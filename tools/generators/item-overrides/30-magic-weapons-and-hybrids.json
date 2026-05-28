@@ -1,0 +1,1010 @@
+{
+  "items": [
+    {
+      "id": 509,
+      "magicOffense": 16
+    },
+    {
+      "id": 100,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2131,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2132,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2133,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2134,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2135,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 101,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 102,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 103,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 197,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 1764,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 1765,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 1766,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 1767,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 1768,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 1769,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 1770,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2136,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2137,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2138,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2139,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2140,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 1771,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 1772,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 1773,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 1774,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 1775,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 1776,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 1777,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 1778,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 1779,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 1780,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 1781,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 1782,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 1783,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2141,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2142,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2143,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2144,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2145,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 1784,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 1785,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2146,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2147,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2148,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2149,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2150,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 1786,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 1787,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 1788,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 198,
+      "name": "Wizard staff",
+      "magicOffense": 28
+    },
+    {
+      "id": 614,
+      "magicOffense": 4
+    },
+    {
+      "id": 615,
+      "magicOffense": 5
+    },
+    {
+      "id": 616,
+      "magicOffense": 5
+    },
+    {
+      "id": 617,
+      "magicOffense": 5
+    },
+    {
+      "id": 618,
+      "magicOffense": 5
+    },
+    {
+      "id": 682,
+      "magicOffense": 6
+    },
+    {
+      "id": 683,
+      "magicOffense": 6
+    },
+    {
+      "id": 684,
+      "magicOffense": 6
+    },
+    {
+      "id": 685,
+      "magicOffense": 6
+    },
+    {
+      "id": 1000,
+      "magicOffense": 6
+    },
+    {
+      "id": 1216,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 1217,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 1218,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 1213,
+      "requiredSkillID": 5,
+      "requiredLevel": 70
+    },
+    {
+      "id": 1214,
+      "requiredSkillID": 5,
+      "requiredLevel": 70
+    },
+    {
+      "id": 1215,
+      "requiredSkillID": 5,
+      "requiredLevel": 70
+    },
+    {
+      "id": 725,
+      "magicOffense": 4
+    },
+    {
+      "id": 2238,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2239,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2240,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2241,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2242,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2243,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2244,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2245,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2246,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2247,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2248,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2249,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2250,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2251,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2252,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2253,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2254,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2255,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2256,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2257,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2258,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2259,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2260,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2261,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2262,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2263,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2264,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2265,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2266,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2267,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2268,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2269,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2270,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2271,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2272,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2273,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2274,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2275,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2276,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2277,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2278,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2279,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2280,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2281,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2282,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2283,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2284,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2285,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2286,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2287,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2288,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2289,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2290,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2291,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2292,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2293,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2294,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2295,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2296,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2297,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2298,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2299,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2300,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2301,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2302,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2303,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2304,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2305,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2306,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2307,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2308,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2309,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2310,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2311,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2312,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2313,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2314,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2315,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2316,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2317,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2318,
+      "magicOffense": 8,
+      "requiredSkillID": 6,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2319,
+      "magicOffense": 12,
+      "requiredSkillID": 6,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2320,
+      "magicOffense": 16,
+      "requiredSkillID": 6,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2321,
+      "magicOffense": 24,
+      "requiredSkillID": 6,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2322,
+      "magicOffense": 28,
+      "requiredSkillID": 6,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2323,
+      "magicOffense": 32,
+      "requiredSkillID": 6,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2324,
+      "magicOffense": 40,
+      "requiredSkillID": 6,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2325,
+      "magicOffense": 44,
+      "requiredSkillID": 6,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2326,
+      "magicOffense": 48,
+      "requiredSkillID": 6,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2327,
+      "magicOffense": 56,
+      "requiredSkillID": 6,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2228,
+      "magicOffense": 2,
+      "requiredSkillID": 5,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2229,
+      "magicOffense": 2,
+      "requiredSkillID": 5,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2230,
+      "magicOffense": 2,
+      "requiredSkillID": 5,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2231,
+      "magicOffense": 2,
+      "requiredSkillID": 5,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2232,
+      "magicOffense": 2,
+      "requiredSkillID": 5,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2233,
+      "magicOffense": 2,
+      "requiredSkillID": 5,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2234,
+      "magicOffense": 2,
+      "requiredSkillID": 5,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2235,
+      "magicOffense": 2,
+      "requiredSkillID": 5,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2236,
+      "magicOffense": 2,
+      "requiredSkillID": 5,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2237,
+      "magicOffense": 2,
+      "requiredSkillID": 5,
+      "requiredLevel": 70
+    },
+    {
+      "id": 314,
+      "magicOffense": 2
+    },
+    {
+      "id": 317,
+      "meleeOffense": 1,
+      "magicOffense": 2,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 852,
+      "meleeOffense": 1,
+      "magicOffense": 1,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    }
+  ]
+}

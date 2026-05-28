@@ -1,0 +1,688 @@
+{
+  "items": [
+    {
+      "id": 188,
+      "rangedOffense": 4,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2117,
+      "rangedOffense": 8,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 8
+    },
+    {
+      "id": 189,
+      "rangedOffense": 3,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2118,
+      "rangedOffense": 5,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 8
+    },
+    {
+      "id": 59,
+      "name": "Pine Crossbow",
+      "rangedOffense": 4,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 8
+    },
+    {
+      "id": 60,
+      "rangedOffense": 2,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2169,
+      "rangedOffense": 7,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2170,
+      "rangedOffense": 10,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2171,
+      "rangedOffense": 14,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 30
+    },
+    {
+      "id": 2172,
+      "rangedOffense": 18,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2173,
+      "rangedOffense": 22,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2174,
+      "rangedOffense": 26,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2175,
+      "rangedOffense": 30,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2176,
+      "rangedOffense": 34,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2177,
+      "name": "Bolt mould"
+    },
+    {
+      "id": 2204,
+      "name": "Dart mould"
+    },
+    {
+      "id": 2205,
+      "name": "Throwing knife mould"
+    },
+    {
+      "id": 2206,
+      "name": "Arrowhead mould"
+    },
+    {
+      "id": 648,
+      "rangedOffense": 12,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 15
+    },
+    {
+      "id": 649,
+      "rangedOffense": 11,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 15
+    },
+    {
+      "id": 650,
+      "rangedOffense": 16,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2121,
+      "rangedOffense": 24,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 30
+    },
+    {
+      "id": 651,
+      "rangedOffense": 15,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2122,
+      "rangedOffense": 22,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 30
+    },
+    {
+      "id": 652,
+      "rangedOffense": 32,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 38
+    },
+    {
+      "id": 653,
+      "rangedOffense": 29,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 38
+    },
+    {
+      "id": 654,
+      "rangedOffense": 36,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2125,
+      "rangedOffense": 40,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 54
+    },
+    {
+      "id": 655,
+      "rangedOffense": 33,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2126,
+      "rangedOffense": 37,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 54
+    },
+    {
+      "id": 656,
+      "rangedOffense": 44,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2129,
+      "rangedOffense": 48,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 70
+    },
+    {
+      "id": 657,
+      "rangedOffense": 41,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 62
+    },
+    {
+      "id": 2130,
+      "rangedOffense": 45,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 70
+    },
+    {
+      "id": 190,
+      "name": "Tin bolts",
+      "rangedOffense": 2
+    },
+    {
+      "id": 592,
+      "name": "Poison Tin bolts",
+      "rangedOffense": 2
+    },
+    {
+      "id": 11,
+      "rangedOffense": 6
+    },
+    {
+      "id": 2039,
+      "rangedOffense": 2
+    },
+    {
+      "id": 2040,
+      "rangedOffense": 4
+    },
+    {
+      "id": 723,
+      "rangedOffense": 8
+    },
+    {
+      "id": 2178,
+      "rangedOffense": 4
+    },
+    {
+      "id": 2179,
+      "rangedOffense": 4
+    },
+    {
+      "id": 2180,
+      "rangedOffense": 6
+    },
+    {
+      "id": 2181,
+      "rangedOffense": 6
+    },
+    {
+      "id": 638,
+      "rangedOffense": 8
+    },
+    {
+      "id": 2182,
+      "rangedOffense": 8
+    },
+    {
+      "id": 2183,
+      "rangedOffense": 8
+    },
+    {
+      "id": 640,
+      "rangedOffense": 12
+    },
+    {
+      "id": 2184,
+      "rangedOffense": 10
+    },
+    {
+      "id": 2185,
+      "rangedOffense": 10
+    },
+    {
+      "id": 642,
+      "rangedOffense": 16
+    },
+    {
+      "id": 2186,
+      "rangedOffense": 12
+    },
+    {
+      "id": 2187,
+      "rangedOffense": 12
+    },
+    {
+      "id": 644,
+      "rangedOffense": 20
+    },
+    {
+      "id": 2188,
+      "rangedOffense": 14
+    },
+    {
+      "id": 2189,
+      "rangedOffense": 14
+    },
+    {
+      "id": 2190,
+      "rangedOffense": 16
+    },
+    {
+      "id": 2191,
+      "rangedOffense": 16
+    },
+    {
+      "id": 646,
+      "rangedOffense": 24
+    },
+    {
+      "id": 2192,
+      "rangedOffense": 18
+    },
+    {
+      "id": 2193,
+      "rangedOffense": 18
+    },
+    {
+      "id": 2194,
+      "rangedOffense": 20
+    },
+    {
+      "id": 2195,
+      "rangedOffense": 20
+    },
+    {
+      "id": 2041,
+      "rangedOffense": 18
+    },
+    {
+      "id": 2042,
+      "rangedOffense": 22
+    },
+    {
+      "id": 786,
+      "rangedOffense": 8
+    },
+    {
+      "id": 1449,
+      "rangedOffense": 28
+    },
+    {
+      "id": 1451,
+      "rangedOffense": 24
+    },
+    {
+      "id": 1452,
+      "rangedOffense": 24
+    },
+    {
+      "id": 1013,
+      "rangedOffense": 9,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 15
+    },
+    {
+      "id": 2043,
+      "rangedOffense": 5,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 1
+    },
+    {
+      "id": 1014,
+      "rangedOffense": 9,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 15
+    },
+    {
+      "id": 1015,
+      "rangedOffense": 11,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 22
+    },
+    {
+      "id": 2044,
+      "rangedOffense": 7,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 8
+    },
+    {
+      "id": 1024,
+      "rangedOffense": 13,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 30
+    },
+    {
+      "id": 1068,
+      "rangedOffense": 15,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 38
+    },
+    {
+      "id": 2045,
+      "rangedOffense": 17,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 46
+    },
+    {
+      "id": 1069,
+      "rangedOffense": 19,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 54
+    },
+    {
+      "id": 2046,
+      "rangedOffense": 21,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 62
+    },
+    {
+      "id": 1070,
+      "rangedOffense": 23,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 70
+    },
+    {
+      "id": 1075,
+      "rangedOffense": 14,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 22
+    },
+    {
+      "id": 1076,
+      "rangedOffense": 12,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 15
+    },
+    {
+      "id": 1077,
+      "rangedOffense": 16,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 30
+    },
+    {
+      "id": 1078,
+      "rangedOffense": 21,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 38
+    },
+    {
+      "id": 1079,
+      "rangedOffense": 26,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 54
+    },
+    {
+      "id": 1080,
+      "rangedOffense": 30,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 70
+    },
+    {
+      "id": 1996,
+      "rangedOffense": 8,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2007,
+      "rangedOffense": 10,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2018,
+      "rangedOffense": 24,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2029,
+      "rangedOffense": 28,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 62
+    },
+    {
+      "id": 1081,
+      "rangedOffense": 16,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 30
+    },
+    {
+      "id": 1122,
+      "rangedOffense": 9,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 15
+    },
+    {
+      "id": 1123,
+      "rangedOffense": 11,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 22
+    },
+    {
+      "id": 1124,
+      "rangedOffense": 13,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 30
+    },
+    {
+      "id": 1125,
+      "rangedOffense": 15,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 38
+    },
+    {
+      "id": 1126,
+      "rangedOffense": 19,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 54
+    },
+    {
+      "id": 1127,
+      "rangedOffense": 23,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2196,
+      "rangedOffense": 5,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2197,
+      "rangedOffense": 7,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2198,
+      "rangedOffense": 17,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2199,
+      "rangedOffense": 21,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 62
+    },
+    {
+      "id": 1128,
+      "rangedOffense": 12,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 15
+    },
+    {
+      "id": 1129,
+      "rangedOffense": 14,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 22
+    },
+    {
+      "id": 1130,
+      "rangedOffense": 16,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 30
+    },
+    {
+      "id": 1131,
+      "rangedOffense": 21,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 38
+    },
+    {
+      "id": 1132,
+      "rangedOffense": 16,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 30
+    },
+    {
+      "id": 1133,
+      "rangedOffense": 26,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 54
+    },
+    {
+      "id": 1134,
+      "rangedOffense": 30,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 70
+    },
+    {
+      "id": 2200,
+      "rangedOffense": 8,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 1
+    },
+    {
+      "id": 2201,
+      "rangedOffense": 10,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 8
+    },
+    {
+      "id": 2202,
+      "rangedOffense": 24,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 46
+    },
+    {
+      "id": 2203,
+      "rangedOffense": 28,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 62
+    },
+    {
+      "id": 1453,
+      "rangedOffense": 40,
+      "weaponSpeed": 4,
+      "requiredSkillID": 4,
+      "requiredLevel": 80
+    },
+    {
+      "id": 1454,
+      "rangedOffense": 56,
+      "weaponSpeed": 3,
+      "requiredSkillID": 4,
+      "requiredLevel": 80
+    }
+  ]
+}

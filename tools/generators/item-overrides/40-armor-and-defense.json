@@ -1,0 +1,2734 @@
+{
+  "items": [
+    {
+      "id": 2,
+      "meleeDefense": 9,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 3,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 4,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 5,
+      "meleeDefense": 3,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 6,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 7,
+      "meleeDefense": 9,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 8,
+      "meleeDefense": 15,
+      "rangedDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 9,
+      "meleeDefense": 9,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 15,
+      "meleeDefense": 3,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 16,
+      "meleeDefense": 1,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 17,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 184,
+      "magicBonus": 0
+    },
+    {
+      "id": 185,
+      "magicBonus": 0
+    },
+    {
+      "id": 199,
+      "magicBonus": 0
+    },
+    {
+      "id": 216,
+      "magicBonus": 0
+    },
+    {
+      "id": 104,
+      "meleeDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 105,
+      "meleeDefense": 4,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 106,
+      "meleeDefense": 5,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 107,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 108,
+      "meleeDefense": 5,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 109,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 110,
+      "meleeDefense": 9,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 111,
+      "meleeDefense": 12,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 112,
+      "meleeDefense": 15,
+      "rangedDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 113,
+      "meleeDefense": 7,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 114,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 115,
+      "meleeDefense": 14,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 116,
+      "meleeDefense": 18,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 117,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 118,
+      "meleeDefense": 19,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 119,
+      "meleeDefense": 23,
+      "rangedDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 120,
+      "meleeDefense": 30,
+      "rangedDefense": 10,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 121,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 122,
+      "meleeDefense": 14,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 123,
+      "meleeDefense": 18,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 124,
+      "meleeDefense": 5,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 125,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 126,
+      "meleeDefense": 9,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 127,
+      "meleeDefense": 12,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 128,
+      "meleeDefense": 7,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 129,
+      "meleeDefense": 12,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 130,
+      "meleeDefense": 14,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 131,
+      "meleeDefense": 18,
+      "magicDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 196,
+      "meleeDefense": 19,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 4
+    },
+    {
+      "id": 206,
+      "meleeDefense": 7,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 230,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 2
+    },
+    {
+      "id": 248,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 313,
+      "meleeDefense": 19,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 4
+    },
+    {
+      "id": 388,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 389,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 399,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 400,
+      "meleeDefense": 23,
+      "rangedDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 401,
+      "meleeDefense": 38,
+      "rangedDefense": 12,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 402,
+      "meleeDefense": 23,
+      "rangedDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 403,
+      "meleeDefense": 15,
+      "rangedDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 404,
+      "meleeDefense": 23,
+      "magicDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 420,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 431,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 432,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 2
+    },
+    {
+      "id": 433,
+      "meleeDefense": 12,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 434,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 470,
+      "meleeDefense": 4,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 1
+    },
+    {
+      "id": 556,
+      "meleeDefense": 2,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 607,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 608,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 698,
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 699,
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 700,
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 701,
+      "description": "Mind spells hit like chaos spells",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 702,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 703,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 722,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 733,
+      "meleeDefense": 3,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 795,
+      "meleeDefense": 10,
+      "rangedDefense": 8,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 807,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 836,
+      "magicDefense": 3,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 837,
+      "magicDefense": 3,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 838,
+      "magicDefense": 3,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 839,
+      "magicDefense": 3,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 840,
+      "magicDefense": 3,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 841,
+      "magicDefense": 1,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 842,
+      "magicDefense": 1,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 843,
+      "magicDefense": 1,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 844,
+      "magicDefense": 1,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 845,
+      "magicDefense": 1,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 846,
+      "magicDefense": 4,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 847,
+      "magicDefense": 4,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 848,
+      "magicDefense": 4,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 849,
+      "magicDefense": 4,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 850,
+      "magicDefense": 4,
+      "armourBonus": 0,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 878,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 966,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 967,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 968,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 969,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 970,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 971,
+      "magicDefense": 1,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 990,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1006,
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1019,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1022,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1023,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1087,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1234,
+      "magicDefense": 1,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1264,
+      "magicDefense": 1,
+      "magicBonus": 0,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1278,
+      "meleeDefense": 22,
+      "rangedDefense": 17,
+      "magicDefense": 11,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1368,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "meleeDefense": 30,
+      "rangedDefense": 23,
+      "magicDefense": 15,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1370,
+      "meleeDefense": 2,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1371,
+      "meleeDefense": 5,
+      "rangedDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1372,
+      "meleeDefense": 1,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1418,
+      "meleeDefense": 7,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1419,
+      "meleeDefense": 9,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1420,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1421,
+      "meleeDefense": 14,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1422,
+      "meleeDefense": 18,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1423,
+      "meleeDefense": 23,
+      "rangedDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1424,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 2
+    },
+    {
+      "id": 1425,
+      "meleeDefense": 22,
+      "rangedDefense": 17,
+      "magicDefense": 11,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1426,
+      "meleeDefense": 30,
+      "magicDefense": 23,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1427,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "meleeDefense": 44,
+      "rangedDefense": 33,
+      "magicDefense": 22,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1428,
+      "name": "Dragon plate mail body",
+      "meleeDefense": 44,
+      "rangedDefense": 33,
+      "magicDefense": 22,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1429,
+      "meleeDefense": 33,
+      "rangedDefense": 25,
+      "magicDefense": 17,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1430,
+      "name": "Dragon plate mail legs",
+      "meleeDefense": 33,
+      "rangedDefense": 25,
+      "magicDefense": 17,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1498,
+      "meleeDefense": 2,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1530,
+      "meleeDefense": 7,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1531,
+      "meleeDefense": 9,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1532,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1533,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 1534,
+      "meleeDefense": 14,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1535,
+      "meleeDefense": 18,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1536,
+      "meleeDefense": 23,
+      "rangedDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1537,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "meleeDefense": 30,
+      "rangedDefense": 23,
+      "magicDefense": 15,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1583,
+      "magicBonus": 0
+    },
+    {
+      "id": 1835,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1836,
+      "meleeDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1837,
+      "meleeDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1838,
+      "meleeDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1839,
+      "meleeDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1840,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1841,
+      "meleeDefense": 1,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1842,
+      "meleeDefense": 1,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1843,
+      "meleeDefense": 2,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1844,
+      "meleeDefense": 3,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1845,
+      "meleeDefense": 1,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1846,
+      "meleeDefense": 1,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1847,
+      "meleeDefense": 1,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1848,
+      "meleeDefense": 2,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1849,
+      "meleeDefense": 3,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1850,
+      "meleeDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1851,
+      "meleeDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1852,
+      "meleeDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1853,
+      "meleeDefense": 5,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1854,
+      "meleeDefense": 7,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1855,
+      "meleeDefense": 1,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1856,
+      "meleeDefense": 1,
+      "rangedDefense": 1,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1857,
+      "meleeDefense": 1,
+      "rangedDefense": 1,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1858,
+      "meleeDefense": 2,
+      "rangedDefense": 1,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1859,
+      "meleeDefense": 2,
+      "rangedDefense": 2,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1860,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1861,
+      "meleeDefense": 1,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1862,
+      "meleeDefense": 1,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1863,
+      "meleeDefense": 1,
+      "rangedDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1864,
+      "meleeDefense": 2,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1865,
+      "meleeDefense": 2,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1866,
+      "meleeDefense": 4,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1867,
+      "meleeDefense": 4,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1868,
+      "meleeDefense": 6,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1869,
+      "meleeDefense": 7,
+      "rangedDefense": 3,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1870,
+      "meleeDefense": 1,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1871,
+      "meleeDefense": 1,
+      "rangedDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1872,
+      "meleeDefense": 1,
+      "rangedDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1873,
+      "meleeDefense": 1,
+      "rangedDefense": 7,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1874,
+      "meleeDefense": 2,
+      "rangedDefense": 8,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1875,
+      "meleeDefense": 2,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1876,
+      "meleeDefense": 4,
+      "rangedDefense": 1,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1877,
+      "meleeDefense": 4,
+      "rangedDefense": 1,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1878,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1879,
+      "meleeDefense": 7,
+      "rangedDefense": 2,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1880,
+      "meleeDefense": 2,
+      "rangedDefense": 1,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1881,
+      "meleeDefense": 4,
+      "rangedDefense": 3,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1882,
+      "meleeDefense": 4,
+      "rangedDefense": 3,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1883,
+      "meleeDefense": 6,
+      "rangedDefense": 4,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1884,
+      "meleeDefense": 8,
+      "rangedDefense": 5,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1885,
+      "meleeDefense": 1,
+      "rangedDefense": 1,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1886,
+      "meleeDefense": 2,
+      "rangedDefense": 2,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1887,
+      "meleeDefense": 2,
+      "rangedDefense": 2,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1888,
+      "meleeDefense": 3,
+      "rangedDefense": 3,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1889,
+      "meleeDefense": 4,
+      "rangedDefense": 4,
+      "magicDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1890,
+      "meleeDefense": 1,
+      "rangedDefense": 3,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1891,
+      "meleeDefense": 1,
+      "rangedDefense": 5,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1892,
+      "meleeDefense": 1,
+      "rangedDefense": 5,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1893,
+      "meleeDefense": 2,
+      "rangedDefense": 8,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1894,
+      "meleeDefense": 3,
+      "rangedDefense": 10,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1895,
+      "meleeDefense": 3,
+      "rangedDefense": 1,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1896,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1897,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1898,
+      "meleeDefense": 10,
+      "rangedDefense": 2,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1899,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1900,
+      "meleeDefense": 3,
+      "rangedDefense": 1,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1901,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1902,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1903,
+      "meleeDefense": 10,
+      "rangedDefense": 2,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1904,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1905,
+      "meleeDefense": 2,
+      "rangedDefense": 1,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1906,
+      "meleeDefense": 4,
+      "rangedDefense": 2,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1907,
+      "meleeDefense": 4,
+      "rangedDefense": 2,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1908,
+      "meleeDefense": 6,
+      "rangedDefense": 4,
+      "magicDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1909,
+      "meleeDefense": 7,
+      "rangedDefense": 5,
+      "magicDefense": 10,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1910,
+      "meleeDefense": 3,
+      "rangedDefense": 2,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1911,
+      "meleeDefense": 7,
+      "rangedDefense": 3,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1912,
+      "meleeDefense": 7,
+      "rangedDefense": 3,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1913,
+      "meleeDefense": 9,
+      "rangedDefense": 5,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1914,
+      "meleeDefense": 13,
+      "rangedDefense": 7,
+      "magicDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1915,
+      "meleeDefense": 5,
+      "rangedDefense": 1,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1916,
+      "meleeDefense": 9,
+      "rangedDefense": 2,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1917,
+      "meleeDefense": 9,
+      "rangedDefense": 2,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1918,
+      "meleeDefense": 13,
+      "rangedDefense": 3,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1919,
+      "meleeDefense": 17,
+      "rangedDefense": 5,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1920,
+      "meleeDefense": 3,
+      "rangedDefense": 2,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1921,
+      "meleeDefense": 5,
+      "rangedDefense": 3,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1922,
+      "meleeDefense": 5,
+      "rangedDefense": 3,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1923,
+      "meleeDefense": 7,
+      "rangedDefense": 5,
+      "magicDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1924,
+      "meleeDefense": 10,
+      "rangedDefense": 7,
+      "magicDefense": 9,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1925,
+      "meleeDefense": 3,
+      "rangedDefense": 2,
+      "magicDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1926,
+      "meleeDefense": 5,
+      "rangedDefense": 3,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1927,
+      "meleeDefense": 5,
+      "rangedDefense": 3,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1928,
+      "meleeDefense": 7,
+      "rangedDefense": 5,
+      "magicDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1929,
+      "meleeDefense": 10,
+      "rangedDefense": 7,
+      "magicDefense": 9,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1930,
+      "meleeDefense": 3,
+      "rangedDefense": 2,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1931,
+      "meleeDefense": 6,
+      "rangedDefense": 4,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1932,
+      "meleeDefense": 6,
+      "rangedDefense": 4,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1933,
+      "meleeDefense": 8,
+      "rangedDefense": 6,
+      "magicDefense": 8,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1934,
+      "meleeDefense": 11,
+      "rangedDefense": 8,
+      "magicDefense": 10,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1935,
+      "meleeDefense": 3,
+      "rangedDefense": 2,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1936,
+      "meleeDefense": 5,
+      "rangedDefense": 3,
+      "magicDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1937,
+      "meleeDefense": 5,
+      "rangedDefense": 3,
+      "magicDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1938,
+      "meleeDefense": 7,
+      "rangedDefense": 5,
+      "magicDefense": 10,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1939,
+      "meleeDefense": 10,
+      "rangedDefense": 6,
+      "magicDefense": 13,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1940,
+      "meleeDefense": 3,
+      "rangedDefense": 3,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1941,
+      "meleeDefense": 6,
+      "rangedDefense": 5,
+      "magicDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1942,
+      "meleeDefense": 6,
+      "rangedDefense": 5,
+      "magicDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1943,
+      "meleeDefense": 9,
+      "rangedDefense": 7,
+      "magicDefense": 9,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1944,
+      "meleeDefense": 12,
+      "rangedDefense": 9,
+      "magicDefense": 12,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1945,
+      "meleeDefense": 3,
+      "rangedDefense": 2,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1946,
+      "meleeDefense": 6,
+      "rangedDefense": 4,
+      "magicDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1947,
+      "meleeDefense": 6,
+      "rangedDefense": 4,
+      "magicDefense": 7,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1948,
+      "meleeDefense": 8,
+      "rangedDefense": 6,
+      "magicDefense": 11,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1949,
+      "meleeDefense": 11,
+      "rangedDefense": 7,
+      "magicDefense": 15,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1950,
+      "meleeDefense": 3,
+      "rangedDefense": 3,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1951,
+      "meleeDefense": 7,
+      "rangedDefense": 5,
+      "magicDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1952,
+      "meleeDefense": 7,
+      "rangedDefense": 5,
+      "magicDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1953,
+      "meleeDefense": 10,
+      "rangedDefense": 7,
+      "magicDefense": 10,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1954,
+      "meleeDefense": 13,
+      "rangedDefense": 10,
+      "magicDefense": 13,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1959,
+      "meleeDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1960,
+      "meleeDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1961,
+      "meleeDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1962,
+      "meleeDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1963,
+      "meleeDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1964,
+      "meleeDefense": 4,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1965,
+      "meleeDefense": 3,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1966,
+      "meleeDefense": 3,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1967,
+      "meleeDefense": 3,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1968,
+      "meleeDefense": 5,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1969,
+      "meleeDefense": 5,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1970,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1971,
+      "meleeDefense": 11,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1972,
+      "meleeDefense": 11,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1973,
+      "meleeDefense": 11,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1974,
+      "meleeDefense": 16,
+      "magicDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1975,
+      "meleeDefense": 16,
+      "rangedDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1976,
+      "meleeDefense": 27,
+      "rangedDefense": 8,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1977,
+      "meleeDefense": 14,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1978,
+      "meleeDefense": 14,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1979,
+      "meleeDefense": 14,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1980,
+      "meleeDefense": 21,
+      "magicDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1981,
+      "meleeDefense": 21,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1982,
+      "meleeDefense": 34,
+      "rangedDefense": 11,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1983,
+      "meleeDefense": 5,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1984,
+      "meleeDefense": 5,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1985,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1986,
+      "meleeDefense": 6,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1988,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1989,
+      "meleeDefense": 9,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1990,
+      "meleeDefense": 9,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1991,
+      "meleeDefense": 12,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1992,
+      "meleeDefense": 12,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1993,
+      "meleeDefense": 15,
+      "rangedDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1994,
+      "meleeDefense": 15,
+      "rangedDefense": 5,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2050,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2051,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2052,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2054,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2055,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2056,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2057,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2058,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2059,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2060,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2061,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2062,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2063,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2064,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2065,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2066,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2067,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2068,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2069,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2070,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2071,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2072,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2073,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2074,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2075,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2076,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2077,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2078,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2079,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2080,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2081,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2082,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2083,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2084,
+      "magicDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2085,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2086,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2087,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2088,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2089,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2090,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2091,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2092,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2093,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2094,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2095,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2096,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2097,
+      "magicDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2098,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2099,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2100,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2101,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2102,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2103,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2104,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2105,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2106,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2107,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2108,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2109,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2110,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2224,
+      "meleeDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2225,
+      "meleeDefense": 3,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2226,
+      "meleeDefense": 11,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 2227,
+      "meleeDefense": 14,
+      "rangedDefense": 4,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1290,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1293,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1296,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 183,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 209,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 229,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 511,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 512,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 513,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 514,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1288,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1373,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1374,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1375,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1376,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1377,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1380,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1381,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1382,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1383,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1384,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1516,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1518,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1519,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1520,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1521,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1522,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1523,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1524,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1525,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1526,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1527,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1528,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1529,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 315,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 734,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 744,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 761,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
+      "id": 1497,
+      "meleeDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    }
+  ]
+}

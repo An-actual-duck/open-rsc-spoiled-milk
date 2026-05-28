@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS `equipped`;
+CREATE TABLE IF NOT EXISTS `equipped`
+(
+    `playerID` int(10) UNSIGNED NOT NULL,
+    `itemID`   int(10) UNSIGNED NOT NULL
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8;

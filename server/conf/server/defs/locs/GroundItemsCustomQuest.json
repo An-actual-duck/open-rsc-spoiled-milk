@@ -1,0 +1,51 @@
+{
+	"grounditems": [{
+		"id": 1362,
+		"pos": {
+			"X": 309,
+			"Y": 3429
+		},
+		"amount": 1,
+		"respawn": 95
+	}, {
+		"id": 21,
+		"pos": {
+			"X": 976,
+			"Y": 165
+		},
+		"amount": 1,
+		"respawn": 95
+	}, {
+		"id": 19,
+		"pos": {
+			"X": 972,
+			"Y": 171
+		},
+		"amount": 1,
+		"respawn": 95
+	}, {
+		"id": 19,
+		"pos": {
+			"X": 971,
+			"Y": 174
+		},
+		"amount": 1,
+		"respawn": 95
+	}, {
+		"id": 14,
+		"pos": {
+			"X": 158,
+			"Y": 694
+		},
+		"amount": 1,
+		"respawn": 95
+	}, {
+		"id": 156,
+		"pos": {
+			"X": 411,
+			"Y": 549
+		},
+		"amount": 1,
+		"respawn": 95
+	}]
+}

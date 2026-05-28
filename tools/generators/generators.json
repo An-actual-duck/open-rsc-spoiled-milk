@@ -1,0 +1,21 @@
+{
+  "groups": {
+    "items": ["item"],
+    "npcs": ["npc"],
+    "combat": ["item", "npc"]
+  },
+  "generators": [
+    {
+      "name": "item",
+      "script": "tools/generators/generate-item-overrides.py",
+      "sourceDir": "tools/generators/item-overrides",
+      "target": "server/conf/server/defs/ItemDefsMyWorld.json"
+    },
+    {
+      "name": "npc",
+      "script": "tools/generators/generate-npc-overrides.py",
+      "sourceDir": "tools/generators/npc-overrides",
+      "target": "server/conf/server/defs/NpcDefsMyWorld.json"
+    }
+  ]
+}

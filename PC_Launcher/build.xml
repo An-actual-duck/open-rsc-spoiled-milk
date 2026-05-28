@@ -1,0 +1,63 @@
+<project default="compile" basedir=".">
+    <property name="src" location="src/main"/>
+    <property name="data" location="src/main"/>
+    <property name="lib" location="lib"/>
+    <property name="build" location="build"/>
+    <property name="jar" location="OpenRSC.jar"/>
+    <property name="javac.source" value="1.8"/>
+    <property name="javac.target" value="1.8"/>
+
+    <tstamp>
+        <format property="calculatedVersion"
+                pattern="yyyyMMdd.HHmmss"
+                timezone="GMT" />
+    </tstamp>
+
+	<target name="clean">
+		<delete dir="${build}" />
+		<delete file="${jar}" />
+	</target>
+
+    <target name="compile">
+        <delete file="${jar}"/>
+        <delete dir="${build}"/>
+        <mkdir dir="${build}"/>
+        <copy todir="${build}/data">
+            <fileset dir="src/main/resources"/>
+        </copy>
+        <javac srcdir="${src}" destdir="${build}" debug="on" target="${javac.source}" source="${javac.target}"
+               includeantruntime="false">
+            <compilerarg line="-Xlint:deprecation"/>
+        </javac>
+        <jar basedir="${build}" destfile="${jar}">
+            <manifest>
+                <attribute name="Main-Class" value="launcher.Main"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="setversion">
+        <replaceregexp
+                file="${src}/java/launcher/Utils/Defaults.java"
+                match="_CURRENT_VERSION = (.*)"
+                replace="_CURRENT_VERSION = ${calculatedVersion};"
+                byline="true"
+        />
+        <echo message="Replaced version number in Defaults.java with ${calculatedVersion}" />
+        <echo message="Run ant dist now to compile." />
+    </target>
+
+    <target name="runclient">
+        <java classname="launcher.Main" fork="true">
+            <jvmarg line="-Xms312m -Dsun.java2d.opengl=true"/>
+            <classpath>
+                <pathelement path="${jar}/"/>
+            </classpath>
+        </java>
+    </target>
+
+    <target name="compile-and-run">
+        <antcall target="compile"/>
+        <antcall target="runclient"/>
+    </target>
+</project>

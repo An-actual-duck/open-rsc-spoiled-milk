@@ -1,0 +1,81 @@
+{
+  "description": "Visible MyWorld resource name normalization without editing inherited base definitions.",
+  "items": [
+    {
+      "id": 147,
+      "name": "Cow hide"
+    },
+    {
+      "id": 148,
+      "name": "Leather"
+    },
+    {
+      "id": 150,
+      "name": "Copper ore"
+    },
+    {
+      "id": 151,
+      "name": "Iron ore"
+    },
+    {
+      "id": 152,
+      "name": "Gold ore"
+    },
+    {
+      "id": 153,
+      "name": "Mithril ore"
+    },
+    {
+      "id": 154,
+      "name": "Adamantite ore"
+    },
+    {
+      "id": 155,
+      "name": "Coal"
+    },
+    {
+      "id": 169,
+      "name": "Bronze bar"
+    },
+    {
+      "id": 170,
+      "name": "Iron bar"
+    },
+    {
+      "id": 171,
+      "name": "Steel bar"
+    },
+    {
+      "id": 172,
+      "name": "Gold bar"
+    },
+    {
+      "id": 173,
+      "name": "Mithril bar"
+    },
+    {
+      "id": 174,
+      "name": "Adamantite bar"
+    },
+    {
+      "id": 202,
+      "name": "Tin ore"
+    },
+    {
+      "id": 383,
+      "name": "Silver ore"
+    },
+    {
+      "id": 384,
+      "name": "Silver bar"
+    },
+    {
+      "id": 408,
+      "name": "Runite bar"
+    },
+    {
+      "id": 409,
+      "name": "Runite ore"
+    }
+  ]
+}

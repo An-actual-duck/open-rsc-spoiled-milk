@@ -1,0 +1,916 @@
+OpenRSC Commands
+------------------------
+Admin Commands
+------------------------
+- clearipbans
+  - Usage: `::clearipbans`
+  - Clears all temporary IP bans.
+- viewipban
+  - Usage: `::viewipban`
+  - Alias: `::checkipban`
+  - Checks if an IP is banned.
+- viewipbanslist
+  - Usage: `::viewipbanslist`
+  - Usage: `::viewipbanlist`
+  - Alias: `::checkipbanslist`
+  - Alias: `::checkipbanlist`
+  - Displays all banned IPs in a list.
+- beastmode
+  - Usage: `::beastmode`
+  - Completes required quests and stats, then sets the player to wield top tier items. Items vary based on if custom sprites are enabled on the server.
+- fillbank
+  - Usage: `::fillbank`
+  - Adds 50 of every item in the game to the admin's bank.
+- unfillbank
+  - Usage: `::unfillbank`
+  - Subtracts 50 of every item in the game from the admin's bank.
+- saveall
+  - Usage: `::saveall`
+  - Saves all users currently logged in.
+- winterholidayevent
+  - Usage: `::winterholidayevent`
+  - Turns on the winter holiday event (spawns tree objects). Note: this is only functional on custom feature worlds, such as Cabbage and Coleslaw.	
+  - Alias: `::toggleholiday`
+- resetevent
+  - Usage: `resetevent [hours] [minute]`
+  - Performs an hourly scenery reset on the server for objects. Example: this resets stuck objects. Not recommended to be used in production servers as long respawn scenery like runite ore rocks would reset at the same time hourly.
+- cabbagehalloweendrop
+  - Usage: `::cabbagehalloweendrop [total hours] [minute of hour to drop scythes] [drop delay in minutes after scythes to drop halloween crackers]`
+  - Drops scythes and halloween crackers at the specified times. 
+  - May be checked with ::checkholidaydrop or cancelled with ::cancelholidaydrop.
+  - Should only be used on server configurations supporting custom items.
+- holidaydrop
+  - Usage: `::holidaydrop [total hours] [minute of hour] [item id] ...`
+  - Performs a global holiday drop. More than one item may be specified by putting spaces between item IDs.
+- stopholidaydrop
+  - Usage: `::stopholidaydrop`
+  - Alias: `::cancelholidaydrop` or `::christmasiscancelled`
+  - Stops the currently running holiday drop.
+- getholidaydrop
+  - Usage: `::getholidaydrop`
+  - Alias: `::checkholidaydrop` or `::checkholidayevent` or `::drop`
+  - Gets information about the currently running holiday drop.
+- restart
+  - Usage: `::restart`
+  - Restarts the server using a five minute timer.
+- grounditem
+  - Usage: `::grounditem [id] (respawn_time) (amount) (x) (y)`
+  - Alias: `::gi` or `::gitem`
+  - Puts a database entry for a ground item to spawn with specified ID, amount, and respawn time.
+  - If no respawn time is supplied, then 188 seconds is used.
+  - If no amount is supplied, then 1 is used.
+  - If no coordinates are supplied, then the current player's coordinates are used. 
+- removegrounditem
+  - Usage: `::removegrounditem (x) (y)`
+  - Alias: `::rgi` or `::rgitem` or `::removegi` or `::removegitem` or `::rgrounditem`
+  - Removes from the database a ground item spawn entry.
+  - If no coordinates are supplied, then the current player's coordinates are used.
+- shutdown
+  - Usage: `::shutdown`
+  - Shuts down the server immediately.
+- update
+  - Usage: `::update (reason)`
+  - Shuts down the server with a warning to users and a graceful timer to allow players to save their status.
+- item
+  - Usage: `::item [id or ItemID name] (amount) (player)`
+  - Spawns an item for the specified player.
+  - If no amount is specified, then 1 is used.
+  - If no player is specified, then it spawns the item to the current player.
+  - For non-stackable items, only up to 30 may be spawned at one time.
+- ritem
+  - Usage: `::ritem [id or ItemId name] [amount] [player] (alert)"`
+  - Removes an item for the specified player.
+  - Partial stacks of items can be removed by amount parameter
+- rbitem
+  - Usage: `::rbitem [id or ItemId name] (amount) (player) (alert)"`
+  - Removes a bank item for the specified player.
+  - Partial stacks of items can be removed by amount parameter
+- swapitem
+  - Usage: `::swapitem [Inventory Slot # OR ItemId name] [Item Id OR ItemID name] [player]`
+  - Inventory Slot # is zero-indexed, i.e. the first inventory slot is # 0, and the last inventory slot is typically # 29.
+  - Cannot swap out stackable or currently equipped items. Use `::ritem` or `::item` commands instead.
+- certeditem
+  - Usage: `::certeditem [id or ItemID name] (amount) (player)`
+  - Alias: `::noteditem`
+  - Spawns an item as a (custom server addition) certificate for the specified player.
+  - If no player is specified, then it spawns the item to the current player.
+- bankitem
+  - Usage: `::bankitem [id or ItemID name] (amount) (player)`
+  - Alias: `::bitem` or `::addbank`
+  - Spawns an item into the bank of the specified player.
+  - If no amount is specified, then 1 is used.
+  - If no player is specified, then it adds to the bank of the current player.
+- heal
+  - Usage: `::heal (player)`
+  - Sets the specified player's current hits value to their maximum hits value.
+  - If no player is specified, then the current player is healed.
+- recharge
+  - Usage: `::recharge (player)`
+  - Alias: `::healprayer` or `::healp`
+  - Sets the specified player's current prayer value to their maximum prayer value.
+  - If no player is specified, then the current player is recharged.
+- sethp
+  - Usage: `::sethp [name] [hp]`
+  - Alias: `::hp` or `::hits`
+  - Sets the specified player's current hits value to the specified value.
+  - You can not set hits of a staff member of equal or greater rank.
+- setprayer
+  - Usage: `::setprayer [name] [prayer]`
+  - Alias: `::prayer`
+  - Sets the specified player's current prayer value to the specified value.
+  - You can not set prayer of a staff member of equal or greater rank.
+- kill
+  - Usage: `::kill [player]`
+  - Kills the specified player.
+  - You can not kill a staff member of equal or greater rank.
+- damage
+  - Usage: `::damage [name] [amount]`
+  - Alias: `::dmg`
+  - Damages the specified player for the specified amount of hits levels.
+  - You can not damage a staff member of equal or greater rank.
+- wipeinventory
+  - Usage: `::wipeinventory [name]`
+  - Alias: `::wipeinv`
+  - Removes all items from the specified player's inventory.
+- wipebank
+  - Usage: `::wipebank [name]`
+  - Removes all items from the specified player's bank.
+- massitem
+  - Usage: `::massitem [id] [amount]`
+  - Spawn the specified amount of the specified item on the ground temporarily for 3 minutes.
+- massnpc
+  - Usage: `::massnpc [id] [amount] (duration_minutes)`
+  - Spawn the specified amount of the specified NPCs for the specified amount of time.
+  - If no duration is supplied, then 10 minutes is used.
+  - Functionality is restricted on non-custom worlds.
+- playertalk
+  - Usage: `::playertalk [name] [msg]`
+  - Causes the specified player to say the specified message to all players in the area.
+  - You can not talk as a staff member of equal or greater rank.
+  - A similar effect is possible by using the `::possess` command (but only if you are an admin).
+- smitenpc
+  - Usage: `::smitenpc [npc_id] (damage)`
+  - Alias: `::damagenpc` or `::dmgnpc`
+  - Damages the specified NPC for the specified amount of damage.
+  - If no damage is specified, then it does enough damage to kill the NPC.
+- npcevent
+  - Usage: `::npcevent [npc_id] [npc_amount] [item_id] (item_amount) (duration)`
+  - Spawns the specified number of the specified NPC. One random of the spawned NPCs will drop the specified loot. The NPCs will stay for the specified duration.
+  - If no item amount is supplied, then 1 is used.
+  - If no duration is specified, then 10 minutes is used.
+  - NOTE that this only happens one time immediately and is not an HourlyNpcLootEvent.
+  - Functionality is restricted on non-custom worlds.
+- chickenevent
+  - Usage: `::chickenevent (hours) (chicken_amount) (item_amount) (chicken_lifetime)`
+  - Starts an hourly chicken holiday event.
+  - Behaves like npcevent, but this is run every hour on the hour for the specified number of hours.
+  - The NPC is chickens and the loot is coins.
+  - Functionality is restricted on non-custom worlds.
+- stopnpcevent
+  - Usage: `::stopnpcevent`
+  - Alias: `::cancelnpcevent`
+  - Stops the currently running HourlyNpcLootEvent.
+- getnpcevent
+  - Usage: `::getnpcevent`
+  - Alias: `::checknpcevent`
+  - Gets information about the currently running HourlyNpcLootEvent.
+- wildrule
+  - Usage: `::wildrule [god/members] [startLevel] [endLevel]`
+  - Changes the rules used for the wilderness.
+  - If god is supplied as the first argument, then it determines which combat levels god spells are allowed to be cast in the wilderness.
+  - If members is supplied as the first argument, then it determines which combat levels members utems are allowed to be equipped in the wilderness.
+- quickauction
+  - Usage: `::quickauction`
+  - Displays the auction house window.
+- quickbank
+  - Usage: `::quickbank`
+  - Displays the logged in player's bank window.
+- freezeexperience
+  - Usage: `::freezeexperience [player] (boolean)`
+  - Alias: `::freezeexp` or `::freezexp`
+  - Freezes the specified player's experience such that they can not gain anymore experience until the freeze is lifted.
+  - If no boolean is supplied, then this command works as a toggle.
+- skull
+  - Usage: `::skull [player]`
+  - Gives a PK skull or renews its duration for the specified player.
+- unskull
+  - Usage: `::unskull [player]`
+  - Alias: `::rskull`
+  - Removes a PK skull for the specified player.
+- ip
+  - Usage: `::ip (name)`
+  - Shows the IP address of the specified player.
+  - If no player is specified, then the current player's IP is shown.
+- spawnnpc
+  - Usage: `::spawnnpc [id] (radius) (time in minutes)`
+  - Spawns the specified NPC with the specified walking radius for the specified amount of time.
+  - If no walking radius is supplied, then 1 is used.
+  - If no duration is supplied, then 10 minutes is used.
+- shootme
+  - Usage: `::shootme [npc_id] (damage) (type)`
+  - Npc shoots player.
+- npcrangeevent
+  - Usage: `::npcrangeevent [npc_id] [npc_id]`
+  - Npc shoots npc.
+- npcrangeevent2
+  - Usage: `::npcrangeevent2 [npc_id]`
+  - Npc shoots current player.
+- npcfightevent
+  - Usage: `::npcfightevent [npc_id] [npc_id]`
+  - Npc fights npc.
+- npcrangedlvl
+  - Usage: `::npcrangedlvl [npc_id]`
+  - Returns npc ranged level.
+- getnpcstats
+  - Usage: `::getnpcstats [npc_id]`
+  - Returns stats of npc.
+- strpotnpc
+  - Usage: `::strpotnpc [npc_id]`
+  - Emulates giving a strength potion to an npc.
+- combatstylenpc
+  - Usage: `::combatstylenpc [npc_id]`
+  - Returns npc combat style.
+- combatstyle
+  - Usage: `::combatstyle`
+  - Returns own combat style.
+- setnpcstats
+  - Usage: `::setnpcstats [npc_id] [att lvl] [def lvl] [str lvl] [hits lvl]`
+  - Sets npc's combat stats.
+- givemodtools
+  - Usage: `::givemodtools`
+  - Gives you info document, resetcrystal, superchisel, ball of wool, fluffs, and digsite info, if you don't already have the item.
+- givetools
+  - Usage: `::givetools`
+  - Gives you rune pick, rune axe, harpoon, and sleeping bag, if you don't already have the item.
+- setstats
+  - Usage: `::setstats [player] [level]` to set all of the specified player's stats to the specified level.
+  - Usage: `::setstats [player]` to set all of your stats to the specified level
+  - Usage: `::setstats [player] [level] [stat]` to set the specified player's specified stat to the specified level.
+  - Usage: `::setstats [level] [stat]` to set your specified stat to the specified level
+  - Alias: `::stats` or `::stat` or `::setstat` or `::setstats`
+  - Set the specified stats of the specified player to the specified level.
+  - Accepts name or stat id of the specified stat.
+  - If no player is specified, then the current player is targeted.
+  - If no stat is specified, then all stats are modified.
+- setxpstats
+  - Usage: `::setxpstats [player] [experience]` to set all of the specified player's stats to the specified experience.
+  - Usage: `::setxpstats [player]` to set all of your stats to the specified experience
+  - Usage: `::setxpstats [player] [experience] [stat]` to set the specified player's specified stat to the specified experience.
+  - Usage: `::setxpstats [experience] [stat]` to set your specified stat to the specified experience
+  - Alias: `::xpstats` or `::xpstat` or `::setxpstat` or `::setxpstats` or `::setxp`
+  - Set the specified current stats of the specified player to the specified experience.
+  - Accepts name or stat id of the specified stat.
+  - If no player is specified, then the current player is targeted.
+  - If no stat is specified, then all stats are modified.
+- reloadworld
+  - Usage: `::reloadworld`
+  - Alias: `::reloadland`
+  - Reloads landscape.
+- hash
+  - Usage: `::hash [username]`
+  - Converts username into a username "hash", for development purposes.
+- unhash
+  - Usage: `::unhash [long number]`
+  - Converts username "hash" into username, for development purposes.
+- setglobalcooldown
+  - Usage: `::setglobalcooldown [time in milliseconds]`
+  - Example: `::setglobalcooldown 20000` sets cooldown to 20 seconds.
+  - Sets the minimum amount of time a user must wait before sending another message to global chat.
+- setgloballevelreq
+  - Usage: `::setgloballevelreq [total level required to chat]`
+  - Example: `::setgloballevelreq 150` sets total level requirement to 150.
+  - Sets the minimum amount of total levels a user must have in order to participate in global chat.
+- setmaxplayersperip
+  - Usage: `::setmaxplayersperip (number)`
+  - Alias: `::smppi` 
+  - Sets the server allow a max number of players per ip
+- setmaxconnectionsperip
+  - Usage: `::setmaxconnectionsperip (number)`
+  - Alias: `::smcpi`
+  - Sets the server allow a max number of connections per ip
+- setmaxconnectionspersecond
+  - Usage: `::setmaxconnectionspersecond (number)`
+  - Alias: `::smcps` max_connections_per_second: 80
+  - Sets the server allow a max number of connections per second
+- yoptin
+  - Usage: `::yoptin (name)`
+  - Displays the client version of the optional target player. Can display in-client Yoptin dialog if using client version 61 to 75.
+- copypassword
+  - Usage: `::copypassword [from_name] [to_name]`
+  - Alias: `::copypass` or `::copypw`
+  - Copies the password hash (and salt if applicable) from one account to another.
+- setdowntimereportmillis
+  - Usage: `::setdowntimereportmillis [number]`
+  - Alias: `::sddrmdbr`
+  - Part of the monitor ip feature, minimum number of milliseconds before it is considered a significant downtime event worth reporting to Discord webhook.
+- setdowntimereportmillis
+  - Usage: `::setmonitortimeoutmillis [number]`
+  - Alias: `::smtm`
+  - Part of the monitor ip feature, maximum number of milliseconds before a ping fails.
+- reloadsslcert
+  - Usage: `::reloadsslcert`
+  - Alias: `::refreshsslcert`
+  - Used to reload the SSL certificate files used for websocket connections to the server.
+- sqlerrorreportingtest
+  - Usage: `::sqlerrorreportingtest`
+  - Sends a test message with the discord general logging webhook URL with a stacktrace in it, to test that the webhook is working.
+------------------------
+Developer Commands
+------------------------
+- createnpc
+  - Usage: `::createnpc [id] [radius] (x) (y)`
+  - Alias: `::radiusnpc` or `::cnpc` or `::cpc`
+  - Creates a new permanent NPC with the given details into the database.
+  - If no coordinates are supplied, then the position of the current player is used.
+- removenpc
+  - Usage: `::removenpc [npc_instance_id]`
+  - Alias: `::rnpc` or `::rpc`
+  - Removes the specified NPC.
+- removescenery
+  - Usage: `::removescenery (x) (y)`
+  - Alias: `::rscenery`, `::robject`, `::removeobject`
+  - Removes the scenery at the specified coordinates.
+  - If no coordinates are supplied, then the current player's position is used.
+- createscenery
+  - Usage: `::createscenery [id] (x) (y)`
+  - Alias: `::cscenery` or `::ascenery` or `::createobject`or `::cobject` or `::addobject` or `::aobject`
+  - Adds the scenery at the specified coordinates.
+  - If no coordinates are supplied, then the current player's position is used.
+- rotatescenery
+  - Usage: `::rotatescenery (x) (y) (direction)`
+  - Alias: `::rotateobject`
+  - Rotates the scenery at the specified coordinates.
+  - If no direction is specified, then the next incremental number is used looping from 0 to 8.
+  - If no coordinates are supplied, then the current player's position is used.
+- tile
+  - Usage: `::tile`
+  - Shows debug information about the tile the current player is position on.
+- debugregion
+  - Usage: `::debugregion (debug_players) (debug_npcs) (debug_items) (debug_objects)`
+  - Shows debug information about the region the current player is located in.
+  - This command has 4 debug booleans. For the ones that are not supplied, it is assumed to be true.
+- coords
+  - Usage: `::coords (player)`
+  - Shows coordinate information about the specified player.
+  - If no player is specified, then it show coordinate info about the current player.\
+- serverstats
+  - Usage: `::serverstats`
+  - Shows statistics about the currently running server Events, including how many events are running for each Event Class.
+- droptest
+  - Usage: `::droptest [npc_id] [count]`
+  - Returns drop outcomes of `[count]` executions of drops on npc `[npc_id]`
+- error
+  - Usage: `::error (output to stdout)`
+  - Causes an ArrayOutOfBounds exception to occur if not passed an argument. Otherwise prints the first argument to stdout.
+- cyclescenery
+  - Usage: `::cyclescenery`
+  - Shows all scenery in game in order.
+- cycleclothing
+  - Usage: `::cycleclothing`
+  - Shows all animations that the player's current client supports. 
+- abort
+  - Usage: `::abort`
+  - Aborts `cyclescenery` or `cycleclothing` before it finishes.
+------------------------
+Super/Senior Moderator Commands
+------------------------
+- setcache
+  - Usage: `::setcache (name) [cache_key] [cache_value]`
+  - Alias: `::scache` or `::storecache`
+  - Sets a cache value for the specified player.
+  - If no player is specified, then the current player's cache is modified.
+- deletecache
+  - Usage: `::deletecache (name) [cache_key]`
+  - Alias: `::dcache` or `::removecache` or `::rcache`
+  - Remove the cache contents of a specified key for the specified player.
+  - If no player is specified, then the current player's cache is modified.
+- setquest
+  - Usage: `::setquest [player] [questId] (stage)`
+  - Alias: `::queststage` or `::setqueststage` or `::resetquest` or `::resetq`
+  - Sets the quest stage for the specified quest to the specified stage for the specified player.
+  - If no quest stage is supplied, then 0 is used.
+- questcomplete
+  - Usage: `::setquest [player] [questId]`
+  - Alias: `::questcom`
+  - Sets the specified quest to completed for the specified player.
+- completeallquests
+  - Usage: `::completeallquests`
+  - Completes all quests for the player that uses this command.
+- reloaddrops
+  - Usage: `::reloaddrops`
+  - Reloads NPC drop tables.
+- ipcount
+  - Usage: `::ipcount (name)`
+  - Shows the number of players connected with the same IP address as the specified player.
+  - If no player is specified, then the current player's information is shown.
+------------------------
+Moderator Commands
+------------------------
+- info
+  - Usage: `::info (player)`
+  - Alias: `::about`
+  - Shows information about the specified player.
+  - If no player is specified, then it show info about the current player.
+- inventory
+  - Usage: `::inventory (player) (want catalog ids)`
+  - Shows inventory information about the specified player.
+  - If no player is specified, then it show inventory info about the current player.
+- ban
+  - Usage: `::ban [name] [time in minutes, -1 for permanent, 0 to unban]`
+  - Bans the specified player.
+  - You can not ban a staff member of equal or greater rank.
+- ipban
+  - Usage: `::ipban [ip] [time in minutes, -1 for permanent, 0 to unban]`
+  - Alias: `::banip`
+  - Bans the specified player.
+  - You can not ban a staff member of equal or greater rank.
+- syncipbans
+  - Usage: `::syncipbans`
+  - Alias: `::sip`
+  - Syncs/reloads IP bans from the ipbans text file.
+- bank
+  - Usage: `::bank (player) (want box) (want catalog ids)`
+  - Shows bank information for the specified player.
+  - If no player is specified, then it show bank info about the current player.
+  - Shows items in the normal bank interface by default, unless (want box) is specified
+- summon
+  - Usage: `::summon [player]`
+  - Summons the specified player to the current player's location.
+  - This command sets a return point which can be used with `::return [player]`
+  - Moderators can not summon players into the wilderness.
+  - Clears any previous summon flag.
+  - You can not summon a staff member of equal or greater rank.
+- say
+  - Usage `::say [message]`
+  - Talk in global chat. This is never turned off for moderators.
+- announcement
+  - Usage `::announcement [message]`
+  - Alias: `::announce` or `::anouncement` or `::anounce`
+  - Send an important message to every player on the server.
+- systemmessage
+  - Usage: `::systemmessage [message]`
+  - Alias: `::sysmes`
+  - Shows a system message box for every player on the server.
+- kick
+  - Usage: `::kick [player]`
+  - Kicks the specified player from the server.
+- queuesleepword
+  - Usage: `::queuesleepword [player] [index] (special)`
+  - Alias: `::qs` or if special is true, then `::queuesleepwordspecial` or `::qss`
+  - Selects a specific sleepword to show to player next time they sleep.
+  - `[index]` is a number between 0 and however many prerendered sleepwords are installed on the server.
+  - if `(special)` is true, then it selects from the specialsleepwords folder instead.
+- queuesleepwordspecial
+  - Usage: `::queuesleepwordspecial [player] [index]`
+  - Alias: `::qss`
+  - Selects a specific sleepword to show to player next time they sleep.
+  - `[index]` is a number between 0 and however many prerendered sleepwords are installed on the server.
+- listspecialsleepwords
+  - Usage: `::listspecialsleepwords`
+  - Alias: `::qssls` or `::lsqss`
+  - Shows all the special sleepwords available and their names.
+- forcesleep
+  - Usage: `::forcesleep [player]`
+  - Puts a user to sleep immediately.
+- wilderness
+  - Usage: `::wilderness`
+  - Shows how many players are in the wilderness and where they are.
+- appearance
+  - Usage: `::appearance (player)`
+  - Shows the appearance change screen to the specified player.
+  - If no player is specified, then it shows the appearance change screen to the current player.
+  - If the user is not an administrator, can only set appearance for players up to total level 150
+- summonall
+  - Usage: `::summonall (width) (height)`
+  - Summons all currently logged in players to the current player.
+  - Clears any previous summon flag.
+  - Width and height define a rectangle that the summon players will be placed into.
+  - If width and height is not supplied then all players are summoned to the same square as the current player.
+  - Limited by the `summon_all_player_limit` config setting, default 15. 
+- returnall
+  - Usage: `::returnall`
+  - Returns all non-staff members who have been summoned.
+- fatigue
+  - Usage: `::fatigue [player] (percentage)`
+  - Sets fatigue of the specified player to the specified percentage.
+  - If no percentage is specified, then 100 is used.
+- jail
+  - Usage: `::jail [name]`
+  - Puts the specified player in Jail, upstairs of Al Kharid palace.
+  - You can not jail a player who has already been jailed.
+  - You can not jail a staff member.
+- release
+  - Usage: `::release [name]`
+  - Releases the specified player from Jail to the location they were before being jailed.
+- getcache
+  - Usage: `::getcache (name) [cache_key]`
+  - Alias: `::gcache` or `::checkcache`
+  - Display the cache contents for the specified player.
+  - If no player is specified, then the current player's cache is checked.
+- quest
+  - Usage: `::quest  [player] [questId]`
+  - Alias: `::getquest` or `::checkquest`
+  - Display the quest stage for the specified user for the specified quest.
+- renameplayer
+  - Usage: `::renameplayer [current name] [new name] [inappropriate (yes/no)] [reason]`
+  - Alias: `::rename` or `::renameuser` or `::renamechar` or `::rn` or `::rp` or `::ren`
+  - Renames a specified player. Please note that ALL underscores and periods will be replaced with spaces
+  - For "Inappropriate", you may type "1" for yes or "0" for no as well.
+  - Reason must be specified.
+  - Cannot use this command to rename players that have not logged in in the past 2 weeks unless it is an inappropriate name.
+- badname
+  - Usage: `::badname [unacceptable username] [reason]`
+  - Alias: `::offensivename` or `inappropriatename`
+  - Unlike `::renameplayer`, this command chooses a random name to replace the offensive name with.
+  - Users who have been renamed with this command will be able to log in with their old username.
+- freename
+  - Usage: `::freename [username to free]`
+  - Alias: `::releasename` or `::freeusername`
+  - If the player is determined to be inactive, their username will be randomly reassigned so that the name is free again.
+  - Users who have been renamed with this command will be able to log in with their old username, should they return.
+- removeformername
+  - Usage: `::removeformername [username to remove former name from]`
+  - Hides the former name of the user. Useful if it contained sensitive information such as their real last name.
+  - Record of the former name remains in the database, but is no longer shown to players.
+- addbadword
+  - Usage: `::addbadword [word or phrase to censor]`
+  - If filtering is enabled on the server, adds a word or phrase that will be replaced by asterisks.
+  - Permutations of the word will also be checked e.g. for filtered word "Cow", it would also block "C 0 @red@w".
+- removebadword
+  - Usage: `::removebadword [existing word or phrase to no longer censor]`
+  - Removes word/phrase from badwords filtering blocklist.
+- addgoodword
+  - Usage: `::addgoodword [word or phrase to NOT censor]`
+  - If filtering is enabled on the server, adds a word or phrase that will NEVER be replaced by asterisks.
+  - For example, if "Hell" is a bad word on the server, it would be desirable to add "Hello" to goodwords.
+  - Not necessary to add every single word in the english dictionary to the filter since "goodwords" are intended to be just a list of blocklist exceptions.
+  - Permutations of the goodword will not be allowlisted.
+- removegoodword
+  - Usage: `::removegoodword [existing word or phrase to no longer allow as a censor exception]`
+  - Removes word/phrase from goodwords filtering allowlist.
+- addalertword
+  - Usage: `::addalertword [word or phrase to flag as interesting & report to discord]`
+  - If filtering is enabled on the server, adds a word or phrase that will not be censored, but instead merely reported to a channel in Discord
+  - For example, "Does anyone know" could be added, then server administrators would be alerted when someone is asking for general knowledge, and could help the user.
+- removealertword
+  - Usage: `::removealertword [existing word or phrase that is no longer considered interesting]`
+  - Removes word/phrase from alertwords list.
+- syncgoodwordsbadwords
+  - Usage: `::syncgoodwordsbadwords`
+  - Alias: `::sgb`
+  - Reloads the contents of goodwords.txt, badwords.txt and alertwords.txt from the disk.
+  - Useful if the list is edited externally while the server is running. This can happen via text editor, or if multiple Open RSC servers are running on the same computer launched from the same directory.
+  - Done automatically whenever a goodword or badword is added or removed in order to prevent data loss.
+- togglespacefiltering
+  - Usage: `::togglespacefiltering`
+  - Toggles more aggressive badword censorship. Space filtering is the act of filtering a badword with spaces in it.
+  - For example, if "cow" is a badword on the server "c o... w" would be caught by the same badword once space filtering enabled.
+  - Using this command does not change the behaviour of the server after reboot. Space filtering is disabled in server configs by default.
+- onlinelistlocs
+  - Usage: `::onlinelistlocs`
+  - Shows a list of online players with their locations appended in parentheses next to their usernames.
+- gettutorial
+  - Usage: `::gettutorial`
+  - Tells the user if the tutorial is mandatory to complete, or if it can be skipped by new players.
+- toggletutorial
+  - Usage: `::toggletutorial`
+  - If completing tutorial island is currently mandatory, allow new users to skip. If the tutorial can currently be skipped, disable that ability.
+------------------------
+Event Commands
+------------------------
+- teleport
+  - Usage: `::teleport [town/player]` to teleport to a specified town or player
+  - Usage: `::teleport [player] [town/player]` to teleport the specified player to the specified town or destination player.
+  - Usage: `::teleport [x] [y]` to teleport to the specified coordinates
+  - Usage: `::teleport [player] [x] [y]` to teleport the specified player to the specified coordinates.
+  - Alias: `::tp` or `::town` or `::goto` or `::tpto` or `::teleportto`
+  - Teleports the specified player.
+  - You can not teleport while you are jailed.
+  - You can not teleport a staff member of equal or greater rank.
+- return
+  - Usage: `::return (player)`
+  - Return the player to their previous location before being summoned and clear the summoned flag.
+  - Event role can only use return on themselves.
+  - You can not return a staff member of equal or greater rank.
+  - If no player is specified, then the current player is returned.
+- blink
+  - Usage: `::blink`
+  - Turn on single click teleportation.
+- invisible
+  - Usage: `::invisible (player) (boolean)`
+  - Alias: `::invis`
+  - Turn the specified player invisinble.
+  - If no player is specified, then the current player is turned invisible.
+  - If no boolean is supplied, then this command works as a toggle.
+- norender
+  - Usage `::norender`
+  - Alias: `::renderself`
+  - Makes the player completely un-rendered, but still transmits position of player to those around, so don't use as a substitute for `::invis`.
+  - Useful for taking pictures or for talking to players while "invisible".
+  - Return to normal with `::resetappearance`
+- invulnerable
+  - Usage: `::invulnerable (player) (boolean)`
+  - Alias: `::invul`
+  - Turn the specified player invulnerable.
+  - If no player is specified, then the current player is turned invulnerable.
+  - If no boolean is supplied, then this command works as a toggle.
+- possess
+  - Usage: `::possess [player]`
+  - Sets yourself invisible and constantly at the same coordinates as the player being possessed.
+  - Alias: `::pos`
+- possessnpc
+  - Usage: `::possessnpc [npc instance id]`
+  - Sets yourself invisible and constantly at the same coordinates as the npc being possessed.
+  - Npc instance id can be seen with RSC+ (ctrl-n with extended tooltip on), or by using the ResetCrystal on an npc.
+  - Alias: `::posnpc`or `::pnpc`
+- possessrandom 
+  - Usage: `::possessrandom`
+  - Selects a random player other than yourself to possess.
+  - Alias: `::pr`
+- leapaboutinstantnavigator
+  - Usage: `::leapaboutinstantnavigator (tick observation length) (serial)`
+  - Automates `::possessnext` and `::possessrandom` commands, repeating on a tick interval.
+  - "tick observation length" is an integer number of ticks before moving on to the next player possession.
+  - if "serial" is true, (or 1 or yes, etc), `::posssessnext` command is automated. Else, `::possessrandom` is automated.
+  - Alias: `::lain` or `::becomelain` or `::hellonavi` or `::navi`
+- reset
+  - Usage: `::reset`
+  - If the user is in lain mode, then lain mode is exited.
+  - You can also exit lain mode by simply clicking away from your current possessee.
+  - Moderators and above can use this command to spawn a reset crystal if not in lain mode.
+- weird
+  - Usage: `::weird`
+  - Halts lain mode, if the current player seems weird and should be observed further (e.g. for botting)
+  - To resume lain mode, simply issue the lain command again.
+  - Alias: `::weirdplayer` or `::stay` 
+- npctalk
+  - Usage: `::npctalk [npc_id] [msg]`
+  - Causes the specified NPC to say the specified message to all players in the area.
+  - Can use `::possessnpc` & then just chat normally for longer conversations
+  - Alias: `::npcsay`
+- togglepartyhall
+  - Usage: `::togglepartyhall (time_in_minutes)`
+  - Alias: `::seers` or `::toggleseers` or `::partyhall`
+  - Turns on or off based on a toggle the seers party hall chest for the specified amount of time.
+  - If no duration is specified, then 60 minutes is used.
+  - You must be in the Seers party hall upstairs or downstairs to use this command.
+  - Only enables the chest downstairs or upstairs based on the current player's location.
+- stoppvpevent
+  - Usage: `::stoppvpevent`
+  - Stops the currently running PK event.
+- startpvpevent
+  - Usage: `::startpvpevent [x] [y] [minCb] [maxCb]`
+  - Alias: `::setpvpevent`
+  - Starts a PK event with the specified location and specified min and max combat levels.
+- setgroup
+  - Usage: `::setgroup [name]` to read a group
+  - Usage: `::setgroup [name] [group_id/group_name]` to write a group
+  - Alias: `::setrank` or `::group` or `::rank`
+  - Read or write the group of the specified player.
+  - Only users of the rank Admin or above may change a player's rank.
+  - You may never change a players rank to be equal to or greater than your own.
+  - If no player is specified, then the current player is targeted.
+- setcurrentstats
+  - Usage: `::setcurrentstats [player] [level]` to set all of the specified player's stats to the specified level.
+  - Usage: `::setcurrentstats [player]` to set all of your stats to the specified level
+  - Usage: `::setcurrentstats [player] [level] [stat]` to set the specified player's specified stat to the specified level.
+  - Usage: `::setcurrentstats [level] [stat]` to set your specified stat to the specified level
+  - Alias: `::currentstats` or `::currentstat` or `::setcurrentstat` or `::curstat` or `::curstats` or `::setcurstat` or `::setcurstats`
+  - Set the specified current stats of the specified player to the specified level.
+  - Accepts name or stat id of the specified stat.
+  - If no player is specified, then the current player is targeted.
+  - If no stat is specified, then all stats are modified.
+- npckills
+  - Usage: `::npckills [name]`
+  - Shows total NPC kill count for name.
+- shufflepid
+  - Usage: `::shufflepid [on/off]`
+  - Alias: `::pidshuffle`
+  - Changes the order that players are processed in. If an administrator runs this command, PID_SHUFFLING on the server can be toggled.
+  - Useful for drop parties, so that the same player doesn't get all the loot.
+------------------------
+Player Moderator Commands
+------------------------
+- gmute
+  - Usage: `::gmute [name] (time in minutes, -1 for permanent, 0 to unmute) (Shadow mute) (Reason)`
+  - Mutes the specified player from global chat.
+  - You can not mute a staff member of equal or greater rank.
+  - time: Defaults to 60 minutes for player moderators and permanent (-1) for moderators and above. Player moderators cannot mute for longer than 1 week (10,080 minutes).
+  - Shadow mute: If true, this will not notify the player they have been muted when the command is issued or when the player tries to speak in the future.
+  - Reason: For database logging
+- ungmute
+  - Usage: `::ungmute [name]`
+  - Unmutes the specified player from global chat.
+  - You can not unmute a staff member of equal or greater rank.
+- mute
+  - Usage: `::mute [name] (time in minutes, -1 for permanent, 0 to unmute) (Shadow mute) (Reason)`
+  - Mutes the specified player from both in game and global chat.
+  - You can not mute a staff member of equal or greater rank.
+  - time: Defaults to 60 minutes for player moderators and permanent (-1) for moderators and above. Player moderators cannot mute for longer than 1 week (10,080 minutes).
+  - Shadow mute: If true, this will not notify the player they have been muted when the command is issued or when the player tries to speak in the future.
+  - Reason: For database logging
+- unmute
+  - Usage: `::unmute [name]`
+  - Unmutes the specified player
+- alert
+  - Usage: `::alert [player] [message]`
+  - Sends the specified player an alert box message.
+- set_icon
+  - Usage:  `::set_icon [integer] (0 for regular player, -1 to reset)`
+  - Changes the player's chat prefix icon (crown)
+- redhat
+  - Usage: `::redhat`
+  - Alias: `::rhel`
+  - Temporarily overlays unobtainable Zamorak hat as well as Zamorak robes on the player
+- robe
+  - Usage: `::robe [color] (player)`
+  - Alias: `::setrobe [color (player)`
+  - Alias: `::setrobes [color] (player)`
+  - Temporarily overlays robes of a specified color on the player
+- becomeNpc
+  - Usage: `::becomenpc [npc name]  (player)`
+  - Alias: `::morph [npc name]  (player)`
+  - Alias: `::morphnpc [npc name]  (player)`
+  - Alias: `::become [npc name]  (player)`
+  - Temporarily replaces the player sprites with a NPC (scaled to the size of the player)
+- restoreHumanity
+  - Usage: `::restorehumanity  (player)`
+  - Alias: `::resetappearance  (player)`
+  - Resets the player to display the regular player sprites
+- becomeGod
+  - Usage: `::becomegod`
+  - Alias: `::become god`
+  - Temporarily sets the player sprite to a mix of random player and NPC sprites at once
+- speakTongues
+  - Usage: `::speaktongues`
+  - Translates player chat messages to random characters while enabled
+- check
+  - Usage: `::check (player)`
+  - Shows all of the characters that were created by the same IP address.
+  - Administrator accounts are able to actually see the IP address.
+- uptime
+  - Usage `::uptime`
+  - Displays the current uptime of the server.
+------------------------
+Regular Player Commands
+------------------------
+- gang
+  - Usage: `::gang`
+  - Shows which gang you are in: Black Arm, Phoneix, or none.
+- c
+  - Usage: `::c [message]`
+  - Send message to clan chat.
+  - Clans must be enabled to use this command.
+  - You must be in a clan to use this command.
+- joinclan
+  - Usage: `::joinclan [clan name]`
+  - Allows a player to request to join a clan.
+- clanaccept
+  - Usage: `::clanaccept`
+  - Accept an invication to a clan.
+  - Clans must be enabled to use this command.
+  - You must be NOT be in a clan to use this command.
+- claninvite
+  - Usage: `::claninvite [name]`
+  - Send a clan invitation to the specified player.
+  - Clans must be enabled to use this command.
+  - You must be in a clan to use this command.
+  - You must be a clan leader to send invites.
+- clankick
+  - Usage: `::clankick [name]`
+  - Clans must be enabled to use this command.
+  - You must be in a clan to use this command.
+  - You can not kick the clan leader.
+  - You must be a clan general or clan leader to kick from the clan.
+- partyaccept
+  - Usage: `::partyaccept [name]`
+  - Accepts a player's party join request
+- leaveparty
+  - Usage: `::leaveparty`
+  - Causes the player to leave the current party
+- gameinfo
+  - Usage: `::gameinfo`
+  - Shows your coordinates and total time played.
+- event
+  - Usage: `::event`
+  - Join the currently running server PK Event.
+  - You can not participate in PK Events while you are jailed.
+  - You can not join PK Events while you are in the wilderness.
+  - You must meet the PK Event requirements to join.
+- g
+  - Usage: `::g [message]`
+  - Alias: `::pk`
+  - Send a message to global or PK chat.
+  - `::g` is for global and `::pk` is for PK chat.
+  - You can only send one global chat message per 15 seconds.
+- p
+  - Usage: `::p [message]`
+  - Send a message to party members chat.
+- online
+  - Usage: `::online`
+  - Shows the number of players currently online
+- uniqueonline
+  - Usage: `::uniqueonline`
+  - Shows the number of players with a unique IP address currently online.
+- onlinelist
+  - Usage: `::onlinelist`
+  - Shows a list of online players.
+- groups
+  - Usage: `::groups`
+  - Alias: `::ranks`
+  - List the permissions groups available on the server.
+- time
+  - Usage: `::time`
+  - Alias: `::date` or `::datetime`
+  - Shows the current date and time of the server.
+- commands
+  - Usage: `::commands`
+  - Shows a list of the Regular Player commands.
+- oldtrade
+  - Usage: `::oldtrade`
+  - Sets the client temporarily to no confirm trade mode. Lasts for 5 minutes.
+- toggleglobalchat
+  - Usage: `::toggleglobalchat`
+  - Toggles seeing global chat received via Global$ friend.
+- toggleblockchat
+  - Usage: `::toggleblockchat`
+  - Toggles the block of seeing all chat messages, including from friends.
+- toggleblockprivate
+  - Usage: `::toggleblockprivate`
+  - Toggles the block of seeing all private messages, including from friends.
+- toggleblocktrade
+  - Usage: `::toggleblocktrade`
+  - Toggles the block of receiving all trade requests, including from friends.
+- toggleblockduel
+  - Usage: `::toggleblockduel`
+  - Toggles the block of receiving all duel requests, including from friends.
+- shareloot
+  - Usage: `::shareloot`
+  - Toggles loot sharing for the party.
+- shareexp
+  - Usage: `::shareexp`
+  - Toggles experience sharing for the party.
+- kills
+  - Usage: `::kills (npc name)`
+  - Alias: `::kc (npc name)`
+  - Displays the top NPC kill counts for the player
+  - Optionally accepts an NPC name to find matching NPCs to display NPC kill counts for.
+- qoloptout
+  - Usage: `::qoloptout`
+  - Allows the player to permanently opt out of QoL features for their account.
+- qoloptoutconfirm
+  - Usage: `::qoloptoutconfirm`
+  - Confirms permanent QoL opt out for the player's account.
+- certoptout
+  - Usage: `::certoptout`
+  - Allows the player to permanently opt out of being able to use item certs.
+- certoptoutconfirm
+  - Usage: `::certoptoutconfirm`
+  - Confirms permanent opt out of being able to use item certs.
+- maxplayersperip
+  - Usage: `::maxplayersperip`
+  - Alias: `::mppi`
+  - Shows the maximum amount of multilogged accounts a single ip address is allowed
+- globalprivate
+  - Usage `::globalprivate`
+  - Alias: `::gp`
+  - Switches Global Chat to output in the Private history tab.
+- globalquest
+  - Usage `::globalquest`
+  - Alias: `::gq`
+  - Switches Global Chat to output in the Quest history tab (default).
+- setglobalmessagecolor
+  - Usage `::setglobalmessagecolor (colorcode)]`
+  - Example: `::setglobalmessagecolor @dre@`
+  - If run with no parameter, resets the color to default.
+- minigamelog
+  - Usage `::minigamelog (player name)`
+  - Example: `::minigamelog` or `::minigamelog friendUsername`
+  - Run with no parameter to check your own minigame related statistics. You can also check another person's minigame stats if they are online and not blocking private messages from you. 
+- togglenpckcmessages
+  - Usage `::togglenpckcmessages`
+  - Example: `::togglenpckcmessages`
+  - Toggles kill count messages in the chat
+- bankpinoptin
+  - Usage `::bankpinoptin`
+  - Alias: `::bank_pin_opt_in` or `::bankpin_optin`
+  - Opt into the bank PINs feature. First you start by opting in, then you can talk to any banker to set a bank pin.
+- bankpinoptout
+  - Usage `::bankpinoptout`
+  - Alias: `::bank_pin_opt_out` or `::bankpin_optout`
+  - Opt out of the bank PINs feature. You must first have removed your bank PIN.
+- globalrules
+  - Usage `::globalrules`
+  - Displays the list of global chat rules for the server (if applicable)
+- i_have_read_and_agree_to_the_global_chat_rules
+  - Usage `::i_have_read_and_agree_to_the_global_chat_rules`
+  - Aliases: `::i_have_read_and_agreed_to_the_global_chat_rules` or `::ihavereadandagreetotheglobalchatrules` or `::ihavereadandagreedtotheglobalchatrules`
+  - Accepts the global chat rules of the server and allows the user to speak in global chat (if the global chat rules config is set to true).
+- rename
+  - This command is not yet implemented.
+  - This command would allow users to rename themselves after having had their previous name freed or marked as inappropriate.
+  - Does not work for Moderators or above.
+- globalchat
+  - Usage `::globalchat`
+  - Alias: `::gc`
+  - Informs the user of the functionality of Global Chat on the server, including any total level restrictions.

@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+import json
+import re
+import sys
+from collections import Counter
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+SERVER = ROOT / "server"
+
+
+def fail(message: str) -> None:
+    print(f"FAIL: {message}")
+    sys.exit(1)
+
+
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        fail(message)
+
+
+def wilderness_level(x: int, y: int) -> int:
+    height = y // 944
+    wild = 2203 - (y + (1776 - (944 * height)))
+    if x + 2304 >= 2640:
+        return 0
+    return 1 + wild // 6 if wild > 0 else 0
+
+
+def require_valid_drop_budget(drops: str, table_name: str) -> None:
+    start = drops.find(f'new DropTable("{table_name}")')
+    require(start >= 0, f"Missing drop table: {table_name}")
+    end = drops.find("addEmptyDrop", start)
+    require(end >= 0, f"Missing empty-drop budget terminator: {table_name}")
+    section = drops[start:end]
+    weights = re.findall(r"add(?:Item|Table)Drop\([^;]*,\s*(\d+)\);", section)
+    total = sum(int(weight) for weight in weights)
+    require(total <= 128, f"{table_name} exceeds the 128 drop-weight budget: {total}")
+
+
+def main() -> None:
+    npc_ids = (SERVER / "src/com/openrsc/server/constants/NpcId.java").read_text(encoding="utf-8")
+    drops = (SERVER / "src/com/openrsc/server/constants/NpcDrops.java").read_text(encoding="utf-8")
+    populator = (SERVER / "src/com/openrsc/server/database/WorldPopulator.java").read_text(encoding="utf-8")
+    audit = (ROOT / "tools/myworld/audit-npc-clusters.py").read_text(encoding="utf-8")
+
+    require("GREY_KNIGHT(836)" in npc_ids, "Grey Knight NPC constant is missing")
+    for snippet in (
+        "ItemId.WHITE_2_HANDED_SWORD.id()",
+        "ItemId.WHITE_SCIMITAR.id()",
+        "ItemId.WHITE_BATTLE_AXE.id()",
+        'new DropTable("Grey Knight (836)")',
+        "ItemId.GREY_LONG_SWORD.id()",
+        "ItemId.GREY_KITE_SHIELD.id()",
+        "ItemId.GREY_PLATE_MAIL_BODY.id()",
+        "ItemId.GREY_PLATE_MAIL_LEGS.id()",
+        "NpcId.GREY_KNIGHT.id()",
+    ):
+        require(snippet in drops, f"Knight drops missing: {snippet}")
+    require_valid_drop_budget(drops, "White Knight (102)")
+    require_valid_drop_budget(drops, "Grey Knight (836)")
+
+    custom_defs = json.loads((SERVER / "conf/server/defs/NpcDefsCustom.json").read_text(encoding="utf-8"))
+    grey = next((npc for npc in custom_defs["npcs"] if npc["id"] == 836), None)
+    require(grey is not None, "Grey Knight definition is missing")
+    require(grey["name"] == "Grey Knight" and grey["combatlvl"] == 56, "Grey Knight identity is incorrect")
+    require(grey["attackable"] == 1 and grey["aggressive"] == 0, "Grey Knight combat disposition is incorrect")
+    myworld_defs = json.loads((SERVER / "conf/server/defs/NpcDefsMyWorld.json").read_text(encoding="utf-8"))
+    grey_override = next((npc for npc in myworld_defs["npcs"] if npc["id"] == 836), None)
+    require(grey_override is not None, "Grey Knight MyWorld combat override is missing")
+    require(
+        grey_override["meleeDefenseMultiplier"] == 1.0
+        and grey_override["rangedDefenseMultiplier"] == 0.1
+        and grey_override["magicDefenseMultiplier"] == 0.1,
+        "Grey Knight should follow the armored knight defense profile",
+    )
+
+    overlay_path = SERVER / "conf/server/defs/locs/MyWorldNpcLocs.json"
+    overlay = json.loads(overlay_path.read_text(encoding="utf-8"))["npclocs"]
+    counts = Counter(loc["id"] for loc in overlay)
+    expected_counts = {
+        836: 4,
+        199: 4,
+        184: 4,
+        57: 4,
+        251: 4,
+        188: 4,
+        53: 4,
+        232: 4,
+        296: 4,
+        189: 4,
+        190: 5,
+        201: 4,
+        22: 4,
+        294: 3,
+        243: 4,
+        342: 4,
+        293: 4,
+        555: 3,
+        358: 1,
+        311: 3,
+        787: 3,
+    }
+    require(counts == expected_counts, f"Unexpected MyWorld spawn overlay counts: {dict(counts)}")
+    for loc in (loc for loc in overlay if loc["id"] in (199, 184)):
+        require(wilderness_level(loc["start"]["X"], loc["start"]["Y"]) > 0,
+                f"Intended Wilderness addition is outside the Wilderness: {loc}")
+    wilderness_additions = [loc for loc in overlay if loc["id"] != 836]
+    require(len(wilderness_additions) == 74, "Wilderness overlay should add exactly 74 hostiles")
+    for loc in wilderness_additions:
+        require(wilderness_level(loc["start"]["X"], loc["start"]["Y"]) > 0,
+                f"MyWorld Wilderness addition is outside the Wilderness: {loc}")
+
+    require("MyWorldNpcLocs.json" in populator and "WANT_MYWORLD" in populator,
+            "Runtime location loader does not include the MyWorld NPC overlay")
+    require("MyWorldNpcLocs.json" in audit and "--wilderness-only" in audit
+            and "Population By Wilderness Level" in audit,
+            "Population audit does not cover the MyWorld Wilderness overlay")
+
+    print("PASS: god knight drops and Wilderness population overlay validated")
+
+
+if __name__ == "__main__":
+    main()

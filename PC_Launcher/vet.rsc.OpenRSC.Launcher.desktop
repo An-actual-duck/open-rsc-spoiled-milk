@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Terminal=false
+Name=OpenRSC
+GenericName=OpenRSC Launcher
+Comment=OpenRSC is a free, open-source launcher for various Classic (2001-2004) RSC servers
+Keywords=games;runescape;rsc;openrsc;
+Exec=openrsc
+Icon=vet.rsc.OpenRSC.Launcher
+Categories=Game;RolePlaying;

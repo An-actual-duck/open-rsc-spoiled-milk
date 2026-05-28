@@ -1,0 +1,1956 @@
+{
+  "npcs": [
+    {
+      "id": 3,
+      "strength": 3,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 4,
+      "strength": 7,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 6,
+      "strength": 7,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 8,
+      "strength": 20,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 15,
+      "strength": 13,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 22,
+      "strength": 70,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 40,
+      "strength": 20,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 41,
+      "strength": 20,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 96,
+      "strength": 28,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.4,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 177,
+      "strength": 7,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 181,
+      "strength": 70,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 184,
+      "strength": 77,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 196,
+      "strength": 98,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 201,
+      "strength": 98,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 202,
+      "strength": 91,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 203,
+      "strength": 84,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 270,
+      "strength": 14,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 290,
+      "strength": 91,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 291,
+      "strength": 182,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 477,
+      "strength": 224,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 568,
+      "strength": 91,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 5,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 11,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 21,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 25,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 37,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 52,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 61,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 62,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 63,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 64,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 65,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 66,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 67,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 68,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 72,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 76,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 78,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 86,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 89,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 94,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 100,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 102,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1,
+      "topColour": 15196886,
+      "bottomColour": 15196886
+    },
+    {
+      "id": 104,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 108,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 109,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 114,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 127,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 135,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 137,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 153,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 154,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 159,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 161,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 162,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 180,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 188,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 189,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 190,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 192,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 199,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 214,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 232,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 234,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 236,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.3,
+      "magicDefenseMultiplier": 0.2
+    },
+    {
+      "id": 237,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.3,
+      "magicDefenseMultiplier": 0.2
+    },
+    {
+      "id": 238,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.3,
+      "magicDefenseMultiplier": 0.2
+    },
+    {
+      "id": 239,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 241,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 243,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 248,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 249,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 251,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 258,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 259,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.4
+    },
+    {
+      "id": 262,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 264,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 265,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 276,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.4
+    },
+    {
+      "id": 277,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 294,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 305,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 311,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 312,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 318,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 319,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 320,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 321,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 322,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 323,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 324,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 338,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 342,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 344,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 348,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 351,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 352,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 355,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 356,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 359,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 373,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 374,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 375,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 376,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 383,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.4
+    },
+    {
+      "id": 384,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 385,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 388,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.4
+    },
+    {
+      "id": 401,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.4
+    },
+    {
+      "id": 407,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 410,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 420,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.3,
+      "magicDefenseMultiplier": 0.2
+    },
+    {
+      "id": 421,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 428,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 438,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 439,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 440,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 441,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 442,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 462,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 463,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 464,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 495,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 502,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 503,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 516,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 518,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 519,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 523,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 524,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 525,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 526,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 527,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 531,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 557,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 558,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 559,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 574,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 575,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 594,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 613,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 632,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 633,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 634,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 635,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 636,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 637,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 638,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 639,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 640,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 651,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 653,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 660,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 668,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 669,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 670,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 671,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 675,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 676,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 677,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 684,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 685,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 690,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 692,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 694,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 697,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 699,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 702,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 703,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 704,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 706,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 710,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 716,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 717,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 718,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 719,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 721,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 729,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 736,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 747,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 748,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 749,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 759,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.3,
+      "magicDefenseMultiplier": 0.2
+    },
+    {
+      "id": 775,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 776,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.25,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 777,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 836,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 19,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 23,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 29,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 34,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 43,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 45,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 46,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 47,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 50,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 53,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 70,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 74,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 80,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 99,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 136,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 178,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 179,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 195,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 244,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 263,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 271,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 292,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 302,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 303,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 304,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 343,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 367,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 386,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 473,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 498,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 521,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 614,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 615,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 630,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 631,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 644,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 655,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 656,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 664,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 666,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 772,
+      "meleeDefenseMultiplier": 0.4,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 786,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 0,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 17,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 35,
+      "meleeDefenseMultiplier": 0.3,
+      "rangedDefenseMultiplier": 0.2,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 57,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 60,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 79,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 81,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 93,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 117,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 139,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 140,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 158,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 182,
+      "meleeDefenseMultiplier": 0.3,
+      "rangedDefenseMultiplier": 0.2,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 200,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 212,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 213,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 215,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 216,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 252,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 254,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.4,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 266,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.4,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 293,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 295,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 296,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 298,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 314,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 333,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 358,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 361,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 364,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 399,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 409,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 425,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 426,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.4,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 513,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 542,
+      "meleeDefenseMultiplier": 0.3,
+      "rangedDefenseMultiplier": 0.2,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 551,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 555,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 562,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 567,
+      "meleeDefenseMultiplier": 0.3,
+      "rangedDefenseMultiplier": 0.2,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 582,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 583,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 584,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 585,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 586,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 592,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 593,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 595,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 597,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 598,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 599,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 600,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 602,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 603,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 604,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 605,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 606,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 607,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 608,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 645,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.4,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 646,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.4,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 647,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.4,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 658,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 672,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 713,
+      "meleeDefenseMultiplier": 0.3,
+      "rangedDefenseMultiplier": 0.2,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 787,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 789,
+      "strength": 52,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 790,
+      "strength": 52,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 791,
+      "strength": 52,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 798,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 809,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 91,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 217,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 315,
+      "meleeDefenseMultiplier": 0.4,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 402,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 416,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 417,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 641,
+      "meleeDefenseMultiplier": 0.4,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 663,
+      "meleeDefenseMultiplier": 0.4,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 683,
+      "meleeDefenseMultiplier": 0.4,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 705,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 757,
+      "meleeDefenseMultiplier": 0.4,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 758,
+      "meleeDefenseMultiplier": 0.4,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 760,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.4,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 761,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.4
+    },
+    {
+      "id": 762,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.4
+    },
+    {
+      "id": 766,
+      "meleeDefenseMultiplier": 0.4,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 767,
+      "meleeDefenseMultiplier": 0.4,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 768,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 769,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.4
+    },
+    {
+      "id": 802,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 816,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    }
+  ]
+}

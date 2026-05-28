@@ -1,0 +1,18 @@
+SPOILED MILK VISUAL ASSET SOURCES
+=================================
+
+Added runtime animation assets use Pimen source assets. Pimen has confirmed
+distribution is permitted with source code available.
+
+Original additions by the project author include the fishing rod equipment
+sprites.
+
+Prayer UI icon assets are sourced from a royalty-free repository.
+
+Summon UI icon provenance is tracked in dev/myworld/assets/credit.
+
+Source:
+- https://pimen.itch.io/
+
+CraftPix-derived icon and Phoenix/Kraken animation assets are not included in
+this downloadable client or source asset tree.

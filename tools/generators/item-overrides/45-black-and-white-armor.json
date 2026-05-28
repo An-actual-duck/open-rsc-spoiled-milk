@@ -1,0 +1,181 @@
+{
+  "description": "White and grey prayer-aligned armour. These sit outside the normal tier ladder, but currently mirror the tier-5 steel defence line with prayer bonuses by smithing cost.",
+  "items": [
+    {
+      "id": 2159,
+      "meleeDefense": 4,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 1
+    },
+    {
+      "id": 2158,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 2
+    },
+    {
+      "id": 2160,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 2168,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 2167,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 2
+    },
+    {
+      "id": 2161,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 2
+    },
+    {
+      "id": 2162,
+      "meleeDefense": 12,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 2163,
+      "meleeDefense": 19,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 4
+    },
+    {
+      "id": 2165,
+      "meleeDefense": 19,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 4
+    },
+    {
+      "id": 2164,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 2166,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 3121,
+      "meleeDefense": 4,
+      "rangedDefense": 1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 1
+    },
+    {
+      "id": 3120,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 2
+    },
+    {
+      "id": 3122,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 3130,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 3129,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 2
+    },
+    {
+      "id": 3123,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 2
+    },
+    {
+      "id": 3124,
+      "meleeDefense": 12,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 3125,
+      "meleeDefense": 19,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 4
+    },
+    {
+      "id": 3127,
+      "meleeDefense": 19,
+      "rangedDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 4
+    },
+    {
+      "id": 3126,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    },
+    {
+      "id": 3128,
+      "meleeDefense": 12,
+      "rangedDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 3
+    }
+  ]
+}

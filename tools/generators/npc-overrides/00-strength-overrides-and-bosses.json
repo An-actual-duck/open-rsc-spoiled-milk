@@ -1,0 +1,152 @@
+{
+  "description": "NPCs with explicit strength overrides or boss-style tuning that should stay isolated from profile-only edits.",
+  "npcs": [
+    {
+      "id": 3,
+      "strength": 3,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 4,
+      "strength": 7,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 6,
+      "strength": 7,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 8,
+      "strength": 20,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 15,
+      "strength": 13,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 22,
+      "strength": 70,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 40,
+      "strength": 20,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 41,
+      "strength": 20,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 96,
+      "strength": 28,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.4,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 177,
+      "strength": 7,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 181,
+      "strength": 70,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 184,
+      "strength": 77,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 196,
+      "strength": 98,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 201,
+      "strength": 98,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 202,
+      "strength": 91,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 203,
+      "strength": 84,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 270,
+      "strength": 14,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 0.1,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 290,
+      "strength": 91,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 291,
+      "strength": 182,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 477,
+      "strength": 224,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 0.75,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
+      "id": 568,
+      "strength": 91,
+      "meleeDefenseMultiplier": 0.75,
+      "rangedDefenseMultiplier": 0.5,
+      "magicDefenseMultiplier": 1.0
+    }
+  ]
+}

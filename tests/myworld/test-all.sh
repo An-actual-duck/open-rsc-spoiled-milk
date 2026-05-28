@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+
+cd "$ROOT_DIR"
+
+./scripts/check.sh
+./tests/myworld/test-smoke.sh
+python3 ./tests/myworld/audit_client_item_coverage.py
+python3 ./tests/myworld/audit-item-id-integrity.py
+python3 ./tests/myworld/audit-client-sprite-references.py
+python3 ./tests/myworld/test-content-item-resolution.py
+python3 ./tests/myworld/test-magic-no-random-fail.py
+python3 ./tests/myworld/test-magic-enchanting-costs.py
+python3 ./tests/myworld/test-animation-asset-migrations.py
+python3 ./tests/myworld/test-altar-enchantment-conversion.py
+python3 ./tests/myworld/test-runecraft-data.py
+python3 ./tests/myworld/test-enchanting-data.py
+python3 ./tests/myworld/test-jewelry-runtime-effects.py
+python3 ./tests/myworld/test-bank-shortcuts.py
+python3 ./tests/myworld/test-source-cleanup.py
+python3 ./tests/myworld/test-world-start.py
+python3 ./tests/myworld/test-fatigue-sleep-removal.py
+python3 ./tests/myworld/test-gathering-rework-plan.py
+python3 ./tests/myworld/test-resource-seed-placement.py
+python3 ./tests/myworld/test-quest-system.py
+python3 ./tests/myworld/test-quest-shortcuts.py
+python3 ./tests/myworld/test-quest-choice-audit.py
+python3 ./tests/myworld/test-quest-rollout-audit.py
+python3 ./tests/myworld/test-magecraft-data.py
+python3 ./tests/myworld/test-production-ui.py
+python3 ./tests/myworld/test-production-behavior.py
+python3 ./tests/myworld/test-production-flow.py
+python3 ./tests/myworld/test-prayer-rework.py
+python3 ./tests/myworld/test-prayer-ui.py
+python3 ./tests/myworld/test-myworld-plugin-layout.py
+python3 ./tests/myworld/test-myworld-import-boundary.py
+python3 ./tests/myworld/test-standalone-layout.py
+python3 ./tests/myworld/test-generator-scripts.py
+python3 ./tests/myworld/test-entrypoints.py
+python3 ./tests/myworld/test-player-release.py
+python3 ./tests/myworld/test-foundation-optimization-guards.py
+python3 ./tests/myworld/test-path-queue-regressions.py
+python3 ./tests/myworld/test-packet-shape-guards.py
+python3 ./tests/myworld/test-ranged-runtime-tables.py
+python3 ./tests/myworld/test-combat-data.py
+python3 ./tests/myworld/test-combat-interaction.py
+python3 ./tests/myworld/test-npc-attack-styles.py
+python3 ./tests/myworld/test-combat-runtime-invariants.py
+python3 ./tests/myworld/test-combat-exceptions.py
+python3 ./tests/myworld/test-combat-scenarios.py
+python3 ./tests/myworld/test-defense-distribution.py
+python3 ./tests/myworld/test-balance-fixtures.py
+python3 ./tests/myworld/test-agility-pouches.py
+python3 ./tests/myworld/test-armor-power-penalties.py
+python3 ./tests/myworld/test-demon-ash-prayer-source.py
+python3 ./tests/myworld/test-drop-redistribution.py
+python3 ./tests/myworld/test-god-knight-drops-and-pvm-population.py
+python3 ./tests/myworld/test-fishing-rework.py
+python3 ./tests/myworld/test-ground-item-cleanup.py
+python3 ./tests/myworld/test-herblaw-cleanup.py
+python3 ./tests/myworld/test-herblaw-remap.py
+python3 ./tests/myworld/test-hide-armor-coverage.py
+python3 ./tests/myworld/test-instant-processing.py
+python3 ./tests/myworld/test-leather-defense-budgets.py
+python3 ./tests/myworld/test-leather-set-bonuses.py
+python3 ./tests/myworld/test-magic-weapon-scaling.py
+python3 ./tests/myworld/test-metal-defense-budgets.py
+python3 ./tests/myworld/test-mining-focus-and-tier11.py
+python3 ./tests/myworld/test-npc-defense-profiles.py
+python3 ./tests/myworld/test-npc-processing-cleanup.py
+python3 ./tests/myworld/test-poison-balance.py
+python3 ./tests/myworld/test-poison-model.py
+python3 ./tests/myworld/test-potion-runtime.py
+python3 ./tests/myworld/test-prayer-equipment-lines.py
+python3 ./tests/myworld/test-prayer-faction-setup.py
+python3 ./tests/myworld/test-quest-reward-guardrails.py
+python3 ./tests/myworld/test-robe-defense-budgets.py
+python3 ./tests/myworld/test-shop-tiering.py
+python3 ./tests/myworld/test-skill-guide-info-pass.py
+python3 ./tests/myworld/test-skill-guides.py
+python3 ./tests/myworld/test-summoning-animation-effect.py
+python3 ./tests/myworld/test-summoning-display-names.py
+python3 ./tests/myworld/test-summoning-spawn-placement.py
+python3 ./tests/myworld/test-tier-rebalance.py

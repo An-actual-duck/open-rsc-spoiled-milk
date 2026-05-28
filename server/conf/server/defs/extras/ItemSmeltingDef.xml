@@ -1,0 +1,150 @@
+<map>
+	<entry>
+		<int>9999</int> <!-- iron fallback -->
+		<ItemSmeltingDef>
+			<exp>50</exp>
+			<barId>170</barId>
+			<requiredLvl>22</requiredLvl>
+			<reqOres />
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>150</int> <!-- copper + tin = bronze -->
+		<ItemSmeltingDef>
+			<exp>25</exp>
+			<barId>169</barId>
+			<requiredLvl>15</requiredLvl>
+			<reqOres>
+				<ReqOreDef>
+					<oreId>202</oreId>
+					<amount>1</amount>
+				</ReqOreDef>
+			</reqOres>
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>202</int> <!-- tin + copper = bronze -->
+		<ItemSmeltingDef>
+			<exp>25</exp>
+			<barId>169</barId>
+			<requiredLvl>15</requiredLvl>
+			<reqOres>
+				<ReqOreDef>
+					<oreId>150</oreId>
+					<amount>1</amount>
+				</ReqOreDef>
+			</reqOres>
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>383</int> <!-- silver -->
+		<ItemSmeltingDef>
+			<exp>55</exp>
+			<barId>384</barId>
+			<requiredLvl>20</requiredLvl>
+			<reqOres />
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>151</int> <!-- iron + coal = steel -->
+		<ItemSmeltingDef>
+			<exp>70</exp>
+			<barId>171</barId>
+			<requiredLvl>30</requiredLvl>
+			<reqOres>
+				<ReqOreDef>
+					<oreId>155</oreId>
+					<amount>1</amount>
+				</ReqOreDef>
+			</reqOres>
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>152</int> <!-- gold -->
+		<ItemSmeltingDef>
+			<exp>90</exp>
+			<barId>172</barId>
+			<requiredLvl>40</requiredLvl>
+			<reqOres />
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>153</int> <!-- mithril + coal -->
+		<ItemSmeltingDef>
+			<exp>120</exp>
+			<barId>173</barId>
+			<requiredLvl>38</requiredLvl>
+			<reqOres>
+				<ReqOreDef>
+					<oreId>155</oreId>
+					<amount>2</amount>
+				</ReqOreDef>
+			</reqOres>
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>154</int> <!-- adamantite + coal -->
+		<ItemSmeltingDef>
+			<exp>150</exp>
+			<barId>174</barId>
+			<requiredLvl>54</requiredLvl>
+			<reqOres>
+				<ReqOreDef>
+					<oreId>155</oreId>
+					<amount>4</amount>
+				</ReqOreDef>
+			</reqOres>
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>155</int> <!-- coal + iron = steel -->
+		<ItemSmeltingDef>
+			<exp>70</exp>
+			<barId>171</barId>
+			<requiredLvl>30</requiredLvl>
+			<reqOres>
+				<ReqOreDef>
+					<oreId>151</oreId>
+					<amount>1</amount>
+				</ReqOreDef>
+			</reqOres>
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>2753</int> <!-- pig iron + coal = steel -->
+		<ItemSmeltingDef>
+			<exp>70</exp>
+			<barId>171</barId>
+			<requiredLvl>30</requiredLvl>
+			<reqOres>
+				<ReqOreDef>
+					<oreId>155</oreId>
+					<amount>1</amount>
+				</ReqOreDef>
+			</reqOres>
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>409</int> <!-- rune + coal -->
+		<ItemSmeltingDef>
+			<exp>200</exp>
+			<barId>408</barId>
+			<requiredLvl>70</requiredLvl>
+			<reqOres>
+				<ReqOreDef>
+					<oreId>155</oreId>
+					<amount>6</amount>
+				</ReqOreDef>
+			</reqOres>
+		</ItemSmeltingDef>
+	</entry>
+	<entry>
+		<int>690</int> <!-- gold (karamja) -->
+		<ItemSmeltingDef>
+			<exp>90</exp>
+			<barId>691</barId>
+			<requiredLvl>40</requiredLvl>
+			<reqOres />
+		</ItemSmeltingDef>
+	</entry>
+</map>

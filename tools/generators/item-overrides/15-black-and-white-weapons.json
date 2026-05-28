@@ -1,0 +1,145 @@
+{
+  "description": "White and grey prayer-aligned weapons. These sit outside the normal tier ladder, but currently mirror the tier-5 steel family line with prayer bonuses.",
+  "items": [
+    {
+      "id": 2151,
+      "meleeOffense": 9,
+      "weaponSpeed": 5,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 1,
+      "weaponAimBonus": 8,
+      "weaponPowerBonus": 8
+    },
+    {
+      "id": 2152,
+      "meleeOffense": 20,
+      "weaponSpeed": 4,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 2,
+      "weaponAimBonus": 13,
+      "weaponPowerBonus": 13
+    },
+    {
+      "id": 2155,
+      "meleeOffense": 19,
+      "weaponSpeed": 4,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 2,
+      "weaponAimBonus": 14,
+      "weaponPowerBonus": 14
+    },
+    {
+      "id": 2153,
+      "meleeOffense": 36,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 3,
+      "weaponAimBonus": 16,
+      "weaponPowerBonus": 16
+    },
+    {
+      "id": 2156,
+      "meleeOffense": 38,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 3,
+      "weaponAimBonus": 15,
+      "weaponPowerBonus": 20
+    },
+    {
+      "id": 2157,
+      "meleeOffense": 25,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 2,
+      "weaponAimBonus": 12,
+      "weaponPowerBonus": 8
+    },
+    {
+      "id": 2154,
+      "meleeOffense": 86,
+      "weaponSpeed": 2,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 4,
+      "weaponAimBonus": 22,
+      "weaponPowerBonus": 22
+    },
+    {
+      "id": 3113,
+      "meleeOffense": 9,
+      "weaponSpeed": 5,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 1,
+      "weaponAimBonus": 8,
+      "weaponPowerBonus": 8
+    },
+    {
+      "id": 3114,
+      "meleeOffense": 20,
+      "weaponSpeed": 4,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 2,
+      "weaponAimBonus": 13,
+      "weaponPowerBonus": 13
+    },
+    {
+      "id": 3117,
+      "meleeOffense": 19,
+      "weaponSpeed": 4,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 2,
+      "weaponAimBonus": 14,
+      "weaponPowerBonus": 14
+    },
+    {
+      "id": 3115,
+      "meleeOffense": 36,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 3,
+      "weaponAimBonus": 16,
+      "weaponPowerBonus": 16
+    },
+    {
+      "id": 3118,
+      "meleeOffense": 38,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 3,
+      "weaponAimBonus": 15,
+      "weaponPowerBonus": 20
+    },
+    {
+      "id": 3119,
+      "meleeOffense": 25,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 2,
+      "weaponAimBonus": 12,
+      "weaponPowerBonus": 8
+    },
+    {
+      "id": 3116,
+      "meleeOffense": 86,
+      "weaponSpeed": 2,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 4,
+      "weaponAimBonus": 22,
+      "weaponPowerBonus": 22
+    }
+  ]
+}

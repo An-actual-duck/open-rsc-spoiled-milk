@@ -1,0 +1,668 @@
+<SpellDef-array>
+    <SpellDef>
+      <reqLevel>1</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>35</int><int>1</int></entry>
+        <entry><int>33</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>88</exp>
+      <name>Wind Arrow</name>
+      <description>Applies Weaker Unsteady for 5 attacks</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>1</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>35</int><int>1</int></entry>
+        <entry><int>32</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>88</exp>
+      <name>Water Ball</name>
+      <description>Applies Weaker Dampen for 5 attacks</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>1</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>35</int><int>1</int></entry>
+        <entry><int>34</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>88</exp>
+      <name>Rock Throw</name>
+      <description>Applies Weaker Slow for 5 attacks</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>1</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>35</int><int>1</int></entry>
+        <entry><int>31</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>88</exp>
+      <name>Fireball</name>
+      <description>Applies Weaker Scorch for 5 attacks</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>10</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>31</int><int>1</int></entry>
+        <entry><int>32</int><int>1</int></entry>
+        <entry><int>35</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>120</exp>
+      <name>Thunder Ball</name>
+      <description>Dual-element thunder damage</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>10</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>33</int><int>1</int></entry>
+        <entry><int>32</int><int>1</int></entry>
+        <entry><int>35</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>120</exp>
+      <name>Icicle Shot</name>
+      <description>Dual-element ice damage</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>10</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>31</int><int>1</int></entry>
+        <entry><int>34</int><int>1</int></entry>
+        <entry><int>35</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>120</exp>
+      <name>Acid Drop</name>
+      <description>Dual-element acid damage</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>10</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>34</int><int>1</int></entry>
+        <entry><int>32</int><int>1</int></entry>
+        <entry><int>35</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>120</exp>
+      <name>Spore</name>
+      <description>Dual-element wood damage</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>3</reqLevel>
+      <type>0</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>34</int><int>1</int></entry>
+        <entry><int>33</int><int>3</int></entry>
+        <entry><int>42</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>328</exp>
+      <name>Lumbridge teleport</name>
+      <description>Teleports you to Lumbridge</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>5</reqLevel>
+      <type>0</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>36</int><int>1</int></entry>
+        <entry><int>35</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>120</exp>
+      <name>Lesser Heal</name>
+      <description>Restores a small amount of health</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>6</reqLevel>
+      <type>0</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>33</int><int>3</int></entry>
+        <entry><int>42</int><int>1</int></entry>
+        <entry><int>31</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>280</exp>
+      <name>Varrock teleport</name>
+      <description>Teleports you to Varrock</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>9</reqLevel>
+      <type>0</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>32</int><int>1</int></entry>
+        <entry><int>33</int><int>3</int></entry>
+        <entry><int>42</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>376</exp>
+      <name>Falador teleport</name>
+      <description>Teleports you to Falador</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>12</reqLevel>
+      <type>0</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>33</int><int>5</int></entry>
+        <entry><int>42</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>440</exp>
+      <name>Camelot teleport</name>
+      <description>Teleports you to Camelot</description>
+      <members>true</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>15</reqLevel>
+      <type>0</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>32</int><int>2</int></entry>
+        <entry><int>42</int><int>2</int></entry>
+      </requiredRunes>
+      <exp>488</exp>
+      <name>Ardougne teleport</name>
+      <description>Teleports you to Ardougne</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>18</reqLevel>
+      <type>0</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>34</int><int>2</int></entry>
+        <entry><int>42</int><int>2</int></entry>
+      </requiredRunes>
+      <exp>544</exp>
+      <name>Watchtower teleport</name>
+      <description>Teleports you to the watchtower</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>20</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>33</int><int>2</int></entry>
+        <entry><int>41</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>216</exp>
+      <name>Wind Slash</name>
+      <description>Applies Weak Unsteady for 5 attacks</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>20</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>32</int><int>2</int></entry>
+        <entry><int>41</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>216</exp>
+      <name>Water Burst</name>
+      <description>Applies Weak Dampen for 5 attacks</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>20</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>34</int><int>2</int></entry>
+        <entry><int>41</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>216</exp>
+      <name>Earth Hammer</name>
+      <description>Applies Weak Slow for 5 attacks</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>20</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>31</int><int>2</int></entry>
+        <entry><int>41</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>216</exp>
+      <name>Fire Claw</name>
+      <description>Applies Weak Scorch for 5 attacks</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>30</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>31</int><int>2</int></entry>
+        <entry><int>32</int><int>2</int></entry>
+        <entry><int>41</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>280</exp>
+      <name>Thunder Splash</name>
+      <description>Dual-element thunder damage</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>30</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>33</int><int>2</int></entry>
+        <entry><int>32</int><int>2</int></entry>
+        <entry><int>41</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>280</exp>
+      <name>Ice Burst</name>
+      <description>Dual-element ice damage</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>30</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>31</int><int>2</int></entry>
+        <entry><int>34</int><int>2</int></entry>
+        <entry><int>41</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>280</exp>
+      <name>Acid Frog</name>
+      <description>Dual-element acid damage</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>30</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>34</int><int>2</int></entry>
+        <entry><int>32</int><int>2</int></entry>
+        <entry><int>41</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>280</exp>
+      <name>Wood Drill</name>
+      <description>Dual-element wood damage</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>20</reqLevel>
+      <type>3</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>40</int><int>1</int></entry>
+        <entry><int>31</int><int>5</int></entry>
+      </requiredRunes>
+      <exp>520</exp>
+      <name>Alchemy</name>
+      <description>Converts an item into gold</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>21</reqLevel>
+      <type>3</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>33</int><int>1</int></entry>
+        <entry><int>42</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>344</exp>
+      <name>Telekinetic grab</name>
+      <description>Take an item you can see but can't reach</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>25</reqLevel>
+      <type>0</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>36</int><int>2</int></entry>
+        <entry><int>40</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>280</exp>
+      <name>Retired spell</name>
+      <description>No longer available</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>40</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>33</int><int>3</int></entry>
+        <entry><int>38</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>392</exp>
+      <name>Tornado</name>
+      <description>Applies Strong Unsteady for 5 attacks</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>40</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>32</int><int>3</int></entry>
+        <entry><int>38</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>392</exp>
+      <name>Water Eruption</name>
+      <description>Applies Strong Dampen for 5 attacks</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>40</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>34</int><int>3</int></entry>
+        <entry><int>38</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>392</exp>
+      <name>Earth Burst</name>
+      <description>Applies Strong Slow for 5 attacks</description>
+      <members>false</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>40</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>31</int><int>3</int></entry>
+        <entry><int>38</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>392</exp>
+      <name>Explosion</name>
+      <description>Applies Strong Scorch for 5 attacks</description>
+      <members>false</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>50</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>31</int><int>3</int></entry>
+        <entry><int>32</int><int>3</int></entry>
+        <entry><int>38</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>480</exp>
+      <name>Thunder Strike</name>
+      <description>Dual-element thunder damage</description>
+      <members>true</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>50</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>33</int><int>3</int></entry>
+        <entry><int>32</int><int>3</int></entry>
+        <entry><int>38</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>480</exp>
+      <name>Ice Crystal</name>
+      <description>Dual-element ice damage</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>50</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>31</int><int>3</int></entry>
+        <entry><int>34</int><int>3</int></entry>
+        <entry><int>38</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>480</exp>
+      <name>Acid Gush</name>
+      <description>Dual-element acid damage</description>
+      <members>true</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>50</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>34</int><int>3</int></entry>
+        <entry><int>32</int><int>3</int></entry>
+        <entry><int>38</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>480</exp>
+      <name>Battering Ram</name>
+      <description>Dual-element wood damage</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>50</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>38</int><int>1</int></entry>
+        <entry><int>31</int><int>5</int></entry>
+      </requiredRunes>
+      <exp>480</exp>
+      <name>Iban blast</name>
+      <description>A strength 25 missile attack!</description>
+      <members>true</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>50</reqLevel>
+      <type>0</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>36</int><int>2</int></entry>
+        <entry><int>40</int><int>1</int></entry>
+        <entry><int>825</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>520</exp>
+      <name>Greater Heal</name>
+      <description>Restores a strong amount of health</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>60</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>33</int><int>4</int></entry>
+        <entry><int>619</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>576</exp>
+      <name>Wind Beam</name>
+      <description>Applies Stronger Unsteady for 5 attacks</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>60</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>32</int><int>4</int></entry>
+        <entry><int>619</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>576</exp>
+      <name>Water Vortex</name>
+      <description>Applies Stronger Dampen for 5 attacks</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>60</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>34</int><int>4</int></entry>
+        <entry><int>619</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>576</exp>
+      <name>Earth Impale</name>
+      <description>Applies Stronger Slow for 5 attacks</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>60</reqLevel>
+      <type>2</type>
+      <runeCount>2</runeCount>
+      <requiredRunes>
+        <entry><int>31</int><int>4</int></entry>
+        <entry><int>619</int><int>1</int></entry>
+      </requiredRunes>
+      <exp>576</exp>
+      <name>Fire Pillar</name>
+      <description>Applies Stronger Scorch for 5 attacks</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>70</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>35</int><int>3</int></entry>
+        <entry><int>619</int><int>1</int></entry>
+        <entry><int>40</int><int>2</int></entry>
+      </requiredRunes>
+      <exp>560</exp>
+      <name>Eye of Guthix</name>
+      <description>AoE damage and applies poison</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>70</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>35</int><int>3</int></entry>
+        <entry><int>619</int><int>1</int></entry>
+        <entry><int>825</int><int>2</int></entry>
+      </requiredRunes>
+      <exp>560</exp>
+      <name>Saradomin strike</name>
+      <description>AoE damage and steals health</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>70</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>35</int><int>3</int></entry>
+        <entry><int>619</int><int>1</int></entry>
+        <entry><int>41</int><int>2</int></entry>
+      </requiredRunes>
+      <exp>560</exp>
+      <name>Void of Zamorak</name>
+      <description>AoE damage and applies withering</description>
+      <members>true</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>80</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>35</int><int>6</int></entry>
+        <entry><int>619</int><int>2</int></entry>
+        <entry><int>41</int><int>4</int></entry>
+      </requiredRunes>
+      <exp>720</exp>
+      <name>Zamorak's Apocolypse</name>
+      <description>Greater AoE damage and applies stronger Withering</description>
+      <members>true</members>
+      <evil>true</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>80</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>35</int><int>6</int></entry>
+        <entry><int>619</int><int>2</int></entry>
+        <entry><int>825</int><int>4</int></entry>
+      </requiredRunes>
+      <exp>720</exp>
+      <name>Saradomin Soul Slash</name>
+      <description>Greater AoE damage and stronger lifesteal</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+    <SpellDef>
+      <reqLevel>80</reqLevel>
+      <type>2</type>
+      <runeCount>3</runeCount>
+      <requiredRunes>
+        <entry><int>35</int><int>6</int></entry>
+        <entry><int>619</int><int>2</int></entry>
+        <entry><int>40</int><int>4</int></entry>
+      </requiredRunes>
+      <exp>720</exp>
+      <name>Claw of Guthix</name>
+      <description>Greater AoE damage and stronger poison</description>
+      <members>true</members>
+      <evil>false</evil>
+    </SpellDef>
+</SpellDef-array>

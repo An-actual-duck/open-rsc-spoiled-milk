@@ -1,0 +1,257 @@
+{
+  "description": "NPCs whose strongest defense profile is ranged resistance.",
+  "npcs": [
+    {
+      "id": 19,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 23,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 29,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 34,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 43,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 45,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 46,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 47,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 50,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 53,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 70,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 74,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 80,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 99,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 136,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 178,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 179,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 195,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 244,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 263,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 271,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 292,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 302,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 303,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 304,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 343,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 367,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 386,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 473,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 498,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 521,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 614,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 615,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 630,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 631,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 644,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 655,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 656,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 664,
+      "meleeDefenseMultiplier": 0.5,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.25
+    },
+    {
+      "id": 666,
+      "meleeDefenseMultiplier": 0.1,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 772,
+      "meleeDefenseMultiplier": 0.4,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.5
+    },
+    {
+      "id": 786,
+      "meleeDefenseMultiplier": 0.25,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 0.1
+    }
+  ]
+}

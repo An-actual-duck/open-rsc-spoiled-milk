@@ -1,0 +1,79 @@
+{
+  "description": "Tool identity overrides for MyWorld gathering and production ladders.",
+  "items": [
+    {
+      "id": 144,
+      "name": "Tin shears"
+    },
+    {
+      "id": 1987,
+      "name": "Tin Pickaxe",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0
+    },
+    {
+      "id": 2047,
+      "name": "Copper Pickaxe",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0
+    },
+    {
+      "id": 156,
+      "name": "Bronze Pickaxe",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0
+    },
+    {
+      "id": 1258,
+      "name": "Iron Pickaxe",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0
+    },
+    {
+      "id": 1259,
+      "name": "Steel Pickaxe",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0
+    },
+    {
+      "id": 1260,
+      "name": "Mithril Pickaxe",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0
+    },
+    {
+      "id": 2048,
+      "name": "Titan Steel Pickaxe",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0
+    },
+    {
+      "id": 1261,
+      "name": "Adamantite Pickaxe",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0
+    },
+    {
+      "id": 2049,
+      "name": "Orichalcum Pickaxe",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0
+    },
+    {
+      "id": 1262,
+      "name": "Rune Pickaxe",
+      "meleeOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0
+    }
+  ]
+}
