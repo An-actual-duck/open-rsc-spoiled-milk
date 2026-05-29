@@ -2153,6 +2153,69 @@ public class ActionSender {
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_INPUT_BOX, struct, player);
 	}
 
+	private static void sendMyWorldFirstLoginIntro(Player player) {
+		sendBox(player,
+			"@gre@Welcome to Spoiled Milk.% %"
+				+ "@whi@There is no Tutorial Island here. Most players already know the basics of RuneScape, "
+				+ "and the old tutorial area is planned for a future rework.% %"
+				+ "Check your bank for your starting tools, runes, arrows, and coins.% %"
+				+ "For skill details, open the stats menu and click a skill to read its in-game guide.% %"
+				+ "The GitHub README has more release notes and useful information:%"
+				+ "@cya@github.com/An-actual-duck/open-rsc-spoiled-milk",
+			true);
+	}
+
+	private static boolean shouldUseMyWorldStarterLoadout(Player player, boolean playerInTutorialLanding) {
+		return player.getConfig().WANT_MYWORLD
+			&& player.getConfig().ARRIVE_LUMBRIDGE
+			&& !playerInTutorialLanding;
+	}
+
+	private static void addMyWorldStarterLoadout(Player player) {
+		player.getCarriedItems().getInventory().add(new Item(ItemId.TIN_SHORT_SWORD.id()), false);
+		player.getCarriedItems().getInventory().add(new Item(ItemId.TIN_SQUARE_SHIELD.id()), false);
+
+		final Item[] bankItems = {
+			new Item(ItemId.TIN_AXE.id()),
+			new Item(ItemId.TIN_PICKAXE.id()),
+			new Item(ItemId.SHEARS.id()),
+			new Item(ItemId.NET.id()),
+			new Item(ItemId.FISHING_ROD.id()),
+			new Item(ItemId.FLY_FISHING_ROD.id()),
+			new Item(ItemId.LOBSTER_POT.id()),
+			new Item(ItemId.HARPOON.id()),
+			new Item(ItemId.SHORTBOW.id()),
+			new Item(ItemId.STAFF.id()),
+			new Item(ItemId.AIR_RUNE.id(), 100),
+			new Item(ItemId.WATER_RUNE.id(), 100),
+			new Item(ItemId.EARTH_RUNE.id(), 100),
+			new Item(ItemId.FIRE_RUNE.id(), 100),
+			new Item(ItemId.MIND_RUNE.id(), 100),
+			new Item(ItemId.TIN_ARROWS.id(), 100),
+			new Item(ItemId.TINDERBOX.id()),
+			new Item(ItemId.HAMMER.id()),
+			new Item(ItemId.CHISEL.id()),
+			new Item(ItemId.KNIFE.id()),
+			new Item(ItemId.NEEDLE.id()),
+			new Item(ItemId.THREAD.id(), 100),
+			new Item(ItemId.RING_MOULD.id()),
+			new Item(ItemId.NECKLACE_MOULD.id()),
+			new Item(ItemId.AMULET_MOULD.id()),
+			new Item(ItemId.HOLY_SYMBOL_MOULD.id()),
+			new Item(ItemId.CAKE_TIN.id()),
+			new Item(ItemId.PIE_DISH.id()),
+			new Item(ItemId.BOLT_MOULD.id()),
+			new Item(ItemId.DART_MOULD.id()),
+			new Item(ItemId.THROWING_KNIFE_MOULD.id()),
+			new Item(ItemId.ARROWHEAD_MOULD.id()),
+			new Item(ItemId.COINS.id(), 500),
+		};
+
+		for (Item item : bankItems) {
+			player.getBank().add(item, false);
+		}
+	}
+
 	static void sendLogin(Player player) {
 		try {
 			if (player.getWorld().registerPlayer(player)) {
@@ -2179,7 +2242,9 @@ public class ActionSender {
 
 					sendAppearanceScreen(player);
 
-					if (!player.getConfig().USES_CLASSES) {
+					if (shouldUseMyWorldStarterLoadout(player, playerInTutorialLanding)) {
+						addMyWorldStarterLoadout(player);
+					} else if (!player.getConfig().USES_CLASSES) {
 						if (player.getConfig().WANT_OPENPK_POINTS) {
 							for (Item item : player.getWorld().getServer().getConstants().OPENPK_STARTER_ITEMS) {
 								player.getCarriedItems().getInventory().add(item, false);
@@ -2225,6 +2290,10 @@ public class ActionSender {
 				}
 				if (playerInTutorialLanding) {
 					sendBox(player, "@gre@Welcome to the " + player.getConfig().SERVER_NAME + " tutorial.% %Most actions are performed with the mouse. To walk around left click on the ground where you want to walk. To interact with something, first move your mouse pointer over it. Then left click or right click to perform different actions% %Try left clicking on one of the guides to talk to her. She will tell you more about how to play", true);
+				}
+				if (player.getLastLogin() == 0L
+					&& shouldUseMyWorldStarterLoadout(player, playerInTutorialLanding)) {
+					sendMyWorldFirstLoginIntro(player);
 				}
 
 				sendNpcKills(player);

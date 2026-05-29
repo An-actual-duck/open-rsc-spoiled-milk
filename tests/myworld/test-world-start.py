@@ -19,6 +19,17 @@ LOGIN_HANDLER = (
     / "rsc"
     / "LoginPacketHandler.java"
 )
+ACTION_SENDER = (
+    ROOT
+    / "server"
+    / "src"
+    / "com"
+    / "openrsc"
+    / "server"
+    / "net"
+    / "rsc"
+    / "ActionSender.java"
+)
 
 
 def fail(message: str) -> None:
@@ -46,6 +57,51 @@ def main() -> None:
 
     if "firstTimeLocation = Point.location(216, 744);" not in login_text:
         fail("LoginPacketHandler tutorial-island fallback changed; review Tutorial Island repurpose assumptions")
+
+    action_sender_text = ACTION_SENDER.read_text(encoding="utf-8")
+    for required in (
+        "sendMyWorldFirstLoginIntro",
+        "There is no Tutorial Island here",
+        "Check your bank for your starting tools, runes, arrows, and coins.",
+        "open the stats menu and click a skill",
+        "github.com/An-actual-duck/open-rsc-spoiled-milk",
+        "shouldUseMyWorldStarterLoadout",
+        "addMyWorldStarterLoadout",
+        "ItemId.TIN_SHORT_SWORD.id()",
+        "ItemId.TIN_SQUARE_SHIELD.id()",
+        "ItemId.TIN_AXE.id()",
+        "ItemId.TIN_PICKAXE.id()",
+        "ItemId.SHORTBOW.id()",
+        "ItemId.STAFF.id()",
+        "ItemId.AIR_RUNE.id(), 100",
+        "ItemId.WATER_RUNE.id(), 100",
+        "ItemId.EARTH_RUNE.id(), 100",
+        "ItemId.FIRE_RUNE.id(), 100",
+        "ItemId.MIND_RUNE.id(), 100",
+        "ItemId.TIN_ARROWS.id(), 100",
+        "ItemId.TINDERBOX.id()",
+        "ItemId.HAMMER.id()",
+        "ItemId.CHISEL.id()",
+        "ItemId.KNIFE.id()",
+        "ItemId.RING_MOULD.id()",
+        "ItemId.NECKLACE_MOULD.id()",
+        "ItemId.AMULET_MOULD.id()",
+        "ItemId.HOLY_SYMBOL_MOULD.id()",
+        "ItemId.BOLT_MOULD.id()",
+        "ItemId.DART_MOULD.id()",
+        "ItemId.THROWING_KNIFE_MOULD.id()",
+        "ItemId.ARROWHEAD_MOULD.id()",
+        "ItemId.COINS.id(), 500",
+        "player.getBank().add(item, false)",
+        "player.getConfig().WANT_MYWORLD",
+        "player.getConfig().ARRIVE_LUMBRIDGE",
+        "!playerInTutorialLanding",
+    ):
+        if required not in action_sender_text:
+            fail(f"MyWorld first-login intro missing guard or copy: {required}")
+
+    if "else if (!player.getConfig().USES_CLASSES)" not in action_sender_text:
+        fail("MyWorld starter loadout should bypass the default configured starter items")
 
     print("PASS: MyWorld first-login spawn policy validated")
 
