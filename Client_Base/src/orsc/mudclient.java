@@ -16969,6 +16969,12 @@ public final class mudclient implements Runnable {
 		);
 		String[] candidateNames = "air".equals(element)
 			? new String[] {"air-glyph.png", "air-glyph2.png", "air glyph.png"}
+			: "law".equals(element)
+			? new String[] {"law-glyph.png", "law-rune.png"}
+			: "blood".equals(element)
+			? new String[] {"blood-glyph.png", "240px-Blood_rune_detail.png"}
+			: "soul".equals(element)
+			? new String[] {"soul-glyph.png", "240px-Soul_rune_detail.png"}
 			: new String[] {element + "-glyph.png"};
 		for (Path basePath : candidateBases) {
 			for (String candidateName : candidateNames) {

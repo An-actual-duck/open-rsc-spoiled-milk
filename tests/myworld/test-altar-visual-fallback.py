@@ -3,6 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+GLYPHS = ROOT / "dev/myworld/assets/sprites/world/rune-altars/glyphs"
 
 
 def require(condition: bool, message: str) -> None:
@@ -21,6 +22,21 @@ def main() -> None:
             "Missing orb fallback when external altar orb PNGs are absent")
     require("private Sprite createProceduralAltarWorldSprite(int color, boolean glyph)" in client,
             "Missing procedural altar world sprite builder")
+    require('"law-rune.png"' in client,
+            "Law altar glyph filename alias should be supported")
+    require('"240px-Blood_rune_detail.png"' in client,
+            "Blood altar glyph filename alias should be supported")
+    require('"240px-Soul_rune_detail.png"' in client,
+            "Soul altar glyph filename alias should be supported")
+
+    expected_glyphs = [
+        "air-glyph.png", "water-glyph.png", "earth-glyph.png", "fire-glyph.png",
+        "mind-glyph.png", "body-glyph.png", "cosmic-glyph.png", "chaos-glyph.png",
+        "nature-glyph.png", "law-rune.png", "death-glyph.png",
+        "240px-Blood_rune_detail.png", "240px-Soul_rune_detail.png", "life-glyph.png",
+    ]
+    for glyph in expected_glyphs:
+        require((GLYPHS / glyph).is_file(), f"Missing altar glyph asset: {glyph}")
 
     print("PASS: rune altar glyph/orb visual fallback validated")
 
