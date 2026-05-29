@@ -304,6 +304,12 @@ public final class mudclient implements Runnable {
 	private int actionProgressItemId = -1;
 	private long actionProgressStartTime = 0L;
 	private long actionProgressDurationMs = 1L;
+	private static final int GATHERING_FOCUS_NONE = 0;
+	private static final int GATHERING_FOCUS_MINING = 1;
+	private static final int GATHERING_FOCUS_FISHING = 2;
+	private static final int GATHERING_FOCUS_WOODCUTTING = 3;
+	private static final int GATHERING_FOCUS_HARVESTING = 4;
+	private int activeGatheringFocusKind = GATHERING_FOCUS_NONE;
 	private long gatheringFocusMenuHideAt = 0L;
 	private final int[] characterDialogHalfWidth = new int[150];
 	private final int[] characterDialogHeight = new int[150];
@@ -332,6 +338,7 @@ public final class mudclient implements Runnable {
 	private final int[] groundItemZ = new int[5000];
 	private final ArrayList<GroundItem> groundItems = new ArrayList<GroundItem>();
 	private final ArrayList<Integer> groundItemRenderOrder = new ArrayList<Integer>(5000);
+	private final int[] groundItemRenderTopByTile = new int[96 * 96];
 	private final Item[] inventory = new Item[S_PLAYER_INVENTORY_SLOTS];
 	private final ORSCharacter[] knownPlayers = new ORSCharacter[500];
 	private final String[] optionsMenuText = new String[20];
@@ -3105,7 +3112,7 @@ public final class mudclient implements Runnable {
 			if (this.actionProgressActive && this.localPlayer != null) {
 				long elapsed = System.currentTimeMillis() - this.actionProgressStartTime;
 				if (elapsed >= this.actionProgressDurationMs) {
-					this.clearActionProgressBar();
+					this.completeActionProgressBar();
 				}
 			}
 
@@ -6546,12 +6553,29 @@ public final class mudclient implements Runnable {
 
 	private void rebuildGroundItemRenderOrder() {
 		this.groundItemRenderOrder.clear();
+		Arrays.fill(this.groundItemRenderTopByTile, -1);
 		for (int index = 0; index < this.groundItemCount; index++) {
 			if (!this.isGroundItemVisibleByFilter(index)) {
 				continue;
 			}
 
-			this.groundItemRenderOrder.add(index);
+			int tileKey = this.getGroundItemTileKey(this.groundItemX[index], this.groundItemZ[index]);
+			if (tileKey < 0) {
+				this.groundItemRenderOrder.add(index);
+				continue;
+			}
+
+			int currentTopIndex = this.groundItemRenderTopByTile[tileKey];
+			if (currentTopIndex < 0 || this.compareGroundItemLayerOrder(currentTopIndex, index) < 0) {
+				this.groundItemRenderTopByTile[tileKey] = index;
+			}
+		}
+
+		for (int tileKey = 0; tileKey < this.groundItemRenderTopByTile.length; tileKey++) {
+			int index = this.groundItemRenderTopByTile[tileKey];
+			if (index >= 0) {
+				this.groundItemRenderOrder.add(index);
+			}
 		}
 
 		Collections.sort(this.groundItemRenderOrder, new Comparator<Integer>() {
@@ -19787,10 +19811,17 @@ public final class mudclient implements Runnable {
 		this.actionProgressStartTime = System.currentTimeMillis();
 		this.actionProgressDurationMs = Math.max(1, delayMillis);
 		this.actionProgressActive = true;
-		this.showGatheringFocusMenuTemporarily();
+		this.showGatheringFocusMenuTemporarily(itemId);
 	}
 
 	public final void clearActionProgressBar() {
+		this.actionProgressActive = false;
+		this.actionProgressItemId = -1;
+		this.activeGatheringFocusKind = GATHERING_FOCUS_NONE;
+		this.gatheringFocusMenuHideAt = 0L;
+	}
+
+	private void completeActionProgressBar() {
 		this.actionProgressActive = false;
 		this.actionProgressItemId = -1;
 		this.extendGatheringFocusMenuLinger();
@@ -20511,25 +20542,119 @@ public final class mudclient implements Runnable {
 
 	public int getCombatStyle() { return this.combatStyle; }
 
+	private int getEquippedGatheringFocusKind() {
+		if (hasEquippedFishingRod()) {
+			return GATHERING_FOCUS_FISHING;
+		}
+		if (hasEquippedWoodcuttingTool()) {
+			return GATHERING_FOCUS_WOODCUTTING;
+		}
+		if (hasEquippedHarvestingShears()) {
+			return GATHERING_FOCUS_HARVESTING;
+		}
+		if (hasEquippedMiningTool()) {
+			return GATHERING_FOCUS_MINING;
+		}
+		return GATHERING_FOCUS_NONE;
+	}
+
+	private int getGatheringFocusKindForItem(int itemId) {
+		if (isFishingRodItem(itemId)) {
+			return GATHERING_FOCUS_FISHING;
+		}
+		if (isWoodcuttingToolItem(itemId)) {
+			return GATHERING_FOCUS_WOODCUTTING;
+		}
+		if (isHarvestingToolItem(itemId)) {
+			return GATHERING_FOCUS_HARVESTING;
+		}
+		if (isMiningToolItem(itemId)) {
+			return GATHERING_FOCUS_MINING;
+		}
+		return GATHERING_FOCUS_NONE;
+	}
+
+	private boolean isMiningToolItem(int itemId) {
+		switch (itemId) {
+			case 156:
+			case 1258:
+			case 1259:
+			case 1260:
+			case 1261:
+			case 1262:
+			case 1987:
+			case 2047:
+			case 2048:
+			case 2049:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	private boolean isFishingRodItem(int itemId) {
+		switch (itemId) {
+			case 377:
+			case 2682:
+			case 2683:
+			case 2684:
+			case 2685:
+			case 2686:
+			case 2687:
+			case 2688:
+			case 2689:
+			case 2690:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	private boolean isWoodcuttingToolItem(int itemId) {
+		switch (itemId) {
+			case 12:
+			case 87:
+			case 88:
+			case 203:
+			case 204:
+			case 405:
+			case 428:
+			case 1480:
+			case 2001:
+			case 2012:
+			case 2023:
+			case 2034:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	private boolean isHarvestingToolItem(int itemId) {
+		switch (itemId) {
+			case 144:
+			case 2215:
+			case 2216:
+			case 2217:
+			case 2218:
+			case 2219:
+			case 2220:
+			case 2221:
+			case 2222:
+			case 2223:
+				return true;
+			default:
+				return false;
+		}
+	}
+
 	private boolean hasEquippedMiningTool() {
 		for (ItemDef item : equippedItems) {
 			if (item == null) {
 				continue;
 			}
-			switch (item.id) {
-				case 156:
-				case 1258:
-				case 1259:
-				case 1260:
-				case 1261:
-				case 1262:
-				case 1987:
-				case 2047:
-				case 2048:
-				case 2049:
+			if (isMiningToolItem(item.id)) {
 					return true;
-				default:
-					break;
 			}
 		}
 		return false;
@@ -20540,20 +20665,8 @@ public final class mudclient implements Runnable {
 			if (item == null) {
 				continue;
 			}
-			switch (item.id) {
-				case 377:
-				case 2682:
-				case 2683:
-				case 2684:
-				case 2685:
-				case 2686:
-				case 2687:
-				case 2688:
-				case 2689:
-				case 2690:
+			if (isFishingRodItem(item.id)) {
 					return true;
-				default:
-					break;
 			}
 		}
 		return false;
@@ -20564,22 +20677,8 @@ public final class mudclient implements Runnable {
 			if (item == null) {
 				continue;
 			}
-			switch (item.id) {
-				case 12:
-				case 87:
-				case 88:
-				case 203:
-				case 204:
-				case 405:
-				case 428:
-				case 1480:
-				case 2001:
-				case 2012:
-				case 2023:
-				case 2034:
+			if (isWoodcuttingToolItem(item.id)) {
 					return true;
-				default:
-					break;
 			}
 		}
 		return false;
@@ -20590,20 +20689,8 @@ public final class mudclient implements Runnable {
 			if (item == null) {
 				continue;
 			}
-			switch (item.id) {
-				case 144:
-				case 2215:
-				case 2216:
-				case 2217:
-				case 2218:
-				case 2219:
-				case 2220:
-				case 2221:
-				case 2222:
-				case 2223:
+			if (isHarvestingToolItem(item.id)) {
 					return true;
-				default:
-					break;
 			}
 		}
 		return false;
@@ -20613,25 +20700,52 @@ public final class mudclient implements Runnable {
 		return hasEquippedMiningTool() || hasEquippedFishingRod() || hasEquippedWoodcuttingTool() || hasEquippedHarvestingShears();
 	}
 
-	public void showGatheringFocusMenuTemporarily() {
-		if (C_GATHERING_FOCUS_MENU == 1 && hasEquippedGatheringFocusTool()) {
-			long now = System.currentTimeMillis();
-			long actionEnd = now + Math.max(1L, this.actionProgressDurationMs);
-			this.gatheringFocusMenuHideAt = actionEnd + 2500L;
+	private boolean hasEquippedGatheringFocusTool(int focusKind) {
+		switch (focusKind) {
+			case GATHERING_FOCUS_MINING:
+				return hasEquippedMiningTool();
+			case GATHERING_FOCUS_FISHING:
+				return hasEquippedFishingRod();
+			case GATHERING_FOCUS_WOODCUTTING:
+				return hasEquippedWoodcuttingTool();
+			case GATHERING_FOCUS_HARVESTING:
+				return hasEquippedHarvestingShears();
+			default:
+				return false;
 		}
 	}
 
+	public void showGatheringFocusMenuTemporarily(int itemId) {
+		this.activeGatheringFocusKind = getGatheringFocusKindForItem(itemId);
+		if (C_GATHERING_FOCUS_MENU != 1 || !hasEquippedGatheringFocusTool(this.activeGatheringFocusKind)) {
+			this.activeGatheringFocusKind = GATHERING_FOCUS_NONE;
+			this.gatheringFocusMenuHideAt = 0L;
+			return;
+		}
+
+		long now = System.currentTimeMillis();
+		long actionEnd = now + Math.max(1L, this.actionProgressDurationMs);
+		this.gatheringFocusMenuHideAt = actionEnd + 2500L;
+	}
+
 	private void extendGatheringFocusMenuLinger() {
-		if (C_GATHERING_FOCUS_MENU == 1 && hasEquippedGatheringFocusTool()) {
+		if (C_GATHERING_FOCUS_MENU == 1 && hasEquippedGatheringFocusTool(this.activeGatheringFocusKind)) {
 			this.gatheringFocusMenuHideAt = System.currentTimeMillis() + 2500L;
 		}
 	}
 
 	private boolean shouldDrawGatheringFocusMenu() {
-		if (!hasEquippedGatheringFocusTool() || C_GATHERING_FOCUS_MENU == 0) {
+		if (C_GATHERING_FOCUS_MENU == 0) {
 			return false;
 		}
-		return C_GATHERING_FOCUS_MENU == 2 || System.currentTimeMillis() < this.gatheringFocusMenuHideAt;
+		if (C_GATHERING_FOCUS_MENU == 2) {
+			return hasEquippedGatheringFocusTool();
+		}
+		if (System.currentTimeMillis() >= this.gatheringFocusMenuHideAt) {
+			this.activeGatheringFocusKind = GATHERING_FOCUS_NONE;
+			return false;
+		}
+		return hasEquippedGatheringFocusTool(this.activeGatheringFocusKind);
 	}
 
 	private String getGatheringFocusMenuLabel() {
@@ -20645,16 +20759,21 @@ public final class mudclient implements Runnable {
 	}
 
 	private String[] getGatheringFocusLabels() {
-		if (hasEquippedFishingRod()) {
-			return new String[]{"Select fishing focus", "Just the fish", "A little loot", "Plenty of loot", "Lots of loot"};
+		int focusKind = activeGatheringFocusKind;
+		if (C_GATHERING_FOCUS_MENU == 2 || focusKind == GATHERING_FOCUS_NONE) {
+			focusKind = getEquippedGatheringFocusKind();
 		}
-		if (hasEquippedWoodcuttingTool()) {
-			return new String[]{"Select woodcutting focus", "No seeds for me", "A few seeds", "More seeds", "Even more seeds!"};
+		switch (focusKind) {
+			case GATHERING_FOCUS_FISHING:
+				return new String[]{"Select fishing focus", "Just the fish", "A little loot", "Plenty of loot", "Lots of loot"};
+			case GATHERING_FOCUS_WOODCUTTING:
+				return new String[]{"Select woodcutting focus", "No seeds for me", "A few seeds", "More seeds", "Even more seeds!"};
+			case GATHERING_FOCUS_HARVESTING:
+				return new String[]{"Select harvesting focus", "No seeds for me", "A few seeds", "More seeds", "Even more seeds!"};
+			case GATHERING_FOCUS_MINING:
+			default:
+				return new String[]{"Select mining focus", "Just the ore", "A few gems", "Plenty of gems", "Lots of gems"};
 		}
-		if (hasEquippedHarvestingShears()) {
-			return new String[]{"Select harvesting focus", "No seeds for me", "A few seeds", "More seeds", "Even more seeds!"};
-		}
-		return new String[]{"Select mining focus", "Just the ore", "A few gems", "Plenty of gems", "Lots of gems"};
 	}
 
 	public void setSettingsBlockGlobal(int block) {

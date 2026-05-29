@@ -74,7 +74,7 @@ public class CombatFormula {
 		int attackMax = applyOutgoingMaxHitDebuff(source, spellMax + offenseBonus);
 		int defenseMax = defenseToMitigation(victim.getMagicDefense());
 		int cappedAttackMax = Math.max(1, (int) Math.ceil(attackMax * maxHitPercent));
-		int damage = applyMitigationRoll(source, victim, attackMax, defenseMax, cappedAttackMax);
+		int damage = applyMitigationRoll(source, victim, cappedAttackMax, defenseMax);
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MAGIC);
 		return applyDamageMultiplier(source, damage);
 	}
@@ -309,13 +309,6 @@ public class CombatFormula {
 		int defenseRoll = defenseMax <= 0 ? 0 : DataConversions.random(1, defenseMax);
 		defenseRoll = maybeRerollDefenseRoll(victim, defenseRoll, defenseMax);
 		return Math.max(offenseRoll - defenseRoll, 0);
-	}
-
-	private static int applyMitigationRoll(final Mob source, final Mob victim, final int attackMax, final int defenseMax, final int damageCap) {
-		int offenseRoll = rollIncomingDamage(source, victim, attackMax);
-		int defenseRoll = defenseMax <= 0 ? 0 : DataConversions.random(1, defenseMax);
-		defenseRoll = maybeRerollDefenseRoll(victim, defenseRoll, defenseMax);
-		return Math.max(Math.min(offenseRoll, damageCap) - defenseRoll, 0);
 	}
 
 	private static int rollIncomingDamage(final Mob source, final Mob victim, final int attackMax) {

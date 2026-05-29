@@ -1225,6 +1225,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(2237, "70", "Blessed Blood Staff - requires Prayer and Magic"));
 		} else if (curTab == 4) {
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Worship at a god's altar to switch prayers"));
+			skillMenuEntries.add(new SkillMenuItem(388, "", "Devotion: every 10 offerings to a god adds +1 Prayer XP"));
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Prayer does not drain over time"));
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Prayer uses point reservation to activate"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {

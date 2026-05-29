@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.authentic.misc;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
@@ -113,9 +114,11 @@ public class Bones implements OpInvTrigger, UseInvTrigger {
 				break;
 		}
 		if (skillXP > 0) {
+			final int devotionBonusXp = Devotion.recordOfferingAndGetPrayerXpBonus(player);
 			for (int praySkillId : prayerSkillIds) {
 				int xpToGive = skillXP / factor;
 				if (bonecrusher) xpToGive /= 2;
+				xpToGive += devotionBonusXp;
 				player.incExp(praySkillId, xpToGive, true);
 			}
 		}

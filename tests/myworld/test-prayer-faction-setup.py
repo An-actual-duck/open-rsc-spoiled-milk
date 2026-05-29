@@ -17,6 +17,15 @@ def item_by_id(items, item_id: int):
     raise AssertionError(f"missing item {item_id}")
 
 
+def apply_item_overrides(items, overrides):
+    by_id = {item["id"]: item.copy() for item in items}
+    for override in overrides:
+        item_id = override["id"]
+        if item_id in by_id:
+            by_id[item_id].update(override)
+    return by_id
+
+
 def npc_by_id(npcs, npc_id: int):
     for npc in npcs:
         if npc["id"] == npc_id:
@@ -26,14 +35,16 @@ def npc_by_id(npcs, npc_id: int):
 
 def main():
     items = load_json("server/conf/server/defs/ItemDefs.json", "item")
+    item_overrides = load_json("server/conf/server/defs/ItemDefsMyWorld.json", "items")
+    item_defs = apply_item_overrides(items, item_overrides)
     npcs = load_json("server/conf/server/defs/NpcDefs.json", "npcs")
 
-    robe_of_guthix_top = item_by_id(items, 607)
-    robe_of_guthix_bottom = item_by_id(items, 608)
-    robe_of_saradomin_top = item_by_id(items, 807)
-    robe_of_saradomin_bottom = item_by_id(items, 808)
-    robe_of_zamorak_top = item_by_id(items, 702)
-    robe_of_zamorak_bottom = item_by_id(items, 703)
+    robe_of_guthix_top = item_defs[607]
+    robe_of_guthix_bottom = item_defs[608]
+    robe_of_saradomin_top = item_defs[807]
+    robe_of_saradomin_bottom = item_defs[808]
+    robe_of_zamorak_top = item_defs[702]
+    robe_of_zamorak_bottom = item_defs[703]
 
     assert robe_of_guthix_top["name"] == "Robe of Guthix"
     assert robe_of_guthix_bottom["name"] == "Robe of Guthix"

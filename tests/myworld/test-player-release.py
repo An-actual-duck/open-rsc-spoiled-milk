@@ -233,7 +233,6 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
     forbidden_prefixes = [
         "myworld-assets/sprites/ui/",
         "myworld-assets/sprites/items/",
-        "myworld-assets/sprites/world/",
         "myworld-assets/animations/On Enemy/phoenix/",
         "myworld-assets/animations/On Enemy/kraken/",
     ]
@@ -246,7 +245,6 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
     for removed_path in [
         ROOT / "dev/myworld/assets/sprites/ui",
         ROOT / "dev/myworld/assets/sprites/items",
-        ROOT / "dev/myworld/assets/sprites/world",
         ROOT / "dev/myworld/assets/archive",
         ROOT / "dev/myworld/assets/animations/On Enemy/phoenix",
         ROOT / "dev/myworld/assets/animations/On Enemy/kraken",

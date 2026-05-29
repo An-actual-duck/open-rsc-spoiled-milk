@@ -211,18 +211,18 @@ def magic_spell_fixture(items, name, skill_level, equipment_ids, spell_band):
 
 
 def capped_biased_average_damage(attack_max: int, damage_cap: int, mitigation_cap: int, high_bias_chance: float) -> float:
-    if attack_max <= 0:
+    if damage_cap <= 0:
         return 0.0
     defense_rolls = [0] if mitigation_cap <= 0 else range(1, mitigation_cap + 1)
     outcomes = 0
     total = 0.0
-    for offense_roll in range(1, attack_max + 1):
+    capped_attack_max = min(attack_max, damage_cap)
+    for offense_roll in range(1, capped_attack_max + 1):
         effective_roll = offense_roll
-        if high_bias_chance > 0.0 and offense_roll < attack_max:
+        if high_bias_chance > 0.0 and offense_roll < capped_attack_max:
             effective_roll = offense_roll + high_bias_chance
-        capped_roll = min(effective_roll, damage_cap)
         for defense_roll in defense_rolls:
-            total += max(capped_roll - defense_roll, 0)
+            total += max(effective_roll - defense_roll, 0)
             outcomes += 1
     return total / outcomes
 

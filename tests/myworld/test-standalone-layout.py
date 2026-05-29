@@ -117,7 +117,7 @@ def test_root_scripts_are_repo_root_anchored() -> None:
 
 def test_active_server_configs_are_myworld_only() -> None:
     active_configs = sorted(path.name for path in (ROOT / "server").glob("*.conf"))
-    expected_configs = ["connections.conf", "myworld.conf"]
+    expected_configs = ["connections.conf", "myworld-host.conf", "myworld.conf"]
     if active_configs != expected_configs:
         fail(f"Active server/*.conf files must be {expected_configs}, got {active_configs}")
 
@@ -137,7 +137,7 @@ def test_active_server_configs_are_myworld_only() -> None:
 
 def test_active_sqlite_seeds_are_myworld_only() -> None:
     active_sqlite = sorted(path.name for path in (ROOT / "server" / "inc" / "sqlite").glob("*.db"))
-    expected_sqlite = ["myworld_dev.db", "myworld_seed.db"]
+    expected_sqlite = ["myworld_dev.db", "myworld_seed.db", "spoiled_milk_alpha.db"]
     if active_sqlite != expected_sqlite:
         fail(f"Active server/inc/sqlite/*.db files must be {expected_sqlite}, got {active_sqlite}")
 

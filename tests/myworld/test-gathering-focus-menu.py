@@ -25,8 +25,12 @@ def main() -> None:
 
     require("public static int C_GATHERING_FOCUS_MENU = 1;" in config,
             "Tool focus menu should default to temporary mode")
-    require("showGatheringFocusMenuTemporarily();" in client,
+    require("showGatheringFocusMenuTemporarily(itemId);" in client,
             "Gathering focus menu should be triggered by action progress")
+    require("completeActionProgressBar();" in client and "this.gatheringFocusMenuHideAt = 0L;" in client,
+            "Walking or cancellation should hide the temporary focus menu instead of extending it")
+    require("getGatheringFocusKindForItem(int itemId)" in client and "hasEquippedGatheringFocusTool(this.activeGatheringFocusKind)" in client,
+            "Temporary focus menu should only show for the gathering action matching the equipped tool")
     require("shouldDrawGatheringFocusMenu()" in client,
             "Focus menu drawing should be gated by the new visibility mode")
     require("Tool Focus Menu - " in client and "C_GATHERING_FOCUS_MENU = (C_GATHERING_FOCUS_MENU + 1) % 3;" in client,

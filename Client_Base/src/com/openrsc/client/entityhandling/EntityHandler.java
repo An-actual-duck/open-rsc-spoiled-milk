@@ -3338,8 +3338,8 @@ public class EntityHandler {
 		items.add(new ItemDef("Distillator", "It's for seperating compounds", "", 1, 278, "items:278", false, false, 0, 16737817, true, true, false, 804));
 		items.add(new ItemDef("Glarial's urn", "An urn containing glarials ashes", "", 1, 279, "items:279", false, false, 0, 0, false, true, false, 805));
 		items.add(new ItemDef("Glarial's urn", "An empty metal urn", "", 1, 280, "items:280", false, false, 0, 0, false, true, false, 806));
-		items.add(new ItemDef("Priest robe", "I feel closer to saradomin in this", "", 5, 87, "items:87", false, true, 64, 1052688, false, false, true, 807));
-		items.add(new ItemDef("Priest gown", "I feel closer to saradomin in this", "", 5, 88, "items:88", false, true, 128, 1052688, false, false, true, 808));
+		items.add(new ItemDef("Priest robe", "I feel closer to saradomin in this", "", 5, 87, "items:87", false, true, 64, 255, false, false, true, 807));
+		items.add(new ItemDef("Priest gown", "I feel closer to saradomin in this", "", 5, 88, "items:88", false, true, 128, 255, false, false, true, 808));
 		items.add(new ItemDef("Liquid Honey", "This isn't worth much", "", 0, 48, "items:48", false, false, 0, 16776960, true, true, false, 809));
 		items.add(new ItemDef("Ethenea", "An expensive colourless liquid", "", 10, 48, "items:48", false, false, 0, 11184827, true, true, false, 810));
 		items.add(new ItemDef("Sulphuric Broline", "it's highly poisonous", "", 1, 48, "items:48", false, false, 0, 11966902, true, true, false, 811));

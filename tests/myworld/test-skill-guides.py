@@ -48,6 +48,7 @@ def main() -> None:
     require(guide, 'addPrayerLine("Crafting Favor", "5 tiers of crafting XP bonuses");', "guthix prayer summary")
     require(guide, 'new SkillMenuItem(1214, "70", "Saradomin Cape - requires Saradomin worship")', "saradomin gear prayer guide")
     require(guide, 'new SkillMenuItem(2237, "70", "Blessed Blood Staff - requires Prayer and Magic")', "blessed blood staff prayer guide")
+    require(guide, 'Devotion: every 10 offerings to a god adds +1 Prayer XP', "devotion prayer guide")
 
     require(guide, 'populateMiningGuide();', "mining guide helper")
     require(guide, 'new SkillMenuItem(1987, "1", "Tin Pickaxe")', "tin pickaxe guide")

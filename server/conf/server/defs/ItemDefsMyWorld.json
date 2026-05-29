@@ -3407,6 +3407,11 @@
       "requiredSkillID": -1
     },
     {
+      "id": 808,
+      "requiredLevel": 0,
+      "requiredSkillID": -1
+    },
+    {
       "id": 836,
       "magicDefense": 3,
       "armourBonus": 0,
