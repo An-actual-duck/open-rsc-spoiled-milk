@@ -2199,6 +2199,7 @@ public class ActionSender {
 			new Item(ItemId.EARTH_RUNE.id(), 100),
 			new Item(ItemId.FIRE_RUNE.id(), 100),
 			new Item(ItemId.MIND_RUNE.id(), 100),
+			new Item(ItemId.LIFE_RUNE.id(), 100),
 			new Item(ItemId.TIN_ARROWS.id(), 100),
 			new Item(ItemId.TINDERBOX.id()),
 			new Item(ItemId.HAMMER.id()),

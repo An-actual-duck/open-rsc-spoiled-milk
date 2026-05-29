@@ -81,6 +81,7 @@ def main() -> None:
         "ItemId.EARTH_RUNE.id(), 100",
         "ItemId.FIRE_RUNE.id(), 100",
         "ItemId.MIND_RUNE.id(), 100",
+        "ItemId.LIFE_RUNE.id(), 100",
         "ItemId.TIN_ARROWS.id(), 100",
         "ItemId.TINDERBOX.id()",
         "ItemId.HAMMER.id()",

@@ -24,16 +24,12 @@ def main() -> None:
             "Missing procedural altar world sprite builder")
     require('"law-rune.png"' in client,
             "Law altar glyph filename alias should be supported")
-    require('"240px-Blood_rune_detail.png"' in client,
-            "Blood altar glyph filename alias should be supported")
-    require('"240px-Soul_rune_detail.png"' in client,
-            "Soul altar glyph filename alias should be supported")
 
     expected_glyphs = [
         "air-glyph.png", "water-glyph.png", "earth-glyph.png", "fire-glyph.png",
         "mind-glyph.png", "body-glyph.png", "cosmic-glyph.png", "chaos-glyph.png",
         "nature-glyph.png", "law-rune.png", "death-glyph.png",
-        "240px-Blood_rune_detail.png", "240px-Soul_rune_detail.png", "life-glyph.png",
+        "blood-glyph.png", "soul-glyph.png", "life-glyph.png",
     ]
     for glyph in expected_glyphs:
         require((GLYPHS / glyph).is_file(), f"Missing altar glyph asset: {glyph}")
