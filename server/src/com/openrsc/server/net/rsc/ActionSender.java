@@ -52,6 +52,7 @@ public class ActionSender {
 	 * The asynchronous logger.
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final String MYWORLD_STARTER_BANK_CACHE_KEY = "myworld_starter_bank_v1";
 	private static final PayloadGenerator<OpcodeOut> PAYLOAD_38_GENERATOR = new Payload38Generator();
 	private static final PayloadGenerator<OpcodeOut> PAYLOAD_69_GENERATOR = new Payload69Generator();
 	private static final PayloadGenerator<OpcodeOut> PAYLOAD_115_GENERATOR = new Payload115Generator();
@@ -2171,19 +2172,25 @@ public class ActionSender {
 			&& !playerInTutorialLanding;
 	}
 
-	private static void addMyWorldStarterLoadout(Player player) {
-		player.getCarriedItems().getInventory().add(new Item(ItemId.TIN_SHORT_SWORD.id()), false);
-		player.getCarriedItems().getInventory().add(new Item(ItemId.TIN_SQUARE_SHIELD.id()), false);
+	private static boolean addMissingMyWorldStarterBankItem(Player player, int itemId, int targetAmount) {
+		final int currentAmount = player.getBank().countId(itemId);
+		if (currentAmount < targetAmount) {
+			return player.getBank().add(new Item(itemId, targetAmount - currentAmount), false);
+		}
+		return true;
+	}
+
+	private static void addMyWorldStarterLoadout(Player player, boolean includeInventoryItems) {
+		if (includeInventoryItems) {
+			player.getCarriedItems().getInventory().add(new Item(ItemId.TIN_SHORT_SWORD.id()), false);
+			player.getCarriedItems().getInventory().add(new Item(ItemId.TIN_SQUARE_SHIELD.id()), false);
+		}
 
 		final Item[] bankItems = {
 			new Item(ItemId.TIN_AXE.id()),
 			new Item(ItemId.TIN_PICKAXE.id()),
 			new Item(ItemId.SHEARS.id()),
-			new Item(ItemId.NET.id()),
 			new Item(ItemId.FISHING_ROD.id()),
-			new Item(ItemId.FLY_FISHING_ROD.id()),
-			new Item(ItemId.LOBSTER_POT.id()),
-			new Item(ItemId.HARPOON.id()),
 			new Item(ItemId.SHORTBOW.id()),
 			new Item(ItemId.STAFF.id()),
 			new Item(ItemId.AIR_RUNE.id(), 100),
@@ -2211,8 +2218,19 @@ public class ActionSender {
 			new Item(ItemId.COINS.id(), 500),
 		};
 
+		boolean addedAllBankItems = true;
 		for (Item item : bankItems) {
-			player.getBank().add(item, false);
+			addedAllBankItems &= addMissingMyWorldStarterBankItem(player, item.getCatalogId(), item.getAmount());
+		}
+		if (addedAllBankItems) {
+			player.getCache().store(MYWORLD_STARTER_BANK_CACHE_KEY, true);
+		}
+	}
+
+	private static void ensureMyWorldStarterLoadout(Player player, boolean playerInTutorialLanding, boolean includeInventoryItems) {
+		if (shouldUseMyWorldStarterLoadout(player, playerInTutorialLanding)
+			&& !player.getCache().hasKey(MYWORLD_STARTER_BANK_CACHE_KEY)) {
+			addMyWorldStarterLoadout(player, includeInventoryItems);
 		}
 	}
 
@@ -2243,7 +2261,7 @@ public class ActionSender {
 					sendAppearanceScreen(player);
 
 					if (shouldUseMyWorldStarterLoadout(player, playerInTutorialLanding)) {
-						addMyWorldStarterLoadout(player);
+						addMyWorldStarterLoadout(player, true);
 					} else if (!player.getConfig().USES_CLASSES) {
 						if (player.getConfig().WANT_OPENPK_POINTS) {
 							for (Item item : player.getWorld().getServer().getConstants().OPENPK_STARTER_ITEMS) {
@@ -2259,6 +2277,7 @@ public class ActionSender {
 					//Block PK chat by default.
 					player.getCache().set("setting_block_global", 3);
 				}
+				ensureMyWorldStarterLoadout(player, playerInTutorialLanding, false);
 
                 sendInventory(player);
                 player.checkEquipment();

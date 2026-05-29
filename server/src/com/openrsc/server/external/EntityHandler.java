@@ -614,11 +614,16 @@ public final class EntityHandler {
 					if (item.has("magicDefense")) existing.setMagicDefense(item.getInt("magicDefense"));
 					if (item.has("requiredLevel")) existing.setRequiredLevel(item.getInt("requiredLevel"));
 					if (item.has("requiredSkillID")) existing.setRequiredSkillIndex(item.getInt("requiredSkillID"));
+					if (item.has("isWearable")) existing.setWieldable(item.getInt("isWearable") != 0);
+					if (item.has("appearanceID")) existing.setAppearanceId(item.getInt("appearanceID"));
+					if (item.has("wearableID")) existing.setWearableId(item.getInt("wearableID"));
+					if (item.has("wearSlot")) existing.setWieldPosition(item.getInt("wearSlot"));
 					if (item.has("weaponAimBonus")) existing.setWeaponAimBonus(item.getInt("weaponAimBonus"));
 					if (item.has("weaponPowerBonus")) existing.setWeaponPowerBonus(item.getInt("weaponPowerBonus"));
 					if (item.has("armourBonus")) existing.setArmourBonus(item.getLong("armourBonus"));
 					if (item.has("magicBonus")) existing.setMagicBonus(item.getInt("magicBonus"));
 					if (item.has("prayerBonus")) existing.setPrayerBonus(item.getInt("prayerBonus"));
+					if (item.has("basePrice")) existing.setDefaultPrice(item.getInt("basePrice"));
 				}
 			}
 		} catch (Exception e) {
@@ -636,7 +641,9 @@ public final class EntityHandler {
 				ItemId.MITHRIL_ARROWS.id(), ItemId.POISON_MITHRIL_ARROWS.id(),
 				ItemId.ADAMANTITE_ARROWS.id(), ItemId.POISON_ADAMANTITE_ARROWS.id(),
 				ItemId.RUNE_ARROWS.id(), ItemId.POISON_RUNE_ARROWS.id(),
-				ItemId.ICE_ARROWS.id(), ItemId.DRAGON_ARROWS.id(), ItemId.POISON_DRAGON_ARROWS.id()
+				ItemId.ICE_ARROWS.id(), ItemId.DRAGON_ARROWS.id(), ItemId.POISON_DRAGON_ARROWS.id(),
+				ItemId.TIN_ARROWS.id(), ItemId.COPPER_ARROWS.id(),
+				ItemId.TITAN_STEEL_ARROWS.id(), ItemId.ORICHALCUM_ARROWS.id()
 			};
 			for (int itemId : wieldableArrows) {
 				items.get(itemId).setWieldable(true);

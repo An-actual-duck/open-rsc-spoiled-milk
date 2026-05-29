@@ -3,77 +3,169 @@
   "items": [
     {
       "id": 144,
-      "name": "Tin shears"
+      "name": "Tin shears",
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 1,
+      "requiredSkillID": 19,
+      "basePrice": 40
     },
     {
       "id": 1987,
       "name": "Tin Pickaxe",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 40
     },
     {
       "id": 2047,
       "name": "Copper Pickaxe",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 80
     },
     {
       "id": 156,
       "name": "Bronze Pickaxe",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 180
     },
     {
       "id": 1258,
       "name": "Iron Pickaxe",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 420
     },
     {
       "id": 1259,
       "name": "Steel Pickaxe",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 900
     },
     {
       "id": 1260,
       "name": "Mithril Pickaxe",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 1800
     },
     {
       "id": 2048,
       "name": "Titan Steel Pickaxe",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 3200
     },
     {
       "id": 1261,
       "name": "Adamantite Pickaxe",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 5500
     },
     {
       "id": 2049,
       "name": "Orichalcum Pickaxe",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 9000
     },
     {
       "id": 1262,
       "name": "Rune Pickaxe",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 15000
+    },
+    {
+      "id": 2215,
+      "basePrice": 80
+    },
+    {
+      "id": 2216,
+      "basePrice": 180
+    },
+    {
+      "id": 2217,
+      "basePrice": 420
+    },
+    {
+      "id": 2218,
+      "basePrice": 900
+    },
+    {
+      "id": 2219,
+      "basePrice": 1800
+    },
+    {
+      "id": 2220,
+      "basePrice": 3200
+    },
+    {
+      "id": 2221,
+      "basePrice": 5500
+    },
+    {
+      "id": 2222,
+      "basePrice": 9000
+    },
+    {
+      "id": 2223,
+      "basePrice": 15000
+    },
+    {
+      "id": 377,
+      "basePrice": 40
+    },
+    {
+      "id": 2682,
+      "basePrice": 80
+    },
+    {
+      "id": 2683,
+      "basePrice": 180
+    },
+    {
+      "id": 2684,
+      "basePrice": 420
+    },
+    {
+      "id": 2685,
+      "basePrice": 900
+    },
+    {
+      "id": 2686,
+      "basePrice": 1800
+    },
+    {
+      "id": 2687,
+      "basePrice": 3200
+    },
+    {
+      "id": 2688,
+      "basePrice": 5500
+    },
+    {
+      "id": 2689,
+      "basePrice": 9000
+    },
+    {
+      "id": 2690,
+      "basePrice": 15000
     }
   ]
 }

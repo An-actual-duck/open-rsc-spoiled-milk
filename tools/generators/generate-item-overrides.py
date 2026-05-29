@@ -30,11 +30,16 @@ ALLOWED_ITEM_FIELDS = {
     "magicDefense",
     "requiredLevel",
     "requiredSkillID",
+    "isWearable",
+    "appearanceID",
+    "wearableID",
+    "wearSlot",
     "prayerBonus",
     "weaponAimBonus",
     "weaponPowerBonus",
     "armourBonus",
     "magicBonus",
+    "basePrice",
 }
 
 
@@ -107,6 +112,10 @@ def describe_item_entry(entry: dict[str, Any]) -> str:
             "weaponSpeed",
             "requiredLevel",
             "requiredSkillID",
+            "isWearable",
+            "appearanceID",
+            "wearableID",
+            "wearSlot",
             "prayerBonus",
             "weaponAimBonus",
             "weaponPowerBonus",
@@ -125,6 +134,8 @@ def describe_item_entry(entry: dict[str, Any]) -> str:
         field in entry for field in ("meleeDefense", "rangedDefense", "magicDefense")
     ):
         categories.append("defense")
+    if "basePrice" in entry:
+        categories.append("economy")
     if not categories:
         categories.append("other")
     return "/".join(categories)

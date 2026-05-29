@@ -2904,7 +2904,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Burnt Lobster", "Oops!", "", 1, 169, "items:169", false, false, 0, 4210752, false, false, true, 374));
 		items.add(new ItemDef("Lobster Pot", "Useful for catching lobsters", "", 20, 170, "items:170", false, false, 0, 0, false, false, true, 375));
 		items.add(new ItemDef("Net", "Useful for catching small fish", "", 5, 171, "items:171", false, false, 0, 0, false, false, true, 376));
-		items.add(new ItemDef("Fishing Rod", "Useful for catching sardine or herring", "", 5, 172, "items:172", false, false, 0, 0, false, false, true, 377));
+		items.add(new ItemDef("Fishing Rod", "Useful for catching sardine or herring", "", 5, 172, "items:172", false, true, 16, 0, false, false, true, 377));
 		items.add(new ItemDef("Fly Fishing Rod", "Useful for catching salmon or trout", "", 5, 173, "items:173", false, false, 0, 0, false, false, true, 378));
 		items.add(new ItemDef("Harpoon", "Useful for catching really big fish", "", 5, 174, "items:174", false, false, 0, 0, false, false, true, 379));
 		items.add(new ItemDef("Fishing Bait", "For use with a fishing rod", "", 3, 175, "items:175", true, false, 0, 0, false, false, false, 380));
@@ -4567,10 +4567,10 @@ public class EntityHandler {
 		items.add(new ItemDef("Orichalcum Mace", "A spiky mace", "", 300, 0, "items:0", false, true, 16, 0x5a3f7d, false, false, true, 2036));
 		items.add(new ItemDef("Orichalcum arrow heads", "Dangerous looking arrow heads - need shafts for flight", "", 36, 207, "items:207", true, false, 0, 0x5a3f7d, false, false, false, 2037));
 		items.add(new ItemDef("Orichalcum dart tips", "Dangerous looking dart tips - need feathers for flight", "", 36, 369, "items:369", true, false, 0, 0x5a3f7d, false, false, false, 2038));
-		items.add(new ItemDef("Tin Arrows", "Arrows with newly forged heads", "", 1, 11, "items:11", true, false, 0, 0xb7c9d9, false, false, false, 2039));
-		items.add(new ItemDef("Copper Arrows", "Arrows with newly forged heads", "", 3, 11, "items:11", true, false, 0, 0xc86a2b, false, false, false, 2040));
-		items.add(new ItemDef("Titan Steel Arrows", "Arrows with newly forged heads", "", 96, 11, "items:11", true, false, 0, 0x8ea6bb, false, false, false, 2041));
-		items.add(new ItemDef("Orichalcum Arrows", "Arrows with newly forged heads", "", 288, 11, "items:11", true, false, 0, 0x5a3f7d, false, false, false, 2042));
+		items.add(new ItemDef("Tin Arrows", "Arrows with newly forged heads", "", 1, 11, "items:11", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1000 : 0, 0xb7c9d9, false, false, false, 2039));
+		items.add(new ItemDef("Copper Arrows", "Arrows with newly forged heads", "", 3, 11, "items:11", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1000 : 0, 0xc86a2b, false, false, false, 2040));
+		items.add(new ItemDef("Titan Steel Arrows", "Arrows with newly forged heads", "", 96, 11, "items:11", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1000 : 0, 0x8ea6bb, false, false, false, 2041));
+		items.add(new ItemDef("Orichalcum Arrows", "Arrows with newly forged heads", "", 288, 11, "items:11", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1000 : 0, 0x5a3f7d, false, false, false, 2042));
 		items.add(new ItemDef("Tin Throwing Dart", "A deadly throwing dart", "", 1, 231, "items:231", true, true, 16, 0xb7c9d9, false, false, false, 2043));
 		items.add(new ItemDef("Copper Throwing Dart", "A deadly throwing dart", "", 3, 231, "items:231", true, true, 16, 0xc86a2b, false, false, false, 2044));
 		items.add(new ItemDef("Titan Steel Throwing Dart", "A deadly throwing dart", "", 96, 231, "items:231", true, true, 16, 0x8ea6bb, false, false, false, 2045));
@@ -8992,6 +8992,7 @@ public class EntityHandler {
 		loadNpcDefinitions4();
 		loadItemDefinitions();
 		applyMyWorldToolOverrides();
+		applyMyWorldEconomyOverrides();
 		loadTextureDefinitions();
 		loadAnimationDefinitions();
 		loadSpellDefinitions();
@@ -9036,6 +9037,28 @@ public class EntityHandler {
 		setCustomItemDefinition(itemId, new ItemDef(name, item.getDescription(), commandString(item),
 			item.basePrice, item.getSpriteID(), item.getSpriteLocation(), item.stackable, true, 16,
 			item.getPictureMask(), item.getBlueMask(), item.membersItem, item.untradeable, item.noteable, itemId));
+	}
+
+	private static void applyMyWorldEconomyOverrides() {
+		int[][] prices = new int[][]{
+			{12, 420}, {87, 180}, {88, 900}, {144, 40}, {156, 180},
+			{203, 1800}, {204, 5500}, {377, 40}, {405, 15000},
+			{428, 900}, {594, 40000}, {1258, 420}, {1259, 900},
+			{1260, 1800}, {1261, 5500}, {1262, 15000}, {1480, 40000},
+			{1987, 40}, {2001, 40}, {2012, 80}, {2023, 3200},
+			{2034, 9000}, {2047, 80}, {2048, 3200}, {2049, 9000},
+			{2215, 80}, {2216, 180}, {2217, 420}, {2218, 900},
+			{2219, 1800}, {2220, 3200}, {2221, 5500}, {2222, 9000},
+			{2223, 15000}, {2682, 80}, {2683, 180}, {2684, 420},
+			{2685, 900}, {2686, 1800}, {2687, 3200}, {2688, 5500},
+			{2689, 9000}, {2690, 15000}
+		};
+		for (int[] price : prices) {
+			ItemDef item = items.get(price[0]);
+			if (item != null && !isUnobtaniumPlaceholder(item)) {
+				item.basePrice = price[1];
+			}
+		}
 	}
 
 	private static void applyMyWorldToolOverrides() {

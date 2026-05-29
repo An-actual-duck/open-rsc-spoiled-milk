@@ -10,6 +10,7 @@ FISHING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/fis
 FLETCHING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/fletching/Fletching.java"
 ENTITY_HANDLER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.java"
 FORMULAE = ROOT / "server/src/com/openrsc/server/util/rsc/Formulae.java"
+CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 INV_USE_ON_ITEM = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/InvUseOnItem.java"
 GERRANT = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/portsarim/GerrantsFishingGear.java"
 FISHING_GUILD = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/hemenster/FishingGuildShop.java"
@@ -54,6 +55,7 @@ def require_rod_runtime() -> None:
     fishing_text = FISHING.read_text(encoding="utf-8")
     entity_text = ENTITY_HANDLER.read_text(encoding="utf-8")
     formulae_text = FORMULAE.read_text(encoding="utf-8")
+    client_entity_text = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
 
     require_snippets(FISHING, ROD_IDS, "Fishing rod ladder")
     require_snippets(FISHING, (
@@ -77,6 +79,9 @@ def require_rod_runtime() -> None:
             fail(f"Fishing rod is not configured as an equipable Fishing tool: {rod_id}")
         if rod_id not in formulae_text:
             fail(f"Fishing rod is missing from shared fishing tool IDs: {rod_id}")
+
+    if 'new ItemDef("Fishing Rod", "Useful for catching sardine or herring", "", 5, 172, "items:172", false, true, 16,' not in client_entity_text:
+        fail("Client baseline Fishing Rod must be wearable in the main-hand slot")
 
 
 def require_rod_crafting() -> None:

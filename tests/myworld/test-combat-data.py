@@ -150,11 +150,16 @@ def main() -> None:
         "magicDefense",
         "requiredLevel",
         "requiredSkillID",
+        "isWearable",
+        "appearanceID",
+        "wearableID",
+        "wearSlot",
         "prayerBonus",
         "weaponAimBonus",
         "weaponPowerBonus",
         "armourBonus",
         "magicBonus",
+        "basePrice",
     }
     item_string_fields = {"name", "description"}
     npc_fields = {

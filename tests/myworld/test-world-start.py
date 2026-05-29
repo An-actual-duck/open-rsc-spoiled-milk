@@ -65,7 +65,10 @@ def main() -> None:
         "Check your bank for your starting tools, runes, arrows, and coins.",
         "open the stats menu and click a skill",
         "github.com/An-actual-duck/open-rsc-spoiled-milk",
+        'MYWORLD_STARTER_BANK_CACHE_KEY = "myworld_starter_bank_v1"',
         "shouldUseMyWorldStarterLoadout",
+        "ensureMyWorldStarterLoadout",
+        "addMissingMyWorldStarterBankItem",
         "addMyWorldStarterLoadout",
         "ItemId.TIN_SHORT_SWORD.id()",
         "ItemId.TIN_SQUARE_SHIELD.id()",
@@ -92,7 +95,8 @@ def main() -> None:
         "ItemId.THROWING_KNIFE_MOULD.id()",
         "ItemId.ARROWHEAD_MOULD.id()",
         "ItemId.COINS.id(), 500",
-        "player.getBank().add(item, false)",
+        "player.getBank().countId(itemId)",
+        "player.getCache().store(MYWORLD_STARTER_BANK_CACHE_KEY, true)",
         "player.getConfig().WANT_MYWORLD",
         "player.getConfig().ARRIVE_LUMBRIDGE",
         "!playerInTutorialLanding",
@@ -102,6 +106,15 @@ def main() -> None:
 
     if "else if (!player.getConfig().USES_CLASSES)" not in action_sender_text:
         fail("MyWorld starter loadout should bypass the default configured starter items")
+
+    for removed in (
+        "ItemId.NET.id()",
+        "ItemId.FLY_FISHING_ROD.id()",
+        "ItemId.LOBSTER_POT.id()",
+        "ItemId.HARPOON.id()",
+    ):
+        if removed in action_sender_text:
+            fail(f"MyWorld starter bank should only include the standard fishing rod, not {removed}")
 
     print("PASS: MyWorld first-login spawn policy validated")
 

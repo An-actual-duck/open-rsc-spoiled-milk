@@ -27,8 +27,10 @@ public class Firemaking implements UseObjTrigger, UseInvTrigger {
 	/**
 	 * LOG IDs
 	 **/
-	private static int[] LOGS = {ItemId.LOGS.id(), ItemId.OAK_LOGS.id(), ItemId.WILLOW_LOGS.id(),
-			ItemId.MAPLE_LOGS.id(), ItemId.YEW_LOGS.id(), ItemId.MAGIC_LOGS.id()};
+	private static int[] LOGS = {ItemId.LOGS.id(), ItemId.PINE_LOGS.id(), ItemId.OAK_LOGS.id(),
+			ItemId.WILLOW_LOGS.id(), ItemId.PALM_LOGS.id(), ItemId.MAPLE_LOGS.id(),
+			ItemId.YEW_LOGS.id(), ItemId.EBONY_LOGS.id(), ItemId.MAGIC_LOGS.id(),
+			ItemId.BLOOD_LOGS.id()};
 
 	@Override
 	public boolean blockUseObj(Player player, GroundItem item, Item myItem) {
@@ -40,11 +42,15 @@ public class Firemaking implements UseObjTrigger, UseInvTrigger {
 		if (config().CUSTOM_FIREMAKING) {
 			switch (ItemId.getById(item.getID())) {
 				case LOGS:
+				case PINE_LOGS:
 				case OAK_LOGS:
 				case WILLOW_LOGS:
+				case PALM_LOGS:
 				case MAPLE_LOGS:
 				case YEW_LOGS:
+				case EBONY_LOGS:
 				case MAGIC_LOGS:
+				case BLOOD_LOGS:
 					handleCustomFiremaking(item, player);
 					break;
 				default:

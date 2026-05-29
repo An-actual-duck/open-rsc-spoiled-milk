@@ -410,91 +410,104 @@
       "name": "Iron Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 420
     },
     {
       "id": 87,
       "name": "Bronze Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 180
     },
     {
       "id": 88,
       "name": "Steel Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 900
     },
     {
       "id": 203,
       "name": "Mithril Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 1800
     },
     {
       "id": 204,
       "name": "Adamantite Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 5500
     },
     {
       "id": 405,
       "name": "Rune Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 15000
     },
     {
       "id": 428,
       "name": "Black Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 900
     },
     {
       "id": 594,
       "name": "Dragon Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 40000
     },
     {
       "id": 1480,
       "name": "Dragon Woodcutting Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 40000
     },
     {
       "id": 2001,
       "name": "Tin Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 40
     },
     {
       "id": 2012,
       "name": "Copper Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 80
     },
     {
       "id": 2023,
       "name": "Titan Steel Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 3200
     },
     {
       "id": 2034,
       "name": "Orichalcum Hatchet",
       "meleeOffense": 0,
       "weaponAimBonus": 0,
-      "weaponPowerBonus": 0
+      "weaponPowerBonus": 0,
+      "basePrice": 9000
     },
     {
       "id": 89,

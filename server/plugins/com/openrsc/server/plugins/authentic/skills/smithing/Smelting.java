@@ -32,7 +32,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 	public static final int FURNACE = SceneryId.FURNACE.id();
 	public static final int LAVA_FURNACE = SceneryId.LAVA_FORGE.id();
-	public static final int FURNACE_CATEGORY_BARS = ItemId.TIN_BAR.id();
+	public static final int FURNACE_CATEGORY_BARS = ItemId.BRONZE_BAR.id();
 	public static final int FURNACE_CATEGORY_RINGS = ItemId.GOLD_RING.id();
 	public static final int FURNACE_CATEGORY_NECKLACES = ItemId.GOLD_NECKLACE.id();
 	public static final int FURNACE_CATEGORY_AMULETS = ItemId.UNSTRUNG_GOLD_AMULET.id();
@@ -106,6 +106,15 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 				} else {
 					player.message("you heat the steel bar");
 				}
+				return;
+			}
+			SmeltRecipe directRecipe = getDirectOreRecipe(item.getCatalogId());
+			if (directRecipe != null) {
+				int repeat = 1;
+				if (config().BATCH_PROGRESSION) {
+					repeat = maxDirectSmelts(player, directRecipe);
+				}
+				makeSmeltingProduction(player, directRecipe, repeat);
 				return;
 			}
 			if (DataConversions.inArray(NORMAL_SMELTING_ITEMS, item.getCatalogId())) {
@@ -433,6 +442,42 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		return null;
 	}
 
+	private static SmeltRecipe getDirectOreRecipe(int itemId) {
+		if (itemId == ItemId.TIN_ORE.id()) {
+			return getRecipe(ItemId.TIN_BAR.id());
+		}
+		if (itemId == ItemId.COPPER_ORE.id()) {
+			return getRecipe(ItemId.COPPER_BAR.id());
+		}
+		if (itemId == ItemId.IRON_ORE.id()) {
+			return getRecipe(ItemId.IRON_BAR.id());
+		}
+		if (itemId == ItemId.SILVER.id()) {
+			return getRecipe(ItemId.SILVER_BAR.id());
+		}
+		if (itemId == ItemId.GOLD.id()) {
+			return getRecipe(ItemId.GOLD_BAR.id());
+		}
+		if (itemId == ItemId.MITHRIL_ORE.id()) {
+			return getRecipe(ItemId.MITHRIL_BAR.id());
+		}
+		if (itemId == ItemId.ADAMANTITE_ORE.id()) {
+			return getRecipe(ItemId.ADAMANTITE_BAR.id());
+		}
+		if (itemId == ItemId.RUNITE_ORE.id()) {
+			return getRecipe(ItemId.RUNITE_BAR.id());
+		}
+		return null;
+	}
+
+	private static int maxDirectSmelts(Player player, SmeltRecipe recipe) {
+		int max = Integer.MAX_VALUE;
+		for (Ingredient ingredient : recipe.ingredients) {
+			max = Math.min(max, ingredient.availableCount(player) / ingredient.amount);
+		}
+		return Math.max(1, max == Integer.MAX_VALUE ? 1 : max);
+	}
+
 	private static Ingredient ingredient(int itemId, int amount) {
 		return new Ingredient(itemId, -1, amount);
 	}
@@ -566,6 +611,14 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 		private static int count(Player player, int itemId) {
 			return player.getCarriedItems().getInventory().countId(itemId, Optional.of(false));
+		}
+
+		private int availableCount(Player player) {
+			int available = count(player, itemId);
+			if (fallbackItemId > -1) {
+				available = Math.max(available, count(player, fallbackItemId));
+			}
+			return available;
 		}
 	}
 }

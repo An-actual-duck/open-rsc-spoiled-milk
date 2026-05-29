@@ -406,6 +406,7 @@ public final class DoSkillInterface {
 
 	private String furnaceCategoryName(int itemId) {
 		switch (itemId) {
+			case 169:
 			case 1955:
 				return "Bars";
 			case 283:

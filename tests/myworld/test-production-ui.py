@@ -29,6 +29,9 @@ FLETCHING = (
 SMITHING = (
     ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "skills" / "smithing" / "Smithing.java"
 )
+DO_SKILL_INTERFACE = (
+    ROOT / "Client_Base" / "src" / "com" / "openrsc" / "interfaces" / "misc" / "DoSkillInterface.java"
+)
 
 
 def fail(message: str) -> NoReturn:
@@ -50,6 +53,7 @@ def main() -> None:
     crafting_text = CRAFTING.read_text(encoding="utf-8")
     fletching_text = FLETCHING.read_text(encoding="utf-8")
     smithing_text = SMITHING.read_text(encoding="utf-8")
+    do_skill_interface_text = DO_SKILL_INTERFACE.read_text(encoding="utf-8")
 
     require(
         session_text,
@@ -160,6 +164,11 @@ def main() -> None:
     )
     if "flags |= 1;" in actionsender_text or "flags |= 2;" in actionsender_text:
         fail("ActionSender should not hand-pack production flags anymore")
+    require(
+        do_skill_interface_text,
+        "case 169:\n\t\t\tcase 1955:\n\t\t\t\treturn \"Bars\";",
+        "Client furnace category picker should label both legacy and MyWorld bar category icons as Bars",
+    )
 
     print("PASS: Production UI structure validated")
 

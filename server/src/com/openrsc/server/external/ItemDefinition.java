@@ -367,6 +367,9 @@ public final class ItemDefinition extends EntityDef {
 	public final int getDefaultPrice() {
 		return defaultPrice;
 	}
+	public void setDefaultPrice(int defaultPrice) {
+		this.defaultPrice = defaultPrice;
+	}
 
 	/**
 	 * Returns the current ID

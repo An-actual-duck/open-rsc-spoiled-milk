@@ -8,6 +8,14 @@
 		</FiremakingDef>
 	</entry>
 	<entry>
+		<int>2111</int>
+		<FiremakingDef>
+			<level>8</level>
+			<exp>200</exp>
+			<length>100</length>
+		</FiremakingDef>
+	</entry>
+	<entry>
 		<int>632</int>
 		<FiremakingDef>
 			<level>15</level>
@@ -18,15 +26,23 @@
 	<entry>
 		<int>633</int>
 		<FiremakingDef>
-			<level>30</level>
+			<level>22</level>
 			<exp>360</exp>
 			<length>130</length>
 		</FiremakingDef>
 	</entry>
 	<entry>
+		<int>2112</int>
+		<FiremakingDef>
+			<level>30</level>
+			<exp>450</exp>
+			<length>140</length>
+		</FiremakingDef>
+	</entry>
+	<entry>
 		<int>634</int>
 		<FiremakingDef>
-			<level>45</level>
+			<level>38</level>
 			<exp>540</exp>
 			<length>150</length>
 		</FiremakingDef>
@@ -34,17 +50,33 @@
 	<entry>
 		<int>635</int>
 		<FiremakingDef>
-			<level>60</level>
+			<level>46</level>
 			<exp>810</exp>
 			<length>170</length>
 		</FiremakingDef>
 	</entry>
 	<entry>
+		<int>2113</int>
+		<FiremakingDef>
+			<level>54</level>
+			<exp>1013</exp>
+			<length>180</length>
+		</FiremakingDef>
+	</entry>
+	<entry>
 		<int>636</int>
 		<FiremakingDef>
-			<level>75</level>
+			<level>62</level>
 			<exp>1216</exp>
 			<length>190</length>
+		</FiremakingDef>
+	</entry>
+	<entry>
+		<int>2114</int>
+		<FiremakingDef>
+			<level>70</level>
+			<exp>1459</exp>
+			<length>200</length>
 		</FiremakingDef>
 	</entry>
 </map>
