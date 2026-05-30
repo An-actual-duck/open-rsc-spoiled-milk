@@ -14551,4 +14551,15 @@
     <groundItemVar>0</groundItemVar>
     <objectModel>obelisk</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Inert obelisk</name>
+    <description>A dormant stone obelisk</description>
+    <command1>WalkTo</command1>
+    <command2>Examine</command2>
+    <type>1</type>
+    <width>1</width>
+    <height>1</height>
+    <groundItemVar>0</groundItemVar>
+    <objectModel>obelisk</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>

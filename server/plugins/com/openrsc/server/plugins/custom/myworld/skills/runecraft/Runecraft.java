@@ -50,11 +50,12 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 
 	@Override
 	public boolean blockOpLoc(Player player, GameObject obj, String command) {
-		return false;
+		return getAltarDef(player, obj) != null && hasRuneStone(player);
 	}
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
+		craftRunesAtAltar(player, obj);
 	}
 
 	@Override
@@ -68,6 +69,10 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 
+		craftRunesAtAltar(player, obj);
+	}
+
+	private void craftRunesAtAltar(Player player, GameObject obj) {
 		final ObjectRunecraftDef def = getAltarDef(player, obj);
 		if (def == null) {
 			return;
@@ -101,6 +106,10 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 		if (successCount > 0) {
 			player.incExp(Skill.RUNECRAFT.id(), def.getExp() * successCount, true);
 		}
+	}
+
+	private boolean hasRuneStone(Player player) {
+		return player.getCarriedItems().getInventory().countId(ItemId.RUNE_STONE.id(), Optional.of(false)) > 0;
 	}
 
 	public int getRuneMultiplier(Player player, int runeId) {

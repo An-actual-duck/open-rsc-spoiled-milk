@@ -74,6 +74,16 @@ def main() -> None:
         "player.incExp(Skill.RUNECRAFT.id(), def.getExp() * successCount, true);",
         "Runecrafting altar XP should still be granted for the full processed stack",
     )
+    require(
+        runecraft_text,
+        "return getAltarDef(player, obj) != null && hasRuneStone(player);",
+        "Runecrafting altar clicks should be intercepted when the player has stone",
+    )
+    require(
+        runecraft_text,
+        "craftRunesAtAltar(player, obj);",
+        "Runecrafting direct altar clicks and item-on-altar use should share the same crafting logic",
+    )
 
     for snippet in (
         "smithing.batchSmithing(player, bar, def);",

@@ -44,8 +44,8 @@ def main() -> None:
         "currentNpcDrops.addItemDrop(ItemId.TIN_SPEAR.id(), 1, 12);",
         "currentNpcDrops.addItemDrop(ItemId.TIN_KITE_SHIELD.id(), 1, 3);",
         "currentNpcDrops.addItemDrop(ItemId.COPPER_BOLTS.id(), 8, 3);",
-        "currentNpcDrops.addItemDrop(ItemId.STEEL_SHORT_SWORD.id(), 1, 4);",
-        "currentNpcDrops.addItemDrop(ItemId.LARGE_STEEL_HELMET.id(), 1, 2);",
+        "currentNpcDrops.addItemDrop(ItemId.BLACK_SHORT_SWORD.id(), 1, 2);",
+        "currentNpcDrops.addItemDrop(ItemId.LARGE_BLACK_HELMET.id(), 1, 2);",
         "currentNpcDrops.addItemDrop(ItemId.LONGBOW.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.IRON_SPEAR.id(), 1, 3);",
         "currentNpcDrops.addItemDrop(ItemId.STEEL_AXE.id(), 1, 6);",
@@ -88,16 +88,19 @@ def main() -> None:
         "currentNpcDrops.addItemDrop(ItemId.LARGE_WHITE_HELMET.id(), 1, 2);",
         "currentNpcDrops.addItemDrop(ItemId.WHITE_KITE_SHIELD.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.WHITE_PLATE_MAIL_BODY.id(), 1, 1);",
+        "currentNpcDrops.addItemDrop(ItemId.WHITE_GAUNTLETS.id(), 1, 1);",
+        "currentNpcDrops.addItemDrop(ItemId.WHITE_GREAVES.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.IRON_ARROWS.id(), 8, 4);",
         "currentNpcDrops.addItemDrop(ItemId.LARGE_BLACK_HELMET.id(), 1, 3);",
         "currentNpcDrops.addItemDrop(ItemId.BLACK_MACE.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.BLACK_DAGGER.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.BLACK_SHORT_SWORD.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.BLACK_LONG_SWORD.id(), 1, 1);",
-        "currentNpcDrops.addItemDrop(ItemId.BLACK_AXE.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.BLACK_KITE_SHIELD.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.BLACK_PLATE_MAIL_BODY.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.BLACK_PLATE_MAIL_LEGS.id(), 1, 1);",
+        "currentNpcDrops.addItemDrop(ItemId.BLACK_GAUNTLETS.id(), 1, 1);",
+        "currentNpcDrops.addItemDrop(ItemId.BLACK_GREAVES.id(), 1, 1);",
     )
     for snippet in required_snippets:
         require(text, snippet, "NpcDrops.java")
@@ -106,13 +109,14 @@ def main() -> None:
         "currentNpcDrops.addItemDrop(ItemId.LEATHER_GLOVES.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.FUR.id(), 1, 1);",
         "currentNpcDrops.addItemDrop(ItemId.GREY_WOLF_FUR.id(), 1, 0);",
+        "currentNpcDrops.addItemDrop(ItemId.BLACK_AXE.id(), 1, 1);",
         "removeLegacyItemFromDropTables(ItemId.LEATHER_GLOVES.id());",
         "removeLegacyItemFromDropTables(ItemId.FUR.id());",
         "removeLegacyItemFromDropTables(ItemId.GREY_WOLF_FUR.id());",
     )
-    for snippet in retired_snippets[:3]:
+    for snippet in retired_snippets[:4]:
         require_absent(text, snippet, "NpcDrops.java")
-    for snippet in retired_snippets[3:]:
+    for snippet in retired_snippets[4:]:
         require(text, snippet, "NpcDrops.java")
 
     require(text, "if (!dropTable.hasItemDrop(itemId, 1, 0, false))", "NpcDrops.java")

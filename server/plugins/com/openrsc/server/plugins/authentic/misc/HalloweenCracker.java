@@ -64,22 +64,21 @@ public class HalloweenCracker implements UsePlayerTrigger, UseNpcTrigger {
 		ItemId.WORM_CRUNCHIES.id(),
 	};
 
-	private static final int[] blackPrizeWeights = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+	private static final int[] blackPrizeWeights = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 	private static final int[] blackPrizeIds = {
 		ItemId.BLACK_PLATE_MAIL_BODY.id(),
 		ItemId.LARGE_BLACK_HELMET.id(),
 		ItemId.BLACK_PLATE_MAIL_LEGS.id(),
-		ItemId.BLACK_PLATE_MAIL_TOP.id(),
 		ItemId.BLACK_DAGGER.id(),
 		ItemId.BLACK_SHORT_SWORD.id(),
 		ItemId.BLACK_LONG_SWORD.id(),
 		ItemId.BLACK_2_HANDED_SWORD.id(),
 		ItemId.BLACK_SCIMITAR.id(),
-		ItemId.BLACK_AXE.id(),
 		ItemId.BLACK_BATTLE_AXE.id(),
 		ItemId.BLACK_MACE.id(),
 		ItemId.BLACK_KITE_SHIELD.id(),
-		ItemId.BLACK_THROWING_KNIFE.id(),
+		ItemId.BLACK_GAUNTLETS.id(),
+		ItemId.BLACK_GREAVES.id(),
 	};
 
 	private static final int[] runePrizeWeights = {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 6, 6, 2};

@@ -893,7 +893,8 @@ public class Equipment {
 				continue;
 			}
 			boolean conflictsBySlot = requestedDef.getWieldPosition() == item.getDef(player.getWorld()).getWieldPosition();
-			boolean conflictsByWearableType = request.item.wieldingAffectsItem(player.getWorld(), item);
+			boolean conflictsByWearableType = request.item.wieldingAffectsItem(player.getWorld(), item)
+				&& !allowsHandFootArmorOverlap(request.item, item);
 			boolean conflictsByBowOffhand = bowConflictsWithOffhand(request.item, item);
 			if (conflictsBySlot || conflictsByWearableType || conflictsByBowOffhand) {
 				if (request.item.getDef(player.getWorld()).isStackable()) {
@@ -917,7 +918,8 @@ public class Equipment {
 				}
 				boolean conflictsBySlot = requestedDef != null
 					&& requestedDef.getWieldPosition() == item.getDef(player.getWorld()).getWieldPosition();
-				boolean conflictsByWearableType = request.item.wieldingAffectsItem(player.getWorld(), item);
+				boolean conflictsByWearableType = request.item.wieldingAffectsItem(player.getWorld(), item)
+					&& !allowsHandFootArmorOverlap(request.item, item);
 				boolean conflictsByBowOffhand = bowConflictsWithOffhand(request.item, item);
 				if (conflictsBySlot || conflictsByWearableType || conflictsByBowOffhand) {
 					debugJewelryEquip("legacy_remove_conflict", request.item,
@@ -2787,6 +2789,32 @@ public class Equipment {
 				&& equippedDef.getWieldPosition() == EquipmentSlot.SLOT_OFFHAND.getIndex())
 			|| (requestedDef.getWieldPosition() == EquipmentSlot.SLOT_OFFHAND.getIndex()
 				&& RangeUtils.isBow(equippedItem.getCatalogId()));
+	}
+
+	private boolean allowsHandFootArmorOverlap(Item requestedItem, Item equippedItem) {
+		ItemDefinition requestedDef = requestedItem.getDef(player.getWorld());
+		ItemDefinition equippedDef = equippedItem.getDef(player.getWorld());
+		if (requestedDef == null || equippedDef == null) {
+			return false;
+		}
+		EquipmentSlot requestedSlot = EquipmentSlot.get(requestedDef.getWieldPosition());
+		EquipmentSlot equippedSlot = EquipmentSlot.get(equippedDef.getWieldPosition());
+		if (requestedSlot == null || equippedSlot == null) {
+			return false;
+		}
+		return isHandFootArmorSlot(requestedSlot) && isBodyLegArmorSlot(equippedSlot)
+			|| isHandFootArmorSlot(equippedSlot) && isBodyLegArmorSlot(requestedSlot);
+	}
+
+	private boolean isHandFootArmorSlot(EquipmentSlot slot) {
+		return slot == EquipmentSlot.SLOT_GLOVES || slot == EquipmentSlot.SLOT_BOOTS;
+	}
+
+	private boolean isBodyLegArmorSlot(EquipmentSlot slot) {
+		return slot == EquipmentSlot.SLOT_CHAIN_BODY
+			|| slot == EquipmentSlot.SLOT_PLATE_BODY
+			|| slot == EquipmentSlot.SLOT_PLATE_LEGS
+			|| slot == EquipmentSlot.SLOT_SKIRT;
 	}
 
 	private boolean isRangedArmor(Item item) {

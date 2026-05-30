@@ -39,25 +39,59 @@ def require_valid_drop_budget(drops: str, table_name: str) -> None:
     require(total <= 128, f"{table_name} exceeds the 128 drop-weight budget: {total}")
 
 
+def drop_table_section(drops: str, table_name: str) -> str:
+    start = drops.find(f'new DropTable("{table_name}")')
+    require(start >= 0, f"Missing drop table: {table_name}")
+    end = drops.find("addEmptyDrop", start)
+    require(end >= 0, f"Missing empty-drop budget terminator: {table_name}")
+    return drops[start:end]
+
+
 def main() -> None:
     npc_ids = (SERVER / "src/com/openrsc/server/constants/NpcId.java").read_text(encoding="utf-8")
     drops = (SERVER / "src/com/openrsc/server/constants/NpcDrops.java").read_text(encoding="utf-8")
+    cracker = (SERVER / "plugins/com/openrsc/server/plugins/authentic/misc/HalloweenCracker.java").read_text(encoding="utf-8")
     populator = (SERVER / "src/com/openrsc/server/database/WorldPopulator.java").read_text(encoding="utf-8")
     audit = (ROOT / "tools/myworld/audit-npc-clusters.py").read_text(encoding="utf-8")
 
     require("GREY_KNIGHT(836)" in npc_ids, "Grey Knight NPC constant is missing")
     for snippet in (
+        'new DropTable("Black Knight (66, 189) Jailer (265) Lord Darquarius (266) Renegade Knight (277)")',
+        "ItemId.BLACK_2_HANDED_SWORD.id()",
+        "ItemId.BLACK_SCIMITAR.id()",
+        "ItemId.BLACK_BATTLE_AXE.id()",
+        "ItemId.BLACK_GAUNTLETS.id()",
+        "ItemId.BLACK_GREAVES.id()",
         "ItemId.WHITE_2_HANDED_SWORD.id()",
         "ItemId.WHITE_SCIMITAR.id()",
         "ItemId.WHITE_BATTLE_AXE.id()",
+        "ItemId.WHITE_GAUNTLETS.id()",
+        "ItemId.WHITE_GREAVES.id()",
         'new DropTable("Grey Knight (836)")',
         "ItemId.GREY_LONG_SWORD.id()",
         "ItemId.GREY_KITE_SHIELD.id()",
         "ItemId.GREY_PLATE_MAIL_BODY.id()",
         "ItemId.GREY_PLATE_MAIL_LEGS.id()",
+        "ItemId.GREY_GAUNTLETS.id()",
+        "ItemId.GREY_GREAVES.id()",
         "NpcId.GREY_KNIGHT.id()",
     ):
         require(snippet in drops, f"Knight drops missing: {snippet}")
+    for table_name, forbidden in (
+        ("Black Knight (66, 189) Jailer (265) Lord Darquarius (266) Renegade Knight (277)", ("BLACK_CHAIN_MAIL", "MEDIUM_BLACK_HELMET", "BLACK_PLATE_MAIL_TOP", "BLACK_PLATED_SKIRT", "BLACK_AXE", "BLACK_THROWING_KNIFE")),
+        ("White Knight (102)", ("WHITE_CHAIN_MAIL", "MEDIUM_WHITE_HELMET", "WHITE_PLATE_MAIL_TOP", "WHITE_PLATED_SKIRT")),
+        ("Grey Knight (836)", ("GREY_CHAIN_MAIL", "MEDIUM_GREY_HELMET", "GREY_PLATE_MAIL_TOP", "GREY_PLATED_SKIRT")),
+    ):
+        section = drop_table_section(drops, table_name)
+        for item_name in forbidden:
+            require(item_name not in section, f"{table_name} should not drop retired/hidden equipment: {item_name}")
+    require("ItemId.BLACK_AXE.id()" not in drop_table_section(drops, "Dark Warrior (199)"),
+            "Dark Warriors should not drop the hidden black hatchet")
+    for hidden in ("BLACK_PLATE_MAIL_TOP", "BLACK_AXE", "BLACK_THROWING_KNIFE"):
+        require(hidden not in cracker, f"Halloween cracker should not award hidden black equipment: {hidden}")
+    require("ItemId.BLACK_GAUNTLETS.id()" in cracker and "ItemId.BLACK_GREAVES.id()" in cracker,
+            "Halloween cracker black prize set should use the active hand/foot armour")
+    require_valid_drop_budget(drops, "Black Knight (66, 189) Jailer (265) Lord Darquarius (266) Renegade Knight (277)")
     require_valid_drop_budget(drops, "White Knight (102)")
     require_valid_drop_budget(drops, "Grey Knight (836)")
 

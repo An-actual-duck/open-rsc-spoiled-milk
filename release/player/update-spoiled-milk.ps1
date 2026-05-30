@@ -12,7 +12,13 @@ if (-not $releases -or $releases.Count -lt 1) {
     throw "Unable to determine the latest release from GitHub."
 }
 
-$latest = $releases[0]
+$latest = $releases |
+    Where-Object { $_.tag_name -match '^v\d+\.\d+\.\d+-alpha\.(\d+)$' } |
+    Sort-Object { [int]([regex]::Match($_.tag_name, '-alpha\.(\d+)$').Groups[1].Value) } -Descending |
+    Select-Object -First 1
+if (-not $latest) {
+    throw "Unable to determine the latest alpha release from GitHub."
+}
 $latestVersion = $latest.tag_name
 $currentAlpha = 0
 $latestAlpha = 0

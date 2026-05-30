@@ -41,7 +41,25 @@ public final class WaynesChains extends AbstractShop {
 
 	public Shop getShop(World world) {
 		if(shop == null) {
-			shop = new Shop(false, 25000, 100, 65, 1);
+			shop = new Shop(false, 25000, 100, 65, 1,
+				new Item(ItemId.TIN_PLATE_MAIL_BODY.id(), 1),
+				new Item(ItemId.TIN_PLATE_MAIL_LEGS.id(), 1),
+				new Item(ItemId.TIN_LARGE_HELMET.id(), 1),
+				new Item(ItemId.COPPER_PLATE_MAIL_BODY.id(), 1),
+				new Item(ItemId.COPPER_PLATE_MAIL_LEGS.id(), 1),
+				new Item(ItemId.COPPER_LARGE_HELMET.id(), 1),
+				new Item(ItemId.BRONZE_PLATE_MAIL_BODY.id(), 1),
+				new Item(ItemId.BRONZE_PLATE_MAIL_LEGS.id(), 1),
+				new Item(ItemId.LARGE_BRONZE_HELMET.id(), 1),
+				new Item(ItemId.IRON_PLATE_MAIL_BODY.id(), 1),
+				new Item(ItemId.IRON_PLATE_MAIL_LEGS.id(), 1),
+				new Item(ItemId.LARGE_IRON_HELMET.id(), 1),
+				new Item(ItemId.STEEL_PLATE_MAIL_BODY.id(), 1),
+				new Item(ItemId.STEEL_PLATE_MAIL_LEGS.id(), 1),
+				new Item(ItemId.LARGE_STEEL_HELMET.id(), 1),
+				new Item(ItemId.MITHRIL_PLATE_MAIL_BODY.id(), 1),
+				new Item(ItemId.MITHRIL_PLATE_MAIL_LEGS.id(), 1),
+				new Item(ItemId.LARGE_MITHRIL_HELMET.id(), 1));
 		}
 
 		return shop;

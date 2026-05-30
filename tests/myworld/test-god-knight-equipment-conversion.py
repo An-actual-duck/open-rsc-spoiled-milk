@@ -53,13 +53,50 @@ def main() -> None:
         require(grey in equipment, f"Missing Guthix product mapping for {source}")
 
     for source, requirement in (
+        ("case 63: // STEEL_DAGGER", "return 100;"),
+        ("case 72: // STEEL_LONG_SWORD", "return 200;"),
+        ("case 78: // STEEL_2_HANDED_SWORD", "return 300;"),
         ("case 698: // STEEL_GAUNTLETS", "return 100;"),
         ("case 1988: // STEEL_GREAVES", "return 200;"),
-        ("case 105: // MEDIUM_STEEL_HELMET", "return 300;"),
+        ("case 109: // LARGE_STEEL_HELMET", "return 300;"),
+        ("case 129: // STEEL_KITE_SHIELD", "return 300;"),
         ("case 121: // STEEL_PLATE_MAIL_LEGS", "return 400;"),
         ("case 118: // STEEL_PLATE_MAIL_BODY", "return 500;"),
     ):
         require(source in equipment and requirement in equipment, f"Missing devotion requirement for {source}")
+
+    for retired_source in (
+        "case 105: // MEDIUM_STEEL_HELMET",
+        "case 114: // STEEL_CHAIN_MAIL_BODY",
+        "case 1532: // STEEL_CHAIN_MAIL_TOP",
+        "case 1420: // STEEL_CHAIN_MAIL_LEGS",
+        "case 125: // STEEL_SQUARE_SHIELD",
+        "case 309: // STEEL_PLATE_MAIL_TOP",
+        "case 225: // STEEL_PLATED_SKIRT",
+    ):
+        require(retired_source not in equipment, f"Retired god knight source should not be convertible: {retired_source}")
+
+    for active_product in (
+        "ItemId.BLACK_2_HANDED_SWORD.id()",
+        "ItemId.WHITE_2_HANDED_SWORD.id()",
+        "ItemId.GREY_2_HANDED_SWORD.id()",
+        "ItemId.BLACK_GAUNTLETS.id()",
+        "ItemId.WHITE_GAUNTLETS.id()",
+        "ItemId.GREY_GAUNTLETS.id()",
+        "ItemId.BLACK_GREAVES.id()",
+        "ItemId.WHITE_GREAVES.id()",
+        "ItemId.GREY_GREAVES.id()",
+    ):
+        require(active_product in equipment, f"Active god knight product missing: {active_product}")
+
+    for retired_product in (
+        "MEDIUM_BLACK_HELMET", "MEDIUM_WHITE_HELMET", "MEDIUM_GREY_HELMET",
+        "BLACK_CHAIN_MAIL", "WHITE_CHAIN_MAIL", "GREY_CHAIN_MAIL",
+        "BLACK_SQUARE_SHIELD", "WHITE_SQUARE_SHIELD", "GREY_SQUARE_SHIELD",
+        "BLACK_PLATE_MAIL_TOP", "WHITE_PLATE_MAIL_TOP", "GREY_PLATE_MAIL_TOP",
+        "BLACK_PLATED_SKIRT", "WHITE_PLATED_SKIRT", "GREY_PLATED_SKIRT",
+    ):
+        require(retired_product not in equipment, f"Retired god knight product should not be altar-made: {retired_product}")
 
     require("Devotion.getDevotionLevel(player, godLine) < devotionRequirement" in equipment,
             "steel armour conversion should be gated by devotion")

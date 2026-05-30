@@ -503,6 +503,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 5);
 		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 6);
 		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 7);
+		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 21);
 		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 8);
 		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 9);
 		if (player.getConfig().CAN_FEATURE_MEMBS) {
@@ -514,6 +515,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		addModernArmorRecipe(recipes, player, item.getCatalogId(), 3);
 		addModernArmorRecipe(recipes, player, item.getCatalogId(), 4);
 		addModernArmorRecipe(recipes, player, item.getCatalogId(), 5);
+		addModernArmorRecipe(recipes, player, item.getCatalogId(), 6);
 		addModernSpecialRecipe(recipes, player, item.getCatalogId());
 
 		if (recipes.isEmpty()) {
@@ -566,7 +568,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		if (!isModernMetalBar(barId)) {
 			return null;
 		}
-		int[] weaponIds = {0, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+		int[] weaponIds = {0, 2, 3, 4, 5, 6, 7, 21, 8, 9, 10};
 		for (int toMake : weaponIds) {
 			if (toMake == 10 && !player.getConfig().CAN_FEATURE_MEMBS) {
 				continue;
@@ -576,7 +578,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return def;
 			}
 		}
-		for (int option = 0; option <= 5; option++) {
+		for (int option = 0; option <= 6; option++) {
 			ItemSmithingDef def = getModernArmorRecipe(barId, option);
 			if (def != null && def.getItemID() == itemId) {
 				return def;
@@ -721,11 +723,16 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				def.level = baseLevel + 6;
 				def.itemID = getModernBodyId(barId);
 				break;
+			case 6:
+				def.bars = 3;
+				def.level = baseLevel + 4;
+				def.itemID = getModernPaladinShieldId(barId);
+				break;
 			default:
 				return null;
 		}
 
-		return def.itemID > 0 ? def : null;
+		return def.itemID >= 0 ? def : null;
 	}
 
 	private int secondMenu(Item item, Player player, int firstType) {
@@ -902,8 +909,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 
 	private int shieldChoice(Player player) {
 		player.message("What sort of shield do you want to make?");
-		int option = multi(player, "Kite Shield (3 bars)");
-		if (option == 0) return 13; // Kite Shield
+		int option = multi(player, "Paladin Shield (3 bars)");
+		if (option == 0) return 13; // Paladin Shield
 		return -1;
 	}
 
@@ -1162,6 +1169,33 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		}
 	}
 
+	private int getModernPaladinShieldId(int barId) {
+		switch (ItemId.getById(barId)) {
+			case TIN_BAR:
+				return ItemId.TIN_KITE_SHIELD.id();
+			case COPPER_BAR:
+				return ItemId.COPPER_KITE_SHIELD.id();
+			case BRONZE_BAR:
+				return ItemId.BRONZE_KITE_SHIELD.id();
+			case IRON_BAR:
+				return ItemId.IRON_KITE_SHIELD.id();
+			case STEEL_BAR:
+				return ItemId.STEEL_KITE_SHIELD.id();
+			case MITHRIL_BAR:
+				return ItemId.MITHRIL_KITE_SHIELD.id();
+			case TITAN_STEEL_BAR:
+				return ItemId.TITAN_STEEL_KITE_SHIELD.id();
+			case ADAMANTITE_BAR:
+				return ItemId.ADAMANTITE_KITE_SHIELD.id();
+			case ORICHALCUM_BAR:
+				return ItemId.ORICHALCUM_KITE_SHIELD.id();
+			case RUNITE_BAR:
+				return ItemId.RUNE_KITE_SHIELD.id();
+			default:
+				return -1;
+		}
+	}
+
 	private int getModernLegsId(int barId) {
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
@@ -1291,7 +1325,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return null;
 		}
 
-		return def.itemID > 0 ? def : null;
+		return def.itemID >= 0 ? def : null;
 	}
 
 	private ItemSmithingDef getModernSpecialRecipe(Player player, int barId) {

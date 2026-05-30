@@ -43,9 +43,9 @@ public final class GodKnightEquipment implements UseLocTrigger {
 			return;
 		}
 
-		final int devotionRequirement = getArmorDevotionRequirement(item.getCatalogId());
+		final int devotionRequirement = getDevotionRequirement(item.getCatalogId());
 		if (devotionRequirement > 0 && Devotion.getDevotionLevel(player, godLine) < devotionRequirement) {
-			player.message("You need " + devotionRequirement + " devotion to " + formatGodLine(godLine) + " to bless that armour.");
+			player.message("You need " + devotionRequirement + " devotion to " + formatGodLine(godLine) + " to bless that equipment.");
 			return;
 		}
 
@@ -56,7 +56,7 @@ public final class GodKnightEquipment implements UseLocTrigger {
 		give(player, productId, 1);
 		player.message("The altar blesses the steel equipment.");
 		if (devotionRequirement > 0) {
-			final int prayerXp = getSteelArmorSmithingXp(player, item.getCatalogId());
+			final int prayerXp = getSteelSmithingXp(player, item.getCatalogId());
 			if (prayerXp > 0) {
 				player.incExp(Skill.PRAYER.id(), prayerXp, true);
 			}
@@ -65,51 +65,63 @@ public final class GodKnightEquipment implements UseLocTrigger {
 		}
 	}
 
-	private int getArmorDevotionRequirement(final int itemId) {
+	private int getDevotionRequirement(final int itemId) {
 		switch (itemId) {
+			case 63: // STEEL_DAGGER
+			case 67: // STEEL_SHORT_SWORD
+			case 95: // STEEL_MACE
+				return 100;
+			case 72: // STEEL_LONG_SWORD
+			case 84: // STEEL_SCIMITAR
+				return 200;
+			case 78: // STEEL_2_HANDED_SWORD
+			case 90: // STEEL_BATTLE_AXE
+			case 129: // STEEL_KITE_SHIELD
+				return 300;
 			case 698: // STEEL_GAUNTLETS
 				return 100;
 			case 1988: // STEEL_GREAVES
 				return 200;
-			case 105: // MEDIUM_STEEL_HELMET
 			case 109: // LARGE_STEEL_HELMET
 				return 300;
 			case 121: // STEEL_PLATE_MAIL_LEGS
-			case 225: // STEEL_PLATED_SKIRT
-			case 1420: // STEEL_CHAIN_MAIL_LEGS
 				return 400;
-			case 114: // STEEL_CHAIN_MAIL_BODY
-			case 1532: // STEEL_CHAIN_MAIL_TOP
 			case 118: // STEEL_PLATE_MAIL_BODY
-			case 309: // STEEL_PLATE_MAIL_TOP
 				return 500;
 			default:
 				return 0;
 		}
 	}
 
-	private int getSteelArmorSmithingXp(final Player player, final int itemId) {
+	private int getSteelSmithingXp(final Player player, final int itemId) {
 		final ItemSmithingDef def = player.getWorld().getServer().getEntityHandler().getSmithingDefbyID(itemId);
 		if (def != null) {
-			return def.getRequiredBars() * 100;
+			return def.getRequiredBars() * 150;
 		}
 
+		final int barCost = getModernSteelBarCost(itemId);
+		return barCost > 0 ? barCost * 150 : 0;
+	}
+
+	private int getModernSteelBarCost(final int itemId) {
 		switch (itemId) {
-			case 105: // MEDIUM_STEEL_HELMET
-				return 100;
+			case 63: // STEEL_DAGGER
+			case 67: // STEEL_SHORT_SWORD
+			case 95: // STEEL_MACE
+				return 1;
+			case 72: // STEEL_LONG_SWORD
+			case 84: // STEEL_SCIMITAR
 			case 698: // STEEL_GAUNTLETS
 			case 1988: // STEEL_GREAVES
 			case 109: // LARGE_STEEL_HELMET
-			case 1420: // STEEL_CHAIN_MAIL_LEGS
-				return 200;
-			case 114: // STEEL_CHAIN_MAIL_BODY
-			case 1532: // STEEL_CHAIN_MAIL_TOP
+				return 2;
+			case 78: // STEEL_2_HANDED_SWORD
+			case 90: // STEEL_BATTLE_AXE
+			case 129: // STEEL_KITE_SHIELD
 			case 121: // STEEL_PLATE_MAIL_LEGS
-			case 225: // STEEL_PLATED_SKIRT
-				return 300;
+				return 3;
 			case 118: // STEEL_PLATE_MAIL_BODY
-			case 309: // STEEL_PLATE_MAIL_TOP
-				return 500;
+				return 5;
 			default:
 				return 0;
 		}
@@ -155,28 +167,14 @@ public final class GodKnightEquipment implements UseLocTrigger {
 				return ItemId.BLACK_BATTLE_AXE.id();
 			case 95: // STEEL_MACE
 				return ItemId.BLACK_MACE.id();
-			case 105: // MEDIUM_STEEL_HELMET
-				return ItemId.MEDIUM_BLACK_HELMET.id();
 			case 109: // LARGE_STEEL_HELMET
 				return ItemId.LARGE_BLACK_HELMET.id();
-			case 114: // STEEL_CHAIN_MAIL_BODY
-				return ItemId.BLACK_CHAIN_MAIL_BODY.id();
-			case 1532: // STEEL_CHAIN_MAIL_TOP
-				return ItemId.BLACK_CHAIN_MAIL_TOP.id();
-			case 1420: // STEEL_CHAIN_MAIL_LEGS
-				return ItemId.BLACK_CHAIN_MAIL_LEGS.id();
-			case 125: // STEEL_SQUARE_SHIELD
-				return ItemId.BLACK_SQUARE_SHIELD.id();
 			case 129: // STEEL_KITE_SHIELD
 				return ItemId.BLACK_KITE_SHIELD.id();
 			case 118: // STEEL_PLATE_MAIL_BODY
 				return ItemId.BLACK_PLATE_MAIL_BODY.id();
-			case 309: // STEEL_PLATE_MAIL_TOP
-				return ItemId.BLACK_PLATE_MAIL_TOP.id();
 			case 121: // STEEL_PLATE_MAIL_LEGS
 				return ItemId.BLACK_PLATE_MAIL_LEGS.id();
-			case 225: // STEEL_PLATED_SKIRT
-				return ItemId.BLACK_PLATED_SKIRT.id();
 			case 698: // STEEL_GAUNTLETS
 				return ItemId.BLACK_GAUNTLETS.id();
 			case 1988: // STEEL_GREAVES
@@ -202,28 +200,14 @@ public final class GodKnightEquipment implements UseLocTrigger {
 				return ItemId.WHITE_BATTLE_AXE.id();
 			case 95: // STEEL_MACE
 				return ItemId.WHITE_MACE.id();
-			case 105: // MEDIUM_STEEL_HELMET
-				return ItemId.MEDIUM_WHITE_HELMET.id();
 			case 109: // LARGE_STEEL_HELMET
 				return ItemId.LARGE_WHITE_HELMET.id();
-			case 114: // STEEL_CHAIN_MAIL_BODY
-				return ItemId.WHITE_CHAIN_MAIL_BODY.id();
-			case 1532: // STEEL_CHAIN_MAIL_TOP
-				return ItemId.WHITE_CHAIN_MAIL_TOP.id();
-			case 1420: // STEEL_CHAIN_MAIL_LEGS
-				return ItemId.WHITE_CHAIN_MAIL_LEGS.id();
-			case 125: // STEEL_SQUARE_SHIELD
-				return ItemId.WHITE_SQUARE_SHIELD.id();
 			case 129: // STEEL_KITE_SHIELD
 				return ItemId.WHITE_KITE_SHIELD.id();
 			case 118: // STEEL_PLATE_MAIL_BODY
 				return ItemId.WHITE_PLATE_MAIL_BODY.id();
-			case 309: // STEEL_PLATE_MAIL_TOP
-				return ItemId.WHITE_PLATE_MAIL_TOP.id();
 			case 121: // STEEL_PLATE_MAIL_LEGS
 				return ItemId.WHITE_PLATE_MAIL_LEGS.id();
-			case 225: // STEEL_PLATED_SKIRT
-				return ItemId.WHITE_PLATED_SKIRT.id();
 			case 698: // STEEL_GAUNTLETS
 				return ItemId.WHITE_GAUNTLETS.id();
 			case 1988: // STEEL_GREAVES
@@ -249,28 +233,14 @@ public final class GodKnightEquipment implements UseLocTrigger {
 				return ItemId.GREY_BATTLE_AXE.id();
 			case 95: // STEEL_MACE
 				return ItemId.GREY_MACE.id();
-			case 105: // MEDIUM_STEEL_HELMET
-				return ItemId.MEDIUM_GREY_HELMET.id();
 			case 109: // LARGE_STEEL_HELMET
 				return ItemId.LARGE_GREY_HELMET.id();
-			case 114: // STEEL_CHAIN_MAIL_BODY
-				return ItemId.GREY_CHAIN_MAIL_BODY.id();
-			case 1532: // STEEL_CHAIN_MAIL_TOP
-				return ItemId.GREY_CHAIN_MAIL_TOP.id();
-			case 1420: // STEEL_CHAIN_MAIL_LEGS
-				return ItemId.GREY_CHAIN_MAIL_LEGS.id();
-			case 125: // STEEL_SQUARE_SHIELD
-				return ItemId.GREY_SQUARE_SHIELD.id();
 			case 129: // STEEL_KITE_SHIELD
 				return ItemId.GREY_KITE_SHIELD.id();
 			case 118: // STEEL_PLATE_MAIL_BODY
 				return ItemId.GREY_PLATE_MAIL_BODY.id();
-			case 309: // STEEL_PLATE_MAIL_TOP
-				return ItemId.GREY_PLATE_MAIL_TOP.id();
 			case 121: // STEEL_PLATE_MAIL_LEGS
 				return ItemId.GREY_PLATE_MAIL_LEGS.id();
-			case 225: // STEEL_PLATED_SKIRT
-				return ItemId.GREY_PLATED_SKIRT.id();
 			case 698: // STEEL_GAUNTLETS
 				return ItemId.GREY_GAUNTLETS.id();
 			case 1988: // STEEL_GREAVES

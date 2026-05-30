@@ -94,8 +94,32 @@ def main() -> None:
         "ItemId.BLACK_SCIMITAR.id()",
     ))
 
+    ensure_contains(WAYNE_PATH, (
+        "ItemId.TIN_PLATE_MAIL_BODY.id()",
+        "ItemId.COPPER_PLATE_MAIL_BODY.id()",
+        "ItemId.BRONZE_PLATE_MAIL_BODY.id()",
+        "ItemId.IRON_PLATE_MAIL_BODY.id()",
+        "ItemId.STEEL_PLATE_MAIL_BODY.id()",
+        "ItemId.MITHRIL_PLATE_MAIL_BODY.id()",
+        "ItemId.TIN_PLATE_MAIL_LEGS.id()",
+        "ItemId.COPPER_PLATE_MAIL_LEGS.id()",
+        "ItemId.BRONZE_PLATE_MAIL_LEGS.id()",
+        "ItemId.IRON_PLATE_MAIL_LEGS.id()",
+        "ItemId.STEEL_PLATE_MAIL_LEGS.id()",
+        "ItemId.MITHRIL_PLATE_MAIL_LEGS.id()",
+        "ItemId.TIN_LARGE_HELMET.id()",
+        "ItemId.COPPER_LARGE_HELMET.id()",
+        "ItemId.LARGE_BRONZE_HELMET.id()",
+        "ItemId.LARGE_IRON_HELMET.id()",
+        "ItemId.LARGE_STEEL_HELMET.id()",
+        "ItemId.LARGE_MITHRIL_HELMET.id()",
+    ))
     ensure_not_contains(WAYNE_PATH, (
         "CHAIN_MAIL",
+        "ADAMANTITE_",
+        "TITAN_STEEL_",
+        "ORICHALCUM_",
+        "RUNE_",
     ))
 
     ensure_contains(SCAVVO_PATH, (
