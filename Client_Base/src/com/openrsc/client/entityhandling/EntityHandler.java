@@ -4483,6 +4483,7 @@ public class EntityHandler {
 		items.add(new ItemDef("King-black-dragon-hide boots", "A boots made from king black dragon hide", "", 160, 223, "items:223", false, true, 512, 0x171b20, false, false, true, 1952));
 		items.add(new ItemDef("King-black-dragon-hide chaps", "A chaps made from king black dragon hide", "", 240, 590, "items:590", false, true, 128, 0x171b20, false, false, true, 1953));
 		items.add(new ItemDef("King-black-dragon-hide cuirass", "A cuirass made from king black dragon hide", "", 320, 7, "items:7", false, true, 64, 0x171b20, false, false, true, 1954));
+		applyMyWorldLeatherArmorDescriptions();
 		items.add(new ItemDef("Tin bar", "A soft light metal bar", "", 3, 79, "items:79", false, false, 0, 0xb7c9d9, false, false, true, 1955));
 		items.add(new ItemDef("Copper bar", "A bright orange metal bar", "", 4, 79, "items:79", false, false, 0, 0xc86a2b, false, false, true, 1956));
 		items.add(new ItemDef("Titan Steel bar", "A pale blue steel-alloy bar", "", 70, 79, "items:79", false, false, 0, 0x8ea6bb, false, false, true, 1957));
@@ -5857,6 +5858,42 @@ public class EntityHandler {
 					false,
 					true,
 					startId + i));
+		}
+	}
+
+	private static void applyMyWorldLeatherArmorDescriptions() {
+		setLeatherSetDescription(1835, 1839, "Full cow-hide set: +5 Hits.");
+		setLeatherSetDescription(1840, 1844, "Full goblin-hide set: 20% chance to enrage for +10% attack speed.");
+		setLeatherSetDescription(1845, 1849, "Full unicorn-hide set: +10 Prayer while worshipping Saradomin.");
+		setLeatherSetDescription(1850, 1854, "Full bear-hide set: 20% chance to intimidate, slowing enemy attacks by 10%.");
+		setLeatherSetDescription(1855, 1859, "Full black unicorn-hide set: +10 Prayer while worshipping Zamorak.");
+		setLeatherSetDescription(1860, 1864, "Full scorpion-carapace set: 20% melee poison chance, up to 10 poison.");
+		setLeatherSetDescription(1865, 1869, "Full wolf-hide set: summons a spirit wolf companion.");
+		setLeatherSetDescription(1870, 1874, "Full spider-carapace set: 20% ranged poison chance, up to 10 poison.");
+		setLeatherSetDescription(1875, 1879, "Full giant-hide set: 20% chance for +10% melee damage.");
+		setLeatherSetDescription(1880, 1884, "Full ogre-hide set: 20% chance to stagger enemy attacks.");
+		setLeatherSetDescription(1885, 1889, "Full baby-dragon-hide set: 20% chance to reduce enemy accuracy by 10%.");
+		setLeatherSetDescription(1890, 1894, "Full magic-spider-carapace set: 20% magic poison chance, up to 20 poison.");
+		setLeatherSetDescription(1895, 1899, "Full moss-giant-hide set: 20% chance for +10% earth and melee damage.");
+		setLeatherSetDescription(1900, 1904, "Full ice-giant-hide set: 20% chance for +10% water and melee damage.");
+		setLeatherSetDescription(1905, 1909, "Full demon-hide set: 20% chance for infernal fire, max hit 8.");
+		setLeatherSetDescription(1910, 1914, "Full hellhound-hide set: summons a spirit hellhound companion.");
+		setLeatherSetDescription(1915, 1919, "Full fire-giant-hide set: 20% chance for +10% fire and melee damage.");
+		setLeatherSetDescription(1920, 1924, "Full blue-dragon-hide set: 20% chance to dampen enemy max hit by 10%.");
+		setLeatherSetDescription(1925, 1929, "Full earth-dragon-hide set: 20% chance to slow enemy attacks by 6%.");
+		setLeatherSetDescription(1930, 1934, "Full red-dragon-hide set: 20% chance to weaken enemy defense by 6%.");
+		setLeatherSetDescription(1935, 1939, "Full black-demon-hide set: 20% chance for infernal fire, max hit 12.");
+		setLeatherSetDescription(1940, 1944, "Full black-dragon-hide set: 20% chance for dragon breath, max hit 30.");
+		setLeatherSetDescription(1945, 1949, "Full balrog-hide set: 20% chance for infernal fire, max hit 18.");
+		setLeatherSetDescription(1950, 1954, "Full king-black-dragon-hide set: 60% chance for dragon breath, max hit 40.");
+	}
+
+	private static void setLeatherSetDescription(int firstItemId, int lastItemId, String description) {
+		for (int itemId = firstItemId; itemId <= lastItemId; itemId++) {
+			ItemDef item = findItem(itemId, false);
+			if (item != null) {
+				item.description = description;
+			}
 		}
 	}
 

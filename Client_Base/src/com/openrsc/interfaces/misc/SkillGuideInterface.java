@@ -166,7 +166,9 @@ public final class SkillGuideInterface {
 			int gapHeight = (curItem instanceof SkillMenuItem) ? 37 : 37;
 
 			mc.getSurface().drawBoxAlpha(detailX - 75, allY, width, gapHeight, 0x45454545, 90);
-			drawString(curItem.getLevelReq(), levelX, allY + 25, 2, textColour);
+			if (!isInfoTab()) {
+				drawString(curItem.getLevelReq(), levelX, allY + 25, 2, textColour);
+			}
 
 			drawString(curItem.getSkillDetail(), detailX + 10, allY + 25, 2, textColour);
 
@@ -1375,12 +1377,12 @@ public final class SkillGuideInterface {
 			addWoodcraftGuide("Logs", 10, 1, 277, 5, 276, 8, 60, 9, 100, 1);
 			addWoodcraftGuide("Pine", 15, 8, 2116, 12, 2115, 15, 59, 16, 2131, 8);
 			addWoodcraftGuide("Oak", 20, 15, 659, 19, 658, 22, 2169, 23, 1764, 15);
-			addWoodcraftGuide("Willow", 25, 22, 661, 26, 660, 29, 2170, 30, 1765, 22);
+			addWoodcraftGuide("Willow", 25, 22, 661, 26, 660, 29, 2170, 30, 1769, 22);
 			addWoodcraftGuide("Palm", 30, 30, 2120, 33, 2119, 36, 2171, 37, 2136, 30);
-			addWoodcraftGuide("Maple", 35, 38, 663, 40, 662, 43, 2172, 44, 1766, 38);
-			addWoodcraftGuide("Yew", 40, 46, 665, 47, 664, 50, 2173, 51, 1767, 46);
+			addWoodcraftGuide("Maple", 35, 38, 663, 40, 662, 43, 2172, 44, 1774, 38);
+			addWoodcraftGuide("Yew", 40, 46, 665, 47, 664, 50, 2173, 51, 1779, 46);
 			addWoodcraftGuide("Ebony", 45, 54, 2124, 54, 2123, 57, 2174, 58, 2141, 54);
-			addWoodcraftGuide("Magic", 50, 62, 667, 61, 666, 64, 2175, 65, 1768, 62);
+			addWoodcraftGuide("Magic", 50, 62, 667, 61, 666, 64, 2175, 65, 1784, 62);
 			addWoodcraftGuide("Blood", 55, 70, 2128, 67, 2127, 70, 2176, 72, 2146, 70);
 		} else if (curTab == 6) {
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor has set effects if all five pieces are worn"));
@@ -1389,10 +1391,10 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Examine armor pieces to read their trait"));
 			skillMenuEntries.add(new SkillMenuItem(1869, "", "Set traits can grant stats, procs, or spirits"));
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Major leather slots lower Magic Power"));
-			skillMenuEntries.add(new SkillMenuItem(779, "34", "Oyster Pearls"));
-			skillMenuEntries.add(new SkillMenuItem(191, "40", "Crafting Guild"));
+			skillMenuEntries.add(new SkillMenuItem(779, "", "Can be opened at level 34"));
+			skillMenuEntries.add(new SkillMenuItem(191, "", "Can enter Crafting Guild at level 40"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
-				skillMenuEntries.add(new SkillMenuItem(1384, "99", "Crafting Cape"));
+				skillMenuEntries.add(new SkillMenuItem(1384, "", "Can buy Crafting Cape at level 99"));
 			}
 		}
 	}

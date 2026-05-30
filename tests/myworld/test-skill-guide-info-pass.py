@@ -51,6 +51,8 @@ def main() -> None:
         '"Hides and carapaces must be tanned at tanning racks"',
         '"Examine armor pieces to read their trait"',
         '"Set traits can grant stats, procs, or spirits"',
+        '"Can be opened at level 34"',
+        '"Can enter Crafting Guild at level 40"',
     ):
         require(guide, snippet, "Crafting guide info")
 

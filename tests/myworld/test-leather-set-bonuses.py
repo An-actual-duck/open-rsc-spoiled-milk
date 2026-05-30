@@ -12,6 +12,7 @@ COMBAT_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/
 PVM_MELEE_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
 LEATHER_DEBUFF_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/LeatherSetDebuffEvent.java"
+CLIENT_ENTITY_HANDLER_PATH = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 
 
 def fail(message: str) -> None:
@@ -102,6 +103,10 @@ def main() -> None:
     expect_contains(PROJECTILE_EVENT_PATH, "inflictAuxiliaryTrueDamage", "projectile dragon breath true damage hook")
     expect_contains(PROJECTILE_EVENT_PATH, "applyPlayerProjectileDamageBuff", "projectile magic buff hook")
     expect_contains(PROJECTILE_EVENT_PATH, "new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH)", "projectile dragon breath visual")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "applyMyWorldLeatherArmorDescriptions();", "client leather examine descriptions hook")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full cow-hide set: +5 Hits.", "cow leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black-dragon-hide set: 20% chance for dragon breath, max hit 30.", "black dragon leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full king-black-dragon-hide set: 60% chance for dragon breath, max hit 40.", "king black dragon leather examine description")
 
     print("PASS: leather set bonuses wired for passive, debuff, poison, brute-force, infernal, dragon-breath, and ogre families")
 
