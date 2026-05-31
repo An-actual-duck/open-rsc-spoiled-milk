@@ -96,15 +96,16 @@ public class MagicCombatEvent extends GameTickEvent {
 			return;
 		}
 
-		final int spellRange = player.getConfig().SPELL_RANGE_DISTANCE;
+		final int spellRange = player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS;
+		final int approachRange = RangeUtils.getApproachRadius(spellRange);
 		if (!player.withinRange(target, spellRange)) {
 			if (getOwner().nextStep(getOwner().getX(), getOwner().getY(), target) == null) {
 				player.message("I can't get close enough");
 				clearActiveEvent();
 				return;
 			}
-			player.setFollowing(target, spellRange, false);
-			player.setWalkToAction(new WalkToMobAction(player, target, spellRange, false, ActionType.ATTACK) {
+			player.setFollowing(target, approachRange, false);
+			player.setWalkToAction(new WalkToMobAction(player, target, approachRange, false, ActionType.ATTACK) {
 				@Override
 				public void executeInternal() {
 					getPlayer().resetFollowing();

@@ -85,8 +85,8 @@ public class RangeEvent extends GameTickEvent {
 			return;
 		}
 
-		final int radius = RangeUtils.isCrossbow(weaponId) || RangeUtils.isShortBow(weaponId) ?
-			4 : 5;
+		final int radius = RangeUtils.getBowAttackRadius(weaponId);
+		final int approachRadius = RangeUtils.getApproachRadius(radius);
 
 		if (!player.withinRange(target, radius)) {
 			if (getOwner().nextStep(getOwner().getX(), getOwner().getY(), target) == null) {
@@ -95,6 +95,9 @@ public class RangeEvent extends GameTickEvent {
 			}
 
 			player.walkToEntity(target.getX(), target.getY());
+			return;
+		}
+		if (!player.withinRange(target, approachRadius) && !player.finishedPath()) {
 			return;
 		}
 

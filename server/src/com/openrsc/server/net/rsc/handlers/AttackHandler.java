@@ -6,6 +6,7 @@ import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.handler.GameEventHandler;
 import com.openrsc.server.event.rsc.impl.projectile.MagicCombatEvent;
 import com.openrsc.server.event.rsc.impl.projectile.RangeEvent;
+import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
 import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.model.action.ActionType;
 import com.openrsc.server.model.action.WalkToMobAction;
@@ -147,10 +148,13 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			}
 
 			int radius = affectedMob.isPlayer() ? player.getConfig().PVP_CATCHING_DISTANCE : player.getConfig().PVM_CATCHING_DISTANCE;
-			int followRadius = player.getConfig().WANT_MYWORLD ? radius : 0;
+			int attackRadius = radius + RangeUtils.PLAYER_COMBAT_RANGE_BONUS;
+			int approachRadius = RangeUtils.getApproachRadius(attackRadius);
+			int walkRadius = player.withinRange(affectedMob, attackRadius) ? attackRadius : approachRadius;
+			int followRadius = player.getConfig().WANT_MYWORLD ? walkRadius : 0;
 			player.setFollowing(affectedMob, followRadius, false, true);
 
-			player.setWalkToAction(new WalkToMobAction(player, affectedMob, radius, true, ActionType.ATTACK) {
+			player.setWalkToAction(new WalkToMobAction(player, affectedMob, walkRadius, true, ActionType.ATTACK) {
 				public void executeInternal() {
 					getPlayer().resetFollowing();
 
@@ -185,8 +189,10 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			final Mob target = affectedMob;
 			player.resetPath();
 			int radius = player.getProjectileRadius();
-			player.setFollowing(affectedMob, radius, false);
-			player.setWalkToAction(new WalkToMobAction(player, affectedMob, radius, false, ActionType.ATTACK) {
+			int approachRadius = player.getProjectileApproachRadius();
+			int walkRadius = player.withinRange(affectedMob, radius) ? radius : approachRadius;
+			player.setFollowing(affectedMob, walkRadius, false);
+			player.setWalkToAction(new WalkToMobAction(player, affectedMob, walkRadius, false, ActionType.ATTACK) {
 				public void executeInternal() {
 					boolean retargetingNpcWithRanged = getPlayer().inCombat()
 						&& getMob().isNpc()

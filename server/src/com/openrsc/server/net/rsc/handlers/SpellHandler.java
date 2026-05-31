@@ -10,6 +10,7 @@ import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.CustomProjectileEvent;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
+import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
 import com.openrsc.server.external.Gauntlets;
 import com.openrsc.server.external.ItemSmeltingDef;
 import com.openrsc.server.external.ReqOreDef;
@@ -1093,7 +1094,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		// Only ranged & melee are authentically blocked in that safespot.
 
 		// Stop the player if they are close enough to their opponent.
-		if (player.withinRange(affectedPlayer, player.getConfig().SPELL_RANGE_DISTANCE)) {
+		if (player.withinRange(affectedPlayer, player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS)) {
 			player.resetPath();
 		}
 
@@ -1127,7 +1128,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 
 		// Stop movement if the player is within range.
-		if (player.withinRange(affectedNpc, player.getConfig().SPELL_RANGE_DISTANCE)) {
+		if (player.withinRange(affectedNpc, player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS)) {
 			player.resetPath();
 		}
 
@@ -1704,7 +1705,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private void handleMobCast(final Player player, final Mob affectedMob, Spells spellEnum, int spellType) {
-		final int spellRange = player.getConfig().SPELL_RANGE_DISTANCE;
+		final int spellRange = player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS;
 		final SpellDef debugSpell = player.getWorld().getServer().getEntityHandler().getSpellDef(spellEnum);
 		magicDebug(player, "mobcast_start spell=" + describeSpell(spellEnum, debugSpell)
 			+ " target=" + describeMob(affectedMob) + " playerLoc=" + player.getLocation()
@@ -1772,7 +1773,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 
 		final boolean alreadyCanCast = player.withinRange(affectedMob, spellRange);
-		final int spellApproachRange = alreadyCanCast ? spellRange : Math.max(1, spellRange - 1);
+		final int spellApproachRange = alreadyCanCast ? spellRange : RangeUtils.getApproachRadius(spellRange);
 		magicDebug(player, "mobcast_walk_action_set range=" + spellRange + " approachRange=" + spellApproachRange
 			+ " target=" + describeMob(affectedMob)
 			+ " retargetingNpcWhileInCombat=" + retargetingNpcWhileInCombat);

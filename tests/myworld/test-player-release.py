@@ -268,6 +268,10 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
     required = {
         "myworld-assets/animations/Projectiles/thunder-ball/thunder-ball1.png",
         "myworld-assets/sprites/equipment/fishing-pole/numbered/00.png",
+        "myworld-assets/sprites/items/inventory-ground/tools/arrowhead-mould.png",
+        "myworld-assets/sprites/items/inventory-ground/tools/bolt-mould.png",
+        "myworld-assets/sprites/items/inventory-ground/tools/dart-mould.png",
+        "myworld-assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
     }
     with zipfile.ZipFile(ROOT / "Client_Base" / "Open_RSC_Client.jar") as jar:
         names = set(jar.namelist())
@@ -276,7 +280,6 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         fail(f"client jar is missing embedded runtime art: {sorted(missing)}")
     forbidden_prefixes = [
         "myworld-assets/sprites/ui/",
-        "myworld-assets/sprites/items/",
         "myworld-assets/animations/On Enemy/phoenix/",
         "myworld-assets/animations/On Enemy/kraken/",
     ]
@@ -285,16 +288,44 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
     )
     if included_forbidden:
         fail(f"client jar still contains removed CraftPix art: {included_forbidden[:5]}")
+    allowed_item_asset_names = {
+        "myworld-assets/sprites/items/inventory-ground/tools/arrowhead-mould.png",
+        "myworld-assets/sprites/items/inventory-ground/tools/bolt-mould.png",
+        "myworld-assets/sprites/items/inventory-ground/tools/dart-mould.png",
+        "myworld-assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
+    }
+    unexpected_item_assets = sorted(
+        name for name in names
+        if name.startswith("myworld-assets/sprites/items/")
+        and name.lower().endswith(".png")
+        and name not in allowed_item_asset_names
+    )
+    if unexpected_item_assets:
+        fail(f"client jar contains unexpected item art: {unexpected_item_assets[:5]}")
 
     for removed_path in [
         ROOT / "dev/myworld/assets/sprites/ui",
-        ROOT / "dev/myworld/assets/sprites/items",
         ROOT / "dev/myworld/assets/archive",
         ROOT / "dev/myworld/assets/animations/On Enemy/phoenix",
         ROOT / "dev/myworld/assets/animations/On Enemy/kraken",
     ]:
         if removed_path.exists():
             fail(f"removed CraftPix source path still exists: {removed_path.relative_to(ROOT)}")
+    allowed_item_sprite_paths = {
+        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/arrowhead-mould.png",
+        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/bolt-mould.png",
+        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/dart-mould.png",
+        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
+    }
+    item_sprite_root = ROOT / "dev/myworld/assets/sprites/items"
+    if item_sprite_root.exists():
+        unexpected_item_sprites = sorted(
+            path.relative_to(ROOT).as_posix()
+            for path in item_sprite_root.rglob("*.png")
+            if path not in allowed_item_sprite_paths
+        )
+        if unexpected_item_sprites:
+            fail(f"unexpected item sprite source files are present: {unexpected_item_sprites[:5]}")
 
     source = (ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java").read_text(encoding="utf-8")
     for snippet in ["EMBEDDED_ASSET_ROOT", "readAssetImage", "assetDirectoryExists"]:

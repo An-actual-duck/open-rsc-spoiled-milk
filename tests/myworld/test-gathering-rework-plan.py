@@ -419,7 +419,10 @@ def require_shears_smithing_and_defs() -> None:
         'addMetalThrowingKnifeDefinition("Copper throwing knife", 2007, 4, 0xC86A2B);',
         'new ItemDef(name, "A finely balanced knife", "", price, 80, "items:80"',
         'addMetalBoltDefinition("Copper bolts", 2178, 4, 0xC86A2B);',
-        'new ItemDef("Arrowhead mould", "Use with bars to cast arrow heads", "", 5, 132, "items:132"',
+        'new ItemDef("Bolt mould", "Use with bars to cast bolts", "", 5, -1, "external-png:bolt-mould"',
+        'new ItemDef("Dart mould", "Use with bars to cast dart tips", "", 5, -1, "external-png:dart-mould"',
+        'new ItemDef("Throwing knife mould", "Use with bars to cast throwing knives", "", 5, -1, "external-png:throwing-knife-mould"',
+        'new ItemDef("Arrowhead mould", "Use with bars to cast arrow heads", "", 5, -1, "external-png:arrowhead-mould"',
     )
     for snippet in client_snippets:
         if snippet not in client_text:

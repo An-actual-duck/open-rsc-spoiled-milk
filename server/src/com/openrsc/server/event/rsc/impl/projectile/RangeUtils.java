@@ -29,6 +29,12 @@ import static com.openrsc.server.plugins.Functions.getCurrentLevel;
 public class RangeUtils {
     public static final int WEARABLE_ARROWS_ID = 1000;
     public static final int WEARABLE_BOLTS_ID = 1001;
+	public static final int PLAYER_COMBAT_RANGE_BONUS = 2;
+	private static final int PLAYER_POSITIONING_RANGE_REDUCTION = 1;
+	private static final int DEFAULT_BOW_RANGE = 5;
+	private static final int SHORT_BOW_RANGE = 4;
+	private static final int DEFAULT_THROWING_RANGE = 3;
+	private static final int THROWING_DART_RANGE = 4;
 
     private final static Set<Integer> BOWS = ImmutableSet.of(
             ItemId.LONGBOW.id(), ItemId.SHORTBOW.id(),
@@ -178,6 +184,20 @@ public class RangeUtils {
             ItemId.POISONED_ORICHALCUM_THROWING_KNIFE.id(),
             ItemId.POISONED_RUNE_THROWING_KNIFE.id()
     );
+
+	public static int getBowAttackRadius(final int weaponId) {
+		final int baseRadius = isCrossbow(weaponId) || isShortBow(weaponId) ? SHORT_BOW_RANGE : DEFAULT_BOW_RANGE;
+		return baseRadius + PLAYER_COMBAT_RANGE_BONUS;
+	}
+
+	public static int getThrowingAttackRadius(final int throwingEquip) {
+		final int baseRadius = THROWING_DARTS.contains(throwingEquip) ? THROWING_DART_RANGE : DEFAULT_THROWING_RANGE;
+		return baseRadius + PLAYER_COMBAT_RANGE_BONUS;
+	}
+
+	public static int getApproachRadius(final int attackRadius) {
+		return Math.max(1, attackRadius - PLAYER_POSITIONING_RANGE_REDUCTION);
+	}
 
     protected static final ImmutableSet<Integer> POISONED_ITEMS = ImmutableSet.of(
             ItemId.POISONED_TIN_THROWING_DART.id(),

@@ -60,14 +60,8 @@ public class ThrowingEvent extends GameTickEvent {
 		return target.getViewArea().getVisibleGroundItem(id, target.getLocation(), player);
 	}
 
-	private boolean canReach(Mob mob) {
-		int radius = 3;
-		final Player playerOwner = getPlayerOwner();
-		final int throwingEquip = playerOwner.getThrowingEquip();
-		if (RangeUtils.THROWING_DARTS.contains(throwingEquip)) {
-			radius = 4;
-		}
-		return playerOwner.withinRange(mob, radius);
+	private int getAttackRadius(final int throwingEquip) {
+		return RangeUtils.getThrowingAttackRadius(throwingEquip);
 	}
 
 	@Override
@@ -90,12 +84,16 @@ public class ThrowingEvent extends GameTickEvent {
 			return;
 		}
 
-		if (!canReach(target)) {
+		final int attackRadius = getAttackRadius(throwingID);
+		if (!player.withinRange(target, attackRadius)) {
 			player.walkToEntity(target.getX(), target.getY());
 			if (getOwner().nextStep(getOwner().getX(), getOwner().getY(), target) == null && throwingID != -1) {
 				player.message("I can't get close enough");
 				player.resetRange();
 			}
+			return;
+		}
+		if (!player.withinRange(target, RangeUtils.getApproachRadius(attackRadius)) && !player.finishedPath()) {
 			return;
 		}
 

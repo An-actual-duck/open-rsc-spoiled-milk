@@ -17,6 +17,13 @@ NPC_BEHAVIOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" 
 NPC_ATTACK_STYLE_PROFILE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcAttackStyleProfile.java"
 GROUND_ITEM = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "GroundItem.java"
 DROP_TABLE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "DropTable.java"
+ATTACK_HANDLER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "AttackHandler.java"
+SPELL_HANDLER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "SpellHandler.java"
+RANGE_UTILS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "RangeUtils.java"
+RANGE_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "RangeEvent.java"
+THROWING_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ThrowingEvent.java"
+MAGIC_COMBAT_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "MagicCombatEvent.java"
+CLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
 
 
 def fail(message: str) -> None:
@@ -105,6 +112,23 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "PathValidation.checkPath(npc.getWorld(), npc.getLocation(), target.getLocation())")
     require_contains(NPC_BEHAVIOR, "new ProjectileEvent(npc.getWorld(), npc, target, damage, 2)")
     require_contains(NPC_BEHAVIOR, "new ProjectileEvent(npc.getWorld(), npc, target, damage, 1)")
+
+    require_contains(RANGE_UTILS, "public static final int PLAYER_COMBAT_RANGE_BONUS = 2;")
+    require_contains(RANGE_UTILS, "return Math.max(1, attackRadius - PLAYER_POSITIONING_RANGE_REDUCTION);")
+    require_contains(RANGE_UTILS, "return baseRadius + PLAYER_COMBAT_RANGE_BONUS;")
+    require_contains(ATTACK_HANDLER, "int attackRadius = radius + RangeUtils.PLAYER_COMBAT_RANGE_BONUS;")
+    require_contains(ATTACK_HANDLER, "int walkRadius = player.withinRange(affectedMob, attackRadius) ? attackRadius : approachRadius;")
+    require_contains(ATTACK_HANDLER, "int walkRadius = player.withinRange(affectedMob, radius) ? radius : approachRadius;")
+    require_contains(SPELL_HANDLER, "player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS")
+    require_contains(MAGIC_COMBAT_EVENT, "final int spellRange = player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS;")
+    require_contains(MAGIC_COMBAT_EVENT, "final int approachRange = RangeUtils.getApproachRadius(spellRange);")
+    require_contains(RANGE_EVENT, "final int radius = RangeUtils.getBowAttackRadius(weaponId);")
+    require_contains(RANGE_EVENT, "final int approachRadius = RangeUtils.getApproachRadius(radius);")
+    require_contains(THROWING_EVENT, "return RangeUtils.getThrowingAttackRadius(throwingEquip);")
+    require_contains(THROWING_EVENT, "RangeUtils.getApproachRadius(attackRadius)")
+    require_contains(CLIENT, "private boolean isSpellProjectile(SpriteDef projectile)")
+    require_contains(CLIENT, "return isSpellProjectile(projectile) ? size * 2 : size;")
+    require_contains(CLIENT, "return 192;")
 
     require_contains(NPC, "Player meleeRangeThreat = getLowestCombatLevelThreat(true);")
     require_contains(NPC, "return getLowestCombatLevelThreat(false);")

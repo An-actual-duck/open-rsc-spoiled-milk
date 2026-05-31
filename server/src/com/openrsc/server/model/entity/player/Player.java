@@ -4841,11 +4841,12 @@ public final class Player extends Mob {
 		return this.carriedItems.get();
 	}
 
-	// Ensures crossbows and shortbows have a shorter radius of 4 instead of the default 5
 	public int getProjectileRadius() {
-		final int weaponId = getRangeEquip();
-		final boolean shortRadius = RangeUtils.isCrossbow(weaponId) || RangeUtils.isShortBow(weaponId);
-		return shortRadius ? DEFAULT_PROJECTILE_RADIUS - 1 : DEFAULT_PROJECTILE_RADIUS;
+		return RangeUtils.getBowAttackRadius(getRangeEquip());
+	}
+
+	public int getProjectileApproachRadius() {
+		return RangeUtils.getApproachRadius(getProjectileRadius());
 	}
 
 	public boolean wantUnholySymbols() {

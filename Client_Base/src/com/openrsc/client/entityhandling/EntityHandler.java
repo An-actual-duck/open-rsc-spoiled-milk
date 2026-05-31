@@ -4678,10 +4678,10 @@ public class EntityHandler {
 		addFishingRodDefinition("Magic Fishing Rod", "A fishing rod shaped from magic logs.", 2689, 1400, 0x4B2E83, 0x000000);
 		addFishingRodDefinition("Blood Fishing Rod", "A fishing rod shaped from blood logs.", 2690, 2200, 0xCC2222, 0x5A0F0F);
 
-		setCustomItemDefinition(2177, new ItemDef("Bolt mould", "Use with bars to cast bolts", "", 5, 128, "items:128", false, false, 0, 0, false, false, true, 2177));
-		setCustomItemDefinition(2204, new ItemDef("Dart mould", "Use with bars to cast dart tips", "", 5, 129, "items:129", false, false, 0, 0, false, false, true, 2204));
-		setCustomItemDefinition(2205, new ItemDef("Throwing knife mould", "Use with bars to cast throwing knives", "", 5, 127, "items:127", false, false, 0, 0, false, false, true, 2205));
-		setCustomItemDefinition(2206, new ItemDef("Arrowhead mould", "Use with bars to cast arrow heads", "", 5, 132, "items:132", false, false, 0, 0, false, false, true, 2206));
+		setCustomItemDefinition(2177, new ItemDef("Bolt mould", "Use with bars to cast bolts", "", 5, -1, "external-png:bolt-mould", false, false, 0, 0, false, false, true, 2177));
+		setCustomItemDefinition(2204, new ItemDef("Dart mould", "Use with bars to cast dart tips", "", 5, -1, "external-png:dart-mould", false, false, 0, 0, false, false, true, 2204));
+		setCustomItemDefinition(2205, new ItemDef("Throwing knife mould", "Use with bars to cast throwing knives", "", 5, -1, "external-png:throwing-knife-mould", false, false, 0, 0, false, false, true, 2205));
+		setCustomItemDefinition(2206, new ItemDef("Arrowhead mould", "Use with bars to cast arrow heads", "", 5, -1, "external-png:arrowhead-mould", false, false, 0, 0, false, false, true, 2206));
 		addMetalBoltDefinition("Tin bolts", 190, 3, 0xB7C9D9);
 		addMetalBoltDefinition("Poison Tin bolts", 592, 3, 0xB7C9D9);
 		addMetalBoltDefinition("Copper bolts", 2178, 4, 0xC86A2B);

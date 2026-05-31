@@ -21465,9 +21465,28 @@ public final class mudclient implements Runnable {
 			return 64;
 		}
 		if (isDualElementProjectile(projectile)) {
-			return 96;
+			return 192;
 		}
-		return isCustomProjectile(projectile) ? 48 : 32;
+		int size = isCustomProjectile(projectile) ? 48 : 32;
+		return isSpellProjectile(projectile) ? size * 2 : size;
+	}
+
+	private boolean isSpellProjectile(SpriteDef projectile) {
+		if (projectile == null) {
+			return true;
+		}
+		return projectile.id == PROJECTILE_TYPES.MAGIC.id()
+			|| projectile.id == PROJECTILE_TYPES.SKULL.id()
+			|| projectile.id == PROJECTILE_TYPES.BLOW_SMOKE.id()
+			|| projectile.id == PROJECTILE_TYPES.FIREBALL.id()
+			|| projectile.id == PROJECTILE_TYPES.WIND_ARROW.id()
+			|| projectile.id == PROJECTILE_TYPES.ROCK_THROW.id()
+			|| projectile.id == PROJECTILE_TYPES.WATER_BALL.id()
+			|| projectile.id == PROJECTILE_TYPES.CLAWS_OF_GUTHIX.id()
+			|| projectile.id == PROJECTILE_TYPES.THUNDER_BALL.id()
+			|| projectile.id == PROJECTILE_TYPES.ICICLE_SHOT.id()
+			|| projectile.id == PROJECTILE_TYPES.ACID_DROP.id()
+			|| projectile.id == PROJECTILE_TYPES.BRANCH_SPORE.id();
 	}
 
 	private boolean isDualElementProjectile(SpriteDef projectile) {
