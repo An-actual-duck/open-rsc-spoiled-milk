@@ -31,6 +31,7 @@ Artist/source links:
 - [What This Version Is Trying To Do](#what-this-version-is-trying-to-do)
 - [Core Gameplay Changes](#core-gameplay-changes)
 - [Combat](#combat)
+  - [Loot Drops](#loot-drops)
 - [Equipment](#equipment)
 - [Interface And Quality Of Life](#interface-and-quality-of-life)
 - [Skills](#skills)
@@ -192,6 +193,20 @@ New damage sources include:
 
 Because of that, the interface had to show damage more clearly, which is covered
 in the UI section.
+
+### Loot Drops
+
+Monster loot is personal in PvM.
+
+Everyone who meaningfully participates in a fight gets their own drop roll
+instead of the party fighting over one shared pile. If several players help kill
+the same enemy, each contributor can receive their own bones, fixed drops, and
+rolled loot from that enemy.
+
+Damage contribution still matters. The more damage you deal, the better your
+chance is at high-value outcomes such as rare-table rolls and rare normal
+drops. Lower-damage contributors are still included, but the best odds go to
+the players who carried more of the fight.
 
 ### Wilderness Encounters
 
@@ -558,6 +573,21 @@ God equipment also matters more. God staves and god capes require worshipping
 the matching god. Blessed staves can be made through prayer-aligned altar
 interaction. Maces and crossbows also have prayer-supporting roles for melee and
 ranged.
+
+Devotion is the long-term progression layer for god-aligned Prayer gear. Each
+god tracks devotion separately, up to `1000`. Offerings build devotion with the
+god you are worshipping, and devotion is then used to bless supported combat
+gear at that god's altar.
+
+Blessing equipment costs devotion based on the resource cost of the base item.
+For example, a plate body takes more devotion to bless than a one-bar weapon.
+Blessing an item grants Prayer XP, but does not directly grant more devotion.
+
+Blessed gear is strongest when it matches the god you currently worship.
+Matching blessed gear gains Prayer bonuses immediately, and its combat stats
+begin scaling upward once you reach `250` devotion with that god. At high
+devotion, blessed combat gear becomes a serious long-term equipment path rather
+than just a cosmetic god version of normal gear.
 
 ### Mining
 
