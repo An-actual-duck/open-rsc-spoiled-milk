@@ -637,6 +637,7 @@ public final class mudclient implements Runnable {
 	private int combatStyle = 0;
 	private int hitsXpFocus = 1;
 	private int combatTimeout = 0;
+	private long hitsXpFocusMenuHideAt = 0L;
 	private int controlButtonAppearanceHeadMinus;
 	private int controlButtonAppearanceHeadPlus;
 	private int controlLoginPass;
@@ -15221,6 +15222,7 @@ public final class mudclient implements Runnable {
 
 					this.packetHandler.getClientStream().finishPacket();
 					this.selectedSpell = -1;
+					this.showHitsXpFocusMenuTemporarily();
 					break;
 				}
 				case NPC_USE_ITEM: {
@@ -15297,6 +15299,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().newPacket(190);
 						this.packetHandler.getClientStream().bufferBits.putShort(indexOrX);
 						this.packetHandler.getClientStream().finishPacket();
+						this.showHitsXpFocusMenuTemporarily();
 						break;
 				}
 				case NPC_EXAMINE: {
@@ -15318,6 +15321,7 @@ public final class mudclient implements Runnable {
 
 					this.packetHandler.getClientStream().finishPacket();
 					this.selectedSpell = -1;
+					this.showHitsXpFocusMenuTemporarily();
 					break;
 				}
 				case PLAYER_USE_ITEM: {
@@ -15355,6 +15359,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().newPacket(171);
 						this.packetHandler.getClientStream().bufferBits.putShort(indexOrX);
 						this.packetHandler.getClientStream().finishPacket();
+						this.showHitsXpFocusMenuTemporarily();
 						break;
 				}
 				case PLAYER_DUEL: {
@@ -20859,7 +20864,20 @@ public final class mudclient implements Runnable {
 		if (C_HITS_XP_FOCUS_MENU == 2) {
 			return true;
 		}
-		return this.combatTimeout > 0;
+		if (this.combatTimeout > 0) {
+			return true;
+		}
+		if (System.currentTimeMillis() < this.hitsXpFocusMenuHideAt) {
+			return true;
+		}
+		this.hitsXpFocusMenuHideAt = 0L;
+		return false;
+	}
+
+	private void showHitsXpFocusMenuTemporarily() {
+		if (C_HITS_XP_FOCUS_MENU == 1) {
+			this.hitsXpFocusMenuHideAt = System.currentTimeMillis() + 10000L;
+		}
 	}
 
 	private String getHitsXpFocusMenuLabel() {

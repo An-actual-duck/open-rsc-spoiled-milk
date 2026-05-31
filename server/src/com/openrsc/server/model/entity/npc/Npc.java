@@ -998,7 +998,7 @@ public class Npc extends Mob {
 			return;
 		}
 
-		awardCombatXpWithHitsFocus(player, Skill.MELEE, meleeXpShare);
+		awardCombatXpWithHitsFocus(player, Skill.MELEE, meleeXpShare * 4);
 	}
 
 	private void awardRangedDamageShareXp(final Player player, final int damage, final int totalCombatXP) {
@@ -1026,7 +1026,7 @@ public class Npc extends Mob {
 	}
 
 	private void awardCombatXpWithHitsFocus(final Player player, final Skill primarySkill, final int totalXp) {
-		int hitsXp = getHitsXpFromFocus(player, totalXp);
+		int hitsXp = Math.min(totalXp, getHitsXpFromFocus(player, totalXp));
 		int primaryXp = Math.max(0, totalXp - hitsXp);
 		if (hitsXp <= 0) {
 			player.incExp(primarySkill.id(), totalXp, true);
@@ -1038,10 +1038,8 @@ public class Npc extends Mob {
 			return;
 		}
 
-		int[] skillsDist = new int[Skill.maxId(primarySkill.name(), Skill.HITS.name()) + 1];
-		skillsDist[primarySkill.id()] = primaryXp;
-		skillsDist[Skill.HITS.id()] = hitsXp;
-		player.incExp(skillsDist, totalXp, true);
+		player.incExp(primarySkill.id(), primaryXp, true);
+		player.incExp(Skill.HITS.id(), hitsXp, true);
 		ActionSender.sendStat(player, Skill.HITS.id());
 	}
 

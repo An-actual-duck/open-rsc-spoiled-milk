@@ -83,10 +83,10 @@ def validate_damage_share_math() -> None:
         fail(f"Expected magic share 352, found {magic_xp}")
 
     melee_skill_awards = {
-        "melee": melee_base * 3 // 4,
-        "hits": melee_base // 4,
+        "melee": melee_base * 3,
+        "hits": melee_base,
     }
-    if melee_skill_awards != {"melee": 41, "hits": 13}:
+    if melee_skill_awards != {"melee": 165, "hits": 55}:
         fail(f"Unexpected melee skill distribution: {melee_skill_awards}")
 
 

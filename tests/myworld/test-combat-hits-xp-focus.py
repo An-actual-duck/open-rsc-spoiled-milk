@@ -33,8 +33,12 @@ def main() -> None:
             "Client should expose the four Hits XP focus labels")
     require("shouldDrawHitsXpFocusMenu() || shouldDrawGatheringFocusMenu()" in client,
             "Hits XP focus menu should draw independently of gathering focus")
-    require("return this.combatTimeout > 0;" in client,
-            "Temporary Hits XP focus menu should appear while engaged in combat")
+    require("private long hitsXpFocusMenuHideAt = 0L;" in client,
+            "Temporary Hits XP focus menu should have an interaction linger timer")
+    require("private void showHitsXpFocusMenuTemporarily()" in client,
+            "Client should be able to show the Hits XP focus menu for combat interactions")
+    require("return true;\n\t\t}\n\t\tif (System.currentTimeMillis() < this.hitsXpFocusMenuHideAt)" in client,
+            "Temporary Hits XP focus menu should appear while engaged in combat or during the linger timer")
     require("C_HITS_XP_FOCUS_MENU = (C_HITS_XP_FOCUS_MENU + 1) % 3;" in client,
             "Options menu should expose a three-state Hits XP focus menu setting")
     require("bufferBits.putByte(49);" in client,
@@ -60,8 +64,8 @@ def main() -> None:
     require("Hits XP focus set to " in combat_style_handler,
             "Server should acknowledge Hits XP focus changes")
 
-    require("awardCombatXpWithHitsFocus(player, Skill.MELEE, meleeXpShare);" in npc,
-            "Melee NPC XP should use Hits XP focus")
+    require("awardCombatXpWithHitsFocus(player, Skill.MELEE, meleeXpShare * 4);" in npc,
+            "Melee NPC XP should use the full old 3:1 melee/Hits budget for Hits XP focus")
     require("awardCombatXpWithHitsFocus(player, Skill.RANGED, remainderXP);" in npc,
             "Ranged NPC XP should use Hits XP focus")
     require("awardCombatXpWithHitsFocus(player, Skill.MAGIC, magicXpShare);" in npc,
@@ -70,6 +74,15 @@ def main() -> None:
             "No Hits XP focus should award no Hits XP")
     require("case Skills.DEFENSIVE_MODE:\n\t\t\t\treturn totalXp;" in npc,
             "All Hits XP focus should move the full combat XP budget into Hits")
+    require("player.incExp(primarySkill.id(), primaryXp, true);" in npc,
+            "Combat XP focus split should award exact primary XP directly")
+    require("player.incExp(Skill.HITS.id(), hitsXp, true);" in npc,
+            "Combat XP focus split should award exact Hits XP directly")
+    require("player.incExp(skillsDist, totalXp, true);" not in npc,
+            "Combat XP focus split must not pass exact XP values to the weighted distribution overload")
+    require("case NPC_CAST_SPELL:" in client and "case PLAYER_CAST_SPELL:" in client and
+            client.count("this.showHitsXpFocusMenuTemporarily();") >= 4,
+            "Magic, NPC attack, and player attack interactions should show the temporary Hits XP focus menu")
 
     print("PASS: combat Hits XP focus menu, persistence, and NPC XP split validated")
 
