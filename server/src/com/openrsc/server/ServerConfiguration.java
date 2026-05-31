@@ -31,6 +31,7 @@ public class ServerConfiguration {
 	public String SERVER_NAME;
 	public String SERVER_NAME_WELCOME;
 	public String WELCOME_TEXT;
+	public String SERVER_BIND_ADDRESS;
 	public String MESSAGE_PREFIX = "@gre@System message:@whi@ ";
 	public String BAD_SYNTAX_PREFIX = MESSAGE_PREFIX +" Invalid Syntax: ::";
 	public boolean MEMBER_WORLD;
@@ -417,6 +418,7 @@ public class ServerConfiguration {
 		AUTO_SAVE = tryReadInt("auto_save").orElse(30000); // 30 seconds
 		CLIENT_VERSION = tryReadInt("client_version").orElse(10009);
 		ENFORCE_CUSTOM_CLIENT_VERSION = tryReadBool("enforce_custom_client_version").orElse(true);
+		SERVER_BIND_ADDRESS = tryReadString("server_bind_address").orElse("0.0.0.0");
 		SERVER_PORT = tryReadInt("server_port").orElse(43594);
 		WS_SERVER_PORT = tryReadInt("ws_server_port").orElse(43494);
 		WANT_FEATURE_WEBSOCKETS = tryReadBool("want_feature_websockets").orElse(true);

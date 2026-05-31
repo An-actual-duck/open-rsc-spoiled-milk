@@ -69,6 +69,12 @@ def parse_itemdef_ids(source: str) -> set[int]:
         start = int(match.group(1))
         ids.update(range(start, start + 14 * 10))
 
+    if "addBlessedWoolArmorDefinitions();" in source:
+        ids.update(range(3137, 3152))
+
+    if "addAdditionalBlessedStaffDefinitions();" in source:
+        ids.update(range(3152, 3172))
+
     ranged_helpers = [
         "addAmuletLine",
         "addNecklaceLine",

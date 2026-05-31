@@ -1,6 +1,7 @@
 package com.openrsc.server.model.container;
 
 import com.openrsc.server.constants.*;
+import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
@@ -1234,7 +1235,9 @@ public class Equipment {
 	}
 
 	private boolean isBlessedStaff(int itemId) {
-		return itemId >= ItemId.BLESSED_STAFF.id() && itemId <= ItemId.BLESSED_BLOOD_STAFF.id();
+		return isZamorakBlessedStaff(itemId)
+			|| isSaradominBlessedStaff(itemId)
+			|| isGuthixBlessedStaff(itemId);
 	}
 
 	private boolean isGodStaff(int itemId) {
@@ -1320,6 +1323,24 @@ public class Equipment {
 		if (itemId == ItemId.GUTHIX_CAPE.id() || itemId == ItemId.STAFF_OF_GUTHIX.id()) {
 			return PrayerCatalog.GodLine.GUTHIX;
 		}
+		if (isZamorakBlessedStaff(itemId)) {
+			return PrayerCatalog.GodLine.ZAMORAK;
+		}
+		if (isSaradominBlessedStaff(itemId)) {
+			return PrayerCatalog.GodLine.SARADOMIN;
+		}
+		if (isGuthixBlessedStaff(itemId)) {
+			return PrayerCatalog.GodLine.GUTHIX;
+		}
+		if (isZamorakBlessedWool(itemId)) {
+			return PrayerCatalog.GodLine.ZAMORAK;
+		}
+		if (isSaradominBlessedWool(itemId)) {
+			return PrayerCatalog.GodLine.SARADOMIN;
+		}
+		if (isGuthixBlessedWool(itemId)) {
+			return PrayerCatalog.GodLine.GUTHIX;
+		}
 		if (isWhiteKnightEquipment(itemId)) {
 			return PrayerCatalog.GodLine.SARADOMIN;
 		}
@@ -1352,6 +1373,8 @@ public class Equipment {
 			case 2166: // WHITE_PLATED_SKIRT
 			case 2167: // WHITE_CHAIN_MAIL_LEGS
 			case 2168: // WHITE_CHAIN_MAIL_TOP
+			case 3133: // WHITE_GAUNTLETS
+			case 3134: // WHITE_GREAVES
 				return true;
 			default:
 				return false;
@@ -1378,6 +1401,8 @@ public class Equipment {
 			case 434: // BLACK_PLATED_SKIRT
 			case 1424: // BLACK_CHAIN_MAIL_LEGS
 			case 1533: // BLACK_CHAIN_MAIL_TOP
+			case 3131: // BLACK_GAUNTLETS
+			case 3132: // BLACK_GREAVES
 				return true;
 			default:
 				return false;
@@ -1404,10 +1429,42 @@ public class Equipment {
 			case 3128: // GREY_PLATED_SKIRT
 			case 3129: // GREY_CHAIN_MAIL_LEGS
 			case 3130: // GREY_CHAIN_MAIL_TOP
+			case 3135: // GREY_GAUNTLETS
+			case 3136: // GREY_GREAVES
 				return true;
 			default:
 				return false;
 		}
+	}
+
+	private boolean isZamorakBlessedWool(final int itemId) {
+		return itemId >= ItemId.ZAMORAK_WOOL_HAT.id() && itemId <= ItemId.ZAMORAK_WOOL_BOOTS.id();
+	}
+
+	private boolean isZamorakBlessedStaff(final int itemId) {
+		return itemId >= ItemId.BLESSED_STAFF.id() && itemId <= ItemId.BLESSED_BLOOD_STAFF.id();
+	}
+
+	private boolean isSaradominBlessedStaff(final int itemId) {
+		return itemId >= ItemId.SARADOMIN_BLESSED_STAFF.id() && itemId <= ItemId.SARADOMIN_BLESSED_BLOOD_STAFF.id();
+	}
+
+	private boolean isGuthixBlessedStaff(final int itemId) {
+		return itemId >= ItemId.GUTHIX_BLESSED_STAFF.id() && itemId <= ItemId.GUTHIX_BLESSED_BLOOD_STAFF.id();
+	}
+
+	private boolean isSaradominBlessedWool(final int itemId) {
+		return itemId >= ItemId.SARADOMIN_WOOL_HAT.id() && itemId <= ItemId.SARADOMIN_WOOL_BOOTS.id();
+	}
+
+	private boolean isGuthixBlessedWool(final int itemId) {
+		return itemId >= ItemId.GUTHIX_WOOL_HAT.id() && itemId <= ItemId.GUTHIX_WOOL_BOOTS.id();
+	}
+
+	private boolean isBlessedWoolArmor(final int itemId) {
+		return isZamorakBlessedWool(itemId)
+			|| isSaradominBlessedWool(itemId)
+			|| isGuthixBlessedWool(itemId);
 	}
 
 	private String formatGodLine(final PrayerCatalog.GodLine godLine) {
@@ -1427,13 +1484,14 @@ public class Equipment {
 		if (player.getConfig().WANT_EQUIPMENT_TAB) {
 			synchronized (list) {
 				for (Item item : list)
-					total += item == null ? 0 : item.getDef(player.getWorld()).getWeaponAimBonus();
+					total += getScaledWeaponAimBonus(item);
 			}
 		} else {
 			synchronized (player.getCarriedItems().getInventory().getItems()) {
 				for (Item item : player.getCarriedItems().getInventory().getItems()) {
 					if (item.isWielded()) {
 						total += item.getDef(player.getWorld()).getWeaponAimBonus();
+						total += getDevotionScaledCombatBonus(item, item.getDef(player.getWorld()).getWeaponAimBonus(), getGodEquipmentTargetWeaponAim(item.getCatalogId()));
 					}
 				}
 			}
@@ -1448,13 +1506,14 @@ public class Equipment {
 		if (player.getConfig().WANT_EQUIPMENT_TAB) {
 			synchronized (list) {
 				for (Item item : list)
-					total += item == null ? 0 : item.getDef(player.getWorld()).getWeaponPowerBonus();
+					total += getScaledWeaponPowerBonus(item);
 			}
 		} else {
 			synchronized (player.getCarriedItems().getInventory().getItems()) {
 				for (Item item : player.getCarriedItems().getInventory().getItems()) {
 					if (item.isWielded()) {
 						total += item.getDef(player.getWorld()).getWeaponPowerBonus();
+						total += getDevotionScaledCombatBonus(item, item.getDef(player.getWorld()).getWeaponPowerBonus(), getGodEquipmentTargetWeaponPower(item.getCatalogId()));
 					}
 				}
 			}
@@ -1469,13 +1528,15 @@ public class Equipment {
 		if (player.getConfig().WANT_EQUIPMENT_TAB) {
 			synchronized (list) {
 				for (Item item : list)
-					total += item == null ? 0 : item.getDef(player.getWorld()).getArmourBonus();
+					total += getScaledArmourBonus(item);
 			}
 		} else {
 			synchronized (player.getCarriedItems().getInventory().getItems()) {
 				for (Item item : player.getCarriedItems().getInventory().getItems()) {
 					if (item.isWielded()) {
-						total += item.getDef(player.getWorld()).getArmourBonus();
+						final int armourBonus = (int) item.getDef(player.getWorld()).getArmourBonus();
+						total += armourBonus;
+						total += getDevotionScaledCombatBonus(item, armourBonus, getGodEquipmentTargetArmour(item.getCatalogId()));
 					}
 				}
 			}
@@ -1490,13 +1551,14 @@ public class Equipment {
 		if (player.getConfig().WANT_EQUIPMENT_TAB) {
 			synchronized (list) {
 				for (Item item : list)
-					total += item == null ? 0 : item.getDef(player.getWorld()).getMagicBonus();
+					total += getScaledMagicBonus(item);
 			}
 		} else {
 			synchronized (player.getCarriedItems().getInventory().getItems()) {
 				for (Item item : player.getCarriedItems().getInventory().getItems()) {
 					if (item.isWielded()) {
 						total += item.getDef(player.getWorld()).getMagicBonus();
+						total += getDevotionScaledCombatBonus(item, item.getDef(player.getWorld()).getMagicBonus(), getGodEquipmentTargetMagic(item.getCatalogId()));
 					}
 				}
 			}
@@ -1546,7 +1608,245 @@ public class Equipment {
 		if (!matchesCurrentPrayerBook(item.getCatalogId())) {
 			return 0;
 		}
+		final int godEquipmentPrayerBonus = getGodEquipmentPrayerBonus(item.getCatalogId());
+		if (godEquipmentPrayerBonus >= 0) {
+			return godEquipmentPrayerBonus;
+		}
 		return item.getDef(player.getWorld()).getPrayerBonus();
+	}
+
+	private int getScaledWeaponAimBonus(final Item item) {
+		if (item == null || item.getDef(player.getWorld()) == null) {
+			return 0;
+		}
+		final int base = item.getDef(player.getWorld()).getWeaponAimBonus();
+		return base + getDevotionScaledCombatBonus(item, base, getGodEquipmentTargetWeaponAim(item.getCatalogId()));
+	}
+
+	private int getScaledWeaponPowerBonus(final Item item) {
+		if (item == null || item.getDef(player.getWorld()) == null) {
+			return 0;
+		}
+		final int base = item.getDef(player.getWorld()).getWeaponPowerBonus();
+		return base + getDevotionScaledCombatBonus(item, base, getGodEquipmentTargetWeaponPower(item.getCatalogId()));
+	}
+
+	private int getScaledArmourBonus(final Item item) {
+		if (item == null || item.getDef(player.getWorld()) == null) {
+			return 0;
+		}
+		final int base = (int) item.getDef(player.getWorld()).getArmourBonus();
+		return base + getDevotionScaledCombatBonus(item, base, getGodEquipmentTargetArmour(item.getCatalogId()));
+	}
+
+	private int getScaledMagicBonus(final Item item) {
+		if (item == null || item.getDef(player.getWorld()) == null) {
+			return 0;
+		}
+		final int base = item.getDef(player.getWorld()).getMagicBonus();
+		return base + getDevotionScaledCombatBonus(item, base, getGodEquipmentTargetMagic(item.getCatalogId()));
+	}
+
+	private int getDevotionScaledCombatBonus(final Item item, final int baseValue, final int targetValue) {
+		if (item == null || targetValue <= baseValue || !matchesCurrentPrayerBook(item.getCatalogId())) {
+			return 0;
+		}
+		final PrayerCatalog.GodLine godLine = getRequiredGodLine(item.getCatalogId());
+		return Devotion.getDevotionGrowthBonus(player, godLine, targetValue - baseValue);
+	}
+
+	private int getGodEquipmentPrayerBonus(final int itemId) {
+		final int resourceCost = getGodEquipmentResourceCost(itemId);
+		if (resourceCost <= 0) {
+			return -1;
+		}
+		final PrayerCatalog.GodLine godLine = getRequiredGodLine(itemId);
+		return getGodEquipmentNaturalPrayerBonus(itemId)
+			+ resourceCost
+			+ Devotion.getPrayerBonusGrowth(player, godLine);
+	}
+
+	private int getGodEquipmentNaturalPrayerBonus(final int itemId) {
+		switch (itemId) {
+			case 430: // BLACK_MACE
+			case 2157: // WHITE_MACE
+			case 3119: // GREY_MACE
+			case 433: // BLACK_KITE_SHIELD
+			case 2162: // WHITE_KITE_SHIELD
+			case 3124: // GREY_KITE_SHIELD
+				return 5;
+			default:
+				return 0;
+		}
+	}
+
+	private int getGodEquipmentResourceCost(final int itemId) {
+		switch (itemId) {
+			case 423: // BLACK_DAGGER
+			case 424: // BLACK_SHORT_SWORD
+			case 430: // BLACK_MACE
+			case 2151: // WHITE_DAGGER
+			case 2152: // WHITE_SHORT_SWORD
+			case 2157: // WHITE_MACE
+			case 3113: // GREY_DAGGER
+			case 3114: // GREY_SHORT_SWORD
+			case 3119: // GREY_MACE
+			case 3137: // ZAMORAK_WOOL_HAT
+			case 3142: // SARADOMIN_WOOL_HAT
+			case 3147: // GUTHIX_WOOL_HAT
+				return 1;
+			case 425: // BLACK_LONG_SWORD
+			case 427: // BLACK_SCIMITAR
+			case 230: // LARGE_BLACK_HELMET
+			case 3131: // BLACK_GAUNTLETS
+			case 3132: // BLACK_GREAVES
+			case 2153: // WHITE_LONG_SWORD
+			case 2155: // WHITE_SCIMITAR
+			case 2158: // LARGE_WHITE_HELMET
+			case 3133: // WHITE_GAUNTLETS
+			case 3134: // WHITE_GREAVES
+			case 3115: // GREY_LONG_SWORD
+			case 3117: // GREY_SCIMITAR
+			case 3120: // LARGE_GREY_HELMET
+			case 3135: // GREY_GAUNTLETS
+			case 3136: // GREY_GREAVES
+			case 3140: // ZAMORAK_WOOL_GLOVES
+			case 3141: // ZAMORAK_WOOL_BOOTS
+			case 3145: // SARADOMIN_WOOL_GLOVES
+			case 3146: // SARADOMIN_WOOL_BOOTS
+			case 3150: // GUTHIX_WOOL_GLOVES
+			case 3151: // GUTHIX_WOOL_BOOTS
+				return 2;
+			case 426: // BLACK_2_HANDED_SWORD
+			case 429: // BLACK_BATTLE_AXE
+			case 433: // BLACK_KITE_SHIELD
+			case 248: // BLACK_PLATE_MAIL_LEGS
+			case 2154: // WHITE_2_HANDED_SWORD
+			case 2156: // WHITE_BATTLE_AXE
+			case 2162: // WHITE_KITE_SHIELD
+			case 2164: // WHITE_PLATE_MAIL_LEGS
+			case 3116: // GREY_2_HANDED_SWORD
+			case 3118: // GREY_BATTLE_AXE
+			case 3124: // GREY_KITE_SHIELD
+			case 3126: // GREY_PLATE_MAIL_LEGS
+			case 3139: // ZAMORAK_WOOL_ROBE_BOTTOM
+			case 3144: // SARADOMIN_WOOL_ROBE_BOTTOM
+			case 3149: // GUTHIX_WOOL_ROBE_BOTTOM
+				return 3;
+			case 196: // BLACK_PLATE_MAIL_BODY
+			case 2163: // WHITE_PLATE_MAIL_BODY
+			case 3125: // GREY_PLATE_MAIL_BODY
+			case 3138: // ZAMORAK_WOOL_ROBE_TOP
+			case 3143: // SARADOMIN_WOOL_ROBE_TOP
+			case 3148: // GUTHIX_WOOL_ROBE_TOP
+				return 4;
+			default:
+				return 0;
+		}
+	}
+
+	private int getGodEquipmentTargetWeaponAim(final int itemId) {
+		switch (itemId) {
+			case 423: // BLACK_DAGGER
+			case 2151: // WHITE_DAGGER
+			case 3113: // GREY_DAGGER
+				return 25;
+			case 424: // BLACK_SHORT_SWORD
+			case 2152: // WHITE_SHORT_SWORD
+			case 3114: // GREY_SHORT_SWORD
+				return 40;
+			case 425: // BLACK_LONG_SWORD
+			case 2153: // WHITE_LONG_SWORD
+			case 3115: // GREY_LONG_SWORD
+				return 49;
+			case 426: // BLACK_2_HANDED_SWORD
+			case 2154: // WHITE_2_HANDED_SWORD
+			case 3116: // GREY_2_HANDED_SWORD
+				return 70;
+			case 427: // BLACK_SCIMITAR
+			case 2155: // WHITE_SCIMITAR
+			case 3117: // GREY_SCIMITAR
+				return 44;
+			case 429: // BLACK_BATTLE_AXE
+			case 2156: // WHITE_BATTLE_AXE
+			case 3118: // GREY_BATTLE_AXE
+				return 47;
+			case 430: // BLACK_MACE
+			case 2157: // WHITE_MACE
+			case 3119: // GREY_MACE
+				return 38;
+			default:
+				return 0;
+		}
+	}
+
+	private int getGodEquipmentTargetWeaponPower(final int itemId) {
+		switch (itemId) {
+			case 423: // BLACK_DAGGER
+			case 2151: // WHITE_DAGGER
+			case 3113: // GREY_DAGGER
+				return 25;
+			case 424: // BLACK_SHORT_SWORD
+			case 2152: // WHITE_SHORT_SWORD
+			case 3114: // GREY_SHORT_SWORD
+				return 40;
+			case 425: // BLACK_LONG_SWORD
+			case 2153: // WHITE_LONG_SWORD
+			case 3115: // GREY_LONG_SWORD
+				return 49;
+			case 426: // BLACK_2_HANDED_SWORD
+			case 2154: // WHITE_2_HANDED_SWORD
+			case 3116: // GREY_2_HANDED_SWORD
+				return 70;
+			case 427: // BLACK_SCIMITAR
+			case 2155: // WHITE_SCIMITAR
+			case 3117: // GREY_SCIMITAR
+				return 44;
+			case 429: // BLACK_BATTLE_AXE
+			case 2156: // WHITE_BATTLE_AXE
+			case 3118: // GREY_BATTLE_AXE
+				return 64;
+			case 430: // BLACK_MACE
+			case 2157: // WHITE_MACE
+			case 3119: // GREY_MACE
+				return 28;
+			default:
+				return 0;
+		}
+	}
+
+	private int getGodEquipmentTargetArmour(final int itemId) {
+		switch (itemId) {
+			case 230: // LARGE_BLACK_HELMET
+			case 2158: // LARGE_WHITE_HELMET
+			case 3120: // LARGE_GREY_HELMET
+				return 30;
+			case 196: // BLACK_PLATE_MAIL_BODY
+			case 2163: // WHITE_PLATE_MAIL_BODY
+			case 3125: // GREY_PLATE_MAIL_BODY
+				return 80;
+			case 248: // BLACK_PLATE_MAIL_LEGS
+			case 2164: // WHITE_PLATE_MAIL_LEGS
+			case 3126: // GREY_PLATE_MAIL_LEGS
+				return 49;
+			case 433: // BLACK_KITE_SHIELD
+			case 2162: // WHITE_KITE_SHIELD
+			case 3124: // GREY_KITE_SHIELD
+				return 38;
+			case 3131: // BLACK_GAUNTLETS
+			case 3133: // WHITE_GAUNTLETS
+			case 3135: // GREY_GAUNTLETS
+			case 3132: // BLACK_GREAVES
+			case 3134: // WHITE_GREAVES
+			case 3136: // GREY_GREAVES
+				return 22;
+			default:
+				return 0;
+		}
+	}
+
+	private int getGodEquipmentTargetMagic(final int itemId) {
+		return 0;
 	}
 
 	public int getBearHideIntimidatePercent() {
@@ -2483,12 +2783,12 @@ public class Equipment {
 		if (lowerName.contains("throwing knife")) {
 			return 0;
 		}
-		if (lowerName.contains("staff")
-			&& (item.getDef(player.getWorld()).getMagicBonus() > 0
-				|| item.getDef(player.getWorld()).getMagicOffense() > 0)) {
-			return 0;
-		}
-		return (int) Math.ceil(item.getDef(player.getWorld()).getWeaponPowerBonus() / 7.0D);
+			if (lowerName.contains("staff")
+				&& (getScaledMagicBonus(item) > 0
+					|| item.getDef(player.getWorld()).getMagicOffense() > 0)) {
+				return 0;
+			}
+			return (int) Math.ceil(getScaledWeaponPowerBonus(item) / 7.0D);
 	}
 
 	private int getDerivedRangedOffense(Item item) {
@@ -2507,7 +2807,7 @@ public class Equipment {
 		if (explicit != 0) {
 			return explicit;
 		}
-		return (int) Math.ceil(item.getDef(player.getWorld()).getMagicBonus() / 4.0D);
+			return (int) Math.ceil(getScaledMagicBonus(item) / 4.0D);
 	}
 
 	private boolean isStaffMagicWeapon(Item item) {
@@ -2540,7 +2840,7 @@ public class Equipment {
 		if (isMagicArmor(item) || isRangedArmor(item)) {
 			return 0;
 		}
-		return (int) Math.ceil(item.getDef(player.getWorld()).getArmourBonus() / 14.0D);
+			return (int) Math.ceil(getScaledArmourBonus(item) / 14.0D);
 	}
 
 	private int getDerivedRangedDefense(Item item) {
@@ -2555,10 +2855,13 @@ public class Equipment {
 		if (!isRangedArmor(item)) {
 			return 0;
 		}
-		return (int) Math.ceil(item.getDef(player.getWorld()).getArmourBonus() / 14.0D);
+			return (int) Math.ceil(getScaledArmourBonus(item) / 14.0D);
 	}
 
 	private int getDerivedMagicDefense(Item item) {
+		if (isBlessedWoolArmor(item.getCatalogId())) {
+			return getBlessedWoolMagicDefense(item);
+		}
 		if (EnchantingItemEffects.isBaseWoolRobePiece(item.getCatalogId())
 			|| EnchantingItemEffects.isEnchantedWoolRobePiece(item.getCatalogId())) {
 			return EnchantingItemEffects.getWoolRobeMagicDefense(item);
@@ -2570,7 +2873,45 @@ public class Equipment {
 		if (!isMagicArmor(item)) {
 			return 0;
 		}
-		return (int) Math.ceil(item.getDef(player.getWorld()).getArmourBonus() / 14.0D);
+		return (int) Math.ceil(getScaledArmourBonus(item) / 14.0D);
+	}
+
+	private int getBlessedWoolMagicDefense(final Item item) {
+		final int itemId = item.getCatalogId();
+		final int baseValue = getBlessedWoolBaseMagicDefense(itemId);
+		final int targetValue = getBlessedWoolTargetMagicDefense(itemId);
+		return baseValue + getDevotionScaledCombatBonus(item, baseValue, targetValue);
+	}
+
+	private int getBlessedWoolBaseMagicDefense(final int itemId) {
+		switch (itemId) {
+			case 3137: // ZAMORAK_WOOL_HAT
+			case 3142: // SARADOMIN_WOOL_HAT
+			case 3147: // GUTHIX_WOOL_HAT
+				return 1;
+			case 3138: // ZAMORAK_WOOL_ROBE_TOP
+			case 3143: // SARADOMIN_WOOL_ROBE_TOP
+			case 3148: // GUTHIX_WOOL_ROBE_TOP
+				return 4;
+			case 3139: // ZAMORAK_WOOL_ROBE_BOTTOM
+			case 3144: // SARADOMIN_WOOL_ROBE_BOTTOM
+			case 3149: // GUTHIX_WOOL_ROBE_BOTTOM
+				return 3;
+			case 3140: // ZAMORAK_WOOL_GLOVES
+			case 3141: // ZAMORAK_WOOL_BOOTS
+			case 3145: // SARADOMIN_WOOL_GLOVES
+			case 3146: // SARADOMIN_WOOL_BOOTS
+			case 3150: // GUTHIX_WOOL_GLOVES
+			case 3151: // GUTHIX_WOOL_BOOTS
+				return 2;
+			default:
+				return 0;
+		}
+	}
+
+	private int getBlessedWoolTargetMagicDefense(final int itemId) {
+		final int resourceCost = getGodEquipmentResourceCost(itemId);
+		return resourceCost > 0 ? Math.max(getBlessedWoolBaseMagicDefense(itemId), (int) Math.ceil(9 * resourceCost * 0.6D)) : 0;
 	}
 
 	private RobeEffects getEquippedRobeEffects() {

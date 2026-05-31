@@ -118,7 +118,7 @@ public final class SkillGuideInterface {
 			mc.getSurface().drawString("Details", x + 140, y + 94, 0xffffff, 2);
 			return;
 		}
-		if (isInfoTab()) {
+		if (isExpositoryTab()) {
 			mc.getSurface().drawString("Important information to know", x + 5, y + 94, 0xffffff, 2);
 			return;
 		}
@@ -166,18 +166,19 @@ public final class SkillGuideInterface {
 			int gapHeight = (curItem instanceof SkillMenuItem) ? 37 : 37;
 
 			mc.getSurface().drawBoxAlpha(detailX - 75, allY, width, gapHeight, 0x45454545, 90);
-			if (!isInfoTab()) {
+			if (!isExpositoryTab()) {
 				drawString(curItem.getLevelReq(), levelX, allY + 25, 2, textColour);
 			}
 
-			drawString(curItem.getSkillDetail(), detailX + 10, allY + 25, 2, textColour);
+			int textX = isExpositoryTab() ? x + 10 : detailX + 10;
+			drawString(curItem.getSkillDetail(), textX, allY + 25, 2, textColour);
 
 			//mc.getSurface().drawLineHoriz(detailX - 75, allY, width, 0);
 			if (i != skillMenuEntries.size() - 1 && i != listEndPoint) {
 				mc.getSurface().drawBoxBorder(detailX - 75, width, allY, gapHeight + 1, 0);
 			}
 
-			if (curItem instanceof SkillMenuItem) {
+			if (curItem instanceof SkillMenuItem && !isExpositoryTab()) {
 				int itemId = ((SkillMenuItem) curItem).getItemID();
 				ItemDef def = EntityHandler.getItemDef(itemId);
 				if (def != null) {
@@ -249,6 +250,14 @@ public final class SkillGuideInterface {
 		}
 		String tab = mc.skillGuideChosenTabs.get(curTab);
 		return tab.equals("Info") || tab.equals("Other");
+	}
+
+	private boolean isExpositoryTab() {
+		if (mc.skillGuideChosenTabs == null || curTab < 0 || curTab >= mc.skillGuideChosenTabs.size()) {
+			return false;
+		}
+		String tab = mc.skillGuideChosenTabs.get(curTab);
+		return isInfoTab() || (mc.getSkillGuideChosen().equals("Prayer") && tab.equals("Devotion"));
 	}
 
 	public void changeTab(int tabNum) {
@@ -1220,25 +1229,40 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(1215, "70", "Guthix Cape - requires Guthix worship"));
 			skillMenuEntries.add(new SkillMenuItem(1217, "70", "Staff of Guthix - requires Guthix worship"));
 			skillMenuEntries.add(new SkillMenuItem(1218, "", "God gear gives prayer points and empowers god spells"));
-			skillMenuEntries.add(new SkillMenuItem(2228, "1", "Blessed Staff - requires Prayer and Magic"));
-			skillMenuEntries.add(new SkillMenuItem(2229, "8", "Blessed Pine Staff - requires Prayer and Magic"));
-			skillMenuEntries.add(new SkillMenuItem(2230, "15", "Blessed Oak Staff - requires Prayer and Magic"));
-			skillMenuEntries.add(new SkillMenuItem(2231, "22", "Blessed Willow Staff - requires Prayer and Magic"));
-			skillMenuEntries.add(new SkillMenuItem(2232, "30", "Blessed Palm Staff - requires Prayer and Magic"));
-			skillMenuEntries.add(new SkillMenuItem(2233, "38", "Blessed Maple Staff - requires Prayer and Magic"));
-			skillMenuEntries.add(new SkillMenuItem(2234, "46", "Blessed Yew Staff - requires Prayer and Magic"));
-			skillMenuEntries.add(new SkillMenuItem(2235, "54", "Blessed Ebony Staff - requires Prayer and Magic"));
-			skillMenuEntries.add(new SkillMenuItem(2236, "62", "Blessed Magic Staff - requires Prayer and Magic"));
-			skillMenuEntries.add(new SkillMenuItem(2237, "70", "Blessed Blood Staff - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(2228, "1", "Staff blessed by Zamorak - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(2229, "8", "Pine staff blessed by Zamorak - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(2230, "15", "Oak staff blessed by Zamorak - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(2231, "22", "Willow staff blessed by Zamorak - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(2232, "30", "Palm staff blessed by Zamorak - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(2233, "38", "Maple staff blessed by Zamorak - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(2234, "46", "Yew staff blessed by Zamorak - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(2235, "54", "Ebony staff blessed by Zamorak - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(2236, "62", "Magic staff blessed by Zamorak - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(2237, "70", "Blood staff blessed by Zamorak - requires Prayer and Magic"));
+			skillMenuEntries.add(new SkillMenuItem(3152, "", "Saradomin blessed staves use the same tiers"));
+			skillMenuEntries.add(new SkillMenuItem(3162, "", "Guthix blessed staves use the same tiers"));
+			skillMenuEntries.add(new SkillMenuItem(3137, "50", "Wool hats can be blessed"));
+			skillMenuEntries.add(new SkillMenuItem(3140, "100", "Wool gloves and boots can be blessed"));
+			skillMenuEntries.add(new SkillMenuItem(3139, "150", "Wool robe bottoms can be blessed"));
+			skillMenuEntries.add(new SkillMenuItem(3138, "200", "Wool robe tops can be blessed"));
 		} else if (curTab == 4) {
-			skillMenuEntries.add(new SkillMenuItem(388, "", "Every 10 offerings increases devotion by 1"));
-			skillMenuEntries.add(new SkillMenuItem(388, "", "Every devotion level increases Prayer XP per offering by 1"));
-			skillMenuEntries.add(new SkillMenuItem(698, "100", "Steel gauntlets can be blessed"));
-			skillMenuEntries.add(new SkillMenuItem(1988, "200", "Steel greaves can be blessed"));
-			skillMenuEntries.add(new SkillMenuItem(109, "300", "Steel helms can be blessed"));
-			skillMenuEntries.add(new SkillMenuItem(121, "400", "Steel leg armour can be blessed"));
-			skillMenuEntries.add(new SkillMenuItem(118, "500", "Steel body armour can be blessed"));
-			skillMenuEntries.add(new SkillMenuItem(388, "", "Blessed armour grants Prayer XP and +1 devotion"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Bury bones or scatter ashes to make offerings"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Every 10 offerings gives +1 devotion"));
+			skillMenuEntries.add(new SkillMenuEntry("", "+1 Prayer XP per offering for each devotion"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Devotion is tracked separately for each god"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Devotion is capped at 1000"));
+			skillMenuEntries.add(new SkillMenuEntry("", "You can bless items at your god's altar"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Blessed items grow stronger with devotion"));
+			skillMenuEntries.add(new SkillMenuEntry("", "You can bless an item once you are at 50 devotion per resource cost"));
+			skillMenuEntries.add(new SkillMenuEntry("", "1 resource: daggers, short swords, maces, wool hats"));
+			skillMenuEntries.add(new SkillMenuEntry("", "2 resources: longs, scims, helms, gloves, boots"));
+			skillMenuEntries.add(new SkillMenuEntry("", "3 resources: 2-handers, battleaxes, shields, legs"));
+			skillMenuEntries.add(new SkillMenuEntry("", "4 resources: bodies and robe tops"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Staff devotion cost increases by 50 each wood tier"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Basic staves require 50; blood staves require 500"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Destroy opposing god's blessed items at your altar"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Destruction gives devotion to your god"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Destruction lowers devotion to the item's god"));
 		} else if (curTab == 5) {
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Worship at a god's altar to switch prayers"));
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Prayer does not drain over time"));

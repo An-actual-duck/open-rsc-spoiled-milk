@@ -52,18 +52,18 @@ def main() -> None:
         require(white in equipment, f"Missing Saradomin product mapping for {source}")
         require(grey in equipment, f"Missing Guthix product mapping for {source}")
 
-    for source, requirement in (
-        ("case 63: // STEEL_DAGGER", "return 100;"),
-        ("case 72: // STEEL_LONG_SWORD", "return 200;"),
-        ("case 78: // STEEL_2_HANDED_SWORD", "return 300;"),
-        ("case 698: // STEEL_GAUNTLETS", "return 100;"),
-        ("case 1988: // STEEL_GREAVES", "return 200;"),
-        ("case 109: // LARGE_STEEL_HELMET", "return 300;"),
-        ("case 129: // STEEL_KITE_SHIELD", "return 300;"),
-        ("case 121: // STEEL_PLATE_MAIL_LEGS", "return 400;"),
-        ("case 118: // STEEL_PLATE_MAIL_BODY", "return 500;"),
+    for source, resource_cost in (
+        ("case 63: // STEEL_DAGGER", "return 1;"),
+        ("case 72: // STEEL_LONG_SWORD", "return 2;"),
+        ("case 78: // STEEL_2_HANDED_SWORD", "return 3;"),
+        ("case 698: // STEEL_GAUNTLETS", "return 2;"),
+        ("case 1988: // STEEL_GREAVES", "return 2;"),
+        ("case 109: // LARGE_STEEL_HELMET", "return 2;"),
+        ("case 129: // STEEL_KITE_SHIELD", "return 3;"),
+        ("case 121: // STEEL_PLATE_MAIL_LEGS", "return 3;"),
+        ("case 118: // STEEL_PLATE_MAIL_BODY", "return 4;"),
     ):
-        require(source in equipment and requirement in equipment, f"Missing devotion requirement for {source}")
+        require(source in equipment and resource_cost in equipment, f"Missing resource-cost rule for {source}")
 
     for retired_source in (
         "case 105: // MEDIUM_STEEL_HELMET",
@@ -100,12 +100,16 @@ def main() -> None:
 
     require("Devotion.getDevotionLevel(player, godLine) < devotionRequirement" in equipment,
             "steel armour conversion should be gated by devotion")
+    require("Devotion.getDevotionRequirementForResourceCost(getSteelResourceCost(itemId))" in equipment,
+            "steel armour conversion should use resource cost * 50 devotion")
+    require("Devotion.getBlessingPrayerXp(player, godLine, getSteelSmithingXp(item.getCatalogId()))" in equipment,
+            "steel armour conversion Prayer XP should scale with devotion")
     require("player.incExp(Skill.PRAYER.id(), prayerXp, true)" in equipment,
             "steel armour conversion should grant Prayer XP")
-    require("Devotion.addDevotionLevels(player, godLine, 1)" in equipment,
-            "steel armour conversion should add one devotion reward")
+    require("Devotion.addDevotionLevels(player, godLine, 1)" not in equipment,
+            "steel armour conversion should not add devotion")
 
-    require("public static final int maxCustom = 3137;" in constants, "ItemId.maxCustom should include god gauntlets and greaves")
+    require("public static final int maxCustom = 3172;" in constants, "ItemId.maxCustom should include blessed staff god variants")
     print("PASS: god knight armour conversion validated")
 
 

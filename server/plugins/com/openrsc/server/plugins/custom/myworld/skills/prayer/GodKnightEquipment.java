@@ -3,7 +3,6 @@ package com.openrsc.server.plugins.custom.myworld.skills.prayer;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.Devotion;
-import com.openrsc.server.external.ItemSmithingDef;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
@@ -44,8 +43,10 @@ public final class GodKnightEquipment implements UseLocTrigger {
 		}
 
 		final int devotionRequirement = getDevotionRequirement(item.getCatalogId());
-		if (devotionRequirement > 0 && Devotion.getDevotionLevel(player, godLine) < devotionRequirement) {
+		final int currentDevotion = Devotion.getDevotionLevel(player, godLine);
+		if (devotionRequirement > 0 && currentDevotion < devotionRequirement) {
 			player.message("You need " + devotionRequirement + " devotion to " + formatGodLine(godLine) + " to bless that equipment.");
+			player.message("Your current devotion to " + formatGodLine(godLine) + " is " + currentDevotion + ".");
 			return;
 		}
 
@@ -56,54 +57,23 @@ public final class GodKnightEquipment implements UseLocTrigger {
 		give(player, productId, 1);
 		player.message("The altar blesses the steel equipment.");
 		if (devotionRequirement > 0) {
-			final int prayerXp = getSteelSmithingXp(player, item.getCatalogId());
+			final int prayerXp = Devotion.getBlessingPrayerXp(player, godLine, getSteelSmithingXp(item.getCatalogId()));
 			if (prayerXp > 0) {
 				player.incExp(Skill.PRAYER.id(), prayerXp, true);
 			}
-			Devotion.addDevotionLevels(player, godLine, 1);
-			player.message("Your devotion to " + formatGodLine(godLine) + " deepens.");
 		}
 	}
 
 	private int getDevotionRequirement(final int itemId) {
-		switch (itemId) {
-			case 63: // STEEL_DAGGER
-			case 67: // STEEL_SHORT_SWORD
-			case 95: // STEEL_MACE
-				return 100;
-			case 72: // STEEL_LONG_SWORD
-			case 84: // STEEL_SCIMITAR
-				return 200;
-			case 78: // STEEL_2_HANDED_SWORD
-			case 90: // STEEL_BATTLE_AXE
-			case 129: // STEEL_KITE_SHIELD
-				return 300;
-			case 698: // STEEL_GAUNTLETS
-				return 100;
-			case 1988: // STEEL_GREAVES
-				return 200;
-			case 109: // LARGE_STEEL_HELMET
-				return 300;
-			case 121: // STEEL_PLATE_MAIL_LEGS
-				return 400;
-			case 118: // STEEL_PLATE_MAIL_BODY
-				return 500;
-			default:
-				return 0;
-		}
+		return Devotion.getDevotionRequirementForResourceCost(getSteelResourceCost(itemId));
 	}
 
-	private int getSteelSmithingXp(final Player player, final int itemId) {
-		final ItemSmithingDef def = player.getWorld().getServer().getEntityHandler().getSmithingDefbyID(itemId);
-		if (def != null) {
-			return def.getRequiredBars() * 150;
-		}
-
-		final int barCost = getModernSteelBarCost(itemId);
+	private int getSteelSmithingXp(final int itemId) {
+		final int barCost = getSteelResourceCost(itemId);
 		return barCost > 0 ? barCost * 150 : 0;
 	}
 
-	private int getModernSteelBarCost(final int itemId) {
+	private int getSteelResourceCost(final int itemId) {
 		switch (itemId) {
 			case 63: // STEEL_DAGGER
 			case 67: // STEEL_SHORT_SWORD
@@ -121,7 +91,7 @@ public final class GodKnightEquipment implements UseLocTrigger {
 			case 121: // STEEL_PLATE_MAIL_LEGS
 				return 3;
 			case 118: // STEEL_PLATE_MAIL_BODY
-				return 5;
+				return 4;
 			default:
 				return 0;
 		}

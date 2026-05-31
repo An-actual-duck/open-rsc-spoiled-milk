@@ -628,8 +628,8 @@ public class Server implements Runnable {
 					bootstrap.childOption(ChannelOption.SO_SNDBUF, 10000);
 					try {
 						getPluginHandler().handlePlugin(StartupTrigger.class);
-						serverChannel = bootstrap.bind(new InetSocketAddress(getConfig().SERVER_PORT)).sync();
-						LOGGER.info("Game world is now online on port {}!", box(getConfig().SERVER_PORT));
+						serverChannel = bootstrap.bind(new InetSocketAddress(getConfig().SERVER_BIND_ADDRESS, getConfig().SERVER_PORT)).sync();
+						LOGGER.info("Game world is now online on {}:{}!", getConfig().SERVER_BIND_ADDRESS, box(getConfig().SERVER_PORT));
 						LOGGER.info("RSA exponent: " + Crypto.getPublicExponent());
 						LOGGER.info("RSA modulus: " + Crypto.getPublicModulus());
 					} catch (final InterruptedException e) {
@@ -672,10 +672,10 @@ public class Server implements Runnable {
 
 					try {
 						getPluginHandler().handlePlugin(StartupTrigger.class);
-						serverChannel = bootstrap.bind(new InetSocketAddress(getConfig().SERVER_PORT)).sync();
-						LOGGER.info("Game world is now online on TCP port {}!", box(getConfig().SERVER_PORT));
-						serverChannelWs = bootstrapWs.bind(new InetSocketAddress(getConfig().WS_SERVER_PORT)).sync();
-						LOGGER.info("Game world is now online on  WS port {}! (webclient only)", box(getConfig().WS_SERVER_PORT));
+						serverChannel = bootstrap.bind(new InetSocketAddress(getConfig().SERVER_BIND_ADDRESS, getConfig().SERVER_PORT)).sync();
+						LOGGER.info("Game world is now online on TCP {}:{}!", getConfig().SERVER_BIND_ADDRESS, box(getConfig().SERVER_PORT));
+						serverChannelWs = bootstrapWs.bind(new InetSocketAddress(getConfig().SERVER_BIND_ADDRESS, getConfig().WS_SERVER_PORT)).sync();
+						LOGGER.info("Game world is now online on WS {}:{}! (webclient only)", getConfig().SERVER_BIND_ADDRESS, box(getConfig().WS_SERVER_PORT));
 						LOGGER.info("RSA exponent: " + Crypto.getPublicExponent());
 						LOGGER.info("RSA modulus: " + Crypto.getPublicModulus());
 					} catch (final InterruptedException e) {

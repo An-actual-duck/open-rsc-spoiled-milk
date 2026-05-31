@@ -10622,7 +10622,8 @@ public final class mudclient implements Runnable {
 		if (woodTier >= 0) {
 			return this.getMyWorldStaffMagicOffenseByTier(woodTier);
 		}
-		if (item.id >= 2228 && item.id <= 2237) {
+		if ((item.id >= 2228 && item.id <= 2237)
+			|| (item.id >= 3152 && item.id <= 3171)) {
 			return 2;
 		}
 		if (item.id >= 2238 && item.id <= 2327) {

@@ -113,6 +113,15 @@ def main():
     require('"id": 235' in scenery, "Guthix altar placements should now use object id 235")
     require("You bless the staff at the altar." in blessing and "getBlessedStaffProduct" in blessing,
             "Blessed staff altar interaction should be wired")
+    require("ItemId.BLESSED_STAFF.id() + tierIndex" in blessing,
+            "Existing blessed staff IDs should remain the Zamorak conversion range")
+    require("ItemId.SARADOMIN_BLESSED_STAFF.id() + tierIndex" in blessing
+            and "ItemId.GUTHIX_BLESSED_STAFF.id() + tierIndex" in blessing,
+            "Blessed staff altar interaction should support all three gods")
+    require("Devotion.getDevotionRequirementForResourceCost(resourceCost)" in blessing,
+            "Blessed staff altar interaction should be devotion-gated")
+    require("Devotion.getBlessingPrayerXp(player, godLine, getStaffCraftingXp(item.getCatalogId()))" in blessing,
+            "Blessed staff altar interaction should grant scaled Prayer XP")
     require("awardGodCape(player, ItemId.SARADOMIN_CAPE.id());" in mage_arena
             and "awardGodCape(player, ItemId.GUTHIX_CAPE.id());" in mage_arena
             and "awardGodCape(player, ItemId.ZAMORAK_CAPE.id());" in mage_arena,

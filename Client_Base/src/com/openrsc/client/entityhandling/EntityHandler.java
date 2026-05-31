@@ -5163,16 +5163,16 @@ public class EntityHandler {
 		setCustomItemDefinition(2225, new ItemDef("Copper Square Shield", "A sturdy metal shield", "", 108, 3, "items:3", false, true, 8, 0xC86A2B, false, false, true, 2225));
 		setCustomItemDefinition(2226, new ItemDef("Titan Steel Square Shield", "A sturdy metal shield", "", 192, 3, "items:3", false, true, 8, 0x8EA6BB, false, false, true, 2226));
 		setCustomItemDefinition(2227, new ItemDef("Orichalcum Square Shield", "A sturdy metal shield", "", 240, 3, "items:3", false, true, 8, 0x5A3F7D, false, false, true, 2227));
-		setCustomItemDefinition(2228, new ItemDef("Blessed Staff", "A staff blessed for prayer", "", 24, 123, "items:123", false, true, 16, 0xF0E68C, false, false, true, 2228));
-		setCustomItemDefinition(2229, new ItemDef("Blessed Pine Staff", "A pine staff blessed for prayer", "", 30, 123, "items:123", false, true, 16, 0xD8B25C, false, false, true, 2229));
-		setCustomItemDefinition(2230, new ItemDef("Blessed Oak Staff", "An oak staff blessed for prayer", "", 45, 123, "items:123", false, true, 16, 0xB97A57, false, false, true, 2230));
-		setCustomItemDefinition(2231, new ItemDef("Blessed Willow Staff", "A willow staff blessed for prayer", "", 54, 123, "items:123", false, true, 16, 0x7D9B5A, false, false, true, 2231));
-		setCustomItemDefinition(2232, new ItemDef("Blessed Palm Staff", "A palm staff blessed for prayer", "", 120, 123, "items:123", false, true, 16, 0xC69C6D, false, false, true, 2232));
-		setCustomItemDefinition(2233, new ItemDef("Blessed Maple Staff", "A maple staff blessed for prayer", "", 180, 123, "items:123", false, true, 16, 0xA0522D, false, false, true, 2233));
-		setCustomItemDefinition(2234, new ItemDef("Blessed Yew Staff", "A yew staff blessed for prayer", "", 270, 123, "items:123", false, true, 16, 0x6B4F2A, false, false, true, 2234));
-		setCustomItemDefinition(2235, new ItemDef("Blessed Ebony Staff", "An ebony staff blessed for prayer", "", 360, 123, "items:123", false, true, 16, 0x333333, false, false, true, 2235));
-		setCustomItemDefinition(2236, new ItemDef("Blessed Magic Staff", "A magic staff blessed for prayer", "", 480, 123, "items:123", false, true, 16, 0x4B2E83, false, false, true, 2236));
-		setCustomItemDefinition(2237, new ItemDef("Blessed Blood Staff", "A blood staff blessed for prayer", "", 720, 123, "items:123", false, true, 16, 0xCC2222, false, false, true, 2237));
+		setCustomItemDefinition(2228, new ItemDef("Staff blessed by Zamorak", "A staff blessed by Zamorak", "", 24, 123, "items:123", false, true, 16, 0xF0E68C, false, false, true, 2228));
+		setCustomItemDefinition(2229, new ItemDef("Pine staff blessed by Zamorak", "A pine staff blessed by Zamorak", "", 30, 123, "items:123", false, true, 16, 0xD8B25C, false, false, true, 2229));
+		setCustomItemDefinition(2230, new ItemDef("Oak staff blessed by Zamorak", "An oak staff blessed by Zamorak", "", 45, 123, "items:123", false, true, 16, 0xB97A57, false, false, true, 2230));
+		setCustomItemDefinition(2231, new ItemDef("Willow staff blessed by Zamorak", "A willow staff blessed by Zamorak", "", 54, 123, "items:123", false, true, 16, 0x7D9B5A, false, false, true, 2231));
+		setCustomItemDefinition(2232, new ItemDef("Palm staff blessed by Zamorak", "A palm staff blessed by Zamorak", "", 120, 123, "items:123", false, true, 16, 0xC69C6D, false, false, true, 2232));
+		setCustomItemDefinition(2233, new ItemDef("Maple staff blessed by Zamorak", "A maple staff blessed by Zamorak", "", 180, 123, "items:123", false, true, 16, 0xA0522D, false, false, true, 2233));
+		setCustomItemDefinition(2234, new ItemDef("Yew staff blessed by Zamorak", "A yew staff blessed by Zamorak", "", 270, 123, "items:123", false, true, 16, 0x6B4F2A, false, false, true, 2234));
+		setCustomItemDefinition(2235, new ItemDef("Ebony staff blessed by Zamorak", "An ebony staff blessed by Zamorak", "", 360, 123, "items:123", false, true, 16, 0x333333, false, false, true, 2235));
+		setCustomItemDefinition(2236, new ItemDef("Magic staff blessed by Zamorak", "A magic staff blessed by Zamorak", "", 480, 123, "items:123", false, true, 16, 0x4B2E83, false, false, true, 2236));
+		setCustomItemDefinition(2237, new ItemDef("Blood staff blessed by Zamorak", "A blood staff blessed by Zamorak", "", 720, 123, "items:123", false, true, 16, 0xCC2222, false, false, true, 2237));
 		setCustomItemDefinition(2238, new ItemDef("Mind Staff", "A staff attuned to mind magic", "", 750, 123, "items:123", false, true, 16, 0xE0D28B, false, false, true, 2238));
 		setCustomItemDefinition(2239, new ItemDef("Mind Pine Staff", "A pine staff attuned to mind magic", "", 875, 123, "items:123", false, true, 16, 0xE0D28B, false, false, true, 2239));
 		setCustomItemDefinition(2240, new ItemDef("Mind Oak Staff", "An oak staff attuned to mind magic", "", 1750, 123, "items:123", false, true, 16, 0xE0D28B, false, false, true, 2240));
@@ -5505,6 +5505,14 @@ public class EntityHandler {
 		setCustomItemDefinition(3128, new ItemDef("Grey Plated skirt", "Armour designed for females", "", 1920, 9, "items:9", false, true, 644, 0x9EA59F, false, false, true, 3128));
 		setCustomItemDefinition(3129, new ItemDef("Grey Chain Mail Legs", "A series of connected metal rings", "", 720, 590, "items:590", false, true, 128, 0x9EA59F, false, false, true, 3129));
 		setCustomItemDefinition(3130, new ItemDef("Grey Chain Mail Top", "A series of connected metal rings", "", 1440, 595, "items:595", false, true, 64, 0x9EA59F, false, false, true, 3130));
+		setCustomItemDefinition(3131, new ItemDef("Black gauntlets", "Heavy hand protection blessed by Zamorak", "", 384, 156, "items:156", false, true, 256, 0x222222, false, false, true, 3131));
+		setCustomItemDefinition(3132, new ItemDef("Black greaves", "Heavy foot protection blessed by Zamorak", "", 384, 16, "items:16", false, true, 512, 0x222222, false, false, true, 3132));
+		setCustomItemDefinition(3133, new ItemDef("White gauntlets", "Heavy hand protection blessed by Saradomin", "", 384, 156, "items:156", false, true, 256, 0xF0F0F0, false, false, true, 3133));
+		setCustomItemDefinition(3134, new ItemDef("White greaves", "Heavy foot protection blessed by Saradomin", "", 384, 16, "items:16", false, true, 512, 0xF0F0F0, false, false, true, 3134));
+		setCustomItemDefinition(3135, new ItemDef("Grey gauntlets", "Heavy hand protection blessed by Guthix", "", 384, 156, "items:156", false, true, 256, 0x9EA59F, false, false, true, 3135));
+		setCustomItemDefinition(3136, new ItemDef("Grey greaves", "Heavy foot protection blessed by Guthix", "", 384, 16, "items:16", false, true, 512, 0x9EA59F, false, false, true, 3136));
+		addBlessedWoolArmorDefinitions();
+		addAdditionalBlessedStaffDefinitions();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
 			new int[] {900, 1275, 2025, 17625}, new int[] {19711, 3394611, 16724736, 12255487});
 
@@ -5527,6 +5535,52 @@ public class EntityHandler {
 		addLifeRingLine(3096, tiers, ringPrices, gemMasks);
 		addLifeNecklaceLine(3101, tiers, necklacePrices, gemMasks);
 		addLifeAmuletLine(3106, tiers, lawAmuletPrices, gemMasks);
+	}
+
+	private static void addBlessedWoolArmorDefinitions() {
+		final String[] gods = {"Zamorak", "Saradomin", "Guthix"};
+		final int[] colors = {0x222222, 0xF0F0F0, 0x9EA59F};
+		int id = 3137;
+		for (int index = 0; index < gods.length; index++) {
+			final String god = gods[index];
+			final int color = colors[index];
+			setCustomItemDefinition(id++, new ItemDef("Wool hat blessed by " + god, "A wool hat blessed by " + god, "", 60, 86, "items:86", false, true, 32, color, false, false, true, id - 1));
+			setCustomItemDefinition(id++, new ItemDef("Wool robe top blessed by " + god, "A wool robe top blessed by " + god, "", 160, 87, "items:87", false, true, 64, color, false, false, true, id - 1));
+			setCustomItemDefinition(id++, new ItemDef("Wool robe bottom blessed by " + god, "A wool robe bottom blessed by " + god, "", 120, 88, "items:88", false, true, 128, color, false, false, true, id - 1));
+			setCustomItemDefinition(id++, new ItemDef("Wool gloves blessed by " + god, "Wool gloves blessed by " + god, "", 120, 17, "items:17", false, true, 256, color, false, false, true, id - 1));
+			setCustomItemDefinition(id++, new ItemDef("Wool boots blessed by " + god, "Wool boots blessed by " + god, "", 120, 16, "items:16", false, true, 512, color, false, false, true, id - 1));
+		}
+	}
+
+	private static void addAdditionalBlessedStaffDefinitions() {
+		addBlessedStaffLine(3152, "Saradomin");
+		addBlessedStaffLine(3162, "Guthix");
+	}
+
+	private static void addBlessedStaffLine(final int startId, final String god) {
+		final String[] woods = {"", "Pine ", "Oak ", "Willow ", "Palm ", "Maple ", "Yew ", "Ebony ", "Magic ", "Blood "};
+		final String[] descriptions = {"A staff", "A pine staff", "An oak staff", "A willow staff", "A palm staff", "A maple staff", "A yew staff", "An ebony staff", "A magic staff", "A blood staff"};
+		final int[] prices = {24, 30, 45, 54, 120, 180, 270, 360, 480, 720};
+		final int[] colors = {0xF0E68C, 0xD8B25C, 0xB97A57, 0x7D9B5A, 0xC69C6D, 0xA0522D, 0x6B4F2A, 0x333333, 0x4B2E83, 0xCC2222};
+		for (int index = 0; index < woods.length; index++) {
+			final int id = startId + index;
+			final String name = index == 0 ? "Staff" : woods[index] + "staff";
+			setCustomItemDefinition(id, new ItemDef(
+				name + " blessed by " + god,
+				descriptions[index] + " blessed by " + god,
+				"",
+				prices[index],
+				123,
+				"items:123",
+				false,
+				true,
+				16,
+				colors[index],
+				false,
+				false,
+				true,
+				id));
+		}
 	}
 
 	private static void addAmuletLine(int startId, String[] tiers, String altarName, String descriptionFormat,

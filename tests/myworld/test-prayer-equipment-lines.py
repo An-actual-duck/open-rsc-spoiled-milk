@@ -145,16 +145,16 @@ def main():
         assert item["prayerBonus"] == 0
 
     expected_blessed_staffs = {
-        2228: ("Blessed Staff", 6, 2, 6, 1),
-        2229: ("Blessed Pine Staff", 7, 3, 6, 2),
-        2230: ("Blessed Oak Staff", 8, 4, 6, 3),
-        2231: ("Blessed Willow Staff", 10, 5, 6, 4),
-        2232: ("Blessed Palm Staff", 11, 5, 6, 5),
-        2233: ("Blessed Maple Staff", 12, 6, 6, 6),
-        2234: ("Blessed Yew Staff", 14, 7, 6, 7),
-        2235: ("Blessed Ebony Staff", 15, 7, 6, 8),
-        2236: ("Blessed Magic Staff", 16, 8, 6, 9),
-        2237: ("Blessed Blood Staff", 18, 9, 6, 10),
+        2228: ("Staff blessed by Zamorak", 6, 2, 6, 1),
+        2229: ("Pine staff blessed by Zamorak", 7, 3, 6, 2),
+        2230: ("Oak staff blessed by Zamorak", 8, 4, 6, 3),
+        2231: ("Willow staff blessed by Zamorak", 10, 5, 6, 4),
+        2232: ("Palm staff blessed by Zamorak", 11, 5, 6, 5),
+        2233: ("Maple staff blessed by Zamorak", 12, 6, 6, 6),
+        2234: ("Yew staff blessed by Zamorak", 14, 7, 6, 7),
+        2235: ("Ebony staff blessed by Zamorak", 15, 7, 6, 8),
+        2236: ("Magic staff blessed by Zamorak", 16, 8, 6, 9),
+        2237: ("Blood staff blessed by Zamorak", 18, 9, 6, 10),
     }
     for item_id, (name, aim, power, magic, prayer) in expected_blessed_staffs.items():
         item = by_id(custom_items, item_id)
@@ -163,6 +163,17 @@ def main():
         assert item["weaponPowerBonus"] == power
         assert item["magicBonus"] == magic
         assert item["prayerBonus"] == prayer
+
+    expected_blessed_staff_variants = {
+        3152: "Staff blessed by Saradomin",
+        3161: "Blood staff blessed by Saradomin",
+        3162: "Staff blessed by Guthix",
+        3171: "Blood staff blessed by Guthix",
+    }
+    for item_id, name in expected_blessed_staff_variants.items():
+        item = by_id(custom_items, item_id)
+        assert item["name"] == name
+        assert item["magicBonus"] == 6
 
     expected_god_staffs = {
         1216: ("Staff of Zamorak", 20, 10, 0, 11),
@@ -200,6 +211,28 @@ def main():
         item = by_id(base_items, item_id)
         assert item["name"] == name
         assert item["magicBonus"] == 0
+        assert item["prayerBonus"] == prayer
+
+    expected_blessed_wool = {
+        3137: ("Wool hat blessed by Zamorak", 1),
+        3138: ("Wool robe top blessed by Zamorak", 4),
+        3139: ("Wool robe bottom blessed by Zamorak", 3),
+        3140: ("Wool gloves blessed by Zamorak", 2),
+        3141: ("Wool boots blessed by Zamorak", 2),
+        3142: ("Wool hat blessed by Saradomin", 1),
+        3143: ("Wool robe top blessed by Saradomin", 4),
+        3144: ("Wool robe bottom blessed by Saradomin", 3),
+        3145: ("Wool gloves blessed by Saradomin", 2),
+        3146: ("Wool boots blessed by Saradomin", 2),
+        3147: ("Wool hat blessed by Guthix", 1),
+        3148: ("Wool robe top blessed by Guthix", 4),
+        3149: ("Wool robe bottom blessed by Guthix", 3),
+        3150: ("Wool gloves blessed by Guthix", 2),
+        3151: ("Wool boots blessed by Guthix", 2),
+    }
+    for item_id, (name, prayer) in expected_blessed_wool.items():
+        item = by_id(custom_items, item_id)
+        assert item["name"] == name
         assert item["prayerBonus"] == prayer
 
 

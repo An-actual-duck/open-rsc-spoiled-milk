@@ -1145,7 +1145,9 @@ public final class Player extends Mob {
 	}
 
 	private boolean isBlessedStaff(int itemId) {
-		return itemId >= ItemId.BLESSED_STAFF.id() && itemId <= ItemId.BLESSED_BLOOD_STAFF.id();
+		return (itemId >= ItemId.BLESSED_STAFF.id() && itemId <= ItemId.BLESSED_BLOOD_STAFF.id())
+			|| (itemId >= ItemId.SARADOMIN_BLESSED_STAFF.id() && itemId <= ItemId.SARADOMIN_BLESSED_BLOOD_STAFF.id())
+			|| (itemId >= ItemId.GUTHIX_BLESSED_STAFF.id() && itemId <= ItemId.GUTHIX_BLESSED_BLOOD_STAFF.id());
 	}
 
 	private boolean isGodStaff(int itemId) {
