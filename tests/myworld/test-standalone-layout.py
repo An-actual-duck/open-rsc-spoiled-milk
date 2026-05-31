@@ -188,6 +188,7 @@ def test_myworld_docs_are_consolidated() -> None:
         "god-knight-equipment-audit.md",
         "jewelry-and-retired-robe-effects.md",
         "migration-regression-audit.md",
+        "new-ideas-and-issues.md",
         "prayer-devotion-equipment-plan.md",
         "pvm-npc-cluster-audit.md",
         "pvm-population-and-cluster-plan.md",

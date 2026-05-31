@@ -330,7 +330,7 @@ public final class SkillGuideInterface {
 				addMeleeTierGuide("Adamantite dagger", 54, 65);
 				addMeleeTierGuide("Orichalcum dagger", 62, 2028);
 				addMeleeTierGuide("Rune dagger", 70, 396);
-				addMeleeTierGuide("Dragon dagger", 70, 1447);
+				addMeleeTierGuide("Dragon dagger", 80, 1447);
 			} else if (curTab == 1) {
 				addMeleeTierGuide("Tin short sword", 1, 1997);
 				addMeleeTierGuide("Copper short sword", 8, 2008);
@@ -352,7 +352,7 @@ public final class SkillGuideInterface {
 				addMeleeTierGuide("Adamantite long sword", 54, 74);
 				addMeleeTierGuide("Orichalcum long sword", 62, 2031);
 				addMeleeTierGuide("Rune long sword", 70, 75);
-				addMeleeTierGuide("Dragon sword", 70, 593);
+				addMeleeTierGuide("Dragon sword", 80, 593);
 			} else if (curTab == 2) {
 				addMeleeTierGuide("Tin scimitar", 1, 1999);
 				addMeleeTierGuide("Copper scimitar", 8, 2010);
@@ -375,7 +375,7 @@ public final class SkillGuideInterface {
 				addMeleeTierGuide("Adamantite 2-handed sword", 54, 80);
 				addMeleeTierGuide("Orichalcum 2-handed sword", 62, 2033);
 				addMeleeTierGuide("Rune 2-handed sword", 70, 81);
-				addMeleeTierGuide("Dragon 2-handed sword", 70, 1346);
+				addMeleeTierGuide("Dragon 2-handed sword", 80, 1346);
 			} else if (curTab == 4) {
 				addMeleeTierGuide("Tin battle axe", 1, 2002);
 				addMeleeTierGuide("Copper battle axe", 8, 2013);
@@ -387,7 +387,7 @@ public final class SkillGuideInterface {
 				addMeleeTierGuide("Adamantite battle axe", 54, 92);
 				addMeleeTierGuide("Orichalcum battle axe", 62, 2035);
 				addMeleeTierGuide("Rune battle axe", 70, 93);
-				addMeleeTierGuide("Dragon battle axe", 70, 2752);
+				addMeleeTierGuide("Dragon battle axe", 80, 2752);
 			} else if (curTab == 5) {
 				addMeleeTierGuide("Tin mace", 1, 2003);
 				addMeleeTierGuide("Copper mace", 8, 2014);

@@ -2508,8 +2508,8 @@ public class EntityHandler {
 		npcs.add(new NPCDef("Futurum", "The ghost of Christmas future", "", 15, 15, 5, 15, false, sprites, 0, 0, 0, 0, 201, 243, 9, 9, 5, i++));
 		sprites = new int[]{6, 1, 2, -1, 107, -1, 45, -1, -1, 11, -1, -1};
 		npcs.add(new NPCDef("Forester", "He looks after McGrubor's wood", "", 24, 22, 17, 23, false, sprites, 1, 56576, 43520, 15523536, 145, 220, 6, 6, 5, i++));
-		sprites = new int[]{6, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-		npcs.add(new NPCDef("McGrubor", "Grumpy old McGruber", "", 20, 20, 20, 20, false, sprites, 0xAAAAAA, 12277060, 0x007900, 15523536, 160, 220, 6, 6, 5, i++));
+		sprites = new int[]{19, 34, 43, -1, 49, -1, -1, -1, -1, -1, -1, -1};
+		npcs.add(new NPCDef("Grey Knight", "An armoured follower of Guthix", "", 55, 58, 52, 60, true, sprites, 1, 8421504, 8421504, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 557, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Ash", "Groovy", "", 20, 20, 20, 20, false, sprites, 0x50321E, 0x00137F, 0x794B1E, 15523536, 160, 220, 6, 6, 5, i++));
 
@@ -2718,7 +2718,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Longbow", "A Nice sturdy bow", "", 80, 54, "items:54", false, true, 24, 65280, 8537122, false, false, true, 188));
 		items.add(new ItemDef("Shortbow", "Short but effective", "", 50, 55, "items:55", false, true, 24, 65280, 8537122, false, false, true, 189));
 		items.add(new ItemDef("Crossbow bolts", "Good if you have a crossbow!", "", 3, 56, "items:56", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1001 : 0, 0, false, false, false, 190));
-		items.add(new ItemDef("Apron", "this will help keep my clothes clean", "", 2, 58, "items:58", false, true, 1024, 9789488, false, false, true, 191));
+		items.add(new ItemDef("Brown apron", "this will help keep my clothes clean", "", 2, 58, "items:58", false, true, 1024, 9789488, false, false, true, 191));
 		items.add(new ItemDef("Chef's hat", "What a silly hat", "", 2, 89, "items:89", false, true, 32, 0, false, false, true, 192));
 		items.add(new ItemDef("Beer", "A glass of frothy ale", "drink", 2, 90, "items:90", false, false, 0, 0, false, false, true, 193));
 		items.add(new ItemDef("skirt", "A ladies skirt", "", 2, 88, "items:88", false, true, 128, 16036851, false, false, true, 194));

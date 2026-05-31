@@ -104,6 +104,7 @@ public final class CraftingEquipmentShops extends AbstractShop {
 			List<Item> shopItems = new ArrayList<>();
 			Collections.addAll(shopItems,
 				new Item(ItemId.CHISEL.id(), 2),
+				new Item(ItemId.BROWN_APRON.id(), 3),
 				new Item(ItemId.RING_MOULD.id(), 4),
 				new Item(ItemId.NECKLACE_MOULD.id(), 2),
 				new Item(ItemId.AMULET_MOULD.id(), 2));

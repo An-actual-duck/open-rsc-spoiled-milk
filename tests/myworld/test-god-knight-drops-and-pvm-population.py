@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "server"
+CLIENT_NPC_DEFS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 
 
 def fail(message: str) -> None:
@@ -45,6 +46,20 @@ def drop_table_section(drops: str, table_name: str) -> str:
     end = drops.find("addEmptyDrop", start)
     require(end >= 0, f"Missing empty-drop budget terminator: {table_name}")
     return drops[start:end]
+
+
+def client_npc_line(npc_id: int) -> str:
+    count = 0
+    pending_sprites = ""
+    for line in CLIENT_NPC_DEFS.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("sprites = new int[]"):
+            pending_sprites = stripped
+        if "npcs.add(new NPCDef(" in stripped:
+            if count == npc_id:
+                return f"{pending_sprites}\n{stripped}"
+            count += 1
+    fail(f"Client NPC definition id {npc_id} is missing")
 
 
 def main() -> None:
@@ -100,6 +115,11 @@ def main() -> None:
     require(grey is not None, "Grey Knight definition is missing")
     require(grey["name"] == "Grey Knight" and grey["combatlvl"] == 56, "Grey Knight identity is incorrect")
     require(grey["attackable"] == 1 and grey["aggressive"] == 0, "Grey Knight combat disposition is incorrect")
+    client_grey = client_npc_line(836)
+    require('NPCDef("Grey Knight", "An armoured follower of Guthix"' in client_grey, "Client Grey Knight identity is incorrect")
+    require("55, 58, 52, 60, true" in client_grey, "Client Grey Knight combat stats/disposition are incorrect")
+    require("new int[]{19, 34, 43, -1, 49" in client_grey, "Client Grey Knight should use knight armour sprites")
+    require("8421504, 8421504" in client_grey, "Client Grey Knight should use grey armour colours")
     myworld_defs = json.loads((SERVER / "conf/server/defs/NpcDefsMyWorld.json").read_text(encoding="utf-8"))
     grey_override = next((npc for npc in myworld_defs["npcs"] if npc["id"] == 836), None)
     require(grey_override is not None, "Grey Knight MyWorld combat override is missing")

@@ -46,6 +46,7 @@ python3 ./tests/myworld/test-path-queue-regressions.py
 python3 ./tests/myworld/test-packet-shape-guards.py
 python3 ./tests/myworld/test-ranged-runtime-tables.py
 python3 ./tests/myworld/test-combat-data.py
+python3 ./tests/myworld/test-melee-weapon-requirements.py
 python3 ./tests/myworld/test-combat-interaction.py
 python3 ./tests/myworld/test-npc-attack-styles.py
 python3 ./tests/myworld/test-combat-runtime-invariants.py
@@ -81,6 +82,7 @@ python3 ./tests/myworld/test-prayer-faction-setup.py
 python3 ./tests/myworld/test-quest-reward-guardrails.py
 python3 ./tests/myworld/test-robe-defense-budgets.py
 python3 ./tests/myworld/test-shop-tiering.py
+python3 ./tests/myworld/test-brown-apron-crafting-guild.py
 python3 ./tests/myworld/test-skill-guide-info-pass.py
 python3 ./tests/myworld/test-skill-guides.py
 python3 ./tests/myworld/test-summoning-animation-effect.py

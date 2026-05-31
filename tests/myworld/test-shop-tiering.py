@@ -351,6 +351,10 @@ def main() -> None:
         "Designed especially for ladies who like to fight",
     ))
 
+    ensure_contains(CRAFTING_EQUIPMENT_PATH, (
+        "ItemId.BROWN_APRON.id()",
+    ))
+
     for path in (ZAFF_PATH, MAGIC_STORE_PATH, BETTY_PATH):
         ensure_contains(path, (
             "ItemId.FIRE_RUNE.id()",

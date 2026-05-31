@@ -12,6 +12,7 @@ repository root [`README.md`](../../README.md).
 - [altar-enchantment-and-conversion-plan.md](altar-enchantment-and-conversion-plan.md): implemented rune-altar enchanting costs, two-part Enchanting gates, and steel-only god knight conversion.
 - [god-knight-equipment-audit.md](god-knight-equipment-audit.md): implementation record and remaining tuning decisions for god-aligned knight equipment sources.
 - [prayer-devotion-equipment-plan.md](prayer-devotion-equipment-plan.md): next prayer-devotion equipment plan, including blessing requirements, XP rules, scaling, and god-tool retirement.
+- [new-ideas-and-issues.md](new-ideas-and-issues.md): lightweight intake list for ideas and newly spotted issues before they become scoped work.
 - [pvm-population-and-cluster-plan.md](pvm-population-and-cluster-plan.md): implemented pre-release PvM population passes and remaining expansion decisions.
 - [pvm-npc-cluster-audit.md](pvm-npc-cluster-audit.md): hostile-NPC proximity audit, including the Wilderness-focused population view.
 - [dual-element-spells.md](dual-element-spells.md): current dual-element Magic spell implementation and live effect identities.
