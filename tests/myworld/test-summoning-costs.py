@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
+CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 PLAN = ROOT / "docs/myworld/summoning-plan.md"
 
 
@@ -18,6 +19,7 @@ def fail(message: str) -> None:
 def main() -> int:
     summoning = SUMMONING.read_text(encoding="utf-8")
     guide = GUIDE.read_text(encoding="utf-8")
+    client = CLIENT.read_text(encoding="utf-8")
     plan = PLAN.read_text(encoding="utf-8")
 
     match = re.search(
@@ -35,6 +37,8 @@ def main() -> int:
         fail("Ironhide Bear should not cost a nature rune")
     if "Ironhide Bear - Combat; 1 life, 2 body, bones" not in guide:
         fail("Summoning skill guide should show the updated Ironhide Bear cost")
+    if "{37, 36, 20}" not in client or "{1, 2, 1}" not in client:
+        fail("Summoning tooltip should show Ironhide Bear as 1 life rune, 2 body runes, and bones")
 
     plan_start = plan.index("### Ironhide Bear")
     plan_end = plan.index("### Sacred Unicorn")

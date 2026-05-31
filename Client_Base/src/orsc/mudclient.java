@@ -185,7 +185,7 @@ public final class mudclient implements Runnable {
 	private static final int[][] SUMMONING_COST_ITEM_IDS = {
 		{37, 36},
 		{37, 36, 181},
-		{37, 36, 40, 20},
+		{37, 36, 20},
 		{37, 36, 46, 20},
 		{37, 33, 36, 40, 604},
 		{37, 42, 36, 40, 20},
@@ -199,7 +199,7 @@ public final class mudclient implements Runnable {
 	private static final int[][] SUMMONING_COST_AMOUNTS = {
 		{1, 1},
 		{1, 1, 1},
-		{1, 1, 1, 1},
+		{1, 2, 1},
 		{1, 1, 1, 1},
 		{1, 1, 1, 1, 1},
 		{1, 2, 1, 1, 1},

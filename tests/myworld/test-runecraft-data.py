@@ -147,7 +147,7 @@ def ensure_stone_and_talismans_are_retired() -> None:
         fail("Found stale talisman Locate commands in ItemDefsCustom.json")
 
     loc_text = RUNECRAFT_LOCS_PATH.read_text(encoding="utf-8")
-    for snippet in ('"id": 1227', '"X": 114', '"Y": 700'):
+    for snippet in ('"id": 98', '"X": 114', '"Y": 700'):
         if snippet not in loc_text:
             fail(f"Runecraft stone source missing Varrock stone placement: {snippet}")
 
