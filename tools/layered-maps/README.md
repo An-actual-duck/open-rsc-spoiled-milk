@@ -5,7 +5,8 @@ capability. It currently provides:
 
 - the `signed-layered-v1` coordinate contract;
 - immutable Java 8 reference values;
-- the checked `legacy-packed-y-v1` codec; and
+- the checked `legacy-packed-y-v1` codec;
+- the checked `legacy-terrain-sector-name-v1` archive-name codec;
 - a read-only preflight for the first supported repository adapter; and
 - lossless, non-relocating normalization of recognized terrain, placements,
   and transition data into a layered inventory.
@@ -71,6 +72,13 @@ every supported coordinate and reconstructs every placement record to prove a
 semantic legacy round trip. Coordinates outside the named legacy codec remain
 raw, visible findings; they are never guessed or corrected.
 
+Terrain entries report both their original non-negative archive indices
+(`legacySectorX/Y`) and their logical signed map-sector identity (`sectorX/Y`).
+The legacy archive grid adds 48 sectors on X and 37 on Y, so `h0x48y37` is
+logical global level-0 sector `(0,0)`. Archive coordinates, logical map sectors,
+and runtime region keys are distinct contracts even where they share a 48-tile
+size.
+
 Java coordinate owners remain fingerprinted, unresolved inputs. This command
 does not rewrite Java, align areas, create a Builder project, launch a server,
 or make anything eligible for game import/export.
@@ -92,4 +100,6 @@ the contract yet. `EntityHandler` can project an already matched legacy object
 telepoint into `WorldObjectTransition`; the XML map, command matching, and
 runtime teleport callers remain unchanged. This object-specific name leaves
 the broader transport/recovery/instance transition model open for later
-design.
+design. `WorldEditorTerrainArchive.Coordinates` may similarly expose a checked
+`WorldMapSectorId`, but archive lookup and both authoritative terrain copies
+remain unchanged.

@@ -1,5 +1,8 @@
 package com.openrsc.server.io;
 
+import com.openrsc.server.model.world.coordinate.LegacyTerrainSectorAdapter;
+import com.openrsc.server.model.world.coordinate.WorldMapSectorId;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -58,6 +61,9 @@ public final class WorldEditorTerrainArchive implements AutoCloseable {
 			int baseY = y - plane * 944;
 			return new Coordinates(x, y, plane, Math.floorDiv(x + 2304, REGION_SIZE),
 				Math.floorDiv(baseY + 1776, REGION_SIZE), Math.floorMod(x, REGION_SIZE), Math.floorMod(baseY, REGION_SIZE));
+		}
+		public WorldMapSectorId toWorldMapSectorId() {
+			return LegacyTerrainSectorAdapter.fromLegacySector(plane, sectorX, sectorY);
 		}
 	}
 

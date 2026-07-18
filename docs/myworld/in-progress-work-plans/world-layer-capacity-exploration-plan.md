@@ -1,14 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-6 implemented and validated on
+Status: architecture design complete; Slices 1-7 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 6 object-telepoint projection checkpoint; packed
-runtime storage remains authoritative and no world conversion has begun
+Current milestone: Slice 7 logical map-sector identity checkpoint; legacy
+terrain archives remain authoritative and no world conversion has begun
 
 ## Purpose
 
@@ -50,9 +50,10 @@ Documentation may be revised as decisions are made. The owner approved the
 isolated Slice 1 coordinate laboratory/read-only preflight, Slice 2 lossless
 normalization inventory, Slice 3 dormant server compatibility seam, Slice 4
 checked legacy-`Area` projection, Slice 5 logical region-key projection, and
-Slice 6 object-telepoint projection on 2026-07-18. The owner then authorized
-continuing through focused slices on the same active branch. Map relocation,
-Builder, database, streaming, export, and live/public work remain out of scope.
+Slice 6 object-telepoint projection, and Slice 7 logical map-sector identity on
+2026-07-18. The owner then authorized continuing through focused slices on the
+same active branch. Map relocation, Builder, database, streaming, export, and
+live/public work remain out of scope.
 
 ## Executive Finding
 
@@ -1860,6 +1861,63 @@ Slice 6 changes no runtime teleport call, XML record, placement, terrain,
 region, entity, packet, persistence, client, or map. It does not define the
 universal transition taxonomy or enable layered-only destinations.
 
+### Slice 7: Logical map-sector identity and legacy archive-name codec
+
+Objective: distinguish canonical signed map-sector identity from the offset
+indices embedded in legacy terrain archive entry names, without rewriting or
+changing how either terrain archive is loaded.
+
+Delivered in both the extractable tool and server binding:
+
+- immutable `WorldMapSectorId(worldSpace, level, sectorX, sectorY)`;
+- named `legacy-terrain-sector-name-v1` codecs for
+  `h{plane}x{archiveSectorX}y{archiveSectorY}`;
+- checked plane/level mapping, global-space restriction, signed logical
+  sectors, overflow handling, and reverse encoding; and
+- explicit archive-sector offsets of `+48` on X and `+37` on Y, derived from
+  the historic tile offsets `2304/48` and `1776/48`.
+
+`WorldMapSectorId` remains a separate semantic type from `WorldRegionKey`.
+They both currently use 48-tile floor-divided indices, but terrain package
+ownership and simulation-region storage/lifetime must be free to evolve
+independently.
+
+Normalization now records `legacySectorX/Y` alongside logical signed
+`sectorX/Y`. This corrects the previous ambiguity where fields named
+`sectorX/Y` still contained offset archive indices. The schema now permits
+signed logical indices. For example, `h0x48y37` maps to global level 0 sector
+`(0,0)`, and archive entries at X 47 or Y 36 correctly map to logical `-1`.
+
+The existing `WorldEditorTerrainArchive.Coordinates` can expose a checked
+logical sector snapshot. Its archive-entry construction, cache, reads, tile
+records, and callers remain unchanged and no code invokes the new method yet.
+
+Validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-seven.py` — 3 tests passed;
+- tool/server codecs agreed and round-tripped across 31,428 synthetic legacy
+  names plus all 1,771 current archive entries;
+- signed/deep/instance logical sectors, invalid names, unsupported levels and
+  spaces, negative archive results, overflow, equality, hashes, and nulls were
+  exercised;
+- the real normalized inventory reconstructs every legacy name and reports
+  logical ranges: level 0 X `0..21`, Y `-1..20`; level +1 X `-1..20`, Y
+  `-1..20`; and levels +2/-1 X/Y `0..20`;
+- both authoritative terrain archives remain byte-identical at SHA-256
+  `d50089fcc81d51aa461567f4416a8f1a329ed439bcf64606ca1441c600e7229b`;
+- Slice 1 through Slice 6, World Builder discovery, schema validation, and
+  server build-authority regressions all passed;
+- the authoritative server build passed for 722 core and 488 plugin sources;
+  and
+- preflight/normalization remain at 254 candidates, 211 unresolved Java owners,
+  1,771 terrain sectors, 49,816 placements, 20 transitions, and one preserved
+  raw coordinate. Fingerprints changed as expected because the editor source
+  is fingerprinted and logical inventory sector semantics were corrected.
+
+Slice 7 does not change terrain bytes, archive names, archive copies, loader
+lookup, runtime regions, tiles, collision, entities, client behavior, Builder,
+or export. It creates no layered terrain file and enables no new map extent.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -1952,11 +2010,12 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 4 as a checked immutable layered projection from legacy `Area`, preserving packed storage and existing containment behavior while proving level/world-space isolation. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 5 as a logical `WorldRegionKey` projection while retaining packed region storage and recording the two legacy region objects that straddle level boundaries. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 6 as an object-specific directed transition projection, retaining the exact telepoint XML, packed lookup, command matching, and runtime teleport path. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 7 by separating logical signed map-sector identity from offset legacy terrain archive indices, retaining exact entry names and payload bytes. | Implemented and validated |
 
 ## Next Discussion
 
-Continue the unchanged-behavior adoption sequence with a focused layered map-
-sector identity contract. Keep terrain archives and the current loader
-authoritative; do not combine archive rewriting, region storage replacement,
-entities, broad transition taxonomy, persistence, client/protocol work,
+Continue the unchanged-behavior adoption sequence with focused static-
+placement location projections. Keep placement JSON, loaders, definitions,
+and runtime entity construction authoritative; do not combine source rewriting,
+region/entity storage replacement, persistence, client/protocol work,
 streaming, Builder, export, or relocation into that checkpoint.

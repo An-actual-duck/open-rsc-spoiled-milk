@@ -120,14 +120,16 @@
     "sector": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["legacyEntry", "legacyPlane", "worldSpace", "level", "sectorX", "sectorY", "payloadSha256"],
+      "required": ["legacyEntry", "legacyPlane", "legacySectorX", "legacySectorY", "worldSpace", "level", "sectorX", "sectorY", "payloadSha256"],
       "properties": {
         "legacyEntry": {"type": "string", "pattern": "^h[0-3]x[0-9]+y[0-9]+$"},
         "legacyPlane": {"type": "integer", "minimum": 0, "maximum": 3},
+        "legacySectorX": {"type": "integer", "minimum": 0},
+        "legacySectorY": {"type": "integer", "minimum": 0},
         "worldSpace": {"const": "global"},
         "level": {"enum": [-1, 0, 1, 2]},
-        "sectorX": {"type": "integer", "minimum": 0},
-        "sectorY": {"type": "integer", "minimum": 0},
+        "sectorX": {"type": "integer"},
+        "sectorY": {"type": "integer"},
         "payloadSha256": {"$ref": "#/$defs/hash"}
       }
     },

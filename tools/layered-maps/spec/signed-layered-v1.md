@@ -39,6 +39,33 @@ localY  = floorMod(y, 48)
 Storage-sector size does not determine renderer, server simulation, visibility,
 or network streaming cell size.
 
+`WorldMapSectorId(worldSpace, level, sectorX, sectorY)` gives this logical
+terrain-sector identity a dedicated type. It is intentionally distinct from
+`WorldRegionKey`: both currently use 48-tile floor-divided indices, but map
+ownership/storage and simulation-region lifetime are different contracts and
+may evolve independently.
+
+## Legacy terrain-sector name codec
+
+Legacy archive entries use `h{plane}x{archiveSectorX}y{archiveSectorY}`. Their
+indices include historical whole-sector offsets:
+
+```text
+logicalSectorX = archiveSectorX - 48
+logicalSectorY = archiveSectorY - 37
+```
+
+The `legacy-terrain-sector-name-v1` codec maps the plane through
+`legacy-packed-y-v1`, assigns the `global` world space, and applies those
+offsets. Reverse encoding requires `global`, one of the four representable
+legacy levels, and logical indices that remain non-negative after the archive
+offsets are restored. Unsupported names, overflow, layered-only levels,
+instances, and archive-negative results are refused.
+
+Normalized inventories retain `legacyEntry`, `legacyPlane`, and
+`legacySectorX/Y` for exact reconstruction while using signed logical
+`sectorX/Y` for map identity. Terrain payload bytes are not changed.
+
 ## Legacy packed-Y codec
 
 The legacy format has four 944-tile Y bands:

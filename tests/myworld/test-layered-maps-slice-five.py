@@ -215,6 +215,7 @@ class LayeredMapsSliceFiveTest(unittest.TestCase):
         self.assertEqual(
             [
                 "server/src/com/openrsc/server/external/EntityHandler.java",
+                "server/src/com/openrsc/server/io/WorldEditorTerrainArchive.java",
                 "server/src/com/openrsc/server/model/world/Area.java",
                 "server/src/com/openrsc/server/model/world/region/RegionManager.java",
             ],

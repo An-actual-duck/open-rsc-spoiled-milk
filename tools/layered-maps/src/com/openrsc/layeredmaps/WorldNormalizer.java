@@ -118,11 +118,11 @@ final class WorldNormalizer {
 						"Terrain entry changed after preflight validation: " + entry.getName());
 				}
 				int legacyPlane = parseNonNegativeInt(matcher.group(1), "terrain plane");
-				int sectorX = parseNonNegativeInt(matcher.group(2), "terrain sector X");
-				int sectorY = parseNonNegativeInt(matcher.group(3), "terrain sector Y");
-				int level = LegacyPackedCoordinateCodec.levelForLegacyPlane(legacyPlane);
-				String reconstructed = "h" + LegacyPackedCoordinateCodec.legacyPlaneForLevel(level)
-					+ "x" + sectorX + "y" + sectorY;
+				int legacySectorX = parseNonNegativeInt(matcher.group(2), "terrain sector X");
+				int legacySectorY = parseNonNegativeInt(matcher.group(3), "terrain sector Y");
+				WorldMapSectorId mapSector = LegacyTerrainSectorCodec.fromLegacySector(
+					legacyPlane, legacySectorX, legacySectorY);
+				String reconstructed = LegacyTerrainSectorCodec.encode(mapSector);
 				if (!entry.getName().equals(reconstructed)) {
 					throw new PreflightException(
 						"Terrain entry did not round-trip through the legacy codec: " + entry.getName());
@@ -133,15 +133,16 @@ final class WorldNormalizer {
 						"Terrain payload changed after preflight validation: " + entry.getName());
 				}
 				sectors.add(new TerrainSector(
-					entry.getName(), legacyPlane, level, sectorX, sectorY, Hashes.sha256(payload)));
+					entry.getName(), legacyPlane, legacySectorX, legacySectorY,
+					mapSector, Hashes.sha256(payload)));
 			}
 		}
 		Collections.sort(sectors);
 		Map<Integer, Integer> levels = new TreeMap<Integer, Integer>();
 		List<Object> sectorDocuments = new ArrayList<Object>();
 		for (TerrainSector sector : sectors) {
-			Integer count = levels.get(sector.level);
-			levels.put(sector.level, count == null ? 1 : count + 1);
+			Integer count = levels.get(sector.mapSector.getLevel());
+			levels.put(sector.mapSector.getLevel(), count == null ? 1 : count + 1);
 			sectorDocuments.add(sector.document());
 		}
 		if (sectors.size() != preflight.terrain.sectorCount) {
@@ -804,23 +805,23 @@ final class WorldNormalizer {
 	private static final class TerrainSector implements Comparable<TerrainSector> {
 		final String legacyEntry;
 		final int legacyPlane;
-		final int level;
-		final int sectorX;
-		final int sectorY;
+		final int legacySectorX;
+		final int legacySectorY;
+		final WorldMapSectorId mapSector;
 		final String payloadSha256;
 
 		TerrainSector(
 			String legacyEntry,
 			int legacyPlane,
-			int level,
-			int sectorX,
-			int sectorY,
+			int legacySectorX,
+			int legacySectorY,
+			WorldMapSectorId mapSector,
 			String payloadSha256) {
 			this.legacyEntry = legacyEntry;
 			this.legacyPlane = legacyPlane;
-			this.level = level;
-			this.sectorX = sectorX;
-			this.sectorY = sectorY;
+			this.legacySectorX = legacySectorX;
+			this.legacySectorY = legacySectorY;
+			this.mapSector = mapSector;
 			this.payloadSha256 = payloadSha256;
 		}
 
@@ -828,10 +829,12 @@ final class WorldNormalizer {
 			Map<String, Object> result = map();
 			result.put("legacyEntry", legacyEntry);
 			result.put("legacyPlane", Long.valueOf(legacyPlane));
-			result.put("worldSpace", WorldSpaceId.GLOBAL.getValue());
-			result.put("level", Long.valueOf(level));
-			result.put("sectorX", Long.valueOf(sectorX));
-			result.put("sectorY", Long.valueOf(sectorY));
+			result.put("legacySectorX", Long.valueOf(legacySectorX));
+			result.put("legacySectorY", Long.valueOf(legacySectorY));
+			result.put("worldSpace", mapSector.getWorldSpace().getValue());
+			result.put("level", Long.valueOf(mapSector.getLevel()));
+			result.put("sectorX", Long.valueOf(mapSector.getSectorX()));
+			result.put("sectorY", Long.valueOf(mapSector.getSectorY()));
 			result.put("payloadSha256", payloadSha256);
 			return result;
 		}
