@@ -259,11 +259,16 @@ final class RepositoryPreflight {
 			for (Path path : regularFiles(directory, ".java")) {
 				List<String> signals = coordinateSignals(path);
 				if (!signals.isEmpty()) {
-					String role = sourceRoot.startsWith("Client_Base")
-						? "client-coordinate-source"
-						: sourceRoot.startsWith("tools/world-builder")
-							? "builder-coordinate-source"
-							: "server-coordinate-source";
+					String relative = root.relativize(path.toRealPath())
+						.toString().replace('\\', '/');
+					String role = relative.startsWith(
+						"server/src/com/openrsc/server/model/world/coordinate/")
+						? "server-layered-coordinate-contract"
+						: sourceRoot.startsWith("Client_Base")
+							? "client-coordinate-source"
+							: sourceRoot.startsWith("tools/world-builder")
+								? "builder-coordinate-source"
+								: "server-coordinate-source";
 					addCandidate(root, candidates, role, path, signals);
 				}
 			}

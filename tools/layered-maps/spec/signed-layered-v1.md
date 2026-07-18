@@ -56,3 +56,15 @@ layered X/Y, expanded extents, and other layered-only values are refused rather
 than silently truncated or reinterpreted.
 
 Legacy conversion is one way once layered-only features are used.
+
+## Dormant server binding
+
+The Java 8 server binding lives under
+`com.openrsc.server.model.world.coordinate`. Its immutable values match this
+contract, while `LegacyPackedPointAdapter` is the only approved Slice 3 bridge
+to the existing packed `com.openrsc.server.model.Point`.
+
+The adapter decodes a legacy `Point` into the `global` world space. Reverse
+conversion requires `global` explicitly and applies every checked legacy-domain
+restriction above. The existence of this binding does not mean a runtime
+entity, region, packet, map, or persisted record has adopted layered identity.

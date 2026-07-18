@@ -1,13 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-2 implemented and validated on
+Status: architecture design complete; Slices 1-3 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 2 checkpoint; no runtime or world conversion begun
+Current milestone: Slice 3 checkpoint; no runtime consumer adoption or world
+conversion begun
 
 ## Purpose
 
@@ -46,9 +47,10 @@ Not authorized by this plan:
 - deploying experimental map work to the public server.
 
 Documentation may be revised as decisions are made. The owner approved the
-isolated Slice 1 coordinate laboratory/read-only preflight and Slice 2 lossless
-normalization inventory on 2026-07-18. Runtime, map relocation, Builder,
-database, streaming, and export work remain separately gated.
+isolated Slice 1 coordinate laboratory/read-only preflight, Slice 2 lossless
+normalization inventory, and Slice 3 dormant server compatibility seam on
+2026-07-18. Runtime consumer adoption, map relocation, Builder, database,
+streaming, and export work remain separately gated.
 
 ## Executive Finding
 
@@ -1505,7 +1507,7 @@ does not get waived merely because a later stage looks correct.
 ## Open Owner Questions
 
 None for the architecture study. Further implementation remains separately
-gated after the approved Slice 2 checkpoint.
+gated after the approved Slice 3 checkpoint.
 
 ## Foundation Implementation Slices: Implemented and Validated
 
@@ -1664,6 +1666,48 @@ Slice 2 is normalization only. It did not align terrain, infer area moves,
 rewrite Java, create a Builder project, modify runtime code, touch a database,
 or create an import/export path.
 
+### Slice 3: Dormant server layered-location adapter
+
+Objective: establish a server-owned Java 8 compatibility seam for
+`signed-layered-v1` without changing any existing world, entity, region,
+collision, pathing, visibility, transition, packet, or persistence consumer.
+
+Delivered under
+`server/src/com/openrsc/server/model/world/coordinate/`:
+
+- immutable `WorldCoordinate(x,y,level)`, `WorldSpaceId`, and
+  `WorldLocation(worldSpaceId,coordinate)` values matching the tool contract;
+- signed 48-tile sector/local addressing with floor division and modulo;
+- checked translation overflow and stable equality/hash behavior; and
+- `LegacyPackedPointAdapter`, an explicit bridge between existing packed
+  `Point` and global layered locations.
+
+The adapter accepts only the exact `legacy-packed-y-v1` domain. Reverse
+conversion refuses level `-2`, other unrepresentable levels, expanded or
+negative coordinates, and every non-global world space. Existing `Point`
+constructors, storage, behavior, and call sites were not modified.
+
+Dormancy and validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-three.py` — 4 tests passed;
+- all packed Y values `0..3775` at representative X boundaries were compared
+  against the tool codec and round-tripped through a `Point`-compatible seam;
+- signed negative coordinates, world-space identity, overflow, nulls, and all
+  legacy refusal boundaries were exercised;
+- a repository-wide guard confirmed that more than 500 existing server/plugin
+  sources do not import or reference the new coordinate package;
+- `./scripts/build-server.sh` passed through the authoritative bundled Ant
+  build for 717 core and 488 plugin sources, and `core.jar` contained only the
+  five approved package artifacts; and
+- Layered Maps preflight classifies the adapter as a resolved
+  `server-layered-coordinate-contract`, so the existing 211 unresolved Java
+  owners remain unchanged rather than counting the adapter as unfinished
+  migration work.
+
+Slice 3 introduces no behavior change. It does not attach layered identity to
+an entity, area, region, map, transition, packet, session, or database row and
+does not enable a new level or world space.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -1752,10 +1796,11 @@ private environment should validate at least:
 | 2026-07-18 | Validate through synthetic, copied vanilla, copied Spoiled Milk, incremental-streaming, alignment-workbench, disposable-export, alternate-adapter, and owner-acceptance gates with rollback at every stage. | Confirmed |
 | 2026-07-18 | Approve and implement Slice 1 as a self-contained signed-coordinate laboratory plus deterministic, read-only `spoiled-milk-repository-v1` preflight; runtime and world conversion remain out of scope. | Implemented and validated |
 | 2026-07-18 | Approve and implement Slice 2 as lossless, non-relocating normalization of recognized terrain, placement, and transition sources, with raw anomaly preservation and unresolved Java ownership. | Implemented and validated |
+| 2026-07-18 | Approve and implement Slice 3 as a dormant server-owned layered-location contract and checked packed `Point` bridge, with exhaustive tool parity and no runtime consumer adoption. | Implemented and validated |
 
 ## Next Discussion
 
-Review the Slice 2 checkpoint, then define and separately approve the first
-dormant runtime-adapter slice. Do not begin runtime integration, map alignment,
-Builder, database, streaming, or export implementation under the completed
-Slice 2 approval.
+Review the Slice 3 checkpoint, then define and separately approve the first
+unchanged-behavior consumer slice. Do not begin entity/region adoption, map
+alignment, Builder, database, streaming, or export implementation under the
+completed Slice 3 approval.

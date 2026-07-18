@@ -83,6 +83,7 @@
               "configuration",
               "placement",
               "transition",
+              "server-layered-coordinate-contract",
               "server-coordinate-source",
               "client-coordinate-source",
               "builder-coordinate-source"
