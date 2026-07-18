@@ -165,8 +165,10 @@ not contain username text, IP addresses, or credentials. Each line conforms to
 `Player` is the first dual-representation runtime owner, but its inherited
 packed `Point` remains the sole gameplay authority. `LayeredLocationMirror`
 synchronizes only from that packed value during initial placement and existing
-location changes. `Player.getLayeredLocation()` is read-only and refuses stale
-or uninitialized mirror state. Movement, regions, collision, packets, saves,
-scripts, terrain, and the client do not consume the mirror. The private
-`::layerparity` command verifies this invariant before starting or inspecting a
-trace.
+location changes. `LayeredRegionMembershipMirror` derives a checked
+world-space/level-qualified `WorldRegionKey` shadow from that location.
+`Player.getLayeredLocation()` and `Player.getLayeredRegionKey()` are read-only
+and refuse stale or uninitialized mirror state. Movement, authoritative region
+storage, collision, packets, saves, scripts, terrain, and the client do not
+consume either mirror. The private `::layerparity` command verifies both
+invariants before starting or inspecting a trace.

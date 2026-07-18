@@ -39,7 +39,9 @@ import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionMembershipMirror;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.ClientLimitations;
@@ -192,6 +194,9 @@ public final class Player extends Mob {
 	private final AtomicReference<CarriedItems> carriedItems = new AtomicReference<>();
 	/** Checked read-only mirror; the inherited packed Point remains authoritative. */
 	private final LayeredLocationMirror layeredLocationMirror = new LayeredLocationMirror();
+	/** Shadow membership only; the inherited packed Region remains authoritative. */
+	private final LayeredRegionMembershipMirror layeredRegionMembershipMirror =
+		new LayeredRegionMembershipMirror();
 	/**
 	 * Players cache is used to store various objects into database
 	 */
@@ -3182,12 +3187,21 @@ public final class Player extends Mob {
 
 	@Override
 	public void setInitialLocation(final Point point) {
-		layeredLocationMirror.synchronize(point);
+		synchronizeLayeredMirrors(point);
 		super.setInitialLocation(point);
 	}
 
 	public WorldLocation getLayeredLocation() {
 		return layeredLocationMirror.requireCurrent(getLocation());
+	}
+
+	public WorldRegionKey getLayeredRegionKey() {
+		return layeredRegionMembershipMirror.requireCurrent(getLayeredLocation());
+	}
+
+	private void synchronizeLayeredMirrors(final Point point) {
+		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
+		layeredRegionMembershipMirror.synchronize(layeredLocation);
 	}
 
 	public void setLoggedIn(final boolean loggedIn) {
@@ -3212,7 +3226,7 @@ public final class Player extends Mob {
 			getWorld().getServer().getGameEventHandler().add(getStatRestorationEvent());
 		}
 		this.loggedIn = loggedIn;
-		getLayeredLocation();
+		getLayeredRegionKey();
 		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
 			LayeredCoordinateParityObserver.onSession(
 				getDatabaseID(), getUsernameHash(), getLocation(), loggedIn);
@@ -4111,9 +4125,9 @@ public final class Player extends Mob {
 			doSceneryMorphWalk(point);
 		}
 
-		layeredLocationMirror.synchronize(point);
+		synchronizeLayeredMirrors(point);
 		super.setLocation(point, teleported);
-		getLayeredLocation();
+		getLayeredRegionKey();
 		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
 			LayeredCoordinateParityObserver.onLocationChanged(
 				getDatabaseID(), getUsernameHash(), previousLocation, point, teleported);

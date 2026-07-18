@@ -1352,7 +1352,7 @@ public final class Development implements CommandTrigger {
 			return;
 		}
 		try {
-			player.getLayeredLocation();
+			player.getLayeredRegionKey();
 		} catch (IllegalStateException failure) {
 			player.message(messagePrefix + "Layered player mirror mismatch: " + failure.getMessage());
 			return;

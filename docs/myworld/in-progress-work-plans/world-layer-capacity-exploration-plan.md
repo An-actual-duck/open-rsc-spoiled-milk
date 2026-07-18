@@ -2289,6 +2289,68 @@ persistence column, change `Entity`, mirror NPC movement, key runtime regions
 by level, alter a packet, or enable signed coordinates beyond the legacy
 adapter's representable range.
 
+### Slice 13: Checked Player logical-region membership shadow
+
+Objective: cross the next runtime boundary by maintaining level/world-space
+qualified Player region membership without replacing or querying the existing
+packed `RegionManager` storage.
+
+Delivered:
+
+- `LayeredRegionMembershipMirror`, an atomic checked `WorldRegionKey` shadow
+  derived only from an authoritative layered location mirror;
+- explicit membership initialization and synchronization alongside the Player
+  location mirror during initial placement and every existing location change;
+- a read-only `Player.getLayeredRegionKey()` accessor that first verifies the
+  checked Player location mirror and then refuses stale/uninitialized region
+  membership;
+- movement-completion and login/logout invariant checks through the combined
+  mirror chain; and
+- a `::layerparity` precondition that validates both Player mirrors before any
+  private trace command runs.
+
+The shadow membership uses signed floor-divided 48-tile region coordinates and
+includes world-space identity and level. Therefore the same geographic region
+on levels `-1`, `0`, and `+1` is three distinct logical memberships, while
+different tiles inside one region intentionally share a membership key.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-thirteen.py` — 2 tests passed;
+- fixtures covered an exact tile `47` to `48` region boundary, same-region tile
+  movement, level `-2`, negative X/Y floor division, and distinct instance
+  world-space identity;
+- Slice 1 through Slice 13 regressions all pass (40 tests), including the
+  explicit coordinate-package and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests, the standalone-layout guard passed,
+  and the bundled-Ant server build authority remained internally consistent;
+- the authoritative server build succeeds for 727 core and 488 plugin sources;
+  and
+- two real-repository normalizations were byte-stable with unchanged content
+  counts. The expected updated fingerprints are source
+  `7303eb74471c6d61d20f6411d762776ddc58218f2f9c8c3eafa9a80d40d06f62`,
+  inventory
+  `14de9781af919280a405a0bf71026f08e4406cfd07387ac781ecc9dfa2a8f314`,
+  classification
+  `005b4c252206bff3c644da94da11ab4843d5b87aea8888f048bf0eb78baed130`,
+  and occurrence
+  `546732da2a27273ab56a0a8a0c1d5a9242fa9f83ced3df4d785292870357c414`.
+
+Safety boundary:
+
+- `RegionManager.regions` remains the same packed nested integer map, and all
+  registration, lookup, visibility, collision, and cache paths continue to use
+  it exclusively;
+- no `ConcurrentHashMap<WorldRegionKey,...>` runtime storage exists;
+- the shadow key is not sent to the client or saved to the database; and
+- no terrain, placements, maps, player data, or public server were changed.
+
+Owner runtime acceptance remains pending. The focused route must cross at
+least one ordinary 48-tile region boundary, then repeat surface/underground or
+surface/upper-floor travel and logout/reconnect under `::layerparity`. Exact
+observer continuity plus unchanged behavior proves the shadow membership stays
+synchronized without participating in authoritative region behavior.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2387,15 +2449,14 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 10 by inventorying exact content teleport, point, and area occurrence shapes with file/line/argument evidence while retaining declarations and expressions as unresolved lexical evidence. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 11 as a doubly opt-in, dev-only private runtime parity observer with stable JSONL movement/session capture while packed `Player` state remains authoritative. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 12 by maintaining a checked read-only layered mirror on Player initialization, movement, and session transitions while inherited packed Point remains the sole gameplay authority. | Implemented and owner-validated |
+| 2026-07-18 | Continue with Slice 13 by maintaining checked world-space/level-qualified Player region membership alongside the accepted location mirror while packed RegionManager storage remains authoritative. | Implemented; automated validation passed; owner runtime test pending |
 
 ## Next Discussion
 
-Implement Slice 13 as checked shadow logical-region membership for Player.
-Derive and synchronize a `WorldRegionKey` from the accepted Player layered
-mirror during initial placement, movement, and session checks, while the
-existing packed `Region` reference and `RegionManager` maps remain solely
-authoritative. Exercise ordinary 48-tile boundary crossings and vertical
-transitions without feeding the shadow key into lookup, visibility, collision,
-packets, or persistence. Do not advance into authoritative region storage,
+Run the Slice 13 owner acceptance route on the checkpointed private server and
+inspect the resulting observer trace. Require an ordinary 48-tile boundary
+crossing as well as a vertical transition and reconnect. If behavior and trace
+continuity remain exact, record acceptance and choose the next reversible
+runtime owner. Do not advance into authoritative region storage,
 client/protocol adoption, streaming, Builder, export, relocation, or level
-`-2` in this slice.
+`-2` before this region-membership gate is reviewed.
