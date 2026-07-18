@@ -2102,6 +2102,85 @@ evaluate expressions, create transition edges, rewrite a script, alter runtime
 coordinates, touch world/player data, or launch a game process. It is the last
 planned report-only bridge before an opt-in private runtime parity observer.
 
+### Slice 11: Private runtime layered-coordinate parity observer
+
+Objective: provide the first owner-testable in-game layered milestone without
+making layered state authoritative or changing the legacy world's behavior.
+
+Delivered:
+
+- `LayeredCoordinateParitySnapshot`, an immutable projection of an
+  authoritative packed `Point` into world space, signed X/Y/level, logical
+  region, logical terrain sector, local sector coordinates, and checked legacy
+  round trip;
+- `LayeredCoordinateParityObserver`, an opt-in JSONL trace isolated by database
+  ID plus username hash, with monotonic per-trace sequence numbers and
+  schema-versioned `start`, `move`, `teleport`, `marker`, `snapshot`, `logout`,
+  `login`, and `stop` events;
+- transition `from`/`to` snapshots and signed X/Y/level deltas, making ordinary
+  movement, vertical changes, long-distance travel, death/respawn, and
+  reconnect visible to AI analysis;
+- dev/admin-only `::layerparity` commands for `start`, `status`, `snapshot`,
+  `mark LABEL`, and `stop`;
+- a second server capability gate controlled by system property, environment,
+  or configuration, defaulting to false in both `myworld.conf` and
+  `myworld-host.conf`; and
+- the Draft 2020-12 `layered-map-parity-event-v1` schema plus exact private
+  launch and command instructions in `tools/layered-maps/README.md`.
+
+Privacy and safety boundaries:
+
+- the observer is dormant unless
+  `OPENRSC_LAYERED_MAP_PARITY_OBSERVER=true` (or its equivalent property/config
+  key) is set and a dev/admin explicitly starts a trace;
+- ordinary players cannot invoke the Development command handler;
+- logs contain numeric database ID and username hash for reconnect-safe
+  isolation, but no username text, IP address, password, credential, inventory,
+  stats, or chat;
+- distinct username hashes sharing a database ID receive distinct trace state
+  and files;
+- invalid/unrepresentable packed coordinates surface a capture error rather
+  than being coerced; and
+- both local and hosted tracked configurations remain disabled by default.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-eleven.py` — 2 tests passed;
+- all eight legacy band boundaries (`0`, `943`, `944`, `1887`, `1888`, `2831`,
+  `2832`, and `3775`) projected and round-tripped exactly;
+- fixtures covered walking, level-boundary movement, multi-level teleport,
+  duplicate-location suppression, marker validation, snapshot, logout/login,
+  stop behavior, identity isolation, invalid-point visibility, sequential
+  JSONL, privacy exclusions, and schema validation;
+- source guards prove the capability/env/config gate, dev-only command path,
+  Player movement/session observation, both disabled config defaults, and no
+  layered value being written back into `Player`;
+- the authoritative server build succeeds for 725 core and 488 plugin sources;
+  and
+- normalization content counts remain unchanged at 211 Java owners, 135
+  content-topology sources, and 1,286 occurrences. Expected source hashes
+  changed because `Player` and `Development` are fingerprinted inputs.
+
+Owner runtime acceptance remains pending. The intended private test is:
+
+1. Launch the private server with the observer environment gate enabled and
+   log in using a dev/admin account.
+2. Run `::layerparity start`, walk normally, cross a 48-tile boundary if
+   convenient, and use `::layerparity mark walking-done`.
+3. Exercise ladders/stairs between surface, upper floors, and underground;
+   take at least one long-distance teleport; then mark `travel-done`.
+4. Exercise death/respawn if practical. Leave capture ACTIVE through logout
+   and reconnect so both session events use the same trace.
+5. Run `::layerparity snapshot`, then `::layerparity stop`.
+6. Review `server/logs/layered-map-parity/*.jsonl` for exact round trips,
+   expected level deltas, and any behavioral or visual regression.
+
+Slice 11 observes the existing packed location after existing movement/session
+logic. It does not store a parallel location on `Player`, feed a layered value
+into region lookup, alter collision/pathing/visibility, change teleport logic,
+modify packets or persistence, enable level `-2`, load a converted map, or
+touch the public server.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2198,17 +2277,14 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 8 by projecting static object, item, and NPC placements into layered locations and correctly inclusive roaming bounds, retaining packed JSON and runtime construction. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 9 by classifying every unresolved Java coordinate owner into a stable lexical migration family while retaining all candidates and making false-positive signal shapes explicit. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 10 by inventorying exact content teleport, point, and area occurrence shapes with file/line/argument evidence while retaining declarations and expressions as unresolved lexical evidence. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 11 as a doubly opt-in, dev-only private runtime parity observer with stable JSONL movement/session capture while packed `Player` state remains authoritative. | Implemented; automated validation passed; owner runtime test pending |
 
 ## Next Discussion
 
-Create an opt-in private/local layered-coordinate parity observer as the first
-owner-testable runtime milestone. It should expose the logged-in player's
-legacy packed point, signed layered location, world-space/level, logical region
-and terrain-sector identities, and round-trip result through an administrator
-or developer diagnostic command. Add transition snapshots so walking,
-teleporting, ladders/stairs, floor changes, death/respawn, logout, and reconnect
-can be exercised without making layered state authoritative. Diagnostics must
-fail visibly on an unrepresentable point, remain disabled from ordinary player
-use, avoid passwords/player secrets, and write stable AI-readable local logs.
-Keep persistence writes, client/protocol adoption, streaming, Builder, export,
-relocation, level `-2`, and public/live use out of that checkpoint.
+Run the Slice 11 owner acceptance test on the private/local client and server,
+then inspect the captured JSONL. If packed/layered round trips and transition
+deltas remain exact with no behavior or visual regression, record acceptance
+and choose the first dual-representation runtime owner from the critical
+families. Do not advance into authoritative storage, persistence, client/
+protocol adoption, streaming, Builder, export, relocation, or level `-2`
+before the observer evidence is reviewed.

@@ -214,6 +214,7 @@ class LayeredMapsSliceFiveTest(unittest.TestCase):
         consumers.sort()
         self.assertEqual(
             [
+                "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
                 "server/src/com/openrsc/server/external/EntityHandler.java",
                 "server/src/com/openrsc/server/external/GameObjectLoc.java",
                 "server/src/com/openrsc/server/external/ItemLoc.java",

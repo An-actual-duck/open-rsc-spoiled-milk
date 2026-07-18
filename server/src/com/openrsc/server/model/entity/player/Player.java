@@ -15,6 +15,7 @@ import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.database.impl.mysql.queries.logging.GenericLog;
 import com.openrsc.server.database.impl.mysql.queries.logging.LiveFeedLog;
 import com.openrsc.server.database.struct.PlayerInventory;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.PluginTask;
@@ -3197,6 +3198,10 @@ public final class Player extends Mob {
 			getWorld().getServer().getGameEventHandler().add(getStatRestorationEvent());
 		}
 		this.loggedIn = loggedIn;
+		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
+			LayeredCoordinateParityObserver.onSession(
+				getDatabaseID(), getUsernameHash(), getLocation(), loggedIn);
+		}
 	}
 
 	public void toggleDenyAllLogoutRequests() {
@@ -4078,6 +4083,7 @@ public final class Player extends Mob {
 
 	@Override
 	public void setLocation(final Point point, final boolean teleported) {
+		Point previousLocation = getLocation();
 		boolean reloadLocalObjects = teleported || !getLocation().isWithin1Tile(point);
 		if (teleported || getSkullType() == 2 || getSkullType() == 0) {
 			// Inappropriate place for this to be getting set at for skulls, to me.
@@ -4091,6 +4097,10 @@ public final class Player extends Mob {
 		}
 
 		super.setLocation(point, teleported);
+		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
+			LayeredCoordinateParityObserver.onLocationChanged(
+				getDatabaseID(), getUsernameHash(), previousLocation, point, teleported);
+		}
 		if (reloadLocalObjects) {
 			resetLocalObjectState();
 		}

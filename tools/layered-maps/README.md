@@ -126,3 +126,36 @@ layered snapshots as well; their JSON, mutable packed fields, loaders, and
 runtime construction remain authoritative. NPC roaming bounds use the
 inclusive `WorldTileBounds` contract rather than the open-boundary
 `WorldArea` contract.
+
+## Private runtime parity observer
+
+The first owner-testable runtime seam remains observational: it projects a dev
+player's existing packed location into signed layered identity and writes
+schema-versioned JSONL without changing movement, teleports, packets, regions,
+terrain, or saved coordinates. It is disabled by default in both local and
+hosted configuration and requires a dev/admin account.
+
+Launch only the private development server with the capability enabled:
+
+```bash
+OPENRSC_LAYERED_MAP_PARITY_OBSERVER=true ./scripts/run-server.sh
+```
+
+Then use:
+
+```text
+::layerparity start
+::layerparity mark before-ladder
+::layerparity snapshot
+::layerparity status
+::layerparity stop
+```
+
+While ACTIVE, ordinary movement and teleports are captured automatically.
+Leave capture active through logout/reconnect if that transition is under
+test; `stop` deliberately ends it. Logs are isolated by database ID and
+username hash under `server/logs/layered-map-parity/`. They contain packed and
+layered positions, world space, level, logical region and terrain-sector keys,
+local sector coordinates, transition deltas, and round-trip status. They do
+not contain username text, IP addresses, or credentials. Each line conforms to
+`schema/layered-map-parity-event-v1.schema.json`.

@@ -8,7 +8,8 @@
  * {@code WorldRegionKey}. Slice 6 adds a read-only directed transition
  * projection from existing object telepoints. Slice 7 separates logical map-
  * sector identity from offset legacy terrain entry names. Slice 8 exposes
- * checked static-placement locations and inclusive NPC roaming bounds. Packed
- * storage and existing runtime decisions remain authoritative.</p>
+ * checked static-placement locations and inclusive NPC roaming bounds. Slice
+ * 11 adds an opt-in parity snapshot consumed only by private diagnostics.
+ * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

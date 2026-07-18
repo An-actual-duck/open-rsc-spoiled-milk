@@ -88,6 +88,7 @@ public class ServerConfiguration {
 	public boolean WANT_SYNC_SCENE_BASELINE;
 	public boolean WANT_SYNC_MOVEMENT_SNAPSHOT;
 	public boolean WANT_MOVEMENT_STUTTER_DIAGNOSTICS;
+	public boolean WANT_LAYERED_MAP_PARITY_OBSERVER;
 	public int MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS;
 	public int MOVEMENT_STUTTER_POLL_OUTLIER_MS;
 	public int MOVEMENT_STUTTER_TICK_OUTLIER_MS;
@@ -505,6 +506,11 @@ public class ServerConfiguration {
 			"openrsc.movementStutterDiagnostics",
 			"OPENRSC_MOVEMENT_STUTTER_DIAGNOSTICS",
 			"want_movement_stutter_diagnostics",
+			false);
+		WANT_LAYERED_MAP_PARITY_OBSERVER = readBoolSystemEnvConfig(
+			"openrsc.layeredMapParityObserver",
+			"OPENRSC_LAYERED_MAP_PARITY_OBSERVER",
+			"want_layered_map_parity_observer",
 			false);
 		MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS = Math.max(5, readIntSystemEnvConfig(
 			"openrsc.movementStutterDiagnosticSummarySeconds",

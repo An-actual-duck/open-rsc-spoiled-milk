@@ -10,6 +10,7 @@ import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.content.worldedit.WorldEditorAccessService;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
@@ -117,6 +118,10 @@ public final class Development implements CommandTrigger {
 		}
 		else if (command.equalsIgnoreCase("coords")) {
 			currentCoordinates(player, args);
+		}
+		else if (command.equalsIgnoreCase("layerparity")
+			|| command.equalsIgnoreCase("layeredparity")) {
+			layeredCoordinateParity(player, command, args);
 		}
 		else if (command.equalsIgnoreCase("serverstats")) {
 			serverStats(player, args);
@@ -1338,6 +1343,76 @@ public final class Development implements CommandTrigger {
 			player.message(messagePrefix + targetPlayer.getStaffName() + " is at: " + targetPlayer.getLocation());
 		else
 			player.message(messagePrefix + "Invalid name or player is not online");
+	}
+
+	private void layeredCoordinateParity(Player player, String command, String[] args) {
+		if (!player.getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
+			player.message(messagePrefix + "Layered parity capture is disabled on this server."
+				+ " Enable OPENRSC_LAYERED_MAP_PARITY_OBSERVER only for private/local testing.");
+			return;
+		}
+
+		String action = args.length == 0 ? "status" : args[0].toLowerCase();
+		LayeredCoordinateParityObserver.Status status;
+		try {
+			if ("start".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.start(
+					player.getDatabaseID(), player.getUsernameHash(), player.getLocation());
+			} else if ("snapshot".equals(action) || "capture".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.snapshot(
+					player.getDatabaseID(), player.getUsernameHash(), player.getLocation());
+			} else if ("mark".equals(action)) {
+				if (args.length != 2) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.mark(
+					player.getDatabaseID(), player.getUsernameHash(), player.getLocation(), args[1]);
+			} else if ("stop".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.stop(
+					player.getDatabaseID(), player.getUsernameHash(), player.getLocation());
+			} else if ("status".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.status(
+					player.getDatabaseID(), player.getUsernameHash());
+			} else {
+				layeredParitySyntax(player, command);
+				return;
+			}
+		} catch (IllegalArgumentException failure) {
+			player.message(messagePrefix + "Layered parity request refused: " + failure.getMessage());
+			return;
+		}
+
+		player.message(messagePrefix + "Layered parity "
+			+ (status.isEnabled() ? "ACTIVE" : "inactive")
+			+ "; records=" + status.getRecordCount() + "; log=" + status.getPath());
+		if (status.getLastSnapshot() != null) {
+			player.message(messagePrefix + status.getLastSnapshot().toCompactString());
+		}
+		if (status.getError() != null) {
+			player.message(messagePrefix + "Capture error: " + status.getError());
+		}
+	}
+
+	private void layeredParitySyntax(Player player, String command) {
+		player.message(badSyntaxPrefix + command.toUpperCase()
+			+ " [start|status|snapshot|mark LABEL|stop]");
 	}
 
 	private void testNpcDrops(Player player, String command, String[] args) {
