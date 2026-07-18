@@ -1,14 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-3 implemented and validated on
+Status: architecture design complete; Slices 1-4 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 3 checkpoint; no runtime consumer adoption or world
-conversion begun
+Current milestone: Slice 4 area-contract checkpoint; packed runtime storage
+remains authoritative and no world conversion has begun
 
 ## Purpose
 
@@ -37,7 +37,7 @@ In scope:
 - recording owner decisions as the discussion progresses;
 - planning private-server validation for a later implementation phase.
 
-Not authorized by this plan:
+Not authorized beyond the approved foundation slices:
 
 - editing terrain archives;
 - relocating existing map content;
@@ -48,9 +48,10 @@ Not authorized by this plan:
 
 Documentation may be revised as decisions are made. The owner approved the
 isolated Slice 1 coordinate laboratory/read-only preflight, Slice 2 lossless
-normalization inventory, and Slice 3 dormant server compatibility seam on
-2026-07-18. Runtime consumer adoption, map relocation, Builder, database,
-streaming, and export work remain separately gated.
+normalization inventory, Slice 3 dormant server compatibility seam, and Slice
+4 checked legacy-`Area` projection on 2026-07-18. The owner then authorized
+continuing through focused slices on the same active branch. Map relocation,
+Builder, database, streaming, export, and live/public work remain out of scope.
 
 ## Executive Finding
 
@@ -1506,8 +1507,8 @@ does not get waived merely because a later stage looks correct.
 
 ## Open Owner Questions
 
-None for the architecture study. Further implementation remains separately
-gated after the approved Slice 3 checkpoint.
+None for the architecture study. Focused foundation implementation is
+continuing slice by slice; world mutation and live/public work remain gated.
 
 ## Foundation Implementation Slices: Implemented and Validated
 
@@ -1708,6 +1709,56 @@ Slice 3 introduces no behavior change. It does not attach layered identity to
 an entity, area, region, map, transition, packet, session, or database row and
 does not enable a new level or world space.
 
+### Slice 4: Checked layered area projection
+
+Objective: make the existing server `Area` the first narrowly scoped consumer
+of the layered location contract while preserving every packed constructor,
+field, mutation, getter, and `inBounds` result.
+
+Delivered:
+
+- immutable `WorldArea` boundaries qualified by one `WorldSpaceId` and one
+  signed level;
+- strict world-space and level isolation plus signed/deep/instance-compatible
+  area values;
+- open-boundary containment matching the historical `Area.inBounds`
+  comparisons;
+- `Area.toWorldArea()`, which creates a checked immutable snapshot from the
+  area's current packed bounds; and
+- an `Area.inBounds(WorldLocation)` overload for layered callers, without
+  rerouting any existing packed caller or storing a parallel mutable value.
+
+The projection refuses negative or expanded legacy coordinates and packed
+areas whose two boundaries decode onto different levels. Existing `Area`
+mutations remain authoritative: a later snapshot reflects them, while an
+already returned `WorldArea` remains immutable. All six current `Area`
+definitions fit within one legacy plane.
+
+Validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-four.py` — 3 tests passed;
+- packed and layered containment agreed for every packed Y `0..3775` at open,
+  interior, and maximum X boundaries across all four legacy levels;
+- mutation parity, immutable snapshot behavior, world-space/level isolation,
+  deep instance areas, invalid bounds, nulls, and cross-plane refusal were
+  exercised;
+- a repository guard confirmed `Area.java` is the only source outside the
+  coordinate package that imports the new contract;
+- Slice 1, Slice 2, Slice 3, World Builder discovery, and server build-authority
+  regressions all passed;
+- the authoritative server build passed for 718 core and 488 plugin sources,
+  with `Area` and all six coordinate-package classes present in `core.jar`;
+  and
+- read-only preflight still finds 254 candidates and normalization still
+  retains 211 unresolved Java owners, 1,771 terrain sectors, 49,816 placements,
+  20 transitions, and the one pre-existing raw NPC maximum. The structured
+  world inventory fingerprint is unchanged because Slice 4 changes no world
+  data.
+
+Slice 4 does not make region storage, entities, transitions, map identity,
+collision, pathing, visibility, packets, persistence, or clients level-aware.
+Packed `Area` storage and all existing call paths remain authoritative.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -1797,10 +1848,12 @@ private environment should validate at least:
 | 2026-07-18 | Approve and implement Slice 1 as a self-contained signed-coordinate laboratory plus deterministic, read-only `spoiled-milk-repository-v1` preflight; runtime and world conversion remain out of scope. | Implemented and validated |
 | 2026-07-18 | Approve and implement Slice 2 as lossless, non-relocating normalization of recognized terrain, placement, and transition sources, with raw anomaly preservation and unresolved Java ownership. | Implemented and validated |
 | 2026-07-18 | Approve and implement Slice 3 as a dormant server-owned layered-location contract and checked packed `Point` bridge, with exhaustive tool parity and no runtime consumer adoption. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 4 as a checked immutable layered projection from legacy `Area`, preserving packed storage and existing containment behavior while proving level/world-space isolation. | Implemented and validated |
 
 ## Next Discussion
 
-Review the Slice 3 checkpoint, then define and separately approve the first
-unchanged-behavior consumer slice. Do not begin entity/region adoption, map
-alignment, Builder, database, streaming, or export implementation under the
-completed Slice 3 approval.
+Continue the unchanged-behavior adoption sequence with a focused region-key
+slice. Keep packed region lookup authoritative until parity is proven; do not
+combine region storage replacement, entities, maps, transitions, persistence,
+client/protocol work, streaming, Builder, export, or relocation into that
+checkpoint.

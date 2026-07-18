@@ -75,9 +75,13 @@ Java coordinate owners remain fingerprinted, unresolved inputs. This command
 does not rewrite Java, align areas, create a Builder project, launch a server,
 or make anything eligible for game import/export.
 
-## Dormant server binding
+## Staged server binding
 
 The matching Java 8 server values and checked packed-`Point` bridge live in
 `server/src/com/openrsc/server/model/world/coordinate/`. Preflight recognizes
 that package as a resolved coordinate contract rather than an unresolved Java
-owner. No existing runtime or plugin consumer uses it yet.
+owner. The existing server `Area` is the first deliberately narrow consumer:
+it can expose a checked immutable `WorldArea` snapshot and test a
+`WorldLocation`, while its packed fields and existing methods remain
+authoritative. Regions, entities, transitions, maps, packets, and persistence
+have not adopted the contract yet.

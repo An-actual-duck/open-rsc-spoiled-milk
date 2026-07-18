@@ -57,14 +57,21 @@ than silently truncated or reinterpreted.
 
 Legacy conversion is one way once layered-only features are used.
 
-## Dormant server binding
+## Staged server binding
 
 The Java 8 server binding lives under
 `com.openrsc.server.model.world.coordinate`. Its immutable values match this
-contract, while `LegacyPackedPointAdapter` is the only approved Slice 3 bridge
-to the existing packed `com.openrsc.server.model.Point`.
+contract, while `LegacyPackedPointAdapter` is the checked bridge to the
+existing packed `com.openrsc.server.model.Point`.
 
 The adapter decodes a legacy `Point` into the `global` world space. Reverse
 conversion requires `global` explicitly and applies every checked legacy-domain
-restriction above. The existence of this binding does not mean a runtime
-entity, region, packet, map, or persisted record has adopted layered identity.
+restriction above.
+
+`WorldArea` is an immutable rectangle bound to one world space and one signed
+level. Its boundaries are open, matching the historical server
+`Area.inBounds` comparisons. The mutable packed `Area` may produce a checked
+snapshot only when both legacy boundaries decode into the same level; a
+cross-band rectangle is refused instead of being silently flattened. This
+first consumer does not replace packed area storage or authorize entity,
+region, transition, map, packet, or persistence adoption.

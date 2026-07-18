@@ -218,23 +218,30 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
 
-    def test_coordinate_package_is_dormant_outside_its_own_sources(self):
+    def test_coordinate_package_has_only_the_approved_area_consumer(self):
         package_name = "com.openrsc.server.model.world.coordinate"
         checked = 0
+        consumers = []
         roots = (ROOT / "server/src", ROOT / "server/plugins")
         for source_root in roots:
             for path in source_root.rglob("*.java"):
                 if SERVER_PACKAGE in path.parents:
                     continue
                 checked += 1
-                self.assertNotIn(package_name, path.read_text(encoding="utf-8"), str(path))
+                if package_name in path.read_text(encoding="utf-8"):
+                    consumers.append(path.relative_to(ROOT).as_posix())
         self.assertGreater(checked, 500)
+        self.assertEqual(
+            ["server/src/com/openrsc/server/model/world/Area.java"],
+            consumers,
+        )
 
     def test_server_package_contains_only_the_approved_dormant_boundary(self):
         self.assertEqual(
             {
                 "LegacyPackedPointAdapter.java",
                 "WorldCoordinate.java",
+                "WorldArea.java",
                 "WorldLocation.java",
                 "WorldSpaceId.java",
                 "package-info.java",
