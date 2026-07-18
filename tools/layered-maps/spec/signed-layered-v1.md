@@ -89,3 +89,16 @@ Y 19 contains both Y 943 (level 0) and Y 944 (level +1), while packed region Y
 39 contains both Y 1887 (level +1) and Y 1888 (level +2). A later storage
 migration must split those regions; it must not assign either straddling object
 one misleading layered key.
+
+`WorldObjectTransition(source, destination, command)` is the immutable directed
+projection of the existing object-command telepoint category. The server first
+performs its historical packed `Point` lookup and case-insensitive command
+match, then may expose the matched source, destination, and exact stored
+command through this layered value. Existing handlers still consume
+`TelePoint` and teleport with packed X/Y.
+
+This type deliberately does not claim to be the universal transition schema.
+Boats, spells, quest routing, death/recovery, area transport, and instance
+entry/exit require their own typed metadata or a later common contract; they
+must not be forced into an object-command field merely because object
+telepoints were migrated first.

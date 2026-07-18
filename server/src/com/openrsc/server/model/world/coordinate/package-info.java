@@ -5,7 +5,8 @@
  * com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter}. Slice 4
  * permits the existing {@code Area} model to expose a checked layered snapshot,
  * and Slice 5 permits {@code RegionManager} to calculate a
- * {@code WorldRegionKey}. Packed storage and existing runtime decisions remain
- * authoritative.</p>
+ * {@code WorldRegionKey}. Slice 6 adds a read-only directed transition
+ * projection from existing object telepoints. Packed storage and existing
+ * runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

@@ -87,5 +87,9 @@ authoritative. `RegionManager` can also calculate a `WorldRegionKey` without
 using it for storage or lookup. This distinction matters because 944-tile
 legacy level bands do not divide evenly into 48-tile regions: two current
 packed region objects straddle logical level boundaries. Entities,
-transitions, maps, packets, persistence, and authoritative region storage have
-not adopted the contract yet.
+maps, packets, persistence, and authoritative region storage have not adopted
+the contract yet. `EntityHandler` can project an already matched legacy object
+telepoint into `WorldObjectTransition`; the XML map, command matching, and
+runtime teleport callers remain unchanged. This object-specific name leaves
+the broader transport/recovery/instance transition model open for later
+design.

@@ -234,6 +234,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
         consumers.sort()
         self.assertEqual(
             [
+                "server/src/com/openrsc/server/external/EntityHandler.java",
                 "server/src/com/openrsc/server/model/world/Area.java",
                 "server/src/com/openrsc/server/model/world/region/RegionManager.java",
             ],
@@ -247,6 +248,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "WorldCoordinate.java",
                 "WorldArea.java",
                 "WorldLocation.java",
+                "WorldObjectTransition.java",
                 "WorldRegionKey.java",
                 "WorldSpaceId.java",
                 "package-info.java",

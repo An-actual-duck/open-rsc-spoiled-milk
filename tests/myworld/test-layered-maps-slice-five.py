@@ -202,7 +202,7 @@ class LayeredMapsSliceFiveTest(unittest.TestCase):
         self.assertIn("return WorldRegionKey.from(location);", source)
         self.assertNotIn("ConcurrentHashMap<WorldRegionKey", source)
 
-    def test_only_area_and_region_manager_consume_the_contract(self):
+    def test_only_approved_staged_sources_consume_the_contract(self):
         package_name = "com.openrsc.server.model.world.coordinate"
         consumers = []
         for source_root in (ROOT / "server/src", ROOT / "server/plugins"):
@@ -214,6 +214,7 @@ class LayeredMapsSliceFiveTest(unittest.TestCase):
         consumers.sort()
         self.assertEqual(
             [
+                "server/src/com/openrsc/server/external/EntityHandler.java",
                 "server/src/com/openrsc/server/model/world/Area.java",
                 "server/src/com/openrsc/server/model/world/region/RegionManager.java",
             ],

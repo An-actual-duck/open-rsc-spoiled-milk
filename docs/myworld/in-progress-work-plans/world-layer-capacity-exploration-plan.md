@@ -1,14 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-5 implemented and validated on
+Status: architecture design complete; Slices 1-6 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 5 logical region-key checkpoint; packed runtime
-storage remains authoritative and no world conversion has begun
+Current milestone: Slice 6 object-telepoint projection checkpoint; packed
+runtime storage remains authoritative and no world conversion has begun
 
 ## Purpose
 
@@ -49,10 +49,10 @@ Not authorized beyond the approved foundation slices:
 Documentation may be revised as decisions are made. The owner approved the
 isolated Slice 1 coordinate laboratory/read-only preflight, Slice 2 lossless
 normalization inventory, Slice 3 dormant server compatibility seam, Slice 4
-checked legacy-`Area` projection, and Slice 5 logical region-key projection on
-2026-07-18. The owner then authorized continuing through focused slices on the
-same active branch. Map relocation, Builder, database, streaming, export, and
-live/public work remain out of scope.
+checked legacy-`Area` projection, Slice 5 logical region-key projection, and
+Slice 6 object-telepoint projection on 2026-07-18. The owner then authorized
+continuing through focused slices on the same active branch. Map relocation,
+Builder, database, streaming, export, and live/public work remain out of scope.
 
 ## Executive Finding
 
@@ -1811,6 +1811,55 @@ visibility caches, entities, map loading, transitions, packets, persistence,
 or clients. It records the exact split requirement that a later storage slice
 must meet.
 
+### Slice 6: Directed object-telepoint projection
+
+Objective: make existing object telepoint destinations consume the layered
+location contract without modifying their XML, packed map, command selection,
+or runtime teleport behavior.
+
+Delivered:
+
+- immutable directed
+  `WorldObjectTransition(source, destination, command)`;
+- checked projection of both legacy endpoints through
+  `LegacyPackedPointAdapter`;
+- exact preservation of the stored command text; and
+- `EntityHandler.getObjectWorldTransition`, which first delegates to the
+  authoritative existing `getObjectTelePoint` lookup/matcher and then returns
+  a layered view of the matched edge.
+
+The type is intentionally object-specific. Calling it the universal world
+transition would prematurely require boats, spells, recovery, quest routes,
+and future instance boundaries to carry an object command. The broader typed
+transition schema remains a later design/adoption slice.
+
+Validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-six.py` — 4 tests passed;
+- all packed Y values `0..3775` were exercised as directed source/destination
+  pairs with exact command preservation;
+- deep and cross-world-space destinations, direction-sensitive equality,
+  command identity, hashes, descriptions, and null refusals were exercised;
+- the current `ObjectTelePoints.xml` SHA-256 remains
+  `957b32b927860170905460b9d2a5f6377256ce493503b62b738175fdda68f4ed`;
+  all 20 directed entries are unique and fit the checked legacy domain;
+- source guards prove the XML still loads into `HashMap<Point, TelePoint>`, the
+  new projection delegates to existing command matching, and no runtime caller
+  invokes the layered API;
+- `Area`, `RegionManager`, and `EntityHandler` are the only staged consumers;
+- Slice 1 through Slice 5, World Builder discovery, and server build-authority
+  regressions all passed;
+- the authoritative server build passed for 720 core and 488 plugin sources;
+  and
+- preflight/normalization remain at 254 candidates, 211 unresolved Java owners,
+  1,771 terrain sectors, 49,816 placements, 20 transitions, and one preserved
+  raw coordinate. Their Slice 5 fingerprints remain unchanged because the
+  normalized source inputs and world data did not change.
+
+Slice 6 changes no runtime teleport call, XML record, placement, terrain,
+region, entity, packet, persistence, client, or map. It does not define the
+universal transition taxonomy or enable layered-only destinations.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -1902,11 +1951,12 @@ private environment should validate at least:
 | 2026-07-18 | Approve and implement Slice 3 as a dormant server-owned layered-location contract and checked packed `Point` bridge, with exhaustive tool parity and no runtime consumer adoption. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 4 as a checked immutable layered projection from legacy `Area`, preserving packed storage and existing containment behavior while proving level/world-space isolation. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 5 as a logical `WorldRegionKey` projection while retaining packed region storage and recording the two legacy region objects that straddle level boundaries. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 6 as an object-specific directed transition projection, retaining the exact telepoint XML, packed lookup, command matching, and runtime teleport path. | Implemented and validated |
 
 ## Next Discussion
 
-Continue the unchanged-behavior adoption sequence with a focused transition-
-destination contract. Keep existing telepoint definitions and runtime movement
-authoritative; do not combine source rewriting, region storage replacement,
-entities, maps, persistence, client/protocol work, streaming, Builder, export,
-or relocation into that checkpoint.
+Continue the unchanged-behavior adoption sequence with a focused layered map-
+sector identity contract. Keep terrain archives and the current loader
+authoritative; do not combine archive rewriting, region storage replacement,
+entities, broad transition taxonomy, persistence, client/protocol work,
+streaming, Builder, export, or relocation into that checkpoint.
