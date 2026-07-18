@@ -113,9 +113,9 @@ it can expose a checked immutable `WorldArea` snapshot and test a
 authoritative. `RegionManager` can also calculate a `WorldRegionKey` without
 using it for storage or lookup. This distinction matters because 944-tile
 legacy level bands do not divide evenly into 48-tile regions: two current
-packed region objects straddle logical level boundaries. Entities,
-maps, packets, persistence, and authoritative region storage have not adopted
-the contract yet. `EntityHandler` can project an already matched legacy object
+packed region objects straddle logical level boundaries. Maps, packets,
+authoritative region storage, and non-Player entities have not adopted the
+contract yet. `EntityHandler` can project an already matched legacy object
 telepoint into `WorldObjectTransition`; the XML map, command matching, and
 runtime teleport callers remain unchanged. This object-specific name leaves
 the broader transport/recovery/instance transition model open for later
@@ -169,6 +169,21 @@ location changes. `LayeredRegionMembershipMirror` derives a checked
 world-space/level-qualified `WorldRegionKey` shadow from that location.
 `Player.getLayeredLocation()` and `Player.getLayeredRegionKey()` are read-only
 and refuse stale or uninitialized mirror state. Movement, authoritative region
-storage, collision, packets, saves, scripts, terrain, and the client do not
-consume either mirror. The private `::layerparity` command verifies both
-invariants before starting or inspecting a trace.
+storage, collision, packets, scripts, terrain, and the client do not consume
+either mirror. The private `::layerparity` command verifies both invariants
+before starting or inspecting a trace.
+
+## Checked legacy Player persistence shadow
+
+`LegacyPlayerLocationPersistenceSnapshot` captures one authoritative packed
+Player point, proves its exact layered round trip, and retains the original X/Y
+for the unchanged database writer. Full saves and the separate offline-location
+update entry point use that checked packed snapshot. Loads capture the same
+snapshot before initial placement and compare its layered value to the Player
+mirror on the single-threaded load path.
+
+This is a legacy persistence shadow, not the future layered persistence format.
+No column or SQL statement changes; no row is migrated; signed X, level `-2`,
+and non-global world spaces remain deliberately unrepresentable. A later
+versioned/additive persistence slice is still required before those capabilities
+can become authoritative.

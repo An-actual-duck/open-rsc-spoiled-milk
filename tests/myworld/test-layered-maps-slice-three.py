@@ -234,6 +234,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
         consumers.sort()
         self.assertEqual(
             [
+                "server/src/com/openrsc/server/database/GameDatabase.java",
                 "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
                 "server/src/com/openrsc/server/external/EntityHandler.java",
                 "server/src/com/openrsc/server/external/GameObjectLoc.java",
@@ -243,6 +244,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "server/src/com/openrsc/server/model/entity/player/Player.java",
                 "server/src/com/openrsc/server/model/world/Area.java",
                 "server/src/com/openrsc/server/model/world/region/RegionManager.java",
+                "server/src/com/openrsc/server/service/PlayerService.java",
             ],
             consumers,
         )
@@ -251,6 +253,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
         self.assertEqual(
             {
                 "LegacyPackedPointAdapter.java",
+                "LegacyPlayerLocationPersistenceSnapshot.java",
                 "LegacyTerrainSectorAdapter.java",
                 "LayeredCoordinateParitySnapshot.java",
                 "LayeredLocationMirror.java",
@@ -298,10 +301,12 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 for source in report["candidateSources"]
                 if source["role"] == "server-layered-coordinate-contract"
             ]
-            self.assertEqual(1, len(contracts))
             self.assertEqual(
-                "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedPointAdapter.java",
-                contracts[0]["path"],
+                [
+                    "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedPointAdapter.java",
+                    "server/src/com/openrsc/server/model/world/coordinate/LegacyPlayerLocationPersistenceSnapshot.java",
+                ],
+                sorted(contract["path"] for contract in contracts),
             )
 
 

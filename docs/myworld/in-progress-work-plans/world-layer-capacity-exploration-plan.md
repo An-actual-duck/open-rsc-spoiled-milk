@@ -1,14 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-8 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-13 implemented and validated on
+the active refinement branch; Slice 14 automated validation complete and
+private persistence round trip pending
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 8 static-placement projection checkpoint; legacy
-placement JSON/loaders remain authoritative and no world conversion has begun
+Current milestone: Slice 14 checked legacy Player persistence shadow; packed
+database X/Y remain authoritative and no schema or world conversion has begun
 
 ## Purpose
 
@@ -41,19 +42,16 @@ Not authorized beyond the approved foundation slices:
 
 - editing terrain archives;
 - relocating existing map content;
-- changing runtime client or server code;
 - changing ladders, portals, teleports, respawns, quests, or placements;
 - modifying player databases or live world data;
 - deploying experimental map work to the public server.
 
 Documentation may be revised as decisions are made. The owner approved the
-isolated Slice 1 coordinate laboratory/read-only preflight, Slice 2 lossless
-normalization inventory, Slice 3 dormant server compatibility seam, Slice 4
-checked legacy-`Area` projection, Slice 5 logical region-key projection, and
-Slice 6 object-telepoint projection, Slice 7 logical map-sector identity, and
-Slice 8 static-placement projections on 2026-07-18. The owner then authorized
-continuing through focused slices on the same active branch. Map relocation,
-Builder, database, streaming, export, and live/public work remain out of scope.
+initial coordinate/preflight, normalization, dormant server contract, static
+projection, source inventory, private observer, and checked Player runtime
+slices on 2026-07-18. The owner then authorized continuing through focused
+slices on the same active branch. Map relocation, Builder, database schema or
+row migration, streaming, export, and live/public work remain out of scope.
 
 ## Executive Finding
 
@@ -160,7 +158,7 @@ important part of making the coordinate system understandable.
 | Static placements | JSON positions contain only `X` and packed `Y` | New schema needs `level` plus normalized `Y` |
 | NPC roaming bounds | Start/min/max positions use packed Y | Every bound must share an explicit level |
 | Plugin and quest logic | Literal coordinates and `teleport(x,y)` are common | Ambiguous two-argument destinations must be migrated or adapted |
-| Player persistence | Database stores packed `x` and `y` | Needs a preservation-safe versioned read/write strategy |
+| Player persistence | Database stores packed `x` and `y`; Slice 14 adds a checked legacy shadow | Still needs a preservation-safe versioned read/write strategy for true layered values |
 | Wire protocol | World info carries a plane, but many positions still use packed Y | Existing clients need a legacy coordinate codec at the boundary |
 | Client terrain loading | Plane is explicit, while world-Z offsets still compensate for packed Y | The client is partly layered already but not consistently normalized |
 | Terrain archive | Entry name contains plane and sector Y is based on normalized Y | Already close to the desired layered representation |
@@ -2368,6 +2366,76 @@ and region-membership mirrors remain synchronized across ordinary region
 crossings, vertical travel, and a real logout/reconnect without participating
 in authoritative region behavior.
 
+### Slice 14: Checked legacy Player persistence shadow
+
+Objective: cross the current Player location into the persistence boundary
+without adding a column, changing an existing value, or making the layered
+representation authoritative.
+
+Selected boundary:
+
+- Player persistence precedes NPC mirroring because persistence is an explicit
+  prerequisite to the streaming phase and can be proven without content
+  changes;
+- runtime NPC mirroring remains deferred because the preserved NPC 67 roaming
+  maximum Y `6549` is outside the four-plane codec. Mandatory mirroring could
+  turn that known source anomaly into a runtime failure before its content
+  ownership is resolved; and
+- projecting a packed location exactly once avoids comparing two independently
+  changing Player atomics on the asynchronous save thread.
+
+Implemented:
+
+- `LegacyPlayerLocationPersistenceSnapshot`, an immutable
+  `legacy-player-location-shadow-v1` projection captured from one authoritative
+  packed `Point` read;
+- checked packed-to-layered-to-packed construction with the original packed X/Y
+  retained for the current database writer;
+- save-path use of the snapshot for the existing `PlayerData.xLocation` and
+  `PlayerData.yLocation` values;
+- the same checked projection for the separate offline/admin player-location
+  update entry point; and
+- load-path capture before `Player.setInitialLocation`, followed by an exact
+  comparison against the accepted Player layered mirror.
+
+Safety boundary:
+
+- the database schema, SQL statements, `PlayerData` shape, packed X/Y columns,
+  and authoritative runtime `Point` remain unchanged;
+- the snapshot deliberately has no layered-to-legacy factory and cannot encode
+  level `-2`, signed legacy X, or non-global world spaces;
+- asynchronous save captures `player.getLocation()` once and does not risk a
+  false mismatch by separately sampling the moving Player mirror; and
+- no database row, terrain, placement, archive, client, packet, public server,
+  or live process is changed by the implementation.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-fourteen.py` — 2 tests passed;
+- fixtures covered every legacy plane edge, aligned underground coordinates,
+  exact retained packed writes, matching/mismatched load mirrors, nulls, and
+  out-of-range X/Y refusal;
+- Slice 1 through Slice 14 regressions all pass (42 tests), including the
+  expanded coordinate-package and consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 728 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged content
+  counts: 1,771 terrain sectors, 49,816 placements, 20 transition edges, one
+  unresolved coordinate, 211 classified owners, and 1,286 occurrences. The
+  expected fingerprints are source
+  `7a948be11d3d70999361af079895c205979f4a29d4505368f28a53124ea47a42`,
+  inventory
+  `bbe485a45eb44b0abb68e5d1c64c1f3376f4476e347ee364a68b9901ec2dbbbe`,
+  classification
+  `5e9f34d35d97aae12b0f22349871757e93aea79bbf62ec24a189edaf30cab620`,
+  and occurrence
+  `546732da2a27273ab56a0a8a0c1d5a9242fa9f83ced3df4d785292870357c414`.
+
+A copied/private underground save and reconnect remains the owner-visible gate
+before Slice 14 is fully accepted.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2467,10 +2535,12 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 11 as a doubly opt-in, dev-only private runtime parity observer with stable JSONL movement/session capture while packed `Player` state remains authoritative. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 12 by maintaining a checked read-only layered mirror on Player initialization, movement, and session transitions while inherited packed Point remains the sole gameplay authority. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 13 by maintaining checked world-space/level-qualified Player region membership alongside the accepted location mirror while packed RegionManager storage remains authoritative. | Implemented and owner-validated |
+| 2026-07-18 | Continue with Slice 14 by projecting each loaded/saved legacy Player location through a checked immutable layered persistence snapshot while retaining the exact X/Y database contract. | Implemented; automated validation passed; private underground save/reconnect pending |
 
 ## Next Discussion
 
-Choose the next reversible runtime owner now that Slice 13 is owner-accepted.
-Do not advance into authoritative region storage,
-client/protocol adoption, streaming, Builder, export, relocation, or level
-`-2` before this region-membership gate is reviewed.
+Finish Slice 14 automated validation, then exercise one copied/private save and
+load round trip at an underground location. Do not advance into a new database
+schema, authoritative region storage, client/protocol adoption, streaming,
+Builder, export, relocation, or level `-2` before this persistence gate is
+reviewed.

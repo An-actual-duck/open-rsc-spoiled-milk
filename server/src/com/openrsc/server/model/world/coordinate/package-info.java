@@ -9,7 +9,10 @@
  * projection from existing object telepoints. Slice 7 separates logical map-
  * sector identity from offset legacy terrain entry names. Slice 8 exposes
  * checked static-placement locations and inclusive NPC roaming bounds. Slice
- * 11 adds an opt-in parity snapshot consumed only by private diagnostics.
- * Packed storage and existing runtime decisions remain authoritative.</p>
+ * 11 adds an opt-in parity snapshot consumed only by private diagnostics,
+ * Slices 12 and 13 add checked Player location and logical-region mirrors, and
+ * Slice 14 projects legacy Player persistence values without changing their
+ * database representation. Packed storage and existing runtime decisions
+ * remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

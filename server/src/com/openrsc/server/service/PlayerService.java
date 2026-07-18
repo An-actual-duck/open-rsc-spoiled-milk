@@ -18,6 +18,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LegacyPlayerLocationPersistenceSnapshot;
 import com.openrsc.server.util.languages.PreferredLanguage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -179,8 +180,12 @@ public class PlayerService implements IPlayerService {
 
         player.setLastLogin(playerData.loginDate);
         player.setLastIP(playerData.loginIp);
-        player.setInitialLocation(new Point(playerData.xLocation, playerData.yLocation));
-        player.setNextRegionLoad();
+		LegacyPlayerLocationPersistenceSnapshot locationSnapshot =
+			LegacyPlayerLocationPersistenceSnapshot.capture(
+				Point.location(playerData.xLocation, playerData.yLocation));
+		player.setInitialLocation(locationSnapshot.toLegacyPoint());
+		locationSnapshot.requireLayeredLocation(player.getLayeredLocation());
+		player.setNextRegionLoad();
 
         player.setFatigue(playerData.fatigue);
         player.setKills(playerData.kills);
