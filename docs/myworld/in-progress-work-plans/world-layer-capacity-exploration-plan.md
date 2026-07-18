@@ -762,6 +762,14 @@ ownership boundaries. From the user's perspective this is a standalone
 conversion module; internally it remains a tested bundle of the engine
 capability, converter, Builder, target adapter, and validation tools.
 
+The bundled interface need not be a one-for-one copy of the standalone World
+Builder. Its initial product can be a focused **conversion workbench and dev
+launcher** assembled from Builder capabilities. It needs to inspect inferred
+levels and moves, show reports and diffs, permit corrective map edits, navigate
+or teleport around the staged world, and launch/stop a private test client and
+server easily. General-purpose authoring features can remain in the standalone
+Builder unless conversion review actually needs them.
+
 The intended initial installation is deliberately developer-oriented: download
 the Layered Maps tool folder and extract it into the root of the repository to
 be converted. The expected user is a map author or server maintainer with a
@@ -871,18 +879,26 @@ The conversion is a staged workspace operation:
    one component, cycles with contradictory depth, terrain joined through
    unexpected non-void tiles, overlapping destinations, hard-coded coordinate
    owners, and placements outside the inferred component all require review.
-9. Apply accepted translations to every inventoried coordinate owner and emit
-   an old-to-new manifest, transition rewrite report, warnings, hashes, and a
-   complete layered project. A conversion with unresolved blocking owners is a
-   reviewable draft, not a clean export.
+9. Produce a deterministic best-effort staging result for every discovered
+   component, including quest-heavy and high-dependency areas. Where constraints
+   are ambiguous, preserve the safest available relationship or choose the
+   converter's reported candidate without treating it as owner acceptance.
+   Emit an old-to-new manifest, confidence and severity findings, transition
+   rewrite report, warnings, and hashes with the layered staging project.
 10. Open the result in the layered World Builder with source/destination
     overlays, inferred component bounds, transition classifications, and all
     unresolved findings visible to the owner.
-11. Launch a private copied client/server workspace from the Builder workflow
-    and validate terrain, collision, placements, transitions, login, reconnect,
-    death, and recovery before enabling export into the actual target.
-12. Export transactionally with a preview, compatibility check, backup,
-    receipt, and rollback material; keep the original legacy project unchanged.
+11. Launch a private copied client/server workspace from the workbench. Provide
+    convenient navigation between converted areas and flagged transitions so
+    the map author can validate terrain, collision, placements, transitions,
+    login, reconnect, death, and recovery without touching the target game.
+12. Keep conversion, review, editing, and private testing entirely inside the
+    staging workspace. None of those operations export changes into the target.
+13. Make a separately invoked final export script the only target-mutating
+    operation. Before mutation it must show the exact diff and unresolved
+    findings, verify the source fingerprint has not changed, require explicit
+    owner confirmation, create a backup, and write a transaction receipt and
+    rollback material.
 
 Conversion does not imply that the new project can be exported back to v1.
 Once it uses level `-2`, expanded extents, layered-only metadata, or aligned
@@ -890,16 +906,23 @@ content, the incompatibility is intentional.
 
 Automatic alignment is therefore best understood as a constraint solver plus
 review workflow, not a blind rewrite. Cleanly separated terrain islands and
-unambiguous reciprocal stairs should convert automatically. Shared complexes,
-quest-driven edges, one-way travel, and incomplete source ownership must stop
-at a clear Builder decision rather than being guessed.
+unambiguous reciprocal stairs should convert with high confidence. Shared
+complexes, quest-driven edges, one-way travel, and incomplete source ownership
+may still receive automatic provisional output, but every assumption remains
+visible and editable in the staging workbench.
 
 An owner may resolve a contradictory legacy relationship by editing terrain or
 an entrance, reclassifying the edge as non-vertical transport, or explicitly
 accepting a compatibility override. An override preserves the relationship but
-does not let the conversion claim complete geographic alignment. Clean export
-requires every detected conflict to be resolved, classified, or deliberately
-acknowledged; it does not require every legacy edge to become vertical.
+does not let the conversion claim complete geographic alignment. The final
+export presents every remaining conflict and requires explicit acknowledgement;
+it does not require every legacy edge to become vertical.
+
+Review is an additional safety boundary, not a substitute for converter
+correctness. The workbench may automate every provisional relocation because
+the result is isolated, but it must still preserve the source, report its
+assumptions, make private testing convenient, and provide backup and rollback
+for the eventual owner-authorized export.
 
 Every conversion must generate both a human-readable report and a stable
 machine-readable report. At minimum they record:
@@ -1108,7 +1131,7 @@ The selected direction is:
 The remaining decisions are deliberately divided so they can be handled one at
 a time.
 
-### Current Module: Existing-Content Eligibility
+### Current Module: Long-Distance Ladders and Transport
 
 The focused layered-coordinate study above is the active discussion. Signed
 geographic levels, exact default vertical anchors, and an explicit legacy-format
@@ -1122,8 +1145,9 @@ copied legacy world into explicit levels without relocating content, prove
 terrain, placement, transition, script, persistence, and gameplay parity, and
 only then begin geographic alignment or introduce level `-2`. That sequence is
 now part of a reusable conversion workspace rather than a Spoiled Milk-only
-map rewrite. Modules A through C are resolved. Modules D, E, F, and G still
-require owner discussion before a focused implementation plan is authorized.
+map rewrite. Modules A through C and the existing-content portion of Module D
+are resolved. Long-distance travel plus Modules E, F, and G still require owner
+discussion before a focused implementation plan is authorized.
 
 ### Module A: Meaning of Deep Underground
 
@@ -1159,14 +1183,21 @@ non-geographic relationships.
 
 ### Module D: Existing Content and Fast Travel
 
-Decide:
+Existing-content eligibility is resolved: every discovered area, including an
+established quest dungeon, is eligible for automatic provisional conversion
+and relocation inside the isolated workspace. Age, quest ownership, and risk
+change the confidence and severity report rather than preventing the staging
+result. Nothing becomes final until the map author reviews/tests the staged
+world and invokes the separate target export script.
 
-- whether established quest dungeons are candidates for relocation;
-- whether only custom, unreleased, or low-dependency regions should move;
+Still decide:
+
 - whether distant ladder fast travel is a valued convenience;
 - whether transport ladders should use a different object or presentation;
 - whether underground-to-underground shortcuts should form a deliberate
-  network.
+  network; and
+- whether the converter should preserve detected long-distance edges by
+  default or suggest a geographically local replacement.
 
 ### Module E: Static Separation Versus True Instancing
 
@@ -1195,10 +1226,9 @@ client scene baselines, and rollback.
 
 ## Open Owner Questions
 
-1. Are existing quest dungeons eligible for relocation?
-2. Is true player/party instancing a desired feature, or is static isolation
+1. Is true player/party instancing a desired feature, or is static isolation
    sufficient?
-3. Should existing long-distance ladder travel be preserved, re-presented as
+2. Should existing long-distance ladder travel be preserved, re-presented as
    transportation, or gradually removed?
 
 ## Living Inventory: Pending Discussion and Audit
@@ -1277,10 +1307,11 @@ private environment should validate at least:
 | 2026-07-18 | Make a reusable one-way conversion workspace a required Layered Maps deliverable, with transition-graph inference, terrain-component alignment, Builder review, and private test-before-export. | Confirmed |
 | 2026-07-18 | Require exact anchors for ordinary vertical edges while permitting reported, explicitly classified or acknowledged legacy misalignments. | Confirmed |
 | 2026-07-18 | Distribute the initial developer-oriented conversion tooling as a folder extracted into a target repository root; extraction alone performs no conversion or target mutation. | Confirmed |
+| 2026-07-18 | Allow automatic provisional conversion and relocation of every discovered area, including quest content, because all output remains isolated until explicit final export. | Confirmed |
+| 2026-07-18 | Use a focused Builder-derived conversion workbench and dev launcher for inspection, correction, navigation, and private testing; reserve target mutation for a separate confirmed export script. | Confirmed |
 
 ## Next Discussion
 
-Continue with existing-content eligibility, long-distance travel, static
-separation versus true instancing, allocation policy, and detailed validation.
-No implementation plan should be prepared until those remaining decisions have
-been resolved.
+Continue with long-distance travel, static separation versus true instancing,
+allocation policy, and detailed validation. No implementation plan should be
+prepared until those remaining decisions have been resolved.

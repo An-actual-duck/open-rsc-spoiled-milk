@@ -202,6 +202,15 @@ source. Conversion emits deterministic human- and machine-readable reports of
 all transformations, retained misalignments, accepted exceptions, unsupported
 owners, and other topology oddities.
 
+Its review UI may be a focused Builder-derived conversion workbench rather than
+a duplicate of the full standalone World Builder. The workbench owns staged
+inspection, corrective edits, convenient world navigation, reports, and a
+private dev client/server launcher. Conversion may produce provisional output
+for every area automatically because the target remains untouched. Only a
+separate, explicitly confirmed final export script may modify target files,
+after diff review, fingerprint verification, backup creation, and warning
+acknowledgement.
+
 A map depends on Renderer only when it truly requires renderer-specific assets
 or behavior. Layered coordinates themselves depend on the layered-world engine
 capability, not a particular visual style.
@@ -584,6 +593,8 @@ Work:
 - Let owners edit, reclassify, or explicitly acknowledge legacy misalignments,
   while recording every retained exception in deterministic human- and
   machine-readable reports.
+- Produce best-effort provisional output for all discovered areas, including
+  quest-heavy content, without treating automatic choices as owner acceptance.
 - Show X/Y/level directly throughout navigation, inspect, copy, terrain,
   placement, transition, and validation interfaces.
 - Add level creation, bounds, naming, role, visibility, and allocation metadata.
@@ -599,6 +610,10 @@ Work:
   backup, receipt, rollback, and crash-recovery guarantees.
 - Launch a compatible private client/server against the copied workspace so an
   owner can test the converted world before export to the actual target.
+- Provide a focused dev launcher and navigation workflow; do not require the
+  conversion review surface to duplicate unrelated standalone Builder tools.
+- Make final export a distinct confirmed transaction with preview, unchanged-
+  target verification, backup, receipt, and rollback.
 - Publish layered Builder releases independently from Spoiled Milk releases.
 
 Exit gate:
@@ -943,3 +958,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-17 | Schedule the Compatibility SDK, full package manager, legacy pack, diagnostics toolkit, asset packs, and compatibility laboratory after the primary Suite roadmap. | Confirmed |
 | 2026-07-18 | Package Layered Maps for reusable world conversion, with parity normalization followed by reviewed transition/component alignment and private test-before-export. | Confirmed in the layered-world plan |
 | 2026-07-18 | Initially distribute Layered Maps as developer tooling extracted into a repository root, with non-mutating extraction, explicit preflight, and reported alignment exceptions. | Confirmed in the layered-world plan |
+| 2026-07-18 | Permit fully automatic provisional conversion inside an isolated Builder-derived workbench, while reserving all target mutation for a separately confirmed transactional export. | Confirmed in the layered-world plan |
