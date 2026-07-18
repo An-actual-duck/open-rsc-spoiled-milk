@@ -69,7 +69,10 @@ Normalization writes only under the ignored
 - `normalization.md` is the operator summary;
 - `coordinate-owner-classification.json` is stable AI-readable migration
   triage for every unresolved Java owner; and
-- `coordinate-owner-classification.md` is its operator-readable companion.
+- `coordinate-owner-classification.md` is its operator-readable companion;
+- `java-coordinate-occurrences.json` inventories content-topology teleport,
+  point, and area call shapes with file/line/argument evidence; and
+- `java-coordinate-occurrences.md` summarizes those sources and counts.
 
 The inventory decodes terrain planes, known location JSON coordinates, and
 directed object telepoints without changing their topology. It reverse-encodes
@@ -91,6 +94,13 @@ grouped by primary migration family and risk. This is lexical triage, not Java
 coordinate parsing: it deliberately retains every candidate and its evidence.
 The command does not rewrite Java, align areas, create a Builder project,
 launch a server, or make anything eligible for game import/export.
+
+The occurrence inventory masks comments and literals, follows balanced Java
+parentheses, preserves normalized argument expressions, and fingerprints the
+result. It does not resolve Java symbols or infer that every lexical
+`teleport(...)` shape is a call rather than a declaration. Literal-only and
+expression-bearing occurrences remain distinct so a later migration parser can
+advance without hiding unresolved script behavior.
 
 ## Staged server binding
 

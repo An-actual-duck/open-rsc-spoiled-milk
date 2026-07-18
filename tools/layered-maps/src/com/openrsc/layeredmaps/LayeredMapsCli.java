@@ -80,11 +80,15 @@ public final class LayeredMapsCli {
 		Path markdownPath = workspace.resolve("normalization.md");
 		Path classificationJsonPath = workspace.resolve("coordinate-owner-classification.json");
 		Path classificationMarkdownPath = workspace.resolve("coordinate-owner-classification.md");
+		Path occurrencesJsonPath = workspace.resolve("java-coordinate-occurrences.json");
+		Path occurrencesMarkdownPath = workspace.resolve("java-coordinate-occurrences.md");
 		writeAtomically(jsonPath, result.toJson());
 		writeAtomically(summaryPath, result.toSummaryJson());
 		writeAtomically(markdownPath, result.toMarkdown());
 		writeAtomically(classificationJsonPath, result.ownerClassification.toJson());
 		writeAtomically(classificationMarkdownPath, result.ownerClassification.toMarkdown());
+		writeAtomically(occurrencesJsonPath, result.coordinateOccurrences.toJson());
+		writeAtomically(occurrencesMarkdownPath, result.coordinateOccurrences.toMarkdown());
 
 		System.out.println("Layered Maps normalization complete");
 		System.out.println("sourceFingerprint=" + result.sourceFingerprint);
@@ -96,12 +100,18 @@ public final class LayeredMapsCli {
 		System.out.println("classifiedSourceOwners=" + result.ownerClassification.sourceOwnerCount);
 		System.out.println("classificationFingerprint="
 			+ result.ownerClassification.classificationFingerprint);
+		System.out.println("coordinateOccurrences=" + result.coordinateOccurrences.occurrenceCount);
+		System.out.println("occurrenceFingerprint="
+			+ result.coordinateOccurrences.occurrenceFingerprint);
 		System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
 		System.out.println("summaryJson=" + summaryPath.toAbsolutePath().normalize());
 		System.out.println("markdown=" + markdownPath.toAbsolutePath().normalize());
 		System.out.println("classificationJson=" + classificationJsonPath.toAbsolutePath().normalize());
 		System.out.println("classificationMarkdown="
 			+ classificationMarkdownPath.toAbsolutePath().normalize());
+		System.out.println("occurrencesJson=" + occurrencesJsonPath.toAbsolutePath().normalize());
+		System.out.println("occurrencesMarkdown="
+			+ occurrencesMarkdownPath.toAbsolutePath().normalize());
 	}
 
 	private static Map<String, String> options(String[] args) {

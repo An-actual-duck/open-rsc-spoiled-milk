@@ -2049,6 +2049,59 @@ arguments are literals, infer topology, resolve expressions, alter preflight
 candidate status, rewrite Java, change runtime behavior, touch persistence or
 player data, modify terrain/placements, launch Builder, or enable import/export.
 
+### Slice 10: Read-only content coordinate-occurrence inventory
+
+Objective: replace source-level content classification with exact lexical
+file/line evidence before any script migration or runtime dual representation
+is attempted.
+
+Delivered in the extractable Layered Maps tool:
+
+- a separate `java-coordinate-occurrence-inventory-v1` JSON contract and
+  Markdown companion emitted by `normalize`;
+- balanced-parenthesis scanning for `teleport(...)`, `Point.location(...)`,
+  `new Point(...)`, `new Area(...)`, and `.inBounds(...)` shapes;
+- Java comment, string-literal, and character-literal masking so textual
+  examples do not become occurrences;
+- source path/SHA-256, one-based line/column, occurrence kind/form, normalized
+  argument expressions, argument count, and lexical argument shape; and
+- deterministic linkage to the repository source fingerprint and Slice 9
+  owner-classification fingerprint, plus its own occurrence fingerprint.
+
+Current content inventory:
+
+| Occurrence kind | Count |
+| --- | ---: |
+| Teleport shape | 903 |
+| Point construction | 341 |
+| Area check | 37 |
+| Area construction | 5 |
+| **Total** | **1,286** |
+
+All 135 `content-topology` sources contain at least one inventoried occurrence.
+Of the 1,286 occurrences, 783 contain only integer-literal arguments, 499
+contain one or more expressions, and four have no arguments. The no-argument
+set demonstrates an intentional limitation: lexical `teleport(...)` matching
+can include a method declaration. Slice 10 records that evidence but does not
+claim symbol resolution or infer a directed transition. Expression-bearing
+arguments likewise remain intact rather than being evaluated or guessed.
+
+Validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-ten.py` — 2 tests passed;
+- the scanner fixture exercised nested calls and commas, array expressions,
+  negative literals, multiple shapes on one line, declarations, ignored
+  comments/strings, unbalanced-source refusal, and null refusal;
+- two real-repository runs produced byte-identical JSON and Markdown, retained
+  all 135 sources and 1,286 occurrences, validated the Draft 2020-12 schema and
+  fingerprint, and left Git status unchanged; and
+- Slice 1 through Slice 10 regressions all pass (34 tests).
+
+Slice 10 does not resolve Java symbols, determine teleport parameter meaning,
+evaluate expressions, create transition edges, rewrite a script, alter runtime
+coordinates, touch world/player data, or launch a game process. It is the last
+planned report-only bridge before an opt-in private runtime parity observer.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2144,14 +2197,18 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 7 by separating logical signed map-sector identity from offset legacy terrain archive indices, retaining exact entry names and payload bytes. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 8 by projecting static object, item, and NPC placements into layered locations and correctly inclusive roaming bounds, retaining packed JSON and runtime construction. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 9 by classifying every unresolved Java coordinate owner into a stable lexical migration family while retaining all candidates and making false-positive signal shapes explicit. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 10 by inventorying exact content teleport, point, and area occurrence shapes with file/line/argument evidence while retaining declarations and expressions as unresolved lexical evidence. | Implemented and validated |
 
 ## Next Discussion
 
-Continue parity work with a read-only Java coordinate-occurrence inventory,
-starting with the 135 `content-topology` owners. Extract explicit teleport,
-point-construction, and area-bound call sites with file/line evidence; retain
-non-literal arguments as unresolved expressions and do not infer destinations
-or rewrite code. This produces the script/topology migration manifest needed
-before any dual-representation or authoritative runtime slice. Keep runtime
-behavior, persistence, client/protocol adoption, streaming, Builder, export,
-and relocation out of that checkpoint.
+Create an opt-in private/local layered-coordinate parity observer as the first
+owner-testable runtime milestone. It should expose the logged-in player's
+legacy packed point, signed layered location, world-space/level, logical region
+and terrain-sector identities, and round-trip result through an administrator
+or developer diagnostic command. Add transition snapshots so walking,
+teleporting, ladders/stairs, floor changes, death/respawn, logout, and reconnect
+can be exercised without making layered state authoritative. Diagnostics must
+fail visibly on an unrepresentable point, remain disabled from ordinary player
+use, avoid passwords/player secrets, and write stable AI-readable local logs.
+Keep persistence writes, client/protocol adoption, streaming, Builder, export,
+relocation, level `-2`, and public/live use out of that checkpoint.

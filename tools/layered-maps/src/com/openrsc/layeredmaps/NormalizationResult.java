@@ -13,6 +13,7 @@ final class NormalizationResult {
 	final int transitionCount;
 	final int unresolvedCoordinateCount;
 	final CoordinateOwnerClassification ownerClassification;
+	final JavaCoordinateOccurrences coordinateOccurrences;
 	final String markdown;
 
 	NormalizationResult(
@@ -25,6 +26,7 @@ final class NormalizationResult {
 		int transitionCount,
 		int unresolvedCoordinateCount,
 		CoordinateOwnerClassification ownerClassification,
+		JavaCoordinateOccurrences coordinateOccurrences,
 		String markdown) {
 		this.document = document;
 		this.summaryDocument = summaryDocument;
@@ -35,6 +37,7 @@ final class NormalizationResult {
 		this.transitionCount = transitionCount;
 		this.unresolvedCoordinateCount = unresolvedCoordinateCount;
 		this.ownerClassification = ownerClassification;
+		this.coordinateOccurrences = coordinateOccurrences;
 		this.markdown = markdown;
 	}
 

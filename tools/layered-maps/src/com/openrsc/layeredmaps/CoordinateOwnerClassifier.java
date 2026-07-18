@@ -83,6 +83,7 @@ final class CoordinateOwnerClassifier {
 			preflight.sourceFingerprint,
 			classificationFingerprint,
 			classifications.size(),
+			classifications,
 			markdown(preflight, classificationFingerprint, dispositions, families, risks, classifications));
 	}
 
