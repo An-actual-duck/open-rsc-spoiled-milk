@@ -1131,7 +1131,7 @@ The selected direction is:
 The remaining decisions are deliberately divided so they can be handled one at
 a time.
 
-### Current Module: Long-Distance Ladders and Transport
+### Current Module: Static Separation Versus True Instancing
 
 The focused layered-coordinate study above is the active discussion. Signed
 geographic levels, exact default vertical anchors, and an explicit legacy-format
@@ -1145,9 +1145,8 @@ copied legacy world into explicit levels without relocating content, prove
 terrain, placement, transition, script, persistence, and gameplay parity, and
 only then begin geographic alignment or introduce level `-2`. That sequence is
 now part of a reusable conversion workspace rather than a Spoiled Milk-only
-map rewrite. Modules A through C and the existing-content portion of Module D
-are resolved. Long-distance travel plus Modules E, F, and G still require owner
-discussion before a focused implementation plan is authorized.
+map rewrite. Modules A through D are resolved. Modules E, F, and G still require
+owner discussion before a focused implementation plan is authorized.
 
 ### Module A: Meaning of Deep Underground
 
@@ -1190,14 +1189,29 @@ change the confidence and severity report rather than preventing the staging
 result. Nothing becomes final until the map author reviews/tests the staged
 world and invokes the separate target export script.
 
-Still decide:
+Long-distance travel is also resolved: it is a valid permanent design choice,
+not a flaw that the layered model should suppress. Transition classifications
+describe behavior and geometry; they do not impose a preferred aesthetic.
+Ladders, stairs, portals, tunnels, or any other object may intentionally connect
+distant points, same-level regions, or underground networks.
 
-- whether distant ladder fast travel is a valued convenience;
-- whether transport ladders should use a different object or presentation;
-- whether underground-to-underground shortcuts should form a deliberate
-  network; and
-- whether the converter should preserve detected long-distance edges by
-  default or suggest a geographically local replacement.
+The converter therefore:
+
+- preserves every recognized transition in its staging output unless a
+  structural rewrite is necessary to represent it in the layered schema;
+- uses direction, reciprocal edges, scripts, and component topology rather
+  than distance alone when inferring a vertical relationship;
+- never replaces a transport object's appearance or interaction merely to make
+  its presentation more geographically conventional;
+- reports large deltas and unusual topology as descriptive information, not as
+  an error or recommendation to remove the feature; and
+- validates that a transition has a representable destination, declared
+  behavior, and recoverable runtime path without judging the creator's design.
+
+Map authors remain free to preserve, reclassify, edit, remove, or add
+long-distance connections in the workbench. The mapping system fixes early
+coordinate limitations while remaining neutral about the worlds creators build
+with it.
 
 ### Module E: Static Separation Versus True Instancing
 
@@ -1228,8 +1242,6 @@ client scene baselines, and rollback.
 
 1. Is true player/party instancing a desired feature, or is static isolation
    sufficient?
-2. Should existing long-distance ladder travel be preserved, re-presented as
-   transportation, or gradually removed?
 
 ## Living Inventory: Pending Discussion and Audit
 
@@ -1309,9 +1321,10 @@ private environment should validate at least:
 | 2026-07-18 | Distribute the initial developer-oriented conversion tooling as a folder extracted into a target repository root; extraction alone performs no conversion or target mutation. | Confirmed |
 | 2026-07-18 | Allow automatic provisional conversion and relocation of every discovered area, including quest content, because all output remains isolated until explicit final export. | Confirmed |
 | 2026-07-18 | Use a focused Builder-derived conversion workbench and dev launcher for inspection, correction, navigation, and private testing; reserve target mutation for a separate confirmed export script. | Confirmed |
+| 2026-07-18 | Treat long-distance and unconventional transitions as valid creator choices; classify and report them descriptively without replacing, discouraging, or judging their design. | Confirmed |
 
 ## Next Discussion
 
-Continue with long-distance travel, static separation versus true instancing,
-allocation policy, and detailed validation. No implementation plan should be
-prepared until those remaining decisions have been resolved.
+Continue with static separation versus true instancing, allocation policy, and
+detailed validation. No implementation plan should be prepared until those
+remaining decisions have been resolved.

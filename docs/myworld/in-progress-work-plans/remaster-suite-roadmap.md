@@ -194,6 +194,12 @@ and terrain components to propose geographic alignment and deeper levels. The
 source stays unchanged, ambiguous ownership requires review, and reverse export
 to the packed format is not promised.
 
+The layered schema and converter are topology-neutral. Long-distance ladders,
+same-level transport, unconventional transition objects, and disconnected
+networks remain valid creator choices. Classification and reports describe
+their behavior without treating geographic convention as a content rule;
+validation enforces representability and integrity rather than aesthetics.
+
 The initial distribution targets map authors and server maintainers. It is a
 tool folder extracted into a target repository root, followed by an explicit
 preflight and conversion command; it is not presented as an in-game player
@@ -959,3 +965,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Package Layered Maps for reusable world conversion, with parity normalization followed by reviewed transition/component alignment and private test-before-export. | Confirmed in the layered-world plan |
 | 2026-07-18 | Initially distribute Layered Maps as developer tooling extracted into a repository root, with non-mutating extraction, explicit preflight, and reported alignment exceptions. | Confirmed in the layered-world plan |
 | 2026-07-18 | Permit fully automatic provisional conversion inside an isolated Builder-derived workbench, while reserving all target mutation for a separately confirmed transactional export. | Confirmed in the layered-world plan |
+| 2026-07-18 | Keep Layered Maps neutral toward creator topology, including intentional long-distance and unconventional transitions. | Confirmed in the layered-world plan |
