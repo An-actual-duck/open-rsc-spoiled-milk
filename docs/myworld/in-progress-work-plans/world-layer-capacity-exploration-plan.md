@@ -2266,12 +2266,23 @@ Automated validation evidence:
   and occurrence
   `6afcd56ff5d43390acd8503f7661903dd62edbffa36d869e20686cb9cb02ed99`.
 
-Owner runtime acceptance remains pending. Relaunch the private server from the
-tested checkpoint with the observer enabled, repeat walking, exact vertical
-transitions, long-distance travel, and logout/reconnect, then stop the trace.
-Successful gameplay plus an exact trace proves both the existing adapter and
-the new Player mirror survive the same route. A `-2` destination, converted
-map, or changed gameplay consumer is not part of this acceptance test.
+Owner runtime acceptance completed on 2026-07-18 from checkpoint `6ef67635b`:
+
+- the independently bounded accepted session contained 97 records: 83 ordinary
+  moves, five teleports, four markers, one logout/login pair, one snapshot, and
+  exact start/stop boundaries;
+- every record round-tripped exactly and the event chain contained no
+  coordinate discontinuity;
+- surface `(216,468,0)` projected exactly to underground `(216,468,-1)`, while
+  surface `(226,440,0)` projected exactly to upper floor `(226,440,+1)`;
+- a same-level 200-tile teleport retained level `0`, and logout, reconnect,
+  snapshot, and stop all retained `(226,640,0)`; and
+- the owner reported no crash, incorrect location, collision issue, missing
+  scenery, or other behavioral/visual regression.
+
+The accepted runtime proves both the legacy adapter and checked Player mirror
+survive the same real movement/session path. A `-2` destination, converted map,
+or changed gameplay consumer was not part of this acceptance test.
 
 Slice 12 does not make layered Player location authoritative, add a second
 persistence column, change `Entity`, mirror NPC movement, key runtime regions
@@ -2375,13 +2386,16 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 9 by classifying every unresolved Java coordinate owner into a stable lexical migration family while retaining all candidates and making false-positive signal shapes explicit. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 10 by inventorying exact content teleport, point, and area occurrence shapes with file/line/argument evidence while retaining declarations and expressions as unresolved lexical evidence. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 11 as a doubly opt-in, dev-only private runtime parity observer with stable JSONL movement/session capture while packed `Player` state remains authoritative. | Implemented and owner-validated |
-| 2026-07-18 | Continue with Slice 12 by maintaining a checked read-only layered mirror on Player initialization, movement, and session transitions while inherited packed Point remains the sole gameplay authority. | Implemented; automated validation passed; owner runtime test pending |
+| 2026-07-18 | Continue with Slice 12 by maintaining a checked read-only layered mirror on Player initialization, movement, and session transitions while inherited packed Point remains the sole gameplay authority. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Run the Slice 12 owner acceptance route on the checkpointed private server and
-inspect the resulting observer trace. If gameplay remains unchanged and all
-events remain exact, record acceptance and choose the next reversible runtime
-owner without making layered state authoritative. Do not advance into
-authoritative region storage, persistence, client/protocol adoption, streaming,
-Builder, export, relocation, or level `-2` before this mirror gate is reviewed.
+Implement Slice 13 as checked shadow logical-region membership for Player.
+Derive and synchronize a `WorldRegionKey` from the accepted Player layered
+mirror during initial placement, movement, and session checks, while the
+existing packed `Region` reference and `RegionManager` maps remain solely
+authoritative. Exercise ordinary 48-tile boundary crossings and vertical
+transitions without feeding the shadow key into lookup, visibility, collision,
+packets, or persistence. Do not advance into authoritative region storage,
+client/protocol adoption, streaming, Builder, export, relocation, or level
+`-2` in this slice.
