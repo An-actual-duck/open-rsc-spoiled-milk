@@ -9,6 +9,8 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -464,6 +466,22 @@ public class RegionManager {
 
 	public Region getRegion(final Point objectCoordinates) {
 		return getRegion(objectCoordinates.getX(), objectCoordinates.getY());
+	}
+
+	/**
+	 * Projects a packed point into the future level-aware region identity.
+	 *
+	 * <p>This does not perform a lookup in the current packed region maps.</p>
+	 */
+	public WorldRegionKey getLayeredRegionKey(final Point objectCoordinates) {
+		return WorldRegionKey.fromLegacyPoint(objectCoordinates);
+	}
+
+	/**
+	 * Calculates a level-aware region identity without consulting packed storage.
+	 */
+	public WorldRegionKey getLayeredRegionKey(final WorldLocation location) {
+		return WorldRegionKey.from(location);
 	}
 
 	/**

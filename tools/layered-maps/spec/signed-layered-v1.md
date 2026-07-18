@@ -75,3 +75,17 @@ snapshot only when both legacy boundaries decode into the same level; a
 cross-band rectangle is refused instead of being silently flattened. This
 first consumer does not replace packed area storage or authorize entity,
 region, transition, map, packet, or persistence adoption.
+
+`WorldRegionKey(worldSpace, level, regionX, regionY)` is the immutable logical
+identity of a 48-tile region. Region indices derive from layered X/Y with floor
+division, so negative coordinates behave consistently. The server
+`RegionManager` may calculate this key from either a checked legacy `Point` or
+a `WorldLocation`, but current nested packed-coordinate maps remain the lookup
+authority.
+
+This is intentionally a projection rather than an identity attached to legacy
+`Region`. The 944-tile packed floor stride is not divisible by 48. Packed region
+Y 19 contains both Y 943 (level 0) and Y 944 (level +1), while packed region Y
+39 contains both Y 1887 (level +1) and Y 1888 (level +2). A later storage
+migration must split those regions; it must not assign either straddling object
+one misleading layered key.

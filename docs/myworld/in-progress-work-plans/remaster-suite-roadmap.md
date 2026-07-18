@@ -580,7 +580,7 @@ Required design work before implementation:
 - publish the layered coordinate, transition, region, map-package, protocol,
   and persistence specifications.
 
-Focused foundation progress (2026-07-18): approved Slices 1-4 now provide the
+Focused foundation progress (2026-07-18): approved Slices 1-5 now provide the
 extractable `signed-layered-v1` contract, immutable Java 8 reference values,
 exhaustive `legacy-packed-y-v1` laboratory codec, deterministic read-only
 `spoiled-milk-repository-v1` preflight, and lossless non-relocating terrain,
@@ -590,10 +590,13 @@ unsupported coordinates raw. The server now also owns a dormant matching
 location contract and checked packed `Point` adapter. The existing mutable
 packed `Area` is the first narrow consumer: it exposes a checked immutable
 `WorldArea` snapshot and layered containment overload without changing legacy
-storage or existing call paths. Java coordinate owners remain fingerprinted
-but unparsed. Regions, entities, transitions, maps, packets, and persistence
-have not adopted the contract, so these slices do not yet satisfy the later
-parity steps below.
+storage or existing call paths. `WorldRegionKey` and read-only `RegionManager`
+projections now establish logical region identity while packed nested maps stay
+authoritative; this also records the two packed regions that straddle legacy
+level boundaries. Java coordinate owners remain fingerprinted but unparsed.
+Entities, transitions, maps, packets, persistence, and authoritative region
+storage have not adopted the contract, so these slices do not yet satisfy the
+later parity steps below.
 
 Implementation sequence:
 
@@ -1038,3 +1041,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Complete the second Layered Maps foundation checkpoint: lossless structured-source normalization, directed transition inventory, compact AI report, and raw anomaly preservation without relocation or target mutation. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the third Layered Maps foundation checkpoint: dormant server-owned layered location values and a checked global packed-`Point` bridge with exhaustive tool parity and no consumer adoption. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the fourth Layered Maps foundation checkpoint: immutable world-space/level-qualified area values and a checked projection from legacy mutable `Area`, with exhaustive containment parity and no storage replacement. | Implemented and validated in the layered-world plan |
+| 2026-07-18 | Complete the fifth Layered Maps foundation checkpoint: immutable logical region keys and read-only manager projections, preserving packed lookup while identifying the two packed regions that must split during later storage migration. | Implemented and validated in the layered-world plan |

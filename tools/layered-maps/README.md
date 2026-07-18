@@ -83,5 +83,9 @@ that package as a resolved coordinate contract rather than an unresolved Java
 owner. The existing server `Area` is the first deliberately narrow consumer:
 it can expose a checked immutable `WorldArea` snapshot and test a
 `WorldLocation`, while its packed fields and existing methods remain
-authoritative. Regions, entities, transitions, maps, packets, and persistence
-have not adopted the contract yet.
+authoritative. `RegionManager` can also calculate a `WorldRegionKey` without
+using it for storage or lookup. This distinction matters because 944-tile
+legacy level bands do not divide evenly into 48-tile regions: two current
+packed region objects straddle logical level boundaries. Entities,
+transitions, maps, packets, persistence, and authoritative region storage have
+not adopted the contract yet.

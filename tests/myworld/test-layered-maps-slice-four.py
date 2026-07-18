@@ -211,7 +211,7 @@ class LayeredMapsSliceFourTest(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
 
-    def test_area_is_the_only_layered_contract_consumer(self):
+    def test_area_and_region_manager_are_the_only_layered_contract_consumers(self):
         package_name = "com.openrsc.server.model.world.coordinate"
         consumers = []
         for source_root in (ROOT / "server/src", ROOT / "server/plugins"):
@@ -220,8 +220,12 @@ class LayeredMapsSliceFourTest(unittest.TestCase):
                     continue
                 if package_name in path.read_text(encoding="utf-8"):
                     consumers.append(path.relative_to(ROOT).as_posix())
+        consumers.sort()
         self.assertEqual(
-            ["server/src/com/openrsc/server/model/world/Area.java"],
+            [
+                "server/src/com/openrsc/server/model/world/Area.java",
+                "server/src/com/openrsc/server/model/world/region/RegionManager.java",
+            ],
             consumers,
         )
 

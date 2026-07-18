@@ -3,7 +3,9 @@
  *
  * <p>Legacy conversion stays explicit through {@link
  * com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter}. Slice 4
- * permits the existing {@code Area} model to expose a checked layered snapshot;
- * packed storage and existing runtime decisions remain authoritative.</p>
+ * permits the existing {@code Area} model to expose a checked layered snapshot,
+ * and Slice 5 permits {@code RegionManager} to calculate a
+ * {@code WorldRegionKey}. Packed storage and existing runtime decisions remain
+ * authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

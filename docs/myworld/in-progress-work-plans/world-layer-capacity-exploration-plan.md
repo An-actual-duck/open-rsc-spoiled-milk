@@ -1,14 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-4 implemented and validated on
+Status: architecture design complete; Slices 1-5 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 4 area-contract checkpoint; packed runtime storage
-remains authoritative and no world conversion has begun
+Current milestone: Slice 5 logical region-key checkpoint; packed runtime
+storage remains authoritative and no world conversion has begun
 
 ## Purpose
 
@@ -48,10 +48,11 @@ Not authorized beyond the approved foundation slices:
 
 Documentation may be revised as decisions are made. The owner approved the
 isolated Slice 1 coordinate laboratory/read-only preflight, Slice 2 lossless
-normalization inventory, Slice 3 dormant server compatibility seam, and Slice
-4 checked legacy-`Area` projection on 2026-07-18. The owner then authorized
-continuing through focused slices on the same active branch. Map relocation,
-Builder, database, streaming, export, and live/public work remain out of scope.
+normalization inventory, Slice 3 dormant server compatibility seam, Slice 4
+checked legacy-`Area` projection, and Slice 5 logical region-key projection on
+2026-07-18. The owner then authorized continuing through focused slices on the
+same active branch. Map relocation, Builder, database, streaming, export, and
+live/public work remain out of scope.
 
 ## Executive Finding
 
@@ -1751,13 +1752,64 @@ Validation evidence:
   and
 - read-only preflight still finds 254 candidates and normalization still
   retains 211 unresolved Java owners, 1,771 terrain sectors, 49,816 placements,
-  20 transitions, and the one pre-existing raw NPC maximum. The structured
-  world inventory fingerprint is unchanged because Slice 4 changes no world
-  data.
+  20 transitions, and the one pre-existing raw NPC maximum. World-data inputs
+  and counts are unchanged; the complete inventory intentionally fingerprints
+  unresolved Java owners, so its overall hash may track staged source changes.
 
 Slice 4 does not make region storage, entities, transitions, map identity,
 collision, pathing, visibility, packets, persistence, or clients level-aware.
 Packed `Area` storage and all existing call paths remain authoritative.
+
+### Slice 5: Logical layered region-key projection
+
+Objective: define an explicit world-space/level-aware region identity and let
+`RegionManager` calculate it without replacing or consulting the current
+packed region maps.
+
+Delivered:
+
+- immutable `WorldRegionKey(worldSpace, level, regionX, regionY)`;
+- signed region indices derived from `WorldCoordinate`'s 48-tile floor-divided
+  sector addressing;
+- checked construction from legacy `Point` through
+  `LegacyPackedPointAdapter`; and
+- read-only `RegionManager.getLayeredRegionKey` overloads for packed and
+  layered locations.
+
+The audit found that an existing packed `Region` cannot always receive one
+truthful layered key. The legacy 944-tile level stride is not divisible by the
+48-tile region size. Packed region Y 19 contains both packed Y 943 at level 0
+and packed Y 944 at level +1. Packed region Y 39 similarly contains packed Y
+1887 at level +1 and Y 1888 at level +2. The Y 2831/2832 boundary already falls
+between packed regions 58 and 59. Slice 5 therefore projects keys from
+locations only; it does not attach a key to `Region` or alter nested map
+identity. A later authoritative storage migration must split the two
+straddling regions.
+
+Validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-five.py` — 3 tests passed;
+- every packed Y `0..3775` at six representative X values produced the same
+  logical key whether entered through legacy `Point` or `WorldLocation`;
+- both straddling boundaries, the already aligned third boundary, signed
+  negative indices, deep levels, world spaces, equality, hashes, and null
+  refusals were exercised;
+- source guards prove that `Area` and `RegionManager` remain the only staged
+  consumers and that `RegionManager` still stores
+  `ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>>` and retains
+  its existing packed division/lookup path;
+- Slice 1 through Slice 4, World Builder discovery, and server build-authority
+  regressions all passed;
+- the authoritative server build passed for 719 core and 488 plugin sources;
+  and
+- preflight/normalization still report 254 candidates, 211 unresolved Java
+  owners, 1,771 terrain sectors, 49,816 placements, 20 transitions, and the one
+  preserved raw coordinate. No world-data source or count changed.
+
+Slice 5 does not change region storage, region construction, tiles, collision,
+visibility caches, entities, map loading, transitions, packets, persistence,
+or clients. It records the exact split requirement that a later storage slice
+must meet.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -1849,11 +1901,12 @@ private environment should validate at least:
 | 2026-07-18 | Approve and implement Slice 2 as lossless, non-relocating normalization of recognized terrain, placement, and transition sources, with raw anomaly preservation and unresolved Java ownership. | Implemented and validated |
 | 2026-07-18 | Approve and implement Slice 3 as a dormant server-owned layered-location contract and checked packed `Point` bridge, with exhaustive tool parity and no runtime consumer adoption. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 4 as a checked immutable layered projection from legacy `Area`, preserving packed storage and existing containment behavior while proving level/world-space isolation. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 5 as a logical `WorldRegionKey` projection while retaining packed region storage and recording the two legacy region objects that straddle level boundaries. | Implemented and validated |
 
 ## Next Discussion
 
-Continue the unchanged-behavior adoption sequence with a focused region-key
-slice. Keep packed region lookup authoritative until parity is proven; do not
-combine region storage replacement, entities, maps, transitions, persistence,
-client/protocol work, streaming, Builder, export, or relocation into that
-checkpoint.
+Continue the unchanged-behavior adoption sequence with a focused transition-
+destination contract. Keep existing telepoint definitions and runtime movement
+authoritative; do not combine source rewriting, region storage replacement,
+entities, maps, persistence, client/protocol work, streaming, Builder, export,
+or relocation into that checkpoint.

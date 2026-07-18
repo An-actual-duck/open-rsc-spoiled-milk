@@ -218,7 +218,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
 
-    def test_coordinate_package_has_only_the_approved_area_consumer(self):
+    def test_coordinate_package_has_only_the_approved_staged_consumers(self):
         package_name = "com.openrsc.server.model.world.coordinate"
         checked = 0
         consumers = []
@@ -231,18 +231,23 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 if package_name in path.read_text(encoding="utf-8"):
                     consumers.append(path.relative_to(ROOT).as_posix())
         self.assertGreater(checked, 500)
+        consumers.sort()
         self.assertEqual(
-            ["server/src/com/openrsc/server/model/world/Area.java"],
+            [
+                "server/src/com/openrsc/server/model/world/Area.java",
+                "server/src/com/openrsc/server/model/world/region/RegionManager.java",
+            ],
             consumers,
         )
 
-    def test_server_package_contains_only_the_approved_dormant_boundary(self):
+    def test_server_package_contains_only_the_approved_staged_boundary(self):
         self.assertEqual(
             {
                 "LegacyPackedPointAdapter.java",
                 "WorldCoordinate.java",
                 "WorldArea.java",
                 "WorldLocation.java",
+                "WorldRegionKey.java",
                 "WorldSpaceId.java",
                 "package-info.java",
             },
