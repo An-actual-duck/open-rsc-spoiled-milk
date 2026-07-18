@@ -194,6 +194,14 @@ and terrain components to propose geographic alignment and deeper levels. The
 source stays unchanged, ambiguous ownership requires review, and reverse export
 to the packed format is not promised.
 
+The initial distribution targets map authors and server maintainers. It is a
+tool folder extracted into a target repository root, followed by an explicit
+preflight and conversion command; it is not presented as an in-game player
+setting. Merely extracting the folder must not alter world data or runtime
+source. Conversion emits deterministic human- and machine-readable reports of
+all transformations, retained misalignments, accepted exceptions, unsupported
+owners, and other topology oddities.
+
 A map depends on Renderer only when it truly requires renderer-specific assets
 or behavior. Layered coordinates themselves depend on the layered-world engine
 capability, not a particular visual style.
@@ -573,6 +581,9 @@ Work:
 - Discover transitions and connected terrain components, propose explicit
   level/translation changes, and surface contradictory or unowned coordinates
   for review instead of guessing.
+- Let owners edit, reclassify, or explicitly acknowledge legacy misalignments,
+  while recording every retained exception in deterministic human- and
+  machine-readable reports.
 - Show X/Y/level directly throughout navigation, inspect, copy, terrain,
   placement, transition, and validation interfaces.
 - Add level creation, bounds, naming, role, visibility, and allocation metadata.
@@ -931,3 +942,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-17 | Establish internal module boundaries and independent artifacts before considering additional repository splits. | Confirmed |
 | 2026-07-17 | Schedule the Compatibility SDK, full package manager, legacy pack, diagnostics toolkit, asset packs, and compatibility laboratory after the primary Suite roadmap. | Confirmed |
 | 2026-07-18 | Package Layered Maps for reusable world conversion, with parity normalization followed by reviewed transition/component alignment and private test-before-export. | Confirmed in the layered-world plan |
+| 2026-07-18 | Initially distribute Layered Maps as developer tooling extracted into a repository root, with non-mutating extraction, explicit preflight, and reported alignment exceptions. | Confirmed in the layered-world plan |

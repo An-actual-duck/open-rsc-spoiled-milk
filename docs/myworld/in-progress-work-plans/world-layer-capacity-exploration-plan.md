@@ -762,6 +762,16 @@ ownership boundaries. From the user's perspective this is a standalone
 conversion module; internally it remains a tested bundle of the engine
 capability, converter, Builder, target adapter, and validation tools.
 
+The intended initial installation is deliberately developer-oriented: download
+the Layered Maps tool folder and extract it into the root of the repository to
+be converted. The expected user is a map author or server maintainer with a
+source checkout, not a player installing a graphical game option. Extraction
+installs only the contained tooling and metadata; it must not rewrite maps,
+runtime code, configuration, archives, or player data. A separately invoked
+preflight identifies the repository adapter and previews all later changes.
+Unknown layouts are refused or require an explicit adapter rather than being
+treated as approximately compatible.
+
 A renderer/client release is a separate compatibility dimension. A map should
 require a renderer capability only when it truly depends on renderer-specific
 assets or behavior; layered coordinates alone should depend on the
@@ -883,6 +893,34 @@ review workflow, not a blind rewrite. Cleanly separated terrain islands and
 unambiguous reciprocal stairs should convert automatically. Shared complexes,
 quest-driven edges, one-way travel, and incomplete source ownership must stop
 at a clear Builder decision rather than being guessed.
+
+An owner may resolve a contradictory legacy relationship by editing terrain or
+an entrance, reclassifying the edge as non-vertical transport, or explicitly
+accepting a compatibility override. An override preserves the relationship but
+does not let the conversion claim complete geographic alignment. Clean export
+requires every detected conflict to be resolved, classified, or deliberately
+acknowledged; it does not require every legacy edge to become vertical.
+
+Every conversion must generate both a human-readable report and a stable
+machine-readable report. At minimum they record:
+
+- every retained misalignment, its actual X/Y delta, transition class,
+  rationale, and acknowledgement;
+- unpaired, one-way, unmatched, or contradictory stairs and ladders;
+- inferred level changes and every terrain-component translation;
+- connected components whose void boundary was uncertain;
+- hard-coded or otherwise unowned coordinate references;
+- placements outside moved component bounds;
+- overlaps, contradictory depth cycles, inaccessible areas, and areas with no
+  known recovery exit;
+- blocking findings, accepted exceptions, warnings, and informational
+  oddities as distinct severities; and
+- source fingerprints, adapter/capability versions, output hashes, and the
+  corresponding old-to-new transformation manifest.
+
+The reports should be useful to a map author, deterministic enough for version
+control, and structured so automated tools or an AI assistant can inspect the
+conversion without scraping Builder screenshots.
 
 ### Proposed Divergence Milestone
 
@@ -1070,7 +1108,7 @@ The selected direction is:
 The remaining decisions are deliberately divided so they can be handled one at
 a time.
 
-### Current Module: Geographic Correspondence
+### Current Module: Existing-Content Eligibility
 
 The focused layered-coordinate study above is the active discussion. Signed
 geographic levels, exact default vertical anchors, and an explicit legacy-format
@@ -1084,8 +1122,8 @@ copied legacy world into explicit levels without relocating content, prove
 terrain, placement, transition, script, persistence, and gameplay parity, and
 only then begin geographic alignment or introduce level `-2`. That sequence is
 now part of a reusable conversion workspace rather than a Spoiled Milk-only
-map rewrite. Module A is resolved. Modules C, D, E, F, and G still require
-owner discussion before a focused implementation plan is authorized.
+map rewrite. Modules A through C are resolved. Modules D, E, F, and G still
+require owner discussion before a focused implementation plan is authorized.
 
 ### Module A: Meaning of Deep Underground
 
@@ -1105,15 +1143,19 @@ their newer capability requirement explicitly.
 
 ### Module C: Geographic Correspondence
 
-Decide how strongly underground entrances should correspond to the surface:
+Resolved: an ordinary vertical edge preserves an exact geographic X/Y anchor.
+The walkable arrival tile may carry a small explicit object-footprint offset,
+but that offset does not redefine the anchor. The converter moves a terrain
+component rigidly and may align multiple entrances automatically only when
+they imply the same translation. It must not rotate, stretch, reshape, or
+silently choose among contradictory anchors.
 
-- exact normalized X/Y whenever possible;
-- a small tolerance around the surface point;
-- placement somewhere under the same named surface region;
-- thematic association only for deep or exceptional destinations.
-
-The result should also define when an entrance may be labeled transit or
-magical rather than vertical.
+Misaligned edges are permitted only after they are classified as intentional
+transport, magical, quest, exceptional, or acknowledged compatibility
+overrides. All retained misalignments and conversion oddities appear in the
+human- and machine-readable conversion reports. A clean export has no
+unresolved vertical conflict, although it may contain explicitly acknowledged
+non-geographic relationships.
 
 ### Module D: Existing Content and Fast Travel
 
@@ -1153,12 +1195,10 @@ client scene baselines, and rollback.
 
 ## Open Owner Questions
 
-1. Should geographic correspondence be exact, regional, or conditional on
-   entrance type?
-2. Are existing quest dungeons eligible for relocation?
-3. Is true player/party instancing a desired feature, or is static isolation
+1. Are existing quest dungeons eligible for relocation?
+2. Is true player/party instancing a desired feature, or is static isolation
    sufficient?
-4. Should existing long-distance ladder travel be preserved, re-presented as
+3. Should existing long-distance ladder travel be preserved, re-presented as
    transportation, or gradually removed?
 
 ## Living Inventory: Pending Discussion and Audit
@@ -1235,10 +1275,12 @@ private environment should validate at least:
 | 2026-07-17 | Normalize and prove unchanged legacy-world behavior before geographic realignment or level `-2` content. | Confirmed |
 | 2026-07-18 | Define deep underground as geographically anchored regional networks on physical level `-2`, disconnected by default but deliberately connectable later. | Confirmed |
 | 2026-07-18 | Make a reusable one-way conversion workspace a required Layered Maps deliverable, with transition-graph inference, terrain-component alignment, Builder review, and private test-before-export. | Confirmed |
+| 2026-07-18 | Require exact anchors for ordinary vertical edges while permitting reported, explicitly classified or acknowledged legacy misalignments. | Confirmed |
+| 2026-07-18 | Distribute the initial developer-oriented conversion tooling as a folder extracted into a target repository root; extraction alone performs no conversion or target mutation. | Confirmed |
 
 ## Next Discussion
 
-Continue with geographic correspondence, existing-content eligibility,
-long-distance travel, static separation versus true instancing, allocation
-policy, and detailed validation. No implementation plan should be prepared
-until those remaining decisions have been resolved.
+Continue with existing-content eligibility, long-distance travel, static
+separation versus true instancing, allocation policy, and detailed validation.
+No implementation plan should be prepared until those remaining decisions have
+been resolved.
