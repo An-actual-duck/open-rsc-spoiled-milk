@@ -1144,7 +1144,7 @@ The selected direction is:
 The remaining decisions are deliberately divided so they can be handled one at
 a time.
 
-### Current Module: Transition Graph and Recovery
+### Current Module: World Loading and Streaming
 
 The focused layered-coordinate study above is the active discussion. Signed
 geographic levels, exact default vertical anchors, and an explicit legacy-format
@@ -1158,8 +1158,9 @@ copied legacy world into explicit levels without relocating content, prove
 terrain, placement, transition, script, persistence, and gameplay parity, and
 only then begin geographic alignment or introduce level `-2`. That sequence is
 now part of a reusable conversion workspace rather than a Spoiled Milk-only
-map rewrite. Modules A through F are resolved. Module G still requires owner
-discussion before a focused implementation plan is authorized.
+map rewrite. Modules A through G are resolved. World loading/streaming and the
+private migration/validation sequence still require discussion before a
+focused implementation plan is authorized.
 
 ### Module A: Meaning of Deep Underground
 
@@ -1312,19 +1313,128 @@ stable IDs, and reservations before import. The final export report lists new,
 moved, released, shared, and conflicting claims so world growth remains
 auditable across releases.
 
-### Module G: Migration and Validation
+### Module G: Transition Graph and Recovery
 
-After an architecture is selected, define the phased migration order and a
-private-server test matrix covering terrain parity, collision, placements,
+Resolved: all transitions are explicit directed edges. A reverse edge is
+optional and no-return, dangerous, quest-controlled, long-distance, and other
+unconventional routes remain valid creator choices. Transition execution is
+atomic: if its destination or requirements cannot be resolved, the player
+stays at the source and the failure is reported rather than entering a partial
+movement state.
+
+Saved locations include world space, X/Y/level, and sufficient map/package
+identity to validate or migrate them. Login and reconnect use this recovery
+order:
+
+1. Restore the exact saved world space and coordinate when valid.
+2. Apply an explicit old-to-new migration redirect when the area moved.
+3. Restore an instance-specific reconnect location when the instance exists.
+4. Use the area or instance's declared recovery anchor.
+5. Use the player's last known safe anchor in the global world space.
+6. Use the configured world spawn only as the final fallback.
+
+The original saved location, selected fallback, and reason are retained in
+diagnostics or a migration receipt rather than silently discarded. Missing map
+packages, invalid terrain, expired instances, failed transition destinations,
+and fallback use appear in both technical logs and conversion/private-test
+reports.
+
+Every reachable area must have an administrative/system recovery path, but it
+does not need a player-accessible exit. This prevents infrastructure failures
+from permanently stranding a character without restricting intentional
+gameplay topology.
+
+### Module H: World Loading and Streaming
+
+The new allocation study exposed four responsibilities currently coupled to
+the number `48`:
+
+- terrain archives store `48 x 48` sectors;
+- the server's `RegionManager` also partitions tiles/entities into 48-tile
+  regions;
+- the client selects a `3 x 3` sector terrain window, producing a `144 x 144`
+  local scene; and
+- region reload, local-coordinate rebasing, visibility/static-scene baselines,
+  collision products, and renderer resident products are coordinated around
+  that window.
+
+The maintained client already has predictive terrain preloading, decoded-sector
+and CPU-window caches, model-input caches, resident renderer chunks, and a
+`WorldStreamManager` telemetry/state foundation. Nevertheless, a window shift
+still resets and rebuilds landscape models, dematerializes/rematerializes walls
+and scenery, rebases entities, ground items, camera, and waypoints, and reapplies
+a complete scene baseline. The active window is therefore larger than one
+sector, but the presentation change can still look like a coarse scene swap.
+
+#### Options
+
+1. **Change every 48-tile unit to a different fixed size.** This moves the
+   boundary but retains the coupling and makes legacy conversion harder.
+2. **Increase the monolithic active window.** This hides boundaries farther
+   away at greater memory/build cost but still causes large replacements.
+3. **Keep 48-tile storage and introduce incremental streaming residency.**
+   Decode archive sectors as pages, derive smaller independent presentation
+   chunks, and add/remove only the chunks entering or leaving a budgeted
+   resident set.
+4. **Adopt a wholly new terrain-page format and streaming system together.**
+   This can be revisited after the layered format is stable, but it combines
+   two migrations without evidence that 48-tile storage pages are the visual
+   problem.
+
+Current recommendation: Option 3. Keep `48 x 48` as the first layered terrain
+storage page because it is migration-friendly, but stop treating storage page,
+server simulation region, network interest area, local coordinate window,
+collision build, and renderer draw chunk as one concept.
+
+A target architecture would:
+
+- derive presentation chunks smaller than a terrain sector, initially testing
+  `24 x 24` because it divides 48 evenly and matches the existing static-object
+  resident chunk size; retain `12 x 12` mesh subcells and smaller animated
+  chunks where already useful;
+- key resident products by world space, level, and global chunk coordinate;
+- retain stable integer world locations and render camera-relative coordinates
+  instead of rebasing authoritative entity state on routine walking;
+- run an asynchronous lifecycle such as requested, decoded, CPU-built,
+  GPU-ready, presentable, active, and retiring;
+- preload from movement intent, velocity/waypoints, camera direction, teleports,
+  and configured draw distance;
+- keep old chunks visible until replacements are presentable, then activate
+  changes atomically so terrain holes or whole-window flashes are not exposed;
+- stream terrain, collision, scenery, walls, roofs, ground items, NPCs, and
+  players through coordinated readiness/interest contracts so one category
+  does not visibly precede its supporting world;
+- stage a teleport or level change until a minimum destination ring is ready,
+  while allowing a loading presentation rather than a partially materialized
+  destination;
+- make resident radius and cache budgets quality/performance settings rather
+  than map-format properties; and
+- retain a legacy-client/window adapter while the maintained custom client
+  adopts incremental streaming.
+
+Layered Maps owns sparse sector identity and terrain access. Server owns
+simulation and network interest. Renderer/client owns presentation residency
+and GPU lifetime. The contracts share world-space/level-aware keys, but one
+module's preferred chunk size must not redefine another's storage or behavior.
+
+The exact default presentation chunk and resident-ring budgets should be chosen
+by benchmark and live visual testing rather than frozen by this discussion
+alone.
+
+### Module I: Migration and Validation
+
+After the loading architecture is selected, define the phased migration order
+and a private-server test matrix covering terrain parity, collision, placements,
 entrances, exits, quests, death, login, logout, reconnect, distant teleports,
-client scene baselines, and rollback.
+client scene baselines, streaming boundaries, and rollback.
 
 ## Open Owner Questions
 
-1. Which transition failures must always have a defined recovery destination,
-   and when may a creator intentionally define a one-way or no-return route?
-2. What should happen on login/reconnect when a saved destination, world space,
-   map package, or instance no longer exists?
+1. Should the layered architecture retain `48 x 48` as storage only and adopt
+   independently sized incremental presentation chunks as recommended?
+2. Should seamless incremental streaming be part of the first layered engine
+   milestone, or a separately gated capability built immediately after
+   coordinate/behavior parity?
 
 ## Living Inventory: Pending Discussion and Audit
 
@@ -1362,7 +1472,8 @@ private environment should validate at least:
 1. Client and server terrain archives begin and end identical.
 2. Only approved sectors and placement records change.
 3. Terrain appearance, roofs, walls, elevation, and collision match the design.
-4. Every entrance and exit works in both intended directions.
+4. Every transition works in each declared direction, and intentional one-way
+   behavior remains one-way.
 5. Requirements and quest gates remain correct.
 6. NPCs, scenery, boundaries, and ground items load after walking and hard
    teleports.
@@ -1408,9 +1519,10 @@ private environment should validate at least:
 | 2026-07-18 | Treat long-distance and unconventional transitions as valid creator choices; classify and report them descriptively without replacing, discouraging, or judging their design. | Confirmed |
 | 2026-07-18 | Make the layered architecture ready for future true instances through a separate world-space identity and template metadata, while keeping current converted content static in the global world space. | Confirmed |
 | 2026-07-18 | Use sparse `48 x 48` sector storage keyed by world space and level, signed 32-bit logical X/Y, stable area IDs, exclusive base-terrain ownership, and explicit creator-controlled growth reservations. | Confirmed |
+| 2026-07-18 | Use directed transitions and a layered recovery hierarchy: exact restore, migration redirect, valid instance, declared recovery anchor, last safe global anchor, then world spawn. | Confirmed |
 
 ## Next Discussion
 
-Continue with transition/recovery policy and the private migration/validation
-sequence. No implementation plan should be prepared until those remaining
-decisions have been resolved.
+Decide the world-loading/streaming architecture, then complete the private
+migration/validation sequence. No implementation plan should be prepared until
+those remaining decisions have been resolved.

@@ -202,6 +202,15 @@ reservations make allocation and package conflicts auditable over long-running
 world expansion. Dynamic instances reuse template allocations instead of
 consuming new permanent coordinates.
 
+The 48-tile value is a storage-page contract, not a required renderer,
+simulation, visibility, or network-streaming chunk size. The recommended
+follow-up is an incremental `world.streaming` boundary: smaller presentation
+chunks remain resident across movement, use world-space/level-aware keys, load
+predictively, and activate only when their terrain and static scene are ready.
+Server interest management and renderer residency may use different internal
+cell sizes while consuming the same layered location contract. The existing
+legacy 3x3 section-window path remains an adapter during parity migration.
+
 The end-user Layered Maps distribution also composes these artifacts with a
 one-way converter, compatible World Builder, target adapter, and private test
 harness. It must be usable to upgrade compatible RuneScape Classic-derived
@@ -590,6 +599,9 @@ Implementation sequence:
     trading, combat, pathing, and cache leakage by invariant tests.
 11. Enable additional signed levels only after the unchanged four-level world
     is stable.
+12. Gate any incremental-streaming promotion on unchanged gameplay parity and
+    explicit readiness/scene-baseline tests; do not hide a streaming rewrite
+    inside the coordinate codec milestone.
 
 Exit gate:
 
@@ -997,3 +1009,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Keep Layered Maps neutral toward creator topology, including intentional long-distance and unconventional transitions. | Confirmed in the layered-world plan |
 | 2026-07-18 | Reserve an explicit world-space identity and instance-template boundary now, while deferring dynamic true-instance lifecycle to a later `world.instances` capability. | Confirmed in the layered-world plan |
 | 2026-07-18 | Adopt sparse 48-tile sector allocation with signed logical X/Y, stable ownership, package collision checks, and explicit growth reservations. | Confirmed in the layered-world plan |
+| 2026-07-18 | Adopt directed transition recovery from exact restore through migration/instance/area/last-safe fallbacks to world spawn. | Confirmed in the layered-world plan |
