@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/preflight-report-v1.schema.json",
+  "title": "Layered Maps Preflight Report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reportType",
+    "coordinateModel",
+    "legacyCodec",
+    "layoutAdapter",
+    "sourceFingerprintSha256",
+    "configuration",
+    "terrain",
+    "candidateSourceCount",
+    "candidateSources",
+    "findings"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "reportType": {"const": "layered-maps-preflight"},
+    "coordinateModel": {"const": "signed-layered-v1"},
+    "legacyCodec": {"const": "legacy-packed-y-v1"},
+    "layoutAdapter": {"type": "string"},
+    "sourceFingerprintSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "clientVersion", "basedMapData", "memberWorld", "customLandscape", "wantMyWorld"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "clientVersion": {"type": "integer"},
+        "basedMapData": {"type": "integer"},
+        "memberWorld": {"type": "boolean"},
+        "customLandscape": {"type": "boolean"},
+        "wantMyWorld": {"type": "boolean"}
+      }
+    },
+    "terrain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["serverPath", "clientPath", "sha256", "sectorCount", "planes"],
+      "properties": {
+        "serverPath": {"type": "string", "minLength": 1},
+        "clientPath": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "sectorCount": {"type": "integer", "minimum": 1},
+        "planes": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "maxProperties": 4,
+          "patternProperties": {
+            "^[0-3]$": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["sectorCount", "minSectorX", "maxSectorX", "minSectorY", "maxSectorY"],
+              "properties": {
+                "sectorCount": {"type": "integer", "minimum": 1},
+                "minSectorX": {"type": "integer"},
+                "maxSectorX": {"type": "integer"},
+                "minSectorY": {"type": "integer"},
+                "maxSectorY": {"type": "integer"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "candidateSourceCount": {"type": "integer", "minimum": 1},
+    "candidateSources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "path", "size", "sha256", "signals"],
+        "properties": {
+          "role": {
+            "enum": [
+              "configuration",
+              "placement",
+              "transition",
+              "server-coordinate-source",
+              "client-coordinate-source",
+              "builder-coordinate-source"
+            ]
+          },
+          "path": {"type": "string", "minLength": 1},
+          "size": {"type": "integer", "minimum": 0},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "signals": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "code", "message"],
+        "properties": {
+          "severity": {"enum": ["info", "warning", "error"]},
+          "code": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "message": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

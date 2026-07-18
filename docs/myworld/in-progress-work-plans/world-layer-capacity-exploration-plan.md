@@ -1,13 +1,13 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; first implementation slice pending
-separate owner approval
+Status: architecture design complete; Slice 1 implemented and validated on the
+active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current discussion: safest first implementation slice
+Current milestone: Slice 1 checkpoint; no runtime or world conversion begun
 
 ## Purpose
 
@@ -45,8 +45,10 @@ Not authorized by this plan:
 - modifying player databases or live world data;
 - deploying experimental map work to the public server.
 
-Documentation may be revised as decisions are made. Implementation requires a
-separately approved focused plan.
+Documentation may be revised as decisions are made. The owner approved only
+the isolated Slice 1 coordinate laboratory and read-only repository preflight
+on 2026-07-18. Runtime, map, Builder, database, streaming, and export work
+remain separately gated.
 
 ## Executive Finding
 
@@ -1502,9 +1504,10 @@ does not get waived merely because a later stage looks correct.
 
 ## Open Owner Questions
 
-None for the architecture study. Implementation remains separately gated.
+None for the architecture study. Further implementation remains separately
+gated after the approved Slice 1 checkpoint.
 
-## Safest First Implementation Slice: Pending Approval
+## Safest First Implementation Slice: Implemented and Validated
 
 ### Slice 1: Layered coordinate contract and read-only preflight
 
@@ -1512,7 +1515,7 @@ Objective: establish the extractable Layered Maps tool boundary, prove the
 coordinate model and legacy codec exhaustively, and fingerprint a target
 repository without changing its runtime or world.
 
-Proposed deliverables:
+Delivered:
 
 - a self-contained `tools/layered-maps/` developer folder suitable for eventual
   extraction into a repository root;
@@ -1559,6 +1562,47 @@ Acceptance evidence:
 This slice creates no compatibility claim for runtime layered maps. Its output
 is the coordinate laboratory and discovery evidence required before a later
 slice can introduce unused server/client adapters behind parity tests.
+
+### Slice 1 implementation record
+
+The implementation is self-contained under `tools/layered-maps/`. It contains
+the language-neutral contract and schemas, dependency-free Java 8 reference
+types, the exact checked legacy codec, a command-line preflight, an ignored
+build/workspace boundary, and operator documentation. The preflight recognizes
+only `spoiled-milk-repository-v1`; it refuses missing markers, incompatible
+configuration, malformed terrain, and server/client archive differences before
+creating reports.
+
+On the current repository, read-only preflight recorded:
+
+- byte-identical server/client `Custom_Landscape.orsc` archives;
+- 1,771 validated `48 x 48` sectors across legacy planes `0..3`, distributed
+  as 445, 444, 441, and 441 sectors respectively;
+- 253 conservatively identified configuration, placement, transition, server,
+  and client candidate coordinate owners; the Builder source scan produced no
+  current signal matches; and
+- deterministic JSON and Markdown reports under the tool's ignored workspace.
+
+Validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-one.py` — 5 tests passed;
+- the coordinate fixture exhaustively decoded and re-encoded packed Y
+  `0..3775` at representative X boundaries, checked every legacy-plane
+  mapping, proved signed-sector floor semantics and world-space isolation, and
+  refused legacy-incompatible coordinates;
+- two fixture preflights produced byte-identical JSON and Markdown while a
+  full before/after filesystem snapshot proved no target mutation;
+- inconsistent and unknown fixtures returned actionable refusals without
+  creating a report workspace;
+- the current-repository guard preserved its starting Git status and protected
+  input hashes while validating the real adapter; and
+- `python3 tests/myworld/test-world-builder-discovery.py` — 13 tests passed,
+  confirming the existing Builder discovery contract remains intact.
+
+The local environment does not provide an `ant` executable, so the optional
+Ant JAR target was not exercised here. The same sources compiled with the Java
+8 source/target flags in the focused guard and through the operator launcher,
+and the launcher completed a real-repository preflight successfully.
 
 ## Living Inventory: Pending Discussion and Audit
 
@@ -1646,9 +1690,10 @@ private environment should validate at least:
 | 2026-07-18 | Use directed transitions and a layered recovery hierarchy: exact restore, migration redirect, valid instance, declared recovery anchor, last safe global anchor, then world spawn. | Confirmed |
 | 2026-07-18 | Retain 48-tile terrain storage while adopting smaller incremental presentation chunks; implement streaming as the separately gated milestone immediately after coordinate/behavior parity. | Confirmed |
 | 2026-07-18 | Validate through synthetic, copied vanilla, copied Spoiled Milk, incremental-streaming, alignment-workbench, disposable-export, alternate-adapter, and owner-acceptance gates with rollback at every stage. | Confirmed |
+| 2026-07-18 | Approve and implement Slice 1 as a self-contained signed-coordinate laboratory plus deterministic, read-only `spoiled-milk-repository-v1` preflight; runtime and world conversion remain out of scope. | Implemented and validated |
 
 ## Next Discussion
 
-Await separate owner approval for Slice 1. Do not begin runtime, map, Builder,
-database, streaming, or export implementation under this architecture-only
-approval.
+Review the Slice 1 checkpoint, then define and separately approve the next
+parity-first slice. Do not begin runtime, map, Builder, database, streaming, or
+export implementation under the completed Slice 1 approval.

@@ -580,6 +580,14 @@ Required design work before implementation:
 - publish the layered coordinate, transition, region, map-package, protocol,
   and persistence specifications.
 
+Focused foundation progress (2026-07-18): the approved Slice 1 checkpoint now
+provides the extractable `signed-layered-v1` contract, immutable Java 8
+reference values, exhaustive `legacy-packed-y-v1` laboratory codec, and a
+deterministic read-only `spoiled-milk-repository-v1` preflight under
+`tools/layered-maps/`. This proves the contract and inventories the current
+target; it does not yet integrate coordinates into server/client runtime code
+or satisfy the parity steps below.
+
 Implementation sequence:
 
 1. Add a named, reversible codec for all existing packed coordinates.
@@ -1019,3 +1027,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Adopt directed transition recovery from exact restore through migration/instance/area/last-safe fallbacks to world spawn. | Confirmed in the layered-world plan |
 | 2026-07-18 | Keep 48-tile terrain pages but adopt incremental presentation streaming as the separately gated milestone after layered-coordinate parity. | Confirmed in the layered-world plan |
 | 2026-07-18 | Gate migration through synthetic, copied-world, streaming, workbench, disposable-export, alternate-adapter, and owner-acceptance fixtures with explicit rollback. | Confirmed in the layered-world plan |
+| 2026-07-18 | Complete the first Layered Maps foundation checkpoint: signed coordinate contract, checked legacy codec, and deterministic read-only repository preflight, without runtime or world mutation. | Implemented and validated in the layered-world plan |
