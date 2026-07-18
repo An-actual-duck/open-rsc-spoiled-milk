@@ -1,12 +1,13 @@
 # World Layer Capacity Exploration Plan
 
-Status: discussion and architecture study
+Status: architecture design complete; first implementation slice pending
+separate owner approval
 
-Branch: `docs/world-layer-capacity-exploration`
+Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current discussion: explicit layered coordinates and geographic map alignment
+Current discussion: safest first implementation slice
 
 ## Purpose
 
@@ -1432,17 +1433,132 @@ streaming regressions inseparable.
 
 ### Module I: Migration and Validation
 
-After the loading architecture is selected, define the phased migration order
-and a private-server test matrix covering terrain parity, collision, placements,
-entrances, exits, quests, death, login, logout, reconnect, distant teleports,
-client scene baselines, streaming boundaries, and rollback.
+Resolved: validation advances through isolated fixtures and explicit gates. No
+phase mutates the public/live server or preservation-critical data.
+
+#### Fixture ladder
+
+1. **Synthetic coordinate laboratory**
+   - Generated terrain and metadata exercise all four legacy bands, explicit
+     positive/negative levels, signed X/Y, 48-tile sector edges, void regions,
+     world spaces, transition classes, contradictory anchors, long-distance
+     travel, and an instance-template declaration.
+   - Codec boundary, overflow, unsupported legacy encoding, deterministic
+     serialization, and source-preservation tests run without a game process.
+2. **Copied vanilla baseline**
+   - Normalize an exact fingerprinted supported vanilla world without moving
+     content.
+   - Require terrain, placements, transitions, collision, and gameplay to
+     remain equivalent and keep the source copy unchanged.
+3. **Copied Spoiled Milk world and player data**
+   - Exercise custom terrain, overlays, definitions, quests, scripts,
+     teleports, recovery paths, and copied player locations.
+   - Cover login, logout, reconnect, death, respawn, walking, teleporting,
+     scenery/NPC/item loading, combat, following, trading, and level/world-space
+     isolation.
+4. **Incremental-streaming fixture**
+   - Keep the normalized world fixed while changing only loading/residency
+     ownership.
+   - Exercise continuous boundary crossings, reversals, camera look-ahead,
+     fast movement, distant teleports, level changes, relogging, roofs,
+     collision, and complete static/dynamic scene readiness.
+5. **Automatic-alignment workspace**
+   - Run transition inference, component movement, growth allocation, report
+     generation, workbench review, corrective edits, and dev-launcher travel
+     through every moved or flagged area.
+6. **Disposable export rehearsal**
+   - Export only to another copied target. Verify the preview, unchanged target
+     fingerprint, changed-file inventory, backup, receipt, deterministic rerun,
+     and byte-exact rollback.
+7. **Additional compatible RSC-derived fixture**
+   - Repeat discovery, normalization, report, private test, and disposable
+     export with at least one non-Spoiled-Milk adapter or generated compatibility
+     project so target assumptions remain explicit and reusable.
+8. **Owner acceptance**
+   - Combine automated evidence with visual traversal and gameplay checks.
+     Real-target export may be proposed only after the relevant fixture gates
+     pass and the owner accepts the staged result.
+
+#### Gate evidence
+
+Every gate retains:
+
+- source adapter/capability versions and source fingerprints;
+- deterministic manifests, reports, output hashes, and exact changed-file
+  inventories;
+- automated results for coordinate round trips, level/world-space isolation,
+  terrain/collision/placement parity, transitions, persistence, streaming
+  readiness, and rollback as applicable;
+- technical diagnostics for warnings, fallbacks, missing owners, scene loads,
+  recovery, and performance;
+- visual evidence for terrain, roofs, walls, scenery, animations, transitions,
+  streaming boundaries, teleports, and level changes where applicable;
+- copied database identity and migration receipts without credential or
+  password material; and
+- an exact rollback target.
+
+A failed gate stops advancement and returns to the last proven artifact. It
+does not get waived merely because a later stage looks correct.
 
 ## Open Owner Questions
 
-1. What exact copied-world fixtures should advance from codec tests to private
-   server/client parity, conversion-workbench review, and final export rehearsal?
-2. Which automated and visual evidence is mandatory before each migration gate
-   may advance or roll back?
+None for the architecture study. Implementation remains separately gated.
+
+## Safest First Implementation Slice: Pending Approval
+
+### Slice 1: Layered coordinate contract and read-only preflight
+
+Objective: establish the extractable Layered Maps tool boundary, prove the
+coordinate model and legacy codec exhaustively, and fingerprint a target
+repository without changing its runtime or world.
+
+Proposed deliverables:
+
+- a self-contained `tools/layered-maps/` developer folder suitable for eventual
+  extraction into a repository root;
+- a versioned, language-neutral `signed-layered-v1` coordinate/manifest
+  specification;
+- dependency-free Java 8 immutable reference values for
+  `WorldCoordinate(x,y,level)`, `WorldSpaceId`, and
+  `WorldLocation(worldSpaceId, coordinate)` so the future Builder/dev launcher
+  can consume the same reference contract;
+- a named `legacy-packed-y-v1` codec mapping legacy bands to levels `0`, `+1`,
+  `+2`, and `-1`, with checked reverse encoding and explicit refusal for `-2`,
+  expanded extents, or other layered-only values;
+- a read-only `preflight` command that identifies an exact supported repository
+  adapter, inventories/fingerprints candidate terrain and coordinate-bearing
+  sources, and emits deterministic human-readable and JSON reports inside the
+  tool's isolated workspace; and
+- focused fixtures/guards for codec behavior, deterministic output, unknown-
+  target refusal, and proof that preflight does not modify target inputs.
+
+Explicitly out of scope for Slice 1:
+
+- replacing or adapting server `Point`;
+- changing client coordinates, packets, persistence, regions, collision,
+  visibility, caches, or streaming;
+- decoding or rewriting complete placements/transitions;
+- emitting a converted map;
+- changing terrain archives, scripts, quests, ladders, player databases, or
+  configuration;
+- World Builder UI/dev-server integration; and
+- any final export or live/public operation.
+
+Acceptance evidence:
+
+1. Exhaustive packed-Y decode/encode coverage for Y `0..3775` and representative
+   X boundaries, plus checked failures outside the legacy domain.
+2. Explicit level mapping and exact round trips for all legacy plane bands.
+3. Layered-only values remain valid in the reference model but cannot be
+   silently encoded as legacy data.
+4. Two identical preflight runs produce identical normalized reports/hashes.
+5. Unknown or changed layouts fail with actionable diagnostics.
+6. Input hashes and Git status remain unchanged after preflight.
+7. Focused tests and the relevant existing repository guards pass.
+
+This slice creates no compatibility claim for runtime layered maps. Its output
+is the coordinate laboratory and discovery evidence required before a later
+slice can introduce unused server/client adapters behind parity tests.
 
 ## Living Inventory: Pending Discussion and Audit
 
@@ -1529,8 +1645,10 @@ private environment should validate at least:
 | 2026-07-18 | Use sparse `48 x 48` sector storage keyed by world space and level, signed 32-bit logical X/Y, stable area IDs, exclusive base-terrain ownership, and explicit creator-controlled growth reservations. | Confirmed |
 | 2026-07-18 | Use directed transitions and a layered recovery hierarchy: exact restore, migration redirect, valid instance, declared recovery anchor, last safe global anchor, then world spawn. | Confirmed |
 | 2026-07-18 | Retain 48-tile terrain storage while adopting smaller incremental presentation chunks; implement streaming as the separately gated milestone immediately after coordinate/behavior parity. | Confirmed |
+| 2026-07-18 | Validate through synthetic, copied vanilla, copied Spoiled Milk, incremental-streaming, alignment-workbench, disposable-export, alternate-adapter, and owner-acceptance gates with rollback at every stage. | Confirmed |
 
 ## Next Discussion
 
-Complete the private migration/validation sequence. Once it is settled, propose
-the safest first implementation slice for separate owner approval.
+Await separate owner approval for Slice 1. Do not begin runtime, map, Builder,
+database, streaming, or export implementation under this architecture-only
+approval.

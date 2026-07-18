@@ -678,6 +678,10 @@ Goal: turn the engine and editor capability into usable, organized worlds.
 
 Work:
 
+- Begin validation with a generated coordinate laboratory, then advance through
+  exact copied vanilla and Spoiled Milk worlds, the separately gated streaming
+  fixture, alignment-workbench review, disposable export/rollback, and at least
+  one additional adapter fixture before real-target acceptance.
 - Build a machine-readable inventory of existing areas, terrain bounds,
   placements, scripts, entrances, exits, dependencies, persistence risks, and
   growth reservations.
@@ -1014,3 +1018,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Adopt sparse 48-tile sector allocation with signed logical X/Y, stable ownership, package collision checks, and explicit growth reservations. | Confirmed in the layered-world plan |
 | 2026-07-18 | Adopt directed transition recovery from exact restore through migration/instance/area/last-safe fallbacks to world spawn. | Confirmed in the layered-world plan |
 | 2026-07-18 | Keep 48-tile terrain pages but adopt incremental presentation streaming as the separately gated milestone after layered-coordinate parity. | Confirmed in the layered-world plan |
+| 2026-07-18 | Gate migration through synthetic, copied-world, streaming, workbench, disposable-export, alternate-adapter, and owner-acceptance fixtures with explicit rollback. | Confirmed in the layered-world plan |
