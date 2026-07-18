@@ -1,12 +1,14 @@
 # Layered Maps
 
 This folder is the non-mutating foundation for the signed layered-map
-capability. Slice 1 provides:
+capability. It currently provides:
 
 - the `signed-layered-v1` coordinate contract;
 - immutable Java 8 reference values;
 - the checked `legacy-packed-y-v1` codec; and
-- a read-only preflight for the first supported repository adapter.
+- a read-only preflight for the first supported repository adapter; and
+- lossless, non-relocating normalization of recognized terrain, placements,
+  and transition data into a layered inventory.
 
 It does **not** convert maps, change runtime coordinates, edit archives, modify
 player data, launch a server, or export into a game.
@@ -47,3 +49,28 @@ means a later converter must inspect the source, not that preflight has parsed
 or rewritten it.
 
 Unknown or inconsistent targets are refused with an actionable error.
+
+## Normalize recognized sources
+
+After preflight succeeds:
+
+```bash
+./tools/layered-maps/layered-maps.sh normalize
+```
+
+Normalization writes only under the ignored
+`tools/layered-maps/workspace/normalize/` directory:
+
+- `world-inventory.json` is the complete machine-readable inventory;
+- `normalization-summary.json` is the compact AI-readable report; and
+- `normalization.md` is the operator summary.
+
+The inventory decodes terrain planes, known location JSON coordinates, and
+directed object telepoints without changing their topology. It reverse-encodes
+every supported coordinate and reconstructs every placement record to prove a
+semantic legacy round trip. Coordinates outside the named legacy codec remain
+raw, visible findings; they are never guessed or corrected.
+
+Java coordinate owners remain fingerprinted, unresolved inputs. This command
+does not rewrite Java, align areas, create a Builder project, launch a server,
+or make anything eligible for game import/export.

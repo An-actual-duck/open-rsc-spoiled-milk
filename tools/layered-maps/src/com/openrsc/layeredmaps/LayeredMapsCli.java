@@ -24,7 +24,7 @@ public final class LayeredMapsCli {
 			usage();
 			return args.length == 0 ? 2 : 0;
 		}
-		if (!"preflight".equals(args[0])) {
+		if (!"preflight".equals(args[0]) && !"normalize".equals(args[0])) {
 			System.err.println("[layered-maps] Unknown command: " + args[0]);
 			usage();
 			return 2;
@@ -36,21 +36,11 @@ public final class LayeredMapsCli {
 			Path workspace = requiredPath(options, "--workspace");
 			validateWorkspace(root, workspace);
 
-			PreflightReport report = new RepositoryPreflight().inspect(root);
-			String json = report.toJson();
-			String markdown = report.toMarkdown();
-			Files.createDirectories(workspace);
-			Path jsonPath = workspace.resolve("preflight.json");
-			Path markdownPath = workspace.resolve("preflight.md");
-			writeAtomically(jsonPath, json);
-			writeAtomically(markdownPath, markdown);
-
-			System.out.println("Layered Maps preflight complete");
-			System.out.println("adapter=" + report.layoutAdapter);
-			System.out.println("sourceFingerprint=" + report.sourceFingerprint);
-			System.out.println("candidateSources=" + report.candidateSources.size());
-			System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
-			System.out.println("markdown=" + markdownPath.toAbsolutePath().normalize());
+			if ("preflight".equals(args[0])) {
+				runPreflight(root, workspace);
+			} else {
+				runNormalization(root, workspace);
+			}
 			return 0;
 		} catch (IllegalArgumentException failure) {
 			System.err.println("[layered-maps] " + failure.getMessage());
@@ -62,6 +52,46 @@ public final class LayeredMapsCli {
 			System.err.println("[layered-maps] Could not write isolated reports: " + failure.getMessage());
 			return 4;
 		}
+	}
+
+	private static void runPreflight(Path root, Path workspace)
+		throws PreflightException, IOException {
+		PreflightReport report = new RepositoryPreflight().inspect(root);
+		Files.createDirectories(workspace);
+		Path jsonPath = workspace.resolve("preflight.json");
+		Path markdownPath = workspace.resolve("preflight.md");
+		writeAtomically(jsonPath, report.toJson());
+		writeAtomically(markdownPath, report.toMarkdown());
+
+		System.out.println("Layered Maps preflight complete");
+		System.out.println("adapter=" + report.layoutAdapter);
+		System.out.println("sourceFingerprint=" + report.sourceFingerprint);
+		System.out.println("candidateSources=" + report.candidateSources.size());
+		System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
+		System.out.println("markdown=" + markdownPath.toAbsolutePath().normalize());
+	}
+
+	private static void runNormalization(Path root, Path workspace)
+		throws PreflightException, IOException {
+		NormalizationResult result = new WorldNormalizer().normalize(root);
+		Files.createDirectories(workspace);
+		Path jsonPath = workspace.resolve("world-inventory.json");
+		Path summaryPath = workspace.resolve("normalization-summary.json");
+		Path markdownPath = workspace.resolve("normalization.md");
+		writeAtomically(jsonPath, result.toJson());
+		writeAtomically(summaryPath, result.toSummaryJson());
+		writeAtomically(markdownPath, result.toMarkdown());
+
+		System.out.println("Layered Maps normalization complete");
+		System.out.println("sourceFingerprint=" + result.sourceFingerprint);
+		System.out.println("inventoryFingerprint=" + result.inventoryFingerprint);
+		System.out.println("terrainSectors=" + result.terrainSectorCount);
+		System.out.println("placementRecords=" + result.placementRecordCount);
+		System.out.println("transitionEdges=" + result.transitionCount);
+		System.out.println("unresolvedCoordinates=" + result.unresolvedCoordinateCount);
+		System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
+		System.out.println("summaryJson=" + summaryPath.toAbsolutePath().normalize());
+		System.out.println("markdown=" + markdownPath.toAbsolutePath().normalize());
 	}
 
 	private static Map<String, String> options(String[] args) {
@@ -121,6 +151,6 @@ public final class LayeredMapsCli {
 	}
 
 	private static void usage() {
-		System.err.println("Usage: layered-maps preflight --root PATH --workspace PATH");
+		System.err.println("Usage: layered-maps <preflight|normalize> --root PATH --workspace PATH");
 	}
 }

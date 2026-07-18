@@ -1,13 +1,13 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slice 1 implemented and validated on the
-active refinement branch
+Status: architecture design complete; Slices 1-2 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 1 checkpoint; no runtime or world conversion begun
+Current milestone: Slice 2 checkpoint; no runtime or world conversion begun
 
 ## Purpose
 
@@ -45,10 +45,10 @@ Not authorized by this plan:
 - modifying player databases or live world data;
 - deploying experimental map work to the public server.
 
-Documentation may be revised as decisions are made. The owner approved only
-the isolated Slice 1 coordinate laboratory and read-only repository preflight
-on 2026-07-18. Runtime, map, Builder, database, streaming, and export work
-remain separately gated.
+Documentation may be revised as decisions are made. The owner approved the
+isolated Slice 1 coordinate laboratory/read-only preflight and Slice 2 lossless
+normalization inventory on 2026-07-18. Runtime, map relocation, Builder,
+database, streaming, and export work remain separately gated.
 
 ## Executive Finding
 
@@ -1505,9 +1505,9 @@ does not get waived merely because a later stage looks correct.
 ## Open Owner Questions
 
 None for the architecture study. Further implementation remains separately
-gated after the approved Slice 1 checkpoint.
+gated after the approved Slice 2 checkpoint.
 
-## Safest First Implementation Slice: Implemented and Validated
+## Foundation Implementation Slices: Implemented and Validated
 
 ### Slice 1: Layered coordinate contract and read-only preflight
 
@@ -1604,7 +1604,67 @@ Ant JAR target was not exercised here. The same sources compiled with the Java
 8 source/target flags in the focused guard and through the operator launcher,
 and the launcher completed a real-repository preflight successfully.
 
-## Living Inventory: Pending Discussion and Audit
+### Slice 2: Canonical world inventory and lossless normalization
+
+Objective: interpret every recognized structured coordinate source through the
+signed layered model without changing topology, source data, runtime behavior,
+or game files.
+
+Delivered under `tools/layered-maps/`:
+
+- the language-neutral `layered-world-inventory-v1` manifest and compact
+  `normalization-summary-v1` report contracts;
+- a dependency-free Java 8 JSON parser/canonical writer and security-hardened
+  XML reader;
+- terrain-sector normalization from legacy planes to signed levels with
+  per-entry payload hashes and checked legacy-name reconstruction;
+- lossless normalization of all six recognized placement roots while
+  preserving arbitrary non-coordinate attributes;
+- a directed transition graph for `ObjectTelePoints.xml`, retaining commands,
+  raw endpoints, layered endpoints, level/X/Y deltas, and exact-anchor status;
+- record-by-record semantic reconstruction through checked reverse encoding;
+- explicit raw preservation and findings for coordinates outside the named
+  codec; and
+- fingerprinted unresolved Java coordinate owners, without parsing or
+  rewriting source code.
+
+The complete manifest is intentionally large because it retains every terrain
+sector and placement record. A compact deterministic JSON report and Markdown
+summary contain the fingerprints, aggregate/source counts, all 20 transition
+edges, all unresolved Java owners, and all findings for practical AI/operator
+review.
+
+Current-repository results:
+
+- 1,771 terrain sectors normalized across levels `0`, `+1`, `+2`, and `-1`;
+- 40 placement sources and 49,816 records reconstructed semantically;
+- 20 directed transition edges normalized and reverse-encoded;
+- 60,680 total structured coordinate occurrences when transition endpoints are
+  included: 60,679 normalized and one retained raw;
+- 211 Java source owners fingerprinted for later parsing; and
+- one existing warning in `NpcLocs.json` record 3,376: NPC 67 has start/minimum
+  Y values `3534/3519`, but maximum Y `6549`, outside the four legacy bands.
+  Slice 2 preserved that maximum unchanged and did not infer a correction.
+
+Validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-two.py` — 5 tests passed;
+- two fixture runs produced byte-identical complete JSON, compact JSON, and
+  Markdown reports while a full source-tree snapshot remained unchanged;
+- all placement roots, all legacy levels, directed transitions, arbitrary
+  attributes, partial normalization, and semantic reverse reconstruction were
+  exercised;
+- unknown placement roots and unsafe XML were refused before report output;
+- both emitted JSON documents validated against their Draft 2020-12 schemas;
+  and
+- the real-repository guard preserved Git status and hashes for configuration,
+  both terrain archives, NPC placements, and transitions.
+
+Slice 2 is normalization only. It did not align terrain, infer area moves,
+rewrite Java, create a Builder project, modify runtime code, touch a database,
+or create an import/export path.
+
+## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
 with at least these fields:
@@ -1691,9 +1751,11 @@ private environment should validate at least:
 | 2026-07-18 | Retain 48-tile terrain storage while adopting smaller incremental presentation chunks; implement streaming as the separately gated milestone immediately after coordinate/behavior parity. | Confirmed |
 | 2026-07-18 | Validate through synthetic, copied vanilla, copied Spoiled Milk, incremental-streaming, alignment-workbench, disposable-export, alternate-adapter, and owner-acceptance gates with rollback at every stage. | Confirmed |
 | 2026-07-18 | Approve and implement Slice 1 as a self-contained signed-coordinate laboratory plus deterministic, read-only `spoiled-milk-repository-v1` preflight; runtime and world conversion remain out of scope. | Implemented and validated |
+| 2026-07-18 | Approve and implement Slice 2 as lossless, non-relocating normalization of recognized terrain, placement, and transition sources, with raw anomaly preservation and unresolved Java ownership. | Implemented and validated |
 
 ## Next Discussion
 
-Review the Slice 1 checkpoint, then define and separately approve the next
-parity-first slice. Do not begin runtime, map, Builder, database, streaming, or
-export implementation under the completed Slice 1 approval.
+Review the Slice 2 checkpoint, then define and separately approve the first
+dormant runtime-adapter slice. Do not begin runtime integration, map alignment,
+Builder, database, streaming, or export implementation under the completed
+Slice 2 approval.

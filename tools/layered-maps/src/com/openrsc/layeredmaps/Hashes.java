@@ -30,6 +30,12 @@ final class Hashes {
 		return hex(digest.digest());
 	}
 
+	static String sha256(byte[] value) {
+		MessageDigest digest = digest();
+		digest.update(value);
+		return hex(digest.digest());
+	}
+
 	private static MessageDigest digest() {
 		try {
 			return MessageDigest.getInstance("SHA-256");

@@ -4,8 +4,8 @@ set -euo pipefail
 TOOL_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPOSITORY_ROOT="$(cd -- "${TOOL_ROOT}/../.." && pwd)"
 CLASSES="${TOOL_ROOT}/build/classes"
-WORKSPACE="${TOOL_ROOT}/workspace/preflight"
 COMMAND="${1:-preflight}"
+WORKSPACE="${TOOL_ROOT}/workspace/${COMMAND}"
 
 if [[ $# -gt 0 ]]; then
   shift
