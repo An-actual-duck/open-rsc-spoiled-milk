@@ -1144,7 +1144,7 @@ The selected direction is:
 The remaining decisions are deliberately divided so they can be handled one at
 a time.
 
-### Current Module: World Loading and Streaming
+### Current Module: Private Migration and Validation
 
 The focused layered-coordinate study above is the active discussion. Signed
 geographic levels, exact default vertical anchors, and an explicit legacy-format
@@ -1158,9 +1158,9 @@ copied legacy world into explicit levels without relocating content, prove
 terrain, placement, transition, script, persistence, and gameplay parity, and
 only then begin geographic alignment or introduce level `-2`. That sequence is
 now part of a reusable conversion workspace rather than a Spoiled Milk-only
-map rewrite. Modules A through G are resolved. World loading/streaming and the
-private migration/validation sequence still require discussion before a
-focused implementation plan is authorized.
+map rewrite. Modules A through H are resolved. The private
+migration/validation sequence still requires discussion before a focused
+implementation plan is authorized.
 
 ### Module A: Meaning of Deep Underground
 
@@ -1381,7 +1381,7 @@ sector, but the presentation change can still look like a coarse scene swap.
    two migrations without evidence that 48-tile storage pages are the visual
    problem.
 
-Current recommendation: Option 3. Keep `48 x 48` as the first layered terrain
+Selected direction: Option 3. Keep `48 x 48` as the first layered terrain
 storage page because it is migration-friendly, but stop treating storage page,
 server simulation region, network interest area, local coordinate window,
 collision build, and renderer draw chunk as one concept.
@@ -1421,6 +1421,15 @@ The exact default presentation chunk and resident-ring budgets should be chosen
 by benchmark and live visual testing rather than frozen by this discussion
 alone.
 
+Implementation sequencing is also selected. Coordinate codecs, explicit level
+and world-space identity, persistence, and unchanged-world behavior reach their
+parity gate through the current section-window adapter first. Incremental
+streaming is the next separately tested layered-engine milestone. It must pass
+walking, teleport, level-change, collision, static-scene, and entity-readiness
+gates before geographic realignment or converted-world export depends on it.
+This keeps the architecture coordinated without making coordinate and scene-
+streaming regressions inseparable.
+
 ### Module I: Migration and Validation
 
 After the loading architecture is selected, define the phased migration order
@@ -1430,11 +1439,10 @@ client scene baselines, streaming boundaries, and rollback.
 
 ## Open Owner Questions
 
-1. Should the layered architecture retain `48 x 48` as storage only and adopt
-   independently sized incremental presentation chunks as recommended?
-2. Should seamless incremental streaming be part of the first layered engine
-   milestone, or a separately gated capability built immediately after
-   coordinate/behavior parity?
+1. What exact copied-world fixtures should advance from codec tests to private
+   server/client parity, conversion-workbench review, and final export rehearsal?
+2. Which automated and visual evidence is mandatory before each migration gate
+   may advance or roll back?
 
 ## Living Inventory: Pending Discussion and Audit
 
@@ -1520,9 +1528,9 @@ private environment should validate at least:
 | 2026-07-18 | Make the layered architecture ready for future true instances through a separate world-space identity and template metadata, while keeping current converted content static in the global world space. | Confirmed |
 | 2026-07-18 | Use sparse `48 x 48` sector storage keyed by world space and level, signed 32-bit logical X/Y, stable area IDs, exclusive base-terrain ownership, and explicit creator-controlled growth reservations. | Confirmed |
 | 2026-07-18 | Use directed transitions and a layered recovery hierarchy: exact restore, migration redirect, valid instance, declared recovery anchor, last safe global anchor, then world spawn. | Confirmed |
+| 2026-07-18 | Retain 48-tile terrain storage while adopting smaller incremental presentation chunks; implement streaming as the separately gated milestone immediately after coordinate/behavior parity. | Confirmed |
 
 ## Next Discussion
 
-Decide the world-loading/streaming architecture, then complete the private
-migration/validation sequence. No implementation plan should be prepared until
-those remaining decisions have been resolved.
+Complete the private migration/validation sequence. Once it is settled, propose
+the safest first implementation slice for separate owner approval.

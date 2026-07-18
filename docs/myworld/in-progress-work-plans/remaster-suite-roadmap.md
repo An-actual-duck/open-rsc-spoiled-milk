@@ -203,13 +203,16 @@ world expansion. Dynamic instances reuse template allocations instead of
 consuming new permanent coordinates.
 
 The 48-tile value is a storage-page contract, not a required renderer,
-simulation, visibility, or network-streaming chunk size. The recommended
-follow-up is an incremental `world.streaming` boundary: smaller presentation
+simulation, visibility, or network-streaming chunk size. The selected follow-up
+is an incremental `world.streaming` boundary: smaller presentation
 chunks remain resident across movement, use world-space/level-aware keys, load
 predictively, and activate only when their terrain and static scene are ready.
 Server interest management and renderer residency may use different internal
 cell sizes while consuming the same layered location contract. The existing
 legacy 3x3 section-window path remains an adapter during parity migration.
+Streaming is implemented as the separately gated milestone immediately after
+coordinate/behavior parity and before map realignment or conversion export
+depends on it.
 
 The end-user Layered Maps distribution also composes these artifacts with a
 one-way converter, compatible World Builder, target adapter, and private test
@@ -1010,3 +1013,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Reserve an explicit world-space identity and instance-template boundary now, while deferring dynamic true-instance lifecycle to a later `world.instances` capability. | Confirmed in the layered-world plan |
 | 2026-07-18 | Adopt sparse 48-tile sector allocation with signed logical X/Y, stable ownership, package collision checks, and explicit growth reservations. | Confirmed in the layered-world plan |
 | 2026-07-18 | Adopt directed transition recovery from exact restore through migration/instance/area/last-safe fallbacks to world spawn. | Confirmed in the layered-world plan |
+| 2026-07-18 | Keep 48-tile terrain pages but adopt incremental presentation streaming as the separately gated milestone after layered-coordinate parity. | Confirmed in the layered-world plan |
