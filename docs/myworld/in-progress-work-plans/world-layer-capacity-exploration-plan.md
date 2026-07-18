@@ -2161,7 +2161,8 @@ Automated validation evidence:
   content-topology sources, and 1,286 occurrences. Expected source hashes
   changed because `Player` and `Development` are fingerprinted inputs.
 
-Owner runtime acceptance remains pending. The intended private test is:
+Owner runtime acceptance was completed on 2026-07-18. The intended private
+test was:
 
 1. Launch the private server with the observer environment gate enabled and
    log in using a dev/admin account.
@@ -2175,11 +2176,107 @@ Owner runtime acceptance remains pending. The intended private test is:
 6. Review `server/logs/layered-map-parity/*.jsonl` for exact round trips,
    expected level deltas, and any behavioral or visual regression.
 
+Owner runtime validation evidence:
+
+- the log contained two independently bounded sessions for the same isolated
+  private identity; the first 434-record session was retained only as
+  corroboration because its marker itinerary was initially misunderstood;
+- the corrected accepted session contained 207 records: 187 ordinary moves,
+  nine teleports, six markers, one logout/login pair, one snapshot, and exact
+  start/stop boundaries;
+- all 207 records reported exact packed-to-layered-to-packed round trips and
+  the event chain contained no coordinate discontinuity;
+- the run exercised surface level `0`, underground level `-1`, and upper-floor
+  level `+1` without changing logical X/Y during exact vertical transitions;
+- surface `(216,468,0)` projected to underground `(216,468,-1)`, and surface
+  `(226,440,0)` projected to upper floor `(226,440,+1)`; their return paths
+  likewise retained their observed logical X/Y;
+- same-level long-distance travel and logout/reconnect retained exact location
+  identity; and
+- level `-2` and death/respawn were not exercised. Level `-2` has no current
+  legacy content to visit, and death/respawn remains a later focused recovery
+  regression rather than a blocker for this observational parity gate.
+
+The runtime JSONL is preserved locally and ignored by Git. It contains stable
+identity metadata intended for diagnostics and is not a source artifact or a
+candidate for checkpoint commits.
+
 Slice 11 observes the existing packed location after existing movement/session
 logic. It does not store a parallel location on `Player`, feed a layered value
 into region lookup, alter collision/pathing/visibility, change teleport logic,
 modify packets or persistence, enable level `-2`, load a converted map, or
 touch the public server.
+
+### Slice 12: Checked Player layered-location mirror
+
+Objective: make `Player` the first deliberately narrow dual-representation
+runtime owner while retaining its inherited packed `Point` as the sole
+authoritative gameplay location.
+
+Delivered:
+
+- `LayeredLocationMirror`, an atomic checked mirror that can only synchronize
+  from an authoritative packed `Point` and exposes no layered-to-packed entity
+  mutation path;
+- exact packed/layered round-trip validation before a mirror state is accepted,
+  with stale, uninitialized, null, and unrepresentable inputs refused rather
+  than silently coerced;
+- `Player.setInitialLocation` initialization and synchronization immediately
+  before every existing `Player.setLocation` mutation;
+- a read-only `Player.getLayeredLocation()` accessor that verifies the mirror
+  still describes the current inherited packed location;
+- invariant checks after every completed movement and during login/logout
+  session transitions; and
+- a dev/admin `::layerparity` precondition that refuses capture if the Player
+  mirror has diverged.
+
+Safety boundary:
+
+- all movement, collision, pathing, region lookup/storage, visibility, packets,
+  persistence, scripts, terrain, and client behavior continue to read the
+  inherited packed `Point`;
+- no caller can supply a `WorldLocation` to the mirror, and Player contains no
+  `WorldLocation`-to-`Point` conversion or write-back;
+- the runtime observer remains separately opt-in and disabled in both tracked
+  server configurations; and
+- JSONL traces are preserved locally but ignored by Git so runtime evidence
+  does not dirty or enter a checkpoint.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-twelve.py` — 2 tests passed;
+- the mirror fixture covered all eight legacy band boundaries, exact
+  `(216,468,0)` to `(216,468,-1)` geographic alignment, equal-value Point
+  instances, stale-state refusal, invalid-update rollback, and null refusal;
+- Slice 1 through Slice 12 regressions all pass (38 tests), including updated
+  explicit package/consumer allowlists naming Player as the new staged owner;
+- World Builder discovery passed 13 tests, the standalone-layout guard passed,
+  and the bundled-Ant server build authority remained internally consistent;
+- the authoritative server build succeeds for 726 core and 488 plugin sources;
+  and
+- two real-repository normalizations were byte-stable at 1,771 terrain
+  sectors, 49,816 placement records, 20 transition edges, one unresolved
+  coordinate input, 211 classified Java owners, and 1,286 coordinate
+  occurrences. The expected updated fingerprints are source
+  `9152df71dfb9b8bb8512fe617dcabab9750d33075f2e136364fbc47d6f013070`,
+  inventory
+  `e10da8df32c1eb7d022f3b5bfce8a137d86d8ecaeee5aa16b81c853a4f79820c`,
+  classification
+  `e63b310467fc785f58b3e93f82621f043d4f206d8317e92f966bd55fd7ec43e6`,
+  and occurrence
+  `6afcd56ff5d43390acd8503f7661903dd62edbffa36d869e20686cb9cb02ed99`.
+
+Owner runtime acceptance remains pending. Relaunch the private server from the
+tested checkpoint with the observer enabled, repeat walking, exact vertical
+transitions, long-distance travel, and logout/reconnect, then stop the trace.
+Successful gameplay plus an exact trace proves both the existing adapter and
+the new Player mirror survive the same route. A `-2` destination, converted
+map, or changed gameplay consumer is not part of this acceptance test.
+
+Slice 12 does not make layered Player location authoritative, add a second
+persistence column, change `Entity`, mirror NPC movement, key runtime regions
+by level, alter a packet, or enable signed coordinates beyond the legacy
+adapter's representable range.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -2277,14 +2374,14 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 8 by projecting static object, item, and NPC placements into layered locations and correctly inclusive roaming bounds, retaining packed JSON and runtime construction. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 9 by classifying every unresolved Java coordinate owner into a stable lexical migration family while retaining all candidates and making false-positive signal shapes explicit. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 10 by inventorying exact content teleport, point, and area occurrence shapes with file/line/argument evidence while retaining declarations and expressions as unresolved lexical evidence. | Implemented and validated |
-| 2026-07-18 | Continue with Slice 11 as a doubly opt-in, dev-only private runtime parity observer with stable JSONL movement/session capture while packed `Player` state remains authoritative. | Implemented; automated validation passed; owner runtime test pending |
+| 2026-07-18 | Continue with Slice 11 as a doubly opt-in, dev-only private runtime parity observer with stable JSONL movement/session capture while packed `Player` state remains authoritative. | Implemented and owner-validated |
+| 2026-07-18 | Continue with Slice 12 by maintaining a checked read-only layered mirror on Player initialization, movement, and session transitions while inherited packed Point remains the sole gameplay authority. | Implemented; automated validation passed; owner runtime test pending |
 
 ## Next Discussion
 
-Run the Slice 11 owner acceptance test on the private/local client and server,
-then inspect the captured JSONL. If packed/layered round trips and transition
-deltas remain exact with no behavior or visual regression, record acceptance
-and choose the first dual-representation runtime owner from the critical
-families. Do not advance into authoritative storage, persistence, client/
-protocol adoption, streaming, Builder, export, relocation, or level `-2`
-before the observer evidence is reviewed.
+Run the Slice 12 owner acceptance route on the checkpointed private server and
+inspect the resulting observer trace. If gameplay remains unchanged and all
+events remain exact, record acceptance and choose the next reversible runtime
+owner without making layered state authoritative. Do not advance into
+authoritative region storage, persistence, client/protocol adoption, streaming,
+Builder, export, relocation, or level `-2` before this mirror gate is reviewed.

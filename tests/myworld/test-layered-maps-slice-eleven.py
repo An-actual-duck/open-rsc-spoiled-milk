@@ -293,7 +293,6 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
         self.assertIn("want_layered_map_parity_observer: false", local_config)
         self.assertIn("want_layered_map_parity_observer: false", host_config)
         self.assertNotIn("LegacyPackedPointAdapter.toLegacyPoint", player)
-        self.assertNotIn("WorldLocation", player)
 
 
 if __name__ == "__main__":

@@ -1351,6 +1351,12 @@ public final class Development implements CommandTrigger {
 				+ " Enable OPENRSC_LAYERED_MAP_PARITY_OBSERVER only for private/local testing.");
 			return;
 		}
+		try {
+			player.getLayeredLocation();
+		} catch (IllegalStateException failure) {
+			player.message(messagePrefix + "Layered player mirror mismatch: " + failure.getMessage());
+			return;
+		}
 
 		String action = args.length == 0 ? "status" : args[0].toLowerCase();
 		LayeredCoordinateParityObserver.Status status;

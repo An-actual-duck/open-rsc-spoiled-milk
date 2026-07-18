@@ -220,6 +220,7 @@ class LayeredMapsSliceFiveTest(unittest.TestCase):
                 "server/src/com/openrsc/server/external/ItemLoc.java",
                 "server/src/com/openrsc/server/external/NPCLoc.java",
                 "server/src/com/openrsc/server/io/WorldEditorTerrainArchive.java",
+                "server/src/com/openrsc/server/model/entity/player/Player.java",
                 "server/src/com/openrsc/server/model/world/Area.java",
                 "server/src/com/openrsc/server/model/world/region/RegionManager.java",
             ],

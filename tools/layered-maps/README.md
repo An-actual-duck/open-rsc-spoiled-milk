@@ -159,3 +159,14 @@ layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, or credentials. Each line conforms to
 `schema/layered-map-parity-event-v1.schema.json`.
+
+## Checked Player mirror
+
+`Player` is the first dual-representation runtime owner, but its inherited
+packed `Point` remains the sole gameplay authority. `LayeredLocationMirror`
+synchronizes only from that packed value during initial placement and existing
+location changes. `Player.getLayeredLocation()` is read-only and refuses stale
+or uninitialized mirror state. Movement, regions, collision, packets, saves,
+scripts, terrain, and the client do not consume the mirror. The private
+`::layerparity` command verifies this invariant before starting or inspecting a
+trace.
