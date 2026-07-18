@@ -2345,11 +2345,24 @@ Safety boundary:
 - the shadow key is not sent to the client or saved to the database; and
 - no terrain, placements, maps, player data, or public server were changed.
 
-Owner runtime acceptance remains pending. The focused route must cross at
-least one ordinary 48-tile region boundary, then repeat surface/underground or
-surface/upper-floor travel and logout/reconnect under `::layerparity`. Exact
-observer continuity plus unchanged behavior proves the shadow membership stays
-synchronized without participating in authoritative region behavior.
+Owner runtime acceptance is partially complete. The accepted geometry portion
+used Y `620` because the originally suggested Y `640` tile was water:
+
+- ordinary movement from `(239,620,0)` to `(240,620,0)` changed logical region
+  `(4,12)` to `(5,12)`, and movement back changed it to `(4,12)` again;
+- the retained marker names `region-east` and `region-west` are treated only as
+  labels because in-game east/west presentation is opposite the increasing-X /
+  decreasing-X wording originally supplied; future instructions must describe
+  the direction numerically instead;
+- vertical travel from `(216,468,0)` to `(216,468,-1)` retained geographic
+  region `(4,9)` while the level-qualified membership changed, then returned
+  exactly to level `0`; and
+- all 14 records were round-trip exact, the trace completed with a snapshot and
+  stop, and the owner reported no behavioral or visual issue.
+
+The trace did not contain logout or login events. Only a short observer start,
+logout/reconnect, snapshot, and stop remains before Slice 13 can be called fully
+owner-accepted; the boundary and vertical route does not need to be repeated.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -2449,14 +2462,15 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 10 by inventorying exact content teleport, point, and area occurrence shapes with file/line/argument evidence while retaining declarations and expressions as unresolved lexical evidence. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 11 as a doubly opt-in, dev-only private runtime parity observer with stable JSONL movement/session capture while packed `Player` state remains authoritative. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 12 by maintaining a checked read-only layered mirror on Player initialization, movement, and session transitions while inherited packed Point remains the sole gameplay authority. | Implemented and owner-validated |
-| 2026-07-18 | Continue with Slice 13 by maintaining checked world-space/level-qualified Player region membership alongside the accepted location mirror while packed RegionManager storage remains authoritative. | Implemented; automated validation passed; owner runtime test pending |
+| 2026-07-18 | Continue with Slice 13 by maintaining checked world-space/level-qualified Player region membership alongside the accepted location mirror while packed RegionManager storage remains authoritative. | Implemented; automated validation and owner geometry route passed; short reconnect trace pending |
 
 ## Next Discussion
 
-Run the Slice 13 owner acceptance route on the checkpointed private server and
-inspect the resulting observer trace. Require an ordinary 48-tile boundary
-crossing as well as a vertical transition and reconnect. If behavior and trace
-continuity remain exact, record acceptance and choose the next reversible
-runtime owner. Do not advance into authoritative region storage,
+Complete only the remaining Slice 13 reconnect check on the checkpointed
+private server: start `::layerparity`, log out and reconnect, then snapshot and
+stop. The ordinary 48-tile boundary and vertical transition already passed and
+must not be repeated. If session continuity remains exact, record full
+acceptance and choose the next reversible runtime owner. Do not advance into
+authoritative region storage,
 client/protocol adoption, streaming, Builder, export, relocation, or level
 `-2` before this region-membership gate is reviewed.
