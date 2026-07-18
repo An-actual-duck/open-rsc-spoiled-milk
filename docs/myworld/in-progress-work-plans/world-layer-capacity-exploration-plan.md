@@ -1971,6 +1971,84 @@ Slice 8 does not change a placement record, loader, spawned entity, roaming
 decision, terrain, runtime region, packet, persistence row, client, Builder, or
 export. It does not enable layered-only placement input.
 
+### Slice 9: Read-only Java coordinate-owner classification
+
+Objective: turn the 211 fingerprinted Java candidates into a deterministic
+migration queue without parsing coordinate expressions, removing evidence, or
+rewriting a source file.
+
+Delivered in the extractable Layered Maps tool:
+
+- a separate `coordinate-owner-classification-v1` JSON contract and Markdown
+  companion emitted by `normalize` alongside the unchanged v1 world inventory;
+- a `classified-unparsed` record for every unresolved Java owner, retaining its
+  role, path, size, SHA-256, and original discovery signals;
+- explicit `migration-owner`, `ambiguous-literal`, and `signal-collision`
+  dispositions;
+- primary migration family, risk, confidence, and stable reason codes for each
+  source; and
+- deterministic source/classification fingerprints and aggregate counts by
+  disposition, family, risk, and source role.
+
+The classifier deliberately distinguishes coordinate evidence from weaknesses
+in the Slice 1 broad scan. That scan treats any `944` substring as a
+`packed-floor-stride` signal, so values such as item IDs, colors, XP table
+entries, and cryptographic constants can become candidates. Slice 9 does not
+silently delete them. It retains all 211 owners and labels three standalone
+`944` uses as ambiguous plus six substring-only matches as signal collisions.
+Actual floor arithmetic such as `/ 944`, `* 944`, and
+`Math.floorDiv(..., 944)` remains migration evidence.
+
+Current classification:
+
+| Disposition | Owners |
+| --- | ---: |
+| Migration owner | 202 |
+| Ambiguous standalone literal | 3 |
+| Definite substring signal collision | 6 |
+
+| Primary migration family | Owners | Risk |
+| --- | ---: | --- |
+| Content topology | 135 | Medium |
+| Protocol/session boundary | 29 | Critical |
+| Simulation/spatial runtime | 22 | Critical |
+| Terrain/region storage | 7 | Critical |
+| Persistence/world bootstrap | 5 | Critical |
+| Client world presentation | 4 | High |
+| Ambiguous literal review | 3 | Review |
+| Incidental signal review | 6 | Review |
+
+No current source is classified under `builder-authoring`, because the present
+World Builder source tree produced no unresolved Java coordinate candidate.
+The contract and focused fixture still cover that family so an extracted
+module or future Builder source is classified deterministically when present.
+
+Validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-nine.py` — 2 tests passed;
+- focused fixtures exercised every migration family, all three dispositions,
+  arithmetic versus substring-only `944` evidence, fallback/manual review,
+  risk/confidence assignment, and null refusal;
+- two real-repository runs emitted byte-identical JSON and Markdown reports,
+  retained all 211 owners, validated count totals and the Draft 2020-12 schema,
+  verified the classification fingerprint, and left Git status unchanged;
+- Slice 1 through Slice 8 regressions all passed (30 tests total before the two
+  Slice 9 tests), as did World Builder discovery, standalone-layout, and server
+  build-authority guards;
+- the authoritative server build remains successful for 723 core and 488
+  plugin sources; and
+- normalization retains source fingerprint
+  `570e784428a139c6f5b5c5c516d0307fbf96a8087fc028bf231cb60bbfe820cf`
+  and inventory fingerprint
+  `d55148506c6172e4c54648ca09d2d85db6660e6760a28e39cde3376bc2d246ea`.
+  The independent classification fingerprint is
+  `315b8676a2f123ab76769a92f0a2ee77c16704a1b6bc51db478860ca54a79f8b`.
+
+Slice 9 is lexical triage only. It does not assert that a source's coordinate
+arguments are literals, infer topology, resolve expressions, alter preflight
+candidate status, rewrite Java, change runtime behavior, touch persistence or
+player data, modify terrain/placements, launch Builder, or enable import/export.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2065,11 +2143,15 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 6 as an object-specific directed transition projection, retaining the exact telepoint XML, packed lookup, command matching, and runtime teleport path. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 7 by separating logical signed map-sector identity from offset legacy terrain archive indices, retaining exact entry names and payload bytes. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 8 by projecting static object, item, and NPC placements into layered locations and correctly inclusive roaming bounds, retaining packed JSON and runtime construction. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 9 by classifying every unresolved Java coordinate owner into a stable lexical migration family while retaining all candidates and making false-positive signal shapes explicit. | Implemented and validated |
 
 ## Next Discussion
 
-Continue parity work with a read-only Java coordinate-owner classification
-slice so the 211 unresolved sources can be divided into explicit migration
-families without rewriting code. Keep source files, runtime behavior,
-persistence, client/protocol work, streaming, Builder, export, and relocation
-out of that checkpoint.
+Continue parity work with a read-only Java coordinate-occurrence inventory,
+starting with the 135 `content-topology` owners. Extract explicit teleport,
+point-construction, and area-bound call sites with file/line evidence; retain
+non-literal arguments as unresolved expressions and do not infer destinations
+or rewrite code. This produces the script/topology migration manifest needed
+before any dual-representation or authoritative runtime slice. Keep runtime
+behavior, persistence, client/protocol adoption, streaming, Builder, export,
+and relocation out of that checkpoint.

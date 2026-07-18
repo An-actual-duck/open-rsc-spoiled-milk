@@ -10,7 +10,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Slice 1 command line: deterministic, read-only target preflight. */
+/** Deterministic, isolated reporting commands for the staged Layered Maps tool. */
 public final class LayeredMapsCli {
 	private LayeredMapsCli() {
 	}
@@ -78,9 +78,13 @@ public final class LayeredMapsCli {
 		Path jsonPath = workspace.resolve("world-inventory.json");
 		Path summaryPath = workspace.resolve("normalization-summary.json");
 		Path markdownPath = workspace.resolve("normalization.md");
+		Path classificationJsonPath = workspace.resolve("coordinate-owner-classification.json");
+		Path classificationMarkdownPath = workspace.resolve("coordinate-owner-classification.md");
 		writeAtomically(jsonPath, result.toJson());
 		writeAtomically(summaryPath, result.toSummaryJson());
 		writeAtomically(markdownPath, result.toMarkdown());
+		writeAtomically(classificationJsonPath, result.ownerClassification.toJson());
+		writeAtomically(classificationMarkdownPath, result.ownerClassification.toMarkdown());
 
 		System.out.println("Layered Maps normalization complete");
 		System.out.println("sourceFingerprint=" + result.sourceFingerprint);
@@ -89,9 +93,15 @@ public final class LayeredMapsCli {
 		System.out.println("placementRecords=" + result.placementRecordCount);
 		System.out.println("transitionEdges=" + result.transitionCount);
 		System.out.println("unresolvedCoordinates=" + result.unresolvedCoordinateCount);
+		System.out.println("classifiedSourceOwners=" + result.ownerClassification.sourceOwnerCount);
+		System.out.println("classificationFingerprint="
+			+ result.ownerClassification.classificationFingerprint);
 		System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
 		System.out.println("summaryJson=" + summaryPath.toAbsolutePath().normalize());
 		System.out.println("markdown=" + markdownPath.toAbsolutePath().normalize());
+		System.out.println("classificationJson=" + classificationJsonPath.toAbsolutePath().normalize());
+		System.out.println("classificationMarkdown="
+			+ classificationMarkdownPath.toAbsolutePath().normalize());
 	}
 
 	private static Map<String, String> options(String[] args) {

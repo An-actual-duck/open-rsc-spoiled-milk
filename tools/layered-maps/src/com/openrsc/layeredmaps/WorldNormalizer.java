@@ -51,6 +51,8 @@ final class WorldNormalizer {
 			List<Object> placements = normalizePlacements(root, preflight, findings, stats);
 			Map<String, Object> transitions = normalizeTransitions(root, preflight, findings, stats);
 			List<Object> unresolvedOwners = unresolvedSourceOwners(preflight);
+			CoordinateOwnerClassification ownerClassification =
+				new CoordinateOwnerClassifier().classify(root, preflight);
 
 			Map<String, Object> fingerprintBody = map();
 			fingerprintBody.put("terrain", terrain);
@@ -91,6 +93,7 @@ final class WorldNormalizer {
 				stats.placementRecords,
 				stats.transitions,
 				stats.unresolvedCoordinates,
+				ownerClassification,
 				markdown(preflight, inventoryFingerprint, stats, placements, unresolvedOwners, findings));
 		} catch (PreflightException failure) {
 			throw failure;

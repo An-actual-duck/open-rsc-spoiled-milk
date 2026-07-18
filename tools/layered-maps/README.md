@@ -9,7 +9,9 @@ capability. It currently provides:
 - the checked `legacy-terrain-sector-name-v1` archive-name codec;
 - a read-only preflight for the first supported repository adapter; and
 - lossless, non-relocating normalization of recognized terrain, placements,
-  and transition data into a layered inventory.
+  and transition data into a layered inventory; and
+- deterministic lexical classification of unresolved Java coordinate owners
+  into migration families without parsing or rewriting them.
 
 It does **not** convert maps, change runtime coordinates, edit archives, modify
 player data, launch a server, or export into a game.
@@ -64,7 +66,10 @@ Normalization writes only under the ignored
 
 - `world-inventory.json` is the complete machine-readable inventory;
 - `normalization-summary.json` is the compact AI-readable report; and
-- `normalization.md` is the operator summary.
+- `normalization.md` is the operator summary;
+- `coordinate-owner-classification.json` is stable AI-readable migration
+  triage for every unresolved Java owner; and
+- `coordinate-owner-classification.md` is its operator-readable companion.
 
 The inventory decodes terrain planes, known location JSON coordinates, and
 directed object telepoints without changing their topology. It reverse-encodes
@@ -79,9 +84,13 @@ logical global level-0 sector `(0,0)`. Archive coordinates, logical map sectors,
 and runtime region keys are distinct contracts even where they share a 48-tile
 size.
 
-Java coordinate owners remain fingerprinted, unresolved inputs. This command
-does not rewrite Java, align areas, create a Builder project, launch a server,
-or make anything eligible for game import/export.
+Java coordinate owners remain fingerprinted, unresolved inputs. The separate
+classification report labels likely migration owners, ambiguous standalone
+`944` literals, and definite substring signal collisions. Likely owners are
+grouped by primary migration family and risk. This is lexical triage, not Java
+coordinate parsing: it deliberately retains every candidate and its evidence.
+The command does not rewrite Java, align areas, create a Builder project,
+launch a server, or make anything eligible for game import/export.
 
 ## Staged server binding
 

@@ -2,7 +2,7 @@ package com.openrsc.layeredmaps;
 
 import java.util.Map;
 
-/** Deterministic Slice 2 inventory plus compact operator report. */
+/** Deterministic world inventory plus compact and owner-classification reports. */
 final class NormalizationResult {
 	final Map<String, Object> document;
 	final Map<String, Object> summaryDocument;
@@ -12,6 +12,7 @@ final class NormalizationResult {
 	final int placementRecordCount;
 	final int transitionCount;
 	final int unresolvedCoordinateCount;
+	final CoordinateOwnerClassification ownerClassification;
 	final String markdown;
 
 	NormalizationResult(
@@ -23,6 +24,7 @@ final class NormalizationResult {
 		int placementRecordCount,
 		int transitionCount,
 		int unresolvedCoordinateCount,
+		CoordinateOwnerClassification ownerClassification,
 		String markdown) {
 		this.document = document;
 		this.summaryDocument = summaryDocument;
@@ -32,6 +34,7 @@ final class NormalizationResult {
 		this.placementRecordCount = placementRecordCount;
 		this.transitionCount = transitionCount;
 		this.unresolvedCoordinateCount = unresolvedCoordinateCount;
+		this.ownerClassification = ownerClassification;
 		this.markdown = markdown;
 	}
 
