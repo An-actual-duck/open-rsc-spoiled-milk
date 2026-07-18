@@ -676,6 +676,13 @@ to use standalone packages, including:
 - map packages with explicit compatibility requirements; and
 - a layered-map capability that a map may declare as required.
 
+The Layered Maps product must not be limited to the Spoiled Milk world. Its
+end-user workflow should accept a compatible existing RuneScape Classic-derived
+world, convert a copy into the layered format, help reorganize its vertical
+areas, and let the owner inspect and privately run the result before exporting
+it to the target game. Spoiled Milk is the first demanding validation target,
+not the only intended input.
+
 This context is relevant to the coordinate architecture because it removes the
 need to disguise a true layered world as packed-Y data forever. Compatibility
 should be explicit and versioned rather than inferred from a similar-looking
@@ -748,6 +755,13 @@ A cleaner distribution model separates three artifacts:
    - Reads, validates, edits, exports, and imports that map format.
    - Refuses targets whose engine capability or definitions do not match.
 
+These may be composed into an end-user **Layered Maps conversion workspace**.
+The workspace can bundle or launch the compatible World Builder and private
+client/server test harness while retaining their independent versions and
+ownership boundaries. From the user's perspective this is a standalone
+conversion module; internally it remains a tested bundle of the engine
+capability, converter, Builder, target adapter, and validation tools.
+
 A renderer/client release is a separate compatibility dimension. A map should
 require a renderer capability only when it truly depends on renderer-specific
 assets or behavior; layered coordinates alone should depend on the
@@ -815,20 +829,60 @@ release, even if new self-contained maps can eventually be more portable.
 
 ### Legacy-to-Layered Conversion
 
-An optional one-way conversion path would protect existing work without
-restricting the new format:
+A reusable one-way converter is a required Layered Maps deliverable, not an
+optional Spoiled Milk migration convenience. Its target is any compatible
+RuneScape Classic-derived world for which the converter can inventory the map,
+placements, and transition owners. Support should be capability- and
+adapter-driven rather than restricted to one Spoiled Milk fingerprint, while
+unknown structures and unresolved coordinate owners must still fail safely.
 
-1. Discover and fingerprint an exact supported packed-Y source.
-2. Decode every current coordinate into `(x,y,level)`.
-3. Preserve existing placement and travel behavior initially.
-4. Emit a layered project with a conversion report and source fingerprint.
-5. Refuse ambiguous coordinates or unsupported content owners.
-6. Validate terrain and placement parity before any geographic relocation.
-7. Keep the original legacy project unchanged.
+The conversion is a staged workspace operation:
+
+1. Copy, discover, and fingerprint the source without changing it.
+2. Inventory terrain archives, packed coordinate bands, placements, scripts,
+   ladders, stairs, portals, teleports, and every other known transition owner.
+3. Decode the legacy bands into explicit levels, initially mapping surface to
+   `0`, current upper floors to positive levels, and the current underground
+   band to `-1` without relocating anything.
+4. Emit and validate an unchanged layered normalization snapshot. This is the
+   parity checkpoint and rollback reference required before reorganization.
+5. Build a directed transition graph. Infer candidate vertical relationships
+   from paired destinations, interaction direction, object semantics, and
+   scripts; never infer depth from the presence of a ladder model alone.
+6. Identify movable terrain components around transition destinations using
+   bounded flood-fill or connected-component analysis across non-void terrain.
+   Include collision, boundaries, scenery, NPCs, ground items, and other owned
+   placements when calculating the component's true extent.
+7. Solve geographic alignment as explicit component translations. A normal
+   up/down edge preserves its anchor X/Y. When a directional descent connects
+   two components that both occupied the legacy underground band, keep the
+   shallower component on `-1` and propose the destination component on `-2`.
+8. Detect conflicts before moving anything: multiple incompatible anchors into
+   one component, cycles with contradictory depth, terrain joined through
+   unexpected non-void tiles, overlapping destinations, hard-coded coordinate
+   owners, and placements outside the inferred component all require review.
+9. Apply accepted translations to every inventoried coordinate owner and emit
+   an old-to-new manifest, transition rewrite report, warnings, hashes, and a
+   complete layered project. A conversion with unresolved blocking owners is a
+   reviewable draft, not a clean export.
+10. Open the result in the layered World Builder with source/destination
+    overlays, inferred component bounds, transition classifications, and all
+    unresolved findings visible to the owner.
+11. Launch a private copied client/server workspace from the Builder workflow
+    and validate terrain, collision, placements, transitions, login, reconnect,
+    death, and recovery before enabling export into the actual target.
+12. Export transactionally with a preview, compatibility check, backup,
+    receipt, and rollback material; keep the original legacy project unchanged.
 
 Conversion does not imply that the new project can be exported back to v1.
 Once it uses level `-2`, expanded extents, layered-only metadata, or aligned
 content, the incompatibility is intentional.
+
+Automatic alignment is therefore best understood as a constraint solver plus
+review workflow, not a blind rewrite. Cleanly separated terrain islands and
+unambiguous reciprocal stairs should convert automatically. Shared complexes,
+quest-driven edges, one-way travel, and incomplete source ownership must stop
+at a clear Builder decision rather than being guessed.
 
 ### Proposed Divergence Milestone
 
@@ -990,31 +1044,33 @@ Current assessment: static isolated regions are immediately viable. True
 instancing should be treated as a separate engine project if it is actually a
 gameplay goal.
 
-## Provisional Hybrid Direction for Discussion
+## Selected Regional-Layer Direction
 
-The initial audit supports exploring this sequence without yet adopting it:
+The selected direction is:
 
-1. Preserve established, quest-heavy legacy complexes initially.
-2. Inventory all current plane-3 areas and every known entrance and exit.
-3. Divide plane 3 into documented allocation districts.
-4. Reserve geographically aligned shallow-underground space beneath important
-   surface regions where feasible.
-5. Reserve one or more large contiguous blocks as deep underground.
-6. Connect deep districts using explicit descents or transit edges rather than
-   implying that every destination sits immediately below its entrance.
-7. Classify existing fast-travel ladders before deciding whether to preserve,
-   replace, or relocate them.
-8. Consider selective relocation only after dependencies and saved-player
-   recovery are documented.
-9. Keep a true fifth plane as a possible future custom-client compatibility
-   project rather than assuming it is required now.
+1. Treat `-1` and `-2` as physical depth, not arbitrary dungeon categories.
+2. Give ordinary descents exact geographic X/Y anchors by default.
+3. Let each depth contain disconnected static terrain components separated by
+   void or unallocated space; sharing a level does not imply connectivity.
+4. Organize `-2` as geographically anchored regional deep networks rather than
+   requiring one globally traversable underworld.
+5. Allow compatible regional networks to gain deliberate terrain corridors or
+   explicit transport links later without assuming those links in advance.
+6. Preserve established content through the normalization checkpoint, then use
+   the conversion workspace to propose component-by-component realignment.
+7. Reclassify same-legacy-underground directional descents as candidate
+   `-1`-to-`-2` relationships when the transition graph and component analysis
+   support that interpretation.
+8. Keep ambiguous topology, fast travel, relocation eligibility, instancing,
+   allocation, and recovery decisions explicit rather than hiding them inside
+   the converter.
 
 ## Discussion Modules
 
 The remaining decisions are deliberately divided so they can be handled one at
 a time.
 
-### Current Module: Coordinate Model and Alignment
+### Current Module: Geographic Correspondence
 
 The focused layered-coordinate study above is the active discussion. Signed
 geographic levels, exact default vertical anchors, and an explicit legacy-format
@@ -1026,21 +1082,19 @@ separate tool and non-vanilla Spoiled Milk maps remain optional Content.
 The first migration scope is also selected at roadmap level: normalize an exact
 copied legacy world into explicit levels without relocating content, prove
 terrain, placement, transition, script, persistence, and gameplay parity, and
-only then begin geographic alignment or introduce level `-2`. The remaining
-Modules A, C, D, E, F, and G still require owner discussion before a focused
-implementation plan is authorized.
+only then begin geographic alignment or introduce level `-2`. That sequence is
+now part of a reusable conversion workspace rather than a Spoiled Milk-only
+map rewrite. Module A is resolved. Modules C, D, E, F, and G still require
+owner discussion before a focused implementation plan is authorized.
 
 ### Module A: Meaning of Deep Underground
 
-Decide whether deep underground is:
-
-- one connected explorable underworld;
-- several separate deep districts with a shared visual or narrative identity;
-- simply an allocation category for unrelated deep dungeons;
-- some combination of connected hubs and isolated branches.
-
-This decision affects how much contiguous space must be reserved and whether a
-global entrance hierarchy is needed.
+Resolved: deep underground is a shared physical depth containing geographically
+anchored regional networks. Regional networks are disconnected by default and
+separated by void or reserved space. They may later be joined through deliberate
+terrain or explicitly classified transport, but `-2` is not required to become
+one globally traversable underworld. It is also not a free-form allocation
+category for unrelated dungeons.
 
 ### Module B: Client Compatibility Target
 
@@ -1099,14 +1153,12 @@ client scene baselines, and rollback.
 
 ## Open Owner Questions
 
-1. Is deep underground intended to be one connected underworld or an
-   organizational category for separate dungeons?
-2. Should geographic correspondence be exact, regional, or conditional on
+1. Should geographic correspondence be exact, regional, or conditional on
    entrance type?
-3. Are existing quest dungeons eligible for relocation?
-4. Is true player/party instancing a desired feature, or is static isolation
+2. Are existing quest dungeons eligible for relocation?
+3. Is true player/party instancing a desired feature, or is static isolation
    sufficient?
-5. Should existing long-distance ladder travel be preserved, re-presented as
+4. Should existing long-distance ladder travel be preserved, re-presented as
    transportation, or gradually removed?
 
 ## Living Inventory: Pending Discussion and Audit
@@ -1181,10 +1233,12 @@ private environment should validate at least:
 | 2026-07-17 | Record standalone capability packaging as relevant context, but defer the general installer and distribution architecture to a future focused study. | Confirmed |
 | 2026-07-17 | Place the layered-world engine capability and layered map packages inside the Remaster Suite's Layered Maps module; keep World Builder separate and non-vanilla map changes in optional Content. | Confirmed |
 | 2026-07-17 | Normalize and prove unchanged legacy-world behavior before geographic realignment or level `-2` content. | Confirmed |
+| 2026-07-18 | Define deep underground as geographically anchored regional networks on physical level `-2`, disconnected by default but deliberately connectable later. | Confirmed |
+| 2026-07-18 | Make a reusable one-way conversion workspace a required Layered Maps deliverable, with transition-graph inference, terrain-component alignment, Builder review, and private test-before-export. | Confirmed |
 
 ## Next Discussion
 
-Continue with the meaning of deep underground, geographic correspondence,
-existing-content eligibility, long-distance travel, static separation versus
-true instancing, allocation policy, and detailed validation. No implementation
-plan should be prepared until those remaining decisions have been resolved.
+Continue with geographic correspondence, existing-content eligibility,
+long-distance travel, static separation versus true instancing, allocation
+policy, and detailed validation. No implementation plan should be prepared
+until those remaining decisions have been resolved.

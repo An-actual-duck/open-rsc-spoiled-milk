@@ -185,6 +185,15 @@ underground `-1`, and deep underground `-2`. Ordinary vertical anchors preserve
 X/Y by default. Local walkable arrival offsets are explicit, while long-distance
 transport, magical, quest, and instance-like edges are classified separately.
 
+The end-user Layered Maps distribution also composes these artifacts with a
+one-way converter, compatible World Builder, target adapter, and private test
+harness. It must be usable to upgrade compatible RuneScape Classic-derived
+worlds rather than being a prebuilt Spoiled Milk map alone. The converter first
+emits a parity-preserving normalized project, then analyzes transition graphs
+and terrain components to propose geographic alignment and deeper levels. The
+source stays unchanged, ambiguous ownership requires review, and reverse export
+to the packed format is not promised.
+
 A map depends on Renderer only when it truly requires renderer-specific assets
 or behavior. Layered coordinates themselves depend on the layered-world engine
 capability, not a particular visual style.
@@ -200,6 +209,7 @@ World Builder remains an independently released tool and repository. It owns:
 - transactional import, backups, receipts, and rollback;
 - legacy packed-map support and read-only conversion;
 - layered-map validation and authoring;
+- conversion-review overlays and private launch/test-before-export workflow;
 - compatibility checks against target capabilities and definitions;
 - end-user launchers, updater behavior, documentation, and diagnostics.
 
@@ -560,6 +570,9 @@ Work:
 - Add a separately named layered project, export, receipt, and adapter schema.
 - Implement read-only legacy discovery and one-way conversion into a new copied
   project.
+- Discover transitions and connected terrain components, propose explicit
+  level/translation changes, and surface contradictory or unowned coordinates
+  for review instead of guessing.
 - Show X/Y/level directly throughout navigation, inspect, copy, terrain,
   placement, transition, and validation interfaces.
 - Add level creation, bounds, naming, role, visibility, and allocation metadata.
@@ -573,6 +586,8 @@ Work:
   import.
 - Preserve isolated workspace, deterministic export, offline-target import,
   backup, receipt, rollback, and crash-recovery guarantees.
+- Launch a compatible private client/server against the copied workspace so an
+  owner can test the converted world before export to the actual target.
 - Publish layered Builder releases independently from Spoiled Milk releases.
 
 Exit gate:
@@ -600,6 +615,15 @@ Work:
   relocations and prove byte/behavior parity where applicable.
 - Convert an exact copied Spoiled Milk world separately; do not allow its custom
   map changes to become part of the vanilla profile.
+- Generalize conversion behind explicit target adapters so other compatible
+  RuneScape Classic-derived worlds can use the same normalize, analyze, review,
+  private-test, and export workflow without pretending unknown sources are
+  safe.
+- Use void-bounded terrain-component analysis and transition constraints to
+  propose aligned moves. A downward edge between two legacy-underground
+  components may place its destination on `-2`; incompatible anchors, joined
+  terrain, incomplete ownership, and quest-driven ambiguity must block clean
+  export pending review.
 - Establish sector/allocation policies for surface, upper floors, shallow
   underground, deep underground, transport, quest, expansion, and experimental
   regions.
@@ -906,3 +930,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-17 | Preserve the legacy Builder/map generation and provide a non-destructive one-way layered conversion path. | Confirmed |
 | 2026-07-17 | Establish internal module boundaries and independent artifacts before considering additional repository splits. | Confirmed |
 | 2026-07-17 | Schedule the Compatibility SDK, full package manager, legacy pack, diagnostics toolkit, asset packs, and compatibility laboratory after the primary Suite roadmap. | Confirmed |
+| 2026-07-18 | Package Layered Maps for reusable world conversion, with parity normalization followed by reviewed transition/component alignment and private test-before-export. | Confirmed in the layered-world plan |
