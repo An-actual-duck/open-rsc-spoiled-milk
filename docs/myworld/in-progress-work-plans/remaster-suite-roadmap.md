@@ -193,6 +193,15 @@ isolated player/party spaces without packing instance identity into coordinates
 or revising the layered map format. No current map is made instanced merely by
 conversion.
 
+Layered maps use sparse `48 x 48` terrain sectors keyed by world space, level,
+and signed sector coordinates. Logical X/Y are signed 32-bit tile coordinates;
+packages declare finite extents and runtimes enforce configured safety limits
+rather than imposing another legacy canvas. Stable area IDs, exclusive base-
+terrain ownership, explicit overlay contracts, and creator-controlled growth
+reservations make allocation and package conflicts auditable over long-running
+world expansion. Dynamic instances reuse template allocations instead of
+consuming new permanent coordinates.
+
 The end-user Layered Maps distribution also composes these artifacts with a
 one-way converter, compatible World Builder, target adapter, and private test
 harness. It must be usable to upgrade compatible RuneScape Classic-derived
@@ -552,7 +561,6 @@ preserving existing gameplay exactly.
 Required design work before implementation:
 
 - finish the open discussion modules in the world-layer capacity plan;
-- choose supported per-layer X/Y bounds;
 - decide deep-underground topology, geographic correspondence rules, migration
   eligibility, transport classifications, and allocation policy;
 - specify the global world-space identity and extension boundary for the later
@@ -617,6 +625,8 @@ Work:
 - Show X/Y/level directly throughout navigation, inspect, copy, terrain,
   placement, transition, and validation interfaces.
 - Add level creation, bounds, naming, role, visibility, and allocation metadata.
+- Render occupied sectors and growth reservations from the allocation registry,
+  and validate package ownership conflicts before edits or export.
 - Add optional instance-template metadata and required-capability declarations
   without claiming the Builder or converter creates live instances.
 - Author geographic anchors separately from collision-adjusted arrival tiles.
@@ -674,6 +684,9 @@ Work:
 - Establish sector/allocation policies for surface, upper floors, shallow
   underground, deep underground, transport, quest, expansion, and experimental
   regions.
+- Generate stable area IDs, occupied-sector claims, and suggested growth
+  reservations during conversion; keep planning categories descriptive rather
+  than restrictive.
 - After engine parity, generate automatic provisional geographic alignment for
   all discovered areas in the isolated workspace and record every move in an
   explicit old-to-new manifest.
@@ -983,3 +996,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Permit fully automatic provisional conversion inside an isolated Builder-derived workbench, while reserving all target mutation for a separately confirmed transactional export. | Confirmed in the layered-world plan |
 | 2026-07-18 | Keep Layered Maps neutral toward creator topology, including intentional long-distance and unconventional transitions. | Confirmed in the layered-world plan |
 | 2026-07-18 | Reserve an explicit world-space identity and instance-template boundary now, while deferring dynamic true-instance lifecycle to a later `world.instances` capability. | Confirmed in the layered-world plan |
+| 2026-07-18 | Adopt sparse 48-tile sector allocation with signed logical X/Y, stable ownership, package collision checks, and explicit growth reservations. | Confirmed in the layered-world plan |

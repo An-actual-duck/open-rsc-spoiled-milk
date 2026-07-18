@@ -1144,7 +1144,7 @@ The selected direction is:
 The remaining decisions are deliberately divided so they can be handled one at
 a time.
 
-### Current Module: Allocation and Growth Reservations
+### Current Module: Transition Graph and Recovery
 
 The focused layered-coordinate study above is the active discussion. Signed
 geographic levels, exact default vertical anchors, and an explicit legacy-format
@@ -1158,8 +1158,8 @@ copied legacy world into explicit levels without relocating content, prove
 terrain, placement, transition, script, persistence, and gameplay parity, and
 only then begin geographic alignment or introduce level `-2`. That sequence is
 now part of a reusable conversion workspace rather than a Spoiled Milk-only
-map rewrite. Modules A through E are resolved. Modules F and G still require
-owner discussion before a focused implementation plan is authorized.
+map rewrite. Modules A through F are resolved. Module G still requires owner
+discussion before a focused implementation plan is authorized.
 
 ### Module A: Meaning of Deep Underground
 
@@ -1244,15 +1244,73 @@ redesign.
 
 ### Module F: Allocation Policy
 
-After Modules A-E, define:
+Resolved: use a sparse, sector-addressed world with machine-readable ownership
+and growth reservations. The policy is designed for long-running MMORPG growth
+without forcing creators into one world topology.
 
-- sector-sized reservation units;
-- district boundaries and ownership;
-- minimum buffers between unrelated areas;
-- shallow, deep, transport, quest, expansion, and experimental categories;
-- reserved future-growth space for every complex;
-- rules for crossing sector and plane boundaries;
-- a machine-readable allocation registry or manifest, if desired.
+#### Coordinate and storage domain
+
+- Logical X and Y are signed 32-bit tile coordinates. Existing non-negative
+  coordinates remain unchanged during normalization, but the layered format is
+  not bounded by the old `944`-tile height or a fixed positive-only canvas.
+- Level remains an explicit signed integer. Runtime and package manifests
+  declare practical supported ranges and reject arithmetic overflow or
+  unreasonable resource requests rather than relying on a small wire field.
+- Terrain storage retains the existing `48 x 48` sector unit for migration and
+  tooling continuity. A sector key is conceptually
+  `(worldSpaceId, level, sectorX, sectorY)` and uses floor division/modulo so
+  negative X/Y coordinates behave predictably.
+- Sector storage is sparse. A missing sector is absent/void, not a serialized
+  blank sector. Each package declares finite extents even though the coordinate
+  type provides a much larger growth domain.
+- Runtime simulation regions and renderer chunks may use their own internal
+  sizes. They must not redefine map ownership or coordinate semantics merely
+  because terrain is stored in 48-tile sectors.
+
+#### Stable identity and ownership
+
+- Every area/component has a stable ID independent of its current coordinates.
+  Movement changes its allocation record, not its identity or transition graph
+  references.
+- Exactly one package owns base terrain for a sector in a world space and
+  level. Overlapping terrain ownership is rejected unless a separately defined
+  patch/overlay contract explicitly permits it.
+- Placement or content overlays may share a sector only through stable object
+  identities, declared dependencies, and deterministic conflict rules.
+- Different levels may and normally will own the same X/Y sectors. That overlap
+  is geographic alignment, not an allocation collision.
+- Dynamic instances do not reserve additional permanent coordinates. A map
+  template owns its static sectors once; runtime world-space instances refer to
+  the template through the future `world.instances` capability.
+
+#### Growth reservations
+
+- The allocation registry distinguishes occupied sectors from reserved-growth
+  sectors. Reservations claim planning space without shipping artificial blank
+  terrain.
+- The converter/workbench proposes a one-sector same-level growth halo around
+  isolated components by default. Creators may shrink, expand, reshape, share,
+  or remove it, and may reserve larger directional corridors for settlements,
+  quest chains, regional cave systems, or future continents.
+- A reservation collision is a planning warning until accepted ownership is
+  transferred or explicitly shared; occupied base-terrain collisions remain a
+  blocking structural conflict.
+- Categories such as shallow, deep, transport, quest, hub, expansion, and
+  experimental are descriptive tags used for planning and filtering. They do
+  not limit what may be built in an allocation.
+
+#### Registry and package checks
+
+The authoritative allocation registry records at least area ID, owner package,
+world space, level, occupied sector set, exact tile bounds, growth reservation,
+surface association, neighboring claims, transition IDs, template status, and
+source/output fingerprints. World Builder renders these claims as an optional
+overlay and checks proposed edits before sector ownership changes.
+
+Package composition validates occupied-sector ownership, overlay contracts,
+stable IDs, and reservations before import. The final export report lists new,
+moved, released, shared, and conflicting claims so world growth remains
+auditable across releases.
 
 ### Module G: Migration and Validation
 
@@ -1263,10 +1321,10 @@ client scene baselines, and rollback.
 
 ## Open Owner Questions
 
-1. Should layered maps use sparse sector-addressed allocation with declared
-   per-area growth reservations, or one fixed global rectangle per level?
-2. What X/Y bounds should the first layered format and maintained runtime
-   guarantee per level?
+1. Which transition failures must always have a defined recovery destination,
+   and when may a creator intentionally define a one-way or no-return route?
+2. What should happen on login/reconnect when a saved destination, world space,
+   map package, or instance no longer exists?
 
 ## Living Inventory: Pending Discussion and Audit
 
@@ -1277,7 +1335,7 @@ with at least these fields:
 | --- | --- |
 | Area ID and name | Stable reference independent of coordinates |
 | Current bounds | Exact terrain and placement extent |
-| Plane-3 sectors | Capacity and adjacency tracking |
+| Layered sector claims | World-space, level, capacity, ownership, and adjacency tracking |
 | Surface association | Geographic or narrative parent region |
 | Area category | Shallow, deep, transit, quest, minigame, or exceptional |
 | Entrances and exits | Directed edges, requirements, and recovery paths |
@@ -1286,7 +1344,7 @@ with at least these fields:
 | Script owners | Plugins, quests, commands, and coordinate checks |
 | Persistence risks | Saved player, quest cache, minigame, or item state |
 | Legacy-client status | Known compatibility requirements |
-| Migration eligibility | Preserve, review, candidate, or prohibited |
+| Conversion confidence | Automatic inferences, warnings, and acknowledged findings |
 | Growth reservation | Buffer and future expansion needs |
 | World-space/template status | Global static area or future instance-template candidate |
 
@@ -1349,8 +1407,10 @@ private environment should validate at least:
 | 2026-07-18 | Use a focused Builder-derived conversion workbench and dev launcher for inspection, correction, navigation, and private testing; reserve target mutation for a separate confirmed export script. | Confirmed |
 | 2026-07-18 | Treat long-distance and unconventional transitions as valid creator choices; classify and report them descriptively without replacing, discouraging, or judging their design. | Confirmed |
 | 2026-07-18 | Make the layered architecture ready for future true instances through a separate world-space identity and template metadata, while keeping current converted content static in the global world space. | Confirmed |
+| 2026-07-18 | Use sparse `48 x 48` sector storage keyed by world space and level, signed 32-bit logical X/Y, stable area IDs, exclusive base-terrain ownership, and explicit creator-controlled growth reservations. | Confirmed |
 
 ## Next Discussion
 
-Continue with allocation policy and detailed validation. No implementation plan
-should be prepared until those remaining decisions have been resolved.
+Continue with transition/recovery policy and the private migration/validation
+sequence. No implementation plan should be prepared until those remaining
+decisions have been resolved.
