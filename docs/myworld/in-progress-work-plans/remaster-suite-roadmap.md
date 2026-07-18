@@ -185,6 +185,14 @@ underground `-1`, and deep underground `-2`. Ordinary vertical anchors preserve
 X/Y by default. Local walkable arrival offsets are explicit, while long-distance
 transport, magical, quest, and instance-like edges are classified separately.
 
+`WorldCoordinate(x,y,level)` remains purely geographic. The layered runtime
+places it inside a separate world-space/location identity whose initial value is
+the one global static world. Map and transition schemas reserve template and
+capability metadata so a later `world.instances` server capability can create
+isolated player/party spaces without packing instance identity into coordinates
+or revising the layered map format. No current map is made instanced merely by
+conversion.
+
 The end-user Layered Maps distribution also composes these artifacts with a
 one-way converter, compatible World Builder, target adapter, and private test
 harness. It must be usable to upgrade compatible RuneScape Classic-derived
@@ -546,36 +554,41 @@ Required design work before implementation:
 - finish the open discussion modules in the world-layer capacity plan;
 - choose supported per-layer X/Y bounds;
 - decide deep-underground topology, geographic correspondence rules, migration
-  eligibility, transport classifications, allocation policy, and whether true
-  instances are a separate later capability;
+  eligibility, transport classifications, and allocation policy;
+- specify the global world-space identity and extension boundary for the later
+  `world.instances` capability without implementing its dynamic lifecycle;
 - publish the layered coordinate, transition, region, map-package, protocol,
   and persistence specifications.
 
 Implementation sequence:
 
 1. Add a named, reversible codec for all existing packed coordinates.
-2. Introduce immutable level-aware points, areas, region keys, transition
-   destinations, and map identities without changing behavior.
-3. Prove exhaustive round trips for terrain, placements, teleports, scripts,
+2. Introduce immutable level-aware points and an enclosing world-space/location
+   identity, initially fixed to the global static space.
+3. Make areas, region keys, transition destinations, and map identities consume
+   that location contract without changing behavior.
+4. Prove exhaustive round trips for terrain, placements, teleports, scripts,
    and copied player locations.
-4. Make region storage, tiles, objects, NPCs, ground items, collision, pathing,
+5. Make region storage, tiles, objects, NPCs, ground items, collision, pathing,
    visibility, targeting, interactions, caches, wilderness, and area checks
    level-aware.
-5. Version placement and definition schemas with explicit levels.
-6. Add preservation-safe player persistence fields and migration receipts on
+6. Version placement and definition schemas with explicit levels.
+7. Add preservation-safe player persistence fields and migration receipts on
    copied databases.
-7. Normalize the maintained client and protocol while confining packed
+8. Normalize the maintained client and protocol while confining packed
    arithmetic to named legacy adapters.
-8. Run all current maps and content without relocation until parity is proven.
-9. Reject cross-level visibility, collision, following, trading, combat,
-   pathing, and cache leakage by invariant tests.
-10. Enable additional signed levels only after the unchanged four-level world
+9. Run all current maps and content without relocation until parity is proven.
+10. Reject cross-level and cross-world-space visibility, collision, following,
+    trading, combat, pathing, and cache leakage by invariant tests.
+11. Enable additional signed levels only after the unchanged four-level world
     is stable.
 
 Exit gate:
 
 - existing content runs unchanged through the explicit layered model;
 - level participates in every world identity and proximity decision;
+- the global world space is explicit and no cache or entity key prevents a
+  later isolated-space implementation;
 - save/login/logout/reconnect/death/recovery retain the correct level;
 - old packed data can be imported losslessly and is never silently
   reinterpreted;
@@ -604,6 +617,8 @@ Work:
 - Show X/Y/level directly throughout navigation, inspect, copy, terrain,
   placement, transition, and validation interfaces.
 - Add level creation, bounds, naming, role, visibility, and allocation metadata.
+- Add optional instance-template metadata and required-capability declarations
+  without claiming the Builder or converter creates live instances.
 - Author geographic anchors separately from collision-adjusted arrival tiles.
 - Author explicit vertical, regional, transit, magical, quest, and exceptional
   transition types.
@@ -654,13 +669,14 @@ Work:
 - Use void-bounded terrain-component analysis and transition constraints to
   propose aligned moves. A downward edge between two legacy-underground
   components may place its destination on `-2`; incompatible anchors, joined
-  terrain, incomplete ownership, and quest-driven ambiguity must block clean
-  export pending review.
+  terrain, incomplete ownership, and quest-driven ambiguity remain explicit
+  findings for workbench review and final-export acknowledgement.
 - Establish sector/allocation policies for surface, upper floors, shallow
   underground, deep underground, transport, quest, expansion, and experimental
   regions.
-- Align ordinary vertical areas geographically after engine parity, moving one
-  low-risk area at a time through explicit old-to-new manifests.
+- After engine parity, generate automatic provisional geographic alignment for
+  all discovered areas in the isolated workspace and record every move in an
+  explicit old-to-new manifest.
 - Preserve or reclassify established quest dungeons and long-distance travel
   according to the completed map design discussion.
 - Add login redirects, quest recovery, death recovery, and rollback for every
@@ -966,3 +982,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Initially distribute Layered Maps as developer tooling extracted into a repository root, with non-mutating extraction, explicit preflight, and reported alignment exceptions. | Confirmed in the layered-world plan |
 | 2026-07-18 | Permit fully automatic provisional conversion inside an isolated Builder-derived workbench, while reserving all target mutation for a separately confirmed transactional export. | Confirmed in the layered-world plan |
 | 2026-07-18 | Keep Layered Maps neutral toward creator topology, including intentional long-distance and unconventional transitions. | Confirmed in the layered-world plan |
+| 2026-07-18 | Reserve an explicit world-space identity and instance-template boundary now, while deferring dynamic true-instance lifecycle to a later `world.instances` capability. | Confirmed in the layered-world plan |

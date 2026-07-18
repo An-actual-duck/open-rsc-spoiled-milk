@@ -1101,9 +1101,19 @@ reconnect, cleanup, and client-loading rules.
 Disjoint coordinate blocks could simulate a limited number of copies, but that
 consumes map space and is not a scalable instance architecture.
 
-Current assessment: static isolated regions are immediately viable. True
-instancing should be treated as a separate engine project if it is actually a
-gameplay goal.
+Selected assessment: static isolated regions serve all current known content,
+but the first layered architecture must be instance-ready. Keep
+`WorldCoordinate(x,y,level)` as the geographic value and place it inside a
+separate `WorldLocation(worldSpaceId, coordinate)` or equivalent runtime
+identity. Current maps use one global static world space. A later
+`world.instances` capability may create player/party spaces from declared map
+templates without changing the coordinate format again.
+
+Instance readiness does not authorize implementing the full dynamic lifecycle
+inside the initial converter. Creation, membership, NPC/item/scenery isolation,
+persistence, logout/reconnect, teardown, protocol behavior, and failure
+recovery remain a focused server capability. Disjoint coordinate blocks must
+not be presented as true instances.
 
 ## Selected Regional-Layer Direction
 
@@ -1125,13 +1135,16 @@ The selected direction is:
 8. Keep ambiguous topology, fast travel, relocation eligibility, instancing,
    allocation, and recovery decisions explicit rather than hiding them inside
    the converter.
+9. Use the global static world space for converted content while reserving
+   explicit world-space identity and instance-template metadata for a later
+   true-instancing capability.
 
 ## Discussion Modules
 
 The remaining decisions are deliberately divided so they can be handled one at
 a time.
 
-### Current Module: Static Separation Versus True Instancing
+### Current Module: Allocation and Growth Reservations
 
 The focused layered-coordinate study above is the active discussion. Signed
 geographic levels, exact default vertical anchors, and an explicit legacy-format
@@ -1145,7 +1158,7 @@ copied legacy world into explicit levels without relocating content, prove
 terrain, placement, transition, script, persistence, and gameplay parity, and
 only then begin geographic alignment or introduce level `-2`. That sequence is
 now part of a reusable conversion workspace rather than a Spoiled Milk-only
-map rewrite. Modules A through D are resolved. Modules E, F, and G still require
+map rewrite. Modules A through E are resolved. Modules F and G still require
 owner discussion before a focused implementation plan is authorized.
 
 ### Module A: Meaning of Deep Underground
@@ -1215,9 +1228,19 @@ with it.
 
 ### Module E: Static Separation Versus True Instancing
 
-Decide whether the goal is isolated static dungeon blocks or genuine private
-player/party copies. The latter is not merely a coordinate-allocation policy
-and would need a separate architecture study.
+Resolved: true player/party instancing is a desired future capability even
+though no current known content requires it. The initial Layered Maps release
+uses static terrain and one global world space, but its location, map-package,
+transition, and Builder contracts must reserve a separate world-space identity
+and instance-template metadata.
+
+`WorldCoordinate(x,y,level)` remains the canonical geographic coordinate.
+Instance identity is not another level and is not encoded into X or Y. A later
+`world.instances` server capability owns creation, party/player association,
+isolated entities and state, persistence, reconnect, cleanup, and protocol
+semantics. This prevents the initial map conversion from absorbing an unused
+runtime feature while ensuring creators can adopt it without another map-format
+redesign.
 
 ### Module F: Allocation Policy
 
@@ -1240,8 +1263,10 @@ client scene baselines, and rollback.
 
 ## Open Owner Questions
 
-1. Is true player/party instancing a desired feature, or is static isolation
-   sufficient?
+1. Should layered maps use sparse sector-addressed allocation with declared
+   per-area growth reservations, or one fixed global rectangle per level?
+2. What X/Y bounds should the first layered format and maintained runtime
+   guarantee per level?
 
 ## Living Inventory: Pending Discussion and Audit
 
@@ -1263,6 +1288,7 @@ with at least these fields:
 | Legacy-client status | Known compatibility requirements |
 | Migration eligibility | Preserve, review, candidate, or prohibited |
 | Growth reservation | Buffer and future expansion needs |
+| World-space/template status | Global static area or future instance-template candidate |
 
 The entrance/exit graph should record directed edges rather than assuming that
 every route is reversible. Each edge should record source, destination,
@@ -1322,9 +1348,9 @@ private environment should validate at least:
 | 2026-07-18 | Allow automatic provisional conversion and relocation of every discovered area, including quest content, because all output remains isolated until explicit final export. | Confirmed |
 | 2026-07-18 | Use a focused Builder-derived conversion workbench and dev launcher for inspection, correction, navigation, and private testing; reserve target mutation for a separate confirmed export script. | Confirmed |
 | 2026-07-18 | Treat long-distance and unconventional transitions as valid creator choices; classify and report them descriptively without replacing, discouraging, or judging their design. | Confirmed |
+| 2026-07-18 | Make the layered architecture ready for future true instances through a separate world-space identity and template metadata, while keeping current converted content static in the global world space. | Confirmed |
 
 ## Next Discussion
 
-Continue with static separation versus true instancing, allocation policy, and
-detailed validation. No implementation plan should be prepared until those
-remaining decisions have been resolved.
+Continue with allocation policy and detailed validation. No implementation plan
+should be prepared until those remaining decisions have been resolved.
