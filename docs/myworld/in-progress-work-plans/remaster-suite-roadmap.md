@@ -580,7 +580,7 @@ Required design work before implementation:
 - publish the layered coordinate, transition, region, map-package, protocol,
   and persistence specifications.
 
-Focused foundation progress (2026-07-18): approved Slices 1-7 now provide the
+Focused foundation progress (2026-07-18): approved Slices 1-8 now provide the
 extractable `signed-layered-v1` contract, immutable Java 8 reference values,
 exhaustive `legacy-packed-y-v1` laboratory codec, deterministic read-only
 `spoiled-milk-repository-v1` preflight, and lossless non-relocating terrain,
@@ -600,10 +600,12 @@ runtime callers remain unchanged, and the object-specific type avoids freezing
 the later universal transport/recovery/instance taxonomy. Map identity is now
 explicitly separated from offset legacy archive indices: the shared
 `WorldMapSectorId` and `legacy-terrain-sector-name-v1` codecs expose signed
-logical sectors while preserving exact archive names and bytes. Entities,
-packets, persistence, and authoritative region/terrain storage have not
-adopted the contract, so these slices do not yet satisfy the later parity steps
-below.
+logical sectors while preserving exact archive names and bytes. Static object,
+item, and NPC placement models now expose checked layered snapshots and
+correctly inclusive roaming bounds while packed JSON/loaders and runtime
+construction remain authoritative. Entities, packets, persistence, and
+authoritative region/terrain storage have not adopted the contract, so these
+slices do not yet satisfy the later parity steps below.
 
 Implementation sequence:
 
@@ -1051,3 +1053,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Complete the fifth Layered Maps foundation checkpoint: immutable logical region keys and read-only manager projections, preserving packed lookup while identifying the two packed regions that must split during later storage migration. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the sixth Layered Maps foundation checkpoint: an object-specific directed layered projection from the existing telepoint map after authoritative command matching, with no XML or runtime movement change. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the seventh Layered Maps foundation checkpoint: shared logical signed map-sector identity and a checked offset legacy archive-name codec, with normalized inventory semantics corrected and terrain bytes untouched. | Implemented and validated in the layered-world plan |
+| 2026-07-18 | Complete the eighth Layered Maps foundation checkpoint: checked layered snapshots for static object, item, and NPC placements plus inclusive roaming bounds, preserving packed inputs and runtime construction. | Implemented and validated in the layered-world plan |

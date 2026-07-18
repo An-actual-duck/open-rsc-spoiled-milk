@@ -103,6 +103,19 @@ cross-band rectangle is refused instead of being silently flattened. This
 first consumer does not replace packed area storage or authorize entity,
 region, transition, map, packet, or persistence adoption.
 
+`WorldTileBounds` is a separate immutable inclusive rectangle. It models
+placement ranges such as NPC minimum/maximum roaming tiles, whose historical
+checks include both endpoints. Open `WorldArea` and inclusive
+`WorldTileBounds` must not be substituted merely because their fields look
+similar.
+
+The server's mutable packed `GameObjectLoc` and `ItemLoc` values may expose a
+checked `WorldLocation` snapshot. `NPCLoc` may expose its checked start
+location and inclusive roaming bounds. These projections are calculated from
+current fields on demand; they do not replace JSON shape, loader behavior, or
+runtime entity construction. A partial record remains partial: a valid NPC
+start does not make an invalid or cross-level roaming maximum representable.
+
 `WorldRegionKey(worldSpace, level, regionX, regionY)` is the immutable logical
 identity of a 48-tile region. Region indices derive from layered X/Y with floor
 division, so negative coordinates behave consistently. The server

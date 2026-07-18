@@ -102,4 +102,8 @@ runtime teleport callers remain unchanged. This object-specific name leaves
 the broader transport/recovery/instance transition model open for later
 design. `WorldEditorTerrainArchive.Coordinates` may similarly expose a checked
 `WorldMapSectorId`, but archive lookup and both authoritative terrain copies
-remain unchanged.
+remain unchanged. `GameObjectLoc`, `ItemLoc`, and `NPCLoc` expose checked
+layered snapshots as well; their JSON, mutable packed fields, loaders, and
+runtime construction remain authoritative. NPC roaming bounds use the
+inclusive `WorldTileBounds` contract rather than the open-boundary
+`WorldArea` contract.

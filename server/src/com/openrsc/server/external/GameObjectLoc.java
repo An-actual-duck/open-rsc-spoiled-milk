@@ -1,6 +1,8 @@
 package com.openrsc.server.external;
 
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 
 public class GameObjectLoc {
 	/**
@@ -79,6 +81,10 @@ public class GameObjectLoc {
 
 	public final Point getLocation() {
 		return location;
+	}
+
+	public final WorldLocation toWorldLocation() {
+		return LegacyPackedPointAdapter.fromLegacyPoint(location);
 	}
 
 	public final int getX() {

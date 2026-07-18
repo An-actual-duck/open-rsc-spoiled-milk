@@ -1,5 +1,9 @@
 package com.openrsc.server.external;
 
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldTileBounds;
+
 public class NPCLoc {
 	/**
 	 * The id of the Npc
@@ -68,5 +72,15 @@ public class NPCLoc {
 
 	public int startY() {
 		return startY;
+	}
+
+	public WorldLocation toWorldStartLocation() {
+		return LegacyPackedPointAdapter.fromPackedValues(startX, startY);
+	}
+
+	public WorldTileBounds toWorldRoamingBounds() {
+		return new WorldTileBounds(
+			LegacyPackedPointAdapter.fromPackedValues(minX, minY),
+			LegacyPackedPointAdapter.fromPackedValues(maxX, maxY));
 	}
 }

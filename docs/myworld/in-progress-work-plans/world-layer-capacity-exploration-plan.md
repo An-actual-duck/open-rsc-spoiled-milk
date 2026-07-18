@@ -1,14 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-7 implemented and validated on
+Status: architecture design complete; Slices 1-8 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 7 logical map-sector identity checkpoint; legacy
-terrain archives remain authoritative and no world conversion has begun
+Current milestone: Slice 8 static-placement projection checkpoint; legacy
+placement JSON/loaders remain authoritative and no world conversion has begun
 
 ## Purpose
 
@@ -50,10 +50,10 @@ Documentation may be revised as decisions are made. The owner approved the
 isolated Slice 1 coordinate laboratory/read-only preflight, Slice 2 lossless
 normalization inventory, Slice 3 dormant server compatibility seam, Slice 4
 checked legacy-`Area` projection, Slice 5 logical region-key projection, and
-Slice 6 object-telepoint projection, and Slice 7 logical map-sector identity on
-2026-07-18. The owner then authorized continuing through focused slices on the
-same active branch. Map relocation, Builder, database, streaming, export, and
-live/public work remain out of scope.
+Slice 6 object-telepoint projection, Slice 7 logical map-sector identity, and
+Slice 8 static-placement projections on 2026-07-18. The owner then authorized
+continuing through focused slices on the same active branch. Map relocation,
+Builder, database, streaming, export, and live/public work remain out of scope.
 
 ## Executive Finding
 
@@ -1918,6 +1918,59 @@ Slice 7 does not change terrain bytes, archive names, archive copies, loader
 lookup, runtime regions, tiles, collision, entities, client behavior, Builder,
 or export. It creates no layered terrain file and enables no new map extent.
 
+### Slice 8: Checked static-placement projections
+
+Objective: let the three server placement models expose layered locations and
+correctly inclusive NPC roaming bounds while preserving their JSON, public
+mutable packed fields, loaders, and entity construction.
+
+Delivered:
+
+- `GameObjectLoc.toWorldLocation()` from its current packed `Point`;
+- `ItemLoc.toWorldLocation()` from its current packed integer X/Y;
+- `NPCLoc.toWorldStartLocation()` from its current spawn X/Y;
+- `NPCLoc.toWorldRoamingBounds()` from its current minimum/maximum X/Y; and
+- immutable `WorldTileBounds`, qualified by world space and signed level with
+  inclusive endpoints.
+
+`WorldTileBounds` is deliberately separate from Slice 4's `WorldArea`. The
+legacy `Area.inBounds` contract uses strict/open comparisons, while NPC roaming
+and path checks include the minimum and maximum tiles. Reusing `WorldArea`
+would have changed edge-tile behavior.
+
+Each projection is calculated on demand. A later public-field mutation appears
+in the next snapshot, while a previously returned layered value stays
+immutable. No existing call site invokes the new methods. Partial validity is
+also preserved: NPC 67's start at `(662,3534)` maps to level `-1`, but its
+existing maximum Y `6549` remains outside the named legacy codec and causes the
+roaming-bounds projection to refuse rather than infer a correction.
+
+Validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-eight.py` — 3 tests passed;
+- all packed Y values `0..3775` round-tripped through object, item, NPC-start,
+  and inclusive NPC-bounds projections;
+- mutable-field snapshots, both inclusive boundary tiles, signed deep instance
+  bounds, level/world-space isolation, inverted/cross-level bounds, invalid
+  packed values, hashes, equality, and nulls were exercised;
+- the real normalization remains at 40 placement sources and 49,816 records,
+  with 60,679 normalized coordinates and only the existing NPC 67 maximum
+  retained raw at record 3,376;
+- source guards prove all public packed fields remain present, the projections
+  are unused, and JSON/loaders/runtime construction remain authoritative;
+- Slice 1 through Slice 7, World Builder discovery, schema validation, and
+  server build-authority regressions all passed;
+- the authoritative server build passed for 723 core and 488 plugin sources;
+  and
+- preflight/normalization retain 254 candidates, 211 unresolved Java owners,
+  1,771 terrain sectors, 49,816 placements, 20 transitions, and one raw
+  coordinate. Fingerprints changed as expected because the three placement
+  model sources are fingerprinted inputs.
+
+Slice 8 does not change a placement record, loader, spawned entity, roaming
+decision, terrain, runtime region, packet, persistence row, client, Builder, or
+export. It does not enable layered-only placement input.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2011,11 +2064,12 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 5 as a logical `WorldRegionKey` projection while retaining packed region storage and recording the two legacy region objects that straddle level boundaries. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 6 as an object-specific directed transition projection, retaining the exact telepoint XML, packed lookup, command matching, and runtime teleport path. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 7 by separating logical signed map-sector identity from offset legacy terrain archive indices, retaining exact entry names and payload bytes. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 8 by projecting static object, item, and NPC placements into layered locations and correctly inclusive roaming bounds, retaining packed JSON and runtime construction. | Implemented and validated |
 
 ## Next Discussion
 
-Continue the unchanged-behavior adoption sequence with focused static-
-placement location projections. Keep placement JSON, loaders, definitions,
-and runtime entity construction authoritative; do not combine source rewriting,
-region/entity storage replacement, persistence, client/protocol work,
-streaming, Builder, export, or relocation into that checkpoint.
+Continue parity work with a read-only Java coordinate-owner classification
+slice so the 211 unresolved sources can be divided into explicit migration
+families without rewriting code. Keep source files, runtime behavior,
+persistence, client/protocol work, streaming, Builder, export, and relocation
+out of that checkpoint.

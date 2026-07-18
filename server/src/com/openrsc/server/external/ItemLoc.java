@@ -1,5 +1,8 @@
 package com.openrsc.server.external;
 
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+
 public class ItemLoc {
 	/**
 	 * Is item noted?
@@ -61,5 +64,9 @@ public class ItemLoc {
 
 	public int getY() {
 		return y;
+	}
+
+	public WorldLocation toWorldLocation() {
+		return LegacyPackedPointAdapter.fromPackedValues(x, y);
 	}
 }
