@@ -253,15 +253,15 @@ class LayeredMapsSliceThirtyNineTest(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
 
-    def test_ledger_remains_dormant_and_outside_gameplay_authority(self):
+    def test_ledger_consumers_remain_checked_and_outside_gameplay_authority(self):
         manager = REGION_MANAGER.read_text(encoding="utf-8")
         path_validation = PATH_VALIDATION.read_text(encoding="utf-8")
         player = PLAYER.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertNotIn("LayeredRegionInterestOwnershipLedger", manager)
+        self.assertIn("LayeredRegionInterestOwnershipLedger", manager)
         self.assertNotIn("LayeredRegionInterestOwnershipLedger", path_validation)
-        self.assertNotIn("LayeredRegionInterestOwnershipLedger", player)
+        self.assertIn("LayeredRegionInterestOwnershipLedger", player)
         self.assertIn(
             "### Slice 39: Global logical-interest ownership model",
             plan,

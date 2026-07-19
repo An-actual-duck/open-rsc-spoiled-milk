@@ -241,8 +241,11 @@ consume it.
 reference rule without adopting it. It allocates opaque, ledger-bound,
 process-local owner handles and atomically replaces each owner's complete
 logical window. Per-key before/after counts distinguish a local exit that is
-still shared from the final `1 -> 0` global release. The ledger is not held by
-RegionManager or Player and cannot load, retain, release, or evict a Region.
+still shared from the final `1 -> 0` global release. RegionManager now owns one
+checked ledger, and each logged-in Player maintains one opaque handle across
+logical-window changes and final logout cleanup. The shadow cannot load,
+retain, release, or evict a Region, and ordinary movement within one logical
+window does not rematerialize its keys.
 
 `LegacyPackedRegionCoverage` describes every logical key touched by one current
 packed 48-tile region cell. It distinguishes the nominal packed cell from the

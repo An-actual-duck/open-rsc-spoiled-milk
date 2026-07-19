@@ -39,6 +39,7 @@ import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionMembershipMirror;
 import com.openrsc.server.model.world.coordinate.LayeredVisibilityWindowMirror;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
@@ -202,6 +203,10 @@ public final class Player extends Mob {
 	/** Shadow interest bounds only; packed visibility lookup remains authoritative. */
 	private final LayeredVisibilityWindowMirror layeredVisibilityWindowMirror =
 		new LayeredVisibilityWindowMirror();
+	/** Process-local interest shadow only; packed visibility remains authoritative. */
+	private final Object layeredInterestOwnerLock = new Object();
+	private LayeredRegionInterestOwnershipLedger.OwnerToken layeredInterestOwner;
+	private WorldRegionWindow layeredInterestOwnerWindow;
 	/**
 	 * Players cache is used to store various objects into database
 	 */
@@ -3212,11 +3217,86 @@ public final class Player extends Mob {
 		return layeredVisibilityWindowMirror.requireCurrent(projected);
 	}
 
+	public LayeredRegionInterestOwnershipLedger.OwnerSnapshot
+		getLayeredInterestOwnerSnapshot() {
+		synchronized (layeredInterestOwnerLock) {
+			if (layeredInterestOwner == null || layeredInterestOwner.isClosed()) {
+				throw new IllegalStateException(
+					"Layered interest owner is not open for this Player session");
+			}
+			LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot =
+				getWorld().getRegionManager().getLayeredRegionInterestOwnerSnapshot(
+					layeredInterestOwner);
+			snapshot.requireWindow(getLayeredVisibilityWindow());
+			if (snapshot.getOwnerSequence() != layeredInterestOwner.getSequence()) {
+				throw new IllegalStateException(
+					"Layered interest owner sequence differs from its handle");
+			}
+			return snapshot;
+		}
+	}
+
 	private void synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
 		layeredRegionMembershipMirror.synchronize(layeredLocation);
-		layeredVisibilityWindowMirror.synchronize(
-			getWorld().getRegionManager().getLayeredVisibleRegionWindow(layeredLocation));
+		WorldRegionWindow window = getWorld().getRegionManager()
+			.getLayeredVisibleRegionWindow(layeredLocation);
+		layeredVisibilityWindowMirror.synchronize(window);
+		synchronizeLayeredInterestOwnerIfOpen(window);
+	}
+
+	private void openOrSynchronizeLayeredInterestOwner(
+		final WorldRegionWindow currentWindow) {
+		synchronized (layeredInterestOwnerLock) {
+			if (layeredInterestOwner == null || layeredInterestOwner.isClosed()) {
+				layeredInterestOwner = getWorld().getRegionManager()
+					.openLayeredRegionInterestOwner(currentWindow);
+			} else if (!currentWindow.equals(layeredInterestOwnerWindow)) {
+				LayeredRegionInterestOwnershipLedger.Change change =
+					getWorld().getRegionManager()
+						.synchronizeLayeredRegionInterestOwner(
+							layeredInterestOwner, currentWindow);
+				if (change.isOwnerClosed()
+					|| change.getOwnerSequence() != layeredInterestOwner.getSequence()
+					|| !currentWindow.equals(change.getCurrentWindow())) {
+					throw new IllegalStateException(
+						"Layered interest synchronization returned inconsistent identity");
+				}
+			}
+			LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot =
+				getWorld().getRegionManager().getLayeredRegionInterestOwnerSnapshot(
+					layeredInterestOwner);
+			snapshot.requireWindow(currentWindow);
+			layeredInterestOwnerWindow = currentWindow;
+		}
+	}
+
+	private void synchronizeLayeredInterestOwnerIfOpen(
+		final WorldRegionWindow currentWindow) {
+		synchronized (layeredInterestOwnerLock) {
+			if (layeredInterestOwner != null && !layeredInterestOwner.isClosed()
+				&& !currentWindow.equals(layeredInterestOwnerWindow)) {
+				openOrSynchronizeLayeredInterestOwner(currentWindow);
+			}
+		}
+	}
+
+	private void closeLayeredInterestOwner() {
+		synchronized (layeredInterestOwnerLock) {
+			if (layeredInterestOwner == null) {
+				return;
+			}
+			LayeredRegionInterestOwnershipLedger.Change change =
+				getWorld().getRegionManager().closeLayeredRegionInterestOwner(
+					layeredInterestOwner);
+			if (!change.isOwnerClosed()
+				|| change.getOwnerSequence() != layeredInterestOwner.getSequence()) {
+				throw new IllegalStateException(
+					"Layered interest close returned inconsistent identity");
+			}
+			layeredInterestOwner = null;
+			layeredInterestOwnerWindow = null;
+		}
 	}
 
 	public void setLoggedIn(final boolean loggedIn) {
@@ -3241,7 +3321,12 @@ public final class Player extends Mob {
 			getWorld().getServer().getGameEventHandler().add(getStatRestorationEvent());
 		}
 		this.loggedIn = loggedIn;
-		getLayeredVisibilityWindow();
+		WorldRegionWindow currentWindow = getLayeredVisibilityWindow();
+		if (loggedIn) {
+			openOrSynchronizeLayeredInterestOwner(currentWindow);
+		} else {
+			closeLayeredInterestOwner();
+		}
 		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
 			LayeredCoordinateParityObserver.onSession(
 				getDatabaseID(), getUsernameHash(), getLocation(), loggedIn);

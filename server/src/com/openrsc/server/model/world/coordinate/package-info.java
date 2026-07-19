@@ -50,7 +50,8 @@
  * as checked logical residency, Slice 37 compares that residency with dormant
  * interest deltas, and Slice 38 emits bounded comparison evidence only through
  * private diagnostics. Slice 39 defines opaque process-local interest owners
- * and shared logical-region reference counts without runtime adoption. Packed
+ * and shared logical-region reference counts, and Slice 40 maintains one such
+ * checked owner per Player session without consuming its results. Packed
  * storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

@@ -16,6 +16,7 @@ import com.openrsc.server.model.world.coordinate.LegacyPackedRegionCoverage;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionPartition;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
+import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
@@ -35,6 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RegionManager {
+	public static final int MAX_LAYERED_REGIONS_PER_INTEREST_OWNER = 4096;
+
 	private final ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>> regions;
 	private final ConcurrentHashMap<Long, List<Region>> visibleRegionWindowCache;
 	private final ConcurrentHashMap<Long, List<GameObject>> visibleObjectWindowCache;
@@ -44,6 +47,8 @@ public class RegionManager {
 	private final AtomicLong visibleObjectSnapshotSequence;
 	private final Object layeredRegionLifecycleLock;
 	private final LayeredRegionResidencyMirror layeredRegionResidencyMirror;
+	private final LayeredRegionInterestOwnershipLedger
+		layeredRegionInterestOwnershipLedger;
 
 	private final World world;
 
@@ -58,6 +63,8 @@ public class RegionManager {
 		this.visibleObjectSnapshotSequence = new AtomicLong();
 		this.layeredRegionLifecycleLock = new Object();
 		this.layeredRegionResidencyMirror = new LayeredRegionResidencyMirror();
+		this.layeredRegionInterestOwnershipLedger =
+			new LayeredRegionInterestOwnershipLedger();
 	}
 
 	public void load() {
@@ -74,6 +81,7 @@ public class RegionManager {
 			}
 			regions.clear();
 			layeredRegionResidencyMirror.clear();
+			layeredRegionInterestOwnershipLedger.clear();
 		}
 		visibleRegionWindowCache.clear();
 		visibleObjectWindowCache.clear();
@@ -556,6 +564,63 @@ public class RegionManager {
 		getLayeredRegionResidencySnapshot(final WorldRegionKey logicalRegionKey) {
 		synchronized (layeredRegionLifecycleLock) {
 			return requireLayeredRegionResidencySnapshot(logicalRegionKey);
+		}
+	}
+
+	/** Opens one dormant owner and atomically assigns its first logical window. */
+	public LayeredRegionInterestOwnershipLedger.OwnerToken
+		openLayeredRegionInterestOwner(final WorldRegionWindow currentWindow) {
+		synchronized (layeredRegionLifecycleLock) {
+			LayeredRegionInterestOwnershipLedger.OwnerToken ownerToken =
+				layeredRegionInterestOwnershipLedger.openOwner();
+			try {
+				layeredRegionInterestOwnershipLedger.synchronizeOwner(
+					ownerToken, currentWindow,
+					MAX_LAYERED_REGIONS_PER_INTEREST_OWNER);
+				return ownerToken;
+			} catch (RuntimeException failure) {
+				layeredRegionInterestOwnershipLedger.closeOwner(ownerToken);
+				throw failure;
+			}
+		}
+	}
+
+	/** Replaces one dormant owner's complete logical interest window. */
+	public LayeredRegionInterestOwnershipLedger.Change
+		synchronizeLayeredRegionInterestOwner(
+			final LayeredRegionInterestOwnershipLedger.OwnerToken ownerToken,
+			final WorldRegionWindow currentWindow) {
+		synchronized (layeredRegionLifecycleLock) {
+			return layeredRegionInterestOwnershipLedger.synchronizeOwner(
+				ownerToken, currentWindow,
+				MAX_LAYERED_REGIONS_PER_INTEREST_OWNER);
+		}
+	}
+
+	/** Closes one dormant owner; repeated cleanup remains idempotent. */
+	public LayeredRegionInterestOwnershipLedger.Change
+		closeLayeredRegionInterestOwner(
+			final LayeredRegionInterestOwnershipLedger.OwnerToken ownerToken) {
+		synchronized (layeredRegionLifecycleLock) {
+			return layeredRegionInterestOwnershipLedger.closeOwner(ownerToken);
+		}
+	}
+
+	/** Returns one checked owner snapshot without exposing other owner handles. */
+	public LayeredRegionInterestOwnershipLedger.OwnerSnapshot
+		getLayeredRegionInterestOwnerSnapshot(
+			final LayeredRegionInterestOwnershipLedger.OwnerToken ownerToken) {
+		synchronized (layeredRegionLifecycleLock) {
+			return layeredRegionInterestOwnershipLedger.snapshotOwner(ownerToken);
+		}
+	}
+
+	/** Returns one global logical-interest count without changing residency. */
+	public LayeredRegionInterestOwnershipLedger.Snapshot
+		getLayeredRegionInterestOwnershipSnapshot(
+			final WorldRegionKey logicalRegionKey) {
+		synchronized (layeredRegionLifecycleLock) {
+			return layeredRegionInterestOwnershipLedger.snapshot(logicalRegionKey);
 		}
 	}
 

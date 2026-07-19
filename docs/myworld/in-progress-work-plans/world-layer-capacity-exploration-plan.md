@@ -1,15 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-39 validated on the active
+Status: architecture design complete; Slices 1-40 validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 39 defines checked process-local global interest
-ownership and shared-reference semantics without wiring the model into Player,
-RegionManager, loading, release, or eviction authority
+Current milestone: Slice 40 maintains a checked RegionManager-owned global
+interest shadow with one opaque handle per Player session while packed Region
+lookup, eager loading, release, eviction, pathing, packets, and persistence
+remain authoritative and unchanged
 
 ## Purpose
 
@@ -4543,6 +4544,75 @@ The next slice may add a checked RegionManager-owned shadow and explicit Player
 session handles while leaving all reference results non-authoritative. Runtime
 diagnostics and any loading/eviction experiment remain later gates.
 
+### Slice 40: Checked Player-session interest ownership shadow
+
+Objective: exercise Slice 39's ownership semantics across real Player session
+and movement lifecycle boundaries while keeping every result observational.
+
+Selected boundary:
+
+- RegionManager owns exactly one process-local ledger and serializes ownership
+  with its existing layered Region lifecycle lock;
+- each Player object opens one opaque handle after successful login state,
+  synchronizes it only when its checked logical visibility window changes, and
+  closes it during final `setLoggedIn(false)` cleanup;
+- initial placement and pre-login benchmark placement continue to initialize
+  the existing location/window mirrors without acquiring global interest;
+- repeated login-state or disconnect cleanup remains idempotent, and a world
+  unload invalidates all outstanding handles while clearing all counts; and
+- checked owner snapshots must match the Player's current visibility mirror
+  and opaque handle sequence.
+
+Implemented:
+
+- RegionManager open, synchronize, close, owner-snapshot, and per-key snapshot
+  methods with a 4,096-key per-owner allocation budget;
+- Player-owned lock, opaque handle, last-owned window, boundary-only
+  synchronization, read-only checked owner snapshot, and final close path; and
+- ledger-wide clear inside the existing RegionManager unload boundary.
+
+Safety boundary:
+
+- `getRegion(...)`, `getTile(...)`, current visibility caches, entity Regions,
+  movement, `PathValidation`, terrain, collision, packets, persistence, client
+  loading, and eager world loading remain authoritative and unchanged;
+- global acquisitions/releases and shared reference counts are not consumed by
+  Region construction, unloading, residency, or any gameplay decision;
+- ownership is absent from the parity observer in this slice, so no schema or
+  diagnostic behavior changes; and
+- ordinary movement inside an unchanged logical window performs no key
+  materialization or ledger mutation.
+
+Automated validation evidence:
+
+- the focused Slice 40 guards verify the single manager-owned ledger, shared
+  lifecycle lock, unload clear, bounded API, Player handle/window checks,
+  boundary-only synchronization, login open, final logout close, and absence
+  from pathing and diagnostics;
+- Slice 1 through Slice 40 regressions all pass (94 tests), including the
+  updated Slice 39 consumer boundary;
+- World Builder discovery passes 13 tests and the standalone-layout guard
+  passes;
+- the authoritative bundled-Ant build succeeds for 745 core and 488 plugin
+  sources;
+- two real-repository normalizations are byte-stable with unchanged world
+  content, 211 classified source owners, and one unresolved normalized
+  coordinate. The expected fingerprints are source
+  `03487a17c0fb04390f00973c7179121b137536488afecc40f71c8f34454cf57e`,
+  inventory
+  `924b5a317e8440d5f583231ea7cfec91c892f822b2979574b8aadfae07332505`,
+  classification
+  `b202868a3fa5f6cf7b2c44d68fa38727034d109654fabed95fbd55cd8b403a45`,
+  and occurrence
+  `cdfe9069333827eca2f52701e321cb7b6234246d07979599311d9e8922c71930`; and
+- no owner runtime route is required yet because the shadow has no observable
+  client, packet, diagnostic, loading, eviction, movement, or persistence
+  effect.
+
+The next owner-testable slice should expose bounded ownership counts and
+per-event global/shared transition evidence through a new additive private
+diagnostic schema. Loading and eviction must remain disabled.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -4668,12 +4738,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 37 by comparing bounded logical interest changes with versioned Region residency while treating load/release candidates as dormant evidence only. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 38 by emitting bounded interest/residency evidence through opt-in private v10 diagnostics without adopting Region loading or eviction. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 39 by defining process-local global interest ownership and shared-reference semantics without runtime adoption. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 40 by maintaining one checked opaque logical-interest owner per Player session without adopting loading, release, or eviction. | Implemented and validated |
 
 ## Next Discussion
 
-Add a checked RegionManager-owned interest shadow with one non-reused handle per
-Player session, then prove movement, teleport, level change, logout, reconnect,
-and overlapping-player reference behavior before exposing it diagnostically.
-A new database schema, authoritative region storage, actual loading/eviction,
-collision/pathing adoption, client protocol adoption, Builder, export,
-relocation, and level `-2` remain separately gated.
+Expose bounded owner/reference evidence through an additive private diagnostic
+schema, then prove movement, teleport, level change, logout, reconnect, and
+overlapping-player behavior on a private server. A new database schema,
+authoritative region storage, actual loading/eviction, collision/pathing
+adoption, client protocol adoption, Builder, export, relocation, and level `-2`
+remain separately gated.

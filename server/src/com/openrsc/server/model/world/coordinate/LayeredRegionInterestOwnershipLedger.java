@@ -85,6 +85,14 @@ public final class LayeredRegionInterestOwnershipLedger {
 		return new Snapshot(key, version, referenceCount(key));
 	}
 
+	/** Captures one open owner's exact window at the current ledger version. */
+	public synchronized OwnerSnapshot snapshotOwner(final OwnerToken ownerToken) {
+		OwnerState owner = requireOpenOwner(ownerToken);
+		return new OwnerSnapshot(
+			ownerToken.sequence, version, owners.size(), referenceCounts.size(),
+			owner.window, owner.keys);
+	}
+
 	public synchronized long getVersion() {
 		return version;
 	}
@@ -467,6 +475,69 @@ public final class LayeredRegionInterestOwnershipLedger {
 		};
 
 		abstract boolean matches(Entry entry);
+	}
+
+	/** Immutable checked view of one open owner's complete logical interest. */
+	public static final class OwnerSnapshot {
+		private final long ownerSequence;
+		private final long ledgerVersion;
+		private final int openOwnerCount;
+		private final int referencedRegionCount;
+		private final WorldRegionWindow window;
+		private final List<WorldRegionKey> keys;
+
+		private OwnerSnapshot(
+			final long ownerSequence,
+			final long ledgerVersion,
+			final int openOwnerCount,
+			final int referencedRegionCount,
+			final WorldRegionWindow window,
+			final List<WorldRegionKey> keys) {
+			this.ownerSequence = ownerSequence;
+			this.ledgerVersion = ledgerVersion;
+			this.openOwnerCount = openOwnerCount;
+			this.referencedRegionCount = referencedRegionCount;
+			this.window = window;
+			this.keys = Collections.unmodifiableList(
+				new ArrayList<WorldRegionKey>(keys));
+		}
+
+		public long getOwnerSequence() {
+			return ownerSequence;
+		}
+
+		public long getLedgerVersion() {
+			return ledgerVersion;
+		}
+
+		public int getOpenOwnerCount() {
+			return openOwnerCount;
+		}
+
+		public int getReferencedRegionCount() {
+			return referencedRegionCount;
+		}
+
+		public WorldRegionWindow getWindow() {
+			return window;
+		}
+
+		public List<WorldRegionKey> getKeys() {
+			return keys;
+		}
+
+		public void requireWindow(final WorldRegionWindow expectedWindow) {
+			WorldRegionWindow expected = Objects.requireNonNull(
+				expectedWindow, "expectedWindow");
+			if (!expected.equals(window)) {
+				throw new IllegalStateException(
+					"Interest owner window differs from the checked Player window");
+			}
+			if (keys.size() != expected.getRegionCount()) {
+				throw new IllegalStateException(
+					"Interest owner key count differs from its window");
+			}
+		}
 	}
 
 	/** Immutable reference count at one ledger version. */
