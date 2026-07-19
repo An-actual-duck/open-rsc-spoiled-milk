@@ -158,13 +158,14 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v6.schema.json`. Each v6 record
-retains all v5 position, logical-window, interest-delta, packed-coverage, and
-logical 48×48 snapshot evidence. Start, marker, teleport, and stop records also
-carry one bounded current-tile comparison: logical location, nullable legacy
-packed address, representability, packed-source presence, missing-source,
-comparability, and exact full-state parity. Other event types carry an explicit
-null instead of repeating the comparison on every movement. The v1-v5 schemas
+traces emit `schema/layered-map-parity-event-v7.schema.json`. Each v7 record
+retains all v6 position, logical-window, interest-delta, packed-coverage,
+logical 48×48 snapshot, and current-tile parity evidence. Start, marker,
+teleport, and stop records also carry one bounded 3×3 neighborhood summary:
+the logical center, fixed cell count, representable/unsupported counts,
+source-present/missing counts, comparable/exact counts, and complete/exact
+status. Tile payloads are never written. Other event types carry explicit nulls
+instead of repeating the tile comparisons on every movement. The v1-v6 schemas
 remain alongside it so already-captured logs keep explicit readable contracts.
 
 ## Checked Player mirror

@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v6";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v7";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -42,13 +42,15 @@ public final class LayeredCoordinateParityObserver {
 		Point current,
 		int viewGridDistance,
 		TileSnapshotSource tileSnapshotSource,
-		TileParitySource tileParitySource) {
+		TileParitySource tileParitySource,
+		TileNeighborhoodSource tileNeighborhoodSource) {
 		Objects.requireNonNull(tileSnapshotSource, "tileSnapshotSource");
 		Objects.requireNonNull(tileParitySource, "tileParitySource");
+		Objects.requireNonNull(tileNeighborhoodSource, "tileNeighborhoodSource");
 		TraceKey key = new TraceKey(playerId, usernameHash);
 		TraceState created = new TraceState(
 			key, logPath(key), viewGridDistance, tileSnapshotSource,
-			tileParitySource);
+			tileParitySource, tileNeighborhoodSource);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
@@ -147,7 +149,8 @@ public final class LayeredCoordinateParityObserver {
 						"Tile snapshot metadata key differs from the current logical region");
 				}
 				TileParityMetadata tileParity = null;
-				if (capturesTileParity(eventType)) {
+				TileNeighborhoodMetadata tileNeighborhood = null;
+				if (capturesTileComparisons(eventType)) {
 					tileParity = Objects.requireNonNull(
 						state.tileParitySource.capture(current),
 						"tileParitySource result");
@@ -155,11 +158,19 @@ public final class LayeredCoordinateParityObserver {
 						throw new IllegalStateException(
 							"Tile parity metadata location differs from the current location");
 					}
+					tileNeighborhood = Objects.requireNonNull(
+						state.tileNeighborhoodSource.capture(current),
+						"tileNeighborhoodSource result");
+					if (!to.getLocation().equals(tileNeighborhood.getCenter())) {
+						throw new IllegalStateException(
+							"Tile neighborhood metadata center differs from the current location");
+					}
 				}
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
 					state.key, nextSequence, System.currentTimeMillis(), eventType,
-					teleported, label, from, to, coverage, tileSnapshot, tileParity);
+					teleported, label, from, to, coverage, tileSnapshot, tileParity,
+					tileNeighborhood);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -192,7 +203,8 @@ public final class LayeredCoordinateParityObserver {
 		LayeredCoordinateParitySnapshot to,
 		LegacyPackedVisibilityCoverageComparison coverage,
 		TileSnapshotMetadata tileSnapshot,
-		TileParityMetadata tileParity) {
+		TileParityMetadata tileParity,
+		TileNeighborhoodMetadata tileNeighborhood) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -241,6 +253,12 @@ public final class LayeredCoordinateParityObserver {
 			out.append("null");
 		} else {
 			appendTileParity(out, tileParity);
+		}
+		out.append(",\"tileNeighborhood\":");
+		if (tileNeighborhood == null) {
+			out.append("null");
+		} else {
+			appendTileNeighborhood(out, tileNeighborhood);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -295,6 +313,33 @@ public final class LayeredCoordinateParityObserver {
 			.append(parity.isMissingPackedSource()).append(',');
 		out.append("\"comparable\":").append(parity.isComparable()).append(',');
 		out.append("\"exact\":").append(parity.isExact()).append('}');
+	}
+
+	private static void appendTileNeighborhood(
+		final StringBuilder out,
+		final TileNeighborhoodMetadata neighborhood) {
+		WorldLocation center = neighborhood.getCenter();
+		WorldCoordinate coordinate = center.getCoordinate();
+		out.append('{');
+		out.append("\"center\":{\"worldSpace\":\"")
+			.append(jsonEscape(center.getWorldSpace().getValue()))
+			.append("\",\"x\":").append(coordinate.getX())
+			.append(",\"y\":").append(coordinate.getY())
+			.append(",\"level\":").append(coordinate.getLevel()).append("},");
+		out.append("\"cellCount\":").append(neighborhood.getCellCount()).append(',');
+		out.append("\"legacyRepresentableCount\":")
+			.append(neighborhood.getLegacyRepresentableCount()).append(',');
+		out.append("\"unsupportedCount\":")
+			.append(neighborhood.getUnsupportedCount()).append(',');
+		out.append("\"packedSourcePresentCount\":")
+			.append(neighborhood.getPackedSourcePresentCount()).append(',');
+		out.append("\"missingPackedSourceCount\":")
+			.append(neighborhood.getMissingPackedSourceCount()).append(',');
+		out.append("\"comparableCount\":")
+			.append(neighborhood.getComparableCount()).append(',');
+		out.append("\"exactCount\":").append(neighborhood.getExactCount()).append(',');
+		out.append("\"complete\":").append(neighborhood.isComplete()).append(',');
+		out.append("\"exact\":").append(neighborhood.isExact()).append('}');
 	}
 
 	private static void appendTileSnapshot(
@@ -424,7 +469,7 @@ public final class LayeredCoordinateParityObserver {
 		return trimmed;
 	}
 
-	private static boolean capturesTileParity(final String eventType) {
+	private static boolean capturesTileComparisons(final String eventType) {
 		return "start".equals(eventType)
 			|| "marker".equals(eventType)
 			|| "teleport".equals(eventType)
@@ -458,6 +503,133 @@ public final class LayeredCoordinateParityObserver {
 	@FunctionalInterface
 	public interface TileParitySource {
 		TileParityMetadata capture(Point current);
+	}
+
+	/** Supplies one bounded 3x3 tile-neighborhood summary to selected events. */
+	@FunctionalInterface
+	public interface TileNeighborhoodSource {
+		TileNeighborhoodMetadata capture(Point current);
+	}
+
+	/** Immutable observer-facing neighborhood counts; no tile payloads. */
+	public static final class TileNeighborhoodMetadata {
+		public static final int CELL_COUNT = 9;
+
+		private final WorldLocation center;
+		private final int legacyRepresentableCount;
+		private final int packedSourcePresentCount;
+		private final int missingPackedSourceCount;
+		private final int comparableCount;
+		private final int exactCount;
+		private final boolean complete;
+		private final boolean exact;
+
+		private TileNeighborhoodMetadata(
+			final WorldLocation center,
+			final int legacyRepresentableCount,
+			final int packedSourcePresentCount,
+			final int missingPackedSourceCount,
+			final int comparableCount,
+			final int exactCount,
+			final boolean complete,
+			final boolean exact) {
+			this.center = center;
+			this.legacyRepresentableCount = legacyRepresentableCount;
+			this.packedSourcePresentCount = packedSourcePresentCount;
+			this.missingPackedSourceCount = missingPackedSourceCount;
+			this.comparableCount = comparableCount;
+			this.exactCount = exactCount;
+			this.complete = complete;
+			this.exact = exact;
+		}
+
+		public static TileNeighborhoodMetadata of(
+			final WorldLocation center,
+			final int legacyRepresentableCount,
+			final int packedSourcePresentCount,
+			final int missingPackedSourceCount,
+			final int comparableCount,
+			final int exactCount,
+			final boolean complete,
+			final boolean exact) {
+			Objects.requireNonNull(center, "center");
+			if (legacyRepresentableCount < 0 || legacyRepresentableCount > CELL_COUNT
+				|| packedSourcePresentCount < 0
+				|| packedSourcePresentCount > legacyRepresentableCount
+				|| missingPackedSourceCount < 0
+				|| comparableCount < 0 || comparableCount > CELL_COUNT
+				|| exactCount < 0 || exactCount > comparableCount) {
+				throw new IllegalArgumentException(
+					"Tile neighborhood metadata counts are inconsistent");
+			}
+			if (packedSourcePresentCount + missingPackedSourceCount
+				!= legacyRepresentableCount) {
+				throw new IllegalArgumentException(
+					"Neighborhood source counts differ from representable cells");
+			}
+			if (comparableCount != packedSourcePresentCount) {
+				throw new IllegalArgumentException(
+					"Neighborhood comparability differs from present sources");
+			}
+			if (complete != (legacyRepresentableCount == CELL_COUNT
+				&& packedSourcePresentCount == CELL_COUNT)) {
+				throw new IllegalArgumentException(
+					"Neighborhood completeness differs from source counts");
+			}
+			if (exact != (comparableCount == CELL_COUNT && exactCount == CELL_COUNT)) {
+				throw new IllegalArgumentException(
+					"Neighborhood parity differs from exact counts");
+			}
+			return new TileNeighborhoodMetadata(
+				center,
+				legacyRepresentableCount,
+				packedSourcePresentCount,
+				missingPackedSourceCount,
+				comparableCount,
+				exactCount,
+				complete,
+				exact);
+		}
+
+		public WorldLocation getCenter() {
+			return center;
+		}
+
+		public int getCellCount() {
+			return CELL_COUNT;
+		}
+
+		public int getLegacyRepresentableCount() {
+			return legacyRepresentableCount;
+		}
+
+		public int getUnsupportedCount() {
+			return CELL_COUNT - legacyRepresentableCount;
+		}
+
+		public int getPackedSourcePresentCount() {
+			return packedSourcePresentCount;
+		}
+
+		public int getMissingPackedSourceCount() {
+			return missingPackedSourceCount;
+		}
+
+		public int getComparableCount() {
+			return comparableCount;
+		}
+
+		public int getExactCount() {
+			return exactCount;
+		}
+
+		public boolean isComplete() {
+			return complete;
+		}
+
+		public boolean isExact() {
+			return exact;
+		}
 	}
 
 	/** Immutable observer-facing current-tile parity metadata; no tile payloads. */
@@ -677,6 +849,7 @@ public final class LayeredCoordinateParityObserver {
 		final int viewGridDistance;
 		final TileSnapshotSource tileSnapshotSource;
 		final TileParitySource tileParitySource;
+		final TileNeighborhoodSource tileNeighborhoodSource;
 		long sequence;
 		LayeredCoordinateParitySnapshot lastSnapshot;
 		String lastError;
@@ -686,7 +859,8 @@ public final class LayeredCoordinateParityObserver {
 			Path path,
 			int viewGridDistance,
 			TileSnapshotSource tileSnapshotSource,
-			TileParitySource tileParitySource) {
+			TileParitySource tileParitySource,
+			TileNeighborhoodSource tileNeighborhoodSource) {
 			if (viewGridDistance < 0) {
 				throw new IllegalArgumentException("View grid distance must not be negative");
 			}
@@ -696,6 +870,7 @@ public final class LayeredCoordinateParityObserver {
 			this.viewGridDistance = viewGridDistance;
 			this.tileSnapshotSource = tileSnapshotSource;
 			this.tileParitySource = tileParitySource;
+			this.tileNeighborhoodSource = tileNeighborhoodSource;
 		}
 
 		Status status(boolean enabled) {

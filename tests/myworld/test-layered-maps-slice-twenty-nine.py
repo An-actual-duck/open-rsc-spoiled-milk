@@ -54,13 +54,13 @@ class LayeredMapsSliceTwentyNineTest(unittest.TestCase):
         player = PLAYER.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v6"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v7"', observer)
         self.assertIn('"start".equals(eventType)', observer)
         self.assertIn('"marker".equals(eventType)', observer)
         self.assertIn('"teleport".equals(eventType)', observer)
         self.assertIn('"stop".equals(eventType)', observer)
         capture_block = observer.split(
-            "private static boolean capturesTileParity", 1
+            "private static boolean capturesTileComparisons", 1
         )[1].split("private static String safeMessage", 1)[0]
         self.assertNotIn('"move".equals(eventType)', capture_block)
         self.assertNotIn('"login".equals(eventType)', capture_block)

@@ -1,14 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-30 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-30 validated and Slice 31
+automated validation complete/owner runtime validation pending on the active
+refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 30 checked 3×3 logical tile-neighborhood parity
-complete;
+Current milestone: Slice 31 bounded private 3×3 tile-neighborhood diagnostics;
 packed region lookup and collision remain authoritative and no client streaming
 or world conversion has begun
 
@@ -3769,6 +3769,83 @@ No owner runtime route is required because the neighborhood remains dormant.
 Any private diagnostic adoption or actual collision/pathing consumer remains a
 separately gated slice.
 
+### Slice 31: Bounded private tile-neighborhood diagnostics
+
+Objective: make the dormant Slice 30 neighborhood comparison AI-readable in
+the opt-in private parity trace without adding tile payloads or running the
+comparison on every movement event.
+
+Selected boundary:
+
+- advance new traces to additive v7 JSONL while retaining every v6 field and
+  keeping the v1-v6 schemas beside it;
+- emit only the logical center, fixed cell count, representable/unsupported
+  counts, source-present/missing counts, comparable/exact counts, and
+  complete/exact status;
+- sample the summary on the same observer `start`, `marker`, `teleport`, and
+  `stop` events as current-tile parity, with an explicit JSON null on movement,
+  snapshot, login, and logout; and
+- bind the source only through the existing dev command and read-only
+  `RegionManager.compareLayeredTileNeighborhood(...)` projection.
+
+Implemented:
+
+- additive `layered-map-parity-event-v7` JSONL retaining every v6 field and
+  requiring a nullable `tileNeighborhood` summary;
+- immutable observer metadata with checked nine-cell count relationships,
+  center identity, completeness, and exactness;
+- fail-closed sampled-event capture that refuses a summary whose center differs
+  from the event's current layered location; and
+- dev-only RegionManager wiring with no Player field, tile payload, cache,
+  gameplay consumer, or persistence state.
+
+Safety boundary:
+
+- the capability remains disabled by default and reachable only through the
+  existing dev/admin command gate;
+- movement, snapshot, login, and logout records do not execute either tile
+  comparison;
+- packed Regions and mutable `TileValue`s remain terrain, collision, pathing,
+  visibility, packet, entity, and persistence authority; and
+- no database, map, placement, archive, client, Builder project, public server,
+  or live data is changed.
+
+Focused findings:
+
+- the compiled eight-event observer trace emits the neighborhood on exactly
+  four event types—start, teleport, marker, and stop—and emits null on move,
+  snapshot, logout, and login;
+- the exact fixture emits nine representable, present, comparable, and exact
+  cells around logical center `(100,943,0)`, with complete/exact true;
+- neighborhood capture count exactly matches the existing bounded current-tile
+  capture count, including identity-isolated traces; and
+- inconsistent source counts, comparability, completeness, exactness, and
+  event-center identity are refused before a record is accepted.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-thirty-one.py` — 2 tests
+  passed;
+- the compiled observer fixture and all v1-v7 schema-lineage checks pass;
+- Slice 1 through Slice 31 regressions all pass (76 tests), including exact
+  coordinate-package consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 740 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content, 211 classified source owners, and one unresolved normalized
+  coordinate. The expected fingerprints are source
+  `302cf9a28a9128890bae0e6d16ce9a0bc87453c58b12df29c81ec3bfda56a1d0`,
+  inventory
+  `f2fb8bf8aaa5fc284cb3ac7918d5f397216dd4c740892303bc2adfbbdfcea23b`,
+  classification
+  `5a44e4fd10d90ec7181919f6bf2908643c8af8f3ae270147c3b22d0e614e79e0`,
+  and occurrence
+  `8f40b8d89ff28ded57c4ac6495ef50839b77fe01975a2855e1f8d94e5a1cc185`.
+
+Owner runtime validation is pending on the private development server.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3885,12 +3962,12 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 28 by comparing one direct packed immutable tile state with its assembled logical-snapshot state without adopting either for gameplay. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 29 by emitting bounded current-tile packed/logical parity metadata through additive private v6 diagnostics. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 30 by comparing a checked 3×3 logical tile neighborhood with its current direct packed sources without collision or pathing adoption. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 31 by emitting bounded 3×3 neighborhood counts through additive private v7 diagnostics without tile payloads or gameplay adoption. | Automated validation complete; owner runtime validation pending |
 
 ## Next Discussion
 
-Proceed with a separately versioned Slice 31 private diagnostic adoption of the
-dormant 3×3 neighborhood summary, bounded to start, marker, teleport, and stop
-events. Preserve v6 fields and emit counts plus complete/exact status without
-tile payloads. A new database schema, authoritative region storage, actual
-collision/pathing adoption, client/protocol adoption, Builder, export,
-relocation, and level `-2` remain separately gated.
+Run the Slice 31 owner route only on the private development server and inspect
+the resulting v7 neighborhood summaries across ordinary travel, vertical
+transitions, and teleport loading. A new database schema, authoritative region
+storage, actual collision/pathing adoption, client/protocol adoption, Builder,
+export, relocation, and level `-2` remain separately gated.

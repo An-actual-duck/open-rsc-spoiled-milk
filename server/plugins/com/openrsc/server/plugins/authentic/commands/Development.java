@@ -26,6 +26,7 @@ import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.region.LayeredRegionTileSnapshot;
+import com.openrsc.server.model.world.region.LayeredTileNeighborhoodParityComparison;
 import com.openrsc.server.model.world.region.LayeredTileStateParityComparison;
 import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.region.TileValue;
@@ -1373,7 +1374,7 @@ public final class Development implements CommandTrigger {
 				status = LayeredCoordinateParityObserver.start(
 					player.getDatabaseID(), player.getUsernameHash(), player.getLocation(),
 					player.getConfig().VIEW_DISTANCE, layeredTileSnapshotSource(player),
-					layeredTileParitySource(player));
+					layeredTileParitySource(player), layeredTileNeighborhoodSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1458,6 +1459,28 @@ public final class Development implements CommandTrigger {
 					comparison.isPackedSourcePresent(),
 					comparison.isMissingPackedSource(),
 					comparison.isComparable(),
+					comparison.isExact());
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.TileNeighborhoodSource
+		layeredTileNeighborhoodSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.TileNeighborhoodSource() {
+			@Override
+			public LayeredCoordinateParityObserver.TileNeighborhoodMetadata capture(
+				final Point current) {
+				LayeredTileNeighborhoodParityComparison comparison =
+					regionManager.compareLayeredTileNeighborhood(current);
+				return LayeredCoordinateParityObserver.TileNeighborhoodMetadata.of(
+					comparison.getCenter(),
+					comparison.getLegacyRepresentableCount(),
+					comparison.getPackedSourcePresentCount(),
+					comparison.getMissingPackedSourceCount(),
+					comparison.getComparableCount(),
+					comparison.getExactCount(),
+					comparison.isComplete(),
 					comparison.isExact());
 			}
 		};
