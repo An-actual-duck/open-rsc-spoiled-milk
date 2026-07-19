@@ -27,7 +27,9 @@
  * partitions one packed cell into exact contiguous logical tile fragments
  * without reading or replacing runtime Region storage. Slice 23 inverts those
  * fragments into complete, partial, or unsupported legacy assembly plans for
- * one logical key without copying runtime tiles.
+ * one logical key without copying runtime tiles. Slice 24 resolves an exact
+ * packed source cell and local index for one logical region-local tile without
+ * reading a runtime TileValue.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

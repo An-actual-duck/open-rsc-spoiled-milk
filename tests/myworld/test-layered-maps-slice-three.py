@@ -253,6 +253,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
         self.assertEqual(
             {
                 "LegacyLogicalRegionAssembly.java",
+                "LegacyLogicalTileAddress.java",
                 "LegacyPackedPointAdapter.java",
                 "LegacyPackedRegionCoverage.java",
                 "LegacyPackedRegionPartition.java",
@@ -311,6 +312,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
             self.assertEqual(
                 [
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyLogicalRegionAssembly.java",
+                    "server/src/com/openrsc/server/model/world/coordinate/LegacyLogicalTileAddress.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedPointAdapter.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedRegionCoverage.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedRegionPartition.java",

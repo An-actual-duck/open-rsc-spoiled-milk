@@ -1,13 +1,13 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-23 implemented and validated on
+Status: architecture design complete; Slices 1-24 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 23 logical-region legacy assembly projection checkpoint;
+Current milestone: Slice 24 logical-tile packed-source addressing checkpoint;
 packed region lookup and caches remain authoritative and no client streaming or
 world conversion has begun
 
@@ -3159,6 +3159,80 @@ Automated validation evidence:
 No owner runtime route is required because neither gameplay nor private
 diagnostics consumes the assembly.
 
+### Slice 24: Logical-tile packed-source addressing
+
+Objective: resolve one logical region-local tile to the exact legacy packed
+point, packed source cell, cell-local indices, and Slice 23 source fragment
+before authorizing any read-only access to runtime tile arrays.
+
+Selected boundary:
+
+- require checked logical local X/Y in `0..47` and preserve the requested
+  logical location even when no legacy representation exists;
+- distinguish representable addresses from terminal-edge, negative, deep-level,
+  and non-global unsupported addresses without clamping;
+- prove the packed point belongs to the selected assembly fragment and its
+  packed region/local coordinates agree exactly; and
+- expose a read-only RegionManager projection without looking up a runtime
+  `Region`, reading a `TileValue`, or affecting caches, collision, or packets.
+
+Implemented:
+
+- immutable `LegacyLogicalTileAddress` retaining logical region key/local X/Y
+  and exact logical location for every request;
+- checked representable addresses with legacy point, packed source region,
+  packed cell-local X/Y, and the exact Slice 23 source fragment;
+- unsupported addresses that retain logical identity with no fabricated packed
+  point/source and refuse packed-only accessors; and
+- `RegionManager.getLegacyLogicalTileAddress(...)`, a projection-only method
+  that never resolves a runtime Region or reads a `TileValue`.
+
+Focused findings:
+
+- logical surface region `(0,4,12)` local `(31,44)` maps exactly to packed
+  point `(223,620)`, packed cell `(4,12)`, and local `(31,44)`;
+- logical level-1 region `(1,4,12)` at the same local position maps to packed
+  `(223,1564)`, packed cell `(4,32)`, and local `(31,28)`;
+- all 2,304 tiles in level-1 logical region `(1,4,0)` round-trip exactly, with
+  768 addressed through packed row 19 and 1,536 through row 20;
+- terminal logical region `(-1,682,19)` exposes exactly 1,024 representable
+  addresses and retains the other 1,280 logical tiles as unsupported; its last
+  supported tile maps from logical `(32767,943,-1)` to packed `(32767,3775)`,
+  cell `(682,78)`, local `(31,31)`; and
+- negative, level `-2`, and isolated-space requests retain their exact logical
+  locations without a packed source.
+
+Safety boundary:
+
+- runtime Region maps, Region tile arrays, entity collections, visibility and
+  object caches, collision, packets, terrain, persistence, diagnostics, client,
+  and Builder remain unchanged;
+- no address resolves or copies a runtime `TileValue`; and
+- no database, map, placement, archive, public server, or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-twenty-four.py` — 2 tests
+  passed;
+- Slice 1 through Slice 24 regressions all pass (62 tests), including exact
+  resolved-contract and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 736 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged content
+  counts. The expected fingerprints are source
+  `5400a2be5bba0a10650949892d7d9f57c6b8d9c5ad414fe114de1d3f4e4a65a5`,
+  inventory
+  `148bc5c63085f239d9c6ff1bba43f6a19432e42c64dba6376e3531f76831cf9e`,
+  classification
+  `daaf54dbaca37bbaa3fc87c3bd99e0562d27d34f997f5d90329697e11ea73135`,
+  and occurrence
+  `60b2e4e975e11528c755e4c0127f6094b0b9fff2cdc5c07cd6471e535913bc7d`.
+
+No owner runtime route is required because neither gameplay nor private
+diagnostics consumes the address.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3268,11 +3342,12 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 21 by emitting bounded packed/logical coverage evidence only through versioned private diagnostics while retaining all current interest and residency authorities. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 22 by partitioning one packed region cell into exact contiguous logical tile fragments while retaining packed Region and tile storage. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 23 by inverting packed fragments into complete, partial, or unsupported logical-region legacy assembly plans without copying tiles. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 24 by resolving logical region-local tiles to checked packed source cells and local indices without reading runtime tiles. | Implemented and validated |
 
 ## Next Discussion
 
-Define checked per-tile logical-to-packed source addressing from Slice 23's
-assembly as the next reversible parity seam, before any read-only runtime tile
-snapshot is authorized. A new database schema, authoritative region storage,
-client/protocol adoption, Builder, export, relocation, and level `-2` remain
-separately gated.
+Use Slice 24 to define a detached, read-only logical tile snapshot copied from
+current packed Region tile values as the next reversible parity seam. The
+snapshot must not become collision, pathing, visibility, or terrain authority.
+A new database schema, authoritative region storage, client/protocol adoption,
+Builder, export, relocation, and level `-2` remain separately gated.

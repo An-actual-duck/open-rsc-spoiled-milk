@@ -239,6 +239,12 @@ assembled tile count, and complete/partial/unsupported status. Negative space,
 new signed levels, isolated world spaces, and terminal legacy edges stay
 explicit instead of being clamped or assigned invented packed sources.
 
+`LegacyLogicalTileAddress` resolves one checked logical region-local X/Y to its
+logical location and, when representable, the exact packed point, packed source
+cell, cell-local X/Y, and assembly fragment. Unsupported terminal, negative,
+deep-level, and isolated-space tiles retain their logical identity without a
+fabricated packed address. The projection does not read a runtime `TileValue`.
+
 `LegacyPackedVisibilityCoverageComparison` unions that coverage across the
 current packed candidate window and compares it with the intended signed
 logical window. It keeps expected, covered, missing, extra, and unsupported

@@ -10,6 +10,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
+import com.openrsc.server.model.world.coordinate.LegacyLogicalTileAddress;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionCoverage;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionPartition;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
@@ -521,6 +522,19 @@ public class RegionManager {
 	public LegacyLogicalRegionAssembly getLegacyLogicalRegionAssembly(
 		final WorldRegionKey logicalRegionKey) {
 		return LegacyLogicalRegionAssembly.fromLogicalRegionKey(logicalRegionKey);
+	}
+
+	/**
+	 * Projects one logical region-local tile into its checked packed source.
+	 *
+	 * <p>This does not access a Region, TileValue, entity, or cache.</p>
+	 */
+	public LegacyLogicalTileAddress getLegacyLogicalTileAddress(
+		final WorldRegionKey logicalRegionKey,
+		final int logicalLocalX,
+		final int logicalLocalY) {
+		return LegacyLogicalTileAddress.resolve(
+			logicalRegionKey, logicalLocalX, logicalLocalY);
 	}
 
 	/**
