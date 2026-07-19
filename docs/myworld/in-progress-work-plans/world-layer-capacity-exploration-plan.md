@@ -1,16 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-32 validated and Slice 33
-automated validation complete/owner runtime validation pending on the active
+Status: architecture design complete; Slices 1-33 validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 33 bounded private adjacent-collision diagnostics;
-packed region lookup, `PathValidation`, movement, and collision remain
-authoritative and no client streaming or world conversion has begun
+Current milestone: Slice 33 bounded private adjacent-collision diagnostics is
+owner-validated; packed region lookup, `PathValidation`, movement, and
+collision remain authoritative and no client streaming or world conversion
+has begun
 
 ## Purpose
 
@@ -4037,7 +4037,21 @@ Automated validation evidence:
   and occurrence
   `c706847eadc500b3db75554384e15a9a5624298625500c47493db162494b6af2`.
 
-Owner runtime validation is pending on the private development server.
+Owner runtime validation evidence:
+
+- the owner completed the private route with no visible collision or movement
+  issues;
+- the doorway marker was captured before the wall marker because the wall step
+  was repeated after a command syntax error; marker identity made the order
+  irrelevant;
+- the initial `start` sample provided the requested ordinary open-ground
+  evidence with zero blocked directions, the doorway sample likewise had zero
+  blocked directions, and the wall-side sample had three;
+- every sampled direction at the wall, doorway, 48-tile region edge, upper
+  floor, underground level, and both surface returns was comparable with exact
+  passability, blocking reason, and required-state parity; and
+- all sampled locations retained exact signed-coordinate round trips. Slice 33
+  is owner-validated.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -4157,13 +4171,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 30 by comparing a checked 3×3 logical tile neighborhood with its current direct packed sources without collision or pathing adoption. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 31 by emitting bounded 3×3 neighborhood counts through additive private v7 diagnostics without tile payloads or gameplay adoption. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 32 by comparing one adjacent logical and packed tile-mask decision without changing PathValidation or movement authority. | Implemented and validated |
-| 2026-07-19 | Continue with Slice 33 by emitting all eight adjacent tile-mask comparisons through additive private v8 diagnostics without changing movement authority. | Automated validation complete; owner runtime validation pending |
+| 2026-07-19 | Continue with Slice 33 by emitting all eight adjacent tile-mask comparisons through additive private v8 diagnostics without changing movement authority. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Complete Slice 33's automated gates, then launch only the private development
-server for owner validation of v8 collision summaries on open ground, beside a
-visible wall/scenery obstacle, across a 48-tile region edge, and on upper and
-underground levels. A new database schema, authoritative region storage,
+Audit the legacy multi-step route and `PathValidation` collision boundaries,
+then define the smallest detached layered traversal comparison that can reuse
+the validated adjacent-step projection without changing route selection or
+movement authority. A new database schema, authoritative region storage,
 actual collision/pathing adoption, client/protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.
