@@ -1,16 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-25 validated, with Slice 26
-implemented and ready for private owner validation on the active refinement
-branch
+Status: architecture design complete; Slices 1-26 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
 Current milestone: Slice 26 private logical-region tile-snapshot diagnostics
-ready for owner capture; packed region lookup and collision remain authoritative
-and no client streaming or world conversion has begun
+owner-validated; packed region lookup and collision remain authoritative and no
+client streaming or world conversion has begun
 
 ## Purpose
 
@@ -3398,10 +3397,30 @@ Automated validation evidence:
   and occurrence
   `bf61c1e731c6c0fdd0f7aee6d393ff61c89560b23e424bf5ada15a4dba92580f`.
 
-Owner runtime validation is pending on an updated private/local server. The
-first capture should sample a normal surface region, a region boundary, an
-upper floor, underground, walking within one region, and a return teleport;
-visuals, loading, collision, and interactions should remain unchanged.
+Owner runtime acceptance is complete:
+
+- the requested route produced 300 consecutive v5 events from start through
+  stop: 287 moves, four vertical teleports, five markers, and two manual
+  snapshots, with zero schema errors;
+- every event round-tripped exactly, its snapshot key matched its current
+  logical region, its supported/target and completeness identities held, its
+  packed visibility coverage was exact, and no packed source was missing;
+- 300 events crossed seven logical regions and produced exactly seven distinct
+  fingerprints; every event within a given world-space/level/region key had
+  one stable fingerprint, including 37 initial-surface samples and 101 samples
+  in the most-traversed region;
+- walking from X `239` to `240` changed surface region `(4,12)` to `(5,12)`
+  and changed the fingerprint on precisely that logical boundary;
+- the authored upper-floor marker at packed `(316,1493)` projected to logical
+  `(316,549,+1)`, assembled all 2,304 tiles from two packed source fragments,
+  and returning to surface region `(6,11)` restored its exact prior
+  fingerprint;
+- the underground marker at packed `(274,3397)` projected to logical
+  `(274,565,-1)`, assembled all 2,304 tiles from one packed source, and the
+  return to surface region `(5,11)` restored its exact prior fingerprint; and
+- the owner completed the requested surface, boundary, upper-floor,
+  underground, walking, and return route without reporting a visual, loading,
+  collision, or interaction anomaly.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -3514,11 +3533,13 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 23 by inverting packed fragments into complete, partial, or unsupported logical-region legacy assembly plans without copying tiles. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 24 by resolving logical region-local tiles to checked packed source cells and local indices without reading runtime tiles. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 25 by copying packed TileValues into detached logical-region snapshots while retaining packed collision and tile authority. | Implemented and validated |
-| 2026-07-18 | Continue with Slice 26 by emitting bounded logical-region tile-snapshot metadata through versioned private diagnostics while retaining packed tile authority. | Implemented and automated validation complete; owner validation pending |
+| 2026-07-18 | Continue with Slice 26 by emitting bounded logical-region tile-snapshot metadata through versioned private diagnostics while retaining packed tile authority. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Run Slice 26's bounded v5 trace against the updated private runtime and inspect
-fingerprint stability, region-key changes, source counts, and unchanged owner
-behavior. A new database schema, authoritative region storage, client/protocol
-adoption, Builder, export, relocation, and level `-2` remain separately gated.
+Proceed with a focused Slice 27 immutable logical tile-state value before any
+cache or storage adoption. It should detach snapshot consumers from mutable
+legacy `TileValue`, prove full-state conversion/equality, and retain a checked
+legacy copy only as a compatibility bridge. A new database schema,
+authoritative region storage, client/protocol adoption, Builder, export,
+relocation, and level `-2` remain separately gated.
