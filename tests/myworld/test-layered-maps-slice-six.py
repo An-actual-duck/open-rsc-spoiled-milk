@@ -271,6 +271,7 @@ class LayeredMapsSliceSixTest(unittest.TestCase):
                 "server/src/com/openrsc/server/model/world/region/LayeredRegionTileSnapshot.java",
                 "server/src/com/openrsc/server/model/world/region/LayeredTileNeighborhoodParityComparison.java",
                 "server/src/com/openrsc/server/model/world/region/LayeredTileStateParityComparison.java",
+                "server/src/com/openrsc/server/model/world/region/LayeredTraversalCollisionComparison.java",
                 "server/src/com/openrsc/server/model/world/region/RegionManager.java",
                 "server/src/com/openrsc/server/service/PlayerService.java",
             ],

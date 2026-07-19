@@ -127,6 +127,12 @@ runtime construction remain authoritative. NPC roaming bounds use the
 inclusive `WorldTileBounds` contract rather than the open-boundary
 `WorldArea` contract.
 
+RegionManager can also compare immutable layered tile snapshots with their
+direct packed sources, evaluate the tile-mask portion of one adjacent step,
+and compose those decisions across an explicit route of at most 50 adjacent
+steps. These are dormant read-only projections: they do not choose a route,
+inspect occupancy, enqueue movement, or replace `PathValidation`.
+
 ## Private runtime parity observer
 
 The first owner-testable runtime seam remains observational: it projects a dev

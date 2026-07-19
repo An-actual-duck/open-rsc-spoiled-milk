@@ -1,16 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-33 validated on the active
+Status: architecture design complete; Slices 1-34 validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 33 bounded private adjacent-collision diagnostics is
-owner-validated; packed region lookup, `PathValidation`, movement, and
-collision remain authoritative and no client streaming or world conversion
-has begun
+Current milestone: Slice 34 dormant bounded traversal collision projection is
+validated; packed region lookup, `PathValidation`, route selection, movement,
+and collision remain authoritative and no client streaming or world
+conversion has begun
 
 ## Purpose
 
@@ -4053,6 +4053,78 @@ Owner runtime validation evidence:
 - all sampled locations retained exact signed-coordinate round trips. Slice 33
   is owner-validated.
 
+### Slice 34: Dormant bounded traversal collision projection
+
+Objective: compose the validated adjacent-step comparison across one explicit,
+already expanded route so future layered traversal can be evaluated without
+asking the projection to choose or execute a path.
+
+Selected boundary:
+
+- accept 1-50 adjacent, distinct steps on one world-space and signed level;
+- preserve every per-step logical/packed decision and aggregate availability,
+  comparability, passability, blocking-reason, and required-state parity;
+- report the first known logical block, packed block, passability mismatch, and
+  blocking-reason mismatch as zero-based step indices;
+- make whole-route passability nullable unless every step is available in that
+  representation; and
+- leave route expansion, zigzag selection, compressed high-speed waypoints,
+  occupancy, NPC-specific scenery checks, projectile rules, and movement
+  execution outside this projection.
+
+Implemented:
+
+- immutable `LayeredTraversalCollisionComparison` with a 50-step allocation
+  bound, continuity checks, stable aggregate counts, nullable route decisions,
+  and an immutable ordered step list; and
+- a read-only RegionManager entry point accepting signed `WorldLocation`
+  routes and refusing duplicate, non-adjacent, level-changing, or world-space-
+  changing steps before composing the Slice 32 primitive.
+
+Safety boundary:
+
+- `Path`, `PathValidation`, `WalkingQueue`, Player, Mob, and A* do not import or
+  consume the new value;
+- the comparison does not inspect or mutate occupancy, select a route, enqueue
+  movement, create Regions, cache snapshots, or write map/database state; and
+- Packed Regions and all legacy movement decisions remain authoritative.
+
+Focused findings:
+
+- an all-open route and a route containing a shared logical/packed block retain
+  exact whole-route decisions and stable first-block indices;
+- a synthetic logical/packed mismatch identifies the first passability and
+  reason mismatch while preserving full step-level evidence;
+- an unavailable packed step keeps logical route passability but makes packed
+  and whole-route comparability explicitly unavailable; and
+- empty, oversized, discontinuous, duplicate, non-adjacent, level-changing,
+  world-space-changing, and null routes are refused at their owning boundary.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-thirty-four.py` — 2 tests
+  passed;
+- Slice 1 through Slice 34 regressions all pass (82 tests), including updated
+  exact coordinate-package consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 742 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content, 211 classified source owners, and one unresolved normalized
+  coordinate. The expected fingerprints are source
+  `ea2308ecca0e858924ed8ed5159e33071673575cf349f2f33a36437f136a4bea`,
+  inventory
+  `9a1c393aed09ee7e8790f1353c78619bc59a8ecceab40e33e1e19b96cd7b67a3`,
+  classification
+  `fe9ccb21ac8780b54db314cd3c70d6ba8e500ac7e64052dec2bdbc401d3fa4e4`,
+  and occurrence
+  `c706847eadc500b3db75554384e15a9a5624298625500c47493db162494b6af2`.
+
+No owner runtime route is required because the projection remains dormant. A
+separately versioned private diagnostic adoption is the next owner-testable
+boundary.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -4172,12 +4244,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 31 by emitting bounded 3×3 neighborhood counts through additive private v7 diagnostics without tile payloads or gameplay adoption. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 32 by comparing one adjacent logical and packed tile-mask decision without changing PathValidation or movement authority. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 33 by emitting all eight adjacent tile-mask comparisons through additive private v8 diagnostics without changing movement authority. | Implemented and owner-validated |
+| 2026-07-19 | Continue with Slice 34 by composing adjacent tile-mask comparisons across one explicit bounded route without selecting or executing a path. | Implemented and validated |
 
 ## Next Discussion
 
-Audit the legacy multi-step route and `PathValidation` collision boundaries,
-then define the smallest detached layered traversal comparison that can reuse
-the validated adjacent-step projection without changing route selection or
-movement authority. A new database schema, authoritative region storage,
-actual collision/pathing adoption, client/protocol adoption, Builder, export,
-relocation, and level `-2` remain separately gated.
+Complete Slice 34's focused and full automated gates, then add only bounded
+recent observed-route summaries to the opt-in private diagnostics so an owner
+can correlate real walking segments with the dormant comparison. A new
+database schema, authoritative region storage, actual collision/pathing
+adoption, client/protocol adoption, Builder, export, relocation, and level
+`-2` remain separately gated.

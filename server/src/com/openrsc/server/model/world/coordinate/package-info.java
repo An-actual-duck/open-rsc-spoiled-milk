@@ -43,7 +43,8 @@
  * private diagnostic events. Slice 32 compares one dormant adjacent logical
  * and packed tile-mask decision without changing movement or PathValidation.
  * Slice 33 emits all eight such comparisons only through bounded opt-in
- * private diagnostics. Packed storage and existing runtime decisions remain
- * authoritative.</p>
+ * private diagnostics. Slice 34 composes the same dormant decision across an
+ * already expanded, bounded adjacent-step route without selecting or executing
+ * a path. Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

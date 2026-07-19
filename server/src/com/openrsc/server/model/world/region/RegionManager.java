@@ -690,6 +690,55 @@ public class RegionManager {
 		return Collections.unmodifiableList(comparisons);
 	}
 
+	/**
+	 * Compares an already expanded adjacent-step route without selecting,
+	 * mutating, or executing a Path. Existing movement remains authoritative.
+	 */
+	public LayeredTraversalCollisionComparison compareLayeredTraversalCollision(
+		final List<WorldLocation> route) {
+		if (route == null) {
+			throw new NullPointerException("route");
+		}
+		if (route.size() < 2
+			|| route.size() > LayeredTraversalCollisionComparison.MAXIMUM_STEP_COUNT + 1) {
+			throw new IllegalArgumentException(
+				"Layered traversal route must contain 2-"
+					+ (LayeredTraversalCollisionComparison.MAXIMUM_STEP_COUNT + 1)
+					+ " locations");
+		}
+		List<LayeredAdjacentStepCollisionComparison> comparisons =
+			new ArrayList<LayeredAdjacentStepCollisionComparison>(route.size() - 1);
+		WorldLocation source = route.get(0);
+		if (source == null) {
+			throw new NullPointerException("route[0]");
+		}
+		for (int index = 1; index < route.size(); index++) {
+			WorldLocation destination = route.get(index);
+			if (destination == null) {
+				throw new NullPointerException("route[" + index + "]");
+			}
+			if (!source.getWorldSpace().equals(destination.getWorldSpace())
+				|| source.getCoordinate().getLevel()
+					!= destination.getCoordinate().getLevel()) {
+				throw new IllegalArgumentException(
+					"Layered traversal steps cannot change world-space or level");
+			}
+			int offsetX = Math.subtractExact(
+				destination.getCoordinate().getX(), source.getCoordinate().getX());
+			int offsetY = Math.subtractExact(
+				destination.getCoordinate().getY(), source.getCoordinate().getY());
+			if (offsetX < -1 || offsetX > 1 || offsetY < -1 || offsetY > 1
+				|| (offsetX == 0 && offsetY == 0)) {
+				throw new IllegalArgumentException(
+					"Layered traversal route must contain adjacent, distinct locations");
+			}
+			comparisons.add(compareLayeredAdjacentStepCollision(
+				source, offsetX, offsetY));
+			source = destination;
+		}
+		return LayeredTraversalCollisionComparison.of(comparisons);
+	}
+
 	private LayeredTileStateParityComparison compareLayeredTileState(
 		final WorldLocation logicalLocation,
 		final LayeredRegionTileSnapshot snapshot) {
