@@ -1,15 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-13 implemented and validated on
-the active refinement branch; Slice 14 automated validation complete and
-private persistence round trip pending
+Status: architecture design complete; Slices 1-14 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 14 checked legacy Player persistence shadow; packed
-database X/Y remain authoritative and no schema or world conversion has begun
+Current milestone: Slice 14 checked legacy Player persistence shadow accepted;
+packed database X/Y remain authoritative and no schema or world conversion has
+begun
 
 ## Purpose
 
@@ -2406,8 +2406,9 @@ Safety boundary:
   level `-2`, signed legacy X, or non-global world spaces;
 - asynchronous save captures `player.getLocation()` once and does not risk a
   false mismatch by separately sampling the moving Player mirror; and
-- no database row, terrain, placement, archive, client, packet, public server,
-  or live process is changed by the implementation.
+- no automatic migration changes a database row, and no terrain, placement,
+  archive, client, packet, public server, or live process is changed by the
+  implementation.
 
 Automated validation evidence:
 
@@ -2433,8 +2434,21 @@ Automated validation evidence:
   and occurrence
   `546732da2a27273ab56a0a8a0c1d5a9242fa9f83ced3df4d785292870357c414`.
 
-A copied/private underground save and reconnect remains the owner-visible gate
-before Slice 14 is fully accepted.
+Owner runtime acceptance is complete:
+
+- the owner teleported the private `devduck` account to packed `(216,3300)`,
+  started parity observation, logged out normally, and reconnected without
+  leaving the underground location;
+- the five-event trace contained start, logout, login, snapshot, and stop in
+  order, and every event retained packed `(216,3300)`, layered
+  `(216,468,-1)`, logical region `(4,9)`, and exact round-trip status;
+- a read-only query after reconnect confirmed private SQLite player row `1`
+  stores X `216`, Y `3300`; and
+- the owner reported no visual, location, login, logout, or reconnect issue.
+
+The private test changed only the normal saved location of the disposable dev
+account through the existing logout save. It did not migrate a schema or row,
+and no public/live data was accessed.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -2535,12 +2549,13 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 11 as a doubly opt-in, dev-only private runtime parity observer with stable JSONL movement/session capture while packed `Player` state remains authoritative. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 12 by maintaining a checked read-only layered mirror on Player initialization, movement, and session transitions while inherited packed Point remains the sole gameplay authority. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 13 by maintaining checked world-space/level-qualified Player region membership alongside the accepted location mirror while packed RegionManager storage remains authoritative. | Implemented and owner-validated |
-| 2026-07-18 | Continue with Slice 14 by projecting each loaded/saved legacy Player location through a checked immutable layered persistence snapshot while retaining the exact X/Y database contract. | Implemented; automated validation passed; private underground save/reconnect pending |
+| 2026-07-18 | Continue with Slice 14 by projecting each loaded/saved legacy Player location through a checked immutable layered persistence snapshot while retaining the exact X/Y database contract. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Finish Slice 14 automated validation, then exercise one copied/private save and
-load round trip at an underground location. Do not advance into a new database
-schema, authoritative region storage, client/protocol adoption, streaming,
-Builder, export, relocation, or level `-2` before this persistence gate is
-reviewed.
+Choose the first reversible incremental-streaming foundation now that the
+unchanged legacy persistence path has passed its parity gate. A logical,
+level-qualified visibility-window shadow is the leading candidate because it
+can model future interest/residency without querying or replacing packed region
+storage. A new database schema, authoritative region storage, client/protocol
+adoption, Builder, export, relocation, and level `-2` remain separately gated.
