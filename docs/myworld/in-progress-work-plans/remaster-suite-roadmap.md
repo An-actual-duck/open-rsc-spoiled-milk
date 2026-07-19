@@ -1077,3 +1077,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Complete the twenty-ninth Layered Maps foundation checkpoint: expose bounded current-tile packed/logical parity through opt-in private v6 diagnostics. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-19 | Complete the thirtieth Layered Maps foundation checkpoint: compare one checked 3×3 logical tile neighborhood with current packed sources without gameplay adoption. | Implemented and validated in the layered-world plan |
 | 2026-07-19 | Add bounded 3×3 neighborhood counts to opt-in private v7 parity diagnostics without tile payloads or gameplay adoption. | Slice 31 implemented and owner-validated in the layered-world plan |
+| 2026-07-19 | Compare one adjacent logical and packed tile-mask decision while retaining PathValidation and movement authority. | Slice 32 implemented and validated in the layered-world plan |

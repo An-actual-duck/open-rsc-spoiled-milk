@@ -1,15 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-31 implemented and validated on
+Status: architecture design complete; Slices 1-32 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 31 bounded private 3×3 tile-neighborhood diagnostics
-owner-validated; packed region lookup and collision remain authoritative and no
-client streaming or world conversion has begun
+Current milestone: Slice 32 dormant adjacent-step collision projection complete;
+packed region lookup, `PathValidation`, movement, and collision remain
+authoritative and no client streaming or world conversion has begun
 
 ## Purpose
 
@@ -3866,6 +3866,97 @@ Owner runtime acceptance completed on 2026-07-19 from checkpoint
 
 Slice 31 is owner-validated. Packed Regions and collision remain authoritative.
 
+### Slice 32: Dormant adjacent-step collision projection
+
+Objective: use the proven immutable 3×3 neighborhood to compare one
+orthogonal or diagonal tile-mask decision between logical snapshot states and
+their current direct packed states, without moving a Player or changing
+pathfinding.
+
+Selected boundary:
+
+- accept exactly one of the eight offsets in `-1..+1`, rejecting `(0,0)` and
+  non-adjacent coordinates;
+- mirror the tile-mask portion of the current adjacent walking rules, including
+  current/side/destination walls, full blocks, diagonal walls, and the legacy
+  diagonal pass-through lookups;
+- preserve the current northwest pass-through auxiliary lookup at offset
+  `(+1,+1)` as parity behavior rather than silently correcting it during the
+  coordinate migration;
+- report logical and packed decision availability, nullable passability,
+  blocking reason, required cell count, exact required-state count,
+  passability parity, and blocking-reason parity; and
+- explicitly exclude Player/NPC occupancy, NPC-specific scenery enumeration,
+  projectile checks, path selection, movement acceptance, and all authoritative
+  `PathValidation` consumers.
+
+Implemented:
+
+- immutable `LayeredAdjacentStepCollisionComparison` with checked source,
+  destination, direction, fixed required-cell selection, and stable blocking
+  reasons;
+- independent logical-snapshot and direct-packed evaluations over full current
+  traversal masks, which already include terrain and dynamic scenery collision;
+- explicit unavailable results for unsupported logical cells or absent packed
+  source Regions instead of substituting a false pass/fail decision; and
+- read-only RegionManager entry points for packed `Point` and explicit
+  `WorldLocation`, built only from the dormant Slice 30 neighborhood, plus an
+  immutable eight-direction batch that reuses one detached neighborhood.
+
+Safety boundary:
+
+- the new comparison has no Player, Mob, `PathValidation`, packet, script,
+  movement, pathfinding, or collision consumer;
+- it does not enumerate occupants and cannot authorize or reject an actual
+  movement step;
+- it uses non-creating packed Region lookups inherited through the detached
+  neighborhood comparison; and
+- no database, map, placement, archive, client, Builder project, public server,
+  or live data is changed.
+
+Focused findings:
+
+- all eight directions remain passable with exact logical/packed decisions and
+  reasons over an open synthetic 3×3 neighborhood;
+- cardinal steps require two fixed cells, ordinary diagonals require four, and
+  the legacy northwest direction explicitly retains its fifth auxiliary
+  `(+1,+1)` lookup;
+- matching current-wall and destination-full-block fixtures produce stable
+  blocked reasons, while a changed packed traversal mask is detected as a
+  passability mismatch;
+- changing only elevation leaves passability/reason parity exact while still
+  exposing that the required full tile states differ;
+- an absent packed Region keeps the logical decision available but makes the
+  packed decision explicitly unavailable, while level `-2` makes both sides
+  unavailable under the legacy adapter; and
+- the immutable eight-direction RegionManager batch reuses exactly one detached
+  neighborhood rather than assembling it eight times.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-thirty-two.py` — 2 tests
+  passed;
+- Slice 1 through Slice 32 regressions all pass (78 tests), including updated
+  exact coordinate-package consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 741 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content, 211 classified source owners, and one unresolved normalized
+  coordinate. The expected fingerprints are source
+  `3dd278a67388dc5fe7d75ced03a3782fc980d16b5877f46e7a2cb64a0be56b22`,
+  inventory
+  `cf0d4b69282a1eabef26bfa3c61227cebce73d558f3e6554aa4c873442b351dd`,
+  classification
+  `1ee922292a5b3de8b16428e4e02a58b988d3b4e8ed4673c186492675cbc6cc74`,
+  and occurrence
+  `8f40b8d89ff28ded57c4ac6495ef50839b77fe01975a2855e1f8d94e5a1cc185`.
+
+No owner runtime route is required because the comparison remains dormant. A
+separately versioned private diagnostic adoption is the next owner-testable
+boundary.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3983,14 +4074,15 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 29 by emitting bounded current-tile packed/logical parity metadata through additive private v6 diagnostics. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 30 by comparing a checked 3×3 logical tile neighborhood with its current direct packed sources without collision or pathing adoption. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 31 by emitting bounded 3×3 neighborhood counts through additive private v7 diagnostics without tile payloads or gameplay adoption. | Implemented and owner-validated |
+| 2026-07-19 | Continue with Slice 32 by comparing one adjacent logical and packed tile-mask decision without changing PathValidation or movement authority. | Implemented and validated |
 
 ## Next Discussion
 
-Slice 31 is owner-validated. The recommended next discussion is a separately
-gated Slice 32 dormant adjacent-step collision projection: use the proven 3×3
-immutable neighborhood to describe one orthogonal or diagonal step and compare
-that prospective logical result with the existing packed collision decision,
-without allowing the new projection to move a Player or alter pathfinding. A
-new database schema, authoritative region storage, actual collision/pathing
-adoption, client/protocol adoption, Builder, export, relocation, and level
-`-2` remain separately gated.
+Proceed with a separately versioned Slice 33 private diagnostic adoption of all
+eight adjacent tile-mask comparisons. Preserve every v7 field; sample only
+start, marker, teleport, and stop; reuse one neighborhood per event; emit
+direction, destination, availability, nullable passability/reason, required
+state counts, and exactness without tile masks or payloads. A new database
+schema, authoritative region storage, actual collision/pathing adoption,
+client/protocol adoption, Builder, export, relocation, and level `-2` remain
+separately gated.

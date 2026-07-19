@@ -40,7 +40,8 @@
  * private diagnostics. Slice 30 extends the dormant comparison across one
  * checked 3x3 tile neighborhood without collision or pathing adoption. Slice
  * 31 exposes only that neighborhood's bounded counts through selected opt-in
- * private diagnostic events. Packed storage and existing runtime decisions
- * remain authoritative.</p>
+ * private diagnostic events. Slice 32 compares one dormant adjacent logical
+ * and packed tile-mask decision without changing movement or PathValidation.
+ * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

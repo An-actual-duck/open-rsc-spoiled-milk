@@ -634,6 +634,62 @@ public class RegionManager {
 			logicalCenter, cells);
 	}
 
+	/**
+	 * Compares one dormant adjacent tile-mask decision around a packed center.
+	 * Existing movement and PathValidation remain authoritative.
+	 */
+	public LayeredAdjacentStepCollisionComparison
+		compareLayeredAdjacentStepCollision(
+			final Point packedCenter,
+			final int offsetX,
+			final int offsetY) {
+		return compareLayeredAdjacentStepCollision(
+			LegacyPackedPointAdapter.fromLegacyPoint(packedCenter),
+			offsetX,
+			offsetY);
+	}
+
+	/**
+	 * Compares logical and direct packed tile-mask decisions without moving a
+	 * Player, changing a path, or creating a Region.
+	 */
+	public LayeredAdjacentStepCollisionComparison
+		compareLayeredAdjacentStepCollision(
+			final WorldLocation logicalCenter,
+			final int offsetX,
+			final int offsetY) {
+		return LayeredAdjacentStepCollisionComparison.of(
+			compareLayeredTileNeighborhood(logicalCenter), offsetX, offsetY);
+	}
+
+	/**
+	 * Compares all eight adjacent directions while reusing one detached 3x3
+	 * neighborhood. Results are row-major with the center omitted.
+	 */
+	public List<LayeredAdjacentStepCollisionComparison>
+		compareLayeredAdjacentStepCollisions(final Point packedCenter) {
+		return compareLayeredAdjacentStepCollisions(
+			LegacyPackedPointAdapter.fromLegacyPoint(packedCenter));
+	}
+
+	/** Returns an immutable eight-direction comparison without persistent cache. */
+	public List<LayeredAdjacentStepCollisionComparison>
+		compareLayeredAdjacentStepCollisions(final WorldLocation logicalCenter) {
+		LayeredTileNeighborhoodParityComparison neighborhood =
+			compareLayeredTileNeighborhood(logicalCenter);
+		List<LayeredAdjacentStepCollisionComparison> comparisons =
+			new ArrayList<LayeredAdjacentStepCollisionComparison>(8);
+		for (int offsetY = -1; offsetY <= 1; offsetY++) {
+			for (int offsetX = -1; offsetX <= 1; offsetX++) {
+				if (offsetX != 0 || offsetY != 0) {
+					comparisons.add(LayeredAdjacentStepCollisionComparison.of(
+						neighborhood, offsetX, offsetY));
+				}
+			}
+		}
+		return Collections.unmodifiableList(comparisons);
+	}
+
 	private LayeredTileStateParityComparison compareLayeredTileState(
 		final WorldLocation logicalLocation,
 		final LayeredRegionTileSnapshot snapshot) {
