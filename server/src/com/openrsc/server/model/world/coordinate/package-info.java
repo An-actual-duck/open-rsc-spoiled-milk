@@ -25,7 +25,9 @@
  * logical window without querying regions or adopting either result. Slice 21
  * permits that comparison only in bounded private diagnostics. Slice 22
  * partitions one packed cell into exact contiguous logical tile fragments
- * without reading or replacing runtime Region storage.
+ * without reading or replacing runtime Region storage. Slice 23 inverts those
+ * fragments into complete, partial, or unsupported legacy assembly plans for
+ * one logical key without copying runtime tiles.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

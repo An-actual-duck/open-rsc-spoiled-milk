@@ -252,6 +252,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
     def test_server_package_contains_only_the_approved_staged_boundary(self):
         self.assertEqual(
             {
+                "LegacyLogicalRegionAssembly.java",
                 "LegacyPackedPointAdapter.java",
                 "LegacyPackedRegionCoverage.java",
                 "LegacyPackedRegionPartition.java",
@@ -309,6 +310,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
             ]
             self.assertEqual(
                 [
+                    "server/src/com/openrsc/server/model/world/coordinate/LegacyLogicalRegionAssembly.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedPointAdapter.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedRegionCoverage.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedRegionPartition.java",

@@ -232,6 +232,13 @@ tile count. Level straddles, same-level upper-plane misalignment, terminal
 partial cells, and empty padding therefore have deterministic lossless split
 plans without reading or replacing a runtime `Region` or its tile grid.
 
+`LegacyLogicalRegionAssembly` inverts those fragments for one requested
+logical region key. It retains nominal 48×48 target bounds separately from the
+legacy-supported intersection and reports the ordered packed source cells,
+assembled tile count, and complete/partial/unsupported status. Negative space,
+new signed levels, isolated world spaces, and terminal legacy edges stay
+explicit instead of being clamped or assigned invented packed sources.
+
 `LegacyPackedVisibilityCoverageComparison` unions that coverage across the
 current packed candidate window and compares it with the intended signed
 logical window. It keeps expected, covered, missing, extra, and unsupported
