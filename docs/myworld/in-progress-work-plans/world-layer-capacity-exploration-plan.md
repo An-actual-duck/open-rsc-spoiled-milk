@@ -1,16 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-17 implemented and validated;
-Slice 18 is implemented and automated-valid, with private owner validation
-pending on the active refinement branch
+Status: architecture design complete; Slices 1-18 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 18 private owner validation of logical interest-delta
-diagnostics; packed region lookup and caches remain authoritative and no client
-streaming or world conversion has begun
+Current milestone: Slice 18 private logical interest-delta diagnostics accepted;
+packed region lookup and caches remain authoritative and no client streaming or
+world conversion has begun
 
 ## Purpose
 
@@ -2739,9 +2738,28 @@ Automated validation evidence:
   and occurrence
   `60b2e4e975e11528c755e4c0127f6094b0b9fff2cdc5c07cd6471e535913bc7d`.
 
-Owner validation will repeat the accepted boundary and level-change route on
-the private server, then inspect the v3 delta counts and changed-key lists
-before this slice is accepted.
+Owner runtime acceptance is complete:
+
+- the owner started at packed `(222,620)`, traversed X `223→224→223`, then
+  teleported through surface packed `(216,468)` and underground packed
+  `(216,3300)` before snapshot and stop;
+- the 13-event v3 session was sequential and every point round-tripped exactly,
+  with all count identities and entered/exited array lengths consistent;
+- X `222→223` was a true no-op interest transition: 42 previous, current, and
+  retained keys with zero entered/exited keys;
+- X `223→224` retained 36 and exited exactly level-0 keys `(1,10..15)`;
+  returning to X `223` re-entered those same six keys with none exited;
+- the longer same-level teleport retained 21, entered 21, and exited 21 keys in
+  deterministic X-major/Y-minor order; and
+- the surface-to-underground transition retained zero, exited all 42 level-0
+  keys, entered the corresponding 42 level-`-1` keys, and marked only the level
+  identity as changed. The owner reported no visual, loading, movement,
+  teleport, or interaction issue.
+
+Only the private development server and disposable dev account were involved.
+No public/live server, database, map, placement, archive, or player data was
+accessed or changed by this validation beyond the dev account's normal
+location update.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -2846,11 +2864,11 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 15 by defining a level-qualified logical visibility window and read-only RegionManager projection while retaining packed lookup, caches, and client behavior. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 16 by maintaining a checked Player visibility-window shadow and adding versioned private trace evidence while retaining packed lookup, caches, and client behavior. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 17 by defining a deterministic, allocation-budgeted logical interest delta while retaining packed lookup, caches, packets, and client behavior. | Implemented and validated |
-| 2026-07-18 | Continue with Slice 18 by emitting bounded logical interest deltas only through versioned private diagnostics while retaining all current interest and residency authorities. | Implemented and automated-valid; owner validation pending |
+| 2026-07-18 | Continue with Slice 18 by emitting bounded logical interest deltas only through versioned private diagnostics while retaining all current interest and residency authorities. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Complete the private interest-delta diagnostic and owner route before selecting
-the next reversible seam. A new database schema, authoritative region storage,
+Select the next reversible parity seam before any authoritative interest or
+residency adoption. A new database schema, authoritative region storage,
 client/protocol adoption, Builder, export, relocation, and level `-2` remain
 separately gated.
