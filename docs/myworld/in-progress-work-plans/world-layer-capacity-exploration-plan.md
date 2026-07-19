@@ -1,16 +1,17 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-43 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-43 implemented and validated,
+with the Slice 44 concurrent-owner private-runtime gate prepared on the active
+refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 43 has owner-validated the dormant Region retirement
-projection through additive opt-in private diagnostics while packed Region
-lookup, eager loading, release, eviction, pathing, packets, and persistence
-remain authoritative and unchanged
+Current milestone: Slice 44 will validate the dormant Region retirement
+projection with two simultaneous real Player owners before any source-level
+retirement arbiter is considered; packed Region lookup, eager loading, release,
+eviction, pathing, packets, and persistence remain authoritative and unchanged
 
 ## Purpose
 
@@ -4923,6 +4924,70 @@ Owner validation evidence:
 - the owner completed the route without reporting a visual or functional
   regression.
 
+### Slice 44: Concurrent-owner private-runtime gate
+
+Objective: prove with two simultaneous real Player sessions that overlapping
+logical interest remains pinned until the final owner releases it, then prove
+the existing cooldown, expiry, and reacquisition behavior. This is a validation
+gate over Slices 39-43, not adoption of a Region loader or retirement arbiter.
+
+Why the gate uses real clients:
+
+- each login receives the normal checked opaque Player-session owner and
+  exercises the actual login, movement-window, logout, and global ownership
+  paths;
+- the primary observer can read the process-global reference totals after the
+  second session acquires and releases the same Regions; and
+- no synthetic owner, diagnostic mutation command, or privileged test-only
+  lifecycle path can accidentally become a second source of authority.
+
+Private test contract:
+
+1. Start the trace on the primary development account at the normal Lumbridge
+   spawn window before the second account logs in, and mark `single-owner`.
+2. Log a new or disposable non-privileged account into the same private server;
+   its normal spawn must overlap the primary window. Mark `shared-two` from the
+   primary account.
+3. Log the second account out normally while the primary account stays in
+   place. Mark `shared-release` from the primary account.
+4. Move the primary account directly to Varrock and mark `final-release`. This
+   must create global `1 -> 0` releases for Regions that were shared rather
+   than doing so when the second account left.
+5. Wait longer than the 16-tick grace and mark `final-expired`.
+6. Move the primary account directly back to Lumbridge, mark `reacquired`, and
+   stop the trace.
+
+Acceptance evidence:
+
+- `single-owner` reports reference count one for the primary window;
+- `shared-two` reports reference count two for the overlapping Regions;
+- `shared-release` returns those Regions to reference count one and does not
+  start their retirement cooldown;
+- `final-release` reports the final global release and begins cooldown only
+  after the primary owner leaves;
+- `final-expired` reports resident supported candidates eligible only after
+  the exact grace period, retaining conservative unsupported states;
+- `reacquired` reports entered Regions pinned with positive references and null
+  release/eligibility timestamps;
+- owner-local/global aggregate arithmetic, retirement-state counts, sequence,
+  coordinate round trips, and v12 schema validation all pass; and
+- both clients remain visually and functionally normal throughout the route.
+
+Safety and operation:
+
+- use only the existing private `localhost:43615` server with
+  `OPENRSC_LAYERED_MAP_PARITY_OBSERVER=true`; never involve the hosted port;
+- preserve the existing trace by archiving it before the new trace starts;
+- the secondary account needs no staff rights, commands, database mutation, or
+  saved-state preparation because the normal new-account spawn supplies the
+  overlap;
+- use `::goto lumbridge` and `::goto varrock` explicitly rather than
+  `::return`, whose saved destination can make the route ambiguous; and
+- if the two spawn windows are not truly identical, analyze exact overlapping
+  keys rather than treating aggregate minimum/maximum values as proof.
+
+Status: prepared; owner validation pending.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -5052,13 +5117,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 41 by emitting bounded Player interest-owner and global/shared reference transitions through opt-in private v11 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 42 by projecting global interest releases through a conservative 16-tick retirement cooldown without adopting loading, retention, release, or eviction. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 43 by exposing bounded transition and recent-release cooldown evidence through opt-in private v12 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
+| 2026-07-19 | Continue with Slice 44 as a two-real-client private-runtime gate proving shared acquisition, partial release, final global release, cooldown, expiry, and reacquisition before considering a retirement arbiter. | Prepared; owner validation pending |
 
 ## Next Discussion
 
-The next bounded slice should exercise two simultaneous overlapping logical
-interest owners in the private runtime and capture shared acquisition, shared
-release, last global release, cooldown, and reacquisition. That gate must pass
-before any source-level retirement arbiter can consume eligibility.
+Complete the prepared Slice 44 two-client private-runtime gate and analyze its
+v12 trace. That gate must pass before any source-level retirement arbiter can
+consume eligibility.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.
