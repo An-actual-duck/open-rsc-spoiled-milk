@@ -1,16 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-35 validated on the active
+Status: architecture design complete; Slices 1-36 validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 35 bounded private recent-traversal diagnostics is
-owner-validated; packed region lookup, `PathValidation`, route selection,
-movement, and collision remain authoritative and no client streaming or world
-conversion has begun
+Current milestone: Slice 36 maintains a checked, versioned logical view of
+packed Region residency; packed Region and tile lookup, `PathValidation`, route
+selection, movement, and collision remain authoritative and no client streaming
+or world conversion has begun
 
 ## Purpose
 
@@ -4220,6 +4220,91 @@ Owner runtime validation evidence:
   packed passability, reason, and required-state parity. Slice 35 is owner-
   validated.
 
+### Slice 36: Checked logical Region residency mirror
+
+Objective: establish the smallest synchronized logical Region lifecycle view
+needed by future streaming work without caching mutable tile/collision payloads
+or replacing current packed Region lookup.
+
+Authoritative mutation and lifecycle audit:
+
+- `RegionManager.getRegionFromSectorCoordinates(...)` is the only constructor
+  path for runtime `Region` objects, and `RegionManager.unload()` is the only
+  removal path; the one external `getRegions()` consumer only enumerates
+  scenery for hourly reset;
+- terrain initialization mutates tile fields and collision state through
+  `WorldLoader`, while runtime scenery, boundary, and projectile changes flow
+  through `World.getMutableTile(...)`; the in-game terrain editor additionally
+  changes elevation, overlay, wall identity, terrain collision, and projectile
+  state;
+- uniform-region compression and later mutable expansion change tile storage
+  representation without changing Region residency; and
+- because `TileValue` remains deliberately mutable and some loader/editor
+  fields are public, a persistent logical tile cache would need a separately
+  approved comprehensive mutation/invalidation boundary. This slice therefore
+  retains no `TileValue`, collision mask, entity, or visibility payload.
+
+Implemented:
+
+- a synchronized `LayeredRegionResidencyMirror` that indexes each packed Region
+  lifecycle claim by every supported `WorldRegionKey` it overlaps;
+- immutable per-key snapshots with explicit mirror version, ordered packed
+  source contributions, target/supported/resident tile counts, missing-source
+  counts, legacy completeness, and residency state;
+- support for idempotent registration/removal, packed-only out-of-codec Region
+  cells, split packed/logical boundaries, partial terminal logical regions,
+  unsupported future levels/world spaces, and full unload clearing; and
+- RegionManager lifecycle wiring under one lock plus a checked read-only query
+  that compares every reported source with the authoritative packed Region map.
+
+Safety boundary:
+
+- `getTile(...)`, `getMutableTile(...)`, `PathValidation`, movement, collision,
+  visibility caches, and entity membership continue to use packed Regions;
+- residency queries never create a Region and the mirror never stores or reads
+  tile, collision, scenery, player, NPC, item, or packet state;
+- the mirror version changes only for actual Region lifecycle changes, making
+  snapshot freshness explicit rather than implied; and
+- per-Region removal is modeled for future streaming but is not adopted by the
+  current eager world lifecycle.
+
+Focused findings:
+
+- logical upper-floor Region `(1,4,0)` correctly requires fragments from packed
+  Regions `(4,19)` and `(4,20)`, exposes partial residency after the first is
+  present, and becomes fully resident after the second;
+- terminal underground Region `(-1,682,19)` distinguishes its 1,024 supported
+  and resident tiles from its incomplete 2,304-tile logical target;
+- level `-2` retains zero fabricated legacy sources and cannot report resident;
+  and
+- duplicate lifecycle notifications are no-ops, individual removal updates the
+  affected logical claims, and full clear leaves no stale packed or logical
+  entries.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-thirty-six.py` — 2 tests pass
+  for the lifecycle mirror and its non-authoritative RegionManager boundary;
+- Slice 1 through Slice 36 regressions all pass (86 tests), including the
+  updated exact staged-contract inventories;
+- World Builder discovery passes 13 tests and the standalone-layout guard
+  passes;
+- the authoritative bundled-Ant build succeeds for 743 core and 488 plugin
+  sources;
+- two real-repository normalizations are byte-stable with unchanged world
+  content, 211 classified source owners, and one unresolved normalized
+  coordinate. The expected fingerprints are source
+  `4ee7fb0260039d4ecdd9fe4c4356995a35accd0a6bea264c94d93c9498577c5c`,
+  inventory
+  `5d330294de99d5516836157a33c0f203a9cda5b2749d9b6b8b35bbd79d575964`,
+  classification
+  `5dfc35786421ced830aea0da2b20c58ad75541bb4a7cda718a7f9a58e4116f79`,
+  and occurrence
+  `3a1611dd5a89feff83cc88e85123f749485c50ab072510bea6b85a37bd83824e`.
+
+No owner runtime route is required because the mirror remains dormant and has
+no visual, movement, collision, packet, or persistence consumer.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -4341,12 +4426,12 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 33 by emitting all eight adjacent tile-mask comparisons through additive private v8 diagnostics without changing movement authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 34 by composing adjacent tile-mask comparisons across one explicit bounded route without selecting or executing a path. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 35 by emitting the latest bounded ordinary walking segment through additive private v9 diagnostics without changing path authority. | Implemented and owner-validated |
+| 2026-07-19 | Continue with Slice 36 by mirroring packed Region lifecycle as checked, versioned logical residency without caching tiles or changing lookup/path authority. | Implemented and validated |
 
 ## Next Discussion
 
-Inventory authoritative tile/collision mutation and cache-invalidation paths,
-then define the smallest checked logical-region residency mirror that can stay
-synchronized without changing packed Region lookup or `PathValidation`.
-A new database schema, authoritative region storage, actual collision/pathing
-adoption, client/protocol adoption, Builder, export, relocation, and level
-`-2` remain separately gated.
+Define the smallest dormant logical-region load/unload request projection that
+can consume Slice 36 residency snapshots without performing eviction or
+changing current eager world loading. A new database schema, authoritative
+region storage, actual collision/pathing adoption, client/protocol adoption,
+Builder, export, relocation, and level `-2` remain separately gated.

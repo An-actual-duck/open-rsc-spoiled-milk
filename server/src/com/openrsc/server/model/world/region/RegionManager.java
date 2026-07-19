@@ -15,6 +15,7 @@ import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionCoverage;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionPartition;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
+import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
@@ -39,6 +40,8 @@ public class RegionManager {
 	private final ConcurrentHashMap<Long, VisibleObjectSnapshot> visibleObjectSnapshotCache;
 	private final ConcurrentHashMap<Long, Set<Long>> visibleObjectSnapshotKeysByRegion;
 	private final AtomicLong visibleObjectSnapshotSequence;
+	private final Object layeredRegionLifecycleLock;
+	private final LayeredRegionResidencyMirror layeredRegionResidencyMirror;
 
 	private final World world;
 
@@ -51,6 +54,8 @@ public class RegionManager {
 		this.visibleObjectSnapshotCache = new ConcurrentHashMap<>();
 		this.visibleObjectSnapshotKeysByRegion = new ConcurrentHashMap<>();
 		this.visibleObjectSnapshotSequence = new AtomicLong();
+		this.layeredRegionLifecycleLock = new Object();
+		this.layeredRegionResidencyMirror = new LayeredRegionResidencyMirror();
 	}
 
 	public void load() {
@@ -59,12 +64,15 @@ public class RegionManager {
 	}
 
 	public void unload() {
-		for (final ConcurrentHashMap<Integer, Region> yRegionList : regions.values()) {
-			for (final Region region : yRegionList.values()) {
-				region.unload();
+		synchronized (layeredRegionLifecycleLock) {
+			for (final ConcurrentHashMap<Integer, Region> yRegionList : regions.values()) {
+				for (final Region region : yRegionList.values()) {
+					region.unload();
+				}
 			}
+			regions.clear();
+			layeredRegionResidencyMirror.clear();
 		}
-		regions.clear();
 		visibleRegionWindowCache.clear();
 		visibleObjectWindowCache.clear();
 		visibleObjectWindowKeysByRegion.clear();
@@ -455,16 +463,27 @@ public class RegionManager {
 	}
 
 	private Region getRegionFromSectorCoordinates(final int regionX, final int regionY) {
-		// Create a new HashMap if it doesn't exist.
-		if (!getRegions().containsKey(regionX)) {
-			getRegions().put(regionX, new ConcurrentHashMap<>());
+		ConcurrentHashMap<Integer, Region> yRegions = regions.get(regionX);
+		Region region = yRegions == null ? null : yRegions.get(regionY);
+		if (region != null) {
+			return region;
 		}
-
-		if (!getRegions().get(regionX).containsKey(regionY)) {
-			getRegions().get(regionX).put(regionY, new Region(this, regionX, regionY));
+		// Region construction and logical-residency registration are one lifecycle
+		// boundary. Existing Region and tile lookup remain packed and authoritative.
+		synchronized (layeredRegionLifecycleLock) {
+			yRegions = regions.get(regionX);
+			if (yRegions == null) {
+				yRegions = new ConcurrentHashMap<Integer, Region>();
+				regions.put(regionX, yRegions);
+			}
+			region = yRegions.get(regionY);
+			if (region == null) {
+				region = new Region(this, regionX, regionY);
+				yRegions.put(regionY, region);
+				layeredRegionResidencyMirror.registerPackedRegion(regionX, regionY);
+			}
+			return region;
 		}
-
-		return getRegions().get(regionX).get(regionY);
 	}
 
 	public Region getRegion(final int x, final int y) {
@@ -525,6 +544,28 @@ public class RegionManager {
 	public LegacyLogicalRegionAssembly getLegacyLogicalRegionAssembly(
 		final WorldRegionKey logicalRegionKey) {
 		return LegacyLogicalRegionAssembly.fromLogicalRegionKey(logicalRegionKey);
+	}
+
+	/**
+	 * Returns a checked, versioned logical view of current packed Region
+	 * residency. No Region is created and no tile or collision state is cached.
+	 */
+	public LayeredRegionResidencyMirror.Snapshot
+		getLayeredRegionResidencySnapshot(final WorldRegionKey logicalRegionKey) {
+		synchronized (layeredRegionLifecycleLock) {
+			LayeredRegionResidencyMirror.Snapshot snapshot =
+				layeredRegionResidencyMirror.snapshot(logicalRegionKey);
+			for (LayeredRegionResidencyMirror.SourceResidency source
+				: snapshot.getSources()) {
+				boolean packedResident = peekRegionFromSectorCoordinates(
+					source.getPackedRegionX(), source.getPackedRegionY()) != null;
+				if (packedResident != source.isResident()) {
+					throw new IllegalStateException(
+						"Layered Region residency mirror differs from packed storage");
+				}
+			}
+			return snapshot;
+		}
 	}
 
 	/**
