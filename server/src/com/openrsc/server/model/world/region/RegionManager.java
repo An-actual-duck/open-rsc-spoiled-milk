@@ -10,6 +10,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionCoverage;
+import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
@@ -496,6 +497,20 @@ public class RegionManager {
 		final int packedRegionY) {
 		return LegacyPackedRegionCoverage.fromPackedRegionCoordinates(
 			packedRegionX, packedRegionY);
+	}
+
+	/**
+	 * Compares packed candidate-region coverage to one logical interest window.
+	 *
+	 * <p>This is projection-only and does not consult packed maps or caches.</p>
+	 */
+	public LegacyPackedVisibilityCoverageComparison compareLayeredVisibleRegionCoverage(
+		final Point location,
+		final int gridDistance,
+		final int maximumPackedCells,
+		final int maximumLogicalKeys) {
+		return LegacyPackedVisibilityCoverageComparison.compare(
+			location, gridDistance, maximumPackedCells, maximumLogicalKeys);
 	}
 
 	/**

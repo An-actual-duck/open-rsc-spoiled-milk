@@ -45,8 +45,10 @@ public final class WorldRegionInterestDelta {
 				"Maximum materialized regions per window must be positive");
 		}
 
-		List<WorldRegionKey> previousKeys = materialize(previous, maximumRegionsPerWindow);
-		List<WorldRegionKey> currentKeys = materialize(current, maximumRegionsPerWindow);
+		List<WorldRegionKey> previousKeys = materializeKeys(
+			previous, maximumRegionsPerWindow);
+		List<WorldRegionKey> currentKeys = materializeKeys(
+			current, maximumRegionsPerWindow);
 		Set<WorldRegionKey> previousSet = new LinkedHashSet<WorldRegionKey>(previousKeys);
 		Set<WorldRegionKey> currentSet = new LinkedHashSet<WorldRegionKey>(currentKeys);
 
@@ -70,9 +72,15 @@ public final class WorldRegionInterestDelta {
 		return new WorldRegionInterestDelta(previous, current, entered, retained, exited);
 	}
 
-	private static List<WorldRegionKey> materialize(
+	/** Materializes deterministic X-major/Y-minor membership under a caller budget. */
+	public static List<WorldRegionKey> materializeKeys(
 		final WorldRegionWindow window,
 		final int maximumRegionsPerWindow) {
+		Objects.requireNonNull(window, "window");
+		if (maximumRegionsPerWindow < 1) {
+			throw new IllegalArgumentException(
+				"Maximum materialized regions per window must be positive");
+		}
 		long regionCount = window.getRegionCount();
 		if (regionCount > maximumRegionsPerWindow) {
 			throw new IllegalArgumentException(
@@ -89,7 +97,7 @@ public final class WorldRegionInterestDelta {
 					window.getWorldSpace(), window.getLevel(), (int) regionX, (int) regionY));
 			}
 		}
-		return keys;
+		return Collections.unmodifiableList(keys);
 	}
 
 	public WorldRegionWindow getPreviousWindow() {

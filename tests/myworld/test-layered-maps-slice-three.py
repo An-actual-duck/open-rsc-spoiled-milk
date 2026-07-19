@@ -254,6 +254,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
             {
                 "LegacyPackedPointAdapter.java",
                 "LegacyPackedRegionCoverage.java",
+                "LegacyPackedVisibilityCoverageComparison.java",
                 "LegacyPlayerLocationPersistenceSnapshot.java",
                 "LegacyTerrainSectorAdapter.java",
                 "LayeredCoordinateParitySnapshot.java",
@@ -309,6 +310,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 [
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedPointAdapter.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedRegionCoverage.java",
+                    "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedVisibilityCoverageComparison.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPlayerLocationPersistenceSnapshot.java",
                     "server/src/com/openrsc/server/model/world/coordinate/WorldRegionKey.java",
                     "server/src/com/openrsc/server/model/world/coordinate/WorldRegionWindow.java",

@@ -224,3 +224,10 @@ packed 48-tile region cell. It distinguishes the nominal packed cell from the
 portion accepted by the legacy point codec, so terminal partial cells and the
 server's post-codec padded rows remain explicit. The RegionManager projection
 does not access or alter packed storage.
+
+`LegacyPackedVisibilityCoverageComparison` unions that coverage across the
+current packed candidate window and compares it with the intended signed
+logical window. It keeps expected, covered, missing, extra, and unsupported
+states explicit under caller-supplied allocation budgets. Extra packed-union
+keys are storage candidates, not proof of gameplay visibility: current region
+lookup, caches, entity filters, packets, and client residency remain unchanged.

@@ -1,15 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-19 implemented and validated on
+Status: architecture design complete; Slices 1-20 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 19 legacy packed-region coverage projection checkpoint;
-packed region lookup and caches remain authoritative and no client streaming or
-world conversion has begun
+Current milestone: Slice 20 packed/logical visibility-window coverage comparison
+checkpoint; packed region lookup and caches remain authoritative and no client
+streaming or world conversion has begun
 
 ## Purpose
 
@@ -2840,6 +2840,88 @@ Automated validation evidence:
 No owner runtime route is required because neither runtime storage nor a
 diagnostic consumes the projection.
 
+### Slice 20: Packed/logical window coverage comparison
+
+Objective: compare the union of logical keys covered by the current packed
+visibility candidate window with the intended signed layered visibility window,
+before attempting any region-storage or interest-authority migration.
+
+Selected boundary:
+
+- derive both windows from one checked legacy `Point` and the current
+  grid-distance convention;
+- report exact logical keys, packed-union keys, missing keys, extra keys, and
+  packed cells outside the checked legacy codec rather than reducing the result
+  to one pass/fail flag;
+- require explicit caller budgets for packed cells and materialized logical
+  keys; and
+- expose the comparison as a read-only RegionManager projection without region
+  lookup, construction, cache access, entity enumeration, or packet changes.
+
+Important interpretation:
+
+- extra logical keys in the packed candidate union describe coarse storage
+  coverage, not proof that current gameplay exposes distant entities; existing
+  per-entity distance, plane, and visibility filters remain authoritative; and
+- missing keys at signed coordinate boundaries describe the legacy packed
+  codec's inability to represent negative positions, not an instruction to
+  silently clamp a future layered window.
+
+Implemented:
+
+- immutable `LegacyPackedVisibilityCoverageComparison`, including packed bounds
+  and cell count, unsupported packed-cell count, deterministic expected and
+  packed-union keys, missing and extra keys, and exactness;
+- a reusable, immutable, caller-budgeted logical-window materializer on
+  `WorldRegionInterestDelta`; and
+- `RegionManager.compareLayeredVisibleRegionCoverage(...)`, a projection-only
+  method that never reads or writes packed region maps or visibility caches.
+
+Focused findings at the current grid distance of 16:
+
+- representative surface packed `(223,620)` and underground packed
+  `(216,3300)` windows each have exact 42-key coverage;
+- representative upper-floor packed `(223,1564)` expects 42 keys while the
+  legacy packed union covers 56, all expected keys plus 14 coarse same-level
+  keys caused by the 944/48 alignment remainder;
+- directly on packed Y `944`, the intended level-1 window includes 21 signed
+  local-Y keys that legacy packed storage cannot name, while its 49-key union
+  includes 28 extras from the prior level and its coarse trailing edge; and
+- at signed world origin, 27 of 36 packed candidates are unrepresentable while
+  the logical window correctly retains those 27 negative-X/Y keys as missing
+  rather than clamping them.
+
+Safety boundary:
+
+- packed RegionManager storage, visibility/object caches, entity enumeration,
+  distance/plane filtering, collision, packets, terrain, persistence, client,
+  and Builder remain unchanged;
+- comparison output is not stored on Player or emitted through diagnostics;
+  and
+- no database, map, placement, archive, public server, or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-twenty.py` — 2 tests passed;
+- Slice 1 through Slice 20 regressions all pass (54 tests), including exact
+  resolved-contract and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 733 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged content
+  counts. The expected fingerprints are source
+  `bd19756fd553986a748ce682fb3bcbad2cdc1834992fbeb2ea97e9bf7e7c6571`,
+  inventory
+  `ec3468830f910798c1e4f172ef8bd032d49189bc9a48bd9f3741b2049aa8ba3d`,
+  classification
+  `cb783fef5c4bfb6036429b193198d5858d078573db1af80e4a85034a0b33f159`,
+  and occurrence
+  `60b2e4e975e11528c755e4c0127f6094b0b9fff2cdc5c07cd6471e535913bc7d`.
+
+No owner runtime route is required because neither gameplay nor private
+diagnostics consumes the comparison.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2945,10 +3027,12 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 17 by defining a deterministic, allocation-budgeted logical interest delta while retaining packed lookup, caches, packets, and client behavior. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 18 by emitting bounded logical interest deltas only through versioned private diagnostics while retaining all current interest and residency authorities. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 19 by projecting every logical key overlapped by one legacy packed region cell while retaining packed storage, caches, and lookup. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 20 by comparing one current packed visibility candidate window with its signed logical window while retaining all runtime lookup and visibility authority. | Implemented and validated |
 
 ## Next Discussion
 
-Continue with a read-only packed-window/logical-window coverage comparison as
-the next reversible parity seam. A new database schema, authoritative region
-storage, client/protocol adoption, Builder, export, relocation, and level `-2`
-remain separately gated.
+Use Slice 20's evidence to choose the next reversible parity seam. The safest
+candidate is a bounded private diagnostic comparison at a small set of
+owner-selected coordinates, still without changing lookup or visibility
+authority. A new database schema, authoritative region storage, client/protocol
+adoption, Builder, export, relocation, and level `-2` remain separately gated.
