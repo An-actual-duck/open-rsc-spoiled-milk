@@ -164,20 +164,24 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v9.schema.json`. Each v9 record
-retains all v8 position, logical-window, interest-delta, packed-coverage,
+traces emit `schema/layered-map-parity-event-v10.schema.json`. Each v10 record
+retains all v9 position, logical-window, interest-delta, packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v8 schemas remain
+repeating the tile comparisons on every movement. The v1-v9 schemas remain
 alongside it so already-captured logs keep explicit readable contracts.
 Marker and stop records may additionally summarize the latest 16 contiguous
 ordinary walking steps since the previous reset, including per-step decisions,
 aggregate parity, capacity evictions, and discontinuities. Teleports, login,
 and start reset that observer-local route; no route is stored on the player or
-used by movement.
+used by movement. Selected records also include versioned logical Region
+residency counts and bounded missing/partial load, exited release, and
+unsupported-current evidence. Ordinary moves omit that comparison unless their
+logical interest window changes. These are diagnostic candidates only: they do
+not load or unload Regions.
 
 ## Checked Player mirror
 

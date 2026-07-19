@@ -7,6 +7,7 @@ import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
+import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,11 +24,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v9";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v10";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -49,17 +51,19 @@ public final class LayeredCoordinateParityObserver {
 		TileParitySource tileParitySource,
 		TileNeighborhoodSource tileNeighborhoodSource,
 		AdjacentCollisionSource adjacentCollisionSource,
-		TraversalCollisionSource traversalCollisionSource) {
+		TraversalCollisionSource traversalCollisionSource,
+		RegionResidencySource regionResidencySource) {
 		Objects.requireNonNull(tileSnapshotSource, "tileSnapshotSource");
 		Objects.requireNonNull(tileParitySource, "tileParitySource");
 		Objects.requireNonNull(tileNeighborhoodSource, "tileNeighborhoodSource");
 		Objects.requireNonNull(adjacentCollisionSource, "adjacentCollisionSource");
 		Objects.requireNonNull(traversalCollisionSource, "traversalCollisionSource");
+		Objects.requireNonNull(regionResidencySource, "regionResidencySource");
 		TraceKey key = new TraceKey(playerId, usernameHash);
 		TraceState created = new TraceState(
 			key, logPath(key), viewGridDistance, tileSnapshotSource,
 			tileParitySource, tileNeighborhoodSource, adjacentCollisionSource,
-			traversalCollisionSource);
+			traversalCollisionSource, regionResidencySource);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
@@ -162,6 +166,11 @@ public final class LayeredCoordinateParityObserver {
 				TileNeighborhoodMetadata tileNeighborhood = null;
 				AdjacentCollisionMetadata adjacentCollision = null;
 				RecentTraversalMetadata recentTraversal = null;
+				WorldRegionInterestDelta interestDelta = from == null ? null
+					: WorldRegionInterestDelta.between(
+						from.getVisibilityWindow(), to.getVisibilityWindow(),
+						MAX_TRACE_REGIONS_PER_WINDOW);
+				RegionResidencyMetadata regionResidency = null;
 				if (capturesTileComparisons(eventType)) {
 					tileParity = Objects.requireNonNull(
 						state.tileParitySource.capture(current),
@@ -207,11 +216,25 @@ public final class LayeredCoordinateParityObserver {
 							"Recent traversal metadata differs from the observed route");
 					}
 				}
+				if (capturesRegionResidency(eventType, interestDelta)) {
+					WorldRegionWindow previousWindow = from == null
+						? to.getVisibilityWindow() : from.getVisibilityWindow();
+					regionResidency = Objects.requireNonNull(
+						state.regionResidencySource.capture(
+							previousWindow, to.getVisibilityWindow(),
+							MAX_TRACE_REGIONS_PER_WINDOW),
+						"regionResidencySource result");
+					WorldRegionInterestDelta expected = WorldRegionInterestDelta.between(
+						previousWindow, to.getVisibilityWindow(),
+						MAX_TRACE_REGIONS_PER_WINDOW);
+					regionResidency.requireMatches(expected);
+				}
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
 					state.key, nextSequence, System.currentTimeMillis(), eventType,
-					teleported, label, from, to, coverage, tileSnapshot, tileParity,
-					tileNeighborhood, adjacentCollision, recentTraversal);
+					teleported, label, from, to, interestDelta, coverage, tileSnapshot,
+					tileParity, tileNeighborhood, adjacentCollision, recentTraversal,
+					regionResidency);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -245,12 +268,14 @@ public final class LayeredCoordinateParityObserver {
 		String label,
 		LayeredCoordinateParitySnapshot from,
 		LayeredCoordinateParitySnapshot to,
+		WorldRegionInterestDelta interestDelta,
 		LegacyPackedVisibilityCoverageComparison coverage,
 		TileSnapshotMetadata tileSnapshot,
 		TileParityMetadata tileParity,
 		TileNeighborhoodMetadata tileNeighborhood,
 		AdjacentCollisionMetadata adjacentCollision,
-		RecentTraversalMetadata recentTraversal) {
+		RecentTraversalMetadata recentTraversal,
+		RegionResidencyMetadata regionResidency) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -283,12 +308,10 @@ public final class LayeredCoordinateParityObserver {
 				.append('}');
 		}
 		out.append(",\"interestDelta\":");
-		if (from == null) {
+		if (interestDelta == null) {
 			out.append("null");
 		} else {
-			appendInterestDelta(out, WorldRegionInterestDelta.between(
-				from.getVisibilityWindow(), to.getVisibilityWindow(),
-				MAX_TRACE_REGIONS_PER_WINDOW));
+			appendInterestDelta(out, interestDelta);
 		}
 		out.append(",\"packedCoverage\":");
 		appendPackedCoverage(out, coverage);
@@ -318,6 +341,12 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendRecentTraversal(out, recentTraversal);
 		}
+		out.append(",\"regionResidency\":");
+		if (regionResidency == null) {
+			out.append("null");
+		} else {
+			appendRegionResidency(out, regionResidency);
+		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
 		return out.append('}').toString();
@@ -342,6 +371,76 @@ public final class LayeredCoordinateParityObserver {
 		out.append(",\"exitedKeys\":");
 		appendRegionKeys(out, delta.getExited());
 		out.append('}');
+	}
+
+	private static void appendRegionResidency(
+		final StringBuilder out,
+		final RegionResidencyMetadata residency) {
+		out.append('{');
+		out.append("\"mirrorVersion\":").append(residency.getMirrorVersion()).append(',');
+		out.append("\"previousRegionCount\":")
+			.append(residency.getPreviousRegionCount()).append(',');
+		out.append("\"currentRegionCount\":")
+			.append(residency.getCurrentRegionCount()).append(',');
+		out.append("\"enteredCount\":").append(residency.getEnteredCount()).append(',');
+		out.append("\"retainedCount\":").append(residency.getRetainedCount()).append(',');
+		out.append("\"exitedCount\":").append(residency.getExitedCount()).append(',');
+		out.append("\"worldSpaceChanged\":")
+			.append(residency.isWorldSpaceChanged()).append(',');
+		out.append("\"levelChanged\":").append(residency.isLevelChanged()).append(',');
+		out.append("\"noOp\":").append(residency.isNoOp()).append(',');
+		out.append("\"residentCurrentCount\":")
+			.append(residency.getResidentCurrentCount()).append(',');
+		out.append("\"partialCurrentCount\":")
+			.append(residency.getPartialCurrentCount()).append(',');
+		out.append("\"missingCurrentCount\":")
+			.append(residency.getMissingCurrentCount()).append(',');
+		out.append("\"unsupportedCurrentCount\":")
+			.append(residency.getUnsupportedCurrent().size()).append(',');
+		out.append("\"loadCandidateCount\":")
+			.append(residency.getLoadCandidates().size()).append(',');
+		out.append("\"releaseCandidateCount\":")
+			.append(residency.getReleaseCandidates().size()).append(',');
+		out.append("\"loadCandidates\":");
+		appendRegionResidencyCandidates(out, residency.getLoadCandidates());
+		out.append(",\"releaseCandidates\":");
+		appendRegionResidencyCandidates(out, residency.getReleaseCandidates());
+		out.append(",\"unsupportedCurrent\":");
+		appendRegionResidencyCandidates(out, residency.getUnsupportedCurrent());
+		out.append('}');
+	}
+
+	private static void appendRegionResidencyCandidates(
+		final StringBuilder out,
+		final List<RegionResidencyCandidateMetadata> candidates) {
+		out.append('[');
+		boolean first = true;
+		for (RegionResidencyCandidateMetadata candidate : candidates) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			WorldRegionKey key = candidate.getLogicalRegionKey();
+			out.append("{\"logicalRegion\":{\"worldSpace\":\"")
+				.append(jsonEscape(key.getWorldSpace().getValue()))
+				.append("\",\"level\":").append(key.getLevel())
+				.append(",\"x\":").append(key.getRegionX())
+				.append(",\"y\":").append(key.getRegionY()).append("},");
+			field(out, "interestState", candidate.getInterestState().name()).append(',');
+			field(out, "residencyState", candidate.getResidencyState().name()).append(',');
+			out.append("\"sourceCount\":").append(candidate.getSourceCount()).append(',');
+			out.append("\"residentSourceCount\":")
+				.append(candidate.getResidentSourceCount()).append(',');
+			out.append("\"missingSourceCount\":")
+				.append(candidate.getMissingSourceCount()).append(',');
+			out.append("\"supportedTileCount\":")
+				.append(candidate.getSupportedTileCount()).append(',');
+			out.append("\"residentTileCount\":")
+				.append(candidate.getResidentTileCount()).append(',');
+			out.append("\"legacyCoverageComplete\":")
+				.append(candidate.isLegacyCoverageComplete()).append('}');
+		}
+		out.append(']');
 	}
 
 	private static void appendTileParity(
@@ -819,6 +918,13 @@ public final class LayeredCoordinateParityObserver {
 		return "marker".equals(eventType) || "stop".equals(eventType);
 	}
 
+	private static boolean capturesRegionResidency(
+		final String eventType,
+		final WorldRegionInterestDelta interestDelta) {
+		return !"move".equals(eventType)
+			|| (interestDelta != null && !interestDelta.isNoOp());
+	}
+
 	private static String safeMessage(Throwable failure) {
 		String message = failure.getMessage();
 		return message == null ? "no detail" : message.replace('\n', ' ').replace('\r', ' ');
@@ -867,6 +973,331 @@ public final class LayeredCoordinateParityObserver {
 			List<WorldLocation> route,
 			int droppedStepCount,
 			int discontinuityCount);
+	}
+
+	/** Supplies one bounded interest/residency comparison to selected events. */
+	@FunctionalInterface
+	public interface RegionResidencySource {
+		RegionResidencyMetadata capture(
+			WorldRegionWindow previousWindow,
+			WorldRegionWindow currentWindow,
+			int maximumRegionsPerWindow);
+	}
+
+	/** Immutable observer-facing aggregate; never a Region load/unload command. */
+	public static final class RegionResidencyMetadata {
+		private final long mirrorVersion;
+		private final int previousRegionCount;
+		private final int currentRegionCount;
+		private final int enteredCount;
+		private final int retainedCount;
+		private final int exitedCount;
+		private final boolean worldSpaceChanged;
+		private final boolean levelChanged;
+		private final boolean noOp;
+		private final int residentCurrentCount;
+		private final int partialCurrentCount;
+		private final int missingCurrentCount;
+		private final List<RegionResidencyCandidateMetadata> loadCandidates;
+		private final List<RegionResidencyCandidateMetadata> releaseCandidates;
+		private final List<RegionResidencyCandidateMetadata> unsupportedCurrent;
+
+		private RegionResidencyMetadata(
+			final long mirrorVersion,
+			final int previousRegionCount,
+			final int currentRegionCount,
+			final int enteredCount,
+			final int retainedCount,
+			final int exitedCount,
+			final boolean worldSpaceChanged,
+			final boolean levelChanged,
+			final boolean noOp,
+			final int residentCurrentCount,
+			final int partialCurrentCount,
+			final int missingCurrentCount,
+			final List<RegionResidencyCandidateMetadata> loadCandidates,
+			final List<RegionResidencyCandidateMetadata> releaseCandidates,
+			final List<RegionResidencyCandidateMetadata> unsupportedCurrent) {
+			this.mirrorVersion = mirrorVersion;
+			this.previousRegionCount = previousRegionCount;
+			this.currentRegionCount = currentRegionCount;
+			this.enteredCount = enteredCount;
+			this.retainedCount = retainedCount;
+			this.exitedCount = exitedCount;
+			this.worldSpaceChanged = worldSpaceChanged;
+			this.levelChanged = levelChanged;
+			this.noOp = noOp;
+			this.residentCurrentCount = residentCurrentCount;
+			this.partialCurrentCount = partialCurrentCount;
+			this.missingCurrentCount = missingCurrentCount;
+			this.loadCandidates = Collections.unmodifiableList(
+				new ArrayList<RegionResidencyCandidateMetadata>(loadCandidates));
+			this.releaseCandidates = Collections.unmodifiableList(
+				new ArrayList<RegionResidencyCandidateMetadata>(releaseCandidates));
+			this.unsupportedCurrent = Collections.unmodifiableList(
+				new ArrayList<RegionResidencyCandidateMetadata>(unsupportedCurrent));
+		}
+
+		public static RegionResidencyMetadata of(
+			final long mirrorVersion,
+			final int previousRegionCount,
+			final int currentRegionCount,
+			final int enteredCount,
+			final int retainedCount,
+			final int exitedCount,
+			final boolean worldSpaceChanged,
+			final boolean levelChanged,
+			final boolean noOp,
+			final int residentCurrentCount,
+			final int partialCurrentCount,
+			final int missingCurrentCount,
+			final List<RegionResidencyCandidateMetadata> loadCandidates,
+			final List<RegionResidencyCandidateMetadata> releaseCandidates,
+			final List<RegionResidencyCandidateMetadata> unsupportedCurrent) {
+			Objects.requireNonNull(loadCandidates, "loadCandidates");
+			Objects.requireNonNull(releaseCandidates, "releaseCandidates");
+			Objects.requireNonNull(unsupportedCurrent, "unsupportedCurrent");
+			if (mirrorVersion < 0L || previousRegionCount < 1 || currentRegionCount < 1
+				|| enteredCount < 0 || retainedCount < 0 || exitedCount < 0
+				|| enteredCount + retainedCount != currentRegionCount
+				|| exitedCount + retainedCount != previousRegionCount
+				|| residentCurrentCount < 0 || partialCurrentCount < 0
+				|| missingCurrentCount < 0
+				|| residentCurrentCount + partialCurrentCount + missingCurrentCount
+					+ unsupportedCurrent.size() != currentRegionCount
+				|| loadCandidates.size()
+					!= partialCurrentCount + missingCurrentCount
+				|| releaseCandidates.size() > exitedCount
+				|| noOp != (enteredCount == 0 && exitedCount == 0)) {
+				throw new IllegalArgumentException(
+					"Invalid Region residency aggregate counts");
+			}
+			Set<WorldRegionKey> candidateKeys = new java.util.HashSet<WorldRegionKey>();
+			int partialLoads = 0;
+			int missingLoads = 0;
+			for (RegionResidencyCandidateMetadata candidate : loadCandidates) {
+				requireCandidate(candidate, candidateKeys);
+				if (candidate.getInterestState() == RegionInterestState.EXITED
+					|| (candidate.getResidencyState() != RegionResidencyState.MISSING
+						&& candidate.getResidencyState()
+							!= RegionResidencyState.PARTIAL)) {
+					throw new IllegalArgumentException("Invalid Region load candidate");
+				}
+				if (candidate.getResidencyState() == RegionResidencyState.PARTIAL) {
+					partialLoads++;
+				} else {
+					missingLoads++;
+				}
+			}
+			if (partialLoads != partialCurrentCount
+				|| missingLoads != missingCurrentCount) {
+				throw new IllegalArgumentException(
+					"Region load candidate states differ from aggregate counts");
+			}
+			for (RegionResidencyCandidateMetadata candidate : releaseCandidates) {
+				requireCandidate(candidate, candidateKeys);
+				if (candidate.getInterestState() != RegionInterestState.EXITED
+					|| (candidate.getResidencyState() != RegionResidencyState.RESIDENT
+						&& candidate.getResidencyState()
+							!= RegionResidencyState.PARTIAL)) {
+					throw new IllegalArgumentException("Invalid Region release candidate");
+				}
+			}
+			for (RegionResidencyCandidateMetadata candidate : unsupportedCurrent) {
+				requireCandidate(candidate, candidateKeys);
+				if (candidate.getInterestState() == RegionInterestState.EXITED
+					|| candidate.getResidencyState()
+						!= RegionResidencyState.UNSUPPORTED) {
+					throw new IllegalArgumentException(
+						"Invalid unsupported current Region");
+				}
+			}
+			return new RegionResidencyMetadata(
+				mirrorVersion, previousRegionCount, currentRegionCount,
+				enteredCount, retainedCount, exitedCount, worldSpaceChanged,
+				levelChanged, noOp, residentCurrentCount, partialCurrentCount,
+				missingCurrentCount, loadCandidates, releaseCandidates,
+				unsupportedCurrent);
+		}
+
+		private static void requireCandidate(
+			final RegionResidencyCandidateMetadata candidate,
+			final Set<WorldRegionKey> candidateKeys) {
+			Objects.requireNonNull(candidate, "candidate");
+			if (!candidateKeys.add(candidate.getLogicalRegionKey())) {
+				throw new IllegalArgumentException(
+					"Region residency candidate keys must be unique");
+			}
+		}
+
+		private void requireMatches(final WorldRegionInterestDelta delta) {
+			if (previousRegionCount
+					!= delta.getRetained().size() + delta.getExited().size()
+				|| currentRegionCount
+					!= delta.getEntered().size() + delta.getRetained().size()
+				|| enteredCount != delta.getEntered().size()
+				|| retainedCount != delta.getRetained().size()
+				|| exitedCount != delta.getExited().size()
+				|| worldSpaceChanged != delta.changesWorldSpace()
+				|| levelChanged != delta.changesLevel()
+				|| noOp != delta.isNoOp()) {
+				throw new IllegalStateException(
+					"Region residency metadata differs from the observed interest delta");
+			}
+			for (RegionResidencyCandidateMetadata candidate : loadCandidates) {
+				requireCandidateInterest(delta, candidate);
+			}
+			for (RegionResidencyCandidateMetadata candidate : releaseCandidates) {
+				if (!delta.getExited().contains(candidate.getLogicalRegionKey())) {
+					throw new IllegalStateException(
+						"Region release candidate is not an exited interest key");
+				}
+			}
+			for (RegionResidencyCandidateMetadata candidate : unsupportedCurrent) {
+				requireCandidateInterest(delta, candidate);
+			}
+		}
+
+		private static void requireCandidateInterest(
+			final WorldRegionInterestDelta delta,
+			final RegionResidencyCandidateMetadata candidate) {
+			boolean expected = candidate.getInterestState() == RegionInterestState.ENTERED
+				? delta.getEntered().contains(candidate.getLogicalRegionKey())
+				: candidate.getInterestState() == RegionInterestState.RETAINED
+					&& delta.getRetained().contains(candidate.getLogicalRegionKey());
+			if (!expected) {
+				throw new IllegalStateException(
+					"Region candidate interest state differs from the observed delta");
+			}
+		}
+
+		public long getMirrorVersion() { return mirrorVersion; }
+		public int getPreviousRegionCount() { return previousRegionCount; }
+		public int getCurrentRegionCount() { return currentRegionCount; }
+		public int getEnteredCount() { return enteredCount; }
+		public int getRetainedCount() { return retainedCount; }
+		public int getExitedCount() { return exitedCount; }
+		public boolean isWorldSpaceChanged() { return worldSpaceChanged; }
+		public boolean isLevelChanged() { return levelChanged; }
+		public boolean isNoOp() { return noOp; }
+		public int getResidentCurrentCount() { return residentCurrentCount; }
+		public int getPartialCurrentCount() { return partialCurrentCount; }
+		public int getMissingCurrentCount() { return missingCurrentCount; }
+		public List<RegionResidencyCandidateMetadata> getLoadCandidates() {
+			return loadCandidates;
+		}
+		public List<RegionResidencyCandidateMetadata> getReleaseCandidates() {
+			return releaseCandidates;
+		}
+		public List<RegionResidencyCandidateMetadata> getUnsupportedCurrent() {
+			return unsupportedCurrent;
+		}
+	}
+
+	public enum RegionInterestState {
+		ENTERED,
+		RETAINED,
+		EXITED
+	}
+
+	public enum RegionResidencyState {
+		RESIDENT,
+		PARTIAL,
+		MISSING,
+		UNSUPPORTED
+	}
+
+	/** Immutable AI-readable evidence for one noteworthy logical Region. */
+	public static final class RegionResidencyCandidateMetadata {
+		private final WorldRegionKey logicalRegionKey;
+		private final RegionInterestState interestState;
+		private final RegionResidencyState residencyState;
+		private final int sourceCount;
+		private final int residentSourceCount;
+		private final long supportedTileCount;
+		private final long residentTileCount;
+		private final boolean legacyCoverageComplete;
+
+		private RegionResidencyCandidateMetadata(
+			final WorldRegionKey logicalRegionKey,
+			final RegionInterestState interestState,
+			final RegionResidencyState residencyState,
+			final int sourceCount,
+			final int residentSourceCount,
+			final long supportedTileCount,
+			final long residentTileCount,
+			final boolean legacyCoverageComplete) {
+			this.logicalRegionKey = logicalRegionKey;
+			this.interestState = interestState;
+			this.residencyState = residencyState;
+			this.sourceCount = sourceCount;
+			this.residentSourceCount = residentSourceCount;
+			this.supportedTileCount = supportedTileCount;
+			this.residentTileCount = residentTileCount;
+			this.legacyCoverageComplete = legacyCoverageComplete;
+		}
+
+		public static RegionResidencyCandidateMetadata of(
+			final WorldRegionKey logicalRegionKey,
+			final RegionInterestState interestState,
+			final RegionResidencyState residencyState,
+			final int sourceCount,
+			final int residentSourceCount,
+			final long supportedTileCount,
+			final long residentTileCount,
+			final boolean legacyCoverageComplete) {
+			Objects.requireNonNull(logicalRegionKey, "logicalRegionKey");
+			Objects.requireNonNull(interestState, "interestState");
+			Objects.requireNonNull(residencyState, "residencyState");
+			if (sourceCount < 0 || residentSourceCount < 0
+				|| residentSourceCount > sourceCount || supportedTileCount < 0L
+				|| residentTileCount < 0L || residentTileCount > supportedTileCount) {
+				throw new IllegalArgumentException("Invalid Region residency candidate counts");
+			}
+			boolean validState;
+			switch (residencyState) {
+				case RESIDENT:
+					validState = sourceCount > 0 && residentSourceCount == sourceCount
+						&& supportedTileCount > 0L
+						&& residentTileCount == supportedTileCount;
+					break;
+				case PARTIAL:
+					validState = residentSourceCount > 0
+						&& residentSourceCount < sourceCount
+						&& residentTileCount > 0L
+						&& residentTileCount < supportedTileCount;
+					break;
+				case MISSING:
+					validState = sourceCount > 0 && residentSourceCount == 0
+						&& supportedTileCount > 0L && residentTileCount == 0L;
+					break;
+				case UNSUPPORTED:
+					validState = sourceCount == 0 && residentSourceCount == 0
+						&& supportedTileCount == 0L && residentTileCount == 0L
+						&& !legacyCoverageComplete;
+					break;
+				default:
+					validState = false;
+			}
+			if (!validState) {
+				throw new IllegalArgumentException(
+					"Region residency state differs from its source/tile counts");
+			}
+			return new RegionResidencyCandidateMetadata(
+				logicalRegionKey, interestState, residencyState, sourceCount,
+				residentSourceCount, supportedTileCount, residentTileCount,
+				legacyCoverageComplete);
+		}
+
+		public WorldRegionKey getLogicalRegionKey() { return logicalRegionKey; }
+		public RegionInterestState getInterestState() { return interestState; }
+		public RegionResidencyState getResidencyState() { return residencyState; }
+		public int getSourceCount() { return sourceCount; }
+		public int getResidentSourceCount() { return residentSourceCount; }
+		public int getMissingSourceCount() { return sourceCount - residentSourceCount; }
+		public long getSupportedTileCount() { return supportedTileCount; }
+		public long getResidentTileCount() { return residentTileCount; }
+		public boolean isLegacyCoverageComplete() { return legacyCoverageComplete; }
 	}
 
 	/** Immutable observer-facing eight-direction summary; no tile masks. */
@@ -1807,6 +2238,7 @@ public final class LayeredCoordinateParityObserver {
 		final TileNeighborhoodSource tileNeighborhoodSource;
 		final AdjacentCollisionSource adjacentCollisionSource;
 		final TraversalCollisionSource traversalCollisionSource;
+		final RegionResidencySource regionResidencySource;
 		final List<WorldLocation> recentTraversal =
 			new ArrayList<WorldLocation>(MAX_TRACE_TRAVERSAL_STEPS + 1);
 		int recentTraversalDroppedStepCount;
@@ -1823,7 +2255,8 @@ public final class LayeredCoordinateParityObserver {
 			TileParitySource tileParitySource,
 			TileNeighborhoodSource tileNeighborhoodSource,
 			AdjacentCollisionSource adjacentCollisionSource,
-			TraversalCollisionSource traversalCollisionSource) {
+			TraversalCollisionSource traversalCollisionSource,
+			RegionResidencySource regionResidencySource) {
 			if (viewGridDistance < 0) {
 				throw new IllegalArgumentException("View grid distance must not be negative");
 			}
@@ -1836,6 +2269,7 @@ public final class LayeredCoordinateParityObserver {
 			this.tileNeighborhoodSource = tileNeighborhoodSource;
 			this.adjacentCollisionSource = adjacentCollisionSource;
 			this.traversalCollisionSource = traversalCollisionSource;
+			this.regionResidencySource = regionResidencySource;
 		}
 
 		Status status(boolean enabled) {

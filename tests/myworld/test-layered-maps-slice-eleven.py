@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v9.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v10.schema.json"
 
 
 POINT_STUB = r'''
@@ -77,9 +77,13 @@ OBSERVER_FIXTURE = r'''
 package com.openrsc.server.diagnostics;
 
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
+import com.openrsc.server.model.world.coordinate.WorldRegionKey;
+import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -151,21 +155,31 @@ public final class LayeredCoordinateParityObserverFixture {
 				return LayeredCoordinateParityObserver.RecentTraversalMetadata.of(
 					openTraversal(route), droppedStepCount, discontinuityCount);
 			};
+        int[] regionResidencyCaptures = {0};
+        LayeredCoordinateParityObserver.RegionResidencySource regionResidency =
+            (previousWindow, currentWindow, maximumRegionsPerWindow) -> {
+                regionResidencyCaptures[0]++;
+                return residentRegionResidency(
+                    previousWindow, currentWindow, maximumRegionsPerWindow);
+            };
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, null, tileParity,
-            tileNeighborhood, adjacentCollision, traversalCollision));
+            tileNeighborhood, adjacentCollision, traversalCollision, regionResidency));
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, tileSnapshots, null,
-            tileNeighborhood, adjacentCollision, traversalCollision));
+            tileNeighborhood, adjacentCollision, traversalCollision, regionResidency));
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, tileSnapshots, tileParity,
-            null, adjacentCollision, traversalCollision));
+            null, adjacentCollision, traversalCollision, regionResidency));
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, tileSnapshots, tileParity,
-            tileNeighborhood, null, traversalCollision));
+            tileNeighborhood, null, traversalCollision, regionResidency));
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, tileSnapshots, tileParity,
-            tileNeighborhood, adjacentCollision, null));
+            tileNeighborhood, adjacentCollision, null, regionResidency));
+        expectNull(() -> LayeredCoordinateParityObserver.start(
+            99, 99L, Point.location(100, 943), 2, tileSnapshots, tileParity,
+            tileNeighborhood, adjacentCollision, traversalCollision, null));
         expectIllegal(() -> LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
             LayeredCoordinateParitySnapshot.capture(Point.location(100, 943)).getRegionKey(),
             1, 2, 2304, 2304, true,
@@ -215,14 +229,16 @@ public final class LayeredCoordinateParityObserverFixture {
             "initially disabled");
         LayeredCoordinateParityObserver.Status started = LayeredCoordinateParityObserver.start(
             playerId, usernameHash, Point.location(100, 943), 2, tileSnapshots,
-            tileParity, tileNeighborhood, adjacentCollision, traversalCollision);
+            tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
+            regionResidency);
         check(started.isEnabled() && started.getRecordCount() == 1, "start");
         check(started.getError() == null, "start error");
         check(started.getLastSnapshot().getVisibilityWindow().getRegionCount() == 2L,
             "start visibility window");
         expectIllegal(() -> LayeredCoordinateParityObserver.start(
             playerId, usernameHash, Point.location(100, 943), 3, tileSnapshots,
-            tileParity, tileNeighborhood, adjacentCollision, traversalCollision));
+            tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
+            regionResidency));
 
         LayeredCoordinateParityObserver.onLocationChanged(
             playerId, usernameHash, Point.location(100, 943), Point.location(100, 944), false);
@@ -252,7 +268,8 @@ public final class LayeredCoordinateParityObserverFixture {
         long otherHash = 987654321L;
         LayeredCoordinateParityObserver.Status other = LayeredCoordinateParityObserver.start(
             playerId, otherHash, Point.location(200, 944), 2, tileSnapshots,
-            tileParity, tileNeighborhood, adjacentCollision, traversalCollision);
+            tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
+            regionResidency);
         check(other.isEnabled() && other.getRecordCount() == 1, "identity-isolated start");
         check(!other.getPath().equals(active.getPath()), "identity-isolated path");
         LayeredCoordinateParityObserver.stop(playerId, otherHash, Point.location(200, 944));
@@ -267,7 +284,7 @@ public final class LayeredCoordinateParityObserverFixture {
 
         LayeredCoordinateParityObserver.Status invalid = LayeredCoordinateParityObserver.start(
             8, 111L, Point.location(100, 3776), 2, tileSnapshots, tileParity,
-            tileNeighborhood, adjacentCollision, traversalCollision);
+            tileNeighborhood, adjacentCollision, traversalCollision, regionResidency);
         check(invalid.isEnabled() && invalid.getRecordCount() == 0, "invalid trace retained");
         check(invalid.getError() != null && invalid.getError().contains("IllegalArgumentException"),
             "invalid trace visible error");
@@ -276,7 +293,8 @@ public final class LayeredCoordinateParityObserverFixture {
 		long routeHash = 222L;
 		LayeredCoordinateParityObserver.start(
 			routePlayerId, routeHash, Point.location(300, 500), 2, tileSnapshots,
-			tileParity, tileNeighborhood, adjacentCollision, traversalCollision);
+			tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
+			regionResidency);
 		for (int step = 0; step < 18; step++) {
 			LayeredCoordinateParityObserver.onLocationChanged(
 				routePlayerId, routeHash,
@@ -301,6 +319,8 @@ public final class LayeredCoordinateParityObserverFixture {
             "bounded adjacent collision capture count");
         check(traversalCaptures[0] == 3,
             "bounded recent traversal capture count");
+		check(regionResidencyCaptures[0] == 15,
+			"bounded Region residency capture count");
 		check(traversalRouteSizes.equals(Arrays.asList(2, 17, 2)),
 			"bounded route location counts");
 		check(traversalDroppedCounts.equals(Arrays.asList(0, 2, 0)),
@@ -362,6 +382,71 @@ public final class LayeredCoordinateParityObserverFixture {
 		}
 		return steps;
 	}
+
+    private static LayeredCoordinateParityObserver.RegionResidencyMetadata
+            residentRegionResidency(
+                WorldRegionWindow previousWindow,
+                WorldRegionWindow currentWindow,
+                int maximumRegionsPerWindow) {
+        WorldRegionInterestDelta delta = WorldRegionInterestDelta.between(
+            previousWindow, currentWindow, maximumRegionsPerWindow);
+        List<LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata>
+            releases = new ArrayList<>();
+        for (WorldRegionKey key : delta.getExited()) {
+            LegacyLogicalRegionAssembly assembly =
+                LegacyLogicalRegionAssembly.fromLogicalRegionKey(key);
+            if (!assembly.isUnsupported()) {
+                releases.add(regionCandidate(
+                    key, LayeredCoordinateParityObserver.RegionInterestState.EXITED,
+                    LayeredCoordinateParityObserver.RegionResidencyState.RESIDENT,
+                    assembly, true));
+            }
+        }
+        List<LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata>
+            unsupported = new ArrayList<>();
+        int residentCurrent = 0;
+        for (WorldRegionKey key : WorldRegionInterestDelta.materializeKeys(
+                currentWindow, maximumRegionsPerWindow)) {
+            LegacyLogicalRegionAssembly assembly =
+                LegacyLogicalRegionAssembly.fromLogicalRegionKey(key);
+            if (assembly.isUnsupported()) {
+                LayeredCoordinateParityObserver.RegionInterestState interest =
+                    delta.getEntered().contains(key)
+                        ? LayeredCoordinateParityObserver.RegionInterestState.ENTERED
+                        : LayeredCoordinateParityObserver.RegionInterestState.RETAINED;
+                unsupported.add(regionCandidate(
+                    key, interest,
+                    LayeredCoordinateParityObserver.RegionResidencyState.UNSUPPORTED,
+                    assembly, false));
+            } else {
+                residentCurrent++;
+            }
+        }
+        return LayeredCoordinateParityObserver.RegionResidencyMetadata.of(
+            1L,
+            delta.getRetained().size() + delta.getExited().size(),
+            delta.getEntered().size() + delta.getRetained().size(),
+            delta.getEntered().size(), delta.getRetained().size(),
+            delta.getExited().size(), delta.changesWorldSpace(),
+            delta.changesLevel(), delta.isNoOp(), residentCurrent, 0, 0,
+            new ArrayList<LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata>(),
+            releases, unsupported);
+    }
+
+    private static LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata
+            regionCandidate(
+                WorldRegionKey key,
+                LayeredCoordinateParityObserver.RegionInterestState interest,
+                LayeredCoordinateParityObserver.RegionResidencyState residency,
+                LegacyLogicalRegionAssembly assembly,
+                boolean resident) {
+        return LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata.of(
+            key, interest, residency, assembly.getSourceFragments().size(),
+            resident ? assembly.getSourceFragments().size() : 0,
+            assembly.getAssembledTileCount(),
+            resident ? assembly.getAssembledTileCount() : 0L,
+            assembly.isComplete());
+    }
 
     private static void expectIllegal(Runnable operation) {
         try {
@@ -470,7 +555,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v9" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v10" for event in events))
             upper_window = events[1]["to"]["visibilityWindow"]
             self.assertEqual(2, upper_window["gridDistance"])
             self.assertEqual(16, upper_window["tileRadius"])
@@ -710,6 +795,57 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 == (event["eventType"] in {"move", "teleport"})
                 for event in events
             ))
+            self.assertTrue(all(
+                (event["regionResidency"] is not None)
+                == (event["eventType"] != "move" or event is events[1])
+                for event in events
+            ))
+            start_residency = events[0]["regionResidency"]
+            self.assertEqual({
+                "mirrorVersion": 1,
+                "previousRegionCount": 2,
+                "currentRegionCount": 2,
+                "enteredCount": 0,
+                "retainedCount": 2,
+                "exitedCount": 0,
+                "worldSpaceChanged": False,
+                "levelChanged": False,
+                "noOp": True,
+                "residentCurrentCount": 2,
+                "partialCurrentCount": 0,
+                "missingCurrentCount": 0,
+                "unsupportedCurrentCount": 0,
+                "loadCandidateCount": 0,
+                "releaseCandidateCount": 0,
+            }, {key: start_residency[key] for key in (
+                "mirrorVersion", "previousRegionCount", "currentRegionCount",
+                "enteredCount", "retainedCount", "exitedCount",
+                "worldSpaceChanged", "levelChanged", "noOp",
+                "residentCurrentCount", "partialCurrentCount",
+                "missingCurrentCount", "unsupportedCurrentCount",
+                "loadCandidateCount", "releaseCandidateCount",
+            )})
+            upper_residency = events[1]["regionResidency"]
+            self.assertEqual(2, upper_residency["residentCurrentCount"])
+            self.assertEqual(2, upper_residency["unsupportedCurrentCount"])
+            self.assertEqual(0, upper_residency["loadCandidateCount"])
+            self.assertEqual(2, upper_residency["releaseCandidateCount"])
+            self.assertEqual(
+                {"worldSpace": "global", "level": 1, "x": 1, "y": -1},
+                upper_residency["unsupportedCurrent"][0]["logicalRegion"],
+            )
+            self.assertEqual(
+                {"interestState": "ENTERED", "residencyState": "UNSUPPORTED",
+                 "sourceCount": 0, "residentSourceCount": 0,
+                 "missingSourceCount": 0, "supportedTileCount": 0,
+                 "residentTileCount": 0, "legacyCoverageComplete": False},
+                {key: upper_residency["unsupportedCurrent"][0][key] for key in (
+                    "interestState", "residencyState", "sourceCount",
+                    "residentSourceCount", "missingSourceCount",
+                    "supportedTileCount", "residentTileCount",
+                    "legacyCoverageComplete",
+                )},
+            )
             raw_log = primary.read_text(encoding="utf-8").lower()
             self.assertNotIn('"username":', raw_log)
             self.assertNotIn("password", raw_log)
@@ -741,10 +877,12 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
         self.assertIn("layeredTileParitySource(player)", command)
         self.assertIn("layeredTileNeighborhoodSource(player)", command)
         self.assertIn("layeredAdjacentCollisionSource(player)", command)
+        self.assertIn("layeredRegionResidencySource(player)", command)
         self.assertIn("regionManager.getLayeredRegionTileSnapshot", command)
         self.assertIn("regionManager.compareLayeredTileState(current)", command)
         self.assertIn("regionManager.compareLayeredTileNeighborhood(current)", command)
         self.assertIn("regionManager.compareLayeredAdjacentStepCollisions(current)", command)
+        self.assertIn("regionManager.compareLayeredRegionInterestResidency(", command)
         self.assertIn('command.equalsIgnoreCase("layerparity")', command)
         self.assertIn("player.isDev()", command)
         self.assertIn("WANT_LAYERED_MAP_PARITY_OBSERVER", command)

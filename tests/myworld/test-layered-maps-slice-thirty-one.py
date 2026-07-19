@@ -84,14 +84,14 @@ class LayeredMapsSliceThirtyOneTest(unittest.TestCase):
         player = PLAYER.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v9"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v10"', observer)
         self.assertIn("TileNeighborhoodSource tileNeighborhoodSource", observer)
         self.assertIn("TileNeighborhoodMetadata tileNeighborhood = null", observer)
         self.assertIn("state.tileNeighborhoodSource.capture(current)", observer)
         self.assertIn('out.append(",\\\"tileNeighborhood\\\":")', observer)
         capture_block = observer.split(
             "private static boolean capturesTileComparisons", 1
-        )[1].split("private static String safeMessage", 1)[0]
+        )[1].split("private static boolean capturesRecentTraversal", 1)[0]
         for event_type in ("start", "marker", "teleport", "stop"):
             self.assertIn(f'"{event_type}".equals(eventType)', capture_block)
         self.assertNotIn('"move".equals(eventType)', capture_block)

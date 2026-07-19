@@ -24,8 +24,11 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
+import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
+import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
+import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 import com.openrsc.server.model.world.region.LayeredAdjacentStepCollisionComparison;
 import com.openrsc.server.model.world.region.LayeredRegionTileSnapshot;
 import com.openrsc.server.model.world.region.LayeredTileNeighborhoodParityComparison;
@@ -1379,7 +1382,8 @@ public final class Development implements CommandTrigger {
 					player.getConfig().VIEW_DISTANCE, layeredTileSnapshotSource(player),
 					layeredTileParitySource(player), layeredTileNeighborhoodSource(player),
 					layeredAdjacentCollisionSource(player),
-					layeredTraversalCollisionSource(player));
+					layeredTraversalCollisionSource(player),
+					layeredRegionResidencySource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1564,6 +1568,69 @@ public final class Development implements CommandTrigger {
 					steps, droppedStepCount, discontinuityCount);
 			}
 		};
+	}
+
+	private LayeredCoordinateParityObserver.RegionResidencySource
+		layeredRegionResidencySource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.RegionResidencySource() {
+			@Override
+			public LayeredCoordinateParityObserver.RegionResidencyMetadata capture(
+				final WorldRegionWindow previousWindow,
+				final WorldRegionWindow currentWindow,
+				final int maximumRegionsPerWindow) {
+				LayeredRegionInterestResidencyComparison comparison =
+					regionManager.compareLayeredRegionInterestResidency(
+						previousWindow, currentWindow, maximumRegionsPerWindow);
+				return LayeredCoordinateParityObserver.RegionResidencyMetadata.of(
+					comparison.getMirrorVersion(),
+					comparison.getInterestDelta().getRetained().size()
+						+ comparison.getInterestDelta().getExited().size(),
+					comparison.getInterestDelta().getEntered().size()
+						+ comparison.getInterestDelta().getRetained().size(),
+					comparison.getInterestDelta().getEntered().size(),
+					comparison.getInterestDelta().getRetained().size(),
+					comparison.getInterestDelta().getExited().size(),
+					comparison.getInterestDelta().changesWorldSpace(),
+					comparison.getInterestDelta().changesLevel(),
+					comparison.getInterestDelta().isNoOp(),
+					comparison.getResidentCurrentCount(),
+					comparison.getPartialCurrentCount(),
+					comparison.getMissingCurrentCount(),
+					layeredRegionResidencyCandidates(
+						comparison.getLoadCandidates()),
+					layeredRegionResidencyCandidates(
+						comparison.getReleaseCandidates()),
+					layeredRegionResidencyCandidates(
+						comparison.getUnsupportedCurrent()));
+			}
+		};
+	}
+
+	private List<LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata>
+		layeredRegionResidencyCandidates(
+			final List<LayeredRegionInterestResidencyComparison.Entry> entries) {
+		List<LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata>
+			candidates = new ArrayList<
+				LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata>(
+					entries.size());
+		for (LayeredRegionInterestResidencyComparison.Entry entry : entries) {
+			LayeredRegionResidencyMirror.Snapshot snapshot =
+				entry.getResidencySnapshot();
+			candidates.add(
+				LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata.of(
+					entry.getLogicalRegionKey(),
+					LayeredCoordinateParityObserver.RegionInterestState.valueOf(
+						entry.getInterestState().name()),
+					LayeredCoordinateParityObserver.RegionResidencyState.valueOf(
+						entry.getResidencyState().name()),
+					snapshot.getSourceCount(),
+					snapshot.getResidentSourceCount(),
+					snapshot.getLegacySupportedTileCount(),
+					snapshot.getResidentTileCount(),
+					snapshot.isLegacyCoverageComplete()));
+		}
+		return candidates;
 	}
 
 	private void layeredParitySyntax(Player player, String command) {

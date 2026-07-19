@@ -1,16 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-37 validated on the active
-refinement branch
+Status: architecture design complete; Slices 1-37 validated and Slice 38 awaits
+owner runtime validation on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 37 compares bounded logical interest changes with the
-checked Region residency view; its load/release candidates are dormant evidence,
-while packed Region/tile lookup, eager loading, `PathValidation`, movement, and
-collision remain authoritative and no client streaming or conversion has begun
+Current milestone: Slice 38 emits bounded Region residency evidence through
+private v10 diagnostics for owner validation; load/release candidates remain
+dormant while packed Region/tile lookup, eager loading, `PathValidation`,
+movement, and collision remain authoritative
 
 ## Purpose
 
@@ -4385,6 +4385,76 @@ Automated validation evidence:
 No owner runtime route is required because this projection remains dormant. A
 bounded private diagnostic adoption is the next owner-testable boundary.
 
+### Slice 38: Private Region residency diagnostics
+
+Objective: expose Slice 37's bounded, versioned Region residency evidence in
+the opt-in private JSONL trace so real world-window crossings, teleports, level
+changes, and session events can be reviewed without adopting streaming.
+
+Selected boundary:
+
+- advance new traces to additive `layered-map-parity-event-v10` while retaining
+  every required v9 field and keeping the v1-v9 schemas alongside it;
+- capture one same-window baseline on start, snapshot, marker, login, logout,
+  and stop, plus transition comparisons on teleports and only those ordinary
+  moves whose logical interest delta is not a no-op;
+- serialize aggregate entered/retained/exited and current residency counts,
+  mirror freshness, and bounded detailed arrays only for missing/partial load
+  candidates, resident exit release candidates, and unsupported current keys;
+  and
+- omit tile/collision payloads and emit explicit null on ordinary moves that do
+  not change the logical interest window.
+
+Implemented:
+
+- v10 Draft 2020-12 JSON schema with bounded Region residency aggregates and
+  stable per-candidate logical key, interest state, residency state, source
+  counts, tile counts, and legacy-completeness fields;
+- observer-owned immutable metadata with checked aggregate arithmetic,
+  candidate-state semantics, unique keys, and exact comparison to the observed
+  interest delta;
+- event gating that avoids rebuilding the full logical-window residency view
+  on every ordinary tile step; and
+- dev-only source wiring from RegionManager's dormant Slice 37 comparison.
+
+Safety boundary:
+
+- the existing private/admin capability gate and default-disabled server
+  configuration remain unchanged;
+- no Region, tile, collision, entity, Player, path, cache, archive, packet,
+  database, or map state is created or mutated by capture;
+- `loadCandidates` and `releaseCandidates` are explicit diagnostic names, not
+  commands, queues, or eviction authorization; and
+- public/live deployment remains out of scope.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-thirty-eight.py` — 2 tests pass
+  for v9/v10 schema lineage, bounded fields, capture gating, and the
+  non-authoritative runtime boundary;
+- the compiled observer fixture validates v10 events and metadata across start,
+  logical-window crossing, level-changing move, teleport, ordinary move,
+  marker, snapshot, logout, login, stop, an 18-step bounded route, and a
+  discontinuous route;
+- Slice 1 through Slice 38 regressions all pass (90 tests), including updated
+  staged-boundary and schema-version guards;
+- World Builder discovery passes 13 tests and the standalone-layout guard
+  passes;
+- the authoritative bundled-Ant build succeeds for 744 core and 488 plugin
+  sources; and
+- two real-repository normalizations are byte-stable with unchanged world
+  content, 211 classified source owners, and one unresolved normalized
+  coordinate. The expected fingerprints are source
+  `57a70382c188ee892805de46eddddf99ec2f15c728863d4c07f5851503547c94`,
+  inventory
+  `25f5347510e95372983db36dd0afa98af63befe6fb86c1a15516bcbc1b8397ac`,
+  classification
+  `d7df5cd3ac229c88ce00a0a94e78bab012c212d97a5ca10cb0c87ce88823a9cf`,
+  and occurrence
+  `cdfe9069333827eca2f52701e321cb7b6234246d07979599311d9e8922c71930`.
+
+Owner runtime validation is pending on the private server.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -4508,12 +4578,12 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 35 by emitting the latest bounded ordinary walking segment through additive private v9 diagnostics without changing path authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 36 by mirroring packed Region lifecycle as checked, versioned logical residency without caching tiles or changing lookup/path authority. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 37 by comparing bounded logical interest changes with versioned Region residency while treating load/release candidates as dormant evidence only. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 38 by emitting bounded interest/residency evidence through opt-in private v10 diagnostics without adopting Region loading or eviction. | Implemented; owner validation pending |
 
 ## Next Discussion
 
-Expose Slice 37 through one bounded, additive private diagnostic version so the
-owner can validate Region residency evidence across ordinary region crossings,
-teleports, level changes, and reconnects. A new database schema, authoritative
-region storage, actual loading/eviction, collision/pathing adoption, client
-protocol adoption, Builder, export, relocation, and level `-2` remain separately
-gated.
+After Slice 38 owner validation, define global residency ownership/reference
+semantics before any actual load or eviction experiment. A new database schema,
+authoritative region storage, actual loading/eviction, collision/pathing
+adoption, client protocol adoption, Builder, export, relocation, and level `-2`
+remain separately gated.
