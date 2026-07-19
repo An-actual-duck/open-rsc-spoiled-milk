@@ -42,7 +42,10 @@ class LayeredMapsSliceFortyTest(unittest.TestCase):
         self.assertNotIn("unregisterPackedRegion", ownership_block)
         self.assertNotIn(".unload(", ownership_block)
         self.assertNotIn("LayeredRegionInterestOwnershipLedger", path_validation)
-        self.assertNotIn("LayeredRegionInterestOwnershipLedger", observer)
+        observer_writes = observer.split("private static Status write(", 1)[1]
+        self.assertIn("InterestOwnershipMetadata", observer_writes)
+        self.assertNotIn("getRegion(", observer_writes)
+        self.assertNotIn(".unload(", observer_writes)
         self.assertIn("return getRegion(x, y).getTileValue(", manager)
 
     def test_player_session_opens_syncs_and_finally_closes_one_opaque_owner(self):

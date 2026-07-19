@@ -39,6 +39,21 @@ public final class LayeredRegionInterestOwnershipLedger {
 		return ownerToken;
 	}
 
+	/** Opens one owner and assigns its first complete window atomically. */
+	public synchronized OpenedOwner openOwner(
+		final WorldRegionWindow currentWindow,
+		final int maximumRegionsPerWindow) {
+		OwnerToken ownerToken = openOwner();
+		try {
+			Change change = synchronizeOwner(
+				ownerToken, currentWindow, maximumRegionsPerWindow);
+			return new OpenedOwner(ownerToken, change);
+		} catch (RuntimeException failure) {
+			closeOwner(ownerToken);
+			throw failure;
+		}
+	}
+
 	/**
 	 * Replaces one owner's complete logical interest window atomically.
 	 *
@@ -88,9 +103,15 @@ public final class LayeredRegionInterestOwnershipLedger {
 	/** Captures one open owner's exact window at the current ledger version. */
 	public synchronized OwnerSnapshot snapshotOwner(final OwnerToken ownerToken) {
 		OwnerState owner = requireOpenOwner(ownerToken);
+		List<OwnerReference> references = new ArrayList<OwnerReference>(
+			owner.keys.size());
+		for (WorldRegionKey key : owner.keys) {
+			references.add(new OwnerReference(
+				key, requirePositiveReferenceCount(key)));
+		}
 		return new OwnerSnapshot(
 			ownerToken.sequence, version, owners.size(), referenceCounts.size(),
-			owner.window, owner.keys);
+			owner.window, references);
 	}
 
 	public synchronized long getVersion() {
@@ -261,6 +282,27 @@ public final class LayeredRegionInterestOwnershipLedger {
 
 		public boolean isClosed() {
 			return closed;
+		}
+	}
+
+	/** Opaque handle plus the exact first-window reference transition. */
+	public static final class OpenedOwner {
+		private final OwnerToken ownerToken;
+		private final Change change;
+
+		private OpenedOwner(
+			final OwnerToken ownerToken,
+			final Change change) {
+			this.ownerToken = ownerToken;
+			this.change = change;
+		}
+
+		public OwnerToken getOwnerToken() {
+			return ownerToken;
+		}
+
+		public Change getChange() {
+			return change;
 		}
 	}
 
@@ -485,6 +527,7 @@ public final class LayeredRegionInterestOwnershipLedger {
 		private final int referencedRegionCount;
 		private final WorldRegionWindow window;
 		private final List<WorldRegionKey> keys;
+		private final List<OwnerReference> references;
 
 		private OwnerSnapshot(
 			final long ownerSequence,
@@ -492,14 +535,20 @@ public final class LayeredRegionInterestOwnershipLedger {
 			final int openOwnerCount,
 			final int referencedRegionCount,
 			final WorldRegionWindow window,
-			final List<WorldRegionKey> keys) {
+			final List<OwnerReference> references) {
 			this.ownerSequence = ownerSequence;
 			this.ledgerVersion = ledgerVersion;
 			this.openOwnerCount = openOwnerCount;
 			this.referencedRegionCount = referencedRegionCount;
 			this.window = window;
-			this.keys = Collections.unmodifiableList(
-				new ArrayList<WorldRegionKey>(keys));
+			this.references = Collections.unmodifiableList(
+				new ArrayList<OwnerReference>(references));
+			List<WorldRegionKey> capturedKeys = new ArrayList<WorldRegionKey>(
+				references.size());
+			for (OwnerReference reference : references) {
+				capturedKeys.add(reference.getLogicalRegionKey());
+			}
+			this.keys = Collections.unmodifiableList(capturedKeys);
 		}
 
 		public long getOwnerSequence() {
@@ -526,6 +575,10 @@ public final class LayeredRegionInterestOwnershipLedger {
 			return keys;
 		}
 
+		public List<OwnerReference> getReferences() {
+			return references;
+		}
+
 		public void requireWindow(final WorldRegionWindow expectedWindow) {
 			WorldRegionWindow expected = Objects.requireNonNull(
 				expectedWindow, "expectedWindow");
@@ -537,6 +590,32 @@ public final class LayeredRegionInterestOwnershipLedger {
 				throw new IllegalStateException(
 					"Interest owner key count differs from its window");
 			}
+		}
+	}
+
+	/** One same-version global count for a Region owned by the captured owner. */
+	public static final class OwnerReference {
+		private final WorldRegionKey logicalRegionKey;
+		private final int referenceCount;
+
+		private OwnerReference(
+			final WorldRegionKey logicalRegionKey,
+			final int referenceCount) {
+			this.logicalRegionKey = Objects.requireNonNull(
+				logicalRegionKey, "logicalRegionKey");
+			if (referenceCount < 1) {
+				throw new IllegalArgumentException(
+					"Owned Region reference count must be positive");
+			}
+			this.referenceCount = referenceCount;
+		}
+
+		public WorldRegionKey getLogicalRegionKey() {
+			return logicalRegionKey;
+		}
+
+		public int getReferenceCount() {
+			return referenceCount;
 		}
 	}
 

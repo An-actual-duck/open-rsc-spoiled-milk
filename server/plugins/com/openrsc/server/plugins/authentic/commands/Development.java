@@ -25,6 +25,7 @@ import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
+import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
@@ -1364,6 +1365,7 @@ public final class Development implements CommandTrigger {
 		}
 		try {
 			player.getLayeredVisibilityWindow();
+			player.getLayeredInterestOwnerSnapshot();
 		} catch (IllegalStateException failure) {
 			player.message(messagePrefix + "Layered player mirror mismatch: " + failure.getMessage());
 			return;
@@ -1383,7 +1385,8 @@ public final class Development implements CommandTrigger {
 					layeredTileParitySource(player), layeredTileNeighborhoodSource(player),
 					layeredAdjacentCollisionSource(player),
 					layeredTraversalCollisionSource(player),
-					layeredRegionResidencySource(player));
+					layeredRegionResidencySource(player),
+					layeredInterestOwnershipSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1603,6 +1606,26 @@ public final class Development implements CommandTrigger {
 						comparison.getReleaseCandidates()),
 					layeredRegionResidencyCandidates(
 						comparison.getUnsupportedCurrent()));
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.InterestOwnershipSource
+		layeredInterestOwnershipSource(final Player player) {
+		return new LayeredCoordinateParityObserver.InterestOwnershipSource() {
+			@Override
+			public LayeredCoordinateParityObserver.InterestOwnershipMetadata capture(
+				final WorldRegionWindow currentWindow,
+				final int maximumRegionsPerWindow) {
+				LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot =
+					player.getLayeredInterestOwnerSnapshot();
+				snapshot.requireWindow(currentWindow);
+				if (snapshot.getReferences().size() > maximumRegionsPerWindow) {
+					throw new IllegalArgumentException(
+						"Interest owner exceeds the diagnostic Region budget");
+				}
+				return LayeredCoordinateParityObserver.InterestOwnershipMetadata
+					.fromOwnerSnapshot(snapshot);
 			}
 		};
 	}

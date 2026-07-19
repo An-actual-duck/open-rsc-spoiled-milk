@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v10.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 
 
 POINT_STUB = r'''
@@ -79,11 +79,13 @@ package com.openrsc.server.diagnostics;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
+import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
+import com.openrsc.server.model.world.coordinate.WorldSpaceId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -109,6 +111,43 @@ public final class LayeredCoordinateParityObserverFixture {
         }
         expectIllegal(() -> LayeredCoordinateParitySnapshot.capture(Point.location(100, 3776)));
         expectNull(() -> LayeredCoordinateParitySnapshot.capture(null));
+
+        LayeredRegionInterestOwnershipLedger ownershipLedger =
+            new LayeredRegionInterestOwnershipLedger();
+        LayeredRegionInterestOwnershipLedger.OpenedOwner firstOwner =
+            ownershipLedger.openOwner(
+                new WorldRegionWindow(WorldSpaceId.GLOBAL, 0, 4, 0, 5, 0), 2);
+        LayeredRegionInterestOwnershipLedger.OpenedOwner secondOwner =
+            ownershipLedger.openOwner(
+                new WorldRegionWindow(WorldSpaceId.GLOBAL, 0, 5, 0, 6, 0), 2);
+        LayeredCoordinateParityObserver.InterestOwnershipMetadata sharedOpen =
+            LayeredCoordinateParityObserver.InterestOwnershipMetadata.fromChange(
+                secondOwner.getChange());
+        check(sharedOpen.isOwnerOpen() && sharedOpen.getEnteredCount() == 2,
+            "second owner exact open transition");
+        check(sharedOpen.getGloballyAcquiredCount() == 1
+            && sharedOpen.getSharedAcquisitionCount() == 1,
+            "second owner distinguishes global and shared acquisition");
+        check(sharedOpen.getMinimumReferenceCount().intValue() == 1
+            && sharedOpen.getMaximumReferenceCount().intValue() == 2,
+            "exact change carries post-transition owner reference range");
+        LayeredCoordinateParityObserver.InterestOwnershipMetadata currentFirst =
+            LayeredCoordinateParityObserver.InterestOwnershipMetadata.fromOwnerSnapshot(
+                ownershipLedger.snapshotOwner(firstOwner.getOwnerToken()));
+        check(currentFirst.isNoOp()
+            && currentFirst.getMaximumReferenceCount().intValue() == 2,
+            "same-version snapshot captures shared reference count");
+        LayeredCoordinateParityObserver.InterestOwnershipMetadata sharedClose =
+            LayeredCoordinateParityObserver.InterestOwnershipMetadata.fromChange(
+                ownershipLedger.closeOwner(secondOwner.getOwnerToken()));
+        check(!sharedClose.isOwnerOpen() && sharedClose.getExitedCount() == 2,
+            "close reports a closed owner and every exit");
+        check(sharedClose.getGloballyReleasedCount() == 1
+            && sharedClose.getSharedReleaseCount() == 1,
+            "close distinguishes global and shared release");
+        check(sharedClose.getMinimumReferenceCount() == null
+            && sharedClose.getMaximumReferenceCount() == null,
+            "closed owner has no owned reference range");
 
         int playerId = 7;
         long usernameHash = 123456789L;
@@ -555,7 +594,16 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v10" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v11" for event in events))
+            self.assertTrue(all(
+                event["interestOwnership"] is not None
+                for event in events
+                if event["eventType"] != "move"
+            ))
+            self.assertIsNone(events[3]["interestOwnership"])
+            self.assertEqual(1, events[0]["interestOwnership"]["ownerSequence"])
+            self.assertTrue(events[0]["interestOwnership"]["ownerOpen"])
+            self.assertTrue(events[0]["interestOwnership"]["noOp"])
             upper_window = events[1]["to"]["visibilityWindow"]
             self.assertEqual(2, upper_window["gridDistance"])
             self.assertEqual(16, upper_window["tileRadius"])

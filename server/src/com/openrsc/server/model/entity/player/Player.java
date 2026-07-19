@@ -3236,23 +3236,29 @@ public final class Player extends Mob {
 		}
 	}
 
-	private void synchronizeLayeredMirrors(final Point point) {
+	private LayeredRegionInterestOwnershipLedger.Change
+		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
 		layeredRegionMembershipMirror.synchronize(layeredLocation);
 		WorldRegionWindow window = getWorld().getRegionManager()
 			.getLayeredVisibleRegionWindow(layeredLocation);
 		layeredVisibilityWindowMirror.synchronize(window);
-		synchronizeLayeredInterestOwnerIfOpen(window);
+		return synchronizeLayeredInterestOwnerIfOpen(window);
 	}
 
-	private void openOrSynchronizeLayeredInterestOwner(
+	private LayeredRegionInterestOwnershipLedger.Change
+		openOrSynchronizeLayeredInterestOwner(
 		final WorldRegionWindow currentWindow) {
 		synchronized (layeredInterestOwnerLock) {
+			LayeredRegionInterestOwnershipLedger.Change change = null;
 			if (layeredInterestOwner == null || layeredInterestOwner.isClosed()) {
-				layeredInterestOwner = getWorld().getRegionManager()
+				LayeredRegionInterestOwnershipLedger.OpenedOwner opened =
+					getWorld().getRegionManager()
 					.openLayeredRegionInterestOwner(currentWindow);
+				layeredInterestOwner = opened.getOwnerToken();
+				change = opened.getChange();
 			} else if (!currentWindow.equals(layeredInterestOwnerWindow)) {
-				LayeredRegionInterestOwnershipLedger.Change change =
+				change =
 					getWorld().getRegionManager()
 						.synchronizeLayeredRegionInterestOwner(
 							layeredInterestOwner, currentWindow);
@@ -3268,23 +3274,26 @@ public final class Player extends Mob {
 					layeredInterestOwner);
 			snapshot.requireWindow(currentWindow);
 			layeredInterestOwnerWindow = currentWindow;
+			return change;
 		}
 	}
 
-	private void synchronizeLayeredInterestOwnerIfOpen(
+	private LayeredRegionInterestOwnershipLedger.Change
+		synchronizeLayeredInterestOwnerIfOpen(
 		final WorldRegionWindow currentWindow) {
 		synchronized (layeredInterestOwnerLock) {
 			if (layeredInterestOwner != null && !layeredInterestOwner.isClosed()
 				&& !currentWindow.equals(layeredInterestOwnerWindow)) {
-				openOrSynchronizeLayeredInterestOwner(currentWindow);
+				return openOrSynchronizeLayeredInterestOwner(currentWindow);
 			}
+			return null;
 		}
 	}
 
-	private void closeLayeredInterestOwner() {
+	private LayeredRegionInterestOwnershipLedger.Change closeLayeredInterestOwner() {
 		synchronized (layeredInterestOwnerLock) {
 			if (layeredInterestOwner == null) {
-				return;
+				return null;
 			}
 			LayeredRegionInterestOwnershipLedger.Change change =
 				getWorld().getRegionManager().closeLayeredRegionInterestOwner(
@@ -3296,6 +3305,7 @@ public final class Player extends Mob {
 			}
 			layeredInterestOwner = null;
 			layeredInterestOwnerWindow = null;
+			return change;
 		}
 	}
 
@@ -3322,14 +3332,16 @@ public final class Player extends Mob {
 		}
 		this.loggedIn = loggedIn;
 		WorldRegionWindow currentWindow = getLayeredVisibilityWindow();
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange;
 		if (loggedIn) {
-			openOrSynchronizeLayeredInterestOwner(currentWindow);
+			ownershipChange = openOrSynchronizeLayeredInterestOwner(currentWindow);
 		} else {
-			closeLayeredInterestOwner();
+			ownershipChange = closeLayeredInterestOwner();
 		}
 		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
 			LayeredCoordinateParityObserver.onSession(
-				getDatabaseID(), getUsernameHash(), getLocation(), loggedIn);
+				getDatabaseID(), getUsernameHash(), getLocation(), loggedIn,
+				ownershipChange);
 		}
 	}
 
@@ -4225,12 +4237,14 @@ public final class Player extends Mob {
 			doSceneryMorphWalk(point);
 		}
 
-		synchronizeLayeredMirrors(point);
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange =
+			synchronizeLayeredMirrors(point);
 		super.setLocation(point, teleported);
 		getLayeredVisibilityWindow();
 		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
 			LayeredCoordinateParityObserver.onLocationChanged(
-				getDatabaseID(), getUsernameHash(), previousLocation, point, teleported);
+				getDatabaseID(), getUsernameHash(), previousLocation, point, teleported,
+				ownershipChange);
 		}
 		if (reloadLocalObjects) {
 			resetLocalObjectState();

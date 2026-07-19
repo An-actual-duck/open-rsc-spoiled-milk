@@ -51,7 +51,9 @@
  * interest deltas, and Slice 38 emits bounded comparison evidence only through
  * private diagnostics. Slice 39 defines opaque process-local interest owners
  * and shared logical-region reference counts, and Slice 40 maintains one such
- * checked owner per Player session without consuming its results. Packed
- * storage and existing runtime decisions remain authoritative.</p>
+ * checked owner per Player session without consuming its results. Slice 41
+ * emits bounded owner and global/shared reference-transition evidence through
+ * private diagnostics only. Packed storage and existing runtime decisions
+ * remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

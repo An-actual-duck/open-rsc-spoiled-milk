@@ -1,16 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-40 validated on the active
-refinement branch
+Status: architecture design complete; Slices 1-40 validated and Slice 41
+implemented pending private owner validation on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 40 maintains a checked RegionManager-owned global
-interest shadow with one opaque handle per Player session while packed Region
-lookup, eager loading, release, eviction, pathing, packets, and persistence
-remain authoritative and unchanged
+Current milestone: Slice 41 exposes the checked Player-session interest shadow
+through bounded v11 private diagnostics while packed Region lookup, eager
+loading, release, eviction, pathing, packets, and persistence remain
+authoritative and unchanged
 
 ## Purpose
 
@@ -4613,6 +4613,91 @@ The next owner-testable slice should expose bounded ownership counts and
 per-event global/shared transition evidence through a new additive private
 diagnostic schema. Loading and eviction must remain disabled.
 
+### Slice 41: Private global-interest ownership diagnostics
+
+Objective: make Slice 40's process-local ownership shadow directly testable and
+AI-readable before any Region loading, retention, release, or eviction policy is
+considered.
+
+Selected boundary:
+
+- additive `layered-map-parity-event-v11` records retain the complete v10
+  contract and add one bounded `interestOwnership` object;
+- start, snapshots, markers, teleports, login, logout, stop, and ordinary moves
+  that cross a logical-window boundary capture ownership; ordinary same-window
+  moves carry an explicit null;
+- current-state records use one atomic owner snapshot whose logical keys and
+  global reference counts share the same ledger version;
+- login, logical-window movement, level changes, teleports, and logout carry the
+  exact immutable ledger `Change` produced for that Player operation, rather
+  than reconstructing a transition after another owner could intervene;
+- records expose only the monotonic process-local owner sequence, ledger
+  version, open-owner/distinct-key counts, current owned-key count,
+  minimum/maximum reference count, entered/retained/exited totals, exact
+  global/shared acquisition and release totals, and bounded entered/exited
+  Region transitions; and
+- opaque owner sequences remain explicitly unrelated to player database IDs,
+  username hashes, entity indexes, persistence, or reusable session identity.
+
+Implemented:
+
+- an atomic ledger `openOwner(window, budget)` result that carries both the
+  opaque token and its exact first-window change;
+- owner snapshots with same-version per-key global reference counts;
+- Player propagation of the exact open, window-change, and final-close result
+  into the existing observer hooks;
+- a checked private command source for non-transition current-owner snapshots;
+  and
+- the retained v10 schema plus an additive, closed, bounded v11 schema and
+  updated observer fixture coverage for unique/shared acquisition and release.
+
+Safety boundary:
+
+- the diagnostic stream reads ownership only after the existing Player shadow
+  has been updated and refuses a mismatched owner/window or owner sequence;
+- `PathValidation`, collision, movement permission, Region lookup and storage,
+  eager loading, residency mirroring, packets, persistence, client loading,
+  terrain, and world data do not consume the diagnostic result;
+- reference counts are evidence, not pins; a zero count is not an unload order,
+  a positive count is not a retention order, and v10 residency candidates
+  remain dormant; and
+- the observer remains opt-in and disabled by default for local and hosted
+  configuration.
+
+Automated validation evidence:
+
+- Slice 1 through Slice 41 regressions all pass (96 tests), including the
+  updated historical observer/schema consumers;
+- the compiled observer fixture covers initial/current ownership, overlapping
+  owners, unique/shared acquisition, unique/shared release, and closed-owner
+  summaries; and
+- World Builder discovery passes 13 tests and the standalone-layout guard
+  passes;
+- the authoritative bundled-Ant build succeeds for 745 core and 488 plugin
+  sources;
+- two real-repository normalizations are byte-stable with unchanged world
+  content, 211 classified source owners, and one unresolved normalized
+  coordinate. The expected fingerprints are source
+  `e62162e795b045c35d2c0bc3420cb5bcc4424868aa816f146b441574e6ebe120`,
+  inventory
+  `6c7436890d9c14e5e1eff366e71e293c5d3a494f06ff83da568607aa99fadefd`,
+  classification
+  `30c1724a793ae82139c2b3ad0b9e7b0a07437fb8e9a1dd2b4ce3a25c4f6ab1ee`,
+  and occurrence
+  `4e533d8513ed06ee84a5fcb15110054c97f87abb92bf2aa8592ee7c9e2a53d4f`;
+  and
+- the private runtime route remains pending owner validation.
+
+The private acceptance route should keep one trace active through ordinary
+movement, one logical-window crossing, surface-to-underground travel,
+logout/reconnect while underground, return to surface, and stop. The resulting
+v11 stream must remain schema-valid; keep one stable owner sequence within each
+session; allocate a new sequence after reconnect; show exact entered/exited and
+global/shared counts only at real ownership boundaries; and report no packed,
+tile, neighborhood, collision, traversal, or residency parity failure. A
+compiled two-owner fixture supplies deterministic overlap coverage when a
+second private human client is unavailable.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -4739,12 +4824,15 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 38 by emitting bounded interest/residency evidence through opt-in private v10 diagnostics without adopting Region loading or eviction. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 39 by defining process-local global interest ownership and shared-reference semantics without runtime adoption. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 40 by maintaining one checked opaque logical-interest owner per Player session without adopting loading, release, or eviction. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 41 by emitting bounded Player interest-owner and global/shared reference transitions through opt-in private v11 diagnostics without adopting loading, retention, release, or eviction. | Implemented; automated validation and private owner acceptance pending |
 
 ## Next Discussion
 
-Expose bounded owner/reference evidence through an additive private diagnostic
-schema, then prove movement, teleport, level change, logout, reconnect, and
-overlapping-player behavior on a private server. A new database schema,
-authoritative region storage, actual loading/eviction, collision/pathing
-adoption, client protocol adoption, Builder, export, relocation, and level `-2`
-remain separately gated.
+Validate the additive v11 owner/reference evidence across movement, teleport,
+level change, logout, reconnect, and return on a private server. After owner
+acceptance, define the first explicit residency pin/cooldown policy as a
+non-authoritative projection and decide whether multi-owner private runtime
+coverage is required before any dormant eviction-eligibility experiment. A new
+database schema, authoritative region storage, actual loading/eviction,
+collision/pathing adoption, client protocol adoption, Builder, export,
+relocation, and level `-2` remain separately gated.

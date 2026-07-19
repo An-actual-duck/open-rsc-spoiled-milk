@@ -568,20 +568,11 @@ public class RegionManager {
 	}
 
 	/** Opens one dormant owner and atomically assigns its first logical window. */
-	public LayeredRegionInterestOwnershipLedger.OwnerToken
+	public LayeredRegionInterestOwnershipLedger.OpenedOwner
 		openLayeredRegionInterestOwner(final WorldRegionWindow currentWindow) {
 		synchronized (layeredRegionLifecycleLock) {
-			LayeredRegionInterestOwnershipLedger.OwnerToken ownerToken =
-				layeredRegionInterestOwnershipLedger.openOwner();
-			try {
-				layeredRegionInterestOwnershipLedger.synchronizeOwner(
-					ownerToken, currentWindow,
-					MAX_LAYERED_REGIONS_PER_INTEREST_OWNER);
-				return ownerToken;
-			} catch (RuntimeException failure) {
-				layeredRegionInterestOwnershipLedger.closeOwner(ownerToken);
-				throw failure;
-			}
+			return layeredRegionInterestOwnershipLedger.openOwner(
+				currentWindow, MAX_LAYERED_REGIONS_PER_INTEREST_OWNER);
 		}
 	}
 

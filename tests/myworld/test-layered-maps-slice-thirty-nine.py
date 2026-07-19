@@ -46,6 +46,26 @@ public final class LayeredRegionInterestOwnershipLedgerFixture {
         LayeredRegionInterestOwnershipLedger ledger =
             new LayeredRegionInterestOwnershipLedger();
         check(ledger.getVersion() == 0L, "initial version");
+
+        LayeredRegionInterestOwnershipLedger atomicLedger =
+            new LayeredRegionInterestOwnershipLedger();
+        LayeredRegionInterestOwnershipLedger.OpenedOwner atomicOpen =
+            atomicLedger.openOwner(window(WorldSpaceId.GLOBAL, 0, 8, 9), 2);
+        check(atomicOpen.getOwnerToken().getSequence()
+            == atomicOpen.getChange().getOwnerSequence(),
+            "atomic open preserves opaque identity");
+        check(atomicOpen.getChange().getGloballyAcquired().size() == 2,
+            "atomic open returns its exact first transition");
+        LayeredRegionInterestOwnershipLedger.OwnerSnapshot atomicSnapshot =
+            atomicLedger.snapshotOwner(atomicOpen.getOwnerToken());
+        check(atomicSnapshot.getLedgerVersion()
+            == atomicOpen.getChange().getLedgerVersion(),
+            "owner snapshot and initial transition share a ledger version");
+        check(atomicSnapshot.getReferences().size() == 2
+            && atomicSnapshot.getReferences().get(0).getReferenceCount() == 1,
+            "owner snapshot includes same-version global counts");
+        expectUnsupported(() -> atomicSnapshot.getReferences().clear());
+
         LayeredRegionInterestOwnershipLedger.OwnerToken first = ledger.openOwner();
         LayeredRegionInterestOwnershipLedger.OwnerToken second = ledger.openOwner();
         check(first.getSequence() > 0L
@@ -77,6 +97,13 @@ public final class LayeredRegionInterestOwnershipLedgerFixture {
         check(snapshot(ledger, WorldSpaceId.GLOBAL, 0, 5) == 2,
             "overlap count two");
         check(ledger.getReferencedRegionCount() == 3, "three distinct keys");
+        LayeredRegionInterestOwnershipLedger.OwnerSnapshot firstSnapshot =
+            ledger.snapshotOwner(first);
+        check(firstSnapshot.getLedgerVersion() == ledger.getVersion(),
+            "owner references use the snapshot ledger version");
+        check(firstSnapshot.getReferences().get(0).getReferenceCount() == 1
+            && firstSnapshot.getReferences().get(1).getReferenceCount() == 2,
+            "owner snapshot exposes unique and shared counts");
 
         LayeredRegionInterestOwnershipLedger.Change firstMove =
             ledger.synchronizeOwner(first, window(WorldSpaceId.GLOBAL, 0, 5, 6), 2);

@@ -3,6 +3,7 @@ package com.openrsc.server.diagnostics;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
+import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
@@ -29,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v10";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v11";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -53,17 +54,38 @@ public final class LayeredCoordinateParityObserver {
 		AdjacentCollisionSource adjacentCollisionSource,
 		TraversalCollisionSource traversalCollisionSource,
 		RegionResidencySource regionResidencySource) {
+		return start(
+			playerId, usernameHash, current, viewGridDistance, tileSnapshotSource,
+			tileParitySource, tileNeighborhoodSource, adjacentCollisionSource,
+			traversalCollisionSource, regionResidencySource,
+			syntheticInterestOwnershipSource());
+	}
+
+	public static Status start(
+		int playerId,
+		long usernameHash,
+		Point current,
+		int viewGridDistance,
+		TileSnapshotSource tileSnapshotSource,
+		TileParitySource tileParitySource,
+		TileNeighborhoodSource tileNeighborhoodSource,
+		AdjacentCollisionSource adjacentCollisionSource,
+		TraversalCollisionSource traversalCollisionSource,
+		RegionResidencySource regionResidencySource,
+		InterestOwnershipSource interestOwnershipSource) {
 		Objects.requireNonNull(tileSnapshotSource, "tileSnapshotSource");
 		Objects.requireNonNull(tileParitySource, "tileParitySource");
 		Objects.requireNonNull(tileNeighborhoodSource, "tileNeighborhoodSource");
 		Objects.requireNonNull(adjacentCollisionSource, "adjacentCollisionSource");
 		Objects.requireNonNull(traversalCollisionSource, "traversalCollisionSource");
 		Objects.requireNonNull(regionResidencySource, "regionResidencySource");
+		Objects.requireNonNull(interestOwnershipSource, "interestOwnershipSource");
 		TraceKey key = new TraceKey(playerId, usernameHash);
 		TraceState created = new TraceState(
 			key, logPath(key), viewGridDistance, tileSnapshotSource,
 			tileParitySource, tileNeighborhoodSource, adjacentCollisionSource,
-			traversalCollisionSource, regionResidencySource);
+			traversalCollisionSource, regionResidencySource,
+			interestOwnershipSource);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
@@ -72,19 +94,21 @@ public final class LayeredCoordinateParityObserver {
 			throw new IllegalArgumentException(
 				"Active trace view distance does not match the current server configuration");
 		}
-		return write(state, newlyStarted ? "start" : "snapshot", null, current, null, null);
+		return write(
+			state, newlyStarted ? "start" : "snapshot", null, current, null, null,
+			null);
 	}
 
 	public static Status snapshot(int playerId, long usernameHash, Point current) {
 		TraceState state = TRACES.get(new TraceKey(playerId, usernameHash));
 		return state == null ? Status.disabled(logPath(new TraceKey(playerId, usernameHash)))
-			: write(state, "snapshot", null, current, null, null);
+			: write(state, "snapshot", null, current, null, null, null);
 	}
 
 	public static Status mark(int playerId, long usernameHash, Point current, String label) {
 		TraceState state = TRACES.get(new TraceKey(playerId, usernameHash));
 		return state == null ? Status.disabled(logPath(new TraceKey(playerId, usernameHash)))
-			: write(state, "marker", null, current, null, sanitizeLabel(label));
+			: write(state, "marker", null, current, null, sanitizeLabel(label), null);
 	}
 
 	public static Status stop(int playerId, long usernameHash, Point current) {
@@ -93,7 +117,7 @@ public final class LayeredCoordinateParityObserver {
 		if (state == null) {
 			return Status.disabled(logPath(key));
 		}
-		Status status = write(state, "stop", null, current, null, null);
+		Status status = write(state, "stop", null, current, null, null, null);
 		TRACES.remove(key, state);
 		return status.asDisabled();
 	}
@@ -115,6 +139,17 @@ public final class LayeredCoordinateParityObserver {
 		Point previous,
 		Point current,
 		boolean teleported) {
+		onLocationChanged(
+			playerId, usernameHash, previous, current, teleported, null);
+	}
+
+	public static void onLocationChanged(
+		int playerId,
+		long usernameHash,
+		Point previous,
+		Point current,
+		boolean teleported,
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange) {
 		if (previous == null || current == null
 			|| (previous.getX() == current.getX() && previous.getY() == current.getY())) {
 			return;
@@ -122,14 +157,25 @@ public final class LayeredCoordinateParityObserver {
 		TraceState state = TRACES.get(new TraceKey(playerId, usernameHash));
 		if (state != null) {
 			write(state, teleported ? "teleport" : "move", previous, current,
-				Boolean.valueOf(teleported), null);
+				Boolean.valueOf(teleported), null, ownershipChange);
 		}
 	}
 
 	public static void onSession(int playerId, long usernameHash, Point current, boolean loggedIn) {
+		onSession(playerId, usernameHash, current, loggedIn, null);
+	}
+
+	public static void onSession(
+		int playerId,
+		long usernameHash,
+		Point current,
+		boolean loggedIn,
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange) {
 		TraceState state = TRACES.get(new TraceKey(playerId, usernameHash));
 		if (state != null && current != null) {
-			write(state, loggedIn ? "login" : "logout", null, current, null, null);
+			write(
+				state, loggedIn ? "login" : "logout", null, current, null, null,
+				ownershipChange);
 		}
 	}
 
@@ -139,7 +185,8 @@ public final class LayeredCoordinateParityObserver {
 		Point previous,
 		Point current,
 		Boolean teleported,
-		String label) {
+		String label,
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange) {
 		Objects.requireNonNull(current, "current");
 		synchronized (state) {
 			try {
@@ -171,6 +218,7 @@ public final class LayeredCoordinateParityObserver {
 						from.getVisibilityWindow(), to.getVisibilityWindow(),
 						MAX_TRACE_REGIONS_PER_WINDOW);
 				RegionResidencyMetadata regionResidency = null;
+				InterestOwnershipMetadata interestOwnership = null;
 				if (capturesTileComparisons(eventType)) {
 					tileParity = Objects.requireNonNull(
 						state.tileParitySource.capture(current),
@@ -229,12 +277,24 @@ public final class LayeredCoordinateParityObserver {
 						MAX_TRACE_REGIONS_PER_WINDOW);
 					regionResidency.requireMatches(expected);
 				}
+				if (capturesInterestOwnership(eventType, interestDelta)) {
+					interestOwnership = ownershipChange == null
+						? Objects.requireNonNull(
+							state.interestOwnershipSource.capture(
+								to.getVisibilityWindow(),
+								MAX_TRACE_REGIONS_PER_WINDOW),
+							"interestOwnershipSource result")
+						: InterestOwnershipMetadata.fromChange(ownershipChange);
+					interestOwnership.requireMatches(
+						eventType, from == null ? null : from.getVisibilityWindow(),
+						to.getVisibilityWindow(), ownershipChange != null);
+				}
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
 					state.key, nextSequence, System.currentTimeMillis(), eventType,
 					teleported, label, from, to, interestDelta, coverage, tileSnapshot,
 					tileParity, tileNeighborhood, adjacentCollision, recentTraversal,
-					regionResidency);
+					regionResidency, interestOwnership);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -275,7 +335,8 @@ public final class LayeredCoordinateParityObserver {
 		TileNeighborhoodMetadata tileNeighborhood,
 		AdjacentCollisionMetadata adjacentCollision,
 		RecentTraversalMetadata recentTraversal,
-		RegionResidencyMetadata regionResidency) {
+		RegionResidencyMetadata regionResidency,
+		InterestOwnershipMetadata interestOwnership) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -347,6 +408,12 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendRegionResidency(out, regionResidency);
 		}
+		out.append(",\"interestOwnership\":");
+		if (interestOwnership == null) {
+			out.append("null");
+		} else {
+			appendInterestOwnership(out, interestOwnership);
+		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
 		return out.append('}').toString();
@@ -408,6 +475,68 @@ public final class LayeredCoordinateParityObserver {
 		out.append(",\"unsupportedCurrent\":");
 		appendRegionResidencyCandidates(out, residency.getUnsupportedCurrent());
 		out.append('}');
+	}
+
+	private static void appendInterestOwnership(
+		final StringBuilder out,
+		final InterestOwnershipMetadata ownership) {
+		out.append('{');
+		out.append("\"ledgerVersion\":")
+			.append(ownership.getLedgerVersion()).append(',');
+		out.append("\"ownerSequence\":")
+			.append(ownership.getOwnerSequence()).append(',');
+		out.append("\"ownerOpen\":").append(ownership.isOwnerOpen()).append(',');
+		out.append("\"openOwnerCount\":")
+			.append(ownership.getOpenOwnerCount()).append(',');
+		out.append("\"referencedRegionCount\":")
+			.append(ownership.getReferencedRegionCount()).append(',');
+		out.append("\"ownedRegionCount\":")
+			.append(ownership.getOwnedRegionCount()).append(',');
+		out.append("\"minimumReferenceCount\":");
+		appendNullableInteger(out, ownership.getMinimumReferenceCount());
+		out.append(",\"maximumReferenceCount\":");
+		appendNullableInteger(out, ownership.getMaximumReferenceCount());
+		out.append(",\"enteredCount\":").append(ownership.getEnteredCount());
+		out.append(",\"retainedCount\":").append(ownership.getRetainedCount());
+		out.append(",\"exitedCount\":").append(ownership.getExitedCount());
+		out.append(",\"globallyAcquiredCount\":")
+			.append(ownership.getGloballyAcquiredCount());
+		out.append(",\"sharedAcquisitionCount\":")
+			.append(ownership.getSharedAcquisitionCount());
+		out.append(",\"globallyReleasedCount\":")
+			.append(ownership.getGloballyReleasedCount());
+		out.append(",\"sharedReleaseCount\":")
+			.append(ownership.getSharedReleaseCount());
+		out.append(",\"noOp\":").append(ownership.isNoOp());
+		out.append(",\"transitions\":");
+		appendInterestOwnershipTransitions(out, ownership.getTransitions());
+		out.append('}');
+	}
+
+	private static void appendInterestOwnershipTransitions(
+		final StringBuilder out,
+		final List<InterestOwnershipTransitionMetadata> transitions) {
+		out.append('[');
+		boolean first = true;
+		for (InterestOwnershipTransitionMetadata transition : transitions) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			WorldRegionKey key = transition.getLogicalRegionKey();
+			out.append("{\"logicalRegion\":{\"worldSpace\":\"")
+				.append(jsonEscape(key.getWorldSpace().getValue()))
+				.append("\",\"level\":").append(key.getLevel())
+				.append(",\"x\":").append(key.getRegionX())
+				.append(",\"y\":").append(key.getRegionY()).append("},");
+			field(out, "interestState", transition.getInterestState().name())
+				.append(',');
+			out.append("\"previousReferenceCount\":")
+				.append(transition.getPreviousReferenceCount()).append(',');
+			out.append("\"currentReferenceCount\":")
+				.append(transition.getCurrentReferenceCount()).append('}');
+		}
+		out.append(']');
 	}
 
 	private static void appendRegionResidencyCandidates(
@@ -925,6 +1054,25 @@ public final class LayeredCoordinateParityObserver {
 			|| (interestDelta != null && !interestDelta.isNoOp());
 	}
 
+	private static boolean capturesInterestOwnership(
+		final String eventType,
+		final WorldRegionInterestDelta interestDelta) {
+		return !"move".equals(eventType)
+			|| (interestDelta != null && !interestDelta.isNoOp());
+	}
+
+	private static InterestOwnershipSource syntheticInterestOwnershipSource() {
+		return new InterestOwnershipSource() {
+			@Override
+			public InterestOwnershipMetadata capture(
+				final WorldRegionWindow currentWindow,
+				final int maximumRegionsPerWindow) {
+				return InterestOwnershipMetadata.syntheticCurrent(
+					currentWindow, maximumRegionsPerWindow);
+			}
+		};
+	}
+
 	private static String safeMessage(Throwable failure) {
 		String message = failure.getMessage();
 		return message == null ? "no detail" : message.replace('\n', ' ').replace('\r', ' ');
@@ -982,6 +1130,383 @@ public final class LayeredCoordinateParityObserver {
 			WorldRegionWindow previousWindow,
 			WorldRegionWindow currentWindow,
 			int maximumRegionsPerWindow);
+	}
+
+	/** Supplies one same-version global-interest ownership view. */
+	@FunctionalInterface
+	public interface InterestOwnershipSource {
+		InterestOwnershipMetadata capture(
+			WorldRegionWindow currentWindow,
+			int maximumRegionsPerWindow);
+	}
+
+	/** Immutable ownership aggregate; never a Region retention or eviction order. */
+	public static final class InterestOwnershipMetadata {
+		private final long ledgerVersion;
+		private final long ownerSequence;
+		private final boolean ownerOpen;
+		private final int openOwnerCount;
+		private final int referencedRegionCount;
+		private final int ownedRegionCount;
+		private final Integer minimumReferenceCount;
+		private final Integer maximumReferenceCount;
+		private final int enteredCount;
+		private final int retainedCount;
+		private final int exitedCount;
+		private final int globallyAcquiredCount;
+		private final int sharedAcquisitionCount;
+		private final int globallyReleasedCount;
+		private final int sharedReleaseCount;
+		private final boolean noOp;
+		private final List<InterestOwnershipTransitionMetadata> transitions;
+		private final WorldRegionWindow previousOwnerWindow;
+		private final WorldRegionWindow currentOwnerWindow;
+
+		private InterestOwnershipMetadata(
+			final long ledgerVersion,
+			final long ownerSequence,
+			final boolean ownerOpen,
+			final int openOwnerCount,
+			final int referencedRegionCount,
+			final int ownedRegionCount,
+			final Integer minimumReferenceCount,
+			final Integer maximumReferenceCount,
+			final int enteredCount,
+			final int retainedCount,
+			final int exitedCount,
+			final int globallyAcquiredCount,
+			final int sharedAcquisitionCount,
+			final int globallyReleasedCount,
+			final int sharedReleaseCount,
+			final boolean noOp,
+			final List<InterestOwnershipTransitionMetadata> transitions,
+			final WorldRegionWindow previousOwnerWindow,
+			final WorldRegionWindow currentOwnerWindow) {
+			Objects.requireNonNull(transitions, "transitions");
+			if (ledgerVersion < 0L || ownerSequence < 1L || openOwnerCount < 0
+				|| referencedRegionCount < 0 || ownedRegionCount < 0
+				|| enteredCount < 0 || retainedCount < 0 || exitedCount < 0
+				|| globallyAcquiredCount < 0 || sharedAcquisitionCount < 0
+				|| globallyReleasedCount < 0 || sharedReleaseCount < 0
+				|| globallyAcquiredCount + sharedAcquisitionCount != enteredCount
+				|| globallyReleasedCount + sharedReleaseCount != exitedCount
+				|| transitions.size() != enteredCount + exitedCount
+				|| noOp != (enteredCount == 0 && exitedCount == 0)
+				|| ownerOpen != (currentOwnerWindow != null)
+				|| ownerOpen && openOwnerCount < 1
+				|| ownerOpen && ownedRegionCount < 1
+				|| !ownerOpen && ownedRegionCount != 0
+				|| ownedRegionCount > referencedRegionCount
+				|| ownedRegionCount == 0
+					&& (minimumReferenceCount != null || maximumReferenceCount != null)
+				|| ownedRegionCount > 0
+					&& (minimumReferenceCount == null || maximumReferenceCount == null)
+				|| minimumReferenceCount != null
+					&& (minimumReferenceCount.intValue() < 1
+						|| maximumReferenceCount.intValue()
+							< minimumReferenceCount.intValue())) {
+				throw new IllegalArgumentException(
+					"Invalid interest ownership aggregate counts");
+			}
+			Set<WorldRegionKey> transitionKeys =
+				new java.util.HashSet<WorldRegionKey>();
+			for (InterestOwnershipTransitionMetadata transition : transitions) {
+				Objects.requireNonNull(transition, "transition");
+				if (!transitionKeys.add(transition.getLogicalRegionKey())) {
+					throw new IllegalArgumentException(
+						"Interest ownership transition keys must be unique");
+				}
+			}
+			if (ownerOpen
+				&& ownedRegionCount != currentOwnerWindow.getRegionCount()) {
+				throw new IllegalArgumentException(
+					"Owned Region count differs from the current owner window");
+			}
+			this.ledgerVersion = ledgerVersion;
+			this.ownerSequence = ownerSequence;
+			this.ownerOpen = ownerOpen;
+			this.openOwnerCount = openOwnerCount;
+			this.referencedRegionCount = referencedRegionCount;
+			this.ownedRegionCount = ownedRegionCount;
+			this.minimumReferenceCount = minimumReferenceCount;
+			this.maximumReferenceCount = maximumReferenceCount;
+			this.enteredCount = enteredCount;
+			this.retainedCount = retainedCount;
+			this.exitedCount = exitedCount;
+			this.globallyAcquiredCount = globallyAcquiredCount;
+			this.sharedAcquisitionCount = sharedAcquisitionCount;
+			this.globallyReleasedCount = globallyReleasedCount;
+			this.sharedReleaseCount = sharedReleaseCount;
+			this.noOp = noOp;
+			this.transitions = Collections.unmodifiableList(
+				new ArrayList<InterestOwnershipTransitionMetadata>(transitions));
+			this.previousOwnerWindow = previousOwnerWindow;
+			this.currentOwnerWindow = currentOwnerWindow;
+		}
+
+		public static InterestOwnershipMetadata fromOwnerSnapshot(
+			final LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot) {
+			LayeredRegionInterestOwnershipLedger.OwnerSnapshot owner =
+				Objects.requireNonNull(snapshot, "snapshot");
+			if (owner.getWindow() == null || owner.getReferences().isEmpty()
+				|| owner.getReferences().size() != owner.getKeys().size()) {
+				throw new IllegalArgumentException(
+					"Open owner snapshot must contain one complete window");
+			}
+			Integer minimum = null;
+			Integer maximum = null;
+			Set<WorldRegionKey> keys = new java.util.HashSet<WorldRegionKey>();
+			for (LayeredRegionInterestOwnershipLedger.OwnerReference reference
+				: owner.getReferences()) {
+				if (!keys.add(reference.getLogicalRegionKey())
+					|| !owner.getWindow().contains(reference.getLogicalRegionKey())) {
+					throw new IllegalArgumentException(
+						"Owner references differ from its logical window");
+				}
+				int count = reference.getReferenceCount();
+				minimum = minimum == null || count < minimum.intValue()
+					? Integer.valueOf(count) : minimum;
+				maximum = maximum == null || count > maximum.intValue()
+					? Integer.valueOf(count) : maximum;
+			}
+			return new InterestOwnershipMetadata(
+				owner.getLedgerVersion(), owner.getOwnerSequence(), true,
+				owner.getOpenOwnerCount(), owner.getReferencedRegionCount(),
+				owner.getReferences().size(), minimum, maximum, 0, 0, 0,
+				0, 0, 0, 0, true,
+				Collections.<InterestOwnershipTransitionMetadata>emptyList(),
+				null, owner.getWindow());
+		}
+
+		public static InterestOwnershipMetadata fromChange(
+			final LayeredRegionInterestOwnershipLedger.Change ownershipChange) {
+			LayeredRegionInterestOwnershipLedger.Change change =
+				Objects.requireNonNull(ownershipChange, "ownershipChange");
+			int entered = 0;
+			int retained = 0;
+			int exited = 0;
+			int globallyAcquired = 0;
+			int sharedAcquisition = 0;
+			int globallyReleased = 0;
+			int sharedRelease = 0;
+			Integer minimum = null;
+			Integer maximum = null;
+			List<InterestOwnershipTransitionMetadata> transitions =
+				new ArrayList<InterestOwnershipTransitionMetadata>();
+			for (LayeredRegionInterestOwnershipLedger.Entry entry
+				: change.getEntries()) {
+				switch (entry.getInterestState()) {
+					case ENTERED:
+						entered++;
+						globallyAcquired += entry.isGloballyAcquired() ? 1 : 0;
+						sharedAcquisition += entry.isSharedAcquisition() ? 1 : 0;
+						transitions.add(
+							InterestOwnershipTransitionMetadata.fromEntry(entry));
+						break;
+					case RETAINED:
+						retained++;
+						break;
+					case EXITED:
+						exited++;
+						globallyReleased += entry.isGloballyReleased() ? 1 : 0;
+						sharedRelease += entry.isSharedRelease() ? 1 : 0;
+						transitions.add(
+							InterestOwnershipTransitionMetadata.fromEntry(entry));
+						break;
+					default:
+						throw new IllegalStateException("Unknown interest state");
+				}
+				if (entry.getInterestState()
+					!= LayeredRegionInterestOwnershipLedger.InterestState.EXITED) {
+					int count = entry.getCurrentReferenceCount();
+					minimum = minimum == null || count < minimum.intValue()
+						? Integer.valueOf(count) : minimum;
+					maximum = maximum == null || count > maximum.intValue()
+						? Integer.valueOf(count) : maximum;
+				}
+			}
+			return new InterestOwnershipMetadata(
+				change.getLedgerVersion(), change.getOwnerSequence(),
+				!change.isOwnerClosed(), change.getOpenOwnerCount(),
+				change.getReferencedRegionCount(), entered + retained,
+				minimum, maximum, entered, retained, exited, globallyAcquired,
+				sharedAcquisition, globallyReleased, sharedRelease,
+				change.isNoOp(), transitions, change.getPreviousWindow(),
+				change.getCurrentWindow());
+		}
+
+		private static InterestOwnershipMetadata syntheticCurrent(
+			final WorldRegionWindow currentWindow,
+			final int maximumRegionsPerWindow) {
+			WorldRegionWindow window = Objects.requireNonNull(
+				currentWindow, "currentWindow");
+			int count = WorldRegionInterestDelta.materializeKeys(
+				window, maximumRegionsPerWindow).size();
+			return new InterestOwnershipMetadata(
+				0L, 1L, true, 1, count, count, Integer.valueOf(1),
+				Integer.valueOf(1), 0, 0, 0, 0, 0, 0, 0, true,
+				Collections.<InterestOwnershipTransitionMetadata>emptyList(),
+				null, window);
+		}
+
+		private void requireMatches(
+			final String eventType,
+			final WorldRegionWindow previousEventWindow,
+			final WorldRegionWindow currentEventWindow,
+			final boolean fromChange) {
+			WorldRegionWindow current = Objects.requireNonNull(
+				currentEventWindow, "currentEventWindow");
+			if (!fromChange) {
+				if (!ownerOpen || !current.equals(currentOwnerWindow)) {
+					throw new IllegalStateException(
+						"Current interest owner differs from the observed window");
+				}
+				return;
+			}
+			if ("logout".equals(eventType)) {
+				if (ownerOpen || currentOwnerWindow != null
+					|| !current.equals(previousOwnerWindow)) {
+					throw new IllegalStateException(
+						"Logout ownership change differs from the observed window");
+				}
+			} else if ("login".equals(eventType)) {
+				if (!ownerOpen || previousOwnerWindow != null
+					|| !current.equals(currentOwnerWindow)) {
+					throw new IllegalStateException(
+						"Login ownership change differs from the observed window");
+				}
+			} else if (previousEventWindow == null
+				|| !ownerOpen
+				|| !previousEventWindow.equals(previousOwnerWindow)
+				|| !current.equals(currentOwnerWindow)) {
+				throw new IllegalStateException(
+					"Movement ownership change differs from observed windows");
+			}
+		}
+
+		public long getLedgerVersion() {
+			return ledgerVersion;
+		}
+
+		public long getOwnerSequence() {
+			return ownerSequence;
+		}
+
+		public boolean isOwnerOpen() {
+			return ownerOpen;
+		}
+
+		public int getOpenOwnerCount() {
+			return openOwnerCount;
+		}
+
+		public int getReferencedRegionCount() {
+			return referencedRegionCount;
+		}
+
+		public int getOwnedRegionCount() {
+			return ownedRegionCount;
+		}
+
+		public Integer getMinimumReferenceCount() {
+			return minimumReferenceCount;
+		}
+
+		public Integer getMaximumReferenceCount() {
+			return maximumReferenceCount;
+		}
+
+		public int getEnteredCount() {
+			return enteredCount;
+		}
+
+		public int getRetainedCount() {
+			return retainedCount;
+		}
+
+		public int getExitedCount() {
+			return exitedCount;
+		}
+
+		public int getGloballyAcquiredCount() {
+			return globallyAcquiredCount;
+		}
+
+		public int getSharedAcquisitionCount() {
+			return sharedAcquisitionCount;
+		}
+
+		public int getGloballyReleasedCount() {
+			return globallyReleasedCount;
+		}
+
+		public int getSharedReleaseCount() {
+			return sharedReleaseCount;
+		}
+
+		public boolean isNoOp() {
+			return noOp;
+		}
+
+		public List<InterestOwnershipTransitionMetadata> getTransitions() {
+			return transitions;
+		}
+	}
+
+	/** One bounded entered/exited Region reference-count transition. */
+	public static final class InterestOwnershipTransitionMetadata {
+		private final WorldRegionKey logicalRegionKey;
+		private final LayeredRegionInterestOwnershipLedger.InterestState interestState;
+		private final int previousReferenceCount;
+		private final int currentReferenceCount;
+
+		private InterestOwnershipTransitionMetadata(
+			final WorldRegionKey logicalRegionKey,
+			final LayeredRegionInterestOwnershipLedger.InterestState interestState,
+			final int previousReferenceCount,
+			final int currentReferenceCount) {
+			this.logicalRegionKey = Objects.requireNonNull(
+				logicalRegionKey, "logicalRegionKey");
+			this.interestState = Objects.requireNonNull(
+				interestState, "interestState");
+			if (interestState
+				== LayeredRegionInterestOwnershipLedger.InterestState.RETAINED
+				|| previousReferenceCount < 0 || currentReferenceCount < 0
+				|| interestState
+					== LayeredRegionInterestOwnershipLedger.InterestState.ENTERED
+					&& currentReferenceCount != previousReferenceCount + 1
+				|| interestState
+					== LayeredRegionInterestOwnershipLedger.InterestState.EXITED
+					&& currentReferenceCount != previousReferenceCount - 1) {
+				throw new IllegalArgumentException(
+					"Invalid interest ownership transition");
+			}
+			this.previousReferenceCount = previousReferenceCount;
+			this.currentReferenceCount = currentReferenceCount;
+		}
+
+		private static InterestOwnershipTransitionMetadata fromEntry(
+			final LayeredRegionInterestOwnershipLedger.Entry entry) {
+			return new InterestOwnershipTransitionMetadata(
+				entry.getLogicalRegionKey(), entry.getInterestState(),
+				entry.getPreviousReferenceCount(), entry.getCurrentReferenceCount());
+		}
+
+		public WorldRegionKey getLogicalRegionKey() {
+			return logicalRegionKey;
+		}
+
+		public LayeredRegionInterestOwnershipLedger.InterestState getInterestState() {
+			return interestState;
+		}
+
+		public int getPreviousReferenceCount() {
+			return previousReferenceCount;
+		}
+
+		public int getCurrentReferenceCount() {
+			return currentReferenceCount;
+		}
 	}
 
 	/** Immutable observer-facing aggregate; never a Region load/unload command. */
@@ -2239,6 +2764,7 @@ public final class LayeredCoordinateParityObserver {
 		final AdjacentCollisionSource adjacentCollisionSource;
 		final TraversalCollisionSource traversalCollisionSource;
 		final RegionResidencySource regionResidencySource;
+		final InterestOwnershipSource interestOwnershipSource;
 		final List<WorldLocation> recentTraversal =
 			new ArrayList<WorldLocation>(MAX_TRACE_TRAVERSAL_STEPS + 1);
 		int recentTraversalDroppedStepCount;
@@ -2256,7 +2782,8 @@ public final class LayeredCoordinateParityObserver {
 			TileNeighborhoodSource tileNeighborhoodSource,
 			AdjacentCollisionSource adjacentCollisionSource,
 			TraversalCollisionSource traversalCollisionSource,
-			RegionResidencySource regionResidencySource) {
+			RegionResidencySource regionResidencySource,
+			InterestOwnershipSource interestOwnershipSource) {
 			if (viewGridDistance < 0) {
 				throw new IllegalArgumentException("View grid distance must not be negative");
 			}
@@ -2270,6 +2797,7 @@ public final class LayeredCoordinateParityObserver {
 			this.adjacentCollisionSource = adjacentCollisionSource;
 			this.traversalCollisionSource = traversalCollisionSource;
 			this.regionResidencySource = regionResidencySource;
+			this.interestOwnershipSource = interestOwnershipSource;
 		}
 
 		Status status(boolean enabled) {
