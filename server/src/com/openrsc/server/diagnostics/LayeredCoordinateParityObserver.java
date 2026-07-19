@@ -27,10 +27,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v8";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v9";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
+	private static final int MAX_TRACE_TRAVERSAL_STEPS = 16;
 
 	private static final Logger LOGGER = LogManager.getLogger(LayeredCoordinateParityObserver.class);
 	private static final Map<TraceKey, TraceState> TRACES =
@@ -47,15 +48,18 @@ public final class LayeredCoordinateParityObserver {
 		TileSnapshotSource tileSnapshotSource,
 		TileParitySource tileParitySource,
 		TileNeighborhoodSource tileNeighborhoodSource,
-		AdjacentCollisionSource adjacentCollisionSource) {
+		AdjacentCollisionSource adjacentCollisionSource,
+		TraversalCollisionSource traversalCollisionSource) {
 		Objects.requireNonNull(tileSnapshotSource, "tileSnapshotSource");
 		Objects.requireNonNull(tileParitySource, "tileParitySource");
 		Objects.requireNonNull(tileNeighborhoodSource, "tileNeighborhoodSource");
 		Objects.requireNonNull(adjacentCollisionSource, "adjacentCollisionSource");
+		Objects.requireNonNull(traversalCollisionSource, "traversalCollisionSource");
 		TraceKey key = new TraceKey(playerId, usernameHash);
 		TraceState created = new TraceState(
 			key, logPath(key), viewGridDistance, tileSnapshotSource,
-			tileParitySource, tileNeighborhoodSource, adjacentCollisionSource);
+			tileParitySource, tileNeighborhoodSource, adjacentCollisionSource,
+			traversalCollisionSource);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
@@ -140,6 +144,7 @@ public final class LayeredCoordinateParityObserver {
 				LayeredCoordinateParitySnapshot from = previous == null
 					? null : LayeredCoordinateParitySnapshot.capture(
 						previous, state.viewGridDistance);
+				updateRecentTraversal(state, eventType, from, to, teleported);
 				LegacyPackedVisibilityCoverageComparison coverage =
 					LegacyPackedVisibilityCoverageComparison.compare(
 						current,
@@ -156,6 +161,7 @@ public final class LayeredCoordinateParityObserver {
 				TileParityMetadata tileParity = null;
 				TileNeighborhoodMetadata tileNeighborhood = null;
 				AdjacentCollisionMetadata adjacentCollision = null;
+				RecentTraversalMetadata recentTraversal = null;
 				if (capturesTileComparisons(eventType)) {
 					tileParity = Objects.requireNonNull(
 						state.tileParitySource.capture(current),
@@ -179,11 +185,33 @@ public final class LayeredCoordinateParityObserver {
 							"Adjacent collision metadata center differs from the current location");
 					}
 				}
+				if (capturesRecentTraversal(eventType)
+					&& state.recentTraversal.size() > 1) {
+					List<WorldLocation> route = Collections.unmodifiableList(
+						new ArrayList<WorldLocation>(state.recentTraversal));
+					recentTraversal = Objects.requireNonNull(
+						state.traversalCollisionSource.capture(
+							route,
+							state.recentTraversalDroppedStepCount,
+							state.recentTraversalDiscontinuityCount),
+						"traversalCollisionSource result");
+					if (!route.get(0).equals(recentTraversal.getSource())
+						|| !route.get(route.size() - 1).equals(
+							recentTraversal.getDestination())
+						|| recentTraversal.getStepCount() != route.size() - 1
+						|| recentTraversal.getDroppedStepCount()
+							!= state.recentTraversalDroppedStepCount
+						|| recentTraversal.getDiscontinuityCount()
+							!= state.recentTraversalDiscontinuityCount) {
+						throw new IllegalStateException(
+							"Recent traversal metadata differs from the observed route");
+					}
+				}
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
 					state.key, nextSequence, System.currentTimeMillis(), eventType,
 					teleported, label, from, to, coverage, tileSnapshot, tileParity,
-					tileNeighborhood, adjacentCollision);
+					tileNeighborhood, adjacentCollision, recentTraversal);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -197,6 +225,9 @@ public final class LayeredCoordinateParityObserver {
 				state.sequence = nextSequence;
 				state.lastSnapshot = to;
 				state.lastError = null;
+				if ("marker".equals(eventType)) {
+					resetRecentTraversal(state, to.getLocation());
+				}
 			} catch (RuntimeException | IOException failure) {
 				state.lastError = failure.getClass().getSimpleName() + ": " + safeMessage(failure);
 				LOGGER.error("Layered coordinate parity observer could not write {}", state.path, failure);
@@ -218,7 +249,8 @@ public final class LayeredCoordinateParityObserver {
 		TileSnapshotMetadata tileSnapshot,
 		TileParityMetadata tileParity,
 		TileNeighborhoodMetadata tileNeighborhood,
-		AdjacentCollisionMetadata adjacentCollision) {
+		AdjacentCollisionMetadata adjacentCollision,
+		RecentTraversalMetadata recentTraversal) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -279,6 +311,12 @@ public final class LayeredCoordinateParityObserver {
 			out.append("null");
 		} else {
 			appendAdjacentCollision(out, adjacentCollision);
+		}
+		out.append(",\"recentTraversal\":");
+		if (recentTraversal == null) {
+			out.append("null");
+		} else {
+			appendRecentTraversal(out, recentTraversal);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -442,6 +480,119 @@ public final class LayeredCoordinateParityObserver {
 			.append(direction.isBlockingReasonExact()).append('}');
 	}
 
+	private static void appendRecentTraversal(
+		final StringBuilder out,
+		final RecentTraversalMetadata traversal) {
+		out.append('{');
+		out.append("\"source\":");
+		appendWorldLocation(out, traversal.getSource());
+		out.append(",\"destination\":");
+		appendWorldLocation(out, traversal.getDestination());
+		out.append(",\"stepCount\":").append(traversal.getStepCount()).append(',');
+		out.append("\"droppedStepCount\":")
+			.append(traversal.getDroppedStepCount()).append(',');
+		out.append("\"discontinuityCount\":")
+			.append(traversal.getDiscontinuityCount()).append(',');
+		out.append("\"logicalDecisionAvailableCount\":")
+			.append(traversal.getLogicalDecisionAvailableCount()).append(',');
+		out.append("\"packedDecisionAvailableCount\":")
+			.append(traversal.getPackedDecisionAvailableCount()).append(',');
+		out.append("\"comparableCount\":")
+			.append(traversal.getComparableCount()).append(',');
+		out.append("\"passabilityExactCount\":")
+			.append(traversal.getPassabilityExactCount()).append(',');
+		out.append("\"blockingReasonExactCount\":")
+			.append(traversal.getBlockingReasonExactCount()).append(',');
+		out.append("\"requiredStatesExactCount\":")
+			.append(traversal.getRequiredStatesExactCount()).append(',');
+		out.append("\"logicalPassable\":");
+		appendNullableBoolean(out, traversal.getLogicalPassable());
+		out.append(",\"packedPassable\":");
+		appendNullableBoolean(out, traversal.getPackedPassable());
+		out.append(",\"comparable\":").append(traversal.isComparable()).append(',');
+		out.append("\"passabilityExact\":")
+			.append(traversal.isPassabilityExact()).append(',');
+		out.append("\"allStepsComparable\":")
+			.append(traversal.areAllStepsComparable()).append(',');
+		out.append("\"allStepPassabilitiesExact\":")
+			.append(traversal.areAllStepPassabilitiesExact()).append(',');
+		out.append("\"allStepBlockingReasonsExact\":")
+			.append(traversal.areAllStepBlockingReasonsExact()).append(',');
+		out.append("\"allRequiredStatesExact\":")
+			.append(traversal.areAllRequiredStatesExact()).append(',');
+		out.append("\"firstLogicalBlockedStepIndex\":");
+		appendNullableInteger(out, traversal.getFirstLogicalBlockedStepIndex());
+		out.append(",\"firstPackedBlockedStepIndex\":");
+		appendNullableInteger(out, traversal.getFirstPackedBlockedStepIndex());
+		out.append(",\"firstPassabilityMismatchStepIndex\":");
+		appendNullableInteger(out, traversal.getFirstPassabilityMismatchStepIndex());
+		out.append(",\"firstBlockingReasonMismatchStepIndex\":");
+		appendNullableInteger(out, traversal.getFirstBlockingReasonMismatchStepIndex());
+		out.append(",\"steps\":[");
+		boolean first = true;
+		for (TraversalStepMetadata step : traversal.getSteps()) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			appendTraversalStep(out, step);
+		}
+		out.append("]}");
+	}
+
+	private static void appendTraversalStep(
+		final StringBuilder out,
+		final TraversalStepMetadata step) {
+		out.append('{');
+		out.append("\"index\":").append(step.getIndex()).append(',');
+		out.append("\"source\":");
+		appendWorldLocation(out, step.getSource());
+		out.append(",\"offset\":{\"x\":").append(step.getOffsetX())
+			.append(",\"y\":").append(step.getOffsetY()).append("},");
+		out.append("\"destination\":");
+		appendWorldLocation(out, step.getDestination());
+		out.append(",\"requiredCellCount\":")
+			.append(step.getRequiredCellCount()).append(',');
+		out.append("\"exactRequiredStateCount\":")
+			.append(step.getExactRequiredStateCount()).append(',');
+		out.append("\"requiredStatesExact\":")
+			.append(step.areRequiredStatesExact()).append(',');
+		out.append("\"logicalDecisionAvailable\":")
+			.append(step.isLogicalDecisionAvailable()).append(',');
+		out.append("\"packedDecisionAvailable\":")
+			.append(step.isPackedDecisionAvailable()).append(',');
+		out.append("\"logicalPassable\":");
+		appendNullableBoolean(out, step.getLogicalPassable());
+		out.append(",\"packedPassable\":");
+		appendNullableBoolean(out, step.getPackedPassable());
+		out.append(",\"logicalBlockingReason\":");
+		appendNullableReason(out, step.getLogicalBlockingReason());
+		out.append(",\"packedBlockingReason\":");
+		appendNullableReason(out, step.getPackedBlockingReason());
+		out.append(",\"comparable\":").append(step.isComparable()).append(',');
+		out.append("\"passabilityExact\":")
+			.append(step.isPassabilityExact()).append(',');
+		out.append("\"blockingReasonExact\":")
+			.append(step.isBlockingReasonExact()).append('}');
+	}
+
+	private static void appendWorldLocation(
+		final StringBuilder out,
+		final WorldLocation location) {
+		WorldCoordinate coordinate = location.getCoordinate();
+		out.append("{\"worldSpace\":\"")
+			.append(jsonEscape(location.getWorldSpace().getValue()))
+			.append("\",\"x\":").append(coordinate.getX())
+			.append(",\"y\":").append(coordinate.getY())
+			.append(",\"level\":").append(coordinate.getLevel()).append('}');
+	}
+
+	private static void appendNullableInteger(
+		final StringBuilder out,
+		final Integer value) {
+		out.append(value == null ? "null" : value.toString());
+	}
+
 	private static void appendNullableBoolean(
 		final StringBuilder out,
 		final Boolean value) {
@@ -585,11 +736,87 @@ public final class LayeredCoordinateParityObserver {
 		return trimmed;
 	}
 
+	private static void updateRecentTraversal(
+		final TraceState state,
+		final String eventType,
+		final LayeredCoordinateParitySnapshot from,
+		final LayeredCoordinateParitySnapshot to,
+		final Boolean teleported) {
+		WorldLocation current = to.getLocation();
+		if ("start".equals(eventType) || "teleport".equals(eventType)
+			|| "login".equals(eventType) || Boolean.TRUE.equals(teleported)) {
+			resetRecentTraversal(state, current);
+			return;
+		}
+		if ("move".equals(eventType) && from != null) {
+			appendRecentTraversalStep(state, from.getLocation(), current);
+			return;
+		}
+		if (("marker".equals(eventType) || "stop".equals(eventType))
+			&& !state.recentTraversal.isEmpty()
+			&& !state.recentTraversal.get(state.recentTraversal.size() - 1)
+				.equals(current)) {
+			state.recentTraversalDiscontinuityCount++;
+			restartRecentTraversal(state, current);
+		}
+	}
+
+	private static void appendRecentTraversalStep(
+		final TraceState state,
+		final WorldLocation source,
+		final WorldLocation destination) {
+		WorldCoordinate from = source.getCoordinate();
+		WorldCoordinate to = destination.getCoordinate();
+		int offsetX = Math.subtractExact(to.getX(), from.getX());
+		int offsetY = Math.subtractExact(to.getY(), from.getY());
+		boolean adjacent = source.getWorldSpace().equals(destination.getWorldSpace())
+			&& from.getLevel() == to.getLevel()
+			&& offsetX >= -1 && offsetX <= 1
+			&& offsetY >= -1 && offsetY <= 1
+			&& (offsetX != 0 || offsetY != 0);
+		if (!adjacent) {
+			state.recentTraversalDiscontinuityCount++;
+			restartRecentTraversal(state, destination);
+			return;
+		}
+		if (state.recentTraversal.isEmpty()) {
+			state.recentTraversal.add(source);
+		} else if (!state.recentTraversal.get(
+			state.recentTraversal.size() - 1).equals(source)) {
+			state.recentTraversalDiscontinuityCount++;
+			restartRecentTraversal(state, source);
+		}
+		state.recentTraversal.add(destination);
+		if (state.recentTraversal.size() > MAX_TRACE_TRAVERSAL_STEPS + 1) {
+			state.recentTraversal.remove(0);
+			state.recentTraversalDroppedStepCount++;
+		}
+	}
+
+	private static void resetRecentTraversal(
+		final TraceState state,
+		final WorldLocation current) {
+		state.recentTraversalDroppedStepCount = 0;
+		state.recentTraversalDiscontinuityCount = 0;
+		restartRecentTraversal(state, current);
+	}
+
+	private static void restartRecentTraversal(
+		final TraceState state,
+		final WorldLocation current) {
+		state.recentTraversal.clear();
+		state.recentTraversal.add(current);
+	}
+
 	private static boolean capturesTileComparisons(final String eventType) {
 		return "start".equals(eventType)
 			|| "marker".equals(eventType)
 			|| "teleport".equals(eventType)
 			|| "stop".equals(eventType);
+	}
+
+	private static boolean capturesRecentTraversal(final String eventType) {
+		return "marker".equals(eventType) || "stop".equals(eventType);
 	}
 
 	private static String safeMessage(Throwable failure) {
@@ -631,6 +858,15 @@ public final class LayeredCoordinateParityObserver {
 	@FunctionalInterface
 	public interface AdjacentCollisionSource {
 		AdjacentCollisionMetadata capture(Point current);
+	}
+
+	/** Supplies one bounded comparison for a recently observed walking route. */
+	@FunctionalInterface
+	public interface TraversalCollisionSource {
+		RecentTraversalMetadata capture(
+			List<WorldLocation> route,
+			int droppedStepCount,
+			int discontinuityCount);
 	}
 
 	/** Immutable observer-facing eight-direction summary; no tile masks. */
@@ -874,6 +1110,333 @@ public final class LayeredCoordinateParityObserver {
 		DESTINATION_DIAGONAL,
 		SIDE_DIAGONAL,
 		DIAGONAL_PASS_THROUGH
+	}
+
+	/** Immutable bounded recent-route summary; no tile masks or payloads. */
+	public static final class RecentTraversalMetadata {
+		private final List<TraversalStepMetadata> steps;
+		private final int droppedStepCount;
+		private final int discontinuityCount;
+
+		private RecentTraversalMetadata(
+			final List<TraversalStepMetadata> steps,
+			final int droppedStepCount,
+			final int discontinuityCount) {
+			this.steps = Collections.unmodifiableList(
+				new ArrayList<TraversalStepMetadata>(steps));
+			this.droppedStepCount = droppedStepCount;
+			this.discontinuityCount = discontinuityCount;
+		}
+
+		public static RecentTraversalMetadata of(
+			final List<TraversalStepMetadata> steps,
+			final int droppedStepCount,
+			final int discontinuityCount) {
+			Objects.requireNonNull(steps, "steps");
+			if (steps.isEmpty() || steps.size() > MAX_TRACE_TRAVERSAL_STEPS
+				|| droppedStepCount < 0 || discontinuityCount < 0) {
+				throw new IllegalArgumentException(
+					"Recent traversal metadata counts are out of bounds");
+			}
+			WorldLocation expectedSource = null;
+			for (int index = 0; index < steps.size(); index++) {
+				TraversalStepMetadata step = Objects.requireNonNull(
+					steps.get(index), "steps[" + index + "]");
+				if (step.getIndex() != index) {
+					throw new IllegalArgumentException(
+						"Recent traversal step index mismatch at " + index);
+				}
+				if (expectedSource != null
+					&& !expectedSource.equals(step.getSource())) {
+					throw new IllegalArgumentException(
+						"Recent traversal is discontinuous at step " + index);
+				}
+				expectedSource = step.getDestination();
+			}
+			return new RecentTraversalMetadata(
+				steps, droppedStepCount, discontinuityCount);
+		}
+
+		public List<TraversalStepMetadata> getSteps() { return steps; }
+		public int getStepCount() { return steps.size(); }
+		public int getDroppedStepCount() { return droppedStepCount; }
+		public int getDiscontinuityCount() { return discontinuityCount; }
+		public WorldLocation getSource() { return steps.get(0).getSource(); }
+		public WorldLocation getDestination() {
+			return steps.get(steps.size() - 1).getDestination();
+		}
+		public int getLogicalDecisionAvailableCount() {
+			return count(TraversalStepStatus.LOGICAL_AVAILABLE);
+		}
+		public int getPackedDecisionAvailableCount() {
+			return count(TraversalStepStatus.PACKED_AVAILABLE);
+		}
+		public int getComparableCount() {
+			return count(TraversalStepStatus.COMPARABLE);
+		}
+		public int getPassabilityExactCount() {
+			return count(TraversalStepStatus.PASSABILITY_EXACT);
+		}
+		public int getBlockingReasonExactCount() {
+			return count(TraversalStepStatus.REASON_EXACT);
+		}
+		public int getRequiredStatesExactCount() {
+			return count(TraversalStepStatus.REQUIRED_STATES_EXACT);
+		}
+		public Boolean getLogicalPassable() {
+			return routePassable(true);
+		}
+		public Boolean getPackedPassable() {
+			return routePassable(false);
+		}
+		public boolean isComparable() {
+			return getLogicalPassable() != null && getPackedPassable() != null;
+		}
+		public boolean isPassabilityExact() {
+			return isComparable()
+				&& getLogicalPassable().equals(getPackedPassable());
+		}
+		public boolean areAllStepsComparable() {
+			return getComparableCount() == steps.size();
+		}
+		public boolean areAllStepPassabilitiesExact() {
+			return getPassabilityExactCount() == steps.size();
+		}
+		public boolean areAllStepBlockingReasonsExact() {
+			return getBlockingReasonExactCount() == steps.size();
+		}
+		public boolean areAllRequiredStatesExact() {
+			return getRequiredStatesExactCount() == steps.size();
+		}
+		public Integer getFirstLogicalBlockedStepIndex() {
+			return firstIndex(TraversalStepStatus.LOGICAL_BLOCKED);
+		}
+		public Integer getFirstPackedBlockedStepIndex() {
+			return firstIndex(TraversalStepStatus.PACKED_BLOCKED);
+		}
+		public Integer getFirstPassabilityMismatchStepIndex() {
+			return firstIndex(TraversalStepStatus.PASSABILITY_MISMATCH);
+		}
+		public Integer getFirstBlockingReasonMismatchStepIndex() {
+			return firstIndex(TraversalStepStatus.REASON_MISMATCH);
+		}
+
+		private Boolean routePassable(final boolean logical) {
+			boolean passable = true;
+			for (TraversalStepMetadata step : steps) {
+				Boolean decision = logical
+					? step.getLogicalPassable() : step.getPackedPassable();
+				if (decision == null) {
+					return null;
+				}
+				passable &= decision.booleanValue();
+			}
+			return Boolean.valueOf(passable);
+		}
+
+		private int count(final TraversalStepStatus status) {
+			int count = 0;
+			for (TraversalStepMetadata step : steps) {
+				if (status.matches(step)) {
+					count++;
+				}
+			}
+			return count;
+		}
+
+		private Integer firstIndex(final TraversalStepStatus status) {
+			for (int index = 0; index < steps.size(); index++) {
+				if (status.matches(steps.get(index))) {
+					return Integer.valueOf(index);
+				}
+			}
+			return null;
+		}
+	}
+
+	/** Immutable observer-facing decision for one retained traversal step. */
+	public static final class TraversalStepMetadata {
+		private final int index;
+		private final WorldLocation source;
+		private final int offsetX;
+		private final int offsetY;
+		private final WorldLocation destination;
+		private final int requiredCellCount;
+		private final int exactRequiredStateCount;
+		private final Boolean logicalPassable;
+		private final Boolean packedPassable;
+		private final AdjacentBlockingReason logicalBlockingReason;
+		private final AdjacentBlockingReason packedBlockingReason;
+
+		private TraversalStepMetadata(
+			final int index,
+			final WorldLocation source,
+			final int offsetX,
+			final int offsetY,
+			final WorldLocation destination,
+			final int requiredCellCount,
+			final int exactRequiredStateCount,
+			final Boolean logicalPassable,
+			final AdjacentBlockingReason logicalBlockingReason,
+			final Boolean packedPassable,
+			final AdjacentBlockingReason packedBlockingReason) {
+			this.index = index;
+			this.source = source;
+			this.offsetX = offsetX;
+			this.offsetY = offsetY;
+			this.destination = destination;
+			this.requiredCellCount = requiredCellCount;
+			this.exactRequiredStateCount = exactRequiredStateCount;
+			this.logicalPassable = logicalPassable;
+			this.logicalBlockingReason = logicalBlockingReason;
+			this.packedPassable = packedPassable;
+			this.packedBlockingReason = packedBlockingReason;
+		}
+
+		public static TraversalStepMetadata of(
+			final int index,
+			final WorldLocation source,
+			final int offsetX,
+			final int offsetY,
+			final WorldLocation destination,
+			final int requiredCellCount,
+			final int exactRequiredStateCount,
+			final Boolean logicalPassable,
+			final AdjacentBlockingReason logicalBlockingReason,
+			final Boolean packedPassable,
+			final AdjacentBlockingReason packedBlockingReason) {
+			Objects.requireNonNull(source, "source");
+			Objects.requireNonNull(destination, "destination");
+			if (index < 0 || offsetX < -1 || offsetX > 1
+				|| offsetY < -1 || offsetY > 1
+				|| (offsetX == 0 && offsetY == 0)) {
+				throw new IllegalArgumentException("Invalid traversal step identity");
+			}
+			WorldCoordinate coordinate = source.getCoordinate();
+			WorldLocation expected = new WorldLocation(
+				source.getWorldSpace(),
+				new WorldCoordinate(
+					Math.addExact(coordinate.getX(), offsetX),
+					Math.addExact(coordinate.getY(), offsetY),
+					coordinate.getLevel()));
+			if (!expected.equals(destination)) {
+				throw new IllegalArgumentException(
+					"Traversal step destination differs from its offset");
+			}
+			int expectedCells = offsetX == 0 || offsetY == 0 ? 2
+				: offsetX == 1 && offsetY == -1 ? 5 : 4;
+			if (requiredCellCount != expectedCells
+				|| exactRequiredStateCount < 0
+				|| exactRequiredStateCount > requiredCellCount) {
+				throw new IllegalArgumentException(
+					"Traversal step required-state counts are inconsistent");
+			}
+			validateTraversalDecision(
+				logicalPassable, logicalBlockingReason, "logical");
+			validateTraversalDecision(
+				packedPassable, packedBlockingReason, "packed");
+			return new TraversalStepMetadata(
+				index, source, offsetX, offsetY, destination,
+				requiredCellCount, exactRequiredStateCount,
+				logicalPassable, logicalBlockingReason,
+				packedPassable, packedBlockingReason);
+		}
+
+		private static void validateTraversalDecision(
+			final Boolean passable,
+			final AdjacentBlockingReason reason,
+			final String label) {
+			if ((passable == null) != (reason == null)
+				|| (passable != null && passable.booleanValue()
+					!= (reason == AdjacentBlockingReason.NONE))) {
+				throw new IllegalArgumentException(
+					label + " traversal decision is inconsistent");
+			}
+		}
+
+		public int getIndex() { return index; }
+		public WorldLocation getSource() { return source; }
+		public int getOffsetX() { return offsetX; }
+		public int getOffsetY() { return offsetY; }
+		public WorldLocation getDestination() { return destination; }
+		public int getRequiredCellCount() { return requiredCellCount; }
+		public int getExactRequiredStateCount() { return exactRequiredStateCount; }
+		public boolean areRequiredStatesExact() {
+			return exactRequiredStateCount == requiredCellCount;
+		}
+		public boolean isLogicalDecisionAvailable() { return logicalPassable != null; }
+		public boolean isPackedDecisionAvailable() { return packedPassable != null; }
+		public Boolean getLogicalPassable() { return logicalPassable; }
+		public Boolean getPackedPassable() { return packedPassable; }
+		public AdjacentBlockingReason getLogicalBlockingReason() {
+			return logicalBlockingReason;
+		}
+		public AdjacentBlockingReason getPackedBlockingReason() {
+			return packedBlockingReason;
+		}
+		public boolean isComparable() {
+			return logicalPassable != null && packedPassable != null;
+		}
+		public boolean isPassabilityExact() {
+			return isComparable() && logicalPassable.equals(packedPassable);
+		}
+		public boolean isBlockingReasonExact() {
+			return isComparable()
+				&& logicalBlockingReason == packedBlockingReason;
+		}
+	}
+
+	private enum TraversalStepStatus {
+		LOGICAL_AVAILABLE {
+			boolean matches(TraversalStepMetadata s) {
+				return s.isLogicalDecisionAvailable();
+			}
+		},
+		PACKED_AVAILABLE {
+			boolean matches(TraversalStepMetadata s) {
+				return s.isPackedDecisionAvailable();
+			}
+		},
+		COMPARABLE {
+			boolean matches(TraversalStepMetadata s) { return s.isComparable(); }
+		},
+		PASSABILITY_EXACT {
+			boolean matches(TraversalStepMetadata s) {
+				return s.isPassabilityExact();
+			}
+		},
+		REASON_EXACT {
+			boolean matches(TraversalStepMetadata s) {
+				return s.isBlockingReasonExact();
+			}
+		},
+		REQUIRED_STATES_EXACT {
+			boolean matches(TraversalStepMetadata s) {
+				return s.areRequiredStatesExact();
+			}
+		},
+		LOGICAL_BLOCKED {
+			boolean matches(TraversalStepMetadata s) {
+				return Boolean.FALSE.equals(s.getLogicalPassable());
+			}
+		},
+		PACKED_BLOCKED {
+			boolean matches(TraversalStepMetadata s) {
+				return Boolean.FALSE.equals(s.getPackedPassable());
+			}
+		},
+		PASSABILITY_MISMATCH {
+			boolean matches(TraversalStepMetadata s) {
+				return s.isComparable() && !s.isPassabilityExact();
+			}
+		},
+		REASON_MISMATCH {
+			boolean matches(TraversalStepMetadata s) {
+				return s.isComparable() && !s.isBlockingReasonExact();
+			}
+		};
+
+		abstract boolean matches(TraversalStepMetadata step);
 	}
 
 	private enum DirectionStatus {
@@ -1243,6 +1806,11 @@ public final class LayeredCoordinateParityObserver {
 		final TileParitySource tileParitySource;
 		final TileNeighborhoodSource tileNeighborhoodSource;
 		final AdjacentCollisionSource adjacentCollisionSource;
+		final TraversalCollisionSource traversalCollisionSource;
+		final List<WorldLocation> recentTraversal =
+			new ArrayList<WorldLocation>(MAX_TRACE_TRAVERSAL_STEPS + 1);
+		int recentTraversalDroppedStepCount;
+		int recentTraversalDiscontinuityCount;
 		long sequence;
 		LayeredCoordinateParitySnapshot lastSnapshot;
 		String lastError;
@@ -1254,7 +1822,8 @@ public final class LayeredCoordinateParityObserver {
 			TileSnapshotSource tileSnapshotSource,
 			TileParitySource tileParitySource,
 			TileNeighborhoodSource tileNeighborhoodSource,
-			AdjacentCollisionSource adjacentCollisionSource) {
+			AdjacentCollisionSource adjacentCollisionSource,
+			TraversalCollisionSource traversalCollisionSource) {
 			if (viewGridDistance < 0) {
 				throw new IllegalArgumentException("View grid distance must not be negative");
 			}
@@ -1266,6 +1835,7 @@ public final class LayeredCoordinateParityObserver {
 			this.tileParitySource = tileParitySource;
 			this.tileNeighborhoodSource = tileNeighborhoodSource;
 			this.adjacentCollisionSource = adjacentCollisionSource;
+			this.traversalCollisionSource = traversalCollisionSource;
 		}
 
 		Status status(boolean enabled) {

@@ -24,11 +24,13 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.region.LayeredAdjacentStepCollisionComparison;
 import com.openrsc.server.model.world.region.LayeredRegionTileSnapshot;
 import com.openrsc.server.model.world.region.LayeredTileNeighborhoodParityComparison;
 import com.openrsc.server.model.world.region.LayeredTileStateParityComparison;
+import com.openrsc.server.model.world.region.LayeredTraversalCollisionComparison;
 import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -1376,7 +1378,8 @@ public final class Development implements CommandTrigger {
 					player.getDatabaseID(), player.getUsernameHash(), player.getLocation(),
 					player.getConfig().VIEW_DISTANCE, layeredTileSnapshotSource(player),
 					layeredTileParitySource(player), layeredTileNeighborhoodSource(player),
-					layeredAdjacentCollisionSource(player));
+					layeredAdjacentCollisionSource(player),
+					layeredTraversalCollisionSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1524,6 +1527,43 @@ public final class Development implements CommandTrigger {
 		return reason == null ? null
 			: LayeredCoordinateParityObserver.AdjacentBlockingReason.valueOf(
 				reason.name());
+	}
+
+	private LayeredCoordinateParityObserver.TraversalCollisionSource
+		layeredTraversalCollisionSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.TraversalCollisionSource() {
+			@Override
+			public LayeredCoordinateParityObserver.RecentTraversalMetadata capture(
+				final List<WorldLocation> route,
+				final int droppedStepCount,
+				final int discontinuityCount) {
+				LayeredTraversalCollisionComparison traversal =
+					regionManager.compareLayeredTraversalCollision(route);
+				List<LayeredCoordinateParityObserver.TraversalStepMetadata> steps =
+					new ArrayList<LayeredCoordinateParityObserver.TraversalStepMetadata>(
+						traversal.getStepCount());
+				int index = 0;
+				for (LayeredAdjacentStepCollisionComparison comparison
+					: traversal.getSteps()) {
+					steps.add(LayeredCoordinateParityObserver.TraversalStepMetadata.of(
+						index,
+						comparison.getSource(),
+						comparison.getOffsetX(),
+						comparison.getOffsetY(),
+						comparison.getDestination(),
+						comparison.getRequiredCellCount(),
+						comparison.getExactRequiredStateCount(),
+						comparison.getLogicalPassable(),
+						adjacentReason(comparison.getLogicalBlockingReason()),
+						comparison.getPackedPassable(),
+						adjacentReason(comparison.getPackedBlockingReason())));
+					index++;
+				}
+				return LayeredCoordinateParityObserver.RecentTraversalMetadata.of(
+					steps, droppedStepCount, discontinuityCount);
+			}
+		};
 	}
 
 	private void layeredParitySyntax(Player player, String command) {

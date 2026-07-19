@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v8.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v9.schema.json"
 
 
 POINT_STUB = r'''
@@ -82,6 +82,7 @@ import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public final class LayeredCoordinateParityObserverFixture {
@@ -137,18 +138,34 @@ public final class LayeredCoordinateParityObserverFixture {
             return LayeredCoordinateParityObserver.AdjacentCollisionMetadata.of(
                 center, openDirections(center));
         };
+		int[] traversalCaptures = {0};
+		List<Integer> traversalRouteSizes = new ArrayList<Integer>();
+		List<Integer> traversalDroppedCounts = new ArrayList<Integer>();
+		List<Integer> traversalDiscontinuityCounts = new ArrayList<Integer>();
+		LayeredCoordinateParityObserver.TraversalCollisionSource traversalCollision =
+			(route, droppedStepCount, discontinuityCount) -> {
+				traversalCaptures[0]++;
+				traversalRouteSizes.add(Integer.valueOf(route.size()));
+				traversalDroppedCounts.add(Integer.valueOf(droppedStepCount));
+				traversalDiscontinuityCounts.add(Integer.valueOf(discontinuityCount));
+				return LayeredCoordinateParityObserver.RecentTraversalMetadata.of(
+					openTraversal(route), droppedStepCount, discontinuityCount);
+			};
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, null, tileParity,
-            tileNeighborhood, adjacentCollision));
+            tileNeighborhood, adjacentCollision, traversalCollision));
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, tileSnapshots, null,
-            tileNeighborhood, adjacentCollision));
+            tileNeighborhood, adjacentCollision, traversalCollision));
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, tileSnapshots, tileParity,
-            null, adjacentCollision));
+            null, adjacentCollision, traversalCollision));
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, tileSnapshots, tileParity,
-            tileNeighborhood, null));
+            tileNeighborhood, null, traversalCollision));
+        expectNull(() -> LayeredCoordinateParityObserver.start(
+            99, 99L, Point.location(100, 943), 2, tileSnapshots, tileParity,
+            tileNeighborhood, adjacentCollision, null));
         expectIllegal(() -> LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
             LayeredCoordinateParitySnapshot.capture(Point.location(100, 943)).getRegionKey(),
             1, 2, 2304, 2304, true,
@@ -198,65 +215,98 @@ public final class LayeredCoordinateParityObserverFixture {
             "initially disabled");
         LayeredCoordinateParityObserver.Status started = LayeredCoordinateParityObserver.start(
             playerId, usernameHash, Point.location(100, 943), 2, tileSnapshots,
-            tileParity, tileNeighborhood, adjacentCollision);
+            tileParity, tileNeighborhood, adjacentCollision, traversalCollision);
         check(started.isEnabled() && started.getRecordCount() == 1, "start");
         check(started.getError() == null, "start error");
         check(started.getLastSnapshot().getVisibilityWindow().getRegionCount() == 2L,
             "start visibility window");
         expectIllegal(() -> LayeredCoordinateParityObserver.start(
             playerId, usernameHash, Point.location(100, 943), 3, tileSnapshots,
-            tileParity, tileNeighborhood, adjacentCollision));
+            tileParity, tileNeighborhood, adjacentCollision, traversalCollision));
 
         LayeredCoordinateParityObserver.onLocationChanged(
             playerId, usernameHash, Point.location(100, 943), Point.location(100, 944), false);
         LayeredCoordinateParityObserver.onLocationChanged(
             playerId, usernameHash, Point.location(100, 944), Point.location(100, 2832), true);
         LayeredCoordinateParityObserver.onLocationChanged(
+            playerId, usernameHash, Point.location(100, 2832), Point.location(101, 2832), false);
+        LayeredCoordinateParityObserver.onLocationChanged(
             playerId, usernameHash, Point.location(100, 2832), Point.location(100, 2832), false);
         LayeredCoordinateParityObserver.mark(
-            playerId, usernameHash, Point.location(100, 2832), "after-ladder");
+            playerId, usernameHash, Point.location(101, 2832), "after-ladder");
         LayeredCoordinateParityObserver.snapshot(
-            playerId, usernameHash, Point.location(100, 2832));
+            playerId, usernameHash, Point.location(101, 2832));
         LayeredCoordinateParityObserver.onSession(
-            playerId, usernameHash, Point.location(100, 2832), false);
+            playerId, usernameHash, Point.location(101, 2832), false);
         LayeredCoordinateParityObserver.onSession(
-            playerId, usernameHash, Point.location(100, 2832), true);
+            playerId, usernameHash, Point.location(101, 2832), true);
         expectIllegal(() -> LayeredCoordinateParityObserver.mark(
-            playerId, usernameHash, Point.location(100, 2832), "unsafe label"));
+            playerId, usernameHash, Point.location(101, 2832), "unsafe label"));
 
         LayeredCoordinateParityObserver.Status active =
             LayeredCoordinateParityObserver.status(playerId, usernameHash);
-        check(active.isEnabled() && active.getRecordCount() == 7, "active record count");
+        check(active.isEnabled() && active.getRecordCount() == 8, "active record count");
         check(active.getLastSnapshot().getLocation().getCoordinate().getLevel() == -1,
             "active layered level");
 
         long otherHash = 987654321L;
         LayeredCoordinateParityObserver.Status other = LayeredCoordinateParityObserver.start(
             playerId, otherHash, Point.location(200, 944), 2, tileSnapshots,
-            tileParity, tileNeighborhood, adjacentCollision);
+            tileParity, tileNeighborhood, adjacentCollision, traversalCollision);
         check(other.isEnabled() && other.getRecordCount() == 1, "identity-isolated start");
         check(!other.getPath().equals(active.getPath()), "identity-isolated path");
         LayeredCoordinateParityObserver.stop(playerId, otherHash, Point.location(200, 944));
 
         LayeredCoordinateParityObserver.Status stopped = LayeredCoordinateParityObserver.stop(
-            playerId, usernameHash, Point.location(100, 2832));
-        check(!stopped.isEnabled() && stopped.getRecordCount() == 8, "stop");
+            playerId, usernameHash, Point.location(101, 2832));
+        check(!stopped.isEnabled() && stopped.getRecordCount() == 9, "stop");
         LayeredCoordinateParityObserver.onLocationChanged(
-            playerId, usernameHash, Point.location(100, 2832), Point.location(101, 2832), false);
+            playerId, usernameHash, Point.location(101, 2832), Point.location(102, 2832), false);
         check(!LayeredCoordinateParityObserver.status(playerId, usernameHash).isEnabled(),
             "movement after stop ignored");
 
         LayeredCoordinateParityObserver.Status invalid = LayeredCoordinateParityObserver.start(
             8, 111L, Point.location(100, 3776), 2, tileSnapshots, tileParity,
-            tileNeighborhood, adjacentCollision);
+            tileNeighborhood, adjacentCollision, traversalCollision);
         check(invalid.isEnabled() && invalid.getRecordCount() == 0, "invalid trace retained");
         check(invalid.getError() != null && invalid.getError().contains("IllegalArgumentException"),
             "invalid trace visible error");
-        check(tileParityCaptures[0] == 6, "bounded tile parity capture count");
-        check(tileNeighborhoodCaptures[0] == 6,
+
+		int routePlayerId = 10;
+		long routeHash = 222L;
+		LayeredCoordinateParityObserver.start(
+			routePlayerId, routeHash, Point.location(300, 500), 2, tileSnapshots,
+			tileParity, tileNeighborhood, adjacentCollision, traversalCollision);
+		for (int step = 0; step < 18; step++) {
+			LayeredCoordinateParityObserver.onLocationChanged(
+				routePlayerId, routeHash,
+				Point.location(300 + step, 500),
+				Point.location(301 + step, 500), false);
+		}
+		LayeredCoordinateParityObserver.mark(
+			routePlayerId, routeHash, Point.location(318, 500), "bounded-route");
+		LayeredCoordinateParityObserver.onLocationChanged(
+			routePlayerId, routeHash,
+			Point.location(318, 500), Point.location(400, 500), false);
+		LayeredCoordinateParityObserver.onLocationChanged(
+			routePlayerId, routeHash,
+			Point.location(400, 500), Point.location(401, 500), false);
+		LayeredCoordinateParityObserver.mark(
+			routePlayerId, routeHash, Point.location(401, 500), "after-gap");
+
+        check(tileParityCaptures[0] == 9, "bounded tile parity capture count");
+        check(tileNeighborhoodCaptures[0] == 9,
             "bounded tile neighborhood capture count");
-        check(adjacentCollisionCaptures[0] == 6,
+        check(adjacentCollisionCaptures[0] == 9,
             "bounded adjacent collision capture count");
+        check(traversalCaptures[0] == 3,
+            "bounded recent traversal capture count");
+		check(traversalRouteSizes.equals(Arrays.asList(2, 17, 2)),
+			"bounded route location counts");
+		check(traversalDroppedCounts.equals(Arrays.asList(0, 2, 0)),
+			"bounded route dropped counts");
+		check(traversalDiscontinuityCounts.equals(Arrays.asList(0, 0, 1)),
+			"bounded route discontinuity counts");
         LayeredCoordinateParityObserver.resetForTests();
     }
 
@@ -289,6 +339,29 @@ public final class LayeredCoordinateParityObserverFixture {
         }
         return directions;
     }
+
+	private static List<LayeredCoordinateParityObserver.TraversalStepMetadata>
+			openTraversal(List<WorldLocation> route) {
+		List<LayeredCoordinateParityObserver.TraversalStepMetadata> steps =
+			new ArrayList<LayeredCoordinateParityObserver.TraversalStepMetadata>();
+		for (int index = 1; index < route.size(); index++) {
+			WorldLocation source = route.get(index - 1);
+			WorldLocation destination = route.get(index);
+			int offsetX = destination.getCoordinate().getX()
+				- source.getCoordinate().getX();
+			int offsetY = destination.getCoordinate().getY()
+				- source.getCoordinate().getY();
+			int required = offsetX == 0 || offsetY == 0 ? 2
+				: offsetX == 1 && offsetY == -1 ? 5 : 4;
+			steps.add(LayeredCoordinateParityObserver.TraversalStepMetadata.of(
+				index - 1, source, offsetX, offsetY, destination,
+				required, required, Boolean.TRUE,
+				LayeredCoordinateParityObserver.AdjacentBlockingReason.NONE,
+				Boolean.TRUE,
+				LayeredCoordinateParityObserver.AdjacentBlockingReason.NONE));
+		}
+		return steps;
+	}
 
     private static void expectIllegal(Runnable operation) {
         try {
@@ -380,21 +453,24 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stderr)
 
             logs = sorted(Path(log_dir).glob("*.jsonl"))
-            self.assertEqual(2, len(logs))
+            self.assertEqual(3, len(logs))
             primary = next(path for path in logs if "123456789" in path.name)
             events = [json.loads(line) for line in primary.read_text(encoding="utf-8").splitlines()]
             self.assertEqual(
-                ["start", "move", "teleport", "marker", "snapshot", "logout", "login", "stop"],
+                [
+                    "start", "move", "teleport", "move", "marker",
+                    "snapshot", "logout", "login", "stop",
+                ],
                 [event["eventType"] for event in events],
             )
-            self.assertEqual(list(range(1, 9)), [event["sequence"] for event in events])
+            self.assertEqual(list(range(1, 10)), [event["sequence"] for event in events])
             self.assertTrue(all(event["roundTripExact"] for event in events))
-            self.assertEqual("after-ladder", events[3]["label"])
+            self.assertEqual("after-ladder", events[4]["label"])
             self.assertEqual(1, events[1]["delta"]["level"])
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v8" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v9" for event in events))
             upper_window = events[1]["to"]["visibilityWindow"]
             self.assertEqual(2, upper_window["gridDistance"])
             self.assertEqual(16, upper_window["tileRadius"])
@@ -552,6 +628,53 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 and direction["packedBlockingReason"] == "NONE"
                 for direction in start_collision["directions"]
             ))
+            self.assertTrue(all(
+                (event["recentTraversal"] is not None)
+                == (event["eventType"] == "marker")
+                for event in events
+            ))
+            recent = events[4]["recentTraversal"]
+            self.assertEqual({
+                "source": {"worldSpace": "global", "x": 100, "y": 0, "level": -1},
+                "destination": {
+                    "worldSpace": "global", "x": 101, "y": 0, "level": -1
+                },
+                "stepCount": 1,
+                "droppedStepCount": 0,
+                "discontinuityCount": 0,
+                "logicalDecisionAvailableCount": 1,
+                "packedDecisionAvailableCount": 1,
+                "comparableCount": 1,
+                "passabilityExactCount": 1,
+                "blockingReasonExactCount": 1,
+                "requiredStatesExactCount": 1,
+                "logicalPassable": True,
+                "packedPassable": True,
+                "comparable": True,
+                "passabilityExact": True,
+                "allStepsComparable": True,
+                "allStepPassabilitiesExact": True,
+                "allStepBlockingReasonsExact": True,
+                "allRequiredStatesExact": True,
+                "firstLogicalBlockedStepIndex": None,
+                "firstPackedBlockedStepIndex": None,
+                "firstPassabilityMismatchStepIndex": None,
+                "firstBlockingReasonMismatchStepIndex": None,
+            }, {key: recent[key] for key in (
+                "source", "destination", "stepCount", "droppedStepCount",
+                "discontinuityCount", "logicalDecisionAvailableCount",
+                "packedDecisionAvailableCount", "comparableCount",
+                "passabilityExactCount", "blockingReasonExactCount",
+                "requiredStatesExactCount", "logicalPassable", "packedPassable",
+                "comparable", "passabilityExact", "allStepsComparable",
+                "allStepPassabilitiesExact", "allStepBlockingReasonsExact",
+                "allRequiredStatesExact", "firstLogicalBlockedStepIndex",
+                "firstPackedBlockedStepIndex",
+                "firstPassabilityMismatchStepIndex",
+                "firstBlockingReasonMismatchStepIndex",
+            )})
+            self.assertEqual(0, recent["steps"][0]["index"])
+            self.assertEqual({"x": 1, "y": 0}, recent["steps"][0]["offset"])
             upper_interest = events[1]["interestDelta"]
             self.assertEqual({
                 "previousRegionCount": 2,

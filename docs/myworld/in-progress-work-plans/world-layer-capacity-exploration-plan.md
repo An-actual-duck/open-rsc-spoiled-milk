@@ -1,16 +1,17 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-34 validated on the active
+Status: architecture design complete; Slices 1-34 validated and Slice 35
+automated validation complete/owner runtime validation pending on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 34 dormant bounded traversal collision projection is
-validated; packed region lookup, `PathValidation`, route selection, movement,
-and collision remain authoritative and no client streaming or world
-conversion has begun
+Current milestone: Slice 35 bounded private recent-traversal diagnostics;
+packed region lookup, `PathValidation`, route selection, movement, and
+collision remain authoritative and no client streaming or world conversion
+has begun
 
 ## Purpose
 
@@ -4125,6 +4126,85 @@ No owner runtime route is required because the projection remains dormant. A
 separately versioned private diagnostic adoption is the next owner-testable
 boundary.
 
+### Slice 35: Bounded private recent-traversal diagnostics
+
+Objective: correlate real private-server walking segments with the dormant
+Slice 34 comparison without retaining an authoritative path or changing any
+movement decision.
+
+Selected boundary:
+
+- advance new traces to additive v9 JSONL while retaining every v8 field and
+  keeping the v1-v8 schemas beside it;
+- retain only the latest 16 contiguous ordinary one-tile movement steps since
+  start, teleport, login, or the previous marker;
+- emit route evidence only on `marker` and `stop`, with explicit null on every
+  other event and when no ordinary step was retained;
+- report capacity evictions and observed non-adjacent discontinuities rather
+  than silently treating them as comparable steps; and
+- serialize bounded source/destination identities, decisions, reasons, counts,
+  exactness, and first noteworthy indices without traversal masks or tile
+  payloads.
+
+Implemented:
+
+- additive `layered-map-parity-event-v9` JSONL with required nullable
+  `recentTraversal` evidence;
+- synchronized per-trace recent-route bookkeeping with a fixed 16-step cap,
+  explicit dropped/discontinuity counters, and reset boundaries;
+- immutable observer metadata that validates step indices, adjacency,
+  continuity, decision/reason consistency, and aggregate route semantics; and
+- dev-only source wiring through the dormant RegionManager traversal
+  comparison.
+
+Safety boundary:
+
+- the observer remains disabled by default and behind the existing dev/admin
+  command capability;
+- the recent route is observer-local, bounded, discarded when the trace ends,
+  and never stored on Player, Mob, Path, WalkingQueue, or RegionManager;
+- teleports and level changes reset rather than fabricate walking steps; and
+- no movement, route selection, `PathValidation`, database, map, placement,
+  archive, client, Builder project, public server, or live data is changed.
+
+Focused findings:
+
+- a real compiled observer trace retained one ordinary same-level move after a
+  teleport and emitted one exact marker-time route comparison;
+- an 18-step synthetic walk retained the latest 16 steps, reported two
+  capacity evictions, and preserved continuity and exact decisions;
+- a non-adjacent ordinary location jump was refused as a traversal step,
+  restarted the retained segment, and surfaced one discontinuity on the next
+  marker;
+- start, teleport, login, and successful markers reset observer-local route
+  state, while move records never run the expensive traversal comparison; and
+- the Draft 2020-12 v9 schema retains every v8 field, caps step arrays at 16,
+  and requires null traversal evidence outside marker/stop events.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-thirty-five.py` — 2 tests
+  passed;
+- the compiled observer fixture and all v1-v9 schema-lineage checks pass;
+- Slice 1 through Slice 35 regressions all pass (84 tests), including exact
+  coordinate-package consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 742 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content, 211 classified source owners, and one unresolved normalized
+  coordinate. The expected fingerprints are source
+  `6da32afdaad7090a00bcb1075eea52b0bc61d15f176c9282d419768f92081e75`,
+  inventory
+  `22d1245bba16406e70539341ae446a486aca4ab6b33ca7e7b71f226b509b605d`,
+  classification
+  `efd29d92296e29dabe53a9cec2ee5a7a793f4f9567e9119d358524b311b96f29`,
+  and occurrence
+  `3a1611dd5a89feff83cc88e85123f749485c50ab072510bea6b85a37bd83824e`.
+
+Owner runtime validation is pending on the private development server.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -4245,12 +4325,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 32 by comparing one adjacent logical and packed tile-mask decision without changing PathValidation or movement authority. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 33 by emitting all eight adjacent tile-mask comparisons through additive private v8 diagnostics without changing movement authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 34 by composing adjacent tile-mask comparisons across one explicit bounded route without selecting or executing a path. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 35 by emitting the latest bounded ordinary walking segment through additive private v9 diagnostics without changing path authority. | Automated validation complete; owner runtime validation pending |
 
 ## Next Discussion
 
-Complete Slice 34's focused and full automated gates, then add only bounded
-recent observed-route summaries to the opt-in private diagnostics so an owner
-can correlate real walking segments with the dormant comparison. A new
-database schema, authoritative region storage, actual collision/pathing
-adoption, client/protocol adoption, Builder, export, relocation, and level
-`-2` remain separately gated.
+Complete Slice 35's automated gates, then launch only the private development
+server for owner validation of marked walking segments through open routes,
+around walls, across a 48-tile region edge, and after teleport/vertical reset
+boundaries. A new database schema, authoritative region storage, actual
+collision/pathing adoption, client/protocol adoption, Builder, export,
+relocation, and level `-2` remain separately gated.

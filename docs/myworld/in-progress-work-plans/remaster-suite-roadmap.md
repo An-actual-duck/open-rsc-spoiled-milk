@@ -1080,3 +1080,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-19 | Compare one adjacent logical and packed tile-mask decision while retaining PathValidation and movement authority. | Slice 32 implemented and validated in the layered-world plan |
 | 2026-07-19 | Emit all eight adjacent tile-mask comparisons through bounded opt-in private v8 diagnostics. | Slice 33 implemented and owner-validated in the layered-world plan |
 | 2026-07-19 | Compose adjacent layered/packed tile-mask decisions across an explicit bounded route while legacy routing and movement remain authoritative. | Slice 34 implemented and validated in the layered-world plan |
+| 2026-07-19 | Emit one bounded recent ordinary-walking segment through opt-in private v9 diagnostics while movement remains authoritative. | Slice 35 automated validation complete; owner runtime validation pending in the layered-world plan |
