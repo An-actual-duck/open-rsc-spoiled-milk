@@ -123,6 +123,7 @@ server/logs/*.log
 server/logs/pcaps/*.gz
 server/logs/pcaps/**/*.gz
 server/logs/layered-map-parity/*.jsonl
+server/logs/layered-map-parity/**/*.jsonl
 
 Client_Base/Open_RSC_Client.jar
 Client_Base/Cache/credentials.txt

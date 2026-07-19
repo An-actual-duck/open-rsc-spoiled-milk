@@ -1,17 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-42 validated and Slice 43
-implemented with automated validation complete and owner validation pending on
+Status: architecture design complete; Slices 1-43 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 43 exposes the dormant Region retirement projection
-through additive opt-in private diagnostics while packed Region lookup, eager
-loading, release, eviction, pathing, packets, and persistence remain
-authoritative and unchanged
+Current milestone: Slice 43 has owner-validated the dormant Region retirement
+projection through additive opt-in private diagnostics while packed Region
+lookup, eager loading, release, eviction, pathing, packets, and persistence
+remain authoritative and unchanged
 
 ## Purpose
 
@@ -4890,15 +4889,39 @@ Automated validation evidence:
   fingerprints;
 - the compatibility observer overload deliberately emits null retirement
   evidence when no source was supplied, while the private `::layerparity`
-  command and reconnect path always supply the real bounded reader; and
-- owner runtime validation remains required before this slice is accepted.
+  command and reconnect path always supply the real bounded reader.
 
-The focused private route should capture one logical-window transition, an
-immediate cooling marker, a marker after at least 16 server ticks, a return that
-reacquires the released Regions, and logout/reconnect while the trace remains
-active. Acceptance requires schema-valid v12 records, exact aggregate counts,
-visible cooling-to-eligible timing, pinned/null-release evidence on
-reacquisition, no dropped candidates, and no visual or functional regression.
+Owner validation evidence:
+
+- the first private launch correctly refused `::layerparity` because the
+  tracked local config retains its safe default `false`; the accepted rerun
+  launched only the private process with
+  `OPENRSC_LAYERED_MAP_PARITY_OBSERVER=true`, verified that exact variable on
+  the listening process, and left hosted configuration/runtime untouched;
+- the isolated log contains 12 consecutive, schema-valid v12 records covering
+  start, baseline, four window-changing teleports, cooldown-expired and
+  reacquired markers, logout, login, reconnect marker, and stop;
+- the first global release occurred at server tick 99. Its 18 resident Regions
+  reported the exact 16-tick grace and eligibility tick 115, while three
+  legacy-unsupported Regions remained conservatively `UNSUPPORTED`; the
+  delayed marker at tick 150 reported all 18 resident candidates
+  `RETIREMENT_ELIGIBLE`;
+- the additional return/Lumbridge/return route exercised two further release
+  and reacquisition cycles. Every entered transition reported `PINNED`, a
+  positive reference count, and null release/eligibility timestamps;
+- logout at tick 274 released the current 36-Region window and reported 36
+  cooling, 42 previously eligible, and 10 unsupported candidates. Login at
+  tick 276 rebound owner sequence 1 to sequence 2, reported all 36 current
+  Regions pinned, and preserved the older bounded candidates for the reconnect
+  marker;
+- every aggregate state count equals its observed-entry count, transition and
+  tracked flags equal their declared counts, entry ownership versions equal the
+  event ownership version, ticks are same-batch, and all cooldown-state
+  arithmetic is exact;
+- all records retain exact coordinate round trips, candidate overflow remained
+  zero, and neither server nor client reported an observer/runtime error; and
+- the owner completed the route without reporting a visual or functional
+  regression.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -5028,13 +5051,14 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 40 by maintaining one checked opaque logical-interest owner per Player session without adopting loading, release, or eviction. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 41 by emitting bounded Player interest-owner and global/shared reference transitions through opt-in private v11 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 42 by projecting global interest releases through a conservative 16-tick retirement cooldown without adopting loading, retention, release, or eviction. | Implemented and validated |
-| 2026-07-19 | Continue with Slice 43 by exposing bounded transition and recent-release cooldown evidence through opt-in private v12 diagnostics without adopting loading, retention, release, or eviction. | Implemented; automated validation complete and owner validation pending |
+| 2026-07-19 | Continue with Slice 43 by exposing bounded transition and recent-release cooldown evidence through opt-in private v12 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Validate the new private v12 retirement evidence across global release, grace,
-expiry, reacquisition cancellation, and logout/reconnect. Real multi-owner
-runtime coverage remains mandatory before any consumer can act on eligibility.
+The next bounded slice should exercise two simultaneous overlapping logical
+interest owners in the private runtime and capture shared acquisition, shared
+release, last global release, cooldown, and reacquisition. That gate must pass
+before any source-level retirement arbiter can consume eligibility.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.
