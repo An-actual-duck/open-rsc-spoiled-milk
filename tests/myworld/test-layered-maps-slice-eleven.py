@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v2.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v3.schema.json"
 
 
 POINT_STUB = r'''
@@ -263,7 +263,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v2" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v3" for event in events))
             upper_window = events[1]["to"]["visibilityWindow"]
             self.assertEqual(2, upper_window["gridDistance"])
             self.assertEqual(16, upper_window["tileRadius"])
@@ -276,6 +276,41 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             }, {key: upper_window[key] for key in (
                 "minRegionX", "minRegionY", "maxRegionX", "maxRegionY")})
             self.assertEqual(4, upper_window["regionCount"])
+            upper_interest = events[1]["interestDelta"]
+            self.assertEqual({
+                "previousRegionCount": 2,
+                "currentRegionCount": 4,
+                "enteredCount": 4,
+                "retainedCount": 0,
+                "exitedCount": 2,
+                "worldSpaceChanged": False,
+                "levelChanged": True,
+                "noOp": False,
+            }, {key: upper_interest[key] for key in (
+                "previousRegionCount",
+                "currentRegionCount",
+                "enteredCount",
+                "retainedCount",
+                "exitedCount",
+                "worldSpaceChanged",
+                "levelChanged",
+                "noOp",
+            )})
+            self.assertEqual(
+                {"worldSpace": "global", "level": 1, "x": 1, "y": -1},
+                upper_interest["enteredKeys"][0],
+            )
+            self.assertEqual(
+                {"worldSpace": "global", "level": 0, "x": 1, "y": 19},
+                upper_interest["exitedKeys"][0],
+            )
+            self.assertIsNotNone(events[2]["interestDelta"])
+            self.assertTrue(events[2]["interestDelta"]["levelChanged"])
+            self.assertTrue(all(
+                (event["interestDelta"] is not None)
+                == (event["eventType"] in {"move", "teleport"})
+                for event in events
+            ))
             raw_log = primary.read_text(encoding="utf-8").lower()
             self.assertNotIn('"username":', raw_log)
             self.assertNotIn("password", raw_log)

@@ -158,10 +158,12 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, or credentials. New traces emit
-`schema/layered-map-parity-event-v2.schema.json`. Each v2 snapshot adds the
-configured grid distance, tile radius, world space, signed level, inclusive
-logical-region bounds, and checked region count. The v1 schema remains
-alongside it so already-captured logs keep an explicit readable contract.
+`schema/layered-map-parity-event-v3.schema.json`. Each v3 snapshot retains the
+v2 configured grid distance, tile radius, world space, signed level, inclusive
+logical-region bounds, and checked region count. Move and teleport events add
+bounded entered/retained/exited logical-interest counts plus entered/exited key
+identities. The v1 and v2 schemas remain alongside it so already-captured logs
+keep explicit readable contracts.
 
 ## Checked Player mirror
 

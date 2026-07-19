@@ -3,6 +3,8 @@ package com.openrsc.server.diagnostics;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
+import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,8 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v2";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v3";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
+	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
 
 	private static final Logger LOGGER = LogManager.getLogger(LayeredCoordinateParityObserver.class);
 	private static final Map<TraceKey, TraceState> TRACES =
@@ -186,9 +189,57 @@ public final class LayeredCoordinateParityObserver {
 				.append(",\"level\":").append(after.getLevel() - before.getLevel())
 				.append('}');
 		}
+		out.append(",\"interestDelta\":");
+		if (from == null) {
+			out.append("null");
+		} else {
+			appendInterestDelta(out, WorldRegionInterestDelta.between(
+				from.getVisibilityWindow(), to.getVisibilityWindow(),
+				MAX_TRACE_REGIONS_PER_WINDOW));
+		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
 		return out.append('}').toString();
+	}
+
+	private static void appendInterestDelta(
+		final StringBuilder out,
+		final WorldRegionInterestDelta delta) {
+		out.append('{');
+		out.append("\"previousRegionCount\":")
+			.append(delta.getExited().size() + delta.getRetained().size()).append(',');
+		out.append("\"currentRegionCount\":")
+			.append(delta.getEntered().size() + delta.getRetained().size()).append(',');
+		out.append("\"enteredCount\":").append(delta.getEntered().size()).append(',');
+		out.append("\"retainedCount\":").append(delta.getRetained().size()).append(',');
+		out.append("\"exitedCount\":").append(delta.getExited().size()).append(',');
+		out.append("\"worldSpaceChanged\":").append(delta.changesWorldSpace()).append(',');
+		out.append("\"levelChanged\":").append(delta.changesLevel()).append(',');
+		out.append("\"noOp\":").append(delta.isNoOp()).append(',');
+		out.append("\"enteredKeys\":");
+		appendRegionKeys(out, delta.getEntered());
+		out.append(",\"exitedKeys\":");
+		appendRegionKeys(out, delta.getExited());
+		out.append('}');
+	}
+
+	private static void appendRegionKeys(
+		final StringBuilder out,
+		final Iterable<WorldRegionKey> keys) {
+		out.append('[');
+		boolean first = true;
+		for (WorldRegionKey key : keys) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			out.append("{\"worldSpace\":\"")
+				.append(jsonEscape(key.getWorldSpace().getValue()))
+				.append("\",\"level\":").append(key.getLevel())
+				.append(",\"x\":").append(key.getRegionX())
+				.append(",\"y\":").append(key.getRegionY()).append('}');
+		}
+		out.append(']');
 	}
 
 	private static StringBuilder field(StringBuilder out, String name, String value) {

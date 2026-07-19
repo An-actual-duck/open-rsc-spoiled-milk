@@ -1,15 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-17 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-17 implemented and validated;
+Slice 18 is implemented and automated-valid, with private owner validation
+pending on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 17 deterministic logical interest delta checkpoint;
-packed region lookup and caches remain authoritative and no client streaming
-or world conversion has begun
+Current milestone: Slice 18 private owner validation of logical interest-delta
+diagnostics; packed region lookup and caches remain authoritative and no client
+streaming or world conversion has begun
 
 ## Purpose
 
@@ -2640,8 +2641,8 @@ Safety boundary:
 
 - RegionManager's packed maps, packed window cache, object caches, region
   creation, and visibility enumeration are unchanged;
-- Player and the parity observer do not import, store, calculate, or consume
-  the delta;
+- the Slice 17 checkpoint introduced no Player or observer consumer; later
+  private diagnostic adoption remains a separately recorded slice;
 - packets, entity selection, terrain, client residency, persistence, and
   Builder remain unchanged; and
 - no database, map, placement, archive, public server, or live data is changed.
@@ -2671,6 +2672,76 @@ Automated validation evidence:
 
 No owner runtime route is required because the new value has no runtime
 consumer.
+
+### Slice 18: Private logical interest-delta diagnostics
+
+Objective: observe the accepted logical interest delta across real private
+movement and teleports without calculating or retaining it during normal
+gameplay and without adopting it for server or client interest decisions.
+
+Selected boundary:
+
+- calculate deltas only inside the existing doubly opt-in, dev-only private
+  parity observer and only for events that have both before and after points;
+- cap each diagnostic materialization at 4,096 keys per window, far above the
+  current private configuration but low enough to refuse accidental runaway
+  debug allocations;
+- emit full entered/exited key identities and compact entered/retained/exited
+  counts, while omitting the usually much larger retained-key list already
+  inferable from the two window snapshots; and
+- retain v1 and v2 schemas for old logs while emitting an additive v3 event
+  contract with a nullable `interestDelta` field.
+
+Implemented:
+
+- v3 observer events with a nullable logical-interest delta derived only from
+  before/after diagnostic snapshots;
+- previous/current and entered/retained/exited counts, world-space/level/no-op
+  flags, and deterministic entered/exited key arrays;
+- a 4,096-key per-window debug allocation ceiling whose refusal is captured as
+  observer error state rather than changing gameplay; and
+- a retained v1/v2 schema lineage plus a strict Draft 2020-12 v3 schema.
+
+Safety boundary:
+
+- delta computation occurs only after the private observer is explicitly
+  enabled in server configuration and started by a dev/admin command;
+- normal movement with the observer disabled performs no delta materialization;
+- Player stores only the already accepted current-window mirror; it does not
+  retain interest deltas or key lists;
+- RegionManager packed lookup/caches, entity selection, packets, terrain,
+  client residency, persistence, and Builder remain unchanged; and
+- no database, map, placement, archive, public server, or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-eighteen.py` — 2 tests passed;
+- the observer integration fixture emitted and schema-validated v3 start,
+  movement, teleport, marker, snapshot, session, and stop events, including
+  exact entered/exited key identities across level changes and nullable deltas
+  where no before point exists;
+- the schema-lineage guard validates retained v1/v2 contracts, required v3
+  fields, region-key identity, observer allocation bounds, and absence from
+  Player and RegionManager;
+- Slice 1 through Slice 18 regressions all pass (50 tests), including exact
+  coordinate-package and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 731 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged content
+  counts and fingerprints: source
+  `2ff279f25945a1a9224e27a687da02bb6883e457db89391454c3fba12f123770`,
+  inventory
+  `23c90d3698a79b984995a6c7205609d69cac337695a878372bbebfac4440c6cb`,
+  classification
+  `5b308fc3dd094bf964ac3837d642d8397e2328a455e10ac0d8ed235ca3118017`,
+  and occurrence
+  `60b2e4e975e11528c755e4c0127f6094b0b9fff2cdc5c07cd6471e535913bc7d`.
+
+Owner validation will repeat the accepted boundary and level-change route on
+the private server, then inspect the v3 delta counts and changed-key lists
+before this slice is accepted.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -2775,10 +2846,11 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 15 by defining a level-qualified logical visibility window and read-only RegionManager projection while retaining packed lookup, caches, and client behavior. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 16 by maintaining a checked Player visibility-window shadow and adding versioned private trace evidence while retaining packed lookup, caches, and client behavior. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 17 by defining a deterministic, allocation-budgeted logical interest delta while retaining packed lookup, caches, packets, and client behavior. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 18 by emitting bounded logical interest deltas only through versioned private diagnostics while retaining all current interest and residency authorities. | Implemented and automated-valid; owner validation pending |
 
 ## Next Discussion
 
-Continue with a checked private runtime interest-delta shadow as the next
-reversible seam. A new database schema, authoritative region storage,
+Complete the private interest-delta diagnostic and owner route before selecting
+the next reversible seam. A new database schema, authoritative region storage,
 client/protocol adoption, Builder, export, relocation, and level `-2` remain
 separately gated.

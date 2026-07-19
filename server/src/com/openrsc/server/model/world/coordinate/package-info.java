@@ -17,7 +17,9 @@
  * and Slice 16 maintains a checked Player shadow of that projection for
  * private diagnostics without making it authoritative. Slice 17 defines a
  * deterministic, allocation-budgeted logical interest delta without adopting
- * it for runtime lookup, packets, or client residency.
+ * it for runtime lookup, packets, or client residency. Slice 18 permits that
+ * delta only in bounded private diagnostics; normal runtime authorities remain
+ * unchanged.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;
