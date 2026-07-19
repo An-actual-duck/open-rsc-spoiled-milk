@@ -1,17 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-15 implemented and validated;
-Slice 16 is implemented and automated-valid, with private owner validation
-pending on the active refinement branch
+Status: architecture design complete; Slices 1-16 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 16 private owner validation of the checked Player
-visibility-window shadow and versioned diagnostics; packed region lookup and
-caches remain authoritative and no client streaming or world conversion has
-begun
+Current milestone: Slice 16 checked Player visibility-window shadow and
+versioned diagnostics accepted; packed region lookup and caches remain
+authoritative and no client streaming or world conversion has begun
 
 ## Purpose
 
@@ -2590,9 +2588,26 @@ Automated validation evidence:
   and occurrence
   `60b2e4e975e11528c755e4c0127f6094b0b9fff2cdc5c07cd6471e535913bc7d`.
 
-Owner validation will exercise an ordinary movement boundary plus a vertical
-transition on the private server and inspect the v2 window fields before this
-slice is accepted.
+Owner runtime acceptance is complete:
+
+- the owner started at packed `(223,620)`, moved to X `224`, returned to X
+  `223`, then teleported through surface packed `(216,468)` and underground
+  packed `(216,3300)` before taking a final snapshot and stopping;
+- all 11 v2 events used configured grid distance `16`, checked tile radius
+  `128`, and exact coordinate round trips;
+- the X `223` window was global level `0`, regions X `1..7`, Y `10..15`, count
+  `42`; X `224` correctly advanced the minimum X region to `2` and count to
+  `36`, and returning to X `223` restored the original bounds;
+- surface and underground `(216,468)` projections retained identical region
+  bounds X `1..7`, Y `7..12`, count `42`, while changing only from level `0`
+  to level `-1`; and
+- the owner reported no visual, loading, movement, teleport, or interaction
+  issue.
+
+Only the private development server and disposable dev account were involved.
+No public/live server, database, map, placement, archive, or player data was
+accessed or changed by this validation beyond the dev account's normal
+location update.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -2695,11 +2710,11 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 13 by maintaining checked world-space/level-qualified Player region membership alongside the accepted location mirror while packed RegionManager storage remains authoritative. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 14 by projecting each loaded/saved legacy Player location through a checked immutable layered persistence snapshot while retaining the exact X/Y database contract. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 15 by defining a level-qualified logical visibility window and read-only RegionManager projection while retaining packed lookup, caches, and client behavior. | Implemented and validated |
-| 2026-07-18 | Continue with Slice 16 by maintaining a checked Player visibility-window shadow and adding versioned private trace evidence while retaining packed lookup, caches, and client behavior. | Implemented and automated-valid; owner validation pending |
+| 2026-07-18 | Continue with Slice 16 by maintaining a checked Player visibility-window shadow and adding versioned private trace evidence while retaining packed lookup, caches, and client behavior. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Complete Slice 16 automated and private owner validation before selecting the
-next reversible streaming seam. A new database schema, authoritative region
-storage, client/protocol adoption, Builder, export, relocation, and level `-2`
-remain separately gated.
+Select the next reversible streaming seam now that the checked logical window
+and its private evidence are accepted. A new database schema, authoritative
+region storage, client/protocol adoption, Builder, export, relocation, and
+level `-2` remain separately gated.
