@@ -37,7 +37,8 @@
  * as a compatibility bridge. Slice 28 compares one such state with its direct
  * packed source through a dormant, non-mutating RegionManager projection.
  * Slice 29 emits bounded metadata from that comparison only through opt-in
- * private diagnostics.
+ * private diagnostics. Slice 30 extends the dormant comparison across one
+ * checked 3x3 tile neighborhood without collision or pathing adoption.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

@@ -1,14 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-29 implemented and validated on
+Status: architecture design complete; Slices 1-30 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 29 bounded private current-tile parity diagnostics
-owner-validated;
+Current milestone: Slice 30 checked 3×3 logical tile-neighborhood parity
+complete;
 packed region lookup and collision remain authoritative and no client streaming
 or world conversion has begun
 
@@ -3689,6 +3689,86 @@ Owner runtime acceptance completed on 2026-07-19 from checkpoint `68cc4e6df`:
 
 Slice 29 is owner-validated. Packed Regions and collision remain authoritative.
 
+### Slice 30: Checked logical tile-neighborhood parity
+
+Objective: expand the proven single-tile comparison into the smallest tile
+neighborhood useful for later adjacent-step collision and pathing work, without
+adopting it for either behavior.
+
+Selected boundary:
+
+- retain exactly nine row-major current-tile comparisons at offsets `-1..+1`
+  around one exact world-space/level-qualified center;
+- validate cell ordering and location identity, and summarize representable,
+  unsupported, source-present, missing-source, comparable, and exact counts;
+- reuse each detached logical 48×48 snapshot within one neighborhood call so a
+  region corner captures at most four logical snapshots rather than nine, with
+  no persistent cache; and
+- compare direct packed sources only through the established non-creating
+  Region peek while keeping Player, movement, collision, pathing, diagnostics,
+  packets, and persistence outside the dormant contract.
+
+Implemented:
+
+- immutable `LayeredTileNeighborhoodParityComparison` retention of one exact
+  center and nine ordered immutable current-tile comparisons;
+- checked offset/location ordering, bounded cell access, immutable cell-list
+  exposure, and explicit representable, unsupported, source-present,
+  missing-source, comparable, and exact counts;
+- read-only RegionManager entry points for packed `Point` and explicit
+  `WorldLocation`, with logical snapshot reuse scoped to one call; and
+- reuse of the established checked single-tile comparison and non-creating
+  packed Region peek rather than adding another tile interpretation.
+
+Focused findings:
+
+- center `(239,16,+1)` spans logical X regions `4..5` and four packed source
+  Regions by crossing packed X and packed Y boundaries; all nine immutable
+  states compare exactly;
+- removing packed Region `(4,20)` leaves all nine cells legacy-representable
+  while explicitly reducing source-present/comparable counts and increasing
+  missing-source count, without reporting complete parity;
+- the same neighborhood at level `-2` preserves nine explicit unsupported
+  cells with no packed source, missing-source, comparability, or false exact
+  result; and
+- wrong cell order, wrong cell count, out-of-range offsets, and mutation of the
+  returned cell list are refused.
+
+Safety boundary:
+
+- each logical snapshot is detached and reused only inside one comparison call;
+  there is no persistent cache or dual-write state;
+- neighborhood lookup never calls the creating Region lookup or a mutable-tile
+  method;
+- packed Regions and mutable `TileValue`s remain terrain, collision, pathing,
+  visibility, packet, entity, and persistence authority; and
+- no Player, movement, collision, pathing, diagnostic, database, map,
+  placement, archive, client, Builder project, public server, or live data is
+  changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-thirty.py` — 2 tests passed;
+- Slice 1 through Slice 30 regressions all pass (74 tests), including exact
+  coordinate-package consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 740 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content and 211 unresolved owners. The expected fingerprints are source
+  `ddd878197077ef6fb7732890534a17de96c28a2810bcbcd1f2567d34953aa4f6`,
+  inventory
+  `6ba68a10a10229ce1083a916fb4c7d33ccfbd708d1264a767e61213eba0b096f`,
+  classification
+  `f702226cfaefdc4ae3e9d69bb1a9f83c2f41ce3ba4ed6471f5c586b326abdd5f`,
+  and occurrence
+  `b2089304574a5e572e7c1b28a1df141a1657a4c12cd28cd92ad03702ca2cc2d3`.
+
+No owner runtime route is required because the neighborhood remains dormant.
+Any private diagnostic adoption or actual collision/pathing consumer remains a
+separately gated slice.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3804,14 +3884,13 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 27 by replacing mutable logical snapshot internals with an immutable full-fidelity tile-state value and retaining a detached legacy-copy bridge. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 28 by comparing one direct packed immutable tile state with its assembled logical-snapshot state without adopting either for gameplay. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 29 by emitting bounded current-tile packed/logical parity metadata through additive private v6 diagnostics. | Implemented and owner-validated |
+| 2026-07-19 | Continue with Slice 30 by comparing a checked 3×3 logical tile neighborhood with its current direct packed sources without collision or pathing adoption. | Implemented and validated |
 
 ## Next Discussion
 
-Proceed with a dormant Slice 30 checked 3×3 logical tile-neighborhood parity
-contract around one location. This is the smallest useful expansion from a
-single tile toward adjacent-step collision and pathing: it must cross logical
-region and legacy packed-region boundaries, retain missing/unsupported cells,
-and compare every available immutable logical state with its direct packed
-source without caching or gameplay adoption. A new database schema,
-authoritative region storage, actual collision/pathing adoption, client/protocol
-adoption, Builder, export, relocation, and level `-2` remain separately gated.
+Proceed with a separately versioned Slice 31 private diagnostic adoption of the
+dormant 3×3 neighborhood summary, bounded to start, marker, teleport, and stop
+events. Preserve v6 fields and emit counts plus complete/exact status without
+tile payloads. A new database schema, authoritative region storage, actual
+collision/pathing adoption, client/protocol adoption, Builder, export,
+relocation, and level `-2` remain separately gated.

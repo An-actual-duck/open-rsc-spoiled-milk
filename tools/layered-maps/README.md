@@ -265,6 +265,13 @@ logical tiles remain distinct. RegionManager exposes the comparison through a
 non-mutating packed-region peek; no Player, diagnostic, collision, cache,
 packet, or client path consumes it.
 
+`LayeredTileNeighborhoodParityComparison` retains the nine checked tile-state
+comparisons at offsets `-1..+1` around one logical center. RegionManager reuses
+detached logical snapshots only within that call and reads direct sources
+through its non-creating packed-region peek. The neighborhood reports explicit
+supported, missing, unsupported, comparable, and exact counts; no movement,
+collision, pathing, cache, Player, diagnostic, or client path consumes it.
+
 `LegacyPackedVisibilityCoverageComparison` unions that coverage across the
 current packed candidate window and compares it with the intended signed
 logical window. It keeps expected, covered, missing, extra, and unsupported

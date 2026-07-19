@@ -22,9 +22,11 @@ import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -587,6 +589,55 @@ public class RegionManager {
 		final WorldLocation logicalLocation) {
 		WorldRegionKey key = WorldRegionKey.from(logicalLocation);
 		LayeredRegionTileSnapshot snapshot = getLayeredRegionTileSnapshot(key);
+		return compareLayeredTileState(logicalLocation, snapshot);
+	}
+
+	/**
+	 * Compares the 3x3 logical tile neighborhood around one packed center.
+	 * The comparison is detached and does not affect movement or collision.
+	 */
+	public LayeredTileNeighborhoodParityComparison
+		compareLayeredTileNeighborhood(final Point packedCenter) {
+		return compareLayeredTileNeighborhood(
+			LegacyPackedPointAdapter.fromLegacyPoint(packedCenter));
+	}
+
+	/**
+	 * Compares one bounded logical neighborhood with its direct packed sources.
+	 * Logical snapshots are reused within this call but are not cached.
+	 */
+	public LayeredTileNeighborhoodParityComparison
+		compareLayeredTileNeighborhood(final WorldLocation logicalCenter) {
+		Map<WorldRegionKey, LayeredRegionTileSnapshot> snapshots =
+			new HashMap<WorldRegionKey, LayeredRegionTileSnapshot>();
+		List<LayeredTileStateParityComparison> cells =
+			new ArrayList<LayeredTileStateParityComparison>(
+				LayeredTileNeighborhoodParityComparison.CELL_COUNT);
+		for (int offsetY = -LayeredTileNeighborhoodParityComparison.RADIUS;
+			offsetY <= LayeredTileNeighborhoodParityComparison.RADIUS;
+			offsetY++) {
+			for (int offsetX = -LayeredTileNeighborhoodParityComparison.RADIUS;
+				offsetX <= LayeredTileNeighborhoodParityComparison.RADIUS;
+				offsetX++) {
+				WorldLocation location = LayeredTileNeighborhoodParityComparison.offset(
+					logicalCenter, offsetX, offsetY);
+				WorldRegionKey key = WorldRegionKey.from(location);
+				LayeredRegionTileSnapshot snapshot = snapshots.get(key);
+				if (snapshot == null) {
+					snapshot = getLayeredRegionTileSnapshot(key);
+					snapshots.put(key, snapshot);
+				}
+				cells.add(compareLayeredTileState(location, snapshot));
+			}
+		}
+		return LayeredTileNeighborhoodParityComparison.of(
+			logicalCenter, cells);
+	}
+
+	private LayeredTileStateParityComparison compareLayeredTileState(
+		final WorldLocation logicalLocation,
+		final LayeredRegionTileSnapshot snapshot) {
+		WorldRegionKey key = WorldRegionKey.from(logicalLocation);
 		LegacyLogicalTileAddress address = LegacyLogicalTileAddress.resolve(
 			key,
 			logicalLocation.getCoordinate().getLocalX(),
