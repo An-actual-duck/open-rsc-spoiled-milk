@@ -9,6 +9,7 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LegacyPackedRegionCoverage;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
@@ -483,6 +484,18 @@ public class RegionManager {
 	 */
 	public WorldRegionKey getLayeredRegionKey(final WorldLocation location) {
 		return WorldRegionKey.from(location);
+	}
+
+	/**
+	 * Projects one current packed region cell into every logical key it overlaps.
+	 *
+	 * <p>This does not access or mutate the current packed region maps.</p>
+	 */
+	public LegacyPackedRegionCoverage getLayeredRegionCoverage(
+		final int packedRegionX,
+		final int packedRegionY) {
+		return LegacyPackedRegionCoverage.fromPackedRegionCoordinates(
+			packedRegionX, packedRegionY);
 	}
 
 	/**

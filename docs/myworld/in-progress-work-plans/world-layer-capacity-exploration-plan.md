@@ -1,13 +1,13 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-18 implemented and validated on
+Status: architecture design complete; Slices 1-19 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 18 private logical interest-delta diagnostics accepted;
+Current milestone: Slice 19 legacy packed-region coverage projection checkpoint;
 packed region lookup and caches remain authoritative and no client streaming or
 world conversion has begun
 
@@ -1785,6 +1785,11 @@ locations only; it does not attach a key to `Region` or alter nested map
 identity. A later authoritative storage migration must split the two
 straddling regions.
 
+Later Slice 19 analysis expands this finding: even when a packed region does
+not cross a level boundary, the 944/48 misalignment means many plane-1 and
+plane-2 packed rows overlap two logical region rows. The two straddles remain
+the most severe cases, but they are not the complete storage-split inventory.
+
 Validation evidence:
 
 - `python3 tests/myworld/test-layered-maps-slice-five.py` — 3 tests passed;
@@ -2761,6 +2766,80 @@ No public/live server, database, map, placement, archive, or player data was
 accessed or changed by this validation beyond the dev account's normal
 location update.
 
+### Slice 19: Legacy packed-region coverage projection
+
+Objective: describe every logical region key overlapped by one current packed
+48-tile region cell before attempting any storage, cache, or interest migration.
+
+Selected boundary:
+
+- model the nominal packed cell independently from its intersection with the
+  checked legacy point-codec domain;
+- retain zero-key coverage for padded cells entirely beyond the legacy domain
+  and partial coverage at the terminal X/Y edges rather than inventing layered
+  coordinates for unsupported tiles;
+- deduplicate logical keys in packed-Y traversal order and explicitly report
+  whether one packed cell crosses signed levels; and
+- expose a read-only RegionManager projection from packed region coordinates,
+  without looking up, creating, rekeying, splitting, or mutating a `Region`.
+
+Implemented:
+
+- immutable `LegacyPackedRegionCoverage` with nominal bounds, checked legacy
+  intersection, legacy tile count, immutable logical-key coverage, containment,
+  level-straddle detection, and explicit empty/partial states;
+- checked arithmetic and negative-coordinate refusal before calculating packed
+  tile bounds; and
+- `RegionManager.getLayeredRegionCoverage(...)`, a projection-only method that
+  never reads or writes the packed region maps.
+
+Audit findings:
+
+- the server's padded height exposes 84 packed region rows per X column;
+- 39 rows cover one logical key, 40 cover two logical keys, and five padded
+  rows lie entirely beyond packed Y `3775` and cover none;
+- packed rows 19 and 39 are the two true level straddles; the other 38 dual-key
+  rows are same-level misalignments on legacy planes 1 and 2;
+- terminal row 78 contains only 32 supported Y tiles per X tile, while rows
+  79..83 are wholly outside the checked legacy codec; and
+- all packed Y values `0..3775` resolve to a key contained by their packed
+  region coverage.
+
+Safety boundary:
+
+- packed RegionManager maps, region construction, tile storage, visibility and
+  object caches, entity enumeration, collision, and packets remain unchanged;
+- no `Region` receives a logical key and no region is split or rekeyed;
+- Player, diagnostics, persistence, terrain archives, client, and Builder do
+  not consume the new coverage value; and
+- no database, map, placement, archive, public server, or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-nineteen.py` — 2 tests passed;
+- fixtures covered every server padded Y-region row, every valid packed Y at
+  current X `1007`, both level straddles, same-level dual coverage, aligned
+  surface/underground rows, terminal partial X/Y cells, post-codec padding,
+  deterministic immutable keys, nulls, negatives, and arithmetic overflow;
+- Slice 1 through Slice 19 regressions all pass (52 tests), including exact
+  resolved-contract and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 732 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged content
+  counts. The expected fingerprints are source
+  `97a79efcd20d03a0f21337b2f9b87e6aa296eff45f03cdf016ec9129bebf1dbd`,
+  inventory
+  `47fb30ee315dd4026011335628c7bd87fcc16270bff5a18ee85ff33b36e5dcdb`,
+  classification
+  `cf6e307b0ccc534c540d150a2a461a22e1bc65f1e34622af02eafcae1057479b`,
+  and occurrence
+  `60b2e4e975e11528c755e4c0127f6094b0b9fff2cdc5c07cd6471e535913bc7d`.
+
+No owner runtime route is required because neither runtime storage nor a
+diagnostic consumes the projection.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2865,10 +2944,11 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 16 by maintaining a checked Player visibility-window shadow and adding versioned private trace evidence while retaining packed lookup, caches, and client behavior. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 17 by defining a deterministic, allocation-budgeted logical interest delta while retaining packed lookup, caches, packets, and client behavior. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 18 by emitting bounded logical interest deltas only through versioned private diagnostics while retaining all current interest and residency authorities. | Implemented and owner-validated |
+| 2026-07-18 | Continue with Slice 19 by projecting every logical key overlapped by one legacy packed region cell while retaining packed storage, caches, and lookup. | Implemented and validated |
 
 ## Next Discussion
 
-Select the next reversible parity seam before any authoritative interest or
-residency adoption. A new database schema, authoritative region storage,
-client/protocol adoption, Builder, export, relocation, and level `-2` remain
-separately gated.
+Continue with a read-only packed-window/logical-window coverage comparison as
+the next reversible parity seam. A new database schema, authoritative region
+storage, client/protocol adoption, Builder, export, relocation, and level `-2`
+remain separately gated.

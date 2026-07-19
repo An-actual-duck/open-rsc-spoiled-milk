@@ -208,7 +208,7 @@ remain 48 tiles during parity migration.
 This projection does not query or populate `RegionManager.regions`, use a
 visibility cache, enumerate entities, alter the current packed visibility
 window, or participate in client streaming. Its checked Player shadow and
-private v2 diagnostics compare projected interest bounds, but neither becomes
+private v3 diagnostics compare projected interest bounds, but neither becomes
 an interest/residency authority.
 
 `WorldRegionInterestDelta` can materialize deterministic X-major/Y-minor
@@ -218,3 +218,9 @@ capacity. World space and signed level are part of key identity, so equal X/Y
 bounds on another level retain no keys. This value remains dormant: Player,
 RegionManager lookup/caches, packets, terrain, and client residency do not
 consume it.
+
+`LegacyPackedRegionCoverage` describes every logical key touched by one current
+packed 48-tile region cell. It distinguishes the nominal packed cell from the
+portion accepted by the legacy point codec, so terminal partial cells and the
+server's post-codec padded rows remain explicit. The RegionManager projection
+does not access or alter packed storage.
