@@ -36,6 +36,8 @@
  * logical tile state inside that snapshot while retaining fresh legacy copies
  * as a compatibility bridge. Slice 28 compares one such state with its direct
  * packed source through a dormant, non-mutating RegionManager projection.
+ * Slice 29 emits bounded metadata from that comparison only through opt-in
+ * private diagnostics.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

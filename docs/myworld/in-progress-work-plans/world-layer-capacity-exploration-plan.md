@@ -1,14 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-28 implemented and validated on
+Status: architecture design complete; Slices 1-28 implemented and validated;
+Slice 29 implemented and automated-validated with owner validation pending on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 28 checked direct-packed/logical-snapshot tile parity
-complete;
+Current milestone: Slice 29 bounded private current-tile parity diagnostics
+awaiting its first owner route;
 packed region lookup and collision remain authoritative and no client streaming
 or world conversion has begun
 
@@ -3585,6 +3586,84 @@ Automated validation evidence:
 No owner runtime route is required because the comparison remains dormant.
 Any private diagnostic adoption remains a separately versioned later slice.
 
+### Slice 29: Bounded private current-tile parity diagnostics
+
+Objective: make the dormant Slice 28 current-tile comparison AI-readable in an
+opt-in private trace without adding another full comparison to every movement
+event.
+
+Selected boundary:
+
+- advance new traces to additive v6 JSONL while retaining every v5 field and
+  keeping the v1-v5 schemas beside it;
+- emit logical location, nullable legacy packed address, representability,
+  packed-source presence, missing-source, comparability, and exact full-state
+  parity;
+- sample only observer `start`, `marker`, `teleport`, and `stop` events, with an
+  explicit JSON null on move, snapshot, login, and logout; and
+- bind the metadata source only through the dev command's dormant read-only
+  RegionManager comparison, outside Player and all gameplay consumers.
+
+Implemented:
+
+- additive `layered-map-parity-event-v6` JSONL retaining every v5 field and
+  requiring a new nullable `tileParity` field;
+- immutable observer metadata with checked logical location, nullable legacy
+  packed address, representability, packed-source presence, missing-source,
+  comparability, and exact full-state parity;
+- location-consistency refusal before a sampled record is written, plus
+  metadata consistency guards preventing unsupported sources, contradictory
+  missing-source state, or exact uncomparable results; and
+- dev-only source wiring from `RegionManager.compareLayeredTileState(...)`,
+  sampled only at start, marker, teleport, and stop.
+
+Focused findings:
+
+- the compiled eight-event observer trace emits parity on exactly four primary
+  events—start, teleport, marker, and stop—and null on move, snapshot, logout,
+  and login;
+- the emitted fixture metadata identifies logical `(100,943,0)`, legacy packed
+  `(100,943)`, a present source, comparability, and exact state parity;
+- a second trace remains identity-isolated while the bounded source records
+  exactly its own start and stop; and
+- all v1-v6 schemas remain individually valid, with v6 structurally preserving
+  every required v5 field.
+
+Safety boundary:
+
+- the private capability remains disabled by default and is reachable only
+  through the existing dev/admin command gate;
+- ordinary movement keeps its established v5 snapshot evidence but does not
+  execute the added current-tile comparison;
+- Player contains no parity metadata or comparison state, and packed Regions
+  remain the sole gameplay/collision authority; and
+- no database, map, placement, archive, client, Builder project, public server,
+  or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-twenty-nine.py` — 2 tests
+  passed;
+- the compiled observer fixture and all v1-v6 schema-lineage checks pass;
+- Slice 1 through Slice 29 regressions all pass (72 tests);
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 739 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content and 211 unresolved owners. The expected fingerprints are source
+  `5011f5976cfca506e0b7845d7fa3b10715e0c88527a38dc33855dcf5aa098fdf`,
+  inventory
+  `528dc5d33a4614ef4a6fa759c27c8c44f3db73ee9378d9e19d5327786da9d995`,
+  classification
+  `8f7fff29ee0b55d7350a11558fc6a84c364f99dfcad51e5af8782a04d5975a42`,
+  and occurrence
+  `b2089304574a5e572e7c1b28a1df141a1657a4c12cd28cd92ad03702ca2cc2d3`.
+
+Owner validation is pending. The first v6 private route should sample surface,
+upper-floor, underground, and teleport points with explicit markers, then stop
+the trace so exact/missing/unsupported current-tile outcomes can be audited.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3699,13 +3778,12 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 26 by emitting bounded logical-region tile-snapshot metadata through versioned private diagnostics while retaining packed tile authority. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 27 by replacing mutable logical snapshot internals with an immutable full-fidelity tile-state value and retaining a detached legacy-copy bridge. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 28 by comparing one direct packed immutable tile state with its assembled logical-snapshot state without adopting either for gameplay. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 29 by emitting bounded current-tile packed/logical parity metadata through additive private v6 diagnostics. | Implemented and automated-validated; owner route pending |
 
 ## Next Discussion
 
-Proceed with a separately versioned Slice 29 private v6 diagnostic adoption of
-the dormant current-tile comparison, bounded to observer start, marker,
-teleport, and stop events rather than every movement event. Preserve v5 fields,
-make missing/unsupported/comparable/exact status AI-readable, and use the first
-owner route to validate direct-packed versus logical-snapshot tile parity. A
-new database schema, authoritative region storage, client/protocol adoption,
-Builder, export, relocation, and level `-2` remain separately gated.
+Run Slice 29's first private v6 owner route to validate direct-packed versus
+logical-snapshot tile parity across surface, upper-floor, underground, and
+teleport samples. A new database schema, authoritative region storage,
+client/protocol adoption, Builder, export, relocation, and level `-2` remain
+separately gated.

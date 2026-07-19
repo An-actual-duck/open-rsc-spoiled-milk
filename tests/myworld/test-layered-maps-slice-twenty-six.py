@@ -21,7 +21,7 @@ class LayeredMapsSliceTwentySixTest(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            for version in (1, 2, 3, 4, 5)
+            for version in (1, 2, 3, 4, 5, 6)
         }
         for version, schema in schemas.items():
             self.assertEqual(
@@ -49,6 +49,21 @@ class LayeredMapsSliceTwentySixTest(unittest.TestCase):
             "^[0-9a-f]{64}$",
             v5["$defs"]["tileSnapshot"]["properties"]["fingerprint"]["pattern"],
         )
+        v6 = schemas[6]
+        self.assertNotIn("tileParity", v5["required"])
+        self.assertIn("tileParity", v6["required"])
+        self.assertEqual(
+            {
+                "logicalLocation",
+                "legacyPackedAddress",
+                "legacyRepresentable",
+                "packedSourcePresent",
+                "missingPackedSource",
+                "comparable",
+                "exact",
+            },
+            set(v6["$defs"]["tileParity"]["required"]),
+        )
 
         try:
             import jsonschema
@@ -65,20 +80,27 @@ class LayeredMapsSliceTwentySixTest(unittest.TestCase):
         player = PLAYER.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v5"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v6"', observer)
         self.assertIn("public interface TileSnapshotSource", observer)
         self.assertIn("public static final class TileSnapshotMetadata", observer)
         self.assertIn("state.tileSnapshotSource.capture(to.getRegionKey())", observer)
         self.assertIn('out.append(",\\\"tileSnapshot\\\":")', observer)
         self.assertIn("appendTileSnapshot(out, tileSnapshot)", observer)
+        self.assertIn("public interface TileParitySource", observer)
+        self.assertIn("public static final class TileParityMetadata", observer)
+        self.assertIn("state.tileParitySource.capture(current)", observer)
+        self.assertIn('out.append(",\\\"tileParity\\\":")', observer)
         self.assertIn("layeredTileSnapshotSource(player)", command)
+        self.assertIn("layeredTileParitySource(player)", command)
         self.assertIn("regionManager.getLayeredRegionTileSnapshot(logicalRegionKey)", command)
+        self.assertIn("regionManager.compareLayeredTileState(current)", command)
         self.assertIn(
             "public LayeredRegionTileSnapshot getLayeredRegionTileSnapshot(",
             manager,
         )
         self.assertNotIn("LayeredRegionTileSnapshot", player)
         self.assertNotIn("TileSnapshotMetadata", player)
+        self.assertNotIn("TileParityMetadata", player)
         self.assertIn(
             "### Slice 26: Private logical-region tile-snapshot diagnostics",
             plan,

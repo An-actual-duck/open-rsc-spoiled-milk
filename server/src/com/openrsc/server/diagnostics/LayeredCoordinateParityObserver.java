@@ -4,6 +4,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 
@@ -23,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v5";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v6";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -40,11 +41,14 @@ public final class LayeredCoordinateParityObserver {
 		long usernameHash,
 		Point current,
 		int viewGridDistance,
-		TileSnapshotSource tileSnapshotSource) {
+		TileSnapshotSource tileSnapshotSource,
+		TileParitySource tileParitySource) {
 		Objects.requireNonNull(tileSnapshotSource, "tileSnapshotSource");
+		Objects.requireNonNull(tileParitySource, "tileParitySource");
 		TraceKey key = new TraceKey(playerId, usernameHash);
 		TraceState created = new TraceState(
-			key, logPath(key), viewGridDistance, tileSnapshotSource);
+			key, logPath(key), viewGridDistance, tileSnapshotSource,
+			tileParitySource);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
@@ -142,10 +146,20 @@ public final class LayeredCoordinateParityObserver {
 					throw new IllegalStateException(
 						"Tile snapshot metadata key differs from the current logical region");
 				}
+				TileParityMetadata tileParity = null;
+				if (capturesTileParity(eventType)) {
+					tileParity = Objects.requireNonNull(
+						state.tileParitySource.capture(current),
+						"tileParitySource result");
+					if (!to.getLocation().equals(tileParity.getLogicalLocation())) {
+						throw new IllegalStateException(
+							"Tile parity metadata location differs from the current location");
+					}
+				}
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
 					state.key, nextSequence, System.currentTimeMillis(), eventType,
-					teleported, label, from, to, coverage, tileSnapshot);
+					teleported, label, from, to, coverage, tileSnapshot, tileParity);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -177,7 +191,8 @@ public final class LayeredCoordinateParityObserver {
 		LayeredCoordinateParitySnapshot from,
 		LayeredCoordinateParitySnapshot to,
 		LegacyPackedVisibilityCoverageComparison coverage,
-		TileSnapshotMetadata tileSnapshot) {
+		TileSnapshotMetadata tileSnapshot,
+		TileParityMetadata tileParity) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -221,6 +236,12 @@ public final class LayeredCoordinateParityObserver {
 		appendPackedCoverage(out, coverage);
 		out.append(",\"tileSnapshot\":");
 		appendTileSnapshot(out, tileSnapshot);
+		out.append(",\"tileParity\":");
+		if (tileParity == null) {
+			out.append("null");
+		} else {
+			appendTileParity(out, tileParity);
+		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
 		return out.append('}').toString();
@@ -245,6 +266,35 @@ public final class LayeredCoordinateParityObserver {
 		out.append(",\"exitedKeys\":");
 		appendRegionKeys(out, delta.getExited());
 		out.append('}');
+	}
+
+	private static void appendTileParity(
+		final StringBuilder out,
+		final TileParityMetadata parity) {
+		WorldLocation location = parity.getLogicalLocation();
+		WorldCoordinate coordinate = location.getCoordinate();
+		out.append('{');
+		out.append("\"logicalLocation\":{\"worldSpace\":\"")
+			.append(jsonEscape(location.getWorldSpace().getValue()))
+			.append("\",\"x\":").append(coordinate.getX())
+			.append(",\"y\":").append(coordinate.getY())
+			.append(",\"level\":").append(coordinate.getLevel()).append("},");
+		out.append("\"legacyPackedAddress\":");
+		Point packedAddress = parity.getLegacyPackedAddress();
+		if (packedAddress == null) {
+			out.append("null");
+		} else {
+			out.append("{\"x\":").append(packedAddress.getX())
+				.append(",\"y\":").append(packedAddress.getY()).append('}');
+		}
+		out.append(",\"legacyRepresentable\":")
+			.append(parity.isLegacyRepresentable()).append(',');
+		out.append("\"packedSourcePresent\":")
+			.append(parity.isPackedSourcePresent()).append(',');
+		out.append("\"missingPackedSource\":")
+			.append(parity.isMissingPackedSource()).append(',');
+		out.append("\"comparable\":").append(parity.isComparable()).append(',');
+		out.append("\"exact\":").append(parity.isExact()).append('}');
 	}
 
 	private static void appendTileSnapshot(
@@ -374,6 +424,13 @@ public final class LayeredCoordinateParityObserver {
 		return trimmed;
 	}
 
+	private static boolean capturesTileParity(final String eventType) {
+		return "start".equals(eventType)
+			|| "marker".equals(eventType)
+			|| "teleport".equals(eventType)
+			|| "stop".equals(eventType);
+	}
+
 	private static String safeMessage(Throwable failure) {
 		String message = failure.getMessage();
 		return message == null ? "no detail" : message.replace('\n', ' ').replace('\r', ' ');
@@ -395,6 +452,100 @@ public final class LayeredCoordinateParityObserver {
 	@FunctionalInterface
 	public interface TileSnapshotSource {
 		TileSnapshotMetadata capture(WorldRegionKey logicalRegionKey);
+	}
+
+	/** Supplies one bounded current-tile comparison to selected trace events. */
+	@FunctionalInterface
+	public interface TileParitySource {
+		TileParityMetadata capture(Point current);
+	}
+
+	/** Immutable observer-facing current-tile parity metadata; no tile payloads. */
+	public static final class TileParityMetadata {
+		private final WorldLocation logicalLocation;
+		private final Point legacyPackedAddress;
+		private final boolean packedSourcePresent;
+		private final boolean missingPackedSource;
+		private final boolean comparable;
+		private final boolean exact;
+
+		private TileParityMetadata(
+			final WorldLocation logicalLocation,
+			final Point legacyPackedAddress,
+			final boolean packedSourcePresent,
+			final boolean missingPackedSource,
+			final boolean comparable,
+			final boolean exact) {
+			this.logicalLocation = logicalLocation;
+			this.legacyPackedAddress = legacyPackedAddress;
+			this.packedSourcePresent = packedSourcePresent;
+			this.missingPackedSource = missingPackedSource;
+			this.comparable = comparable;
+			this.exact = exact;
+		}
+
+		public static TileParityMetadata of(
+			final WorldLocation logicalLocation,
+			final Point legacyPackedAddress,
+			final boolean packedSourcePresent,
+			final boolean missingPackedSource,
+			final boolean comparable,
+			final boolean exact) {
+			Objects.requireNonNull(logicalLocation, "logicalLocation");
+			boolean legacyRepresentable = legacyPackedAddress != null;
+			if (packedSourcePresent && !legacyRepresentable) {
+				throw new IllegalArgumentException(
+					"Unsupported logical tile cannot have a packed source");
+			}
+			if (missingPackedSource != (legacyRepresentable && !packedSourcePresent)) {
+				throw new IllegalArgumentException(
+					"Missing-source status differs from packed representability");
+			}
+			if (comparable != packedSourcePresent) {
+				throw new IllegalArgumentException(
+					"Comparability differs from packed source presence");
+			}
+			if (exact && !comparable) {
+				throw new IllegalArgumentException(
+					"An uncomparable tile cannot report exact parity");
+			}
+			return new TileParityMetadata(
+				logicalLocation,
+				legacyPackedAddress,
+				packedSourcePresent,
+				missingPackedSource,
+				comparable,
+				exact);
+		}
+
+		public WorldLocation getLogicalLocation() {
+			return logicalLocation;
+		}
+
+		/** Returns null when the logical tile has no legacy packed address. */
+		public Point getLegacyPackedAddress() {
+			return legacyPackedAddress;
+		}
+
+		public boolean isLegacyRepresentable() {
+			return legacyPackedAddress != null;
+		}
+
+		public boolean isPackedSourcePresent() {
+			return packedSourcePresent;
+		}
+
+		public boolean isMissingPackedSource() {
+			return missingPackedSource;
+		}
+
+		public boolean isComparable() {
+			return comparable;
+		}
+
+		public boolean isExact() {
+			return exact;
+		}
 	}
 
 	/** Immutable observer-facing metadata; tile payloads never enter JSONL. */
@@ -525,6 +676,7 @@ public final class LayeredCoordinateParityObserver {
 		final Path path;
 		final int viewGridDistance;
 		final TileSnapshotSource tileSnapshotSource;
+		final TileParitySource tileParitySource;
 		long sequence;
 		LayeredCoordinateParitySnapshot lastSnapshot;
 		String lastError;
@@ -533,7 +685,8 @@ public final class LayeredCoordinateParityObserver {
 			TraceKey key,
 			Path path,
 			int viewGridDistance,
-			TileSnapshotSource tileSnapshotSource) {
+			TileSnapshotSource tileSnapshotSource,
+			TileParitySource tileParitySource) {
 			if (viewGridDistance < 0) {
 				throw new IllegalArgumentException("View grid distance must not be negative");
 			}
@@ -542,6 +695,7 @@ public final class LayeredCoordinateParityObserver {
 			this.path = path;
 			this.viewGridDistance = viewGridDistance;
 			this.tileSnapshotSource = tileSnapshotSource;
+			this.tileParitySource = tileParitySource;
 		}
 
 		Status status(boolean enabled) {

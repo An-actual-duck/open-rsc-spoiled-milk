@@ -26,6 +26,7 @@ import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.region.LayeredRegionTileSnapshot;
+import com.openrsc.server.model.world.region.LayeredTileStateParityComparison;
 import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -1371,7 +1372,8 @@ public final class Development implements CommandTrigger {
 				}
 				status = LayeredCoordinateParityObserver.start(
 					player.getDatabaseID(), player.getUsernameHash(), player.getLocation(),
-					player.getConfig().VIEW_DISTANCE, layeredTileSnapshotSource(player));
+					player.getConfig().VIEW_DISTANCE, layeredTileSnapshotSource(player),
+					layeredTileParitySource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1437,6 +1439,26 @@ public final class Development implements CommandTrigger {
 					snapshot.getTargetTileCount(),
 					snapshot.isComplete(),
 					snapshot.getFingerprint());
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.TileParitySource
+		layeredTileParitySource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.TileParitySource() {
+			@Override
+			public LayeredCoordinateParityObserver.TileParityMetadata capture(
+				final Point current) {
+				LayeredTileStateParityComparison comparison =
+					regionManager.compareLayeredTileState(current);
+				return LayeredCoordinateParityObserver.TileParityMetadata.of(
+					comparison.getLogicalLocation(),
+					comparison.getAddress().getLegacyPoint(),
+					comparison.isPackedSourcePresent(),
+					comparison.isMissingPackedSource(),
+					comparison.isComparable(),
+					comparison.isExact());
 			}
 		};
 	}
