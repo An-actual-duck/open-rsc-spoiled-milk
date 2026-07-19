@@ -15,8 +15,10 @@ import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionCoverage;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionPartition;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
+import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 
@@ -553,19 +555,55 @@ public class RegionManager {
 	public LayeredRegionResidencyMirror.Snapshot
 		getLayeredRegionResidencySnapshot(final WorldRegionKey logicalRegionKey) {
 		synchronized (layeredRegionLifecycleLock) {
-			LayeredRegionResidencyMirror.Snapshot snapshot =
-				layeredRegionResidencyMirror.snapshot(logicalRegionKey);
-			for (LayeredRegionResidencyMirror.SourceResidency source
-				: snapshot.getSources()) {
-				boolean packedResident = peekRegionFromSectorCoordinates(
-					source.getPackedRegionX(), source.getPackedRegionY()) != null;
-				if (packedResident != source.isResident()) {
-					throw new IllegalStateException(
-						"Layered Region residency mirror differs from packed storage");
-				}
-			}
-			return snapshot;
+			return requireLayeredRegionResidencySnapshot(logicalRegionKey);
 		}
+	}
+
+	/**
+	 * Compares one bounded logical interest change with current residency without
+	 * loading, retaining, releasing, or evicting any Region.
+	 */
+	public LayeredRegionInterestResidencyComparison
+		compareLayeredRegionInterestResidency(
+			final WorldRegionWindow previousWindow,
+			final WorldRegionWindow currentWindow,
+			final int maximumRegionsPerWindow) {
+		WorldRegionInterestDelta delta = WorldRegionInterestDelta.between(
+			previousWindow, currentWindow, maximumRegionsPerWindow);
+		synchronized (layeredRegionLifecycleLock) {
+			List<LayeredRegionResidencyMirror.Snapshot> snapshots =
+				new ArrayList<LayeredRegionResidencyMirror.Snapshot>(
+					delta.getEntered().size() + delta.getRetained().size()
+						+ delta.getExited().size());
+			appendLayeredRegionResidencySnapshots(snapshots, delta.getEntered());
+			appendLayeredRegionResidencySnapshots(snapshots, delta.getRetained());
+			appendLayeredRegionResidencySnapshots(snapshots, delta.getExited());
+			return LayeredRegionInterestResidencyComparison.compare(delta, snapshots);
+		}
+	}
+
+	private void appendLayeredRegionResidencySnapshots(
+		final List<LayeredRegionResidencyMirror.Snapshot> snapshots,
+		final List<WorldRegionKey> keys) {
+		for (WorldRegionKey key : keys) {
+			snapshots.add(requireLayeredRegionResidencySnapshot(key));
+		}
+	}
+
+	private LayeredRegionResidencyMirror.Snapshot
+		requireLayeredRegionResidencySnapshot(final WorldRegionKey logicalRegionKey) {
+		LayeredRegionResidencyMirror.Snapshot snapshot =
+			layeredRegionResidencyMirror.snapshot(logicalRegionKey);
+		for (LayeredRegionResidencyMirror.SourceResidency source
+			: snapshot.getSources()) {
+			boolean packedResident = peekRegionFromSectorCoordinates(
+				source.getPackedRegionX(), source.getPackedRegionY()) != null;
+			if (packedResident != source.isResident()) {
+				throw new IllegalStateException(
+					"Layered Region residency mirror differs from packed storage");
+			}
+		}
+		return snapshot;
 	}
 
 	/**

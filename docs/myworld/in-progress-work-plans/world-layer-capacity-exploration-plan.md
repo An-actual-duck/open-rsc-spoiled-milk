@@ -1,16 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-36 validated on the active
+Status: architecture design complete; Slices 1-37 validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 36 maintains a checked, versioned logical view of
-packed Region residency; packed Region and tile lookup, `PathValidation`, route
-selection, movement, and collision remain authoritative and no client streaming
-or world conversion has begun
+Current milestone: Slice 37 compares bounded logical interest changes with the
+checked Region residency view; its load/release candidates are dormant evidence,
+while packed Region/tile lookup, eager loading, `PathValidation`, movement, and
+collision remain authoritative and no client streaming or conversion has begun
 
 ## Purpose
 
@@ -4305,6 +4305,86 @@ Automated validation evidence:
 No owner runtime route is required because the mirror remains dormant and has
 no visual, movement, collision, packet, or persistence consumer.
 
+### Slice 37: Dormant interest/residency projection
+
+Objective: combine the allocation-bounded logical interest delta from Slice 17
+with the lifecycle-only residency snapshots from Slice 36 so future streaming
+requests can be studied without performing any load, retention, release, or
+eviction.
+
+Selected boundary:
+
+- accept two caller-bounded logical interest windows and preserve Slice 17's
+  deterministic entered, retained, and exited order;
+- capture every involved residency snapshot under one Region lifecycle lock and
+  require one explicit mirror version across the complete comparison;
+- classify current keys as resident, partial, missing, or unsupported, exposing
+  only missing/partial current keys as legacy load candidates;
+- classify exited keys with one or more resident packed sources as release
+  candidates, not unload instructions; and
+- keep unsupported current keys separate because the legacy packed adapter has
+  no valid source it could request.
+
+Implemented:
+
+- immutable `LayeredRegionInterestResidencyComparison` with per-key interest
+  and residency states, shared freshness version, aggregate counts, immutable
+  load/release/unsupported views, and strict identity/order validation; and
+- a read-only RegionManager projection that builds the existing bounded
+  `WorldRegionInterestDelta`, checks every Slice 36 snapshot against packed
+  storage, and composes the comparison without creating a Region.
+
+Safety boundary:
+
+- load candidates are evidence that required legacy sources are missing or
+  partial; no loader, archive, tile array, entity, cache, or packet consumes
+  them;
+- release candidates cannot unload a Region. Actual eviction remains blocked
+  on a future global ownership/reference policy because one Player leaving a
+  window cannot prove that no other Player or subsystem needs it;
+- current eager world loading, packed Region maps, visibility caches,
+  `PathValidation`, movement, collision, and Player state remain unchanged; and
+- mixed-version, reordered, missing, duplicate, or null snapshot evidence is
+  refused rather than normalized silently.
+
+Focused findings:
+
+- a two-key upper-floor window shift retains a fully resident key, identifies a
+  partially resident entered key as a load candidate, and identifies a fully
+  resident exited key as release evidence;
+- removing the entered key's sole present packed source changes the same
+  projection from partial to missing without changing interest identity;
+- a transition into level `-2` classifies the entered key as unsupported rather
+  than fabricating a legacy load candidate, while preserving the old level's
+  release evidence; and
+- the comparison does not change the residency mirror version and rejects
+  snapshots captured across different lifecycle versions.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-thirty-seven.py` — 2 tests pass
+  for deterministic classifications, freshness checks, and the dormant
+  RegionManager boundary;
+- Slice 1 through Slice 37 regressions all pass (88 tests), including updated
+  exact staged-contract inventories;
+- World Builder discovery passes 13 tests and the standalone-layout guard
+  passes;
+- the authoritative bundled-Ant build succeeds for 744 core and 488 plugin
+  sources; and
+- two real-repository normalizations are byte-stable with unchanged world
+  content, 211 classified source owners, and one unresolved normalized
+  coordinate. The expected fingerprints are source
+  `55c641d13b46a576783ea82655c753d3bf87b6e0fe7025ecd0eecc3089e5a92d`,
+  inventory
+  `2e4fa2dd3111eabd551ab2ddb1c10a2de98ce493b0700efdfde0fba2dfdce7b6`,
+  classification
+  `d60001c2f87adbe44af40cad3b01fef0a35c6c6f4cc27ecbde2f2084fbe5e186`,
+  and occurrence
+  `3a1611dd5a89feff83cc88e85123f749485c50ab072510bea6b85a37bd83824e`.
+
+No owner runtime route is required because this projection remains dormant. A
+bounded private diagnostic adoption is the next owner-testable boundary.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -4427,11 +4507,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 34 by composing adjacent tile-mask comparisons across one explicit bounded route without selecting or executing a path. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 35 by emitting the latest bounded ordinary walking segment through additive private v9 diagnostics without changing path authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 36 by mirroring packed Region lifecycle as checked, versioned logical residency without caching tiles or changing lookup/path authority. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 37 by comparing bounded logical interest changes with versioned Region residency while treating load/release candidates as dormant evidence only. | Implemented and validated |
 
 ## Next Discussion
 
-Define the smallest dormant logical-region load/unload request projection that
-can consume Slice 36 residency snapshots without performing eviction or
-changing current eager world loading. A new database schema, authoritative
-region storage, actual collision/pathing adoption, client/protocol adoption,
-Builder, export, relocation, and level `-2` remain separately gated.
+Expose Slice 37 through one bounded, additive private diagnostic version so the
+owner can validate Region residency evidence across ordinary region crossings,
+teleports, level changes, and reconnects. A new database schema, authoritative
+region storage, actual loading/eviction, collision/pathing adoption, client
+protocol adoption, Builder, export, relocation, and level `-2` remain separately
+gated.

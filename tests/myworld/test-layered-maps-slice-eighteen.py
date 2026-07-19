@@ -71,7 +71,7 @@ class LayeredMapsSliceEighteenTest(unittest.TestCase):
         self.assertIn('out.append(",\\\"interestDelta\\\":")', observer)
         self.assertIn("appendRegionKeys(out, delta.getEntered())", observer)
         self.assertIn("appendRegionKeys(out, delta.getExited())", observer)
-        self.assertNotIn("WorldRegionInterestDelta", manager)
+        self.assertIn("compareLayeredRegionInterestResidency(", manager)
         self.assertNotIn("WorldRegionInterestDelta", player)
         self.assertIn("ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>>", manager)
         self.assertIn("visibleRegionWindowCache.putIfAbsent", manager)

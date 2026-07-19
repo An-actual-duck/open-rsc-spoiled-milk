@@ -1082,3 +1082,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-19 | Compose adjacent layered/packed tile-mask decisions across an explicit bounded route while legacy routing and movement remain authoritative. | Slice 34 implemented and validated in the layered-world plan |
 | 2026-07-19 | Emit one bounded recent ordinary-walking segment through opt-in private v9 diagnostics while movement remains authoritative. | Slice 35 implemented and owner-validated in the layered-world plan |
 | 2026-07-19 | Maintain a checked, versioned logical view of packed Region lifecycle without caching mutable tile/collision state or changing packed authority. | Slice 36 implemented and validated in the layered-world plan |
+| 2026-07-19 | Compare bounded logical interest changes with checked Region residency while keeping load/release candidates dormant and preserving eager packed authority. | Slice 37 implemented and validated in the layered-world plan |

@@ -217,7 +217,8 @@ class LayeredMapsSliceSeventeenTest(unittest.TestCase):
         player = PLAYER_SOURCE.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertNotIn("WorldRegionInterestDelta", manager)
+        self.assertIn("compareLayeredRegionInterestResidency(", manager)
+        self.assertIn("WorldRegionInterestDelta.between(", manager)
         self.assertNotIn("WorldRegionInterestDelta", player)
         self.assertIn("ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>>", manager)
         self.assertIn("private List<Region> getVisibleRegionWindow", manager)
