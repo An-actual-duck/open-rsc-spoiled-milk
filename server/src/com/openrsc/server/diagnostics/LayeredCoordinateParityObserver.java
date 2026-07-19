@@ -18,13 +18,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v7";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v8";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -43,14 +46,16 @@ public final class LayeredCoordinateParityObserver {
 		int viewGridDistance,
 		TileSnapshotSource tileSnapshotSource,
 		TileParitySource tileParitySource,
-		TileNeighborhoodSource tileNeighborhoodSource) {
+		TileNeighborhoodSource tileNeighborhoodSource,
+		AdjacentCollisionSource adjacentCollisionSource) {
 		Objects.requireNonNull(tileSnapshotSource, "tileSnapshotSource");
 		Objects.requireNonNull(tileParitySource, "tileParitySource");
 		Objects.requireNonNull(tileNeighborhoodSource, "tileNeighborhoodSource");
+		Objects.requireNonNull(adjacentCollisionSource, "adjacentCollisionSource");
 		TraceKey key = new TraceKey(playerId, usernameHash);
 		TraceState created = new TraceState(
 			key, logPath(key), viewGridDistance, tileSnapshotSource,
-			tileParitySource, tileNeighborhoodSource);
+			tileParitySource, tileNeighborhoodSource, adjacentCollisionSource);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
@@ -150,6 +155,7 @@ public final class LayeredCoordinateParityObserver {
 				}
 				TileParityMetadata tileParity = null;
 				TileNeighborhoodMetadata tileNeighborhood = null;
+				AdjacentCollisionMetadata adjacentCollision = null;
 				if (capturesTileComparisons(eventType)) {
 					tileParity = Objects.requireNonNull(
 						state.tileParitySource.capture(current),
@@ -165,12 +171,19 @@ public final class LayeredCoordinateParityObserver {
 						throw new IllegalStateException(
 							"Tile neighborhood metadata center differs from the current location");
 					}
+					adjacentCollision = Objects.requireNonNull(
+						state.adjacentCollisionSource.capture(current),
+						"adjacentCollisionSource result");
+					if (!to.getLocation().equals(adjacentCollision.getCenter())) {
+						throw new IllegalStateException(
+							"Adjacent collision metadata center differs from the current location");
+					}
 				}
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
 					state.key, nextSequence, System.currentTimeMillis(), eventType,
 					teleported, label, from, to, coverage, tileSnapshot, tileParity,
-					tileNeighborhood);
+					tileNeighborhood, adjacentCollision);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -204,7 +217,8 @@ public final class LayeredCoordinateParityObserver {
 		LegacyPackedVisibilityCoverageComparison coverage,
 		TileSnapshotMetadata tileSnapshot,
 		TileParityMetadata tileParity,
-		TileNeighborhoodMetadata tileNeighborhood) {
+		TileNeighborhoodMetadata tileNeighborhood,
+		AdjacentCollisionMetadata adjacentCollision) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -259,6 +273,12 @@ public final class LayeredCoordinateParityObserver {
 			out.append("null");
 		} else {
 			appendTileNeighborhood(out, tileNeighborhood);
+		}
+		out.append(",\"adjacentCollision\":");
+		if (adjacentCollision == null) {
+			out.append("null");
+		} else {
+			appendAdjacentCollision(out, adjacentCollision);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -340,6 +360,102 @@ public final class LayeredCoordinateParityObserver {
 		out.append("\"exactCount\":").append(neighborhood.getExactCount()).append(',');
 		out.append("\"complete\":").append(neighborhood.isComplete()).append(',');
 		out.append("\"exact\":").append(neighborhood.isExact()).append('}');
+	}
+
+	private static void appendAdjacentCollision(
+		final StringBuilder out,
+		final AdjacentCollisionMetadata collision) {
+		WorldLocation center = collision.getCenter();
+		WorldCoordinate coordinate = center.getCoordinate();
+		out.append('{');
+		out.append("\"center\":{\"worldSpace\":\"")
+			.append(jsonEscape(center.getWorldSpace().getValue()))
+			.append("\",\"x\":").append(coordinate.getX())
+			.append(",\"y\":").append(coordinate.getY())
+			.append(",\"level\":").append(coordinate.getLevel()).append("},");
+		out.append("\"directionCount\":").append(collision.getDirections().size()).append(',');
+		out.append("\"logicalDecisionAvailableCount\":")
+			.append(collision.getLogicalDecisionAvailableCount()).append(',');
+		out.append("\"packedDecisionAvailableCount\":")
+			.append(collision.getPackedDecisionAvailableCount()).append(',');
+		out.append("\"comparableCount\":").append(collision.getComparableCount()).append(',');
+		out.append("\"passabilityExactCount\":")
+			.append(collision.getPassabilityExactCount()).append(',');
+		out.append("\"blockingReasonExactCount\":")
+			.append(collision.getBlockingReasonExactCount()).append(',');
+		out.append("\"requiredStatesExactCount\":")
+			.append(collision.getRequiredStatesExactCount()).append(',');
+		out.append("\"allComparable\":").append(collision.isAllComparable()).append(',');
+		out.append("\"allPassabilityExact\":")
+			.append(collision.isAllPassabilityExact()).append(',');
+		out.append("\"allBlockingReasonsExact\":")
+			.append(collision.isAllBlockingReasonsExact()).append(',');
+		out.append("\"allRequiredStatesExact\":")
+			.append(collision.isAllRequiredStatesExact()).append(',');
+		out.append("\"directions\":[");
+		boolean first = true;
+		for (AdjacentDirectionMetadata direction : collision.getDirections()) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			appendAdjacentDirection(out, direction);
+		}
+		out.append("]}");
+	}
+
+	private static void appendAdjacentDirection(
+		final StringBuilder out,
+		final AdjacentDirectionMetadata direction) {
+		WorldLocation destination = direction.getDestination();
+		WorldCoordinate coordinate = destination.getCoordinate();
+		out.append('{');
+		out.append("\"offset\":{\"x\":").append(direction.getOffsetX())
+			.append(",\"y\":").append(direction.getOffsetY()).append("},");
+		out.append("\"destination\":{\"worldSpace\":\"")
+			.append(jsonEscape(destination.getWorldSpace().getValue()))
+			.append("\",\"x\":").append(coordinate.getX())
+			.append(",\"y\":").append(coordinate.getY())
+			.append(",\"level\":").append(coordinate.getLevel()).append("},");
+		out.append("\"requiredCellCount\":")
+			.append(direction.getRequiredCellCount()).append(',');
+		out.append("\"exactRequiredStateCount\":")
+			.append(direction.getExactRequiredStateCount()).append(',');
+		out.append("\"requiredStatesExact\":")
+			.append(direction.areRequiredStatesExact()).append(',');
+		out.append("\"logicalDecisionAvailable\":")
+			.append(direction.isLogicalDecisionAvailable()).append(',');
+		out.append("\"packedDecisionAvailable\":")
+			.append(direction.isPackedDecisionAvailable()).append(',');
+		out.append("\"logicalPassable\":");
+		appendNullableBoolean(out, direction.getLogicalPassable());
+		out.append(",\"packedPassable\":");
+		appendNullableBoolean(out, direction.getPackedPassable());
+		out.append(",\"logicalBlockingReason\":");
+		appendNullableReason(out, direction.getLogicalBlockingReason());
+		out.append(",\"packedBlockingReason\":");
+		appendNullableReason(out, direction.getPackedBlockingReason());
+		out.append(",\"comparable\":").append(direction.isComparable()).append(',');
+		out.append("\"passabilityExact\":")
+			.append(direction.isPassabilityExact()).append(',');
+		out.append("\"blockingReasonExact\":")
+			.append(direction.isBlockingReasonExact()).append('}');
+	}
+
+	private static void appendNullableBoolean(
+		final StringBuilder out,
+		final Boolean value) {
+		out.append(value == null ? "null" : value.toString());
+	}
+
+	private static void appendNullableReason(
+		final StringBuilder out,
+		final AdjacentBlockingReason reason) {
+		if (reason == null) {
+			out.append("null");
+		} else {
+			quoted(out, reason.name());
+		}
 	}
 
 	private static void appendTileSnapshot(
@@ -509,6 +625,282 @@ public final class LayeredCoordinateParityObserver {
 	@FunctionalInterface
 	public interface TileNeighborhoodSource {
 		TileNeighborhoodMetadata capture(Point current);
+	}
+
+	/** Supplies all eight adjacent tile-mask comparisons to selected events. */
+	@FunctionalInterface
+	public interface AdjacentCollisionSource {
+		AdjacentCollisionMetadata capture(Point current);
+	}
+
+	/** Immutable observer-facing eight-direction summary; no tile masks. */
+	public static final class AdjacentCollisionMetadata {
+		public static final int DIRECTION_COUNT = 8;
+
+		private final WorldLocation center;
+		private final List<AdjacentDirectionMetadata> directions;
+
+		private AdjacentCollisionMetadata(
+			final WorldLocation center,
+			final List<AdjacentDirectionMetadata> directions) {
+			this.center = center;
+			this.directions = Collections.unmodifiableList(
+				new ArrayList<AdjacentDirectionMetadata>(directions));
+		}
+
+		public static AdjacentCollisionMetadata of(
+			final WorldLocation center,
+			final List<AdjacentDirectionMetadata> directions) {
+			Objects.requireNonNull(center, "center");
+			Objects.requireNonNull(directions, "directions");
+			if (directions.size() != DIRECTION_COUNT) {
+				throw new IllegalArgumentException(
+					"Adjacent collision metadata must contain eight directions");
+			}
+			int index = 0;
+			for (int offsetY = -1; offsetY <= 1; offsetY++) {
+				for (int offsetX = -1; offsetX <= 1; offsetX++) {
+					if (offsetX == 0 && offsetY == 0) {
+						continue;
+					}
+					AdjacentDirectionMetadata direction = Objects.requireNonNull(
+						directions.get(index), "directions[" + index + "]");
+					if (direction.getOffsetX() != offsetX
+						|| direction.getOffsetY() != offsetY) {
+						throw new IllegalArgumentException(
+							"Adjacent collision direction order mismatch at index " + index);
+					}
+					WorldCoordinate coordinate = center.getCoordinate();
+					WorldLocation expected = new WorldLocation(
+						center.getWorldSpace(),
+						new WorldCoordinate(
+							Math.addExact(coordinate.getX(), offsetX),
+							Math.addExact(coordinate.getY(), offsetY),
+							coordinate.getLevel()));
+					if (!expected.equals(direction.getDestination())) {
+						throw new IllegalArgumentException(
+							"Adjacent collision destination mismatch at index " + index);
+					}
+					index++;
+				}
+			}
+			return new AdjacentCollisionMetadata(center, directions);
+		}
+
+		public WorldLocation getCenter() {
+			return center;
+		}
+
+		public List<AdjacentDirectionMetadata> getDirections() {
+			return directions;
+		}
+
+		public int getLogicalDecisionAvailableCount() {
+			return count(DirectionStatus.LOGICAL_AVAILABLE);
+		}
+
+		public int getPackedDecisionAvailableCount() {
+			return count(DirectionStatus.PACKED_AVAILABLE);
+		}
+
+		public int getComparableCount() {
+			return count(DirectionStatus.COMPARABLE);
+		}
+
+		public int getPassabilityExactCount() {
+			return count(DirectionStatus.PASSABILITY_EXACT);
+		}
+
+		public int getBlockingReasonExactCount() {
+			return count(DirectionStatus.REASON_EXACT);
+		}
+
+		public int getRequiredStatesExactCount() {
+			return count(DirectionStatus.REQUIRED_STATES_EXACT);
+		}
+
+		public boolean isAllComparable() {
+			return getComparableCount() == DIRECTION_COUNT;
+		}
+
+		public boolean isAllPassabilityExact() {
+			return getPassabilityExactCount() == DIRECTION_COUNT;
+		}
+
+		public boolean isAllBlockingReasonsExact() {
+			return getBlockingReasonExactCount() == DIRECTION_COUNT;
+		}
+
+		public boolean isAllRequiredStatesExact() {
+			return getRequiredStatesExactCount() == DIRECTION_COUNT;
+		}
+
+		private int count(final DirectionStatus status) {
+			int count = 0;
+			for (AdjacentDirectionMetadata direction : directions) {
+				if (status.matches(direction)) {
+					count++;
+				}
+			}
+			return count;
+		}
+	}
+
+	/** Immutable metadata for one adjacent direction. */
+	public static final class AdjacentDirectionMetadata {
+		private final int offsetX;
+		private final int offsetY;
+		private final WorldLocation destination;
+		private final int requiredCellCount;
+		private final int exactRequiredStateCount;
+		private final Boolean logicalPassable;
+		private final Boolean packedPassable;
+		private final AdjacentBlockingReason logicalBlockingReason;
+		private final AdjacentBlockingReason packedBlockingReason;
+
+		private AdjacentDirectionMetadata(
+			final int offsetX,
+			final int offsetY,
+			final WorldLocation destination,
+			final int requiredCellCount,
+			final int exactRequiredStateCount,
+			final Boolean logicalPassable,
+			final AdjacentBlockingReason logicalBlockingReason,
+			final Boolean packedPassable,
+			final AdjacentBlockingReason packedBlockingReason) {
+			this.offsetX = offsetX;
+			this.offsetY = offsetY;
+			this.destination = destination;
+			this.requiredCellCount = requiredCellCount;
+			this.exactRequiredStateCount = exactRequiredStateCount;
+			this.logicalPassable = logicalPassable;
+			this.logicalBlockingReason = logicalBlockingReason;
+			this.packedPassable = packedPassable;
+			this.packedBlockingReason = packedBlockingReason;
+		}
+
+		public static AdjacentDirectionMetadata of(
+			final int offsetX,
+			final int offsetY,
+			final WorldLocation destination,
+			final int requiredCellCount,
+			final int exactRequiredStateCount,
+			final Boolean logicalPassable,
+			final AdjacentBlockingReason logicalBlockingReason,
+			final Boolean packedPassable,
+			final AdjacentBlockingReason packedBlockingReason) {
+			Objects.requireNonNull(destination, "destination");
+			if (offsetX < -1 || offsetX > 1 || offsetY < -1 || offsetY > 1
+				|| (offsetX == 0 && offsetY == 0)) {
+				throw new IllegalArgumentException("Invalid adjacent collision direction");
+			}
+			int expectedCells = offsetX == 0 || offsetY == 0 ? 2
+				: offsetX == 1 && offsetY == -1 ? 5 : 4;
+			if (requiredCellCount != expectedCells
+				|| exactRequiredStateCount < 0
+				|| exactRequiredStateCount > requiredCellCount) {
+				throw new IllegalArgumentException(
+					"Adjacent collision required-state counts are inconsistent");
+			}
+			validateDecision(logicalPassable, logicalBlockingReason, "logical");
+			validateDecision(packedPassable, packedBlockingReason, "packed");
+			return new AdjacentDirectionMetadata(
+				offsetX, offsetY, destination, requiredCellCount,
+				exactRequiredStateCount, logicalPassable, logicalBlockingReason,
+				packedPassable, packedBlockingReason);
+		}
+
+		private static void validateDecision(
+			final Boolean passable,
+			final AdjacentBlockingReason reason,
+			final String label) {
+			if ((passable == null) != (reason == null)) {
+				throw new IllegalArgumentException(
+					label + " adjacent decision availability is inconsistent");
+			}
+			if (passable != null
+				&& (passable.booleanValue()
+					!= (reason == AdjacentBlockingReason.NONE))) {
+				throw new IllegalArgumentException(
+					label + " adjacent passability differs from its reason");
+			}
+		}
+
+		public int getOffsetX() { return offsetX; }
+		public int getOffsetY() { return offsetY; }
+		public WorldLocation getDestination() { return destination; }
+		public int getRequiredCellCount() { return requiredCellCount; }
+		public int getExactRequiredStateCount() { return exactRequiredStateCount; }
+		public boolean areRequiredStatesExact() {
+			return exactRequiredStateCount == requiredCellCount;
+		}
+		public boolean isLogicalDecisionAvailable() { return logicalPassable != null; }
+		public boolean isPackedDecisionAvailable() { return packedPassable != null; }
+		public Boolean getLogicalPassable() { return logicalPassable; }
+		public Boolean getPackedPassable() { return packedPassable; }
+		public AdjacentBlockingReason getLogicalBlockingReason() {
+			return logicalBlockingReason;
+		}
+		public AdjacentBlockingReason getPackedBlockingReason() {
+			return packedBlockingReason;
+		}
+		public boolean isComparable() {
+			return logicalPassable != null && packedPassable != null;
+		}
+		public boolean isPassabilityExact() {
+			return isComparable() && logicalPassable.equals(packedPassable);
+		}
+		public boolean isBlockingReasonExact() {
+			return isComparable() && logicalBlockingReason == packedBlockingReason;
+		}
+	}
+
+	/** Trace-stable mirror of dormant adjacent collision reasons. */
+	public enum AdjacentBlockingReason {
+		NONE,
+		CURRENT_AXES,
+		CURRENT_X,
+		CURRENT_Y,
+		ADJACENT_AXES,
+		ADJACENT_X,
+		ADJACENT_Y,
+		ADJACENT_X_CORRIDOR,
+		ADJACENT_Y_CORRIDOR,
+		DESTINATION_AXES,
+		DESTINATION_X,
+		DESTINATION_Y,
+		DESTINATION_X_CORRIDOR,
+		DESTINATION_Y_CORRIDOR,
+		DESTINATION_DIAGONAL,
+		SIDE_DIAGONAL,
+		DIAGONAL_PASS_THROUGH
+	}
+
+	private enum DirectionStatus {
+		LOGICAL_AVAILABLE {
+			boolean matches(AdjacentDirectionMetadata d) {
+				return d.isLogicalDecisionAvailable();
+			}
+		},
+		PACKED_AVAILABLE {
+			boolean matches(AdjacentDirectionMetadata d) {
+				return d.isPackedDecisionAvailable();
+			}
+		},
+		COMPARABLE {
+			boolean matches(AdjacentDirectionMetadata d) { return d.isComparable(); }
+		},
+		PASSABILITY_EXACT {
+			boolean matches(AdjacentDirectionMetadata d) { return d.isPassabilityExact(); }
+		},
+		REASON_EXACT {
+			boolean matches(AdjacentDirectionMetadata d) { return d.isBlockingReasonExact(); }
+		},
+		REQUIRED_STATES_EXACT {
+			boolean matches(AdjacentDirectionMetadata d) { return d.areRequiredStatesExact(); }
+		};
+
+		abstract boolean matches(AdjacentDirectionMetadata direction);
 	}
 
 	/** Immutable observer-facing neighborhood counts; no tile payloads. */
@@ -850,6 +1242,7 @@ public final class LayeredCoordinateParityObserver {
 		final TileSnapshotSource tileSnapshotSource;
 		final TileParitySource tileParitySource;
 		final TileNeighborhoodSource tileNeighborhoodSource;
+		final AdjacentCollisionSource adjacentCollisionSource;
 		long sequence;
 		LayeredCoordinateParitySnapshot lastSnapshot;
 		String lastError;
@@ -860,7 +1253,8 @@ public final class LayeredCoordinateParityObserver {
 			int viewGridDistance,
 			TileSnapshotSource tileSnapshotSource,
 			TileParitySource tileParitySource,
-			TileNeighborhoodSource tileNeighborhoodSource) {
+			TileNeighborhoodSource tileNeighborhoodSource,
+			AdjacentCollisionSource adjacentCollisionSource) {
 			if (viewGridDistance < 0) {
 				throw new IllegalArgumentException("View grid distance must not be negative");
 			}
@@ -871,6 +1265,7 @@ public final class LayeredCoordinateParityObserver {
 			this.tileSnapshotSource = tileSnapshotSource;
 			this.tileParitySource = tileParitySource;
 			this.tileNeighborhoodSource = tileNeighborhoodSource;
+			this.adjacentCollisionSource = adjacentCollisionSource;
 		}
 
 		Status status(boolean enabled) {

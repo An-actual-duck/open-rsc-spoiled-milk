@@ -64,7 +64,7 @@ class LayeredMapsSliceTwentyOneTest(unittest.TestCase):
         player = PLAYER_SOURCE.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v7"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v8"', observer)
         self.assertIn("MAX_TRACE_PACKED_CELLS = 4096", observer)
         self.assertIn("LegacyPackedVisibilityCoverageComparison.compare(", observer)
         self.assertIn('out.append(",\\\"packedCoverage\\\":")', observer)

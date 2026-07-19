@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v7.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v8.schema.json"
 
 
 POINT_STUB = r'''
@@ -78,6 +78,11 @@ package com.openrsc.server.diagnostics;
 
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class LayeredCoordinateParityObserverFixture {
     public static void main(String[] args) {
@@ -124,15 +129,26 @@ public final class LayeredCoordinateParityObserverFixture {
                 LayeredCoordinateParitySnapshot.capture(current).getLocation(),
                 9, 9, 0, 9, 9, true, true);
         };
+        int[] adjacentCollisionCaptures = {0};
+        LayeredCoordinateParityObserver.AdjacentCollisionSource adjacentCollision = current -> {
+            adjacentCollisionCaptures[0]++;
+            WorldLocation center =
+                LayeredCoordinateParitySnapshot.capture(current).getLocation();
+            return LayeredCoordinateParityObserver.AdjacentCollisionMetadata.of(
+                center, openDirections(center));
+        };
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, null, tileParity,
-            tileNeighborhood));
+            tileNeighborhood, adjacentCollision));
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, tileSnapshots, null,
-            tileNeighborhood));
+            tileNeighborhood, adjacentCollision));
         expectNull(() -> LayeredCoordinateParityObserver.start(
             99, 99L, Point.location(100, 943), 2, tileSnapshots, tileParity,
-            null));
+            null, adjacentCollision));
+        expectNull(() -> LayeredCoordinateParityObserver.start(
+            99, 99L, Point.location(100, 943), 2, tileSnapshots, tileParity,
+            tileNeighborhood, null));
         expectIllegal(() -> LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
             LayeredCoordinateParitySnapshot.capture(Point.location(100, 943)).getRegionKey(),
             1, 2, 2304, 2304, true,
@@ -169,18 +185,27 @@ public final class LayeredCoordinateParityObserverFixture {
         expectIllegal(() -> LayeredCoordinateParityObserver.TileNeighborhoodMetadata.of(
             LayeredCoordinateParitySnapshot.capture(Point.location(100, 943)).getLocation(),
             9, 9, 0, 9, 8, true, true));
+        expectIllegal(() -> LayeredCoordinateParityObserver.AdjacentDirectionMetadata.of(
+            1, 0,
+            new WorldLocation(
+                LayeredCoordinateParitySnapshot.capture(Point.location(100, 943))
+                    .getLocation().getWorldSpace(),
+                new WorldCoordinate(101, 943, 0)),
+            2, 2, Boolean.TRUE,
+            LayeredCoordinateParityObserver.AdjacentBlockingReason.CURRENT_X,
+            Boolean.TRUE, LayeredCoordinateParityObserver.AdjacentBlockingReason.NONE));
         check(!LayeredCoordinateParityObserver.status(playerId, usernameHash).isEnabled(),
             "initially disabled");
         LayeredCoordinateParityObserver.Status started = LayeredCoordinateParityObserver.start(
             playerId, usernameHash, Point.location(100, 943), 2, tileSnapshots,
-            tileParity, tileNeighborhood);
+            tileParity, tileNeighborhood, adjacentCollision);
         check(started.isEnabled() && started.getRecordCount() == 1, "start");
         check(started.getError() == null, "start error");
         check(started.getLastSnapshot().getVisibilityWindow().getRegionCount() == 2L,
             "start visibility window");
         expectIllegal(() -> LayeredCoordinateParityObserver.start(
             playerId, usernameHash, Point.location(100, 943), 3, tileSnapshots,
-            tileParity, tileNeighborhood));
+            tileParity, tileNeighborhood, adjacentCollision));
 
         LayeredCoordinateParityObserver.onLocationChanged(
             playerId, usernameHash, Point.location(100, 943), Point.location(100, 944), false);
@@ -208,7 +233,7 @@ public final class LayeredCoordinateParityObserverFixture {
         long otherHash = 987654321L;
         LayeredCoordinateParityObserver.Status other = LayeredCoordinateParityObserver.start(
             playerId, otherHash, Point.location(200, 944), 2, tileSnapshots,
-            tileParity, tileNeighborhood);
+            tileParity, tileNeighborhood, adjacentCollision);
         check(other.isEnabled() && other.getRecordCount() == 1, "identity-isolated start");
         check(!other.getPath().equals(active.getPath()), "identity-isolated path");
         LayeredCoordinateParityObserver.stop(playerId, otherHash, Point.location(200, 944));
@@ -223,14 +248,46 @@ public final class LayeredCoordinateParityObserverFixture {
 
         LayeredCoordinateParityObserver.Status invalid = LayeredCoordinateParityObserver.start(
             8, 111L, Point.location(100, 3776), 2, tileSnapshots, tileParity,
-            tileNeighborhood);
+            tileNeighborhood, adjacentCollision);
         check(invalid.isEnabled() && invalid.getRecordCount() == 0, "invalid trace retained");
         check(invalid.getError() != null && invalid.getError().contains("IllegalArgumentException"),
             "invalid trace visible error");
         check(tileParityCaptures[0] == 6, "bounded tile parity capture count");
         check(tileNeighborhoodCaptures[0] == 6,
             "bounded tile neighborhood capture count");
+        check(adjacentCollisionCaptures[0] == 6,
+            "bounded adjacent collision capture count");
         LayeredCoordinateParityObserver.resetForTests();
+    }
+
+    private static List<LayeredCoordinateParityObserver.AdjacentDirectionMetadata>
+            openDirections(WorldLocation center) {
+        List<LayeredCoordinateParityObserver.AdjacentDirectionMetadata> directions =
+            new ArrayList<LayeredCoordinateParityObserver.AdjacentDirectionMetadata>();
+        WorldCoordinate coordinate = center.getCoordinate();
+        for (int offsetY = -1; offsetY <= 1; offsetY++) {
+            for (int offsetX = -1; offsetX <= 1; offsetX++) {
+                if (offsetX == 0 && offsetY == 0) {
+                    continue;
+                }
+                int required = offsetX == 0 || offsetY == 0 ? 2
+                    : offsetX == 1 && offsetY == -1 ? 5 : 4;
+                WorldLocation destination = new WorldLocation(
+                    center.getWorldSpace(),
+                    new WorldCoordinate(
+                        coordinate.getX() + offsetX,
+                        coordinate.getY() + offsetY,
+                        coordinate.getLevel()));
+                directions.add(
+                    LayeredCoordinateParityObserver.AdjacentDirectionMetadata.of(
+                        offsetX, offsetY, destination, required, required,
+                        Boolean.TRUE,
+                        LayeredCoordinateParityObserver.AdjacentBlockingReason.NONE,
+                        Boolean.TRUE,
+                        LayeredCoordinateParityObserver.AdjacentBlockingReason.NONE));
+            }
+        }
+        return directions;
     }
 
     private static void expectIllegal(Runnable operation) {
@@ -337,7 +394,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v7" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v8" for event in events))
             upper_window = events[1]["to"]["visibilityWindow"]
             self.assertEqual(2, upper_window["gridDistance"])
             self.assertEqual(16, upper_window["tileRadius"])
@@ -452,6 +509,49 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 },
                 events[0]["tileNeighborhood"],
             )
+            self.assertTrue(all(
+                (event["adjacentCollision"] is not None)
+                == (event["eventType"] in {"start", "teleport", "marker", "stop"})
+                for event in events
+            ))
+            start_collision = events[0]["adjacentCollision"]
+            self.assertEqual(
+                {
+                    "directionCount": 8,
+                    "logicalDecisionAvailableCount": 8,
+                    "packedDecisionAvailableCount": 8,
+                    "comparableCount": 8,
+                    "passabilityExactCount": 8,
+                    "blockingReasonExactCount": 8,
+                    "requiredStatesExactCount": 8,
+                    "allComparable": True,
+                    "allPassabilityExact": True,
+                    "allBlockingReasonsExact": True,
+                    "allRequiredStatesExact": True,
+                },
+                {key: start_collision[key] for key in (
+                    "directionCount",
+                    "logicalDecisionAvailableCount",
+                    "packedDecisionAvailableCount",
+                    "comparableCount",
+                    "passabilityExactCount",
+                    "blockingReasonExactCount",
+                    "requiredStatesExactCount",
+                    "allComparable",
+                    "allPassabilityExact",
+                    "allBlockingReasonsExact",
+                    "allRequiredStatesExact",
+                )},
+            )
+            self.assertEqual({"x": -1, "y": -1}, start_collision["directions"][0]["offset"])
+            self.assertEqual({"x": 1, "y": 1}, start_collision["directions"][-1]["offset"])
+            self.assertTrue(all(
+                direction["logicalPassable"]
+                and direction["packedPassable"]
+                and direction["logicalBlockingReason"] == "NONE"
+                and direction["packedBlockingReason"] == "NONE"
+                for direction in start_collision["directions"]
+            ))
             upper_interest = events[1]["interestDelta"]
             self.assertEqual({
                 "previousRegionCount": 2,
@@ -517,9 +617,11 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
         self.assertIn("layeredTileSnapshotSource(player)", command)
         self.assertIn("layeredTileParitySource(player)", command)
         self.assertIn("layeredTileNeighborhoodSource(player)", command)
+        self.assertIn("layeredAdjacentCollisionSource(player)", command)
         self.assertIn("regionManager.getLayeredRegionTileSnapshot", command)
         self.assertIn("regionManager.compareLayeredTileState(current)", command)
         self.assertIn("regionManager.compareLayeredTileNeighborhood(current)", command)
+        self.assertIn("regionManager.compareLayeredAdjacentStepCollisions(current)", command)
         self.assertIn('command.equalsIgnoreCase("layerparity")', command)
         self.assertIn("player.isDev()", command)
         self.assertIn("WANT_LAYERED_MAP_PARITY_OBSERVER", command)

@@ -42,6 +42,8 @@
  * 31 exposes only that neighborhood's bounded counts through selected opt-in
  * private diagnostic events. Slice 32 compares one dormant adjacent logical
  * and packed tile-mask decision without changing movement or PathValidation.
- * Packed storage and existing runtime decisions remain authoritative.</p>
+ * Slice 33 emits all eight such comparisons only through bounded opt-in
+ * private diagnostics. Packed storage and existing runtime decisions remain
+ * authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

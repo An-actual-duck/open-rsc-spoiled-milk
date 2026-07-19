@@ -25,6 +25,7 @@ import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
+import com.openrsc.server.model.world.region.LayeredAdjacentStepCollisionComparison;
 import com.openrsc.server.model.world.region.LayeredRegionTileSnapshot;
 import com.openrsc.server.model.world.region.LayeredTileNeighborhoodParityComparison;
 import com.openrsc.server.model.world.region.LayeredTileStateParityComparison;
@@ -1374,7 +1375,8 @@ public final class Development implements CommandTrigger {
 				status = LayeredCoordinateParityObserver.start(
 					player.getDatabaseID(), player.getUsernameHash(), player.getLocation(),
 					player.getConfig().VIEW_DISTANCE, layeredTileSnapshotSource(player),
-					layeredTileParitySource(player), layeredTileNeighborhoodSource(player));
+					layeredTileParitySource(player), layeredTileNeighborhoodSource(player),
+					layeredAdjacentCollisionSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1484,6 +1486,44 @@ public final class Development implements CommandTrigger {
 					comparison.isExact());
 			}
 		};
+	}
+
+	private LayeredCoordinateParityObserver.AdjacentCollisionSource
+		layeredAdjacentCollisionSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.AdjacentCollisionSource() {
+			@Override
+			public LayeredCoordinateParityObserver.AdjacentCollisionMetadata capture(
+				final Point current) {
+				List<LayeredAdjacentStepCollisionComparison> comparisons =
+					regionManager.compareLayeredAdjacentStepCollisions(current);
+				List<LayeredCoordinateParityObserver.AdjacentDirectionMetadata> directions =
+					new ArrayList<LayeredCoordinateParityObserver.AdjacentDirectionMetadata>(
+						comparisons.size());
+				for (LayeredAdjacentStepCollisionComparison comparison : comparisons) {
+					directions.add(
+						LayeredCoordinateParityObserver.AdjacentDirectionMetadata.of(
+							comparison.getOffsetX(),
+							comparison.getOffsetY(),
+							comparison.getDestination(),
+							comparison.getRequiredCellCount(),
+							comparison.getExactRequiredStateCount(),
+							comparison.getLogicalPassable(),
+							adjacentReason(comparison.getLogicalBlockingReason()),
+							comparison.getPackedPassable(),
+							adjacentReason(comparison.getPackedBlockingReason())));
+				}
+				return LayeredCoordinateParityObserver.AdjacentCollisionMetadata.of(
+					comparisons.get(0).getSource(), directions);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.AdjacentBlockingReason adjacentReason(
+		final LayeredAdjacentStepCollisionComparison.BlockingReason reason) {
+		return reason == null ? null
+			: LayeredCoordinateParityObserver.AdjacentBlockingReason.valueOf(
+				reason.name());
 	}
 
 	private void layeredParitySyntax(Player player, String command) {

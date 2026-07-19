@@ -1,13 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-32 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-32 validated and Slice 33
+automated validation complete/owner runtime validation pending on the active
+refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 32 dormant adjacent-step collision projection complete;
+Current milestone: Slice 33 bounded private adjacent-collision diagnostics;
 packed region lookup, `PathValidation`, movement, and collision remain
 authoritative and no client streaming or world conversion has begun
 
@@ -3957,6 +3958,87 @@ No owner runtime route is required because the comparison remains dormant. A
 separately versioned private diagnostic adoption is the next owner-testable
 boundary.
 
+### Slice 33: Bounded private adjacent-collision diagnostics
+
+Objective: expose the dormant eight-direction Slice 32 comparison in the
+opt-in private parity trace so an owner can correlate visible walls, scenery,
+region boundaries, and vertical areas with stable AI-readable tile-mask
+decisions.
+
+Selected boundary:
+
+- advance new traces to additive v8 JSONL while retaining every v7 field and
+  keeping the v1-v7 schemas beside it;
+- sample all eight directions only on observer `start`, `marker`, `teleport`,
+  and `stop`, with explicit null on movement, snapshot, login, and logout;
+- emit center, direction/destination identity, required and exact state counts,
+  nullable logical/packed passability and blocking reasons, comparability, and
+  exactness summaries without traversal masks or tile payloads;
+- reuse exactly one detached 3×3 neighborhood for the eight directions in one
+  event; and
+- keep actual movement acceptance, occupancy, path selection, and
+  `PathValidation` outside the diagnostic contract.
+
+Implemented:
+
+- additive `layered-map-parity-event-v8` JSONL retaining every v7 field and
+  requiring nullable `adjacentCollision` evidence;
+- immutable observer metadata with exactly eight row-major directions, checked
+  destinations, fixed 2/4/5 required-cell counts, consistent nullable
+  decision/reason pairs, and derived aggregate counts;
+- dev-only source wiring through the RegionManager eight-direction batch; and
+- location-consistency refusal before a sampled record is written.
+
+Safety boundary:
+
+- the private capability remains disabled by default and reachable only
+  through the existing dev/admin command gate;
+- movement, snapshot, login, and logout records do not run the adjacent
+  comparisons;
+- no traversal mask or tile payload is serialized, and no Player/Mob stores
+  diagnostic collision state; and
+- no movement, `PathValidation`, database, map, placement, archive, client,
+  Builder project, public server, or live data is changed.
+
+Focused findings:
+
+- the compiled eight-event observer trace emits adjacent collision evidence on
+  exactly start, teleport, marker, and stop, with null on move, snapshot,
+  logout, and login;
+- the open fixture emits eight row-major directions with logical/packed
+  decisions available, passable, reason `NONE`, and exact passability, reason,
+  and required-state parity;
+- the bounded adjacent source is captured exactly as often as current-tile and
+  neighborhood parity, including the identity-isolated trace;
+- inconsistent passability/reason pairs are refused, and parent metadata checks
+  direction count, order, and destination identity; and
+- the Draft 2020-12 v8 schema fixes eight directions and retains the complete
+  v7 required-field contract.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-thirty-three.py` — 2 tests
+  passed;
+- the compiled observer fixture and all v1-v8 schema-lineage checks pass;
+- Slice 1 through Slice 33 regressions all pass (80 tests), including exact
+  coordinate-package consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 741 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content, 211 classified source owners, and one unresolved normalized
+  coordinate. The expected fingerprints are source
+  `6a97b31445a2a989f2b2245d477a28c56ac8020dc8586bfcb026edab533d5382`,
+  inventory
+  `6b08310027eca8187cd23ec112379b94cf36b79a9d41f30275f8a162cdeb1aab`,
+  classification
+  `8ea94f361a844826010a8b85340fdf2490d1182e187ea7b8b59e85809cd881ee`,
+  and occurrence
+  `c706847eadc500b3db75554384e15a9a5624298625500c47493db162494b6af2`.
+
+Owner runtime validation is pending on the private development server.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -4075,14 +4157,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 30 by comparing a checked 3×3 logical tile neighborhood with its current direct packed sources without collision or pathing adoption. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 31 by emitting bounded 3×3 neighborhood counts through additive private v7 diagnostics without tile payloads or gameplay adoption. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 32 by comparing one adjacent logical and packed tile-mask decision without changing PathValidation or movement authority. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 33 by emitting all eight adjacent tile-mask comparisons through additive private v8 diagnostics without changing movement authority. | Automated validation complete; owner runtime validation pending |
 
 ## Next Discussion
 
-Proceed with a separately versioned Slice 33 private diagnostic adoption of all
-eight adjacent tile-mask comparisons. Preserve every v7 field; sample only
-start, marker, teleport, and stop; reuse one neighborhood per event; emit
-direction, destination, availability, nullable passability/reason, required
-state counts, and exactness without tile masks or payloads. A new database
-schema, authoritative region storage, actual collision/pathing adoption,
-client/protocol adoption, Builder, export, relocation, and level `-2` remain
-separately gated.
+Complete Slice 33's automated gates, then launch only the private development
+server for owner validation of v8 collision summaries on open ground, beside a
+visible wall/scenery obstacle, across a 48-tile region edge, and on upper and
+underground levels. A new database schema, authoritative region storage,
+actual collision/pathing adoption, client/protocol adoption, Builder, export,
+relocation, and level `-2` remain separately gated.
