@@ -1,17 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-34 validated and Slice 35
-automated validation complete/owner runtime validation pending on the active
+Status: architecture design complete; Slices 1-35 validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 35 bounded private recent-traversal diagnostics;
-packed region lookup, `PathValidation`, route selection, movement, and
-collision remain authoritative and no client streaming or world conversion
-has begun
+Current milestone: Slice 35 bounded private recent-traversal diagnostics is
+owner-validated; packed region lookup, `PathValidation`, route selection,
+movement, and collision remain authoritative and no client streaming or world
+conversion has begun
 
 ## Purpose
 
@@ -4203,7 +4202,23 @@ Automated validation evidence:
   and occurrence
   `3a1611dd5a89feff83cc88e85123f749485c50ab072510bea6b85a37bd83824e`.
 
-Owner runtime validation is pending on the private development server.
+Owner runtime validation evidence:
+
+- the owner completed the full private route with no visible movement or
+  collision issues;
+- `long-open-route` retained 16 exact steps and reported 43 capacity evictions,
+  while `obstacle-route` retained 16 exact steps and reported 13;
+- the ordinary walked boundary step from `(274,623,0)` to `(274,624,0)` was
+  retained as one exact, fully comparable step after the preceding teleport
+  reset;
+- `underground-walk` retained 16 exact level `-1` steps with 16 evictions, and
+  `surface-after-return` retained 16 exact level `0` steps with 52 evictions;
+- every teleport and ladder transition emitted null recent-route evidence and
+  reset the segment as designed; and
+- all five route markers reported zero discontinuities, no blocked-step or
+  mismatch indices, exact signed-coordinate round trips, and complete logical/
+  packed passability, reason, and required-state parity. Slice 35 is owner-
+  validated.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -4325,13 +4340,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 32 by comparing one adjacent logical and packed tile-mask decision without changing PathValidation or movement authority. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 33 by emitting all eight adjacent tile-mask comparisons through additive private v8 diagnostics without changing movement authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 34 by composing adjacent tile-mask comparisons across one explicit bounded route without selecting or executing a path. | Implemented and validated |
-| 2026-07-19 | Continue with Slice 35 by emitting the latest bounded ordinary walking segment through additive private v9 diagnostics without changing path authority. | Automated validation complete; owner runtime validation pending |
+| 2026-07-19 | Continue with Slice 35 by emitting the latest bounded ordinary walking segment through additive private v9 diagnostics without changing path authority. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Complete Slice 35's automated gates, then launch only the private development
-server for owner validation of marked walking segments through open routes,
-around walls, across a 48-tile region edge, and after teleport/vertical reset
-boundaries. A new database schema, authoritative region storage, actual
-collision/pathing adoption, client/protocol adoption, Builder, export,
-relocation, and level `-2` remain separately gated.
+Inventory authoritative tile/collision mutation and cache-invalidation paths,
+then define the smallest checked logical-region residency mirror that can stay
+synchronized without changing packed Region lookup or `PathValidation`.
+A new database schema, authoritative region storage, actual collision/pathing
+adoption, client/protocol adoption, Builder, export, relocation, and level
+`-2` remain separately gated.
