@@ -22,7 +22,8 @@
  * unchanged. Slice 19 projects complete logical-key coverage for one legacy
  * packed region cell without rekeying or splitting runtime storage. Slice 20
  * compares the union of one packed visibility candidate window with its signed
- * logical window without querying regions or adopting either result.
+ * logical window without querying regions or adopting either result. Slice 21
+ * permits that comparison only in bounded private diagnostics.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

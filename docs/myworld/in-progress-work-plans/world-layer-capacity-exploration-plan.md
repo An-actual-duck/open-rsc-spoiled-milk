@@ -1,15 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-20 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-20 implemented and validated;
+Slice 21 implemented and automated-validated with private owner validation
+pending on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 20 packed/logical visibility-window coverage comparison
-checkpoint; packed region lookup and caches remain authoritative and no client
-streaming or world conversion has begun
+Current milestone: Slice 21 private packed/logical coverage diagnostics; packed
+region lookup and caches remain authoritative and no client streaming or world
+conversion has begun
 
 ## Purpose
 
@@ -2922,6 +2923,64 @@ Automated validation evidence:
 No owner runtime route is required because neither gameplay nor private
 diagnostics consumes the comparison.
 
+### Slice 21: Private packed/logical coverage diagnostics
+
+Objective: capture Slice 20's missing/extra packed-window evidence at real
+private-server locations while preserving every current gameplay authority.
+
+Selected boundary:
+
+- advance new traces to an additive v4 JSONL schema while retaining v1-v3
+  schemas for existing evidence;
+- attach one bounded packed/logical comparison to each emitted current-point
+  snapshot, including packed bounds, counts, exactness, and only the missing and
+  extra key identities needed to explain discrepancies;
+- reuse the existing dev-only command, disabled-by-default server capability,
+  identity-safe log path, and explicit trace lifecycle; and
+- keep comparison construction inside the observer rather than Player,
+  RegionManager lookup/cache paths, packets, or the client.
+
+Implemented:
+
+- v4 observer output with packed bounds, packed/unsupported cell counts,
+  expected/covered/missing/extra key counts, exactness, and deterministic
+  missing/extra key arrays for each emitted current point;
+- separate 4,096-cell and 4,096-key diagnostic budgets, with failures retained
+  through the existing trace status rather than affecting gameplay; and
+- additive `layered-map-parity-event-v4` JSON Schema while v1-v3 remain
+  unchanged and readable.
+
+Safety boundary:
+
+- the observer remains disabled by default and requires both private-server
+  capability enablement and an explicit dev/admin trace command;
+- Player only invokes the existing observer hooks; it does not store or consume
+  the comparison;
+- RegionManager storage, visibility/object caches, entity enumeration,
+  distance/plane filtering, collision, packets, terrain, persistence, client,
+  and Builder remain unchanged; and
+- no database, map, placement, archive, public server, or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-twenty-one.py` — 2 tests
+  passed;
+- the compiled observer fixture emitted eight v4 events across a level boundary,
+  a distant teleport, markers, session events, and stop; all events validated
+  against the v4 schema and exact missing/extra identities were asserted;
+- Slice 1 through Slice 21 regressions all pass (56 tests), including schema
+  lineage and exact runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 733 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged Slice 20
+  content counts and fingerprints.
+
+Owner runtime validation remains pending. The route should sample an aligned
+surface window, an aligned underground window, a representative upper-floor
+window, and one level boundary on the private server.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3028,11 +3087,11 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 18 by emitting bounded logical interest deltas only through versioned private diagnostics while retaining all current interest and residency authorities. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 19 by projecting every logical key overlapped by one legacy packed region cell while retaining packed storage, caches, and lookup. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 20 by comparing one current packed visibility candidate window with its signed logical window while retaining all runtime lookup and visibility authority. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 21 by emitting bounded packed/logical coverage evidence only through versioned private diagnostics while retaining all current interest and residency authorities. | In progress |
 
 ## Next Discussion
 
-Use Slice 20's evidence to choose the next reversible parity seam. The safest
-candidate is a bounded private diagnostic comparison at a small set of
-owner-selected coordinates, still without changing lookup or visibility
-authority. A new database schema, authoritative region storage, client/protocol
-adoption, Builder, export, relocation, and level `-2` remain separately gated.
+Complete Slice 21's code/schema gates and private owner route, then use the
+captured evidence to choose the next reversible parity seam. A new database
+schema, authoritative region storage, client/protocol adoption, Builder,
+export, relocation, and level `-2` remain separately gated.

@@ -1,6 +1,7 @@
 package com.openrsc.server.diagnostics;
 
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
@@ -22,8 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v3";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v4";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
+	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
 
 	private static final Logger LOGGER = LogManager.getLogger(LayeredCoordinateParityObserver.class);
@@ -124,10 +126,16 @@ public final class LayeredCoordinateParityObserver {
 				LayeredCoordinateParitySnapshot from = previous == null
 					? null : LayeredCoordinateParitySnapshot.capture(
 						previous, state.viewGridDistance);
+				LegacyPackedVisibilityCoverageComparison coverage =
+					LegacyPackedVisibilityCoverageComparison.compare(
+						current,
+						state.viewGridDistance,
+						MAX_TRACE_PACKED_CELLS,
+						MAX_TRACE_REGIONS_PER_WINDOW);
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
 					state.key, nextSequence, System.currentTimeMillis(), eventType,
-					teleported, label, from, to);
+					teleported, label, from, to, coverage);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -157,7 +165,8 @@ public final class LayeredCoordinateParityObserver {
 		Boolean teleported,
 		String label,
 		LayeredCoordinateParitySnapshot from,
-		LayeredCoordinateParitySnapshot to) {
+		LayeredCoordinateParitySnapshot to,
+		LegacyPackedVisibilityCoverageComparison coverage) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -197,6 +206,8 @@ public final class LayeredCoordinateParityObserver {
 				from.getVisibilityWindow(), to.getVisibilityWindow(),
 				MAX_TRACE_REGIONS_PER_WINDOW));
 		}
+		out.append(",\"packedCoverage\":");
+		appendPackedCoverage(out, coverage);
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
 		return out.append('}').toString();
@@ -220,6 +231,33 @@ public final class LayeredCoordinateParityObserver {
 		appendRegionKeys(out, delta.getEntered());
 		out.append(",\"exitedKeys\":");
 		appendRegionKeys(out, delta.getExited());
+		out.append('}');
+	}
+
+	private static void appendPackedCoverage(
+		final StringBuilder out,
+		final LegacyPackedVisibilityCoverageComparison coverage) {
+		out.append('{');
+		out.append("\"minPackedRegionX\":").append(coverage.getMinPackedRegionX()).append(',');
+		out.append("\"minPackedRegionY\":").append(coverage.getMinPackedRegionY()).append(',');
+		out.append("\"maxPackedRegionX\":").append(coverage.getMaxPackedRegionX()).append(',');
+		out.append("\"maxPackedRegionY\":").append(coverage.getMaxPackedRegionY()).append(',');
+		out.append("\"packedCellCount\":").append(coverage.getPackedCellCount()).append(',');
+		out.append("\"unsupportedPackedCellCount\":")
+			.append(coverage.getUnsupportedPackedCellCount()).append(',');
+		out.append("\"expectedKeyCount\":")
+			.append(coverage.getExpectedLogicalKeys().size()).append(',');
+		out.append("\"packedCoverageKeyCount\":")
+			.append(coverage.getPackedCoverageKeys().size()).append(',');
+		out.append("\"missingKeyCount\":")
+			.append(coverage.getMissingLogicalKeys().size()).append(',');
+		out.append("\"extraKeyCount\":")
+			.append(coverage.getExtraPackedCoverageKeys().size()).append(',');
+		out.append("\"exact\":").append(coverage.isExactCoverage()).append(',');
+		out.append("\"missingKeys\":");
+		appendRegionKeys(out, coverage.getMissingLogicalKeys());
+		out.append(",\"extraKeys\":");
+		appendRegionKeys(out, coverage.getExtraPackedCoverageKeys());
 		out.append('}');
 	}
 

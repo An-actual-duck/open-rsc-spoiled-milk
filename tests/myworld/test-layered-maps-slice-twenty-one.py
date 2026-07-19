@@ -12,15 +12,15 @@ PLAN = ROOT / "docs/myworld/in-progress-work-plans/world-layer-capacity-explorat
 SCHEMA_ROOT = ROOT / "tools/layered-maps/schema"
 
 
-class LayeredMapsSliceEighteenTest(unittest.TestCase):
-    def test_v3_schema_adds_bounded_interest_delta_and_retains_lineage(self):
+class LayeredMapsSliceTwentyOneTest(unittest.TestCase):
+    def test_v4_schema_adds_bounded_packed_coverage_and_retains_lineage(self):
         schemas = {
             version: json.loads(
                 (SCHEMA_ROOT / f"layered-map-parity-event-v{version}.schema.json").read_text(
                     encoding="utf-8"
                 )
             )
-            for version in (1, 2, 3)
+            for version in (1, 2, 3, 4)
         }
         for version, schema in schemas.items():
             self.assertEqual(
@@ -28,27 +28,26 @@ class LayeredMapsSliceEighteenTest(unittest.TestCase):
                 schema["properties"]["schema"]["const"],
             )
 
-        v3 = schemas[3]
-        self.assertIn("interestDelta", v3["required"])
-        interest = v3["$defs"]["interestDelta"]
+        v4 = schemas[4]
+        self.assertIn("packedCoverage", v4["required"])
+        coverage = v4["$defs"]["packedCoverage"]
         self.assertEqual(
             {
-                "previousRegionCount",
-                "currentRegionCount",
-                "enteredCount",
-                "retainedCount",
-                "exitedCount",
-                "worldSpaceChanged",
-                "levelChanged",
-                "noOp",
-                "enteredKeys",
-                "exitedKeys",
+                "minPackedRegionX",
+                "minPackedRegionY",
+                "maxPackedRegionX",
+                "maxPackedRegionY",
+                "packedCellCount",
+                "unsupportedPackedCellCount",
+                "expectedKeyCount",
+                "packedCoverageKeyCount",
+                "missingKeyCount",
+                "extraKeyCount",
+                "exact",
+                "missingKeys",
+                "extraKeys",
             },
-            set(interest["required"]),
-        )
-        self.assertEqual(
-            {"worldSpace", "level", "x", "y"},
-            set(v3["$defs"]["regionKey"]["required"]),
+            set(coverage["required"]),
         )
 
         try:
@@ -59,23 +58,23 @@ class LayeredMapsSliceEighteenTest(unittest.TestCase):
             for schema in schemas.values():
                 jsonschema.Draft202012Validator.check_schema(schema)
 
-    def test_interest_delta_remains_private_observer_only(self):
+    def test_coverage_comparison_remains_private_observer_only(self):
         observer = OBSERVER_SOURCE.read_text(encoding="utf-8")
         manager = REGION_MANAGER_SOURCE.read_text(encoding="utf-8")
         player = PLAYER_SOURCE.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
         self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v4"', observer)
-        self.assertIn("MAX_TRACE_REGIONS_PER_WINDOW = 4096", observer)
-        self.assertIn("WorldRegionInterestDelta.between(", observer)
-        self.assertIn('out.append(",\\\"interestDelta\\\":")', observer)
-        self.assertIn("appendRegionKeys(out, delta.getEntered())", observer)
-        self.assertIn("appendRegionKeys(out, delta.getExited())", observer)
-        self.assertNotIn("WorldRegionInterestDelta", manager)
-        self.assertNotIn("WorldRegionInterestDelta", player)
+        self.assertIn("MAX_TRACE_PACKED_CELLS = 4096", observer)
+        self.assertIn("LegacyPackedVisibilityCoverageComparison.compare(", observer)
+        self.assertIn('out.append(",\\\"packedCoverage\\\":")', observer)
+        self.assertIn("appendRegionKeys(out, coverage.getMissingLogicalKeys())", observer)
+        self.assertIn("appendRegionKeys(out, coverage.getExtraPackedCoverageKeys())", observer)
+        self.assertNotIn("LegacyPackedVisibilityCoverageComparison", player)
+        self.assertNotIn("compareLayeredVisibleRegionCoverage(player", manager)
         self.assertIn("ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>>", manager)
         self.assertIn("visibleRegionWindowCache.putIfAbsent", manager)
-        self.assertIn("### Slice 18: Private logical interest-delta diagnostics", plan)
+        self.assertIn("### Slice 21: Private packed/logical coverage diagnostics", plan)
 
 
 if __name__ == "__main__":
