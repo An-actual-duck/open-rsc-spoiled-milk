@@ -1,16 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-37 validated and Slice 38 awaits
-owner runtime validation on the active refinement branch
+Status: architecture design complete; Slices 1-38 validated on the active
+refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 38 emits bounded Region residency evidence through
-private v10 diagnostics for owner validation; load/release candidates remain
-dormant while packed Region/tile lookup, eager loading, `PathValidation`,
-movement, and collision remain authoritative
+Current milestone: Slice 38's bounded private Region-residency diagnostics are
+owner-validated; global residency ownership/reference semantics are the next
+design and implementation boundary before any loading or eviction experiment
 
 ## Purpose
 
@@ -4453,7 +4452,24 @@ Automated validation evidence:
   and occurrence
   `cdfe9069333827eca2f52701e321cb7b6234246d07979599311d9e8922c71930`.
 
-Owner runtime validation is pending on the private server.
+Owner runtime validation evidence (2026-07-19):
+
+- the owner completed ordinary walking, logical-window changes, teleports,
+  surface `0` to underground `-1` and return transitions, logout/reconnect,
+  markers, and clean stop with no visual or gameplay issues;
+- all 48 captured events validate against the v10 schema with a continuous
+  start-through-stop sequence, and residency capture occurred on all non-move
+  events and changed-window moves while same-window ordinary moves correctly
+  emitted null residency metadata;
+- the mirror remained stable at version `1842`; every current logical window
+  reported 36-42 resident regions with zero partial, missing, unsupported, or
+  load-candidate regions;
+- 90 release candidates were reported across exited rows and both full
+  36-region level changes, exactly as dormant evidence; no loading, eviction,
+  or authority change occurred; and
+- packed coverage, tile snapshots, current-tile and neighborhood parity,
+  adjacent collision, recent traversal, and coordinate round trips reported
+  zero failures.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -4578,12 +4594,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 35 by emitting the latest bounded ordinary walking segment through additive private v9 diagnostics without changing path authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 36 by mirroring packed Region lifecycle as checked, versioned logical residency without caching tiles or changing lookup/path authority. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 37 by comparing bounded logical interest changes with versioned Region residency while treating load/release candidates as dormant evidence only. | Implemented and validated |
-| 2026-07-19 | Continue with Slice 38 by emitting bounded interest/residency evidence through opt-in private v10 diagnostics without adopting Region loading or eviction. | Implemented; owner validation pending |
+| 2026-07-19 | Continue with Slice 38 by emitting bounded interest/residency evidence through opt-in private v10 diagnostics without adopting Region loading or eviction. | Implemented and owner-validated |
 
 ## Next Discussion
 
-After Slice 38 owner validation, define global residency ownership/reference
-semantics before any actual load or eviction experiment. A new database schema,
+Define global residency ownership/reference semantics before any actual load or
+eviction experiment. The next slice should model checked global interest
+ownership without changing eager packed residency. A new database schema,
 authoritative region storage, actual loading/eviction, collision/pathing
 adoption, client protocol adoption, Builder, export, relocation, and level `-2`
 remain separately gated.
