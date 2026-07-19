@@ -23,7 +23,9 @@
  * packed region cell without rekeying or splitting runtime storage. Slice 20
  * compares the union of one packed visibility candidate window with its signed
  * logical window without querying regions or adopting either result. Slice 21
- * permits that comparison only in bounded private diagnostics.
+ * permits that comparison only in bounded private diagnostics. Slice 22
+ * partitions one packed cell into exact contiguous logical tile fragments
+ * without reading or replacing runtime Region storage.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

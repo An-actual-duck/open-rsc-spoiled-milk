@@ -10,6 +10,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionCoverage;
+import com.openrsc.server.model.world.coordinate.LegacyPackedRegionPartition;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
@@ -496,6 +497,18 @@ public class RegionManager {
 		final int packedRegionX,
 		final int packedRegionY) {
 		return LegacyPackedRegionCoverage.fromPackedRegionCoordinates(
+			packedRegionX, packedRegionY);
+	}
+
+	/**
+	 * Projects one packed cell into exact logical tile fragments.
+	 *
+	 * <p>This does not access a Region, its tile grid, entities, or caches.</p>
+	 */
+	public LegacyPackedRegionPartition getLayeredRegionPartition(
+		final int packedRegionX,
+		final int packedRegionY) {
+		return LegacyPackedRegionPartition.fromPackedRegionCoordinates(
 			packedRegionX, packedRegionY);
 	}
 

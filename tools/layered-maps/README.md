@@ -225,6 +225,13 @@ portion accepted by the legacy point codec, so terminal partial cells and the
 server's post-codec padded rows remain explicit. The RegionManager projection
 does not access or alter packed storage.
 
+`LegacyPackedRegionPartition` refines that coverage into contiguous,
+non-overlapping tile fragments. Each fragment retains packed absolute and
+cell-local bounds, signed logical bounds, logical region identity, and exact
+tile count. Level straddles, same-level upper-plane misalignment, terminal
+partial cells, and empty padding therefore have deterministic lossless split
+plans without reading or replacing a runtime `Region` or its tile grid.
+
 `LegacyPackedVisibilityCoverageComparison` unions that coverage across the
 current packed candidate window and compares it with the intended signed
 logical window. It keeps expected, covered, missing, extra, and unsupported

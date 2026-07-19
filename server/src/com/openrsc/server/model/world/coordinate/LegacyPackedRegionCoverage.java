@@ -110,6 +110,22 @@ public final class LegacyPackedRegionCoverage {
 		return nominalMaxTileY;
 	}
 
+	public int getLegacyMinTileX() {
+		return legacyMinTileX;
+	}
+
+	public int getLegacyMinTileY() {
+		return legacyMinTileY;
+	}
+
+	public int getLegacyMaxTileX() {
+		return legacyMaxTileX;
+	}
+
+	public int getLegacyMaxTileY() {
+		return legacyMaxTileY;
+	}
+
 	public boolean hasLegacyTiles() {
 		return !coveredKeys.isEmpty();
 	}

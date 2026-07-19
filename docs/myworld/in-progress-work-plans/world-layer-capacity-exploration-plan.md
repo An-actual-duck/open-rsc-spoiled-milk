@@ -1,15 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-21 implemented and validated on
+Status: architecture design complete; Slices 1-22 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 21 private packed/logical coverage diagnostics owner-
-acceptance checkpoint; packed region lookup and caches remain authoritative and
-no client streaming or world conversion has begun
+Current milestone: Slice 22 exact packed-cell tile partition projection
+checkpoint; packed region lookup and caches remain authoritative and no client
+streaming or world conversion has begun
 
 ## Purpose
 
@@ -3003,6 +3003,79 @@ No public/live server, database schema, map, placement, archive, or player data
 was accessed or changed by this validation beyond the dev account's normal
 location update.
 
+### Slice 22: Exact packed-cell tile partitions
+
+Objective: turn Slice 19's logical-key coverage into exact, lossless tile
+rectangles that a later region-storage or conversion milestone can split,
+without adopting those rectangles at runtime.
+
+Selected boundary:
+
+- partition only the checked legacy-supported portion of one packed 48-tile
+  region cell;
+- retain packed absolute bounds, packed cell-local bounds, signed logical tile
+  bounds, logical region key, and tile count for each contiguous fragment;
+- preserve deterministic packed-Y order, including true level boundaries,
+  same-level upper-plane misalignment, terminal partial cells, and empty padded
+  cells; and
+- expose a read-only RegionManager projection without reading or mutating a
+  `Region`, tile grid, entity collection, cache, terrain archive, or placement.
+
+Implemented:
+
+- immutable `LegacyPackedRegionPartition` and nested fragment values retaining
+  packed absolute/cell-local bounds, signed logical bounds, logical region key,
+  containment, and exact tile count;
+- checked losslessness invariants requiring fragment tile totals and key order
+  to match `LegacyPackedRegionCoverage`; and
+- `RegionManager.getLayeredRegionPartition(...)`, a projection-only method
+  that never looks up or mutates a runtime `Region`.
+
+Audit findings:
+
+- per X column across the 84 current padded packed rows, 39 cells produce one
+  fragment, 40 produce two fragments, and five padded cells produce none;
+- rows 19 and 39 split across signed levels, while the other 38 two-fragment
+  rows split between adjacent same-level logical region Ys on legacy planes 1
+  and 2;
+- an aligned full cell retains all 2,304 tiles in one 48×48 fragment;
+- true boundary row 19 divides into 1,536 level-0 tiles and 768 level-1 tiles;
+- terminal packed cell `(682,78)` retains exactly the supported 32×32 tile
+  rectangle, and padded row 79 is explicitly empty; and
+- every fragment key, order, and summed tile count matches the earlier coverage
+  projection across all padded Y rows.
+
+Safety boundary:
+
+- runtime Region maps, Region tile arrays, entity collections, visibility and
+  object caches, collision, packets, terrain, persistence, diagnostics, client,
+  and Builder remain unchanged;
+- no fragment is cached, stored on Player, or used for lookup; and
+- no database, map, placement, archive, public server, or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-twenty-two.py` — 2 tests
+  passed;
+- Slice 1 through Slice 22 regressions all pass (58 tests), including exact
+  resolved-contract and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 734 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged content
+  counts. The expected fingerprints are source
+  `5b8651e485ddcf951963d067e1a79e59f319724c8dc05dccf86e7d1a840cff6c`,
+  inventory
+  `0e45a348e959466ad82c82b5e02904fb578b3c16835c9d5993d9b9407890d7bc`,
+  classification
+  `f38a83a4b9da10beb975c5fb61860ece81866173de11106bedbd75289388408c`,
+  and occurrence
+  `60b2e4e975e11528c755e4c0127f6094b0b9fff2cdc5c07cd6471e535913bc7d`.
+
+No owner runtime route is required because neither gameplay nor private
+diagnostics consumes the partition.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3110,10 +3183,12 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 19 by projecting every logical key overlapped by one legacy packed region cell while retaining packed storage, caches, and lookup. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 20 by comparing one current packed visibility candidate window with its signed logical window while retaining all runtime lookup and visibility authority. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 21 by emitting bounded packed/logical coverage evidence only through versioned private diagnostics while retaining all current interest and residency authorities. | Implemented and owner-validated |
+| 2026-07-18 | Continue with Slice 22 by partitioning one packed region cell into exact contiguous logical tile fragments while retaining packed Region and tile storage. | Implemented and validated |
 
 ## Next Discussion
 
-Use the accepted Slice 21 evidence to define exact packed-cell-to-logical-region
-tile partitions as the next dormant, reversible parity seam. A new database
-schema, authoritative region storage, client/protocol adoption, Builder,
-export, relocation, and level `-2` remain separately gated.
+Invert Slice 22's fragments into a read-only logical-region assembly plan as the
+next reversible parity seam, proving which packed cells compose each complete
+logical 48×48 region before any tile storage is copied. A new database schema,
+authoritative region storage, client/protocol adoption, Builder, export,
+relocation, and level `-2` remain separately gated.
