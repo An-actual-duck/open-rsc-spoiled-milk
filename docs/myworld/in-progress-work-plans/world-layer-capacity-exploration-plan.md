@@ -1,7 +1,6 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-28 implemented and validated;
-Slice 29 implemented and automated-validated with owner validation pending on
+Status: architecture design complete; Slices 1-29 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -9,7 +8,7 @@ Branch: `docs/layered-map-rebuild-refinement`
 Started: 2026-07-17
 
 Current milestone: Slice 29 bounded private current-tile parity diagnostics
-awaiting its first owner route;
+owner-validated;
 packed region lookup and collision remain authoritative and no client streaming
 or world conversion has begun
 
@@ -3660,9 +3659,35 @@ Automated validation evidence:
   and occurrence
   `b2089304574a5e572e7c1b28a1df141a1657a4c12cd28cd92ad03702ca2cc2d3`.
 
-Owner validation is pending. The first v6 private route should sample surface,
-upper-floor, underground, and teleport points with explicit markers, then stop
-the trace so exact/missing/unsupported current-tile outcomes can be audited.
+Owner runtime acceptance completed on 2026-07-19 from checkpoint `68cc4e6df`:
+
+- the private route produced 124 consecutive schema-valid v6 events from start
+  through stop: 110 moves, five teleports, six markers, one explicit snapshot,
+  one start, and one stop;
+- all events retained exact coordinate round trips, exact packed/logical
+  visibility coverage with no missing, extra, or unsupported keys, and complete
+  2,304-tile logical snapshots with no missing source Region;
+- exactly 13 bounded events carried current-tile parity—six markers, five
+  teleports, start, and stop—while every move and the explicit snapshot carried
+  null as designed;
+- all 13 comparisons were legacy-representable, source-present, comparable,
+  and exact, and every logical and packed address matched the event's existing
+  `to` snapshot;
+- the requested markers proved surface level `0`, upper floor `+1`, returned
+  surface `0`, underground `-1`, returned surface `0`, and the final surface
+  teleport at level `0`;
+- `underground-return` intentionally denotes the state after returning from
+  underground; its trace correctly records logical `(274,565,0)` and packed
+  `(274,565)`, while `underground` records logical `(274,565,-1)` and packed
+  `(274,3397)`;
+- five distinct logical regions each retained one stable fingerprint throughout
+  the route, including restoration of surface region `(0,5,11)` fingerprint
+  `4500089f49cb1f5e8560df5be0d249497bf06bb06778c5a1719f34f2980c7f6e`
+  after leaving underground; and
+- the owner reported no visual, loading, collision, or interaction issue beyond
+  confirming the intended return-marker naming.
+
+Slice 29 is owner-validated. Packed Regions and collision remain authoritative.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -3778,12 +3803,15 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 26 by emitting bounded logical-region tile-snapshot metadata through versioned private diagnostics while retaining packed tile authority. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 27 by replacing mutable logical snapshot internals with an immutable full-fidelity tile-state value and retaining a detached legacy-copy bridge. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 28 by comparing one direct packed immutable tile state with its assembled logical-snapshot state without adopting either for gameplay. | Implemented and validated |
-| 2026-07-18 | Continue with Slice 29 by emitting bounded current-tile packed/logical parity metadata through additive private v6 diagnostics. | Implemented and automated-validated; owner route pending |
+| 2026-07-18 | Continue with Slice 29 by emitting bounded current-tile packed/logical parity metadata through additive private v6 diagnostics. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Run Slice 29's first private v6 owner route to validate direct-packed versus
-logical-snapshot tile parity across surface, upper-floor, underground, and
-teleport samples. A new database schema, authoritative region storage,
-client/protocol adoption, Builder, export, relocation, and level `-2` remain
-separately gated.
+Proceed with a dormant Slice 30 checked 3×3 logical tile-neighborhood parity
+contract around one location. This is the smallest useful expansion from a
+single tile toward adjacent-step collision and pathing: it must cross logical
+region and legacy packed-region boundaries, retain missing/unsupported cells,
+and compare every available immutable logical state with its direct packed
+source without caching or gameplay adoption. A new database schema,
+authoritative region storage, actual collision/pathing adoption, client/protocol
+adoption, Builder, export, relocation, and level `-2` remain separately gated.
