@@ -208,3 +208,11 @@ visibility cache, enumerate entities, alter the current packed visibility
 window, or participate in client streaming. Its checked Player shadow and
 private v2 diagnostics compare projected interest bounds, but neither becomes
 an interest/residency authority.
+
+`WorldRegionInterestDelta` can materialize deterministic X-major/Y-minor
+entered, retained, and exited key lists between two windows. Its required
+caller-supplied key budget limits one materialization operation, not world
+capacity. World space and signed level are part of key identity, so equal X/Y
+bounds on another level retain no keys. This value remains dormant: Player,
+RegionManager lookup/caches, packets, terrain, and client residency do not
+consume it.

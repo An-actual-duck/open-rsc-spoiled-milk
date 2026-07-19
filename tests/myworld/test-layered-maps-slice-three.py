@@ -265,6 +265,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "WorldMapSectorId.java",
                 "WorldObjectTransition.java",
                 "WorldRegionKey.java",
+                "WorldRegionInterestDelta.java",
                 "WorldRegionWindow.java",
                 "WorldSpaceId.java",
                 "WorldTileBounds.java",

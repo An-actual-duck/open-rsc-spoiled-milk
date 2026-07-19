@@ -15,7 +15,9 @@
  * database representation. Slice 15 defines a read-only level-qualified
  * logical visibility window without adopting it for packed lookup or caches,
  * and Slice 16 maintains a checked Player shadow of that projection for
- * private diagnostics without making it authoritative.
+ * private diagnostics without making it authoritative. Slice 17 defines a
+ * deterministic, allocation-budgeted logical interest delta without adopting
+ * it for runtime lookup, packets, or client residency.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

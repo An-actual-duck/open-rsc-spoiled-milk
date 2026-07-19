@@ -1,15 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-16 implemented and validated on
+Status: architecture design complete; Slices 1-17 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 16 checked Player visibility-window shadow and
-versioned diagnostics accepted; packed region lookup and caches remain
-authoritative and no client streaming or world conversion has begun
+Current milestone: Slice 17 deterministic logical interest delta checkpoint;
+packed region lookup and caches remain authoritative and no client streaming
+or world conversion has begun
 
 ## Purpose
 
@@ -2609,6 +2609,69 @@ No public/live server, database, map, placement, archive, or player data was
 accessed or changed by this validation beyond the dev account's normal
 location update.
 
+### Slice 17: Deterministic logical interest delta
+
+Objective: define the immutable entered/retained/exited region-key difference
+between two accepted logical visibility windows without attaching it to Player,
+RegionManager storage, packet production, or client residency.
+
+Selected boundary:
+
+- materialize window membership only through an explicit caller-supplied
+  per-window allocation budget; this guards accidental large allocations
+  without imposing a map/world capacity limit;
+- preserve deterministic X-major/Y-minor ordering, matching the current packed
+  manager's region-window iteration order for later parity comparison;
+- compare complete `WorldRegionKey` identity, so a world-space or signed-level
+  change has no retained keys even when X/Y bounds are identical; and
+- expose immutable entered, retained, and exited lists plus level/world-space
+  change indicators, but perform no loading, lookup, caching, or mutation.
+
+Implemented:
+
+- immutable `WorldRegionInterestDelta` with explicit previous/current windows,
+  deterministic entered/retained/exited key lists, no-op detection, and
+  level/world-space change indicators;
+- complete `WorldRegionKey` comparison rather than X/Y-only comparison; and
+- a required caller-owned materialization budget with checked refusal before
+  list allocation when either window exceeds it.
+
+Safety boundary:
+
+- RegionManager's packed maps, packed window cache, object caches, region
+  creation, and visibility enumeration are unchanged;
+- Player and the parity observer do not import, store, calculate, or consume
+  the delta;
+- packets, entity selection, terrain, client residency, persistence, and
+  Builder remain unchanged; and
+- no database, map, placement, archive, public server, or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-seventeen.py` — 2 tests passed;
+- fixtures covered the accepted X `223→224→223` windows, deterministic key
+  order, shrinking/growing and equal-size shifts, no-op retention, complete
+  level/world-space separation, immutable outputs, exact/insufficient/invalid
+  budgets, enormous-window early refusal, nulls, and summary output;
+- Slice 1 through Slice 17 regressions all pass (48 tests), including exact
+  coordinate-package and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 731 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged content
+  counts and the accepted Slice 16 fingerprints: source
+  `2ff279f25945a1a9224e27a687da02bb6883e457db89391454c3fba12f123770`,
+  inventory
+  `23c90d3698a79b984995a6c7205609d69cac337695a878372bbebfac4440c6cb`,
+  classification
+  `5b308fc3dd094bf964ac3837d642d8397e2328a455e10ac0d8ed235ca3118017`,
+  and occurrence
+  `60b2e4e975e11528c755e4c0127f6094b0b9fff2cdc5c07cd6471e535913bc7d`.
+
+No owner runtime route is required because the new value has no runtime
+consumer.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2711,10 +2774,11 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 14 by projecting each loaded/saved legacy Player location through a checked immutable layered persistence snapshot while retaining the exact X/Y database contract. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 15 by defining a level-qualified logical visibility window and read-only RegionManager projection while retaining packed lookup, caches, and client behavior. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 16 by maintaining a checked Player visibility-window shadow and adding versioned private trace evidence while retaining packed lookup, caches, and client behavior. | Implemented and owner-validated |
+| 2026-07-18 | Continue with Slice 17 by defining a deterministic, allocation-budgeted logical interest delta while retaining packed lookup, caches, packets, and client behavior. | Implemented and validated |
 
 ## Next Discussion
 
-Select the next reversible streaming seam now that the checked logical window
-and its private evidence are accepted. A new database schema, authoritative
-region storage, client/protocol adoption, Builder, export, relocation, and
-level `-2` remain separately gated.
+Continue with a checked private runtime interest-delta shadow as the next
+reversible seam. A new database schema, authoritative region storage,
+client/protocol adoption, Builder, export, relocation, and level `-2` remain
+separately gated.
