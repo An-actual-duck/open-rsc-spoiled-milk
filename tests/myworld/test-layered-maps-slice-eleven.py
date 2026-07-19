@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v4.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v5.schema.json"
 
 
 POINT_STUB = r'''
@@ -102,16 +102,41 @@ public final class LayeredCoordinateParityObserverFixture {
 
         int playerId = 7;
         long usernameHash = 123456789L;
+        LayeredCoordinateParityObserver.TileSnapshotSource tileSnapshots =
+            key -> key.getLevel() == 0 && key.getRegionY() == 19
+                ? LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
+                    key, 1, 0, 1536, 2304, false,
+                    "0000000000000000000000000000000000000000000000000000000000000000")
+                : LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
+                    key, key.getLevel() == 1 ? 2 : 1, 0, 2304, 2304, true,
+                    "1111111111111111111111111111111111111111111111111111111111111111");
+        expectNull(() -> LayeredCoordinateParityObserver.start(
+            99, 99L, Point.location(100, 943), 2, null));
+        expectIllegal(() -> LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
+            LayeredCoordinateParitySnapshot.capture(Point.location(100, 943)).getRegionKey(),
+            1, 2, 2304, 2304, true,
+            "0000000000000000000000000000000000000000000000000000000000000000"));
+        expectIllegal(() -> LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
+            LayeredCoordinateParitySnapshot.capture(Point.location(100, 943)).getRegionKey(),
+            1, 0, 1536, 2304, true,
+            "0000000000000000000000000000000000000000000000000000000000000000"));
+        expectIllegal(() -> LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
+            LayeredCoordinateParitySnapshot.capture(Point.location(100, 943)).getRegionKey(),
+            1, 0, 1536, 2304, false, "not-a-fingerprint"));
+        expectIllegal(() -> LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
+            LayeredCoordinateParitySnapshot.capture(Point.location(100, 943)).getRegionKey(),
+            1, 0, 1536, 2303, false,
+            "0000000000000000000000000000000000000000000000000000000000000000"));
         check(!LayeredCoordinateParityObserver.status(playerId, usernameHash).isEnabled(),
             "initially disabled");
         LayeredCoordinateParityObserver.Status started = LayeredCoordinateParityObserver.start(
-            playerId, usernameHash, Point.location(100, 943), 2);
+            playerId, usernameHash, Point.location(100, 943), 2, tileSnapshots);
         check(started.isEnabled() && started.getRecordCount() == 1, "start");
         check(started.getError() == null, "start error");
         check(started.getLastSnapshot().getVisibilityWindow().getRegionCount() == 2L,
             "start visibility window");
         expectIllegal(() -> LayeredCoordinateParityObserver.start(
-            playerId, usernameHash, Point.location(100, 943), 3));
+            playerId, usernameHash, Point.location(100, 943), 3, tileSnapshots));
 
         LayeredCoordinateParityObserver.onLocationChanged(
             playerId, usernameHash, Point.location(100, 943), Point.location(100, 944), false);
@@ -138,7 +163,7 @@ public final class LayeredCoordinateParityObserverFixture {
 
         long otherHash = 987654321L;
         LayeredCoordinateParityObserver.Status other = LayeredCoordinateParityObserver.start(
-            playerId, otherHash, Point.location(200, 944), 2);
+            playerId, otherHash, Point.location(200, 944), 2, tileSnapshots);
         check(other.isEnabled() && other.getRecordCount() == 1, "identity-isolated start");
         check(!other.getPath().equals(active.getPath()), "identity-isolated path");
         LayeredCoordinateParityObserver.stop(playerId, otherHash, Point.location(200, 944));
@@ -152,7 +177,7 @@ public final class LayeredCoordinateParityObserverFixture {
             "movement after stop ignored");
 
         LayeredCoordinateParityObserver.Status invalid = LayeredCoordinateParityObserver.start(
-            8, 111L, Point.location(100, 3776), 2);
+            8, 111L, Point.location(100, 3776), 2, tileSnapshots);
         check(invalid.isEnabled() && invalid.getRecordCount() == 0, "invalid trace retained");
         check(invalid.getError() != null && invalid.getError().contains("IllegalArgumentException"),
             "invalid trace visible error");
@@ -263,7 +288,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v4" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v5" for event in events))
             upper_window = events[1]["to"]["visibilityWindow"]
             self.assertEqual(2, upper_window["gridDistance"])
             self.assertEqual(16, upper_window["tileRadius"])
@@ -298,6 +323,16 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 {"worldSpace": "global", "level": 1, "x": 1, "y": 0},
                 start_coverage["extraKeys"][0],
             )
+            start_tiles = events[0]["tileSnapshot"]
+            self.assertEqual({
+                "logicalRegion": {"worldSpace": "global", "level": 0, "x": 2, "y": 19},
+                "sourceFragmentCount": 1,
+                "missingSourceRegionCount": 0,
+                "supportedTileCount": 1536,
+                "targetTileCount": 2304,
+                "complete": False,
+                "fingerprint": "0" * 64,
+            }, start_tiles)
             upper_coverage = events[1]["packedCoverage"]
             self.assertEqual(2, upper_coverage["missingKeyCount"])
             self.assertEqual(4, upper_coverage["extraKeyCount"])
@@ -309,6 +344,15 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 {"worldSpace": "global", "level": 0, "x": 1, "y": 19},
                 upper_coverage["extraKeys"][0],
             )
+            upper_tiles = events[1]["tileSnapshot"]
+            self.assertEqual(
+                {"worldSpace": "global", "level": 1, "x": 2, "y": 0},
+                upper_tiles["logicalRegion"],
+            )
+            self.assertEqual(2, upper_tiles["sourceFragmentCount"])
+            self.assertEqual(2304, upper_tiles["supportedTileCount"])
+            self.assertTrue(upper_tiles["complete"])
+            self.assertTrue(all(event["tileSnapshot"] is not None for event in events))
             upper_interest = events[1]["interestDelta"]
             self.assertEqual({
                 "previousRegionCount": 2,
@@ -371,6 +415,8 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
         self.assertIn("WANT_LAYERED_MAP_PARITY_OBSERVER", player)
         self.assertIn("LayeredCoordinateParityObserver.onLocationChanged", player)
         self.assertIn("LayeredCoordinateParityObserver.onSession", player)
+        self.assertIn("layeredTileSnapshotSource(player)", command)
+        self.assertIn("regionManager.getLayeredRegionTileSnapshot", command)
         self.assertIn('command.equalsIgnoreCase("layerparity")', command)
         self.assertIn("player.isDev()", command)
         self.assertIn("WANT_LAYERED_MAP_PARITY_OBSERVER", command)

@@ -157,13 +157,14 @@ test; `stop` deliberately ends it. Logs are isolated by database ID and
 username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
-not contain username text, IP addresses, or credentials. New traces emit
-`schema/layered-map-parity-event-v4.schema.json`. Each v4 snapshot retains the
-v3 position, logical-window, and interest-delta evidence, then adds a bounded
-comparison between the packed candidate-region union and intended logical
-window. It records packed bounds, supported/unsupported and expected/covered
-counts, exactness, and missing/extra key identities. The v1-v3 schemas remain
-alongside it so already-captured logs keep explicit readable contracts.
+not contain username text, IP addresses, credentials, or tile payloads. New
+traces emit `schema/layered-map-parity-event-v5.schema.json`. Each v5 snapshot
+retains the v4 position, logical-window, interest-delta, and packed-coverage
+evidence, then adds one bounded detached snapshot summary for the player's
+current logical 48×48 region. It records logical identity, packed source and
+missing-source counts, supported/target tile counts, completeness, and a stable
+full-tile-state SHA-256. The v1-v4 schemas remain alongside it so
+already-captured logs keep explicit readable contracts.
 
 ## Checked Player mirror
 

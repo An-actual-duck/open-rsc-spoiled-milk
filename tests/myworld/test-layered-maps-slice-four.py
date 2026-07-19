@@ -223,6 +223,7 @@ class LayeredMapsSliceFourTest(unittest.TestCase):
         consumers.sort()
         self.assertEqual(
             [
+                "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java",
                 "server/src/com/openrsc/server/database/GameDatabase.java",
                 "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
                 "server/src/com/openrsc/server/external/EntityHandler.java",

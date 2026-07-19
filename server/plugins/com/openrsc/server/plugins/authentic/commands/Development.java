@@ -24,6 +24,9 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
+import com.openrsc.server.model.world.coordinate.WorldRegionKey;
+import com.openrsc.server.model.world.region.LayeredRegionTileSnapshot;
+import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.authentic.quests.members.touristtrap.Tourist_Trap_Mechanism;
@@ -1368,7 +1371,7 @@ public final class Development implements CommandTrigger {
 				}
 				status = LayeredCoordinateParityObserver.start(
 					player.getDatabaseID(), player.getUsernameHash(), player.getLocation(),
-					player.getConfig().VIEW_DISTANCE);
+					player.getConfig().VIEW_DISTANCE, layeredTileSnapshotSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1415,6 +1418,27 @@ public final class Development implements CommandTrigger {
 		if (status.getError() != null) {
 			player.message(messagePrefix + "Capture error: " + status.getError());
 		}
+	}
+
+	private LayeredCoordinateParityObserver.TileSnapshotSource
+		layeredTileSnapshotSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.TileSnapshotSource() {
+			@Override
+			public LayeredCoordinateParityObserver.TileSnapshotMetadata capture(
+				final WorldRegionKey logicalRegionKey) {
+				LayeredRegionTileSnapshot snapshot =
+					regionManager.getLayeredRegionTileSnapshot(logicalRegionKey);
+				return LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
+					snapshot.getLogicalRegionKey(),
+					snapshot.getSourceFragmentCount(),
+					snapshot.getMissingSourceRegionCount(),
+					snapshot.getSupportedTileCount(),
+					snapshot.getTargetTileCount(),
+					snapshot.isComplete(),
+					snapshot.getFingerprint());
+			}
+		};
 	}
 
 	private void layeredParitySyntax(Player player, String command) {

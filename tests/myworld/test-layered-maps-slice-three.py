@@ -234,6 +234,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
         consumers.sort()
         self.assertEqual(
             [
+                "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java",
                 "server/src/com/openrsc/server/database/GameDatabase.java",
                 "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
                 "server/src/com/openrsc/server/external/EntityHandler.java",
@@ -312,6 +313,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
             ]
             self.assertEqual(
                 [
+                    "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyLogicalRegionAssembly.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyLogicalTileAddress.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedPointAdapter.java",

@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v4";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v5";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -39,9 +39,12 @@ public final class LayeredCoordinateParityObserver {
 		int playerId,
 		long usernameHash,
 		Point current,
-		int viewGridDistance) {
+		int viewGridDistance,
+		TileSnapshotSource tileSnapshotSource) {
+		Objects.requireNonNull(tileSnapshotSource, "tileSnapshotSource");
 		TraceKey key = new TraceKey(playerId, usernameHash);
-		TraceState created = new TraceState(key, logPath(key), viewGridDistance);
+		TraceState created = new TraceState(
+			key, logPath(key), viewGridDistance, tileSnapshotSource);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
@@ -132,10 +135,17 @@ public final class LayeredCoordinateParityObserver {
 						state.viewGridDistance,
 						MAX_TRACE_PACKED_CELLS,
 						MAX_TRACE_REGIONS_PER_WINDOW);
+				TileSnapshotMetadata tileSnapshot = Objects.requireNonNull(
+					state.tileSnapshotSource.capture(to.getRegionKey()),
+					"tileSnapshotSource result");
+				if (!to.getRegionKey().equals(tileSnapshot.getLogicalRegionKey())) {
+					throw new IllegalStateException(
+						"Tile snapshot metadata key differs from the current logical region");
+				}
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
 					state.key, nextSequence, System.currentTimeMillis(), eventType,
-					teleported, label, from, to, coverage);
+					teleported, label, from, to, coverage, tileSnapshot);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -166,7 +176,8 @@ public final class LayeredCoordinateParityObserver {
 		String label,
 		LayeredCoordinateParitySnapshot from,
 		LayeredCoordinateParitySnapshot to,
-		LegacyPackedVisibilityCoverageComparison coverage) {
+		LegacyPackedVisibilityCoverageComparison coverage,
+		TileSnapshotMetadata tileSnapshot) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -208,6 +219,8 @@ public final class LayeredCoordinateParityObserver {
 		}
 		out.append(",\"packedCoverage\":");
 		appendPackedCoverage(out, coverage);
+		out.append(",\"tileSnapshot\":");
+		appendTileSnapshot(out, tileSnapshot);
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
 		return out.append('}').toString();
@@ -231,6 +244,29 @@ public final class LayeredCoordinateParityObserver {
 		appendRegionKeys(out, delta.getEntered());
 		out.append(",\"exitedKeys\":");
 		appendRegionKeys(out, delta.getExited());
+		out.append('}');
+	}
+
+	private static void appendTileSnapshot(
+		final StringBuilder out,
+		final TileSnapshotMetadata snapshot) {
+		WorldRegionKey key = snapshot.getLogicalRegionKey();
+		out.append('{');
+		out.append("\"logicalRegion\":{\"worldSpace\":\"")
+			.append(jsonEscape(key.getWorldSpace().getValue()))
+			.append("\",\"level\":").append(key.getLevel())
+			.append(",\"x\":").append(key.getRegionX())
+			.append(",\"y\":").append(key.getRegionY()).append("},");
+		out.append("\"sourceFragmentCount\":")
+			.append(snapshot.getSourceFragmentCount()).append(',');
+		out.append("\"missingSourceRegionCount\":")
+			.append(snapshot.getMissingSourceRegionCount()).append(',');
+		out.append("\"supportedTileCount\":")
+			.append(snapshot.getSupportedTileCount()).append(',');
+		out.append("\"targetTileCount\":")
+			.append(snapshot.getTargetTileCount()).append(',');
+		out.append("\"complete\":").append(snapshot.isComplete()).append(',');
+		field(out, "fingerprint", snapshot.getFingerprint());
 		out.append('}');
 	}
 
@@ -355,6 +391,105 @@ public final class LayeredCoordinateParityObserver {
 		TRACES.clear();
 	}
 
+	/** Supplies one bounded, detached tile-snapshot summary to an active trace. */
+	@FunctionalInterface
+	public interface TileSnapshotSource {
+		TileSnapshotMetadata capture(WorldRegionKey logicalRegionKey);
+	}
+
+	/** Immutable observer-facing metadata; tile payloads never enter JSONL. */
+	public static final class TileSnapshotMetadata {
+		private final WorldRegionKey logicalRegionKey;
+		private final int sourceFragmentCount;
+		private final int missingSourceRegionCount;
+		private final int supportedTileCount;
+		private final int targetTileCount;
+		private final boolean complete;
+		private final String fingerprint;
+
+		private TileSnapshotMetadata(
+			final WorldRegionKey logicalRegionKey,
+			final int sourceFragmentCount,
+			final int missingSourceRegionCount,
+			final int supportedTileCount,
+			final int targetTileCount,
+			final boolean complete,
+			final String fingerprint) {
+			this.logicalRegionKey = logicalRegionKey;
+			this.sourceFragmentCount = sourceFragmentCount;
+			this.missingSourceRegionCount = missingSourceRegionCount;
+			this.supportedTileCount = supportedTileCount;
+			this.targetTileCount = targetTileCount;
+			this.complete = complete;
+			this.fingerprint = fingerprint;
+		}
+
+		public static TileSnapshotMetadata of(
+			final WorldRegionKey logicalRegionKey,
+			final int sourceFragmentCount,
+			final int missingSourceRegionCount,
+			final int supportedTileCount,
+			final int targetTileCount,
+			final boolean complete,
+			final String fingerprint) {
+			Objects.requireNonNull(logicalRegionKey, "logicalRegionKey");
+			Objects.requireNonNull(fingerprint, "fingerprint");
+			if (sourceFragmentCount < 0
+				|| missingSourceRegionCount < 0
+				|| missingSourceRegionCount > sourceFragmentCount
+				|| supportedTileCount < 0
+				|| targetTileCount != WorldRegionKey.REGION_SIZE * WorldRegionKey.REGION_SIZE
+				|| supportedTileCount > targetTileCount) {
+				throw new IllegalArgumentException(
+					"Tile snapshot metadata counts are inconsistent");
+			}
+			if (complete != (supportedTileCount == targetTileCount)) {
+				throw new IllegalArgumentException(
+					"Tile snapshot completeness differs from its tile counts");
+			}
+			if (!fingerprint.matches("[0-9a-f]{64}")) {
+				throw new IllegalArgumentException(
+					"Tile snapshot fingerprint must be lowercase SHA-256");
+			}
+			return new TileSnapshotMetadata(
+				logicalRegionKey,
+				sourceFragmentCount,
+				missingSourceRegionCount,
+				supportedTileCount,
+				targetTileCount,
+				complete,
+				fingerprint);
+		}
+
+		public WorldRegionKey getLogicalRegionKey() {
+			return logicalRegionKey;
+		}
+
+		public int getSourceFragmentCount() {
+			return sourceFragmentCount;
+		}
+
+		public int getMissingSourceRegionCount() {
+			return missingSourceRegionCount;
+		}
+
+		public int getSupportedTileCount() {
+			return supportedTileCount;
+		}
+
+		public int getTargetTileCount() {
+			return targetTileCount;
+		}
+
+		public boolean isComplete() {
+			return complete;
+		}
+
+		public String getFingerprint() {
+			return fingerprint;
+		}
+	}
+
 	private static final class TraceKey {
 		final int playerId;
 		final long usernameHash;
@@ -389,11 +524,16 @@ public final class LayeredCoordinateParityObserver {
 		final TraceKey key;
 		final Path path;
 		final int viewGridDistance;
+		final TileSnapshotSource tileSnapshotSource;
 		long sequence;
 		LayeredCoordinateParitySnapshot lastSnapshot;
 		String lastError;
 
-		TraceState(TraceKey key, Path path, int viewGridDistance) {
+		TraceState(
+			TraceKey key,
+			Path path,
+			int viewGridDistance,
+			TileSnapshotSource tileSnapshotSource) {
 			if (viewGridDistance < 0) {
 				throw new IllegalArgumentException("View grid distance must not be negative");
 			}
@@ -401,6 +541,7 @@ public final class LayeredCoordinateParityObserver {
 			this.key = key;
 			this.path = path;
 			this.viewGridDistance = viewGridDistance;
+			this.tileSnapshotSource = tileSnapshotSource;
 		}
 
 		Status status(boolean enabled) {

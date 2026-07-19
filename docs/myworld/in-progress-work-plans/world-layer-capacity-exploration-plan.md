@@ -1,15 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-25 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-25 validated, with Slice 26
+implemented and ready for private owner validation on the active refinement
+branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 25 detached logical-region tile snapshot complete;
-packed region lookup and collision remain authoritative and no client streaming
-or world conversion has begun
+Current milestone: Slice 26 private logical-region tile-snapshot diagnostics
+ready for owner capture; packed region lookup and collision remain authoritative
+and no client streaming or world conversion has begun
 
 ## Purpose
 
@@ -3316,6 +3317,92 @@ No owner runtime route is required because neither gameplay nor private
 diagnostics consumes the snapshot. A later separately versioned private
 diagnostic fingerprint remains the first proposed owner runtime consumer.
 
+### Slice 26: Private logical-region tile-snapshot diagnostics
+
+Objective: exercise Slice 25 against real private-server regions by emitting
+only bounded metadata and a deterministic fingerprint for the player's current
+logical region through the existing opt-in parity trace.
+
+Selected boundary:
+
+- advance new traces to an additive v5 JSONL schema while retaining v1-v4
+  schemas for existing evidence;
+- capture exactly one logical 48×48 tile snapshot for the emitted current
+  location and record its region key, source/missing-source counts,
+  supported/target counts, completeness, and SHA-256 without serializing tile
+  payloads;
+- bind the source only when a dev/admin explicitly starts a trace on a private
+  server, retaining the existing identity-safe path and lifecycle; and
+- keep snapshot capture under the observer's execution path and preserve
+  packed RegionManager, collision, pathing, visibility, terrain, packets,
+  entities, persistence, client, and Builder authority.
+
+Implemented:
+
+- additive `layered-map-parity-event-v5` JSONL output retaining every v4 field
+  and adding one required `tileSnapshot` object;
+- observer-owned source execution for the current logical region, with a
+  required source binding when `::layerparity start` creates a trace;
+- immutable observer metadata validating the exact 2,304-tile target,
+  source/missing-source and supported counts, completeness, current-region
+  identity, and lowercase SHA-256; and
+- a dev-command adapter that captures Slice 25 snapshots through RegionManager
+  without placing the snapshot on Player or any gameplay path.
+
+Focused findings:
+
+- the compiled eight-event observer trace emitted required v5 metadata at
+  start, movement, teleport, marker, manual snapshot, logout, login, and stop;
+- the terminal surface logical region containing packed `(100,943)` reported
+  1,536 supported tiles of 2,304 and incomplete status;
+- moving to packed `(100,944)` reported logical level `+1` region `(2,0)`, two
+  packed source fragments, all 2,304 tiles, and complete status;
+- teleporting to packed `(100,2832)` reported the corresponding complete
+  underground logical region, while every metadata key matched the event's
+  current logical region; and
+- missing source bindings, inconsistent counts/completeness, non-2,304 targets,
+  malformed fingerprints, null metadata, and wrong logical keys are refused
+  into trace status rather than affecting gameplay.
+
+Safety boundary:
+
+- the capability remains disabled by default and can be started only through
+  the existing dev/admin private command gate;
+- each event copies and hashes one bounded 48×48 logical region but serializes
+  metadata only, never tile payloads;
+- Player still invokes only the established observer movement/session hooks
+  and does not store, consume, or import the tile snapshot;
+- packed RegionManager storage, collision, pathing, visibility/object caches,
+  entity enumeration, terrain, packets, persistence, client, and Builder remain
+  unchanged and authoritative; and
+- no database, map, placement, archive, public server, or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-twenty-six.py` — 2 tests
+  passed;
+- the compiled observer fixture and all v1-v5 schema-lineage checks pass;
+- Slice 1 through Slice 26 regressions all pass (66 tests), including exact
+  resolved-contract and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 737 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content and 211 unresolved owners. The expected fingerprints are source
+  `b8ec78d3f2c951c52497287a27aac4b1a81ecc9340ddd0f8fade3664109aed9a`,
+  inventory
+  `fd2d8392fbf55562cfbc8fa20da266d558880ec0d42b1da572c6579d7c498a85`,
+  classification
+  `624d89e8005dc010ee5c84046c51646a109cbaa6f851dc8b44bfce3249f9862f`,
+  and occurrence
+  `bf61c1e731c6c0fdd0f7aee6d393ff61c89560b23e424bf5ada15a4dba92580f`.
+
+Owner runtime validation is pending on an updated private/local server. The
+first capture should sample a normal surface region, a region boundary, an
+upper floor, underground, walking within one region, and a return teleport;
+visuals, loading, collision, and interactions should remain unchanged.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3427,11 +3514,11 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 23 by inverting packed fragments into complete, partial, or unsupported logical-region legacy assembly plans without copying tiles. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 24 by resolving logical region-local tiles to checked packed source cells and local indices without reading runtime tiles. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 25 by copying packed TileValues into detached logical-region snapshots while retaining packed collision and tile authority. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 26 by emitting bounded logical-region tile-snapshot metadata through versioned private diagnostics while retaining packed tile authority. | Implemented and automated validation complete; owner validation pending |
 
 ## Next Discussion
 
-Proceed, as a separately versioned Slice 26, with bounded snapshot metadata and
-a fingerprint in private diagnostics so the owner can exercise the first
-runtime tile seam without transferring authority. A new database schema,
-authoritative region storage, client/protocol adoption, Builder, export,
-relocation, and level `-2` remain separately gated.
+Run Slice 26's bounded v5 trace against the updated private runtime and inspect
+fingerprint stability, region-key changes, source counts, and unchanged owner
+behavior. A new database schema, authoritative region storage, client/protocol
+adoption, Builder, export, relocation, and level `-2` remain separately gated.

@@ -50,6 +50,8 @@ final class RepositoryPreflight {
 	};
 	private static final String LAYERED_REGION_TILE_SNAPSHOT =
 		"server/src/com/openrsc/server/model/world/region/LayeredRegionTileSnapshot.java";
+	private static final String LAYERED_PARITY_OBSERVER =
+		"server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java";
 
 	private static final Map<String, List<String>> JAVA_SIGNALS = javaSignals();
 
@@ -266,6 +268,7 @@ final class RepositoryPreflight {
 					String role = relative.startsWith(
 						"server/src/com/openrsc/server/model/world/coordinate/")
 						|| LAYERED_REGION_TILE_SNAPSHOT.equals(relative)
+						|| LAYERED_PARITY_OBSERVER.equals(relative)
 						? "server-layered-coordinate-contract"
 						: sourceRoot.startsWith("Client_Base")
 							? "client-coordinate-source"
