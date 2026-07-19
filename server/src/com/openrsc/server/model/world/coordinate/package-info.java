@@ -31,7 +31,10 @@
  * packed source cell and local index for one logical region-local tile without
  * reading a runtime TileValue. Slice 25 permits RegionManager to copy those
  * values into a detached logical tile snapshot while packed collision and
- * storage stay authoritative.
+ * storage stay authoritative. Slice 26 exposes bounded snapshot metadata only
+ * through private diagnostics, and Slice 27 stores immutable full-fidelity
+ * logical tile state inside that snapshot while retaining fresh legacy copies
+ * as a compatibility bridge.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

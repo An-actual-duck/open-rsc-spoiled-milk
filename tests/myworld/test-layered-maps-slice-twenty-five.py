@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SERVER_COORDINATES = ROOT / "server/src/com/openrsc/server/model/world/coordinate"
 SNAPSHOT_SOURCE = ROOT / "server/src/com/openrsc/server/model/world/region/LayeredRegionTileSnapshot.java"
 TILE_SOURCE = ROOT / "server/src/com/openrsc/server/model/world/region/TileValue.java"
+TILE_STATE_SOURCE = ROOT / "server/src/com/openrsc/server/model/world/region/LayeredTileState.java"
 COLLISION_SOURCE = ROOT / "server/src/com/openrsc/server/util/rsc/CollisionFlag.java"
 REGION_MANAGER_SOURCE = ROOT / "server/src/com/openrsc/server/model/world/region/RegionManager.java"
 PLAYER_SOURCE = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
@@ -271,6 +272,7 @@ class LayeredMapsSliceTwentyFiveTest(unittest.TestCase):
                 *(str(path) for path in sorted(SERVER_COORDINATES.glob("*.java"))),
                 str(COLLISION_SOURCE),
                 str(TILE_SOURCE),
+                str(TILE_STATE_SOURCE),
                 str(SNAPSHOT_SOURCE),
             ],
             cwd=ROOT,

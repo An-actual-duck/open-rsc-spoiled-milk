@@ -1,15 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-26 implemented and validated on
+Status: architecture design complete; Slices 1-27 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 26 private logical-region tile-snapshot diagnostics
-owner-validated; packed region lookup and collision remain authoritative and no
-client streaming or world conversion has begun
+Current milestone: Slice 27 immutable logical tile-state contract complete;
+packed region lookup and collision remain authoritative and no client streaming
+or world conversion has begun
 
 ## Purpose
 
@@ -3422,6 +3422,89 @@ Owner runtime acceptance is complete:
   underground, walking, and return route without reporting a visual, loading,
   collision, or interaction anomaly.
 
+### Slice 27: Immutable logical tile state
+
+Objective: detach read-only logical snapshot consumers from mutable legacy
+`TileValue` while preserving every terrain, wall, collision, and projectile
+field exactly and retaining a checked compatibility copy.
+
+Selected boundary:
+
+- define one immutable `LayeredTileState` with full legacy tile fidelity,
+  defensive dynamic-count handling, value equality, and stable digest input;
+- store that immutable value inside Slice 25 snapshots and expose it directly
+  to future logical readers;
+- retain `getTileValue(...)` only as a fresh detached legacy compatibility copy
+  whose mutation cannot affect the state or snapshot; and
+- preserve the existing snapshot fingerprint field order so adopted v5
+  evidence remains comparable, without changing packed Region/TileValue
+  ownership or any gameplay path.
+
+Implemented:
+
+- immutable `LayeredTileState` covering traversal, walls, overlay, elevation,
+  public projectile flags, terrain/scenery blocking, terrain and dynamic
+  collision state, and overlay/wall/dynamic projectile state;
+- defensive dynamic-collision arrays, value equality/hash semantics, and
+  deterministic digest contribution in the exact accepted Slice 25/v5 field
+  order;
+- a fresh full-fidelity `TileValue` compatibility bridge using a package-local
+  state constructor, without changing the legacy default constructor, copy,
+  mutation, or collision-refresh paths; and
+- `LayeredRegionTileSnapshot` immutable internal storage plus
+  `getTileState(...)`, while `getTileValue(...)` remains a fresh mutation-
+  isolated legacy copy.
+
+Focused findings:
+
+- a tile with deliberately non-default public values, two blocking scenery
+  owners, terrain mask `13`, overlapping dynamic-collision counts, two wall
+  projectile owners, and three dynamic projectile owners round-trips with
+  exact `TileValue.equals(...)` fidelity;
+- changing either the original packed test tile, a returned collision-count
+  array, or a returned legacy compatibility copy cannot alter immutable state
+  or a later compatibility copy;
+- equal states have equal hashes, changed private or public state compares
+  unequal, and a separately encoded legacy digest exactly matches the new
+  state's digest bytes; and
+- complete, partial, unsupported, absent-source, fingerprint-stability, and
+  returned-copy Slice 25 behavior remains unchanged after adopting immutable
+  internals.
+
+Safety boundary:
+
+- current packed Regions and mutable `TileValue`s remain terrain, collision,
+  pathing, visibility, packet, entity, and persistence authority;
+- no cache, dual-write, logical mutation, collision consumer, or Player state
+  adopts `LayeredTileState`;
+- v5 diagnostics continue to consume only snapshot metadata and require no
+  schema or runtime change; and
+- no database, map, placement, archive, client, Builder project, public server,
+  or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-twenty-seven.py` — 2 tests
+  passed;
+- Slice 1 through Slice 27 regressions all pass (68 tests), including the full
+  Slice 25 snapshot fixture and exact runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 738 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content and 211 unresolved owners. The expected fingerprints are source
+  `a55e6019ef03da666a541531901e494c4d1390a6755cd6b3f80f513a76521fa5`,
+  inventory
+  `fd2d8392fbf55562cfbc8fa20da266d558880ec0d42b1da572c6579d7c498a85`,
+  classification
+  `624d89e8005dc010ee5c84046c51646a109cbaa6f851dc8b44bfce3249f9862f`,
+  and occurrence
+  `bf61c1e731c6c0fdd0f7aee6d393ff61c89560b23e424bf5ada15a4dba92580f`.
+
+No owner runtime route is required because existing v5 diagnostics consume
+only snapshot metadata and the accepted fingerprint encoding is unchanged.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3534,12 +3617,13 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 24 by resolving logical region-local tiles to checked packed source cells and local indices without reading runtime tiles. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 25 by copying packed TileValues into detached logical-region snapshots while retaining packed collision and tile authority. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 26 by emitting bounded logical-region tile-snapshot metadata through versioned private diagnostics while retaining packed tile authority. | Implemented and owner-validated |
+| 2026-07-18 | Continue with Slice 27 by replacing mutable logical snapshot internals with an immutable full-fidelity tile-state value and retaining a detached legacy-copy bridge. | Implemented and validated |
 
 ## Next Discussion
 
-Proceed with a focused Slice 27 immutable logical tile-state value before any
-cache or storage adoption. It should detach snapshot consumers from mutable
-legacy `TileValue`, prove full-state conversion/equality, and retain a checked
-legacy copy only as a compatibility bridge. A new database schema,
-authoritative region storage, client/protocol adoption, Builder, export,
-relocation, and level `-2` remain separately gated.
+Proceed with a dormant Slice 28 checked current-tile parity value comparing the
+immutable logical snapshot path with the current direct packed tile path. Keep
+comparison construction read-only and out of Player/gameplay; separately gate
+any v6 diagnostic adoption. A new database schema, authoritative region
+storage, client/protocol adoption, Builder, export, relocation, and level `-2`
+remain separately gated.

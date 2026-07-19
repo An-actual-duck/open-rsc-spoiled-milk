@@ -14,7 +14,7 @@ import java.util.Objects;
 public final class LayeredRegionTileSnapshot {
 	private final WorldRegionKey logicalRegionKey;
 	private final LegacyLogicalRegionAssembly assembly;
-	private final TileValue[][] tiles;
+	private final LayeredTileState[][] tileStates;
 	private final int sourceFragmentCount;
 	private final int missingSourceRegionCount;
 	private final int supportedTileCount;
@@ -23,14 +23,14 @@ public final class LayeredRegionTileSnapshot {
 	private LayeredRegionTileSnapshot(
 		final WorldRegionKey logicalRegionKey,
 		final LegacyLogicalRegionAssembly assembly,
-		final TileValue[][] tiles,
+		final LayeredTileState[][] tileStates,
 		final int sourceFragmentCount,
 		final int missingSourceRegionCount,
 		final int supportedTileCount,
 		final String fingerprint) {
 		this.logicalRegionKey = logicalRegionKey;
 		this.assembly = assembly;
-		this.tiles = tiles;
+		this.tileStates = tileStates;
 		this.sourceFragmentCount = sourceFragmentCount;
 		this.missingSourceRegionCount = missingSourceRegionCount;
 		this.supportedTileCount = supportedTileCount;
@@ -44,7 +44,7 @@ public final class LayeredRegionTileSnapshot {
 		Objects.requireNonNull(source, "source");
 		LegacyLogicalRegionAssembly assembly =
 			LegacyLogicalRegionAssembly.fromLogicalRegionKey(logicalRegionKey);
-		TileValue[][] tiles = new TileValue[WorldRegionKey.REGION_SIZE]
+		LayeredTileState[][] tileStates = new LayeredTileState[WorldRegionKey.REGION_SIZE]
 			[WorldRegionKey.REGION_SIZE];
 		int missingSources = 0;
 		int copiedTiles = 0;
@@ -69,7 +69,7 @@ public final class LayeredRegionTileSnapshot {
 						- target.getMinX() + offsetX;
 					int logicalLocalY = logicalBounds.getMinY()
 						- target.getMinY() + offsetY;
-					if (tiles[logicalLocalX][logicalLocalY] != null) {
+					if (tileStates[logicalLocalX][logicalLocalY] != null) {
 						throw new IllegalStateException(
 							"Logical snapshot fragments overlap at local tile "
 								+ logicalLocalX + ',' + logicalLocalY);
@@ -85,7 +85,8 @@ public final class LayeredRegionTileSnapshot {
 						throw new IllegalStateException(
 							"Present packed source returned a null TileValue");
 					}
-					tiles[logicalLocalX][logicalLocalY] = packedTile.copy();
+					tileStates[logicalLocalX][logicalLocalY] =
+						LayeredTileState.fromLegacy(packedTile);
 					copiedTiles++;
 				}
 			}
@@ -95,12 +96,12 @@ public final class LayeredRegionTileSnapshot {
 				"Logical snapshot tile count differs from its assembly");
 		}
 		String fingerprint = fingerprint(
-			logicalRegionKey, tiles, assembly.getTargetTileCount(), copiedTiles,
+			logicalRegionKey, tileStates, assembly.getTargetTileCount(), copiedTiles,
 			assembly.getSourceFragments().size(), missingSources);
 		return new LayeredRegionTileSnapshot(
 			logicalRegionKey,
 			assembly,
-			tiles,
+			tileStates,
 			assembly.getSourceFragments().size(),
 			missingSources,
 			copiedTiles,
@@ -109,7 +110,7 @@ public final class LayeredRegionTileSnapshot {
 
 	private static String fingerprint(
 		final WorldRegionKey key,
-		final TileValue[][] tiles,
+		final LayeredTileState[][] tileStates,
 		final long targetTileCount,
 		final int supportedTileCount,
 		final int sourceFragmentCount,
@@ -126,10 +127,10 @@ public final class LayeredRegionTileSnapshot {
 			updateInt(digest, missingSourceRegionCount);
 			for (int localX = 0; localX < WorldRegionKey.REGION_SIZE; localX++) {
 				for (int localY = 0; localY < WorldRegionKey.REGION_SIZE; localY++) {
-					TileValue tile = tiles[localX][localY];
-					digest.update((byte) (tile == null ? 0 : 1));
-					if (tile != null) {
-						updateTile(digest, tile);
+					LayeredTileState state = tileStates[localX][localY];
+					digest.update((byte) (state == null ? 0 : 1));
+					if (state != null) {
+						state.updateDigest(digest);
 					}
 				}
 			}
@@ -141,28 +142,6 @@ public final class LayeredRegionTileSnapshot {
 		} catch (NoSuchAlgorithmException impossible) {
 			throw new IllegalStateException("SHA-256 is unavailable", impossible);
 		}
-	}
-
-	private static void updateTile(
-		final MessageDigest digest,
-		final TileValue tile) {
-		updateInt(digest, tile.traversalMask);
-		updateInt(digest, tile.diagWallVal);
-		updateInt(digest, tile.horizontalWallVal);
-		updateInt(digest, tile.overlay);
-		updateInt(digest, tile.verticalWallVal);
-		updateInt(digest, tile.elevation);
-		digest.update((byte) (tile.projectileAllowed ? 1 : 0));
-		digest.update((byte) (tile.originalProjectileAllowed ? 1 : 0));
-		digest.update((byte) (tile.isTerrainBlocked() ? 1 : 0));
-		updateInt(digest, tile.getBlockingSceneryCount());
-		updateInt(digest, tile.getTerrainCollisionMask());
-		for (int count : tile.getDynamicCollisionCounts()) {
-			updateInt(digest, count);
-		}
-		digest.update((byte) (tile.isTerrainOverlayProjectileBlocked() ? 1 : 0));
-		updateInt(digest, tile.getTerrainWallProjectileCount());
-		updateInt(digest, tile.getDynamicProjectileCount());
 	}
 
 	private static void updateInt(final MessageDigest digest, final int value) {
@@ -202,14 +181,21 @@ public final class LayeredRegionTileSnapshot {
 
 	public boolean isLegacySupported(final int logicalLocalX, final int logicalLocalY) {
 		validateLocal(logicalLocalX, logicalLocalY);
-		return tiles[logicalLocalX][logicalLocalY] != null;
+		return tileStates[logicalLocalX][logicalLocalY] != null;
 	}
 
-	/** Returns a detached copy, or null when this logical tile is unsupported. */
-	public TileValue getTileValue(final int logicalLocalX, final int logicalLocalY) {
+	/** Returns immutable logical state, or null when this tile is unsupported. */
+	public LayeredTileState getTileState(
+		final int logicalLocalX,
+		final int logicalLocalY) {
 		validateLocal(logicalLocalX, logicalLocalY);
-		TileValue tile = tiles[logicalLocalX][logicalLocalY];
-		return tile == null ? null : tile.copy();
+		return tileStates[logicalLocalX][logicalLocalY];
+	}
+
+	/** Returns a fresh legacy compatibility copy, or null when unsupported. */
+	public TileValue getTileValue(final int logicalLocalX, final int logicalLocalY) {
+		LayeredTileState state = getTileState(logicalLocalX, logicalLocalY);
+		return state == null ? null : state.toLegacyTileValue();
 	}
 
 	public String getFingerprint() {

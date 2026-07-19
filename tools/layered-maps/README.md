@@ -249,10 +249,13 @@ fabricated packed address. The projection does not read a runtime `TileValue`.
 `LayeredRegionTileSnapshot` is the first explicit read-only runtime tile seam.
 RegionManager can copy all supported packed `TileValue` state into a detached
 logical 48×48 snapshot, leaving unsupported positions absent and reporting
-packed sources that were not already loaded. Callers receive fresh tile copies,
-and a stable SHA-256 covers logical identity, support layout, source metadata,
-and complete collision/terrain tile state. The snapshot is not cached and is
-not collision, pathing, visibility, terrain, packet, or entity authority.
+packed sources that were not already loaded. Snapshot internals use immutable
+full-fidelity `LayeredTileState` values; logical callers may read those values
+directly, while legacy callers receive fresh mutable compatibility copies. A
+stable SHA-256 covers logical identity, support layout, source metadata, and
+complete collision/terrain tile state using the accepted v5 field order. The
+snapshot is not cached and is not collision, pathing, visibility, terrain,
+packet, or entity authority.
 
 `LegacyPackedVisibilityCoverageComparison` unions that coverage across the
 current packed candidate window and compares it with the intended signed

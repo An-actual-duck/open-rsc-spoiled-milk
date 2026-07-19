@@ -20,6 +20,50 @@ public class TileValue {
 	private int terrainWallProjectileCount = 0;
 	private int dynamicProjectileCount = 0;
 
+	public TileValue() {
+	}
+
+	TileValue(
+		final byte traversalMask,
+		final short diagWallVal,
+		final byte horizontalWallVal,
+		final byte overlay,
+		final byte verticalWallVal,
+		final byte elevation,
+		final boolean projectileAllowed,
+		final boolean originalProjectileAllowed,
+		final boolean terrainBlocked,
+		final int blockingSceneryCount,
+		final int terrainCollisionMask,
+		final int[] dynamicCollisionCounts,
+		final boolean terrainOverlayProjectileBlocked,
+		final int terrainWallProjectileCount,
+		final int dynamicProjectileCount) {
+		if (dynamicCollisionCounts == null
+			|| dynamicCollisionCounts.length != this.dynamicCollisionCounts.length) {
+			throw new IllegalArgumentException(
+				"Dynamic collision state must contain exactly "
+					+ this.dynamicCollisionCounts.length + " counters");
+		}
+		this.traversalMask = traversalMask;
+		this.diagWallVal = diagWallVal;
+		this.horizontalWallVal = horizontalWallVal;
+		this.overlay = overlay;
+		this.verticalWallVal = verticalWallVal;
+		this.elevation = elevation;
+		this.projectileAllowed = projectileAllowed;
+		this.originalProjectileAllowed = originalProjectileAllowed;
+		this.terrainBlocked = terrainBlocked;
+		this.blockingSceneryCount = blockingSceneryCount;
+		this.terrainCollisionMask = terrainCollisionMask;
+		System.arraycopy(
+			dynamicCollisionCounts, 0, this.dynamicCollisionCounts, 0,
+			dynamicCollisionCounts.length);
+		this.terrainOverlayProjectileBlocked = terrainOverlayProjectileBlocked;
+		this.terrainWallProjectileCount = terrainWallProjectileCount;
+		this.dynamicProjectileCount = dynamicProjectileCount;
+	}
+
 	public TileValue copy() {
 		TileValue copy = new TileValue();
 		copy.traversalMask = traversalMask;
