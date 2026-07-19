@@ -14,7 +14,8 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
+SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 
 
 POINT_STUB = r'''
@@ -613,7 +614,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v11" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v12" for event in events))
             self.assertTrue(all(
                 event["interestOwnership"] is not None
                 for event in events
@@ -924,9 +925,18 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             except ImportError:
                 jsonschema = None
             if jsonschema is not None:
+                from referencing import Registry, Resource
+
                 jsonschema.Draft202012Validator.check_schema(schema)
+                v11 = json.loads(SCHEMA_V11.read_text(encoding="utf-8"))
+                registry = Registry().with_resource(
+                    v11["$id"], Resource.from_contents(v11)
+                )
+                validator = jsonschema.Draft202012Validator(
+                    schema, registry=registry
+                )
                 for event in events:
-                    jsonschema.validate(event, schema)
+                    validator.validate(event)
 
     def test_runtime_wiring_is_opt_in_dev_only_and_observational(self):
         config = CONFIG_SOURCE.read_text(encoding="utf-8")

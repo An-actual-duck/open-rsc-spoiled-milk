@@ -41,6 +41,7 @@ import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionMembershipMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.LayeredVisibilityWindowMirror;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
@@ -3256,6 +3257,34 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver.RegionRetirementSource
+		layeredRegionRetirementSource() {
+		return new LayeredCoordinateParityObserver.RegionRetirementSource() {
+			@Override
+			public LayeredCoordinateParityObserver.RegionRetirementMetadata capture(
+				final List<WorldRegionKey> transitionKeys,
+				final List<WorldRegionKey> trackedCandidateKeys,
+				final long droppedCandidateCount,
+				final int maximumRegions) {
+				LinkedHashSet<WorldRegionKey> observed =
+					new LinkedHashSet<WorldRegionKey>(transitionKeys);
+				observed.addAll(trackedCandidateKeys);
+				if (observed.size() > maximumRegions) {
+					throw new IllegalArgumentException(
+						"Region retirement evidence exceeds the diagnostic budget");
+				}
+				List<LayeredRegionRetirementEligibilityLedger.Snapshot> snapshots =
+					getWorld().getRegionManager()
+						.getLayeredRegionRetirementEligibilitySnapshots(
+							new ArrayList<WorldRegionKey>(observed), maximumRegions);
+				return LayeredCoordinateParityObserver.RegionRetirementMetadata
+					.fromSnapshots(
+						snapshots, transitionKeys, trackedCandidateKeys,
+						droppedCandidateCount);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3362,7 +3391,8 @@ public final class Player extends Mob {
 			LayeredCoordinateParityObserver.onSession(
 				getDatabaseID(), getUsernameHash(), getLocation(), loggedIn,
 				ownershipChange,
-				loggedIn ? layeredInterestOwnershipSource() : null);
+				loggedIn ? layeredInterestOwnershipSource() : null,
+				loggedIn ? layeredRegionRetirementSource() : null);
 		}
 	}
 

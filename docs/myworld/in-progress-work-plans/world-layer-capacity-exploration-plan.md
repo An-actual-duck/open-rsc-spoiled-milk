@@ -1,15 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-42 implemented and validated on
+Status: architecture design complete; Slices 1-42 validated and Slice 43
+implemented with automated validation complete and owner validation pending on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 42 projects checked global-interest ownership into a
-conservative tick-based Region retirement cooldown while packed Region lookup,
-eager loading, release, eviction, pathing, packets, and persistence remain
+Current milestone: Slice 43 exposes the dormant Region retirement projection
+through additive opt-in private diagnostics while packed Region lookup, eager
+loading, release, eviction, pathing, packets, and persistence remain
 authoritative and unchanged
 
 ## Purpose
@@ -4818,6 +4819,87 @@ an additive private diagnostic schema. That evidence should prove release,
 cooldown, reacquisition cancellation, logout/reconnect, and expiry timing while
 remaining unable to enumerate or act on an eviction queue.
 
+### Slice 43: Private Region retirement diagnostics
+
+Objective: make Slice 42's pin, release, grace, cancellation, and expiry policy
+visible in stable AI-readable private traces without turning the observer into
+a Region scan, cache, loader, or eviction owner.
+
+Implemented:
+
+- additive `layered-map-parity-event-v12` JSONL records with a nullable
+  `regionRetirement` block while the immutable v11 schema remains available for
+  old traces;
+- exact transition-Region observations plus a trace-local insertion-ordered set
+  of recently globally released Regions. The observer retains at most 4096
+  such candidates, drops the oldest on diagnostic overflow, and reports the
+  cumulative dropped count;
+- per-entry transition/candidate reasons, ownership and residency versions,
+  observed server tick, provisional 16-tick grace, reference and packed-source
+  counts, release/eligibility ticks, remaining grace, eligibility boolean, and
+  the explicit Slice 42 state;
+- aggregate transition, tracked, dropped, observed, pinned, cooling, eligible,
+  nonresident, unsupported, and untracked counts so automated analysis does
+  not need to reconstruct basic invariants from the entry list;
+- a bounded RegionManager batch snapshot that captures every requested key at
+  one server tick under the existing layered lifecycle lock; and
+- login rebind of both ownership and retirement readers to the newly
+  constructed Player, preserving an active trace across logout/reconnect.
+
+Candidate behavior:
+
+- a global `1 -> 0` release adds the Region after Slice 42 has begun its grace;
+- any observed positive-reference transition removes that candidate before the
+  event snapshot, while the transition entry still reports `PINNED` and null
+  release timestamps;
+- acquisition by another owner can be discovered on the next diagnostic event;
+  a pinned snapshot with no release record is emitted once, then pruned;
+- cooling and eligible records remain available for later marker/snapshot
+  events until reacquisition, trace overflow, or trace stop; and
+- ordinary same-window moves continue to emit null rather than repeatedly
+  serializing unchanged retirement evidence.
+
+Safety boundary:
+
+- the trace set is observer-local diagnostic memory, not an authoritative
+  retirement queue, and it stores only immutable logical keys;
+- the batch API accepts only caller-supplied bounded unique keys and has no
+  world enumeration path;
+- no timer or expiry callback writes an event or performs work by itself;
+- no diagnostic code calls Region lookup, registration, release, unload, or
+  eviction; and
+- packed eager residency, tiles, collision, entities, pathing, packets,
+  persistence, and client loading remain unchanged.
+
+Automated validation evidence:
+
+- the focused v12 schema/wiring and compatibility tests pass;
+- all 100 layered-map slice tests pass, including full v12 JSONL validation
+  against the retained v11 definitions;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant server build compiles 746 core and 488 plugin
+  sources successfully;
+- two consecutive normalizations produced identical source
+  `f2d7b08e019c12e93cb5e95b02e51c510df20f3fbba8ac774bc693f785e318d9`,
+  inventory
+  `e8a7e3f7a418505c56dd284fe391c786adb0c3fa41dab6f5fc43639ed7fa0eb3`,
+  classification
+  `2d928c483bf9a13b55cc7092213863502624323fcc7c4e656f3d32d66fa0d579`,
+  and occurrence
+  `cb475d534bebc8c848cfc0cb748b5290971196eb064f663f2e35aee0cdce89f2`
+  fingerprints;
+- the compatibility observer overload deliberately emits null retirement
+  evidence when no source was supplied, while the private `::layerparity`
+  command and reconnect path always supply the real bounded reader; and
+- owner runtime validation remains required before this slice is accepted.
+
+The focused private route should capture one logical-window transition, an
+immediate cooling marker, a marker after at least 16 server ticks, a return that
+reacquires the released Regions, and logout/reconnect while the trace remains
+active. Acceptance requires schema-valid v12 records, exact aggregate counts,
+visible cooling-to-eligible timing, pinned/null-release evidence on
+reacquisition, no dropped candidates, and no visual or functional regression.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -4946,11 +5028,12 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 40 by maintaining one checked opaque logical-interest owner per Player session without adopting loading, release, or eviction. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 41 by emitting bounded Player interest-owner and global/shared reference transitions through opt-in private v11 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 42 by projecting global interest releases through a conservative 16-tick retirement cooldown without adopting loading, retention, release, or eviction. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 43 by exposing bounded transition and recent-release cooldown evidence through opt-in private v12 diagnostics without adopting loading, retention, release, or eviction. | Implemented; automated validation complete and owner validation pending |
 
 ## Next Discussion
 
-Expose bounded retirement-cooldown evidence through additive private
-diagnostics and validate its timing and reconnect behavior. Real multi-owner
+Validate the new private v12 retirement evidence across global release, grace,
+expiry, reacquisition cancellation, and logout/reconnect. Real multi-owner
 runtime coverage remains mandatory before any consumer can act on eligibility.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,

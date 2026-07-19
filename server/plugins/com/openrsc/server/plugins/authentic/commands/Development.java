@@ -27,6 +27,7 @@ import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
@@ -54,6 +55,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import static com.openrsc.server.plugins.Functions.*;
@@ -1386,7 +1388,8 @@ public final class Development implements CommandTrigger {
 					layeredAdjacentCollisionSource(player),
 					layeredTraversalCollisionSource(player),
 					layeredRegionResidencySource(player),
-					layeredInterestOwnershipSource(player));
+					layeredInterestOwnershipSource(player),
+					layeredRegionRetirementSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1626,6 +1629,34 @@ public final class Development implements CommandTrigger {
 				}
 				return LayeredCoordinateParityObserver.InterestOwnershipMetadata
 					.fromOwnerSnapshot(snapshot);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.RegionRetirementSource
+		layeredRegionRetirementSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.RegionRetirementSource() {
+			@Override
+			public LayeredCoordinateParityObserver.RegionRetirementMetadata capture(
+				final List<WorldRegionKey> transitionKeys,
+				final List<WorldRegionKey> trackedCandidateKeys,
+				final long droppedCandidateCount,
+				final int maximumRegions) {
+				LinkedHashSet<WorldRegionKey> observed =
+					new LinkedHashSet<WorldRegionKey>(transitionKeys);
+				observed.addAll(trackedCandidateKeys);
+				if (observed.size() > maximumRegions) {
+					throw new IllegalArgumentException(
+						"Region retirement evidence exceeds the diagnostic budget");
+				}
+				List<LayeredRegionRetirementEligibilityLedger.Snapshot> snapshots =
+					regionManager.getLayeredRegionRetirementEligibilitySnapshots(
+						new ArrayList<WorldRegionKey>(observed), maximumRegions);
+				return LayeredCoordinateParityObserver.RegionRetirementMetadata
+					.fromSnapshots(
+						snapshots, transitionKeys, trackedCandidateKeys,
+						droppedCandidateCount);
 			}
 		};
 	}

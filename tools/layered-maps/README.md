@@ -164,14 +164,14 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v11.schema.json`. Each v11 record
-retains all v10 position, logical-window, interest-delta, packed-coverage,
+traces emit `schema/layered-map-parity-event-v12.schema.json`. Each v12 record
+retains all v11 position, logical-window, interest-delta, packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v10 schemas remain
+repeating the tile comparisons on every movement. The v1-v11 schemas remain
 alongside it so already-captured logs keep explicit readable contracts.
 Marker and stop records may additionally summarize the latest 16 contiguous
 ordinary walking steps since the previous reset, including per-step decisions,
@@ -189,7 +189,15 @@ carry an explicit null. Owner identities are process-local diagnostic handles,
 not database IDs, username hashes, entity indexes, or persistence keys; these
 reference counts likewise cannot retain, load, release, or evict a Region.
 When a trace survives logout, login atomically rebinds its current-owner reader
-to the newly constructed Player before recording the login event.
+to the newly constructed Player before recording the login event. v12 adds a
+bounded retirement projection for exact transition Regions and recently
+globally released Regions. Each entry records its server tick, 16-tick grace,
+current reference/residency state, release and eligibility ticks, and one of
+`PINNED`, `COOLING_DOWN`, `RETIREMENT_ELIGIBLE`, `NOT_RESIDENT`, `UNSUPPORTED`,
+or `UNTRACKED`. The observer retains at most 4096 recent release candidates,
+reports any diagnostic overflow, and removes canceled candidates after a
+positive reference is observed. Expiry remains evidence only: no observer,
+schema field, or candidate list can unload or evict a Region.
 
 ## Checked Player mirror
 

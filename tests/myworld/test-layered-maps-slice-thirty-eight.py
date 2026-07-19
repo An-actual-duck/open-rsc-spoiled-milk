@@ -75,7 +75,7 @@ class LayeredMapsSliceThirtyEightTest(unittest.TestCase):
         readme = README.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v11"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v12"', observer)
         self.assertIn("RegionResidencySource regionResidencySource", observer)
         self.assertIn("state.regionResidencySource.capture(", observer)
         self.assertIn("MAX_TRACE_REGIONS_PER_WINDOW", observer)
@@ -91,7 +91,7 @@ class LayeredMapsSliceThirtyEightTest(unittest.TestCase):
         self.assertNotIn("LayeredRegionInterestResidencyComparison", path_validation)
         self.assertNotIn("RegionResidencyMetadata", path_validation)
         self.assertNotIn("RegionResidencyMetadata", player)
-        self.assertIn("layered-map-parity-event-v11.schema.json", readme)
+        self.assertIn("layered-map-parity-event-v12.schema.json", readme)
         self.assertIn(
             "### Slice 38: Private Region residency diagnostics",
             plan,

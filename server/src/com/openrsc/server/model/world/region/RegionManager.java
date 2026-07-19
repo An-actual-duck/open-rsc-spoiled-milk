@@ -653,6 +653,43 @@ public class RegionManager {
 	}
 
 	/**
+	 * Captures one bounded, same-tick retirement-evidence batch. The returned
+	 * snapshots remain observations only and cannot change Region lifecycle.
+	 */
+	public List<LayeredRegionRetirementEligibilityLedger.Snapshot>
+		getLayeredRegionRetirementEligibilitySnapshots(
+			final List<WorldRegionKey> logicalRegionKeys,
+			final int maximumRegions) {
+		if (logicalRegionKeys == null) {
+			throw new NullPointerException("logicalRegionKeys");
+		}
+		if (maximumRegions < 0 || logicalRegionKeys.size() > maximumRegions) {
+			throw new IllegalArgumentException(
+				"Retirement evidence exceeds the diagnostic Region budget");
+		}
+		LinkedHashSet<WorldRegionKey> uniqueKeys =
+			new LinkedHashSet<WorldRegionKey>(logicalRegionKeys);
+		if (uniqueKeys.size() != logicalRegionKeys.size()
+			|| uniqueKeys.contains(null)) {
+			throw new IllegalArgumentException(
+				"Retirement evidence Region keys must be non-null and unique");
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			long currentTick = getWorld().getServer().getCurrentTick();
+			List<LayeredRegionRetirementEligibilityLedger.Snapshot> snapshots =
+				new ArrayList<LayeredRegionRetirementEligibilityLedger.Snapshot>(
+					logicalRegionKeys.size());
+			for (WorldRegionKey logicalRegionKey : logicalRegionKeys) {
+				snapshots.add(layeredRegionRetirementEligibilityLedger.snapshot(
+					layeredRegionInterestOwnershipLedger.snapshot(logicalRegionKey),
+					requireLayeredRegionResidencySnapshot(logicalRegionKey),
+					currentTick));
+			}
+			return Collections.unmodifiableList(snapshots);
+		}
+	}
+
+	/**
 	 * Compares one bounded logical interest change with current residency without
 	 * loading, retaining, releasing, or evicting any Region.
 	 */

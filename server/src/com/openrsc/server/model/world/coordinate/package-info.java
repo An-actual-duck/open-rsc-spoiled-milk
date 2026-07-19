@@ -55,7 +55,8 @@
  * emits bounded owner and global/shared reference-transition evidence through
  * private diagnostics only. Slice 42 projects global releases through a
  * conservative tick-based retirement cooldown without authorizing lifecycle
- * changes. Packed storage and existing runtime decisions remain
- * authoritative.</p>
+ * changes. Slice 43 emits bounded transition and recent-release cooldown
+ * evidence through private diagnostics only. Packed storage and existing
+ * runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

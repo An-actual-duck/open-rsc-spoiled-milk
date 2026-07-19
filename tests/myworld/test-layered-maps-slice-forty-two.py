@@ -250,7 +250,7 @@ class LayeredMapsSliceFortyTwoTest(unittest.TestCase):
         self.assertIn("getLayeredRegionRetirementEligibilitySnapshot(", manager)
         self.assertIn("layeredRegionRetirementEligibilityLedger.clear();", manager)
         self.assertNotIn("LayeredRegionRetirementEligibilityLedger", path_validation)
-        self.assertNotIn("LayeredRegionRetirementEligibilityLedger", observer)
+        self.assertIn("LayeredRegionRetirementEligibilityLedger", observer)
 
         projection = manager.split(
             "/**\n\t * Returns conservative pin/cooldown evidence", 1
