@@ -257,6 +257,13 @@ complete collision/terrain tile state using the accepted v5 field order. The
 snapshot is not cached and is not collision, pathing, visibility, terrain,
 packet, or entity authority.
 
+`LayeredTileStateParityComparison` checks one current tile through two read-only
+paths: its direct packed source cell and its immutable assembled logical
+snapshot. Exact full-state equality, missing packed sources, and unsupported
+logical tiles remain distinct. RegionManager exposes the comparison through a
+non-mutating packed-region peek; no Player, diagnostic, collision, cache,
+packet, or client path consumes it.
+
 `LegacyPackedVisibilityCoverageComparison` unions that coverage across the
 current packed candidate window and compares it with the intended signed
 logical window. It keeps expected, covered, missing, extra, and unsupported

@@ -34,7 +34,8 @@
  * storage stay authoritative. Slice 26 exposes bounded snapshot metadata only
  * through private diagnostics, and Slice 27 stores immutable full-fidelity
  * logical tile state inside that snapshot while retaining fresh legacy copies
- * as a compatibility bridge.
+ * as a compatibility bridge. Slice 28 compares one such state with its direct
+ * packed source through a dormant, non-mutating RegionManager projection.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

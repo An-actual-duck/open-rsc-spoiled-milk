@@ -1,13 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-27 implemented and validated on
+Status: architecture design complete; Slices 1-28 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 27 immutable logical tile-state contract complete;
+Current milestone: Slice 28 checked direct-packed/logical-snapshot tile parity
+complete;
 packed region lookup and collision remain authoritative and no client streaming
 or world conversion has begun
 
@@ -3505,6 +3506,85 @@ Automated validation evidence:
 No owner runtime route is required because existing v5 diagnostics consume
 only snapshot metadata and the accepted fingerprint encoding is unchanged.
 
+### Slice 28: Checked current-tile state parity
+
+Objective: compare one immutable tile reached through the assembled logical
+snapshot with the same tile reached directly through its current packed source,
+without creating a Region or changing either path's authority.
+
+Selected boundary:
+
+- retain the checked Slice 24 address and exact logical location, direct packed
+  immutable state, logical snapshot state, source-presence/comparability, and
+  full-state equality result in one immutable comparison;
+- distinguish exact, missing-packed-source, and unsupported logical tiles
+  without treating a synthesized blank snapshot tile as direct parity;
+- expose read-only RegionManager entry points for packed `Point` and
+  `WorldLocation`, using only the existing non-mutating packed-region peek; and
+- keep Player, collision, pathing, visibility, packets, caches, and diagnostics
+  entirely outside this dormant comparison.
+
+Implemented:
+
+- immutable `LayeredTileStateParityComparison` retention of the checked tile
+  address, exact logical location, packed-source presence, both immutable tile
+  states, comparability, and full-state equality;
+- explicit classification of exact parity, a comparable mismatch, a
+  representable tile whose packed Region is absent, and a level that has no
+  legacy packed representation;
+- checked refusal when the logical snapshot key, supported state, or declared
+  packed-source presence disagrees with the comparison input; and
+- read-only RegionManager entry points for both a legacy packed `Point` and an
+  explicit `WorldLocation`, using the established packed-region peek rather
+  than the creating lookup.
+
+Focused findings:
+
+- logical `(223,44,+1)` resolves to packed `(223,988)` and compares exactly
+  across a logical snapshot assembled from two packed source Regions;
+- changing one direct packed tile field produces a comparable non-exact result
+  without changing the captured logical state;
+- an absent representable source retains its synthesized blank logical state
+  but is explicitly missing and not comparable, rather than reporting false
+  parity; and
+- logical level `-2` remains explicitly unsupported with no direct or snapshot
+  tile state, while wrong keys and contradictory source declarations are
+  refused.
+
+Safety boundary:
+
+- comparison construction does not call the creating Region lookup or any
+  mutable-tile method;
+- current packed Regions and mutable `TileValue`s remain terrain, collision,
+  pathing, visibility, packet, entity, and persistence authority;
+- no Player, diagnostic, cache, collision, client, or World Builder path
+  consumes the dormant comparison; and
+- no database, map, placement, archive, client, Builder project, public server,
+  or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-twenty-eight.py` — 2 tests
+  passed;
+- Slice 1 through Slice 28 regressions all pass (70 tests), including the
+  exact coordinate-package consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 739 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content and 211 unresolved owners. The expected fingerprints are source
+  `c50ede16e25e64b9edd08d87bd8fed49f7f2fab1d654bc94dd71e4c9f144cb53`,
+  inventory
+  `0b237d3a9e0ecd5ea3d29b2334e453f59381c730934eb780bd77fd840696bb25`,
+  classification
+  `1436c4e1e1ba17dcb72dcbb9717a235272c1c1efbbc289f8301367ebf415c8b4`,
+  and occurrence
+  `bf61c1e731c6c0fdd0f7aee6d393ff61c89560b23e424bf5ada15a4dba92580f`.
+
+No owner runtime route is required because the comparison remains dormant.
+Any private diagnostic adoption remains a separately versioned later slice.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3618,12 +3698,14 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 25 by copying packed TileValues into detached logical-region snapshots while retaining packed collision and tile authority. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 26 by emitting bounded logical-region tile-snapshot metadata through versioned private diagnostics while retaining packed tile authority. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 27 by replacing mutable logical snapshot internals with an immutable full-fidelity tile-state value and retaining a detached legacy-copy bridge. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 28 by comparing one direct packed immutable tile state with its assembled logical-snapshot state without adopting either for gameplay. | Implemented and validated |
 
 ## Next Discussion
 
-Proceed with a dormant Slice 28 checked current-tile parity value comparing the
-immutable logical snapshot path with the current direct packed tile path. Keep
-comparison construction read-only and out of Player/gameplay; separately gate
-any v6 diagnostic adoption. A new database schema, authoritative region
-storage, client/protocol adoption, Builder, export, relocation, and level `-2`
-remain separately gated.
+Proceed with a separately versioned Slice 29 private v6 diagnostic adoption of
+the dormant current-tile comparison, bounded to observer start, marker,
+teleport, and stop events rather than every movement event. Preserve v5 fields,
+make missing/unsupported/comparable/exact status AI-readable, and use the first
+owner route to validate direct-packed versus logical-snapshot tile parity. A
+new database schema, authoritative region storage, client/protocol adoption,
+Builder, export, relocation, and level `-2` remain separately gated.

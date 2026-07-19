@@ -11,6 +11,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
 import com.openrsc.server.model.world.coordinate.LegacyLogicalTileAddress;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionCoverage;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionPartition;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
@@ -566,6 +567,39 @@ public class RegionManager {
 						: region.getTileValue(packedLocalX, packedLocalY);
 				}
 			});
+	}
+
+	/**
+	 * Compares one direct packed tile with its detached logical snapshot state.
+	 * No Region is created and neither state becomes authoritative.
+	 */
+	public LayeredTileStateParityComparison compareLayeredTileState(
+		final Point packedPoint) {
+		return compareLayeredTileState(
+			LegacyPackedPointAdapter.fromLegacyPoint(packedPoint));
+	}
+
+	/**
+	 * Compares one logical tile with its current direct packed source when one
+	 * exists. Unsupported and unloaded sources remain explicit.
+	 */
+	public LayeredTileStateParityComparison compareLayeredTileState(
+		final WorldLocation logicalLocation) {
+		WorldRegionKey key = WorldRegionKey.from(logicalLocation);
+		LayeredRegionTileSnapshot snapshot = getLayeredRegionTileSnapshot(key);
+		LegacyLogicalTileAddress address = LegacyLogicalTileAddress.resolve(
+			key,
+			logicalLocation.getCoordinate().getLocalX(),
+			logicalLocation.getCoordinate().getLocalY());
+		Region directRegion = address.isLegacyRepresentable()
+			? peekRegionFromSectorCoordinates(
+				address.getPackedRegionX(), address.getPackedRegionY())
+			: null;
+		TileValue directTile = directRegion == null ? null
+			: directRegion.getTileValue(
+				address.getPackedLocalX(), address.getPackedLocalY());
+		return LayeredTileStateParityComparison.compare(
+			logicalLocation, snapshot, directRegion != null, directTile);
 	}
 
 	private Region peekRegionFromSectorCoordinates(
