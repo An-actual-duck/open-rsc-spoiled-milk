@@ -29,7 +29,9 @@
  * fragments into complete, partial, or unsupported legacy assembly plans for
  * one logical key without copying runtime tiles. Slice 24 resolves an exact
  * packed source cell and local index for one logical region-local tile without
- * reading a runtime TileValue.
+ * reading a runtime TileValue. Slice 25 permits RegionManager to copy those
+ * values into a detached logical tile snapshot while packed collision and
+ * storage stay authoritative.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

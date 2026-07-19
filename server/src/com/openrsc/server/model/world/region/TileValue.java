@@ -55,6 +55,11 @@ public class TileValue {
 	public void addBlockingScenery(){blockingSceneryCount++;refreshFullBlock();}
 	public void removeBlockingScenery(){if(blockingSceneryCount>0)blockingSceneryCount--;refreshFullBlock();}
 	public int getBlockingSceneryCount(){return blockingSceneryCount;}
+	public int getTerrainCollisionMask(){return terrainCollisionMask;}
+	public int[] getDynamicCollisionCounts(){return Arrays.copyOf(dynamicCollisionCounts,dynamicCollisionCounts.length);}
+	public boolean isTerrainOverlayProjectileBlocked(){return terrainOverlayProjectileBlocked;}
+	public int getTerrainWallProjectileCount(){return terrainWallProjectileCount;}
+	public int getDynamicProjectileCount(){return dynamicProjectileCount;}
 	public void setTerrainOverlayProjectileBlocked(boolean blocked){terrainOverlayProjectileBlocked=blocked;refreshProjectile();}
 	public void addTerrainWallProjectileBlock(){terrainWallProjectileCount++;refreshProjectile();}
 	public void removeTerrainWallProjectileBlock(){if(terrainWallProjectileCount>0)terrainWallProjectileCount--;refreshProjectile();}

@@ -1,15 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-24 implemented and validated on
+Status: architecture design complete; Slices 1-25 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 24 logical-tile packed-source addressing checkpoint;
-packed region lookup and caches remain authoritative and no client streaming or
-world conversion has begun
+Current milestone: Slice 25 detached logical-region tile snapshot complete;
+packed region lookup and collision remain authoritative and no client streaming
+or world conversion has begun
 
 ## Purpose
 
@@ -3233,6 +3233,89 @@ Automated validation evidence:
 No owner runtime route is required because neither gameplay nor private
 diagnostics consumes the address.
 
+### Slice 25: Detached logical-region tile snapshots
+
+Objective: make the first read-only runtime tile seam by copying current packed
+`TileValue`s into one detached logical 48×48 snapshot through Slice 23/24
+addressing, without making the copy authoritative.
+
+Selected boundary:
+
+- copy every legacy-supported tile value; never expose an internal mutable
+  snapshot tile and never write back to the packed source;
+- leave unsupported logical tiles absent, while representing an absent packed
+  source Region with the exact blank `TileValue` the current lazy region path
+  would create and reporting the missing source count;
+- record source, supported, and target counts plus a deterministic SHA-256 over
+  support markers and complete tile state; and
+- expose an explicit read-only RegionManager method without caching the
+  snapshot or routing collision, pathing, visibility, terrain, packets, or
+  entities through it.
+
+Implemented:
+
+- `LayeredRegionTileSnapshot`, which assembles one logical 48×48 target from
+  Slice 23 fragments and copies every supported `TileValue` into private
+  detached storage;
+- complete copying and hashing of the public terrain values plus private
+  terrain/dynamic collision and projectile state, with defensive copies for
+  mutable count arrays and every returned tile;
+- explicit complete, terminal-partial, unsupported, and absent-packed-source
+  behavior, including exact blank legacy tile values and missing-source
+  reporting without creating a Region; and
+- `RegionManager.getLayeredRegionTileSnapshot(...)`, backed by a non-mutating
+  packed-region peek and deliberately unused by Player or any gameplay path.
+
+Focused findings:
+
+- logical level `+1` region `(4,0)` copies all 2,304 tiles from packed cells
+  `(4,19)` and `(4,20)`, including the exact seam at logical local Y `15/16`;
+- changing a returned `TileValue` cannot alter the snapshot or a later return,
+  identical inputs produce an identical SHA-256, and changed full-fidelity tile
+  state changes the fingerprint;
+- when packed cell `(4,20)` is absent, the snapshot reports one missing source
+  and represents that cell's 1,536 supported tiles with the current blank
+  `TileValue` defaults rather than mutating RegionManager to create it;
+- terminal logical region `(-1,682,19)` copies exactly 1,024 supported tiles
+  and leaves 1,280 unsupported positions absent; and
+- logical level `-2` remains explicitly unsupported by the legacy adapter,
+  with no packed source lookup or tile read.
+
+Safety boundary:
+
+- packed Regions and `TileValue`s remain collision, pathing, visibility,
+  terrain, packet, entity, and persistence authority;
+- snapshots are uncached and cannot write back to packed storage;
+- preflight recognizes the exact reviewed snapshot seam as resolved layered
+  contract code, while the unresolved legacy Java-owner inventory remains 211;
+  and
+- no database, map, placement, archive, client, Builder project, public server,
+  or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-twenty-five.py` — 2 tests
+  passed;
+- Slice 1 through Slice 25 regressions all pass (64 tests), including exact
+  resolved-contract and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 737 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged world
+  content and 211 unresolved owners. The expected fingerprints are source
+  `105a7538f52637385f25d241ae40a9e68c2d646a3a57bf40ef33a3954a2702d8`,
+  inventory
+  `7d3a71393321633a4d022b189b6dfe505090155b313b6def51b7fd57b745eff2`,
+  classification
+  `58cc12072cd73665066bfbf0e1994b93f90719246425e50022694a31ee4a6901`,
+  and occurrence
+  `60b2e4e975e11528c755e4c0127f6094b0b9fff2cdc5c07cd6471e535913bc7d`.
+
+No owner runtime route is required because neither gameplay nor private
+diagnostics consumes the snapshot. A later separately versioned private
+diagnostic fingerprint remains the first proposed owner runtime consumer.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -3343,11 +3426,12 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 22 by partitioning one packed region cell into exact contiguous logical tile fragments while retaining packed Region and tile storage. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 23 by inverting packed fragments into complete, partial, or unsupported logical-region legacy assembly plans without copying tiles. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 24 by resolving logical region-local tiles to checked packed source cells and local indices without reading runtime tiles. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 25 by copying packed TileValues into detached logical-region snapshots while retaining packed collision and tile authority. | Implemented and validated |
 
 ## Next Discussion
 
-Use Slice 24 to define a detached, read-only logical tile snapshot copied from
-current packed Region tile values as the next reversible parity seam. The
-snapshot must not become collision, pathing, visibility, or terrain authority.
-A new database schema, authoritative region storage, client/protocol adoption,
-Builder, export, relocation, and level `-2` remain separately gated.
+Proceed, as a separately versioned Slice 26, with bounded snapshot metadata and
+a fingerprint in private diagnostics so the owner can exercise the first
+runtime tile seam without transferring authority. A new database schema,
+authoritative region storage, client/protocol adoption, Builder, export,
+relocation, and level `-2` remain separately gated.

@@ -48,6 +48,8 @@ final class RepositoryPreflight {
 		"Client_Base/src",
 		"tools/world-builder/src"
 	};
+	private static final String LAYERED_REGION_TILE_SNAPSHOT =
+		"server/src/com/openrsc/server/model/world/region/LayeredRegionTileSnapshot.java";
 
 	private static final Map<String, List<String>> JAVA_SIGNALS = javaSignals();
 
@@ -263,6 +265,7 @@ final class RepositoryPreflight {
 						.toString().replace('\\', '/');
 					String role = relative.startsWith(
 						"server/src/com/openrsc/server/model/world/coordinate/")
+						|| LAYERED_REGION_TILE_SNAPSHOT.equals(relative)
 						? "server-layered-coordinate-contract"
 						: sourceRoot.startsWith("Client_Base")
 							? "client-coordinate-source"

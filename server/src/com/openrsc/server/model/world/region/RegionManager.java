@@ -538,6 +538,44 @@ public class RegionManager {
 	}
 
 	/**
+	 * Copies one logical region's supported packed tile values into a detached
+	 * read-only snapshot. Current packed Regions remain authoritative.
+	 */
+	public LayeredRegionTileSnapshot getLayeredRegionTileSnapshot(
+		final WorldRegionKey logicalRegionKey) {
+		return LayeredRegionTileSnapshot.capture(
+			logicalRegionKey,
+			new LayeredRegionTileSnapshot.PackedTileSource() {
+				@Override
+				public boolean hasPackedRegion(
+					final int packedRegionX,
+					final int packedRegionY) {
+					return peekRegionFromSectorCoordinates(
+						packedRegionX, packedRegionY) != null;
+				}
+
+				@Override
+				public TileValue readPackedTile(
+					final int packedRegionX,
+					final int packedRegionY,
+					final int packedLocalX,
+					final int packedLocalY) {
+					Region region = peekRegionFromSectorCoordinates(
+						packedRegionX, packedRegionY);
+					return region == null ? null
+						: region.getTileValue(packedLocalX, packedLocalY);
+				}
+			});
+	}
+
+	private Region peekRegionFromSectorCoordinates(
+		final int packedRegionX,
+		final int packedRegionY) {
+		ConcurrentHashMap<Integer, Region> yRegions = regions.get(packedRegionX);
+		return yRegions == null ? null : yRegions.get(packedRegionY);
+	}
+
+	/**
 	 * Compares packed candidate-region coverage to one logical interest window.
 	 *
 	 * <p>This is projection-only and does not consult packed maps or caches.</p>
