@@ -1,15 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-40 validated and Slice 41
-implemented pending private owner validation on the active refinement branch
+Status: architecture design complete; Slices 1-41 validated on the active
+refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 41 exposes the checked Player-session interest shadow
-through bounded v11 private diagnostics while packed Region lookup, eager
-loading, release, eviction, pathing, packets, and persistence remain
+Current milestone: Slice 41 owner-validates the checked Player-session interest
+shadow through bounded v11 private diagnostics while packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
 authoritative and unchanged
 
 ## Purpose
@@ -4689,7 +4689,7 @@ Automated validation evidence:
   and occurrence
   `4e533d8513ed06ee84a5fcb15110054c97f87abb92bf2aa8592ee7c9e2a53d4f`;
   and
-- the private runtime route remains pending owner validation.
+- the private runtime route is owner-validated as detailed below.
 
 The private acceptance route should keep one trace active through ordinary
 movement, one logical-window crossing, surface-to-underground travel,
@@ -4700,6 +4700,33 @@ global/shared counts only at real ownership boundaries; and report no packed,
 tile, neighborhood, collision, traversal, or residency parity failure. A
 compiled two-owner fixture supplies deterministic overlap coverage when a
 second private human client is unavailable.
+
+Owner validation evidence (2026-07-19):
+
+- the accepted focused reconnect trace contains 12 contiguous, schema-valid
+  v11 events: start, three teleports, three markers, logout, login, two ordinary
+  moves, and stop;
+- markers occur at `before-logout` underground, `reconnect-underground`, and
+  `surface-return`, with the expected level sequence `0 -> -1 -> 0`;
+- owner sequence 1 remains stable through the first session, then logout closes
+  it at ledger version 14 with zero open owners, zero owned Regions, 36 exits,
+  and 36 global releases;
+- reconnect opens distinct owner sequence 2 at ledger version 16 with one open
+  owner, 36 owned Regions, 36 entries, and 36 global acquisitions; the following
+  reconnect marker successfully reads owner 2, proving the surviving trace was
+  rebound to the newly constructed Player;
+- the surface return advances owner 2 to ledger version 17 with exact 36-entry
+  and 36-exit transitions, and every observed reference count remains one in
+  this single-player route; deterministic compiled overlap coverage separately
+  proves shared acquisition and release counts greater than one;
+- Region residency mirror version 1,842 remains stable, all sampled windows
+  contain 36 resident Regions, and partial, missing, unsupported, and load
+  candidate counts remain zero; and
+- sequence continuity, packed/layered round trips, packed coverage, current
+  tiles, 3x3 neighborhoods, adjacent collision decisions, residency, and
+  ownership aggregate/transition invariants report zero failures. The owner
+  observed no visual or functional issues in the longer movement route or the
+  focused reconnect route.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -4827,15 +4854,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 38 by emitting bounded interest/residency evidence through opt-in private v10 diagnostics without adopting Region loading or eviction. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 39 by defining process-local global interest ownership and shared-reference semantics without runtime adoption. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 40 by maintaining one checked opaque logical-interest owner per Player session without adopting loading, release, or eviction. | Implemented and validated |
-| 2026-07-19 | Continue with Slice 41 by emitting bounded Player interest-owner and global/shared reference transitions through opt-in private v11 diagnostics without adopting loading, retention, release, or eviction. | Implemented; automated validation and private owner acceptance pending |
+| 2026-07-19 | Continue with Slice 41 by emitting bounded Player interest-owner and global/shared reference transitions through opt-in private v11 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Validate the additive v11 owner/reference evidence across movement, teleport,
-level change, logout, reconnect, and return on a private server. After owner
-acceptance, define the first explicit residency pin/cooldown policy as a
-non-authoritative projection and decide whether multi-owner private runtime
-coverage is required before any dormant eviction-eligibility experiment. A new
-database schema, authoritative region storage, actual loading/eviction,
-collision/pathing adoption, client protocol adoption, Builder, export,
-relocation, and level `-2` remain separately gated.
+Define the first explicit residency pin/cooldown policy as a non-authoritative
+projection and decide whether multi-owner private runtime coverage is required
+before any dormant eviction-eligibility experiment. A new database schema,
+authoritative region storage, actual loading/eviction, collision/pathing
+adoption, client protocol adoption, Builder, export, relocation, and level `-2`
+remain separately gated.
