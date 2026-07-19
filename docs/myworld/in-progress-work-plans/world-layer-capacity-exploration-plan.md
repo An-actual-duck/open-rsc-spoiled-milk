@@ -1,16 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-20 implemented and validated;
-Slice 21 implemented and automated-validated with private owner validation
-pending on the active refinement branch
+Status: architecture design complete; Slices 1-21 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 21 private packed/logical coverage diagnostics; packed
-region lookup and caches remain authoritative and no client streaming or world
-conversion has begun
+Current milestone: Slice 21 private packed/logical coverage diagnostics owner-
+acceptance checkpoint; packed region lookup and caches remain authoritative and
+no client streaming or world conversion has begun
 
 ## Purpose
 
@@ -2977,9 +2976,32 @@ Automated validation evidence:
 - two real-repository normalizations were byte-stable with unchanged Slice 20
   content counts and fingerprints.
 
-Owner runtime validation remains pending. The route should sample an aligned
-surface window, an aligned underground window, a representative upper-floor
-window, and one level boundary on the private server.
+Owner runtime acceptance is complete:
+
+- one 13-event v4 trace was sequential from start through stop; every packed
+  point round-tripped exactly and every expected/missing/extra count matched its
+  emitted array and logical-window count;
+- aligned underground packed `(216,3300)` and aligned surface packed
+  `(223,620)` each reported exact 42-key coverage, including after returning
+  from the probes;
+- upper-floor packed `(223,1564)` reported 42 expected keys, 56 covered keys,
+  zero missing, and the predicted 14 same-level extras at logical Y `9` and
+  `16` across seven X columns;
+- boundary packed `(223,944)` reported 42 expected keys, 49 covered keys, the
+  predicted 21 missing level-1 local-Y `-3..-1` keys, and 28 extras comprising
+  prior-level Y `17..19` plus level-1 Y `3` across seven X columns;
+- all sampled packed cells were inside the checked legacy codec, so unsupported
+  packed-cell count remained zero; and
+- the owner observed normal behavior at authored surface and underground
+  locations. The upper-floor and exact boundary probes appeared out of bounds,
+  which is expected because these mathematical samples are not authored
+  destinations; no loading, movement, collision, or return-path defect was
+  observed.
+
+Only the private development server and disposable dev account were involved.
+No public/live server, database schema, map, placement, archive, or player data
+was accessed or changed by this validation beyond the dev account's normal
+location update.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -3087,11 +3109,11 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 18 by emitting bounded logical interest deltas only through versioned private diagnostics while retaining all current interest and residency authorities. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 19 by projecting every logical key overlapped by one legacy packed region cell while retaining packed storage, caches, and lookup. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 20 by comparing one current packed visibility candidate window with its signed logical window while retaining all runtime lookup and visibility authority. | Implemented and validated |
-| 2026-07-18 | Continue with Slice 21 by emitting bounded packed/logical coverage evidence only through versioned private diagnostics while retaining all current interest and residency authorities. | In progress |
+| 2026-07-18 | Continue with Slice 21 by emitting bounded packed/logical coverage evidence only through versioned private diagnostics while retaining all current interest and residency authorities. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Complete Slice 21's code/schema gates and private owner route, then use the
-captured evidence to choose the next reversible parity seam. A new database
+Use the accepted Slice 21 evidence to define exact packed-cell-to-logical-region
+tile partitions as the next dormant, reversible parity seam. A new database
 schema, authoritative region storage, client/protocol adoption, Builder,
 export, relocation, and level `-2` remain separately gated.
