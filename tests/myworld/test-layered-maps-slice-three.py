@@ -268,6 +268,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "LegacyTerrainSectorAdapter.java",
                 "LayeredCoordinateParitySnapshot.java",
                 "LayeredLocationMirror.java",
+                "LayeredRegionInterestOwnershipLedger.java",
                 "LayeredRegionInterestResidencyComparison.java",
                 "LayeredRegionMembershipMirror.java",
                 "LayeredRegionResidencyMirror.java",

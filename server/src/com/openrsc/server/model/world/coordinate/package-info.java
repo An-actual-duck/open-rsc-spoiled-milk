@@ -46,7 +46,11 @@
  * private diagnostics. Slice 34 composes the same dormant decision across an
  * already expanded, bounded adjacent-step route without selecting or executing
  * a path. Slice 35 exposes only the latest bounded observed walking segment
- * through opt-in private diagnostics. Packed storage and existing runtime
- * decisions remain authoritative.</p>
+ * through opt-in private diagnostics. Slice 36 mirrors packed Region lifecycle
+ * as checked logical residency, Slice 37 compares that residency with dormant
+ * interest deltas, and Slice 38 emits bounded comparison evidence only through
+ * private diagnostics. Slice 39 defines opaque process-local interest owners
+ * and shared logical-region reference counts without runtime adoption. Packed
+ * storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

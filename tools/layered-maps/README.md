@@ -237,6 +237,13 @@ bounds on another level retain no keys. This value remains dormant: Player,
 RegionManager lookup/caches, packets, terrain, and client residency do not
 consume it.
 
+`LayeredRegionInterestOwnershipLedger` further defines the future global
+reference rule without adopting it. It allocates opaque, ledger-bound,
+process-local owner handles and atomically replaces each owner's complete
+logical window. Per-key before/after counts distinguish a local exit that is
+still shared from the final `1 -> 0` global release. The ledger is not held by
+RegionManager or Player and cannot load, retain, release, or evict a Region.
+
 `LegacyPackedRegionCoverage` describes every logical key touched by one current
 packed 48-tile region cell. It distinguishes the nominal packed cell from the
 portion accepted by the legacy point codec, so terminal partial cells and the
