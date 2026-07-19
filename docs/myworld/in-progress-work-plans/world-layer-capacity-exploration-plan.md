@@ -1,17 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-43 implemented and validated,
-with the Slice 44 concurrent-owner private-runtime gate prepared on the active
-refinement branch
+Status: architecture design complete; Slices 1-44 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 44 will validate the dormant Region retirement
-projection with two simultaneous real Player owners before any source-level
-retirement arbiter is considered; packed Region lookup, eager loading, release,
-eviction, pathing, packets, and persistence remain authoritative and unchanged
+Current milestone: Slice 44 has owner-validated the dormant Region retirement
+projection with two simultaneous real Player owners; packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
+authoritative and unchanged
 
 ## Purpose
 
@@ -4986,7 +4985,43 @@ Safety and operation:
 - if the two spawn windows are not truly identical, analyze exact overlapping
   keys rather than treating aggregate minimum/maximum values as proof.
 
-Status: prepared; owner validation pending.
+Owner validation evidence:
+
+- the isolated trace contains 10 consecutive, schema-valid v12 records at the
+  expected Lumbridge `(120,648)` and Varrock `(122,509)` destinations; every
+  coordinate round trip is exact;
+- `single-owner` reported one open owner and all 49 current Regions at reference
+  count one. After the real secondary account logged into the identical
+  Lumbridge spawn, `shared-two` reported two open owners and all 49 Regions at
+  reference count two;
+- the server log independently records the secondary account's normal login at
+  `(120,648)` and normal player-requested logout through save, channel close,
+  world unregistration, and PlayerSaveRequest removal;
+- `shared-release` then reported one open owner and all 49 Regions back at
+  reference count one. It produced no global-release transition and the
+  retirement observer remained empty, proving the partial release did not
+  begin cooldown;
+- the primary move from Lumbridge to Varrock retained 28 Regions, globally
+  released 21, and globally acquired 21 with zero shared-release transitions.
+  Exactly 18 resident supported releases entered the 16-tick cooldown and the
+  three unsupported releases remained conservatively `UNSUPPORTED`;
+- the release event captured tick 1990 and eligibility tick 2006 exactly. Both
+  `final-release` at tick 2008 and the later `final-expired` marker reported all
+  18 supported candidates `RETIREMENT_ELIGIBLE`;
+- the return to Lumbridge globally reacquired 21 Regions and emitted all 21 as
+  `PINNED` with positive references and null release/eligibility timestamps.
+  The owner named the following marker `acquired` rather than `reacquired`, but
+  its `(120,648)` destination and state make the intended evidence unambiguous;
+- candidate overflow remained zero; every retirement aggregate equals its
+  entry-derived count, transition/tracked flags match, ownership versions are
+  same-snapshot, and pinned, cooling, and eligible state arithmetic all pass;
+- all 100 layered-map tests across 43 focused files pass, and both private
+  client launches compiled successfully; and
+- no error occurred during the accepted runtime gate, the owner completed it
+  without noting a visual or functional problem, and the hosted server was not
+  involved.
+
+Status: implemented and owner-validated.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -5117,13 +5152,15 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 41 by emitting bounded Player interest-owner and global/shared reference transitions through opt-in private v11 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 42 by projecting global interest releases through a conservative 16-tick retirement cooldown without adopting loading, retention, release, or eviction. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 43 by exposing bounded transition and recent-release cooldown evidence through opt-in private v12 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
-| 2026-07-19 | Continue with Slice 44 as a two-real-client private-runtime gate proving shared acquisition, partial release, final global release, cooldown, expiry, and reacquisition before considering a retirement arbiter. | Prepared; owner validation pending |
+| 2026-07-19 | Continue with Slice 44 as a two-real-client private-runtime gate proving shared acquisition, partial release, final global release, cooldown, expiry, and reacquisition before considering a retirement arbiter. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Complete the prepared Slice 44 two-client private-runtime gate and analyze its
-v12 trace. That gate must pass before any source-level retirement arbiter can
-consume eligibility.
+The next bounded slice may introduce a source-level Region retirement decision
+arbiter that consumes Slice 42 eligibility only after atomically rechecking
+references, residency, version, and cooldown. Its decisions must remain
+idempotent, bounded, and dormant evidence: it must not unregister, unload, or
+evict packed Regions yet.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.
