@@ -1,16 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-30 validated and Slice 31
-automated validation complete/owner runtime validation pending on the active
-refinement branch
+Status: architecture design complete; Slices 1-31 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 31 bounded private 3×3 tile-neighborhood diagnostics;
-packed region lookup and collision remain authoritative and no client streaming
-or world conversion has begun
+Current milestone: Slice 31 bounded private 3×3 tile-neighborhood diagnostics
+owner-validated; packed region lookup and collision remain authoritative and no
+client streaming or world conversion has begun
 
 ## Purpose
 
@@ -3844,7 +3843,28 @@ Automated validation evidence:
   and occurrence
   `8f40b8d89ff28ded57c4ac6495ef50839b77fe01975a2855e1f8d94e5a1cc185`.
 
-Owner runtime validation is pending on the private development server.
+Owner runtime acceptance completed on 2026-07-19 from checkpoint
+`0d43cbd4107cd65ab72cdd3710a648493939e10b`:
+
+- the private route produced 73 consecutive schema-valid v7 events from start
+  through stop: 40 moves, 23 teleports, eight markers, one start, and one stop;
+- all 33 eligible start/marker/teleport/stop records carried a neighborhood,
+  while every move carried null, exactly matching the bounded sampling policy;
+- markers on the two sides of the 48-tile Y boundary—logical `(274,623,0)` at
+  region/local `(5,12)/(34,47)` and `(274,624,0)` at
+  `(5,13)/(34,0)`—each compared all nine cells exactly;
+- upper-floor `(276,625,+1)`, returned surface `(276,625,0)`, underground
+  `(274,565,-1)`, and returned surface `(274,565,0)` markers each compared all
+  nine cells exactly;
+- the distant route ended at logical `(110,510,0)` after 23 observed teleports
+  with a complete exact neighborhood and exact packed/layered round trip;
+- one intermediate teleport to logical origin `(0,0,0)` correctly reported
+  four representable/present/comparable/exact cells and five unsupported
+  negative-coordinate neighbors, rather than misclassifying them as missing
+  sources or falsely claiming complete parity; and
+- the owner reported no visual, loading, collision, or interaction issues.
+
+Slice 31 is owner-validated. Packed Regions and collision remain authoritative.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -3962,12 +3982,15 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 28 by comparing one direct packed immutable tile state with its assembled logical-snapshot state without adopting either for gameplay. | Implemented and validated |
 | 2026-07-18 | Continue with Slice 29 by emitting bounded current-tile packed/logical parity metadata through additive private v6 diagnostics. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 30 by comparing a checked 3×3 logical tile neighborhood with its current direct packed sources without collision or pathing adoption. | Implemented and validated |
-| 2026-07-19 | Continue with Slice 31 by emitting bounded 3×3 neighborhood counts through additive private v7 diagnostics without tile payloads or gameplay adoption. | Automated validation complete; owner runtime validation pending |
+| 2026-07-19 | Continue with Slice 31 by emitting bounded 3×3 neighborhood counts through additive private v7 diagnostics without tile payloads or gameplay adoption. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Run the Slice 31 owner route only on the private development server and inspect
-the resulting v7 neighborhood summaries across ordinary travel, vertical
-transitions, and teleport loading. A new database schema, authoritative region
-storage, actual collision/pathing adoption, client/protocol adoption, Builder,
-export, relocation, and level `-2` remain separately gated.
+Slice 31 is owner-validated. The recommended next discussion is a separately
+gated Slice 32 dormant adjacent-step collision projection: use the proven 3×3
+immutable neighborhood to describe one orthogonal or diagonal step and compare
+that prospective logical result with the existing packed collision decision,
+without allowing the new projection to move a Player or alter pathfinding. A
+new database schema, authoritative region storage, actual collision/pathing
+adoption, client/protocol adoption, Builder, export, relocation, and level
+`-2` remain separately gated.
