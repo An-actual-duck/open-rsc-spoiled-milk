@@ -187,3 +187,17 @@ No column or SQL statement changes; no row is migrated; signed X, level `-2`,
 and non-global world spaces remain deliberately unrepresentable. A later
 versioned/additive persistence slice is still required before those capabilities
 can become authoritative.
+
+## Logical visibility-window projection
+
+`WorldRegionWindow` defines inclusive logical-region bounds in one world space
+and on one signed level. `RegionManager.getLayeredVisibleRegionWindow(...)`
+projects the current view-distance units into that value with signed floor
+division and checked arithmetic. Logical region size is declared separately on
+`WorldRegionKey`, even though both logical regions and legacy terrain sectors
+remain 48 tiles during parity migration.
+
+This projection does not query or populate `RegionManager.regions`, use a
+visibility cache, enumerate entities, alter the current packed visibility
+window, or participate in Player/client streaming. It is the read-only contract
+needed before a later shadow can compare interest/residency behavior safely.

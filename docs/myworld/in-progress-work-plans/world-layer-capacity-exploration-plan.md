@@ -1,15 +1,15 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-14 implemented and validated on
+Status: architecture design complete; Slices 1-15 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 14 checked legacy Player persistence shadow accepted;
-packed database X/Y remain authoritative and no schema or world conversion has
-begun
+Current milestone: Slice 15 logical visibility-window projection checkpoint;
+packed region lookup and caches remain authoritative and no client streaming or
+world conversion has begun
 
 ## Purpose
 
@@ -2450,6 +2450,71 @@ The private test changed only the normal saved location of the disposable dev
 account through the existing logout save. It did not migrate a schema or row,
 and no public/live data was accessed.
 
+### Slice 15: Logical visibility-window projection
+
+Objective: define the first incremental-streaming foundation value while
+leaving the current packed simulation, entity-interest, cache, and client
+window paths untouched.
+
+Selected boundary:
+
+- keep the configured `view_distance` semantics, where one unit expands to
+  eight tiles, so the projection can be compared to current behavior;
+- declare logical region size independently on `WorldRegionKey` rather than
+  deriving it from terrain-sector identity. Both remain 48 tiles during
+  parity, but one module can change later without silently redefining the
+  other;
+- use inclusive min/max logical-region bounds qualified by world space and
+  signed level; and
+- project only. Do not enumerate regions/entities, fill a cache, attach the
+  window to Player, or send it to the client in this slice.
+
+Implemented:
+
+- immutable `WorldRegionWindow` with checked construction, signed floor-divided
+  `around(...)` projection, containment, deterministic equality/hash/string,
+  and overflow-safe region counts;
+- a separate `WorldRegionKey.REGION_SIZE` contract replacing its incidental
+  dependency on terrain-sector accessors; and
+- default and explicit-distance
+  `RegionManager.getLayeredVisibleRegionWindow(...)` projections using checked
+  conversion from the existing eight-tile view-distance units.
+
+Safety boundary:
+
+- `RegionManager.regions`, current `Point` window calculation, visible-region
+  and visible-object caches, entity enumeration, collision, and packets remain
+  unchanged;
+- no `WorldRegionWindow` cache or authoritative lookup exists;
+- Player, NPC, client, renderer, persistence, terrain, and Builder do not
+  consume the new value; and
+- no database, map, placement, archive, public server, or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-fifteen.py` — 2 tests passed;
+- fixtures covered current view-distance bounds, inclusive containment, signed
+  floor division, level and world-space isolation, deep level `-2`, equality,
+  nulls, inverted bounds, arithmetic overflow, and region-count overflow;
+- Slice 1 through Slice 15 regressions all pass (44 tests), including the exact
+  resolved-contract and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 729 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged content
+  counts. The expected fingerprints are source
+  `72ea1e919715af18d63e4fdecdb9ae03b9e739360877a7b319e5af842cd5b45b`,
+  inventory
+  `250d623d536c2d943ae1cf41334e7fe029fa471a66380b5d64d511c718e9c985`,
+  classification
+  `909403149731c73741a813bed03cddb98d3166c8e2e68ddfea8b2c839d6f262c`,
+  and occurrence
+  `546732da2a27273ab56a0a8a0c1d5a9242fa9f83ced3df4d785292870357c414`.
+
+No owner runtime route is required because no runtime state, lookup, cache, or
+client consumes the projection in this slice.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2550,12 +2615,13 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 12 by maintaining a checked read-only layered mirror on Player initialization, movement, and session transitions while inherited packed Point remains the sole gameplay authority. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 13 by maintaining checked world-space/level-qualified Player region membership alongside the accepted location mirror while packed RegionManager storage remains authoritative. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 14 by projecting each loaded/saved legacy Player location through a checked immutable layered persistence snapshot while retaining the exact X/Y database contract. | Implemented and owner-validated |
+| 2026-07-18 | Continue with Slice 15 by defining a level-qualified logical visibility window and read-only RegionManager projection while retaining packed lookup, caches, and client behavior. | Implemented and validated |
 
 ## Next Discussion
 
-Choose the first reversible incremental-streaming foundation now that the
-unchanged legacy persistence path has passed its parity gate. A logical,
-level-qualified visibility-window shadow is the leading candidate because it
-can model future interest/residency without querying or replacing packed region
-storage. A new database schema, authoritative region storage, client/protocol
-adoption, Builder, export, relocation, and level `-2` remain separately gated.
+Continue with a checked Player logical-window shadow and private diagnostic
+fields as the next reversible gate. Combining synchronization with stable trace
+evidence makes the first streaming-ownership seam owner-testable while packed
+lookup and caches remain authoritative. A new database schema, authoritative
+region storage, client/protocol adoption, Builder, export, relocation, and
+level `-2` remain separately gated.

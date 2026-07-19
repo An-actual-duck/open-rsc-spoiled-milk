@@ -6,6 +6,8 @@ import java.util.Objects;
 
 /** Immutable world-space, level, and 48-tile region identity. */
 public final class WorldRegionKey {
+	public static final int REGION_SIZE = 48;
+
 	private final WorldSpaceId worldSpace;
 	private final int level;
 	private final int regionX;
@@ -24,8 +26,8 @@ public final class WorldRegionKey {
 		return new WorldRegionKey(
 			location.getWorldSpace(),
 			coordinate.getLevel(),
-			coordinate.getSectorX(),
-			coordinate.getSectorY());
+			Math.floorDiv(coordinate.getX(), REGION_SIZE),
+			Math.floorDiv(coordinate.getY(), REGION_SIZE));
 	}
 
 	public static WorldRegionKey fromLegacyPoint(Point point) {

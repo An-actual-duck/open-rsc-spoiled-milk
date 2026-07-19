@@ -264,6 +264,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "WorldMapSectorId.java",
                 "WorldObjectTransition.java",
                 "WorldRegionKey.java",
+                "WorldRegionWindow.java",
                 "WorldSpaceId.java",
                 "WorldTileBounds.java",
                 "package-info.java",
@@ -305,6 +306,8 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 [
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedPointAdapter.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyPlayerLocationPersistenceSnapshot.java",
+                    "server/src/com/openrsc/server/model/world/coordinate/WorldRegionKey.java",
+                    "server/src/com/openrsc/server/model/world/coordinate/WorldRegionWindow.java",
                 ],
                 sorted(contract["path"] for contract in contracts),
             )

@@ -11,6 +11,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
+import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -482,6 +483,27 @@ public class RegionManager {
 	 */
 	public WorldRegionKey getLayeredRegionKey(final WorldLocation location) {
 		return WorldRegionKey.from(location);
+	}
+
+	/**
+	 * Projects the configured visibility bounds without consulting packed region
+	 * storage or its caches.
+	 */
+	public WorldRegionWindow getLayeredVisibleRegionWindow(final WorldLocation location) {
+		return getLayeredVisibleRegionWindow(
+			location, getWorld().getServer().getConfig().VIEW_DISTANCE);
+	}
+
+	/**
+	 * Projects legacy view-distance units into one level-qualified logical window.
+	 */
+	public WorldRegionWindow getLayeredVisibleRegionWindow(
+		final WorldLocation location,
+		final int gridDistance) {
+		if (gridDistance < 0) {
+			throw new IllegalArgumentException("Grid distance must not be negative");
+		}
+		return WorldRegionWindow.around(location, Math.multiplyExact(gridDistance, 8));
 	}
 
 	/**
