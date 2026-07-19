@@ -293,8 +293,27 @@ public final class LayeredCoordinateParityObserverFixture {
             playerId, usernameHash, Point.location(101, 2832));
         LayeredCoordinateParityObserver.onSession(
             playerId, usernameHash, Point.location(101, 2832), false);
+        WorldRegionWindow reconnectWindow = LayeredCoordinateParitySnapshot.capture(
+            Point.location(101, 2832), 2).getVisibilityWindow();
+        LayeredRegionInterestOwnershipLedger.OpenedOwner reconnectOwner =
+            ownershipLedger.openOwner(reconnectWindow, 4096);
+        int[] reconnectOwnershipCaptures = {0};
+        LayeredCoordinateParityObserver.InterestOwnershipSource reconnectOwnership =
+            (currentWindow, maximumRegionsPerWindow) -> {
+                reconnectOwnershipCaptures[0]++;
+                LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot =
+                    ownershipLedger.snapshotOwner(reconnectOwner.getOwnerToken());
+                snapshot.requireWindow(currentWindow);
+                check(snapshot.getReferences().size() <= maximumRegionsPerWindow,
+                    "reconnected ownership budget");
+                return LayeredCoordinateParityObserver.InterestOwnershipMetadata
+                    .fromOwnerSnapshot(snapshot);
+            };
         LayeredCoordinateParityObserver.onSession(
-            playerId, usernameHash, Point.location(101, 2832), true);
+            playerId, usernameHash, Point.location(101, 2832), true, null,
+            reconnectOwnership);
+        check(reconnectOwnershipCaptures[0] == 1,
+            "reconnect replaces the current-owner reader before the login event");
         expectIllegal(() -> LayeredCoordinateParityObserver.mark(
             playerId, usernameHash, Point.location(101, 2832), "unsafe label"));
 

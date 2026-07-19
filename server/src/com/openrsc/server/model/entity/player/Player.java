@@ -3236,6 +3236,26 @@ public final class Player extends Mob {
 		}
 	}
 
+	private LayeredCoordinateParityObserver.InterestOwnershipSource
+		layeredInterestOwnershipSource() {
+		return new LayeredCoordinateParityObserver.InterestOwnershipSource() {
+			@Override
+			public LayeredCoordinateParityObserver.InterestOwnershipMetadata capture(
+				final WorldRegionWindow currentWindow,
+				final int maximumRegionsPerWindow) {
+				LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot =
+					getLayeredInterestOwnerSnapshot();
+				snapshot.requireWindow(currentWindow);
+				if (snapshot.getReferences().size() > maximumRegionsPerWindow) {
+					throw new IllegalArgumentException(
+						"Interest owner exceeds the diagnostic Region budget");
+				}
+				return LayeredCoordinateParityObserver.InterestOwnershipMetadata
+					.fromOwnerSnapshot(snapshot);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3341,7 +3361,8 @@ public final class Player extends Mob {
 		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
 			LayeredCoordinateParityObserver.onSession(
 				getDatabaseID(), getUsernameHash(), getLocation(), loggedIn,
-				ownershipChange);
+				ownershipChange,
+				loggedIn ? layeredInterestOwnershipSource() : null);
 		}
 	}
 

@@ -4646,6 +4646,9 @@ Implemented:
 - owner snapshots with same-version per-key global reference counts;
 - Player propagation of the exact open, window-change, and final-close result
   into the existing observer hooks;
+- atomic replacement of the trace's current-owner reader on reconnect, before
+  the login record is written, so a surviving trace never queries the closed
+  pre-logout Player object;
 - a checked private command source for non-transition current-owner snapshots;
   and
 - the retained v10 schema plus an additive, closed, bounded v11 schema and
@@ -4678,11 +4681,11 @@ Automated validation evidence:
 - two real-repository normalizations are byte-stable with unchanged world
   content, 211 classified source owners, and one unresolved normalized
   coordinate. The expected fingerprints are source
-  `e62162e795b045c35d2c0bc3420cb5bcc4424868aa816f146b441574e6ebe120`,
+  `5c86bb9de730c04dfd35c10e68c907a6f51df43b90ed41cdfeee4f8e9b0e0352`,
   inventory
-  `6c7436890d9c14e5e1eff366e71e293c5d3a494f06ff83da568607aa99fadefd`,
+  `c69ccf8673723be7644151762bd05e3650e5640b295984c2703562b1882b47e0`,
   classification
-  `30c1724a793ae82139c2b3ad0b9e7b0a07437fb8e9a1dd2b4ce3a25c4f6ab1ee`,
+  `5aa650136625ec836b17b227d1ddc3209a01ca2bb59000b3162214dfcef6d1ab`,
   and occurrence
   `4e533d8513ed06ee84a5fcb15110054c97f87abb92bf2aa8592ee7c9e2a53d4f`;
   and

@@ -162,7 +162,7 @@ public final class LayeredCoordinateParityObserver {
 	}
 
 	public static void onSession(int playerId, long usernameHash, Point current, boolean loggedIn) {
-		onSession(playerId, usernameHash, current, loggedIn, null);
+		onSession(playerId, usernameHash, current, loggedIn, null, null);
 	}
 
 	public static void onSession(
@@ -171,11 +171,27 @@ public final class LayeredCoordinateParityObserver {
 		Point current,
 		boolean loggedIn,
 		LayeredRegionInterestOwnershipLedger.Change ownershipChange) {
+		onSession(
+			playerId, usernameHash, current, loggedIn, ownershipChange, null);
+	}
+
+	public static void onSession(
+		int playerId,
+		long usernameHash,
+		Point current,
+		boolean loggedIn,
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange,
+		InterestOwnershipSource currentInterestOwnershipSource) {
 		TraceState state = TRACES.get(new TraceKey(playerId, usernameHash));
 		if (state != null && current != null) {
-			write(
-				state, loggedIn ? "login" : "logout", null, current, null, null,
-				ownershipChange);
+			synchronized (state) {
+				if (loggedIn && currentInterestOwnershipSource != null) {
+					state.interestOwnershipSource = currentInterestOwnershipSource;
+				}
+				write(
+					state, loggedIn ? "login" : "logout", null, current, null, null,
+					ownershipChange);
+			}
 		}
 	}
 
@@ -2764,7 +2780,7 @@ public final class LayeredCoordinateParityObserver {
 		final AdjacentCollisionSource adjacentCollisionSource;
 		final TraversalCollisionSource traversalCollisionSource;
 		final RegionResidencySource regionResidencySource;
-		final InterestOwnershipSource interestOwnershipSource;
+		InterestOwnershipSource interestOwnershipSource;
 		final List<WorldLocation> recentTraversal =
 			new ArrayList<WorldLocation>(MAX_TRACE_TRAVERSAL_STEPS + 1);
 		int recentTraversalDroppedStepCount;

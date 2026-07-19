@@ -60,13 +60,18 @@ class LayeredMapsSliceFortyOneTest(unittest.TestCase):
 
         self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v11"', observer)
         self.assertIn("InterestOwnershipMetadata.fromChange(ownershipChange)", observer)
+        self.assertIn(
+            "state.interestOwnershipSource = currentInterestOwnershipSource;",
+            observer,
+        )
         self.assertIn("fromOwnerSnapshot(snapshot)", development)
         self.assertIn("player.getLayeredInterestOwnerSnapshot();", development)
         self.assertIn("OpenedOwner openOwner(", ledger)
         self.assertIn("List<OwnerReference> getReferences()", ledger)
         self.assertIn("LayeredRegionInterestOwnershipLedger.OpenedOwner", manager)
         self.assertIn("opened.getChange()", player)
-        self.assertIn("ownershipChange);", player)
+        self.assertIn("ownershipChange,", player)
+        self.assertIn("loggedIn ? layeredInterestOwnershipSource() : null", player)
         self.assertNotIn("LayeredRegionInterestOwnershipLedger", path_validation)
 
         observer_write = observer.split("private static Status write(", 1)[1]

@@ -188,6 +188,8 @@ or releases at login, window changes, and logout. Ordinary same-window moves
 carry an explicit null. Owner identities are process-local diagnostic handles,
 not database IDs, username hashes, entity indexes, or persistence keys; these
 reference counts likewise cannot retain, load, release, or evict a Region.
+When a trace survives logout, login atomically rebinds its current-owner reader
+to the newly constructed Player before recording the login event.
 
 ## Checked Player mirror
 
