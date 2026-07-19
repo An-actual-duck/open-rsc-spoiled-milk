@@ -1,15 +1,17 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-15 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-15 implemented and validated;
+Slice 16 is implemented and automated-valid, with private owner validation
+pending on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 15 logical visibility-window projection checkpoint;
-packed region lookup and caches remain authoritative and no client streaming or
-world conversion has begun
+Current milestone: Slice 16 private owner validation of the checked Player
+visibility-window shadow and versioned diagnostics; packed region lookup and
+caches remain authoritative and no client streaming or world conversion has
+begun
 
 ## Purpose
 
@@ -2515,6 +2517,83 @@ Automated validation evidence:
 No owner runtime route is required because no runtime state, lookup, cache, or
 client consumes the projection in this slice.
 
+### Slice 16: Checked Player visibility-window shadow
+
+Objective: make the accepted logical interest-window projection a checked
+Player shadow and expose it in stable private diagnostics without making it an
+authority for entity lookup, residency, packets, or client loading.
+
+Selected boundary:
+
+- synchronize an immutable `WorldRegionWindow` shadow only from the accepted
+  Player layered location and configured view distance during the existing
+  initial-location and movement paths;
+- require the current location mirror, region-membership mirror, and projected
+  visibility window to agree at session and private-observer boundaries;
+- retain the original parity-event v1 schema for existing logs while emitting
+  an explicit v2 event whose snapshots add the world space, signed level,
+  configured grid distance, tile radius, inclusive logical-region bounds, and
+  checked region count; and
+- keep traces doubly opt-in, dev-only, private/local, identity-isolated, and
+  free of username text, address, or credential material.
+
+Implemented:
+
+- `LayeredVisibilityWindowMirror`, an initialized/stale-state refusing Player
+  shadow with immutable value equality;
+- Player synchronization and read-only validation across initial placement,
+  movement, and login/logout, derived through the existing manager projection;
+- parity observer v2 capture tied to the server's configured view distance,
+  including refusal if an active trace is restarted with a different window
+  configuration; and
+- a retained v1 schema plus the additive Draft 2020-12
+  `layered-map-parity-event-v2` schema.
+
+Safety boundary:
+
+- inherited packed Player location, packed RegionManager storage, current
+  visibility/object caches, entity enumeration, collision, pathing, packets,
+  terrain, and client loading remain authoritative and unchanged;
+- the new Player window is checked only, never passed to `getRegion(...)`, used
+  as a cache key, or written to persistence;
+- the v2 diagnostic is not enabled in normal local or hosted configuration;
+  and
+- no database schema/row, terrain, placement, archive, Builder project,
+  public server, or live data is changed.
+
+Automated validation evidence:
+
+- `python3 tests/myworld/test-layered-maps-slice-sixteen.py` — 2 tests passed;
+- fixtures covered uninitialized state, equivalent projections, stale bounds,
+  signed-level and world-space mismatch, non-mutating refusal, null input,
+  configured-distance/radius projection, JSON and compact output, the retained
+  v1 snapshot layout, and arithmetic/invalid-distance refusal;
+- the observer fixture validated v2 events and their Draft 2020-12 schema,
+  including visibility fields on both sides of moves, trace identity isolation,
+  active configuration mismatch, exact coordinate round trips, and exclusion
+  of username text, address, and password material;
+- Slice 1 through Slice 16 regressions all pass (46 tests), including exact
+  coordinate-package and runtime-consumer allowlists;
+- World Builder discovery passed 13 tests and the standalone-layout guard
+  passed;
+- the authoritative bundled-Ant build succeeds for 730 core and 488 plugin
+  sources; and
+- two real-repository normalizations were byte-stable with unchanged content
+  counts: 1,771 terrain sectors, 49,816 placements, 20 transition edges, one
+  unresolved coordinate, 211 classified owners, and 1,286 occurrences. The
+  expected fingerprints are source
+  `2ff279f25945a1a9224e27a687da02bb6883e457db89391454c3fba12f123770`,
+  inventory
+  `23c90d3698a79b984995a6c7205609d69cac337695a878372bbebfac4440c6cb`,
+  classification
+  `5b308fc3dd094bf964ac3837d642d8397e2328a455e10ac0d8ed235ca3118017`,
+  and occurrence
+  `60b2e4e975e11528c755e4c0127f6094b0b9fff2cdc5c07cd6471e535913bc7d`.
+
+Owner validation will exercise an ordinary movement boundary plus a vertical
+transition on the private server and inspect the v2 window fields before this
+slice is accepted.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -2616,12 +2695,11 @@ private environment should validate at least:
 | 2026-07-18 | Continue with Slice 13 by maintaining checked world-space/level-qualified Player region membership alongside the accepted location mirror while packed RegionManager storage remains authoritative. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 14 by projecting each loaded/saved legacy Player location through a checked immutable layered persistence snapshot while retaining the exact X/Y database contract. | Implemented and owner-validated |
 | 2026-07-18 | Continue with Slice 15 by defining a level-qualified logical visibility window and read-only RegionManager projection while retaining packed lookup, caches, and client behavior. | Implemented and validated |
+| 2026-07-18 | Continue with Slice 16 by maintaining a checked Player visibility-window shadow and adding versioned private trace evidence while retaining packed lookup, caches, and client behavior. | Implemented and automated-valid; owner validation pending |
 
 ## Next Discussion
 
-Continue with a checked Player logical-window shadow and private diagnostic
-fields as the next reversible gate. Combining synchronization with stable trace
-evidence makes the first streaming-ownership seam owner-testable while packed
-lookup and caches remain authoritative. A new database schema, authoritative
-region storage, client/protocol adoption, Builder, export, relocation, and
-level `-2` remain separately gated.
+Complete Slice 16 automated and private owner validation before selecting the
+next reversible streaming seam. A new database schema, authoritative region
+storage, client/protocol adoption, Builder, export, relocation, and level `-2`
+remain separately gated.

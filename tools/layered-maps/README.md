@@ -157,8 +157,11 @@ test; `stop` deliberately ends it. Logs are isolated by database ID and
 username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
-not contain username text, IP addresses, or credentials. Each line conforms to
-`schema/layered-map-parity-event-v1.schema.json`.
+not contain username text, IP addresses, or credentials. New traces emit
+`schema/layered-map-parity-event-v2.schema.json`. Each v2 snapshot adds the
+configured grid distance, tile radius, world space, signed level, inclusive
+logical-region bounds, and checked region count. The v1 schema remains
+alongside it so already-captured logs keep an explicit readable contract.
 
 ## Checked Player mirror
 
@@ -167,10 +170,13 @@ packed `Point` remains the sole gameplay authority. `LayeredLocationMirror`
 synchronizes only from that packed value during initial placement and existing
 location changes. `LayeredRegionMembershipMirror` derives a checked
 world-space/level-qualified `WorldRegionKey` shadow from that location.
-`Player.getLayeredLocation()` and `Player.getLayeredRegionKey()` are read-only
-and refuse stale or uninitialized mirror state. Movement, authoritative region
-storage, collision, packets, scripts, terrain, and the client do not consume
-either mirror. The private `::layerparity` command verifies both invariants
+`LayeredVisibilityWindowMirror` additionally shadows the manager projection
+for the accepted Player location and configured view distance.
+`Player.getLayeredLocation()`, `Player.getLayeredRegionKey()`, and
+`Player.getLayeredVisibilityWindow()` are read-only and refuse stale or
+uninitialized mirror state. Movement, authoritative region storage, caches,
+collision, packets, scripts, terrain, and the client do not consume these
+mirrors. The private `::layerparity` command verifies all three invariants
 before starting or inspecting a trace.
 
 ## Checked legacy Player persistence shadow
@@ -199,5 +205,6 @@ remain 48 tiles during parity migration.
 
 This projection does not query or populate `RegionManager.regions`, use a
 visibility cache, enumerate entities, alter the current packed visibility
-window, or participate in Player/client streaming. It is the read-only contract
-needed before a later shadow can compare interest/residency behavior safely.
+window, or participate in client streaming. Its checked Player shadow and
+private v2 diagnostics compare projected interest bounds, but neither becomes
+an interest/residency authority.

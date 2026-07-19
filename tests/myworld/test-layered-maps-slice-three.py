@@ -258,6 +258,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "LayeredCoordinateParitySnapshot.java",
                 "LayeredLocationMirror.java",
                 "LayeredRegionMembershipMirror.java",
+                "LayeredVisibilityWindowMirror.java",
                 "WorldCoordinate.java",
                 "WorldArea.java",
                 "WorldLocation.java",

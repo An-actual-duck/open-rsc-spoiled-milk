@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v1";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v2";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 
 	private static final Logger LOGGER = LogManager.getLogger(LayeredCoordinateParityObserver.class);
@@ -30,13 +30,20 @@ public final class LayeredCoordinateParityObserver {
 	private LayeredCoordinateParityObserver() {
 	}
 
-	public static Status start(int playerId, long usernameHash, Point current) {
+	public static Status start(
+		int playerId,
+		long usernameHash,
+		Point current,
+		int viewGridDistance) {
 		TraceKey key = new TraceKey(playerId, usernameHash);
-		TraceState created = new TraceState(key, logPath(key));
+		TraceState created = new TraceState(key, logPath(key), viewGridDistance);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
 			state = created;
+		} else if (state.viewGridDistance != viewGridDistance) {
+			throw new IllegalArgumentException(
+				"Active trace view distance does not match the current server configuration");
 		}
 		return write(state, newlyStarted ? "start" : "snapshot", null, current, null, null);
 	}
@@ -109,9 +116,11 @@ public final class LayeredCoordinateParityObserver {
 		Objects.requireNonNull(current, "current");
 		synchronized (state) {
 			try {
-				LayeredCoordinateParitySnapshot to = LayeredCoordinateParitySnapshot.capture(current);
+				LayeredCoordinateParitySnapshot to =
+					LayeredCoordinateParitySnapshot.capture(current, state.viewGridDistance);
 				LayeredCoordinateParitySnapshot from = previous == null
-					? null : LayeredCoordinateParitySnapshot.capture(previous);
+					? null : LayeredCoordinateParitySnapshot.capture(
+						previous, state.viewGridDistance);
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
 					state.key, nextSequence, System.currentTimeMillis(), eventType,
@@ -163,8 +172,9 @@ public final class LayeredCoordinateParityObserver {
 		}
 		out.append(",\"teleported\":");
 		out.append(teleported == null ? "null" : teleported.toString());
-		out.append(",\"from\":").append(from == null ? "null" : from.toJson());
-		out.append(",\"to\":").append(to.toJson());
+		out.append(",\"from\":").append(
+			from == null ? "null" : from.toJsonWithVisibilityWindow());
+		out.append(",\"to\":").append(to.toJsonWithVisibilityWindow());
 		out.append(",\"delta\":");
 		if (from == null) {
 			out.append("null");
@@ -289,13 +299,19 @@ public final class LayeredCoordinateParityObserver {
 	private static final class TraceState {
 		final TraceKey key;
 		final Path path;
+		final int viewGridDistance;
 		long sequence;
 		LayeredCoordinateParitySnapshot lastSnapshot;
 		String lastError;
 
-		TraceState(TraceKey key, Path path) {
+		TraceState(TraceKey key, Path path, int viewGridDistance) {
+			if (viewGridDistance < 0) {
+				throw new IllegalArgumentException("View grid distance must not be negative");
+			}
+			Math.multiplyExact(viewGridDistance, 8);
 			this.key = key;
 			this.path = path;
+			this.viewGridDistance = viewGridDistance;
 		}
 
 		Status status(boolean enabled) {

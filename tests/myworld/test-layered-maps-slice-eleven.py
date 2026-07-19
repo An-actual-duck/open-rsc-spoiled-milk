@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v1.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v2.schema.json"
 
 
 POINT_STUB = r'''
@@ -105,9 +105,13 @@ public final class LayeredCoordinateParityObserverFixture {
         check(!LayeredCoordinateParityObserver.status(playerId, usernameHash).isEnabled(),
             "initially disabled");
         LayeredCoordinateParityObserver.Status started = LayeredCoordinateParityObserver.start(
-            playerId, usernameHash, Point.location(100, 943));
+            playerId, usernameHash, Point.location(100, 943), 2);
         check(started.isEnabled() && started.getRecordCount() == 1, "start");
         check(started.getError() == null, "start error");
+        check(started.getLastSnapshot().getVisibilityWindow().getRegionCount() == 2L,
+            "start visibility window");
+        expectIllegal(() -> LayeredCoordinateParityObserver.start(
+            playerId, usernameHash, Point.location(100, 943), 3));
 
         LayeredCoordinateParityObserver.onLocationChanged(
             playerId, usernameHash, Point.location(100, 943), Point.location(100, 944), false);
@@ -134,7 +138,7 @@ public final class LayeredCoordinateParityObserverFixture {
 
         long otherHash = 987654321L;
         LayeredCoordinateParityObserver.Status other = LayeredCoordinateParityObserver.start(
-            playerId, otherHash, Point.location(200, 944));
+            playerId, otherHash, Point.location(200, 944), 2);
         check(other.isEnabled() && other.getRecordCount() == 1, "identity-isolated start");
         check(!other.getPath().equals(active.getPath()), "identity-isolated path");
         LayeredCoordinateParityObserver.stop(playerId, otherHash, Point.location(200, 944));
@@ -148,7 +152,7 @@ public final class LayeredCoordinateParityObserverFixture {
             "movement after stop ignored");
 
         LayeredCoordinateParityObserver.Status invalid = LayeredCoordinateParityObserver.start(
-            8, 111L, Point.location(100, 3776));
+            8, 111L, Point.location(100, 3776), 2);
         check(invalid.isEnabled() && invalid.getRecordCount() == 0, "invalid trace retained");
         check(invalid.getError() != null && invalid.getError().contains("IllegalArgumentException"),
             "invalid trace visible error");
@@ -259,6 +263,19 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v2" for event in events))
+            upper_window = events[1]["to"]["visibilityWindow"]
+            self.assertEqual(2, upper_window["gridDistance"])
+            self.assertEqual(16, upper_window["tileRadius"])
+            self.assertEqual(1, upper_window["level"])
+            self.assertEqual({
+                "minRegionX": 1,
+                "minRegionY": -1,
+                "maxRegionX": 2,
+                "maxRegionY": 0,
+            }, {key: upper_window[key] for key in (
+                "minRegionX", "minRegionY", "maxRegionX", "maxRegionY")})
+            self.assertEqual(4, upper_window["regionCount"])
             raw_log = primary.read_text(encoding="utf-8").lower()
             self.assertNotIn('"username":', raw_log)
             self.assertNotIn("password", raw_log)

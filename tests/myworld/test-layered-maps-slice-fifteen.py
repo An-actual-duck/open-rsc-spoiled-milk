@@ -214,7 +214,7 @@ class LayeredMapsSliceFifteenTest(unittest.TestCase):
         self.assertIn("getVisibleRegionWindow(final Point location", manager)
         self.assertNotIn("ConcurrentHashMap<WorldRegionWindow", manager)
         self.assertNotIn("getRegion(getLayeredVisibleRegionWindow", manager)
-        self.assertNotIn("WorldRegionWindow", player)
+        self.assertNotIn("getRegion(getLayeredVisibilityWindow", player)
         self.assertIn("### Slice 15: Logical visibility-window projection", plan)
 
 

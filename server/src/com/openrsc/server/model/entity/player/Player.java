@@ -40,8 +40,10 @@ import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionMembershipMirror;
+import com.openrsc.server.model.world.coordinate.LayeredVisibilityWindowMirror;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
+import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.ClientLimitations;
@@ -197,6 +199,9 @@ public final class Player extends Mob {
 	/** Shadow membership only; the inherited packed Region remains authoritative. */
 	private final LayeredRegionMembershipMirror layeredRegionMembershipMirror =
 		new LayeredRegionMembershipMirror();
+	/** Shadow interest bounds only; packed visibility lookup remains authoritative. */
+	private final LayeredVisibilityWindowMirror layeredVisibilityWindowMirror =
+		new LayeredVisibilityWindowMirror();
 	/**
 	 * Players cache is used to store various objects into database
 	 */
@@ -3199,9 +3204,19 @@ public final class Player extends Mob {
 		return layeredRegionMembershipMirror.requireCurrent(getLayeredLocation());
 	}
 
+	public WorldRegionWindow getLayeredVisibilityWindow() {
+		WorldLocation layeredLocation = getLayeredLocation();
+		layeredRegionMembershipMirror.requireCurrent(layeredLocation);
+		WorldRegionWindow projected = getWorld().getRegionManager()
+			.getLayeredVisibleRegionWindow(layeredLocation);
+		return layeredVisibilityWindowMirror.requireCurrent(projected);
+	}
+
 	private void synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
 		layeredRegionMembershipMirror.synchronize(layeredLocation);
+		layeredVisibilityWindowMirror.synchronize(
+			getWorld().getRegionManager().getLayeredVisibleRegionWindow(layeredLocation));
 	}
 
 	public void setLoggedIn(final boolean loggedIn) {
@@ -3226,7 +3241,7 @@ public final class Player extends Mob {
 			getWorld().getServer().getGameEventHandler().add(getStatRestorationEvent());
 		}
 		this.loggedIn = loggedIn;
-		getLayeredRegionKey();
+		getLayeredVisibilityWindow();
 		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
 			LayeredCoordinateParityObserver.onSession(
 				getDatabaseID(), getUsernameHash(), getLocation(), loggedIn);
@@ -4127,7 +4142,7 @@ public final class Player extends Mob {
 
 		synchronizeLayeredMirrors(point);
 		super.setLocation(point, teleported);
-		getLayeredRegionKey();
+		getLayeredVisibilityWindow();
 		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
 			LayeredCoordinateParityObserver.onLocationChanged(
 				getDatabaseID(), getUsernameHash(), previousLocation, point, teleported);

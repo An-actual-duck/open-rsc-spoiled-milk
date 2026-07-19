@@ -13,7 +13,9 @@
  * Slices 12 and 13 add checked Player location and logical-region mirrors, and
  * Slice 14 projects legacy Player persistence values without changing their
  * database representation. Slice 15 defines a read-only level-qualified
- * logical visibility window without adopting it for packed lookup or caches.
+ * logical visibility window without adopting it for packed lookup or caches,
+ * and Slice 16 maintains a checked Player shadow of that projection for
+ * private diagnostics without making it authoritative.
  * Packed storage and existing runtime decisions remain authoritative.</p>
  */
 package com.openrsc.server.model.world.coordinate;

@@ -1352,7 +1352,7 @@ public final class Development implements CommandTrigger {
 			return;
 		}
 		try {
-			player.getLayeredRegionKey();
+			player.getLayeredVisibilityWindow();
 		} catch (IllegalStateException failure) {
 			player.message(messagePrefix + "Layered player mirror mismatch: " + failure.getMessage());
 			return;
@@ -1367,7 +1367,8 @@ public final class Development implements CommandTrigger {
 					return;
 				}
 				status = LayeredCoordinateParityObserver.start(
-					player.getDatabaseID(), player.getUsernameHash(), player.getLocation());
+					player.getDatabaseID(), player.getUsernameHash(), player.getLocation(),
+					player.getConfig().VIEW_DISTANCE);
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
