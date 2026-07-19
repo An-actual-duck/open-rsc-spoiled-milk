@@ -1,14 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-41 validated on the active
-refinement branch
+Status: architecture design complete; Slices 1-42 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 41 owner-validates the checked Player-session interest
-shadow through bounded v11 private diagnostics while packed Region lookup,
+Current milestone: Slice 42 projects checked global-interest ownership into a
+conservative tick-based Region retirement cooldown while packed Region lookup,
 eager loading, release, eviction, pathing, packets, and persistence remain
 authoritative and unchanged
 
@@ -4728,6 +4728,96 @@ Owner validation evidence (2026-07-19):
   observed no visual or functional issues in the longer movement route or the
   focused reconnect route.
 
+### Slice 42: Dormant Region retirement cooldown policy
+
+Objective: define the first explicit anti-thrashing rule between global
+interest reaching zero and any future Region retirement consideration, without
+turning ownership or expiry into runtime authority.
+
+Selected policy:
+
+- every positive global logical-interest reference count is a pin;
+- shared release from `N -> N-1`, where the result remains positive, leaves the
+  Region pinned and never begins a cooldown;
+- only an observed global `1 -> 0` release begins a cooldown, recorded from the
+  monotonic server tick rather than wall-clock time;
+- the provisional default grace is 16 server ticks. It is a benchmarkable
+  policy constant, not a map-format promise or final production tuning value;
+- any later global `0 -> 1` acquisition cancels the old release record; if the
+  Region returns to zero again, the entire cooldown restarts from that newer
+  release; and
+- expiry produces `RETIREMENT_ELIGIBLE` evidence only when a supported logical
+  Region still has a resident packed source. It is not an unload, eviction,
+  cache-release, or lifecycle command.
+
+Implemented:
+
+- `LayeredRegionRetirementEligibilityLedger`, which consumes the exact
+  versioned ownership changes from Slice 39/40 and mirrors their global
+  reference counts with strict before-count, distinct-count, version-order,
+  unique-key, and monotonic-tick checks;
+- per-key release version, release tick, eligible tick, remaining grace, current
+  ownership count, residency mirror version, source/resident-source counts, and
+  the explicit states `PINNED`, `COOLING_DOWN`, `RETIREMENT_ELIGIBLE`,
+  `NOT_RESIDENT`, `UNSUPPORTED`, and conservative `UNTRACKED`;
+- RegionManager wiring under the existing layered lifecycle lock for exact
+  owner open, window replacement, close, read-only snapshot, and unload clear;
+  and
+- deterministic overlap/reversal coverage proving that one owner leaving a
+  shared Region does not start retirement and that reacquisition cancels stale
+  eligibility.
+
+Safety boundary:
+
+- a never-owned resident Region remains `UNTRACKED`, not immediately eligible;
+- logical eligibility is insufficient to retire a packed source because one
+  packed source may contribute to multiple logical Regions, and NPC, system,
+  transition-destination, instance, quest, editor, or preload pins do not exist
+  yet;
+- no timer scans Regions, no expiry callback exists, and no consumer enumerates
+  eligible keys;
+- `RegionManager.getRegion(...)`, packed storage, eager world loading, residency
+  registration, tiles, entities, collision, pathing, packets, persistence,
+  client loading, and diagnostics remain unchanged; and
+- the policy is cleared during world unload and otherwise stores only keys,
+  counts, versions, and ticks—never mutable Region or tile state.
+
+Multi-owner gate decision:
+
+- deterministic compiled two-owner coverage is sufficient for this dormant
+  projection and the next diagnostic-only adoption because it exhaustively
+  controls overlap, shared release, last release, reacquisition, and independent
+  expiry timing;
+- a real two-client or synthetic concurrent-owner private route is mandatory
+  before any Region loader, retention cache, source-level arbiter, or eviction
+  mechanism consumes the result.
+
+Automated validation evidence:
+
+- the focused Slice 42 contract passes both compiled policy behavior and the
+  structural no-authority guard;
+- all 98 layered-map slice tests pass, including the earlier staged-boundary
+  inventory updated to name this approved coordinate package class;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant server build compiles 746 core and 488 plugin
+  sources successfully without any loading or eviction consumer;
+- two consecutive normalizations produced identical source
+  `1dbbb97ded33091baaebee3af2b6403e88129c65ebd90adb26633cbf8fed377e`,
+  inventory
+  `117bedbe0449f182060fee672f900a68524fd9344a8ce919f2b77c6fad3ad05c`,
+  classification
+  `b376b91ae43f58fdd33e7b3394b15cf83b9832364ede230b1fff8bb2f1fca04a`,
+  and occurrence
+  `4e533d8513ed06ee84a5fcb15110054c97f87abb92bf2aa8592ee7c9e2a53d4f`
+  fingerprints; and
+- no owner runtime route is required because this slice has no diagnostic,
+  client, packet, movement, or lifecycle effect.
+
+The next owner-testable boundary should expose bounded cooldown state through
+an additive private diagnostic schema. That evidence should prove release,
+cooldown, reacquisition cancellation, logout/reconnect, and expiry timing while
+remaining unable to enumerate or act on an eviction queue.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -4855,12 +4945,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 39 by defining process-local global interest ownership and shared-reference semantics without runtime adoption. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 40 by maintaining one checked opaque logical-interest owner per Player session without adopting loading, release, or eviction. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 41 by emitting bounded Player interest-owner and global/shared reference transitions through opt-in private v11 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
+| 2026-07-19 | Continue with Slice 42 by projecting global interest releases through a conservative 16-tick retirement cooldown without adopting loading, retention, release, or eviction. | Implemented and validated |
 
 ## Next Discussion
 
-Define the first explicit residency pin/cooldown policy as a non-authoritative
-projection and decide whether multi-owner private runtime coverage is required
-before any dormant eviction-eligibility experiment. A new database schema,
-authoritative region storage, actual loading/eviction, collision/pathing
-adoption, client protocol adoption, Builder, export, relocation, and level `-2`
-remain separately gated.
+Expose bounded retirement-cooldown evidence through additive private
+diagnostics and validate its timing and reconnect behavior. Real multi-owner
+runtime coverage remains mandatory before any consumer can act on eligibility.
+A new database schema, authoritative region storage, actual loading/eviction,
+collision/pathing adoption, client protocol adoption, Builder, export,
+relocation, and level `-2` remain separately gated.

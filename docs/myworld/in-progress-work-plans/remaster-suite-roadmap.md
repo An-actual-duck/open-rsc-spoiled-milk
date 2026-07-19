@@ -1087,3 +1087,4 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-19 | Define monotonic process-local logical-interest owners and shared-reference counts without runtime or residency adoption. | Slice 39 implemented and validated in the layered-world plan |
 | 2026-07-19 | Maintain one checked opaque logical-interest owner per Player session while preserving packed eager Region authority. | Slice 40 implemented and validated in the layered-world plan |
 | 2026-07-19 | Emit bounded Player interest-owner and global/shared reference transitions through opt-in private v11 diagnostics without adopting Region loading or eviction. | Slice 41 implemented and owner-validated in the layered-world plan |
+| 2026-07-19 | Project global logical-interest releases through a conservative tick-based retirement cooldown without adopting Region loading or eviction. | Slice 42 implemented and validated in the layered-world plan |

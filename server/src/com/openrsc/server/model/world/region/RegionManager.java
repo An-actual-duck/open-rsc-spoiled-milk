@@ -18,6 +18,7 @@ import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageC
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class RegionManager {
 	public static final int MAX_LAYERED_REGIONS_PER_INTEREST_OWNER = 4096;
+	public static final long LAYERED_REGION_RETIREMENT_COOLDOWN_TICKS = 16L;
 
 	private final ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>> regions;
 	private final ConcurrentHashMap<Long, List<Region>> visibleRegionWindowCache;
@@ -49,6 +51,8 @@ public class RegionManager {
 	private final LayeredRegionResidencyMirror layeredRegionResidencyMirror;
 	private final LayeredRegionInterestOwnershipLedger
 		layeredRegionInterestOwnershipLedger;
+	private final LayeredRegionRetirementEligibilityLedger
+		layeredRegionRetirementEligibilityLedger;
 
 	private final World world;
 
@@ -65,6 +69,9 @@ public class RegionManager {
 		this.layeredRegionResidencyMirror = new LayeredRegionResidencyMirror();
 		this.layeredRegionInterestOwnershipLedger =
 			new LayeredRegionInterestOwnershipLedger();
+		this.layeredRegionRetirementEligibilityLedger =
+			new LayeredRegionRetirementEligibilityLedger(
+				LAYERED_REGION_RETIREMENT_COOLDOWN_TICKS);
 	}
 
 	public void load() {
@@ -82,6 +89,7 @@ public class RegionManager {
 			regions.clear();
 			layeredRegionResidencyMirror.clear();
 			layeredRegionInterestOwnershipLedger.clear();
+			layeredRegionRetirementEligibilityLedger.clear();
 		}
 		visibleRegionWindowCache.clear();
 		visibleObjectWindowCache.clear();
@@ -571,8 +579,12 @@ public class RegionManager {
 	public LayeredRegionInterestOwnershipLedger.OpenedOwner
 		openLayeredRegionInterestOwner(final WorldRegionWindow currentWindow) {
 		synchronized (layeredRegionLifecycleLock) {
-			return layeredRegionInterestOwnershipLedger.openOwner(
+			LayeredRegionInterestOwnershipLedger.OpenedOwner openedOwner =
+				layeredRegionInterestOwnershipLedger.openOwner(
 				currentWindow, MAX_LAYERED_REGIONS_PER_INTEREST_OWNER);
+			layeredRegionRetirementEligibilityLedger.observeOwnershipChange(
+				openedOwner.getChange(), getWorld().getServer().getCurrentTick());
+			return openedOwner;
 		}
 	}
 
@@ -580,20 +592,28 @@ public class RegionManager {
 	public LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredRegionInterestOwner(
 			final LayeredRegionInterestOwnershipLedger.OwnerToken ownerToken,
-			final WorldRegionWindow currentWindow) {
+		final WorldRegionWindow currentWindow) {
 		synchronized (layeredRegionLifecycleLock) {
-			return layeredRegionInterestOwnershipLedger.synchronizeOwner(
+			LayeredRegionInterestOwnershipLedger.Change change =
+				layeredRegionInterestOwnershipLedger.synchronizeOwner(
 				ownerToken, currentWindow,
 				MAX_LAYERED_REGIONS_PER_INTEREST_OWNER);
+			layeredRegionRetirementEligibilityLedger.observeOwnershipChange(
+				change, getWorld().getServer().getCurrentTick());
+			return change;
 		}
 	}
 
 	/** Closes one dormant owner; repeated cleanup remains idempotent. */
 	public LayeredRegionInterestOwnershipLedger.Change
 		closeLayeredRegionInterestOwner(
-			final LayeredRegionInterestOwnershipLedger.OwnerToken ownerToken) {
+		final LayeredRegionInterestOwnershipLedger.OwnerToken ownerToken) {
 		synchronized (layeredRegionLifecycleLock) {
-			return layeredRegionInterestOwnershipLedger.closeOwner(ownerToken);
+			LayeredRegionInterestOwnershipLedger.Change change =
+				layeredRegionInterestOwnershipLedger.closeOwner(ownerToken);
+			layeredRegionRetirementEligibilityLedger.observeOwnershipChange(
+				change, getWorld().getServer().getCurrentTick());
+			return change;
 		}
 	}
 
@@ -612,6 +632,23 @@ public class RegionManager {
 			final WorldRegionKey logicalRegionKey) {
 		synchronized (layeredRegionLifecycleLock) {
 			return layeredRegionInterestOwnershipLedger.snapshot(logicalRegionKey);
+		}
+	}
+
+	/**
+	 * Returns conservative pin/cooldown evidence without changing Region
+	 * residency. Retirement eligibility is not an unload or eviction order.
+	 */
+	public LayeredRegionRetirementEligibilityLedger.Snapshot
+		getLayeredRegionRetirementEligibilitySnapshot(
+			final WorldRegionKey logicalRegionKey) {
+		synchronized (layeredRegionLifecycleLock) {
+			LayeredRegionInterestOwnershipLedger.Snapshot ownership =
+				layeredRegionInterestOwnershipLedger.snapshot(logicalRegionKey);
+			LayeredRegionResidencyMirror.Snapshot residency =
+				requireLayeredRegionResidencySnapshot(logicalRegionKey);
+			return layeredRegionRetirementEligibilityLedger.snapshot(
+				ownership, residency, getWorld().getServer().getCurrentTick());
 		}
 	}
 

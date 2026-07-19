@@ -272,6 +272,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "LayeredRegionInterestResidencyComparison.java",
                 "LayeredRegionMembershipMirror.java",
                 "LayeredRegionResidencyMirror.java",
+                "LayeredRegionRetirementEligibilityLedger.java",
                 "LayeredVisibilityWindowMirror.java",
                 "WorldCoordinate.java",
                 "WorldArea.java",
