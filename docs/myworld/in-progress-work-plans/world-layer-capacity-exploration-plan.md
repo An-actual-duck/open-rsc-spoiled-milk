@@ -1,20 +1,20 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-59, 62, 64, and 66
-owner-validated, Slice 60 private-runtime validated, Slices 61, 63, 65, and 67
-automated-validated, and Slice 68 owner-validated on the active refinement
-branch
+Status: architecture design complete; Slices 1-59, 62, 64, 66, and 68
+owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, 65,
+67, and 69 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 68 evidence proves that spatial NPC
-roaming support, authored replay ownership, and active runtime residency cannot
-be treated as one recursive recipe-closure relationship. The result remains
-detached diagnostic evidence only. No recipe consumer, load request, registry,
-or lifecycle authority is authorized, and packed Region lookup, eager loading,
-release, eviction, pathing, packets, and persistence remain unchanged
+Current milestone: Slice 69 now represents authored replay as source-local,
+preserves conservative outbound spatial support, and reports external authored
+owners that can reach inward as a separate potential dependency. The result
+remains detached diagnostic evidence only. It is not active-instance evidence.
+No recipe consumer, load request, registry, or lifecycle authority is
+authorized, and packed Region lookup, eager loading, release, eviction,
+pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -6789,6 +6789,59 @@ Status: implemented, automated-validated, and owner-validated. The result
 rejects weak-component retirement as a practical design while preserving every
 conservative spatial envelope. No lifecycle authority is authorized.
 
+### Slice 69: Reconstruction dependency semantics
+
+Objective: turn Slice 68's architectural finding into a bounded, executable
+semantic split without creating a reconstruction or lifecycle consumer.
+
+Implemented:
+
+- the exact retirement-safety selection defines the source-local authored
+  replay set; a support coordinate never imports its own unrelated recipe;
+- every coordinate reached by a selected placement's existing conservative
+  dependency envelope remains explicit outbound spatial-support evidence,
+  including coordinates that also contain authored content;
+- authored sources outside the selection whose placements can reach inward are
+  reported separately as incoming owners rather than silently added to replay;
+- object footprints, NPC roaming, and anchor-only dependencies are classified
+  as static-footprint support, potential-mobile support, and anchor-only
+  support respectively; and
+- aggregate, per-source, and per-construction/dependency-kind arithmetic keeps
+  replay placements, outbound references, external support, incoming
+  placements, and incoming references independently reconcilable.
+
+Safety boundary:
+
+- selected-source, support-source, incoming-owner, and incoming-placement
+  collections have independent refusal budgets; overflow cannot yield a
+  partial classification;
+- potential NPC reach is not active-instance evidence and does not assert that
+  an NPC currently occupies, enters, or retains a selected Region;
+- the immutable result retains primitive coordinates, counts, and enums only,
+  with no entity, Region, tile, archive, registry, callback, claim, permit,
+  lease, transaction, reconstruction, teardown, or rollback handle; and
+- No lifecycle authority, recipe execution, envelope change, loading, release,
+  eviction, or active-entity registry is authorized.
+
+Automated validation status:
+
+- the executable fixture proves that an exact selected source replays only its
+  own scenery and NPC placements while preserving an authored neighboring
+  coordinate as outbound support rather than recursively importing it;
+- the same fixture reports the neighboring source's boundary and NPC as
+  separate incoming-owner evidence and preserves their static versus
+  potential-mobile meaning;
+- immutable-output and four independent undersized-budget guards prove
+  fail-closed behavior; and
+- package/source guards keep the analysis inside the approved detached
+  coordinate boundary;
+- the complete layered-map suite passes 166 tests across 68 focused files; and
+- the authoritative bundled-Ant build compiles 763 core and 488 plugin
+  sources.
+
+Status: implemented and automated-validated. No lifecycle authority is
+authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7062,6 +7115,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 66 by exposing typed cohort attribution through additive private schema-v22 diagnostics. | Implemented and owner-validated; NPC roaming accounts for 333/334 narrow and 194/195 broad frontier references, every external-support reference, and 1,626/1,636 combined cross-source references; static scenery creates no frontier expansion, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 67 by comparing the completed forward cohort with whole-recipe incoming edges and strong/weak component topology. | Implemented and automated-validated; forward closure is proved distinct from incoming/weak closure, graph membership remains evidence only, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 68 by exposing bounded whole-recipe topology through additive private schema-v23 diagnostics. | Implemented and owner-validated; the narrow/broad forward cohorts gain the same 75 incoming-only sources through 10 NPC-roaming edges/38 references, the largest weak component contains 123 of 366 authored sources, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 69 by separating exact source-local replay, conservative outbound spatial support, and external incoming-owner reach. | Implemented and automated-validated; support content is never recursively imported, potential mobile reach is not active-instance evidence, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -7078,22 +7132,19 @@ mobile entity currently needs. Preserve every conservative reach envelope, but
 do not recursively import a target coordinate's unrelated authored recipe just
 because the coordinate contains content.
 
-The safest next prerequisite is an automated-only dependency-semantics slice.
-It should keep authored replay ownership source-local, classify object
-footprints as static multi-source support, classify NPC roaming as potential
-mobility support, and retain anchor-only placement locally. For an exact safety
-selection, report separately:
+Slice 69 now supplies the automated-only dependency-semantics prerequisite. The
+safest next slice is additive private diagnostics that apply it to the same
+narrow and broad routes already accepted under schema v23. The event should
+report bounded selected replay sources/placements, outbound support sources and
+references, external incoming-owner sources/placements/references, and exact
+static-footprint, potential-mobile, and anchor-only totals. This will determine
+whether the semantic split remains intelligible and bounded on real data before
+any active-instance design is considered.
 
-- authored recipes whose content would actually be replayed;
-- outbound spatial-support coordinates;
-- external authored owners whose placements can reach inward; and
-- the later active-instance residency/arrival gate that would be required
-  before any incoming mobile entity could enter or remain in a retiring source.
-
-This classification must not shrink an envelope, permit retirement, or assert
-that a potential roaming relationship is an active blocker. Only a later
-runtime census can prove whether a specific NPC instance is present, moving,
-or holding residency. Do not create that registry or gate in the first slice.
+This diagnostic must not shrink an envelope, permit retirement, or assert that
+a potential roaming relationship is an active blocker. Only a later runtime
+census can prove whether a specific NPC instance is present, moving, or holding
+residency. Do not create that registry or gate in the diagnostics slice.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
