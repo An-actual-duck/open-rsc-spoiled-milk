@@ -291,7 +291,7 @@ class LayeredMapsSliceFortyFiveTest(unittest.TestCase):
         self.assertNotIn("unregisterPackedRegion", arbiter)
         self.assertNotIn(".unload(", arbiter)
         self.assertNotIn("LayeredRegionRetirementDecisionArbiter", path_validation)
-        self.assertNotIn("LayeredRegionRetirementDecisionArbiter", observer)
+        self.assertIn("LayeredRegionRetirementDecisionArbiter", observer)
 
         boundary = manager.split(
             "/**\n\t * Atomically rechecks one earlier retirement candidate", 1

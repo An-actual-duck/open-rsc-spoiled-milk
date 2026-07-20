@@ -41,6 +41,7 @@ import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionMembershipMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.LayeredVisibilityWindowMirror;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
@@ -3285,6 +3286,27 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver.RegionRetirementDecisionSource
+		layeredRegionRetirementDecisionSource() {
+		return new LayeredCoordinateParityObserver.RegionRetirementDecisionSource() {
+			@Override
+			public LayeredCoordinateParityObserver.RegionRetirementDecisionMetadata
+				capture(
+					final List<LayeredRegionRetirementEligibilityLedger.Snapshot>
+						candidates,
+					final long droppedCandidateCount,
+					final int maximumRegions) {
+				List<LayeredRegionRetirementDecisionArbiter.Decision> decisions =
+					getWorld().getRegionManager()
+						.evaluateLayeredRegionRetirementCandidates(
+							candidates, maximumRegions);
+				return LayeredCoordinateParityObserver
+					.RegionRetirementDecisionMetadata.fromDecisions(
+						decisions, droppedCandidateCount);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3392,7 +3414,8 @@ public final class Player extends Mob {
 				getDatabaseID(), getUsernameHash(), getLocation(), loggedIn,
 				ownershipChange,
 				loggedIn ? layeredInterestOwnershipSource() : null,
-				loggedIn ? layeredRegionRetirementSource() : null);
+				loggedIn ? layeredRegionRetirementSource() : null,
+				loggedIn ? layeredRegionRetirementDecisionSource() : null);
 		}
 	}
 

@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v13.schema.json",
+  "title": "Layered Map Parity Event v13",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v13"},
+    "eventType": {
+      "enum": ["start", "snapshot", "marker", "move", "teleport", "login", "logout", "stop"]
+    },
+    "sequence": {"type": "integer", "minimum": 1},
+    "timestampEpochMillis": {"type": "integer", "minimum": 0},
+    "player": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["databaseId", "usernameHash"],
+      "properties": {
+        "databaseId": {"type": "integer", "minimum": 0},
+        "usernameHash": {"type": "string", "pattern": "^[0-9]+$"}
+      }
+    },
+    "label": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9._-]{1,64}$"},
+    "teleported": {"type": ["boolean", "null"]},
+    "from": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v11.schema.json#/$defs/snapshot"},
+        {"type": "null"}
+      ]
+    },
+    "to": {"$ref": "layered-map-parity-event-v11.schema.json#/$defs/snapshot"},
+    "delta": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v11.schema.json#/$defs/delta"},
+        {"type": "null"}
+      ]
+    },
+    "interestDelta": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v11.schema.json#/$defs/interestDelta"},
+        {"type": "null"}
+      ]
+    },
+    "packedCoverage": {
+      "$ref": "layered-map-parity-event-v11.schema.json#/$defs/packedCoverage"
+    },
+    "tileSnapshot": {
+      "$ref": "layered-map-parity-event-v11.schema.json#/$defs/tileSnapshot"
+    },
+    "tileParity": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v11.schema.json#/$defs/tileParity"},
+        {"type": "null"}
+      ]
+    },
+    "tileNeighborhood": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v11.schema.json#/$defs/tileNeighborhood"},
+        {"type": "null"}
+      ]
+    },
+    "adjacentCollision": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v11.schema.json#/$defs/adjacentCollision"},
+        {"type": "null"}
+      ]
+    },
+    "recentTraversal": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v11.schema.json#/$defs/recentTraversal"},
+        {"type": "null"}
+      ]
+    },
+    "regionResidency": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v11.schema.json#/$defs/regionResidency"},
+        {"type": "null"}
+      ]
+    },
+    "interestOwnership": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v11.schema.json#/$defs/interestOwnership"},
+        {"type": "null"}
+      ]
+    },
+    "regionRetirement": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v12.schema.json#/$defs/regionRetirement"},
+        {"type": "null"}
+      ]
+    },
+    "regionRetirementDecisions": {
+      "oneOf": [{"$ref": "#/$defs/regionRetirementDecisions"}, {"type": "null"}]
+    },
+    "roundTripExact": {"const": true}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "eventType": {"enum": ["start", "marker", "teleport", "stop"]}
+        }
+      },
+      "then": {
+        "properties": {
+          "tileParity": {
+            "$ref": "layered-map-parity-event-v11.schema.json#/$defs/tileParity"
+          },
+          "tileNeighborhood": {
+            "$ref": "layered-map-parity-event-v11.schema.json#/$defs/tileNeighborhood"
+          },
+          "adjacentCollision": {
+            "$ref": "layered-map-parity-event-v11.schema.json#/$defs/adjacentCollision"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "tileParity": {"type": "null"},
+          "tileNeighborhood": {"type": "null"},
+          "adjacentCollision": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"eventType": {"enum": ["marker", "stop"]}}},
+      "else": {"properties": {"recentTraversal": {"type": "null"}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "eventType": {
+            "enum": ["start", "snapshot", "marker", "teleport", "login", "logout", "stop"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "interestOwnership": {
+            "$ref": "layered-map-parity-event-v11.schema.json#/$defs/interestOwnership"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "regionRetirementDecisionEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logicalRegion", "candidateOwnershipVersion", "currentOwnershipVersion",
+        "candidateResidencyMirrorVersion", "currentResidencyMirrorVersion",
+        "observedAtTick", "candidateReleasedAtOwnershipVersion",
+        "currentReleasedAtOwnershipVersion", "candidateReleasedAtTick",
+        "currentReleasedAtTick", "candidateEligibleAtTick",
+        "currentEligibleAtTick", "currentRetirementState", "decisionState",
+        "eligible"
+      ],
+      "properties": {
+        "logicalRegion": {
+          "$ref": "layered-map-parity-event-v11.schema.json#/$defs/regionKey"
+        },
+        "candidateOwnershipVersion": {"type": "integer", "minimum": 0},
+        "currentOwnershipVersion": {"type": "integer", "minimum": 0},
+        "candidateResidencyMirrorVersion": {"type": "integer", "minimum": 0},
+        "currentResidencyMirrorVersion": {"type": "integer", "minimum": 0},
+        "observedAtTick": {"type": "integer", "minimum": 0},
+        "candidateReleasedAtOwnershipVersion": {"type": "integer", "minimum": 0},
+        "currentReleasedAtOwnershipVersion": {
+          "$ref": "layered-map-parity-event-v12.schema.json#/$defs/nullableNonNegativeInteger"
+        },
+        "candidateReleasedAtTick": {"type": "integer", "minimum": 0},
+        "currentReleasedAtTick": {
+          "$ref": "layered-map-parity-event-v12.schema.json#/$defs/nullableNonNegativeInteger"
+        },
+        "candidateEligibleAtTick": {"type": "integer", "minimum": 0},
+        "currentEligibleAtTick": {
+          "$ref": "layered-map-parity-event-v12.schema.json#/$defs/nullableNonNegativeInteger"
+        },
+        "currentRetirementState": {
+          "enum": [
+            "PINNED", "COOLING_DOWN", "RETIREMENT_ELIGIBLE",
+            "NOT_RESIDENT", "UNSUPPORTED", "UNTRACKED"
+          ]
+        },
+        "decisionState": {
+          "enum": [
+            "ELIGIBLE", "FOREIGN_PROJECTION", "CANDIDATE_NOT_ELIGIBLE",
+            "PINNED", "COOLING_DOWN", "NOT_RESIDENT", "UNSUPPORTED",
+            "UNTRACKED", "RELEASE_CHANGED", "RESIDENCY_CHANGED"
+          ]
+        },
+        "eligible": {"type": "boolean"}
+      }
+    },
+    "regionRetirementDecisions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidateCount", "droppedCandidateCount", "eligibleCount",
+        "refusedCount", "entries"
+      ],
+      "properties": {
+        "candidateCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "droppedCandidateCount": {"type": "integer", "minimum": 0},
+        "eligibleCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "refusedCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "entries": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {"$ref": "#/$defs/regionRetirementDecisionEntry"}
+        }
+      }
+    }
+  }
+}

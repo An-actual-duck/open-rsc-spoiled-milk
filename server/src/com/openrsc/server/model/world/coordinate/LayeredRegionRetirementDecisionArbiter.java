@@ -129,6 +129,35 @@ public final class LayeredRegionRetirementDecisionArbiter {
 			return current.getObservedAtTick();
 		}
 
+		public Long getCandidateReleasedAtOwnershipVersion() {
+			return candidate.getReleasedAtOwnershipVersion();
+		}
+
+		public Long getCurrentReleasedAtOwnershipVersion() {
+			return current.getReleasedAtOwnershipVersion();
+		}
+
+		public Long getCandidateReleasedAtTick() {
+			return candidate.getReleasedAtTick();
+		}
+
+		public Long getCurrentReleasedAtTick() {
+			return current.getReleasedAtTick();
+		}
+
+		public Long getCandidateEligibleAtTick() {
+			return candidate.getEligibleAtTick();
+		}
+
+		public Long getCurrentEligibleAtTick() {
+			return current.getEligibleAtTick();
+		}
+
+		public LayeredRegionRetirementEligibilityLedger.RetirementState
+			getCurrentRetirementState() {
+			return current.getRetirementState();
+		}
+
 		public DecisionState getDecisionState() {
 			return decisionState;
 		}

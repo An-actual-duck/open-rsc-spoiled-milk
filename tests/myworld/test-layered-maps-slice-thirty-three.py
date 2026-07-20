@@ -71,7 +71,7 @@ class LayeredMapsSliceThirtyThreeTest(unittest.TestCase):
         player = PLAYER.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v12"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v13"', observer)
         self.assertIn("AdjacentCollisionSource adjacentCollisionSource", observer)
         self.assertIn("AdjacentCollisionMetadata adjacentCollision = null", observer)
         self.assertIn("state.adjacentCollisionSource.capture(current)", observer)

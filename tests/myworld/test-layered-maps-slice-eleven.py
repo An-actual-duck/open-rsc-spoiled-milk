@@ -14,8 +14,9 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
+SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 
 
 POINT_STUB = r'''
@@ -81,6 +82,9 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
+import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
@@ -90,6 +94,7 @@ import com.openrsc.server.model.world.coordinate.WorldSpaceId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public final class LayeredCoordinateParityObserverFixture {
@@ -341,6 +346,114 @@ public final class LayeredCoordinateParityObserverFixture {
         check(!LayeredCoordinateParityObserver.status(playerId, usernameHash).isEnabled(),
             "movement after stop ignored");
 
+        int decisionPlayerId = 11;
+        long decisionHash = 333L;
+        Point firstDecisionPoint = Point.location(193, 1);
+        Point secondDecisionPoint = Point.location(481, 1);
+        WorldRegionWindow firstDecisionWindow =
+            LayeredCoordinateParitySnapshot.capture(firstDecisionPoint, 0)
+                .getVisibilityWindow();
+        WorldRegionWindow secondDecisionWindow =
+            LayeredCoordinateParitySnapshot.capture(secondDecisionPoint, 0)
+                .getVisibilityWindow();
+        LayeredRegionInterestOwnershipLedger decisionOwnership =
+            new LayeredRegionInterestOwnershipLedger();
+        LayeredRegionInterestOwnershipLedger.OpenedOwner decisionOwner =
+            decisionOwnership.openOwner(firstDecisionWindow, 1);
+        LayeredRegionResidencyMirror decisionResidency =
+            new LayeredRegionResidencyMirror();
+        check(decisionResidency.registerPackedRegion(4, 0),
+            "decision first Region resident");
+        check(decisionResidency.registerPackedRegion(10, 0),
+            "decision second Region resident");
+        LayeredRegionRetirementEligibilityLedger decisionRetirement =
+            new LayeredRegionRetirementEligibilityLedger(1L);
+        long[] decisionTick = {0L};
+        decisionRetirement.observeOwnershipChange(
+            decisionOwner.getChange(), decisionTick[0]);
+        LayeredCoordinateParityObserver.InterestOwnershipSource decisionInterest =
+            (currentWindow, maximumRegionsPerWindow) -> {
+                LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot =
+                    decisionOwnership.snapshotOwner(decisionOwner.getOwnerToken());
+                snapshot.requireWindow(currentWindow);
+                check(snapshot.getReferences().size() <= maximumRegionsPerWindow,
+                    "decision interest budget");
+                return LayeredCoordinateParityObserver.InterestOwnershipMetadata
+                    .fromOwnerSnapshot(snapshot);
+            };
+        LayeredCoordinateParityObserver.RegionRetirementSource decisionRetirementSource =
+            (transitionKeys, trackedCandidateKeys, droppedCandidateCount,
+                    maximumRegions) -> {
+                LinkedHashSet<WorldRegionKey> observed =
+                    new LinkedHashSet<WorldRegionKey>(transitionKeys);
+                observed.addAll(trackedCandidateKeys);
+                check(observed.size() <= maximumRegions,
+                    "decision retirement evidence budget");
+                List<LayeredRegionRetirementEligibilityLedger.Snapshot> snapshots =
+                    new ArrayList<LayeredRegionRetirementEligibilityLedger.Snapshot>();
+                for (WorldRegionKey key : observed) {
+                    snapshots.add(decisionRetirement.snapshot(
+                        decisionOwnership.snapshot(key),
+                        decisionResidency.snapshot(key), decisionTick[0]));
+                }
+                return LayeredCoordinateParityObserver.RegionRetirementMetadata
+                    .fromSnapshots(snapshots, transitionKeys,
+                        trackedCandidateKeys, droppedCandidateCount);
+            };
+        LayeredRegionRetirementDecisionArbiter decisionArbiter =
+            new LayeredRegionRetirementDecisionArbiter();
+        LayeredCoordinateParityObserver.RegionRetirementDecisionSource
+            decisionSource = (candidates, droppedCandidateCount,
+                    maximumRegions) -> {
+                check(candidates.size() <= maximumRegions,
+                    "retirement decision budget");
+                List<LayeredRegionRetirementDecisionArbiter.Decision> decisions =
+                    new ArrayList<LayeredRegionRetirementDecisionArbiter.Decision>();
+                for (LayeredRegionRetirementEligibilityLedger.Snapshot candidate
+                        : candidates) {
+                    WorldRegionKey key = candidate.getLogicalRegionKey();
+                    LayeredRegionRetirementEligibilityLedger.Snapshot current =
+                        decisionRetirement.snapshot(
+                            decisionOwnership.snapshot(key),
+                            decisionResidency.snapshot(key), decisionTick[0]);
+                    decisions.add(decisionArbiter.evaluate(candidate, current));
+                }
+                return LayeredCoordinateParityObserver
+                    .RegionRetirementDecisionMetadata.fromDecisions(
+                        decisions, droppedCandidateCount);
+            };
+        LayeredCoordinateParityObserver.start(
+            decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
+            tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
+            regionResidency, decisionInterest, decisionRetirementSource,
+            decisionSource);
+        decisionTick[0] = 1L;
+        LayeredRegionInterestOwnershipLedger.Change decisionRelease =
+            decisionOwnership.synchronizeOwner(
+                decisionOwner.getOwnerToken(), secondDecisionWindow, 1);
+        decisionRetirement.observeOwnershipChange(
+            decisionRelease, decisionTick[0]);
+        LayeredCoordinateParityObserver.onLocationChanged(
+            decisionPlayerId, decisionHash, firstDecisionPoint,
+            secondDecisionPoint, true, decisionRelease);
+        decisionTick[0] = 2L;
+        LayeredCoordinateParityObserver.mark(
+            decisionPlayerId, decisionHash, secondDecisionPoint,
+            "eligible-decision");
+        LayeredRegionInterestOwnershipLedger.Change decisionReacquire =
+            decisionOwnership.synchronizeOwner(
+                decisionOwner.getOwnerToken(), firstDecisionWindow, 1);
+        decisionRetirement.observeOwnershipChange(
+            decisionReacquire, decisionTick[0]);
+        LayeredCoordinateParityObserver.onLocationChanged(
+            decisionPlayerId, decisionHash, secondDecisionPoint,
+            firstDecisionPoint, true, decisionReacquire);
+        LayeredCoordinateParityObserver.mark(
+            decisionPlayerId, decisionHash, firstDecisionPoint,
+            "refusal-pruned");
+        LayeredCoordinateParityObserver.stop(
+            decisionPlayerId, decisionHash, firstDecisionPoint);
+
         LayeredCoordinateParityObserver.Status invalid = LayeredCoordinateParityObserver.start(
             8, 111L, Point.location(100, 3776), 2, tileSnapshots, tileParity,
             tileNeighborhood, adjacentCollision, traversalCollision, regionResidency);
@@ -371,14 +484,14 @@ public final class LayeredCoordinateParityObserverFixture {
 		LayeredCoordinateParityObserver.mark(
 			routePlayerId, routeHash, Point.location(401, 500), "after-gap");
 
-        check(tileParityCaptures[0] == 9, "bounded tile parity capture count");
-        check(tileNeighborhoodCaptures[0] == 9,
+        check(tileParityCaptures[0] == 15, "bounded tile parity capture count");
+        check(tileNeighborhoodCaptures[0] == 15,
             "bounded tile neighborhood capture count");
-        check(adjacentCollisionCaptures[0] == 9,
+        check(adjacentCollisionCaptures[0] == 15,
             "bounded adjacent collision capture count");
         check(traversalCaptures[0] == 3,
             "bounded recent traversal capture count");
-		check(regionResidencyCaptures[0] == 15,
+		check(regionResidencyCaptures[0] == 21,
 			"bounded Region residency capture count");
 		check(traversalRouteSizes.equals(Arrays.asList(2, 17, 2)),
 			"bounded route location counts");
@@ -597,7 +710,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stderr)
 
             logs = sorted(Path(log_dir).glob("*.jsonl"))
-            self.assertEqual(3, len(logs))
+            self.assertEqual(4, len(logs))
             primary = next(path for path in logs if "123456789" in path.name)
             events = [json.loads(line) for line in primary.read_text(encoding="utf-8").splitlines()]
             self.assertEqual(
@@ -614,7 +727,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v12" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v13" for event in events))
             self.assertTrue(all(
                 event["interestOwnership"] is not None
                 for event in events
@@ -919,6 +1032,29 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertNotIn("password", raw_log)
             self.assertNotIn("ipaddress", raw_log)
 
+            decision_log = next(path for path in logs if "333" in path.name)
+            decision_events = [
+                json.loads(line)
+                for line in decision_log.read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertEqual(6, len(decision_events))
+            eligible = decision_events[2]["regionRetirementDecisions"]
+            self.assertEqual((1, 1, 0), (
+                eligible["candidateCount"], eligible["eligibleCount"],
+                eligible["refusedCount"],
+            ))
+            self.assertEqual("ELIGIBLE", eligible["entries"][0]["decisionState"])
+            refusal = decision_events[3]["regionRetirementDecisions"]
+            self.assertEqual((1, 0, 1), (
+                refusal["candidateCount"], refusal["eligibleCount"],
+                refusal["refusedCount"],
+            ))
+            self.assertEqual("PINNED", refusal["entries"][0]["decisionState"])
+            self.assertEqual("PINNED", refusal["entries"][0]["currentRetirementState"])
+            self.assertEqual(
+                0, decision_events[4]["regionRetirementDecisions"]["candidateCount"]
+            )
+
             schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
             try:
                 import jsonschema
@@ -929,9 +1065,11 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
 
                 jsonschema.Draft202012Validator.check_schema(schema)
                 v11 = json.loads(SCHEMA_V11.read_text(encoding="utf-8"))
-                registry = Registry().with_resource(
-                    v11["$id"], Resource.from_contents(v11)
-                )
+                v12 = json.loads(SCHEMA_V12.read_text(encoding="utf-8"))
+                registry = Registry().with_resources([
+                    (v11["$id"], Resource.from_contents(v11)),
+                    (v12["$id"], Resource.from_contents(v12)),
+                ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry
                 )

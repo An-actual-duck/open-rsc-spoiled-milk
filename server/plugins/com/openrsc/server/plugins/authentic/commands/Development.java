@@ -27,6 +27,7 @@ import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
@@ -1389,7 +1390,8 @@ public final class Development implements CommandTrigger {
 					layeredTraversalCollisionSource(player),
 					layeredRegionResidencySource(player),
 					layeredInterestOwnershipSource(player),
-					layeredRegionRetirementSource(player));
+					layeredRegionRetirementSource(player),
+					layeredRegionRetirementDecisionSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1657,6 +1659,27 @@ public final class Development implements CommandTrigger {
 					.fromSnapshots(
 						snapshots, transitionKeys, trackedCandidateKeys,
 						droppedCandidateCount);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.RegionRetirementDecisionSource
+		layeredRegionRetirementDecisionSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.RegionRetirementDecisionSource() {
+			@Override
+			public LayeredCoordinateParityObserver.RegionRetirementDecisionMetadata
+				capture(
+					final List<LayeredRegionRetirementEligibilityLedger.Snapshot>
+						candidates,
+					final long droppedCandidateCount,
+					final int maximumRegions) {
+				List<LayeredRegionRetirementDecisionArbiter.Decision> decisions =
+					regionManager.evaluateLayeredRegionRetirementCandidates(
+						candidates, maximumRegions);
+				return LayeredCoordinateParityObserver
+					.RegionRetirementDecisionMetadata.fromDecisions(
+						decisions, droppedCandidateCount);
 			}
 		};
 	}

@@ -1,16 +1,17 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-45 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-45 implemented and validated,
+with Slice 46 implemented and awaiting private owner validation on the active
+refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 45 has added the first source-level, atomically
-rechecked Region retirement decision boundary while keeping every decision
-dormant; packed Region lookup, eager loading, release, eviction, pathing,
-packets, and persistence remain authoritative and unchanged
+Current milestone: Slice 46 exposes the dormant, atomically rechecked Region
+retirement decisions through additive opt-in private diagnostics; packed Region
+lookup, eager loading, release, eviction, pathing, packets, and persistence
+remain authoritative and unchanged
 
 ## Purpose
 
@@ -5093,6 +5094,100 @@ Automated validation evidence:
 
 Status: implemented and validated; runtime adoption remains deliberately absent.
 
+### Slice 46: Private Region retirement decision diagnostics
+
+Objective: make Slice 45's accepted and refused decisions visible in stable
+AI-readable private traces, while ensuring that observer retention remains a
+bounded diagnostic mechanism rather than a Region retirement queue.
+
+Implemented:
+
+- additive `layered-map-parity-event-v13` JSONL records with a nullable
+  `regionRetirementDecisions` block while the immutable v12 schema remains
+  available for old traces;
+- an observer-local insertion-ordered map retaining at most 4096 immutable
+  `RETIREMENT_ELIGIBLE` snapshots from currently tracked release candidates;
+- atomic recheck of that bounded snapshot list through the Slice 45
+  RegionManager batch boundary at one current server tick;
+- aggregate candidate, dropped, eligible, and refused counts plus one entry per
+  candidate containing its logical key, candidate/current ownership and
+  residency versions, candidate/current release ownership version, release and
+  eligibility ticks, current cooldown state, exact decision state, and eligible
+  boolean;
+- explicit `ELIGIBLE`, `FOREIGN_PROJECTION`, `CANDIDATE_NOT_ELIGIBLE`, `PINNED`,
+  `COOLING_DOWN`, `NOT_RESIDENT`, `UNSUPPORTED`, `UNTRACKED`, `RELEASE_CHANGED`,
+  and `RESIDENCY_CHANGED` decision states;
+- one-time reporting and removal of refused candidates, while safe candidates
+  remain available for repeated idempotence evidence; and
+- login rebind of the decision reader together with the existing ownership and
+  retirement readers, preserving an active trace across reconnect.
+
+Candidate behavior:
+
+- a tracked release becomes a decision candidate only after a v12 retirement
+  snapshot reports it eligible; cooling and unsupported entries never enter the
+  decision set;
+- the candidate is immediately rechecked rather than assuming the just-read
+  snapshot is still current;
+- a later positive-reference transition leaves the old immutable candidate in
+  place until the event's arbiter recheck reports `PINNED`, after which it is
+  pruned;
+- a later release, residency change, source removal, or foreign projection is
+  likewise reported as an explicit refusal once before pruning; and
+- overflow evicts the oldest diagnostic candidate and increments its own
+  cumulative dropped count. It does not alter the cooldown ledger or Region
+  storage.
+
+Safety boundary:
+
+- retained snapshots carry an opaque projection identity but no mutable ledger
+  reference and expose no Region handle;
+- the observer cannot enumerate the world and can consider only bounded release
+  keys already observed by the active trace;
+- neither the schema, candidate map, metadata, nor source callbacks can call
+  Region construction, registration, unregistration, unload, or eviction;
+- refused and eligible results are diagnostic facts, not commands, leases,
+  claims, callbacks, or timer work; and
+- packed eager residency and all gameplay authority remain unchanged.
+
+Automated validation evidence:
+
+- the compiled observer fixture emits schema-valid v13 records and proves an
+  eligible candidate, a later real repin refusal, and one-event refusal pruning;
+- the v13 schema is closed, preserves the full v12 contract, caps entries at
+  4096, and enumerates every Slice 45 decision state;
+- compatibility start overloads emit explicit null decision evidence when no
+  decision source was supplied;
+- the complete layered-map suite passes 104 tests across 45 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 747 core and 488 plugin sources
+  successfully; and
+- two consecutive normalizations produced identical source
+  `4cf3ff069054933af003ba7cebec3ee8c4f5af04aaa3db43c817000664e8df55`,
+  inventory
+  `a5cc7c2535ab86cc0f51820611a1e8a0dc2fd58cd55d6ded5db12dbe19773738`,
+  classification
+  `1d7c5e3e2b6b8f3533015693dc43cb8474404d20e39d7abc6b6a2008db158d66`,
+  and occurrence
+  `1f674f7fffcccb9d689c570d42900a3c2c8cba9c1082edc512e0f99ea2971d79`
+  fingerprints.
+
+Private owner-validation contract:
+
+1. Start at Lumbridge, begin the trace, and mark `decision-baseline`.
+2. Move directly to Varrock. Wait at least 15 seconds, then mark
+   `decision-eligible`; every supported released Lumbridge candidate should be
+   atomically accepted while unsupported Regions remain absent.
+3. Move directly back to Lumbridge. The teleport event should report those old
+   Lumbridge candidates `PINNED` exactly once while beginning cooldown for the
+   released Varrock-only Regions.
+4. Immediately mark `decision-refusals-pruned`; no refused Lumbridge candidate
+   should remain.
+5. Wait at least 15 seconds, mark `decision-second-wave`, and stop. The supported
+   Varrock-only releases should now have fresh eligible decisions.
+
+Status: implemented and automatically validated; owner validation pending.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -5224,14 +5319,14 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 43 by exposing bounded transition and recent-release cooldown evidence through opt-in private v12 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 44 as a two-real-client private-runtime gate proving shared acquisition, partial release, final global release, cooldown, expiry, and reacquisition before considering a retirement arbiter. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 45 by atomically rechecking bounded retirement candidates through a pure source-level decision arbiter that cannot alter packed Region lifecycle. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 46 by emitting bounded accepted/refused retirement-decision evidence through additive private v13 diagnostics without lifecycle authority. | Implemented and automatically validated; owner validation pending |
 
 ## Next Discussion
 
-The next bounded slice may expose Slice 45 decision outcomes through additive,
-opt-in private diagnostics, including explicit stale-release, repinned, and
-residency-changed refusals. That observer must retain only bounded immutable
-candidate evidence and still cannot unregister, unload, or evict packed
-Regions.
+Complete the prepared Slice 46 private runtime route and analyze its v13 trace.
+No lifecycle consumer should be considered until eligible decisions,
+reacquisition refusal, refusal pruning, and a second independent eligibility
+wave all pass.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.
