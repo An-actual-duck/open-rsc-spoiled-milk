@@ -45,7 +45,7 @@ class LayeredMapsSliceFiftyEightTest(unittest.TestCase):
         self.assertNotIn(".unload(", observation)
 
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v21"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v22"', observer
         )
         self.assertIn('anomalyDetails', observer)
         self.assertIn('droppedAnomalyDetailCount', observer)

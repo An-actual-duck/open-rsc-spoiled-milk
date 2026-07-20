@@ -42,6 +42,7 @@ import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
@@ -3398,6 +3399,27 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionCohortAttributionSource
+			layeredPackedRegionAuthoredReconstructionCohortAttributionSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionCohortAttributionSource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionCohortAttribution
+				capture(
+					final LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+						cohort,
+					final int maximumEdges,
+					final int maximumBridgePlacements) {
+				return LayeredPackedRegionAuthoredReconstructionCohortAttribution
+					.analyze(
+						getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						cohort, maximumEdges, maximumBridgePlacements);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3513,6 +3535,9 @@ public final class Player extends Mob {
 				loggedIn ? layeredPackedRegionAuthoredReconstructionSource() : null,
 				loggedIn
 					? layeredPackedRegionAuthoredReconstructionCohortSource()
+					: null,
+				loggedIn
+					? layeredPackedRegionAuthoredReconstructionCohortAttributionSource()
 					: null);
 		}
 	}

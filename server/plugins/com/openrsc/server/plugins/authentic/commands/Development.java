@@ -27,6 +27,7 @@ import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
@@ -1402,7 +1403,9 @@ public final class Development implements CommandTrigger {
 					layeredPackedRegionAuthoredConstructionSource(player),
 					layeredPackedRegionAuthoredProvenanceSource(player),
 					layeredPackedRegionAuthoredReconstructionSource(player),
-					layeredPackedRegionAuthoredReconstructionCohortSource(player));
+					layeredPackedRegionAuthoredReconstructionCohortSource(player),
+					layeredPackedRegionAuthoredReconstructionCohortAttributionSource(
+						player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1779,6 +1782,28 @@ public final class Development implements CommandTrigger {
 							.getAuthoredReconstructionRecipe(),
 						safety, maximumCohortSources,
 						maximumRequirementSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionCohortAttributionSource
+			layeredPackedRegionAuthoredReconstructionCohortAttributionSource(
+				final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionCohortAttributionSource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionCohortAttribution
+				capture(
+					final LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+						cohort,
+					final int maximumEdges,
+					final int maximumBridgePlacements) {
+				return LayeredPackedRegionAuthoredReconstructionCohortAttribution
+					.analyze(
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						cohort, maximumEdges, maximumBridgePlacements);
 			}
 		};
 	}

@@ -178,8 +178,8 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v21.schema.json`. Each v21 record
-retains the complete v20 position, logical-window, interest-delta,
+traces emit `schema/layered-map-parity-event-v22.schema.json`. Each v22 record
+retains the complete v21 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
@@ -193,8 +193,8 @@ alongside it—including
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
-explicit readable contracts. The v19 and v20 schemas remain immutable contracts
-for earlier records.
+explicit readable contracts. The v19-v21 schemas remain immutable contracts for
+earlier records.
 Marker and stop records may additionally summarize the latest 16 contiguous
 ordinary walking steps since the previous reset, including per-step decisions,
 aggregate parity, capacity evictions, and discontinuities. Teleports, login,
@@ -284,6 +284,14 @@ requirements. Cohort roles, expansion rounds, final-live counts, conservative
 reach, support perimeter, and exact requirement references remain detached
 diagnostic evidence. The payload cannot acquire, load, retain, reconstruct, or
 retire a source and explicitly has no entity registry or lifecycle authority.
+v22 attributes the exact detached cohort without changing it. Typed aggregates
+separate construction and dependency kinds; sorted owner-to-requirement edges
+identify expansion-frontier and external-support relationships; and compact
+bridge records retain primitive authored identity and conservative envelope
+metadata for cross-source placements. Edge and bridge lists each refuse beyond
+8,192 entries. The observer passes the exact v21 cohort object into attribution,
+and the payload remains identity-only evidence with no entity registry or
+lifecycle authority.
 
 ## Checked Player mirror
 

@@ -436,6 +436,10 @@ public final class
 		private final int placementReferenceCount;
 		private final int[] constructionKindReferenceCounts;
 		private final int[] dependencyKindReferenceCounts;
+		private final List<TypedReferenceAttribution>
+			constructionKindReferences;
+		private final List<TypedReferenceAttribution>
+			dependencyKindReferences;
 
 		private EdgeAttribution(final MutableEdgeAttribution source) {
 			this.ownerPackedRegionX = source.key.ownerPackedRegionX;
@@ -453,6 +457,28 @@ public final class
 				source.constructionKindReferenceCounts.clone();
 			this.dependencyKindReferenceCounts =
 				source.dependencyKindReferenceCounts.clone();
+			List<TypedReferenceAttribution> constructionReferences =
+				new ArrayList<TypedReferenceAttribution>();
+			for (ConstructionKind kind : ConstructionKind.values()) {
+				int count = constructionKindReferenceCounts[kind.ordinal()];
+				if (count > 0) {
+					constructionReferences.add(
+						new TypedReferenceAttribution(kind.name(), count));
+				}
+			}
+			this.constructionKindReferences = Collections.unmodifiableList(
+				constructionReferences);
+			List<TypedReferenceAttribution> dependencyReferences =
+				new ArrayList<TypedReferenceAttribution>();
+			for (DependencyKind kind : DependencyKind.values()) {
+				int count = dependencyKindReferenceCounts[kind.ordinal()];
+				if (count > 0) {
+					dependencyReferences.add(
+						new TypedReferenceAttribution(kind.name(), count));
+				}
+			}
+			this.dependencyKindReferences = Collections.unmodifiableList(
+				dependencyReferences);
 		}
 
 		public int getOwnerPackedRegionX() { return ownerPackedRegionX; }
@@ -484,6 +510,30 @@ public final class
 			if (kind == null) { throw new NullPointerException("kind"); }
 			return dependencyKindReferenceCounts[kind.ordinal()];
 		}
+		public List<TypedReferenceAttribution>
+			getConstructionKindReferences() {
+			return constructionKindReferences;
+		}
+		public List<TypedReferenceAttribution>
+			getDependencyKindReferences() {
+			return dependencyKindReferences;
+		}
+	}
+
+	/** One nonzero enum-name/reference-count pair detached for serialization. */
+	public static final class TypedReferenceAttribution {
+		private final String kindName;
+		private final int referenceCount;
+
+		private TypedReferenceAttribution(
+			final String kindName,
+			final int referenceCount) {
+			this.kindName = kindName;
+			this.referenceCount = referenceCount;
+		}
+
+		public String getKindName() { return kindName; }
+		public int getReferenceCount() { return referenceCount; }
 	}
 
 	/** Primitive metadata for one final-live cross-source placement. */

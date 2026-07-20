@@ -335,7 +335,7 @@ class LayeredMapsSliceFiftyNineTest(unittest.TestCase):
         )
         self.assertIn("SUPERSEDED_IDENTITY_PRESENT", observation)
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v21"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v22"', observer
         )
         self.assertIn("populationSupersessions", observer)
 
