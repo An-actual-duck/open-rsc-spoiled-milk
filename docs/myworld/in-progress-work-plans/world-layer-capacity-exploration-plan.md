@@ -1,21 +1,18 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-58 implemented and owner-
-validated on the active refinement branch
+Status: architecture design complete; Slices 1-58 owner-validated and Slice 59
+implemented with automated validation on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 58's private v18 evidence names all four Slice 57
-absences and proves they are deterministic population-time supersessions: two
-legacy tables displaced by harvesting plants, one base doorframe displaced by
-a custom-quest door, and one duplicated leafy-tree definition displaced by its
-later identical entry. They are valid replay-history records but are not final
-live-state expectations. The next design gate is a detached population-outcome
-projection that preserves full manifest order while distinguishing superseded
-identities from genuine runtime absence. No registry or lifecycle authority is
-authorized, and packed Region lookup, eager loading, release, eviction,
+Current milestone: Slice 59 records deterministic population-time collision
+lineage while preserving Slice 53's complete ordered replay history. Private
+v19 provenance now evaluates only the final-live expectation set, reports the
+four known superseded predecessors separately, and still treats a predecessor
+that unexpectedly reappears as an anomaly. No registry or lifecycle authority
+is authorized, and packed Region lookup, eager loading, release, eviction,
 pathing, packets, and persistence remain unchanged
 
 ## Purpose
@@ -6277,6 +6274,72 @@ Status: implemented and owner-validated. The four absences are classified as
 population-time supersession evidence, not runtime provenance failures. No
 lifecycle consumer is authorized.
 
+### Slice 59: Detached population supersession projection
+
+Objective: preserve the complete authored placement manifest as construction
+replay history while deriving an exact final-live expectation after normal
+startup collision registration supersedes earlier object identities.
+
+Implemented:
+
+- whole-world population now observes the same scenery-anchor or
+  boundary-anchor-and-direction collider that `World.registerGameObject` will
+  replace, then records predecessor and successor authored identities after
+  the successor has received its manifest identity;
+- an immutable generation-fenced population outcome resolves both identities
+  against the completed manifest and retains only detached primitive placement
+  metadata: source ordinal, construction family, definition/entity IDs,
+  coordinate, direction, object type, and collision family;
+- the complete manifest remains unchanged and ordered. The outcome separately
+  reports manifest count, supersession count, and final-live expectation count;
+- the private runtime provenance census includes superseded manifest identities
+  in its recognized address set but excludes them from absence and expected
+  family arithmetic. If a predecessor is unexpectedly present at runtime it is
+  counted as `SUPERSEDED_IDENTITY_PRESENT`, not silently ignored; and
+- additive `layered-map-parity-event-v19` diagnostics report manifest,
+  superseded, and final-live counts plus a deterministic bounded list of
+  predecessor/successor collision details. The immutable v18 contract remains
+  available for existing traces.
+
+Safety boundary:
+
+- the outcome retains no entity, Region, collection owned by runtime storage,
+  tile, archive, event, callback, cache, claim, permit, lease, or commit handle;
+- collision lineage is collected only during the existing single population
+  pass and published only after the manifest and dependency equivalence gates
+  succeed;
+- the manifest is not rewritten, source definitions are not deleted, and
+  startup collision precedence remains unchanged;
+- v19 details are capped at 4,096 for each provenance observation and report
+  exact overflow; and
+- supersession evidence grants no loading, reconstruction, teardown, reload,
+  retirement, or eviction authority. `LAYERED_PACKED_REGION_RELOAD_SUPPORTED`
+  remains false.
+
+Automated validation status:
+
+- a compiled fixture proves scenery-to-harvesting and boundary-to-boundary
+  collision projection, detached metadata, immutable ordering, manifest versus
+  final-live arithmetic, zero false absences, and explicit detection if a
+  superseded predecessor reappears;
+- the authoritative bundled-Ant build compiles 757 core and 488 plugin sources;
+- the closed v19 observer fixture validates against the immutable v11-v18
+  schema registry, and the complete layered-map suite passes 132 tests across
+  59 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- two consecutive normalizations retain identical source
+  `da9ba5080a3e7bb06a1cc8b28f7db8a34364a18457796be60c3b6e132a8c9c7e`,
+  inventory
+  `12beea5c7ed88e6de7690bb3178cc1b6dd9fa6b962506b48560319f7ae68d9f1`,
+  classification
+  `d41a95db44e9e8967cb70928f225f38e8fe9aeeef4f86e4ef75658d4a95231ee`,
+  and occurrence
+  `d8ee498c4d527361da224bcb0efc786295b5e4f73c095f561985cd6f5e8c64f4`
+  fingerprints; and
+- private-runtime validation remains the owner gate after this checkpoint.
+
+Status: implemented with focused automated validation; owner validation pending.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -6422,21 +6485,18 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 56 by attaching conflict-refusing authored identity metadata to accepted definitions/entities and preserving it through existing respawn and explicit replacement paths. | Implemented and runtime-validated; registry/lifecycle authority remains absent |
 | 2026-07-19 | Continue with Slice 57 by comparing exact safety-source manifest identities with a bounded count-only private runtime census and additive v17 diagnostics. | Implemented and owner-validated; registry/lifecycle authority remains absent |
 | 2026-07-19 | Continue with Slice 58 by adding bounded detached exact-identity details for every authored-provenance anomaly through additive v18 diagnostics. | Implemented and owner-validated; all four prior absences classified as deterministic population-time supersessions and registry/lifecycle authority remains absent |
+| 2026-07-20 | Continue with Slice 59 by preserving complete manifest replay history while projecting deterministic population supersessions into a final-live expectation set and additive v19 diagnostics. | Implemented with automated validation; owner validation pending and registry/lifecycle authority remains absent |
 
 ## Next Discussion
 
-Design Slice 59 as a bounded detached population-supersession projection. Keep
-Slice 53's complete ordered manifest as replay history, but record when later
-startup construction collision-displaces an earlier authored identity and
-derive a final-live expectation set that excludes those predecessors. Preserve
-both identities and the collision family so the two harvesting overlays, the
-custom door overlay, and the duplicated tree are explicit and testable; do not
-silently delete or rewrite source content. Feed that projection into the
-private provenance census so these four expected supersessions stop presenting
-as absences while a truly missing final identity still does. Do not create a
-global entity registry or grant loading, teardown, or reload authority. Terrain replay,
-collision derivation, event ownership, transactional teardown, and rollback
-remain later gates.
+Owner-validate Slice 59 on the private server. A focused v19 marker should
+retain all four deterministic supersession details, reduce final-live expected
+placements from 5,801 to 5,797, match all 5,797, and report zero genuine
+absence, duplicate, stale-generation, unrecognized, or superseded-runtime
+anomalies. Any different count remains actionable evidence rather than
+permission to alter content. Do not create a global entity registry or grant
+loading, teardown, or reload authority. Terrain replay, collision derivation,
+event ownership, transactional teardown, and rollback remain later gates.
 Any later commit token or lifecycle consumer must remain unable to alter the
 authoritative packed Region registry until ownership, residency, players,
 NPCs, objects, ground items, collision, reload, and recovery preconditions can

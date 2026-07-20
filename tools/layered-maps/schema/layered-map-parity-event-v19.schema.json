@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v19.schema.json",
+  "title": "Layered Map Parity Event v19",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v19"},
+    "eventType": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {
+      "oneOf": [
+        {"$ref": "#/$defs/packedRegionAuthoredProvenance"},
+        {"type": "null"}
+      ]
+    },
+    "roundTripExact": {"$ref": "layered-map-parity-event-v18.schema.json#/properties/roundTripExact"}
+  },
+  "allOf": [
+    {"$ref": "layered-map-parity-event-v18.schema.json#/allOf/0"},
+    {"$ref": "layered-map-parity-event-v18.schema.json#/allOf/1"},
+    {"$ref": "layered-map-parity-event-v18.schema.json#/allOf/2"},
+    {"$ref": "layered-map-parity-event-v18.schema.json#/allOf/3"},
+    {"$ref": "layered-map-parity-event-v18.schema.json#/allOf/4"},
+    {"$ref": "layered-map-parity-event-v18.schema.json#/allOf/5"},
+    {"$ref": "layered-map-parity-event-v18.schema.json#/allOf/6"}
+  ],
+  "$defs": {
+    "authoredProvenanceAnomaly": {
+      "oneOf": [
+        {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/authoredProvenanceAnomaly"},
+        {"$ref": "#/$defs/supersededIdentityPresentAnomaly"}
+      ]
+    },
+    "supersededIdentityPresentAnomaly": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "anomalyKind", "generation", "packedRegionX", "packedRegionY",
+        "sourceOrdinal", "constructionKind", "manifestRecognized",
+        "authoredDefinitionId", "expectedConstructedEntityId", "packedX",
+        "packedY", "runtimeObserved", "runtimeEntityId",
+        "currentPackedRegionX", "currentPackedRegionY", "runtimeActive",
+        "runtimeInstanceCount", "replacementObjectInstanceCount"
+      ],
+      "properties": {
+        "anomalyKind": {"const": "SUPERSEDED_IDENTITY_PRESENT"},
+        "generation": {"type": "integer", "minimum": 1},
+        "packedRegionX": {"type": "integer", "minimum": 0},
+        "packedRegionY": {"type": "integer", "minimum": 0},
+        "sourceOrdinal": {"type": "integer", "minimum": 1, "maximum": 262144},
+        "constructionKind": {"enum": ["SCENERY", "BOUNDARY", "NPC_SPAWN", "GROUND_ITEM_SPAWN", "HARVESTING_SCENERY"]},
+        "manifestRecognized": {"const": true},
+        "authoredDefinitionId": {"type": "integer", "minimum": 0},
+        "expectedConstructedEntityId": {"type": "integer", "minimum": 0},
+        "packedX": {"type": "integer", "minimum": 0},
+        "packedY": {"type": "integer", "minimum": 0},
+        "runtimeObserved": {"const": true},
+        "runtimeEntityId": {"type": "integer", "minimum": 0},
+        "currentPackedRegionX": {"type": "integer", "minimum": 0},
+        "currentPackedRegionY": {"type": "integer", "minimum": 0},
+        "runtimeActive": {"type": "boolean"},
+        "runtimeInstanceCount": {"type": "integer", "minimum": 1, "maximum": 524288},
+        "replacementObjectInstanceCount": {"type": "integer", "minimum": 0, "maximum": 524288}
+      }
+    },
+    "populationPlacement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "packedRegionX", "packedRegionY", "sourceOrdinal",
+        "constructionKind", "authoredDefinitionId", "constructedEntityId",
+        "packedX", "packedY", "direction", "objectType"
+      ],
+      "properties": {
+        "generation": {"type": "integer", "minimum": 1},
+        "packedRegionX": {"type": "integer", "minimum": 0},
+        "packedRegionY": {"type": "integer", "minimum": 0},
+        "sourceOrdinal": {"type": "integer", "minimum": 1, "maximum": 262144},
+        "constructionKind": {"enum": ["SCENERY", "BOUNDARY", "NPC_SPAWN", "GROUND_ITEM_SPAWN", "HARVESTING_SCENERY"]},
+        "authoredDefinitionId": {"type": "integer", "minimum": 0},
+        "constructedEntityId": {"type": "integer", "minimum": 0},
+        "packedX": {"type": "integer", "minimum": 0},
+        "packedY": {"type": "integer", "minimum": 0},
+        "direction": {"type": "integer", "minimum": -1},
+        "objectType": {"type": "integer", "minimum": -1}
+      }
+    },
+    "populationSupersession": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["collisionKind", "predecessor", "successor"],
+      "properties": {
+        "collisionKind": {"enum": ["SCENERY_ANCHOR", "BOUNDARY_ANCHOR_DIRECTION"]},
+        "predecessor": {"$ref": "#/$defs/populationPlacement"},
+        "successor": {"$ref": "#/$defs/populationPlacement"}
+      }
+    },
+    "packedRegionAuthoredProvenanceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packedRegionX", "packedRegionY", "manifestPlacementCount",
+        "expectedPlacementCount", "supersededManifestIdentityCount",
+        "supersededRuntimeInstanceCount", "matchedIdentityCount",
+        "absentIdentityCount", "duplicateIdentityCount", "runtimeInstanceCount",
+        "activeRuntimeInstanceCount", "inactiveRuntimeInstanceCount",
+        "atAuthoredSourceInstanceCount", "awayFromAuthoredSourceInstanceCount",
+        "replacementObjectInstanceCount", "staleGenerationInstanceCount",
+        "unrecognizedIdentityInstanceCount", "expectedSceneryCount",
+        "expectedBoundaryCount", "expectedNpcSpawnCount",
+        "expectedGroundItemSpawnCount", "expectedHarvestingSceneryCount",
+        "runtimeSceneryCount", "runtimeBoundaryCount", "runtimeNpcSpawnCount",
+        "runtimeGroundItemSpawnCount", "runtimeHarvestingSceneryCount"
+      ],
+      "properties": {
+        "packedRegionX": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/packedRegionX"},
+        "packedRegionY": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/packedRegionY"},
+        "manifestPlacementCount": {"type": "integer", "minimum": 0, "maximum": 262144},
+        "expectedPlacementCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/expectedPlacementCount"},
+        "supersededManifestIdentityCount": {"type": "integer", "minimum": 0, "maximum": 262144},
+        "supersededRuntimeInstanceCount": {"type": "integer", "minimum": 0, "maximum": 524288},
+        "matchedIdentityCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/matchedIdentityCount"},
+        "absentIdentityCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/absentIdentityCount"},
+        "duplicateIdentityCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/duplicateIdentityCount"},
+        "runtimeInstanceCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/runtimeInstanceCount"},
+        "activeRuntimeInstanceCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/activeRuntimeInstanceCount"},
+        "inactiveRuntimeInstanceCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/inactiveRuntimeInstanceCount"},
+        "atAuthoredSourceInstanceCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/atAuthoredSourceInstanceCount"},
+        "awayFromAuthoredSourceInstanceCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/awayFromAuthoredSourceInstanceCount"},
+        "replacementObjectInstanceCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/replacementObjectInstanceCount"},
+        "staleGenerationInstanceCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/staleGenerationInstanceCount"},
+        "unrecognizedIdentityInstanceCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/unrecognizedIdentityInstanceCount"},
+        "expectedSceneryCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/expectedSceneryCount"},
+        "expectedBoundaryCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/expectedBoundaryCount"},
+        "expectedNpcSpawnCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/expectedNpcSpawnCount"},
+        "expectedGroundItemSpawnCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/expectedGroundItemSpawnCount"},
+        "expectedHarvestingSceneryCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/expectedHarvestingSceneryCount"},
+        "runtimeSceneryCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/runtimeSceneryCount"},
+        "runtimeBoundaryCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/runtimeBoundaryCount"},
+        "runtimeNpcSpawnCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/runtimeNpcSpawnCount"},
+        "runtimeGroundItemSpawnCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/runtimeGroundItemSpawnCount"},
+        "runtimeHarvestingSceneryCount": {"$ref": "layered-map-parity-event-v17.schema.json#/$defs/packedRegionAuthoredProvenanceEntry/properties/runtimeHarvestingSceneryCount"}
+      }
+    },
+    "packedRegionAuthoredProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "safetyObservedAtTick", "runtimeObservedAtTick",
+        "sourceCount", "manifestPlacementCount", "expectedPlacementCount",
+        "supersededManifestIdentityCount", "supersededRuntimeInstanceCount",
+        "matchedIdentityCount", "absentIdentityCount", "duplicateIdentityCount",
+        "runtimeInstanceCount", "activeRuntimeInstanceCount",
+        "inactiveRuntimeInstanceCount", "atAuthoredSourceInstanceCount",
+        "awayFromAuthoredSourceInstanceCount", "replacementObjectInstanceCount",
+        "staleGenerationInstanceCount", "unrecognizedIdentityInstanceCount",
+        "expectedSceneryCount", "expectedBoundaryCount", "expectedNpcSpawnCount",
+        "expectedGroundItemSpawnCount", "expectedHarvestingSceneryCount",
+        "runtimeSceneryCount", "runtimeBoundaryCount", "runtimeNpcSpawnCount",
+        "runtimeGroundItemSpawnCount", "runtimeHarvestingSceneryCount",
+        "anomalyDetailCount", "droppedAnomalyDetailCount",
+        "populationSupersessionDetailCount",
+        "droppedPopulationSupersessionDetailCount", "identityMetadataOnly",
+        "entityRegistry", "lifecycleAuthority", "anomalyDetails",
+        "populationSupersessions", "entries"
+      ],
+      "properties": {
+        "generation": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/generation"},
+        "safetyObservedAtTick": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/safetyObservedAtTick"},
+        "runtimeObservedAtTick": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/runtimeObservedAtTick"},
+        "sourceCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/sourceCount"},
+        "manifestPlacementCount": {"type": "integer", "minimum": 0, "maximum": 262144},
+        "expectedPlacementCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/expectedPlacementCount"},
+        "supersededManifestIdentityCount": {"type": "integer", "minimum": 0, "maximum": 262144},
+        "supersededRuntimeInstanceCount": {"type": "integer", "minimum": 0, "maximum": 524288},
+        "matchedIdentityCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/matchedIdentityCount"},
+        "absentIdentityCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/absentIdentityCount"},
+        "duplicateIdentityCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/duplicateIdentityCount"},
+        "runtimeInstanceCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/runtimeInstanceCount"},
+        "activeRuntimeInstanceCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/activeRuntimeInstanceCount"},
+        "inactiveRuntimeInstanceCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/inactiveRuntimeInstanceCount"},
+        "atAuthoredSourceInstanceCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/atAuthoredSourceInstanceCount"},
+        "awayFromAuthoredSourceInstanceCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/awayFromAuthoredSourceInstanceCount"},
+        "replacementObjectInstanceCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/replacementObjectInstanceCount"},
+        "staleGenerationInstanceCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/staleGenerationInstanceCount"},
+        "unrecognizedIdentityInstanceCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/unrecognizedIdentityInstanceCount"},
+        "expectedSceneryCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/expectedSceneryCount"},
+        "expectedBoundaryCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/expectedBoundaryCount"},
+        "expectedNpcSpawnCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/expectedNpcSpawnCount"},
+        "expectedGroundItemSpawnCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/expectedGroundItemSpawnCount"},
+        "expectedHarvestingSceneryCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/expectedHarvestingSceneryCount"},
+        "runtimeSceneryCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/runtimeSceneryCount"},
+        "runtimeBoundaryCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/runtimeBoundaryCount"},
+        "runtimeNpcSpawnCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/runtimeNpcSpawnCount"},
+        "runtimeGroundItemSpawnCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/runtimeGroundItemSpawnCount"},
+        "runtimeHarvestingSceneryCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/runtimeHarvestingSceneryCount"},
+        "anomalyDetailCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/anomalyDetailCount"},
+        "droppedAnomalyDetailCount": {"$ref": "layered-map-parity-event-v18.schema.json#/$defs/packedRegionAuthoredProvenance/properties/droppedAnomalyDetailCount"},
+        "populationSupersessionDetailCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "droppedPopulationSupersessionDetailCount": {"type": "integer", "minimum": 0},
+        "identityMetadataOnly": {"const": true},
+        "entityRegistry": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "anomalyDetails": {"type": "array", "maxItems": 4096, "items": {"$ref": "#/$defs/authoredProvenanceAnomaly"}},
+        "populationSupersessions": {"type": "array", "maxItems": 4096, "items": {"$ref": "#/$defs/populationSupersession"}},
+        "entries": {"type": "array", "maxItems": 8192, "items": {"$ref": "#/$defs/packedRegionAuthoredProvenanceEntry"}}
+      }
+    }
+  }
+}

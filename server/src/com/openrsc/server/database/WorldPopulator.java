@@ -18,6 +18,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredCons
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory.DependencyKind;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.WorldNpcEditFiles;
 import com.openrsc.server.util.WorldSceneryEditFiles;
@@ -58,6 +59,9 @@ public final class WorldPopulator {
 	private volatile LayeredPackedRegionAuthoredPlacementDependencyInventory
 		authoredPlacementDependencies =
 			LayeredPackedRegionAuthoredPlacementDependencyInventory.empty();
+	private volatile LayeredPackedRegionAuthoredPopulationOutcome
+		authoredPopulationOutcome =
+			LayeredPackedRegionAuthoredPopulationOutcome.empty();
 
 	public WorldPopulator(final World world) {
 		this.world = world;
@@ -82,6 +86,9 @@ public final class WorldPopulator {
 			placementDependencies =
 				LayeredPackedRegionAuthoredPlacementDependencyInventory.builder(
 					constructionGeneration);
+		LayeredPackedRegionAuthoredPopulationOutcome.Builder populationOutcome =
+			LayeredPackedRegionAuthoredPopulationOutcome.builder(
+				constructionGeneration);
 		try {
 			// LOAD OBJECTS //
 			int countOBJ = 0;
@@ -122,6 +129,8 @@ public final class WorldPopulator {
 				GameObject obj = new GameObject(getWorld(), object.location, object.id,
 					object.direction, object.type);
 
+				LayeredAuthoredPlacementIdentity supersededIdentity =
+					collidingAuthoredObjectIdentity(obj);
 				getWorld().registerGameObject(obj);
 				recordConstruction(
 					constructionInventory,
@@ -133,6 +142,10 @@ public final class WorldPopulator {
 					placementManifest.getLastRecordedIdentity();
 				object.assignAuthoredPlacementIdentity(objectIdentity);
 				assignObjectIdentity(obj, objectIdentity);
+				if (supersededIdentity != null) {
+					populationOutcome.recordSupersession(
+						supersededIdentity, objectIdentity);
+				}
 				recordObjectDependency(placementDependencies, obj);
 				if (obj.getType() == 0) { // no wall objects allowed
 					getWorld().addSceneryLoc(obj.getLocation(), obj.getID());
@@ -233,6 +246,8 @@ public final class WorldPopulator {
 					Point location = Point.location(i.x, i.y);
 					GameObject harvestingScenery = new GameObject(
 						getWorld(), location, harvestingSceneryId, 0, 0);
+					LayeredAuthoredPlacementIdentity supersededIdentity =
+						collidingAuthoredObjectIdentity(harvestingScenery);
 					getWorld().registerGameObject(harvestingScenery);
 					recordConstruction(
 						constructionInventory,
@@ -245,6 +260,10 @@ public final class WorldPopulator {
 					i.assignAuthoredPlacementIdentity(harvestingIdentity);
 					assignObjectIdentity(
 						harvestingScenery, harvestingIdentity);
+					if (supersededIdentity != null) {
+						populationOutcome.recordSupersession(
+							supersededIdentity, harvestingIdentity);
+					}
 					recordObjectDependency(
 						placementDependencies, harvestingScenery,
 						ConstructionKind.HARVESTING_SCENERY);
@@ -282,6 +301,8 @@ public final class WorldPopulator {
 				placementManifest.build();
 			LayeredPackedRegionAuthoredPlacementDependencyInventory
 				completedDependencies = placementDependencies.build();
+			LayeredPackedRegionAuthoredPopulationOutcome completedOutcome =
+				populationOutcome.build(completedManifest);
 			if (!completedManifest.isCountEquivalentTo(completedInventory)) {
 				throw new IllegalStateException(
 					"Authored placement manifest does not match construction inventory");
@@ -290,6 +311,12 @@ public final class WorldPopulator {
 				throw new IllegalStateException(
 					"Authored placement dependencies do not align with manifest");
 			}
+			LOGGER.info(
+				"Recorded {} authored population supersessions; {} of {} manifest "
+					+ "placements remain final-live expectations.",
+				box(completedOutcome.getSupersessionCount()),
+				box(completedOutcome.getFinalExpectedPlacementCount()),
+				box(completedOutcome.getManifestPlacementCount()));
 			LOGGER.info(
 				"Indexed {} authored placement dependency envelopes; "
 					+ "{} cross packed-source boundaries ({} source references, "
@@ -312,6 +339,7 @@ public final class WorldPopulator {
 				box(completedDependencies.getAnchorOnlyDependencyCount()),
 				box(completedDependencies.getAnchorOnlySourceReferenceCount()));
 			authoredPlacementDependencies = completedDependencies;
+			authoredPopulationOutcome = completedOutcome;
 			authoredPlacementManifest = completedManifest;
 			authoredConstructionInventory = completedInventory;
 
@@ -404,6 +432,18 @@ public final class WorldPopulator {
 		object.assignAuthoredPlacementIdentity(identity);
 	}
 
+	private LayeredAuthoredPlacementIdentity collidingAuthoredObjectIdentity(
+		final GameObject object) {
+		Point location = Point.location(object.getX(), object.getY());
+		GameObject colliding = object.getType() == 0
+			? getWorld().getRegionManager().getRegion(location)
+				.getGameObject(location, null)
+			: getWorld().getRegionManager().getRegion(location)
+				.getWallGameObject(location, object.getDirection());
+		return colliding == null
+			? null : colliding.getAuthoredPlacementIdentity();
+	}
+
 	private void recordObjectDependency(
 		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
 			dependencies,
@@ -492,6 +532,11 @@ public final class WorldPopulator {
 	public LayeredPackedRegionAuthoredPlacementDependencyInventory
 		getAuthoredPlacementDependencies() {
 		return authoredPlacementDependencies;
+	}
+
+	public LayeredPackedRegionAuthoredPopulationOutcome
+		getAuthoredPopulationOutcome() {
+		return authoredPopulationOutcome;
 	}
 
 	private int harvestingSceneryForGroundItem(int itemId) {

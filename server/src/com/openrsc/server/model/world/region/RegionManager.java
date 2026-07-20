@@ -20,6 +20,7 @@ import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipL
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
@@ -1217,9 +1218,19 @@ public class RegionManager {
 			final LayeredPackedRegionAuthoredPlacementManifest manifest,
 			final LayeredPackedRegionRetirementSafetyAssessment safety,
 			final long observedAtTick) {
+		return captureAuthoredProvenance(
+			manifest, null, safety, observedAtTick);
+	}
+
+	public LayeredPackedRegionAuthoredProvenanceObservation
+		captureAuthoredProvenance(
+			final LayeredPackedRegionAuthoredPlacementManifest manifest,
+			final LayeredPackedRegionAuthoredPopulationOutcome populationOutcome,
+			final LayeredPackedRegionRetirementSafetyAssessment safety,
+			final long observedAtTick) {
 		LayeredPackedRegionAuthoredProvenanceObservation.Builder builder =
 			LayeredPackedRegionAuthoredProvenanceObservation.builder(
-				manifest, safety, observedAtTick);
+				manifest, populationOutcome, safety, observedAtTick);
 		synchronized (layeredRegionLifecycleLock) {
 			for (Npc npc : world.getNpcs()) {
 				if (npc.getAuthoredPlacementIdentity() != null) {

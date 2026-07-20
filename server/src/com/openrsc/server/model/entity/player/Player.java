@@ -3352,6 +3352,8 @@ public final class Player extends Mob {
 				return getWorld().getRegionManager().captureAuthoredProvenance(
 					getWorld().getWorldLoader().getWorldPopulator()
 						.getAuthoredPlacementManifest(),
+					getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredPopulationOutcome(),
 					safety, getWorld().getServer().getCurrentTick());
 			}
 		};

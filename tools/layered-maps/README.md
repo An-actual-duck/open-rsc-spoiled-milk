@@ -178,16 +178,17 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v18.schema.json`. Each v18 record
-retains the complete v17 position, logical-window, interest-delta,
+traces emit `schema/layered-map-parity-event-v19.schema.json`. Each v19 record
+retains the complete v18 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v17 schemas remain
+repeating the tile comparisons on every movement. The v1-v18 schemas remain
 alongside it—including
+`schema/layered-map-parity-event-v18.schema.json`,
 `schema/layered-map-parity-event-v17.schema.json`,
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
@@ -259,6 +260,14 @@ number omitted beyond that limit. Nullable fields distinguish an absent
 runtime instance or an identity not recognized by the current manifest. These
 primitive facts remain observer-only: no entity, Region, registry, callback,
 or lifecycle handle is serialized or retained.
+v19 preserves the complete authored manifest as replay history while applying
+the detached final-population outcome to provenance expectations. It reports
+manifest, superseded, and final-live counts and emits bounded deterministic
+predecessor/successor metadata for scenery-anchor and
+boundary-anchor-and-direction collisions. Expected startup supersessions no
+longer appear as false absences; a superseded identity that unexpectedly
+reappears is an explicit anomaly. The outcome and JSON contain no entity,
+Region, registry, callback, or lifecycle handle.
 
 ## Checked Player mirror
 

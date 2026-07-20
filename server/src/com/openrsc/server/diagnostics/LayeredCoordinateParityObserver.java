@@ -4,6 +4,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
@@ -39,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v18";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v19";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -1246,8 +1247,14 @@ public final class LayeredCoordinateParityObserver {
 			.append(observation.getRuntimeObservedAtTick()).append(',');
 		out.append("\"sourceCount\":")
 			.append(observation.getSourceCount()).append(',');
+		out.append("\"manifestPlacementCount\":")
+			.append(observation.getManifestPlacementCount()).append(',');
 		out.append("\"expectedPlacementCount\":")
 			.append(observation.getExpectedPlacementCount()).append(',');
+		out.append("\"supersededManifestIdentityCount\":")
+			.append(observation.getSupersededManifestIdentityCount()).append(',');
+		out.append("\"supersededRuntimeInstanceCount\":")
+			.append(observation.getSupersededRuntimeInstanceCount()).append(',');
 		out.append("\"matchedIdentityCount\":")
 			.append(observation.getMatchedIdentityCount()).append(',');
 		out.append("\"absentIdentityCount\":")
@@ -1294,6 +1301,11 @@ public final class LayeredCoordinateParityObserver {
 			.append(observation.getAnomalyDetailCount()).append(',');
 		out.append("\"droppedAnomalyDetailCount\":")
 			.append(observation.getDroppedAnomalyDetailCount()).append(',');
+		out.append("\"populationSupersessionDetailCount\":")
+			.append(observation.getPopulationSupersessionDetailCount()).append(',');
+		out.append("\"droppedPopulationSupersessionDetailCount\":")
+			.append(observation.getDroppedPopulationSupersessionDetailCount())
+			.append(',');
 		out.append("\"identityMetadataOnly\":true,");
 		out.append("\"entityRegistry\":false,");
 		out.append("\"lifecycleAuthority\":false,");
@@ -1308,6 +1320,18 @@ public final class LayeredCoordinateParityObserver {
 			appendPackedRegionAuthoredProvenanceAnomaly(out, detail);
 		}
 		out.append("],");
+		out.append("\"populationSupersessions\":[");
+		boolean firstSupersession = true;
+		for (LayeredPackedRegionAuthoredPopulationOutcome.Supersession
+			supersession : observation.getPopulationSupersessions()) {
+			if (!firstSupersession) {
+				out.append(',');
+			}
+			firstSupersession = false;
+			appendPackedRegionAuthoredPopulationSupersession(
+				out, supersession);
+		}
+		out.append("],");
 		out.append("\"entries\":[");
 		boolean first = true;
 		for (LayeredPackedRegionAuthoredProvenanceObservation.SourceObservation
@@ -1320,8 +1344,14 @@ public final class LayeredCoordinateParityObserver {
 				.append(source.getPackedRegionX()).append(',');
 			out.append("\"packedRegionY\":")
 				.append(source.getPackedRegionY()).append(',');
+			out.append("\"manifestPlacementCount\":")
+				.append(source.getManifestPlacementCount()).append(',');
 			out.append("\"expectedPlacementCount\":")
 				.append(source.getExpectedPlacementCount()).append(',');
+			out.append("\"supersededManifestIdentityCount\":")
+				.append(source.getSupersededManifestIdentityCount()).append(',');
+			out.append("\"supersededRuntimeInstanceCount\":")
+				.append(source.getSupersededRuntimeInstanceCount()).append(',');
 			out.append("\"matchedIdentityCount\":")
 				.append(source.getMatchedIdentityCount()).append(',');
 			out.append("\"absentIdentityCount\":")
@@ -1366,6 +1396,52 @@ public final class LayeredCoordinateParityObserver {
 				.append(source.getRuntimeHarvestingSceneryCount()).append('}');
 		}
 		out.append("]}");
+	}
+
+	private static void appendPackedRegionAuthoredPopulationSupersession(
+		final StringBuilder out,
+		final LayeredPackedRegionAuthoredPopulationOutcome.Supersession
+			supersession) {
+		out.append('{');
+		field(out, "collisionKind", supersession.getCollisionKind().name())
+			.append(',');
+		out.append("\"predecessor\":");
+		appendPackedRegionAuthoredPopulationPlacement(
+			out, supersession.getPredecessor());
+		out.append(',');
+		out.append("\"successor\":");
+		appendPackedRegionAuthoredPopulationPlacement(
+			out, supersession.getSuccessor());
+		out.append('}');
+	}
+
+	private static void appendPackedRegionAuthoredPopulationPlacement(
+		final StringBuilder out,
+		final LayeredPackedRegionAuthoredPopulationOutcome.PlacementMetadata
+			placement) {
+		out.append('{');
+		out.append("\"generation\":")
+			.append(placement.getGeneration()).append(',');
+		out.append("\"packedRegionX\":")
+			.append(placement.getPackedRegionX()).append(',');
+		out.append("\"packedRegionY\":")
+			.append(placement.getPackedRegionY()).append(',');
+		out.append("\"sourceOrdinal\":")
+			.append(placement.getSourceOrdinal()).append(',');
+		field(out, "constructionKind",
+			placement.getConstructionKind().name()).append(',');
+		out.append("\"authoredDefinitionId\":")
+			.append(placement.getAuthoredDefinitionId()).append(',');
+		out.append("\"constructedEntityId\":")
+			.append(placement.getConstructedEntityId()).append(',');
+		out.append("\"packedX\":")
+			.append(placement.getPackedX()).append(',');
+		out.append("\"packedY\":")
+			.append(placement.getPackedY()).append(',');
+		out.append("\"direction\":")
+			.append(placement.getDirection()).append(',');
+		out.append("\"objectType\":")
+			.append(placement.getObjectType()).append('}');
 	}
 
 	private static void appendPackedRegionAuthoredProvenanceAnomaly(

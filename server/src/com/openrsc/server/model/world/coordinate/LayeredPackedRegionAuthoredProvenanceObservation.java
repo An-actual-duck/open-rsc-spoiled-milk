@@ -20,6 +20,7 @@ import java.util.Map;
 public final class LayeredPackedRegionAuthoredProvenanceObservation {
 	public static final int MAXIMUM_RUNTIME_INSTANCES = 524288;
 	public static final int MAXIMUM_ANOMALY_DETAILS = 4096;
+	public static final int MAXIMUM_POPULATION_SUPERSESSION_DETAILS = 4096;
 
 	private final long generation;
 	private final long safetyObservedAtTick;
@@ -28,6 +29,9 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 	private final MutableCounts totals;
 	private final List<AnomalyDetail> anomalyDetails;
 	private final int droppedAnomalyDetailCount;
+	private final List<LayeredPackedRegionAuthoredPopulationOutcome.Supersession>
+		populationSupersessions;
+	private final int droppedPopulationSupersessionDetailCount;
 
 	private LayeredPackedRegionAuthoredProvenanceObservation(
 		final long generation,
@@ -36,7 +40,10 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 		final List<SourceObservation> sources,
 		final MutableCounts totals,
 		final List<AnomalyDetail> anomalyDetails,
-		final int droppedAnomalyDetailCount) {
+		final int droppedAnomalyDetailCount,
+		final List<LayeredPackedRegionAuthoredPopulationOutcome.Supersession>
+			populationSupersessions,
+		final int droppedPopulationSupersessionDetailCount) {
 		this.generation = generation;
 		this.safetyObservedAtTick = safetyObservedAtTick;
 		this.runtimeObservedAtTick = runtimeObservedAtTick;
@@ -45,13 +52,27 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 		this.anomalyDetails = Collections.unmodifiableList(
 			new ArrayList<AnomalyDetail>(anomalyDetails));
 		this.droppedAnomalyDetailCount = droppedAnomalyDetailCount;
+		this.populationSupersessions = Collections.unmodifiableList(
+			new ArrayList<LayeredPackedRegionAuthoredPopulationOutcome.Supersession>(
+				populationSupersessions));
+		this.droppedPopulationSupersessionDetailCount =
+			droppedPopulationSupersessionDetailCount;
 	}
 
 	public static Builder builder(
 		final LayeredPackedRegionAuthoredPlacementManifest manifest,
 		final LayeredPackedRegionRetirementSafetyAssessment safety,
 		final long runtimeObservedAtTick) {
-		return new Builder(manifest, safety, runtimeObservedAtTick);
+		return new Builder(manifest, null, safety, runtimeObservedAtTick);
+	}
+
+	public static Builder builder(
+		final LayeredPackedRegionAuthoredPlacementManifest manifest,
+		final LayeredPackedRegionAuthoredPopulationOutcome populationOutcome,
+		final LayeredPackedRegionRetirementSafetyAssessment safety,
+		final long runtimeObservedAtTick) {
+		return new Builder(
+			manifest, populationOutcome, safety, runtimeObservedAtTick);
 	}
 
 	public long getGeneration() { return generation; }
@@ -61,6 +82,15 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 	public int getSourceCount() { return sources.size(); }
 	public int getExpectedPlacementCount() {
 		return totals.expectedPlacementCount;
+	}
+	public int getManifestPlacementCount() {
+		return totals.manifestPlacementCount;
+	}
+	public int getSupersededManifestIdentityCount() {
+		return totals.supersededManifestIdentityCount;
+	}
+	public int getSupersededRuntimeInstanceCount() {
+		return totals.supersededRuntimeInstanceCount;
 	}
 	public int getMatchedIdentityCount() { return totals.matchedIdentityCount; }
 	public int getAbsentIdentityCount() { return totals.absentIdentityCount; }
@@ -112,13 +142,24 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 	public int getDroppedAnomalyDetailCount() {
 		return droppedAnomalyDetailCount;
 	}
+	public List<LayeredPackedRegionAuthoredPopulationOutcome.Supersession>
+		getPopulationSupersessions() {
+		return populationSupersessions;
+	}
+	public int getPopulationSupersessionDetailCount() {
+		return populationSupersessions.size();
+	}
+	public int getDroppedPopulationSupersessionDetailCount() {
+		return droppedPopulationSupersessionDetailCount;
+	}
 
 	public enum AnomalyKind {
 		ABSENT,
 		DUPLICATE,
 		REPLACEMENT_OBJECT,
 		STALE_GENERATION,
-		UNRECOGNIZED_IDENTITY
+		UNRECOGNIZED_IDENTITY,
+		SUPERSEDED_IDENTITY_PRESENT
 	}
 
 	/** One bounded immutable identity detail; never an entity or registry entry. */
@@ -223,6 +264,15 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 		public int getExpectedPlacementCount() {
 			return counts.expectedPlacementCount;
 		}
+		public int getManifestPlacementCount() {
+			return counts.manifestPlacementCount;
+		}
+		public int getSupersededManifestIdentityCount() {
+			return counts.supersededManifestIdentityCount;
+		}
+		public int getSupersededRuntimeInstanceCount() {
+			return counts.supersededRuntimeInstanceCount;
+		}
 		public int getMatchedIdentityCount() {
 			return counts.matchedIdentityCount;
 		}
@@ -300,12 +350,17 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 				new LinkedHashMap<LayeredAuthoredPlacementIdentity, MutableExpected>();
 		private final List<AnomalyDetail> anomalyDetails =
 			new ArrayList<AnomalyDetail>();
+		private final List<LayeredPackedRegionAuthoredPopulationOutcome.Supersession>
+			populationSupersessions =
+				new ArrayList<LayeredPackedRegionAuthoredPopulationOutcome.Supersession>();
 		private int runtimeRecords;
 		private int droppedAnomalyDetailCount;
+		private int droppedPopulationSupersessionDetailCount;
 		private boolean built;
 
 		private Builder(
 			final LayeredPackedRegionAuthoredPlacementManifest manifest,
+			final LayeredPackedRegionAuthoredPopulationOutcome populationOutcome,
 			final LayeredPackedRegionRetirementSafetyAssessment safety,
 			final long runtimeObservedAtTick) {
 			if (manifest == null) {
@@ -317,6 +372,9 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 			if (runtimeObservedAtTick < 0L) {
 				throw new IllegalArgumentException(
 					"Runtime observation tick must not be negative");
+			}
+			if (populationOutcome != null) {
+				populationOutcome.validateAgainst(manifest);
 			}
 			this.manifest = manifest;
 			this.safetyObservedAtTick = safety.getObservedAtTick();
@@ -336,13 +394,26 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 				}
 				for (LayeredPackedRegionAuthoredPlacementManifest.AuthoredPlacement
 					placement : definitions.getPlacements()) {
+					source.counts.manifestPlacementCount = Math.incrementExact(
+						source.counts.manifestPlacementCount);
+					LayeredPackedRegionAuthoredPopulationOutcome.Supersession
+						supersession = populationOutcome == null ? null
+							: populationOutcome.findSupersession(
+								placement.getIdentity());
 					MutableExpected value = new MutableExpected(
-						source, placement);
+						source, placement, supersession);
 					if (expected.put(placement.getIdentity(), value) != null) {
 						throw new IllegalArgumentException(
 							"Duplicate authored placement identity in manifest");
 					}
-					source.counts.recordExpected(placement.getKind());
+					if (supersession == null) {
+						source.counts.recordExpected(placement.getKind());
+					} else {
+						source.counts.supersededManifestIdentityCount =
+							Math.incrementExact(
+								source.counts.supersededManifestIdentityCount);
+						recordPopulationSupersession(supersession);
+					}
 				}
 			}
 		}
@@ -417,7 +488,21 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 			return new LayeredPackedRegionAuthoredProvenanceObservation(
 				manifest.getGeneration(), safetyObservedAtTick,
 				runtimeObservedAtTick, immutable, totals,
-				anomalyDetails, droppedAnomalyDetailCount);
+				anomalyDetails, droppedAnomalyDetailCount,
+				populationSupersessions,
+				droppedPopulationSupersessionDetailCount);
+		}
+
+		private void recordPopulationSupersession(
+			final LayeredPackedRegionAuthoredPopulationOutcome.Supersession
+				supersession) {
+			if (populationSupersessions.size()
+				< MAXIMUM_POPULATION_SUPERSESSION_DETAILS) {
+				populationSupersessions.add(supersession);
+			} else {
+				droppedPopulationSupersessionDetailCount = Math.incrementExact(
+					droppedPopulationSupersessionDetailCount);
+			}
 		}
 
 		private void recordAnomaly(final AnomalyDetail detail) {
@@ -443,6 +528,8 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 			placement;
 		private final LayeredAuthoredPlacementIdentity identity;
 		private final int expectedEntityId;
+		private final LayeredPackedRegionAuthoredPopulationOutcome.Supersession
+			supersession;
 		private int instanceCount;
 		private int replacementObjectInstanceCount;
 		private boolean runtimeSampleObserved;
@@ -459,11 +546,14 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 		private MutableExpected(
 			final MutableSource source,
 			final LayeredPackedRegionAuthoredPlacementManifest.AuthoredPlacement
-				placement) {
+				placement,
+			final LayeredPackedRegionAuthoredPopulationOutcome.Supersession
+				supersession) {
 			this.source = source;
 			this.placement = placement;
 			this.identity = placement.getIdentity();
 			this.expectedEntityId = placement.getConstructedEntityId();
+			this.supersession = supersession;
 		}
 
 		private void record(
@@ -517,6 +607,21 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 		}
 
 		private void finish(final Builder builder) {
+			if (supersession != null) {
+				if (instanceCount > 0) {
+					source.counts.supersededRuntimeInstanceCount = Math.addExact(
+						source.counts.supersededRuntimeInstanceCount,
+						instanceCount);
+					builder.recordAnomaly(expectedAnomaly(
+						AnomalyKind.SUPERSEDED_IDENTITY_PRESENT,
+						placement, true, runtimeSampleEntityId,
+						runtimeSamplePackedRegionX,
+						runtimeSamplePackedRegionY,
+						runtimeSampleActive, instanceCount,
+						replacementObjectInstanceCount));
+				}
+				return;
+			}
 			if (instanceCount == 0) {
 				source.counts.absentIdentityCount = Math.incrementExact(
 					source.counts.absentIdentityCount);
@@ -563,7 +668,10 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 	}
 
 	private static final class MutableCounts {
+		private int manifestPlacementCount;
 		private int expectedPlacementCount;
+		private int supersededManifestIdentityCount;
+		private int supersededRuntimeInstanceCount;
 		private int matchedIdentityCount;
 		private int absentIdentityCount;
 		private int duplicateIdentityCount;
@@ -644,7 +752,10 @@ public final class LayeredPackedRegionAuthoredProvenanceObservation {
 		}
 
 		private void add(final MutableCounts other) {
+			manifestPlacementCount = Math.addExact(manifestPlacementCount, other.manifestPlacementCount);
 			expectedPlacementCount = Math.addExact(expectedPlacementCount, other.expectedPlacementCount);
+			supersededManifestIdentityCount = Math.addExact(supersededManifestIdentityCount, other.supersededManifestIdentityCount);
+			supersededRuntimeInstanceCount = Math.addExact(supersededRuntimeInstanceCount, other.supersededRuntimeInstanceCount);
 			matchedIdentityCount = Math.addExact(matchedIdentityCount, other.matchedIdentityCount);
 			absentIdentityCount = Math.addExact(absentIdentityCount, other.absentIdentityCount);
 			duplicateIdentityCount = Math.addExact(duplicateIdentityCount, other.duplicateIdentityCount);
