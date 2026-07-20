@@ -24,6 +24,8 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
@@ -1391,7 +1393,8 @@ public final class Development implements CommandTrigger {
 					layeredRegionResidencySource(player),
 					layeredInterestOwnershipSource(player),
 					layeredRegionRetirementSource(player),
-					layeredRegionRetirementDecisionSource(player));
+					layeredRegionRetirementDecisionSource(player),
+					layeredPackedRegionRetirementSafetySource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1680,6 +1683,21 @@ public final class Development implements CommandTrigger {
 				return LayeredCoordinateParityObserver
 					.RegionRetirementDecisionMetadata.fromDecisions(
 						decisions, droppedCandidateCount);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionRetirementSafetySource
+		layeredPackedRegionRetirementSafetySource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver
+			.PackedRegionRetirementSafetySource() {
+			@Override
+			public LayeredPackedRegionRetirementSafetyAssessment capture(
+				final LayeredPackedRegionRetirementReadiness readiness,
+				final int maximumPackedSources) {
+				return regionManager.assessLayeredPackedRegionRetirementSafety(
+					readiness, maximumPackedSources);
 			}
 		};
 	}

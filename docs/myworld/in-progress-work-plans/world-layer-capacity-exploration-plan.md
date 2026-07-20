@@ -1,17 +1,17 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-49 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-49 validated and Slice 50
+implemented pending private owner validation on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 49 identifies packed-source contents and lifecycle
-blockers through a bounded, read-only assessment; the current absence of a
-per-Region reload path explicitly blocks every source from lifecycle readiness,
-and packed Region lookup, eager loading, release, eviction, pathing, packets,
-and persistence remain authoritative and unchanged
+Current milestone: Slice 50 emits Slice 49's packed-source contents and
+lifecycle blockers through additive opt-in private v15 diagnostics; the current
+absence of a per-Region reload path explicitly blocks every source from
+lifecycle readiness, and packed Region lookup, eager loading, release,
+eviction, pathing, packets, and persistence remain authoritative and unchanged
 
 ## Purpose
 
@@ -5419,7 +5419,9 @@ Safety boundary:
   evict, or invalidate a packed Region or cache;
 - an absent source reports `SOURCE_NOT_RESIDENT` and
   `TILE_STORAGE_UNAVAILABLE` rather than resembling an empty source; and
-- the assessment remains absent from PathValidation and private diagnostics.
+- at the Slice 49 checkpoint the assessment remained absent from
+  PathValidation and private diagnostics; Slice 50 adds only the separately
+  gated diagnostic exposure below.
 
 Automated validation evidence:
 
@@ -5444,9 +5446,83 @@ Automated validation evidence:
   `1f674f7fffcccb9d689c570d42900a3c2c8cba9c1082edc512e0f99ea2971d79`
   fingerprints.
 
-Status: implemented and validated. Diagnostic exposure is deferred to Slice
-50; actual retirement remains blocked pending a separately designed
-packed-source reload and recovery contract.
+Status: implemented and validated. Diagnostic exposure is implemented
+separately in Slice 50 below; actual retirement remains blocked pending a
+separately designed packed-source reload and recovery contract.
+
+### Slice 50: Private packed-source contents safety diagnostics
+
+Objective: expose Slice 49's ephemeral source-content assessment in stable,
+AI-readable private traces so real-world content blockers can be measured
+before any reload or retirement design.
+
+Implemented:
+
+- additive `layered-map-parity-event-v15` JSONL records with a nullable
+  `packedRegionRetirementSafety` block while retaining the immutable v14 schema
+  for old traces;
+- capture through the exact `LayeredPackedRegionRetirementReadiness` value
+  already emitted by the event, followed by the manager's bounded,
+  non-creating contents assessment;
+- aggregate observation/readiness ticks, ownership and residency versions,
+  source count, content-quiescent count, lifecycle-ready count, and blocked
+  count;
+- one bounded entry per same-order source with packed coordinates, readiness
+  state, residency/tile/reload flags, player/NPC/scenery-object/ground-item
+  counts, quiescence/readiness booleans, and stable blocker names; and
+- initial dev-command wiring plus Player-session rebinding so a trace retained
+  across logout/reconnect reads the current RegionManager.
+
+Safety boundary:
+
+- the new source receives immutable readiness and returns immutable assessment;
+  neither the observer nor schema receives a Region, entity, collection, tile,
+  loader, registry, cache, claim, callback, queue, lease, or commit handle;
+- safety capture occurs only after the same event has atomically rechecked its
+  logical retirement candidates and derived packed readiness;
+- compatibility overloads may emit explicit `null` when no safety source is
+  installed, while a missing readiness value requires safety to be null; and
+- current runtime entries always include `RELOAD_PATH_UNAVAILABLE`, leaving
+  lifecycle-ready count zero regardless of content quiescence.
+
+Automated validation evidence:
+
+- the compiled observer fixture emits populated logically ready safety,
+  repinned/refused safety, and an explicit empty safety aggregate from one
+  retained trace;
+- every emitted fixture record validates against the closed v15 schema through
+  its local v11-v14 registry;
+- the v15 schema retains the complete v14 contract, caps sources and entries at
+  8192, closes aggregate and entry properties, and enumerates every readiness
+  state and blocker;
+- the complete layered-map suite passes 112 tests across 49 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 749 core and 488 plugin sources
+  successfully; and
+- two consecutive normalizations produced identical source
+  `c43873af00b0516aaa021e319fe3debf498d8086462030c5d960ebedabb49baa`,
+  inventory
+  `9db0494c996a73839e7d2815765a4fd6a87dcfaffeec4bfdf0f399683435d276`,
+  classification
+  `fd7279e556311b80f97cc5313eb488d39a92da123b5102d4ecf32b92287339c8`,
+  and occurrence
+  `14bdefc20442d9f4cfc6d728dc5fdb9deb57871c4fdccbaeee7886e269f243e5`
+  fingerprints.
+
+Private owner-validation contract:
+
+1. Start at Lumbridge, begin the trace, and mark `safety-baseline`.
+2. Move directly to Varrock. Wait at least 15 seconds, then mark
+   `safety-first-wave`; released Lumbridge sources should expose their real
+   NPC/object/item counts, any empty sources, and reload blockers.
+3. Move directly back to Lumbridge. The return event should refuse the exact
+   first-wave sources as `READINESS_NOT_READY`; the currently occupied source
+   may additionally report `PLAYERS_PRESENT`.
+4. Wait at least 15 seconds, mark `safety-second-wave`, and stop. The disjoint
+   Varrock release should expose its own content/blocker distribution.
+
+Status: implemented and automated-validated; private owner validation pending.
+Actual retirement remains absent.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -5583,12 +5659,13 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 47 by aggregating same-snapshot logical retirement decisions into conservative packed-source readiness while blocking incomplete cross-level coverage and partial edge sources. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 48 by emitting bounded packed-source readiness from the existing atomic decision batch through additive private v14 diagnostics without lifecycle authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 49 by assessing packed-source contents and quiescence read-only while explicitly blocking lifecycle readiness until a per-Region reload path exists. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 50 by emitting bounded packed-source contents and blocker evidence through additive private v15 diagnostics without lifecycle authority. | Implemented; private owner validation pending |
 
 ## Next Discussion
 
-Define Slice 50 as additive private diagnostics for the read-only packed-source
-contents safety assessment. Any later commit token or lifecycle consumer must
-remain unable to alter the authoritative packed Region registry until
+Owner-validate Slice 50 and use the measured content distribution to define the
+smallest safe reload/recovery design study. Any later commit token or lifecycle
+consumer must remain unable to alter the authoritative packed Region registry until
 ownership, residency, players, NPCs, objects, ground items, collision, reload,
 and recovery preconditions can be proved together.
 A new database schema, authoritative region storage, actual loading/eviction,

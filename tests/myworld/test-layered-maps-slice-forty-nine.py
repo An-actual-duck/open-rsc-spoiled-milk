@@ -406,7 +406,7 @@ class LayeredMapsSliceFortyNineTest(unittest.TestCase):
         self.assertNotIn(
             "com.openrsc.server.model.world.region.Region", assessment
         )
-        self.assertNotIn("LayeredPackedRegionRetirementSafetyAssessment", observer)
+        self.assertIn("LayeredPackedRegionRetirementSafetyAssessment", observer)
         self.assertNotIn("LayeredPackedRegionRetirementSafetyAssessment", path_validation)
         self.assertIn(
             "### Slice 49: Dormant packed-source contents safety assessment",

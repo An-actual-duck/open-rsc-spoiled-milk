@@ -14,10 +14,11 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v14.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v15.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
+SCHEMA_V14 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v14.schema.json"
 
 
 POINT_STUB = r'''
@@ -82,6 +83,8 @@ package com.openrsc.server.diagnostics;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
@@ -423,11 +426,33 @@ public final class LayeredCoordinateParityObserverFixture {
                     .RegionRetirementDecisionMetadata.fromDecisions(
                         decisions, droppedCandidateCount);
             };
+        LayeredCoordinateParityObserver.PackedRegionRetirementSafetySource
+            decisionSafetySource = (readiness, maximumPackedSources) -> {
+                check(readiness.getSourceCount() <= maximumPackedSources,
+                    "packed retirement safety budget");
+                List<LayeredPackedRegionRetirementSafetyAssessment
+                    .PackedSourceContents> contents =
+                    new ArrayList<LayeredPackedRegionRetirementSafetyAssessment
+                        .PackedSourceContents>();
+                for (LayeredPackedRegionRetirementReadiness.SourceReadiness source
+                        : readiness.getSources()) {
+                    contents.add(LayeredPackedRegionRetirementSafetyAssessment
+                        .PackedSourceContents.of(
+                            source.getPackedRegionX(), source.getPackedRegionY(),
+                            true, true, false,
+                            source.isReady() ? 0 : 1,
+                            source.isReady() ? 2 : 0,
+                            source.isReady() ? 3 : 0,
+                            source.isReady() ? 4 : 0));
+                }
+                return LayeredPackedRegionRetirementSafetyAssessment.assess(
+                    readiness, contents, decisionTick[0], maximumPackedSources);
+            };
         LayeredCoordinateParityObserver.start(
             decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
             tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
             regionResidency, decisionInterest, decisionRetirementSource,
-            decisionSource);
+            decisionSource, decisionSafetySource);
         decisionTick[0] = 1L;
         LayeredRegionInterestOwnershipLedger.Change decisionRelease =
             decisionOwnership.synchronizeOwner(
@@ -728,7 +753,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v14" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v15" for event in events))
             self.assertTrue(all(
                 event["interestOwnership"] is not None
                 for event in events
@@ -1056,6 +1081,39 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(
                 "READY", eligible_sources["entries"][0]["sourceState"]
             )
+            eligible_safety = decision_events[2][
+                "packedRegionRetirementSafety"
+            ]
+            self.assertEqual((1, 0, 0, 1), (
+                eligible_safety["sourceCount"],
+                eligible_safety["contentQuiescentSourceCount"],
+                eligible_safety["lifecycleReadySourceCount"],
+                eligible_safety["blockedSourceCount"],
+            ))
+            self.assertEqual(
+                {
+                    "readinessState": "READY",
+                    "resident": True,
+                    "tileStorageAvailable": True,
+                    "regionReloadSupported": False,
+                    "playerCount": 0,
+                    "npcCount": 2,
+                    "objectCount": 3,
+                    "groundItemCount": 4,
+                    "contentQuiescent": False,
+                    "lifecycleReady": False,
+                    "blockers": [
+                        "NPCS_PRESENT", "OBJECTS_PRESENT",
+                        "GROUND_ITEMS_PRESENT", "RELOAD_PATH_UNAVAILABLE",
+                    ],
+                },
+                {key: eligible_safety["entries"][0][key] for key in (
+                    "readinessState", "resident", "tileStorageAvailable",
+                    "regionReloadSupported", "playerCount", "npcCount",
+                    "objectCount", "groundItemCount", "contentQuiescent",
+                    "lifecycleReady", "blockers",
+                )},
+            )
             refusal = decision_events[3]["regionRetirementDecisions"]
             self.assertEqual((1, 0, 1), (
                 refusal["candidateCount"], refusal["eligibleCount"],
@@ -1075,12 +1133,29 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 "REFUSED_COVERAGE",
                 refused_sources["entries"][0]["sourceState"],
             )
+            refused_safety = decision_events[3][
+                "packedRegionRetirementSafety"
+            ]
+            self.assertEqual(
+                [
+                    "READINESS_NOT_READY", "PLAYERS_PRESENT",
+                    "RELOAD_PATH_UNAVAILABLE",
+                ],
+                refused_safety["entries"][0]["blockers"],
+            )
+            self.assertEqual(1, refused_safety["entries"][0]["playerCount"])
             self.assertEqual(
                 0, decision_events[4]["regionRetirementDecisions"]["candidateCount"]
             )
             self.assertEqual(
                 0,
                 decision_events[4]["packedRegionRetirementReadiness"][
+                    "sourceCount"
+                ],
+            )
+            self.assertEqual(
+                0,
+                decision_events[4]["packedRegionRetirementSafety"][
                     "sourceCount"
                 ],
             )
@@ -1097,15 +1172,17 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v11 = json.loads(SCHEMA_V11.read_text(encoding="utf-8"))
                 v12 = json.loads(SCHEMA_V12.read_text(encoding="utf-8"))
                 v13 = json.loads(SCHEMA_V13.read_text(encoding="utf-8"))
+                v14 = json.loads(SCHEMA_V14.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
                     (v13["$id"], Resource.from_contents(v13)),
+                    (v14["$id"], Resource.from_contents(v14)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry
                 )
-                for event in events:
+                for event in events + decision_events:
                     validator.validate(event)
 
     def test_runtime_wiring_is_opt_in_dev_only_and_observational(self):

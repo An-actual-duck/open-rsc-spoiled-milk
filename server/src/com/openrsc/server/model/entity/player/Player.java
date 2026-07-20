@@ -39,6 +39,8 @@ import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionMembershipMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
@@ -3307,6 +3309,21 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver.PackedRegionRetirementSafetySource
+		layeredPackedRegionRetirementSafetySource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionRetirementSafetySource() {
+			@Override
+			public LayeredPackedRegionRetirementSafetyAssessment capture(
+				final LayeredPackedRegionRetirementReadiness readiness,
+				final int maximumPackedSources) {
+				return getWorld().getRegionManager()
+					.assessLayeredPackedRegionRetirementSafety(
+						readiness, maximumPackedSources);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3415,7 +3432,8 @@ public final class Player extends Mob {
 				ownershipChange,
 				loggedIn ? layeredInterestOwnershipSource() : null,
 				loggedIn ? layeredRegionRetirementSource() : null,
-				loggedIn ? layeredRegionRetirementDecisionSource() : null);
+				loggedIn ? layeredRegionRetirementDecisionSource() : null,
+				loggedIn ? layeredPackedRegionRetirementSafetySource() : null);
 		}
 	}
 

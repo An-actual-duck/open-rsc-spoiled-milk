@@ -141,7 +141,11 @@ have an eligible decision in the same atomic snapshot. Missing or refused
 coverage, partial multi-source residency, and partial legacy-domain edge sources
 remain blocked. This readiness contains no Region handle and cannot unload,
 unregister, remove, or evict packed storage; eager packed residency remains
-authoritative.
+authoritative. A second read-only assessment can snapshot exact player, NPC,
+scenery-object, ground-item, and tile-storage presence for those sources. It
+separates content quiescence from lifecycle readiness and currently reports
+`RELOAD_PATH_UNAVAILABLE` for every source because the legacy runtime has only
+whole-world loading, not a safe per-Region reload path.
 
 ## Private runtime parity observer
 
@@ -174,15 +178,18 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v14.schema.json`. Each v14 record
-retains all v13 position, logical-window, interest-delta, packed-coverage,
+traces emit `schema/layered-map-parity-event-v15.schema.json`. Each v15 record
+retains the complete v14 position, logical-window, interest-delta,
+packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v13 schemas remain
-alongside it so already-captured logs keep explicit readable contracts.
+repeating the tile comparisons on every movement. The v1-v14 schemas remain
+alongside it—including
+`schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
+explicit readable contracts.
 Marker and stop records may additionally summarize the latest 16 contiguous
 ordinary walking steps since the previous reset, including per-step decisions,
 aggregate parity, capacity evictions, and discontinuities. Teleports, login,
@@ -220,6 +227,11 @@ by legacy packed source. It records ready and blocked counts plus each source's
 covered, missing, refused, and partially resident logical keys, cross-level
 status, and exact readiness state. It does not call the manager preparation
 method separately and gains no Region handle or lifecycle authority.
+v15 adds the contents assessment for the exact emitted readiness value. It
+records stable blocker names and counts for players, NPCs, scenery objects,
+ground items, tile storage, and reload support. These counts are ephemeral
+diagnostic evidence, not a claim or unload token; the current missing reload
+path keeps lifecycle-ready count at zero.
 
 ## Checked Player mirror
 
