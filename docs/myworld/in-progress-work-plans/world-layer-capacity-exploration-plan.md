@@ -1,21 +1,21 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, and
-72 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, 65,
-67, 69, 71, 73, and 74 automated-validated on the active refinement branch
+Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
+and 74 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63,
+65, 67, 69, 71, and 73 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 74 exposes Slice 73's point-in-time result
-through additive private schema-v26 diagnostics. Each containment value derives
-from the same exact census already serialized for that event, retains all six
-blockers and the same-source/cross-source split, and cannot claim lifecycle
-readiness. No second entity registry, arrival gate, load request, retention
-decision, or lifecycle authority is authorized, and packed Region lookup,
-eager loading, release, eviction, pathing, packets, and persistence remain
-unchanged
+Current milestone: owner-validated Slice 74 proves schema-v26 distinguishes a
+contained boundary from a real mobile-entity crossing. The broad selection
+began contained with 795 selected-owned NPCs, including 18 across their exact
+authored source, then correctly opened when one Guard authored in unselected
+source `(2,10)` wandered into selected source `(2,9)`. No second entity
+registry, arrival gate, load request, retention decision, or lifecycle
+authority is authorized, and packed Region lookup, eager loading, release,
+eviction, pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -7157,6 +7157,36 @@ Automated validation status:
 - the authoritative bundled-Ant build compiles 765 core and 488 plugin
   sources.
 
+Private owner validation status:
+
+- all 77 fresh records are schema-v26, sequences `1-77` are contiguous, and
+  every record validates against the complete 26-resource schema registry;
+- 11 events contain paired active-NPC residency and containment evidence, and
+  25,087 schema, sequence, census arithmetic, identity, selected-source
+  membership, safety-count, authored-replay, and containment reconciliation
+  checks pass;
+- the intended 6-source narrow set matured one tick after the labeled marker
+  because the marker occurred at tick 15 of the 16-tick cooldown. Its next
+  event contains 78 selected-owned NPCs, all in their exact authored source,
+  with zero blockers. The owner followed the route correctly and no retest is
+  required;
+- the 42-source broad marker contains 795 active selected-owned NPCs. Of those,
+  777 remain in their exact authored source and 18 have crossed into another
+  selected source; all 795 current NPC counts and authored NPC replay counts
+  reconcile and the boundary is contained;
+- ordinary walking grows the accumulated set first to 48 and then 54 sources.
+  One recognized Guard (`runtimeNpcId=65`) authored by source `(2,10)` with
+  identity ordinal 181 moves into selected source `(2,9)`, producing exactly
+  one `EXTERNAL_OWNER_INSIDE` blocker and changing the result to open;
+- the matching authored Guard placements explicitly permit Y roaming across
+  the source boundary at `479/480`, so the open result is valid mobile-entity
+  evidence rather than an identity, movement, or placement error;
+- the owner also opened scenery, killed one Goblin, collected its drops, and
+  attempted Woodcutting. The inactive Goblin is outside the selected set and
+  remains correctly irrelevant rather than becoming a containment blocker;
+  and
+- the owner reported no visual, NPC, interaction, collision, or loading issue.
+
 Safety boundary:
 
 - the diagnostic reports one assessment produced from one detached census; it
@@ -7168,8 +7198,8 @@ Safety boundary:
 - No lifecycle authority, arrival rejection, registry, loading, retention,
   release, eviction, recipe execution, transaction, or rollback is created.
 
-Status: implemented and automated-validated. Private owner validation is
-pending; all lifecycle adoption remains deliberately absent.
+Status: implemented, automated-validated, and owner-validated. All lifecycle
+adoption remains deliberately absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -7449,7 +7479,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 71 by classifying detached point-in-time active NPC residency against exact safety sources and authored recipe identity. | Implemented and automated-validated; authored ownership remains independent from current residency, invalid identity stays unresolved, and no registry, arrival gate, or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 72 by exposing active NPC owner/residency evidence through additive private schema-v25 diagnostics. | Implemented and owner-validated; 12 NPCs crossed their exact authored packed-source boundary but remained inside the broad selection, all identity and safety arithmetic reconciled, and no registry, arrival gate, or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 73 by assessing whether one exact active-NPC observation is contained at its census tick while keeping preservation and lifecycle readiness separate. | Implemented and automated-validated; cross-source movement inside stays contained, six independent blockers are refusal-tested, and no registry, arrival gate, or lifecycle authority exists |
-| 2026-07-20 | Continue with Slice 74 by exposing the active-NPC containment assessment through additive private schema-v26 evidence derived from the event's existing census. | Implemented and automated-validated; the same census drives both values, all six blockers remain explicit, and no registry, arrival gate, or lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 74 by exposing the active-NPC containment assessment through additive private schema-v26 evidence derived from the event's existing census. | Implemented and owner-validated; the broad selection began contained, then one Guard legitimately crossed from external owner source `(2,10)` into selected current source `(2,9)` and produced the sole blocker without registry, arrival-gate, or lifecycle authority |
 
 ## Next Discussion
 
@@ -7481,14 +7511,26 @@ outside, relevant inactive instances, and duplicate relevant identities are
 independent blockers. A contained result still retains the exact active-entity
 preservation burden and has No lifecycle authority.
 
-Schema-v26 now exposes the same assessment from the exact Slice 72 observation
-already emitted for each event. It retains all six blocker counts and the
-same-source/cross-source split, while lifecycle-ready, entity-registry,
-arrival-gate, and lifecycle-authority remain false. The next gate is a short
-private owner route showing whether the accepted narrow and broad selections
-remain contained while NPCs move naturally. Runtime evidence must reconcile
-every containment field back to its parent residency and safety values before
-any later design discussion.
+The accepted schema-v26 route proves both sides of the assessment. Its broad
+selection begins contained while 18 NPCs move between selected sources, then
+opens when one Guard authored in external source `(2,10)` enters selected
+source `(2,9)`. All 25,087 reconciliation checks pass. A static selected-source
+boundary therefore cannot assume that an initially contained mobile census
+will remain contained.
+
+The next safe prerequisite should be an automated-only active-NPC boundary
+requirement projection. For recognized selected-owned NPCs outside, it should
+report their current source; for recognized external-owned NPCs inside, it
+should report their authored owner source. The real Guard case should therefore
+request `(2,10)` exactly. Unresolved identity, relevant inactive instances, and
+duplicate identity must remain hard blockers that source expansion cannot
+erase.
+
+Any proposed source must require a fresh complete retirement-safety assessment
+and a new census. The projection must not mutate the selected set, recursively
+expand on its own, claim closure, or become an arrival gate. This separates an
+explainable boundary requirement from authority to acquire, retain, load, or
+release the proposed source.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
