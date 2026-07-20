@@ -1,16 +1,17 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-46 implemented and validated on
+Status: architecture design complete; Slices 1-47 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 46 has owner-validated the dormant, atomically
-rechecked Region retirement decisions through additive opt-in private
-diagnostics; packed Region lookup, eager loading, release, eviction, pathing,
-packets, and persistence remain authoritative and unchanged
+Current milestone: Slice 47 aggregates freshly rechecked logical retirement
+decisions into conservative packed-source readiness without granting authority
+to unload, unregister, remove, or evict a packed Region; packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
+authoritative and unchanged
 
 ## Purpose
 
@@ -5205,6 +5206,87 @@ Private owner-validation evidence:
 
 Status: implemented and owner-validated.
 
+### Slice 47: Dormant packed-source retirement readiness
+
+Objective: cross the first logical-to-packed consumer boundary without treating
+one logical Region decision as permission to retire a packed 48×48 source that
+may also contain tiles from other logical Regions or levels.
+
+Implemented:
+
+- immutable `LayeredPackedRegionRetirementReadiness` aggregation over a
+  bounded list of Slice 45 decisions captured at one ownership version,
+  residency-mirror version, and server tick;
+- expansion of every input logical key through its checked legacy assembly,
+  followed by deduplication into at most two packed sources per logical Region
+  and an explicit 8192-source hard ceiling for the 4096-key manager boundary;
+- inverse coverage checks for each proposed packed source, requiring every
+  logical Region represented by that source to have an `ELIGIBLE` decision in
+  the same atomic input before the source becomes `READY`;
+- explicit `INCOMPLETE_COVERAGE`, `REFUSED_COVERAGE`, and
+  `PARTIAL_RESIDENCY` and `PARTIAL_LEGACY_DOMAIN` blocked states, with immutable
+  covered, missing, refused, and partially resident logical-key lists;
+- preservation of cross-level coverage as evidence rather than rejecting it:
+  a packed source spanning a 944-tile legacy plane boundary becomes ready only
+  when the logical Regions on both levels are eligible together; and
+- a bounded RegionManager preparation method that freshly rechecks the earlier
+  candidates under the existing lifecycle lock before source aggregation.
+
+Important mapping finding:
+
+- the 944-tile legacy plane stride is not divisible by the 48-tile Region size;
+  therefore packed sources around each plane boundary can cover two levels,
+  while one logical Region adjacent to the boundary can itself require two
+  packed sources;
+- source readiness must consequently be evaluated as an inverse-coverage
+  problem. A set of logical candidates may yield safe interior packed sources
+  while its boundary sources remain blocked until neighboring logical
+  decisions are present; and
+- this is a compatibility constraint of the current packed archive, not a
+  property the future layered archive should reproduce.
+
+Safety boundary:
+
+- readiness contains coordinates, versions, decision states, and logical keys,
+  but no mutable Region, tile, collision, entity, visibility-cache, loader, or
+  registry handle;
+- `READY` is revocable evidence, not a permit, claim, callback, lease, queue
+  item, unload request, or commit token;
+- partial edge sources remain blocked even when their represented logical key
+  is eligible, pending an explicit legacy-domain edge policy; and
+- a logically eligible multi-source Region with only some packed sources
+  resident remains blocked, preventing older partial-residency evidence from
+  becoming source-level readiness; and
+- the manager boundary performs no Region lookup, construction, registration,
+  unregistration, unload, removal, cache invalidation, or eviction.
+
+Automated validation evidence:
+
+- the focused compiled fixture proves ordinary one-to-one readiness, missing
+  cross-level coverage refusal, complete cross-level source readiness, repin
+  refusal of the whole shared source, incomplete adjacent-source protection,
+  partial-residency and partial-domain blocking, same-snapshot enforcement,
+  uniqueness, immutability, and both logical/source budgets;
+- source guards prove the readiness value and manager preparation boundary have
+  no packed Region lifecycle mutator and remain absent from PathValidation and
+  private diagnostics;
+- the complete layered-map suite passes 106 tests across 46 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 748 core and 488 plugin sources
+  successfully; and
+- two consecutive normalizations produced identical source
+  `f84521fa71154e822d09704665c6a05062ea11fa42f7e0dbdef4522d8f952485`,
+  inventory
+  `8cb82502dc6999c8c94b433b36a35d7a629ebb1e5462baa2390307d2ca99ad40`,
+  classification
+  `9653761ab0f23fea4f6d0cbf63cf661ab875b5e1ceed05dcfd284087207347c3`,
+  and occurrence
+  `1f674f7fffcccb9d689c570d42900a3c2c8cba9c1082edc512e0f99ea2971d79`
+  fingerprints.
+
+Status: implemented and validated. Runtime adoption and diagnostic exposure
+remain deliberately absent.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -5337,14 +5419,15 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 44 as a two-real-client private-runtime gate proving shared acquisition, partial release, final global release, cooldown, expiry, and reacquisition before considering a retirement arbiter. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 45 by atomically rechecking bounded retirement candidates through a pure source-level decision arbiter that cannot alter packed Region lifecycle. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 46 by emitting bounded accepted/refused retirement-decision evidence through additive private v13 diagnostics without lifecycle authority. | Implemented and owner-validated |
+| 2026-07-19 | Continue with Slice 47 by aggregating same-snapshot logical retirement decisions into conservative packed-source readiness while blocking incomplete cross-level coverage and partial edge sources. | Implemented and validated |
 
 ## Next Discussion
 
-Define Slice 47 as the smallest reversible consumer boundary now that eligible
-decisions, reacquisition refusal, refusal pruning, and a second independent
-eligibility wave have passed. Any consumer must remain unable to alter the
-authoritative packed Region registry until its ownership, residency, entity,
-collision, and recovery preconditions can be proved together.
+Define Slice 48 as additive private diagnostics for bounded packed-source
+readiness before any commit token or lifecycle consumer. Any later consumer
+must remain unable to alter the authoritative packed Region registry until its
+ownership, residency, entity, collision, and recovery preconditions can be
+proved together.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.

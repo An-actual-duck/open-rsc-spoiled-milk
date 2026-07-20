@@ -17,6 +17,7 @@ import com.openrsc.server.model.world.coordinate.LegacyPackedRegionPartition;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
@@ -40,6 +41,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class RegionManager {
 	public static final int MAX_LAYERED_REGIONS_PER_INTEREST_OWNER = 4096;
+	public static final int MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN =
+		MAX_LAYERED_REGIONS_PER_INTEREST_OWNER
+			* LayeredPackedRegionRetirementReadiness
+				.MAX_PACKED_SOURCES_PER_LOGICAL_REGION;
 	public static final long LAYERED_REGION_RETIREMENT_COOLDOWN_TICKS = 16L;
 
 	private final ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>> regions;
@@ -762,6 +767,50 @@ public class RegionManager {
 				layeredRegionInterestOwnershipLedger.snapshot(key),
 				requireLayeredRegionResidencySnapshot(key), currentTick);
 		return layeredRegionRetirementDecisionArbiter.evaluate(candidate, current);
+	}
+
+	/**
+	 * Atomically rechecks one bounded candidate batch and aggregates its logical
+	 * decisions into dormant packed-source readiness. The result has no Region
+	 * handle and cannot unload, unregister, remove, or evict packed storage.
+	 */
+	public LayeredPackedRegionRetirementReadiness
+		prepareLayeredPackedRegionRetirementReadiness(
+			final List<LayeredRegionRetirementEligibilityLedger.Snapshot> candidates,
+			final int maximumRegions) {
+		if (candidates == null) {
+			throw new NullPointerException("candidates");
+		}
+		if (maximumRegions < 0
+			|| maximumRegions > MAX_LAYERED_REGIONS_PER_INTEREST_OWNER
+			|| candidates.size() > maximumRegions) {
+			throw new IllegalArgumentException(
+				"Packed retirement readiness exceeds the candidate Region budget");
+		}
+		LinkedHashSet<WorldRegionKey> uniqueKeys =
+			new LinkedHashSet<WorldRegionKey>();
+		for (LayeredRegionRetirementEligibilityLedger.Snapshot candidate
+			: candidates) {
+			if (candidate == null
+				|| !uniqueKeys.add(candidate.getLogicalRegionKey())) {
+				throw new IllegalArgumentException(
+					"Packed retirement candidates must be non-null and unique");
+			}
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			long currentTick = getWorld().getServer().getCurrentTick();
+			List<LayeredRegionRetirementDecisionArbiter.Decision> decisions =
+				new ArrayList<LayeredRegionRetirementDecisionArbiter.Decision>(
+					candidates.size());
+			for (LayeredRegionRetirementEligibilityLedger.Snapshot candidate
+				: candidates) {
+				decisions.add(evaluateLayeredRegionRetirementCandidateLocked(
+					candidate, currentTick));
+			}
+			return LayeredPackedRegionRetirementReadiness.fromDecisions(
+				decisions, maximumRegions,
+				MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN);
+		}
 	}
 
 	/**

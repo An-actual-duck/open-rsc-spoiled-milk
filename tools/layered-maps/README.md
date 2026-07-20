@@ -133,6 +133,16 @@ and compose those decisions across an explicit route of at most 50 adjacent
 steps. These are dormant read-only projections: they do not choose a route,
 inspect occupancy, enqueue movement, or replace `PathValidation`.
 
+RegionManager can additionally recheck a bounded batch of dormant logical
+retirement candidates and aggregate the results into immutable packed-source
+readiness. Every logical Region covered by a packed source—including both
+levels when a 48-tile source straddles a 944-tile legacy plane boundary—must
+have an eligible decision in the same atomic snapshot. Missing or refused
+coverage, partial multi-source residency, and partial legacy-domain edge sources
+remain blocked. This readiness contains no Region handle and cannot unload,
+unregister, remove, or evict packed storage; eager packed residency remains
+authoritative.
+
 ## Private runtime parity observer
 
 The first owner-testable runtime seam remains observational: it projects a dev

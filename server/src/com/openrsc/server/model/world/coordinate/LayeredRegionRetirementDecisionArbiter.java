@@ -158,6 +158,19 @@ public final class LayeredRegionRetirementDecisionArbiter {
 			return current.getRetirementState();
 		}
 
+		public int getCurrentSourceCount() {
+			return current.getSourceCount();
+		}
+
+		public int getCurrentResidentSourceCount() {
+			return current.getResidentSourceCount();
+		}
+
+		public boolean isCurrentResidencyComplete() {
+			return current.getSourceCount() > 0
+				&& current.getResidentSourceCount() == current.getSourceCount();
+		}
+
 		public DecisionState getDecisionState() {
 			return decisionState;
 		}

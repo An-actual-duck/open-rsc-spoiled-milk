@@ -268,6 +268,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "LegacyTerrainSectorAdapter.java",
                 "LayeredCoordinateParitySnapshot.java",
                 "LayeredLocationMirror.java",
+                "LayeredPackedRegionRetirementReadiness.java",
                 "LayeredRegionInterestOwnershipLedger.java",
                 "LayeredRegionInterestResidencyComparison.java",
                 "LayeredRegionMembershipMirror.java",
@@ -323,6 +324,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
             self.assertEqual(
                 [
                     "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
+                    "server/src/com/openrsc/server/model/world/coordinate/LayeredPackedRegionRetirementReadiness.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LayeredRegionResidencyMirror.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyLogicalRegionAssembly.java",
                     "server/src/com/openrsc/server/model/world/coordinate/LegacyLogicalTileAddress.java",
