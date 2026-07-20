@@ -2,19 +2,20 @@
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, and 70
 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, 65,
-67, and 69 automated-validated on the active refinement branch
+67, 69, and 71 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 70 proves that source-local replay can
-remain distinct from asymmetric outbound support and incoming ownership on the
-accepted narrow and broad routes. Every external relationship in both labeled
-selections is potential NPC roaming, not static scenery and not active-instance
-evidence. No recipe consumer, load request, registry, or lifecycle authority is
-authorized, and packed Region lookup, eager loading, release, eviction,
-pathing, packets, and persistence remain unchanged
+Current milestone: Slice 71 adds a bounded, detached point-in-time NPC census
+classification that keeps authored ownership independent from current packed
+residency. It distinguishes selected-owned NPCs inside or outside the exact
+safety selection, external-owned NPCs currently inside it, and unresolved
+identity evidence without creating a second entity registry. No recipe
+consumer, arrival gate, load request, retention decision, or lifecycle
+authority is authorized, and packed Region lookup, eager loading, release,
+eviction, pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -6914,6 +6915,58 @@ Private owner validation status:
 Status: implemented, automated-validated, and owner-validated. No lifecycle
 authority is authorized.
 
+### Slice 71: Active NPC residency classification
+
+Objective: distinguish authored NPC replay ownership from current packed
+residency using one bounded point-in-time census, without creating a runtime
+entity registry or granting the result any arrival, retention, or lifecycle
+role.
+
+Implemented:
+
+- a detached census input records only authored identity, runtime NPC ID,
+  current packed source coordinate, and active state for each observed NPC;
+- valid identity requires the exact completed recipe generation, NPC
+  construction kind, known recipe identity, and expected runtime NPC ID;
+  missing, stale, non-NPC, unknown, and runtime-ID-mismatched identities remain
+  separate unresolved statuses;
+- relevant active instances are classified independently as selected-owner
+  inside, selected-owner outside, external-owner inside, unresolved inside, or
+  unresolved with a claimed selected owner outside;
+- whole-census totals retain active/inactive, recognized/unrecognized,
+  unique/duplicate recognized identity, relevant/irrelevant, and identity-
+  status arithmetic; and
+- inactive entries remain explicit census evidence but cannot be classified as
+  active residency.
+
+Safety boundary:
+
+- independent instance and relevant-detail budgets refuse the complete
+  observation on overflow rather than truncating it;
+- the immutable result contains detached values only and imports neither live
+  entities nor Region storage;
+- duplicate recognized instances are reported, not silently collapsed, and an
+  invalid identity never invents authored ownership; and
+- No lifecycle authority, entity registry, arrival gate, retention decision,
+  recipe execution, loading, release, eviction, movement, roaming, respawn, or
+  combat behavior is created or changed.
+
+Automated validation status:
+
+- the executable fixture covers selected-owned NPCs both inside and outside,
+  an external-owned NPC inside, unresolved inside/outside cases, active and
+  inactive instances, duplicate identities, and exact identity-status totals;
+- immutable-output and independent undersized-budget checks prove fail-closed
+  behavior; and
+- source guards keep this as point-in-time census evidence with explicit inert
+  registry, arrival-gate, and lifecycle flags;
+- the complete layered-map suite passes 173 tests across 70 focused files; and
+- the authoritative bundled-Ant build compiles 764 core and 488 plugin
+  sources.
+
+Status: implemented and automated-validated. No lifecycle authority is
+authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7189,6 +7242,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 68 by exposing bounded whole-recipe topology through additive private schema-v23 diagnostics. | Implemented and owner-validated; the narrow/broad forward cohorts gain the same 75 incoming-only sources through 10 NPC-roaming edges/38 references, the largest weak component contains 123 of 366 authored sources, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 69 by separating exact source-local replay, conservative outbound spatial support, and external incoming-owner reach. | Implemented and automated-validated; support content is never recursively imported, potential mobile reach is not active-instance evidence, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 70 by exposing the dependency-semantics split through additive private schema-v24 diagnostics. | Implemented and owner-validated; exact safety drives bounded replay/support/incoming evidence, all external relationships in both labeled selections are potential NPC roaming, active-instance evidence remains absent, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 71 by classifying detached point-in-time active NPC residency against exact safety sources and authored recipe identity. | Implemented and automated-validated; authored ownership remains independent from current residency, invalid identity stays unresolved, and no registry, arrival gate, or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -7205,28 +7259,25 @@ mobile entity currently needs. Preserve every conservative reach envelope, but
 do not recursively import a target coordinate's unrelated authored recipe just
 because the coordinate contains content.
 
-The accepted schema-v24 route proves that source-local replay, outbound
-support, and incoming ownership remain bounded and intelligible on real data.
-The next prerequisite should be an automated-only active-NPC residency
-classification. For an exact safety selection, it should report separately:
+Slice 71 now provides the automated-only classification boundary: existing
+authored identity establishes owner source while one bounded point-in-time
+census establishes current packed residency. It explicitly reports invalid
+identity and duplicate recognized instances without creating a second NPC
+registry, retaining an NPC, rejecting arrival, blocking retirement, or
+inferring active state from a conservative envelope.
 
-- authored NPC instances whose owner source and current packed source are both
-  selected;
-- selected-owned NPC instances currently outside the selection;
-- external-owned NPC instances currently inside the selection; and
-- active NPC instances without valid authored identity, as explicit unresolved
-  evidence rather than silently assigning ownership.
+The next owner-testable prerequisite should expose this result through an
+additive private schema-v25 diagnostic. Capture one synchronized, detached
+snapshot from the existing world NPC collection, classify it against the exact
+safety selection and completed recipe, and serialize bounded aggregate,
+identity-status, and relevant-instance evidence on marker/stop events. The
+accepted narrow and broad routes should then establish how authored potential
+roaming differs from actual active residency in practice.
 
-Use the existing attached authored identity and a bounded point-in-time world
-census; do not create a second NPC registry. Preserve current movement, roaming,
-respawn, combat, and Region registration authority. This first classification
-must not retain an NPC, reject arrival, block retirement, or infer active state
-from a conservative envelope alone.
-
-This diagnostic must not shrink an envelope, permit retirement, or assert that
-a potential roaming relationship is an active blocker. Only a later runtime
-census can prove whether a specific NPC instance is present, moving, or holding
-residency. Do not create that registry or gate in the diagnostics slice.
+The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
+or become a registry or arrival gate. Active census evidence is explanatory;
+it is not by itself proof that a source can be loaded, retained, retired, or
+reconstructed safely.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
