@@ -64,6 +64,11 @@
  * packed source without exposing placement definitions or adopting Region
  * teardown/reconstruction. Slice 52 projects only those immutable origin
  * counts onto the exact private retirement-safety sources while explicitly
- * denying reconstruction-manifest semantics.</p>
+ * denying reconstruction-manifest semantics. Slices 53-62 add detached
+ * authored identities, final-live population outcomes, conservative
+ * dependency envelopes, inert reconstruction recipes, and bounded private
+ * evidence without a runtime reconstruction consumer. Slice 63 analyzes the
+ * fixed-point authored cohort and separates empty external support coordinates
+ * without granting loading, teardown, or lifecycle authority.</p>
  */
 package com.openrsc.server.model.world.coordinate;

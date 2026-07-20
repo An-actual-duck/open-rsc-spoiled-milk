@@ -1,17 +1,17 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59 and 62 owner-validated,
-Slice 60 private-runtime validated, and Slice 61 automated-validated on the
+Slice 60 private-runtime validated, Slices 61 and 63 automated-validated on the
 active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 62 has exposed the inert final-live recipe projection and
-its exact dependency-source closure through additive private schema-v20
-diagnostics. Both selection-wide and per-authored-source closure remain
-diagnostic evidence only. No recipe consumer, load request, registry, or
+Current milestone: Slice 63 expands exact safety seeds through final-live
+authored dependency sources to a bounded fixed point, while leaving required
+coordinates without authored content as explicit external support. The result
+is diagnostic evidence only. No recipe consumer, load request, registry, or
 lifecycle authority is authorized, and packed Region lookup, eager loading,
 release, eviction, pathing, packets, and persistence remain unchanged
 
@@ -6533,6 +6533,63 @@ Automated validation status:
 Status: implemented, automated-validated, and owner-validated. No lifecycle
 authority is authorized.
 
+### Slice 63: Fixed-point authored reconstruction cohort
+
+Objective: determine how far an exact retirement-safety seed set expands when
+every dependency coordinate with final-live authored content must contribute
+its own recipe and dependencies, without treating empty neighboring coordinates
+as reconstructable authored sources.
+
+Implemented:
+
+- one bounded immutable analysis preserves exact safety sources as round-zero
+  seeds and recursively adds required sources with final-live authored content
+  until no authored dependency remains outside the cohort;
+- cohort order retains the exact safety-source order followed by deterministic
+  expansion discovery. Every source records its seed/expanded role, expansion
+  round, recipe presence, final-live placement/reach arithmetic, and direct
+  cohort-versus-support requirement counts;
+- the sorted requirement union records cohort membership, recipe-source
+  presence, final-live authored-content presence, owner-source count, and
+  placement-reference count;
+- a dependency coordinate without final-live content is retained as an
+  external support requirement rather than added as an empty authored cohort
+  member. Such a coordinate may still matter for terrain, collision, roaming,
+  or object footprint support; and
+- cohort and requirement budgets are independent and refusal-based. Expansion
+  never truncates into a false fixed point or self-contained result.
+
+Safety boundary:
+
+- the value retains detached recipe/dependency metadata only and has no entity,
+  Region, tile, archive, event, registry, cache, callback, claim, permit, lease,
+  transaction, commit, load, teardown, reconstruction, or rollback handle;
+- `authoredClosureComplete` means only that every dependency with final-live
+  authored content joined this analysis. `fullySelfContained` additionally
+  means there are no support-only dependency coordinates, but neither result is
+  permission to change lifecycle;
+- external support is reported, not acquired, pinned, loaded, or validated;
+  terrain replay, collision reconstruction, and event ownership remain absent;
+  and
+- this slice has no runtime consumer or diagnostic schema. Packed Region and
+  entity lifecycle remain unchanged.
+
+Automated validation status:
+
+- a compiled fixture proves one seed recursively adding an authored neighbor,
+  that neighbor exposing a support-only empty coordinate, exact shared-owner
+  requirement arithmetic, and an independent anchor-only self-contained seed;
+- the same fixture proves immutable result collections and refuses undersized
+  cohort or requirement budgets; and
+- source guards prove the analysis has no entity or RegionManager dependency
+  and describes itself as detached evidence only;
+- the complete layered-map suite passes 145 tests across 62 focused files; and
+- the authoritative bundled-Ant build compiles 760 core and 488 plugin
+  sources.
+
+Status: implemented and automated-validated. No lifecycle authority is
+authorized.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -6682,15 +6739,14 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 60 by deriving an inert per-source recipe from final-live authored identities and aligned dependency envelopes without a runtime consumer. | Implemented and private-runtime validated; all 33,515 final-live inputs retain aligned reach and lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 61 by projecting final-live recipe counts and unique dependency requirements onto an exact bounded safety-source set. | Implemented and automated-validated; closure remains evidence only and lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 62 by exposing bounded recipe and dependency-closure evidence through additive private schema-v20 diagnostics. | Implemented and owner-validated; all 5,590 selected final-live identities matched, the 16-source open dependency remainder was exact, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 63 by expanding safety seeds through recursively required final-live authored sources while retaining empty dependency coordinates as external support. | Implemented and automated-validated; lifecycle authority remains absent |
 
 ## Next Discussion
 
-Use Slice 62's exact requirement union to choose the smallest next precondition
-slice; do not infer that dependency closure alone makes a packed source
-reconstructable. The current evidence shows that source-local reconstruction
-cannot be correct unless the plan distinguishes dependencies that supply
-authored recipe content from empty neighboring source coordinates reached by
-footprints or roaming envelopes.
+The smallest next owner-testable slice is additive private diagnostics for the
+fixed-point cohort, so the accepted 36-source selection can show its real
+authored expansion depth and support-only perimeter. Do not infer that a small
+or self-contained cohort is reconstructable.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
