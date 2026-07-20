@@ -278,6 +278,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "LayeredPackedRegionAuthoredConstructionObservation.java",
                 "LayeredPackedRegionAuthoredPlacementDependencyInventory.java",
                 "LayeredPackedRegionAuthoredPlacementManifest.java",
+                "LayeredPackedRegionAuthoredPopulationOutcome.java",
                 "LayeredPackedRegionAuthoredProvenanceObservation.java",
                 "LayeredPackedRegionRetirementReadiness.java",
                 "LayeredPackedRegionRetirementSafetyAssessment.java",

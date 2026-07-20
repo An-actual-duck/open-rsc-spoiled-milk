@@ -17,6 +17,9 @@ REGION_MANAGER = ROOT / (
     "server/src/com/openrsc/server/model/world/region/RegionManager.java"
 )
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+DEVELOPMENT = ROOT / (
+    "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
+)
 OBSERVER = ROOT / (
     "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java"
 )
@@ -300,6 +303,7 @@ class LayeredMapsSliceFiftyNineTest(unittest.TestCase):
         populator = POPULATOR.read_text(encoding="utf-8")
         manager = REGION_MANAGER.read_text(encoding="utf-8")
         player = PLAYER.read_text(encoding="utf-8")
+        development = DEVELOPMENT.read_text(encoding="utf-8")
         observer = OBSERVER.read_text(encoding="utf-8")
         v18 = json.loads(SCHEMA_V18.read_text(encoding="utf-8"))
         v19 = json.loads(SCHEMA_V19.read_text(encoding="utf-8"))
@@ -320,6 +324,15 @@ class LayeredMapsSliceFiftyNineTest(unittest.TestCase):
         self.assertIn("getAuthoredPopulationOutcome", populator)
         self.assertIn("LayeredPackedRegionAuthoredPopulationOutcome", manager)
         self.assertIn("getAuthoredPopulationOutcome()", player)
+        command_provenance_source = development.split(
+            "layeredPackedRegionAuthoredProvenanceSource(final Player player)",
+            1,
+        )[1].split(
+            "private List<LayeredCoordinateParityObserver.", 1
+        )[0]
+        self.assertIn(
+            "getAuthoredPopulationOutcome()", command_provenance_source
+        )
         self.assertIn("SUPERSEDED_IDENTITY_PRESENT", observation)
         self.assertIn(
             'EVENT_SCHEMA = "layered-map-parity-event-v19"', observer

@@ -1,7 +1,6 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-58 owner-validated and Slice 59
-runtime-validated with focused owner diagnostics pending on the active
+Status: architecture design complete; Slices 1-59 owner-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -9,12 +8,14 @@ Branch: `docs/layered-map-rebuild-refinement`
 Started: 2026-07-17
 
 Current milestone: Slice 59 records deterministic population-time collision
-lineage while preserving Slice 53's complete ordered replay history. Private
-v19 provenance now evaluates only the final-live expectation set, reports the
-four known superseded predecessors separately, and still treats a predecessor
-that unexpectedly reappears as an anomaly. No registry or lifecycle authority
-is authorized, and packed Region lookup, eager loading, release, eviction,
-pathing, packets, and persistence remain unchanged
+lineage while preserving Slice 53's complete ordered replay history. Owner-
+accepted private v19 provenance evaluates only the final-live expectation set,
+reports the four known superseded predecessors separately, and still treats a
+predecessor that unexpectedly reappears as an anomaly. The command-local trace
+source now forwards the same completed population outcome as the Player session
+source. No registry or lifecycle authority is authorized, and packed Region
+lookup, eager loading, release, eviction, pathing, packets, and persistence
+remain unchanged
 
 ## Purpose
 
@@ -6328,7 +6329,8 @@ Automated validation status:
 - the authoritative bundled-Ant build compiles 757 core and 488 plugin sources;
 - the closed v19 observer fixture validates against the immutable v11-v18
   schema registry, and the complete layered-map suite passes 132 tests across
-  59 focused files;
+  58 focused files. The staged coordinate-package boundary and both Player and
+  command-local provenance selectors are guarded explicitly;
 - all 13 World Builder discovery tests and the standalone-layout guard pass;
 - two consecutive normalizations retain identical source
   `da9ba5080a3e7bb06a1cc8b28f7db8a34364a18457796be60c3b6e132a8c9c7e`,
@@ -6343,11 +6345,18 @@ Automated validation status:
   33,532 manifest placements, records 17 whole-world startup supersessions,
   derives 33,515 final-live expectations, and reaches its isolated online state
   normally; and
-- focused owner v19 trace validation remains the acceptance gate after this
-  checkpoint.
+- the owner-accepted `slice59-command-fix` v19 marker covers 42 exact safety
+  sources and 5,801 manifest placements, projects four deterministic
+  predecessors out of the final-live set, matches all 5,797 expectations, and
+  reports zero absent, duplicate, stale-generation, unrecognized,
+  superseded-runtime, or other anomaly details. All four bounded
+  predecessor/successor explanations were retained with zero detail overflow.
+  Earlier owner attempts exposed a duplicated `Development` command source
+  that called the legacy no-outcome overload; forwarding the completed outcome
+  there produced the accepted result.
 
-Status: implemented and private-runtime validated; focused owner v19 validation
-pending.
+Status: implemented and owner-validated. No registry or lifecycle consumer is
+authorized.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -6494,18 +6503,21 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 56 by attaching conflict-refusing authored identity metadata to accepted definitions/entities and preserving it through existing respawn and explicit replacement paths. | Implemented and runtime-validated; registry/lifecycle authority remains absent |
 | 2026-07-19 | Continue with Slice 57 by comparing exact safety-source manifest identities with a bounded count-only private runtime census and additive v17 diagnostics. | Implemented and owner-validated; registry/lifecycle authority remains absent |
 | 2026-07-19 | Continue with Slice 58 by adding bounded detached exact-identity details for every authored-provenance anomaly through additive v18 diagnostics. | Implemented and owner-validated; all four prior absences classified as deterministic population-time supersessions and registry/lifecycle authority remains absent |
-| 2026-07-20 | Continue with Slice 59 by preserving complete manifest replay history while projecting deterministic population supersessions into a final-live expectation set and additive v19 diagnostics. | Implemented and private-runtime validated; focused owner v19 validation pending and registry/lifecycle authority remains absent |
+| 2026-07-20 | Continue with Slice 59 by preserving complete manifest replay history while projecting deterministic population supersessions into a final-live expectation set and additive v19 diagnostics. | Implemented and owner-validated; the duplicated command trace source now forwards the completed outcome, all 5,797 final-live expectations match, and registry/lifecycle authority remains absent |
 
 ## Next Discussion
 
-Owner-validate Slice 59 on the private server. A focused v19 marker should
-retain all four deterministic supersession details, reduce final-live expected
-placements from 5,801 to 5,797, match all 5,797, and report zero genuine
-absence, duplicate, stale-generation, unrecognized, or superseded-runtime
-anomalies. Any different count remains actionable evidence rather than
-permission to alter content. Do not create a global entity registry or grant
-loading, teardown, or reload authority. Terrain replay, collision derivation,
-event ownership, transactional teardown, and rollback remain later gates.
+Use Slice 59's accepted final-live census to design the next smallest inert
+reconstruction prerequisite. The recommended Slice 60 is a detached,
+generation-fenced per-source reconstruction recipe projection: select only
+final-live authored identities for an exact bounded safety-source set, retain
+their existing ordered construction metadata and dependency envelopes, and
+report cross-source requirements without constructing, registering, removing,
+or retaining any live entity. The design must define collision-order behavior,
+source ownership, dependency closure, and bounded refusal before implementation.
+Do not create a global entity registry or grant loading, teardown, or reload
+authority. Terrain replay, collision derivation, event ownership, transactional
+teardown, and rollback remain later gates.
 Any later commit token or lifecycle consumer must remain unable to alter the
 authoritative packed Region registry until ownership, residency, players,
 NPCs, objects, ground items, collision, reload, and recovery preconditions can

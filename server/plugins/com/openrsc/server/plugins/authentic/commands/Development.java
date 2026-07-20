@@ -1734,6 +1734,8 @@ public final class Development implements CommandTrigger {
 				return regionManager.captureAuthoredProvenance(
 					player.getWorld().getWorldLoader().getWorldPopulator()
 						.getAuthoredPlacementManifest(),
+					player.getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredPopulationOutcome(),
 					safety, player.getWorld().getServer().getCurrentTick());
 			}
 		};
