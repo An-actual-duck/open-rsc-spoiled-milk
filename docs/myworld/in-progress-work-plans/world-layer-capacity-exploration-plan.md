@@ -1,18 +1,17 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-51 implemented and validated on
+Status: architecture design complete; Slices 1-52 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 51 records an immutable count-only inventory of the
-authored scenery, boundaries, NPC spawns, ground-item spawns, and harvesting
-conversions actually constructed by each whole-world population pass; it does
-not retain definitions or entities, claim reconstructibility, or change packed
-Region lookup, eager loading, release, eviction, pathing, packets, or
-persistence
+Current milestone: Slice 52 exposes Slice 51's count-only authored construction
+origins beside exact packed-source safety evidence through additive private v16
+diagnostics; it explicitly denies reconstruction-manifest semantics and does
+not change packed Region lookup, eager loading, release, eviction, pathing,
+packets, or persistence
 
 ## Purpose
 
@@ -5649,6 +5648,88 @@ Status: implemented and validated. Diagnostic exposure and any detached
 definition manifest remain separate later slices; actual retirement remains
 absent.
 
+### Slice 52: Private authored-construction origin diagnostics
+
+Objective: correlate Slice 50's active packed-source content counts with Slice
+51's configured authored construction origins in stable, AI-readable private
+traces, without inferring current entity provenance or reconstructibility.
+
+Implemented:
+
+- immutable `LayeredPackedRegionAuthoredConstructionObservation` values that
+  project one whole-world inventory onto the exact same-order packed sources
+  in a retirement-safety assessment;
+- generation, safety/readiness ticks, whole-inventory family totals, observed
+  source/family totals, and one exact count-only entry per safety source;
+- absent inventory entries represented as zero authored origins rather than a
+  missing or implicitly quiescent runtime Region;
+- additive `layered-map-parity-event-v16` JSONL records with nullable
+  `packedRegionAuthoredConstruction`, while the immutable v15 schema remains
+  available for existing captures;
+- schema constants `originCountsOnly=true` and
+  `reconstructionManifest=false`, making the semantic boundary machine-checkable
+  rather than relying only on prose; and
+- initial dev-command wiring plus Player-session rebinding so a trace retained
+  across logout/reconnect reads the current WorldPopulator inventory generation.
+
+Safety boundary:
+
+- construction projection occurs only after the exact same event has produced
+  packed readiness and read-only safety; if safety is null, the new payload is
+  required to be null;
+- the source receives only an immutable safety value and returns only an
+  immutable count projection. It receives no Region, entity, placement
+  definition, TileValue, archive, event, registry, cache, lifecycle owner, or
+  commit handle;
+- an authored NPC count identifies its start/source Region, not its current
+  roaming Region; object and item counts likewise do not prove that a current
+  instance is the authored instance or currently present; and
+- `LAYERED_PACKED_REGION_RELOAD_SUPPORTED` remains false. The observer and
+  schema cannot unregister, unload, remove, evict, reconstruct, or roll back a
+  packed Region.
+
+Automated validation evidence:
+
+- the compiled v16 observer fixture proves populated authored-origin counts for
+  ready and repinned sources, explicit empty aggregates, compatibility nulls,
+  source ordering, family and total arithmetic, and generation/tick
+  correlation;
+- every fixture record validates against the closed v16 schema through its
+  local v11-v15 registry; v16 references the immutable v15 field contracts and
+  adds only its closed count-only block;
+- source guards prove the projection reads the completed WorldPopulator
+  inventory and exact safety entries while serialization has no lifecycle or
+  construction calls;
+- the complete layered-map suite passes 116 tests across 51 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 751 core and 488 plugin sources
+  successfully; and
+- two consecutive normalizations produce identical source
+  `44af58896e4ca44b508651ae78b7e9895932c8747378d14b37a20d7ff7d95c82`,
+  inventory
+  `b3988db5f4a2da2b7d3036ee343180da5b82a5cf92f162f9f63cc9284edd73d8`,
+  classification
+  `6524100a65a2beef07f8b44489d94562000f4f422c4495dad6e19f2da4c70c35`,
+  and occurrence
+  `590ee0ba4293283abe33ebce8c4063fdf0430d36a6a74d549e21af9122bbada6`
+  fingerprints.
+
+Private owner-validation contract:
+
+1. Start at Lumbridge, begin a fresh trace, and mark `origin-baseline`.
+2. Move directly to Varrock, wait at least 15 seconds, and mark
+   `origin-first-wave`.
+3. Return directly to Lumbridge, wait at least 15 seconds, mark
+   `origin-second-wave`, and stop.
+4. The owner need only report whether movement, scenery, NPCs, items, and
+   collision remained normal. The AI will validate v16 schema/order/arithmetic,
+   compare active contents with authored origin families, and identify where
+   roaming, temporary removal/replacement, dynamic state, or zero authored
+   origins require the next provenance design.
+
+Status: implemented and automated-validated; private owner validation pending.
+Actual retirement remains absent.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -5786,17 +5867,16 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 49 by assessing packed-source contents and quiescence read-only while explicitly blocking lifecycle readiness until a per-Region reload path exists. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 50 by emitting bounded packed-source contents and blocker evidence through additive private v15 diagnostics without lifecycle authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 51 by auditing construction/teardown owners and recording a bounded immutable count-only inventory of authored content actually constructed per packed Region. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 52 by correlating exact retirement-safety sources with immutable authored construction-origin counts through additive private v16 diagnostics. | Implemented and automated-validated; owner validation pending |
 
 ## Next Discussion
 
-Use Slice 51's audited owners and exact authored-construction origins to compare
-current active source contents with their authored construction families in
-bounded private diagnostics. The next slice may expose count-only inventory
-generation and same-source family counts beside v15 safety evidence, but must
-label them as origin counts rather than reconstructible entities. A subsequent
-detached definition manifest must separately address duplicates/replacements,
-NPC roaming, delayed respawn state, dynamic provenance, collision derivation,
-global registries, event ownership, and rollback before any reload design.
+Complete Slice 52's private v16 owner route and use the measured differences
+between active content and authored construction origins to select the next
+provenance boundary. A subsequent detached definition manifest must separately
+address duplicates/replacements, NPC roaming, delayed respawn state, dynamic
+provenance, collision derivation, global registries, event ownership, and
+rollback before any reload design.
 Any later commit token or lifecycle consumer must remain unable to alter the
 authoritative packed Region registry until ownership, residency, players,
 NPCs, objects, ground items, collision, reload, and recovery preconditions can

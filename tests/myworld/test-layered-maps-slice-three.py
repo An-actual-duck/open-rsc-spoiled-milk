@@ -270,6 +270,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "LayeredCoordinateParitySnapshot.java",
                 "LayeredLocationMirror.java",
                 "LayeredPackedRegionAuthoredConstructionInventory.java",
+                "LayeredPackedRegionAuthoredConstructionObservation.java",
                 "LayeredPackedRegionRetirementReadiness.java",
                 "LayeredPackedRegionRetirementSafetyAssessment.java",
                 "LayeredRegionInterestOwnershipLedger.java",

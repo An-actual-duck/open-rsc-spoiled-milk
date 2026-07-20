@@ -14,11 +14,12 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v15.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v16.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
 SCHEMA_V14 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v14.schema.json"
+SCHEMA_V15 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v15.schema.json"
 
 
 POINT_STUB = r'''
@@ -83,6 +84,8 @@ package com.openrsc.server.diagnostics;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
@@ -448,11 +451,41 @@ public final class LayeredCoordinateParityObserverFixture {
                 return LayeredPackedRegionRetirementSafetyAssessment.assess(
                     readiness, contents, decisionTick[0], maximumPackedSources);
             };
+        LayeredCoordinateParityObserver.PackedRegionAuthoredConstructionSource
+            decisionConstructionSource = (safety, maximumPackedSources) -> {
+                LayeredPackedRegionAuthoredConstructionInventory.Builder builder =
+                    LayeredPackedRegionAuthoredConstructionInventory.builder(7L);
+                for (LayeredPackedRegionRetirementSafetyAssessment.SourceAssessment
+                        source : safety.getSources()) {
+                    int x = source.getPackedRegionX();
+                    int y = source.getPackedRegionY();
+                    builder.record(
+                        LayeredPackedRegionAuthoredConstructionInventory
+                            .ConstructionKind.SCENERY, x, y);
+                    builder.record(
+                        LayeredPackedRegionAuthoredConstructionInventory
+                            .ConstructionKind.SCENERY, x, y);
+                    builder.record(
+                        LayeredPackedRegionAuthoredConstructionInventory
+                            .ConstructionKind.BOUNDARY, x, y);
+                    builder.record(
+                        LayeredPackedRegionAuthoredConstructionInventory
+                            .ConstructionKind.NPC_SPAWN, x, y);
+                    builder.record(
+                        LayeredPackedRegionAuthoredConstructionInventory
+                            .ConstructionKind.GROUND_ITEM_SPAWN, x, y);
+                    builder.record(
+                        LayeredPackedRegionAuthoredConstructionInventory
+                            .ConstructionKind.HARVESTING_SCENERY, x, y);
+                }
+                return LayeredPackedRegionAuthoredConstructionObservation.observe(
+                    builder.build(), safety, maximumPackedSources);
+            };
         LayeredCoordinateParityObserver.start(
             decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
             tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
             regionResidency, decisionInterest, decisionRetirementSource,
-            decisionSource, decisionSafetySource);
+            decisionSource, decisionSafetySource, decisionConstructionSource);
         decisionTick[0] = 1L;
         LayeredRegionInterestOwnershipLedger.Change decisionRelease =
             decisionOwnership.synchronizeOwner(
@@ -753,7 +786,11 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v15" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v16" for event in events))
+            self.assertTrue(all(
+                event["packedRegionAuthoredConstruction"] is None
+                for event in events
+            ))
             self.assertTrue(all(
                 event["interestOwnership"] is not None
                 for event in events
@@ -1114,6 +1151,32 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     "lifecycleReady", "blockers",
                 )},
             )
+            eligible_construction = decision_events[2][
+                "packedRegionAuthoredConstruction"
+            ]
+            self.assertEqual((7, 1, 1, 6), (
+                eligible_construction["generation"],
+                eligible_construction["sourceCount"],
+                eligible_construction["authoredSourceCount"],
+                eligible_construction["authoredConstructionCount"],
+            ))
+            self.assertTrue(eligible_construction["originCountsOnly"])
+            self.assertFalse(eligible_construction["reconstructionManifest"])
+            self.assertEqual(
+                {
+                    "sceneryCount": 2,
+                    "boundaryCount": 1,
+                    "npcSpawnCount": 1,
+                    "groundItemSpawnCount": 1,
+                    "harvestingSceneryCount": 1,
+                    "authoredConstructionCount": 6,
+                },
+                {key: eligible_construction["entries"][0][key] for key in (
+                    "sceneryCount", "boundaryCount", "npcSpawnCount",
+                    "groundItemSpawnCount", "harvestingSceneryCount",
+                    "authoredConstructionCount",
+                )},
+            )
             refusal = decision_events[3]["regionRetirementDecisions"]
             self.assertEqual((1, 0, 1), (
                 refusal["candidateCount"], refusal["eligibleCount"],
@@ -1159,6 +1222,12 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     "sourceCount"
                 ],
             )
+            self.assertEqual(
+                0,
+                decision_events[4]["packedRegionAuthoredConstruction"][
+                    "sourceCount"
+                ],
+            )
 
             schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
             try:
@@ -1173,11 +1242,13 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v12 = json.loads(SCHEMA_V12.read_text(encoding="utf-8"))
                 v13 = json.loads(SCHEMA_V13.read_text(encoding="utf-8"))
                 v14 = json.loads(SCHEMA_V14.read_text(encoding="utf-8"))
+                v15 = json.loads(SCHEMA_V15.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
                     (v13["$id"], Resource.from_contents(v13)),
                     (v14["$id"], Resource.from_contents(v14)),
+                    (v15["$id"], Resource.from_contents(v15)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry
@@ -1202,6 +1273,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
         self.assertIn("layeredTileNeighborhoodSource(player)", command)
         self.assertIn("layeredAdjacentCollisionSource(player)", command)
         self.assertIn("layeredRegionResidencySource(player)", command)
+        self.assertIn("layeredPackedRegionAuthoredConstructionSource(player)", command)
         self.assertIn("regionManager.getLayeredRegionTileSnapshot", command)
         self.assertIn("regionManager.compareLayeredTileState(current)", command)
         self.assertIn("regionManager.compareLayeredTileNeighborhood(current)", command)

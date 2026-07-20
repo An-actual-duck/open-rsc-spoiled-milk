@@ -84,9 +84,19 @@ public final class LayeredPackedRegionAuthoredConstructionInventory {
 	public PackedSourceInventory findSource(
 		final int packedRegionX,
 		final int packedRegionY) {
-		for (PackedSourceInventory source : sources) {
-			if (source.getPackedRegionX() == packedRegionX
-				&& source.getPackedRegionY() == packedRegionY) {
+		int low = 0;
+		int high = sources.size() - 1;
+		while (low <= high) {
+			int middle = (low + high) >>> 1;
+			PackedSourceInventory source = sources.get(middle);
+			int x = Integer.compare(source.getPackedRegionX(), packedRegionX);
+			int comparison = x != 0 ? x
+				: Integer.compare(source.getPackedRegionY(), packedRegionY);
+			if (comparison < 0) {
+				low = middle + 1;
+			} else if (comparison > 0) {
+				high = middle - 1;
+			} else {
 				return source;
 			}
 		}

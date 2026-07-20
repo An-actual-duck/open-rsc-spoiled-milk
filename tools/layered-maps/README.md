@@ -178,16 +178,17 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v15.schema.json`. Each v15 record
-retains the complete v14 position, logical-window, interest-delta,
+traces emit `schema/layered-map-parity-event-v16.schema.json`. Each v16 record
+retains the complete v15 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v14 schemas remain
+repeating the tile comparisons on every movement. The v1-v15 schemas remain
 alongside it—including
+`schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
 explicit readable contracts.
 Marker and stop records may additionally summarize the latest 16 contiguous
@@ -232,6 +233,12 @@ records stable blocker names and counts for players, NPCs, scenery objects,
 ground items, tile storage, and reload support. These counts are ephemeral
 diagnostic evidence, not a claim or unload token; the current missing reload
 path keeps lifecycle-ready count at zero.
+v16 additionally projects the immutable whole-world population generation and
+count-only authored construction origins onto those exact safety sources. It
+separates scenery, boundaries, NPC spawns, ground-item spawns, and harvesting
+conversions, and explicitly records `originCountsOnly=true` and
+`reconstructionManifest=false`. The counts do not classify current entities,
+retain placement definitions, or authorize teardown/reload.
 
 ## Checked Player mirror
 

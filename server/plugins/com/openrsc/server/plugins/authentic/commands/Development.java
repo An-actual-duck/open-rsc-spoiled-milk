@@ -24,6 +24,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
@@ -1394,7 +1395,8 @@ public final class Development implements CommandTrigger {
 					layeredInterestOwnershipSource(player),
 					layeredRegionRetirementSource(player),
 					layeredRegionRetirementDecisionSource(player),
-					layeredPackedRegionRetirementSafetySource(player));
+					layeredPackedRegionRetirementSafetySource(player),
+					layeredPackedRegionAuthoredConstructionSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1698,6 +1700,22 @@ public final class Development implements CommandTrigger {
 				final int maximumPackedSources) {
 				return regionManager.assessLayeredPackedRegionRetirementSafety(
 					readiness, maximumPackedSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionAuthoredConstructionSource
+		layeredPackedRegionAuthoredConstructionSource(final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredConstructionSource() {
+			@Override
+			public LayeredPackedRegionAuthoredConstructionObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumPackedSources) {
+				return LayeredPackedRegionAuthoredConstructionObservation.observe(
+					player.getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredConstructionInventory(),
+					safety, maximumPackedSources);
 			}
 		};
 	}

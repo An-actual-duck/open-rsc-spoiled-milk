@@ -62,6 +62,8 @@
  * safety while retaining the absent reload boundary. Slice 51 permits the
  * whole-world populator to freeze count-only authored construction origins per
  * packed source without exposing placement definitions or adopting Region
- * teardown/reconstruction.</p>
+ * teardown/reconstruction. Slice 52 projects only those immutable origin
+ * counts onto the exact private retirement-safety sources while explicitly
+ * denying reconstruction-manifest semantics.</p>
  */
 package com.openrsc.server.model.world.coordinate;
