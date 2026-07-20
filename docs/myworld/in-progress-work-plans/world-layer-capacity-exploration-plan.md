@@ -1,18 +1,18 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-54 implemented and validated on
+Status: architecture design complete; Slices 1-55 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 54 aligns every Slice 53 placement identity with a
-detached conservative packed-source reach envelope. Private startup evidence
-shows only 12 object footprints but 1,007 NPC roaming bounds cross an anchor
-source, confirming that mobile NPC ownership must not become hard terrain
-retention. The inventory remains inert and does not change packed Region
-lookup, eager loading, release, eviction, pathing, packets, or persistence
+Current milestone: Slice 55 makes Slice 53's implicit source address an
+immutable generation-fenced authored placement identity after Slice 54 proved
+mobile provenance must remain separate from terrain retention. The identity is
+still manifest-owned and is not attached to live definitions or entities; it
+does not change packed Region lookup, eager loading, release, eviction,
+pathing, packets, or persistence
 
 ## Purpose
 
@@ -5936,6 +5936,72 @@ Automated and private-runtime validation evidence:
 Status: implemented and runtime-validated. No owner route is required because
 the inventory is inert and has no client-visible or lifecycle consumer.
 
+### Slice 55: Generation-fenced authored placement identity
+
+Objective: formalize the stable authored address needed to follow mobile or
+temporarily replaced content without yet attaching provenance to runtime state.
+
+Implemented:
+
+- immutable `LayeredAuthoredPlacementIdentity` values containing population
+  generation, packed source X/Y, one-based source ordinal, and construction
+  family;
+- checked positive generation and ordinal budgets, non-negative current packed
+  source coordinates, non-null family, value equality/hash semantics, and a
+  deterministic compact technical string;
+- canonical identities constructed inside the Slice 53 manifest builder and
+  owned by each immutable placement entry, while existing ordinal/family
+  accessors delegate to that identity; and
+- generation fencing so an entity, callback, or registry value from an older
+  whole-world population cannot silently equal a placement in a later pass.
+
+Runtime lifecycle audit:
+
+- authored NPC death/respawn reuses the same `Npc` and `NPCLoc`, so identity can
+  survive ordinary movement, death, and respawn without making roaming Regions
+  owners of the spawn;
+- authored ground-item respawn creates a new `GroundItem` from the retained
+  `ItemLoc` held by the authored registry callback, so identity must be carried
+  by both the definition and each active instance;
+- authored game objects frequently transition to temporary replacement
+  instances, while delayed restoration usually reconstructs from the original
+  `GameObjectLoc`; a central replacement propagation policy is therefore
+  needed to avoid losing identity during the temporary state; and
+- configured startup objects can intentionally replace earlier definitions at
+  the same tile. Those remain distinct manifest identities, and ordinary
+  collision replacement must not automatically transfer the earlier identity
+  onto the later authored definition.
+
+Safety boundary:
+
+- the identity contains values only and has no Entity, definition, Region,
+  tile, archive, event, registry, cache, callback, claim, permit, lease, or
+  commit handle;
+- `Entity`, `GameObjectLoc`, `NPCLoc`, and `ItemLoc` remain unchanged and cannot
+  carry the identity in this slice;
+- no runtime registry, lookup, teardown, reconstruction, observer payload, or
+  persistence format consumes it; and
+- `LAYERED_PACKED_REGION_RELOAD_SUPPORTED` remains false.
+
+Automated validation evidence:
+
+- the compiled fixture proves equality/hash behavior, generation/family/
+  ordinal fencing, exact fields and technical text, invalid-input refusal, and
+  canonical manifest identity for duplicate definitions; and
+- source guards prove runtime entities and location definitions remain unaware
+  of the new value;
+- the complete layered-map suite passes 122 tests across 54 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 754 core and 488 plugin sources
+  successfully; and
+- two consecutive normalizations retain Slice 54's identical source,
+  inventory, classification, and occurrence fingerprints and unchanged world
+  totals, confirming the inert identity value does not alter normalized map
+  inputs or outputs.
+
+Status: implemented and automated-validated. Runtime attachment remains a
+separately gated slice.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -6077,16 +6143,18 @@ private environment should validate at least:
 | 2026-07-19 | Use Slice 52's active-versus-origin evidence to select a detached immutable authored-placement manifest as the next prerequisite, keeping spawn origin separate from active state. | Confirmed for Slice 53; lifecycle adoption remains gated |
 | 2026-07-19 | Continue with Slice 53 by retaining exact detached construction inputs, duplicate-safe source ordinals, and harvesting conversion identity after successful population. | Implemented and runtime-validated; lifecycle adoption remains gated |
 | 2026-07-19 | Continue with Slice 54 by aligning every authored placement with a detached conservative object, NPC-roaming, or anchor-only packed-source reach envelope. | Implemented and runtime-validated; lifecycle adoption remains gated |
+| 2026-07-19 | Continue with Slice 55 by formalizing the manifest address as an immutable generation-fenced identity without attaching it to live definitions or entities. | Implemented and automated-validated; runtime attachment remains gated |
 
 ## Next Discussion
 
-Use Slice 54's measured split to design stable authored runtime provenance
-without coupling mobile NPC roaming bounds to terrain residency. The next
-bounded slice should define an immutable placement identity value and audit how
-that identity can survive NPC movement/respawn, authored item respawn, and
-object removal/replacement before attaching it to live entities. Later slices
-must still address terrain replay, collision derivation, global registries,
-event ownership, transactional teardown, and rollback before any reload design.
+Continue with a bounded observational runtime-attachment slice: carry Slice
+55's identity on authored location definitions and their current entities,
+preserve it through existing NPC/item respawn and explicit object replacement,
+and reject conflicting reassignment. Do not transfer identity during ordinary
+collision-driven registration because configured duplicate/replacement
+definitions have distinct addresses. Diagnostics and any registry remain later
+gates, as do terrain replay, collision derivation, event ownership,
+transactional teardown, and rollback.
 Any later commit token or lifecycle consumer must remain unable to alter the
 authoritative packed Region registry until ownership, residency, players,
 NPCs, objects, ground items, collision, reload, and recovery preconditions can

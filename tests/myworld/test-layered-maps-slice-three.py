@@ -268,6 +268,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "LegacyPlayerLocationPersistenceSnapshot.java",
                 "LegacyTerrainSectorAdapter.java",
                 "LayeredCoordinateParitySnapshot.java",
+                "LayeredAuthoredPlacementIdentity.java",
                 "LayeredLocationMirror.java",
                 "LayeredPackedRegionAuthoredConstructionInventory.java",
                 "LayeredPackedRegionAuthoredConstructionObservation.java",

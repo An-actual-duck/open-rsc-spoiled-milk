@@ -10,6 +10,7 @@ COORDINATES = ROOT / "server/src/com/openrsc/server/model/world/coordinate"
 INVENTORY = COORDINATES / (
     "LayeredPackedRegionAuthoredConstructionInventory.java"
 )
+IDENTITY = COORDINATES / "LayeredAuthoredPlacementIdentity.java"
 MANIFEST = COORDINATES / "LayeredPackedRegionAuthoredPlacementManifest.java"
 POPULATOR = ROOT / "server/src/com/openrsc/server/database/WorldPopulator.java"
 REGION_MANAGER = ROOT / (
@@ -214,7 +215,7 @@ class LayeredMapsSliceFiftyThreeTest(unittest.TestCase):
             subprocess.run(
                 [
                     "javac", "-d", str(classes), str(INVENTORY),
-                    str(MANIFEST), str(fixture_path),
+                    str(IDENTITY), str(MANIFEST), str(fixture_path),
                 ],
                 check=True,
                 cwd=ROOT,

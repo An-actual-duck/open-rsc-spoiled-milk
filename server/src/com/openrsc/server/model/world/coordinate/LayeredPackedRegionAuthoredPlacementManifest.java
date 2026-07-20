@@ -207,8 +207,7 @@ public final class LayeredPackedRegionAuthoredPlacementManifest {
 	 * inputs and the scenery identity constructed from them.
 	 */
 	public static final class AuthoredPlacement {
-		private final int sourceOrdinal;
-		private final ConstructionKind kind;
+		private final LayeredAuthoredPlacementIdentity identity;
 		private final int authoredDefinitionId;
 		private final int constructedEntityId;
 		private final int packedX;
@@ -226,8 +225,7 @@ public final class LayeredPackedRegionAuthoredPlacementManifest {
 		private final int itemNoted;
 
 		private AuthoredPlacement(
-			final int sourceOrdinal,
-			final ConstructionKind kind,
+			final LayeredAuthoredPlacementIdentity identity,
 			final int authoredDefinitionId,
 			final int constructedEntityId,
 			final int packedX,
@@ -243,8 +241,10 @@ public final class LayeredPackedRegionAuthoredPlacementManifest {
 			final int itemAmount,
 			final int itemRespawnTime,
 			final int itemNoted) {
-			this.sourceOrdinal = sourceOrdinal;
-			this.kind = kind;
+			if (identity == null) {
+				throw new NullPointerException("identity");
+			}
+			this.identity = identity;
 			this.authoredDefinitionId = authoredDefinitionId;
 			this.constructedEntityId = constructedEntityId;
 			this.packedX = packedX;
@@ -262,8 +262,15 @@ public final class LayeredPackedRegionAuthoredPlacementManifest {
 			this.itemNoted = itemNoted;
 		}
 
-		public int getSourceOrdinal() { return sourceOrdinal; }
-		public ConstructionKind getKind() { return kind; }
+		public LayeredAuthoredPlacementIdentity getIdentity() {
+			return identity;
+		}
+		public int getSourceOrdinal() {
+			return identity.getSourceOrdinal();
+		}
+		public ConstructionKind getKind() {
+			return identity.getConstructionKind();
+		}
 		public int getAuthoredDefinitionId() {
 			return authoredDefinitionId;
 		}
@@ -464,8 +471,12 @@ public final class LayeredPackedRegionAuthoredPlacementManifest {
 			int sourceOrdinal = Math.incrementExact(
 				source.placementsRecorded);
 			source.placementsRecorded = sourceOrdinal;
+			LayeredAuthoredPlacementIdentity identity =
+				new LayeredAuthoredPlacementIdentity(
+					generation, packedRegionX, packedRegionY,
+					sourceOrdinal, kind);
 			source.placements.add(new AuthoredPlacement(
-				sourceOrdinal, kind, authoredDefinitionId,
+				identity, authoredDefinitionId,
 				constructedEntityId, packedX, packedY,
 				permanentObjectId, direction, objectType, objectOwner,
 				npcMinimumX, npcMaximumX, npcMinimumY, npcMaximumY,
