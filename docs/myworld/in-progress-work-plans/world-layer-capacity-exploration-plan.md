@@ -1,19 +1,20 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-59, 62, 64, 66, and 68
+Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, and 70
 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, 65,
-67, 69, and 70 automated-validated on the active refinement branch
+67, and 69 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 70 exposes Slice 69's source-local replay, conservative
-outbound spatial support, and external incoming-owner reach through additive
-private schema-v24 evidence. It remains detached diagnostics and is not
-active-instance evidence. No recipe consumer, load request, registry, or
-lifecycle authority is authorized, and packed Region lookup, eager loading,
-release, eviction, pathing, packets, and persistence remain unchanged
+Current milestone: owner-validated Slice 70 proves that source-local replay can
+remain distinct from asymmetric outbound support and incoming ownership on the
+accepted narrow and broad routes. Every external relationship in both labeled
+selections is potential NPC roaming, not static scenery and not active-instance
+evidence. No recipe consumer, load request, registry, or lifecycle authority is
+authorized, and packed Region lookup, eager loading, release, eviction,
+pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -6888,8 +6889,30 @@ Automated validation status:
 - the authoritative bundled-Ant build compiles 763 core and 488 plugin
   sources.
 
-Status: implemented and automated-validated. No lifecycle authority is
-authorized.
+Private owner validation status:
+
+- all 35 schema-v24 records validate against the complete additive schema
+  chain; 8 records contain semantic evidence, sequences `1-35` are contiguous,
+  and every exact-safety, selected-source, support, incoming-owner, typed-kind,
+  and inert-flag invariant reconciles;
+- `slice70-narrow` contains 6 selected authored replay sources with 546
+  placements, 13 outbound support sources including 7 external sources, and 6
+  incoming owners contributing 16 placements/16 inward references;
+- `slice70-broad` contains 42 selected sources, 39 with authored content, and
+  6,666 replay placements. Its 56 outbound support sources include 15 external
+  sources, while 11 incoming owners contribute 52 placements/81 inward
+  references;
+- all 34 narrow and 164 broad external outbound references are NPC roaming,
+  as are every incoming placement/reference. Static footprints and anchor-only
+  entries create no external relationship in either labeled selection;
+- outbound support and incoming ownership overlap only partially, confirming
+  that they are independent directional relationships rather than a recursive
+  replay closure; and
+- the owner walked and inspected scenery, NPCs, interaction, collision, and
+  loading after the broad capture and reported no issue.
+
+Status: implemented, automated-validated, and owner-validated. No lifecycle
+authority is authorized.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -7165,7 +7188,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 67 by comparing the completed forward cohort with whole-recipe incoming edges and strong/weak component topology. | Implemented and automated-validated; forward closure is proved distinct from incoming/weak closure, graph membership remains evidence only, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 68 by exposing bounded whole-recipe topology through additive private schema-v23 diagnostics. | Implemented and owner-validated; the narrow/broad forward cohorts gain the same 75 incoming-only sources through 10 NPC-roaming edges/38 references, the largest weak component contains 123 of 366 authored sources, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 69 by separating exact source-local replay, conservative outbound spatial support, and external incoming-owner reach. | Implemented and automated-validated; support content is never recursively imported, potential mobile reach is not active-instance evidence, and no lifecycle authority exists |
-| 2026-07-20 | Continue with Slice 70 by exposing the dependency-semantics split through additive private schema-v24 diagnostics. | Implemented and automated-validated; exact safety drives bounded replay/support/incoming evidence, active-instance evidence remains absent, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 70 by exposing the dependency-semantics split through additive private schema-v24 diagnostics. | Implemented and owner-validated; exact safety drives bounded replay/support/incoming evidence, all external relationships in both labeled selections are potential NPC roaming, active-instance evidence remains absent, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -7182,13 +7205,23 @@ mobile entity currently needs. Preserve every conservative reach envelope, but
 do not recursively import a target coordinate's unrelated authored recipe just
 because the coordinate contains content.
 
-Slice 70 now applies the semantic split to additive private schema-v24
-diagnostics. The safest next gate is an owner route comparing the same narrow
-and broad selections accepted in Slices 64-68. The capture should verify exact
-schema and arithmetic, then compare selected replay, outbound support, and
-incoming-owner totals by static-footprint, potential-mobile, and anchor-only
-semantics. The route must also confirm unchanged scenery, NPC, collision, and
-loading behavior.
+The accepted schema-v24 route proves that source-local replay, outbound
+support, and incoming ownership remain bounded and intelligible on real data.
+The next prerequisite should be an automated-only active-NPC residency
+classification. For an exact safety selection, it should report separately:
+
+- authored NPC instances whose owner source and current packed source are both
+  selected;
+- selected-owned NPC instances currently outside the selection;
+- external-owned NPC instances currently inside the selection; and
+- active NPC instances without valid authored identity, as explicit unresolved
+  evidence rather than silently assigning ownership.
+
+Use the existing attached authored identity and a bounded point-in-time world
+census; do not create a second NPC registry. Preserve current movement, roaming,
+respawn, combat, and Region registration authority. This first classification
+must not retain an NPC, reject arrival, block retirement, or infer active state
+from a conservative envelope alone.
 
 This diagnostic must not shrink an envelope, permit retirement, or assert that
 a potential roaming relationship is an active blocker. Only a later runtime
