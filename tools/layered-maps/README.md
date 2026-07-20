@@ -178,8 +178,8 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v19.schema.json`. Each v19 record
-retains the complete v18 position, logical-window, interest-delta,
+traces emit `schema/layered-map-parity-event-v20.schema.json`. Each v20 record
+retains the complete v19 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
@@ -193,7 +193,8 @@ alongside it—including
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
-explicit readable contracts.
+explicit readable contracts. The v19 schema remains the immutable contract for
+earlier records.
 Marker and stop records may additionally summarize the latest 16 contiguous
 ordinary walking steps since the previous reset, including per-step decisions,
 aggregate parity, capacity evictions, and discontinuities. Teleports, login,
@@ -268,6 +269,14 @@ boundary-anchor-and-direction collisions. Expected startup supersessions no
 longer appear as false absences; a superseded identity that unexpectedly
 reappears is an explicit anomaly. The outcome and JSON contain no entity,
 Region, registry, callback, or lifecycle handle.
+v20 additionally projects the inert final-live reconstruction recipe onto the
+exact packed retirement-safety source selection. It reports whole-recipe and
+selected-source counts, each selected source's conservative dependency closure,
+and a deterministic union of required packed sources with selected/authored
+membership and reference counts. Separate hard bounds cover selected sources
+and requirements; overflow refuses the observation instead of truncating it
+into a false closed result. The payload explicitly remains identity metadata
+only, with no entity registry or lifecycle authority.
 
 ## Checked Player mirror
 

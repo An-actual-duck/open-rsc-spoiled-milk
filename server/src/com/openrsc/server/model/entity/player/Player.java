@@ -41,6 +41,7 @@ import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
@@ -3359,6 +3360,23 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver.PackedRegionAuthoredReconstructionSource
+		layeredPackedRegionAuthoredReconstructionSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionSource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumSafetySources,
+				final int maximumRequirementSources) {
+				return LayeredPackedRegionAuthoredReconstructionObservation.observe(
+					getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredReconstructionRecipe(),
+					safety, maximumSafetySources, maximumRequirementSources);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3470,7 +3488,8 @@ public final class Player extends Mob {
 				loggedIn ? layeredRegionRetirementDecisionSource() : null,
 				loggedIn ? layeredPackedRegionRetirementSafetySource() : null,
 				loggedIn ? layeredPackedRegionAuthoredConstructionSource() : null,
-				loggedIn ? layeredPackedRegionAuthoredProvenanceSource() : null);
+				loggedIn ? layeredPackedRegionAuthoredProvenanceSource() : null,
+				loggedIn ? layeredPackedRegionAuthoredReconstructionSource() : null);
 		}
 	}
 

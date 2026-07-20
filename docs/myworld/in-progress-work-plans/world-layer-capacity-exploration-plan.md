@@ -1,16 +1,16 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59 owner-validated, Slice 60
-private-runtime validated, and Slice 61 automated-validated on the active
-refinement branch
+private-runtime validated, Slice 61 automated-validated, and Slice 62 awaiting
+private owner validation on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 61 projects the inert final-live recipe onto an exact
-bounded packed-source safety selection and reports whether every dependency
-source is present. Both selection-wide and per-authored-source closure remain
+Current milestone: Slice 62 exposes the inert final-live recipe projection and
+its exact dependency-source closure through additive private schema-v20
+diagnostics. Both selection-wide and per-authored-source closure remain
 diagnostic evidence only. No recipe consumer, load request, registry, or
 lifecycle authority is authorized, and packed Region lookup, eager loading,
 release, eviction, pathing, packets, and persistence remain unchanged
@@ -6472,6 +6472,55 @@ Automated validation status:
 Status: implemented and automated-validated. No lifecycle authority is
 authorized.
 
+### Slice 62: Authored reconstruction dependency diagnostics
+
+Objective: expose Slice 61's bounded recipe/requirement projection through the
+opt-in private observer so an owner can inspect real source selections without
+granting the observation any loading or teardown role.
+
+Implemented:
+
+- additive `layered-map-parity-event-v20` records retain the complete v19
+  event and add nullable `packedRegionAuthoredReconstruction` evidence;
+- selected-source entries preserve the exact safety-source order and report
+  final-live recipe counts, conservative reach counts, unique dependency
+  counts, and per-source closure;
+- the sorted requirement union reports selected-safety membership, authored
+  recipe presence, owner-source count, and placement-reference count, allowing
+  an open selection to explain exactly which packed sources are absent;
+- whole-recipe totals distinguish global recipe size from the selected
+  observation so a small source set cannot be mistaken for a complete world
+  recipe; and
+- both the Player session rebind path and the development-command start path
+  obtain the completed reconstruction recipe from `WorldPopulator`, preventing
+  duplicated command wiring from silently emitting a weaker projection.
+
+Safety boundary:
+
+- selected safety sources and unique dependency requirements each use an
+  explicit refusal-based bound; overflow cannot be truncated into a false
+  closed result;
+- the JSON declares `identityMetadataOnly=true`, `entityRegistry=false`, and
+  `lifecycleAuthority=false`, and the source produces primitive detached
+  evidence only;
+- schema-v20 is additive and the v11-v19 contracts remain immutable for prior
+  captures; and
+- open or closed dependency evidence changes no Region, tile, archive, entity,
+  collision, event, player, persistence, or recovery state and carries no
+  lifecycle authority.
+
+Automated validation status:
+
+- the authoritative bundled-Ant build compiles all 759 core and 488 plugin
+  sources;
+- the schema/source guard verifies the additive nullable contract, explicit
+  inert flags, refusal budgets, serializer, and both runtime source paths; and
+- the complete layered-map suite passes 142 tests across 61 focused files; and
+- a private owner trace remains to be completed for this milestone.
+
+Status: implemented and automated-validated; private owner validation pending.
+No lifecycle authority is authorized.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -6620,15 +6669,15 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 59 by preserving complete manifest replay history while projecting deterministic population supersessions into a final-live expectation set and additive v19 diagnostics. | Implemented and owner-validated; the duplicated command trace source now forwards the completed outcome, all 5,797 final-live expectations match, and registry/lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 60 by deriving an inert per-source recipe from final-live authored identities and aligned dependency envelopes without a runtime consumer. | Implemented and private-runtime validated; all 33,515 final-live inputs retain aligned reach and lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 61 by projecting final-live recipe counts and unique dependency requirements onto an exact bounded safety-source set. | Implemented and automated-validated; closure remains evidence only and lifecycle authority remains absent |
+| 2026-07-20 | Continue with Slice 62 by exposing bounded recipe and dependency-closure evidence through additive private schema-v20 diagnostics. | Implemented and automated-validated; private owner validation pending, with no lifecycle authority |
 
 ## Next Discussion
 
-Continue with Slice 62 by emitting the bounded recipe and closure observation
-through additive private v20
-diagnostics, retaining the immutable v11-v19 schema registry and refusing
-overflow rather than truncating requirement sources. Owner validation should
-compare one broad transition with at least one narrower selection and treat
-both closed and open results as descriptive evidence only.
+Complete Slice 62's automated and private owner validation. Compare one broad
+transition with at least one narrower selection and treat both closed and open
+results as descriptive evidence only. Use the captured requirement union to
+choose the smallest next precondition slice; do not infer that dependency
+closure alone makes a packed source reconstructable.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.

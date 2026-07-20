@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v19.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v20.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -89,8 +89,12 @@ import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionRecipe;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
@@ -500,12 +504,46 @@ public final class LayeredCoordinateParityObserverFixture {
 				return LayeredPackedRegionAuthoredProvenanceObservation.builder(
 					manifest.build(), safety, decisionTick[0]).build();
 			};
+		LayeredCoordinateParityObserver.PackedRegionAuthoredReconstructionSource
+			decisionReconstructionSource = (safety, maximumSafetySources,
+					maximumRequirementSources) -> {
+				LayeredPackedRegionAuthoredPlacementManifest.Builder manifest =
+					LayeredPackedRegionAuthoredPlacementManifest.builder(7L);
+				LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+					dependencies =
+						LayeredPackedRegionAuthoredPlacementDependencyInventory
+							.builder(7L);
+				for (LayeredPackedRegionRetirementSafetyAssessment.SourceAssessment
+						source : safety.getSources()) {
+					int x = source.getPackedRegionX();
+					int y = source.getPackedRegionY();
+					manifest.recordScenery(
+						x, y, 100, 100, x * 48, y * 48, 0, 0, null);
+					dependencies.record(
+						LayeredPackedRegionAuthoredConstructionInventory
+							.ConstructionKind.SCENERY,
+						LayeredPackedRegionAuthoredPlacementDependencyInventory
+							.DependencyKind.OBJECT_FOOTPRINT,
+						x, y, x * 48, x * 48, y * 48, y * 48,
+						x, x, y, y);
+				}
+				LayeredPackedRegionAuthoredPlacementManifest builtManifest =
+					manifest.build();
+				LayeredPackedRegionAuthoredReconstructionRecipe recipe =
+					LayeredPackedRegionAuthoredReconstructionRecipe.derive(
+						builtManifest, dependencies.build(),
+						LayeredPackedRegionAuthoredPopulationOutcome.builder(7L)
+							.build(builtManifest));
+				return LayeredPackedRegionAuthoredReconstructionObservation.observe(
+					recipe, safety, maximumSafetySources,
+					maximumRequirementSources);
+			};
 		LayeredCoordinateParityObserver.start(
 			decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
 			tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
 			regionResidency, decisionInterest, decisionRetirementSource,
 			decisionSource, decisionSafetySource, decisionConstructionSource,
-			decisionProvenanceSource);
+			decisionProvenanceSource, decisionReconstructionSource);
         decisionTick[0] = 1L;
         LayeredRegionInterestOwnershipLedger.Change decisionRelease =
             decisionOwnership.synchronizeOwner(
@@ -806,7 +844,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v19" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v20" for event in events))
             self.assertTrue(all(
                 event["packedRegionAuthoredConstruction"] is None
                 for event in events
@@ -1235,6 +1273,36 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     "runtimeObserved", "runtimeEntityId", "runtimeActive",
                     "runtimeInstanceCount",
                     "replacementObjectInstanceCount",
+                )})
+            eligible_reconstruction = decision_events[2][
+                "packedRegionAuthoredReconstruction"
+            ]
+            self.assertEqual((7, 1, 1, 1, 1, 0), (
+                eligible_reconstruction["generation"],
+                eligible_reconstruction["sourceCount"],
+                eligible_reconstruction["reconstructionPlacementCount"],
+                eligible_reconstruction["requirementSourceCount"],
+                eligible_reconstruction["selectedRequirementSourceCount"],
+                eligible_reconstruction["missingRequirementSourceCount"],
+            ))
+            self.assertTrue(
+                eligible_reconstruction["selectionDependencyClosed"]
+            )
+            self.assertTrue(eligible_reconstruction["identityMetadataOnly"])
+            self.assertFalse(eligible_reconstruction["entityRegistry"])
+            self.assertFalse(eligible_reconstruction["lifecycleAuthority"])
+            self.assertTrue(
+                eligible_reconstruction["entries"][0]["dependencyClosed"]
+            )
+            self.assertEqual({
+                "selectedSafetySource": True,
+                "authoredRecipeSource": True,
+                "ownerSourceCount": 1,
+                "placementReferenceCount": 1,
+            }, {key: eligible_reconstruction["requirements"][0][key]
+                for key in (
+                    "selectedSafetySource", "authoredRecipeSource",
+                    "ownerSourceCount", "placementReferenceCount",
                 )})
             refusal = decision_events[3]["regionRetirementDecisions"]
             self.assertEqual((1, 0, 1), (
