@@ -178,16 +178,17 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v17.schema.json`. Each v17 record
-retains the complete v16 position, logical-window, interest-delta,
+traces emit `schema/layered-map-parity-event-v18.schema.json`. Each v18 record
+retains the complete v17 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v16 schemas remain
+repeating the tile comparisons on every movement. The v1-v17 schemas remain
 alongside it—including
+`schema/layered-map-parity-event-v17.schema.json`,
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
@@ -249,6 +250,15 @@ per-family expected/runtime counts. It explicitly records
 `identityMetadataOnly=true`, `entityRegistry=false`, and
 `lifecycleAuthority=false`; neither the observer nor its JSONL payload can
 retain an entity or authorize loading, teardown, or reload.
+v18 adds a closed, deterministic anomaly-detail list for the v17 count
+categories. Each detail names the generation-fenced source, ordinal, family,
+manifest definition and constructed ID, construction coordinate, and—when a
+runtime instance exists—a detached current ID, source, activity flag, and
+instance counts. The list contains at most 4,096 entries and reports the exact
+number omitted beyond that limit. Nullable fields distinguish an absent
+runtime instance or an identity not recognized by the current manifest. These
+primitive facts remain observer-only: no entity, Region, registry, callback,
+or lifecycle handle is serialized or retained.
 
 ## Checked Player mirror
 

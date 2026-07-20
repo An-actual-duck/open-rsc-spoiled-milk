@@ -112,7 +112,65 @@ public final class AuthoredProvenanceObservationFixture {
             && result.getRuntimeNpcSpawnCount() == 2
             && result.getRuntimeGroundItemSpawnCount() == 0,
             "runtime family totals are exact");
+		check(result.getAnomalyDetailCount() == 6
+			&& result.getDroppedAnomalyDetailCount() == 0,
+			"every anomaly has one bounded exact detail");
+		String[] expectedKinds = {
+			"STALE_GENERATION", "DUPLICATE", "REPLACEMENT_OBJECT",
+			"ABSENT", "ABSENT", "UNRECOGNIZED_IDENTITY"
+		};
+		for (int index = 0; index < expectedKinds.length; index++) {
+			check(result.getAnomalyDetails().get(index).getAnomalyKind().name()
+				.equals(expectedKinds[index]),
+				"anomaly details have deterministic identity order " + index);
+		}
+		LayeredPackedRegionAuthoredProvenanceObservation.AnomalyDetail
+			replacement = result.getAnomalyDetails().get(2);
+		check(replacement.isManifestRecognized()
+			&& replacement.isRuntimeObserved()
+			&& replacement.getIdentity().equals(scenery)
+			&& replacement.getAuthoredDefinitionId() == 100
+			&& replacement.getExpectedConstructedEntityId() == 100
+			&& replacement.getPackedX() == 200
+			&& replacement.getPackedY() == 20
+			&& replacement.getRuntimeEntityId() == 101
+			&& replacement.getRuntimeInstanceCount() == 2
+			&& replacement.getReplacementObjectInstanceCount() == 1,
+			"replacement detail preserves detached manifest and runtime facts");
+		LayeredPackedRegionAuthoredProvenanceObservation.AnomalyDetail absent =
+			result.getAnomalyDetails().get(3);
+		check(absent.isManifestRecognized() && !absent.isRuntimeObserved()
+			&& absent.getIdentity().getSourceOrdinal() == 2
+			&& absent.getAuthoredDefinitionId() == 5
+			&& absent.getRuntimeInstanceCount() == 0,
+			"absence identifies the exact authored placement without a runtime handle");
         expectImmutable(result.getSources());
+		expectImmutable(result.getAnomalyDetails());
+
+		LayeredPackedRegionAuthoredProvenanceObservation.Builder capped =
+			LayeredPackedRegionAuthoredProvenanceObservation.builder(
+				manifest, safety, 10L);
+		for (LayeredPackedRegionAuthoredPlacementManifest.AuthoredPlacement
+			placement : source.getPlacements()) {
+			capped.recordRuntimeInstance(
+				placement.getIdentity(), placement.getConstructedEntityId(),
+				4, 0, true);
+		}
+		for (int index = 0;
+			index < LayeredPackedRegionAuthoredProvenanceObservation
+				.MAXIMUM_ANOMALY_DETAILS + 1;
+			index++) {
+			capped.recordRuntimeInstance(
+				identity(5L, 4, 0, 1000 + index, "SCENERY"),
+				100, 4, 0, true);
+		}
+		LayeredPackedRegionAuthoredProvenanceObservation cappedResult =
+			capped.build();
+		check(cappedResult.getAnomalyDetailCount()
+				== LayeredPackedRegionAuthoredProvenanceObservation
+					.MAXIMUM_ANOMALY_DETAILS
+			&& cappedResult.getDroppedAnomalyDetailCount() == 1,
+			"anomaly details stop at their hard cap and report exact drops");
         expectState(builder::build);
         expectNull(() -> LayeredPackedRegionAuthoredProvenanceObservation
             .builder(null, safety, 9L));

@@ -80,7 +80,7 @@ class LayeredMapsSliceTwentySixTest(unittest.TestCase):
         player = PLAYER.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v17"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v18"', observer)
         self.assertIn("public interface TileSnapshotSource", observer)
         self.assertIn("public static final class TileSnapshotMetadata", observer)
         self.assertIn("state.tileSnapshotSource.capture(to.getRegionKey())", observer)

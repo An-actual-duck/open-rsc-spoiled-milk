@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v17";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v18";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -1290,9 +1290,24 @@ public final class LayeredCoordinateParityObserver {
 			.append(observation.getRuntimeGroundItemSpawnCount()).append(',');
 		out.append("\"runtimeHarvestingSceneryCount\":")
 			.append(observation.getRuntimeHarvestingSceneryCount()).append(',');
+		out.append("\"anomalyDetailCount\":")
+			.append(observation.getAnomalyDetailCount()).append(',');
+		out.append("\"droppedAnomalyDetailCount\":")
+			.append(observation.getDroppedAnomalyDetailCount()).append(',');
 		out.append("\"identityMetadataOnly\":true,");
 		out.append("\"entityRegistry\":false,");
 		out.append("\"lifecycleAuthority\":false,");
+		out.append("\"anomalyDetails\":[");
+		boolean firstAnomaly = true;
+		for (LayeredPackedRegionAuthoredProvenanceObservation.AnomalyDetail
+			detail : observation.getAnomalyDetails()) {
+			if (!firstAnomaly) {
+				out.append(',');
+			}
+			firstAnomaly = false;
+			appendPackedRegionAuthoredProvenanceAnomaly(out, detail);
+		}
+		out.append("],");
 		out.append("\"entries\":[");
 		boolean first = true;
 		for (LayeredPackedRegionAuthoredProvenanceObservation.SourceObservation
@@ -1351,6 +1366,74 @@ public final class LayeredCoordinateParityObserver {
 				.append(source.getRuntimeHarvestingSceneryCount()).append('}');
 		}
 		out.append("]}");
+	}
+
+	private static void appendPackedRegionAuthoredProvenanceAnomaly(
+		final StringBuilder out,
+		final LayeredPackedRegionAuthoredProvenanceObservation.AnomalyDetail
+			detail) {
+		out.append('{');
+		field(out, "anomalyKind", detail.getAnomalyKind().name()).append(',');
+		out.append("\"generation\":")
+			.append(detail.getGeneration()).append(',');
+		out.append("\"packedRegionX\":")
+			.append(detail.getPackedRegionX()).append(',');
+		out.append("\"packedRegionY\":")
+			.append(detail.getPackedRegionY()).append(',');
+		out.append("\"sourceOrdinal\":")
+			.append(detail.getSourceOrdinal()).append(',');
+		field(out, "constructionKind",
+			detail.getConstructionKind().name()).append(',');
+		out.append("\"manifestRecognized\":")
+			.append(detail.isManifestRecognized()).append(',');
+		appendNullableInteger(out, "authoredDefinitionId",
+			detail.isManifestRecognized(), detail.getAuthoredDefinitionId());
+		out.append(',');
+		appendNullableInteger(out, "expectedConstructedEntityId",
+			detail.isManifestRecognized(),
+			detail.getExpectedConstructedEntityId());
+		out.append(',');
+		appendNullableInteger(out, "packedX",
+			detail.isManifestRecognized(), detail.getPackedX());
+		out.append(',');
+		appendNullableInteger(out, "packedY",
+			detail.isManifestRecognized(), detail.getPackedY());
+		out.append(',');
+		out.append("\"runtimeObserved\":")
+			.append(detail.isRuntimeObserved()).append(',');
+		appendNullableInteger(out, "runtimeEntityId",
+			detail.isRuntimeObserved(), detail.getRuntimeEntityId());
+		out.append(',');
+		appendNullableInteger(out, "currentPackedRegionX",
+			detail.isRuntimeObserved(), detail.getCurrentPackedRegionX());
+		out.append(',');
+		appendNullableInteger(out, "currentPackedRegionY",
+			detail.isRuntimeObserved(), detail.getCurrentPackedRegionY());
+		out.append(',');
+		quoted(out, "runtimeActive").append(':');
+		if (detail.isRuntimeObserved()) {
+			out.append(detail.isRuntimeActive());
+		} else {
+			out.append("null");
+		}
+		out.append(',');
+		out.append("\"runtimeInstanceCount\":")
+			.append(detail.getRuntimeInstanceCount()).append(',');
+		out.append("\"replacementObjectInstanceCount\":")
+			.append(detail.getReplacementObjectInstanceCount()).append('}');
+	}
+
+	private static void appendNullableInteger(
+		final StringBuilder out,
+		final String name,
+		final boolean present,
+		final int value) {
+		quoted(out, name).append(':');
+		if (present) {
+			out.append(value);
+		} else {
+			out.append("null");
+		}
 	}
 
 	private static void appendRegionResidencyCandidates(

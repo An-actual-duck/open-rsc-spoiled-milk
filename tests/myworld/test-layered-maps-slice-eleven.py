@@ -14,13 +14,14 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v17.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v18.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
 SCHEMA_V14 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v14.schema.json"
 SCHEMA_V15 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v15.schema.json"
 SCHEMA_V16 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v16.schema.json"
+SCHEMA_V17 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v17.schema.json"
 
 
 POINT_STUB = r'''
@@ -87,6 +88,8 @@ import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
@@ -482,11 +485,26 @@ public final class LayeredCoordinateParityObserverFixture {
                 return LayeredPackedRegionAuthoredConstructionObservation.observe(
                     builder.build(), safety, maximumPackedSources);
             };
-        LayeredCoordinateParityObserver.start(
-            decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
-            tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
-            regionResidency, decisionInterest, decisionRetirementSource,
-            decisionSource, decisionSafetySource, decisionConstructionSource);
+		LayeredCoordinateParityObserver.PackedRegionAuthoredProvenanceSource
+			decisionProvenanceSource = safety -> {
+				LayeredPackedRegionAuthoredPlacementManifest.Builder manifest =
+					LayeredPackedRegionAuthoredPlacementManifest.builder(7L);
+				for (LayeredPackedRegionRetirementSafetyAssessment.SourceAssessment
+						source : safety.getSources()) {
+					int x = source.getPackedRegionX();
+					int y = source.getPackedRegionY();
+					manifest.recordScenery(
+						x, y, 100, 100, x * 48, y * 48, 0, 0, null);
+				}
+				return LayeredPackedRegionAuthoredProvenanceObservation.builder(
+					manifest.build(), safety, decisionTick[0]).build();
+			};
+		LayeredCoordinateParityObserver.start(
+			decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
+			tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
+			regionResidency, decisionInterest, decisionRetirementSource,
+			decisionSource, decisionSafetySource, decisionConstructionSource,
+			decisionProvenanceSource);
         decisionTick[0] = 1L;
         LayeredRegionInterestOwnershipLedger.Change decisionRelease =
             decisionOwnership.synchronizeOwner(
@@ -787,7 +805,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v17" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v18" for event in events))
             self.assertTrue(all(
                 event["packedRegionAuthoredConstruction"] is None
                 for event in events
@@ -1182,6 +1200,41 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     "authoredConstructionCount",
                 )},
             )
+            eligible_provenance = decision_events[2][
+                "packedRegionAuthoredProvenance"
+            ]
+            self.assertEqual((7, 1, 1, 1, 0), (
+                eligible_provenance["generation"],
+                eligible_provenance["sourceCount"],
+                eligible_provenance["absentIdentityCount"],
+                eligible_provenance["anomalyDetailCount"],
+                eligible_provenance["droppedAnomalyDetailCount"],
+            ))
+            self.assertTrue(eligible_provenance["identityMetadataOnly"])
+            self.assertFalse(eligible_provenance["entityRegistry"])
+            self.assertFalse(eligible_provenance["lifecycleAuthority"])
+            self.assertEqual({
+                "anomalyKind": "ABSENT",
+                "generation": 7,
+                "sourceOrdinal": 1,
+                "constructionKind": "SCENERY",
+                "manifestRecognized": True,
+                "authoredDefinitionId": 100,
+                "expectedConstructedEntityId": 100,
+                "runtimeObserved": False,
+                "runtimeEntityId": None,
+                "runtimeActive": None,
+                "runtimeInstanceCount": 0,
+                "replacementObjectInstanceCount": 0,
+            }, {key: eligible_provenance["anomalyDetails"][0][key]
+                for key in (
+                    "anomalyKind", "generation", "sourceOrdinal",
+                    "constructionKind", "manifestRecognized",
+                    "authoredDefinitionId", "expectedConstructedEntityId",
+                    "runtimeObserved", "runtimeEntityId", "runtimeActive",
+                    "runtimeInstanceCount",
+                    "replacementObjectInstanceCount",
+                )})
             refusal = decision_events[3]["regionRetirementDecisions"]
             self.assertEqual((1, 0, 1), (
                 refusal["candidateCount"], refusal["eligibleCount"],
@@ -1249,6 +1302,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v14 = json.loads(SCHEMA_V14.read_text(encoding="utf-8"))
                 v15 = json.loads(SCHEMA_V15.read_text(encoding="utf-8"))
                 v16 = json.loads(SCHEMA_V16.read_text(encoding="utf-8"))
+                v17 = json.loads(SCHEMA_V17.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -1256,6 +1310,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v14["$id"], Resource.from_contents(v14)),
                     (v15["$id"], Resource.from_contents(v15)),
                     (v16["$id"], Resource.from_contents(v16)),
+                    (v17["$id"], Resource.from_contents(v17)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

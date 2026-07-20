@@ -1,19 +1,21 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-57 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-57 implemented and owner-
+validated, and Slice 58 implemented with automated validation on the active
+refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 57 compares Slice 53's detached placement manifest
-with Slice 56's current runtime identity metadata for exact retirement-safety
-sources. The bounded count-only private v17 census distinguishes matches,
-absence, duplicates, NPC roaming/respawn, and temporary object replacements
-without retaining entity handles or creating a registry or lifecycle authority.
-It does not change packed Region lookup, eager loading, release, eviction,
-pathing, packets, or persistence
+Current milestone: Slice 58 adds a bounded detached detail for each anomaly in
+Slice 57's private authored-provenance census. The additive v18 payload can
+name an absent, duplicate, replacement, stale-generation, or unrecognized
+identity by exact source ordinal, family, definition/entity ID, and authored
+coordinate without retaining an entity or creating a registry or lifecycle
+authority. A private owner trace is the remaining gate for classifying the four
+count-only absences found during Slice 57. It does not change packed Region
+lookup, eager loading, release, eviction, pathing, packets, or persistence
 
 ## Purpose
 
@@ -6174,6 +6176,70 @@ Owner validation evidence (2026-07-19):
 
 Status: implemented and owner-validated. No lifecycle consumer is authorized.
 
+### Slice 58: Bounded authored provenance anomaly details
+
+Objective: make every anomalous Slice 57 count actionable in private traces by
+attaching a stable, AI-readable identity and construction location while
+retaining no runtime or lifecycle authority.
+
+Implemented:
+
+- the immutable authored-provenance observation now emits details for
+  `ABSENT`, `DUPLICATE`, `REPLACEMENT_OBJECT`, `STALE_GENERATION`, and
+  `UNRECOGNIZED_IDENTITY` classifications;
+- recognized details include the generation-fenced packed source, source
+  ordinal, construction family, authored definition ID, expected constructed
+  entity ID, and exact packed construction X/Y;
+- runtime-observed details additionally include one detached runtime ID,
+  current packed source, active flag, total instance count, and replacement
+  instance count, while absent details use explicit no-runtime state;
+- detail ordering is deterministic by identity and anomaly kind; output is
+  capped at 4,096 immutable entries and reports the exact number of further
+  details dropped; and
+- additive `layered-map-parity-event-v18` diagnostics serialize the detail list
+  through a closed schema while leaving the v17 contract intact for existing
+  traces.
+
+Safety boundary:
+
+- a detail contains only immutable identity values and primitive manifest or
+  runtime observations; it retains no entity, Region, collection, tile,
+  archive, event, callback, cache, claim, permit, lease, or commit handle;
+- collection still occurs only for Slice 57's exact bounded safety-source set
+  under the existing lifecycle lock, with the same 524,288 runtime-observation
+  ceiling;
+- the 4,096-entry cap bounds diagnostic output and memory growth, and the
+  dropped count makes truncation explicit rather than silently hiding it;
+- details remain evidence only: absence cannot authorize reconstruction,
+  replacement cannot authorize teardown, and stale or unrecognized metadata
+  cannot alter current provenance; and
+- `LAYERED_PACKED_REGION_RELOAD_SUPPORTED` remains false.
+
+Automated validation status:
+
+- the compiled provenance fixture proves all five anomaly kinds, exact
+  detached manifest/runtime fields, deterministic ordering, immutable output,
+  and exact cap/drop arithmetic;
+- the observer fixture emits and validates a non-null absent detail against the
+  closed v18 schema while the immutable v17 schema continues to reject fields
+  outside its prior contract; and
+- the complete layered-map suite passes 129 tests across 58 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 756 core and 488 plugin sources;
+  and
+- two consecutive normalizations retain identical source
+  `671b7e116c15e38f871a61b34bd244693d7078e94574fe521e9ba4585a4741b7`,
+  inventory
+  `b80658b28fc18987686ace066ff3d83ad153939b90017ba74ac721b30662aad5`,
+  classification
+  `403454e7d68265c8e9134afa4bffe461ac1e16fd078c26eda6f9d4cb86ce44ee`,
+  and occurrence
+  `d8ee498c4d527361da224bcb0efc786295b5e4f73c095f561985cd6f5e8c64f4`
+  fingerprints, with world totals unchanged.
+
+Status: implemented and automated-validated. A focused private v18 trace is the
+remaining owner gate before the four wider-route absences can be classified.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -6318,15 +6384,15 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 55 by formalizing the manifest address as an immutable generation-fenced identity without attaching it to live definitions or entities. | Implemented and automated-validated; runtime attachment remains gated |
 | 2026-07-19 | Continue with Slice 56 by attaching conflict-refusing authored identity metadata to accepted definitions/entities and preserving it through existing respawn and explicit replacement paths. | Implemented and runtime-validated; registry/lifecycle authority remains absent |
 | 2026-07-19 | Continue with Slice 57 by comparing exact safety-source manifest identities with a bounded count-only private runtime census and additive v17 diagnostics. | Implemented and owner-validated; registry/lifecycle authority remains absent |
+| 2026-07-19 | Continue with Slice 58 by adding bounded detached exact-identity details for every authored-provenance anomaly through additive v18 diagnostics. | Implemented and automated-validated; private classification trace pending and registry/lifecycle authority remains absent |
 
 ## Next Discussion
 
-Add bounded detached anomaly details to the private provenance census so an
-absent, duplicate, replacement, stale-generation, or unrecognized identity can
-be tied to its manifest family, source ordinal, authored/constructed ID, and
-construction coordinate without retaining an entity or creating a persistent
-registry. Use that evidence to classify the four wider-route absences before
-any identity registry is considered. Terrain replay,
+Capture a focused private v18 trace and use its bounded detached anomaly details
+to classify the four wider-route absences by exact family, source ordinal,
+authored/constructed ID, and construction coordinate. Determine whether each
+is a normal temporary interaction state or a genuine provenance gap before any
+identity registry is considered. Terrain replay,
 collision derivation, event ownership, transactional teardown, and rollback
 remain later gates.
 Any later commit token or lifecycle consumer must remain unable to alter the

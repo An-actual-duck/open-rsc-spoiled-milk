@@ -221,7 +221,7 @@ class LayeredMapsSliceSixteenTest(unittest.TestCase):
         self.assertIn("getLayeredVisibilityWindow();\n\t\tif (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER)", player)
         self.assertIn("player.getLayeredVisibilityWindow();", command)
         self.assertIn("player.getConfig().VIEW_DISTANCE", command)
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v17"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v18"', observer)
         self.assertIn("toJsonWithVisibilityWindow()", observer)
         self.assertIn("state.viewGridDistance", observer)
         self.assertIn("ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>>", manager)
