@@ -1,20 +1,20 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, and 66
-owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, 65, and
-67 automated-validated; Slice 68 is automated-validated and awaits private
-owner validation on the active refinement branch
+owner-validated, Slice 60 private-runtime validated, Slices 61, 63, 65, and 67
+automated-validated, and Slice 68 owner-validated on the active refinement
+branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 68 exposes Slice 67's completed forward-versus-whole-
-recipe topology through additive private schema-v23 diagnostics. The result
-remains detached diagnostic evidence only. No recipe consumer, load request,
-registry, or lifecycle authority is authorized, and packed Region lookup,
-eager loading, release, eviction, pathing, packets, and persistence remain
-unchanged
+Current milestone: owner-validated Slice 68 evidence proves that spatial NPC
+roaming support, authored replay ownership, and active runtime residency cannot
+be treated as one recursive recipe-closure relationship. The result remains
+detached diagnostic evidence only. No recipe consumer, load request, registry,
+or lifecycle authority is authorized, and packed Region lookup, eager loading,
+release, eviction, pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -6758,8 +6758,36 @@ Automated validation status:
 - focused schema, observer, runtime-wiring, and plan guards pass; and
 - the complete layered-map suite passes 163 tests across 67 focused files.
 
-Status: implemented and automated-validated; private owner validation pending.
-No lifecycle authority is authorized.
+Private owner validation status:
+
+- all six captured schema-v23 events validate against the additive v23 schema;
+  source, kind, weak/strong component, cohort, recipe, and provenance arithmetic
+  reconciles exactly, and the route completed without a reported visual,
+  loading, scenery, NPC, or collision issue;
+- the whole recipe contains 366 authored source nodes split across 165 weak and
+  271 strong components, with 777 directed edges (366 self and 411 cross-
+  source), 35,051 authored references, and 237 support-only references. The
+  largest weak component contains 123 sources while the next-largest contains
+  21; the largest strong component contains 22 sources;
+- NPC roaming contributes 1,524 of 1,536 whole-recipe cross-source authored
+  references and every support-only reference. Scenery and boundary footprints
+  contribute only 7 and 5 cross-source authored references respectively;
+- `slice68-narrow` places its 61 forward authored sources inside two weak
+  components of 123 and 13 sources. The conservative connected union is 136
+  sources, including 75 incoming-only sources; all 10 direct incoming edges and
+  all 38 direct incoming references are NPC roaming;
+- `slice68-broad` contains 65 cohort sources, of which 62 have authored
+  content. It touches the same 123- and 13-source components plus one isolated
+  authored source, producing a 137-source connected union with the same 75
+  incoming-only sources and the same 10 NPC edges/38 references; and
+- both forward cohorts remain authored-dependency closed but are not weakly
+  closed. The 123-source component spans packed source coordinates X `1-15`
+  and Y `2-17`; recursively treating it as one lifecycle unit would couple a
+  large fraction of the current world.
+
+Status: implemented, automated-validated, and owner-validated. The result
+rejects weak-component retirement as a practical design while preserving every
+conservative spatial envelope. No lifecycle authority is authorized.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -7033,7 +7061,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 65 by attributing exact cohort dependency edges and cross-source placement bridges by construction and dependency kind. | Implemented and automated-validated; all arithmetic is exact and refusal-bounded, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 66 by exposing typed cohort attribution through additive private schema-v22 diagnostics. | Implemented and owner-validated; NPC roaming accounts for 333/334 narrow and 194/195 broad frontier references, every external-support reference, and 1,626/1,636 combined cross-source references; static scenery creates no frontier expansion, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 67 by comparing the completed forward cohort with whole-recipe incoming edges and strong/weak component topology. | Implemented and automated-validated; forward closure is proved distinct from incoming/weak closure, graph membership remains evidence only, and no lifecycle authority exists |
-| 2026-07-20 | Continue with Slice 68 by exposing bounded whole-recipe topology through additive private schema-v23 diagnostics. | Implemented and automated-validated; exact same-cohort wiring and bounded source/component/kind serialization are proved, private owner validation is pending, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 68 by exposing bounded whole-recipe topology through additive private schema-v23 diagnostics. | Implemented and owner-validated; the narrow/broad forward cohorts gain the same 75 incoming-only sources through 10 NPC-roaming edges/38 references, the largest weak component contains 123 of 366 authored sources, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -7043,11 +7071,29 @@ envelopes and all 14 support-only coordinates: their size is not evidence that
 they are accidental, and an authored-closed forward cohort is still not proof
 of a reconstructable or safely retireable unit.
 
-Complete Slice 68's automated gates, then repeat the accepted narrow and broad
-private selections under schema-v23. Compare incoming-only source counts,
-direct incoming kinds, and touched weak components to determine whether NPC
-roaming creates one giant conservative component. Do not infer that a weak
-component is an operational load, teardown, or reload unit.
+The accepted schema-v23 evidence shows that a single recursive dependency rule
+conflates three different concerns: which authored source owns replay, which
+coordinates a placement may spatially affect, and which Regions an active
+mobile entity currently needs. Preserve every conservative reach envelope, but
+do not recursively import a target coordinate's unrelated authored recipe just
+because the coordinate contains content.
+
+The safest next prerequisite is an automated-only dependency-semantics slice.
+It should keep authored replay ownership source-local, classify object
+footprints as static multi-source support, classify NPC roaming as potential
+mobility support, and retain anchor-only placement locally. For an exact safety
+selection, report separately:
+
+- authored recipes whose content would actually be replayed;
+- outbound spatial-support coordinates;
+- external authored owners whose placements can reach inward; and
+- the later active-instance residency/arrival gate that would be required
+  before any incoming mobile entity could enter or remain in a retiring source.
+
+This classification must not shrink an envelope, permit retirement, or assert
+that a potential roaming relationship is an active blocker. Only a later
+runtime census can prove whether a specific NPC instance is present, moving,
+or holding residency. Do not create that registry or gate in the first slice.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
