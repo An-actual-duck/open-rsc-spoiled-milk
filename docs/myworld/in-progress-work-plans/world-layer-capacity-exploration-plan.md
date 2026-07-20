@@ -1,17 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-47 implemented and validated,
-with Slice 48 implemented, automatically validated, and awaiting private owner
-validation on the active refinement branch
+Status: architecture design complete; Slices 1-48 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 48 exposes Slice 47 packed-source readiness through
-additive opt-in private diagnostics without granting authority to unload,
-unregister, remove, or evict a packed Region; packed Region lookup, eager
-loading, release, eviction, pathing, packets, and persistence remain
+Current milestone: Slice 48 has owner-validated Slice 47 packed-source readiness
+through additive opt-in private diagnostics without granting authority to
+unload, unregister, remove, or evict a packed Region; packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
 authoritative and unchanged
 
 ## Purpose
@@ -5360,8 +5359,24 @@ Private owner-validation contract:
 4. Wait at least 15 seconds, mark `source-second-wave`, and stop. The disjoint
    Varrock release should produce a fresh eligible/ready source wave.
 
-Status: implemented and automatically validated; private owner validation
-pending. Runtime adoption remains deliberately absent.
+Private owner-validation evidence:
+
+- all seven captured records validated against the closed v14 schema through
+  its local v11-v13 registry;
+- the first release produced 18 eligible logical decisions and 18 one-to-one
+  packed sources, all classified `READY`;
+- returning to Lumbridge refused those exact 18 logical identities as `PINNED`
+  and blocked those exact 18 packed-source identities as `REFUSED_COVERAGE`;
+- the second release produced a disjoint set of 18 logical identities and 18
+  packed-source identities, all `ELIGIBLE`/`READY`;
+- every record preserved logical-decision/source aggregate arithmetic, the
+  residency mirror remained at version 1842, and candidate overflow remained
+  zero; and
+- the owner completed the route without reporting a visual or functional
+  problem.
+
+Status: implemented and owner-validated. Runtime adoption remains deliberately
+absent.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -5496,15 +5511,15 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 45 by atomically rechecking bounded retirement candidates through a pure source-level decision arbiter that cannot alter packed Region lifecycle. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 46 by emitting bounded accepted/refused retirement-decision evidence through additive private v13 diagnostics without lifecycle authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 47 by aggregating same-snapshot logical retirement decisions into conservative packed-source readiness while blocking incomplete cross-level coverage and partial edge sources. | Implemented and validated |
-| 2026-07-19 | Continue with Slice 48 by emitting bounded packed-source readiness from the existing atomic decision batch through additive private v14 diagnostics without lifecycle authority. | Implemented and automatically validated; owner validation pending |
+| 2026-07-19 | Continue with Slice 48 by emitting bounded packed-source readiness from the existing atomic decision batch through additive private v14 diagnostics without lifecycle authority. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Complete the prepared Slice 48 private owner route and analyze its v14 trace
-before considering any commit token or lifecycle consumer. Any later consumer
-must remain unable to alter the authoritative packed Region registry until its
-ownership, residency, entity, collision, and recovery preconditions can be
-proved together.
+Define Slice 49 as a read-only packed-source contents and quiescence assessment.
+Any later commit token or lifecycle consumer must remain unable to alter the
+authoritative packed Region registry until ownership, residency, players,
+NPCs, objects, ground items, collision, reload, and recovery preconditions can
+be proved together.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.
