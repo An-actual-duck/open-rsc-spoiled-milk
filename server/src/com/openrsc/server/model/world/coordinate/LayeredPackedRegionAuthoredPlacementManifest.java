@@ -298,6 +298,7 @@ public final class LayeredPackedRegionAuthoredPlacementManifest {
 		private final Map<Long, MutableSource> sources =
 			new LinkedHashMap<Long, MutableSource>();
 		private int placementCount;
+		private LayeredAuthoredPlacementIdentity lastRecordedIdentity;
 		private boolean built;
 
 		private Builder(final long generation) {
@@ -482,8 +483,19 @@ public final class LayeredPackedRegionAuthoredPlacementManifest {
 				npcMinimumX, npcMaximumX, npcMinimumY, npcMaximumY,
 				itemAmount, itemRespawnTime, itemNoted));
 			source.record(kind);
+			lastRecordedIdentity = identity;
 			placementCount = Math.incrementExact(placementCount);
 			return this;
+		}
+
+		/** Returns the immutable identity produced by the immediately prior record. */
+		public LayeredAuthoredPlacementIdentity getLastRecordedIdentity() {
+			checkOpen();
+			if (lastRecordedIdentity == null) {
+				throw new IllegalStateException(
+					"No authored placement has been recorded");
+			}
+			return lastRecordedIdentity;
 		}
 
 		public LayeredPackedRegionAuthoredPlacementManifest build() {

@@ -12,6 +12,7 @@ import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory.ConstructionKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
@@ -128,6 +129,10 @@ public final class WorldPopulator {
 						: ConstructionKind.BOUNDARY,
 					obj.getX(), obj.getY());
 				recordObjectPlacement(placementManifest, obj);
+				LayeredAuthoredPlacementIdentity objectIdentity =
+					placementManifest.getLastRecordedIdentity();
+				object.assignAuthoredPlacementIdentity(objectIdentity);
+				assignObjectIdentity(obj, objectIdentity);
 				recordObjectDependency(placementDependencies, obj);
 				if (obj.getType() == 0) { // no wall objects allowed
 					getWorld().addSceneryLoc(obj.getLocation(), obj.getID());
@@ -191,6 +196,10 @@ public final class WorldPopulator {
 					constructionInventory, ConstructionKind.NPC_SPAWN,
 					n.startX(), n.startY());
 				recordNpcPlacement(placementManifest, n);
+				LayeredAuthoredPlacementIdentity npcIdentity =
+					placementManifest.getLastRecordedIdentity();
+				n.assignAuthoredPlacementIdentity(npcIdentity);
+				npc.assignAuthoredPlacementIdentity(npcIdentity);
 				recordNpcDependency(placementDependencies, n);
 			}
 			LOGGER.info("Loaded {}", box(getWorld().countNpcs()) + " NPC spawns");
@@ -229,8 +238,13 @@ public final class WorldPopulator {
 						constructionInventory,
 						ConstructionKind.HARVESTING_SCENERY,
 						i.x, i.y);
-				recordHarvestingPlacement(
+					recordHarvestingPlacement(
 						placementManifest, i, harvestingScenery);
+					LayeredAuthoredPlacementIdentity harvestingIdentity =
+						placementManifest.getLastRecordedIdentity();
+					i.assignAuthoredPlacementIdentity(harvestingIdentity);
+					assignObjectIdentity(
+						harvestingScenery, harvestingIdentity);
 					recordObjectDependency(
 						placementDependencies, harvestingScenery,
 						ConstructionKind.HARVESTING_SCENERY);
@@ -246,6 +260,10 @@ public final class WorldPopulator {
 						ConstructionKind.GROUND_ITEM_SPAWN,
 						i.x, i.y);
 					recordGroundItemPlacement(placementManifest, i);
+					LayeredAuthoredPlacementIdentity itemIdentity =
+						placementManifest.getLastRecordedIdentity();
+					i.assignAuthoredPlacementIdentity(itemIdentity);
+					authoredItem.assignAuthoredPlacementIdentity(itemIdentity);
 					recordGroundItemDependency(placementDependencies, i);
 				}
 				countGI++;
@@ -377,6 +395,13 @@ public final class WorldPopulator {
 			dependencies, object,
 			object.getType() == 0 ? ConstructionKind.SCENERY
 				: ConstructionKind.BOUNDARY);
+	}
+
+	private void assignObjectIdentity(
+		final GameObject object,
+		final LayeredAuthoredPlacementIdentity identity) {
+		object.getLoc().assignAuthoredPlacementIdentity(identity);
+		object.assignAuthoredPlacementIdentity(identity);
 	}
 
 	private void recordObjectDependency(

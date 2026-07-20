@@ -121,6 +121,10 @@ public class Npc extends Mob {
 
 	public Npc(final World world, final NPCLoc loc) {
 		super(world, EntityType.NPC);
+		if (loc.getAuthoredPlacementIdentity() != null) {
+			assignAuthoredPlacementIdentity(
+				loc.getAuthoredPlacementIdentity());
+		}
 
 		for (int i : Constants.UNDEAD_NPCS) {
 			if (loc.getId() == i) {

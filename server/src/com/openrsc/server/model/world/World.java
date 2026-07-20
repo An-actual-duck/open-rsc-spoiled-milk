@@ -35,6 +35,7 @@ import com.openrsc.server.model.entity.player.Group;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.snapshot.Snapshot;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
 import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.ConnectionAttachment;
@@ -784,6 +785,12 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	}
 
 	public void replaceGameObject(final GameObject old, final GameObject _new) {
+		LayeredAuthoredPlacementIdentity authoredIdentity =
+			old.getAuthoredPlacementIdentity();
+		if (authoredIdentity != null) {
+			_new.getLoc().assignAuthoredPlacementIdentity(authoredIdentity);
+			_new.assignAuthoredPlacementIdentity(authoredIdentity);
+		}
 		unregisterGameObject(old);
 		registerGameObject(_new);
 	}

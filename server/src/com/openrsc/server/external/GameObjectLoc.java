@@ -2,6 +2,8 @@ package com.openrsc.server.external;
 
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentitySlot;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 
 public class GameObjectLoc {
@@ -27,6 +29,10 @@ public class GameObjectLoc {
 	public Point location;
 
 	private String owner = null;
+
+	private final LayeredAuthoredPlacementIdentitySlot
+		authoredPlacementIdentity =
+			new LayeredAuthoredPlacementIdentitySlot();
 
 	public GameObjectLoc() { }
 
@@ -61,6 +67,16 @@ public class GameObjectLoc {
 
 	public final String getOwner() {
 		return owner;
+	}
+
+	public final LayeredAuthoredPlacementIdentity
+		getAuthoredPlacementIdentity() {
+		return authoredPlacementIdentity.get();
+	}
+
+	public final void assignAuthoredPlacementIdentity(
+		final LayeredAuthoredPlacementIdentity identity) {
+		authoredPlacementIdentity.assign(identity);
 	}
 
 	public final int getDirection() {

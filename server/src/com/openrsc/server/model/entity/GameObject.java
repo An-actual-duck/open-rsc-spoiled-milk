@@ -26,6 +26,10 @@ public class GameObject extends Entity {
 
 	public GameObject(final World world, final GameObjectLoc loc) {
 		super(world, EntityType.GAME_OBJECT);
+		if (loc.getAuthoredPlacementIdentity() != null) {
+			assignAuthoredPlacementIdentity(
+				loc.getAuthoredPlacementIdentity());
+		}
 
 		direction = loc.getDirection();
 		gameObjectType = GameObjectType.fromInt(loc.getType());

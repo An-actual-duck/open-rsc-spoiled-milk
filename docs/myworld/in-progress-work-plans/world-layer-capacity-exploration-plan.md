@@ -1,18 +1,18 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-55 implemented and validated on
+Status: architecture design complete; Slices 1-56 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 55 makes Slice 53's implicit source address an
-immutable generation-fenced authored placement identity after Slice 54 proved
-mobile provenance must remain separate from terrain retention. The identity is
-still manifest-owned and is not attached to live definitions or entities; it
-does not change packed Region lookup, eager loading, release, eviction,
-pathing, packets, or persistence
+Current milestone: Slice 56 attaches Slice 55's generation-fenced identity to
+authored definitions and current entities as conflict-refusing observational
+metadata, preserving it through existing NPC/item respawn and explicit object
+replacement without creating a registry or lifecycle authority. It does not
+change packed Region lookup, eager loading, release, eviction, pathing,
+packets, or persistence
 
 ## Purpose
 
@@ -6002,6 +6002,83 @@ Automated validation evidence:
 Status: implemented and automated-validated. Runtime attachment remains a
 separately gated slice.
 
+### Slice 56: Observational runtime provenance attachment
+
+Objective: let existing authored runtime state carry its canonical Slice 55
+identity through ordinary lifecycle transitions without creating a lookup
+registry or changing any gameplay/lifecycle decision.
+
+Implemented:
+
+- a small `LayeredAuthoredPlacementIdentitySlot` whose initial state is absent,
+  whose first assignment is retained, whose equal reassignment is idempotent,
+  and whose null or conflicting reassignment is refused;
+- one slot on `Entity`, `GameObjectLoc`, `NPCLoc`, and `ItemLoc`, with read and
+  assign operations but no clear, replace, mutation, or lifecycle operation;
+- constructors for `GameObject`, `Npc`, and authored `GroundItem` copy a
+  definition identity onto the new entity when present;
+- the startup population pass assigns each manifest builder's immediately
+  prior canonical identity to the accepted source definition and constructed
+  entity after registration succeeds;
+- harvesting conversion assigns the same harvesting-family identity to both
+  its source item definition and its constructed scenery definition/entity;
+- authored ground-item delayed respawn inherits identity naturally because its
+  retained `ItemLoc` constructs the replacement; NPC movement/death/respawn
+  keeps identity because the same entity and `NPCLoc` survive; and
+- `World.replaceGameObject()` explicitly copies an old authored identity to a
+  temporary replacement definition/entity before unregistering the old object,
+  allowing the existing delayed restoration path to inherit it.
+
+Explicit non-propagation rule:
+
+- ordinary `registerGameObject()` collision replacement does not copy
+  identity. This is necessary because configured duplicate/replacement
+  definitions at one tile are distinct authored placements and each receives
+  its own manifest ordinal only after successful registration;
+- an unassigned dynamic entity remains unassigned unless it is the explicit
+  replacement of an authored object; and
+- an old-generation identity remains detectable but receives no authority.
+  No runtime consumer can act on it in this slice.
+
+Safety boundary:
+
+- the slots carry one immutable value only; they contain no Region, tile,
+  archive, event, registry, cache, callback, claim, permit, lease, or commit
+  handle;
+- attachment does not change entity equality, indexing, location, visibility,
+  collision, combat, respawn timing, registration, persistence, packets, or
+  client state;
+- RegionManager and the private observer remain unaware of provenance, and no
+  global identity-to-entity registry exists; and
+- `LAYERED_PACKED_REGION_RELOAD_SUPPORTED` remains false.
+
+Automated and private-runtime validation evidence:
+
+- the compiled fixture proves absent initial state, idempotent equal assignment,
+  null/conflict refusal without mutation, exact manifest builder cursor
+  identity, and refusal before a record or after builder completion;
+- source guards prove all three authored entity constructors inherit definition
+  identity, startup assignment follows successful construction, explicit
+  object replacement propagates before unregister, ordinary collision
+  registration does not propagate, and RegionManager/observer remain unaware;
+- the complete layered-map suite passes 124 tests across 55 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build and private launch compile 755 core and
+  488 plugin sources, populate and align all 33,532 authored definitions, and
+  reach the online state normally; and
+- two consecutive normalizations produce identical source
+  `e9e727c6547256db100204887192c8e8175393fa5e1ca07ea4c63c342aecec19`,
+  inventory
+  `a25a035b4381fed98a3b1f94fffadb9c19dd027b7540d570756522e6dcc03bb9`,
+  classification
+  `5ef669d5745beb4a910c8fd482afe78e22e986b71d69fc2c21eb6d9a1e557698`,
+  and occurrence
+  `d8e52da68e1f019347eb2198ceef16285d09c9d1b20b88bf990af174b1a7b868`
+  fingerprints, with world totals unchanged.
+
+Status: implemented and runtime-validated. Provenance census diagnostics remain
+the next gate before any registry or lifecycle consumer.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -6144,17 +6221,19 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 53 by retaining exact detached construction inputs, duplicate-safe source ordinals, and harvesting conversion identity after successful population. | Implemented and runtime-validated; lifecycle adoption remains gated |
 | 2026-07-19 | Continue with Slice 54 by aligning every authored placement with a detached conservative object, NPC-roaming, or anchor-only packed-source reach envelope. | Implemented and runtime-validated; lifecycle adoption remains gated |
 | 2026-07-19 | Continue with Slice 55 by formalizing the manifest address as an immutable generation-fenced identity without attaching it to live definitions or entities. | Implemented and automated-validated; runtime attachment remains gated |
+| 2026-07-19 | Continue with Slice 56 by attaching conflict-refusing authored identity metadata to accepted definitions/entities and preserving it through existing respawn and explicit replacement paths. | Implemented and runtime-validated; registry/lifecycle authority remains absent |
 
 ## Next Discussion
 
-Continue with a bounded observational runtime-attachment slice: carry Slice
-55's identity on authored location definitions and their current entities,
-preserve it through existing NPC/item respawn and explicit object replacement,
-and reject conflicting reassignment. Do not transfer identity during ordinary
-collision-driven registration because configured duplicate/replacement
-definitions have distinct addresses. Diagnostics and any registry remain later
-gates, as do terrain replay, collision derivation, event ownership,
-transactional teardown, and rollback.
+Add a bounded private provenance census that compares manifest identities with
+current authored entity identities by active packed source and by authored
+source, including absent, current, roaming, and temporarily replaced states.
+The census must be read-only, bounded, and explicit about lack of registry or
+reconstruction authority. A private route should then exercise NPC movement/
+death/respawn, one authored item pickup/respawn, and one temporary object
+replacement before any identity registry is considered. Terrain replay,
+collision derivation, event ownership, transactional teardown, and rollback
+remain later gates.
 Any later commit token or lifecycle consumer must remain unable to alter the
 authoritative packed Region registry until ownership, residency, players,
 NPCs, objects, ground items, collision, reload, and recovery preconditions can

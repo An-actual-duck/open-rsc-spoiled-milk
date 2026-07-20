@@ -151,11 +151,8 @@ class LayeredMapsSliceFiftyFiveTest(unittest.TestCase):
         self.assertIn("no entity, Region, event, registry", identity)
         self.assertIn("getIdentity()", manifest)
         self.assertIn("new LayeredAuthoredPlacementIdentity(", manifest)
-        for source in (ENTITY, GAME_OBJECT_LOC, NPC_LOC, ITEM_LOC):
-            self.assertNotIn(
-                "LayeredAuthoredPlacementIdentity",
-                source.read_text(encoding="utf-8"),
-            )
+        self.assertNotIn("model.entity", identity)
+        self.assertNotIn("server.external", identity)
         self.assertIn(
             "### Slice 55: Generation-fenced authored placement identity",
             plan,

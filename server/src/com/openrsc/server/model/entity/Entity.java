@@ -3,6 +3,8 @@ package com.openrsc.server.model.entity;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentitySlot;
 import com.openrsc.server.model.world.region.Region;
 
 import java.util.Map;
@@ -22,6 +24,10 @@ public abstract class Entity {
 	private final AtomicReference<Point> location = new AtomicReference<Point>();
 
 	private final AtomicReference<Region> region = new AtomicReference<Region>();
+
+	private final LayeredAuthoredPlacementIdentitySlot
+		authoredPlacementIdentity =
+			new LayeredAuthoredPlacementIdentitySlot();
 
 	private boolean removed = false;
 
@@ -123,6 +129,16 @@ public abstract class Entity {
 
 	public final Point getLocation() {
 		return location.get();
+	}
+
+	public final LayeredAuthoredPlacementIdentity
+		getAuthoredPlacementIdentity() {
+		return authoredPlacementIdentity.get();
+	}
+
+	public final void assignAuthoredPlacementIdentity(
+		final LayeredAuthoredPlacementIdentity identity) {
+		authoredPlacementIdentity.assign(identity);
 	}
 
 	public void setLocation(final Point point) {

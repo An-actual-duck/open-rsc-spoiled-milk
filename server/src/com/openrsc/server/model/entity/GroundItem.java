@@ -72,6 +72,10 @@ public class GroundItem extends Entity {
 
 	public GroundItem(final World world, final ItemLoc loc) {
 		super(world, EntityType.GROUND_ITEM);
+		if (loc.getAuthoredPlacementIdentity() != null) {
+			assignAuthoredPlacementIdentity(
+				loc.getAuthoredPlacementIdentity());
+		}
 		this.loc = loc;
 		setID(loc.id);
 		setAmount(loc.amount);
