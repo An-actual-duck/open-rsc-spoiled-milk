@@ -1,7 +1,8 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-58 owner-validated and Slice 59
-implemented with automated validation on the active refinement branch
+runtime-validated with focused owner diagnostics pending on the active
+refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
@@ -6285,7 +6286,9 @@ Implemented:
 - whole-world population now observes the same scenery-anchor or
   boundary-anchor-and-direction collider that `World.registerGameObject` will
   replace, then records predecessor and successor authored identities after
-  the successor has received its manifest identity;
+  the successor has received its manifest identity. The pre-registration probe
+  reads the immutable location definition because entity location is assigned
+  by registration itself;
 - an immutable generation-fenced population outcome resolves both identities
   against the completed manifest and retains only detached primitive placement
   metadata: source ordinal, construction family, definition/entity IDs,
@@ -6336,9 +6339,15 @@ Automated validation status:
   and occurrence
   `d8ee498c4d527361da224bcb0efc786295b5e4f73c095f561985cd6f5e8c64f4`
   fingerprints; and
-- private-runtime validation remains the owner gate after this checkpoint.
+- the private server rebuilds 757 core and 488 plugin sources, populates all
+  33,532 manifest placements, records 17 whole-world startup supersessions,
+  derives 33,515 final-live expectations, and reaches its isolated online state
+  normally; and
+- focused owner v19 trace validation remains the acceptance gate after this
+  checkpoint.
 
-Status: implemented with focused automated validation; owner validation pending.
+Status: implemented and private-runtime validated; focused owner v19 validation
+pending.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -6485,7 +6494,7 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 56 by attaching conflict-refusing authored identity metadata to accepted definitions/entities and preserving it through existing respawn and explicit replacement paths. | Implemented and runtime-validated; registry/lifecycle authority remains absent |
 | 2026-07-19 | Continue with Slice 57 by comparing exact safety-source manifest identities with a bounded count-only private runtime census and additive v17 diagnostics. | Implemented and owner-validated; registry/lifecycle authority remains absent |
 | 2026-07-19 | Continue with Slice 58 by adding bounded detached exact-identity details for every authored-provenance anomaly through additive v18 diagnostics. | Implemented and owner-validated; all four prior absences classified as deterministic population-time supersessions and registry/lifecycle authority remains absent |
-| 2026-07-20 | Continue with Slice 59 by preserving complete manifest replay history while projecting deterministic population supersessions into a final-live expectation set and additive v19 diagnostics. | Implemented with automated validation; owner validation pending and registry/lifecycle authority remains absent |
+| 2026-07-20 | Continue with Slice 59 by preserving complete manifest replay history while projecting deterministic population supersessions into a final-live expectation set and additive v19 diagnostics. | Implemented and private-runtime validated; focused owner v19 validation pending and registry/lifecycle authority remains absent |
 
 ## Next Discussion
 

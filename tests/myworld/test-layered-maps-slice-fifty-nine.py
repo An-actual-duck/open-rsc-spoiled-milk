@@ -308,6 +308,14 @@ class LayeredMapsSliceFiftyNineTest(unittest.TestCase):
         self.assertNotIn("com.openrsc.server.model.world.region", outcome)
         self.assertIn("Collections.unmodifiableList", outcome)
         self.assertIn("collidingAuthoredObjectIdentity", populator)
+        self.assertIn("object.getLoc().getX()", populator)
+        self.assertIn("object.getLoc().getY()", populator)
+        collision_helper = populator.split(
+            "private LayeredAuthoredPlacementIdentity "
+            "collidingAuthoredObjectIdentity", 1
+        )[1].split("private void recordObjectDependency", 1)[0]
+        self.assertNotIn("object.getX()", collision_helper)
+        self.assertNotIn("object.getY()", collision_helper)
         self.assertIn("recordSupersession", populator)
         self.assertIn("getAuthoredPopulationOutcome", populator)
         self.assertIn("LayeredPackedRegionAuthoredPopulationOutcome", manager)

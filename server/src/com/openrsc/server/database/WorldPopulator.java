@@ -434,12 +434,13 @@ public final class WorldPopulator {
 
 	private LayeredAuthoredPlacementIdentity collidingAuthoredObjectIdentity(
 		final GameObject object) {
-		Point location = Point.location(object.getX(), object.getY());
+		Point location = Point.location(
+			object.getLoc().getX(), object.getLoc().getY());
 		GameObject colliding = object.getType() == 0
 			? getWorld().getRegionManager().getRegion(location)
 				.getGameObject(location, null)
 			: getWorld().getRegionManager().getRegion(location)
-				.getWallGameObject(location, object.getDirection());
+				.getWallGameObject(location, object.getLoc().getDirection());
 		return colliding == null
 			? null : colliding.getAuthoredPlacementIdentity();
 	}
