@@ -1,21 +1,23 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-and 74 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63,
-65, 67, 69, 71, 73, 75, and 76 automated-validated on the active refinement
-branch
+and 74 owner-validated, Slice 60 private-runtime validated, Slice 76's
+contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
+and 76 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 76 exposes Slice 75's exact active-NPC
-boundary requirements through additive private schema-v27 diagnostics derived
-from the same exact census already emitted for each event. No second census,
-selection mutation, source load, entity registry, arrival gate, retention
-decision, or lifecycle authority is authorized, and packed Region lookup,
-eager loading, release, eviction, pathing, packets, and persistence remain
-unchanged
+Current milestone: Slice 76 private schema-v27 validation proves that 16 real
+atomic NPC census/containment/projection triplets remain internally exact when
+the observed boundary is contained and emit zero false source requirements.
+The nondeterministic Guard crossing did not recur in this capture, so a live
+non-empty requirement remains a targeted validation gap rather than a failed
+expectation. No second census, selection mutation, source load, entity
+registry, arrival gate, retention decision, or lifecycle authority is
+authorized, and packed Region lookup, eager loading, release, eviction,
+pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -7295,14 +7297,42 @@ Automated validation status:
 - source guards prove the projection consumes the same exact census as the
   parent containment assessment and that no separate requirement source or
   runtime callback exists;
-- the executable observer fixture emits a zero-NPC, zero-requirement contained
-  projection, reconciles its generation and selected-source context with its
-  parents, and validates the complete v11-v27 schema resource chain;
+- the executable observer fixture emits one recognized external-owned NPC in a
+  selected current source, serializes exactly one
+  `EXTERNAL_OWNER_AUTHORED_SOURCE` requirement for its unselected owner source,
+  reconciles its generation and selected-source context with both parents, and
+  validates the complete v11-v27 schema resource chain;
 - existing diagnostic consumers retain their prior start overloads and receive
   null requirements when no active-NPC source is installed;
 - the complete layered-map suite passes 190 tests across 75 focused files; and
 - the authoritative bundled-Ant build compiles 766 core and 488 plugin
   sources.
+
+Private owner validation status:
+
+- all 112 fresh records are schema-v27, sequences `1-112` are contiguous, and
+  every record validates against the complete 15-resource schema registry;
+- 16 events contain one atomic active-NPC residency, containment, and boundary
+  requirement triplet. All 33,385 schema, sequence, selected-source
+  membership, census arithmetic, identity-status, containment-blocker,
+  requirement-derivation, reason-count, and authority-flag checks pass;
+- the matured narrow marker selects 6 exact sources, the broad marker selects
+  42, ordinary walking grows the accumulated set to 48, and the final marker
+  selects 55. Every observed census contains 3,774 or 3,775 active recognized
+  NPCs with no unresolved or relevant duplicate identity;
+- every observed boundary is contained in this run. No selected-owned NPC
+  leaves, no external-owned NPC enters, every hard-blocker count is zero, and
+  all 16 projections therefore emit exactly zero source requirements;
+- the owner opens scenery, kills one Goblin, interacts with nearby animals,
+  and attempts Woodcutting while moving through the broad route. The killed
+  Goblin temporarily changes the active census from 3,775 to 3,774, remains
+  correctly irrelevant to the selected boundary, and later respawns;
+- the owner reports no visual, NPC, movement, interaction, collision, loading,
+  or diagnostic issue; and
+- the roaming Guard observed in Slice 74 does not happen to cross from authored
+  source `(2,10)` into selected source `(2,9)` during this shorter fresh-server
+  run. The contained/zero-requirement runtime path is owner-validated; a
+  non-empty runtime requirement remains unobserved rather than contradicted.
 
 Safety boundary:
 
@@ -7316,8 +7346,10 @@ Safety boundary:
   loading, release, eviction, reconstruction, transaction, or rollback is
   created.
 
-Status: implemented and automated-validated. Private owner validation and all
-lifecycle adoption remain deliberately absent.
+Status: implemented and automated-validated; contained-path owner-validated.
+A naturally occurring non-empty private-world capture remains unobserved but
+is not required after deterministic observer/schema coverage; all lifecycle
+adoption remains deliberately absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -7599,7 +7631,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 73 by assessing whether one exact active-NPC observation is contained at its census tick while keeping preservation and lifecycle readiness separate. | Implemented and automated-validated; cross-source movement inside stays contained, six independent blockers are refusal-tested, and no registry, arrival gate, or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 74 by exposing the active-NPC containment assessment through additive private schema-v26 evidence derived from the event's existing census. | Implemented and owner-validated; the broad selection began contained, then one Guard legitimately crossed from external owner source `(2,10)` into selected current source `(2,9)` and produced the sole blocker without registry, arrival-gate, or lifecycle authority |
 | 2026-07-20 | Continue with Slice 75 by projecting exact missing sources for recognized active-NPC boundary crossings while preserving non-expandable hard blockers. | Implemented and automated-validated; requirements are deduplicated and refusal-bounded, every proposal requires fresh safety/census evidence, and no selection or lifecycle authority exists |
-| 2026-07-20 | Continue with Slice 76 by exposing active-NPC boundary requirements through additive private schema-v27 evidence derived from the event's existing census. | Implemented and automated-validated; exact missing sources and hard blockers are serialized without a second census, selection mutation, registry, arrival gate, or lifecycle authority |
+| 2026-07-20 | Continue with Slice 76 by exposing active-NPC boundary requirements through additive private schema-v27 evidence derived from the event's existing census. | Implemented and automated-validated; contained-path owner validation passes 33,385 checks with zero false requirements, and the executable observer fixture deterministically validates one exact non-empty external-owner requirement without a second census, selection mutation, registry, arrival gate, or lifecycle authority |
 
 ## Next Discussion
 
@@ -7646,12 +7678,21 @@ identity evidence remains non-expandable. Every result requires fresh safety
 and census evidence and can neither mutate the selection nor prove closure.
 
 Slice 76 now exposes that projection through additive private schema-v27
-diagnostics derived from the same event census. The next meaningful checkpoint
-is owner validation: the real Guard case should report exactly one
-external-owner-authored requirement for `(2,10)`, with no hard blockers, while
-contained events should report zero required sources. Runtime reconciliation
-must keep the proposed source outside the observed safety selection and
-preserve all parent assessment counts.
+diagnostics derived from the same event census. Its owner route validates 112
+events and 16 contained triplets without one false requirement; the shorter
+fresh-server run does not reproduce Slice 74's nondeterministic Guard crossing.
+The executable observer fixture closes the serialization gap deterministically
+by emitting one external-owner-inside instance and exactly one
+external-owner-authored requirement for its unselected source. Another random
+owner rerun is not required.
+
+The next safe slice should remain an inert refinement proposal: combine the
+static authored-cohort sources, exact active-NPC boundary requirements, and
+non-expandable hard blockers into one provenance-tagged candidate source union.
+Every coordinate added beyond the original safety set must be explicitly
+marked as lacking fresh safety and census evidence. The result must neither
+mutate the selected set nor claim fixed-point closure; it should only explain
+what a later reassessment would need to observe.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

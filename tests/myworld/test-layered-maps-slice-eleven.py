@@ -92,8 +92,10 @@ package com.openrsc.server.diagnostics;
 
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation.NpcInstanceSnapshot;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory;
@@ -642,12 +644,37 @@ public final class LayeredCoordinateParityObserverFixture {
 					decisionAttributionRecipe[0], safety,
 					maximumSelectedSources, maximumSupportSources,
 					maximumIncomingOwners, maximumIncomingPlacements);
+		LayeredPackedRegionAuthoredPlacementManifest.Builder activeNpcManifest =
+			LayeredPackedRegionAuthoredPlacementManifest.builder(7L);
+		activeNpcManifest.recordNpcSpawn(
+			5, 0, 10, 241, 1, 192, 241, 0, 47);
+		LayeredAuthoredPlacementIdentity externalNpcIdentity =
+			activeNpcManifest.getLastRecordedIdentity();
+		LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			activeNpcDependencies =
+				LayeredPackedRegionAuthoredPlacementDependencyInventory
+					.builder(7L);
+		activeNpcDependencies.record(
+			LayeredPackedRegionAuthoredConstructionInventory
+				.ConstructionKind.NPC_SPAWN,
+			LayeredPackedRegionAuthoredPlacementDependencyInventory
+				.DependencyKind.NPC_ROAMING,
+			5, 0, 192, 241, 0, 47, 4, 5, 0, 0);
+		LayeredPackedRegionAuthoredPlacementManifest builtActiveNpcManifest =
+			activeNpcManifest.build();
+		LayeredPackedRegionAuthoredReconstructionRecipe activeNpcRecipe =
+			LayeredPackedRegionAuthoredReconstructionRecipe.derive(
+				builtActiveNpcManifest, activeNpcDependencies.build(),
+				LayeredPackedRegionAuthoredPopulationOutcome.builder(7L)
+					.build(builtActiveNpcManifest));
+		List<NpcInstanceSnapshot> activeNpcCensus = Collections.singletonList(
+			new NpcInstanceSnapshot(
+				externalNpcIdentity, 10, 4, 0, true));
 		LayeredCoordinateParityObserver.PackedRegionActiveNpcResidencySource
 			decisionActiveNpcResidencySource =
 				(safety, maximumInstances, maximumRelevantDetails) ->
 			LayeredPackedRegionActiveNpcResidencyObservation.observe(
-				decisionAttributionRecipe[0], safety, 3L,
-				Collections.emptyList(), maximumInstances,
+				activeNpcRecipe, safety, 3L, activeNpcCensus, maximumInstances,
 				maximumRelevantDetails);
 		LayeredCoordinateParityObserver.start(
 			decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
@@ -1500,7 +1527,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             eligible_active_npcs = decision_events[2][
                 "packedRegionActiveNpcResidency"
             ]
-            self.assertEqual((7, 1, 0, 0, 0), (
+            self.assertEqual((7, 1, 1, 1, 1), (
                 eligible_active_npcs["generation"],
                 eligible_active_npcs["selectedSourceCount"],
                 eligible_active_npcs["observedInstanceCount"],
@@ -1508,7 +1535,27 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 eligible_active_npcs["relevantActiveInstanceCount"],
             ))
             self.assertEqual(6, len(eligible_active_npcs["identityStatuses"]))
-            self.assertEqual([], eligible_active_npcs["relevantActiveInstances"])
+            self.assertEqual(1, len(
+                eligible_active_npcs["relevantActiveInstances"]
+            ))
+            external_active_npc = eligible_active_npcs[
+                "relevantActiveInstances"
+            ][0]
+            self.assertEqual({
+                "identity": {
+                    "generation": 7,
+                    "packedRegionX": 5,
+                    "packedRegionY": 0,
+                    "sourceOrdinal": 1,
+                    "constructionKind": "NPC_SPAWN",
+                },
+                "runtimeNpcId": 10,
+                "currentPackedRegionX": 4,
+                "currentPackedRegionY": 0,
+                "identityStatus": "RECOGNIZED",
+                "expectedRuntimeNpcId": 10,
+                "classification": "EXTERNAL_OWNER_INSIDE",
+            }, external_active_npc)
             self.assertTrue(eligible_active_npcs["pointInTimeCensus"])
             self.assertTrue(eligible_active_npcs["activeInstanceEvidence"])
             self.assertFalse(eligible_active_npcs["entityRegistry"])
@@ -1517,7 +1564,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             eligible_active_npc_containment = decision_events[2][
                 "packedRegionActiveNpcContainment"
             ]
-            self.assertEqual((7, 1, 0, 0, 0, 0, 0, 0), (
+            self.assertEqual((7, 1, 1, 1, 0, 0, 1, 1), (
                 eligible_active_npc_containment["generation"],
                 eligible_active_npc_containment["selectedSourceCount"],
                 eligible_active_npc_containment["activeInstanceCount"],
@@ -1533,23 +1580,27 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 eligible_active_npc_containment["blockingConditionCount"],
                 eligible_active_npc_containment["blockingEvidenceCount"],
             ))
-            self.assertTrue(
+            self.assertFalse(
                 eligible_active_npc_containment["boundaryContained"]
             )
             self.assertEqual(
                 6, len(eligible_active_npc_containment["blockers"])
             )
-            self.assertTrue(all(
-                blocker["instanceCount"] == 0
-                for blocker in eligible_active_npc_containment["blockers"]
-            ))
+            self.assertEqual(
+                {"EXTERNAL_OWNER_INSIDE": 1},
+                {
+                    blocker["kind"]: blocker["instanceCount"]
+                    for blocker in eligible_active_npc_containment["blockers"]
+                    if blocker["instanceCount"] > 0
+                },
+            )
             self.assertTrue(
                 eligible_active_npc_containment["pointInTimeOnly"]
             )
             self.assertTrue(
                 eligible_active_npc_containment["containmentEvidence"]
             )
-            self.assertFalse(
+            self.assertTrue(
                 eligible_active_npc_containment["entityPreservationRequired"]
             )
             self.assertFalse(eligible_active_npc_containment["lifecycleReady"])
@@ -1561,7 +1612,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             eligible_active_npc_boundary_requirements = decision_events[2][
                 "packedRegionActiveNpcBoundaryRequirements"
             ]
-            self.assertEqual((7, 1, 0, 0, 0, 0, 0), (
+            self.assertEqual((7, 1, 0, 1, 1, 0, 0), (
                 eligible_active_npc_boundary_requirements["generation"],
                 eligible_active_npc_boundary_requirements[
                     "selectedSourceCount"
@@ -1582,13 +1633,30 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     "hardBlockingEvidenceCount"
                 ],
             ))
-            self.assertTrue(
+            self.assertFalse(
                 eligible_active_npc_boundary_requirements[
                     "boundaryContainedNow"
                 ]
             )
             self.assertEqual(
-                [], eligible_active_npc_boundary_requirements["requirements"]
+                [{
+                    "packedRegionX": 5,
+                    "packedRegionY": 0,
+                    "selectedOwnerCurrentSourceInstanceCount": 0,
+                    "externalOwnerAuthoredSourceInstanceCount": 1,
+                    "boundaryInstanceCount": 1,
+                    "reasons": [
+                        {
+                            "reason": "SELECTED_OWNER_CURRENT_SOURCE",
+                            "instanceCount": 0,
+                        },
+                        {
+                            "reason": "EXTERNAL_OWNER_AUTHORED_SOURCE",
+                            "instanceCount": 1,
+                        },
+                    ],
+                }],
+                eligible_active_npc_boundary_requirements["requirements"],
             )
             self.assertTrue(
                 eligible_active_npc_boundary_requirements[
