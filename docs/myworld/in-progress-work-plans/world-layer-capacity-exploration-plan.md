@@ -6143,8 +6143,36 @@ Validation status:
 - the private server compiles 756 core and 488 plugin sources, populates all
   33,532 authored definitions, and reaches its isolated online state normally.
 
-Status: implemented and private-startup validated. The focused owner route
-remains pending; no lifecycle consumer is authorized.
+Owner validation evidence (2026-07-19):
+
+- the completed trace contains 115 contiguous v17 records; every record
+  validates against the closed schema, and every provenance payload satisfies
+  exact expected-state, runtime-state, and active-location arithmetic;
+- the initial restored farm wave covered 1,982 authored placements with all
+  1,982 identities matched, zero absent/duplicate/stale/unrecognized
+  identities, and ten valid NPCs currently roaming outside their authored
+  packed sources;
+- after the owner killed a chicken and picked up the authored egg, packed
+  source `(2,12)` returned to all 155 expected identities matched, including
+  all 17 NPC and three ground-item identities. The elapsed marker did not catch
+  the intermediate absent/respawning state, but the restored ground-item
+  entity and retained NPC entity were both recognized after their existing
+  respawn paths completed;
+- opening the authored generic chest at `(141,471)` produced one matched
+  temporary replacement in packed source `(2,9)`: all 257 expected identities
+  remained matched, the runtime object ID differed exactly once, and no stale,
+  duplicate, or unrecognized identity appeared;
+- the wider bounded safety set exposed four unrelated currently absent
+  authored objects—three scenery and one boundary—and one other matched
+  replacement. These states may be ordinary open/depleted/temporarily removed
+  world interactions, but count-only v17 evidence cannot name their exact
+  identity or construction coordinate; that is the next diagnostic limitation
+  to resolve before considering a persistent identity registry; and
+- the owner reported no visual, movement, interaction, or restoration issue,
+  and every source remained lifecycle-blocked because per-Region reload support
+  is still false.
+
+Status: implemented and owner-validated. No lifecycle consumer is authorized.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -6289,14 +6317,16 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 54 by aligning every authored placement with a detached conservative object, NPC-roaming, or anchor-only packed-source reach envelope. | Implemented and runtime-validated; lifecycle adoption remains gated |
 | 2026-07-19 | Continue with Slice 55 by formalizing the manifest address as an immutable generation-fenced identity without attaching it to live definitions or entities. | Implemented and automated-validated; runtime attachment remains gated |
 | 2026-07-19 | Continue with Slice 56 by attaching conflict-refusing authored identity metadata to accepted definitions/entities and preserving it through existing respawn and explicit replacement paths. | Implemented and runtime-validated; registry/lifecycle authority remains absent |
-| 2026-07-19 | Continue with Slice 57 by comparing exact safety-source manifest identities with a bounded count-only private runtime census and additive v17 diagnostics. | Implemented and focused-build validated; private owner route pending, registry/lifecycle authority remains absent |
+| 2026-07-19 | Continue with Slice 57 by comparing exact safety-source manifest identities with a bounded count-only private runtime census and additive v17 diagnostics. | Implemented and owner-validated; registry/lifecycle authority remains absent |
 
 ## Next Discussion
 
-Validate Slice 57's bounded private provenance census with an owner route that
-exercises NPC movement/death/respawn, one authored item pickup/respawn, and one
-temporary object replacement. Analyze the v17 safety-source records before any
-identity registry is considered. Terrain replay,
+Add bounded detached anomaly details to the private provenance census so an
+absent, duplicate, replacement, stale-generation, or unrecognized identity can
+be tied to its manifest family, source ordinal, authored/constructed ID, and
+construction coordinate without retaining an entity or creating a persistent
+registry. Use that evidence to classify the four wider-route absences before
+any identity registry is considered. Terrain replay,
 collision derivation, event ownership, transactional teardown, and rollback
 remain later gates.
 Any later commit token or lifecycle consumer must remain unable to alter the
