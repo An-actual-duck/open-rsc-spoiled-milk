@@ -1,18 +1,18 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-59 and 62 owner-validated,
-Slice 60 private-runtime validated, Slices 61 and 63 automated-validated, and
-Slice 64 awaiting private owner validation on the active refinement branch
+Status: architecture design complete; Slices 1-59, 62, and 64 owner-validated,
+Slice 60 private-runtime validated, and Slices 61 and 63 automated-validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 64 exposes the fixed-point authored cohort and its
-support-only perimeter through additive private schema-v21 diagnostics. The
-result is diagnostic evidence only. No recipe consumer, load request, registry,
-or lifecycle authority is authorized, and packed Region lookup, eager loading,
-release, eviction, pathing, packets, and persistence remain unchanged
+Current milestone: Slice 64 owner validation proves that even a narrow six-seed
+retirement selection reaches a much larger fixed-point authored cohort. The
+result remains diagnostic evidence only. No recipe consumer, load request,
+registry, or lifecycle authority is authorized, and packed Region lookup, eager
+loading, release, eviction, pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -6516,10 +6516,30 @@ Automated validation status:
   refusal budgets, inert flags, and both runtime source paths;
 - the complete layered-map suite passes 149 tests across 63 focused files;
 - the authoritative bundled-Ant build compiles 760 core and 488 plugin
-  sources; and
-- a private owner trace remains to be completed for this milestone.
+  sources;
+- the accepted private trace contains six schema-v21 events and both owner
+  markers validate against the additive v21 contract;
+- `slice64-narrow` begins with 6 authored safety seeds and reaches 61 authored
+  sources after adding 55 sources over 10 expansion rounds; the cohort contains
+  11,677 final-live placements, 388 cross-source placements, 12,483 affected
+  source references, and 75 requirements split into 61 cohort requirements and
+  14 external support-only requirements;
+- `slice64-broad` begins with 42 safety seeds, including 3 content-empty seeds,
+  and reaches 65 sources after adding 23 authored sources over 5 expansion
+  rounds; the cohort contains 11,781 final-live placements, 400 cross-source
+  placements, 12,611 affected source references, and 78 requirements split into
+  64 cohort requirements and 14 external support-only requirements;
+- both cohorts are authored-closure complete but not fully self-contained. All
+  14 external requirements have no authored recipe or final-live authored
+  content, so they terminate authored expansion while remaining explicit
+  support preconditions; and
+- the narrow and broad seed selections respectively matched all 546 and 6,666
+  selected final-live identities, with zero absences, duplicates, anomalies, or
+  dropped details. The owner observed normal scenery, NPCs, collision, and
+  loading throughout the route.
 
-Status: implemented and automated-validated; private owner validation pending.
+Status: implemented and owner-validated. The narrow result proves the authored
+dependency component cannot be treated as a small local reconstruction unit.
 No lifecycle authority is authorized.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
@@ -6790,15 +6810,22 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 61 by projecting final-live recipe counts and unique dependency requirements onto an exact bounded safety-source set. | Implemented and automated-validated; closure remains evidence only and lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 62 by exposing bounded recipe and dependency-closure evidence through additive private schema-v20 diagnostics. | Implemented and owner-validated; all 5,590 selected final-live identities matched, the 16-source open dependency remainder was exact, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 63 by expanding safety seeds through recursively required final-live authored sources while retaining empty dependency coordinates as external support. | Implemented and automated-validated; lifecycle authority remains absent |
-| 2026-07-20 | Continue with Slice 64 by exposing fixed-point cohort expansion and support-only requirements through additive private schema-v21 diagnostics. | Implemented and automated-validated; private owner validation pending with no lifecycle authority |
+| 2026-07-20 | Continue with Slice 64 by exposing fixed-point cohort expansion and support-only requirements through additive private schema-v21 diagnostics. | Implemented and owner-validated; 6 narrow seeds reached 61 authored sources over 10 rounds, both accepted cohorts closed with 14 explicit support-only requirements, and no lifecycle authority exists |
 
 ## Next Discussion
 
-Compare a correctly aligned non-empty narrow retirement selection with the
-accepted broad route. Use the evidence to determine whether authored expansion
-remains local or connects a much larger part of the world, and preserve every
-support-only coordinate. Do not infer that a small or self-contained cohort is
-reconstructable.
+The accepted narrow and broad routes establish that authored expansion connects
+a materially larger part of the world: six narrow seeds reached 61 authored
+sources and 11,677 final-live placements. Preserve all 14 support-only
+coordinates, and do not infer that an authored-closed cohort is reconstructable.
+
+The safest next slice is detached dependency-edge attribution. Explain which
+placement kinds and exact owner-to-requirement edges cause each expansion round,
+especially whether conservative NPC roaming envelopes create the long bridges.
+Keep that evidence bounded and identity-only. Do not create a consumer or alter
+the deliberately conservative reach model merely because the component is
+large; first distinguish a correct conservative dependency from an accidental
+over-connection.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
