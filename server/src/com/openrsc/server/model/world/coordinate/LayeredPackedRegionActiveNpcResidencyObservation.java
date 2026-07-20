@@ -424,6 +424,22 @@ public final class LayeredPackedRegionActiveNpcResidencyObservation {
 		}
 
 		public LayeredAuthoredPlacementIdentity getIdentity() { return identity; }
+		public boolean hasAuthoredIdentity() { return identity != null; }
+		public long getIdentityGeneration() {
+			return requireIdentity().getGeneration();
+		}
+		public int getIdentityPackedRegionX() {
+			return requireIdentity().getPackedRegionX();
+		}
+		public int getIdentityPackedRegionY() {
+			return requireIdentity().getPackedRegionY();
+		}
+		public int getIdentitySourceOrdinal() {
+			return requireIdentity().getSourceOrdinal();
+		}
+		public ConstructionKind getIdentityConstructionKind() {
+			return requireIdentity().getConstructionKind();
+		}
 		public int getRuntimeNpcId() { return runtimeNpcId; }
 		public int getCurrentPackedRegionX() { return currentPackedRegionX; }
 		public int getCurrentPackedRegionY() { return currentPackedRegionY; }
@@ -431,6 +447,14 @@ public final class LayeredPackedRegionActiveNpcResidencyObservation {
 		public Integer getExpectedRuntimeNpcId() { return expectedRuntimeNpcId; }
 		public ActiveResidencyClassification getClassification() {
 			return classification;
+		}
+
+		private LayeredAuthoredPlacementIdentity requireIdentity() {
+			if (identity == null) {
+				throw new IllegalStateException(
+					"Active NPC evidence has no authored identity");
+			}
+			return identity;
 		}
 	}
 

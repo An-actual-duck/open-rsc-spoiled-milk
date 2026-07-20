@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v25.schema.json",
+  "title": "Layered Map Parity Event v25",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency", "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v25"},
+    "eventType": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/packedRegionAuthoredReconstructionTopology"},
+    "packedRegionAuthoredReconstructionDependencySemantics": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics"},
+    "packedRegionActiveNpcResidency": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/activeNpcResidencyObservation"}
+      ]
+    },
+    "roundTripExact": {"$ref": "layered-map-parity-event-v24.schema.json#/properties/roundTripExact"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"packedRegionRetirementSafety": {"type": "null"}}},
+      "then": {"properties": {"packedRegionActiveNpcResidency": {"type": "null"}}}
+    }
+  ],
+  "$defs": {
+    "nonNegativeInteger": {"type": "integer", "minimum": 0},
+    "boundedCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+    "nullableNonNegativeInteger": {
+      "oneOf": [
+        {"$ref": "#/$defs/nonNegativeInteger"},
+        {"type": "null"}
+      ]
+    },
+    "identityStatus": {
+      "enum": [
+        "RECOGNIZED", "MISSING_AUTHORED_IDENTITY", "STALE_GENERATION",
+        "NON_NPC_IDENTITY", "UNKNOWN_RECIPE_IDENTITY",
+        "RUNTIME_ID_MISMATCH"
+      ]
+    },
+    "authoredIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "packedRegionX", "packedRegionY", "sourceOrdinal",
+        "constructionKind"
+      ],
+      "properties": {
+        "generation": {"type": "integer", "minimum": 1},
+        "packedRegionX": {"$ref": "#/$defs/nonNegativeInteger"},
+        "packedRegionY": {"$ref": "#/$defs/nonNegativeInteger"},
+        "sourceOrdinal": {"type": "integer", "minimum": 1, "maximum": 262144},
+        "constructionKind": {"$ref": "layered-map-parity-event-v22.schema.json#/$defs/constructionKind"}
+      }
+    },
+    "identityStatusCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "activeInstanceCount"],
+      "properties": {
+        "status": {"$ref": "#/$defs/identityStatus"},
+        "activeInstanceCount": {"$ref": "#/$defs/boundedCount"}
+      }
+    },
+    "relevantActiveInstance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity", "runtimeNpcId", "currentPackedRegionX",
+        "currentPackedRegionY", "identityStatus", "expectedRuntimeNpcId",
+        "classification"
+      ],
+      "properties": {
+        "identity": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/authoredIdentity"}
+          ]
+        },
+        "runtimeNpcId": {"$ref": "#/$defs/nonNegativeInteger"},
+        "currentPackedRegionX": {"$ref": "#/$defs/nonNegativeInteger"},
+        "currentPackedRegionY": {"$ref": "#/$defs/nonNegativeInteger"},
+        "identityStatus": {"$ref": "#/$defs/identityStatus"},
+        "expectedRuntimeNpcId": {"$ref": "#/$defs/nullableNonNegativeInteger"},
+        "classification": {
+          "enum": [
+            "SELECTED_OWNER_INSIDE", "SELECTED_OWNER_OUTSIDE",
+            "EXTERNAL_OWNER_INSIDE", "UNRESOLVED_INSIDE",
+            "UNRESOLVED_CLAIMED_SELECTED_OWNER_OUTSIDE"
+          ]
+        }
+      }
+    },
+    "activeNpcResidencyObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "safetyObservedAtTick", "censusObservedAtTick",
+        "selectedSourceCount", "observedInstanceCount",
+        "activeInstanceCount", "inactiveInstanceCount",
+        "activeRecognizedInstanceCount", "activeUnrecognizedInstanceCount",
+        "uniqueActiveRecognizedIdentityCount",
+        "duplicateActiveRecognizedIdentityInstanceCount",
+        "relevantActiveInstanceCount", "irrelevantActiveInstanceCount",
+        "selectedOwnerInsideCount", "selectedOwnerOutsideCount",
+        "externalOwnerInsideCount", "unresolvedInsideCount",
+        "unresolvedClaimedSelectedOwnerOutsideCount",
+        "inactiveRelevantInstanceCount", "inactiveIrrelevantInstanceCount",
+        "pointInTimeCensus", "activeInstanceEvidence", "entityRegistry",
+        "arrivalGate", "lifecycleAuthority", "identityStatuses",
+        "relevantActiveInstances"
+      ],
+      "properties": {
+        "generation": {"type": "integer", "minimum": 1},
+        "safetyObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "censusObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "selectedSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "observedInstanceCount": {"$ref": "#/$defs/boundedCount"},
+        "activeInstanceCount": {"$ref": "#/$defs/boundedCount"},
+        "inactiveInstanceCount": {"$ref": "#/$defs/boundedCount"},
+        "activeRecognizedInstanceCount": {"$ref": "#/$defs/boundedCount"},
+        "activeUnrecognizedInstanceCount": {"$ref": "#/$defs/boundedCount"},
+        "uniqueActiveRecognizedIdentityCount": {"$ref": "#/$defs/boundedCount"},
+        "duplicateActiveRecognizedIdentityInstanceCount": {"$ref": "#/$defs/boundedCount"},
+        "relevantActiveInstanceCount": {"$ref": "#/$defs/boundedCount"},
+        "irrelevantActiveInstanceCount": {"$ref": "#/$defs/boundedCount"},
+        "selectedOwnerInsideCount": {"$ref": "#/$defs/boundedCount"},
+        "selectedOwnerOutsideCount": {"$ref": "#/$defs/boundedCount"},
+        "externalOwnerInsideCount": {"$ref": "#/$defs/boundedCount"},
+        "unresolvedInsideCount": {"$ref": "#/$defs/boundedCount"},
+        "unresolvedClaimedSelectedOwnerOutsideCount": {"$ref": "#/$defs/boundedCount"},
+        "inactiveRelevantInstanceCount": {"$ref": "#/$defs/boundedCount"},
+        "inactiveIrrelevantInstanceCount": {"$ref": "#/$defs/boundedCount"},
+        "pointInTimeCensus": {"const": true},
+        "activeInstanceEvidence": {"const": true},
+        "entityRegistry": {"const": false},
+        "arrivalGate": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "identityStatuses": {
+          "type": "array", "minItems": 6, "maxItems": 6,
+          "items": {"$ref": "#/$defs/identityStatusCount"}
+        },
+        "relevantActiveInstances": {
+          "type": "array", "maxItems": 8192,
+          "items": {"$ref": "#/$defs/relevantActiveInstance"}
+        }
+      }
+    }
+  }
+}

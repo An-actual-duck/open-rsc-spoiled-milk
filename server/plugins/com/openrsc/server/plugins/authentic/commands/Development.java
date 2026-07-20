@@ -24,6 +24,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
@@ -1410,7 +1411,8 @@ public final class Development implements CommandTrigger {
 						player),
 					layeredPackedRegionAuthoredReconstructionTopologySource(player),
 					layeredPackedRegionAuthoredReconstructionDependencySemanticsSource(
-						player));
+						player),
+					layeredPackedRegionActiveNpcResidencySource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1858,6 +1860,25 @@ public final class Development implements CommandTrigger {
 							safety, maximumSelectedSources,
 							maximumSupportSources, maximumIncomingOwners,
 							maximumIncomingPlacements);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionActiveNpcResidencySource
+		layeredPackedRegionActiveNpcResidencySource(final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionActiveNpcResidencySource() {
+			@Override
+			public LayeredPackedRegionActiveNpcResidencyObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumInstances,
+				final int maximumRelevantDetails) {
+				return player.getWorld().getRegionManager()
+					.captureActiveNpcResidency(
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						safety, player.getWorld().getServer().getCurrentTick(),
+						maximumInstances, maximumRelevantDetails);
 			}
 		};
 	}

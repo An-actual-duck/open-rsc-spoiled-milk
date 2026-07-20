@@ -75,7 +75,7 @@ class LayeredMapsSliceThirtyEightTest(unittest.TestCase):
         readme = README.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v24"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v25"', observer)
         self.assertIn("RegionResidencySource regionResidencySource", observer)
         self.assertIn("state.regionResidencySource.capture(", observer)
         self.assertIn("MAX_TRACE_REGIONS_PER_WINDOW", observer)

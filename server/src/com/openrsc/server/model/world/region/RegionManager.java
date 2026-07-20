@@ -22,6 +22,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSa
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionRecipe;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
@@ -1249,6 +1251,39 @@ public class RegionManager {
 			}
 		}
 		return builder.build();
+	}
+
+	/**
+	 * Captures one detached point-in-time NPC census for exact safety sources.
+	 * The returned observation has no entity, arrival, retention, or lifecycle
+	 * authority.
+	 */
+	public LayeredPackedRegionActiveNpcResidencyObservation
+		captureActiveNpcResidency(
+			final LayeredPackedRegionAuthoredReconstructionRecipe recipe,
+			final LayeredPackedRegionRetirementSafetyAssessment safety,
+			final long observedAtTick,
+			final int maximumInstances,
+			final int maximumRelevantDetails) {
+		List<LayeredPackedRegionActiveNpcResidencyObservation.NpcInstanceSnapshot>
+			instances = new ArrayList<
+				LayeredPackedRegionActiveNpcResidencyObservation.NpcInstanceSnapshot>();
+		synchronized (layeredRegionLifecycleLock) {
+			synchronized (world.getNpcs()) {
+				for (Npc npc : world.getNpcs()) {
+					Point location = npc.getLocation();
+					instances.add(new LayeredPackedRegionActiveNpcResidencyObservation
+						.NpcInstanceSnapshot(
+							npc.getAuthoredPlacementIdentity(), npc.getID(),
+							location.getX() / Constants.REGION_SIZE,
+							location.getY() / Constants.REGION_SIZE,
+							!npc.isRemoved() && !npc.isRespawning()));
+				}
+			}
+		}
+		return LayeredPackedRegionActiveNpcResidencyObservation.observe(
+			recipe, safety, observedAtTick, instances, maximumInstances,
+			maximumRelevantDetails);
 	}
 
 	// originally private, set to public to access for reset event

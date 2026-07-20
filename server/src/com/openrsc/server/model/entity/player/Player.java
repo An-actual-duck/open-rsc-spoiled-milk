@@ -39,6 +39,7 @@ import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
@@ -3469,6 +3470,24 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver.PackedRegionActiveNpcResidencySource
+		layeredPackedRegionActiveNpcResidencySource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionActiveNpcResidencySource() {
+			@Override
+			public LayeredPackedRegionActiveNpcResidencyObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumInstances,
+				final int maximumRelevantDetails) {
+				return getWorld().getRegionManager().captureActiveNpcResidency(
+					getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredReconstructionRecipe(),
+					safety, getWorld().getServer().getCurrentTick(),
+					maximumInstances, maximumRelevantDetails);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3593,7 +3612,8 @@ public final class Player extends Mob {
 					: null,
 				loggedIn
 					? layeredPackedRegionAuthoredReconstructionDependencySemanticsSource()
-					: null);
+					: null,
+				loggedIn ? layeredPackedRegionActiveNpcResidencySource() : null);
 		}
 	}
 

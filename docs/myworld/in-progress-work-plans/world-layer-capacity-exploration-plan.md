@@ -2,20 +2,21 @@
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, and 70
 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, 65,
-67, 69, and 71 automated-validated on the active refinement branch
+67, 69, 71, and 72 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 71 adds a bounded, detached point-in-time NPC census
-classification that keeps authored ownership independent from current packed
-residency. It distinguishes selected-owned NPCs inside or outside the exact
-safety selection, external-owned NPCs currently inside it, and unresolved
-identity evidence without creating a second entity registry. No recipe
-consumer, arrival gate, load request, retention decision, or lifecycle
-authority is authorized, and packed Region lookup, eager loading, release,
-eviction, pathing, packets, and persistence remain unchanged
+Current milestone: Slice 72 exposes Slice 71 through additive private
+schema-v25 diagnostics. One synchronized, detached snapshot of the existing
+world NPC collection is classified against the exact safety selection and
+completed authored recipe, including NPCs with missing or invalid identity.
+The automated contract is complete and awaits narrow/broad private owner
+validation. No second entity registry, arrival gate, load request, retention
+decision, or lifecycle authority is authorized, and packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
+unchanged
 
 ## Purpose
 
@@ -6967,6 +6968,65 @@ Automated validation status:
 Status: implemented and automated-validated. No lifecycle authority is
 authorized.
 
+### Slice 72: Active NPC residency diagnostics
+
+Objective: expose Slice 71's owner-versus-current-residency classification
+through additive private schema-v25 evidence so authored potential roaming can
+be compared with actual active NPC locations on the accepted narrow and broad
+routes.
+
+Implemented:
+
+- `layered-map-parity-event-v25` retains every v24 field and adds nullable
+  `packedRegionActiveNpcResidency` evidence;
+- RegionManager takes one synchronized snapshot from the existing world NPC
+  collection, copies one stable location per NPC, and detaches authored
+  identity, runtime ID, packed source, and active state before classification;
+- every observed NPC is retained in census arithmetic, including instances
+  without authored identity, while only bounded relevant active-instance
+  details are serialized;
+- aggregate fields preserve active/inactive, recognized/unrecognized,
+  unique/duplicate identity, relevant/irrelevant, selected-owner-inside,
+  selected-owner-outside, external-owner-inside, and unresolved arithmetic;
+- the six identity-resolution statuses and five active-residency
+  classifications remain explicit stable enum strings for AI analysis; and
+- both the Player session-rebind path and development-command start path supply
+  the completed reconstruction recipe, exact safety assessment, current server
+  tick, and independent instance/detail budgets.
+
+Safety boundary:
+
+- the census reads the existing bounded NPC collection and creates no second
+  registry, index, cache, callback, listener, lease, or retained entity handle;
+- missing, stale, non-NPC, unknown, or runtime-ID-mismatched identity is
+  unresolved evidence and cannot acquire an authored owner;
+- schema-v25 requires `pointInTimeCensus=true`,
+  `activeInstanceEvidence=true`, `entityRegistry=false`,
+  `arrivalGate=false`, and `lifecycleAuthority=false`;
+- evidence is emitted only when the same exact retirement-safety assessment is
+  available, and null remains required when that parent evidence is absent;
+  and
+- No lifecycle authority, arrival rejection, NPC retention, envelope change,
+  recipe execution, loading, release, eviction, movement, roaming, respawn, or
+  combat behavior is created or changed.
+
+Automated validation status:
+
+- the compiled observer fixture emits a non-null empty-census result tied to
+  exact recipe/safety identity and validates the complete v11-v25 schema chain;
+- schema and source guards prove additive bounded fields, exact inert flags,
+  synchronized detachment from the existing NPC collection, and both runtime
+  source paths; and
+- earlier observer consumers continue compiling through the retained v24
+  source overload, with the new required field serialized as null when no v25
+  source is supplied;
+- the complete layered-map suite passes 178 tests across 71 focused files; and
+- the authoritative bundled-Ant build compiles 764 core and 488 plugin
+  sources.
+
+Status: implemented and automated-validated; private owner validation is
+pending. No lifecycle authority is authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7243,6 +7303,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 69 by separating exact source-local replay, conservative outbound spatial support, and external incoming-owner reach. | Implemented and automated-validated; support content is never recursively imported, potential mobile reach is not active-instance evidence, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 70 by exposing the dependency-semantics split through additive private schema-v24 diagnostics. | Implemented and owner-validated; exact safety drives bounded replay/support/incoming evidence, all external relationships in both labeled selections are potential NPC roaming, active-instance evidence remains absent, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 71 by classifying detached point-in-time active NPC residency against exact safety sources and authored recipe identity. | Implemented and automated-validated; authored ownership remains independent from current residency, invalid identity stays unresolved, and no registry, arrival gate, or lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 72 by exposing active NPC owner/residency evidence through additive private schema-v25 diagnostics. | Implemented and automated-validated; the existing world NPC collection is copied into one bounded detached census, and no registry, arrival gate, or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -7259,20 +7320,14 @@ mobile entity currently needs. Preserve every conservative reach envelope, but
 do not recursively import a target coordinate's unrelated authored recipe just
 because the coordinate contains content.
 
-Slice 71 now provides the automated-only classification boundary: existing
-authored identity establishes owner source while one bounded point-in-time
-census establishes current packed residency. It explicitly reports invalid
-identity and duplicate recognized instances without creating a second NPC
-registry, retaining an NPC, rejecting arrival, blocking retirement, or
-inferring active state from a conservative envelope.
-
-The next owner-testable prerequisite should expose this result through an
-additive private schema-v25 diagnostic. Capture one synchronized, detached
-snapshot from the existing world NPC collection, classify it against the exact
-safety selection and completed recipe, and serialize bounded aggregate,
-identity-status, and relevant-instance evidence on marker/stop events. The
-accepted narrow and broad routes should then establish how authored potential
-roaming differs from actual active residency in practice.
+Slice 72 now supplies the owner-testable schema-v25 boundary. The next step is
+private narrow/broad runtime validation using the same accepted route shape as
+Slice 70. The capture should establish whole-world active/inactive and
+identity-status totals, then compare selected-owned NPCs currently inside or
+outside each exact selection with external-owned and unresolved NPCs currently
+inside. Owner inspection should continue to cover visible NPCs, scenery,
+interaction, collision, and ordinary loading while moving through the broad
+selection.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
