@@ -178,16 +178,17 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v16.schema.json`. Each v16 record
-retains the complete v15 position, logical-window, interest-delta,
+traces emit `schema/layered-map-parity-event-v17.schema.json`. Each v17 record
+retains the complete v16 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v15 schemas remain
+repeating the tile comparisons on every movement. The v1-v16 schemas remain
 alongside it—including
+`schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
 explicit readable contracts.
@@ -239,6 +240,15 @@ separates scenery, boundaries, NPC spawns, ground-item spawns, and harvesting
 conversions, and explicitly records `originCountsOnly=true` and
 `reconstructionManifest=false`. The counts do not classify current entities,
 retain placement definitions, or authorize teardown/reload.
+v17 compares the manifest identities for those exact safety sources with a
+bounded count-only census of current authored runtime identity metadata. It
+separates exact matches, absent and duplicate identities, active and inactive
+NPC state, NPCs roaming away from their authored source, temporary authored
+object replacements, stale generations, and unrecognized identities, with
+per-family expected/runtime counts. It explicitly records
+`identityMetadataOnly=true`, `entityRegistry=false`, and
+`lifecycleAuthority=false`; neither the observer nor its JSONL payload can
+retain an entity or authorize loading, teardown, or reload.
 
 ## Checked Player mirror
 

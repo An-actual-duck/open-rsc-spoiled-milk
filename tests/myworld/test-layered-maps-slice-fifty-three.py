@@ -274,7 +274,14 @@ class LayeredMapsSliceFiftyThreeTest(unittest.TestCase):
         self.assertIn("if (authoredItem != null)", populator)
 
         manifest_name = "LayeredPackedRegionAuthoredPlacementManifest"
-        self.assertNotIn(manifest_name, manager)
+        self.assertIn(manifest_name, manager)
+        census = manager.split("captureAuthoredProvenance(", 1)[1].split(
+            "// originally private", 1
+        )[0]
+        self.assertIn("recordAuthoredProvenance(builder)", census)
+        self.assertNotIn("registerGameObject", census)
+        self.assertNotIn("unregisterGameObject", census)
+        self.assertNotIn(".unload(", census)
         self.assertNotIn(manifest_name, observer)
         self.assertIn(
             "### Slice 53: Detached authored-placement manifest", plan

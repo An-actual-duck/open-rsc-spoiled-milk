@@ -1,18 +1,19 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-56 implemented and validated on
+Status: architecture design complete; Slices 1-57 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 56 attaches Slice 55's generation-fenced identity to
-authored definitions and current entities as conflict-refusing observational
-metadata, preserving it through existing NPC/item respawn and explicit object
-replacement without creating a registry or lifecycle authority. It does not
-change packed Region lookup, eager loading, release, eviction, pathing,
-packets, or persistence
+Current milestone: Slice 57 compares Slice 53's detached placement manifest
+with Slice 56's current runtime identity metadata for exact retirement-safety
+sources. The bounded count-only private v17 census distinguishes matches,
+absence, duplicates, NPC roaming/respawn, and temporary object replacements
+without retaining entity handles or creating a registry or lifecycle authority.
+It does not change packed Region lookup, eager loading, release, eviction,
+pathing, packets, or persistence
 
 ## Purpose
 
@@ -6079,6 +6080,72 @@ Automated and private-runtime validation evidence:
 Status: implemented and runtime-validated. Provenance census diagnostics remain
 the next gate before any registry or lifecycle consumer.
 
+### Slice 57: Bounded authored runtime provenance census
+
+Objective: compare the exact authored identities expected for each bounded
+packed retirement-safety source with current runtime identity metadata, while
+preserving the distinction between an authored origin and an entity's current
+location or temporary lifecycle state.
+
+Implemented:
+
+- an immutable `LayeredPackedRegionAuthoredProvenanceObservation` built only
+  from the detached placement manifest, the exact safety-source list, primitive
+  runtime identity observations, IDs, packed source coordinates, and active
+  flags;
+- one expected-identity classification per safety source: exactly matched,
+  absent, or duplicated, plus separately counted stale-generation and
+  unrecognized runtime identities;
+- active, inactive-respawn, at-authored-source, away-from-authored-source, and
+  temporary authored-object replacement counts, with exact expected/runtime
+  totals for scenery, boundaries, NPCs, ground items, and harvesting scenery;
+- a Region-local read-only scan for active scenery and ground items plus a
+  RegionManager scan for active or respawning authored NPCs, performed under
+  the existing layered lifecycle lock and reduced immediately to detached
+  counts; and
+- additive `layered-map-parity-event-v17` JSONL diagnostics with a closed
+  schema. v17 retains v16 intact and marks the new payload
+  `identityMetadataOnly=true`, `entityRegistry=false`, and
+  `lifecycleAuthority=false`.
+
+Safety boundary:
+
+- the census retains no entity, Region, collection, tile, archive, event,
+  callback, cache, claim, permit, lease, or commit handle;
+- it records at most 524,288 runtime identity observations and at most the
+  existing 8,192 bounded safety sources;
+- NPCs roaming into neighboring packed sources remain associated with their
+  authored origin but do not cause those neighbors to retain terrain;
+- absent and replacement states are diagnostic lifecycle evidence, not proof
+  that an entity may be removed or reconstructed; and
+- `LAYERED_PACKED_REGION_RELOAD_SUPPORTED` remains false.
+
+Validation status:
+
+- a compiled fixture proves exact expected/matched/absent/duplicate arithmetic,
+  active/inactive and origin/roaming distinctions, temporary replacement
+  detection, stale/unrecognized refusal, family totals, immutable output, and
+  builder input/lifecycle validation;
+- the authoritative bundled-Ant build compiles 756 core and 488 plugin sources;
+  and
+- the closed v17 schema resolves against the immutable v11-v16 registry, and
+  the complete layered-map suite passes 126 tests across 56 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- two consecutive normalizations retain identical source
+  `b18b6a5627d2b806bd21383216f5cad4bf1bc3ead239d6bf9fbb3b06a08b9fed`,
+  inventory
+  `b80658b28fc18987686ace066ff3d83ad153939b90017ba74ac721b30662aad5`,
+  classification
+  `403454e7d68265c8e9134afa4bffe461ac1e16fd078c26eda6f9d4cb86ce44ee`,
+  and occurrence
+  `d8ee498c4d527361da224bcb0efc786295b5e4f73c095f561985cd6f5e8c64f4`
+  fingerprints; and
+- the private server compiles 756 core and 488 plugin sources, populates all
+  33,532 authored definitions, and reaches its isolated online state normally.
+
+Status: implemented and private-startup validated. The focused owner route
+remains pending; no lifecycle consumer is authorized.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -6222,16 +6289,14 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 54 by aligning every authored placement with a detached conservative object, NPC-roaming, or anchor-only packed-source reach envelope. | Implemented and runtime-validated; lifecycle adoption remains gated |
 | 2026-07-19 | Continue with Slice 55 by formalizing the manifest address as an immutable generation-fenced identity without attaching it to live definitions or entities. | Implemented and automated-validated; runtime attachment remains gated |
 | 2026-07-19 | Continue with Slice 56 by attaching conflict-refusing authored identity metadata to accepted definitions/entities and preserving it through existing respawn and explicit replacement paths. | Implemented and runtime-validated; registry/lifecycle authority remains absent |
+| 2026-07-19 | Continue with Slice 57 by comparing exact safety-source manifest identities with a bounded count-only private runtime census and additive v17 diagnostics. | Implemented and focused-build validated; private owner route pending, registry/lifecycle authority remains absent |
 
 ## Next Discussion
 
-Add a bounded private provenance census that compares manifest identities with
-current authored entity identities by active packed source and by authored
-source, including absent, current, roaming, and temporarily replaced states.
-The census must be read-only, bounded, and explicit about lack of registry or
-reconstruction authority. A private route should then exercise NPC movement/
-death/respawn, one authored item pickup/respawn, and one temporary object
-replacement before any identity registry is considered. Terrain replay,
+Validate Slice 57's bounded private provenance census with an owner route that
+exercises NPC movement/death/respawn, one authored item pickup/respawn, and one
+temporary object replacement. Analyze the v17 safety-source records before any
+identity registry is considered. Terrain replay,
 collision derivation, event ownership, transactional teardown, and rollback
 remain later gates.
 Any later commit token or lifecycle consumer must remain unable to alter the

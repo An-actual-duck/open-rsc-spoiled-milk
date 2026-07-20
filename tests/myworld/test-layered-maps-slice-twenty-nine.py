@@ -54,7 +54,7 @@ class LayeredMapsSliceTwentyNineTest(unittest.TestCase):
         player = PLAYER.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v16"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v17"', observer)
         self.assertIn('"start".equals(eventType)', observer)
         self.assertIn('"marker".equals(eventType)', observer)
         self.assertIn('"teleport".equals(eventType)', observer)

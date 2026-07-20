@@ -25,6 +25,7 @@ import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
@@ -1396,7 +1397,8 @@ public final class Development implements CommandTrigger {
 					layeredRegionRetirementSource(player),
 					layeredRegionRetirementDecisionSource(player),
 					layeredPackedRegionRetirementSafetySource(player),
-					layeredPackedRegionAuthoredConstructionSource(player));
+					layeredPackedRegionAuthoredConstructionSource(player),
+					layeredPackedRegionAuthoredProvenanceSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1716,6 +1718,23 @@ public final class Development implements CommandTrigger {
 					player.getWorld().getWorldLoader().getWorldPopulator()
 						.getAuthoredConstructionInventory(),
 					safety, maximumPackedSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionAuthoredProvenanceSource
+		layeredPackedRegionAuthoredProvenanceSource(final Player player) {
+		final RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredProvenanceSource() {
+			@Override
+			public LayeredPackedRegionAuthoredProvenanceObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety) {
+				return regionManager.captureAuthoredProvenance(
+					player.getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredPlacementManifest(),
+					safety, player.getWorld().getServer().getCurrentTick());
 			}
 		};
 	}

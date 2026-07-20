@@ -11,6 +11,7 @@ import com.openrsc.server.model.entity.GameObjectType;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -107,6 +108,32 @@ public class Region {
 							tiles != null || tile != null,
 							players.size(), npcs.size(), objects.size(), items.size());
 					}
+				}
+			}
+		}
+	}
+
+	/** Records detached authored identity metadata for active objects/items. */
+	void recordAuthoredProvenance(
+		final LayeredPackedRegionAuthoredProvenanceObservation.Builder builder) {
+		if (builder == null) {
+			throw new NullPointerException("builder");
+		}
+		synchronized (objects) {
+			for (GameObject object : objects.values()) {
+				if (object.getAuthoredPlacementIdentity() != null) {
+					builder.recordRuntimeInstance(
+						object.getAuthoredPlacementIdentity(), object.getID(),
+						regionX, regionY, true);
+				}
+			}
+		}
+		synchronized (items) {
+			for (GroundItem item : items.values()) {
+				if (item.getAuthoredPlacementIdentity() != null) {
+					builder.recordRuntimeInstance(
+						item.getAuthoredPlacementIdentity(), item.getID(),
+						regionX, regionY, true);
 				}
 			}
 		}

@@ -40,6 +40,7 @@ import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
@@ -3341,6 +3342,21 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver.PackedRegionAuthoredProvenanceSource
+		layeredPackedRegionAuthoredProvenanceSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredProvenanceSource() {
+			@Override
+			public LayeredPackedRegionAuthoredProvenanceObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety) {
+				return getWorld().getRegionManager().captureAuthoredProvenance(
+					getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredPlacementManifest(),
+					safety, getWorld().getServer().getCurrentTick());
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3451,7 +3467,8 @@ public final class Player extends Mob {
 				loggedIn ? layeredRegionRetirementSource() : null,
 				loggedIn ? layeredRegionRetirementDecisionSource() : null,
 				loggedIn ? layeredPackedRegionRetirementSafetySource() : null,
-				loggedIn ? layeredPackedRegionAuthoredConstructionSource() : null);
+				loggedIn ? layeredPackedRegionAuthoredConstructionSource() : null,
+				loggedIn ? layeredPackedRegionAuthoredProvenanceSource() : null);
 		}
 	}
 

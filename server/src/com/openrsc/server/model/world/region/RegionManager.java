@@ -19,6 +19,8 @@ import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyC
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
@@ -1204,6 +1206,38 @@ public class RegionManager {
 
 	public TileValue getTile(final Point point) {
 		return getTile(point.getX(), point.getY());
+	}
+
+	/**
+	 * Captures count-only authored provenance for exact safety sources without
+	 * retaining entity, Region, collection, or lifecycle handles.
+	 */
+	public LayeredPackedRegionAuthoredProvenanceObservation
+		captureAuthoredProvenance(
+			final LayeredPackedRegionAuthoredPlacementManifest manifest,
+			final LayeredPackedRegionRetirementSafetyAssessment safety,
+			final long observedAtTick) {
+		LayeredPackedRegionAuthoredProvenanceObservation.Builder builder =
+			LayeredPackedRegionAuthoredProvenanceObservation.builder(
+				manifest, safety, observedAtTick);
+		synchronized (layeredRegionLifecycleLock) {
+			for (Npc npc : world.getNpcs()) {
+				if (npc.getAuthoredPlacementIdentity() != null) {
+					builder.recordRuntimeInstance(
+						npc.getAuthoredPlacementIdentity(), npc.getID(),
+						npc.getX() / Constants.REGION_SIZE,
+						npc.getY() / Constants.REGION_SIZE,
+						!npc.isRemoved() && !npc.isRespawning());
+				}
+			}
+			for (ConcurrentHashMap<Integer, Region> yRegions
+				: regions.values()) {
+				for (Region region : yRegions.values()) {
+					region.recordAuthoredProvenance(builder);
+				}
+			}
+		}
+		return builder.build();
 	}
 
 	// originally private, set to public to access for reset event

@@ -4,6 +4,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
@@ -38,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v16";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v17";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -178,6 +179,34 @@ public final class LayeredCoordinateParityObserver {
 		PackedRegionRetirementSafetySource packedRegionRetirementSafetySource,
 		PackedRegionAuthoredConstructionSource
 			packedRegionAuthoredConstructionSource) {
+		return start(
+			playerId, usernameHash, current, viewGridDistance, tileSnapshotSource,
+			tileParitySource, tileNeighborhoodSource, adjacentCollisionSource,
+			traversalCollisionSource, regionResidencySource,
+			interestOwnershipSource, regionRetirementSource,
+			regionRetirementDecisionSource, packedRegionRetirementSafetySource,
+			packedRegionAuthoredConstructionSource, null);
+	}
+
+	public static Status start(
+		int playerId,
+		long usernameHash,
+		Point current,
+		int viewGridDistance,
+		TileSnapshotSource tileSnapshotSource,
+		TileParitySource tileParitySource,
+		TileNeighborhoodSource tileNeighborhoodSource,
+		AdjacentCollisionSource adjacentCollisionSource,
+		TraversalCollisionSource traversalCollisionSource,
+		RegionResidencySource regionResidencySource,
+		InterestOwnershipSource interestOwnershipSource,
+		RegionRetirementSource regionRetirementSource,
+		RegionRetirementDecisionSource regionRetirementDecisionSource,
+		PackedRegionRetirementSafetySource packedRegionRetirementSafetySource,
+		PackedRegionAuthoredConstructionSource
+			packedRegionAuthoredConstructionSource,
+		PackedRegionAuthoredProvenanceSource
+			packedRegionAuthoredProvenanceSource) {
 		Objects.requireNonNull(tileSnapshotSource, "tileSnapshotSource");
 		Objects.requireNonNull(tileParitySource, "tileParitySource");
 		Objects.requireNonNull(tileNeighborhoodSource, "tileNeighborhoodSource");
@@ -193,7 +222,8 @@ public final class LayeredCoordinateParityObserver {
 			interestOwnershipSource, regionRetirementSource,
 			regionRetirementDecisionSource,
 			packedRegionRetirementSafetySource,
-			packedRegionAuthoredConstructionSource);
+			packedRegionAuthoredConstructionSource,
+			packedRegionAuthoredProvenanceSource);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
@@ -354,6 +384,29 @@ public final class LayeredCoordinateParityObserver {
 			currentPackedRegionRetirementSafetySource,
 		PackedRegionAuthoredConstructionSource
 			currentPackedRegionAuthoredConstructionSource) {
+		onSession(
+			playerId, usernameHash, current, loggedIn, ownershipChange,
+			currentInterestOwnershipSource, currentRegionRetirementSource,
+			currentRegionRetirementDecisionSource,
+			currentPackedRegionRetirementSafetySource,
+			currentPackedRegionAuthoredConstructionSource, null);
+	}
+
+	public static void onSession(
+		int playerId,
+		long usernameHash,
+		Point current,
+		boolean loggedIn,
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange,
+		InterestOwnershipSource currentInterestOwnershipSource,
+		RegionRetirementSource currentRegionRetirementSource,
+		RegionRetirementDecisionSource currentRegionRetirementDecisionSource,
+		PackedRegionRetirementSafetySource
+			currentPackedRegionRetirementSafetySource,
+		PackedRegionAuthoredConstructionSource
+			currentPackedRegionAuthoredConstructionSource,
+		PackedRegionAuthoredProvenanceSource
+			currentPackedRegionAuthoredProvenanceSource) {
 		TraceState state = TRACES.get(new TraceKey(playerId, usernameHash));
 		if (state != null && current != null) {
 			synchronized (state) {
@@ -376,6 +429,11 @@ public final class LayeredCoordinateParityObserver {
 					&& currentPackedRegionAuthoredConstructionSource != null) {
 					state.packedRegionAuthoredConstructionSource =
 						currentPackedRegionAuthoredConstructionSource;
+				}
+				if (loggedIn
+					&& currentPackedRegionAuthoredProvenanceSource != null) {
+					state.packedRegionAuthoredProvenanceSource =
+						currentPackedRegionAuthoredProvenanceSource;
 				}
 				write(
 					state, loggedIn ? "login" : "logout", null, current, null, null,
@@ -432,6 +490,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionRetirementSafety = null;
 				LayeredPackedRegionAuthoredConstructionObservation
 					packedRegionAuthoredConstruction = null;
+				LayeredPackedRegionAuthoredProvenanceObservation
+					packedRegionAuthoredProvenance = null;
 				if (capturesTileComparisons(eventType)) {
 					tileParity = Objects.requireNonNull(
 						state.tileParitySource.capture(current),
@@ -544,6 +604,12 @@ public final class LayeredCoordinateParityObserver {
 									MAX_TRACE_PACKED_RETIREMENT_SOURCES),
 								"packedRegionAuthoredConstructionSource result");
 						}
+						if (state.packedRegionAuthoredProvenanceSource != null) {
+							packedRegionAuthoredProvenance = Objects.requireNonNull(
+								state.packedRegionAuthoredProvenanceSource.capture(
+									packedRegionRetirementSafety),
+								"packedRegionAuthoredProvenanceSource result");
+						}
 					}
 				}
 				long nextSequence = state.sequence + 1L;
@@ -553,7 +619,8 @@ public final class LayeredCoordinateParityObserver {
 					tileParity, tileNeighborhood, adjacentCollision, recentTraversal,
 					regionResidency, interestOwnership, regionRetirement,
 					regionRetirementDecisions, packedRegionRetirementSafety,
-					packedRegionAuthoredConstruction);
+					packedRegionAuthoredConstruction,
+					packedRegionAuthoredProvenance);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -608,7 +675,9 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionRetirementSafetyAssessment
 			packedRegionRetirementSafety,
 		LayeredPackedRegionAuthoredConstructionObservation
-			packedRegionAuthoredConstruction) {
+			packedRegionAuthoredConstruction,
+		LayeredPackedRegionAuthoredProvenanceObservation
+			packedRegionAuthoredProvenance) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -718,6 +787,13 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendPackedRegionAuthoredConstruction(
 				out, packedRegionAuthoredConstruction);
+		}
+		out.append(",\"packedRegionAuthoredProvenance\":");
+		if (packedRegionAuthoredProvenance == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionAuthoredProvenance(
+				out, packedRegionAuthoredProvenance);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -1154,6 +1230,125 @@ public final class LayeredCoordinateParityObserver {
 				.append(source.getHarvestingSceneryCount()).append(',');
 			out.append("\"authoredConstructionCount\":")
 				.append(source.getAuthoredConstructionCount()).append('}');
+		}
+		out.append("]}");
+	}
+
+	private static void appendPackedRegionAuthoredProvenance(
+		final StringBuilder out,
+		final LayeredPackedRegionAuthoredProvenanceObservation observation) {
+		out.append('{');
+		out.append("\"generation\":")
+			.append(observation.getGeneration()).append(',');
+		out.append("\"safetyObservedAtTick\":")
+			.append(observation.getSafetyObservedAtTick()).append(',');
+		out.append("\"runtimeObservedAtTick\":")
+			.append(observation.getRuntimeObservedAtTick()).append(',');
+		out.append("\"sourceCount\":")
+			.append(observation.getSourceCount()).append(',');
+		out.append("\"expectedPlacementCount\":")
+			.append(observation.getExpectedPlacementCount()).append(',');
+		out.append("\"matchedIdentityCount\":")
+			.append(observation.getMatchedIdentityCount()).append(',');
+		out.append("\"absentIdentityCount\":")
+			.append(observation.getAbsentIdentityCount()).append(',');
+		out.append("\"duplicateIdentityCount\":")
+			.append(observation.getDuplicateIdentityCount()).append(',');
+		out.append("\"runtimeInstanceCount\":")
+			.append(observation.getRuntimeInstanceCount()).append(',');
+		out.append("\"activeRuntimeInstanceCount\":")
+			.append(observation.getActiveRuntimeInstanceCount()).append(',');
+		out.append("\"inactiveRuntimeInstanceCount\":")
+			.append(observation.getInactiveRuntimeInstanceCount()).append(',');
+		out.append("\"atAuthoredSourceInstanceCount\":")
+			.append(observation.getAtAuthoredSourceInstanceCount()).append(',');
+		out.append("\"awayFromAuthoredSourceInstanceCount\":")
+			.append(observation.getAwayFromAuthoredSourceInstanceCount()).append(',');
+		out.append("\"replacementObjectInstanceCount\":")
+			.append(observation.getReplacementObjectInstanceCount()).append(',');
+		out.append("\"staleGenerationInstanceCount\":")
+			.append(observation.getStaleGenerationInstanceCount()).append(',');
+		out.append("\"unrecognizedIdentityInstanceCount\":")
+			.append(observation.getUnrecognizedIdentityInstanceCount()).append(',');
+		out.append("\"expectedSceneryCount\":")
+			.append(observation.getExpectedSceneryCount()).append(',');
+		out.append("\"expectedBoundaryCount\":")
+			.append(observation.getExpectedBoundaryCount()).append(',');
+		out.append("\"expectedNpcSpawnCount\":")
+			.append(observation.getExpectedNpcSpawnCount()).append(',');
+		out.append("\"expectedGroundItemSpawnCount\":")
+			.append(observation.getExpectedGroundItemSpawnCount()).append(',');
+		out.append("\"expectedHarvestingSceneryCount\":")
+			.append(observation.getExpectedHarvestingSceneryCount()).append(',');
+		out.append("\"runtimeSceneryCount\":")
+			.append(observation.getRuntimeSceneryCount()).append(',');
+		out.append("\"runtimeBoundaryCount\":")
+			.append(observation.getRuntimeBoundaryCount()).append(',');
+		out.append("\"runtimeNpcSpawnCount\":")
+			.append(observation.getRuntimeNpcSpawnCount()).append(',');
+		out.append("\"runtimeGroundItemSpawnCount\":")
+			.append(observation.getRuntimeGroundItemSpawnCount()).append(',');
+		out.append("\"runtimeHarvestingSceneryCount\":")
+			.append(observation.getRuntimeHarvestingSceneryCount()).append(',');
+		out.append("\"identityMetadataOnly\":true,");
+		out.append("\"entityRegistry\":false,");
+		out.append("\"lifecycleAuthority\":false,");
+		out.append("\"entries\":[");
+		boolean first = true;
+		for (LayeredPackedRegionAuthoredProvenanceObservation.SourceObservation
+			source : observation.getSources()) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			out.append("{\"packedRegionX\":")
+				.append(source.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(source.getPackedRegionY()).append(',');
+			out.append("\"expectedPlacementCount\":")
+				.append(source.getExpectedPlacementCount()).append(',');
+			out.append("\"matchedIdentityCount\":")
+				.append(source.getMatchedIdentityCount()).append(',');
+			out.append("\"absentIdentityCount\":")
+				.append(source.getAbsentIdentityCount()).append(',');
+			out.append("\"duplicateIdentityCount\":")
+				.append(source.getDuplicateIdentityCount()).append(',');
+			out.append("\"runtimeInstanceCount\":")
+				.append(source.getRuntimeInstanceCount()).append(',');
+			out.append("\"activeRuntimeInstanceCount\":")
+				.append(source.getActiveRuntimeInstanceCount()).append(',');
+			out.append("\"inactiveRuntimeInstanceCount\":")
+				.append(source.getInactiveRuntimeInstanceCount()).append(',');
+			out.append("\"atAuthoredSourceInstanceCount\":")
+				.append(source.getAtAuthoredSourceInstanceCount()).append(',');
+			out.append("\"awayFromAuthoredSourceInstanceCount\":")
+				.append(source.getAwayFromAuthoredSourceInstanceCount()).append(',');
+			out.append("\"replacementObjectInstanceCount\":")
+				.append(source.getReplacementObjectInstanceCount()).append(',');
+			out.append("\"staleGenerationInstanceCount\":")
+				.append(source.getStaleGenerationInstanceCount()).append(',');
+			out.append("\"unrecognizedIdentityInstanceCount\":")
+				.append(source.getUnrecognizedIdentityInstanceCount()).append(',');
+			out.append("\"expectedSceneryCount\":")
+				.append(source.getExpectedSceneryCount()).append(',');
+			out.append("\"expectedBoundaryCount\":")
+				.append(source.getExpectedBoundaryCount()).append(',');
+			out.append("\"expectedNpcSpawnCount\":")
+				.append(source.getExpectedNpcSpawnCount()).append(',');
+			out.append("\"expectedGroundItemSpawnCount\":")
+				.append(source.getExpectedGroundItemSpawnCount()).append(',');
+			out.append("\"expectedHarvestingSceneryCount\":")
+				.append(source.getExpectedHarvestingSceneryCount()).append(',');
+			out.append("\"runtimeSceneryCount\":")
+				.append(source.getRuntimeSceneryCount()).append(',');
+			out.append("\"runtimeBoundaryCount\":")
+				.append(source.getRuntimeBoundaryCount()).append(',');
+			out.append("\"runtimeNpcSpawnCount\":")
+				.append(source.getRuntimeNpcSpawnCount()).append(',');
+			out.append("\"runtimeGroundItemSpawnCount\":")
+				.append(source.getRuntimeGroundItemSpawnCount()).append(',');
+			out.append("\"runtimeHarvestingSceneryCount\":")
+				.append(source.getRuntimeHarvestingSceneryCount()).append('}');
 		}
 		out.append("]}");
 	}
@@ -1892,6 +2087,13 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionAuthoredConstructionObservation capture(
 			LayeredPackedRegionRetirementSafetyAssessment safety,
 			int maximumPackedSources);
+	}
+
+	/** Compares authored identities with a bounded detached runtime census. */
+	@FunctionalInterface
+	public interface PackedRegionAuthoredProvenanceSource {
+		LayeredPackedRegionAuthoredProvenanceObservation capture(
+			LayeredPackedRegionRetirementSafetyAssessment safety);
 	}
 
 	/** Immutable ownership aggregate; never a Region retention or eviction order. */
@@ -4086,6 +4288,8 @@ public final class LayeredCoordinateParityObserver {
 		PackedRegionRetirementSafetySource packedRegionRetirementSafetySource;
 		PackedRegionAuthoredConstructionSource
 			packedRegionAuthoredConstructionSource;
+		PackedRegionAuthoredProvenanceSource
+			packedRegionAuthoredProvenanceSource;
 		final List<WorldLocation> recentTraversal =
 			new ArrayList<WorldLocation>(MAX_TRACE_TRAVERSAL_STEPS + 1);
 		final LinkedHashSet<WorldRegionKey> retirementCandidates =
@@ -4118,7 +4322,9 @@ public final class LayeredCoordinateParityObserver {
 			PackedRegionRetirementSafetySource
 				packedRegionRetirementSafetySource,
 			PackedRegionAuthoredConstructionSource
-				packedRegionAuthoredConstructionSource) {
+				packedRegionAuthoredConstructionSource,
+			PackedRegionAuthoredProvenanceSource
+				packedRegionAuthoredProvenanceSource) {
 			if (viewGridDistance < 0) {
 				throw new IllegalArgumentException("View grid distance must not be negative");
 			}
@@ -4139,6 +4345,8 @@ public final class LayeredCoordinateParityObserver {
 				packedRegionRetirementSafetySource;
 			this.packedRegionAuthoredConstructionSource =
 				packedRegionAuthoredConstructionSource;
+			this.packedRegionAuthoredProvenanceSource =
+				packedRegionAuthoredProvenanceSource;
 		}
 
 		Status status(boolean enabled) {
