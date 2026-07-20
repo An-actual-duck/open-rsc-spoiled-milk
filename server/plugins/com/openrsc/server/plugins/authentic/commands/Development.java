@@ -26,6 +26,7 @@ import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
@@ -1400,7 +1401,8 @@ public final class Development implements CommandTrigger {
 					layeredPackedRegionRetirementSafetySource(player),
 					layeredPackedRegionAuthoredConstructionSource(player),
 					layeredPackedRegionAuthoredProvenanceSource(player),
-					layeredPackedRegionAuthoredReconstructionSource(player));
+					layeredPackedRegionAuthoredReconstructionSource(player),
+					layeredPackedRegionAuthoredReconstructionCohortSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1756,6 +1758,27 @@ public final class Development implements CommandTrigger {
 					player.getWorld().getWorldLoader().getWorldPopulator()
 						.getAuthoredReconstructionRecipe(),
 					safety, maximumSafetySources, maximumRequirementSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionCohortSource
+			layeredPackedRegionAuthoredReconstructionCohortSource(
+				final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionCohortSource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionCohortAnalysis capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumCohortSources,
+				final int maximumRequirementSources) {
+				return LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+					.analyze(
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						safety, maximumCohortSources,
+						maximumRequirementSources);
 			}
 		};
 	}

@@ -6,6 +6,7 @@ import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
@@ -41,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v20";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v21";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -240,6 +241,40 @@ public final class LayeredCoordinateParityObserver {
 			packedRegionAuthoredProvenanceSource,
 		PackedRegionAuthoredReconstructionSource
 			packedRegionAuthoredReconstructionSource) {
+		return start(
+			playerId, usernameHash, current, viewGridDistance, tileSnapshotSource,
+			tileParitySource, tileNeighborhoodSource, adjacentCollisionSource,
+			traversalCollisionSource, regionResidencySource,
+			interestOwnershipSource, regionRetirementSource,
+			regionRetirementDecisionSource, packedRegionRetirementSafetySource,
+			packedRegionAuthoredConstructionSource,
+			packedRegionAuthoredProvenanceSource,
+			packedRegionAuthoredReconstructionSource, null);
+	}
+
+	public static Status start(
+		int playerId,
+		long usernameHash,
+		Point current,
+		int viewGridDistance,
+		TileSnapshotSource tileSnapshotSource,
+		TileParitySource tileParitySource,
+		TileNeighborhoodSource tileNeighborhoodSource,
+		AdjacentCollisionSource adjacentCollisionSource,
+		TraversalCollisionSource traversalCollisionSource,
+		RegionResidencySource regionResidencySource,
+		InterestOwnershipSource interestOwnershipSource,
+		RegionRetirementSource regionRetirementSource,
+		RegionRetirementDecisionSource regionRetirementDecisionSource,
+		PackedRegionRetirementSafetySource packedRegionRetirementSafetySource,
+		PackedRegionAuthoredConstructionSource
+			packedRegionAuthoredConstructionSource,
+		PackedRegionAuthoredProvenanceSource
+			packedRegionAuthoredProvenanceSource,
+		PackedRegionAuthoredReconstructionSource
+			packedRegionAuthoredReconstructionSource,
+		PackedRegionAuthoredReconstructionCohortSource
+			packedRegionAuthoredReconstructionCohortSource) {
 		Objects.requireNonNull(tileSnapshotSource, "tileSnapshotSource");
 		Objects.requireNonNull(tileParitySource, "tileParitySource");
 		Objects.requireNonNull(tileNeighborhoodSource, "tileNeighborhoodSource");
@@ -257,7 +292,8 @@ public final class LayeredCoordinateParityObserver {
 			packedRegionRetirementSafetySource,
 			packedRegionAuthoredConstructionSource,
 			packedRegionAuthoredProvenanceSource,
-			packedRegionAuthoredReconstructionSource);
+			packedRegionAuthoredReconstructionSource,
+			packedRegionAuthoredReconstructionCohortSource);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
@@ -467,6 +503,35 @@ public final class LayeredCoordinateParityObserver {
 			currentPackedRegionAuthoredProvenanceSource,
 		PackedRegionAuthoredReconstructionSource
 			currentPackedRegionAuthoredReconstructionSource) {
+		onSession(
+			playerId, usernameHash, current, loggedIn, ownershipChange,
+			currentInterestOwnershipSource, currentRegionRetirementSource,
+			currentRegionRetirementDecisionSource,
+			currentPackedRegionRetirementSafetySource,
+			currentPackedRegionAuthoredConstructionSource,
+			currentPackedRegionAuthoredProvenanceSource,
+			currentPackedRegionAuthoredReconstructionSource, null);
+	}
+
+	public static void onSession(
+		int playerId,
+		long usernameHash,
+		Point current,
+		boolean loggedIn,
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange,
+		InterestOwnershipSource currentInterestOwnershipSource,
+		RegionRetirementSource currentRegionRetirementSource,
+		RegionRetirementDecisionSource currentRegionRetirementDecisionSource,
+		PackedRegionRetirementSafetySource
+			currentPackedRegionRetirementSafetySource,
+		PackedRegionAuthoredConstructionSource
+			currentPackedRegionAuthoredConstructionSource,
+		PackedRegionAuthoredProvenanceSource
+			currentPackedRegionAuthoredProvenanceSource,
+		PackedRegionAuthoredReconstructionSource
+			currentPackedRegionAuthoredReconstructionSource,
+		PackedRegionAuthoredReconstructionCohortSource
+			currentPackedRegionAuthoredReconstructionCohortSource) {
 		TraceState state = TRACES.get(new TraceKey(playerId, usernameHash));
 		if (state != null && current != null) {
 			synchronized (state) {
@@ -499,6 +564,11 @@ public final class LayeredCoordinateParityObserver {
 					&& currentPackedRegionAuthoredReconstructionSource != null) {
 					state.packedRegionAuthoredReconstructionSource =
 						currentPackedRegionAuthoredReconstructionSource;
+				}
+				if (loggedIn
+					&& currentPackedRegionAuthoredReconstructionCohortSource != null) {
+					state.packedRegionAuthoredReconstructionCohortSource =
+						currentPackedRegionAuthoredReconstructionCohortSource;
 				}
 				write(
 					state, loggedIn ? "login" : "logout", null, current, null, null,
@@ -559,6 +629,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionAuthoredProvenance = null;
 				LayeredPackedRegionAuthoredReconstructionObservation
 					packedRegionAuthoredReconstruction = null;
+				LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+					packedRegionAuthoredReconstructionCohort = null;
 				if (capturesTileComparisons(eventType)) {
 					tileParity = Objects.requireNonNull(
 						state.tileParitySource.capture(current),
@@ -685,6 +757,17 @@ public final class LayeredCoordinateParityObserver {
 									MAX_TRACE_PACKED_RETIREMENT_SOURCES),
 								"packedRegionAuthoredReconstructionSource result");
 						}
+						if (state.packedRegionAuthoredReconstructionCohortSource
+							!= null) {
+							packedRegionAuthoredReconstructionCohort =
+								Objects.requireNonNull(
+									state.packedRegionAuthoredReconstructionCohortSource
+										.capture(
+											packedRegionRetirementSafety,
+											MAX_TRACE_PACKED_RETIREMENT_SOURCES,
+											MAX_TRACE_PACKED_RETIREMENT_SOURCES),
+									"packedRegionAuthoredReconstructionCohortSource result");
+						}
 					}
 				}
 				long nextSequence = state.sequence + 1L;
@@ -696,7 +779,8 @@ public final class LayeredCoordinateParityObserver {
 					regionRetirementDecisions, packedRegionRetirementSafety,
 					packedRegionAuthoredConstruction,
 					packedRegionAuthoredProvenance,
-					packedRegionAuthoredReconstruction);
+					packedRegionAuthoredReconstruction,
+					packedRegionAuthoredReconstructionCohort);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -755,7 +839,9 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionAuthoredProvenanceObservation
 			packedRegionAuthoredProvenance,
 		LayeredPackedRegionAuthoredReconstructionObservation
-			packedRegionAuthoredReconstruction) {
+			packedRegionAuthoredReconstruction,
+		LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+			packedRegionAuthoredReconstructionCohort) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -879,6 +965,13 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendPackedRegionAuthoredReconstruction(
 				out, packedRegionAuthoredReconstruction);
+		}
+		out.append(",\"packedRegionAuthoredReconstructionCohort\":");
+		if (packedRegionAuthoredReconstructionCohort == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionAuthoredReconstructionCohort(
+				out, packedRegionAuthoredReconstructionCohort);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -1570,6 +1663,107 @@ public final class LayeredCoordinateParityObserver {
 				.append(requirement.isSelectedSafetySource()).append(',');
 			out.append("\"authoredRecipeSource\":")
 				.append(requirement.isAuthoredRecipeSource()).append(',');
+			out.append("\"ownerSourceCount\":")
+				.append(requirement.getOwnerSourceCount()).append(',');
+			out.append("\"placementReferenceCount\":")
+				.append(requirement.getPlacementReferenceCount()).append('}');
+		}
+		out.append("]}");
+	}
+
+	private static void appendPackedRegionAuthoredReconstructionCohort(
+		final StringBuilder out,
+		final LayeredPackedRegionAuthoredReconstructionCohortAnalysis analysis) {
+		out.append('{');
+		out.append("\"generation\":")
+			.append(analysis.getGeneration()).append(',');
+		out.append("\"safetyObservedAtTick\":")
+			.append(analysis.getSafetyObservedAtTick()).append(',');
+		out.append("\"seedSourceCount\":")
+			.append(analysis.getSeedSourceCount()).append(',');
+		out.append("\"cohortSourceCount\":")
+			.append(analysis.getCohortSourceCount()).append(',');
+		out.append("\"expandedAuthoredSourceCount\":")
+			.append(analysis.getExpandedAuthoredSourceCount()).append(',');
+		out.append("\"authoredContentSourceCount\":")
+			.append(analysis.getAuthoredContentSourceCount()).append(',');
+		out.append("\"reconstructionPlacementCount\":")
+			.append(analysis.getReconstructionPlacementCount()).append(',');
+		out.append("\"crossSourcePlacementCount\":")
+			.append(analysis.getCrossSourcePlacementCount()).append(',');
+		out.append("\"affectedSourceReferenceCount\":")
+			.append(analysis.getAffectedSourceReferenceCount()).append(',');
+		out.append("\"requirementSourceCount\":")
+			.append(analysis.getRequirementSourceCount()).append(',');
+		out.append("\"cohortRequirementSourceCount\":")
+			.append(analysis.getCohortRequirementSourceCount()).append(',');
+		out.append("\"externalSupportRequirementSourceCount\":")
+			.append(analysis.getExternalSupportRequirementSourceCount())
+			.append(',');
+		out.append("\"maximumExpansionRound\":")
+			.append(analysis.getMaximumExpansionRound()).append(',');
+		out.append("\"authoredClosureComplete\":")
+			.append(analysis.isAuthoredClosureComplete()).append(',');
+		out.append("\"fullySelfContained\":")
+			.append(analysis.isFullySelfContained()).append(',');
+		out.append("\"identityMetadataOnly\":true,");
+		out.append("\"entityRegistry\":false,");
+		out.append("\"lifecycleAuthority\":false,");
+		out.append("\"entries\":[");
+		boolean first = true;
+		for (LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+			.SourceAnalysis source : analysis.getSources()) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			out.append("{\"packedRegionX\":")
+				.append(source.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(source.getPackedRegionY()).append(',');
+			field(out, "role", source.getRole().name()).append(',');
+			out.append("\"expansionRound\":")
+				.append(source.getExpansionRound()).append(',');
+			out.append("\"recipeSourcePresent\":")
+				.append(source.isRecipeSourcePresent()).append(',');
+			out.append("\"authoredContentPresent\":")
+				.append(source.hasAuthoredContent()).append(',');
+			out.append("\"reconstructionPlacementCount\":")
+				.append(source.getReconstructionPlacementCount()).append(',');
+			out.append("\"crossSourcePlacementCount\":")
+				.append(source.getCrossSourcePlacementCount()).append(',');
+			out.append("\"affectedSourceReferenceCount\":")
+				.append(source.getAffectedSourceReferenceCount()).append(',');
+			out.append("\"requirementSourceCount\":")
+				.append(source.getRequirementSourceCount()).append(',');
+			out.append("\"cohortRequirementSourceCount\":")
+				.append(source.getCohortRequirementSourceCount()).append(',');
+			out.append("\"externalSupportRequirementSourceCount\":")
+				.append(source.getExternalSupportRequirementSourceCount())
+				.append(',');
+			out.append("\"dependencySelfContained\":")
+				.append(source.isDependencySelfContained()).append('}');
+		}
+		out.append("],\"requirements\":[");
+		first = true;
+		for (LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+			.RequirementAnalysis requirement : analysis.getRequirements()) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			out.append("{\"packedRegionX\":")
+				.append(requirement.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(requirement.getPackedRegionY()).append(',');
+			out.append("\"cohortSource\":")
+				.append(requirement.isCohortSource()).append(',');
+			out.append("\"recipeSourcePresent\":")
+				.append(requirement.isRecipeSourcePresent()).append(',');
+			out.append("\"authoredContentPresent\":")
+				.append(requirement.hasAuthoredContent()).append(',');
+			out.append("\"externalSupportRequired\":")
+				.append(requirement.isExternalSupportRequired()).append(',');
 			out.append("\"ownerSourceCount\":")
 				.append(requirement.getOwnerSourceCount()).append(',');
 			out.append("\"placementReferenceCount\":")
@@ -2441,6 +2635,15 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionAuthoredReconstructionObservation capture(
 			LayeredPackedRegionRetirementSafetyAssessment safety,
 			int maximumSafetySources,
+			int maximumRequirementSources);
+	}
+
+	/** Expands authored dependencies while preserving support-only evidence. */
+	@FunctionalInterface
+	public interface PackedRegionAuthoredReconstructionCohortSource {
+		LayeredPackedRegionAuthoredReconstructionCohortAnalysis capture(
+			LayeredPackedRegionRetirementSafetyAssessment safety,
+			int maximumCohortSources,
 			int maximumRequirementSources);
 	}
 
@@ -4640,6 +4843,8 @@ public final class LayeredCoordinateParityObserver {
 			packedRegionAuthoredProvenanceSource;
 		PackedRegionAuthoredReconstructionSource
 			packedRegionAuthoredReconstructionSource;
+		PackedRegionAuthoredReconstructionCohortSource
+			packedRegionAuthoredReconstructionCohortSource;
 		final List<WorldLocation> recentTraversal =
 			new ArrayList<WorldLocation>(MAX_TRACE_TRAVERSAL_STEPS + 1);
 		final LinkedHashSet<WorldRegionKey> retirementCandidates =
@@ -4676,7 +4881,9 @@ public final class LayeredCoordinateParityObserver {
 			PackedRegionAuthoredProvenanceSource
 				packedRegionAuthoredProvenanceSource,
 			PackedRegionAuthoredReconstructionSource
-				packedRegionAuthoredReconstructionSource) {
+				packedRegionAuthoredReconstructionSource,
+			PackedRegionAuthoredReconstructionCohortSource
+				packedRegionAuthoredReconstructionCohortSource) {
 			if (viewGridDistance < 0) {
 				throw new IllegalArgumentException("View grid distance must not be negative");
 			}
@@ -4701,6 +4908,8 @@ public final class LayeredCoordinateParityObserver {
 				packedRegionAuthoredProvenanceSource;
 			this.packedRegionAuthoredReconstructionSource =
 				packedRegionAuthoredReconstructionSource;
+			this.packedRegionAuthoredReconstructionCohortSource =
+				packedRegionAuthoredReconstructionCohortSource;
 		}
 
 		Status status(boolean enabled) {

@@ -1,18 +1,17 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59 and 62 owner-validated,
-Slice 60 private-runtime validated, Slices 61 and 63 automated-validated on the
-active refinement branch
+Slice 60 private-runtime validated, Slices 61 and 63 automated-validated, and
+Slice 64 awaiting private owner validation on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 63 expands exact safety seeds through final-live
-authored dependency sources to a bounded fixed point, while leaving required
-coordinates without authored content as explicit external support. The result
-is diagnostic evidence only. No recipe consumer, load request, registry, or
-lifecycle authority is authorized, and packed Region lookup, eager loading,
+Current milestone: Slice 64 exposes the fixed-point authored cohort and its
+support-only perimeter through additive private schema-v21 diagnostics. The
+result is diagnostic evidence only. No recipe consumer, load request, registry,
+or lifecycle authority is authorized, and packed Region lookup, eager loading,
 release, eviction, pathing, packets, and persistence remain unchanged
 
 ## Purpose
@@ -6472,6 +6471,57 @@ Automated validation status:
 Status: implemented and automated-validated. No lifecycle authority is
 authorized.
 
+### Slice 64: Fixed-point cohort diagnostics
+
+Objective: expose Slice 63's bounded cohort analysis through the opt-in private
+observer so real retirement selections reveal recursive authored expansion and
+support-only perimeter size without acquiring either set.
+
+Implemented:
+
+- additive `layered-map-parity-event-v21` records retain the complete v20 event
+  and add nullable `packedRegionAuthoredReconstructionCohort` evidence;
+- cohort totals report seed, expanded-authored, authored-content, final-live
+  placement, conservative reach, requirement, external-support, and maximum
+  expansion-round counts plus authored-closure and self-contained status;
+- each seed or expanded source reports its role, expansion round, recipe/content
+  presence, final-live arithmetic, and direct cohort-versus-support dependency
+  counts;
+- the deterministic requirement union distinguishes cohort sources, recipe
+  sources, sources with final-live authored content, and external support-only
+  coordinates with exact owner and placement-reference counts; and
+- both the Player session-rebind path and development-command start path derive
+  the cohort from the completed `WorldPopulator` recipe and exact same safety
+  assessment.
+
+Safety boundary:
+
+- cohort and requirement budgets are passed independently at the observer's
+  established hard source limit; overflow refuses the event rather than
+  truncating a fixed point or support perimeter;
+- schema-v21 declares `identityMetadataOnly=true`, `entityRegistry=false`, and
+  `lifecycleAuthority=false`, and the v11-v20 contracts remain immutable;
+- authored closure or self-containment is descriptive evidence only. The
+  observer neither acquires support sources nor validates terrain, collision,
+  events, teardown, reload, or rollback; and
+- the analysis and JSON contain no entity, Region, tile, archive, registry,
+  callback, lifecycle, or transaction handle.
+
+Automated validation status:
+
+- the executable observer fixture emits a non-null self-contained cohort and
+  validates its exact totals, entry, requirement, and inert flags against
+  schema-v21;
+- schema/source guards verify the additive nullable contract, serializer,
+  refusal budgets, inert flags, and both runtime source paths;
+- the complete layered-map suite passes 149 tests across 63 focused files;
+- the authoritative bundled-Ant build compiles 760 core and 488 plugin
+  sources; and
+- a private owner trace remains to be completed for this milestone.
+
+Status: implemented and automated-validated; private owner validation pending.
+No lifecycle authority is authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -6740,13 +6790,15 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 61 by projecting final-live recipe counts and unique dependency requirements onto an exact bounded safety-source set. | Implemented and automated-validated; closure remains evidence only and lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 62 by exposing bounded recipe and dependency-closure evidence through additive private schema-v20 diagnostics. | Implemented and owner-validated; all 5,590 selected final-live identities matched, the 16-source open dependency remainder was exact, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 63 by expanding safety seeds through recursively required final-live authored sources while retaining empty dependency coordinates as external support. | Implemented and automated-validated; lifecycle authority remains absent |
+| 2026-07-20 | Continue with Slice 64 by exposing fixed-point cohort expansion and support-only requirements through additive private schema-v21 diagnostics. | Implemented and automated-validated; private owner validation pending with no lifecycle authority |
 
 ## Next Discussion
 
-The smallest next owner-testable slice is additive private diagnostics for the
-fixed-point cohort, so the accepted 36-source selection can show its real
-authored expansion depth and support-only perimeter. Do not infer that a small
-or self-contained cohort is reconstructable.
+Compare a correctly aligned non-empty narrow retirement selection with the
+accepted broad route. Use the evidence to determine whether authored expansion
+remains local or connects a much larger part of the world, and preserve every
+support-only coordinate. Do not infer that a small or self-contained cohort is
+reconstructable.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
