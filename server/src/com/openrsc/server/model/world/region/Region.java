@@ -95,6 +95,52 @@ public class Region {
 	}
 
 	/**
+	 * Captures entity counts and tile-storage presence without exposing the
+	 * collections or their contents. This is read-only retirement evidence.
+	 */
+	RetirementContentsSnapshot captureRetirementContentsSnapshot() {
+		synchronized (players) {
+			synchronized (npcs) {
+				synchronized (objects) {
+					synchronized (items) {
+						return new RetirementContentsSnapshot(
+							tiles != null || tile != null,
+							players.size(), npcs.size(), objects.size(), items.size());
+					}
+				}
+			}
+		}
+	}
+
+	/** Immutable Region-local counts; never an entity or tile handle. */
+	static final class RetirementContentsSnapshot {
+		private final boolean tileStorageAvailable;
+		private final int playerCount;
+		private final int npcCount;
+		private final int objectCount;
+		private final int groundItemCount;
+
+		private RetirementContentsSnapshot(
+			final boolean tileStorageAvailable,
+			final int playerCount,
+			final int npcCount,
+			final int objectCount,
+			final int groundItemCount) {
+			this.tileStorageAvailable = tileStorageAvailable;
+			this.playerCount = playerCount;
+			this.npcCount = npcCount;
+			this.objectCount = objectCount;
+			this.groundItemCount = groundItemCount;
+		}
+
+		boolean isTileStorageAvailable() { return tileStorageAvailable; }
+		int getPlayerCount() { return playerCount; }
+		int getNpcCount() { return npcCount; }
+		int getObjectCount() { return objectCount; }
+		int getGroundItemCount() { return groundItemCount; }
+	}
+
+	/**
 	 * Gets the list of players.
 	 *
 	 * @return The list of players.

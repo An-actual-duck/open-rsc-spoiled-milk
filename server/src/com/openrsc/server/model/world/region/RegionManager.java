@@ -18,6 +18,7 @@ import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageC
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
@@ -45,6 +46,7 @@ public class RegionManager {
 		MAX_LAYERED_REGIONS_PER_INTEREST_OWNER
 			* LayeredPackedRegionRetirementReadiness
 				.MAX_PACKED_SOURCES_PER_LOGICAL_REGION;
+	public static final boolean LAYERED_PACKED_REGION_RELOAD_SUPPORTED = false;
 	public static final long LAYERED_REGION_RETIREMENT_COOLDOWN_TICKS = 16L;
 
 	private final ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>> regions;
@@ -810,6 +812,51 @@ public class RegionManager {
 			return LayeredPackedRegionRetirementReadiness.fromDecisions(
 				decisions, maximumRegions,
 				MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN);
+		}
+	}
+
+	/**
+	 * Captures read-only contents and quiescence evidence for one bounded
+	 * packed-source readiness value. Counts may become stale immediately; this
+	 * method cannot claim, unload, unregister, remove, or evict a Region.
+	 */
+	public LayeredPackedRegionRetirementSafetyAssessment
+		assessLayeredPackedRegionRetirementSafety(
+			final LayeredPackedRegionRetirementReadiness readiness,
+			final int maximumPackedSources) {
+		LayeredPackedRegionRetirementReadiness checked =
+			Objects.requireNonNull(readiness, "readiness");
+		if (maximumPackedSources < 0
+			|| maximumPackedSources
+				> MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN
+			|| checked.getSourceCount() > maximumPackedSources) {
+			throw new IllegalArgumentException(
+				"Packed retirement assessment exceeds the source budget");
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			List<LayeredPackedRegionRetirementSafetyAssessment.PackedSourceContents>
+				contents = new ArrayList<LayeredPackedRegionRetirementSafetyAssessment
+					.PackedSourceContents>(checked.getSourceCount());
+			for (LayeredPackedRegionRetirementReadiness.SourceReadiness source
+				: checked.getSources()) {
+				Region region = peekRegionFromSectorCoordinates(
+					source.getPackedRegionX(), source.getPackedRegionY());
+				Region.RetirementContentsSnapshot snapshot = region == null
+					? null : region.captureRetirementContentsSnapshot();
+				contents.add(LayeredPackedRegionRetirementSafetyAssessment
+					.PackedSourceContents.of(
+						source.getPackedRegionX(), source.getPackedRegionY(),
+						region != null,
+						snapshot != null && snapshot.isTileStorageAvailable(),
+						LAYERED_PACKED_REGION_RELOAD_SUPPORTED,
+						snapshot == null ? 0 : snapshot.getPlayerCount(),
+						snapshot == null ? 0 : snapshot.getNpcCount(),
+						snapshot == null ? 0 : snapshot.getObjectCount(),
+						snapshot == null ? 0 : snapshot.getGroundItemCount()));
+			}
+			return LayeredPackedRegionRetirementSafetyAssessment.assess(
+				checked, contents, getWorld().getServer().getCurrentTick(),
+				maximumPackedSources);
 		}
 	}
 

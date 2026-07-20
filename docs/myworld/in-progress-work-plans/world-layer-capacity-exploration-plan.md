@@ -1,17 +1,17 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-48 implemented and validated on
+Status: architecture design complete; Slices 1-49 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 48 has owner-validated Slice 47 packed-source readiness
-through additive opt-in private diagnostics without granting authority to
-unload, unregister, remove, or evict a packed Region; packed Region lookup,
-eager loading, release, eviction, pathing, packets, and persistence remain
-authoritative and unchanged
+Current milestone: Slice 49 identifies packed-source contents and lifecycle
+blockers through a bounded, read-only assessment; the current absence of a
+per-Region reload path explicitly blocks every source from lifecycle readiness,
+and packed Region lookup, eager loading, release, eviction, pathing, packets,
+and persistence remain authoritative and unchanged
 
 ## Purpose
 
@@ -5378,6 +5378,76 @@ Private owner-validation evidence:
 Status: implemented and owner-validated. Runtime adoption remains deliberately
 absent.
 
+### Slice 49: Dormant packed-source contents safety assessment
+
+Objective: determine whether a Slice 47 source that is logically `READY` is
+also empty and recoverable enough to consider for later retirement, without
+granting any unload authority.
+
+Implemented:
+
+- immutable `LayeredPackedRegionRetirementSafetyAssessment` values that combine
+  one bounded readiness snapshot with resident/tile-storage state and exact
+  player, NPC, scenery-object, and ground-item counts for each same-order
+  packed source;
+- separate `contentQuiescent` and `lifecycleReady` results so an empty Region
+  cannot be confused with a Region that is safe to destroy and reconstruct;
+- explicit blockers for refused logical readiness, absent residency, missing
+  tile storage, every populated content family, and unavailable reload support;
+- a Region-local snapshot that holds the four synchronized entity-collection
+  monitors together while capturing counts, but returns no collection, entity,
+  tile, or Region handle; and
+- a bounded RegionManager assessment under the existing lifecycle lock that
+  uses non-creating packed lookup and records the current server tick.
+
+Critical lifecycle finding:
+
+- current `Region.unload()` clears players, NPCs, scenery objects, ground items,
+  and tile arrays;
+- current loading is whole-world `WorldLoader.loadWorld()` behavior, with no
+  packed-source reload/recovery operation that could rebuild one retired
+  Region and its static/dynamic contents; and
+- RegionManager therefore hardcodes packed-source reload support to `false`.
+  Even a resident, tile-backed, empty, logically `READY` source receives
+  `RELOAD_PATH_UNAVAILABLE` and has `lifecycleReady=false`.
+
+Safety boundary:
+
+- the assessment is ephemeral evidence that may become stale immediately; it
+  is not a claim, permit, lease, queue entry, callback, token, or commit guard;
+- the manager boundary cannot create, register, unregister, unload, remove,
+  evict, or invalidate a packed Region or cache;
+- an absent source reports `SOURCE_NOT_RESIDENT` and
+  `TILE_STORAGE_UNAVAILABLE` rather than resembling an empty source; and
+- the assessment remains absent from PathValidation and private diagnostics.
+
+Automated validation evidence:
+
+- the compiled fixture proves exact content counts and blocker order,
+  quiescence independent of reload capability, readiness-refusal precedence,
+  absent-source handling, a future reload-capable success case, version/tick
+  preservation, immutability, ordering, null rejection, and source budgets;
+- source guards prove the manager uses the lifecycle lock, non-creating lookup,
+  and consistent Region snapshot while granting no lifecycle or observer
+  authority;
+- the complete layered-map suite passes 110 tests across 48 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 749 core and 488 plugin sources
+  successfully; and
+- two consecutive normalizations produced identical source
+  `c2a193a62ced3409a57bf7d74731619ccc3c2c77dd7cf4e2198ffa11082c439f`,
+  inventory
+  `8f485c302ac4832c113488cddf2e13425a192dc9052b7f837d417e0dbad87cc4`,
+  classification
+  `9521d960ffbf9acaf2554c1ec67fb0b5ff5b21421f452e045a9b2b12c7db34c8`,
+  and occurrence
+  `1f674f7fffcccb9d689c570d42900a3c2c8cba9c1082edc512e0f99ea2971d79`
+  fingerprints.
+
+Status: implemented and validated. Diagnostic exposure is deferred to Slice
+50; actual retirement remains blocked pending a separately designed
+packed-source reload and recovery contract.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -5512,14 +5582,15 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 46 by emitting bounded accepted/refused retirement-decision evidence through additive private v13 diagnostics without lifecycle authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 47 by aggregating same-snapshot logical retirement decisions into conservative packed-source readiness while blocking incomplete cross-level coverage and partial edge sources. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 48 by emitting bounded packed-source readiness from the existing atomic decision batch through additive private v14 diagnostics without lifecycle authority. | Implemented and owner-validated |
+| 2026-07-19 | Continue with Slice 49 by assessing packed-source contents and quiescence read-only while explicitly blocking lifecycle readiness until a per-Region reload path exists. | Implemented and validated |
 
 ## Next Discussion
 
-Define Slice 49 as a read-only packed-source contents and quiescence assessment.
-Any later commit token or lifecycle consumer must remain unable to alter the
-authoritative packed Region registry until ownership, residency, players,
-NPCs, objects, ground items, collision, reload, and recovery preconditions can
-be proved together.
+Define Slice 50 as additive private diagnostics for the read-only packed-source
+contents safety assessment. Any later commit token or lifecycle consumer must
+remain unable to alter the authoritative packed Region registry until
+ownership, residency, players, NPCs, objects, ground items, collision, reload,
+and recovery preconditions can be proved together.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.
