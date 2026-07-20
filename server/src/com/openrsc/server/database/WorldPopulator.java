@@ -19,6 +19,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlac
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory.DependencyKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionRecipe;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.WorldNpcEditFiles;
 import com.openrsc.server.util.WorldSceneryEditFiles;
@@ -62,6 +63,9 @@ public final class WorldPopulator {
 	private volatile LayeredPackedRegionAuthoredPopulationOutcome
 		authoredPopulationOutcome =
 			LayeredPackedRegionAuthoredPopulationOutcome.empty();
+	private volatile LayeredPackedRegionAuthoredReconstructionRecipe
+		authoredReconstructionRecipe =
+			LayeredPackedRegionAuthoredReconstructionRecipe.empty();
 
 	public WorldPopulator(final World world) {
 		this.world = world;
@@ -303,6 +307,9 @@ public final class WorldPopulator {
 				completedDependencies = placementDependencies.build();
 			LayeredPackedRegionAuthoredPopulationOutcome completedOutcome =
 				populationOutcome.build(completedManifest);
+			LayeredPackedRegionAuthoredReconstructionRecipe completedRecipe =
+				LayeredPackedRegionAuthoredReconstructionRecipe.derive(
+					completedManifest, completedDependencies, completedOutcome);
 			if (!completedManifest.isCountEquivalentTo(completedInventory)) {
 				throw new IllegalStateException(
 					"Authored placement manifest does not match construction inventory");
@@ -317,6 +324,15 @@ public final class WorldPopulator {
 				box(completedOutcome.getSupersessionCount()),
 				box(completedOutcome.getFinalExpectedPlacementCount()),
 				box(completedOutcome.getManifestPlacementCount()));
+			LOGGER.info(
+				"Prepared {} inert authored reconstruction recipe entries across {} "
+					+ "packed sources; {} entries cross source boundaries ({} source "
+					+ "references, maximum {} per entry).",
+				box(completedRecipe.getReconstructionPlacementCount()),
+				box(completedRecipe.getSourceCount()),
+				box(completedRecipe.getCrossSourcePlacementCount()),
+				box(completedRecipe.getAffectedSourceReferenceCount()),
+				box(completedRecipe.getMaximumAffectedSourceCount()));
 			LOGGER.info(
 				"Indexed {} authored placement dependency envelopes; "
 					+ "{} cross packed-source boundaries ({} source references, "
@@ -340,6 +356,7 @@ public final class WorldPopulator {
 				box(completedDependencies.getAnchorOnlySourceReferenceCount()));
 			authoredPlacementDependencies = completedDependencies;
 			authoredPopulationOutcome = completedOutcome;
+			authoredReconstructionRecipe = completedRecipe;
 			authoredPlacementManifest = completedManifest;
 			authoredConstructionInventory = completedInventory;
 
@@ -538,6 +555,11 @@ public final class WorldPopulator {
 	public LayeredPackedRegionAuthoredPopulationOutcome
 		getAuthoredPopulationOutcome() {
 		return authoredPopulationOutcome;
+	}
+
+	public LayeredPackedRegionAuthoredReconstructionRecipe
+		getAuthoredReconstructionRecipe() {
+		return authoredReconstructionRecipe;
 	}
 
 	private int harvestingSceneryForGroundItem(int itemId) {

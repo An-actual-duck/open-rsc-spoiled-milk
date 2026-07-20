@@ -1,21 +1,19 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-59 owner-validated on the active
-refinement branch
+Status: architecture design complete; Slices 1-59 owner-validated and Slice 60
+private-runtime validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 59 records deterministic population-time collision
-lineage while preserving Slice 53's complete ordered replay history. Owner-
-accepted private v19 provenance evaluates only the final-live expectation set,
-reports the four known superseded predecessors separately, and still treats a
-predecessor that unexpectedly reappears as an anomaly. The command-local trace
-source now forwards the same completed population outcome as the Player session
-source. No registry or lifecycle authority is authorized, and packed Region
-lookup, eager loading, release, eviction, pathing, packets, and persistence
-remain unchanged
+Current milestone: Slice 60 derives one inert whole-world reconstruction recipe
+from the aligned authored manifest, dependency inventory, and owner-accepted
+population outcome. Each packed source owns only its final-live authored
+entries in original ordinal order and retains conservative cross-source reach
+as a requirement. No recipe consumer, registry, or lifecycle authority is
+authorized, and packed Region lookup, eager loading, release, eviction,
+pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -6358,6 +6356,70 @@ Automated validation status:
 Status: implemented and owner-validated. No registry or lifecycle consumer is
 authorized.
 
+### Slice 60: Inert final-live reconstruction recipe
+
+Objective: derive exact, ordered per-source reconstruction inputs from the
+accepted final-live population model without constructing, registering,
+removing, loading, or retaining any runtime entity.
+
+Implemented:
+
+- a generation-fenced immutable recipe derives only after the placement
+  dependency inventory proves exact source/order/family alignment with the
+  completed manifest and the population outcome proves generation, count, and
+  metadata alignment;
+- every retained entry is owned by its authored anchor source, preserves its
+  original duplicate-safe source ordinal and order, and pairs the immutable
+  primitive placement definition with its matching conservative dependency
+  envelope;
+- population-time collision predecessors remain in manifest replay history but
+  are excluded from the recipe. Ordinal gaps are retained deliberately, so the
+  recipe cannot silently renumber an identity or change collision precedence;
+- per-source and whole-world arithmetic distinguishes manifest placements,
+  superseded predecessors, and final-live recipe entries. Cross-source entry
+  counts, affected-source references, and maximum fanout remain explicit; and
+- `WorldPopulator` publishes the completed recipe only after the existing
+  manifest, dependency, and outcome gates succeed and emits one startup summary
+  for private/runtime verification.
+
+Safety boundary:
+
+- the recipe references only already immutable detached placement and
+  dependency values. It retains no entity, Region, tile, archive, event,
+  registry, cache, callback, claim, permit, lease, commit, teardown, loading,
+  or rollback handle;
+- source ownership follows the authored anchor even when an object footprint
+  or NPC roaming envelope reaches neighboring sources. Cross-source reach is a
+  prerequisite to solve, not authority to load or mutate a neighbor;
+- this slice does not select a safety-source subset, calculate dependency
+  closure, construct terrain or collision, bind events, compare current state,
+  or expose a lifecycle command; and
+- `LAYERED_PACKED_REGION_RELOAD_SUPPORTED` remains false. Recipe availability
+  does not change any safety blocker or lifecycle-ready result.
+
+Automated validation status:
+
+- a compiled fixture covers scenery-to-harvesting and boundary-to-boundary
+  supersession, two authored sources, cross-source object and NPC reach,
+  anchor-only reach, final-live arithmetic, original ordinal gaps, exact source
+  lookup, immutable lists, primitive metadata retention, and misaligned-
+  generation refusal;
+- the staged coordinate-package boundary includes the new inert value and
+  source guards reject entity, RegionManager, registration, and unregistration
+  dependencies; and
+- the authoritative bundled-Ant build compiles 758 core and 488 plugin sources,
+  and the complete layered-map suite passes 135 tests across 59 focused files;
+  and
+- the private server populates normally and derives 33,515 recipe entries from
+  33,532 manifest placements across 366 authored sources after excluding all
+  17 superseded predecessors. The retained recipe contains 1,019 cross-source
+  entries, 35,288 affected-source references, and a maximum fanout of 64,
+  consistent with removing 17 anchor-local predecessor references from the
+  aligned dependency inventory.
+
+Status: implemented and private-runtime validated. No lifecycle authority is
+authorized.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -6504,17 +6566,15 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 57 by comparing exact safety-source manifest identities with a bounded count-only private runtime census and additive v17 diagnostics. | Implemented and owner-validated; registry/lifecycle authority remains absent |
 | 2026-07-19 | Continue with Slice 58 by adding bounded detached exact-identity details for every authored-provenance anomaly through additive v18 diagnostics. | Implemented and owner-validated; all four prior absences classified as deterministic population-time supersessions and registry/lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 59 by preserving complete manifest replay history while projecting deterministic population supersessions into a final-live expectation set and additive v19 diagnostics. | Implemented and owner-validated; the duplicated command trace source now forwards the completed outcome, all 5,797 final-live expectations match, and registry/lifecycle authority remains absent |
+| 2026-07-20 | Continue with Slice 60 by deriving an inert per-source recipe from final-live authored identities and aligned dependency envelopes without a runtime consumer. | Implemented and private-runtime validated; all 33,515 final-live inputs retain aligned reach and lifecycle authority remains absent |
 
 ## Next Discussion
 
-Use Slice 59's accepted final-live census to design the next smallest inert
-reconstruction prerequisite. The recommended Slice 60 is a detached,
-generation-fenced per-source reconstruction recipe projection: select only
-final-live authored identities for an exact bounded safety-source set, retain
-their existing ordered construction metadata and dependency envelopes, and
-report cross-source requirements without constructing, registering, removing,
-or retaining any live entity. The design must define collision-order behavior,
-source ownership, dependency closure, and bounded refusal before implementation.
+Continue with Slice 61 as a bounded, read-only projection of recipe counts and
+cross-source requirements onto the exact safety-source set already used by
+private diagnostics. It must report whether the observed source set contains
+every dependency source, but closure evidence must not become a load request or
+lifecycle permit.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
