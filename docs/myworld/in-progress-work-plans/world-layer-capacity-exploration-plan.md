@@ -2,20 +2,20 @@
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 and 74 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63,
-65, 67, 69, 71, 73, and 75 automated-validated on the active refinement branch
+65, 67, 69, 71, 73, 75, and 76 automated-validated on the active refinement
+branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 75 converts recognized active-NPC boundary
-crossings into exact missing-source requirements while separating four kinds
-of evidence that expansion cannot resolve. Every proposed source still
-requires a fresh complete safety assessment and census; the projection neither
-mutates the selected set nor proves closure. No second entity registry, arrival
-gate, load request, retention decision, or lifecycle authority is authorized,
-and packed Region lookup, eager loading, release, eviction, pathing, packets,
-and persistence remain unchanged
+Current milestone: automated Slice 76 exposes Slice 75's exact active-NPC
+boundary requirements through additive private schema-v27 diagnostics derived
+from the same exact census already emitted for each event. No second census,
+selection mutation, source load, entity registry, arrival gate, retention
+decision, or lifecycle authority is authorized, and packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
+unchanged
 
 ## Purpose
 
@@ -7262,6 +7262,63 @@ Safety boundary:
 Status: implemented and automated-validated. Runtime diagnostic exposure and
 all lifecycle adoption remain deliberately absent.
 
+### Slice 76: Active NPC boundary requirement diagnostics
+
+Objective: expose Slice 75's bounded missing-source projection through
+additive private diagnostics, deriving it from the same exact census already
+emitted for the event so real mobile boundary crossings can identify their
+required coordinates without becoming load or lifecycle instructions.
+
+Implemented:
+
+- `layered-map-parity-event-v27` retains every v26 field and adds nullable
+  `packedRegionActiveNpcBoundaryRequirements` evidence;
+- the observer derives the projection directly from the non-null
+  `packedRegionActiveNpcResidency` captured for that event, alongside the
+  containment assessment, without a second census, callback, or later tick;
+- schema-v27 retains generation, safety tick, census tick, selected-source
+  count, contained-now state, recognized crossing counts, and four kinds of
+  non-expandable hard-blocker evidence;
+- each stable Y/X-sorted requirement retains both possible reason counts and
+  the total number of crossing NPC instances that requested its source;
+- the projection must be null when its parent containment evidence is null;
+  and
+- required fresh-safety, fresh-census, selection-mutated,
+  boundary-closure-proved, entity-registry, arrival-gate, and
+  lifecycle-authority fields preserve the refusal boundary in the schema and
+  serializer.
+
+Automated validation status:
+
+- schema comparison proves the v27 field is additive to v26, required but
+  nullable, bounded to 8,192 requirements, and non-authoritative;
+- source guards prove the projection consumes the same exact census as the
+  parent containment assessment and that no separate requirement source or
+  runtime callback exists;
+- the executable observer fixture emits a zero-NPC, zero-requirement contained
+  projection, reconciles its generation and selected-source context with its
+  parents, and validates the complete v11-v27 schema resource chain;
+- existing diagnostic consumers retain their prior start overloads and receive
+  null requirements when no active-NPC source is installed;
+- the complete layered-map suite passes 190 tests across 75 focused files; and
+- the authoritative bundled-Ant build compiles 766 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- a serialized requirement is diagnostic evidence, not a source load,
+  acquisition, ownership, lease, retention, or selection mutation;
+- every proposed source still requires a fresh complete safety assessment and
+  active-NPC census before any later boundary decision;
+- a zero-requirement event proves only that its one observed census contained
+  no expandable crossing, not that future movement is closed; and
+- No lifecycle authority, arrival rejection, registry, entity retention,
+  loading, release, eviction, reconstruction, transaction, or rollback is
+  created.
+
+Status: implemented and automated-validated. Private owner validation and all
+lifecycle adoption remain deliberately absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7542,6 +7599,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 73 by assessing whether one exact active-NPC observation is contained at its census tick while keeping preservation and lifecycle readiness separate. | Implemented and automated-validated; cross-source movement inside stays contained, six independent blockers are refusal-tested, and no registry, arrival gate, or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 74 by exposing the active-NPC containment assessment through additive private schema-v26 evidence derived from the event's existing census. | Implemented and owner-validated; the broad selection began contained, then one Guard legitimately crossed from external owner source `(2,10)` into selected current source `(2,9)` and produced the sole blocker without registry, arrival-gate, or lifecycle authority |
 | 2026-07-20 | Continue with Slice 75 by projecting exact missing sources for recognized active-NPC boundary crossings while preserving non-expandable hard blockers. | Implemented and automated-validated; requirements are deduplicated and refusal-bounded, every proposal requires fresh safety/census evidence, and no selection or lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 76 by exposing active-NPC boundary requirements through additive private schema-v27 evidence derived from the event's existing census. | Implemented and automated-validated; exact missing sources and hard blockers are serialized without a second census, selection mutation, registry, arrival gate, or lifecycle authority |
 
 ## Next Discussion
 
@@ -7587,12 +7645,13 @@ losing reason counts, while unresolved, relevant inactive, and duplicate
 identity evidence remains non-expandable. Every result requires fresh safety
 and census evidence and can neither mutate the selection nor prove closure.
 
-The next safe slice should expose this projection through additive private
-schema-v27 diagnostics derived from the same event census. The real Guard case
-must report exactly one external-owner-authored requirement for `(2,10)`, with
-no hard blockers, while the earlier contained events must report zero required
-sources. Runtime reconciliation must keep the proposed source outside the
-observed safety selection and preserve all parent assessment counts.
+Slice 76 now exposes that projection through additive private schema-v27
+diagnostics derived from the same event census. The next meaningful checkpoint
+is owner validation: the real Guard case should report exactly one
+external-owner-authored requirement for `(2,10)`, with no hard blockers, while
+contained events should report zero required sources. Runtime reconciliation
+must keep the proposed source outside the observed safety selection and
+preserve all parent assessment counts.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

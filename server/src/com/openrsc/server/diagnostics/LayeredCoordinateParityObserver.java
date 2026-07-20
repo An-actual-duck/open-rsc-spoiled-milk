@@ -3,6 +3,7 @@ package com.openrsc.server.diagnostics;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcBoundaryRequirementProjection;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcContainmentAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
@@ -47,7 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v26";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v27";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -78,6 +79,8 @@ public final class LayeredCoordinateParityObserver {
 		MAX_TRACE_PACKED_RETIREMENT_SOURCES;
 	private static final int MAX_TRACE_ACTIVE_NPC_RELEVANT_DETAILS =
 		MAX_TRACE_PACKED_RETIREMENT_SOURCES;
+	private static final int MAX_TRACE_ACTIVE_NPC_BOUNDARY_REQUIREMENTS =
+		MAX_TRACE_ACTIVE_NPC_RELEVANT_DETAILS;
 	private static final int MAX_TRACE_TRAVERSAL_STEPS = 16;
 
 	private static final Logger LOGGER = LogManager.getLogger(LayeredCoordinateParityObserver.class);
@@ -1007,6 +1010,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionActiveNpcResidency = null;
 				LayeredPackedRegionActiveNpcContainmentAssessment
 					packedRegionActiveNpcContainment = null;
+				LayeredPackedRegionActiveNpcBoundaryRequirementProjection
+					packedRegionActiveNpcBoundaryRequirements = null;
 				if (capturesTileComparisons(eventType)) {
 					tileParity = Objects.requireNonNull(
 						state.tileParitySource.capture(current),
@@ -1195,6 +1200,11 @@ public final class LayeredCoordinateParityObserver {
 							packedRegionActiveNpcContainment =
 								LayeredPackedRegionActiveNpcContainmentAssessment.assess(
 									packedRegionActiveNpcResidency);
+							packedRegionActiveNpcBoundaryRequirements =
+								LayeredPackedRegionActiveNpcBoundaryRequirementProjection
+									.project(
+										packedRegionActiveNpcResidency,
+										MAX_TRACE_ACTIVE_NPC_BOUNDARY_REQUIREMENTS);
 						}
 					}
 				}
@@ -1213,7 +1223,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionAuthoredReconstructionTopology,
 					packedRegionAuthoredReconstructionDependencySemantics,
 					packedRegionActiveNpcResidency,
-					packedRegionActiveNpcContainment);
+					packedRegionActiveNpcContainment,
+					packedRegionActiveNpcBoundaryRequirements);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -1284,7 +1295,9 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionActiveNpcResidencyObservation
 			packedRegionActiveNpcResidency,
 		LayeredPackedRegionActiveNpcContainmentAssessment
-			packedRegionActiveNpcContainment) {
+			packedRegionActiveNpcContainment,
+		LayeredPackedRegionActiveNpcBoundaryRequirementProjection
+			packedRegionActiveNpcBoundaryRequirements) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -1450,6 +1463,13 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendPackedRegionActiveNpcContainment(
 				out, packedRegionActiveNpcContainment);
+		}
+		out.append(",\"packedRegionActiveNpcBoundaryRequirements\":");
+		if (packedRegionActiveNpcBoundaryRequirements == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionActiveNpcBoundaryRequirements(
+				out, packedRegionActiveNpcBoundaryRequirements);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -2853,6 +2873,96 @@ public final class LayeredCoordinateParityObserver {
 			field(out, "kind", blocker.getKind().name()).append(',');
 			out.append("\"instanceCount\":")
 				.append(blocker.getInstanceCount()).append('}');
+		}
+		out.append("]}");
+	}
+
+	private static void appendPackedRegionActiveNpcBoundaryRequirements(
+		final StringBuilder out,
+		final LayeredPackedRegionActiveNpcBoundaryRequirementProjection
+			projection) {
+		out.append('{');
+		out.append("\"generation\":").append(projection.getGeneration())
+			.append(',');
+		out.append("\"safetyObservedAtTick\":")
+			.append(projection.getSafetyObservedAtTick()).append(',');
+		out.append("\"censusObservedAtTick\":")
+			.append(projection.getCensusObservedAtTick()).append(',');
+		out.append("\"selectedSourceCount\":")
+			.append(projection.getSelectedSourceCount()).append(',');
+		out.append("\"boundaryContainedNow\":")
+			.append(projection.isBoundaryContainedNow()).append(',');
+		out.append("\"selectedOwnerOutsideInstanceCount\":")
+			.append(projection.getSelectedOwnerOutsideInstanceCount()).append(',');
+		out.append("\"externalOwnerInsideInstanceCount\":")
+			.append(projection.getExternalOwnerInsideInstanceCount()).append(',');
+		out.append("\"expandableBoundaryInstanceCount\":")
+			.append(projection.getExpandableBoundaryInstanceCount()).append(',');
+		out.append("\"uniqueRequiredSourceCount\":")
+			.append(projection.getUniqueRequiredSourceCount()).append(',');
+		out.append("\"unresolvedInsideInstanceCount\":")
+			.append(projection.getUnresolvedInsideInstanceCount()).append(',');
+		out.append("\"unresolvedClaimedSelectedOwnerOutsideInstanceCount\":")
+			.append(
+				projection
+					.getUnresolvedClaimedSelectedOwnerOutsideInstanceCount())
+			.append(',');
+		out.append("\"relevantInactiveInstanceCount\":")
+			.append(projection.getRelevantInactiveInstanceCount()).append(',');
+		out.append("\"relevantDuplicateIdentityInstanceCount\":")
+			.append(projection.getRelevantDuplicateIdentityInstanceCount())
+			.append(',');
+		out.append("\"hardBlockingConditionCount\":")
+			.append(projection.getHardBlockingConditionCount()).append(',');
+		out.append("\"hardBlockingEvidenceCount\":")
+			.append(projection.getHardBlockingEvidenceCount()).append(',');
+		out.append("\"freshSafetyAssessmentRequired\":")
+			.append(projection.isFreshSafetyAssessmentRequired()).append(',');
+		out.append("\"freshNpcCensusRequired\":")
+			.append(projection.isFreshNpcCensusRequired()).append(',');
+		out.append("\"selectionMutated\":")
+			.append(projection.isSelectionMutated()).append(',');
+		out.append("\"boundaryClosureProved\":")
+			.append(projection.isBoundaryClosureProved()).append(',');
+		out.append("\"entityRegistry\":")
+			.append(projection.isEntityRegistry()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(projection.isArrivalGate()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(projection.isLifecycleAuthority()).append(',');
+		out.append("\"requirements\":[");
+		boolean firstRequirement = true;
+		for (LayeredPackedRegionActiveNpcBoundaryRequirementProjection
+			.SourceRequirement requirement : projection.getRequirements()) {
+			if (!firstRequirement) { out.append(','); }
+			firstRequirement = false;
+			out.append('{');
+			out.append("\"packedRegionX\":")
+				.append(requirement.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(requirement.getPackedRegionY()).append(',');
+			out.append("\"selectedOwnerCurrentSourceInstanceCount\":")
+				.append(
+					requirement.getSelectedOwnerCurrentSourceInstanceCount())
+				.append(',');
+			out.append("\"externalOwnerAuthoredSourceInstanceCount\":")
+				.append(
+					requirement.getExternalOwnerAuthoredSourceInstanceCount())
+				.append(',');
+			out.append("\"boundaryInstanceCount\":")
+				.append(requirement.getBoundaryInstanceCount()).append(',');
+			out.append("\"reasons\":[");
+			boolean firstReason = true;
+			for (LayeredPackedRegionActiveNpcBoundaryRequirementProjection
+				.ReasonCount reason : requirement.getReasons()) {
+				if (!firstReason) { out.append(','); }
+				firstReason = false;
+				out.append('{');
+				field(out, "reason", reason.getReason().name()).append(',');
+				out.append("\"instanceCount\":")
+					.append(reason.getInstanceCount()).append('}');
+			}
+			out.append("]}");
 		}
 		out.append("]}");
 	}
