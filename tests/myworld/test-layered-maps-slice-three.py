@@ -284,6 +284,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "LayeredPackedRegionAuthoredReconstructionCohortAttribution.java",
                 "LayeredPackedRegionAuthoredReconstructionObservation.java",
                 "LayeredPackedRegionAuthoredReconstructionRecipe.java",
+                "LayeredPackedRegionAuthoredReconstructionTopologyAnalysis.java",
                 "LayeredPackedRegionRetirementReadiness.java",
                 "LayeredPackedRegionRetirementSafetyAssessment.java",
                 "LayeredRegionInterestOwnershipLedger.java",

@@ -1,20 +1,19 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, and 66
-owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, and 65
-automated-validated on the active refinement branch
+owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, 65, and
+67 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 66 schema-v22 evidence identifies NPC
-roaming envelopes as the cause of nearly every expansion-frontier,
-external-support, and cross-source relationship in Slice 64's unexpectedly
-large authored cohorts. The result remains diagnostic evidence only. No recipe
-consumer, load request, registry, or lifecycle authority is authorized, and
-packed Region lookup, eager loading, release, eviction, pathing, packets, and
-persistence remain unchanged
+Current milestone: Slice 67 can now compare a completed forward authored cohort
+with the whole recipe's incoming edges, weak components, and strong components.
+The result remains detached diagnostic evidence only. No recipe consumer, load
+request, registry, or lifecycle authority is authorized, and packed Region
+lookup, eager loading, release, eviction, pathing, packets, and persistence
+remain unchanged
 
 ## Purpose
 
@@ -6666,6 +6665,59 @@ Status: implemented, automated-validated, and owner-validated. The evidence
 explains the large cohort without justifying a weaker roaming envelope. No
 lifecycle authority is authorized.
 
+### Slice 67: Whole-recipe directed topology audit
+
+Objective: determine whether authored sources outside a forward-closed cohort
+can depend on sources inside it, and quantify the broader conservative graph
+before any reconstruction or retirement consumer is considered.
+
+Implemented:
+
+- one bounded detached analysis treats every final-live authored recipe source
+  as a node and every owner-to-authored-requirement relationship as a directed
+  edge, while retaining empty dependency coordinates as explicit external
+  support rather than false authored nodes;
+- the completed forward cohort is checked against the exact same recipe, and
+  any forward edge to omitted authored content refuses the analysis instead of
+  silently weakening the already-proved fixed point;
+- iterative graph traversal reports exact weak and strong components without a
+  recursion-depth dependency. Self relationships remain counted in whole-
+  recipe arithmetic but do not manufacture cross-source connectivity or a
+  cyclic strong component;
+- source evidence records weak/strong component membership and distinguishes
+  forward-cohort, conservative-connected, and incoming-only authored sources;
+- kind evidence attributes authored, cross-source, external-support, direct-
+  incoming, and conservative-connected references by construction and
+  dependency family; and
+- authored and support owner-to-requirement relationships share one explicit
+  refusal budget, so the analysis cannot omit one side of the topology and
+  still return a result.
+
+Safety boundary:
+
+- weak-component membership is deliberately conservative diagnostic evidence,
+  not a proposed unit of loading, teardown, reconstruction, or rollback;
+- the value retains primitive coordinates, counts, enums, and immutable lists
+  only, with no entity, Region, tile, archive, event, registry, callback,
+  transaction, claim, permit, lease, commit, or lifecycle handle; and
+- the analysis neither changes conservative NPC roaming/object envelopes nor
+  makes an incoming edge safe to quiesce.
+
+Automated validation status:
+
+- the executable fixture proves a two-source forward cycle, a third authored
+  source with an incoming-only NPC-roaming edge, two unrelated weak components,
+  one support-only coordinate, exact kind/reference arithmetic, immutable
+  outputs, and full refusal at undersized source and relationship budgets;
+- source guards prove the value has no entity, RegionManager, or lifecycle
+  dependency;
+- the complete layered-map suite passes 159 tests across 66 focused files; and
+- the authoritative bundled-Ant build compiles 762 core and 488 plugin
+  sources.
+
+Status: implemented and automated-validated. No lifecycle authority is
+authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -6937,6 +6989,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 64 by exposing fixed-point cohort expansion and support-only requirements through additive private schema-v21 diagnostics. | Implemented and owner-validated; 6 narrow seeds reached 61 authored sources over 10 rounds, both accepted cohorts closed with 14 explicit support-only requirements, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 65 by attributing exact cohort dependency edges and cross-source placement bridges by construction and dependency kind. | Implemented and automated-validated; all arithmetic is exact and refusal-bounded, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 66 by exposing typed cohort attribution through additive private schema-v22 diagnostics. | Implemented and owner-validated; NPC roaming accounts for 333/334 narrow and 194/195 broad frontier references, every external-support reference, and 1,626/1,636 combined cross-source references; static scenery creates no frontier expansion, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 67 by comparing the completed forward cohort with whole-recipe incoming edges and strong/weak component topology. | Implemented and automated-validated; forward closure is proved distinct from incoming/weak closure, graph membership remains evidence only, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -6946,16 +6999,12 @@ envelopes and all 14 support-only coordinates: their size is not evidence that
 they are accidental, and an authored-closed forward cohort is still not proof
 of a reconstructable or safely retireable unit.
 
-Before any consumer, the safest next prerequisite is a detached whole-recipe
-directed-topology audit. Compare the present forward dependency closure with
-incoming dependencies and a conservative bidirectional/weak component; report
-strongly and weakly connected component sizes and attribute their edges by
-dependency kind. This will show whether an authored source outside a proposed
-cohort can reach into it, and whether roaming creates one giant conservative
-component, without treating graph membership as a load, teardown, or reload
-instruction. Keep this first slice automated-only; expose another private
-schema revision only if the aggregate topology leaves a question that needs a
-real route to answer.
+Complete Slice 67's automated gates, then expose only its bounded source,
+component, and kind aggregates through an additive private observer revision.
+Compare the accepted narrow and broad selections to determine how many
+incoming-only sources exist and whether NPC roaming creates one giant weak
+component. Do not serialize placement payloads or infer that a weak component
+is an operational load, teardown, or reload unit.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
