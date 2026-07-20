@@ -1,19 +1,19 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-59 owner-validated and Slice 60
-private-runtime validated on the active refinement branch
+Status: architecture design complete; Slices 1-59 owner-validated, Slice 60
+private-runtime validated, and Slice 61 automated-validated on the active
+refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 60 derives one inert whole-world reconstruction recipe
-from the aligned authored manifest, dependency inventory, and owner-accepted
-population outcome. Each packed source owns only its final-live authored
-entries in original ordinal order and retains conservative cross-source reach
-as a requirement. No recipe consumer, registry, or lifecycle authority is
-authorized, and packed Region lookup, eager loading, release, eviction,
-pathing, packets, and persistence remain unchanged
+Current milestone: Slice 61 projects the inert final-live recipe onto an exact
+bounded packed-source safety selection and reports whether every dependency
+source is present. Both selection-wide and per-authored-source closure remain
+diagnostic evidence only. No recipe consumer, load request, registry, or
+lifecycle authority is authorized, and packed Region lookup, eager loading,
+release, eviction, pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -6420,6 +6420,58 @@ Automated validation status:
 Status: implemented and private-runtime validated. No lifecycle authority is
 authorized.
 
+### Slice 61: Safety-source reconstruction requirements
+
+Objective: correlate the inert final-live recipe with one exact packed-source
+safety selection and describe its dependency closure without interpreting that
+evidence as a load request or lifecycle permit.
+
+Implemented:
+
+- one bounded immutable observation preserves whole-recipe generation and
+  manifest/supersession/final-live context while projecting recipe arithmetic
+  onto the safety sources in their existing exact order;
+- each safety-source entry reports manifest, superseded, final-live,
+  cross-source, and affected-reference counts plus the unique dependency
+  sources required by its owned recipe entries;
+- the selection-wide union of dependency sources is deterministic and sorted
+  by packed coordinate. Each requirement reports whether it is already in the
+  safety selection, whether it has authored recipe content, how many selected
+  owner sources depend on it, and how many placement envelopes reference it;
+- per-source and selection-wide `dependencyClosed` results mean only that every
+  conservative dependency coordinate appears in the observed selection. Empty
+  recipe sources are closed by definition and cannot confer authority; and
+- selected-source and unique-requirement budgets are separate, explicit, and
+  refusal-based. No details are truncated into a misleading closed result.
+
+Safety boundary:
+
+- the projection retains no entity, Region, tile, archive, event, registry,
+  cache, callback, claim, permit, lease, commit, construction, teardown,
+  loading, or rollback handle;
+- neither a missing requirement nor a closed result changes retirement
+  readiness, source ownership, residency, or the permanent
+  `RELOAD_PATH_UNAVAILABLE` blocker;
+- dependency rectangles are enumerated only into detached packed-coordinate
+  evidence within an explicit bound; and
+- there is no runtime consumer or diagnostic schema in this slice. Additive
+  private trace exposure remains a separately checked step.
+
+Automated validation status:
+
+- a compiled fixture proves exact one-source projection for an NPC whose
+  roaming envelope crosses into a second authored source, deterministic
+  selected/missing requirement details, an anchor-only closed selection,
+  immutable outputs, and refusal of undersized selection or requirement
+  budgets; and
+- source guards prove the value has no entity or RegionManager dependency and
+  describes closure explicitly as evidence rather than a load request; and
+- the authoritative bundled-Ant build compiles 759 core and 488 plugin sources,
+  and the complete layered-map suite passes 138 tests across 60 focused files.
+
+Status: implemented and automated-validated. No lifecycle authority is
+authorized.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -6567,14 +6619,16 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 58 by adding bounded detached exact-identity details for every authored-provenance anomaly through additive v18 diagnostics. | Implemented and owner-validated; all four prior absences classified as deterministic population-time supersessions and registry/lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 59 by preserving complete manifest replay history while projecting deterministic population supersessions into a final-live expectation set and additive v19 diagnostics. | Implemented and owner-validated; the duplicated command trace source now forwards the completed outcome, all 5,797 final-live expectations match, and registry/lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 60 by deriving an inert per-source recipe from final-live authored identities and aligned dependency envelopes without a runtime consumer. | Implemented and private-runtime validated; all 33,515 final-live inputs retain aligned reach and lifecycle authority remains absent |
+| 2026-07-20 | Continue with Slice 61 by projecting final-live recipe counts and unique dependency requirements onto an exact bounded safety-source set. | Implemented and automated-validated; closure remains evidence only and lifecycle authority remains absent |
 
 ## Next Discussion
 
-Continue with Slice 61 as a bounded, read-only projection of recipe counts and
-cross-source requirements onto the exact safety-source set already used by
-private diagnostics. It must report whether the observed source set contains
-every dependency source, but closure evidence must not become a load request or
-lifecycle permit.
+Continue with Slice 62 by emitting the bounded recipe and closure observation
+through additive private v20
+diagnostics, retaining the immutable v11-v19 schema registry and refusing
+overflow rather than truncating requirement sources. Owner validation should
+compare one broad transition with at least one narrower selection and treat
+both closed and open results as descriptive evidence only.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
