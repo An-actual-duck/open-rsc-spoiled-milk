@@ -3,13 +3,17 @@ package com.openrsc.server.database;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.SceneryId;
+import com.openrsc.server.constants.Constants;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory.ConstructionKind;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.WorldNpcEditFiles;
 import com.openrsc.server.util.WorldSceneryEditFiles;
@@ -41,6 +45,10 @@ public final class WorldPopulator {
 
 	private final ArrayList<ItemLoc> itemlocs = new ArrayList<>();
 
+	private volatile LayeredPackedRegionAuthoredConstructionInventory
+		authoredConstructionInventory =
+			LayeredPackedRegionAuthoredConstructionInventory.empty();
+
 	public WorldPopulator(final World world) {
 		this.world = world;
 	}
@@ -50,6 +58,11 @@ public final class WorldPopulator {
 		gameobjlocs.clear();
 		npclocs.clear();
 		itemlocs.clear();
+		LayeredPackedRegionAuthoredConstructionInventory.Builder
+			constructionInventory =
+				LayeredPackedRegionAuthoredConstructionInventory.builder(
+					Math.incrementExact(
+						authoredConstructionInventory.getGeneration()));
 		try {
 			// LOAD OBJECTS //
 			int countOBJ = 0;
@@ -91,6 +104,11 @@ public final class WorldPopulator {
 					object.direction, object.type);
 
 				getWorld().registerGameObject(obj);
+				recordConstruction(
+					constructionInventory,
+					obj.getType() == 0 ? ConstructionKind.SCENERY
+						: ConstructionKind.BOUNDARY,
+					obj.getX(), obj.getY());
 				if (obj.getType() == 0) { // no wall objects allowed
 					getWorld().addSceneryLoc(obj.getLocation(), obj.getID());
 				}
@@ -147,7 +165,11 @@ public final class WorldPopulator {
 					continue;
 				}
 
-				getWorld().registerNpc(new Npc(getWorld(), n));
+				Npc npc = new Npc(getWorld(), n);
+				getWorld().registerNpc(npc);
+				recordConstruction(
+					constructionInventory, ConstructionKind.NPC_SPAWN,
+					n.startX(), n.startY());
 			}
 			LOGGER.info("Loaded {}", box(getWorld().countNpcs()) + " NPC spawns");
 
@@ -179,11 +201,22 @@ public final class WorldPopulator {
 				if (getWorld().getServer().getConfig().WANT_HARVESTING && harvestingSceneryId >= 0) {
 					Point location = Point.location(i.x, i.y);
 					getWorld().registerGameObject(new GameObject(getWorld(), location, harvestingSceneryId, 0, 0));
+					recordConstruction(
+						constructionInventory,
+						ConstructionKind.HARVESTING_SCENERY,
+						i.x, i.y);
 					getWorld().addSceneryLoc(location, harvestingSceneryId);
 					continue;
 				}
 
-				getWorld().registerAuthoredGroundItem(i);
+				GroundItem authoredItem =
+					getWorld().registerAuthoredGroundItem(i);
+				if (authoredItem != null) {
+					recordConstruction(
+						constructionInventory,
+						ConstructionKind.GROUND_ITEM_SPAWN,
+						i.x, i.y);
+				}
 				countGI++;
 			}
 			LOGGER.info("Loaded {}", box(countGI) + " grounditems.");
@@ -194,11 +227,28 @@ public final class WorldPopulator {
 				getWorld().getServer().getDatabase().getItemIDList().add(itemId);
 
 			LOGGER.info("Loaded {}", box(getWorld().getServer().getDatabase().getItemIDList().size()) + " itemIDs.");
+			authoredConstructionInventory = constructionInventory.build();
 
 		} catch (Exception e) {
 			LOGGER.catching(e);
 			SystemUtil.exit(1);
 		}
+	}
+
+	private void recordConstruction(
+		final LayeredPackedRegionAuthoredConstructionInventory.Builder inventory,
+		final ConstructionKind kind,
+		final int packedX,
+		final int packedY) {
+		inventory.record(
+			kind,
+			packedX / Constants.REGION_SIZE,
+			packedY / Constants.REGION_SIZE);
+	}
+
+	public LayeredPackedRegionAuthoredConstructionInventory
+		getAuthoredConstructionInventory() {
+		return authoredConstructionInventory;
 	}
 
 	private int harvestingSceneryForGroundItem(int itemId) {

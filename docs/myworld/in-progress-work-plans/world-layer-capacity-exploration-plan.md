@@ -1,17 +1,18 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-50 implemented and validated on
+Status: architecture design complete; Slices 1-51 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 50 owner-validates real packed-source contents and
-lifecycle blockers through additive opt-in private v15 diagnostics; empty
-sources remain correctly blocked by the absent per-Region reload path, while
-packed Region lookup, eager loading, release, eviction, pathing, packets, and
-persistence remain authoritative and unchanged
+Current milestone: Slice 51 records an immutable count-only inventory of the
+authored scenery, boundaries, NPC spawns, ground-item spawns, and harvesting
+conversions actually constructed by each whole-world population pass; it does
+not retain definitions or entities, claim reconstructibility, or change packed
+Region lookup, eager loading, release, eviction, pathing, packets, or
+persistence
 
 ## Purpose
 
@@ -5546,6 +5547,108 @@ Private owner-validation evidence:
 
 Status: implemented and owner-validated. Actual retirement remains absent.
 
+### Slice 51: Authored packed-source construction inventory
+
+Objective: inventory the authoritative construction and teardown owners found
+after Slice 50, then preserve an exact per-packed-Region count of authored
+placements that the current configured population pass actually constructs.
+This is the smallest useful prerequisite for a later detached reconstruction
+study; it is not a reload path.
+
+Construction and teardown ownership audit:
+
+| Content family | Current construction owner | Current active owners after construction | Why `Region.unload()` alone is unsafe |
+| --- | --- | --- | --- |
+| Terrain and base collision | `WorldLoader.loadWorld()` opens the configured JAG/MEM or ZIP terrain source, loops all four legacy floors and every 48-tile packed cell, writes `TileValue`, then compacts uniform Regions | packed `Region` tile storage; source archives retained only in the whole-world loader | there is no one-Region loader; destroying tile storage also destroys terrain collision and all later dynamic collision mutations |
+| Authored scenery and boundaries | `WorldPopulator` merges configured base/custom/MyWorld placement files, applies removals and membership filters, constructs `GameObject`, then `World.registerGameObject()` derives collision | the packed Region entity collection and mutable tile collision; scenery additionally leaves only a tile-to-base-ID entry in `World.sceneryLocs` | the scenery map omits boundaries, direction, type, replacement state, and teardown; unregistering an object also mutates neighboring collision tiles |
+| Authored NPC spawns | `WorldPopulator` filters `NPCLoc` definitions, constructs an `Npc`, and adds it to both its current packed Region and the World-global NPC list | packed Region, global NPC list, NPC roaming/respawn state, combat references, and scheduled events | an NPC can roam away from its authored start Region; clearing one Region neither removes it from global ownership nor safely resolves respawn/combat/events |
+| Authored ground-item spawns | `WorldPopulator` constructs through `World.registerAuthoredGroundItem()` | packed Region plus `AuthoredGroundItemRegistry` tile identity/generation and possible delayed respawn event | clearing a Region leaves the authored registry and delayed generation callbacks inconsistent; active absence during a respawn delay is valid state |
+| Harvesting conversions | configured authored ground-item definitions are conditionally converted into scenery and registered through the object path | packed Region, dynamic collision as applicable, and `World.sceneryLocs` | the original source family and constructed runtime family differ, so raw placement-file counts cannot describe teardown/rebuild |
+| Dynamic objects, NPCs, and items | plugins, quests, combat, inventory, summoning, minigames, and delayed events construct the same runtime entity classes | packed Regions plus family-specific global lists, attributes, owners, timers, and scripts | objects and NPCs have location definitions even when dynamically created, so `getLoc() != null` is not provenance; only ordinary ground items currently have a reliable `loc == null` distinction |
+| Players | login/persistence constructs and registers Player state | packed Region, World player list, session/login ownership, social/party/clan references, persistence | player absence in a candidate is mandatory but not sufficient; a Region teardown must never own player logout or persistence |
+| Visibility caches | RegionManager builds packed object windows and snapshots | multiple Region-indexed cache/reverse-index maps | object changes invalidate affected caches, but `Region.unload()` does not provide a complete transactional teardown/rollback boundary |
+
+Critical audit findings:
+
+- `Region.unload()` is a whole-world shutdown primitive in practice: it clears
+  its four entity collections and nulls tile storage but does not unregister
+  NPCs, objects, items, players, scheduled events, authored item generations,
+  global NPC ownership, scenery base IDs, or cross-Region collision;
+- `World.unload()` supplies the surrounding whole-world sequencing by saving
+  players, stopping other systems, unloading all Regions, resetting authored
+  item generations, and clearing global collections. That sequence cannot be
+  reduced to a call on one Region;
+- the filtered `gameobjlocs`, `npclocs`, and `itemlocs` arrays survive inside
+  the startup `WorldPopulator`, but they are mutable definition lists rather
+  than a versioned reconstruction manifest, and their source count can differ
+  from constructed content after filters and harvesting conversion;
+- object and NPC constructors do not encode authored-versus-dynamic
+  provenance. Instance `GameObjectLoc`/`NPCLoc` presence therefore cannot be
+  used to declare current content reconstructible;
+- NPC authored ownership is based on its spawn definition while active Region
+  ownership follows its roaming position. Any later comparison must keep
+  "constructed from this source" separate from "currently in this source";
+  and
+- safe reconstruction ultimately needs a detached definition manifest,
+  event/dynamic-state policy, collision rebuild, global-registry reconciliation,
+  atomic recheck/commit token, failure rollback, and cache invalidation. Counts
+  alone intentionally satisfy none of those requirements.
+
+Implemented:
+
+- immutable `LayeredPackedRegionAuthoredConstructionInventory` values with a
+  monotonic whole-world population generation and deterministic packed
+  coordinate ordering;
+- exact count families for scenery, boundaries, NPC spawns, authored
+  ground-item spawns, and ground-item-to-harvesting-scenery conversions;
+- recording only after the configured membership/event/removal filters and the
+  corresponding runtime construction/registration step have succeeded;
+- a startup-only bounded builder that rejects negative coordinates, null
+  kinds, non-positive generations, more than 8192 packed sources, arithmetic
+  overflow, and reuse after completion; and
+- one volatile immutable snapshot published only after the full population
+  pass completes. Before that point callers see an explicit generation-zero
+  empty inventory rather than a partially built value.
+
+Safety boundary:
+
+- the inventory retains counts only: no placement definition, Entity, Region,
+  TileValue, collection, archive, event, callback, registry, cache, claim,
+  permit, lease, or commit handle crosses the boundary;
+- it reports authored construction origins, not current active content,
+  teardown ownership, recoverability, or reconstructibility;
+- it is not consulted by RegionManager, PathValidation, diagnostics, gameplay,
+  population filtering, registration, collision, persistence, or clients; and
+- `LAYERED_PACKED_REGION_RELOAD_SUPPORTED` remains `false`; no Region can be
+  unloaded, removed, evicted, or reconstructed through this slice.
+
+Automated validation evidence:
+
+- the compiled fixture proves exact family/source totals, deterministic source
+  ordering, lookup, generation-zero emptiness, immutability, invalid-input
+  refusal, and completed-builder refusal;
+- source guards prove every supported configured construction path is recorded
+  after runtime registration, while RegionManager and the private observer do
+  not receive the inventory;
+- the complete layered-map suite passes 114 tests across 50 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 750 core and 488 plugin sources
+  successfully; and
+- two consecutive normalizations produce identical source
+  `0d1dd6e6db756508498f91518493377f46dd59464d41e2c8bb63e8a7546278f8`,
+  inventory
+  `eedf7a507bc46f431caa5a8ec9fc48de1c36285d1b51062e8e8447826f817783`,
+  classification
+  `c19b983cf1691e3ab608596fce01db574d04e642fc4e2dea2f1d980c6274f70f`,
+  and occurrence
+  `3e9bf5f961cb3b7721eeccd0ad8bea3d2d3b192facd229c15e98c7ebdaf46e3b`
+  fingerprints, confirming this runtime-only count inventory does not alter
+  normalized map inputs or outputs.
+
+Status: implemented and validated. Diagnostic exposure and any detached
+definition manifest remain separate later slices; actual retirement remains
+absent.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -5682,17 +5785,22 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 48 by emitting bounded packed-source readiness from the existing atomic decision batch through additive private v14 diagnostics without lifecycle authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 49 by assessing packed-source contents and quiescence read-only while explicitly blocking lifecycle readiness until a per-Region reload path exists. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 50 by emitting bounded packed-source contents and blocker evidence through additive private v15 diagnostics without lifecycle authority. | Implemented and owner-validated |
+| 2026-07-19 | Continue with Slice 51 by auditing construction/teardown owners and recording a bounded immutable count-only inventory of authored content actually constructed per packed Region. | Implemented and validated |
 
 ## Next Discussion
 
-Use Slice 50's measured content distribution to define the smallest safe
-reload/recovery design study. The next slice should inventory the authoritative
-construction and teardown owners for terrain tiles, static scenery and
-boundaries, NPC spawns, static ground-item spawns, and dynamic entities before
-specifying a detached reconstruction plan. Any later commit token or lifecycle
-consumer must remain unable to alter the authoritative packed Region registry
-until ownership, residency, players, NPCs, objects, ground items, collision,
-reload, and recovery preconditions can be proved together.
+Use Slice 51's audited owners and exact authored-construction origins to compare
+current active source contents with their authored construction families in
+bounded private diagnostics. The next slice may expose count-only inventory
+generation and same-source family counts beside v15 safety evidence, but must
+label them as origin counts rather than reconstructible entities. A subsequent
+detached definition manifest must separately address duplicates/replacements,
+NPC roaming, delayed respawn state, dynamic provenance, collision derivation,
+global registries, event ownership, and rollback before any reload design.
+Any later commit token or lifecycle consumer must remain unable to alter the
+authoritative packed Region registry until ownership, residency, players,
+NPCs, objects, ground items, collision, reload, and recovery preconditions can
+be proved together.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.

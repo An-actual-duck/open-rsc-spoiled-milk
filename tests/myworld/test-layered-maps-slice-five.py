@@ -216,6 +216,7 @@ class LayeredMapsSliceFiveTest(unittest.TestCase):
             [
                 "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java",
                 "server/src/com/openrsc/server/database/GameDatabase.java",
+                "server/src/com/openrsc/server/database/WorldPopulator.java",
                 "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
                 "server/src/com/openrsc/server/external/EntityHandler.java",
                 "server/src/com/openrsc/server/external/GameObjectLoc.java",

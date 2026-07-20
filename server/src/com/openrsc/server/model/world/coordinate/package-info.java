@@ -57,6 +57,11 @@
  * conservative tick-based retirement cooldown without authorizing lifecycle
  * changes. Slice 43 emits bounded transition and recent-release cooldown
  * evidence through private diagnostics only. Packed storage and existing
- * runtime decisions remain authoritative.</p>
+ * runtime decisions remain authoritative. Slices 44-50 validate and expose
+ * bounded retirement decisions, packed-source readiness, and read-only content
+ * safety while retaining the absent reload boundary. Slice 51 permits the
+ * whole-world populator to freeze count-only authored construction origins per
+ * packed source without exposing placement definitions or adopting Region
+ * teardown/reconstruction.</p>
  */
 package com.openrsc.server.model.world.coordinate;

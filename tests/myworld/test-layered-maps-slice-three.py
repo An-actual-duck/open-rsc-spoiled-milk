@@ -236,6 +236,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
             [
                 "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java",
                 "server/src/com/openrsc/server/database/GameDatabase.java",
+                "server/src/com/openrsc/server/database/WorldPopulator.java",
                 "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
                 "server/src/com/openrsc/server/external/EntityHandler.java",
                 "server/src/com/openrsc/server/external/GameObjectLoc.java",
@@ -268,6 +269,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "LegacyTerrainSectorAdapter.java",
                 "LayeredCoordinateParitySnapshot.java",
                 "LayeredLocationMirror.java",
+                "LayeredPackedRegionAuthoredConstructionInventory.java",
                 "LayeredPackedRegionRetirementReadiness.java",
                 "LayeredPackedRegionRetirementSafetyAssessment.java",
                 "LayeredRegionInterestOwnershipLedger.java",
