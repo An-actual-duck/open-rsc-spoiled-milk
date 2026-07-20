@@ -15,6 +15,8 @@ import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory.ConstructionKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory.DependencyKind;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.WorldNpcEditFiles;
 import com.openrsc.server.util.WorldSceneryEditFiles;
@@ -52,6 +54,9 @@ public final class WorldPopulator {
 	private volatile LayeredPackedRegionAuthoredPlacementManifest
 		authoredPlacementManifest =
 			LayeredPackedRegionAuthoredPlacementManifest.empty();
+	private volatile LayeredPackedRegionAuthoredPlacementDependencyInventory
+		authoredPlacementDependencies =
+			LayeredPackedRegionAuthoredPlacementDependencyInventory.empty();
 
 	public WorldPopulator(final World world) {
 		this.world = world;
@@ -71,6 +76,10 @@ public final class WorldPopulator {
 		LayeredPackedRegionAuthoredPlacementManifest.Builder
 			placementManifest =
 				LayeredPackedRegionAuthoredPlacementManifest.builder(
+					constructionGeneration);
+		LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			placementDependencies =
+				LayeredPackedRegionAuthoredPlacementDependencyInventory.builder(
 					constructionGeneration);
 		try {
 			// LOAD OBJECTS //
@@ -119,6 +128,7 @@ public final class WorldPopulator {
 						: ConstructionKind.BOUNDARY,
 					obj.getX(), obj.getY());
 				recordObjectPlacement(placementManifest, obj);
+				recordObjectDependency(placementDependencies, obj);
 				if (obj.getType() == 0) { // no wall objects allowed
 					getWorld().addSceneryLoc(obj.getLocation(), obj.getID());
 				}
@@ -181,6 +191,7 @@ public final class WorldPopulator {
 					constructionInventory, ConstructionKind.NPC_SPAWN,
 					n.startX(), n.startY());
 				recordNpcPlacement(placementManifest, n);
+				recordNpcDependency(placementDependencies, n);
 			}
 			LOGGER.info("Loaded {}", box(getWorld().countNpcs()) + " NPC spawns");
 
@@ -218,8 +229,11 @@ public final class WorldPopulator {
 						constructionInventory,
 						ConstructionKind.HARVESTING_SCENERY,
 						i.x, i.y);
-					recordHarvestingPlacement(
+				recordHarvestingPlacement(
 						placementManifest, i, harvestingScenery);
+					recordObjectDependency(
+						placementDependencies, harvestingScenery,
+						ConstructionKind.HARVESTING_SCENERY);
 					getWorld().addSceneryLoc(location, harvestingSceneryId);
 					continue;
 				}
@@ -232,6 +246,7 @@ public final class WorldPopulator {
 						ConstructionKind.GROUND_ITEM_SPAWN,
 						i.x, i.y);
 					recordGroundItemPlacement(placementManifest, i);
+					recordGroundItemDependency(placementDependencies, i);
 				}
 				countGI++;
 			}
@@ -247,10 +262,38 @@ public final class WorldPopulator {
 				constructionInventory.build();
 			LayeredPackedRegionAuthoredPlacementManifest completedManifest =
 				placementManifest.build();
+			LayeredPackedRegionAuthoredPlacementDependencyInventory
+				completedDependencies = placementDependencies.build();
 			if (!completedManifest.isCountEquivalentTo(completedInventory)) {
 				throw new IllegalStateException(
 					"Authored placement manifest does not match construction inventory");
 			}
+			if (!completedDependencies.isAlignedWith(completedManifest)) {
+				throw new IllegalStateException(
+					"Authored placement dependencies do not align with manifest");
+			}
+			LOGGER.info(
+				"Indexed {} authored placement dependency envelopes; "
+					+ "{} cross packed-source boundaries ({} source references, "
+					+ "maximum {} per placement). Object footprints: {} total, "
+					+ "{} cross-source, {} references, maximum {}. NPC roaming: "
+					+ "{} total, {} cross-source, {} references, maximum {}. "
+					+ "Anchor-only: {} total, {} references.",
+				box(completedDependencies.getDependencyCount()),
+				box(completedDependencies.getCrossSourceDependencyCount()),
+				box(completedDependencies.getAffectedSourceReferenceCount()),
+				box(completedDependencies.getMaximumAffectedSourceCount()),
+				box(completedDependencies.getObjectFootprintDependencyCount()),
+				box(completedDependencies.getCrossSourceObjectFootprintCount()),
+				box(completedDependencies.getObjectFootprintSourceReferenceCount()),
+				box(completedDependencies.getMaximumObjectFootprintSourceCount()),
+				box(completedDependencies.getNpcRoamingDependencyCount()),
+				box(completedDependencies.getCrossSourceNpcRoamingCount()),
+				box(completedDependencies.getNpcRoamingSourceReferenceCount()),
+				box(completedDependencies.getMaximumNpcRoamingSourceCount()),
+				box(completedDependencies.getAnchorOnlyDependencyCount()),
+				box(completedDependencies.getAnchorOnlySourceReferenceCount()));
+			authoredPlacementDependencies = completedDependencies;
 			authoredPlacementManifest = completedManifest;
 			authoredConstructionInventory = completedInventory;
 
@@ -326,6 +369,91 @@ public final class WorldPopulator {
 			source.getRespawnTime(), source.getNoted());
 	}
 
+	private void recordObjectDependency(
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			dependencies,
+		final GameObject object) {
+		recordObjectDependency(
+			dependencies, object,
+			object.getType() == 0 ? ConstructionKind.SCENERY
+				: ConstructionKind.BOUNDARY);
+	}
+
+	private void recordObjectDependency(
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			dependencies,
+		final GameObject object,
+		final ConstructionKind kind) {
+		Point[] footprint = object.getObjectBoundary();
+		int minimumX = Math.min(
+			object.getX(), Math.min(
+				footprint[0].getX(), footprint[1].getX()));
+		int maximumX = Math.max(
+			object.getX(), Math.max(
+				footprint[0].getX(), footprint[1].getX()));
+		int minimumY = Math.min(
+			object.getY(), Math.min(
+				footprint[0].getY(), footprint[1].getY()));
+		int maximumY = Math.max(
+			object.getY(), Math.max(
+				footprint[0].getY(), footprint[1].getY()));
+		recordPlacementDependency(
+			dependencies, kind, DependencyKind.OBJECT_FOOTPRINT,
+			object.getX(), object.getY(),
+			minimumX, maximumX, minimumY, maximumY);
+	}
+
+	private void recordNpcDependency(
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			dependencies,
+		final NPCLoc loc) {
+		int minimumX = Math.min(
+			loc.startX(), Math.min(loc.minX(), loc.maxX()));
+		int maximumX = Math.max(
+			loc.startX(), Math.max(loc.minX(), loc.maxX()));
+		int minimumY = Math.min(
+			loc.startY(), Math.min(loc.minY(), loc.maxY()));
+		int maximumY = Math.max(
+			loc.startY(), Math.max(loc.minY(), loc.maxY()));
+		recordPlacementDependency(
+			dependencies, ConstructionKind.NPC_SPAWN,
+			DependencyKind.NPC_ROAMING, loc.startX(), loc.startY(),
+			minimumX, maximumX, minimumY, maximumY);
+	}
+
+	private void recordGroundItemDependency(
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			dependencies,
+		final ItemLoc loc) {
+		recordPlacementDependency(
+			dependencies, ConstructionKind.GROUND_ITEM_SPAWN,
+			DependencyKind.ANCHOR_ONLY, loc.getX(), loc.getY(),
+			loc.getX(), loc.getX(), loc.getY(), loc.getY());
+	}
+
+	private void recordPlacementDependency(
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			dependencies,
+		final ConstructionKind kind,
+		final DependencyKind dependencyKind,
+		final int sourcePackedX,
+		final int sourcePackedY,
+		final int minimumPackedX,
+		final int maximumPackedX,
+		final int minimumPackedY,
+		final int maximumPackedY) {
+		dependencies.record(
+			kind, dependencyKind,
+			sourcePackedX / Constants.REGION_SIZE,
+			sourcePackedY / Constants.REGION_SIZE,
+			minimumPackedX, maximumPackedX,
+			minimumPackedY, maximumPackedY,
+			minimumPackedX / Constants.REGION_SIZE,
+			maximumPackedX / Constants.REGION_SIZE,
+			minimumPackedY / Constants.REGION_SIZE,
+			maximumPackedY / Constants.REGION_SIZE);
+	}
+
 	public LayeredPackedRegionAuthoredConstructionInventory
 		getAuthoredConstructionInventory() {
 		return authoredConstructionInventory;
@@ -334,6 +462,11 @@ public final class WorldPopulator {
 	public LayeredPackedRegionAuthoredPlacementManifest
 		getAuthoredPlacementManifest() {
 		return authoredPlacementManifest;
+	}
+
+	public LayeredPackedRegionAuthoredPlacementDependencyInventory
+		getAuthoredPlacementDependencies() {
+		return authoredPlacementDependencies;
 	}
 
 	private int harvestingSceneryForGroundItem(int itemId) {

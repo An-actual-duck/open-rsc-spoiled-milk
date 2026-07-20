@@ -1,18 +1,18 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-53 implemented and validated on
+Status: architecture design complete; Slices 1-54 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 53 preserves every successful configured construction
-as a deterministic, detached authored-placement definition after Slice 52
-proved that active Region contents cannot supply spawn provenance. It remains
-an inert input manifest rather than an executable reconstruction manifest and
-does not change packed Region lookup, eager loading, release, eviction,
-pathing, packets, or persistence
+Current milestone: Slice 54 aligns every Slice 53 placement identity with a
+detached conservative packed-source reach envelope. Private startup evidence
+shows only 12 object footprints but 1,007 NPC roaming bounds cross an anchor
+source, confirming that mobile NPC ownership must not become hard terrain
+retention. The inventory remains inert and does not change packed Region
+lookup, eager loading, release, eviction, pathing, packets, or persistence
 
 ## Purpose
 
@@ -5851,6 +5851,91 @@ Automated and private-runtime validation evidence:
 Status: implemented and runtime-validated. No owner route is required because
 the manifest is inert and has no client-visible or lifecycle consumer.
 
+### Slice 54: Authored placement dependency envelopes
+
+Objective: identify where a successful authored placement can reach beyond its
+anchor packed source before any reload design assumes one-source ownership.
+The result is a conservative dependency inventory, not a decision to retain all
+reached Regions together.
+
+Implemented:
+
+- immutable
+  `LayeredPackedRegionAuthoredPlacementDependencyInventory` generations with
+  the exact same source coordinates, per-source ordering, construction family,
+  and one-based ordinal identities as Slice 53;
+- conservative object-footprint envelopes from the successfully constructed
+  object's existing boundary calculation, always including its actual anchor;
+- NPC roaming envelopes that normalize definition min/max ordering and always
+  include the authored start tile, regardless of malformed or asymmetric
+  source bounds;
+- explicit anchor-only ground-item envelopes, while harvesting conversions
+  retain object-footprint semantics;
+- checked tile bounds, packed-source bounds, source containment, affected
+  source counts, cross-source flags, deterministic source ordering, immutable
+  lists, binary lookup, and the same source/placement budgets as Slice 53;
+- aggregate counts and maxima separated into object-footprint, NPC-roaming, and
+  anchor-only families; and
+- a mandatory generation/source/ordinal/family alignment gate against the
+  completed Slice 53 manifest before the dependency inventory is published.
+
+Private configured-world findings:
+
+- all 33,532 manifest placements have aligned dependency envelopes producing
+  35,305 packed-source references;
+- 28,875 object-footprint placements produce 28,887 references. Only 12 cross
+  a packed-source boundary and none reaches more than two sources;
+- 3,775 NPC spawn definitions produce 5,536 roaming references. 1,007 cross a
+  packed-source boundary and the widest definition spans 64 sources;
+- all 882 ordinary ground-item definitions are anchor-only and produce exactly
+  882 references; and
+- therefore object reconstruction has a small, explicit neighbor-coupling
+  problem, while NPCs require stable spawn identity and mobile runtime
+  ownership. Treating every theoretical NPC roaming source as a hard terrain
+  dependency would create excessive retention and is rejected.
+
+Safety boundary:
+
+- dependency recording observes only successful population values and copies
+  integer bounds, kinds, ordinals, and booleans;
+- no Entity, Region, tile, archive, definition object, event, registry, cache,
+  callback, claim, permit, lease, or commit handle survives the builder;
+- an envelope is conservative reach evidence, not proof that a placement is
+  active anywhere inside it and not authorization to acquire or retain every
+  source in the rectangle;
+- RegionManager, diagnostics, collision, pathing, plugins, persistence, and
+  clients cannot read or act on the inventory; and
+- `LAYERED_PACKED_REGION_RELOAD_SUPPORTED` remains false. No source can be
+  loaded, unloaded, removed, evicted, reconstructed, or rolled back here.
+
+Automated and private-runtime validation evidence:
+
+- the compiled fixture proves exact aggregate/family counts, cross-source
+  detection, stable ordinals, deterministic ordering, lookup, immutable lists,
+  manifest alignment and mismatch refusal, bounds/family validation,
+  generation-zero emptiness, and completed-builder refusal;
+- source guards prove object, NPC, item, and harvesting envelopes are recorded
+  in the same successful order as their manifest definitions, while
+  RegionManager and the observer cannot access the inventory;
+- the complete layered-map suite passes 120 tests across 53 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant private launch compiles 753 core and 488
+  plugin sources, passes the full 33,532-entry alignment gate, logs the family
+  findings above, and reaches the online state normally; and
+- two consecutive normalizations produce identical source
+  `679b03b3267ea5e209cc2b32a4538d13f84c9a0a42b34c5d9fa29f504f10c230`,
+  inventory
+  `b84fac3dae4e1391305e6e1baef476e6bc2384cc1ff45d49aba58132fc9b34e9`,
+  classification
+  `169aaac82f0ab853d1342ae37c575145dda8b0dfce48b5cea01240c2ca5d2c4d`,
+  and occurrence
+  `d8e52da68e1f019347eb2198ceef16285d09c9d1b20b88bf990af174b1a7b868`
+  fingerprints, with terrain, placement, transition, and unresolved-coordinate
+  totals unchanged.
+
+Status: implemented and runtime-validated. No owner route is required because
+the inventory is inert and has no client-visible or lifecycle consumer.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -5991,17 +6076,17 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 52 by correlating exact retirement-safety sources with immutable authored construction-origin counts through additive private v16 diagnostics. | Implemented and owner-validated |
 | 2026-07-19 | Use Slice 52's active-versus-origin evidence to select a detached immutable authored-placement manifest as the next prerequisite, keeping spawn origin separate from active state. | Confirmed for Slice 53; lifecycle adoption remains gated |
 | 2026-07-19 | Continue with Slice 53 by retaining exact detached construction inputs, duplicate-safe source ordinals, and harvesting conversion identity after successful population. | Implemented and runtime-validated; lifecycle adoption remains gated |
+| 2026-07-19 | Continue with Slice 54 by aligning every authored placement with a detached conservative object, NPC-roaming, or anchor-only packed-source reach envelope. | Implemented and runtime-validated; lifecycle adoption remains gated |
 
 ## Next Discussion
 
-Use Slice 53's definition evidence to audit the complete cross-source effect
-surface before designing a reconstruction executor. The next bounded slice
-should derive detached packed-source dependencies for object/collision
-footprints and NPC roaming bounds while preserving placement identity and
-without reading or changing active lifecycle state. Later slices must still
-address terrain replay, replacements, delayed respawn state, dynamic
-provenance, collision derivation, global registries, event ownership, and
-rollback before any reload design.
+Use Slice 54's measured split to design stable authored runtime provenance
+without coupling mobile NPC roaming bounds to terrain residency. The next
+bounded slice should define an immutable placement identity value and audit how
+that identity can survive NPC movement/respawn, authored item respawn, and
+object removal/replacement before attaching it to live entities. Later slices
+must still address terrain replay, collision derivation, global registries,
+event ownership, transactional teardown, and rollback before any reload design.
 Any later commit token or lifecycle consumer must remain unable to alter the
 authoritative packed Region registry until ownership, residency, players,
 NPCs, objects, ground items, collision, reload, and recovery preconditions can
