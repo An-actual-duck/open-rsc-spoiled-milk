@@ -15,6 +15,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
@@ -48,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v27";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v28";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -81,6 +82,10 @@ public final class LayeredCoordinateParityObserver {
 		MAX_TRACE_PACKED_RETIREMENT_SOURCES;
 	private static final int MAX_TRACE_ACTIVE_NPC_BOUNDARY_REQUIREMENTS =
 		MAX_TRACE_ACTIVE_NPC_RELEVANT_DETAILS;
+	private static final int MAX_TRACE_RETIREMENT_REFINEMENT_CANDIDATES =
+		MAX_TRACE_PACKED_RETIREMENT_SOURCES;
+	private static final int MAX_TRACE_RETIREMENT_REFINEMENT_SUPPORT =
+		MAX_TRACE_PACKED_RETIREMENT_SOURCES;
 	private static final int MAX_TRACE_TRAVERSAL_STEPS = 16;
 
 	private static final Logger LOGGER = LogManager.getLogger(LayeredCoordinateParityObserver.class);
@@ -1012,6 +1017,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionActiveNpcContainment = null;
 				LayeredPackedRegionActiveNpcBoundaryRequirementProjection
 					packedRegionActiveNpcBoundaryRequirements = null;
+				LayeredPackedRegionRetirementRefinementProposal
+					packedRegionRetirementRefinement = null;
 				if (capturesTileComparisons(eventType)) {
 					tileParity = Objects.requireNonNull(
 						state.tileParitySource.capture(current),
@@ -1205,6 +1212,16 @@ public final class LayeredCoordinateParityObserver {
 									.project(
 										packedRegionActiveNpcResidency,
 										MAX_TRACE_ACTIVE_NPC_BOUNDARY_REQUIREMENTS);
+							if (packedRegionAuthoredReconstructionCohort != null) {
+								packedRegionRetirementRefinement =
+									LayeredPackedRegionRetirementRefinementProposal
+										.propose(
+											packedRegionRetirementSafety,
+											packedRegionAuthoredReconstructionCohort,
+											packedRegionActiveNpcBoundaryRequirements,
+											MAX_TRACE_RETIREMENT_REFINEMENT_CANDIDATES,
+											MAX_TRACE_RETIREMENT_REFINEMENT_SUPPORT);
+							}
 						}
 					}
 				}
@@ -1224,7 +1241,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionAuthoredReconstructionDependencySemantics,
 					packedRegionActiveNpcResidency,
 					packedRegionActiveNpcContainment,
-					packedRegionActiveNpcBoundaryRequirements);
+					packedRegionActiveNpcBoundaryRequirements,
+					packedRegionRetirementRefinement);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -1297,7 +1315,9 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionActiveNpcContainmentAssessment
 			packedRegionActiveNpcContainment,
 		LayeredPackedRegionActiveNpcBoundaryRequirementProjection
-			packedRegionActiveNpcBoundaryRequirements) {
+			packedRegionActiveNpcBoundaryRequirements,
+		LayeredPackedRegionRetirementRefinementProposal
+			packedRegionRetirementRefinement) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -1470,6 +1490,13 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendPackedRegionActiveNpcBoundaryRequirements(
 				out, packedRegionActiveNpcBoundaryRequirements);
+		}
+		out.append(",\"packedRegionRetirementRefinement\":");
+		if (packedRegionRetirementRefinement == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionRetirementRefinement(
+				out, packedRegionRetirementRefinement);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -2963,6 +2990,134 @@ public final class LayeredCoordinateParityObserver {
 					.append(reason.getInstanceCount()).append('}');
 			}
 			out.append("]}");
+		}
+		out.append("]}");
+	}
+
+	private static void appendPackedRegionRetirementRefinement(
+		final StringBuilder out,
+		final LayeredPackedRegionRetirementRefinementProposal proposal) {
+		out.append('{');
+		out.append("\"generation\":").append(proposal.getGeneration())
+			.append(',');
+		out.append("\"safetyObservedAtTick\":")
+			.append(proposal.getSafetyObservedAtTick()).append(',');
+		out.append("\"censusObservedAtTick\":")
+			.append(proposal.getCensusObservedAtTick()).append(',');
+		out.append("\"originalSafetySourceCount\":")
+			.append(proposal.getOriginalSafetySourceCount()).append(',');
+		out.append("\"authoredCohortSourceCount\":")
+			.append(proposal.getAuthoredCohortSourceCount()).append(',');
+		out.append("\"expandedAuthoredSourceCount\":")
+			.append(proposal.getExpandedAuthoredSourceCount()).append(',');
+		out.append("\"activeNpcRequirementSourceCount\":")
+			.append(proposal.getActiveNpcRequirementSourceCount()).append(',');
+		out.append("\"candidateSourceCount\":")
+			.append(proposal.getCandidateSourceCount()).append(',');
+		out.append("\"addedCandidateSourceCount\":")
+			.append(proposal.getAddedCandidateSourceCount()).append(',');
+		out.append("\"activeNpcAndAuthoredOverlapSourceCount\":")
+			.append(proposal.getActiveNpcAndAuthoredOverlapSourceCount())
+			.append(',');
+		out.append("\"externalSupportRequirementSourceCount\":")
+			.append(proposal.getExternalSupportRequirementSourceCount())
+			.append(',');
+		out.append("\"supportPromotedToCandidateSourceCount\":")
+			.append(proposal.getSupportPromotedToCandidateSourceCount())
+			.append(',');
+		out.append("\"hardBlockingConditionCount\":")
+			.append(proposal.getHardBlockingConditionCount()).append(',');
+		out.append("\"hardBlockingEvidenceCount\":")
+			.append(proposal.getHardBlockingEvidenceCount()).append(',');
+		out.append("\"boundaryContainedAtInput\":")
+			.append(proposal.isBoundaryContainedAtInput()).append(',');
+		out.append("\"nonExpandableHardBlockers\":")
+			.append(proposal.hasNonExpandableHardBlockers()).append(',');
+		out.append("\"freshSafetyAssessmentRequired\":")
+			.append(proposal.isFreshSafetyAssessmentRequired()).append(',');
+		out.append("\"freshNpcCensusRequired\":")
+			.append(proposal.isFreshNpcCensusRequired()).append(',');
+		out.append("\"reassessmentRequired\":")
+			.append(proposal.isReassessmentRequired()).append(',');
+		out.append("\"candidateSelectionMutated\":")
+			.append(proposal.isCandidateSelectionMutated()).append(',');
+		out.append("\"fixedPointClosureProved\":")
+			.append(proposal.isFixedPointClosureProved()).append(',');
+		out.append("\"loadRequest\":")
+			.append(proposal.isLoadRequest()).append(',');
+		out.append("\"entityRegistry\":")
+			.append(proposal.isEntityRegistry()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(proposal.isArrivalGate()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(proposal.isLifecycleAuthority()).append(',');
+		out.append("\"candidates\":[");
+		boolean first = true;
+		for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+			candidate : proposal.getCandidates()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			out.append("\"packedRegionX\":")
+				.append(candidate.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(candidate.getPackedRegionY()).append(',');
+			out.append("\"originalSafetySource\":")
+				.append(candidate.isOriginalSafetySource()).append(',');
+			out.append("\"authoredCohortSource\":")
+				.append(candidate.isAuthoredCohortSource()).append(',');
+			out.append("\"authoredExpansionRound\":");
+			if (candidate.getAuthoredExpansionRound() == null) {
+				out.append("null");
+			} else {
+				out.append(candidate.getAuthoredExpansionRound().intValue());
+			}
+			out.append(',');
+			out.append("\"externalStaticSupportSource\":")
+				.append(candidate.isExternalStaticSupportSource()).append(',');
+			out.append("\"staticSupportOwnerSourceCount\":")
+				.append(candidate.getStaticSupportOwnerSourceCount()).append(',');
+			out.append("\"staticSupportPlacementReferenceCount\":")
+				.append(candidate.getStaticSupportPlacementReferenceCount())
+				.append(',');
+			out.append("\"selectedOwnerCurrentSourceInstanceCount\":")
+				.append(
+					candidate.getSelectedOwnerCurrentSourceInstanceCount())
+				.append(',');
+			out.append("\"externalOwnerAuthoredSourceInstanceCount\":")
+				.append(
+					candidate.getExternalOwnerAuthoredSourceInstanceCount())
+				.append(',');
+			out.append("\"activeNpcBoundaryInstanceCount\":")
+				.append(candidate.getActiveNpcBoundaryInstanceCount()).append(',');
+			out.append("\"activeNpcBoundarySource\":")
+				.append(candidate.isActiveNpcBoundarySource()).append(',');
+			out.append("\"addedBeyondOriginalSafety\":")
+				.append(candidate.isAddedBeyondOriginalSafety()).append(',');
+			out.append("\"freshSafetyEvidenceRequired\":")
+				.append(candidate.isFreshSafetyEvidenceRequired()).append(',');
+			out.append("\"freshNpcCensusRequired\":")
+				.append(candidate.isFreshNpcCensusRequired()).append('}');
+		}
+		out.append("],\"externalSupportRequirements\":[");
+		first = true;
+		for (LayeredPackedRegionRetirementRefinementProposal.SupportRequirement
+			support : proposal.getExternalSupportRequirements()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			out.append("\"packedRegionX\":")
+				.append(support.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(support.getPackedRegionY()).append(',');
+			out.append("\"ownerSourceCount\":")
+				.append(support.getOwnerSourceCount()).append(',');
+			out.append("\"placementReferenceCount\":")
+				.append(support.getPlacementReferenceCount()).append(',');
+			out.append("\"candidateSource\":")
+				.append(support.isCandidateSource()).append(',');
+			out.append("\"externalStaticSupportRequired\":")
+				.append(support.isExternalStaticSupportRequired()).append('}');
 		}
 		out.append("]}");
 	}

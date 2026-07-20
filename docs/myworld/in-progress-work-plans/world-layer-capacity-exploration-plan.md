@@ -3,20 +3,20 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 and 74 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, and 77 automated-validated on the active refinement branch
+76, 77, and 78 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 77 combines one exact retirement-safety
-source set, its fixed-point authored cohort, active-NPC boundary requirements,
-and non-expandable hard blockers into a bounded provenance-tagged candidate
-union for later reassessment. Every added coordinate explicitly lacks fresh
-safety and census evidence; static support remains distinct. No selection
-mutation, source load, entity registry, arrival gate, retention decision, or
-lifecycle authority is authorized, and packed Region lookup, eager loading,
-release, eviction, pathing, packets, and persistence remain unchanged
+Current milestone: automated Slice 78 exposes Slice 77's exact refinement
+proposal through additive private schema-v28 diagnostics derived from the same
+event's safety, authored cohort, and active-NPC values. Every seed, added
+candidate, overlap, support coordinate, reason count, and hard blocker remains
+machine-readable. No second snapshot, selection mutation, source load, entity
+registry, arrival gate, retention decision, or lifecycle authority is
+authorized, and packed Region lookup, eager loading, release, eviction,
+pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -7413,6 +7413,67 @@ Safety boundary:
 Status: implemented and automated-validated. Runtime diagnostic exposure and
 all lifecycle adoption remain deliberately absent.
 
+### Slice 78: Retirement refinement diagnostics
+
+Objective: expose Slice 77's bounded candidate union through additive private
+diagnostics, deriving it from the same event safety, authored cohort, and
+active-NPC boundary values so runtime evidence can be reconciled without a
+second snapshot or lifecycle consumer.
+
+Implemented:
+
+- `layered-map-parity-event-v28` retains every v27 field and adds nullable
+  `packedRegionRetirementRefinement` evidence;
+- the observer constructs the proposal only when retirement safety, authored
+  cohort, and active-NPC requirements all exist for the same event, using no
+  new callback, source interface, census, or later tick;
+- schema-v28 preserves original safety, authored cohort, authored expansion,
+  active-NPC requirement, deduplicated candidate, added candidate, overlap,
+  external support, support-promotion, and hard-blocker totals;
+- each candidate retains its exact coordinate, seed/cohort/support roles,
+  authored expansion round, both active-NPC reason counts, added status, and
+  missing-fresh-evidence flags;
+- support coordinates retain owner-source and placement-reference counts and
+  explicitly report whether an independent active reason also promoted the
+  coordinate into the candidate union;
+- the proposal must be null when any of its three parent values is null; and
+- required reassessment, candidate-mutation, fixed-point-closure, load-request,
+  entity-registry, arrival-gate, and lifecycle-authority fields preserve the
+  refusal boundary in the schema and serializer.
+
+Automated validation status:
+
+- schema comparison proves the v28 field is additive to v27, required but
+  nullable, separately bounded to 8,192 candidates/support coordinates, and
+  non-authoritative;
+- source guards prove the proposal consumes the same event parents and that no
+  separate refinement source or runtime callback exists;
+- the executable observer fixture emits one safety seed `(4,0)` and one
+  external-owner candidate `(5,0)`, preserving exact parent ticks, source
+  counts, active reason count, fresh-evidence flags, and zero hard blockers;
+- the fixture validates the complete v11-v28 schema resource chain, including
+  every nested non-empty candidate field;
+- existing diagnostic consumers retain their prior start overloads and receive
+  null refinement when any required parent source is absent;
+- the complete layered-map suite passes 196 tests across 77 focused files; and
+- the authoritative bundled-Ant build compiles 767 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- serialized candidates are explanatory evidence, not a changed selection,
+  load request, acquisition, lease, ownership, or retention decision;
+- `reassessmentRequired` and per-added-source flags mean a consumer must obtain
+  new evidence; they do not authorize the observer to obtain or apply it;
+- input authored closure and a contained active census still cannot prove
+  fixed-point closure after source addition; and
+- No lifecycle authority, arrival rejection, registry, entity retention,
+  loading, release, eviction, reconstruction, transaction, commit, or rollback
+  is created.
+
+Status: implemented and automated-validated. Private owner validation and all
+lifecycle adoption remain deliberately absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7695,6 +7756,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 75 by projecting exact missing sources for recognized active-NPC boundary crossings while preserving non-expandable hard blockers. | Implemented and automated-validated; requirements are deduplicated and refusal-bounded, every proposal requires fresh safety/census evidence, and no selection or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 76 by exposing active-NPC boundary requirements through additive private schema-v27 evidence derived from the event's existing census. | Implemented and automated-validated; contained-path owner validation passes 33,385 checks with zero false requirements, and the executable observer fixture deterministically validates one exact non-empty external-owner requirement without a second census, selection mutation, registry, arrival gate, or lifecycle authority |
 | 2026-07-20 | Continue with Slice 77 by combining exact safety seeds, authored-cohort expansion, active-NPC requirements, static support, and hard blockers into one inert refinement proposal. | Implemented and automated-validated; every added candidate retains provenance and explicitly requires fresh safety/census evidence, while support remains separate and no selection or lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 78 by exposing the retirement refinement proposal through additive private schema-v28 evidence derived from the same event parents. | Implemented and automated-validated; every candidate/support provenance and fresh-evidence requirement is serialized without a second snapshot, selection mutation, load request, or lifecycle authority |
 
 ## Next Discussion
 
@@ -7755,12 +7817,14 @@ hard blockers distinct while producing one deduplicated candidate union. Every
 added candidate explicitly requires fresh safety and census evidence, and the
 result neither mutates a selection nor claims fixed-point closure.
 
-The next safe slice should expose the proposal through additive private
-schema-v28 diagnostics derived from the same event's safety, cohort, and
-active-NPC values. Runtime reconciliation must prove every seed, added source,
+Slice 78 now exposes the proposal through additive private schema-v28
+diagnostics derived from the same event's safety, cohort, and active-NPC
+values. The next meaningful checkpoint is owner validation of the accepted
+narrow/broad route. Runtime reconciliation must prove every seed, added source,
 overlap, support coordinate, reason count, and hard blocker against its three
-parents. A null parent must keep the proposal null, and diagnostic exposure
-must not become a load request or lifecycle consumer.
+parents. A naturally occurring active boundary crossing is useful but not
+required because the executable observer fixture covers the non-empty active
+reason path deterministically.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

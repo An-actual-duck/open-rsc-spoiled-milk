@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v27.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v28.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -29,6 +29,7 @@ SCHEMA_V23 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v23.sche
 SCHEMA_V24 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v24.schema.json"
 SCHEMA_V25 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v25.schema.json"
 SCHEMA_V26 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v26.schema.json"
+SCHEMA_V27 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v27.schema.json"
 
 
 POINT_STUB = r'''
@@ -986,7 +987,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v27" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v28" for event in events))
             self.assertTrue(all(
                 event["packedRegionAuthoredConstruction"] is None
                 for event in events
@@ -1675,6 +1676,103 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 self.assertFalse(
                     eligible_active_npc_boundary_requirements[authority_flag]
                 )
+            eligible_retirement_refinement = decision_events[2][
+                "packedRegionRetirementRefinement"
+            ]
+            self.assertEqual((7, 1, 1, 0, 1, 2, 1, 0, 0, 0, 0, 0), (
+                eligible_retirement_refinement["generation"],
+                eligible_retirement_refinement["originalSafetySourceCount"],
+                eligible_retirement_refinement["authoredCohortSourceCount"],
+                eligible_retirement_refinement["expandedAuthoredSourceCount"],
+                eligible_retirement_refinement[
+                    "activeNpcRequirementSourceCount"
+                ],
+                eligible_retirement_refinement["candidateSourceCount"],
+                eligible_retirement_refinement["addedCandidateSourceCount"],
+                eligible_retirement_refinement[
+                    "activeNpcAndAuthoredOverlapSourceCount"
+                ],
+                eligible_retirement_refinement[
+                    "externalSupportRequirementSourceCount"
+                ],
+                eligible_retirement_refinement[
+                    "supportPromotedToCandidateSourceCount"
+                ],
+                eligible_retirement_refinement["hardBlockingConditionCount"],
+                eligible_retirement_refinement["hardBlockingEvidenceCount"],
+            ))
+            self.assertEqual(
+                eligible_active_npc_boundary_requirements[
+                    "safetyObservedAtTick"
+                ],
+                eligible_retirement_refinement["safetyObservedAtTick"],
+            )
+            self.assertEqual(
+                eligible_active_npc_boundary_requirements[
+                    "censusObservedAtTick"
+                ],
+                eligible_retirement_refinement["censusObservedAtTick"],
+            )
+            self.assertFalse(
+                eligible_retirement_refinement["boundaryContainedAtInput"]
+            )
+            self.assertFalse(
+                eligible_retirement_refinement["nonExpandableHardBlockers"]
+            )
+            self.assertEqual([], eligible_retirement_refinement[
+                "externalSupportRequirements"
+            ])
+            self.assertEqual([
+                {
+                    "packedRegionX": 4,
+                    "packedRegionY": 0,
+                    "originalSafetySource": True,
+                    "authoredCohortSource": True,
+                    "authoredExpansionRound": 0,
+                    "externalStaticSupportSource": False,
+                    "staticSupportOwnerSourceCount": 0,
+                    "staticSupportPlacementReferenceCount": 0,
+                    "selectedOwnerCurrentSourceInstanceCount": 0,
+                    "externalOwnerAuthoredSourceInstanceCount": 0,
+                    "activeNpcBoundaryInstanceCount": 0,
+                    "activeNpcBoundarySource": False,
+                    "addedBeyondOriginalSafety": False,
+                    "freshSafetyEvidenceRequired": False,
+                    "freshNpcCensusRequired": False,
+                },
+                {
+                    "packedRegionX": 5,
+                    "packedRegionY": 0,
+                    "originalSafetySource": False,
+                    "authoredCohortSource": False,
+                    "authoredExpansionRound": None,
+                    "externalStaticSupportSource": False,
+                    "staticSupportOwnerSourceCount": 0,
+                    "staticSupportPlacementReferenceCount": 0,
+                    "selectedOwnerCurrentSourceInstanceCount": 0,
+                    "externalOwnerAuthoredSourceInstanceCount": 1,
+                    "activeNpcBoundaryInstanceCount": 1,
+                    "activeNpcBoundarySource": True,
+                    "addedBeyondOriginalSafety": True,
+                    "freshSafetyEvidenceRequired": True,
+                    "freshNpcCensusRequired": True,
+                },
+            ], eligible_retirement_refinement["candidates"])
+            for required_flag in (
+                "freshSafetyAssessmentRequired", "freshNpcCensusRequired",
+                "reassessmentRequired",
+            ):
+                self.assertTrue(
+                    eligible_retirement_refinement[required_flag]
+                )
+            for authority_flag in (
+                "candidateSelectionMutated", "fixedPointClosureProved",
+                "loadRequest", "entityRegistry", "arrivalGate",
+                "lifecycleAuthority",
+            ):
+                self.assertFalse(
+                    eligible_retirement_refinement[authority_flag]
+                )
             refusal = decision_events[3]["regionRetirementDecisions"]
             self.assertEqual((1, 0, 1), (
                 refusal["candidateCount"], refusal["eligibleCount"],
@@ -1750,6 +1848,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v24 = json.loads(SCHEMA_V24.read_text(encoding="utf-8"))
                 v25 = json.loads(SCHEMA_V25.read_text(encoding="utf-8"))
                 v26 = json.loads(SCHEMA_V26.read_text(encoding="utf-8"))
+                v27 = json.loads(SCHEMA_V27.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -1765,6 +1864,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v24["$id"], Resource.from_contents(v24)),
                     (v25["$id"], Resource.from_contents(v25)),
                     (v26["$id"], Resource.from_contents(v26)),
+                    (v27["$id"], Resource.from_contents(v27)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry
