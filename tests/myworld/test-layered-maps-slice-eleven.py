@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v25.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v26.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -27,6 +27,7 @@ SCHEMA_V21 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v21.sche
 SCHEMA_V22 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v22.schema.json"
 SCHEMA_V23 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v23.schema.json"
 SCHEMA_V24 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v24.schema.json"
+SCHEMA_V25 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v25.schema.json"
 
 
 POINT_STUB = r'''
@@ -957,7 +958,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v25" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v26" for event in events))
             self.assertTrue(all(
                 event["packedRegionAuthoredConstruction"] is None
                 for event in events
@@ -1512,6 +1513,50 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertFalse(eligible_active_npcs["entityRegistry"])
             self.assertFalse(eligible_active_npcs["arrivalGate"])
             self.assertFalse(eligible_active_npcs["lifecycleAuthority"])
+            eligible_active_npc_containment = decision_events[2][
+                "packedRegionActiveNpcContainment"
+            ]
+            self.assertEqual((7, 1, 0, 0, 0, 0, 0, 0), (
+                eligible_active_npc_containment["generation"],
+                eligible_active_npc_containment["selectedSourceCount"],
+                eligible_active_npc_containment["activeInstanceCount"],
+                eligible_active_npc_containment[
+                    "relevantActiveInstanceCount"
+                ],
+                eligible_active_npc_containment[
+                    "sameSourceSelectedOwnerInsideCount"
+                ],
+                eligible_active_npc_containment[
+                    "crossSourceSelectedOwnerInsideCount"
+                ],
+                eligible_active_npc_containment["blockingConditionCount"],
+                eligible_active_npc_containment["blockingEvidenceCount"],
+            ))
+            self.assertTrue(
+                eligible_active_npc_containment["boundaryContained"]
+            )
+            self.assertEqual(
+                6, len(eligible_active_npc_containment["blockers"])
+            )
+            self.assertTrue(all(
+                blocker["instanceCount"] == 0
+                for blocker in eligible_active_npc_containment["blockers"]
+            ))
+            self.assertTrue(
+                eligible_active_npc_containment["pointInTimeOnly"]
+            )
+            self.assertTrue(
+                eligible_active_npc_containment["containmentEvidence"]
+            )
+            self.assertFalse(
+                eligible_active_npc_containment["entityPreservationRequired"]
+            )
+            self.assertFalse(eligible_active_npc_containment["lifecycleReady"])
+            self.assertFalse(eligible_active_npc_containment["entityRegistry"])
+            self.assertFalse(eligible_active_npc_containment["arrivalGate"])
+            self.assertFalse(
+                eligible_active_npc_containment["lifecycleAuthority"]
+            )
             refusal = decision_events[3]["regionRetirementDecisions"]
             self.assertEqual((1, 0, 1), (
                 refusal["candidateCount"], refusal["eligibleCount"],
@@ -1585,6 +1630,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v22 = json.loads(SCHEMA_V22.read_text(encoding="utf-8"))
                 v23 = json.loads(SCHEMA_V23.read_text(encoding="utf-8"))
                 v24 = json.loads(SCHEMA_V24.read_text(encoding="utf-8"))
+                v25 = json.loads(SCHEMA_V25.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -1598,6 +1644,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v22["$id"], Resource.from_contents(v22)),
                     (v23["$id"], Resource.from_contents(v23)),
                     (v24["$id"], Resource.from_contents(v24)),
+                    (v25["$id"], Resource.from_contents(v25)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

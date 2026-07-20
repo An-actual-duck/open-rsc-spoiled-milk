@@ -2,18 +2,17 @@
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, and
 72 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, 65,
-67, 69, 71, and 73 automated-validated on the active refinement branch
+67, 69, 71, 73, and 74 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 73 converts one exact bounded active-NPC
-observation into explicit point-in-time containment evidence. Cross-source
-movement wholly inside the selection remains contained, while six independent
-ownership, residency, identity, and inactive-instance conditions keep a
-boundary open. Even `contained now` retains its active-entity preservation
-burden. No second entity registry, arrival gate, load request, retention
+Current milestone: automated Slice 74 exposes Slice 73's point-in-time result
+through additive private schema-v26 diagnostics. Each containment value derives
+from the same exact census already serialized for that event, retains all six
+blockers and the same-source/cross-source split, and cannot claim lifecycle
+readiness. No second entity registry, arrival gate, load request, retention
 decision, or lifecycle authority is authorized, and packed Region lookup,
 eager loading, release, eviction, pathing, packets, and persistence remain
 unchanged
@@ -7117,6 +7116,61 @@ Safety boundary:
 Status: implemented and automated-validated. Runtime diagnostic exposure and
 all lifecycle adoption remain deliberately absent.
 
+### Slice 74: Active NPC containment diagnostics
+
+Objective: expose Slice 73's bounded point-in-time result through additive
+private diagnostics, deriving it from the same exact census already emitted
+for an event so owner validation can compare real NPC movement with the six
+containment blockers.
+
+Implemented:
+
+- `layered-map-parity-event-v26` retains every v25 field and adds nullable
+  `packedRegionActiveNpcContainment` evidence;
+- the observer derives containment directly from the non-null
+  `packedRegionActiveNpcResidency` value captured for that event and takes no
+  second NPC snapshot, source callback, registry lookup, or later tick;
+- schema-v26 retains the generation, safety tick, census tick, selected source
+  and active-instance context from the parent observation;
+- same-source and cross-source selected-owner-inside counts remain separate,
+  while all six stable blocker kinds retain exact instance counts;
+- boundary, preservation-required, condition-count, and evidence-count fields
+  make `contained now` and remaining entity work directly machine-readable;
+- the assessment must be null when its parent residency observation is null;
+  and
+- required point-in-time, containment-evidence, lifecycle-ready,
+  entity-registry, arrival-gate, and lifecycle-authority fields preserve the
+  refusal boundary in the schema and serializer.
+
+Automated validation status:
+
+- schema comparison proves the v26 field is additive to v25, required but
+  nullable, six-blocker bounded, and non-authoritative;
+- source guards prove the assessment consumes the same exact census and that no
+  separate containment source or runtime callback exists;
+- the executable observer fixture emits a zero-NPC contained assessment,
+  reconciles its source/tick/count identity with the parent observation, and
+  validates the complete v11-v26 schema resource chain;
+- existing diagnostic consumers retain their prior start overloads and receive
+  null containment when no active-NPC source is installed; and
+- the complete layered-map suite passes 184 tests across 73 focused files; and
+- the authoritative bundled-Ant build compiles 765 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- the diagnostic reports one assessment produced from one detached census; it
+  does not predict a later arrival, departure, death, respawn, or movement;
+- non-null containment cannot exist without non-null residency evidence from
+  the same event;
+- `entityPreservationRequired` reports an unmet obligation and does not retain,
+  transfer, serialize, reconstruct, or own an NPC; and
+- No lifecycle authority, arrival rejection, registry, loading, retention,
+  release, eviction, recipe execution, transaction, or rollback is created.
+
+Status: implemented and automated-validated. Private owner validation is
+pending; all lifecycle adoption remains deliberately absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7395,6 +7449,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 71 by classifying detached point-in-time active NPC residency against exact safety sources and authored recipe identity. | Implemented and automated-validated; authored ownership remains independent from current residency, invalid identity stays unresolved, and no registry, arrival gate, or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 72 by exposing active NPC owner/residency evidence through additive private schema-v25 diagnostics. | Implemented and owner-validated; 12 NPCs crossed their exact authored packed-source boundary but remained inside the broad selection, all identity and safety arithmetic reconciled, and no registry, arrival gate, or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 73 by assessing whether one exact active-NPC observation is contained at its census tick while keeping preservation and lifecycle readiness separate. | Implemented and automated-validated; cross-source movement inside stays contained, six independent blockers are refusal-tested, and no registry, arrival gate, or lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 74 by exposing the active-NPC containment assessment through additive private schema-v26 evidence derived from the event's existing census. | Implemented and automated-validated; the same census drives both values, all six blockers remain explicit, and no registry, arrival gate, or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -7426,13 +7481,14 @@ outside, relevant inactive instances, and duplicate relevant identities are
 independent blockers. A contained result still retains the exact active-entity
 preservation burden and has No lifecycle authority.
 
-The next safe slice should expose the same assessment through additive private
-schema-v26 diagnostics. It should derive from the exact Slice 72 observation
-already emitted for an event, retain all six blocker counts and the
-same-source/cross-source split, and require lifecycle-ready, entity-registry,
-arrival-gate, and lifecycle-authority flags to remain false. A short owner route
-can then show whether the accepted narrow and broad selections remain contained
-while NPCs move naturally.
+Schema-v26 now exposes the same assessment from the exact Slice 72 observation
+already emitted for each event. It retains all six blocker counts and the
+same-source/cross-source split, while lifecycle-ready, entity-registry,
+arrival-gate, and lifecycle-authority remain false. The next gate is a short
+private owner route showing whether the accepted narrow and broad selections
+remain contained while NPCs move naturally. Runtime evidence must reconcile
+every containment field back to its parent residency and safety values before
+any later design discussion.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

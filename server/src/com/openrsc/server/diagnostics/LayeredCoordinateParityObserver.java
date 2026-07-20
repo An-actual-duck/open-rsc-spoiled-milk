@@ -3,6 +3,7 @@ package com.openrsc.server.diagnostics;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcContainmentAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
@@ -46,7 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v25";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v26";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -1004,6 +1005,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionAuthoredReconstructionDependencySemantics = null;
 				LayeredPackedRegionActiveNpcResidencyObservation
 					packedRegionActiveNpcResidency = null;
+				LayeredPackedRegionActiveNpcContainmentAssessment
+					packedRegionActiveNpcContainment = null;
 				if (capturesTileComparisons(eventType)) {
 					tileParity = Objects.requireNonNull(
 						state.tileParitySource.capture(current),
@@ -1189,6 +1192,9 @@ public final class LayeredCoordinateParityObserver {
 									MAX_TRACE_ACTIVE_NPC_INSTANCES,
 									MAX_TRACE_ACTIVE_NPC_RELEVANT_DETAILS),
 								"packedRegionActiveNpcResidencySource result");
+							packedRegionActiveNpcContainment =
+								LayeredPackedRegionActiveNpcContainmentAssessment.assess(
+									packedRegionActiveNpcResidency);
 						}
 					}
 				}
@@ -1206,7 +1212,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionAuthoredReconstructionCohortAttribution,
 					packedRegionAuthoredReconstructionTopology,
 					packedRegionAuthoredReconstructionDependencySemantics,
-					packedRegionActiveNpcResidency);
+					packedRegionActiveNpcResidency,
+					packedRegionActiveNpcContainment);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -1275,7 +1282,9 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis
 			packedRegionAuthoredReconstructionDependencySemantics,
 		LayeredPackedRegionActiveNpcResidencyObservation
-			packedRegionActiveNpcResidency) {
+			packedRegionActiveNpcResidency,
+		LayeredPackedRegionActiveNpcContainmentAssessment
+			packedRegionActiveNpcContainment) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -1434,6 +1443,13 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendPackedRegionActiveNpcResidency(
 				out, packedRegionActiveNpcResidency);
+		}
+		out.append(",\"packedRegionActiveNpcContainment\":");
+		if (packedRegionActiveNpcContainment == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionActiveNpcContainment(
+				out, packedRegionActiveNpcContainment);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -2781,6 +2797,64 @@ public final class LayeredCoordinateParityObserver {
 			.append(evidence.getIdentitySourceOrdinal()).append(',');
 		field(out, "constructionKind",
 			evidence.getIdentityConstructionKind().name()).append('}');
+	}
+
+	private static void appendPackedRegionActiveNpcContainment(
+		final StringBuilder out,
+		final LayeredPackedRegionActiveNpcContainmentAssessment assessment) {
+		out.append('{');
+		out.append("\"generation\":").append(assessment.getGeneration())
+			.append(',');
+		out.append("\"safetyObservedAtTick\":")
+			.append(assessment.getSafetyObservedAtTick()).append(',');
+		out.append("\"censusObservedAtTick\":")
+			.append(assessment.getCensusObservedAtTick()).append(',');
+		out.append("\"selectedSourceCount\":")
+			.append(assessment.getSelectedSourceCount()).append(',');
+		out.append("\"activeInstanceCount\":")
+			.append(assessment.getActiveInstanceCount()).append(',');
+		out.append("\"relevantActiveInstanceCount\":")
+			.append(assessment.getRelevantActiveInstanceCount()).append(',');
+		out.append("\"selectedOwnerInsideCount\":")
+			.append(assessment.getSelectedOwnerInsideCount()).append(',');
+		out.append("\"sameSourceSelectedOwnerInsideCount\":")
+			.append(assessment.getSameSourceSelectedOwnerInsideCount()).append(',');
+		out.append("\"crossSourceSelectedOwnerInsideCount\":")
+			.append(assessment.getCrossSourceSelectedOwnerInsideCount()).append(',');
+		out.append("\"currentInsideCount\":")
+			.append(assessment.getCurrentInsideCount()).append(',');
+		out.append("\"activePreservationRequiredInstanceCount\":")
+			.append(assessment.getActivePreservationRequiredInstanceCount())
+			.append(',');
+		out.append("\"relevantDuplicateIdentityInstanceCount\":")
+			.append(assessment.getRelevantDuplicateIdentityInstanceCount())
+			.append(',');
+		out.append("\"blockingConditionCount\":")
+			.append(assessment.getBlockingConditionCount()).append(',');
+		out.append("\"blockingEvidenceCount\":")
+			.append(assessment.getBlockingEvidenceCount()).append(',');
+		out.append("\"boundaryContained\":")
+			.append(assessment.isBoundaryContained()).append(',');
+		out.append("\"pointInTimeOnly\":true,");
+		out.append("\"containmentEvidence\":true,");
+		out.append("\"entityPreservationRequired\":")
+			.append(assessment.isEntityPreservationRequired()).append(',');
+		out.append("\"lifecycleReady\":false,");
+		out.append("\"entityRegistry\":false,");
+		out.append("\"arrivalGate\":false,");
+		out.append("\"lifecycleAuthority\":false,");
+		out.append("\"blockers\":[");
+		boolean first = true;
+		for (LayeredPackedRegionActiveNpcContainmentAssessment.BlockerCount
+			blocker : assessment.getBlockers()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			field(out, "kind", blocker.getKind().name()).append(',');
+			out.append("\"instanceCount\":")
+				.append(blocker.getInstanceCount()).append('}');
+		}
+		out.append("]}");
 	}
 
 	private static void appendPackedRegionAuthoredPopulationSupersession(
