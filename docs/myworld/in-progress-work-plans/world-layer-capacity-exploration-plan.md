@@ -7,10 +7,11 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 52 exposes Slice 51's count-only authored construction
+Current milestone: Slice 52 owner-validates count-only authored construction
 origins beside exact packed-source safety evidence through additive private v16
-diagnostics; it explicitly denies reconstruction-manifest semantics and does
-not change packed Region lookup, eager loading, release, eviction, pathing,
+diagnostics. The resulting active-versus-origin measurements select a detached,
+immutable authored-placement manifest as the next prerequisite; neither slice
+changes packed Region lookup, eager loading, release, eviction, pathing,
 packets, or persistence
 
 ## Purpose
@@ -5727,8 +5728,44 @@ Private owner-validation contract:
    roaming, temporary removal/replacement, dynamic state, or zero authored
    origins require the next provenance design.
 
-Status: implemented and automated-validated; private owner validation pending.
-Actual retirement remains absent.
+Private owner-validation evidence:
+
+- the owner completed the Lumbridge-to-Varrock-to-Lumbridge route without a
+  reported movement, scenery, NPC, item, collision, visual, or functional
+  problem;
+- the fresh trace contains seven contiguous v16 records (`start`, baseline,
+  the two teleports and waves, then `stop`), all with exact coordinate round
+  trips and valid closed-schema payloads;
+- every construction projection shares its safety/readiness ticks and its
+  exact same-order source coordinates with the corresponding safety value;
+  all entry, observed, and whole-inventory family totals reconcile;
+- the stable generation-one whole-world inventory contains 366 authored
+  packed sources and 33,532 constructed origins: 27,759 scenery, 973
+  boundaries, 3,775 NPC spawns, 882 ground-item spawns, and 143 harvesting
+  conversions;
+- the first departed 18-source wave contained 827 authored origins across 12
+  non-empty sources. All 18 ground-item counts matched active state, 17 object
+  counts matched, and 13 NPC counts matched; the aggregate active-minus-origin
+  differences were zero ground items, minus one object, and minus one NPC;
+- the second departed 18-source wave contained 2,152 authored origins across
+  15 non-empty sources. All object and ground-item counts matched active state,
+  while 14 NPC counts matched; the aggregate NPC difference was minus two; and
+- NPC differences move in both directions among adjacent sources while staying
+  close in aggregate, directly confirming why spawn-origin ownership must not
+  be inferred from a roaming NPC's active Region. The one first-wave object
+  difference likewise confirms that an origin count is not proof that its
+  runtime object is presently active.
+
+Decision from the evidence: preserve authored placement identity and full
+detached construction inputs before attempting teardown or reconstruction.
+The next bounded slice should define an immutable, deterministic per-source
+definition manifest, including duplicates and original construction family,
+without retaining live entities or granting a lifecycle consumer. NPC spawn
+origin must remain distinct from active position; harvesting conversion must
+remain distinct from ordinary scenery; dynamic state and delayed respawn state
+remain later policies.
+
+Status: implemented and owner-validated. Actual retirement remains absent.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -5867,14 +5904,17 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 49 by assessing packed-source contents and quiescence read-only while explicitly blocking lifecycle readiness until a per-Region reload path exists. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 50 by emitting bounded packed-source contents and blocker evidence through additive private v15 diagnostics without lifecycle authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 51 by auditing construction/teardown owners and recording a bounded immutable count-only inventory of authored content actually constructed per packed Region. | Implemented and validated |
-| 2026-07-19 | Continue with Slice 52 by correlating exact retirement-safety sources with immutable authored construction-origin counts through additive private v16 diagnostics. | Implemented and automated-validated; owner validation pending |
+| 2026-07-19 | Continue with Slice 52 by correlating exact retirement-safety sources with immutable authored construction-origin counts through additive private v16 diagnostics. | Implemented and owner-validated |
+| 2026-07-19 | Use Slice 52's active-versus-origin evidence to select a detached immutable authored-placement manifest as the next prerequisite, keeping spawn origin separate from active state. | Confirmed for Slice 53; lifecycle adoption remains gated |
 
 ## Next Discussion
 
-Complete Slice 52's private v16 owner route and use the measured differences
-between active content and authored construction origins to select the next
-provenance boundary. A subsequent detached definition manifest must separately
-address duplicates/replacements, NPC roaming, delayed respawn state, dynamic
+Proceed with Slice 53 as a detached immutable authored-placement manifest: keep
+deterministic per-source construction inputs and stable identity without live
+entity, Region, event, registry, archive, cache, or lifecycle handles. Preserve
+duplicates and authored family explicitly; keep NPC spawn origin separate from
+active position and harvesting conversion separate from ordinary scenery.
+Later slices must still address replacements, delayed respawn state, dynamic
 provenance, collision derivation, global registries, event ownership, and
 rollback before any reload design.
 Any later commit token or lifecycle consumer must remain unable to alter the
