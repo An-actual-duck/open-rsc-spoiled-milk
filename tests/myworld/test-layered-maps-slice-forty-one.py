@@ -58,7 +58,7 @@ class LayeredMapsSliceFortyOneTest(unittest.TestCase):
         readme = README.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v22"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v23"', observer)
         self.assertIn("InterestOwnershipMetadata.fromChange(ownershipChange)", observer)
         self.assertIn(
             "state.interestOwnershipSource = currentInterestOwnershipSource;",

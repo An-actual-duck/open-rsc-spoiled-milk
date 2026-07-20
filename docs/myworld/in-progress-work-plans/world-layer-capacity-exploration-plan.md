@@ -2,18 +2,19 @@
 
 Status: architecture design complete; Slices 1-59, 62, 64, and 66
 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, 65, and
-67 automated-validated on the active refinement branch
+67 automated-validated; Slice 68 is automated-validated and awaits private
+owner validation on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 67 can now compare a completed forward authored cohort
-with the whole recipe's incoming edges, weak components, and strong components.
-The result remains detached diagnostic evidence only. No recipe consumer, load
-request, registry, or lifecycle authority is authorized, and packed Region
-lookup, eager loading, release, eviction, pathing, packets, and persistence
-remain unchanged
+Current milestone: Slice 68 exposes Slice 67's completed forward-versus-whole-
+recipe topology through additive private schema-v23 diagnostics. The result
+remains detached diagnostic evidence only. No recipe consumer, load request,
+registry, or lifecycle authority is authorized, and packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
+unchanged
 
 ## Purpose
 
@@ -6718,6 +6719,48 @@ Automated validation status:
 Status: implemented and automated-validated. No lifecycle authority is
 authorized.
 
+### Slice 68: Whole-recipe topology diagnostics
+
+Objective: expose Slice 67's bounded source and component topology through the
+private observer so the accepted narrow and broad cohorts can be compared with
+their actual incoming-only authored sources.
+
+Implemented:
+
+- additive `layered-map-parity-event-v23` records retain the complete v22 event
+  and add nullable `packedRegionAuthoredReconstructionTopology` evidence;
+- the observer passes the exact cohort it just captured into the topology
+  source, while both the Player session-rebind path and development-command
+  start path supply the completed `WorldPopulator` recipe;
+- aggregate totals distinguish authored nodes, directed/self/cross-source
+  edges, authored/support references, forward sources, touched weak components,
+  incoming-only sources, and direct incoming relationships;
+- bounded source entries expose only packed coordinates, placement counts,
+  weak/strong component ordinals, and forward/connected/incoming roles;
+- bounded kind entries attribute authored, cross-source, support, incoming, and
+  connected references without serializing placement definitions; and
+- bounded weak and strong component entries contain only ordinals and internal
+  cross-source edge/reference totals.
+
+Safety boundary:
+
+- topology source and relationship budgets are independent observer constants;
+  overflow refuses the event instead of truncating a component;
+- schema-v23 declares `identityMetadataOnly=true`, `entityRegistry=false`, and
+  `lifecycleAuthority=false`, while v11-v22 remain immutable contracts; and
+- the observer neither acquires an incoming source nor treats a weak component
+  as a lifecycle instruction.
+
+Automated validation status:
+
+- the authoritative bundled-Ant build compiles 762 core and 488 plugin sources;
+- the v23 schema is a valid additive Draft 2020-12 contract; and
+- focused schema, observer, runtime-wiring, and plan guards pass; and
+- the complete layered-map suite passes 163 tests across 67 focused files.
+
+Status: implemented and automated-validated; private owner validation pending.
+No lifecycle authority is authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -6990,6 +7033,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 65 by attributing exact cohort dependency edges and cross-source placement bridges by construction and dependency kind. | Implemented and automated-validated; all arithmetic is exact and refusal-bounded, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 66 by exposing typed cohort attribution through additive private schema-v22 diagnostics. | Implemented and owner-validated; NPC roaming accounts for 333/334 narrow and 194/195 broad frontier references, every external-support reference, and 1,626/1,636 combined cross-source references; static scenery creates no frontier expansion, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 67 by comparing the completed forward cohort with whole-recipe incoming edges and strong/weak component topology. | Implemented and automated-validated; forward closure is proved distinct from incoming/weak closure, graph membership remains evidence only, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 68 by exposing bounded whole-recipe topology through additive private schema-v23 diagnostics. | Implemented and automated-validated; exact same-cohort wiring and bounded source/component/kind serialization are proved, private owner validation is pending, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -6999,12 +7043,11 @@ envelopes and all 14 support-only coordinates: their size is not evidence that
 they are accidental, and an authored-closed forward cohort is still not proof
 of a reconstructable or safely retireable unit.
 
-Complete Slice 67's automated gates, then expose only its bounded source,
-component, and kind aggregates through an additive private observer revision.
-Compare the accepted narrow and broad selections to determine how many
-incoming-only sources exist and whether NPC roaming creates one giant weak
-component. Do not serialize placement payloads or infer that a weak component
-is an operational load, teardown, or reload unit.
+Complete Slice 68's automated gates, then repeat the accepted narrow and broad
+private selections under schema-v23. Compare incoming-only source counts,
+direct incoming kinds, and touched weak components to determine whether NPC
+roaming creates one giant conservative component. Do not infer that a weak
+component is an operational load, teardown, or reload unit.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.

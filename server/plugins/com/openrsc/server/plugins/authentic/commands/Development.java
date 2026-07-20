@@ -29,6 +29,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProv
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
@@ -1405,7 +1406,8 @@ public final class Development implements CommandTrigger {
 					layeredPackedRegionAuthoredReconstructionSource(player),
 					layeredPackedRegionAuthoredReconstructionCohortSource(player),
 					layeredPackedRegionAuthoredReconstructionCohortAttributionSource(
-						player));
+						player),
+					layeredPackedRegionAuthoredReconstructionTopologySource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1804,6 +1806,28 @@ public final class Development implements CommandTrigger {
 						player.getWorld().getWorldLoader().getWorldPopulator()
 							.getAuthoredReconstructionRecipe(),
 						cohort, maximumEdges, maximumBridgePlacements);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionTopologySource
+			layeredPackedRegionAuthoredReconstructionTopologySource(
+				final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionTopologySource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionTopologyAnalysis
+				capture(
+					final LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+						cohort,
+					final int maximumSources,
+					final int maximumRelationships) {
+				return LayeredPackedRegionAuthoredReconstructionTopologyAnalysis
+					.analyze(
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						cohort, maximumSources, maximumRelationships);
 			}
 		};
 	}

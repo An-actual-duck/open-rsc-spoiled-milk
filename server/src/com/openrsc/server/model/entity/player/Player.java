@@ -44,6 +44,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProv
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
@@ -3420,6 +3421,27 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionTopologySource
+			layeredPackedRegionAuthoredReconstructionTopologySource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionTopologySource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionTopologyAnalysis
+				capture(
+					final LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+						cohort,
+					final int maximumSources,
+					final int maximumRelationships) {
+				return LayeredPackedRegionAuthoredReconstructionTopologyAnalysis
+					.analyze(
+						getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						cohort, maximumSources, maximumRelationships);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3538,6 +3560,9 @@ public final class Player extends Mob {
 					: null,
 				loggedIn
 					? layeredPackedRegionAuthoredReconstructionCohortAttributionSource()
+					: null,
+				loggedIn
+					? layeredPackedRegionAuthoredReconstructionTopologySource()
 					: null);
 		}
 	}
