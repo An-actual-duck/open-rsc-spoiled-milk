@@ -69,6 +69,9 @@
  * dependency envelopes, inert reconstruction recipes, and bounded private
  * evidence without a runtime reconstruction consumer. Slice 63 analyzes the
  * fixed-point authored cohort and separates empty external support coordinates
- * without granting loading, teardown, or lifecycle authority.</p>
+ * without granting loading, teardown, or lifecycle authority. Slice 65
+ * attributes that cohort's exact owner-to-requirement edges and cross-source
+ * placement bridges by construction and dependency kind without changing the
+ * conservative envelopes or granting lifecycle authority.</p>
  */
 package com.openrsc.server.model.world.coordinate;

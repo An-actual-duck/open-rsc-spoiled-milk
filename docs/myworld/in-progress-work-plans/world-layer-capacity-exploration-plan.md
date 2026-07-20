@@ -8,11 +8,12 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 64 owner validation proves that even a narrow six-seed
-retirement selection reaches a much larger fixed-point authored cohort. The
-result remains diagnostic evidence only. No recipe consumer, load request,
-registry, or lifecycle authority is authorized, and packed Region lookup, eager
-loading, release, eviction, pathing, packets, and persistence remain unchanged
+Current milestone: Slice 65 attributes exact typed dependency edges and
+cross-source placement bridges inside Slice 64's unexpectedly large authored
+cohort. The result remains diagnostic evidence only. No recipe consumer, load
+request, registry, or lifecycle authority is authorized, and packed Region
+lookup, eager loading, release, eviction, pathing, packets, and persistence
+remain unchanged
 
 ## Purpose
 
@@ -6542,6 +6543,58 @@ Status: implemented and owner-validated. The narrow result proves the authored
 dependency component cannot be treated as a small local reconstruction unit.
 No lifecycle authority is authorized.
 
+### Slice 65: Cohort dependency-edge attribution
+
+Objective: explain why a small retirement seed set reaches a large authored
+cohort before considering any reconstruction consumer or changing the
+deliberately conservative dependency model.
+
+Implemented:
+
+- a detached attribution value consumes an already completed recipe and cohort
+  analysis, then verifies their generation and every source and requirement
+  count before producing evidence;
+- aggregate kind records separate unique placements, cross-source placements,
+  affected-source references, cross-source references, expansion-frontier
+  references, and external-support references for every observed construction-
+  kind and dependency-kind pair;
+- exact sorted owner-to-requirement edges retain primitive coordinates,
+  expansion rounds, self/cohort/frontier/support roles, total placement
+  references, and per-kind reference counts;
+- one compact bridge record per final-live cross-source placement retains only
+  its authored identity generation and ordinal, definition/entity IDs,
+  conservative source envelope, and counts of cohort, expansion-frontier, and
+  external-support targets; and
+- edge and bridge-placement budgets refuse the entire result rather than
+  truncating an attribution into misleading arithmetic.
+
+Safety boundary:
+
+- the analysis accepts immutable detached recipe and cohort values and exposes
+  primitive metadata only; it has no entity, Region, tile, archive, event,
+  registry, cache, callback, claim, permit, lease, transaction, commit, load,
+  teardown, reconstruction, or rollback handle;
+- frontier attribution describes the deterministic round relationship; it is
+  not a load order, acquisition request, or proof that the required terrain,
+  collision, events, or rollback boundary exists; and
+- a large NPC-roaming or object-footprint contribution is evidence to inspect,
+  not permission to weaken a conservative envelope.
+
+Validation status:
+
+- the executable fixture proves a two-round NPC-roaming chain, exact self,
+  expansion-frontier, and support-only edges, typed arithmetic, primitive
+  bridge identities, immutable outputs, and refusal of undersized independent
+  edge and bridge budgets; and
+- source guards prove the result has no entity, RegionManager, or lifecycle
+  dependency;
+- the complete layered-map suite passes 152 tests across 64 focused files; and
+- the authoritative bundled-Ant build compiles 761 core and 488 plugin
+  sources.
+
+Status: implemented and automated-validated. No lifecycle authority is
+authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -6811,6 +6864,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 62 by exposing bounded recipe and dependency-closure evidence through additive private schema-v20 diagnostics. | Implemented and owner-validated; all 5,590 selected final-live identities matched, the 16-source open dependency remainder was exact, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 63 by expanding safety seeds through recursively required final-live authored sources while retaining empty dependency coordinates as external support. | Implemented and automated-validated; lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 64 by exposing fixed-point cohort expansion and support-only requirements through additive private schema-v21 diagnostics. | Implemented and owner-validated; 6 narrow seeds reached 61 authored sources over 10 rounds, both accepted cohorts closed with 14 explicit support-only requirements, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 65 by attributing exact cohort dependency edges and cross-source placement bridges by construction and dependency kind. | Implemented and automated-validated; all arithmetic is exact and refusal-bounded, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -6819,13 +6873,14 @@ a materially larger part of the world: six narrow seeds reached 61 authored
 sources and 11,677 final-live placements. Preserve all 14 support-only
 coordinates, and do not infer that an authored-closed cohort is reconstructable.
 
-The safest next slice is detached dependency-edge attribution. Explain which
-placement kinds and exact owner-to-requirement edges cause each expansion round,
-especially whether conservative NPC roaming envelopes create the long bridges.
-Keep that evidence bounded and identity-only. Do not create a consumer or alter
-the deliberately conservative reach model merely because the component is
-large; first distinguish a correct conservative dependency from an accidental
-over-connection.
+The safest next slice is additive private diagnostics for the detached
+dependency-edge attribution. Report bounded kind totals and exact
+expansion-frontier/support edges first; retain cross-source placement identities
+only under a separate strict budget. Use the accepted narrow and broad routes to
+establish whether conservative NPC roaming envelopes create the long bridges.
+Do not create a consumer or alter the deliberately conservative reach model
+merely because the component is large; first distinguish a correct conservative
+dependency from an accidental over-connection.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
