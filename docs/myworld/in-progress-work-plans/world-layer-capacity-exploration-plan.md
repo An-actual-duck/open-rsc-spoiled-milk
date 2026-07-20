@@ -1,14 +1,14 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-59 owner-validated, Slice 60
-private-runtime validated, Slice 61 automated-validated, and Slice 62 awaiting
-private owner validation on the active refinement branch
+Status: architecture design complete; Slices 1-59 and 62 owner-validated,
+Slice 60 private-runtime validated, and Slice 61 automated-validated on the
+active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 62 exposes the inert final-live recipe projection and
+Current milestone: Slice 62 has exposed the inert final-live recipe projection and
 its exact dependency-source closure through additive private schema-v20
 diagnostics. Both selection-wide and per-authored-source closure remain
 diagnostic evidence only. No recipe consumer, load request, registry, or
@@ -6516,10 +6516,22 @@ Automated validation status:
 - the schema/source guard verifies the additive nullable contract, explicit
   inert flags, refusal budgets, serializer, and both runtime source paths; and
 - the complete layered-map suite passes 142 tests across 61 focused files; and
-- a private owner trace remains to be completed for this milestone.
+- the owner-observed broad transition remained visually normal and emitted a
+  schema-valid 36-source selection containing 5,590 final-live expectations:
+  all 5,590 matched, with zero absences, duplicates, anomaly details, or
+  dropped details;
+- that selection reported 51 unique dependency sources, 35 selected and 16
+  missing, so its open result is exact and explanatory rather than a silent
+  boolean; and
+- the attempted narrow runtime boundary `527 -> 528` was correctly a no-op for
+  the 128-tile visibility window and emitted an empty closed observation. It is
+  not evidence for a non-empty narrow selection; the compiled fixture supplies
+  that closed-selection case. A later runtime test that specifically needs one
+  exiting region column should use the actual `559 -> 560` threshold at this
+  Y coordinate.
 
-Status: implemented and automated-validated; private owner validation pending.
-No lifecycle authority is authorized.
+Status: implemented, automated-validated, and owner-validated. No lifecycle
+authority is authorized.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -6669,15 +6681,16 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 59 by preserving complete manifest replay history while projecting deterministic population supersessions into a final-live expectation set and additive v19 diagnostics. | Implemented and owner-validated; the duplicated command trace source now forwards the completed outcome, all 5,797 final-live expectations match, and registry/lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 60 by deriving an inert per-source recipe from final-live authored identities and aligned dependency envelopes without a runtime consumer. | Implemented and private-runtime validated; all 33,515 final-live inputs retain aligned reach and lifecycle authority remains absent |
 | 2026-07-20 | Continue with Slice 61 by projecting final-live recipe counts and unique dependency requirements onto an exact bounded safety-source set. | Implemented and automated-validated; closure remains evidence only and lifecycle authority remains absent |
-| 2026-07-20 | Continue with Slice 62 by exposing bounded recipe and dependency-closure evidence through additive private schema-v20 diagnostics. | Implemented and automated-validated; private owner validation pending, with no lifecycle authority |
+| 2026-07-20 | Continue with Slice 62 by exposing bounded recipe and dependency-closure evidence through additive private schema-v20 diagnostics. | Implemented and owner-validated; all 5,590 selected final-live identities matched, the 16-source open dependency remainder was exact, and no lifecycle authority exists |
 
 ## Next Discussion
 
-Complete Slice 62's automated and private owner validation. Compare one broad
-transition with at least one narrower selection and treat both closed and open
-results as descriptive evidence only. Use the captured requirement union to
-choose the smallest next precondition slice; do not infer that dependency
-closure alone makes a packed source reconstructable.
+Use Slice 62's exact requirement union to choose the smallest next precondition
+slice; do not infer that dependency closure alone makes a packed source
+reconstructable. The current evidence shows that source-local reconstruction
+cannot be correct unless the plan distinguishes dependencies that supply
+authored recipe content from empty neighboring source coordinates reached by
+footprints or roaming envelopes.
 Do not create a global entity registry or grant loading, teardown, or reload
 authority. Terrain replay, collision derivation, event ownership, transactional
 teardown, and rollback remain later gates.
