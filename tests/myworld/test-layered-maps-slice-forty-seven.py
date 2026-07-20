@@ -447,7 +447,7 @@ class LayeredMapsSliceFortySevenTest(unittest.TestCase):
         self.assertNotIn("unregisterPackedRegion", readiness)
         self.assertNotIn(".unload(", readiness)
         self.assertNotIn("LayeredPackedRegionRetirementReadiness", path_validation)
-        self.assertNotIn("LayeredPackedRegionRetirementReadiness", observer)
+        self.assertIn("LayeredPackedRegionRetirementReadiness", observer)
 
         boundary = manager.split(
             "/**\n\t * Atomically rechecks one bounded candidate batch and aggregates",

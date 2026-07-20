@@ -14,9 +14,10 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v14.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
+SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
 
 
 POINT_STUB = r'''
@@ -727,7 +728,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v13" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v14" for event in events))
             self.assertTrue(all(
                 event["interestOwnership"] is not None
                 for event in events
@@ -1044,6 +1045,17 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 eligible["refusedCount"],
             ))
             self.assertEqual("ELIGIBLE", eligible["entries"][0]["decisionState"])
+            eligible_sources = decision_events[2][
+                "packedRegionRetirementReadiness"
+            ]
+            self.assertEqual((1, 1, 0), (
+                eligible_sources["sourceCount"],
+                eligible_sources["readySourceCount"],
+                eligible_sources["blockedSourceCount"],
+            ))
+            self.assertEqual(
+                "READY", eligible_sources["entries"][0]["sourceState"]
+            )
             refusal = decision_events[3]["regionRetirementDecisions"]
             self.assertEqual((1, 0, 1), (
                 refusal["candidateCount"], refusal["eligibleCount"],
@@ -1051,8 +1063,26 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             ))
             self.assertEqual("PINNED", refusal["entries"][0]["decisionState"])
             self.assertEqual("PINNED", refusal["entries"][0]["currentRetirementState"])
+            refused_sources = decision_events[3][
+                "packedRegionRetirementReadiness"
+            ]
+            self.assertEqual((1, 0, 1), (
+                refused_sources["sourceCount"],
+                refused_sources["readySourceCount"],
+                refused_sources["blockedSourceCount"],
+            ))
+            self.assertEqual(
+                "REFUSED_COVERAGE",
+                refused_sources["entries"][0]["sourceState"],
+            )
             self.assertEqual(
                 0, decision_events[4]["regionRetirementDecisions"]["candidateCount"]
+            )
+            self.assertEqual(
+                0,
+                decision_events[4]["packedRegionRetirementReadiness"][
+                    "sourceCount"
+                ],
             )
 
             schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
@@ -1066,9 +1096,11 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 jsonschema.Draft202012Validator.check_schema(schema)
                 v11 = json.loads(SCHEMA_V11.read_text(encoding="utf-8"))
                 v12 = json.loads(SCHEMA_V12.read_text(encoding="utf-8"))
+                v13 = json.loads(SCHEMA_V13.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
+                    (v13["$id"], Resource.from_contents(v13)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

@@ -174,14 +174,14 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v13.schema.json`. Each v13 record
-retains all v12 position, logical-window, interest-delta, packed-coverage,
+traces emit `schema/layered-map-parity-event-v14.schema.json`. Each v14 record
+retains all v13 position, logical-window, interest-delta, packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v12 schemas remain
+repeating the tile comparisons on every movement. The v1-v13 schemas remain
 alongside it so already-captured logs keep explicit readable contracts.
 Marker and stop records may additionally summarize the latest 16 contiguous
 ordinary walking steps since the previous reset, including per-step decisions,
@@ -215,7 +215,11 @@ release identity and timing, the current cooldown state, and an explicit
 eligible or refusal reason. Refused candidates are reported once and then
 removed; eligible candidates may be rechecked idempotently. These snapshots
 remain observer-owned evidence rather than a loading, retention, retirement,
-or eviction queue.
+or eviction queue. v14 aggregates that same atomically rechecked decision batch
+by legacy packed source. It records ready and blocked counts plus each source's
+covered, missing, refused, and partially resident logical keys, cross-level
+status, and exact readiness state. It does not call the manager preparation
+method separately and gains no Region handle or lifecycle authority.
 
 ## Checked Player mirror
 

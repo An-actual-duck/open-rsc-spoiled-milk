@@ -3,6 +3,7 @@ package com.openrsc.server.diagnostics;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
@@ -35,11 +36,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v13";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v14";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
 	private static final int MAX_TRACE_RETIREMENT_CANDIDATES = 4096;
+	private static final int MAX_TRACE_PACKED_RETIREMENT_SOURCES =
+		MAX_TRACE_RETIREMENT_CANDIDATES
+			* LayeredPackedRegionRetirementReadiness
+				.MAX_PACKED_SOURCES_PER_LOGICAL_REGION;
 	private static final int MAX_TRACE_RETIREMENT_REGIONS =
 		MAX_TRACE_REGIONS_PER_WINDOW * 3;
 	private static final int MAX_TRACE_TRAVERSAL_STEPS = 16;
@@ -570,6 +575,13 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendRegionRetirementDecisions(out, regionRetirementDecisions);
 		}
+		out.append(",\"packedRegionRetirementReadiness\":");
+		if (regionRetirementDecisions == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionRetirementReadiness(
+				out, regionRetirementDecisions.getPackedSourceReadiness());
+		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
 		return out.append('}').toString();
@@ -822,6 +834,53 @@ public final class LayeredCoordinateParityObserver {
 			field(out, "decisionState", entry.getDecisionState().name())
 				.append(',');
 			out.append("\"eligible\":").append(entry.isEligible()).append('}');
+		}
+		out.append("]}");
+	}
+
+	private static void appendPackedRegionRetirementReadiness(
+		final StringBuilder out,
+		final LayeredPackedRegionRetirementReadiness readiness) {
+		out.append('{');
+		out.append("\"observedAtTick\":")
+			.append(readiness.getObservedAtTick()).append(',');
+		out.append("\"ownershipVersion\":")
+			.append(readiness.getOwnershipVersion()).append(',');
+		out.append("\"residencyMirrorVersion\":")
+			.append(readiness.getResidencyMirrorVersion()).append(',');
+		out.append("\"logicalDecisionCount\":")
+			.append(readiness.getLogicalDecisionCount()).append(',');
+		out.append("\"sourceCount\":")
+			.append(readiness.getSourceCount()).append(',');
+		out.append("\"readySourceCount\":")
+			.append(readiness.getReadySourceCount()).append(',');
+		out.append("\"blockedSourceCount\":")
+			.append(readiness.getBlockedSourceCount()).append(',');
+		out.append("\"entries\":[");
+		boolean first = true;
+		for (LayeredPackedRegionRetirementReadiness.SourceReadiness source
+			: readiness.getSources()) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			out.append("{\"packedRegionX\":")
+				.append(source.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(source.getPackedRegionY()).append(',');
+			out.append("\"coveredLogicalRegions\":");
+			appendRegionKeys(out, source.getCoveredLogicalRegions());
+			out.append(",\"missingLogicalDecisions\":");
+			appendRegionKeys(out, source.getMissingLogicalDecisions());
+			out.append(",\"refusedLogicalDecisions\":");
+			appendRegionKeys(out, source.getRefusedLogicalDecisions());
+			out.append(",\"partialResidencyLogicalDecisions\":");
+			appendRegionKeys(
+				out, source.getPartialResidencyLogicalDecisions());
+			out.append(",\"spansLevels\":")
+				.append(source.spansLevels()).append(',');
+			field(out, "sourceState", source.getSourceState().name());
+			out.append('}');
 		}
 		out.append("]}");
 	}
@@ -2135,14 +2194,21 @@ public final class LayeredCoordinateParityObserver {
 		private final long droppedCandidateCount;
 		private final int eligibleCount;
 		private final List<RegionRetirementDecisionEntryMetadata> entries;
+		private final LayeredPackedRegionRetirementReadiness
+			packedSourceReadiness;
 
 		private RegionRetirementDecisionMetadata(
 			final long droppedCandidateCount,
 			final int eligibleCount,
-			final List<RegionRetirementDecisionEntryMetadata> entries) {
+			final List<RegionRetirementDecisionEntryMetadata> entries,
+			final LayeredPackedRegionRetirementReadiness packedSourceReadiness) {
 			Objects.requireNonNull(entries, "entries");
+			this.packedSourceReadiness = Objects.requireNonNull(
+				packedSourceReadiness, "packedSourceReadiness");
 			if (droppedCandidateCount < 0L || eligibleCount < 0
-				|| eligibleCount > entries.size()) {
+				|| eligibleCount > entries.size()
+				|| packedSourceReadiness.getLogicalDecisionCount()
+					!= entries.size()) {
 				throw new IllegalArgumentException(
 					"Invalid Region retirement decision aggregate counts");
 			}
@@ -2177,7 +2243,10 @@ public final class LayeredCoordinateParityObserver {
 				}
 			}
 			return new RegionRetirementDecisionMetadata(
-				droppedCandidateCount, eligible, entries);
+				droppedCandidateCount, eligible, entries,
+				LayeredPackedRegionRetirementReadiness.fromDecisions(
+					decisions, MAX_TRACE_RETIREMENT_CANDIDATES,
+					MAX_TRACE_PACKED_RETIREMENT_SOURCES));
 		}
 
 		private void requireMatches(
@@ -2229,6 +2298,11 @@ public final class LayeredCoordinateParityObserver {
 
 		public List<RegionRetirementDecisionEntryMetadata> getEntries() {
 			return entries;
+		}
+
+		public LayeredPackedRegionRetirementReadiness
+			getPackedSourceReadiness() {
+			return packedSourceReadiness;
 		}
 	}
 

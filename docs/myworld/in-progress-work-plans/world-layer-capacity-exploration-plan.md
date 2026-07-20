@@ -1,16 +1,17 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-47 implemented and validated on
-the active refinement branch
+Status: architecture design complete; Slices 1-47 implemented and validated,
+with Slice 48 implemented, automatically validated, and awaiting private owner
+validation on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 47 aggregates freshly rechecked logical retirement
-decisions into conservative packed-source readiness without granting authority
-to unload, unregister, remove, or evict a packed Region; packed Region lookup,
-eager loading, release, eviction, pathing, packets, and persistence remain
+Current milestone: Slice 48 exposes Slice 47 packed-source readiness through
+additive opt-in private diagnostics without granting authority to unload,
+unregister, remove, or evict a packed Region; packed Region lookup, eager
+loading, release, eviction, pathing, packets, and persistence remain
 authoritative and unchanged
 
 ## Purpose
@@ -5284,8 +5285,83 @@ Automated validation evidence:
   `1f674f7fffcccb9d689c570d42900a3c2c8cba9c1082edc512e0f99ea2971d79`
   fingerprints.
 
-Status: implemented and validated. Runtime adoption and diagnostic exposure
-remain deliberately absent.
+Status: implemented and validated. Lifecycle adoption remains deliberately
+absent; diagnostic exposure begins in Slice 48.
+
+### Slice 48: Private packed-source retirement readiness diagnostics
+
+Objective: make Slice 47's source aggregation observable in stable AI-readable
+private traces before considering any source claim, commit token, or lifecycle
+consumer.
+
+Implemented:
+
+- additive `layered-map-parity-event-v14` JSONL records with a nullable
+  `packedRegionRetirementReadiness` block while retaining the immutable v13
+  schema for old traces;
+- direct aggregation from the exact atomic Slice 45 decision list already
+  returned to the observer, avoiding a second manager read, tick, or
+  preparation call;
+- aggregate observation tick, ownership version, residency-mirror version,
+  logical-decision count, packed-source count, ready count, and blocked count;
+- one bounded entry per deduplicated packed source with its packed coordinates,
+  complete logical coverage, missing decisions, refused decisions, partially
+  resident decisions, cross-level flag, and exact Slice 47 source state; and
+- a maximum of 8192 entries derived from the existing 4096 logical-candidate
+  limit and checked two-source assembly fanout.
+
+Safety boundary:
+
+- the observer does not call
+  `prepareLayeredPackedRegionRetirementReadiness`; it serializes the immutable
+  result derived from the decision batch it already owns;
+- nullable compatibility remains explicit when no retirement-decision source
+  is installed, and an installed source with no candidates emits an explicit
+  empty readiness aggregate;
+- v14 adds no Region handle, manager mutator, loader, registry, entity,
+  collision, cache, callback, timer, queue, claim, lease, or persistence field;
+  and
+- `READY` remains diagnostic evidence only and cannot cause a packed Region to
+  be constructed, registered, unregistered, unloaded, removed, or evicted.
+
+Automated validation evidence:
+
+- the compiled observer fixture emits a ready source from an eligible logical
+  decision, a `REFUSED_COVERAGE` source from a real repin, and an empty source
+  set after one-event refusal pruning;
+- every emitted record validates against the closed v14 schema through its
+  local v11-v13 registry;
+- the v14 schema retains the complete v13 contract, caps logical decisions at
+  4096 and sources at 8192, caps one source's inverse coverage at two logical
+  keys, and enumerates every Slice 47 state; and
+- the complete layered-map suite passes 108 tests across 47 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 748 core and 488 plugin sources
+  successfully; and
+- two consecutive normalizations produced identical source
+  `26926df17a4bf145252966f0fedbb457f5bf6a5761e79e1d6b87957285c59292`,
+  inventory
+  `8cb82502dc6999c8c94b433b36a35d7a629ebb1e5462baa2390307d2ca99ad40`,
+  classification
+  `9653761ab0f23fea4f6d0cbf63cf661ab875b5e1ceed05dcfd284087207347c3`,
+  and occurrence
+  `1f674f7fffcccb9d689c570d42900a3c2c8cba9c1082edc512e0f99ea2971d79`
+  fingerprints.
+
+Private owner-validation contract:
+
+1. Start at Lumbridge, begin the trace, and mark `source-baseline`.
+2. Move directly to Varrock. Wait at least 15 seconds, then mark
+   `source-first-wave`; supported released Lumbridge logical decisions and
+   their ordinary one-to-one packed sources should be `ELIGIBLE`/`READY`.
+3. Move directly back to Lumbridge. The teleport event should refuse the old
+   logical decisions as `PINNED` and classify their exact packed sources as
+   `REFUSED_COVERAGE` once.
+4. Wait at least 15 seconds, mark `source-second-wave`, and stop. The disjoint
+   Varrock release should produce a fresh eligible/ready source wave.
+
+Status: implemented and automatically validated; private owner validation
+pending. Runtime adoption remains deliberately absent.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -5420,11 +5496,12 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 45 by atomically rechecking bounded retirement candidates through a pure source-level decision arbiter that cannot alter packed Region lifecycle. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 46 by emitting bounded accepted/refused retirement-decision evidence through additive private v13 diagnostics without lifecycle authority. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 47 by aggregating same-snapshot logical retirement decisions into conservative packed-source readiness while blocking incomplete cross-level coverage and partial edge sources. | Implemented and validated |
+| 2026-07-19 | Continue with Slice 48 by emitting bounded packed-source readiness from the existing atomic decision batch through additive private v14 diagnostics without lifecycle authority. | Implemented and automatically validated; owner validation pending |
 
 ## Next Discussion
 
-Define Slice 48 as additive private diagnostics for bounded packed-source
-readiness before any commit token or lifecycle consumer. Any later consumer
+Complete the prepared Slice 48 private owner route and analyze its v14 trace
+before considering any commit token or lifecycle consumer. Any later consumer
 must remain unable to alter the authoritative packed Region registry until its
 ownership, residency, entity, collision, and recovery preconditions can be
 proved together.
