@@ -1,18 +1,18 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-52 implemented and validated on
+Status: architecture design complete; Slices 1-53 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 52 owner-validates count-only authored construction
-origins beside exact packed-source safety evidence through additive private v16
-diagnostics. The resulting active-versus-origin measurements select a detached,
-immutable authored-placement manifest as the next prerequisite; neither slice
-changes packed Region lookup, eager loading, release, eviction, pathing,
-packets, or persistence
+Current milestone: Slice 53 preserves every successful configured construction
+as a deterministic, detached authored-placement definition after Slice 52
+proved that active Region contents cannot supply spawn provenance. It remains
+an inert input manifest rather than an executable reconstruction manifest and
+does not change packed Region lookup, eager loading, release, eviction,
+pathing, packets, or persistence
 
 ## Purpose
 
@@ -5767,6 +5767,90 @@ remain later policies.
 
 Status: implemented and owner-validated. Actual retirement remains absent.
 
+### Slice 53: Detached authored-placement manifest
+
+Objective: retain the exact primitive construction inputs and deterministic
+authored identity of every placement accepted by the configured whole-world
+population pass. This upgrades Slice 51's count-only origins into inert
+definition evidence; it does not make those definitions executable for Region
+reload.
+
+Implemented:
+
+- immutable `LayeredPackedRegionAuthoredPlacementManifest` generations grouped
+  by deterministic packed source coordinate, with successful population order
+  retained within each source;
+- a stable one-based placement identity tuple of packed source X, packed source
+  Y, and source ordinal. Exact duplicate definitions remain separate entries
+  rather than being deduplicated or ambiguously addressed;
+- detached object construction inputs: authored/constructed ID, packed tile,
+  permanent object ID, direction, object type, and immutable owner text;
+- detached NPC inputs: ID, authored start tile, and full roaming bounds. The
+  source Region is derived from the authored start and never from the NPC's
+  later active position;
+- detached authored ground-item inputs: ID, packed tile, amount, respawn time,
+  and noted state;
+- explicit harvesting-conversion inputs that preserve both the source item
+  definition and the scenery object actually constructed from it, rather than
+  collapsing the conversion into ordinary scenery;
+- bounded startup construction with the existing 8192-source ceiling, a
+  262,144-placement ceiling, checked counters, closed-builder refusal,
+  coordinate ordering, binary source lookup, and immutable placement lists;
+  and
+- a mandatory generation/source/family count-equivalence check against Slice
+  51's independently accumulated inventory before either completed value is
+  published by `WorldPopulator`.
+
+Construction boundary:
+
+- definitions are recorded only after the same membership, feature, event,
+  removal, and replacement filters used by population and only after the
+  corresponding object/NPC/item registration succeeds;
+- the manifest contains primitives and immutable text only. No Entity,
+  `GameObjectLoc`, `NPCLoc`, `ItemLoc`, Region, `TileValue`, terrain archive,
+  event, authored-item registry, cache, callback, claim, permit, lease, or
+  commit handle survives the builder boundary;
+- a stable placement key identifies authored construction input, not a current
+  runtime entity. It does not claim that an object or item is present, that an
+  NPC remains in its source, or that dynamic state can be discarded;
+- the manifest is not read by RegionManager, the private parity observer,
+  pathing, collision, registration, persistence, plugins, or clients; and
+- `LAYERED_PACKED_REGION_RELOAD_SUPPORTED` remains false. No source can be
+  unloaded, removed, evicted, reconstructed, or rolled back through this slice.
+
+Automated and private-runtime validation evidence:
+
+- the compiled fixture proves all five definition families, exact field
+  retention, stable one-based ordinals, duplicate preservation, deterministic
+  source ordering, lookup, immutable lists, explicit generation-zero
+  emptiness, count equivalence, invalid-input refusal, and completed-builder
+  refusal;
+- source guards prove all definitions are captured only along the successful
+  configured construction paths, while RegionManager and the observer cannot
+  access the manifest;
+- the complete layered-map suite passes 118 tests across 52 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 752 core and 488 plugin sources
+  successfully; and
+- a normal private `myworld_dev` startup loaded all 28,732 configured objects,
+  3,775 NPC spawns, and 882 ordinary ground items and reached the online state,
+  exercising the complete-manifest equivalence gate across the same 33,532
+  origins measured in Slice 52; and
+- two consecutive normalizations produce identical source
+  `9ea223c7f18ad3a6529e2a0389fe4254f2c6a521f0c99d9e9e8d7599501da71f`,
+  inventory
+  `54ea3fb6044728dd552d2904c515d4691ca129538de502d44bbcaf720da71887`,
+  classification
+  `2372075613128bee3e9cbfbae795fdfd74b9638b7dc85b3280082fa402d2ed12`,
+  and occurrence
+  `d8e52da68e1f019347eb2198ceef16285d09c9d1b20b88bf990af174b1a7b868`
+  fingerprints, with the existing 1,771 terrain sectors, 49,816 placement
+  records, 20 transition edges, and one explicitly unresolved coordinate
+  unchanged.
+
+Status: implemented and runtime-validated. No owner route is required because
+the manifest is inert and has no client-visible or lifecycle consumer.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -5906,15 +5990,16 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 51 by auditing construction/teardown owners and recording a bounded immutable count-only inventory of authored content actually constructed per packed Region. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 52 by correlating exact retirement-safety sources with immutable authored construction-origin counts through additive private v16 diagnostics. | Implemented and owner-validated |
 | 2026-07-19 | Use Slice 52's active-versus-origin evidence to select a detached immutable authored-placement manifest as the next prerequisite, keeping spawn origin separate from active state. | Confirmed for Slice 53; lifecycle adoption remains gated |
+| 2026-07-19 | Continue with Slice 53 by retaining exact detached construction inputs, duplicate-safe source ordinals, and harvesting conversion identity after successful population. | Implemented and runtime-validated; lifecycle adoption remains gated |
 
 ## Next Discussion
 
-Proceed with Slice 53 as a detached immutable authored-placement manifest: keep
-deterministic per-source construction inputs and stable identity without live
-entity, Region, event, registry, archive, cache, or lifecycle handles. Preserve
-duplicates and authored family explicitly; keep NPC spawn origin separate from
-active position and harvesting conversion separate from ordinary scenery.
-Later slices must still address replacements, delayed respawn state, dynamic
+Use Slice 53's definition evidence to audit the complete cross-source effect
+surface before designing a reconstruction executor. The next bounded slice
+should derive detached packed-source dependencies for object/collision
+footprints and NPC roaming bounds while preserving placement identity and
+without reading or changing active lifecycle state. Later slices must still
+address terrain replay, replacements, delayed respawn state, dynamic
 provenance, collision derivation, global registries, event ownership, and
 rollback before any reload design.
 Any later commit token or lifecycle consumer must remain unable to alter the

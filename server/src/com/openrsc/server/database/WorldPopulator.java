@@ -14,6 +14,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory.ConstructionKind;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.WorldNpcEditFiles;
 import com.openrsc.server.util.WorldSceneryEditFiles;
@@ -48,6 +49,9 @@ public final class WorldPopulator {
 	private volatile LayeredPackedRegionAuthoredConstructionInventory
 		authoredConstructionInventory =
 			LayeredPackedRegionAuthoredConstructionInventory.empty();
+	private volatile LayeredPackedRegionAuthoredPlacementManifest
+		authoredPlacementManifest =
+			LayeredPackedRegionAuthoredPlacementManifest.empty();
 
 	public WorldPopulator(final World world) {
 		this.world = world;
@@ -58,11 +62,16 @@ public final class WorldPopulator {
 		gameobjlocs.clear();
 		npclocs.clear();
 		itemlocs.clear();
+		long constructionGeneration = Math.incrementExact(
+			authoredConstructionInventory.getGeneration());
 		LayeredPackedRegionAuthoredConstructionInventory.Builder
 			constructionInventory =
 				LayeredPackedRegionAuthoredConstructionInventory.builder(
-					Math.incrementExact(
-						authoredConstructionInventory.getGeneration()));
+					constructionGeneration);
+		LayeredPackedRegionAuthoredPlacementManifest.Builder
+			placementManifest =
+				LayeredPackedRegionAuthoredPlacementManifest.builder(
+					constructionGeneration);
 		try {
 			// LOAD OBJECTS //
 			int countOBJ = 0;
@@ -109,6 +118,7 @@ public final class WorldPopulator {
 					obj.getType() == 0 ? ConstructionKind.SCENERY
 						: ConstructionKind.BOUNDARY,
 					obj.getX(), obj.getY());
+				recordObjectPlacement(placementManifest, obj);
 				if (obj.getType() == 0) { // no wall objects allowed
 					getWorld().addSceneryLoc(obj.getLocation(), obj.getID());
 				}
@@ -170,6 +180,7 @@ public final class WorldPopulator {
 				recordConstruction(
 					constructionInventory, ConstructionKind.NPC_SPAWN,
 					n.startX(), n.startY());
+				recordNpcPlacement(placementManifest, n);
 			}
 			LOGGER.info("Loaded {}", box(getWorld().countNpcs()) + " NPC spawns");
 
@@ -200,11 +211,15 @@ public final class WorldPopulator {
 				int harvestingSceneryId = harvestingSceneryForGroundItem(i.id);
 				if (getWorld().getServer().getConfig().WANT_HARVESTING && harvestingSceneryId >= 0) {
 					Point location = Point.location(i.x, i.y);
-					getWorld().registerGameObject(new GameObject(getWorld(), location, harvestingSceneryId, 0, 0));
+					GameObject harvestingScenery = new GameObject(
+						getWorld(), location, harvestingSceneryId, 0, 0);
+					getWorld().registerGameObject(harvestingScenery);
 					recordConstruction(
 						constructionInventory,
 						ConstructionKind.HARVESTING_SCENERY,
 						i.x, i.y);
+					recordHarvestingPlacement(
+						placementManifest, i, harvestingScenery);
 					getWorld().addSceneryLoc(location, harvestingSceneryId);
 					continue;
 				}
@@ -216,6 +231,7 @@ public final class WorldPopulator {
 						constructionInventory,
 						ConstructionKind.GROUND_ITEM_SPAWN,
 						i.x, i.y);
+					recordGroundItemPlacement(placementManifest, i);
 				}
 				countGI++;
 			}
@@ -227,7 +243,16 @@ public final class WorldPopulator {
 				getWorld().getServer().getDatabase().getItemIDList().add(itemId);
 
 			LOGGER.info("Loaded {}", box(getWorld().getServer().getDatabase().getItemIDList().size()) + " itemIDs.");
-			authoredConstructionInventory = constructionInventory.build();
+			LayeredPackedRegionAuthoredConstructionInventory completedInventory =
+				constructionInventory.build();
+			LayeredPackedRegionAuthoredPlacementManifest completedManifest =
+				placementManifest.build();
+			if (!completedManifest.isCountEquivalentTo(completedInventory)) {
+				throw new IllegalStateException(
+					"Authored placement manifest does not match construction inventory");
+			}
+			authoredPlacementManifest = completedManifest;
+			authoredConstructionInventory = completedInventory;
 
 		} catch (Exception e) {
 			LOGGER.catching(e);
@@ -246,9 +271,69 @@ public final class WorldPopulator {
 			packedY / Constants.REGION_SIZE);
 	}
 
+	private void recordObjectPlacement(
+		final LayeredPackedRegionAuthoredPlacementManifest.Builder manifest,
+		final GameObject object) {
+		if (object.getType() == 0) {
+			manifest.recordScenery(
+				object.getX() / Constants.REGION_SIZE,
+				object.getY() / Constants.REGION_SIZE,
+				object.getID(), object.getLoc().getPermId(),
+				object.getX(), object.getY(), object.getDirection(),
+				object.getType(), object.getOwner());
+		} else {
+			manifest.recordBoundary(
+				object.getX() / Constants.REGION_SIZE,
+				object.getY() / Constants.REGION_SIZE,
+				object.getID(), object.getLoc().getPermId(),
+				object.getX(), object.getY(), object.getDirection(),
+				object.getType(), object.getOwner());
+		}
+	}
+
+	private void recordNpcPlacement(
+		final LayeredPackedRegionAuthoredPlacementManifest.Builder manifest,
+		final NPCLoc loc) {
+		manifest.recordNpcSpawn(
+			loc.startX() / Constants.REGION_SIZE,
+			loc.startY() / Constants.REGION_SIZE,
+			loc.getId(), loc.startX(), loc.startY(),
+			loc.minX(), loc.maxX(), loc.minY(), loc.maxY());
+	}
+
+	private void recordGroundItemPlacement(
+		final LayeredPackedRegionAuthoredPlacementManifest.Builder manifest,
+		final ItemLoc loc) {
+		manifest.recordGroundItemSpawn(
+			loc.getX() / Constants.REGION_SIZE,
+			loc.getY() / Constants.REGION_SIZE,
+			loc.getId(), loc.getX(), loc.getY(), loc.getAmount(),
+			loc.getRespawnTime(), loc.getNoted());
+	}
+
+	private void recordHarvestingPlacement(
+		final LayeredPackedRegionAuthoredPlacementManifest.Builder manifest,
+		final ItemLoc source,
+		final GameObject constructed) {
+		manifest.recordHarvestingScenery(
+			constructed.getX() / Constants.REGION_SIZE,
+			constructed.getY() / Constants.REGION_SIZE,
+			source.getId(), constructed.getID(),
+			constructed.getLoc().getPermId(),
+			constructed.getX(), constructed.getY(),
+			constructed.getDirection(), constructed.getType(),
+			constructed.getOwner(), source.getAmount(),
+			source.getRespawnTime(), source.getNoted());
+	}
+
 	public LayeredPackedRegionAuthoredConstructionInventory
 		getAuthoredConstructionInventory() {
 		return authoredConstructionInventory;
+	}
+
+	public LayeredPackedRegionAuthoredPlacementManifest
+		getAuthoredPlacementManifest() {
+		return authoredPlacementManifest;
 	}
 
 	private int harvestingSceneryForGroundItem(int itemId) {
