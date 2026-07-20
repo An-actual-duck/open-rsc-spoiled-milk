@@ -3,21 +3,20 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 and 74 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-and 76 automated-validated on the active refinement branch
+76, and 77 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 76 private schema-v27 validation proves that 16 real
-atomic NPC census/containment/projection triplets remain internally exact when
-the observed boundary is contained and emit zero false source requirements.
-The nondeterministic Guard crossing did not recur in this capture, so a live
-non-empty requirement remains a targeted validation gap rather than a failed
-expectation. No second census, selection mutation, source load, entity
-registry, arrival gate, retention decision, or lifecycle authority is
-authorized, and packed Region lookup, eager loading, release, eviction,
-pathing, packets, and persistence remain unchanged
+Current milestone: automated Slice 77 combines one exact retirement-safety
+source set, its fixed-point authored cohort, active-NPC boundary requirements,
+and non-expandable hard blockers into a bounded provenance-tagged candidate
+union for later reassessment. Every added coordinate explicitly lacks fresh
+safety and census evidence; static support remains distinct. No selection
+mutation, source load, entity registry, arrival gate, retention decision, or
+lifecycle authority is authorized, and packed Region lookup, eager loading,
+release, eviction, pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -7351,6 +7350,69 @@ A naturally occurring non-empty private-world capture remains unobserved but
 is not required after deterministic observer/schema coverage; all lifecycle
 adoption remains deliberately absent.
 
+### Slice 77: Retirement source refinement proposal
+
+Objective: combine one exact retirement-safety source set with its static
+authored cohort, point-in-time active-NPC requirements, and non-expandable hard
+blockers into a provenance-tagged candidate union that explains what a later
+reassessment must observe without changing runtime state.
+
+Implemented:
+
+- `LayeredPackedRegionRetirementRefinementProposal` requires the original
+  safety assessment and Slice 63 authored cohort to agree on every ordered
+  seed coordinate, while the Slice 75 active-NPC projection must agree on
+  generation, safety tick, and selected-source count;
+- original safety seeds, recursively expanded authored sources, and both
+  active-NPC requirement reasons deduplicate into one stable Y/X-sorted
+  candidate list without losing their independent provenance or instance
+  counts;
+- authored expansion round remains attached to each cohort source, including
+  active requirements that overlap an already-required authored coordinate;
+- empty static support coordinates remain a separate bounded requirement list
+  rather than silently becoming load candidates. If an independent active-NPC
+  reason names the same coordinate, both roles remain explicit;
+- every candidate added beyond the exact original safety set reports that
+  fresh safety evidence and a fresh NPC census are required;
+- all four non-expandable active-NPC blocker categories and their exact total
+  evidence survive unchanged; and
+- separate candidate/support budgets refuse the whole proposal before any
+  source or reason can be truncated.
+
+Automated validation status:
+
+- a compiled aligned fixture begins with safety source `(4,0)`, recursively
+  adds authored source `(5,0)`, retains empty static support `(6,0)`, and adds
+  active-only authored-owner source `(7,0)`;
+- the same fixture proves `(5,0)` deduplicates while preserving both its
+  authored expansion and selected-owner-current reasons, so three input source
+  families produce three exact candidates rather than four;
+- unresolved-inside and relevant-inactive evidence remain two hard conditions
+  with two evidence instances and cannot be erased by the candidate union;
+- seed-coordinate mismatch, candidate overflow, support overflow, invalid
+  budgets, null input, and immutable result guards all refuse safely;
+- source guards keep the proposal detached from entities, Region,
+  RegionManager, callbacks, loading, and teardown;
+- the complete layered-map suite passes 193 tests across 76 focused files; and
+- the authoritative bundled-Ant build compiles 767 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- a candidate coordinate is a request for later evidence, not a load,
+  acquisition, lease, ownership, retention, or selection mutation;
+- original safety evidence is retained only as the input observation; every
+  later decision still requires a fresh whole-set assessment and census;
+- authored closure of one input cohort does not prove closure after adding an
+  active-only source, and support coordinates remain spatial evidence rather
+  than reconstructable content; and
+- No lifecycle authority, arrival rejection, registry, entity retention,
+  loading, release, eviction, reconstruction, transaction, commit, or rollback
+  is created.
+
+Status: implemented and automated-validated. Runtime diagnostic exposure and
+all lifecycle adoption remain deliberately absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7632,6 +7694,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 74 by exposing the active-NPC containment assessment through additive private schema-v26 evidence derived from the event's existing census. | Implemented and owner-validated; the broad selection began contained, then one Guard legitimately crossed from external owner source `(2,10)` into selected current source `(2,9)` and produced the sole blocker without registry, arrival-gate, or lifecycle authority |
 | 2026-07-20 | Continue with Slice 75 by projecting exact missing sources for recognized active-NPC boundary crossings while preserving non-expandable hard blockers. | Implemented and automated-validated; requirements are deduplicated and refusal-bounded, every proposal requires fresh safety/census evidence, and no selection or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 76 by exposing active-NPC boundary requirements through additive private schema-v27 evidence derived from the event's existing census. | Implemented and automated-validated; contained-path owner validation passes 33,385 checks with zero false requirements, and the executable observer fixture deterministically validates one exact non-empty external-owner requirement without a second census, selection mutation, registry, arrival gate, or lifecycle authority |
+| 2026-07-20 | Continue with Slice 77 by combining exact safety seeds, authored-cohort expansion, active-NPC requirements, static support, and hard blockers into one inert refinement proposal. | Implemented and automated-validated; every added candidate retains provenance and explicitly requires fresh safety/census evidence, while support remains separate and no selection or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -7686,13 +7749,18 @@ by emitting one external-owner-inside instance and exactly one
 external-owner-authored requirement for its unselected source. Another random
 owner rerun is not required.
 
-The next safe slice should remain an inert refinement proposal: combine the
-static authored-cohort sources, exact active-NPC boundary requirements, and
-non-expandable hard blockers into one provenance-tagged candidate source union.
-Every coordinate added beyond the original safety set must be explicitly
-marked as lacking fresh safety and census evidence. The result must neither
-mutate the selected set nor claim fixed-point closure; it should only explain
-what a later reassessment would need to observe.
+Slice 77 now supplies that inert refinement proposal. It keeps original safety
+seeds, authored expansion, active-NPC reasons, support-only coordinates, and
+hard blockers distinct while producing one deduplicated candidate union. Every
+added candidate explicitly requires fresh safety and census evidence, and the
+result neither mutates a selection nor claims fixed-point closure.
+
+The next safe slice should expose the proposal through additive private
+schema-v28 diagnostics derived from the same event's safety, cohort, and
+active-NPC values. Runtime reconciliation must prove every seed, added source,
+overlap, support coordinate, reason count, and hard blocker against its three
+parents. A null parent must keep the proposal null, and diagnostic exposure
+must not become a load request or lifecycle consumer.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
