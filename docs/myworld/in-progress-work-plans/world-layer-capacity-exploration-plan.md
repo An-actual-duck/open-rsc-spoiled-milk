@@ -1,16 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-44 implemented and validated on
+Status: architecture design complete; Slices 1-45 implemented and validated on
 the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 44 has owner-validated the dormant Region retirement
-projection with two simultaneous real Player owners; packed Region lookup,
-eager loading, release, eviction, pathing, packets, and persistence remain
-authoritative and unchanged
+Current milestone: Slice 45 has added the first source-level, atomically
+rechecked Region retirement decision boundary while keeping every decision
+dormant; packed Region lookup, eager loading, release, eviction, pathing,
+packets, and persistence remain authoritative and unchanged
 
 ## Purpose
 
@@ -5023,6 +5023,76 @@ Owner validation evidence:
 
 Status: implemented and owner-validated.
 
+### Slice 45: Dormant Region retirement decision arbiter
+
+Objective: introduce the smallest source-level consumer of Slice 42 eligibility
+that can reject a stale or unsafe candidate after a fresh atomic recheck, while
+remaining structurally incapable of changing packed Region lifecycle.
+
+Implemented:
+
+- `LayeredRegionRetirementDecisionArbiter`, a pure evaluator accepting one
+  earlier candidate snapshot and one freshly captured snapshot for the same
+  logical Region;
+- an opaque per-ledger projection identity carried by immutable snapshots, so a
+  candidate originating from another world/manager projection is rejected
+  without retaining a reference back to the mutable ledger;
+- explicit outcomes for eligible evidence, foreign projections, noneligible
+  candidates, repinning, active cooldown, nonresidency, unsupported/untracked
+  states, changed release identity, and changed residency version;
+- comparison of release ownership version, release tick, and eligibility tick,
+  preventing an old candidate from authorizing a later release even after that
+  later release has completed its own cooldown;
+- conservative residency-version equality, detecting source removal/re-addition
+  and unrelated residency mutations so a caller must obtain a fresh candidate;
+- deliberate tolerance for unrelated global ownership-version advances when
+  the candidate Region's exact release identity remains current and its
+  reference count remains zero; and
+- single and bounded-batch RegionManager entry points that capture all current
+  ownership, checked residency, release, and cooldown evidence under the
+  existing lifecycle lock at one server tick. Batch inputs must fit the
+  caller-supplied budget, remain within the existing 4096-Region hard ceiling,
+  and identify unique non-null logical Regions.
+
+Decision safety:
+
+- evaluation is deterministic and non-consuming; repeating the same safe
+  evaluation returns eligible evidence again rather than mutating or claiming
+  the candidate;
+- the arbiter has no `Region` reference, loader, registry, cache, tile/entity
+  state, callback, timer, queue, or packed source mutator;
+- the RegionManager boundary performs only checked snapshot reads and cannot
+  call Region construction, registration, unregistration, unload, or eviction;
+- no gameplay, pathing, packet, Player, persistence, or observer path consumes
+  the new decision yet; and
+- even `ELIGIBLE` is explicitly evidence rather than permission or an order to
+  alter residency.
+
+Automated validation evidence:
+
+- the focused compiled fixture accepts a fresh candidate and repeated
+  idempotent evaluation, then rejects reacquisition, pre-expiry input, a stale
+  first-release candidate after re-release, changed residency, removed
+  residency, a foreign projection, an unsupported candidate, mismatched keys,
+  and null inputs;
+- the fixture also proves an unrelated ownership-version advance does not
+  invalidate an otherwise unchanged exact release;
+- the complete layered-map suite passes 102 tests across 44 focused files;
+- all 13 World Builder discovery tests and the standalone-layout guard pass;
+- the authoritative bundled-Ant build compiles 747 core and 488 plugin sources
+  successfully; and
+- two consecutive normalizations produced identical source
+  `ad66d692e9ade0fea6dfb28b42b1c7fcad4fd42e2b8f56fff3823059bb4dbe6e`,
+  inventory
+  `9c66dbe1a50c4f16b928fc4eb632f14251f1c5b32f6734bdd17370cde037a5d8`,
+  classification
+  `5b22933eaf16beb52e16f804b20fdf46c3fc21cfcdd759e2b49a02e247d9841e`,
+  and occurrence
+  `cb475d534bebc8c848cfc0cb748b5290971196eb064f663f2e35aee0cdce89f2`
+  fingerprints.
+
+Status: implemented and validated; runtime adoption remains deliberately absent.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -5153,14 +5223,15 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 42 by projecting global interest releases through a conservative 16-tick retirement cooldown without adopting loading, retention, release, or eviction. | Implemented and validated |
 | 2026-07-19 | Continue with Slice 43 by exposing bounded transition and recent-release cooldown evidence through opt-in private v12 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 44 as a two-real-client private-runtime gate proving shared acquisition, partial release, final global release, cooldown, expiry, and reacquisition before considering a retirement arbiter. | Implemented and owner-validated |
+| 2026-07-19 | Continue with Slice 45 by atomically rechecking bounded retirement candidates through a pure source-level decision arbiter that cannot alter packed Region lifecycle. | Implemented and validated |
 
 ## Next Discussion
 
-The next bounded slice may introduce a source-level Region retirement decision
-arbiter that consumes Slice 42 eligibility only after atomically rechecking
-references, residency, version, and cooldown. Its decisions must remain
-idempotent, bounded, and dormant evidence: it must not unregister, unload, or
-evict packed Regions yet.
+The next bounded slice may expose Slice 45 decision outcomes through additive,
+opt-in private diagnostics, including explicit stale-release, repinned, and
+residency-changed refusals. That observer must retain only bounded immutable
+candidate evidence and still cannot unregister, unload, or evict packed
+Regions.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.

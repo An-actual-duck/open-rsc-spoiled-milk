@@ -16,6 +16,7 @@ import java.util.Set;
  * evict a Region.</p>
  */
 public final class LayeredRegionRetirementEligibilityLedger {
+	private final Object projectionIdentity = new Object();
 	private final long minimumCooldownTicks;
 	private final Map<WorldRegionKey, Integer> referenceCounts =
 		new HashMap<WorldRegionKey, Integer>();
@@ -143,7 +144,8 @@ public final class LayeredRegionRetirementEligibilityLedger {
 
 		latestObservationTick = currentTick;
 		return new Snapshot(
-			key, ownership.getLedgerVersion(), residency.getMirrorVersion(),
+			projectionIdentity, key, ownership.getLedgerVersion(),
+			residency.getMirrorVersion(),
 			currentTick, minimumCooldownTicks, referenceCount,
 			residency.isLegacySupported(), residency.getSourceCount(),
 			residency.getResidentSourceCount(), state,
@@ -200,6 +202,7 @@ public final class LayeredRegionRetirementEligibilityLedger {
 
 	/** Immutable logical evidence; never an unload or eviction order. */
 	public static final class Snapshot {
+		private final Object projectionIdentity;
 		private final WorldRegionKey logicalRegionKey;
 		private final long ownershipVersion;
 		private final long residencyMirrorVersion;
@@ -215,6 +218,7 @@ public final class LayeredRegionRetirementEligibilityLedger {
 		private final Long eligibleAtTick;
 
 		private Snapshot(
+			final Object projectionIdentity,
 			final WorldRegionKey logicalRegionKey,
 			final long ownershipVersion,
 			final long residencyMirrorVersion,
@@ -228,6 +232,8 @@ public final class LayeredRegionRetirementEligibilityLedger {
 			final Long releasedAtOwnershipVersion,
 			final Long releasedAtTick,
 			final Long eligibleAtTick) {
+			this.projectionIdentity = Objects.requireNonNull(
+				projectionIdentity, "projectionIdentity");
 			this.logicalRegionKey = Objects.requireNonNull(
 				logicalRegionKey, "logicalRegionKey");
 			this.ownershipVersion = ownershipVersion;
@@ -306,6 +312,11 @@ public final class LayeredRegionRetirementEligibilityLedger {
 
 		public boolean isRetirementEligible() {
 			return retirementState == RetirementState.RETIREMENT_ELIGIBLE;
+		}
+
+		boolean sharesProjectionWith(final Snapshot other) {
+			return other != null
+				&& projectionIdentity == other.projectionIdentity;
 		}
 	}
 

@@ -18,6 +18,7 @@ import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageC
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
@@ -32,6 +33,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -53,6 +55,8 @@ public class RegionManager {
 		layeredRegionInterestOwnershipLedger;
 	private final LayeredRegionRetirementEligibilityLedger
 		layeredRegionRetirementEligibilityLedger;
+	private final LayeredRegionRetirementDecisionArbiter
+		layeredRegionRetirementDecisionArbiter;
 
 	private final World world;
 
@@ -72,6 +76,8 @@ public class RegionManager {
 		this.layeredRegionRetirementEligibilityLedger =
 			new LayeredRegionRetirementEligibilityLedger(
 				LAYERED_REGION_RETIREMENT_COOLDOWN_TICKS);
+		this.layeredRegionRetirementDecisionArbiter =
+			new LayeredRegionRetirementDecisionArbiter();
 	}
 
 	public void load() {
@@ -687,6 +693,75 @@ public class RegionManager {
 			}
 			return Collections.unmodifiableList(snapshots);
 		}
+	}
+
+	/**
+	 * Atomically rechecks one earlier retirement candidate against current
+	 * ownership, residency, release, and cooldown state. The result is dormant
+	 * evidence only and cannot change packed Region lifecycle.
+	 */
+	public LayeredRegionRetirementDecisionArbiter.Decision
+		evaluateLayeredRegionRetirementCandidate(
+			final LayeredRegionRetirementEligibilityLedger.Snapshot candidate) {
+		LayeredRegionRetirementEligibilityLedger.Snapshot checkedCandidate =
+			Objects.requireNonNull(candidate, "candidate");
+		synchronized (layeredRegionLifecycleLock) {
+			return evaluateLayeredRegionRetirementCandidateLocked(
+				checkedCandidate, getWorld().getServer().getCurrentTick());
+		}
+	}
+
+	/**
+	 * Atomically rechecks one bounded, unique candidate batch at one server tick.
+	 * No candidate is retained, consumed, unloaded, unregistered, or evicted.
+	 */
+	public List<LayeredRegionRetirementDecisionArbiter.Decision>
+		evaluateLayeredRegionRetirementCandidates(
+			final List<LayeredRegionRetirementEligibilityLedger.Snapshot> candidates,
+			final int maximumRegions) {
+		if (candidates == null) {
+			throw new NullPointerException("candidates");
+		}
+		if (maximumRegions < 0
+			|| maximumRegions > MAX_LAYERED_REGIONS_PER_INTEREST_OWNER
+			|| candidates.size() > maximumRegions) {
+			throw new IllegalArgumentException(
+				"Retirement decisions exceed the candidate Region budget");
+		}
+		LinkedHashSet<WorldRegionKey> uniqueKeys =
+			new LinkedHashSet<WorldRegionKey>();
+		for (LayeredRegionRetirementEligibilityLedger.Snapshot candidate
+			: candidates) {
+			if (candidate == null
+				|| !uniqueKeys.add(candidate.getLogicalRegionKey())) {
+				throw new IllegalArgumentException(
+					"Retirement decision candidates must be non-null and unique");
+			}
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			long currentTick = getWorld().getServer().getCurrentTick();
+			List<LayeredRegionRetirementDecisionArbiter.Decision> decisions =
+				new ArrayList<LayeredRegionRetirementDecisionArbiter.Decision>(
+					candidates.size());
+			for (LayeredRegionRetirementEligibilityLedger.Snapshot candidate
+				: candidates) {
+				decisions.add(evaluateLayeredRegionRetirementCandidateLocked(
+					candidate, currentTick));
+			}
+			return Collections.unmodifiableList(decisions);
+		}
+	}
+
+	private LayeredRegionRetirementDecisionArbiter.Decision
+		evaluateLayeredRegionRetirementCandidateLocked(
+			final LayeredRegionRetirementEligibilityLedger.Snapshot candidate,
+			final long currentTick) {
+		WorldRegionKey key = candidate.getLogicalRegionKey();
+		LayeredRegionRetirementEligibilityLedger.Snapshot current =
+			layeredRegionRetirementEligibilityLedger.snapshot(
+				layeredRegionInterestOwnershipLedger.snapshot(key),
+				requireLayeredRegionResidencySnapshot(key), currentTick);
+		return layeredRegionRetirementDecisionArbiter.evaluate(candidate, current);
 	}
 
 	/**
