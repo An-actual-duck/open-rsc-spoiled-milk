@@ -2,20 +2,20 @@
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 and 74 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63,
-65, 67, 69, 71, and 73 automated-validated on the active refinement branch
+65, 67, 69, 71, 73, and 75 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 74 proves schema-v26 distinguishes a
-contained boundary from a real mobile-entity crossing. The broad selection
-began contained with 795 selected-owned NPCs, including 18 across their exact
-authored source, then correctly opened when one Guard authored in unselected
-source `(2,10)` wandered into selected source `(2,9)`. No second entity
-registry, arrival gate, load request, retention decision, or lifecycle
-authority is authorized, and packed Region lookup, eager loading, release,
-eviction, pathing, packets, and persistence remain unchanged
+Current milestone: automated Slice 75 converts recognized active-NPC boundary
+crossings into exact missing-source requirements while separating four kinds
+of evidence that expansion cannot resolve. Every proposed source still
+requires a fresh complete safety assessment and census; the projection neither
+mutates the selected set nor proves closure. No second entity registry, arrival
+gate, load request, retention decision, or lifecycle authority is authorized,
+and packed Region lookup, eager loading, release, eviction, pathing, packets,
+and persistence remain unchanged
 
 ## Purpose
 
@@ -7201,6 +7201,67 @@ Safety boundary:
 Status: implemented, automated-validated, and owner-validated. All lifecycle
 adoption remains deliberately absent.
 
+### Slice 75: Active NPC boundary requirement projection
+
+Objective: explain recognized active-NPC boundary crossings as exact source
+requirements while preserving unresolved identity, inactive evidence, and
+duplicate identity as hard blockers that source expansion cannot erase.
+
+Implemented:
+
+- `LayeredPackedRegionActiveNpcBoundaryRequirementProjection` consumes one
+  complete Slice 71 observation and derives its Slice 73 assessment internally,
+  preventing a mismatched caller-supplied containment result;
+- a recognized selected-owned NPC outside proposes its current packed source,
+  while a recognized external-owned NPC inside proposes its authored owner
+  source;
+- repeated crossings deduplicate into stable Y/X-sorted source requirements
+  while retaining selected-owner-current and external-owner-authored reason
+  counts separately;
+- expandable instance count remains separate from unique required-source count,
+  so multiple NPCs cannot silently appear to require multiple source loads;
+- unresolved-inside, unresolved-claimed-selected-owner-outside,
+  relevant-inactive, and relevant-duplicate-identity counts remain four
+  explicit hard-blocker categories;
+- a caller-supplied requirement budget refuses the complete projection before
+  any unique source can be silently dropped; and
+- fresh-safety, fresh-census, selection-mutated, boundary-closure-proved,
+  entity-registry, arrival-gate, and lifecycle-authority flags make the safety
+  boundary machine-readable.
+
+Automated validation status:
+
+- a contained fixture has same-source and internal cross-source movement,
+  produces no requirement or hard blocker, and still refuses to prove future
+  closure;
+- an open fixture projects one selected-owner current source and one shared
+  external-owner authored source from three crossing NPC instances;
+- the same open fixture preserves one count in each hard-blocker category and
+  proves that expansion reasons do not erase unresolved, inactive, or duplicate
+  evidence;
+- immutable-list and zero/overflow budget guards refuse truncation or caller
+  mutation, and source guards keep the projection detached from entities,
+  Region, RegionManager, callbacks, loading, and teardown; and
+- the complete layered-map suite passes 187 tests across 74 focused files; and
+- the authoritative bundled-Ant build compiles 766 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- a source requirement explains which coordinate must be reconsidered; it is
+  not a load, acquisition, retention, lease, or ownership request;
+- every proposed source requires a fresh complete safety assessment and a new
+  NPC census before the boundary can be assessed again;
+- the projection never edits its input selection, recursively follows a new
+  crossing, or claims that adding its requirements would reach a fixed point;
+  and
+- No lifecycle authority, arrival rejection, registry, entity retention,
+  loading, release, eviction, reconstruction, transaction, or rollback is
+  created.
+
+Status: implemented and automated-validated. Runtime diagnostic exposure and
+all lifecycle adoption remain deliberately absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7480,6 +7541,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 72 by exposing active NPC owner/residency evidence through additive private schema-v25 diagnostics. | Implemented and owner-validated; 12 NPCs crossed their exact authored packed-source boundary but remained inside the broad selection, all identity and safety arithmetic reconciled, and no registry, arrival gate, or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 73 by assessing whether one exact active-NPC observation is contained at its census tick while keeping preservation and lifecycle readiness separate. | Implemented and automated-validated; cross-source movement inside stays contained, six independent blockers are refusal-tested, and no registry, arrival gate, or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 74 by exposing the active-NPC containment assessment through additive private schema-v26 evidence derived from the event's existing census. | Implemented and owner-validated; the broad selection began contained, then one Guard legitimately crossed from external owner source `(2,10)` into selected current source `(2,9)` and produced the sole blocker without registry, arrival-gate, or lifecycle authority |
+| 2026-07-20 | Continue with Slice 75 by projecting exact missing sources for recognized active-NPC boundary crossings while preserving non-expandable hard blockers. | Implemented and automated-validated; requirements are deduplicated and refusal-bounded, every proposal requires fresh safety/census evidence, and no selection or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -7518,19 +7580,19 @@ source `(2,9)`. All 25,087 reconciliation checks pass. A static selected-source
 boundary therefore cannot assume that an initially contained mobile census
 will remain contained.
 
-The next safe prerequisite should be an automated-only active-NPC boundary
-requirement projection. For recognized selected-owned NPCs outside, it should
-report their current source; for recognized external-owned NPCs inside, it
-should report their authored owner source. The real Guard case should therefore
-request `(2,10)` exactly. Unresolved identity, relevant inactive instances, and
-duplicate identity must remain hard blockers that source expansion cannot
-erase.
+Slice 75 now projects exact missing sources for recognized crossings. A
+selected-owned NPC outside requests its current source; an external-owned NPC
+inside requests its authored source. Repeated instances deduplicate without
+losing reason counts, while unresolved, relevant inactive, and duplicate
+identity evidence remains non-expandable. Every result requires fresh safety
+and census evidence and can neither mutate the selection nor prove closure.
 
-Any proposed source must require a fresh complete retirement-safety assessment
-and a new census. The projection must not mutate the selected set, recursively
-expand on its own, claim closure, or become an arrival gate. This separates an
-explainable boundary requirement from authority to acquire, retain, load, or
-release the proposed source.
+The next safe slice should expose this projection through additive private
+schema-v27 diagnostics derived from the same event census. The real Guard case
+must report exactly one external-owner-authored requirement for `(2,10)`, with
+no hard blockers, while the earlier contained events must report zero required
+sources. Runtime reconciliation must keep the proposed source outside the
+observed safety selection and preserve all parent assessment counts.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
