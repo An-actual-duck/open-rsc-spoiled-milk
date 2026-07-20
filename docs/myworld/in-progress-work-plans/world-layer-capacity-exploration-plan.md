@@ -1,21 +1,22 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-57 implemented and owner-
-validated, and Slice 58 implemented with automated validation on the active
-refinement branch
+Status: architecture design complete; Slices 1-58 implemented and owner-
+validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 58 adds a bounded detached detail for each anomaly in
-Slice 57's private authored-provenance census. The additive v18 payload can
-name an absent, duplicate, replacement, stale-generation, or unrecognized
-identity by exact source ordinal, family, definition/entity ID, and authored
-coordinate without retaining an entity or creating a registry or lifecycle
-authority. A private owner trace is the remaining gate for classifying the four
-count-only absences found during Slice 57. It does not change packed Region
-lookup, eager loading, release, eviction, pathing, packets, or persistence
+Current milestone: Slice 58's private v18 evidence names all four Slice 57
+absences and proves they are deterministic population-time supersessions: two
+legacy tables displaced by harvesting plants, one base doorframe displaced by
+a custom-quest door, and one duplicated leafy-tree definition displaced by its
+later identical entry. They are valid replay-history records but are not final
+live-state expectations. The next design gate is a detached population-outcome
+projection that preserves full manifest order while distinguishing superseded
+identities from genuine runtime absence. No registry or lifecycle authority is
+authorized, and packed Region lookup, eager loading, release, eviction,
+pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -6237,8 +6238,44 @@ Automated validation status:
   `d8ee498c4d527361da224bcb0efc786295b5e4f73c095f561985cd6f5e8c64f4`
   fingerprints, with world totals unchanged.
 
-Status: implemented and automated-validated. A focused private v18 trace is the
-remaining owner gate before the four wider-route absences can be classified.
+Owner validation evidence (2026-07-20):
+
+- the owner completed the focused farm-to-far transition and captured four
+  contiguous v18 records—start, teleport, marker, and stop—with no reported
+  test interruption;
+- all four records validate against the closed v18 schema, sequences are
+  contiguous, and the marker's expected classification, runtime activity,
+  active-location, expected-family, runtime-family, and detail-count arithmetic
+  are exact;
+- the marker covers 42 exact safety sources and 5,801 expected placements:
+  5,797 matched, four absent, zero duplicate, 5,797 runtime instances, zero
+  replacements, zero stale-generation identities, zero unrecognized
+  identities, four emitted details, and zero dropped details;
+- packed source `(1,14)`, ordinal 74 is the legacy table (`TABLE`, ID `3`) at
+  `(79,693)`. With harvesting enabled, the later authored cabbage ground item
+  (`CABBAGE`, item ID `18`) at that coordinate constructs `CABBAGE` scenery
+  (ID `1262`), and normal collision registration supersedes the table;
+- packed source `(2,11)`, ordinal 9 is the base doorframe (`DOORFRAME`, boundary
+  ID `1`) at `(115,532)`. The later custom-quest boundary file deliberately
+  supplies a closed `DOOR` (ID `2`) at the same coordinate and direction, so
+  registration supersedes the base doorframe;
+- packed source `(3,13)`, ordinal 106 is a base leafy tree (`LEAFY_TREE`, ID
+  `1`) at `(177,655)`. `SceneryLocsOther.json` later repeats the identical tree
+  at the same coordinate, so the later definition supersedes the earlier one;
+- packed source `(4,13)`, ordinal 7 is the legacy table (`TABLE`, ID `3`) at
+  `(222,624)`. The later authored tomato ground item (`TOMATO`, item ID `320`)
+  constructs `TOMATO_PLANT` scenery (ID `1268`) under harvesting and supersedes
+  the table; and
+- the same four details persist unchanged in marker and stop evidence. Their
+  exact correspondence to configured load order and `World.registerGameObject`
+  collision behavior rules out stale identity, missed respawn, roaming,
+  transient interaction, or census loss. The current manifest records replay
+  history correctly, but its full construction set is too broad to serve
+  directly as the expected final-live identity set.
+
+Status: implemented and owner-validated. The four absences are classified as
+population-time supersession evidence, not runtime provenance failures. No
+lifecycle consumer is authorized.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -6384,15 +6421,20 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 55 by formalizing the manifest address as an immutable generation-fenced identity without attaching it to live definitions or entities. | Implemented and automated-validated; runtime attachment remains gated |
 | 2026-07-19 | Continue with Slice 56 by attaching conflict-refusing authored identity metadata to accepted definitions/entities and preserving it through existing respawn and explicit replacement paths. | Implemented and runtime-validated; registry/lifecycle authority remains absent |
 | 2026-07-19 | Continue with Slice 57 by comparing exact safety-source manifest identities with a bounded count-only private runtime census and additive v17 diagnostics. | Implemented and owner-validated; registry/lifecycle authority remains absent |
-| 2026-07-19 | Continue with Slice 58 by adding bounded detached exact-identity details for every authored-provenance anomaly through additive v18 diagnostics. | Implemented and automated-validated; private classification trace pending and registry/lifecycle authority remains absent |
+| 2026-07-19 | Continue with Slice 58 by adding bounded detached exact-identity details for every authored-provenance anomaly through additive v18 diagnostics. | Implemented and owner-validated; all four prior absences classified as deterministic population-time supersessions and registry/lifecycle authority remains absent |
 
 ## Next Discussion
 
-Capture a focused private v18 trace and use its bounded detached anomaly details
-to classify the four wider-route absences by exact family, source ordinal,
-authored/constructed ID, and construction coordinate. Determine whether each
-is a normal temporary interaction state or a genuine provenance gap before any
-identity registry is considered. Terrain replay,
+Design Slice 59 as a bounded detached population-supersession projection. Keep
+Slice 53's complete ordered manifest as replay history, but record when later
+startup construction collision-displaces an earlier authored identity and
+derive a final-live expectation set that excludes those predecessors. Preserve
+both identities and the collision family so the two harvesting overlays, the
+custom door overlay, and the duplicated tree are explicit and testable; do not
+silently delete or rewrite source content. Feed that projection into the
+private provenance census so these four expected supersessions stop presenting
+as absences while a truly missing final identity still does. Do not create a
+global entity registry or grant loading, teardown, or reload authority. Terrain replay,
 collision derivation, event ownership, transactional teardown, and rollback
 remain later gates.
 Any later commit token or lifecycle consumer must remain unable to alter the
