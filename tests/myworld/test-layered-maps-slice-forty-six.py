@@ -73,7 +73,7 @@ class LayeredMapsSliceFortySixTest(unittest.TestCase):
         readme = README.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v23"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v24"', observer)
         self.assertIn("MAX_TRACE_RETIREMENT_CANDIDATES = 4096", observer)
         self.assertIn("retirementDecisionCandidates", observer)
         self.assertIn("updateRetirementDecisionCandidates(", observer)

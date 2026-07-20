@@ -28,6 +28,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredCons
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
@@ -1407,7 +1408,9 @@ public final class Development implements CommandTrigger {
 					layeredPackedRegionAuthoredReconstructionCohortSource(player),
 					layeredPackedRegionAuthoredReconstructionCohortAttributionSource(
 						player),
-					layeredPackedRegionAuthoredReconstructionTopologySource(player));
+					layeredPackedRegionAuthoredReconstructionTopologySource(player),
+					layeredPackedRegionAuthoredReconstructionDependencySemanticsSource(
+						player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1828,6 +1831,33 @@ public final class Development implements CommandTrigger {
 						player.getWorld().getWorldLoader().getWorldPopulator()
 							.getAuthoredReconstructionRecipe(),
 						cohort, maximumSources, maximumRelationships);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionDependencySemanticsSource
+			layeredPackedRegionAuthoredReconstructionDependencySemanticsSource(
+				final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionDependencySemanticsSource() {
+			@Override
+			public
+				LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis
+					capture(
+						final LayeredPackedRegionRetirementSafetyAssessment safety,
+						final int maximumSelectedSources,
+						final int maximumSupportSources,
+						final int maximumIncomingOwners,
+						final int maximumIncomingPlacements) {
+				return
+					LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis
+						.analyze(
+							player.getWorld().getWorldLoader().getWorldPopulator()
+								.getAuthoredReconstructionRecipe(),
+							safety, maximumSelectedSources,
+							maximumSupportSources, maximumIncomingOwners,
+							maximumIncomingPlacements);
 			}
 		};
 	}

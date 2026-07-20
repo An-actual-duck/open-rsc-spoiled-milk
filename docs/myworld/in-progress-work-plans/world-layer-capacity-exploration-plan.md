@@ -2,19 +2,18 @@
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, and 68
 owner-validated, Slice 60 private-runtime validated, and Slices 61, 63, 65,
-67, and 69 automated-validated on the active refinement branch
+67, 69, and 70 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 69 now represents authored replay as source-local,
-preserves conservative outbound spatial support, and reports external authored
-owners that can reach inward as a separate potential dependency. The result
-remains detached diagnostic evidence only. It is not active-instance evidence.
-No recipe consumer, load request, registry, or lifecycle authority is
-authorized, and packed Region lookup, eager loading, release, eviction,
-pathing, packets, and persistence remain unchanged
+Current milestone: Slice 70 exposes Slice 69's source-local replay, conservative
+outbound spatial support, and external incoming-owner reach through additive
+private schema-v24 evidence. It remains detached diagnostics and is not
+active-instance evidence. No recipe consumer, load request, registry, or
+lifecycle authority is authorized, and packed Region lookup, eager loading,
+release, eviction, pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -6842,6 +6841,56 @@ Automated validation status:
 Status: implemented and automated-validated. No lifecycle authority is
 authorized.
 
+### Slice 70: Reconstruction dependency semantics diagnostics
+
+Objective: expose Slice 69's bounded semantic split through the opt-in private
+observer so the accepted narrow and broad safety selections can be compared on
+real data without creating active-instance or lifecycle state.
+
+Implemented:
+
+- additive `layered-map-parity-event-v24` records retain the complete v23 event
+  and add nullable
+  `packedRegionAuthoredReconstructionDependencySemantics` evidence;
+- the observer passes the exact safety assessment used by the existing recipe,
+  construction, provenance, and cohort diagnostics into the semantic source;
+- aggregate totals distinguish selected replay sources and placements,
+  outbound support sources and references, and external incoming owners,
+  placements, and inward references;
+- bounded selected-source, outbound-support, incoming-owner, and typed-kind
+  entries preserve the source-local, static-footprint, potential-mobile, and
+  anchor-only distinctions; and
+- both the Player session-rebind path and development-command start path derive
+  the analysis from the completed `WorldPopulator` recipe.
+
+Safety boundary:
+
+- selected, support, incoming-owner, and incoming-placement budgets are
+  independent observer limits, and overflow refuses the event rather than
+  truncating evidence;
+- schema-v24 declares `sourceLocalReplay=true`,
+  `spatialReachPreserved=true`, `activeInstanceEvidence=false`,
+  `entityRegistry=false`, and `lifecycleAuthority=false`, while v11-v23 remain
+  immutable contracts; and
+- the observer cannot execute a recipe, acquire a dependency, alter an
+  envelope, retain an NPC, or change packed Region loading or release.
+
+Automated validation status:
+
+- the v24 schema is an additive Draft 2020-12 contract with bounded collections
+  and explicit inert flags;
+- the executable observer fixture emits a non-null source-local semantics value
+  and validates its aggregate, kind, inert-flag, and complete schema-chain
+  representation;
+- observer guards verify exact-safety capture, four independent budgets,
+  serialization, and both runtime source paths;
+- the complete layered-map suite passes 170 tests across 69 focused files; and
+- the authoritative bundled-Ant build compiles 763 core and 488 plugin
+  sources.
+
+Status: implemented and automated-validated. No lifecycle authority is
+authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7116,6 +7165,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 67 by comparing the completed forward cohort with whole-recipe incoming edges and strong/weak component topology. | Implemented and automated-validated; forward closure is proved distinct from incoming/weak closure, graph membership remains evidence only, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 68 by exposing bounded whole-recipe topology through additive private schema-v23 diagnostics. | Implemented and owner-validated; the narrow/broad forward cohorts gain the same 75 incoming-only sources through 10 NPC-roaming edges/38 references, the largest weak component contains 123 of 366 authored sources, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 69 by separating exact source-local replay, conservative outbound spatial support, and external incoming-owner reach. | Implemented and automated-validated; support content is never recursively imported, potential mobile reach is not active-instance evidence, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 70 by exposing the dependency-semantics split through additive private schema-v24 diagnostics. | Implemented and automated-validated; exact safety drives bounded replay/support/incoming evidence, active-instance evidence remains absent, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -7132,14 +7182,13 @@ mobile entity currently needs. Preserve every conservative reach envelope, but
 do not recursively import a target coordinate's unrelated authored recipe just
 because the coordinate contains content.
 
-Slice 69 now supplies the automated-only dependency-semantics prerequisite. The
-safest next slice is additive private diagnostics that apply it to the same
-narrow and broad routes already accepted under schema v23. The event should
-report bounded selected replay sources/placements, outbound support sources and
-references, external incoming-owner sources/placements/references, and exact
-static-footprint, potential-mobile, and anchor-only totals. This will determine
-whether the semantic split remains intelligible and bounded on real data before
-any active-instance design is considered.
+Slice 70 now applies the semantic split to additive private schema-v24
+diagnostics. The safest next gate is an owner route comparing the same narrow
+and broad selections accepted in Slices 64-68. The capture should verify exact
+schema and arithmetic, then compare selected replay, outbound support, and
+incoming-owner totals by static-footprint, potential-mobile, and anchor-only
+semantics. The route must also confirm unchanged scenery, NPC, collision, and
+loading behavior.
 
 This diagnostic must not shrink an envelope, permit retirement, or assert that
 a potential roaming relationship is an active blocker. Only a later runtime

@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v23.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v24.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -25,6 +25,7 @@ SCHEMA_V17 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v17.sche
 SCHEMA_V18 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v18.schema.json"
 SCHEMA_V21 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v21.schema.json"
 SCHEMA_V22 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v22.schema.json"
+SCHEMA_V23 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v23.schema.json"
 
 
 POINT_STUB = r'''
@@ -98,6 +99,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProv
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionRecipe;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
@@ -625,6 +627,16 @@ public final class LayeredCoordinateParityObserverFixture {
 			LayeredPackedRegionAuthoredReconstructionCohortAttribution.analyze(
 				decisionAttributionRecipe[0], cohort, maximumEdges,
 				maximumBridgePlacements);
+		LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionDependencySemanticsSource
+				decisionReconstructionDependencySemanticsSource =
+					(safety, maximumSelectedSources, maximumSupportSources,
+						maximumIncomingOwners, maximumIncomingPlacements) ->
+			LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis
+				.analyze(
+					decisionAttributionRecipe[0], safety,
+					maximumSelectedSources, maximumSupportSources,
+					maximumIncomingOwners, maximumIncomingPlacements);
 		LayeredCoordinateParityObserver.start(
 			decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
 			tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
@@ -632,7 +644,8 @@ public final class LayeredCoordinateParityObserverFixture {
 			decisionSource, decisionSafetySource, decisionConstructionSource,
 			decisionProvenanceSource, decisionReconstructionSource,
 			wrappedDecisionReconstructionCohortSource,
-			decisionReconstructionCohortAttributionSource);
+			decisionReconstructionCohortAttributionSource, null,
+			decisionReconstructionDependencySemanticsSource);
         decisionTick[0] = 1L;
         LayeredRegionInterestOwnershipLedger.Change decisionRelease =
             decisionOwnership.synchronizeOwner(
@@ -933,7 +946,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v23" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v24" for event in events))
             self.assertTrue(all(
                 event["packedRegionAuthoredConstruction"] is None
                 for event in events
@@ -1450,6 +1463,27 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertTrue(eligible_attribution["identityMetadataOnly"])
             self.assertFalse(eligible_attribution["entityRegistry"])
             self.assertFalse(eligible_attribution["lifecycleAuthority"])
+            eligible_semantics = decision_events[2][
+                "packedRegionAuthoredReconstructionDependencySemantics"
+            ]
+            self.assertEqual((7, 1, 1, 1, 1, 0, 0), (
+                eligible_semantics["generation"],
+                eligible_semantics["selectedSourceCount"],
+                eligible_semantics["selectedAuthoredReplaySourceCount"],
+                eligible_semantics["replayPlacementCount"],
+                eligible_semantics["outboundSupportSourceCount"],
+                eligible_semantics["externalOutboundSupportSourceCount"],
+                eligible_semantics["incomingOwnerSourceCount"],
+            ))
+            self.assertEqual(
+                "STATIC_FOOTPRINT_SUPPORT",
+                eligible_semantics["kinds"][0]["semantics"],
+            )
+            self.assertTrue(eligible_semantics["sourceLocalReplay"])
+            self.assertTrue(eligible_semantics["spatialReachPreserved"])
+            self.assertFalse(eligible_semantics["activeInstanceEvidence"])
+            self.assertFalse(eligible_semantics["entityRegistry"])
+            self.assertFalse(eligible_semantics["lifecycleAuthority"])
             refusal = decision_events[3]["regionRetirementDecisions"]
             self.assertEqual((1, 0, 1), (
                 refusal["candidateCount"], refusal["eligibleCount"],
@@ -1521,6 +1555,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v18 = json.loads(SCHEMA_V18.read_text(encoding="utf-8"))
                 v21 = json.loads(SCHEMA_V21.read_text(encoding="utf-8"))
                 v22 = json.loads(SCHEMA_V22.read_text(encoding="utf-8"))
+                v23 = json.loads(SCHEMA_V23.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -1532,6 +1567,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v18["$id"], Resource.from_contents(v18)),
                     (v21["$id"], Resource.from_contents(v21)),
                     (v22["$id"], Resource.from_contents(v22)),
+                    (v23["$id"], Resource.from_contents(v23)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

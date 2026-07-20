@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v24.schema.json",
+  "title": "Layered Map Parity Event v24",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v24"},
+    "eventType": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/packedRegionAuthoredReconstructionTopology"},
+    "packedRegionAuthoredReconstructionDependencySemantics": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/dependencySemanticsAnalysis"}
+      ]
+    },
+    "roundTripExact": {"$ref": "layered-map-parity-event-v23.schema.json#/properties/roundTripExact"}
+  },
+  "$defs": {
+    "nonNegativeInteger": {"type": "integer", "minimum": 0},
+    "selectedSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packedRegionX", "packedRegionY", "recipeSourcePresent",
+        "authoredContentPresent", "replayPlacementCount"
+      ],
+      "properties": {
+        "packedRegionX": {"type": "integer"},
+        "packedRegionY": {"type": "integer"},
+        "recipeSourcePresent": {"type": "boolean"},
+        "authoredContentPresent": {"type": "boolean"},
+        "replayPlacementCount": {"$ref": "#/$defs/nonNegativeInteger"}
+      }
+    },
+    "supportSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packedRegionX", "packedRegionY", "selectedSource",
+        "externalSupportSource", "recipeSourcePresent",
+        "authoredContentPresent", "ownerSourceCount",
+        "placementReferenceCount", "staticFootprintReferenceCount",
+        "potentialMobileReferenceCount", "anchorOnlyReferenceCount"
+      ],
+      "properties": {
+        "packedRegionX": {"type": "integer"},
+        "packedRegionY": {"type": "integer"},
+        "selectedSource": {"type": "boolean"},
+        "externalSupportSource": {"type": "boolean"},
+        "recipeSourcePresent": {"type": "boolean"},
+        "authoredContentPresent": {"type": "boolean"},
+        "ownerSourceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "placementReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "staticFootprintReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "potentialMobileReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "anchorOnlyReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"}
+      }
+    },
+    "incomingOwner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packedRegionX", "packedRegionY", "ownerReplayPlacementCount",
+        "incomingPlacementCount", "selectedSourceReferenceCount",
+        "staticFootprintPlacementCount", "potentialMobilePlacementCount",
+        "anchorOnlyPlacementCount"
+      ],
+      "properties": {
+        "packedRegionX": {"type": "integer"},
+        "packedRegionY": {"type": "integer"},
+        "ownerReplayPlacementCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "incomingPlacementCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "selectedSourceReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "staticFootprintPlacementCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "potentialMobilePlacementCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "anchorOnlyPlacementCount": {"$ref": "#/$defs/nonNegativeInteger"}
+      }
+    },
+    "kind": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constructionKind", "dependencyKind", "semantics",
+        "replayPlacementCount", "outboundSupportReferenceCount",
+        "externalOutboundSupportReferenceCount", "incomingPlacementCount",
+        "incomingReferenceCount"
+      ],
+      "properties": {
+        "constructionKind": {"$ref": "layered-map-parity-event-v22.schema.json#/$defs/constructionKind"},
+        "dependencyKind": {"$ref": "layered-map-parity-event-v22.schema.json#/$defs/dependencyKind"},
+        "semantics": {
+          "enum": [
+            "STATIC_FOOTPRINT_SUPPORT", "POTENTIAL_MOBILE_SUPPORT",
+            "ANCHOR_ONLY_SUPPORT"
+          ]
+        },
+        "replayPlacementCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "outboundSupportReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "externalOutboundSupportReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "incomingPlacementCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "incomingReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"}
+      }
+    },
+    "dependencySemanticsAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "safetyObservedAtTick", "selectedSourceCount",
+        "selectedAuthoredReplaySourceCount", "selectedContentEmptySourceCount",
+        "replayPlacementCount", "outboundSupportSourceCount",
+        "externalOutboundSupportSourceCount", "outboundSupportReferenceCount",
+        "externalOutboundSupportReferenceCount", "incomingOwnerSourceCount",
+        "incomingPlacementCount", "incomingReferenceCount", "kindCount",
+        "sourceLocalReplay", "spatialReachPreserved",
+        "activeInstanceEvidence", "entityRegistry", "lifecycleAuthority",
+        "selectedSources", "outboundSupportSources", "incomingOwners", "kinds"
+      ],
+      "properties": {
+        "generation": {"type": "integer", "minimum": 1},
+        "safetyObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "selectedSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "selectedAuthoredReplaySourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "selectedContentEmptySourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "replayPlacementCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "outboundSupportSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "externalOutboundSupportSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "outboundSupportReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "externalOutboundSupportReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "incomingOwnerSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "incomingPlacementCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "incomingReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "kindCount": {"type": "integer", "minimum": 0, "maximum": 15},
+        "sourceLocalReplay": {"const": true},
+        "spatialReachPreserved": {"const": true},
+        "activeInstanceEvidence": {"const": false},
+        "entityRegistry": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "selectedSources": {
+          "type": "array", "maxItems": 8192,
+          "items": {"$ref": "#/$defs/selectedSource"}
+        },
+        "outboundSupportSources": {
+          "type": "array", "maxItems": 8192,
+          "items": {"$ref": "#/$defs/supportSource"}
+        },
+        "incomingOwners": {
+          "type": "array", "maxItems": 8192,
+          "items": {"$ref": "#/$defs/incomingOwner"}
+        },
+        "kinds": {
+          "type": "array", "maxItems": 15,
+          "items": {"$ref": "#/$defs/kind"}
+        }
+      }
+    }
+  }
+}

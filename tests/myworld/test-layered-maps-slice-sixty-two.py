@@ -72,7 +72,7 @@ class LayeredMapsSliceSixtyTwoTest(unittest.TestCase):
     def test_observer_serializes_bounded_dependency_evidence(self):
         observer = OBSERVER.read_text(encoding="utf-8")
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v23"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v24"', observer
         )
         self.assertIn("PackedRegionAuthoredReconstructionSource", observer)
         self.assertIn("maximumRequirementSources", observer)

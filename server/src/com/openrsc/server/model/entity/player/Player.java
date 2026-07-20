@@ -43,6 +43,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredCons
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
@@ -3442,6 +3443,32 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionDependencySemanticsSource
+			layeredPackedRegionAuthoredReconstructionDependencySemanticsSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionDependencySemanticsSource() {
+			@Override
+			public
+				LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis
+					capture(
+						final LayeredPackedRegionRetirementSafetyAssessment safety,
+						final int maximumSelectedSources,
+						final int maximumSupportSources,
+						final int maximumIncomingOwners,
+						final int maximumIncomingPlacements) {
+				return
+					LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis
+						.analyze(
+							getWorld().getWorldLoader().getWorldPopulator()
+								.getAuthoredReconstructionRecipe(),
+							safety, maximumSelectedSources,
+							maximumSupportSources, maximumIncomingOwners,
+							maximumIncomingPlacements);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3563,6 +3590,9 @@ public final class Player extends Mob {
 					: null,
 				loggedIn
 					? layeredPackedRegionAuthoredReconstructionTopologySource()
+					: null,
+				loggedIn
+					? layeredPackedRegionAuthoredReconstructionDependencySemanticsSource()
 					: null);
 		}
 	}
