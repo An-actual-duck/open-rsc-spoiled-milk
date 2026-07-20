@@ -1,17 +1,16 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-45 implemented and validated,
-with Slice 46 implemented and awaiting private owner validation on the active
-refinement branch
+Status: architecture design complete; Slices 1-46 implemented and validated on
+the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: Slice 46 exposes the dormant, atomically rechecked Region
-retirement decisions through additive opt-in private diagnostics; packed Region
-lookup, eager loading, release, eviction, pathing, packets, and persistence
-remain authoritative and unchanged
+Current milestone: Slice 46 has owner-validated the dormant, atomically
+rechecked Region retirement decisions through additive opt-in private
+diagnostics; packed Region lookup, eager loading, release, eviction, pathing,
+packets, and persistence remain authoritative and unchanged
 
 ## Purpose
 
@@ -5186,7 +5185,25 @@ Private owner-validation contract:
 5. Wait at least 15 seconds, mark `decision-second-wave`, and stop. The supported
    Varrock-only releases should now have fresh eligible decisions.
 
-Status: implemented and automatically validated; owner validation pending.
+Private owner-validation evidence:
+
+- all eight captured records validated against the closed v13 schema using its
+  retained local v11/v12 schema registry;
+- the first release produced 18 supported decision candidates and all 18 were
+  accepted as `ELIGIBLE`, with the three unsupported release entries remaining
+  outside the decision set;
+- returning to Lumbridge refused those exact 18 candidate identities as
+  `PINNED`, with zero accepted candidates in that event;
+- no refused first-wave identity appeared in any later decision set, proving
+  one-event reporting and pruning;
+- the post-return marker was entered 33 ticks after the return teleport, so the
+  newly released Varrock set had already passed its 16-tick cooldown; it
+  correctly contained a disjoint second set of 18 eligible identities, which
+  remained identically eligible at `decision-second-wave`; and
+- dropped-candidate count remained zero throughout, and the owner reported no
+  visual or functional issue.
+
+Status: implemented and owner-validated.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -5319,14 +5336,15 @@ private environment should validate at least:
 | 2026-07-19 | Continue with Slice 43 by exposing bounded transition and recent-release cooldown evidence through opt-in private v12 diagnostics without adopting loading, retention, release, or eviction. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 44 as a two-real-client private-runtime gate proving shared acquisition, partial release, final global release, cooldown, expiry, and reacquisition before considering a retirement arbiter. | Implemented and owner-validated |
 | 2026-07-19 | Continue with Slice 45 by atomically rechecking bounded retirement candidates through a pure source-level decision arbiter that cannot alter packed Region lifecycle. | Implemented and validated |
-| 2026-07-19 | Continue with Slice 46 by emitting bounded accepted/refused retirement-decision evidence through additive private v13 diagnostics without lifecycle authority. | Implemented and automatically validated; owner validation pending |
+| 2026-07-19 | Continue with Slice 46 by emitting bounded accepted/refused retirement-decision evidence through additive private v13 diagnostics without lifecycle authority. | Implemented and owner-validated |
 
 ## Next Discussion
 
-Complete the prepared Slice 46 private runtime route and analyze its v13 trace.
-No lifecycle consumer should be considered until eligible decisions,
-reacquisition refusal, refusal pruning, and a second independent eligibility
-wave all pass.
+Define Slice 47 as the smallest reversible consumer boundary now that eligible
+decisions, reacquisition refusal, refusal pruning, and a second independent
+eligibility wave have passed. Any consumer must remain unable to alter the
+authoritative packed Region registry until its ownership, residency, entity,
+collision, and recovery preconditions can be proved together.
 A new database schema, authoritative region storage, actual loading/eviction,
 collision/pathing adoption, client protocol adoption, Builder, export,
 relocation, and level `-2` remain separately gated.
