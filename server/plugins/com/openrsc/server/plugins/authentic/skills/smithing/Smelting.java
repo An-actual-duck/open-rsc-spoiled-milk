@@ -110,6 +110,9 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		if (!isInFurnaceRange(player, obj)) {
 			return;
 		}
+		if (ShiloFurnaceAccess.isShiloFurnace(obj) && !ShiloFurnaceAccess.ensureUnlocked(player)) {
+			return;
+		}
 		openSmeltingInterface(player);
 	}
 
@@ -123,6 +126,10 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 		if (obj.getID() == FURNACE) {
+			if (ShiloFurnaceAccess.isShiloFurnace(obj)
+				&& (!isInFurnaceRange(player, obj) || !ShiloFurnaceAccess.ensureUnlocked(player))) {
+				return;
+			}
 			if (item.getCatalogId() == ItemId.STEEL_BAR.id()
 				&& player.getWorld().canYield(new Item(ItemId.MULTI_CANNON_BALL.id()))
 				&& player.getConfig().MEMBER_WORLD) {
@@ -537,7 +544,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	}
 
 	private boolean isInFurnaceRange(Player player, GameObject obj) {
-		if (obj.getLocation().equals(Point.location(399, 840))) {
+		if (ShiloFurnaceAccess.isShiloFurnace(obj)) {
 			return !((player.getLocation().getY() == 841 && !player.withinRange(obj, 2))
 				&& !player.withinRange90Deg(obj, 2));
 		}

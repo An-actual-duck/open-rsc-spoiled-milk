@@ -21,6 +21,7 @@ import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.UseInvTrigger;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
 import com.openrsc.server.plugins.authentic.skills.smithing.Smelting;
+import com.openrsc.server.plugins.authentic.skills.smithing.ShiloFurnaceAccess;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
 import com.openrsc.server.util.rsc.MathUtil;
@@ -330,7 +331,7 @@ public class Crafting implements UseInvTrigger,
 
 		if (item.getItemStatus().getNoted()) return false;
 
-		if (obj.getLocation().equals(Point.location(399, 840))) {
+		if (ShiloFurnaceAccess.isShiloFurnace(obj)) {
 			// furnace in shilo village
 			if ((player.getLocation().getY() == 841 && !player.withinRange(obj, 2)) && !player.withinRange90Deg(obj, 2)) {
 				return false;
@@ -340,6 +341,9 @@ public class Crafting implements UseInvTrigger,
 			if (!player.withinRange(obj, 1) && !player.withinRange90Deg(obj, 2)) {
 				return false;
 			}
+		}
+		if (ShiloFurnaceAccess.isShiloFurnace(obj) && !ShiloFurnaceAccess.ensureUnlocked(player)) {
+			return false;
 		}
 
 		if (item.getCatalogId() == ItemId.SODA_ASH.id() || item.getCatalogId() == ItemId.SAND.id()) { // Soda Ash or Sand (Glass)

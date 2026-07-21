@@ -57,7 +57,10 @@ def main() -> None:
             "tiered mold recipe lookup")
     require(category_session, "new ProductionRecipe(recipe.resultId, recipe.reqLvl, 1, recipe.amount",
             "tiered mold output recipe")
-    require(category_session, "new int[]{barId, recipe.mouldId}", "tiered mold ingredient details")
+    require(category_session, "new int[]{barId}, new int[]{-1}, new int[]{1}",
+            "tiered mold consumable ingredient details")
+    forbid(category_session, "new int[]{barId, recipe.mouldId}",
+           "reusable mould listed as a consumable ingredient")
     require(category_session,
             "new ProductionSession(ProductionSession.TYPE_CRAFTING, getFurnaceCategoryProductionTitle(categoryId), categoryId, recipes)",
             "tiered mold final production session")

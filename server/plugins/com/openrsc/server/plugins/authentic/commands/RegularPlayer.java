@@ -820,10 +820,6 @@ public final class RegularPlayer implements CommandTrigger {
 				++disablableCount;
 				qolExplanation.append(String.format("@lre@%d) @whi@Ability to withdraw items as bank notes is disabled.%%", disablableCount));
 			}
-			if (config().FASTER_YOHNUS) {
-				++disablableCount;
-				qolExplanation.append(String.format("@lre@%d) @whi@Yohnus, who owns the shilo furnace, will not be faster.%%", disablableCount));
-			}
 			if (config().WANT_APOTHECARY_QOL) {
 				++disablableCount;
 				qolExplanation.append(String.format("@lre@%d) @whi@The Apothecary will no longer offer to combine vials.%%", disablableCount));
@@ -868,7 +864,6 @@ public final class RegularPlayer implements CommandTrigger {
 		return quickBankingIsAvailable()
 			|| config().RIGHT_CLICK_TRADE
 			|| config().WANT_BANK_NOTES
-			|| config().FASTER_YOHNUS
 			|| config().WANT_APOTHECARY_QOL
 			|| config().WANT_BETTER_JEWELRY_CRAFTING;
 	}
