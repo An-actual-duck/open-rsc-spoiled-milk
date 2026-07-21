@@ -1,7 +1,7 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, and 82 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, 82, and 85 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
 76, 77, 78, 79, 80, 81, 83, 84, and 85 automated-validated on the active
 refinement branch
@@ -10,14 +10,16 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 85 exposes Slice 84's bounded five-family
-capture through additive private schema-v30 diagnostics. Proposal creation,
-same-tick deferral, and fresh reassessment each sample the same exact proposal
-order that the event describes, while records without a proposal carry null.
-The stream distinguishes complete, partial, and unavailable evidence and
-grants no preservation, reload, selection, registry, teardown, or lifecycle
-authority. Packed Region lookup, eager loading, release, eviction, pathing,
-packets, and persistence remain unchanged
+Current milestone: owner-validated Slice 85 exposes Slice 84's bounded five-
+family capture through additive private schema-v30 diagnostics. The accepted
+Lumbridge-to-Varrock route measured 40 exact proposal sources and a fresh
+41-source expansion. One current Player hard-blocked source `(2,10)`, no active
+dynamic object was present, ground items and collision remained partial across
+the whole selection, and event ownership remained unavailable. All sources
+therefore stayed blocked and every preservation, reload, selection, registry,
+teardown, and lifecycle-authority flag remained false. Packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
+unchanged
 
 ## Purpose
 
@@ -7997,14 +7999,40 @@ Safety boundary:
   arrival rejection, entity registry, transaction, teardown, reconstruction,
   rollback, pathing, packet, persistence, or world-data mutation is created.
 
-Status: implemented and automated-validated.
+Status: implemented, automated-validated, and owner-validated.
 
-Private owner validation status: pending. The focused route should create one
-proposal after a broad teleport, capture one retained/fresh follow-up, and stop
-while the owner confirms that ordinary scenery, NPCs, movement, and interaction
-remain visually normal. The resulting v30 records must validate, retain exact
-candidate order, show all five family summaries, and keep every authority flag
-false.
+Private owner validation status:
+
+- the accepted private route contains four contiguous schema-v30 records:
+  start at Lumbridge `(120,648)`, teleport to Varrock `(122,509)`, one marker,
+  and stop. The intended first marker was entered without a recognized command
+  prefix and produced no event, so the later `burden-reassment` marker became
+  the proposal event and stop supplied the fresh follow-up; no equivalent
+  rerun is needed;
+- all four events validate against the complete v30 schema chain, sequences
+  are `1-4`, every packed/layered round trip is exact, and 1,222 independent
+  proposal-order, family-total, blocker, and authority reconciliations pass;
+- the marker expands 18 exact safety sources into 40 proposal candidates. Its
+  matching burden reports one Player in packed source `(2,10)`, zero active
+  dynamic objects, 123 active ground items, 36,374 collision-product tiles,
+  and unavailable owned-event counts for all 40 sources;
+- 39 sources have the three conservative ground-item, collision, and event
+  family blocks; `(2,10)` additionally has `ACTIVE_PLAYERS_PRESENT`. No source
+  is burden-satisfied at observation;
+- stop performs one fresh `EXPANDED` reassessment from 40 to 41 candidates,
+  adding only packed source `(4,11)`. The assessment matches that next proposal
+  exactly and reports 137 active ground items and 37,042 collision-product
+  tiles; the new source contributes 14 and 668 respectively while containing
+  no Player or active dynamic object;
+- all 40/41 Player and dynamic-object observations are complete, all 40/41
+  ground-item and collision observations remain partial, and all 40/41 event
+  observations remain unavailable rather than being converted to zero;
+- every readiness, candidate-mutation, preservation, reload, entity-registry,
+  arrival-gate, teardown-transaction, and lifecycle-authority flag is false;
+  and
+- the private server records normal post-stop movement, Auctioneer dialogue,
+  and scenery interaction with no parity-observer error. The owner completed
+  the requested visual and interaction route without reporting an issue.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -8298,6 +8326,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 83 by defining a bounded five-family preservation/reload burden contract over exact safety sources. | Implemented and automated-validated; complete, partial, and unavailable evidence remain distinct, each family retains its own blocking or recovery policy, and the dormant value grants no preservation, reload, teardown, or lifecycle authority |
 | 2026-07-21 | Continue with Slice 84 by capturing the current five-family burden from one non-creating Region snapshot per exact refinement candidate. | Implemented and automated-validated; exact local Player/dynamic-object counts remain distinct from partial ground-item/collision evidence and unavailable event ownership, the seam remains disconnected, and no lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 85 by exposing exact proposal-ordered preservation burdens through additive private schema-v30 diagnostics. | Implemented and automated-validated; proposal creation, deferral, and reassessment retain bounded five-family evidence, every mutating authority flag remains false, and private owner validation is pending |
+| 2026-07-21 | Accept the Slice 85 Lumbridge-to-Varrock preservation-burden route. | Owner-validated; four v30 records pass 1,222 reconciliations, the exact assessment expands from 40 to 41 sources with `(4,11)`, one Player remains a hard block, incomplete ground-item/collision/event evidence blocks every source, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -8417,12 +8446,16 @@ additive private diagnostic exposure of this exact assessment so a real route
 can measure how those burdens vary across candidate sets without granting the
 observer any runtime authority.
 
-Slice 85 now supplies that private exposure. The event samples the proposal it
+Slice 85 now supplies that private exposure and its owner gate is accepted. The event samples the proposal it
 actually creates, retains, or freshly reassesses, checks the assessment against
 the same exact proposal order, and emits all five burden families through
-schema-v30. The next gate is owner validation of one broad transition and
-follow-up capture before any family receives a preservation, rebuild, event-
-ownership, arrival-gate, teardown, or recovery implementation.
+schema-v30. The route proves the family split is materially necessary: one
+candidate really contains the Player, dynamic-object counts are exact and
+empty, active ground items are widespread but incomplete, collision products
+exist in every candidate, and event ownership cannot yet be observed. The next
+focused gate should choose one missing family capability and define its dormant
+preservation or rebuild contract before any arrival-gate, teardown, or recovery
+implementation.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
