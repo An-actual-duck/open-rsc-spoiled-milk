@@ -197,13 +197,13 @@ class LayeredMapsSliceNinetySixTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, boundary)
 
-    def test_identity_remains_unpublished_and_non_authoritative(self):
+    def test_identity_is_published_minimally_and_remains_non_authoritative(self):
         inventory = INVENTORY.read_text(encoding="utf-8")
         observer = OBSERVER.read_text(encoding="utf-8")
         self.assertIn("getRegistrationSequence()", inventory)
         self.assertIn("isSchedulerInstanceIdentityCaptured()", inventory)
-        self.assertNotIn("getRegistrationSequence()", observer)
-        self.assertNotIn("registrationSequence", observer)
+        self.assertIn("getRegistrationSequence()", observer)
+        self.assertIn("registrationSequence", observer)
         for forbidden in (
             "import java.util.UUID", "GameTickEvent ", "GameTickKey",
             "event.stop()", "eventStore.remove", "eventStore.add",

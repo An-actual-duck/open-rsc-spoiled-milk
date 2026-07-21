@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v33.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v34.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -35,6 +35,7 @@ SCHEMA_V29 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v29.sche
 SCHEMA_V30 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v30.schema.json"
 SCHEMA_V31 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v31.schema.json"
 SCHEMA_V32 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v32.schema.json"
+SCHEMA_V33 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v33.schema.json"
 
 
 POINT_STUB = r'''
@@ -1179,7 +1180,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v33" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v34" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -2065,6 +2066,19 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 ],
             ))
             self.assertFalse(event_ownership["candidateAttributionComplete"])
+            self.assertEqual(2, event_ownership[
+                "registrationIdentityCapturedEventCount"
+            ])
+            self.assertTrue(event_ownership["registrationIdentityCaptured"])
+            self.assertTrue(event_ownership["registrationIdentityComplete"])
+            self.assertFalse(event_ownership[
+                "schedulerInstanceIdentityCaptured"
+            ])
+            self.assertEqual(
+                [101, 102],
+                [event["registrationSequence"]
+                 for event in event_ownership["events"]],
+            )
             self.assertEqual(
                 "EXACT_SPATIAL",
                 event_ownership["events"][0]["attributionKind"],
@@ -2272,6 +2286,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v30 = json.loads(SCHEMA_V30.read_text(encoding="utf-8"))
                 v31 = json.loads(SCHEMA_V31.read_text(encoding="utf-8"))
                 v32 = json.loads(SCHEMA_V32.read_text(encoding="utf-8"))
+                v33 = json.loads(SCHEMA_V33.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -2293,6 +2308,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v30["$id"], Resource.from_contents(v30)),
                     (v31["$id"], Resource.from_contents(v31)),
                     (v32["$id"], Resource.from_contents(v32)),
+                    (v33["$id"], Resource.from_contents(v33)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

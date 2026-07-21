@@ -3,24 +3,23 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, and 94 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, and 96 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, and 97 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 96 copies Slice 95's positive
-process-local registration sequence through the same atomic tracked-event
-snapshot into every bounded event record. Snapshot ordinal and registration
-identity remain distinct, and missing, duplicate, or descending identities
-refuse the entire inventory. Existing UUIDs, keys, descriptors, classes,
-owners, callbacks, and handles do not cross the detached boundary. Scheduler-
-instance identity remains explicitly absent, so the sequence cannot be compared
-across restarts. The observer and schema-v33 remain unchanged; cancellation,
-reschedule, replay, preservation, and all lifecycle authority remain absent.
-The next gate can expose this minimum primitive evidence through additive
-private schema-v34 for owner validation;
+Current milestone: automated-validated Slice 97 exposes Slice 96's positive
+process-local registration sequence through additive private schema-v34.
+Aggregate evidence states that every bounded event has registration identity
+while scheduler-instance and full scheduler identity remain false. Snapshot
+ordinal and registration sequence stay separate; existing UUIDs, keys,
+descriptors, classes, owners, callbacks, and handles remain absent. Historical
+schema-v33 is unchanged, and cancellation, reschedule, replay, preservation,
+and all lifecycle authority remain absent. The current gate is a private route
+that correlates one pending callback across two markers, its natural removal,
+and a greater new sequence after re-chopping;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8720,6 +8719,67 @@ Status: implemented and automated-validated. Private schema exposure, owner
 validation, scheduler-instance identity, executable restoration, and all
 event/lifecycle authority remain absent.
 
+### Slice 97: Private event registration identity diagnostics
+
+Objective: expose only Slice 96's positive process-local registration sequence
+through the opt-in private observer so repeated event instances can be
+correlated without exposing the existing event UUID/key or creating scheduler
+authority.
+
+Implemented:
+
+- additive `layered-map-parity-event-v34` records preserve the complete v33
+  event and add aggregate registration-identity capture/count/completeness plus
+  `schedulerInstanceIdentityCaptured=false`;
+- every bounded event publishes its positive `registrationSequence` beside its
+  existing contiguous `snapshotOrdinal`; the two values have intentionally
+  different meanings and constraints;
+- historical schema-v33 remains closed and unchanged. Schema-v34 closes the
+  extended aggregate and event shapes and retains all existing bounds;
+- neither aggregate nor event records publish UUIDs, scheduler keys,
+  descriptors, classes, callbacks, owner identities, or username hashes; and
+- scheduler identity, cancellation, reschedule, restoration, preservation,
+  registry, arrival, teardown, and lifecycle-authority flags remain false.
+
+Automated validation status:
+
+- the executable observer fixture emits registration sequences 101 and 102,
+  reconciles aggregate identity count with event count, and validates all
+  records against closed schema-v34;
+- structural guards prove schema-v33 contains none of the new fields, v34
+  requires positive sequences and complete process-local evidence, and
+  scheduler-instance identity remains false;
+- observer source guards prove only the sequence and aggregate booleans cross
+  the JSON boundary, without existing UUID/key/private scheduler state;
+- the complete layered-map suite passes 270 tests across 96 focused files; and
+- the authoritative bundled-Ant build compiles 773 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- the published sequence is meaningful only within one live scheduler
+  instance. Without scheduler-instance identity it must never be compared
+  across restarts or treated as a persistent/durable identifier;
+- identity completeness proves only that every bounded record can be
+  correlated within this process. It does not complete callback capture,
+  scheduler state, target lookup, or standalone restoration;
+- records remain opt-in, private, bounded, point-in-time, detached, and
+  read-only; and
+- No event is cancelled, stopped, removed, rescheduled, recreated, or run. No
+  source is loaded, retained, retired, reconstructed, or gated, and no
+  preservation, reload, registry, teardown, transaction, rollback, or
+  lifecycle authority is created.
+
+Private owner validation status: pending. Capture one magic-tree respawn at
+two proposal-bearing markers before it runs, the empty state after natural
+completion, and the greater new registration sequence created by re-chopping
+the returned tree. Visuals, collision, interaction, privacy, countdown
+direction, and all inert authority flags remain part of acceptance.
+
+Status: implemented and automated-validated. Private owner validation,
+scheduler-instance identity, executable restoration, and all event/lifecycle
+authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -9028,6 +9088,7 @@ private environment should validate at least:
 | 2026-07-21 | Accept the timing-corrected Slice 94 magic-tree restoration-state route. | Owner-validated; pending contains exactly one complete detached authored spawn payload, the return teleport proves its natural completion, re-chopping the returned tree creates a new equivalent callback, privacy holds, and all scheduler/recovery/lifecycle authority remains false |
 | 2026-07-21 | Continue with Slice 95 by assigning scheduler-local identity to accepted event registrations. | Implemented and automated-validated; repeated snapshots retain one process-local sequence, rejected duplicates consume none, removal/re-registration and replacement receive new identities, UUID/key/private state stays internal, and no scheduler-control or lifecycle authority is created |
 | 2026-07-21 | Continue with Slice 96 by copying accepted registration identity into the bounded event inventory. | Implemented and automated-validated; one atomic store snapshot preserves ordinal/identity distinction, invalid identity refuses the whole capture, scheduler-instance identity and schema-v33 remain absent, and no event or lifecycle authority is created |
+| 2026-07-21 | Continue with Slice 97 by exposing process-local registration identity through additive private schema-v34. | Implemented and automated-validated; every bounded event publishes one positive sequence and aggregate completeness, historical v33 and existing UUID/key/private state remain untouched, scheduler-instance identity stays false, and no event or lifecycle authority is created |
 
 ## Next Discussion
 
@@ -9259,6 +9320,16 @@ identity absent, and keep historical schema-v33 immutable. A private route can
 then mark the same pending tree callback twice before respawn, prove the
 registration sequence is stable while countdown decreases, prove it disappears
 after natural completion, and prove re-chopping creates a greater new sequence.
+
+Slice 97 now supplies that additive private exposure. Its owner route should
+avoid the previous grace-period ambiguity: after chopping and leaving the
+tree, wait 12 seconds, mark `same-a`, wait 5 seconds, and mark `same-b`. Both
+records should identify the same exact spawn registration while its countdown
+decreases. After natural respawn, the return teleport should contain no exact
+spawn; re-chop the visibly returned tree, leave again, wait 12 seconds, and
+mark `new`. That record should carry a greater registration sequence for the
+same authored placement. Finish with `::lp stop`; no restart may occur during
+the route because scheduler-instance identity is deliberately uncaptured.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

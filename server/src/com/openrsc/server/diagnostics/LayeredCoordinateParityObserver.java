@@ -53,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v33";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v34";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4054,6 +4054,15 @@ public final class LayeredCoordinateParityObserver {
 			.append(inventory.getUnattributedEventCount()).append(',');
 		out.append("\"candidateRelatedEventCount\":")
 			.append(inventory.getCandidateRelatedEventCount()).append(',');
+		out.append("\"registrationIdentityCapturedEventCount\":")
+			.append(inventory.getRegistrationIdentityCapturedEventCount())
+			.append(',');
+		out.append("\"registrationIdentityCaptured\":")
+			.append(inventory.isRegistrationIdentityCaptured()).append(',');
+		out.append("\"registrationIdentityComplete\":")
+			.append(inventory.isRegistrationIdentityComplete()).append(',');
+		out.append("\"schedulerInstanceIdentityCaptured\":")
+			.append(inventory.isSchedulerInstanceIdentityCaptured()).append(',');
 		out.append("\"restorationStateAvailableEventCount\":")
 			.append(inventory.getRestorationStateAvailableEventCount()).append(',');
 		out.append("\"detachedCallbackPayloadCompleteEventCount\":")
@@ -4120,6 +4129,8 @@ public final class LayeredCoordinateParityObserver {
 			firstEvent = false;
 			out.append('{');
 			out.append("\"snapshotOrdinal\":").append(event.getSnapshotOrdinal()).append(',');
+			out.append("\"registrationSequence\":")
+				.append(event.getRegistrationSequence()).append(',');
 			field(out, "ownerKind", event.getOwnerKind().name()).append(',');
 			field(out, "attributionKind", event.getAttributionKind().name()).append(',');
 			out.append("\"running\":").append(event.isRunning()).append(',');
