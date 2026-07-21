@@ -18,6 +18,7 @@ import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageC
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
@@ -862,6 +863,52 @@ public class RegionManager {
 			return LayeredPackedRegionRetirementSafetyAssessment.assess(
 				checked, contents, getWorld().getServer().getCurrentTick(),
 				maximumPackedSources);
+		}
+	}
+
+	/**
+	 * Observes an exact refinement candidate set without loading absent Regions
+	 * or manufacturing logical retirement/readiness evidence.
+	 */
+	public LayeredPackedRegionRetirementSafetyAssessment
+		assessLayeredPackedRegionRetirementRefinementCandidates(
+			final LayeredPackedRegionRetirementRefinementProposal proposal,
+			final int maximumPackedSources) {
+		LayeredPackedRegionRetirementRefinementProposal checked =
+			Objects.requireNonNull(proposal, "proposal");
+		if (maximumPackedSources < 0
+			|| maximumPackedSources
+				> MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN
+			|| checked.getCandidateSourceCount() > maximumPackedSources) {
+			throw new IllegalArgumentException(
+				"Refinement candidate assessment exceeds the source budget");
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			List<LayeredPackedRegionRetirementSafetyAssessment.PackedSourceContents>
+				contents = new ArrayList<
+					LayeredPackedRegionRetirementSafetyAssessment
+						.PackedSourceContents>(checked.getCandidateSourceCount());
+			for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+				candidate : checked.getCandidates()) {
+				Region region = peekRegionFromSectorCoordinates(
+					candidate.getPackedRegionX(), candidate.getPackedRegionY());
+				Region.RetirementContentsSnapshot snapshot = region == null
+					? null : region.captureRetirementContentsSnapshot();
+				contents.add(LayeredPackedRegionRetirementSafetyAssessment
+					.PackedSourceContents.of(
+						candidate.getPackedRegionX(), candidate.getPackedRegionY(),
+						region != null,
+						snapshot != null && snapshot.isTileStorageAvailable(),
+						LAYERED_PACKED_REGION_RELOAD_SUPPORTED,
+						snapshot == null ? 0 : snapshot.getPlayerCount(),
+						snapshot == null ? 0 : snapshot.getNpcCount(),
+						snapshot == null ? 0 : snapshot.getObjectCount(),
+						snapshot == null ? 0 : snapshot.getGroundItemCount()));
+			}
+			return LayeredPackedRegionRetirementSafetyAssessment
+				.assessDiagnosticSelection(
+					contents, getWorld().getServer().getCurrentTick(),
+					maximumPackedSources);
 		}
 	}
 

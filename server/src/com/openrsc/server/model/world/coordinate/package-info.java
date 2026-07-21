@@ -77,6 +77,8 @@
  * requirement, and refinement evidence plus private diagnostics. Slice 79
  * reassesses one exact proposed candidate set against strictly newer atomic
  * evidence while keeping candidate-set convergence separate from retirement
- * or lifecycle authority.</p>
+ * or lifecycle authority. Slice 80 permits the runtime to peek that exact
+ * candidate selection without loading absent Regions or manufacturing
+ * retirement readiness.</p>
  */
 package com.openrsc.server.model.world.coordinate;

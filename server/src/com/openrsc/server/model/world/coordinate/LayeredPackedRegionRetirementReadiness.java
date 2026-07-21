@@ -206,7 +206,8 @@ public final class LayeredPackedRegionRetirementReadiness {
 		INCOMPLETE_COVERAGE,
 		REFUSED_COVERAGE,
 		PARTIAL_RESIDENCY,
-		PARTIAL_LEGACY_DOMAIN
+		PARTIAL_LEGACY_DOMAIN,
+		DIAGNOSTIC_SELECTION_ONLY
 	}
 
 	/** One immutable packed-source result with no mutable Region handle. */

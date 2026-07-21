@@ -3,21 +3,20 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, and 78 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, and 79 automated-validated on the active refinement branch
+76, 77, 78, 79, and 80 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 79 closes the first fresh-evidence loop by
-requiring Slice 78's ordered candidate set to become the exact input to one
-strictly newer safety/cohort/active-NPC observation. It distinguishes a stable
-candidate set, further source expansion, and non-expandable blockers without
-confusing candidate-set convergence with retirement readiness. No source load,
-selection mutation, entity registry, arrival gate, commit token, retention
-decision, or lifecycle authority is authorized, and packed Region lookup,
-eager loading, release, eviction, pathing, packets, and persistence remain
-unchanged
+Current milestone: automated Slice 80 gives the private runtime a bounded,
+peek-only way to observe Slice 79's exact candidate selection. Every source is
+marked `DIAGNOSTIC_SELECTION_ONLY`, lacks retirement-readiness versions, and
+remains lifecycle-blocked even when resident, empty, and reload-capable. Absent
+Regions are reported rather than loaded. No selection mutation, entity
+registry, arrival gate, commit token, retention decision, or lifecycle
+authority is authorized, and packed Region lookup, eager loading, release,
+eviction, pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -7590,6 +7589,64 @@ Safety boundary:
 Status: implemented and automated-validated. Runtime diagnostic exposure and
 all lifecycle adoption remain deliberately absent.
 
+### Slice 80: Read-only refinement-candidate observation
+
+Objective: let the private runtime observe one exact Slice 79 candidate set
+without requiring those sources to be existing retirement candidates, loading
+an absent Region, or manufacturing logical retirement/readiness evidence.
+
+Implemented:
+
+- `LayeredPackedRegionRetirementSafetyAssessment.assessDiagnosticSelection`
+  accepts one bounded, ordered, duplicate-free list of count-only packed-source
+  contents and explicitly records that retirement-readiness evidence is absent;
+- diagnostic observations use readiness tick, ownership version, and residency
+  version `-1`, and every source carries the distinct
+  `DIAGNOSTIC_SELECTION_ONLY` state plus `READINESS_NOT_READY`;
+- resident, tile-backed, empty sources may still report content quiescence, but
+  diagnostic selection alone can never produce one lifecycle-ready source;
+- ordinary readiness-backed safety assessments retain their existing
+  semantics and explicitly report that they do contain retirement-readiness
+  evidence;
+- `RegionManager.assessLayeredPackedRegionRetirementRefinementCandidates`
+  preserves proposal order, holds the existing observation lock, peeks each
+  packed Region, captures only detached counts, and reports an absent source
+  without calling a loading or registration path; and
+- candidate, source, and list budgets refuse the whole observation before any
+  truncation.
+
+Automated validation status:
+
+- a compiled fixture observes one occupied, one absent, and one quiescent
+  source while preserving exact content/blocker arithmetic and input order;
+- the absent source retains `SOURCE_NOT_RESIDENT` and
+  `TILE_STORAGE_UNAVAILABLE`, while the otherwise quiescent source remains
+  blocked solely by missing readiness evidence;
+- negative ticks, null inputs/elements, duplicate coordinates, overflow, and
+  mutable-result attempts all refuse safely;
+- source guards prove the RegionManager seam uses
+  `peekRegionFromSectorCoordinates` and detached content snapshots without
+  calling Region loading, registration, removal, or unload paths;
+- the complete layered-map suite passes 202 tests across 79 focused files; and
+- the authoritative bundled-Ant build compiles 768 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- `DIAGNOSTIC_SELECTION_ONLY` is deliberately not another route to
+  `READY`; content counts cannot substitute for ownership, residency, release,
+  cooldown, or covered-logical-Region decisions;
+- an absent Region is valid negative evidence and is never loaded merely so a
+  diagnostic can inspect it;
+- the method returns detached count-only state and retains no Region or entity
+  handle after its observation lock is released; and
+- No lifecycle authority, retirement decision, commit token, source load,
+  arrival rejection, entity registry, transaction, teardown, reconstruction,
+  or rollback is created.
+
+Status: implemented and automated-validated. The one-callback fresh
+reassessment and diagnostic exposure remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7875,6 +7932,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 78 by exposing the retirement refinement proposal through additive private schema-v28 evidence derived from the same event parents. | Implemented and automated-validated; every candidate/support provenance and fresh-evidence requirement is serialized without a second snapshot, selection mutation, load request, or lifecycle authority |
 | 2026-07-20 | Accept the Slice 78 narrow/broad owner route and measure progress by capability gates rather than raw slice count. | Owner-validated; 84 schema-v28 records pass 17,836 reconciliation checks, the candidate union grows from 61 to 120 without lost provenance, the current proof stream is mature, and authoritative runtime, Builder, migration, and export gates remain open |
 | 2026-07-20 | Continue with Slice 79 by reassessing an exact proposed candidate set against strictly newer atomic evidence. | Implemented and automated-validated; stable, expanding, and non-expandable-blocked outcomes remain distinct, stale/incomplete inputs refuse, and candidate-set convergence grants no lifecycle authority |
+| 2026-07-20 | Continue with Slice 80 by observing exact refinement candidates without manufacturing retirement eligibility or loading absent Regions. | Implemented and automated-validated; every diagnostic source is explicitly non-ready, absent sources remain absent, count evidence is detached, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -7952,13 +8010,20 @@ cohort and active census either stabilize the set, add precisely explained
 candidates, or preserve a non-expandable blocker. Candidate-set convergence is
 point-in-time evidence, not a commit token or lifecycle decision.
 
-The next prerequisite is no longer another abstract candidate-union rule. The
-private runtime needs a bounded, read-only way to observe the proposed
-candidate set as one fresh selection without loading a missing source or
-manufacturing retirement eligibility. That feasibility seam must be audited
-before diagnostic exposure. Equivalent preservation treatment is still
-required for players, dynamic objects, ground items, collision/reload products,
-and owned events before any runtime consumer can act.
+Slice 80 provides that bounded runtime seam. It observes the exact proposal
+order through Region peeks, represents missing sources honestly, and marks the
+whole selection as diagnostic-only rather than inventing retirement readiness.
+Even an empty, resident source remains lifecycle-blocked without the original
+logical decision evidence.
+
+The next focused checkpoint can now compose candidate observation, authored
+cohort analysis, one same-tick NPC census, and Slice 79 reassessment behind a
+single private callback. It must skip rather than fail when the server tick is
+not newer, retain only immutable prior/next proposals, and remain absent from
+normal runtime behavior until additive diagnostics are reviewed. Equivalent
+preservation treatment is still required for players, dynamic objects, ground
+items, collision/reload products, and owned events before any runtime consumer
+can act.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
