@@ -17,8 +17,10 @@ detached callback-payload completeness while standalone restoration remains
 zero. The schema publishes owner presence but never raw owner text, and keeps
 legacy hint/unattributed events in the same bounded snapshot. Scheduler
 identity, target lookup, preservation, cancellation, reschedule, replay, and
-all lifecycle authority remain absent. Private owner validation of one natural
-magic-tree respawn is the current gate;
+all lifecycle authority remain absent. The first private route was
+inconclusive because its pending marker preceded the 16-tick retirement grace;
+private owner validation of one natural magic-tree respawn remains the current
+gate;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8582,9 +8584,20 @@ Safety boundary:
   reconstructed, or gated, and no preservation, reload, teardown,
   transaction, rollback, or lifecycle authority is created.
 
-Private owner validation status: pending. Repeat the accepted natural
-magic-tree respawn route and capture both its pending and post-respawn state;
-normal visuals, collision, and interaction remain part of acceptance.
+Private owner validation status: pending after one inconclusive capture. The
+nine-record schema-v33 trace is internally coherent and all packed/layered
+round trips are exact. It starts at `(523,489)`, leaves for `(122,509)`, and
+marks `pending` 8.313 seconds later. That is earlier than the retirement
+ledger's 16-tick grace (about 10.24 seconds), so the marker correctly has zero
+refinement candidates and a null event-ownership inventory; it cannot validate
+or refute the pending restoration payload. The route returns after 85.811
+seconds and the final stop record then has 102 candidate sources and 3,881
+events: zero exact scenery events, zero restoration-state events, 3,783 owner
+position hints, and 98 unattributed callbacks. This is consistent with natural
+completion but is not a paired pending/complete proof. A future repeat should
+wait at least 12 seconds after leaving the tree before marking `pending`, while
+still marking before the natural respawn. Owner-reported interaction and
+visual behavior were normal.
 
 Status: implemented and automated-validated. Private owner validation,
 executable restoration, and all event/lifecycle authority remain absent.
@@ -8893,6 +8906,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 92 by defining dormant detached restoration state for the two known scenery callbacks. | Implemented and automated-validated; spawn constructor/provenance state is representable without a target, authored removal has binding evidence, identity-less removal remains live-reference-dependent, every other callback stays unavailable, and no scheduler or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 93 by copying explicit scenery restoration state into the bounded event inventory. | Implemented and automated-validated; state requires matching exact fixed affinity, source/event ordinals remain correlated, availability stays distinct from callback-payload and standalone-restoration completeness, raw owner text remains unpublished, and no event or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 94 by exposing the narrow scenery restoration state through additive private schema-v33 diagnostics. | Implemented and automated-validated; aggregate/source/event records retain exact correlation, owner presence replaces owner text, historical schema-v32 remains immutable, and every scheduler/recovery/lifecycle authority remains false |
+| 2026-07-21 | Record the first Slice 94 private magic-tree route without overstating its evidence. | Inconclusive; the pending marker arrived 8.313 seconds after source release, before the 16-tick retirement grace, so its inventory is null. The post-respawn stop is coherent and empty of exact/restoration events, behavior looked normal, but paired owner validation remains pending |
 
 ## Next Discussion
 
@@ -9092,12 +9106,14 @@ facts needed to validate the magic-tree spawn, using additive schema-v33. It
 must preserve the complete hint/unattributed population and every false
 scheduler/recovery/lifecycle flag.
 
-Slice 94 now supplies that privacy-safe schema-v33 exposure. The next meaningful
-gate is an owner repeat of the natural magic-tree route using the concise
-aliases: `::tp 523 489`, `::lp start`, chop the magic tree, `::goto varrock`,
-then `::lp mark restoration-pending` within 30 seconds; wait at least 50
-seconds, return to the tree, run `::lp mark restoration-complete`, and finish
-with `::lp stop`. The pending record should contain one `SCENERY_SPAWN` for
+Slice 94 now supplies that privacy-safe schema-v33 exposure. Its first owner
+route exposed an instruction-timing gap: proposal evidence cannot exist until
+the 16-tick retirement grace has elapsed. On a future repeat, use the concise
+aliases `::tp 523 489`, `::lp start`, chop the magic tree, and `::tp 122 509`;
+wait at least 12 seconds after that teleport, then run `::lp mark pending`
+before the natural respawn. After at least 60 seconds, return to the tree, run
+`::lp mark complete`, and finish with `::lp stop`. The pending record should
+contain one `SCENERY_SPAWN` for
 object 310 at `(524,489)`, complete detached callback inputs, `NOT_REQUIRED`
 target binding, no raw owner, and every restoration/authority flag false. The
 complete record should contain no exact scenery callback after natural respawn,
