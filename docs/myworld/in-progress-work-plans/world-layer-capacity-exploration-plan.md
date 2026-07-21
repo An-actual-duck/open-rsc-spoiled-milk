@@ -1,7 +1,7 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-and 74 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, and 78 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
 76, 77, and 78 automated-validated on the active refinement branch
 
@@ -9,14 +9,15 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 78 exposes Slice 77's exact refinement
+Current milestone: owner-validated Slice 78 exposes Slice 77's exact refinement
 proposal through additive private schema-v28 diagnostics derived from the same
-event's safety, authored cohort, and active-NPC values. Every seed, added
-candidate, overlap, support coordinate, reason count, and hard blocker remains
-machine-readable. No second snapshot, selection mutation, source load, entity
-registry, arrival gate, retention decision, or lifecycle authority is
-authorized, and packed Region lookup, eager loading, release, eviction,
-pathing, packets, and persistence remain unchanged
+event's safety, authored cohort, and active-NPC values. The accepted 84-record
+route passes 17,836 schema, sequence, parent-alignment, candidate-union,
+support, reason-count, ordering, and authority-boundary checks. No second
+snapshot, selection mutation, source load, entity registry, arrival gate,
+retention decision, or lifecycle authority is authorized, and packed Region
+lookup, eager loading, release, eviction, pathing, packets, and persistence
+remain unchanged
 
 ## Purpose
 
@@ -1516,6 +1517,37 @@ does not get waived merely because a later stage looks correct.
 
 None for the architecture study. Focused foundation implementation is
 continuing slice by slice; world mutation and live/public work remain gated.
+
+## Implementation Progress Checkpoint: 2026-07-20
+
+The slice number is not a denominator: the plan does not define a fixed final
+slice count, and many slices deliberately pair one inert value with one private
+diagnostic. Progress is therefore measured against capability gates:
+
+- the architecture and product decisions in this plan are complete;
+- the read-only/dormant foundation is mature: coordinate codecs, normalized
+  inventories, level-aware value types, transition and placement projections,
+  tile/collision parity evidence, interest/residency/retirement models,
+  authored reconstruction analysis, and active-NPC boundary refinement all
+  have automated or private-owner evidence through Slice 78;
+- the current pre-authority proof stream is approximately `85-90%` complete;
+  remaining proof must close fresh candidate-set reassessment and the other
+  runtime preservation categories before any lifecycle consumer is safe;
+- Phase 5's complete layered-world engine is approximately `35-40%` complete.
+  Packed runtime state remains authoritative, so region storage, complete
+  entity/collision/pathing adoption, persistence, schemas, protocol/client
+  adoption, unchanged-world parity under layered authority, signed extra
+  levels, and incremental streaming remain substantial gates; and
+- the complete Layered Maps product spanning roadmap Phases 5-7 is
+  approximately `20-25%` complete. Layered World Builder conversion/review,
+  the dev launcher, deterministic export/import/backup/rollback, copied-world
+  migration, geographic alignment, and a privately validated level `-2` world
+  have not yet been implemented.
+
+These ranges are planning estimates, not release percentages. The work to date
+has retired much of the design and observability risk, but the remaining
+authority-changing and tooling work is larger per milestone than most earlier
+slices.
 
 ## Foundation Implementation Slices: Implemented and Validated
 
@@ -7459,6 +7491,29 @@ Automated validation status:
 - the authoritative bundled-Ant build compiles 767 core and 488 plugin
   sources.
 
+Private owner validation status:
+
+- all 84 fresh records are schema-v28, sequences `1-84` are contiguous, the
+  accepted narrow, broad, and broad-after-walk markers occur at sequences 3,
+  5, and 83, and the route ends with an exact stop record;
+- 13 events contain an atomic safety, authored-cohort, active-NPC requirement,
+  and retirement-refinement chain. All 17,836 schema, sequence, parent-tick,
+  seed-order, candidate-union, provenance, support, reason-count, ordering,
+  hard-blocker, and authority-flag checks pass;
+- the narrow marker expands 6 original safety sources to 61 candidate sources
+  with 55 added authored sources and 14 support-only coordinates. The broad
+  marker expands 42 originals to 65 candidates with 23 additions and 14
+  support coordinates;
+- ordinary walking grows the observed original set first to 48 sources and
+  ultimately to 55. The final marker then reports 120 candidates, 65 additions,
+  and 17 support coordinates without losing or duplicating a source;
+- every active-NPC boundary is contained in this run, so active requirements,
+  active/authored overlaps, support promotions, and hard blockers are all zero.
+  The deterministic executable observer fixture remains the accepted coverage
+  for the non-empty active-reason path; and
+- the owner reports no visual, movement, collision, loading, interaction, or
+  diagnostic issue.
+
 Safety boundary:
 
 - serialized candidates are explanatory evidence, not a changed selection,
@@ -7471,8 +7526,8 @@ Safety boundary:
   loading, release, eviction, reconstruction, transaction, commit, or rollback
   is created.
 
-Status: implemented and automated-validated. Private owner validation and all
-lifecycle adoption remain deliberately absent.
+Status: implemented, automated-validated, and owner-validated. All lifecycle
+adoption remains deliberately absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -7757,6 +7812,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 76 by exposing active-NPC boundary requirements through additive private schema-v27 evidence derived from the event's existing census. | Implemented and automated-validated; contained-path owner validation passes 33,385 checks with zero false requirements, and the executable observer fixture deterministically validates one exact non-empty external-owner requirement without a second census, selection mutation, registry, arrival gate, or lifecycle authority |
 | 2026-07-20 | Continue with Slice 77 by combining exact safety seeds, authored-cohort expansion, active-NPC requirements, static support, and hard blockers into one inert refinement proposal. | Implemented and automated-validated; every added candidate retains provenance and explicitly requires fresh safety/census evidence, while support remains separate and no selection or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 78 by exposing the retirement refinement proposal through additive private schema-v28 evidence derived from the same event parents. | Implemented and automated-validated; every candidate/support provenance and fresh-evidence requirement is serialized without a second snapshot, selection mutation, load request, or lifecycle authority |
+| 2026-07-20 | Accept the Slice 78 narrow/broad owner route and measure progress by capability gates rather than raw slice count. | Owner-validated; 84 schema-v28 records pass 17,836 reconciliation checks, the candidate union grows from 61 to 120 without lost provenance, the current proof stream is mature, and authoritative runtime, Builder, migration, and export gates remain open |
 
 ## Next Discussion
 
@@ -7819,12 +7875,22 @@ result neither mutates a selection nor claims fixed-point closure.
 
 Slice 78 now exposes the proposal through additive private schema-v28
 diagnostics derived from the same event's safety, cohort, and active-NPC
-values. The next meaningful checkpoint is owner validation of the accepted
-narrow/broad route. Runtime reconciliation must prove every seed, added source,
-overlap, support coordinate, reason count, and hard blocker against its three
-parents. A naturally occurring active boundary crossing is useful but not
-required because the executable observer fixture covers the non-empty active
-reason path deterministically.
+values. The accepted 84-record owner route passes 17,836 reconciliation checks:
+every seed, added source, support coordinate, reason count, hard blocker, and
+authority flag agrees with its three parents. The narrow selection expands 6
+originals to 61 candidates, the broad selection expands 42 to 65, and walking
+ultimately expands 55 originals to 120 candidates. All observed active-NPC
+boundaries remain contained; the executable observer fixture covers the
+non-empty active-reason path deterministically, so another random route is not
+required.
+
+The next focused server checkpoint should close the fresh-evidence loop without
+jumping to lifecycle authority: define a bounded, detached reassessment of one
+proposed candidate set that can prove exact source/tick agreement, report
+convergence or another refinement, and refuse stale, incomplete, or overflowing
+evidence. Before any runtime consumer can act on such a result, equivalent
+preservation treatment is still required for players, dynamic objects, ground
+items, collision/reload products, and owned events.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
