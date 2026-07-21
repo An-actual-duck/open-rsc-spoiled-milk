@@ -92,7 +92,7 @@ class LayeredMapsSliceEightyTwoTest(unittest.TestCase):
     def test_observer_retains_only_one_immutable_pending_proposal(self):
         source = OBSERVER.read_text(encoding="utf-8")
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v32"', source
+            'EVENT_SCHEMA = "layered-map-parity-event-v33"', source
         )
         self.assertIn(
             "PackedRegionRetirementRefinementReassessmentSource", source

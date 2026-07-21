@@ -230,13 +230,16 @@ class LayeredMapsSliceNinetyThreeTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, boundary)
 
-    def test_capture_remains_unpublished_and_inert(self):
+    def test_capture_is_privately_published_and_remains_inert(self):
         inventory = INVENTORY.read_text(encoding="utf-8")
         self.assertIn("getRestorationStateAvailableEventCount()", inventory)
         self.assertIn("LIVE_ENTITY_REFERENCE_ONLY", inventory)
-        self.assertNotIn(
+        self.assertIn(
             "getRestorationStateAvailableEventCount()",
             OBSERVER.read_text(encoding="utf-8"),
+        )
+        self.assertNotIn(
+            "scenery.getOwner()", OBSERVER.read_text(encoding="utf-8")
         )
         for forbidden in (
             "event.stop()", "eventStore.remove", "eventStore.add",

@@ -3,22 +3,22 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, and 91 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, and 93 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, and 94 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 93 copies Slice 92 state through
-the existing bounded scheduler snapshot. Restoration metadata is accepted only
-for an exact event whose fixed-effect coordinate matches the detached scenery
-coordinate. Aggregate, source, and event records distinguish state
-availability from callback-payload completeness while standalone restoration
-remains zero. Raw owner state remains internal and schema-v32 is unchanged.
-Scheduler identity, target lookup, preservation, cancellation, reschedule,
-replay, and all lifecycle authority remain absent. The next gate can expose a
-privacy-safe subset through an additive private schema;
+Current milestone: automated-validated Slice 94 exposes the narrow Slice 93
+scenery-event restoration state through additive private schema-v33.
+Aggregate, source, and event records distinguish state availability from
+detached callback-payload completeness while standalone restoration remains
+zero. The schema publishes owner presence but never raw owner text, and keeps
+legacy hint/unattributed events in the same bounded snapshot. Scheduler
+identity, target lookup, preservation, cancellation, reschedule, replay, and
+all lifecycle authority remain absent. Private owner validation of one natural
+magic-tree respawn is the current gate;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8533,6 +8533,62 @@ Status: implemented and automated-validated. Private schema exposure, owner
 validation, executable restoration, and all event/lifecycle authority remain
 absent.
 
+### Slice 94: Private scenery-event restoration diagnostics
+
+Objective: expose the minimum privacy-safe Slice 93 restoration facts through
+the opt-in observer so one real delayed scenery callback can be checked without
+publishing owner text or creating a recovery path.
+
+Implemented:
+
+- additive `layered-map-parity-event-v33` records preserve the complete v32
+  event while adding restoration availability and detached-payload-completeness
+  counts to the exact same proposal-correlated event inventory;
+- proposal-ordered sources publish restoration-bearing scheduler ordinals and
+  event records publish nullable spawn/removal state, force-full-block,
+  target-binding evidence, and the existing false completeness boundary;
+- scenery state publishes current/permanent IDs, packed coordinate,
+  direction/type, owner presence, opaque runtime-attribute count, and nullable
+  authored generation/source/ordinal/kind;
+- Raw owner text is never serialized. The executable observer fixture uses a
+  sentinel owner value and proves it is absent from the entire JSON trace; and
+- historical schema-v32 remains closed and unchanged, while events without the
+  explicit narrow contract retain null restoration state.
+
+Automated validation status:
+
+- the executable observer fixture emits one exact authored scenery-spawn
+  payload beside one unattributed event, checks aggregate/source/event
+  correlation, validates every record against schema-v33, and proves the raw
+  owner sentinel is absent;
+- structural guards prove schema-v32 has none of the new fields, schema-v33 is
+  closed and bounded, only `ownerPresent` crosses the JSON boundary, and every
+  scheduler/recovery/lifecycle-authority flag remains false;
+- the complete layered-map suite passes 257 tests across 93 focused files; and
+- the authoritative bundled-Ant build compiles 773 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- diagnostic availability and detached callback-payload completeness are not
+  standalone restoration. No scheduler identity or callback closure is
+  captured, and no target binding lookup is performed;
+- authored placement metadata is evidence only, not a registry key, retained
+  entity, reload request, replay instruction, or commit token;
+- schema-v33 remains opt-in, private, point-in-time, detached, bounded, and
+  read-only; and
+- No event is cancelled, stopped, removed, rescheduled, recreated, or run. No
+  object or source is registered, removed, loaded, retained, retired,
+  reconstructed, or gated, and no preservation, reload, teardown,
+  transaction, rollback, or lifecycle authority is created.
+
+Private owner validation status: pending. Repeat the accepted natural
+magic-tree respawn route and capture both its pending and post-respawn state;
+normal visuals, collision, and interaction remain part of acceptance.
+
+Status: implemented and automated-validated. Private owner validation,
+executable restoration, and all event/lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8836,6 +8892,7 @@ private environment should validate at least:
 | 2026-07-21 | Accept the Slice 91 scheduled-scenery owner route and add concise private command aliases. | Owner-validated; the pending magic-tree record contains the sole exact fixed effect at `(524,489)` in candidate source `(10,10)`, the post-respawn record contains none, legacy hint/unattributed callbacks remain blocking, visuals/collision/interaction remain normal, `::lp` aliases `::layerparity`, and the existing `::tp` alias is documented |
 | 2026-07-21 | Continue with Slice 92 by defining dormant detached restoration state for the two known scenery callbacks. | Implemented and automated-validated; spawn constructor/provenance state is representable without a target, authored removal has binding evidence, identity-less removal remains live-reference-dependent, every other callback stays unavailable, and no scheduler or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 93 by copying explicit scenery restoration state into the bounded event inventory. | Implemented and automated-validated; state requires matching exact fixed affinity, source/event ordinals remain correlated, availability stays distinct from callback-payload and standalone-restoration completeness, raw owner text remains unpublished, and no event or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 94 by exposing the narrow scenery restoration state through additive private schema-v33 diagnostics. | Implemented and automated-validated; aggregate/source/event records retain exact correlation, owner presence replaces owner text, historical schema-v32 remains immutable, and every scheduler/recovery/lifecycle authority remains false |
 
 ## Next Discussion
 
@@ -9034,6 +9091,17 @@ publish only owner presence and the minimum constructor/provenance/binding
 facts needed to validate the magic-tree spawn, using additive schema-v33. It
 must preserve the complete hint/unattributed population and every false
 scheduler/recovery/lifecycle flag.
+
+Slice 94 now supplies that privacy-safe schema-v33 exposure. The next meaningful
+gate is an owner repeat of the natural magic-tree route using the concise
+aliases: `::tp 523 489`, `::lp start`, chop the magic tree, `::goto varrock`,
+then `::lp mark restoration-pending` within 30 seconds; wait at least 50
+seconds, return to the tree, run `::lp mark restoration-complete`, and finish
+with `::lp stop`. The pending record should contain one `SCENERY_SPAWN` for
+object 310 at `(524,489)`, complete detached callback inputs, `NOT_REQUIRED`
+target binding, no raw owner, and every restoration/authority flag false. The
+complete record should contain no exact scenery callback after natural respawn,
+while visuals, collision, and interaction remain normal.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v32.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v33.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -34,6 +34,7 @@ SCHEMA_V28 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v28.sche
 SCHEMA_V29 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v29.schema.json"
 SCHEMA_V30 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v30.schema.json"
 SCHEMA_V31 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v31.schema.json"
+SCHEMA_V32 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v32.schema.json"
 
 
 POINT_STUB = r'''
@@ -853,7 +854,19 @@ public final class LayeredCoordinateParityObserverFixture {
 									.SpatialReference.of(
 										LayeredPackedRegionEventOwnershipInventory
 											.SpatialRole.FIXED_EFFECT_LOCATION,
-										193, 2))),
+										193, 2)),
+							LayeredPackedRegionEventOwnershipInventory
+								.EventRestorationState.scenerySpawn(
+									LayeredPackedRegionEventOwnershipInventory
+										.SceneryRestorationState.of(
+											310, 310, 193, 2, 0, 0,
+											"private-event-owner", 0,
+											LayeredPackedRegionEventOwnershipInventory
+												.AuthoredPlacementRestorationState.of(
+													7L, 4, 0, 42,
+													LayeredPackedRegionEventOwnershipInventory
+														.AuthoredConstructionKind.SCENERY)),
+									true)),
 						LayeredPackedRegionEventOwnershipInventory.EventState.of(
 							1,
 							LayeredPackedRegionEventOwnershipInventory.OwnerKind.NONE,
@@ -1166,7 +1179,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v32" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v33" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -2040,12 +2053,16 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             )
             self.assertNotIn("private-owner", json.dumps(decision_events))
             event_ownership = decision_events[2]["packedRegionEventOwnership"]
-            self.assertEqual((2, 2, 1, 0, 0, 1), (
+            self.assertEqual((2, 2, 1, 0, 0, 1, 1, 1), (
                 event_ownership["sourceCount"], event_ownership["eventCount"],
                 event_ownership["exactSpatialEventCount"],
                 event_ownership["ownerPositionHintEventCount"],
                 event_ownership["nonSpatialGlobalEventCount"],
                 event_ownership["unattributedEventCount"],
+                event_ownership["restorationStateAvailableEventCount"],
+                event_ownership[
+                    "detachedCallbackPayloadCompleteEventCount"
+                ],
             ))
             self.assertFalse(event_ownership["candidateAttributionComplete"])
             self.assertEqual(
@@ -2057,6 +2074,46 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                  "packedY": 2},
                 event_ownership["events"][0]["spatialReferences"][0],
             )
+            self.assertEqual([0], event_ownership["sources"][0][
+                "restorationStateEventOrdinals"
+            ])
+            self.assertEqual(1, event_ownership["sources"][0][
+                "restorationStateEventCount"
+            ])
+            restoration = event_ownership["events"][0]["restorationState"]
+            self.assertEqual((
+                "SCENERY_SPAWN", True, "NOT_REQUIRED", True, False, False,
+                False,
+            ), (
+                restoration["kind"], restoration["forceFullBlock"],
+                restoration["targetBindingEvidence"],
+                restoration["detachedCallbackPayloadComplete"],
+                restoration["schedulerIdentityCaptured"],
+                restoration["targetBindingLookupPerformed"],
+                restoration["standaloneRestorationComplete"],
+            ))
+            self.assertEqual({
+                "objectId": 310,
+                "permanentObjectId": 310,
+                "packedX": 193,
+                "packedY": 2,
+                "direction": 0,
+                "type": 0,
+                "ownerPresent": True,
+                "runtimeAttributeCount": 0,
+                "constructorStateComplete": True,
+                "authoredPlacement": {
+                    "generation": 7,
+                    "packedRegionX": 4,
+                    "packedRegionY": 0,
+                    "sourceOrdinal": 42,
+                    "constructionKind": "SCENERY",
+                },
+            }, restoration["scenery"])
+            self.assertIsNone(
+                event_ownership["events"][1]["restorationState"]
+            )
+            self.assertNotIn("private-event-owner", json.dumps(decision_events))
             for authority_flag in (
                 "callbackStateCaptured", "schedulerIdentityCaptured",
                 "preservationPerformed", "reloadRequest", "eventCancellation",
@@ -2214,6 +2271,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v29 = json.loads(SCHEMA_V29.read_text(encoding="utf-8"))
                 v30 = json.loads(SCHEMA_V30.read_text(encoding="utf-8"))
                 v31 = json.loads(SCHEMA_V31.read_text(encoding="utf-8"))
+                v32 = json.loads(SCHEMA_V32.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -2234,6 +2292,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v29["$id"], Resource.from_contents(v29)),
                     (v30["$id"], Resource.from_contents(v30)),
                     (v31["$id"], Resource.from_contents(v31)),
+                    (v32["$id"], Resource.from_contents(v32)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

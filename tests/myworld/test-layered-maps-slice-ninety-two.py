@@ -231,7 +231,9 @@ class LayeredMapsSliceNinetyTwoTest(unittest.TestCase):
             self.assertNotIn(forbidden, source)
         method = "getRestorationState()"
         self.assertIn(method, HANDLER.read_text(encoding="utf-8"))
-        self.assertNotIn(method, OBSERVER.read_text(encoding="utf-8"))
+        observer = OBSERVER.read_text(encoding="utf-8")
+        self.assertIn(method, observer)
+        self.assertNotIn("scenery.getOwner()", observer)
 
     def test_living_plan_records_slice_ninety_two_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")

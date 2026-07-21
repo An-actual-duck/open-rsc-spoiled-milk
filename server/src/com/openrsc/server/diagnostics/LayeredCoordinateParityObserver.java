@@ -53,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v32";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v33";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4054,6 +4054,11 @@ public final class LayeredCoordinateParityObserver {
 			.append(inventory.getUnattributedEventCount()).append(',');
 		out.append("\"candidateRelatedEventCount\":")
 			.append(inventory.getCandidateRelatedEventCount()).append(',');
+		out.append("\"restorationStateAvailableEventCount\":")
+			.append(inventory.getRestorationStateAvailableEventCount()).append(',');
+		out.append("\"detachedCallbackPayloadCompleteEventCount\":")
+			.append(inventory.getDetachedCallbackPayloadCompleteEventCount())
+			.append(',');
 		out.append("\"candidateAttributionComplete\":")
 			.append(inventory.isCandidateAttributionComplete()).append(',');
 		out.append("\"restorationStateCompleteEventCount\":")
@@ -4097,6 +4102,11 @@ public final class LayeredCoordinateParityObserver {
 			appendIntegerList(out, "ownerPositionHintEventOrdinals",
 				source.getOwnerPositionHintEventOrdinals());
 			out.append(',');
+			out.append("\"restorationStateEventCount\":")
+				.append(source.getRestorationStateEventCount()).append(',');
+			appendIntegerList(out, "restorationStateEventOrdinals",
+				source.getRestorationStateEventOrdinals());
+			out.append(',');
 			out.append("\"unattributedEventCount\":")
 				.append(source.getUnattributedEventCount()).append(',');
 			out.append("\"attributionComplete\":")
@@ -4119,6 +4129,9 @@ public final class LayeredCoordinateParityObserver {
 			out.append("\"attributionComplete\":").append(event.isAttributionComplete()).append(',');
 			out.append("\"restorationStateComplete\":")
 				.append(event.isRestorationStateComplete()).append(',');
+			out.append("\"restorationState\":");
+			appendEventRestorationState(out, event.getRestorationState());
+			out.append(',');
 			appendIntegerList(out, "candidateSourceOrdinals",
 				event.getCandidateSourceOrdinals());
 			out.append(",\"spatialReferences\":[");
@@ -4135,6 +4148,67 @@ public final class LayeredCoordinateParityObserver {
 			out.append("]}");
 		}
 		out.append("]}");
+	}
+
+	private static void appendEventRestorationState(
+		final StringBuilder out,
+		final LayeredPackedRegionEventOwnershipInventory.EventRestorationState
+			state) {
+		if (state.getKind()
+			== LayeredPackedRegionEventOwnershipInventory.RestorationKind
+				.UNAVAILABLE) {
+			out.append("null");
+			return;
+		}
+		LayeredPackedRegionEventOwnershipInventory.SceneryRestorationState
+			scenery = state.getScenery();
+		out.append('{');
+		field(out, "kind", state.getKind().name()).append(',');
+		out.append("\"forceFullBlock\":")
+			.append(state.isForceFullBlock()).append(',');
+		field(out, "targetBindingEvidence",
+			state.getTargetBindingEvidence().name()).append(',');
+		out.append("\"detachedCallbackPayloadComplete\":")
+			.append(state.isDetachedCallbackPayloadComplete()).append(',');
+		out.append("\"schedulerIdentityCaptured\":")
+			.append(state.isSchedulerIdentityCaptured()).append(',');
+		out.append("\"targetBindingLookupPerformed\":")
+			.append(state.isTargetBindingLookupPerformed()).append(',');
+		out.append("\"standaloneRestorationComplete\":")
+			.append(state.isStandaloneRestorationComplete()).append(',');
+		out.append("\"scenery\":{");
+		out.append("\"objectId\":").append(scenery.getObjectId()).append(',');
+		out.append("\"permanentObjectId\":")
+			.append(scenery.getPermanentObjectId()).append(',');
+		out.append("\"packedX\":").append(scenery.getX()).append(',');
+		out.append("\"packedY\":").append(scenery.getY()).append(',');
+		out.append("\"direction\":").append(scenery.getDirection()).append(',');
+		out.append("\"type\":").append(scenery.getType()).append(',');
+		out.append("\"ownerPresent\":").append(scenery.hasOwner()).append(',');
+		out.append("\"runtimeAttributeCount\":")
+			.append(scenery.getRuntimeAttributeCount()).append(',');
+		out.append("\"constructorStateComplete\":true,");
+		out.append("\"authoredPlacement\":");
+		LayeredPackedRegionEventOwnershipInventory
+			.AuthoredPlacementRestorationState authored =
+				scenery.getAuthoredPlacement();
+		if (authored == null) {
+			out.append("null");
+		} else {
+			out.append('{');
+			out.append("\"generation\":")
+				.append(authored.getGeneration()).append(',');
+			out.append("\"packedRegionX\":")
+				.append(authored.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(authored.getPackedRegionY()).append(',');
+			out.append("\"sourceOrdinal\":")
+				.append(authored.getSourceOrdinal()).append(',');
+			field(out, "constructionKind",
+				authored.getConstructionKind().name());
+			out.append('}');
+		}
+		out.append("}}");
 	}
 
 	private static void appendIntegerList(

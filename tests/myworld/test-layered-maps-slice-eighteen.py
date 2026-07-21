@@ -65,7 +65,7 @@ class LayeredMapsSliceEighteenTest(unittest.TestCase):
         player = PLAYER_SOURCE.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v32"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v33"', observer)
         self.assertIn("MAX_TRACE_REGIONS_PER_WINDOW = 4096", observer)
         self.assertIn("WorldRegionInterestDelta.between(", observer)
         self.assertIn('out.append(",\\\"interestDelta\\\":")', observer)
