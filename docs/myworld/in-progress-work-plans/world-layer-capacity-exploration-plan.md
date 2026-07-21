@@ -3,20 +3,21 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, and 82 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, and 81 automated-validated on the active refinement branch
+76, 77, 78, 79, 80, 81, and 83 automated-validated on the active refinement
+branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 82 exposes the Slice 81 fresh
-reassessment through additive private schema-v29 diagnostics. The accepted
-runtime chain expanded one real 40-source proposal to 41 sources for an exact
-active-NPC ownership requirement, retained that immutable proposal, and then
-cleared it after a strictly newer stable 41-source reassessment. Diagnostic-only
-safety remained visibly distinct from retirement readiness. No selection
-mutation, source load, entity registry, arrival gate, commit token, retention
-decision, or lifecycle authority is authorized, and packed Region lookup,
+Current milestone: automated Slice 83 defines the dormant preservation/reload
+burden contract that must follow Slice 82's accepted refinement chain. Every
+exact safety source now has a stable five-family vocabulary for player
+sessions, dynamic objects, ground items, collision products, and owned events.
+Complete, partial, and unavailable evidence remain distinct; an empty
+point-in-time observation is not an arrival gate or lifecycle decision. The
+contract retains no runtime handles and grants no preservation, reload,
+selection, registry, teardown, or lifecycle authority. Packed Region lookup,
 eager loading, release, eviction, pathing, packets, and persistence remain
 unchanged
 
@@ -7795,6 +7796,83 @@ Safety boundary:
 Status: implemented, automated-validated, and owner-validated. No lifecycle
 authority is granted.
 
+### Slice 83: Runtime preservation and reload burden contract
+
+Objective: turn the remaining runtime-state audit into one bounded, immutable
+contract without observing, preserving, reloading, or retiring anything.
+
+Runtime ownership audit:
+
+| Burden family | Evidence available now | Required policy | Missing capability |
+| --- | --- | --- | --- |
+| `PLAYER_SESSION` | packed Region has an exact local Player count; World, login/session state, persistence, social state, and the client connection remain separate owners | any Player present is a hard blocker; Region retirement must never own logout or persistence | a future atomic gate must prevent a Player entering between observation and commit; no Player snapshot/reload path is appropriate |
+| `DYNAMIC_OBJECT` | active authored objects carry generation-fenced placement identity, so an identity-less active object can be distinguished from the authored recipe | preserve and restore dynamic identity, object state, ownership, attributes, replacement state, and affected caches | no dynamic-object state bundle, source-scoped registry, restore path, or rollback exists; one anchored object can also mutate collision in neighboring packed sources |
+| `GROUND_ITEM` | Region contains active items and authored identity distinguishes active authored items from ordinary dynamic drops | preserve and restore active dynamic state, owner visibility, amount, noted/spawn timing, attributes, and authored-generation state | absent authored items may be valid pending respawn in `AuthoredGroundItemRegistry` and an unowned delayed event; no source-complete bundle or replay path exists |
+| `COLLISION_PRODUCT` | `LayeredTileState` can copy full tile collision counters and projectile state | treat collision as derived state and rebuild it from terrain plus the accepted authored/dynamic object state | no source-attributed mutation ledger or transactional cross-source rebuild exists; raw tile state mixes terrain, scenery, walls, projectile blockers, and neighboring-object effects |
+| `OWNED_EVENT` | `GameTickEventStore` can return a global event snapshot and each event may expose a Player/NPC/null owner | preserve and restore every event whose owner or spatial effect depends on a retiring source | events are keyed globally by class/duplication policy and Player username hash, not packed source; null-owned spatial callbacks and anonymous closure state have no stable serialization contract |
+
+Implemented:
+
+- immutable `LayeredPackedRegionPreservationBurdenAssessment` values correlate
+  one exact same-order Slice 49/80 safety selection with a complete five-family
+  inventory for every packed source;
+- `COMPLETE`, `PARTIAL`, and `UNAVAILABLE` evidence remain distinct.
+  Unavailable evidence uses count `-1`, so an unknown family can never be
+  aggregated or displayed as zero;
+- each family has a fixed policy: Players block while present; dynamic objects,
+  ground items, and owned events require both preservation and restoration;
+  collision products require a checked derived-state rebuild rather than blind
+  serialization;
+- exact complete Player and ground-item counts must agree with their parent
+  safety entry, while observed dynamic-object counts cannot exceed the safety
+  entry's total object count;
+- per-source results preserve stable family and blocker order and expose only
+  point-in-time `burdenSatisfiedAtObservation`; per-family summaries retain
+  complete/partial/unavailable source counts, blocked-source counts, and known
+  observed-instance totals without folding unknown evidence into arithmetic;
+  and
+- explicit false flags state that the value performs no preservation, reload,
+  candidate mutation, entity registration, arrival gating, teardown
+  transaction, or lifecycle action.
+
+Automated validation status:
+
+- a compiled fixture correlates two exact diagnostic safety sources and proves
+  all five policies independently: an active Player hard-blocks, partial
+  dynamic objects retain evidence plus two missing-path blockers, preserved
+  ground items still require restoration, derived collision may be rebuilt
+  without serialization, and unavailable event ownership remains unknown;
+- a second complete empty source has zero observed burden while remaining
+  explicitly point-in-time and non-authoritative;
+- the fixture proves stable canonical family ordering, immutable values, exact
+  aggregate arithmetic, safety-count correlation, null rejection, source-order
+  matching, evidence-count conventions, and bounded refusal; and
+- source guards prove the contract is absent from RegionManager,
+  PathValidation, and private diagnostics and imports no Region, entity, or
+  event handle;
+- the complete layered-map suite passes 212 tests across 82 focused files; and
+- the authoritative bundled-Ant build compiles 769 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- this slice defines how later observations must describe the five burdens; it
+  does not claim the current runtime can completely observe any family except
+  the already available local counts;
+- `burdenSatisfiedAtObservation` means only that supplied complete evidence had
+  no unresolved state at that instant. It is not durable under Player/entity
+  arrival, object replacement, item spawn/removal, collision mutation, or event
+  scheduling;
+- no evidence status can load an absent source, preserve or reconstruct state,
+  remove an entity or event, mutate collision, invalidate a cache, or clear a
+  pending proposal; and
+- No lifecycle authority, retirement decision, commit token, source load,
+  arrival rejection, entity registry, transaction, teardown, reconstruction,
+  or rollback is created.
+
+Status: implemented and automated-validated. Runtime capture, schema exposure,
+and owner validation remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8084,6 +8162,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 81 by composing one strictly newer, same-tick candidate observation and reassessment behind a dormant RegionManager seam. | Implemented and automated-validated; same-tick repeats defer before sampling, all evidence shares one observation lock/tick, the observer remains disconnected, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 82 by retaining and reassessing the latest immutable proposal through additive private schema-v29 diagnostics. | Implemented and automated-validated; deferral, stable, expanding, and hard-blocked states are explicit, diagnostic-only safety remains non-ready, and no lifecycle authority exists |
 | 2026-07-20 | Accept the Slice 82 Lumbridge-to-Varrock refinement route. | Owner-validated; one fresh reassessment expanded the exact candidate set from 40 to 41 for active-NPC ownership at `(4,11)`, the next fresh reassessment stabilized at 41 and cleared the pending proposal, all five v29 records and round trips passed, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 83 by defining a bounded five-family preservation/reload burden contract over exact safety sources. | Implemented and automated-validated; complete, partial, and unavailable evidence remain distinct, each family retains its own blocking or recovery policy, and the dormant value grants no preservation, reload, teardown, or lifecycle authority |
 
 ## Next Discussion
 
@@ -8182,11 +8261,17 @@ states that it is not retirement-readiness evidence.
 The real proposal-chain gate is now owner-validated. Its first fresh
 observation legitimately expands the exact set from 40 to 41 for active-NPC
 ownership at `(4,11)`; its next fresh observation retains all 41 sources,
-requires no further active-NPC expansion, and clears the stable proposal. The
-safest implementation direction is now to inventory the equivalent
-preservation and reload burdens for players, dynamic objects, ground items,
-collision products, and owned events before creating any runtime lifecycle
-consumer.
+requires no further active-NPC expansion, and clears the stable proposal.
+
+Slice 83 now provides the required preservation/reload vocabulary. It refuses
+to conflate a Player hard block, stateful entity restoration, derived collision
+rebuild, or incomplete event ownership, and it never interprets unknown
+evidence as zero. The safest next gate is a bounded, read-only runtime capture
+for what can be observed honestly: exact Players, authored-versus-dynamic
+active objects, active ground items, and collision-product counts, while event
+ownership and absent authored-item respawn state remain explicitly partial or
+unavailable. Only after that capture is deterministic should an additive
+private schema expose it for owner validation.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
