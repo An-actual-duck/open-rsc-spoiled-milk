@@ -18,6 +18,10 @@ import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.database.impl.mysql.queries.player.login.PlayerOnlineFlagQuery;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.SingleEvent;
+import com.openrsc.server.event.rsc.GameTickEventRestorationState;
+import com.openrsc.server.event.rsc.GameTickEventRestorationState.AuthoredConstructionKind;
+import com.openrsc.server.event.rsc.GameTickEventRestorationState.AuthoredPlacementState;
+import com.openrsc.server.event.rsc.GameTickEventRestorationState.SceneryState;
 import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
@@ -191,6 +195,12 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 					object.getX(), object.getY());
 			}
 
+			@Override
+			public GameTickEventRestorationState getRestorationState() {
+				return GameTickEventRestorationState.sceneryRemove(
+					detachSceneryState(object));
+			}
+
 			public void action() {
 				unregisterGameObject(object);
 			}
@@ -208,6 +218,12 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 					loc.getX(), loc.getY());
 			}
 
+			@Override
+			public GameTickEventRestorationState getRestorationState() {
+				return GameTickEventRestorationState.scenerySpawn(
+					detachSceneryState(loc), forceFullBlock);
+			}
+
 			public void action() {
 				registerGameObject(new GameObject(getWorld(), loc));
 				if (forceFullBlock) {
@@ -219,6 +235,30 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 
 	public void delayedSpawnObject(final GameObjectLoc loc, final int respawnTime) {
 		this.delayedSpawnObject(loc, respawnTime, false);
+	}
+
+	private static SceneryState detachSceneryState(final GameObject object) {
+		return SceneryState.of(
+			object.getID(), object.getLoc().getPermId(),
+			object.getX(), object.getY(), object.getDirection(), object.getType(),
+			object.getOwner(), object.getRuntimeAttributeCount(),
+			detachAuthoredPlacement(object.getAuthoredPlacementIdentity()));
+	}
+
+	private static SceneryState detachSceneryState(final GameObjectLoc loc) {
+		return SceneryState.of(
+			loc.getId(), loc.getPermId(), loc.getX(), loc.getY(),
+			loc.getDirection(), loc.getType(), loc.getOwner(), 0,
+			detachAuthoredPlacement(loc.getAuthoredPlacementIdentity()));
+	}
+
+	private static AuthoredPlacementState detachAuthoredPlacement(
+		final LayeredAuthoredPlacementIdentity identity) {
+		return identity == null ? null : AuthoredPlacementState.of(
+			identity.getGeneration(), identity.getPackedRegionX(),
+			identity.getPackedRegionY(), identity.getSourceOrdinal(),
+			AuthoredConstructionKind.valueOf(
+				identity.getConstructionKind().name()));
 	}
 
 	public Npc getNpc(final int idx) {

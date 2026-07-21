@@ -3,25 +3,22 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, and 91 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, and 91 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, and 92 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 91 exposes Slice 89/90 event-
-affinity evidence through additive private schema-v32 diagnostics. The same
-proposal used for preservation burden and dynamic-object records supplies exact
-generation and source order. Bounded scheduler ordinals, owner/affinity kinds,
-countdowns, execution counts, candidate relationships, and packed references
-are visible; descriptors, UUIDs, callback classes, closure state, and owner
-identities are absent. The deterministic fixture proves exact scenery-style and
-unattributed events coexist without manufacturing complete attribution. No
-event is preserved, cancelled, rescheduled, restored, or granted lifecycle
-authority. The deliberate private scheduled-scenery route found its exact
-pending callback and its natural completion; the next gate can define the
-narrow dormant restoration-state contract required by that known callback;
+Current milestone: automated-validated Slice 92 defines dormant detached
+restoration state for the two known scenery callbacks. A delayed spawn records
+its complete constructor/provenance input and force-full-block bit without a
+target; delayed removal distinguishes authored-identity binding evidence from
+an identity-less live-reference dependency. Every legacy callback still
+defaults to unavailable state. Scheduler state/identity, target lookup,
+attribute values, preservation, cancellation, reschedule, replay, and all
+lifecycle authority remain absent. The next gate can capture this state into
+the bounded event inventory without exposing owner text or adopting it;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8418,6 +8415,64 @@ Safety boundary:
 Status: implemented, automated-validated, and owner-validated. Callback
 restoration and all event/lifecycle authority remain absent.
 
+### Slice 92: Dormant scenery-event restoration state
+
+Objective: describe the detached inputs required by the two known delayed
+scenery callbacks while distinguishing representable constructor/provenance
+state from scheduler identity, target rebinding, and executable restoration.
+
+Implemented:
+
+- immutable `GameTickEventRestorationState` values default to `UNAVAILABLE`;
+  existing callbacks gain no classification without an explicit override;
+- the delayed scenery-spawn callback records current/permanent object IDs,
+  packed coordinate, direction/type, optional owner, authored placement
+  generation/source/ordinal/kind, and the `forceFullBlock` input used by its
+  action;
+- spawn state is a complete detached callback payload and requires no target
+  binding, but remains non-executable and omits scheduler countdown/identity;
+- the delayed scenery-removal callback records the target's same constructor
+  values plus its opaque runtime-attribute count;
+- an authored removal target reports
+  `AUTHORED_PLACEMENT_IDENTITY` as detached binding evidence, while an
+  identity-less target reports `LIVE_ENTITY_REFERENCE_ONLY` and cannot claim a
+  complete detached callback payload; and
+- authored provenance is copied into scalar state. No `GameObject`,
+  `GameObjectLoc`, entity, event, World, Region, scheduler, callback, registry,
+  or collection handle crosses the contract.
+
+Automated validation status:
+
+- an executable Java fixture proves complete authored spawn state, the
+  force-full-block bit, identity-less removal refusal, authored-removal binding
+  evidence, conservative legacy defaults, invalid-input refusal, and every
+  inert authority flag;
+- source guards isolate exactly two restoration-state overrides in `World`,
+  verify both use the callback's existing captured inputs, and prove neither
+  `GameEventHandler` nor the parity observer reads the new contract;
+- the complete layered-map suite passes 248 tests across 91 focused files; and
+- the authoritative bundled-Ant build compiles 773 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- detached callback-payload completeness means only that the known action's
+  scalar inputs are representable. It is not proof that the event can be
+  durably identified, paused, rebound, rescheduled, replayed, or recovered;
+- authored placement identity is binding evidence only. No target lookup is
+  performed, and identity-less removal remains dependent on an uncaptured live
+  entity reference;
+- opaque runtime-attribute values are not copied, and no state is exposed in
+  private diagnostics yet; and
+- No callback is cancelled, stopped, removed, rescheduled, recreated, or run.
+  No object or source is registered, removed, loaded, retained, retired,
+  reconstructed, or gated, and no preservation, reload, teardown,
+  transaction, rollback, or lifecycle authority is created.
+
+Status: implemented and automated-validated. Runtime capture, private schema
+exposure, owner validation, executable restoration, and all event/lifecycle
+authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8719,6 +8774,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 90 by declaring exact fixed-location affinity for delayed scenery spawn/remove callbacks only. | Implemented and automated-validated; both declarations use the action's captured coordinate, every other callback remains conservative, and no event or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 91 by exposing the complete event-affinity inventory through additive private schema-v32 diagnostics. | Implemented and automated-validated; exact events and unknown callbacks coexist in one bounded proposal-correlated record without descriptors, identities, scheduler mutation, or lifecycle authority |
 | 2026-07-21 | Accept the Slice 91 scheduled-scenery owner route and add concise private command aliases. | Owner-validated; the pending magic-tree record contains the sole exact fixed effect at `(524,489)` in candidate source `(10,10)`, the post-respawn record contains none, legacy hint/unattributed callbacks remain blocking, visuals/collision/interaction remain normal, `::lp` aliases `::layerparity`, and the existing `::tp` alias is documented |
+| 2026-07-21 | Continue with Slice 92 by defining dormant detached restoration state for the two known scenery callbacks. | Implemented and automated-validated; spawn constructor/provenance state is representable without a target, authored removal has binding evidence, identity-less removal remains live-reference-dependent, every other callback stays unavailable, and no scheduler or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -8896,11 +8952,17 @@ pending magic-tree record shows exactly one fixed effect at `(524,489)` in
 candidate source `(10,10)`; after natural respawn the exact event is absent.
 All 3,783 owner-position hints and 98 unattributed callbacks remain visible and
 blocking, every mutating authority flag stays false, and the owner reports
-normal replacement, collision, interaction, and natural respawn. The next
-focused gate should define the narrow dormant restoration-state contract for
-the two known scenery callbacks without serializing arbitrary callback state,
-preserving a live scheduler handle, or implementing cancellation, reschedule,
-teardown, reload, or replay.
+normal replacement, collision, interaction, and natural respawn.
+
+Slice 92 now defines the narrow dormant restoration-state contract for those
+two callbacks. Spawn has complete detached constructor/provenance inputs and no
+target requirement; removal distinguishes authored identity evidence from an
+identity-less live-reference dependency. Neither result includes scheduler
+identity/countdown or performs a target lookup, and both remain explicitly
+non-restorable. The next focused gate should add this state to the bounded
+event snapshot, correlate only exact scenery events, and keep owner text
+private. It must not expose a replay command or implement cancellation,
+reschedule, teardown, reload, or restoration.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

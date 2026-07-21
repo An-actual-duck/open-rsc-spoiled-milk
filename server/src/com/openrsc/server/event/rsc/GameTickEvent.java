@@ -168,4 +168,12 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	public GameTickEventSpatialAffinity getSpatialAffinity() {
 		return GameTickEventSpatialAffinity.unspecified();
 	}
+
+	/**
+	 * Declares detached callback inputs only when an event implementation can do
+	 * so explicitly. The value is inert and is not read by the scheduler.
+	 */
+	public GameTickEventRestorationState getRestorationState() {
+		return GameTickEventRestorationState.unavailable();
+	}
 }
