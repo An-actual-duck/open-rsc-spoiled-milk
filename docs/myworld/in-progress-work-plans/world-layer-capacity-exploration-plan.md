@@ -3,25 +3,25 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, and 87 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, and 87 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, and 88 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 87 proves Slice 86's detached dynamic-
-scenery records agree exactly with private schema-v31 preservation-burden
-diagnostics for a deliberately created and removed object. Ten contiguous
-events passed 10,240 reconciliations; all three record-bearing proposals found
-the one stump at packed source `(3,13)`, retained its exact constructor fields,
-and exposed neither owner text nor account identity. Cleanup left no queued
-world edit or gameplay issue. Standalone restoration remains false because
-event ownership is still uncaptured. No object is unregistered, recreated, or
-retained by the layered-map observer and every preservation, reload, registry,
-arrival, teardown, and lifecycle-authority flag remains false. Packed Region
-lookup, eager loading, release, eviction, pathing, packets, and persistence
-remain unchanged
+Current milestone: automated-validated Slice 88 defines the first bounded
+event-ownership inventory without inspecting or adopting a live scheduler
+callback. It keeps exact spatial affinity, Mob-owner position hints, explicitly
+non-spatial global events, and unattributed callbacks distinct across one exact
+proposal order. Multi-source effects remain visible, while every owner hint and
+anonymous null-owned callback keeps candidate attribution incomplete. Callback
+implementation state, scheduler identity, preservation, cancellation,
+rescheduling, reload, and all lifecycle authority remain absent. The next gate
+is a bounded runtime snapshot that defaults every legacy event conservatively
+and permits exact affinity only through an explicit event-provided contract;
+Packed Region lookup, eager loading, release, eviction, pathing, packets, and
+persistence remain unchanged
 
 ## Purpose
 
@@ -8172,6 +8172,66 @@ Safety boundary:
 Status: implemented, automated-validated, and owner-validated. No recovery or
 lifecycle authority is created.
 
+### Slice 88: Dormant event-ownership inventory contract
+
+Objective: define how a later global scheduler snapshot can describe event
+affinity to an exact packed-source proposal without guessing from null owners,
+retaining runtime handles, or granting event/lifecycle authority.
+
+Implemented:
+
+- immutable `LayeredPackedRegionEventOwnershipInventory` values correlate one
+  bounded detached event snapshot with one exact canonical candidate order;
+- event ownership (`NONE`, `PLAYER`, or `NPC`) remains independent from event
+  attribution: `EXACT_SPATIAL`, `OWNER_POSITION_HINT`,
+  `NON_SPATIAL_GLOBAL`, and `UNATTRIBUTED` cannot collapse into each other;
+- exact events may retain multiple role-labelled spatial references, allowing
+  a subject, target, owner, or fixed effect to touch more than one candidate
+  source without double-counting the same event within one source;
+- a Mob's current coordinate is only a position hint unless the event declares
+  its actual effect. Anonymous null-owned callbacks remain unattributed rather
+  than being mislabeled global or empty;
+- contiguous snapshot ordinals retain input order without UUID, descriptor,
+  callback class, owner identity, or live handle exposure, while running state,
+  ticks-before-run, and execution count remain detached primitive evidence;
+- aggregate and proposal-ordered per-source records report exact events, owner
+  hints, global events, unattributed events, candidate relationships, and
+  whether attribution is complete; and
+- fixed refusal budgets allow at most 65,536 events and 262,144 spatial
+  references, with no partial truncation on overflow.
+
+Automated validation status:
+
+- an executable compiled fixture distinguishes a fixed null-owned effect, one
+  exact NPC event spanning two packed sources, a Player-owner position hint,
+  an explicitly non-spatial global event, and an unattributed callback;
+- the fixture proves deterministic proposal/event order, multi-source
+  correlation, global uncertainty propagation, exact aggregate arithmetic,
+  invalid attribution refusal, and event/reference budget refusal;
+- source guards prove the inventory imports and retains no event, Mob, Region,
+  scheduler, callback, UUID, or descriptor and remains disconnected from
+  `RegionManager` and `GameEventHandler`; and
+- the complete layered-map suite passes 231 tests across 87 focused files; and
+- the authoritative bundled-Ant build compiles 771 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- event affinity is classification evidence, not event serialization: callback
+  captures, implementation state, scheduler key identity, and restoration
+  behavior remain absent;
+- `OWNER_POSITION_HINT` cannot make any candidate source attribution-complete,
+  and one unattributed callback remains uncertainty for every candidate;
+- an explicitly non-spatial global event is excluded from candidate counts only
+  when supplied as explicit evidence, never inferred from a null owner; and
+- No event is cancelled, stopped, removed, run, recreated, or rescheduled. No
+  source is loaded, retained, retired, reconstructed, or gated, and no
+  preservation, reload, registry, teardown, transaction, rollback, or
+  lifecycle authority is created.
+
+Status: implemented and automated-validated. Runtime capture, private schema
+exposure, owner validation, and all event/lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8468,6 +8528,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 86 by recording detached dynamic-object constructor state for exact refinement candidates. | Implemented and automated-validated; deterministic bounded records retain recreation inputs and opaque-attribute counts, external event ownership keeps standalone restoration incomplete, and no object or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 87 by exposing privacy-safe dynamic-object preservation records through additive private schema-v31 diagnostics. | Implemented and automated-validated; exact proposal generation/order and constructor-state records are visible without owner text, while standalone restoration and all lifecycle authority remain false |
 | 2026-07-21 | Accept the Slice 87 dynamic-object create-capture-remove route. | Owner-validated; ten v31 events pass 10,240 reconciliations, all three record-bearing proposals find the exact temporary stump in `(3,13)`, privacy and inert-authority boundaries hold, cleanup leaves no queued world edit, and the owner reports normal visuals, collision, and interaction |
+| 2026-07-21 | Continue with Slice 88 by defining a dormant event-ownership inventory over exact refinement candidates. | Implemented and automated-validated; exact spatial affinity, owner-position hints, explicit non-spatial scope, and unknown callbacks remain distinct, multi-source effects are bounded, and no event or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -8614,6 +8675,15 @@ leave normal scenery interaction and movement. Dynamic-object restoration is
 still honestly blocked by external event ownership, so the next focused gate
 should inventory and classify event ownership without cancelling, rescheduling,
 or otherwise adopting authority over any event.
+
+Slice 88 supplies that classification contract. A Player or NPC owner now has
+an explicitly weaker meaning than an event-declared spatial effect, and a null
+owner means nothing without an explicit scope declaration. The next focused
+gate should detach one bounded global scheduler snapshot into this vocabulary:
+legacy events must default to an owner-position hint or unattributed callback,
+while exact spatial and non-spatial classifications require a narrow explicit
+contract on the event itself. Capture must occur without cancellation,
+rescheduling, callback reflection, or scheduler-key mutation.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
