@@ -1,7 +1,7 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, 82, 85, 87, and 91 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, 82, 85, 87, 91, and 94 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, and 94 automated-validated on the active
 refinement branch
@@ -10,17 +10,19 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 94 exposes the narrow Slice 93
+Current milestone: owner-validated Slice 94 exposes the narrow Slice 93
 scenery-event restoration state through additive private schema-v33.
 Aggregate, source, and event records distinguish state availability from
 detached callback-payload completeness while standalone restoration remains
 zero. The schema publishes owner presence but never raw owner text, and keeps
 legacy hint/unattributed events in the same bounded snapshot. Scheduler
 identity, target lookup, preservation, cancellation, reschedule, replay, and
-all lifecycle authority remain absent. The first private route was
-inconclusive because its pending marker preceded the 16-tick retirement grace;
-private owner validation of one natural magic-tree respawn remains the current
-gate;
+all lifecycle authority remain absent. The accepted private route proves one
+natural magic-tree callback is present with the expected state, naturally
+completes, and is replaced by a distinct callback after the returned tree is
+used again. The next gate can define an opaque process-local registration
+identity so repeated snapshots can distinguish those event instances without
+publishing UUIDs or granting scheduler authority;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8584,20 +8586,30 @@ Safety boundary:
   reconstructed, or gated, and no preservation, reload, teardown,
   transaction, rollback, or lifecycle authority is created.
 
-Private owner validation status: pending after one inconclusive capture. The
-nine-record schema-v33 trace is internally coherent and all packed/layered
-round trips are exact. It starts at `(523,489)`, leaves for `(122,509)`, and
-marks `pending` 8.313 seconds later. That is earlier than the retirement
-ledger's 16-tick grace (about 10.24 seconds), so the marker correctly has zero
-refinement candidates and a null event-ownership inventory; it cannot validate
-or refute the pending restoration payload. The route returns after 85.811
-seconds and the final stop record then has 102 candidate sources and 3,881
-events: zero exact scenery events, zero restoration-state events, 3,783 owner
-position hints, and 98 unattributed callbacks. This is consistent with natural
-completion but is not a paired pending/complete proof. A future repeat should
-wait at least 12 seconds after leaving the tree before marking `pending`, while
-still marking before the natural respawn. Owner-reported interaction and
-visual behavior were normal.
+Private owner validation status: accepted after one timing-corrected repeat.
+The earlier nine-record trace remains useful evidence of the 16-tick grace
+boundary, but its too-early pending marker was not used as restoration proof.
+The accepted six-record schema-v33 session validates against the closed schema,
+has contiguous sequences and exact packed/layered round trips, and records:
+
+- after 23.780 seconds away from the tree, `pending` has 60 exact proposal
+  sources and 3,886 events. Exactly one event is `EXACT_SPATIAL`, carries
+  restoration state, and has a complete detached callback payload;
+- that event is a never-yet-run `SCENERY_SPAWN` with 22 ticks remaining for
+  object 310 at `(524,489)`, candidate source ordinal 24, no owner, no runtime
+  attributes, and complete constructor state;
+- its authored identity is generation 1, source `(10,10)`, ordinal 22,
+  `SCENERY`; target binding is `NOT_REQUIRED`, while scheduler identity,
+  target lookup, standalone restoration, and every recovery/lifecycle flag
+  remain false;
+- the return teleport after natural respawn has zero exact events and zero
+  restoration-state events, proving the first callback completed naturally;
+- the owner then successfully chopped the returned tree to check interaction.
+  The later `complete` marker therefore contains one new equivalent respawn
+  callback with 65 ticks remaining rather than falsely describing the first
+  callback as still pending; and
+- raw owner text remains absent. The owner reported normal visuals, collision,
+  natural respawn, and interaction.
 
 Status: implemented and automated-validated. Private owner validation,
 executable restoration, and all event/lifecycle authority remain absent.
@@ -8907,6 +8919,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 93 by copying explicit scenery restoration state into the bounded event inventory. | Implemented and automated-validated; state requires matching exact fixed affinity, source/event ordinals remain correlated, availability stays distinct from callback-payload and standalone-restoration completeness, raw owner text remains unpublished, and no event or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 94 by exposing the narrow scenery restoration state through additive private schema-v33 diagnostics. | Implemented and automated-validated; aggregate/source/event records retain exact correlation, owner presence replaces owner text, historical schema-v32 remains immutable, and every scheduler/recovery/lifecycle authority remains false |
 | 2026-07-21 | Record the first Slice 94 private magic-tree route without overstating its evidence. | Inconclusive; the pending marker arrived 8.313 seconds after source release, before the 16-tick retirement grace, so its inventory is null. The post-respawn stop is coherent and empty of exact/restoration events, behavior looked normal, but paired owner validation remains pending |
+| 2026-07-21 | Accept the timing-corrected Slice 94 magic-tree restoration-state route. | Owner-validated; pending contains exactly one complete detached authored spawn payload, the return teleport proves its natural completion, re-chopping the returned tree creates a new equivalent callback, privacy holds, and all scheduler/recovery/lifecycle authority remains false |
 
 ## Next Discussion
 
@@ -9106,18 +9119,18 @@ facts needed to validate the magic-tree spawn, using additive schema-v33. It
 must preserve the complete hint/unattributed population and every false
 scheduler/recovery/lifecycle flag.
 
-Slice 94 now supplies that privacy-safe schema-v33 exposure. Its first owner
-route exposed an instruction-timing gap: proposal evidence cannot exist until
-the 16-tick retirement grace has elapsed. On a future repeat, use the concise
-aliases `::tp 523 489`, `::lp start`, chop the magic tree, and `::tp 122 509`;
-wait at least 12 seconds after that teleport, then run `::lp mark pending`
-before the natural respawn. After at least 60 seconds, return to the tree, run
-`::lp mark complete`, and finish with `::lp stop`. The pending record should
-contain one `SCENERY_SPAWN` for
-object 310 at `(524,489)`, complete detached callback inputs, `NOT_REQUIRED`
-target binding, no raw owner, and every restoration/authority flag false. The
-complete record should contain no exact scenery callback after natural respawn,
-while visuals, collision, and interaction remain normal.
+Slice 94 now supplies and owner-validates that privacy-safe schema-v33
+exposure. The timing-corrected route finds exactly one complete detached
+authored spawn payload while pending; the return teleport proves that instance
+completed naturally, and using the returned tree creates a new equivalent
+callback. What remains missing is a safe way to prove across repeated snapshots
+that the pending instance stayed the same and the re-chop instance is new. The
+next focused gate should define an opaque, process-local, monotonically assigned
+scheduler-registration identity. It must not expose existing UUIDs, event keys,
+descriptors, classes, owner identities, or callback data; must distinguish an
+accepted add, a rejected duplicate, removal, and `addOrUpdate` replacement; and
+must initially remain disconnected from the layered inventory and all event
+mutation consumers.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
