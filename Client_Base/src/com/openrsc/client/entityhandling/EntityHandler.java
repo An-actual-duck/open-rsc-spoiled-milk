@@ -9577,6 +9577,9 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Safety Deposit Box", "A secure box for items barred from Entrana", "Deposit", "Withdraw", 1, 1, 1, 0, "ChestClosed", ++i)); //1326
 		objects.add(new GameObjectDef("Pumpkin", "A ripe event pumpkin ready for harvest", "Harvest", "Examine", 0, 1, 1, 0, "pumpkinwhite", ++i)); //1327
 		objects.add(new GameObjectDef("Dragon sulfur rock", "A volatile sulfur-stained rock", "Mine", "Prospect", 1, 1, 1, 0, "copperrock1", ++i)); //1328
+		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "Jump to", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1329 - Al Kharid to Lumbridge
+		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "WalkTo", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1330 - visual centre
+		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "Jump to", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1331 - Lumbridge to Al Kharid
 	}
 
 	public static void load(boolean loadMembers) {

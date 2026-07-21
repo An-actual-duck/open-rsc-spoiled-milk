@@ -120,6 +120,7 @@ python3 ./tests/myworld/test-moderator-death-drops.py
 python3 ./tests/myworld/test-defense-distribution.py
 python3 ./tests/myworld/test-balance-fixtures.py
 python3 ./tests/myworld/test-agility-pouches.py
+python3 ./tests/myworld/test-lumbridge-alkharid-stepping-stones.py
 python3 ./tests/myworld/test-armor-power-penalties.py
 python3 ./tests/myworld/test-demon-ash-prayer-source.py
 python3 ./tests/myworld/test-baby-blue-dragon-drops.py
