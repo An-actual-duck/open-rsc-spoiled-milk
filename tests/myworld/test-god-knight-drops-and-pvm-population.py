@@ -58,6 +58,14 @@ def is_elite_mining_guild_dragon_overlay(loc: dict) -> bool:
     return int(loc["id"]) in (196, 844) and 248 <= x <= 280 and 3416 <= y <= 3444
 
 
+def is_lumbridge_bank_overlay(loc: dict) -> bool:
+    return (
+        int(loc["id"]) == 95
+        and int(loc["start"]["X"]) == 111
+        and int(loc["start"]["Y"]) == 652
+    )
+
+
 def require_valid_drop_budget(drops: str, table_name: str) -> None:
     start = drops.find(f'new DropTable("{table_name}")')
     require(start >= 0, f"Missing drop table: {table_name}")
@@ -202,6 +210,7 @@ def main() -> None:
         and not is_karamja_volcano_fire_warrior_overlay(loc)
         and not is_frumscone_training_cage_overlay(loc)
         and not is_elite_mining_guild_dragon_overlay(loc)
+        and not is_lumbridge_bank_overlay(loc)
     ]
     counts = Counter(loc["id"] for loc in population_overlay)
     expected_counts = {
