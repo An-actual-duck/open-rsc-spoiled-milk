@@ -3,19 +3,21 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, and 103 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, and 106 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, and 107 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 106 exposes Slice 105's detached
-atomic running/remaining-delay/execution-count tuples through additive private
-schema-v37. Aggregate, event, and known-restoration claims reconcile; unknown
-callbacks remain visibly non-atomic and historical schema-v36 remains pinned
-false/zero. Arrival ordering, replay, cancellation, reschedule, preservation,
-and all lifecycle authority remain absent;
+Current milestone: automated-validated Slice 107 corrects the callback-lock
+deadlock exposed by the first Slice 106 owner route. Event execution remains
+serialized, but the timing monitor now protects only primitive state
+transitions and is never held across arbitrary callback/plugin code. Atomic
+capture can therefore observe an executing tuple without forming a lock cycle;
+schema-v37 and every authority boundary remain unchanged. Arrival ordering,
+replay, cancellation, reschedule, preservation, and all lifecycle authority
+remain absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -9143,18 +9145,19 @@ executable restoration, and all event/lifecycle authority remain absent.
 ### Slice 104: Atomic scheduler event-timing foundation
 
 Objective: capture the smallest timing tuple for one accepted event under one
-event-local lifecycle lock and bind it to one scheduler observation tick and
+event-local timing lock and bind it to one scheduler observation tick and
 registration set without publishing or consuming it yet.
 
 Implemented:
 
-- `GameTickEvent` owns one private timing lock. Its tick, due callback,
-  execution-count increment, countdown reset, and stop transition complete
-  before `captureAtomicTimingSnapshot` can return the immutable running/
-  remaining-ticks/execution-count tuple;
-- the callback continues to execute normally. The lock does not add a replay
-  method, callback accessor, due-event executor, cancellation path, or timing
-  mutation interface;
+- `GameTickEvent` owns one private timing lock for its tick/due decision,
+  execution-count/countdown completion, stop transition, and immutable
+  running/remaining-ticks/execution-count snapshot. A separate private
+  execution lock serializes `doRun` calls;
+- arbitrary callback code executes between the two timing transitions without
+  holding the timing monitor. A concurrent snapshot may therefore return the
+  coherent active tuple before callback completion without acquiring callback-
+  owned plugin/entity monitors;
 - `GameTickEventStore` adds a read-only two-phase timing snapshot: it first
   copies store scope and accepted registrations, releases the store lock while
   taking each event-local snapshot, then verifies the registration version is
@@ -9170,9 +9173,10 @@ Implemented:
 
 Automated validation status:
 
-- an executable event fixture blocks inside a due one-shot-style callback and
-  proves timing capture cannot observe its partially executed lifecycle; after
-  release it receives the complete stopped/reset/one-execution tuple;
+- an executable event fixture recreates a callback/foreign-monitor inversion
+  and proves timing capture returns the active due tuple without waiting for
+  arbitrary callback code; after callback completion it receives the stopped/
+  reset/one-execution tuple;
 - the executable store fixture binds canonical scheduler scope, observation
   tick, registration identity, and event-local timing, keeps the returned list
   immutable, refuses a negative observation tick, and deterministically
@@ -9326,6 +9330,77 @@ Safety boundary:
 Status: implemented and automated-validated. Private owner validation,
 executable restoration, arrival ordering, and all event/lifecycle authority
 remain absent.
+
+### Slice 107: Atomic timing callback-lock deadlock hardening
+
+Objective: correct the lock inversion discovered by the first Slice 106 owner
+route while preserving serialized event execution and the detached atomic
+timing contract.
+
+Owner finding and exact root cause:
+
+- `::lp mark atomic-a` reached the private server at tick 239 but never
+  completed. Normal ticks stopped, the client timed out, and later login
+  attempts received response 4 because the original Player could not reach
+  unregister cleanup;
+- a read-only `jstack` of the wedged private process proved one Java-level
+  deadlock. `GameThread` held the executing `PluginTickEvent` timing monitor
+  while waiting for the plugin task's monitor; `PluginThread-0` held that task
+  monitor while the observer requested the same event's atomic timing monitor;
+  and
+- the command text, client transport, account, and login cleanup were not the
+  cause. The disconnect and stale logged-in state were downstream effects of
+  the stalled game tick.
+
+Implemented:
+
+- `GameTickEvent` now has a private execution lock that retains one-at-a-time
+  `doRun` behavior without participating in diagnostic capture;
+- the timing lock covers only the pre-callback tick/due decision and the
+  post-callback execution-count/countdown transition. Arbitrary `run()` code
+  executes between those critical sections and can no longer carry the timing
+  monitor into plugin, entity, or callback-owned locks;
+- `captureAtomicTimingSnapshot` remains under the timing lock. During callback
+  execution it may return the coherent active tuple—running lifecycle state,
+  due countdown, and pre-completion execution count—then a later capture sees
+  the complete reset/increment state; and
+- schema-v37, inventory construction, registration version fencing, callback
+  payloads, execution semantics, and every diagnostic authority flag are
+  unchanged.
+
+Automated validation status:
+
+- the executable event fixture recreates the exact foreign-monitor cycle: the
+  callback thread waits for a monitor owned by the capture thread while that
+  owner requests the event timing snapshot. Capture must finish within one
+  second with the active due tuple, release its foreign monitor, and allow the
+  event to complete with one execution and a reset countdown;
+- structural guards prove `run()` lies between—not inside—the timing critical
+  sections, while the private execution lock retains serialized `doRun`;
+- observer guards prove serialization still consumes detached primitives and
+  gains no timing/execution lock, live event/store, callback, stop, or run path;
+- the complete layered-map suite passes 320 tests across 106 focused files;
+  and
+- the authoritative bundled-Ant build compiles 773 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- the change narrows a lock scope; it does not make event execution concurrent
+  with another `doRun` for the same event, introduce callback interruption, or
+  grant diagnostics an execution lock;
+- an active timing tuple is an observation, not permission to replay, cancel,
+  reschedule, complete, or reconstruct that callback;
+- registration-version changes still refuse the store snapshot instead of
+  publishing mixed accepted stays; and
+- No callback is cancelled, stopped by capture, removed, rescheduled,
+  recreated, or run by capture. No source is loaded, retained, retired,
+  reconstructed, or gated, and no preservation, reload, registry, teardown,
+  transaction, rollback, or lifecycle authority is created.
+
+Status: implemented and automated-validated. The corrected Slice 106 owner
+route remains to be repeated on the private server; executable restoration,
+arrival ordering, and all event/lifecycle authority remain absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -9648,6 +9723,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 104 by defining an atomic scheduler event-timing foundation. | Implemented and automated-validated; one event-local lock captures the timing tuple, one version-fenced store snapshot binds it to tick/scope/registration, mixed-registration capture refuses, diagnostics remain non-atomic and unchanged, and no event or lifecycle authority is created |
 | 2026-07-21 | Continue with Slice 105 by detaching atomic timing for known scenery callbacks. | Implemented and automated-validated; the handler consumes one version-fenced snapshot, known timing/counts reconcile, unavailable callbacks remain non-atomic, schema-v36 stays pinned false/zero, and no event or lifecycle authority is created |
 | 2026-07-21 | Continue with Slice 106 by exposing detached atomic timing through an additive private contract. | Implemented and automated-validated; schema-v37 publishes reconciled aggregate/per-event timing provenance, known restorations are atomic, unknown callbacks remain non-atomic, schema-v36 stays immutable, and no event or lifecycle authority is created |
+| 2026-07-21 | Correct the private marker deadlock exposed by the first Slice 106 owner route. | Slice 107 implemented and automated-validated; an exact thread dump proves the callback/timing lock cycle, `doRun` remains serialized without holding the timing monitor across callback code, the executable inversion fixture completes, and no event or lifecycle authority is created |
 
 ## Next Discussion
 
@@ -9990,16 +10066,19 @@ explicitly non-atomic, and distinguish atomic timing from standalone
 restoration. Schema-v36 and the observer should remain unchanged until that
 detached contract is executable and bounded.
 
-Slice 106 now supplies that additive private contract while keeping v36
-immutable and explicitly non-atomic. The next focused gate is private owner
-validation: compare two pending markers for one stable scheduler token and
-registration, prove aggregate/event/restoration atomic flags reconcile while
-the remaining ticks fall by the observation-tick delta, then prove natural
-completion removes the callback without observer intervention. Only after that
-evidence is accepted should another implementation slice select the next
-restoration prerequisite, most likely immutable target-binding evidence and
-arrival ordering. The observer must continue to receive no event, store,
-callback, key, due-event executor, cancellation, or reschedule path.
+Slice 106 supplies that additive private contract while keeping v36 immutable
+and explicitly non-atomic. Its first owner marker exposed the Slice 104 timing-
+monitor scope defect rather than producing valid evidence; Slice 107 now
+corrects that exact deadlock with an executable lock-inversion regression. The
+next focused gate is a clean repeat of private owner validation: compare two
+pending markers for one stable scheduler token and registration, prove
+aggregate/event/restoration atomic flags reconcile while remaining ticks fall
+by the observation-tick delta, then prove natural completion removes the
+callback without observer intervention. Only after that evidence is accepted
+should another implementation slice select the next restoration prerequisite,
+most likely immutable target-binding evidence and arrival ordering. The
+observer must continue to receive no event, store, callback, key, due-event
+executor, cancellation, or reschedule path.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

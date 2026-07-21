@@ -16,6 +16,7 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
 
+	private final Object executionLock = new Object();
 	private final Object timingLock = new Object();
 	protected volatile boolean running = true;
 	private final Mob owner;
@@ -42,13 +43,22 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	public abstract void run();
 
 	public final long doRun() {
-		synchronized (timingLock) {
+		synchronized (executionLock) {
 			lastEventDuration = getWorld().getServer().bench(() -> {
-				tick();
-				if (shouldRun()) {
+				final boolean runNow;
+				synchronized (timingLock) {
+					ticksBeforeRun--;
+					runNow = running && ticksBeforeRun <= 0;
+				}
+				if (runNow) {
+					// Never hold the timing monitor across arbitrary callback code.
+					// Callbacks may own plugin or entity monitors while diagnostics
+					// capture this event's detached timing tuple.
 					run();
-					timesRan++;
-					resetCountdown();
+					synchronized (timingLock) {
+						timesRan++;
+						ticksBeforeRun = delayTicks;
+					}
 				}
 			});
 		}

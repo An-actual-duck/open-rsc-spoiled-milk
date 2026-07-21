@@ -94,13 +94,13 @@ package com.openrsc.server.event.rsc;
 
 import com.openrsc.server.model.world.World;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class AtomicEventTimingFixture {
     private static final class BlockingEvent extends GameTickEvent {
+        private final Object foreignCallbackLock = new Object();
+        private final CountDownLatch foreignLockOwned = new CountDownLatch(1);
         private final CountDownLatch entered = new CountDownLatch(1);
-        private final CountDownLatch release = new CountDownLatch(1);
 
         BlockingEvent(World world) {
             super(world, null, 1L, "atomic timing fixture",
@@ -109,7 +109,7 @@ public final class AtomicEventTimingFixture {
 
         public void run() {
             entered.countDown();
-            await(release);
+            synchronized (foreignCallbackLock) { }
             stop();
         }
     }
@@ -123,26 +123,34 @@ public final class AtomicEventTimingFixture {
                 && initial.getTimesRan() == 0,
             "constructor state is captured as one timing tuple");
 
-        Thread runner = new Thread(() -> event.doRun());
-        runner.start();
-        await(event.entered);
-
-        AtomicBoolean captureFinished = new AtomicBoolean(false);
         AtomicReference<GameTickEvent.AtomicTimingSnapshot> captured =
             new AtomicReference<>();
         Thread capture = new Thread(() -> {
-            captured.set(event.captureAtomicTimingSnapshot());
-            captureFinished.set(true);
+            synchronized (event.foreignCallbackLock) {
+                event.foreignLockOwned.countDown();
+                await(event.entered);
+                captured.set(event.captureAtomicTimingSnapshot());
+            }
         });
+        capture.setDaemon(true);
         capture.start();
-        pause(50L);
-        check(!captureFinished.get(),
-            "timing capture cannot split an executing callback lifecycle");
+        await(event.foreignLockOwned);
 
-        event.release.countDown();
+        Thread runner = new Thread(() -> event.doRun());
+        runner.setDaemon(true);
+        runner.start();
+        boolean captureCompleted = joinWithin(capture, 1000L);
+        GameTickEvent.AtomicTimingSnapshot active = captured.get();
+
+        check(captureCompleted
+                && active != null
+                && active.isRunning()
+                && active.getTicksBeforeRun() == 0L
+                && active.getTimesRan() == 0,
+            "timing capture breaks the callback lock inversion");
         join(runner);
-        join(capture);
-        GameTickEvent.AtomicTimingSnapshot complete = captured.get();
+        GameTickEvent.AtomicTimingSnapshot complete =
+            event.captureAtomicTimingSnapshot();
         check(!complete.isRunning()
                 && complete.getTicksBeforeRun() == 1L
                 && complete.getTimesRan() == 1,
@@ -159,22 +167,17 @@ public final class AtomicEventTimingFixture {
     }
 
     private static void join(Thread thread) {
-        try {
-            thread.join(5000L);
-        } catch (InterruptedException interrupted) {
-            Thread.currentThread().interrupt();
-            throw new AssertionError(interrupted);
-        }
-        check(!thread.isAlive(), "fixture thread completed");
+        check(joinWithin(thread, 5000L), "fixture thread completed");
     }
 
-    private static void pause(long millis) {
+    private static boolean joinWithin(Thread thread, long millis) {
         try {
-            Thread.sleep(millis);
+            thread.join(millis);
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
             throw new AssertionError(interrupted);
         }
+        return !thread.isAlive();
     }
 
     private static void check(boolean condition, String message) {
@@ -230,7 +233,7 @@ class LayeredMapsSliceOneHundredFourTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.compile_temp.cleanup()
 
-    def test_event_timing_fixture_refuses_split_callback_state(self):
+    def test_event_timing_fixture_captures_without_callback_lock_inversion(self):
         result = subprocess.run(
             [
                 "java", "-cp", str(self.classes),
@@ -244,14 +247,17 @@ class LayeredMapsSliceOneHundredFourTest(unittest.TestCase):
 
     def test_event_uses_one_private_lifecycle_lock_for_timing(self):
         source = EVENT.read_text(encoding="utf-8")
+        self.assertIn("private final Object executionLock", source)
         self.assertIn("private final Object timingLock", source)
         self.assertIn("captureAtomicTimingSnapshot()", source)
         self.assertIn("class AtomicTimingSnapshot", source)
         do_run = source[source.index("public final long doRun()"):
                         source.index("@Override", source.index("public final long doRun()"))]
+        self.assertIn("synchronized (executionLock)", do_run)
         self.assertIn("synchronized (timingLock)", do_run)
         self.assertIn("timesRan++", do_run)
-        self.assertIn("resetCountdown()", do_run)
+        self.assertIn("ticksBeforeRun = delayTicks", do_run)
+        self.assertIn("Never hold the timing monitor", do_run)
 
     def test_store_binds_tick_registration_and_refuses_mixed_version(self):
         source = STORE.read_text(encoding="utf-8")
