@@ -3,17 +3,17 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, and 78 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, and 80 automated-validated on the active refinement branch
+76, 77, 78, 79, 80, and 81 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 80 gives the private runtime a bounded,
-peek-only way to observe Slice 79's exact candidate selection. Every source is
-marked `DIAGNOSTIC_SELECTION_ONLY`, lacks retirement-readiness versions, and
-remains lifecycle-blocked even when resident, empty, and reload-capable. Absent
-Regions are reported rather than loaded. No selection mutation, entity
+Current milestone: automated Slice 81 composes Slice 80 candidate observation,
+authored-cohort analysis, an active-NPC census, and Slice 79 reassessment behind
+one bounded same-tick RegionManager call. A tick that is not newer returns no
+sample rather than manufacturing freshness. The seam remains unconnected to
+the observer and normal runtime. No selection mutation, source load, entity
 registry, arrival gate, commit token, retention decision, or lifecycle
 authority is authorized, and packed Region lookup, eager loading, release,
 eviction, pathing, packets, and persistence remain unchanged
@@ -7647,6 +7647,63 @@ Safety boundary:
 Status: implemented and automated-validated. The one-callback fresh
 reassessment and diagnostic exposure remain absent.
 
+### Slice 81: Same-tick refinement reassessment source
+
+Objective: compose exact refinement-candidate observation, authored closure,
+active-NPC residency, boundary requirements, and Slice 79 reassessment behind
+one bounded private runtime call without exposing or retaining the result yet.
+
+Implemented:
+
+- `LayeredPackedRegionRetirementRefinementReassessment.isFreshObservationTick`
+  requires one shared non-negative tick to be strictly newer than both the
+  previous safety and census ticks;
+- `RegionManager.captureLayeredPackedRegionRetirementRefinementReassessmentIfFresh`
+  returns `null` before sampling when that freshness rule is not satisfied,
+  making same-tick command/movement bursts a normal deferral rather than an
+  observer failure;
+- one `layeredRegionLifecycleLock` scope captures the proposal-ordered
+  diagnostic contents, analyzes the immutable authored recipe, snapshots the
+  active NPC population, projects boundary requirements, and invokes Slice 79
+  using the same server tick for safety and census evidence;
+- candidate/support/NPC/detail/requirement budgets remain explicit and their
+  existing builders refuse overflow without partial results;
+- candidate contents continue to use Region peeks and detached counts, so an
+  absent candidate is reported without loading it; and
+- no observer interface, trace state, callback registration, serialization, or
+  normal runtime caller is added in this slice.
+
+Automated validation status:
+
+- the executable Slice 79 fixture proves a shared tick equal to the previous
+  census is not fresh while the next tick is, with null and negative-tick
+  refusal preserved;
+- source guards prove the RegionManager method checks freshness before
+  sampling, composes the exact Slice 80/cohort/NPC/requirement/Slice 79 chain
+  inside one observation lock, and contains no loading, registration, removal,
+  teleport, or lifecycle operation;
+- a separate guard proves the new method remains absent from the parity
+  observer until diagnostic exposure is deliberately added;
+- the complete layered-map suite passes 205 tests across 80 focused files; and
+- the authoritative bundled-Ant build compiles 768 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- `null` means only `not newer yet`; it cannot be interpreted as convergence,
+  failure, readiness, or permission to discard the prior immutable proposal;
+- same-tick alignment prevents the candidate-content and active-NPC portions
+  from silently describing different server ticks, but it does not prevent a
+  later mobile arrival or mutation;
+- holding the private observation lock creates no lease, pin, admission gate,
+  or retained Region/entity handle; and
+- No lifecycle authority, retirement decision, commit token, source load,
+  arrival rejection, entity registry, transaction, teardown, reconstruction,
+  or rollback is created.
+
+Status: implemented and automated-validated. Observer state, schema exposure,
+and private owner validation remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7933,6 +7990,7 @@ private environment should validate at least:
 | 2026-07-20 | Accept the Slice 78 narrow/broad owner route and measure progress by capability gates rather than raw slice count. | Owner-validated; 84 schema-v28 records pass 17,836 reconciliation checks, the candidate union grows from 61 to 120 without lost provenance, the current proof stream is mature, and authoritative runtime, Builder, migration, and export gates remain open |
 | 2026-07-20 | Continue with Slice 79 by reassessing an exact proposed candidate set against strictly newer atomic evidence. | Implemented and automated-validated; stable, expanding, and non-expandable-blocked outcomes remain distinct, stale/incomplete inputs refuse, and candidate-set convergence grants no lifecycle authority |
 | 2026-07-20 | Continue with Slice 80 by observing exact refinement candidates without manufacturing retirement eligibility or loading absent Regions. | Implemented and automated-validated; every diagnostic source is explicitly non-ready, absent sources remain absent, count evidence is detached, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 81 by composing one strictly newer, same-tick candidate observation and reassessment behind a dormant RegionManager seam. | Implemented and automated-validated; same-tick repeats defer before sampling, all evidence shares one observation lock/tick, the observer remains disconnected, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -8016,14 +8074,19 @@ whole selection as diagnostic-only rather than inventing retirement readiness.
 Even an empty, resident source remains lifecycle-blocked without the original
 logical decision evidence.
 
-The next focused checkpoint can now compose candidate observation, authored
-cohort analysis, one same-tick NPC census, and Slice 79 reassessment behind a
-single private callback. It must skip rather than fail when the server tick is
-not newer, retain only immutable prior/next proposals, and remain absent from
-normal runtime behavior until additive diagnostics are reviewed. Equivalent
-preservation treatment is still required for players, dynamic objects, ground
-items, collision/reload products, and owned events before any runtime consumer
-can act.
+Slice 81 now composes candidate observation, authored cohort analysis, one
+same-tick NPC census, and Slice 79 reassessment behind a single dormant
+RegionManager call. It defers before sampling when the tick has not advanced,
+and it retains no runtime state or authority.
+
+The next focused checkpoint is additive private diagnostic exposure. Observer
+state may retain only the latest immutable proposal, invoke the Slice 81 source
+on a later event, replace that proposal only with an immutable next proposal,
+and serialize whether reassessment was deferred, stable, expanding, or hard-
+blocked. Normal runtime and existing schema consumers must remain unchanged.
+Equivalent preservation treatment is still required for players, dynamic
+objects, ground items, collision/reload products, and owned events before any
+runtime consumer can act.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

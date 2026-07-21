@@ -79,6 +79,8 @@
  * evidence while keeping candidate-set convergence separate from retirement
  * or lifecycle authority. Slice 80 permits the runtime to peek that exact
  * candidate selection without loading absent Regions or manufacturing
- * retirement readiness.</p>
+ * retirement readiness. Slice 81 composes a strictly newer candidate
+ * observation, authored cohort, NPC census, and reassessment behind one
+ * same-tick private runtime seam without exposing it to diagnostics yet.</p>
  */
 package com.openrsc.server.model.world.coordinate;

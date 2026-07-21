@@ -43,6 +43,20 @@ public final class LayeredPackedRegionRetirementRefinementReassessment {
 				.CandidateSource>(newCandidates));
 	}
 
+	/** Returns whether one shared safety/census tick is strictly newer. */
+	public static boolean isFreshObservationTick(
+		final LayeredPackedRegionRetirementRefinementProposal previousProposal,
+		final long observedAtTick) {
+		LayeredPackedRegionRetirementRefinementProposal previous =
+			Objects.requireNonNull(previousProposal, "previousProposal");
+		if (observedAtTick < 0L) {
+			throw new IllegalArgumentException(
+				"Reassessment observation tick must not be negative");
+		}
+		return observedAtTick > previous.getSafetyObservedAtTick()
+			&& observedAtTick > previous.getCensusObservedAtTick();
+	}
+
 	/**
 	 * Rebuilds the refinement proposal from one strictly newer atomic snapshot.
 	 * Any stale, incomplete, reordered, foreign-generation, or overflowing

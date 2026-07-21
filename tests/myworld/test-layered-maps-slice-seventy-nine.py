@@ -62,6 +62,17 @@ public final class RetirementRefinementReassessmentFixture {
             initialProposal();
         check(previous.getCandidateSourceCount() == 3,
             "initial proposal has three candidates");
+        check(!LayeredPackedRegionRetirementRefinementReassessment
+                .isFreshObservationTick(previous, 13L)
+            && LayeredPackedRegionRetirementRefinementReassessment
+                .isFreshObservationTick(previous, 14L),
+            "shared reassessment tick must be newer than both parents");
+        expectFailure(() ->
+            LayeredPackedRegionRetirementRefinementReassessment
+                .isFreshObservationTick(previous, -1L));
+        expectNullFailure(() ->
+            LayeredPackedRegionRetirementRefinementReassessment
+                .isFreshObservationTick(null, 14L));
 
         LayeredPackedRegionRetirementSafetyAssessment stableSafety =
             safety(new int[] {4, 5, 7}, 20L);

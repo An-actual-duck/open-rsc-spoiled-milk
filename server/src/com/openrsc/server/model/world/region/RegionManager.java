@@ -19,7 +19,10 @@ import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyC
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcBoundaryRequirementProjection;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
@@ -884,32 +887,92 @@ public class RegionManager {
 				"Refinement candidate assessment exceeds the source budget");
 		}
 		synchronized (layeredRegionLifecycleLock) {
-			List<LayeredPackedRegionRetirementSafetyAssessment.PackedSourceContents>
-				contents = new ArrayList<
-					LayeredPackedRegionRetirementSafetyAssessment
-						.PackedSourceContents>(checked.getCandidateSourceCount());
-			for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
-				candidate : checked.getCandidates()) {
-				Region region = peekRegionFromSectorCoordinates(
-					candidate.getPackedRegionX(), candidate.getPackedRegionY());
-				Region.RetirementContentsSnapshot snapshot = region == null
-					? null : region.captureRetirementContentsSnapshot();
-				contents.add(LayeredPackedRegionRetirementSafetyAssessment
-					.PackedSourceContents.of(
-						candidate.getPackedRegionX(), candidate.getPackedRegionY(),
-						region != null,
-						snapshot != null && snapshot.isTileStorageAvailable(),
-						LAYERED_PACKED_REGION_RELOAD_SUPPORTED,
-						snapshot == null ? 0 : snapshot.getPlayerCount(),
-						snapshot == null ? 0 : snapshot.getNpcCount(),
-						snapshot == null ? 0 : snapshot.getObjectCount(),
-						snapshot == null ? 0 : snapshot.getGroundItemCount()));
-			}
-			return LayeredPackedRegionRetirementSafetyAssessment
-				.assessDiagnosticSelection(
-					contents, getWorld().getServer().getCurrentTick(),
-					maximumPackedSources);
+			return assessLayeredPackedRegionRetirementRefinementCandidatesLocked(
+				checked, maximumPackedSources,
+				getWorld().getServer().getCurrentTick());
 		}
+	}
+
+	/**
+	 * Captures one strictly newer, same-tick refinement reassessment. A null
+	 * result means the server tick has not advanced yet; no evidence is sampled.
+	 */
+	public LayeredPackedRegionRetirementRefinementReassessment
+		captureLayeredPackedRegionRetirementRefinementReassessmentIfFresh(
+			final LayeredPackedRegionRetirementRefinementProposal previousProposal,
+			final LayeredPackedRegionAuthoredReconstructionRecipe recipe,
+			final int maximumCandidateSources,
+			final int maximumSupportSources,
+			final int maximumNpcInstances,
+			final int maximumRelevantNpcDetails,
+			final int maximumActiveNpcRequirements) {
+		LayeredPackedRegionRetirementRefinementProposal previous =
+			Objects.requireNonNull(previousProposal, "previousProposal");
+		LayeredPackedRegionAuthoredReconstructionRecipe checkedRecipe =
+			Objects.requireNonNull(recipe, "recipe");
+		if (maximumCandidateSources < 0
+			|| maximumCandidateSources
+				> MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN
+			|| previous.getCandidateSourceCount() > maximumCandidateSources) {
+			throw new IllegalArgumentException(
+				"Refinement reassessment exceeds the candidate budget");
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			long observedAtTick = getWorld().getServer().getCurrentTick();
+			if (!LayeredPackedRegionRetirementRefinementReassessment
+				.isFreshObservationTick(previous, observedAtTick)) {
+				return null;
+			}
+			LayeredPackedRegionRetirementSafetyAssessment safety =
+				assessLayeredPackedRegionRetirementRefinementCandidatesLocked(
+					previous, maximumCandidateSources, observedAtTick);
+			LayeredPackedRegionAuthoredReconstructionCohortAnalysis cohort =
+				LayeredPackedRegionAuthoredReconstructionCohortAnalysis.analyze(
+					checkedRecipe, safety, maximumCandidateSources,
+					maximumSupportSources);
+			LayeredPackedRegionActiveNpcResidencyObservation activeNpcResidency =
+				captureActiveNpcResidency(
+					checkedRecipe, safety, observedAtTick, maximumNpcInstances,
+					maximumRelevantNpcDetails);
+			LayeredPackedRegionActiveNpcBoundaryRequirementProjection
+				activeNpcRequirements =
+					LayeredPackedRegionActiveNpcBoundaryRequirementProjection.project(
+						activeNpcResidency, maximumActiveNpcRequirements);
+			return LayeredPackedRegionRetirementRefinementReassessment.reassess(
+				previous, safety, cohort, activeNpcRequirements,
+				maximumCandidateSources, maximumSupportSources);
+		}
+	}
+
+	private LayeredPackedRegionRetirementSafetyAssessment
+		assessLayeredPackedRegionRetirementRefinementCandidatesLocked(
+			final LayeredPackedRegionRetirementRefinementProposal proposal,
+			final int maximumPackedSources,
+			final long observedAtTick) {
+		List<LayeredPackedRegionRetirementSafetyAssessment.PackedSourceContents>
+			contents = new ArrayList<
+				LayeredPackedRegionRetirementSafetyAssessment
+					.PackedSourceContents>(proposal.getCandidateSourceCount());
+		for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+			candidate : proposal.getCandidates()) {
+			Region region = peekRegionFromSectorCoordinates(
+				candidate.getPackedRegionX(), candidate.getPackedRegionY());
+			Region.RetirementContentsSnapshot snapshot = region == null
+				? null : region.captureRetirementContentsSnapshot();
+			contents.add(LayeredPackedRegionRetirementSafetyAssessment
+				.PackedSourceContents.of(
+					candidate.getPackedRegionX(), candidate.getPackedRegionY(),
+					region != null,
+					snapshot != null && snapshot.isTileStorageAvailable(),
+					LAYERED_PACKED_REGION_RELOAD_SUPPORTED,
+					snapshot == null ? 0 : snapshot.getPlayerCount(),
+					snapshot == null ? 0 : snapshot.getNpcCount(),
+					snapshot == null ? 0 : snapshot.getObjectCount(),
+					snapshot == null ? 0 : snapshot.getGroundItemCount()));
+		}
+		return LayeredPackedRegionRetirementSafetyAssessment
+			.assessDiagnosticSelection(
+				contents, observedAtTick, maximumPackedSources);
 	}
 
 	/**

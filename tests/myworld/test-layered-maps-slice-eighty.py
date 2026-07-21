@@ -220,19 +220,26 @@ class LayeredMapsSliceEightyTest(unittest.TestCase):
 
     def test_region_manager_candidate_observation_is_peek_only(self):
         source = REGION_MANAGER.read_text(encoding="utf-8")
-        method_name = (
+        public_method_name = (
             "assessLayeredPackedRegionRetirementRefinementCandidates"
         )
-        start = source.index(method_name)
+        start = source.index(public_method_name)
         end = source.index("\n\t/**", start)
-        method = source[start:end]
-        self.assertIn("peekRegionFromSectorCoordinates", method)
-        self.assertIn("captureRetirementContentsSnapshot", method)
-        self.assertIn("assessDiagnosticSelection", method)
-        self.assertNotIn("getRegion(", method)
-        self.assertNotIn("register", method)
-        self.assertNotIn("unload", method)
-        self.assertNotIn("remove", method)
+        public_method = source[start:end]
+        helper_name = (
+            "assessLayeredPackedRegionRetirementRefinementCandidatesLocked"
+        )
+        self.assertIn(helper_name, public_method)
+        helper_start = source.rindex(helper_name)
+        helper_end = source.index("\n\t/**", helper_start)
+        helper = source[helper_start:helper_end]
+        self.assertIn("peekRegionFromSectorCoordinates", helper)
+        self.assertIn("captureRetirementContentsSnapshot", helper)
+        self.assertIn("assessDiagnosticSelection", helper)
+        self.assertNotIn("getRegion(", helper)
+        self.assertNotIn("register", helper)
+        self.assertNotIn("unload", helper)
+        self.assertNotIn("remove", helper)
 
     def test_living_plan_records_slice_eighty_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")
