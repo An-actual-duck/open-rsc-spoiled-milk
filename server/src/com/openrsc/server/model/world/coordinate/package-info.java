@@ -72,6 +72,11 @@
  * without granting loading, teardown, or lifecycle authority. Slice 65
  * attributes that cohort's exact owner-to-requirement edges and cross-source
  * placement bridges by construction and dependency kind without changing the
- * conservative envelopes or granting lifecycle authority.</p>
+ * conservative envelopes or granting lifecycle authority. Slices 67-78 add
+ * detached topology, dependency-semantics, active-NPC containment, boundary-
+ * requirement, and refinement evidence plus private diagnostics. Slice 79
+ * reassesses one exact proposed candidate set against strictly newer atomic
+ * evidence while keeping candidate-set convergence separate from retirement
+ * or lifecycle authority.</p>
  */
 package com.openrsc.server.model.world.coordinate;

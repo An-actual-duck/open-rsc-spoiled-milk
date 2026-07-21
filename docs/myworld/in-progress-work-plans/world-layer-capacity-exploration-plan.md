@@ -3,21 +3,21 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, and 78 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, and 78 automated-validated on the active refinement branch
+76, 77, 78, and 79 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 78 exposes Slice 77's exact refinement
-proposal through additive private schema-v28 diagnostics derived from the same
-event's safety, authored cohort, and active-NPC values. The accepted 84-record
-route passes 17,836 schema, sequence, parent-alignment, candidate-union,
-support, reason-count, ordering, and authority-boundary checks. No second
-snapshot, selection mutation, source load, entity registry, arrival gate,
-retention decision, or lifecycle authority is authorized, and packed Region
-lookup, eager loading, release, eviction, pathing, packets, and persistence
-remain unchanged
+Current milestone: automated Slice 79 closes the first fresh-evidence loop by
+requiring Slice 78's ordered candidate set to become the exact input to one
+strictly newer safety/cohort/active-NPC observation. It distinguishes a stable
+candidate set, further source expansion, and non-expandable blockers without
+confusing candidate-set convergence with retirement readiness. No source load,
+selection mutation, entity registry, arrival gate, commit token, retention
+decision, or lifecycle authority is authorized, and packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
+unchanged
 
 ## Purpose
 
@@ -7529,6 +7529,67 @@ Safety boundary:
 Status: implemented, automated-validated, and owner-validated. All lifecycle
 adoption remains deliberately absent.
 
+### Slice 79: Fresh retirement-refinement reassessment
+
+Objective: close one detached refinement loop by requiring a proposal's exact
+candidate set to receive strictly newer, atomically aligned safety,
+authored-cohort, and active-NPC evidence, while keeping candidate-set
+convergence separate from retirement readiness or lifecycle authority.
+
+Implemented:
+
+- `LayeredPackedRegionRetirementRefinementReassessment` requires the fresh
+  safety source count and ordered coordinates to match every prior candidate
+  exactly; a missing, extra, or reordered source refuses the whole result;
+- authored manifest generation must remain unchanged, the safety observation
+  must be newer than the prior safety tick, and the active census must be newer
+  than the prior census tick;
+- the existing Slice 77 proposal builder combines the fresh parents again, so
+  its alignment, budgets, candidate provenance, support separation, and hard-
+  blocker rules remain the single derivation authority;
+- retained candidates and genuinely new candidates have exact arithmetic, and
+  the new-candidate list preserves authored/active/support provenance plus the
+  requirement for another fresh assessment and census;
+- a stable source set with no non-expandable blocker reports refinement
+  convergence only at that observation. A stable set with an unresolved
+  blocker remains explicitly unconverged, while any new candidate requires
+  another bounded iteration; and
+- lifecycle-ready source counts remain visible as evidence but cannot turn
+  candidate convergence into a load, retirement decision, or commit token.
+
+Automated validation status:
+
+- a compiled fixture begins with candidates `(4,0)`, `(5,0)`, and `(7,0)`,
+  then reassesses those exact sources from newer ticks and proves a stable
+  three-source result with external support `(6,0)` retained;
+- a second census observes an external-owned NPC inside the selection and adds
+  only `(8,0)`, retaining its exact active reason and fresh-evidence burden;
+- a stable candidate set containing unresolved active identity evidence keeps
+  one hard condition/evidence instance and does not report convergence;
+- stale observations, incomplete and reordered candidate sets, candidate
+  overflow, null input, and mutable-result attempts all refuse safely;
+- source guards keep the reassessment detached from entities, Region,
+  RegionManager, callbacks, loading, teardown, and lifecycle authority;
+- the complete layered-map suite passes 199 tests across 78 focused files; and
+- the authoritative bundled-Ant build compiles 768 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- `isCandidateSetStableAtObservation` describes one exact point-in-time source
+  set; it is not a durable admission barrier for mobile entities or mutations;
+- `isRefinementConvergedAtObservation` requires both a stable set and no
+  non-expandable active-NPC blocker, but it proves neither full entity
+  preservation nor lifecycle readiness;
+- the returned next proposal and additions are immutable evidence and cannot
+  acquire, retain, load, release, unregister, reconstruct, or evict anything;
+  and
+- No lifecycle authority, retirement commit token, arrival rejection, entity
+  registry, transaction, teardown, reconstruction, or rollback is created.
+
+Status: implemented and automated-validated. Runtime diagnostic exposure and
+all lifecycle adoption remain deliberately absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7813,6 +7874,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 77 by combining exact safety seeds, authored-cohort expansion, active-NPC requirements, static support, and hard blockers into one inert refinement proposal. | Implemented and automated-validated; every added candidate retains provenance and explicitly requires fresh safety/census evidence, while support remains separate and no selection or lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 78 by exposing the retirement refinement proposal through additive private schema-v28 evidence derived from the same event parents. | Implemented and automated-validated; every candidate/support provenance and fresh-evidence requirement is serialized without a second snapshot, selection mutation, load request, or lifecycle authority |
 | 2026-07-20 | Accept the Slice 78 narrow/broad owner route and measure progress by capability gates rather than raw slice count. | Owner-validated; 84 schema-v28 records pass 17,836 reconciliation checks, the candidate union grows from 61 to 120 without lost provenance, the current proof stream is mature, and authoritative runtime, Builder, migration, and export gates remain open |
+| 2026-07-20 | Continue with Slice 79 by reassessing an exact proposed candidate set against strictly newer atomic evidence. | Implemented and automated-validated; stable, expanding, and non-expandable-blocked outcomes remain distinct, stale/incomplete inputs refuse, and candidate-set convergence grants no lifecycle authority |
 
 ## Next Discussion
 
@@ -7884,13 +7946,19 @@ boundaries remain contained; the executable observer fixture covers the
 non-empty active-reason path deterministically, so another random route is not
 required.
 
-The next focused server checkpoint should close the fresh-evidence loop without
-jumping to lifecycle authority: define a bounded, detached reassessment of one
-proposed candidate set that can prove exact source/tick agreement, report
-convergence or another refinement, and refuse stale, incomplete, or overflowing
-evidence. Before any runtime consumer can act on such a result, equivalent
-preservation treatment is still required for players, dynamic objects, ground
-items, collision/reload products, and owned events.
+Slice 79 closes that detached fresh-evidence loop. The prior ordered candidates
+must become the exact strictly newer safety selection, after which one fresh
+cohort and active census either stabilize the set, add precisely explained
+candidates, or preserve a non-expandable blocker. Candidate-set convergence is
+point-in-time evidence, not a commit token or lifecycle decision.
+
+The next prerequisite is no longer another abstract candidate-union rule. The
+private runtime needs a bounded, read-only way to observe the proposed
+candidate set as one fresh selection without loading a missing source or
+manufacturing retirement eligibility. That feasibility seam must be audited
+before diagnostic exposure. Equivalent preservation treatment is still
+required for players, dynamic objects, ground items, collision/reload products,
+and owned events before any runtime consumer can act.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
