@@ -88,7 +88,7 @@ public final class EventRestorationInventoryFixture {
 
         LayeredPackedRegionEventOwnershipInventory inventory =
             LayeredPackedRegionEventOwnershipInventory.inventory(
-                9L, 120L,
+                9L, 120L, "00000000-0000-0000-0000-000000000093",
                 Collections.singletonList(PackedSource.of(10, 10)),
                 Arrays.asList(
                     EventState.of(0, 21L, OwnerKind.NONE,

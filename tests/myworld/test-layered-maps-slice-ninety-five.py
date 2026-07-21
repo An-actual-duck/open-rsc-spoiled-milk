@@ -328,7 +328,8 @@ class LayeredMapsSliceNinetyFiveTest(unittest.TestCase):
     def test_registration_identity_reaches_inventory_and_private_observer(self):
         handler = HANDLER.read_text(encoding="utf-8")
         observer = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn("getTrackedEventRegistrations()", handler)
+        self.assertIn("getTrackedEventRegistrationSnapshot()", handler)
+        self.assertIn("registrationSnapshot.getRegistrations()", handler)
         self.assertIn("getRegistrationSequence()", handler)
         self.assertNotIn("getTrackedEventRegistrations()", observer)
         self.assertIn("getRegistrationSequence()", observer)

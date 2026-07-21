@@ -386,8 +386,10 @@ public class GameEventHandler {
 				source.getPackedRegionX(), source.getPackedRegionY()));
 		}
 
+		GameTickEventStore.RegistrationSnapshot registrationSnapshot =
+			eventStore.getTrackedEventRegistrationSnapshot();
 		List<GameTickEventStore.RegisteredEvent> liveRegistrations =
-			eventStore.getTrackedEventRegistrations();
+			registrationSnapshot.getRegistrations();
 		if (maximumEvents < 0
 			|| maximumEvents
 				> LayeredPackedRegionEventOwnershipInventory.MAXIMUM_EVENTS
@@ -409,7 +411,9 @@ public class GameEventHandler {
 				event, ordinal, registration.getRegistrationSequence()));
 		}
 		return LayeredPackedRegionEventOwnershipInventory.inventory(
-			checked.getGeneration(), observedAtTick, packedSources, eventStates,
+			checked.getGeneration(), observedAtTick,
+			registrationSnapshot.getSchedulerInstanceIdentity(),
+			packedSources, eventStates,
 			checked.getCandidateSourceCount(), maximumEvents,
 			maximumSpatialReferences);
 	}

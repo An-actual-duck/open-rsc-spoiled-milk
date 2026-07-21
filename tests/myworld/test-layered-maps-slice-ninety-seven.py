@@ -89,7 +89,11 @@ class LayeredMapsSliceNinetySevenTest(unittest.TestCase):
         ]
         self.assertIn("getRegistrationSequence()", boundary)
         self.assertIn("isRegistrationIdentityComplete()", boundary)
-        self.assertIn("isSchedulerInstanceIdentityCaptured()", boundary)
+        self.assertIn(
+            '"\\\"schedulerInstanceIdentityCaptured\\\":false,"',
+            boundary,
+        )
+        self.assertNotIn("getSchedulerInstanceIdentity()", boundary)
         for forbidden in (
             "getUUID()", "getDescriptor()", "getClass()", "eventKey",
             "ownerIdentity", "usernameHash",

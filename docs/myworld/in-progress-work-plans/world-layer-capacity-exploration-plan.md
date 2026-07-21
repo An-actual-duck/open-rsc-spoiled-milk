@@ -3,22 +3,22 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, and 97 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, and 98 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, and 99 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 98 gives each scheduler store one
-opaque immutable instance identity and returns it with registrations through
-one atomic read-only snapshot. Repeated reads from one store retain the same
-identity while different store lifetimes receive different identities. The
-token is not an event UUID, key, callback, descriptor, owner, or scheduler
-handle and does not yet cross into the detached inventory or private schema.
-Owner-validated schema-v34 therefore remains unchanged and still reports
-`schedulerInstanceIdentityCaptured=false`. Cancellation, reschedule, replay,
-preservation, and all lifecycle authority remain absent;
+Current milestone: automated-validated Slice 99 carries Slice 98's opaque
+scheduler-instance identity through the same atomic event snapshot into the
+detached bounded inventory. The inventory requires canonical identity even for
+an empty event list and now distinguishes complete instance scope from the
+still-absent full scheduler identity. No store or event reference crosses the
+boundary. Owner-validated schema-v34 remains unchanged and deliberately still
+reports `schedulerInstanceIdentityCaptured=false` because private exposure is
+not part of this slice. Cancellation, reschedule, replay, preservation, and
+all lifecycle authority remain absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8835,6 +8835,61 @@ Status: implemented and automated-validated. Inventory capture, private
 schema exposure, owner validation, executable restoration, and all
 event/lifecycle authority remain absent.
 
+### Slice 99: Detached scheduler-instance identity
+
+Objective: copy Slice 98's opaque scheduler-store lifetime identity into the
+bounded event inventory through the same atomic snapshot as registration order,
+without exposing it through diagnostics or retaining scheduler authority.
+
+Implemented:
+
+- `GameEventHandler` consumes exactly one `RegistrationSnapshot`, then detaches
+  its opaque scheduler-instance identity and immutable accepted-order event
+  registrations into one inventory construction;
+- the inventory requires canonical lowercase opaque identity for every
+  capture, including an empty event list, retains it as detached text, and
+  reports `schedulerInstanceIdentityCaptured=true`;
+- registration sequence remains positive, unique, strictly increasing accepted
+  order and independently reconciled with event count;
+- full `schedulerIdentityCaptured` remains false because no scheduler state,
+  handle, callback, key, execution cursor, or mutation interface is captured;
+  and
+- schema-v34 remains unchanged. Its observer writes literal
+  `schedulerInstanceIdentityCaptured=false` and publishes neither the token nor
+  the internal true inventory state until an additive schema is approved.
+
+Automated validation status:
+
+- the executable inventory fixture retains the exact detached token alongside
+  non-contiguous registration sequences and refuses null or malformed instance
+  scope, duplicate registration identity, and descending registration order;
+- handler guards prove one atomic store snapshot supplies both token and list,
+  with no independent scheduler read or event mutation path;
+- current-head guards prove schema-v34 remains closed, false, and token-free,
+  and the observer does not call the new inventory getter;
+- the complete layered-map suite passes 280 tests across 98 focused files; and
+- the authoritative bundled-Ant build compiles 773 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- captured instance scope permits only equality comparison between detached
+  observations. It is not a durable server identifier, credential, replay key,
+  scheduler handle, or proof that callback state is restorable;
+- requiring identity for empty inventories prevents an empty capture from
+  becoming ambiguously unscoped, but proves nothing about scheduler contents
+  beyond the bounded point-in-time snapshot;
+- diagnostics continue to state false until an additive private schema can
+  publish both the token and its semantics atomically; and
+- No event is cancelled, stopped, removed, rescheduled, recreated, or run. No
+  source is loaded, retained, retired, reconstructed, or gated, and no
+  preservation, reload, registry, teardown, transaction, rollback, or
+  lifecycle authority is created.
+
+Status: implemented and automated-validated. Private schema exposure, owner
+validation, executable restoration, and all event/lifecycle authority remain
+absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -9146,6 +9201,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 97 by exposing process-local registration identity through additive private schema-v34. | Implemented and automated-validated; every bounded event publishes one positive sequence and aggregate completeness, historical v33 and existing UUID/key/private state remain untouched, scheduler-instance identity stays false, and no event or lifecycle authority is created |
 | 2026-07-21 | Accept the Slice 97 repeated-callback identity route. | Owner-validated; `same-a` and `same-b` retain registration 3929 while countdown falls 28 to 12 ticks, natural completion removes it, re-chopping creates greater registration 3968, all eight v34 records validate, and no scheduler or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 98 by defining an opaque scheduler-instance scope for registration identity. | Implemented and automated-validated; one immutable atomic snapshot binds a stable same-store identity to accepted registration order, different stores differ, no token leaves the scheduler yet, and no event or lifecycle authority is created |
+| 2026-07-21 | Continue with Slice 99 by detaching scheduler-instance scope into the bounded event inventory. | Implemented and automated-validated; one atomic snapshot supplies token and registrations, canonical scope is required even when empty, schema-v34 remains unchanged and private, full scheduler identity stays false, and no event or lifecycle authority is created |
 
 ## Next Discussion
 
@@ -9408,6 +9464,17 @@ the event list is empty, retain existing registration-order validation, expose
 no store/event reference, and change `schedulerInstanceIdentityCaptured` to
 true while full `schedulerIdentityCaptured` remains false. Schema-v34 and the
 observer must remain unchanged until a later additive private exposure.
+
+Slice 99 now supplies that detached scope and keeps it unreachable from the
+v34 observer. The next focused gate should add private schema-v35 with one
+required canonical `schedulerInstanceIdentity`, change its capture flag to
+true, and retain full `schedulerIdentityCaptured=false`. Historical schema-v34
+must remain byte-for-byte closed and false. The observer may serialize only
+the detached token—never the store, existing event UUIDs/keys, callbacks,
+classes, owners, or mutation operations. An owner route can then capture one
+pending callback, restart the private server, capture a new callback, and
+prove registration sequences are comparable only when their instance identity
+matches.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

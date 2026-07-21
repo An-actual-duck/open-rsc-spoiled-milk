@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Immutable, dormant classification of scheduled-event affinity to one exact
@@ -29,6 +30,8 @@ import java.util.Set;
 public final class LayeredPackedRegionEventOwnershipInventory {
 	public static final int MAXIMUM_EVENTS = 65536;
 	public static final int MAXIMUM_SPATIAL_REFERENCES = 262144;
+	private static final Pattern SCHEDULER_INSTANCE_IDENTITY = Pattern.compile(
+		"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
 	private static final Comparator<PackedSource> SOURCE_ORDER =
 		new Comparator<PackedSource>() {
@@ -59,6 +62,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 
 	private final long proposalGeneration;
 	private final long observedAtTick;
+	private final String schedulerInstanceIdentity;
 	private final List<SourceRecord> sources;
 	private final List<EventRecord> events;
 	private final int spatialReferenceCount;
@@ -73,6 +77,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	private LayeredPackedRegionEventOwnershipInventory(
 		final long proposalGeneration,
 		final long observedAtTick,
+		final String schedulerInstanceIdentity,
 		final List<SourceRecord> sources,
 		final List<EventRecord> events,
 		final int spatialReferenceCount,
@@ -85,6 +90,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		final int detachedCallbackPayloadCompleteEventCount) {
 		this.proposalGeneration = proposalGeneration;
 		this.observedAtTick = observedAtTick;
+		this.schedulerInstanceIdentity = schedulerInstanceIdentity;
 		this.sources = Collections.unmodifiableList(sources);
 		this.events = Collections.unmodifiableList(events);
 		this.spatialReferenceCount = spatialReferenceCount;
@@ -106,6 +112,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	public static LayeredPackedRegionEventOwnershipInventory inventory(
 		final long proposalGeneration,
 		final long observedAtTick,
+		final String schedulerInstanceIdentity,
 		final List<PackedSource> packedSources,
 		final List<EventState> eventStates,
 		final int maximumPackedSources,
@@ -114,6 +121,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		Objects.requireNonNull(packedSources, "packedSources");
 		Objects.requireNonNull(eventStates, "eventStates");
 		if (proposalGeneration < 0L || observedAtTick < 0L
+			|| schedulerInstanceIdentity == null
+			|| !SCHEDULER_INSTANCE_IDENTITY.matcher(
+				schedulerInstanceIdentity).matches()
 			|| maximumPackedSources < 0
 			|| maximumPackedSources
 				> LayeredPackedRegionRetirementRefinementProposal
@@ -240,7 +250,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 				unknownCount));
 		}
 		return new LayeredPackedRegionEventOwnershipInventory(
-			proposalGeneration, observedAtTick, sourceRecords, eventRecords,
+			proposalGeneration, observedAtTick, schedulerInstanceIdentity,
+			sourceRecords, eventRecords,
 			referenceCount, exactCount, hintCount, globalCount, unknownCount,
 			candidateEventCount, restorationAvailableCount,
 			callbackPayloadCompleteCount);
@@ -265,6 +276,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 
 	public long getProposalGeneration() { return proposalGeneration; }
 	public long getObservedAtTick() { return observedAtTick; }
+	public String getSchedulerInstanceIdentity() {
+		return schedulerInstanceIdentity;
+	}
 	public List<SourceRecord> getSources() { return sources; }
 	public int getSourceCount() { return sources.size(); }
 	public List<EventRecord> getEvents() { return events; }
@@ -296,7 +310,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	}
 	public boolean isRegistrationIdentityCaptured() { return true; }
 	public boolean isRegistrationIdentityComplete() { return true; }
-	public boolean isSchedulerInstanceIdentityCaptured() { return false; }
+	public boolean isSchedulerInstanceIdentityCaptured() { return true; }
 
 	public boolean isPointInTimeOnly() { return true; }
 	public boolean isDetachedPrimitiveCopy() { return true; }

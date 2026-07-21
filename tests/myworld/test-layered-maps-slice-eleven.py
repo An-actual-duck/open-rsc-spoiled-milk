@@ -877,6 +877,7 @@ public final class LayeredCoordinateParityObserverFixture {
 				return LayeredPackedRegionEventOwnershipInventory.inventory(
 					proposal.getGeneration(),
 					Math.max(proposal.getSafetyObservedAtTick(), decisionTick[0]),
+					"00000000-0000-0000-0000-000000000011",
 					sources, states, sources.size(), maximumEvents,
 					maximumReferences);
 			});

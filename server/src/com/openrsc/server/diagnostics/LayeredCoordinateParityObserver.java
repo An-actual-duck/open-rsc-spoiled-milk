@@ -4061,8 +4061,7 @@ public final class LayeredCoordinateParityObserver {
 			.append(inventory.isRegistrationIdentityCaptured()).append(',');
 		out.append("\"registrationIdentityComplete\":")
 			.append(inventory.isRegistrationIdentityComplete()).append(',');
-		out.append("\"schedulerInstanceIdentityCaptured\":")
-			.append(inventory.isSchedulerInstanceIdentityCaptured()).append(',');
+		out.append("\"schedulerInstanceIdentityCaptured\":false,");
 		out.append("\"restorationStateAvailableEventCount\":")
 			.append(inventory.getRestorationStateAvailableEventCount()).append(',');
 		out.append("\"detachedCallbackPayloadCompleteEventCount\":")

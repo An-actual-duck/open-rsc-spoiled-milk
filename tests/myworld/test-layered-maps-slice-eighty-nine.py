@@ -166,7 +166,8 @@ class LayeredMapsSliceEightyNineTest(unittest.TestCase):
         )
         end = handler.index("public boolean hasEvent", start)
         boundary = handler[start:end]
-        self.assertIn("getTrackedEventRegistrations()", boundary)
+        self.assertIn("getTrackedEventRegistrationSnapshot()", boundary)
+        self.assertIn("registrationSnapshot.getRegistrations()", boundary)
         self.assertIn("OWNER_POSITION_HINT", boundary)
         self.assertIn("UNATTRIBUTED", boundary)
         self.assertIn("EXACT_SPATIAL", boundary)

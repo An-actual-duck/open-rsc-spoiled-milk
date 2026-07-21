@@ -63,7 +63,8 @@ public final class EventRegistrationInventoryFixture {
     private static void registrationIdentityIsDistinctFromSnapshotOrder() {
         LayeredPackedRegionEventOwnershipInventory inventory =
             LayeredPackedRegionEventOwnershipInventory.inventory(
-                3L, 90L, Collections.singletonList(PackedSource.of(4, 10)),
+                3L, 90L, "00000000-0000-0000-0000-000000000096",
+                Collections.singletonList(PackedSource.of(4, 10)),
                 Arrays.asList(
                     EventState.of(
                         0, 41L, OwnerKind.NONE,
@@ -77,9 +78,11 @@ public final class EventRegistrationInventoryFixture {
         check(inventory.getRegistrationIdentityCapturedEventCount() == 2
             && inventory.isRegistrationIdentityCaptured()
             && inventory.isRegistrationIdentityComplete()
-            && !inventory.isSchedulerInstanceIdentityCaptured()
+            && inventory.isSchedulerInstanceIdentityCaptured()
+            && inventory.getSchedulerInstanceIdentity().equals(
+                "00000000-0000-0000-0000-000000000096")
             && !inventory.isSchedulerIdentityCaptured(),
-            "registration evidence is complete but not cross-process identity");
+            "registration evidence carries detached scheduler-instance scope");
         check(inventory.getEvents().get(0).getSnapshotOrdinal() == 0
             && inventory.getEvents().get(0).getRegistrationSequence() == 41L
             && inventory.getEvents().get(1).getSnapshotOrdinal() == 1
@@ -93,7 +96,8 @@ public final class EventRegistrationInventoryFixture {
             true, 1L, 0, Collections.emptyList()));
         expectIllegal(() -> LayeredPackedRegionEventOwnershipInventory
             .inventory(
-                1L, 1L, Collections.emptyList(),
+                1L, 1L, "00000000-0000-0000-0000-000000000096",
+                Collections.emptyList(),
                 Arrays.asList(
                     EventState.of(
                         0, 8L, OwnerKind.NONE,
@@ -106,7 +110,16 @@ public final class EventRegistrationInventoryFixture {
                 0, 2, 0));
         expectIllegal(() -> LayeredPackedRegionEventOwnershipInventory
             .inventory(
-                1L, 1L, Collections.emptyList(),
+                1L, 1L, "not-a-scheduler-instance",
+                Collections.emptyList(), Collections.emptyList(), 0, 0, 0));
+        expectIllegal(() -> LayeredPackedRegionEventOwnershipInventory
+            .inventory(
+                1L, 1L, null,
+                Collections.emptyList(), Collections.emptyList(), 0, 0, 0));
+        expectIllegal(() -> LayeredPackedRegionEventOwnershipInventory
+            .inventory(
+                1L, 1L, "00000000-0000-0000-0000-000000000096",
+                Collections.emptyList(),
                 Arrays.asList(
                     EventState.of(
                         0, 9L, OwnerKind.NONE,
@@ -188,7 +201,11 @@ class LayeredMapsSliceNinetySixTest(unittest.TestCase):
         )
         end = source.index("public boolean hasEvent", start)
         boundary = source[start:end]
-        self.assertIn("getTrackedEventRegistrations()", boundary)
+        self.assertIn("getTrackedEventRegistrationSnapshot()", boundary)
+        self.assertIn("registrationSnapshot.getRegistrations()", boundary)
+        self.assertIn(
+            "registrationSnapshot.getSchedulerInstanceIdentity()", boundary
+        )
         self.assertIn("registration.getRegistrationSequence()", boundary)
         self.assertNotIn("List<GameTickEvent> liveEvents", boundary)
         for forbidden in (

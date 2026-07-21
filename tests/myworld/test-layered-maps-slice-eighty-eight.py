@@ -68,7 +68,7 @@ public final class EventOwnershipInventoryFixture {
     private static void affinityKindsRemainDistinctAndBounded() {
         LayeredPackedRegionEventOwnershipInventory inventory =
             LayeredPackedRegionEventOwnershipInventory.inventory(
-                7L, 99L,
+                7L, 99L, "00000000-0000-0000-0000-000000000088",
                 Arrays.asList(PackedSource.of(2, 10), PackedSource.of(3, 10)),
                 Arrays.asList(
                     EventState.of(0, 11L, OwnerKind.NONE,
@@ -153,16 +153,18 @@ public final class EventOwnershipInventoryFixture {
             AttributionKind.NON_SPATIAL_GLOBAL, true, 0L, 0,
             Collections.singletonList(fixed)));
         expectIllegal(() -> LayeredPackedRegionEventOwnershipInventory
-            .inventory(1L, 1L,
+            .inventory(1L, 1L, "00000000-0000-0000-0000-000000000088",
                 Arrays.asList(PackedSource.of(3, 10), source),
                 Collections.emptyList(), 2, 0, 0));
         expectIllegal(() -> LayeredPackedRegionEventOwnershipInventory
-            .inventory(1L, 1L, Collections.singletonList(source),
+            .inventory(1L, 1L, "00000000-0000-0000-0000-000000000088",
+                Collections.singletonList(source),
                 Collections.singletonList(EventState.of(1, 1L, OwnerKind.NONE,
                     AttributionKind.UNATTRIBUTED, true, 0L, 0,
                     Collections.emptyList())), 1, 1, 0));
         expectIllegal(() -> LayeredPackedRegionEventOwnershipInventory
-            .inventory(1L, 1L, Collections.singletonList(source),
+            .inventory(1L, 1L, "00000000-0000-0000-0000-000000000088",
+                Collections.singletonList(source),
                 Collections.singletonList(EventState.of(0, 1L, OwnerKind.NONE,
                     AttributionKind.EXACT_SPATIAL, true, 0L, 0,
                     Collections.singletonList(fixed))), 1, 1, 0));
