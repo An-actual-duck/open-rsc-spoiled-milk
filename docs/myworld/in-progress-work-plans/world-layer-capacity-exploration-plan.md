@@ -3,24 +3,22 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, and 97 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, and 97 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, and 98 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 97 exposes Slice 96's positive
-process-local registration sequence through additive private schema-v34.
-Aggregate evidence states that every bounded event has registration identity
-while scheduler-instance and full scheduler identity remain false. Snapshot
-ordinal and registration sequence stay separate; existing UUIDs, keys,
-descriptors, classes, owners, callbacks, and handles remain absent. Historical
-schema-v33 is unchanged. The accepted private route correlates registration
-3929 across `same-a` and `same-b` while its countdown falls from 28 to 12
-ticks, sees no exact callback after natural completion, and assigns the
-re-chopped tree the greater registration 3968. Cancellation, reschedule,
-replay, preservation, and all lifecycle authority remain absent;
+Current milestone: automated-validated Slice 98 gives each scheduler store one
+opaque immutable instance identity and returns it with registrations through
+one atomic read-only snapshot. Repeated reads from one store retain the same
+identity while different store lifetimes receive different identities. The
+token is not an event UUID, key, callback, descriptor, owner, or scheduler
+handle and does not yet cross into the detached inventory or private schema.
+Owner-validated schema-v34 therefore remains unchanged and still reports
+`schedulerInstanceIdentityCaptured=false`. Cancellation, reschedule, replay,
+preservation, and all lifecycle authority remain absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8787,6 +8785,56 @@ Status: implemented, automated-validated, and owner-validated.
 Scheduler-instance identity, executable restoration, and all event/lifecycle
 authority remain absent.
 
+### Slice 98: Scheduler-instance identity scope
+
+Objective: define one opaque scheduler-store lifetime identity so detached
+registration sequences can eventually be compared only inside their valid
+scope, without exposing an event identity or creating a scheduler handle.
+
+Implemented:
+
+- every `GameTickEventStore` creates one canonical opaque identity for its
+  lifetime, independently of all event UUIDs, keys, owners, callbacks, and
+  registration sequences;
+- one synchronized `RegistrationSnapshot` now binds that identity to the same
+  immutable accepted-order registration list. The compatibility list getter
+  delegates to this atomic snapshot rather than rebuilding a second view;
+- repeated snapshots from one store retain the same identity, while different
+  scheduler stores receive different identities; and
+- the token remains scheduler-internal. `GameEventHandler`, the detached event
+  inventory, schema-v34, and the private observer do not consume or publish it.
+
+Automated validation status:
+
+- the executable scheduler fixture verifies canonical opaque syntax, stable
+  same-store identity, distinct identity for different scheduler stores,
+  registration sequence 1 in the same atomic snapshot, and immutable lists;
+- structural guards prove the snapshot is built under the store lock and has
+  no event stop, remove, run, clear, or scheduler-mutation path;
+- current-head guards prove the handler does not yet read the identity and the
+  inventory continues to report `schedulerInstanceIdentityCaptured=false`;
+- the complete layered-map suite passes 275 tests across 97 focused files; and
+- the authoritative bundled-Ant build compiles 773 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- the identity scopes one scheduler-store lifetime only. It is not durable,
+  ordered, player-derived, or valid evidence that two different stores are the
+  same, and it must never authorize authentication or persistence;
+- the token is detached text, not a store or event reference, but it does not
+  leave the scheduler boundary in this slice;
+- random uniqueness distinguishes different scheduler stores for diagnostic
+  correlation; it does not replace registration order or callback state; and
+- No event is cancelled, stopped, removed, rescheduled, recreated, or run. No
+  source is loaded, retained, retired, reconstructed, or gated, and no
+  preservation, reload, registry, teardown, transaction, rollback, or
+  lifecycle authority is created.
+
+Status: implemented and automated-validated. Inventory capture, private
+schema exposure, owner validation, executable restoration, and all
+event/lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -9097,6 +9145,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 96 by copying accepted registration identity into the bounded event inventory. | Implemented and automated-validated; one atomic store snapshot preserves ordinal/identity distinction, invalid identity refuses the whole capture, scheduler-instance identity and schema-v33 remain absent, and no event or lifecycle authority is created |
 | 2026-07-21 | Continue with Slice 97 by exposing process-local registration identity through additive private schema-v34. | Implemented and automated-validated; every bounded event publishes one positive sequence and aggregate completeness, historical v33 and existing UUID/key/private state remain untouched, scheduler-instance identity stays false, and no event or lifecycle authority is created |
 | 2026-07-21 | Accept the Slice 97 repeated-callback identity route. | Owner-validated; `same-a` and `same-b` retain registration 3929 while countdown falls 28 to 12 ticks, natural completion removes it, re-chopping creates greater registration 3968, all eight v34 records validate, and no scheduler or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 98 by defining an opaque scheduler-instance scope for registration identity. | Implemented and automated-validated; one immutable atomic snapshot binds a stable same-store identity to accepted registration order, different stores differ, no token leaves the scheduler yet, and no event or lifecycle authority is created |
 
 ## Next Discussion
 
@@ -9350,6 +9399,15 @@ carry it through the event inventory without exposing a scheduler handle, and
 keep it private and observational. It must make cross-instance comparison
 detectably invalid, leave historical schema-v34 immutable, and grant no event
 mutation, loading, retirement, restoration, or lifecycle authority.
+
+Slice 98 now defines that scope at the scheduler boundary. The next focused
+gate should make `GameEventHandler` consume the single atomic instance/order/
+registration snapshot and copy only its opaque identity into the detached
+inventory. The inventory must require a non-empty canonical identity even when
+the event list is empty, retain existing registration-order validation, expose
+no store/event reference, and change `schedulerInstanceIdentityCaptured` to
+true while full `schedulerIdentityCaptured` remains false. Schema-v34 and the
+observer must remain unchanged until a later additive private exposure.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

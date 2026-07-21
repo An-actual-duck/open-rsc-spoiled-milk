@@ -41,6 +41,8 @@ class GameTickEventStore {
      */
     private final Map<GameTickEvent, Long> registrationSequences =
         new IdentityHashMap<>();
+    private final String schedulerInstanceIdentity =
+        UUID.randomUUID().toString();
     private long nextRegistrationSequence;
 
     /**
@@ -164,6 +166,15 @@ class GameTickEventStore {
 
     /** One atomic scheduler-local order/identity view for read-only capture. */
     List<RegisteredEvent> getTrackedEventRegistrations() {
+        return getTrackedEventRegistrationSnapshot().getRegistrations();
+    }
+
+    /**
+     * One atomic scheduler-instance/order/identity view for read-only capture.
+     * The opaque instance identity scopes registration sequences to this store
+     * lifetime; it is not an event UUID, key, callback, or scheduler handle.
+     */
+    RegistrationSnapshot getTrackedEventRegistrationSnapshot() {
         synchronized (LOCK) {
             List<RegisteredEvent> registrations =
                 new ArrayList<>(events.size());
@@ -176,7 +187,9 @@ class GameTickEventStore {
                 registrations.add(new RegisteredEvent(
                     event, sequence.longValue()));
             }
-            return Collections.unmodifiableList(registrations);
+            return new RegistrationSnapshot(
+                schedulerInstanceIdentity,
+                Collections.unmodifiableList(registrations));
         }
     }
 
@@ -218,6 +231,27 @@ class GameTickEventStore {
 
         long getRegistrationSequence() {
             return registrationSequence;
+        }
+    }
+
+    /** Immutable store-lifetime identity plus one atomic registration view. */
+    static final class RegistrationSnapshot {
+        private final String schedulerInstanceIdentity;
+        private final List<RegisteredEvent> registrations;
+
+        private RegistrationSnapshot(
+            final String schedulerInstanceIdentity,
+            final List<RegisteredEvent> registrations) {
+            this.schedulerInstanceIdentity = schedulerInstanceIdentity;
+            this.registrations = registrations;
+        }
+
+        String getSchedulerInstanceIdentity() {
+            return schedulerInstanceIdentity;
+        }
+
+        List<RegisteredEvent> getRegistrations() {
+            return registrations;
         }
     }
 

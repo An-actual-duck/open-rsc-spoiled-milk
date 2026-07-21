@@ -129,6 +129,7 @@ public final class GameTickEventRegistrationFixture {
     public static void main(String[] args) {
         acceptedAndRejectedAddsKeepStableIdentity();
         removalAndReplacementCreateNewRegistrations();
+        schedulerInstanceIdentityScopesAtomicSnapshots();
     }
 
     private static void acceptedAndRejectedAddsKeepStableIdentity() {
@@ -194,6 +195,29 @@ public final class GameTickEventRegistrationFixture {
         check(sequenceOf(store, playerEvent) == 6L
             && store.getPlayerEvents(owner).contains(playerEvent),
             "identity bookkeeping preserves player index behavior");
+    }
+
+    private static void schedulerInstanceIdentityScopesAtomicSnapshots() {
+        GameTickEventStore firstStore = new GameTickEventStore();
+        check(firstStore.add(new ServerEventA()), "snapshot event accepted");
+        GameTickEventStore.RegistrationSnapshot first =
+            firstStore.getTrackedEventRegistrationSnapshot();
+        GameTickEventStore.RegistrationSnapshot repeated =
+            firstStore.getTrackedEventRegistrationSnapshot();
+        GameTickEventStore.RegistrationSnapshot other =
+            new GameTickEventStore().getTrackedEventRegistrationSnapshot();
+        String identity = first.getSchedulerInstanceIdentity();
+        check(identity.matches(
+                "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"),
+            "scheduler-instance identity is canonical opaque text");
+        check(identity.equals(repeated.getSchedulerInstanceIdentity()),
+            "one store lifetime keeps one scheduler-instance identity");
+        check(!identity.equals(other.getSchedulerInstanceIdentity()),
+            "different stores have different scheduler-instance identities");
+        check(first.getRegistrations().size() == 1
+                && first.getRegistrations().get(0).getRegistrationSequence() == 1L,
+            "instance identity and registrations share one atomic snapshot");
+        expectUnsupported(() -> first.getRegistrations().clear());
     }
 
     private static long sequenceOf(
