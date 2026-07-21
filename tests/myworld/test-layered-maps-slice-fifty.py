@@ -99,7 +99,7 @@ class LayeredMapsSliceFiftyTest(unittest.TestCase):
         readme = README.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v34"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v35"', observer)
         self.assertIn('append(",\\"packedRegionRetirementSafety\\":")', observer)
         self.assertIn("PackedRegionRetirementSafetySource", observer)
         self.assertIn("appendPackedRegionRetirementSafety(", observer)

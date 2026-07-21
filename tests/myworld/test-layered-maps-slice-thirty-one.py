@@ -84,7 +84,7 @@ class LayeredMapsSliceThirtyOneTest(unittest.TestCase):
         player = PLAYER.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v34"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v35"', observer)
         self.assertIn("TileNeighborhoodSource tileNeighborhoodSource", observer)
         self.assertIn("TileNeighborhoodMetadata tileNeighborhood = null", observer)
         self.assertIn("state.tileNeighborhoodSource.capture(current)", observer)

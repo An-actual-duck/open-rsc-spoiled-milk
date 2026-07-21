@@ -60,7 +60,7 @@ class LayeredMapsSliceNinetyEightTest(unittest.TestCase):
             fixture,
         )
 
-    def test_identity_is_detached_but_not_yet_published(self):
+    def test_identity_is_detached_and_privately_published(self):
         handler = HANDLER.read_text(encoding="utf-8")
         inventory = INVENTORY.read_text(encoding="utf-8")
         observer = OBSERVER.read_text(encoding="utf-8")
@@ -71,7 +71,7 @@ class LayeredMapsSliceNinetyEightTest(unittest.TestCase):
             "isSchedulerInstanceIdentityCaptured() { return true; }",
             inventory,
         )
-        self.assertNotIn("getSchedulerInstanceIdentity()", observer)
+        self.assertIn("getSchedulerInstanceIdentity()", observer)
 
     def test_living_plan_records_slice_ninety_eight_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")

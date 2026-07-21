@@ -80,20 +80,17 @@ class LayeredMapsSliceNinetySevenTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, event["properties"])
 
-    def test_observer_serializes_only_registration_sequence(self):
+    def test_observer_serializes_registration_and_instance_scope_only(self):
         source = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v34"', source)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v35"', source)
         boundary = source[
             source.index("private static void appendPackedRegionEventOwnership("):
             source.index("private static void appendIntegerList(")
         ]
         self.assertIn("getRegistrationSequence()", boundary)
         self.assertIn("isRegistrationIdentityComplete()", boundary)
-        self.assertIn(
-            '"\\\"schedulerInstanceIdentityCaptured\\\":false,"',
-            boundary,
-        )
-        self.assertNotIn("getSchedulerInstanceIdentity()", boundary)
+        self.assertIn("isSchedulerInstanceIdentityCaptured()", boundary)
+        self.assertIn("getSchedulerInstanceIdentity()", boundary)
         for forbidden in (
             "getUUID()", "getDescriptor()", "getClass()", "eventKey",
             "ownerIdentity", "usernameHash",

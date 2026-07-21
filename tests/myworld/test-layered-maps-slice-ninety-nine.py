@@ -62,7 +62,7 @@ class LayeredMapsSliceNinetyNineTest(unittest.TestCase):
         self.assertIn('"not-a-scheduler-instance"', fixture)
         self.assertIn("1L, 1L, null", fixture)
 
-    def test_schema_v34_and_observer_keep_identity_private(self):
+    def test_schema_v34_stays_private_while_current_observer_is_additive(self):
         schema_text = SCHEMA_V34.read_text(encoding="utf-8")
         schema = json.loads(schema_text)
         observer = OBSERVER.read_text(encoding="utf-8")
@@ -73,10 +73,11 @@ class LayeredMapsSliceNinetyNineTest(unittest.TestCase):
                 "const"
             ]
         )
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v34"', observer)
-        self.assertNotIn("getSchedulerInstanceIdentity()", observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v35"', observer)
+        self.assertIn("getSchedulerInstanceIdentity()", observer)
+        self.assertIn("isSchedulerInstanceIdentityCaptured()", observer)
         self.assertIn(
-            'out.append("\\\"schedulerInstanceIdentityCaptured\\\":false,")',
+            'field(out, "schedulerInstanceIdentity"',
             observer,
         )
 
