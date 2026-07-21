@@ -74,6 +74,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	private final int restorationStateAvailableEventCount;
 	private final int detachedCallbackPayloadCompleteEventCount;
 	private final int executionSemanticsCapturedEventCount;
+	private final int atomicTimingCapturedEventCount;
 
 	private LayeredPackedRegionEventOwnershipInventory(
 		final long proposalGeneration,
@@ -89,7 +90,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		final int candidateRelatedEventCount,
 		final int restorationStateAvailableEventCount,
 		final int detachedCallbackPayloadCompleteEventCount,
-		final int executionSemanticsCapturedEventCount) {
+		final int executionSemanticsCapturedEventCount,
+		final int atomicTimingCapturedEventCount) {
 		this.proposalGeneration = proposalGeneration;
 		this.observedAtTick = observedAtTick;
 		this.schedulerInstanceIdentity = schedulerInstanceIdentity;
@@ -107,6 +109,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			detachedCallbackPayloadCompleteEventCount;
 		this.executionSemanticsCapturedEventCount =
 			executionSemanticsCapturedEventCount;
+		this.atomicTimingCapturedEventCount = atomicTimingCapturedEventCount;
 	}
 
 	/**
@@ -178,6 +181,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		int restorationAvailableCount = 0;
 		int callbackPayloadCompleteCount = 0;
 		int executionSemanticsCapturedCount = 0;
+		int atomicTimingCapturedCount = 0;
 		long previousRegistrationSequence = 0L;
 		for (int index = 0; index < eventStates.size(); index++) {
 			EventState state = Objects.requireNonNull(
@@ -227,6 +231,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 				executionSemanticsCapturedCount += state.getRestorationState()
 					.isExecutionSemanticsCaptured() ? 1 : 0;
 			}
+			atomicTimingCapturedCount +=
+				state.isAtomicTimingCaptured() ? 1 : 0;
 			candidateEventCount += candidateOrdinals.isEmpty() ? 0 : 1;
 			switch (state.getAttributionKind()) {
 				case EXACT_SPATIAL:
@@ -261,7 +267,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			sourceRecords, eventRecords,
 			referenceCount, exactCount, hintCount, globalCount, unknownCount,
 			candidateEventCount, restorationAvailableCount,
-			callbackPayloadCompleteCount, executionSemanticsCapturedCount);
+			callbackPayloadCompleteCount, executionSemanticsCapturedCount,
+			atomicTimingCapturedCount);
 	}
 
 	private static List<List<Integer>> emptyEventOrdinalsBySource(
@@ -318,8 +325,16 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		return executionSemanticsCapturedEventCount
 			== restorationStateAvailableEventCount;
 	}
-	public int getAtomicTimingCapturedEventCount() { return 0; }
-	public boolean isAtomicTimingCaptured() { return false; }
+	public int getAtomicTimingCapturedEventCount() {
+		return atomicTimingCapturedEventCount;
+	}
+	public boolean isAtomicTimingCaptured() {
+		return atomicTimingCapturedEventCount > 0;
+	}
+	public boolean isAtomicTimingComplete() {
+		return atomicTimingCapturedEventCount
+			== restorationStateAvailableEventCount;
+	}
 	public boolean isCandidateAttributionComplete() {
 		return ownerPositionHintEventCount == 0 && unattributedEventCount == 0;
 	}
@@ -695,6 +710,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		private final boolean running;
 		private final long ticksBeforeRun;
 		private final int timesRan;
+		private final boolean atomicTimingCaptured;
 		private final List<SpatialReference> spatialReferences;
 		private final EventRestorationState restorationState;
 
@@ -707,7 +723,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final long ticksBeforeRun,
 			final int timesRan,
 			final List<SpatialReference> spatialReferences,
-			final EventRestorationState restorationState) {
+			final EventRestorationState restorationState,
+			final boolean atomicTimingCaptured) {
 			if (snapshotOrdinal < 0 || registrationSequence <= 0L
 				|| timesRan < 0) {
 				throw new IllegalArgumentException(
@@ -731,9 +748,15 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			this.restorationState = Objects.requireNonNull(
 				restorationState, "restorationState");
 			validateRestoration(attributionKind, copied, restorationState);
+			if (atomicTimingCaptured
+				&& !restorationState.isExecutionSemanticsCaptured()) {
+				throw new IllegalArgumentException(
+					"Atomic timing requires explicit execution semantics");
+			}
 			this.running = running;
 			this.ticksBeforeRun = ticksBeforeRun;
 			this.timesRan = timesRan;
+			this.atomicTimingCaptured = atomicTimingCaptured;
 			this.spatialReferences = Collections.unmodifiableList(copied);
 		}
 
@@ -798,7 +821,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 				snapshotOrdinal, registrationSequence, ownerKind, attributionKind,
 				running,
 				ticksBeforeRun, timesRan, spatialReferences,
-				EventRestorationState.unavailable());
+				EventRestorationState.unavailable(), false);
 		}
 
 		public static EventState of(
@@ -815,7 +838,24 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 				snapshotOrdinal, registrationSequence, ownerKind, attributionKind,
 				running,
 				ticksBeforeRun, timesRan, spatialReferences,
-				restorationState);
+				restorationState, false);
+		}
+
+		public static EventState of(
+			final int snapshotOrdinal,
+			final long registrationSequence,
+			final OwnerKind ownerKind,
+			final AttributionKind attributionKind,
+			final boolean running,
+			final long ticksBeforeRun,
+			final int timesRan,
+			final List<SpatialReference> spatialReferences,
+			final EventRestorationState restorationState,
+			final boolean atomicTimingCaptured) {
+			return new EventState(
+				snapshotOrdinal, registrationSequence, ownerKind, attributionKind,
+				running, ticksBeforeRun, timesRan, spatialReferences,
+				restorationState, atomicTimingCaptured);
 		}
 
 		public int getSnapshotOrdinal() { return snapshotOrdinal; }
@@ -827,6 +867,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		public boolean isRunning() { return running; }
 		public long getTicksBeforeRun() { return ticksBeforeRun; }
 		public int getTimesRan() { return timesRan; }
+		public boolean isAtomicTimingCaptured() {
+			return atomicTimingCaptured;
+		}
 		public List<SpatialReference> getSpatialReferences() {
 			return spatialReferences;
 		}
@@ -859,6 +902,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		public boolean isRunning() { return state.isRunning(); }
 		public long getTicksBeforeRun() { return state.getTicksBeforeRun(); }
 		public int getTimesRan() { return state.getTimesRan(); }
+		public boolean isAtomicTimingCaptured() {
+			return state.isAtomicTimingCaptured();
+		}
 		public List<SpatialReference> getSpatialReferences() {
 			return state.getSpatialReferences();
 		}

@@ -65,7 +65,7 @@ class LayeredMapsSliceNinetyEightTest(unittest.TestCase):
         inventory = INVENTORY.read_text(encoding="utf-8")
         observer = OBSERVER.read_text(encoding="utf-8")
         self.assertIn(
-            "registrationSnapshot.getSchedulerInstanceIdentity()", handler
+            "timingSnapshot.getSchedulerInstanceIdentity()", handler
         )
         self.assertIn(
             "isSchedulerInstanceIdentityCaptured() { return true; }",

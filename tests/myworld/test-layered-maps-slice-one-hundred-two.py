@@ -18,7 +18,7 @@ PLAN = ROOT / "docs/myworld/in-progress-work-plans/world-layer-capacity-explorat
 
 
 class LayeredMapsSliceOneHundredTwoTest(unittest.TestCase):
-    def test_inventory_detaches_semantics_and_keeps_timing_non_atomic(self):
+    def test_inventory_keeps_semantics_and_atomic_timing_distinct(self):
         source = INVENTORY.read_text(encoding="utf-8")
         self.assertIn("enum ExecutionSemantics", source)
         self.assertIn("enum TimeProgressionPolicy", source)
@@ -26,8 +26,9 @@ class LayeredMapsSliceOneHundredTwoTest(unittest.TestCase):
         self.assertIn("getTimeProgressionPolicy()", source)
         self.assertIn("getExecutionSemanticsCapturedEventCount()", source)
         self.assertIn("isExecutionSemanticsComplete()", source)
-        self.assertIn("getAtomicTimingCapturedEventCount() { return 0; }", source)
-        self.assertIn("isAtomicTimingCaptured() { return false; }", source)
+        self.assertIn("getAtomicTimingCapturedEventCount()", source)
+        self.assertIn("isAtomicTimingComplete()", source)
+        self.assertIn("Atomic timing requires explicit execution semantics", source)
 
     def test_handler_maps_declared_values_without_class_inference(self):
         source = HANDLER.read_text(encoding="utf-8")

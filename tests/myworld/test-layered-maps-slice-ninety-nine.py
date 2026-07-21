@@ -37,11 +37,11 @@ class LayeredMapsSliceNinetyNineTest(unittest.TestCase):
         end = source.index("public boolean hasEvent", start)
         boundary = source[start:end]
         self.assertEqual(
-            1, boundary.count("getTrackedEventRegistrationSnapshot()")
+            1, boundary.count("getTrackedEventAtomicTimingSnapshot(")
         )
-        self.assertIn("registrationSnapshot.getRegistrations()", boundary)
+        self.assertIn("timingSnapshot.getRegistrations()", boundary)
         self.assertIn(
-            "registrationSnapshot.getSchedulerInstanceIdentity()", boundary
+            "timingSnapshot.getSchedulerInstanceIdentity()", boundary
         )
         for forbidden in (
             "getUUID()",

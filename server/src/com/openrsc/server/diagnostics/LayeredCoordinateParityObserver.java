@@ -4078,9 +4078,9 @@ public final class LayeredCoordinateParityObserver {
 		out.append("\"executionSemanticsComplete\":")
 			.append(inventory.isExecutionSemanticsComplete()).append(',');
 		out.append("\"atomicTimingCapturedEventCount\":")
-			.append(inventory.getAtomicTimingCapturedEventCount()).append(',');
+			.append(0).append(',');
 		out.append("\"atomicTimingCaptured\":")
-			.append(inventory.isAtomicTimingCaptured()).append(',');
+			.append(false).append(',');
 		out.append("\"candidateAttributionComplete\":")
 			.append(inventory.isCandidateAttributionComplete()).append(',');
 		out.append("\"restorationStateCompleteEventCount\":")

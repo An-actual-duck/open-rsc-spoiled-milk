@@ -388,10 +388,10 @@ public class GameEventHandler {
 				source.getPackedRegionX(), source.getPackedRegionY()));
 		}
 
-		GameTickEventStore.RegistrationSnapshot registrationSnapshot =
-			eventStore.getTrackedEventRegistrationSnapshot();
-		List<GameTickEventStore.RegisteredEvent> liveRegistrations =
-			registrationSnapshot.getRegistrations();
+		GameTickEventStore.StoreAtomicTimingSnapshot timingSnapshot =
+			eventStore.getTrackedEventAtomicTimingSnapshot(observedAtTick);
+		List<GameTickEventStore.AtomicTimedRegisteredEvent> liveRegistrations =
+			timingSnapshot.getRegistrations();
 		if (maximumEvents < 0
 			|| maximumEvents
 				> LayeredPackedRegionEventOwnershipInventory.MAXIMUM_EVENTS
@@ -402,7 +402,7 @@ public class GameEventHandler {
 		List<EventState> eventStates =
 			new ArrayList<EventState>(liveRegistrations.size());
 		for (int ordinal = 0; ordinal < liveRegistrations.size(); ordinal++) {
-			GameTickEventStore.RegisteredEvent registration =
+			GameTickEventStore.AtomicTimedRegisteredEvent registration =
 				Objects.requireNonNull(
 					liveRegistrations.get(ordinal),
 					"liveRegistrations[" + ordinal + "]");
@@ -410,11 +410,12 @@ public class GameEventHandler {
 				registration.getEvent(),
 				"liveRegistrations[" + ordinal + "].event");
 			eventStates.add(detachEventState(
-				event, ordinal, registration.getRegistrationSequence()));
+				event, ordinal, registration.getRegistrationSequence(),
+				registration.getTiming()));
 		}
 		return LayeredPackedRegionEventOwnershipInventory.inventory(
-			checked.getGeneration(), observedAtTick,
-			registrationSnapshot.getSchedulerInstanceIdentity(),
+			checked.getGeneration(), timingSnapshot.getObservedAtTick(),
+			timingSnapshot.getSchedulerInstanceIdentity(),
 			packedSources, eventStates,
 			checked.getCandidateSourceCount(), maximumEvents,
 			maximumSpatialReferences);
@@ -423,7 +424,8 @@ public class GameEventHandler {
 	private EventState detachEventState(
 		final GameTickEvent event,
 		final int ordinal,
-		final long registrationSequence) {
+		final long registrationSequence,
+		final GameTickEvent.AtomicTimingSnapshot timing) {
 		Mob owner = event.getOwner();
 		OwnerKind ownerKind = owner == null
 			? OwnerKind.NONE
@@ -462,12 +464,14 @@ public class GameEventHandler {
 				throw new IllegalStateException(
 					"Unhandled event spatial-affinity scope");
 		}
+		EventRestorationState restorationState =
+			detachEventRestorationState(Objects.requireNonNull(
+				event.getRestorationState(), "event restoration state"));
 		return EventState.of(
 			ordinal, registrationSequence, ownerKind, attribution,
-			event.isRunning(),
-			event.getTicksBeforeRun(), event.getTimesRan(), references,
-			detachEventRestorationState(Objects.requireNonNull(
-				event.getRestorationState(), "event restoration state")));
+			timing.isRunning(), timing.getTicksBeforeRun(),
+			timing.getTimesRan(), references, restorationState,
+			restorationState.isExecutionSemanticsCaptured());
 	}
 
 	private EventRestorationState detachEventRestorationState(

@@ -201,10 +201,10 @@ class LayeredMapsSliceNinetySixTest(unittest.TestCase):
         )
         end = source.index("public boolean hasEvent", start)
         boundary = source[start:end]
-        self.assertIn("getTrackedEventRegistrationSnapshot()", boundary)
-        self.assertIn("registrationSnapshot.getRegistrations()", boundary)
+        self.assertIn("getTrackedEventAtomicTimingSnapshot(", boundary)
+        self.assertIn("timingSnapshot.getRegistrations()", boundary)
         self.assertIn(
-            "registrationSnapshot.getSchedulerInstanceIdentity()", boundary
+            "timingSnapshot.getSchedulerInstanceIdentity()", boundary
         )
         self.assertIn("registration.getRegistrationSequence()", boundary)
         self.assertNotIn("List<GameTickEvent> liveEvents", boundary)

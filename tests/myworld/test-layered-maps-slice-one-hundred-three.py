@@ -64,12 +64,14 @@ class LayeredMapsSliceOneHundredThreeTest(unittest.TestCase):
             "getExecutionSemanticsCapturedEventCount()",
             "isExecutionSemanticsCaptured()",
             "isExecutionSemanticsComplete()",
-            "getAtomicTimingCapturedEventCount()",
-            "isAtomicTimingCaptured()",
             "getExecutionSemantics()",
             "getTimeProgressionPolicy()",
         ):
             self.assertIn(method, boundary)
+        self.assertIn("atomicTimingCapturedEventCount", boundary)
+        self.assertIn("atomicTimingCaptured", boundary)
+        self.assertIn(".append(0).append(',')", boundary)
+        self.assertIn(".append(false).append(',')", boundary)
         for forbidden in (
             "GameTickEventStore",
             "GameTickEvent",
