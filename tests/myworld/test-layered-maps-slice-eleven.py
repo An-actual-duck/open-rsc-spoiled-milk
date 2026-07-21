@@ -2265,6 +2265,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
         self.assertIn("regionManager.compareLayeredAdjacentStepCollisions(current)", command)
         self.assertIn("regionManager.compareLayeredRegionInterestResidency(", command)
         self.assertIn('command.equalsIgnoreCase("layerparity")', command)
+        self.assertIn('command.equalsIgnoreCase("lp")', command)
         self.assertIn("player.isDev()", command)
         self.assertIn("WANT_LAYERED_MAP_PARITY_OBSERVER", command)
         self.assertIn("[start|status|snapshot|mark LABEL|stop]", command)

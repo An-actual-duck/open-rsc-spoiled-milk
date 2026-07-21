@@ -1,7 +1,7 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, 82, 85, and 87 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, 82, 85, 87, and 91 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, and 91 automated-validated on the active
 refinement branch
@@ -10,7 +10,7 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 91 exposes Slice 89/90 event-
+Current milestone: owner-validated Slice 91 exposes Slice 89/90 event-
 affinity evidence through additive private schema-v32 diagnostics. The same
 proposal used for preservation burden and dynamic-object records supplies exact
 generation and source order. Bounded scheduler ordinals, owner/affinity kinds,
@@ -19,7 +19,9 @@ are visible; descriptors, UUIDs, callback classes, closure state, and owner
 identities are absent. The deterministic fixture proves exact scenery-style and
 unattributed events coexist without manufacturing complete attribution. No
 event is preserved, cancelled, rescheduled, restored, or granted lifecycle
-authority. A deliberate private scheduled-scenery route is the next gate;
+authority. The deliberate private scheduled-scenery route found its exact
+pending callback and its natural completion; the next gate can define the
+narrow dormant restoration-state contract required by that known callback;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8272,6 +8274,30 @@ Automated validation status:
 - the authoritative bundled-Ant build compiles 772 core and 488 plugin
   sources.
 
+Private owner validation status:
+
+- the first ordinary-tree route visually confirmed normal replacement,
+  collision, interaction, and natural respawn, while its pending marker
+  correctly contained no exact event because the accelerated ten-second
+  callback had already completed;
+- the follow-up magic-tree route captured one running exact fixed effect at
+  `(524,489)`, with 41 ticks remaining, zero prior executions, no owner, and
+  candidate source `(10,10)` at proposal ordinal 24;
+- the pending record retained all 3,783 owner-position hints and 98
+  unattributed callbacks, so the single exact event did not manufacture
+  complete attribution or restoration evidence;
+- after natural respawn, the completion marker contained zero exact events
+  while the legacy hint/unattributed population remained visible; and
+- the owner confirmed the tree returned with normal visuals, interaction, and
+  collision. Every cancellation, reschedule, preservation, restoration,
+  registry, arrival, teardown, and lifecycle-authority flag remained false.
+
+Private route ergonomics:
+
+- `::lp` is now an exact alias for `::layerparity`; and
+- the pre-existing `::tp` alias for `::teleport` is documented beside it for
+  time-sensitive private capture routes.
+
 Safety boundary:
 
 - the tracked-event list is a point-in-time observation, not a scheduler lock,
@@ -8389,8 +8415,8 @@ Safety boundary:
   and no preservation, reload, registry, teardown, transaction, rollback, or
   lifecycle authority is created.
 
-Status: implemented and automated-validated. Private owner validation remains
-pending; callback restoration and all event/lifecycle authority remain absent.
+Status: implemented, automated-validated, and owner-validated. Callback
+restoration and all event/lifecycle authority remain absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -8692,6 +8718,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 89 by detaching one bounded global scheduler snapshot into the event-ownership inventory. | Implemented and automated-validated; legacy Mob owners remain position hints, null-owned callbacks remain unattributed, exact/global scope requires an explicit declaration, and no scheduler or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 90 by declaring exact fixed-location affinity for delayed scenery spawn/remove callbacks only. | Implemented and automated-validated; both declarations use the action's captured coordinate, every other callback remains conservative, and no event or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 91 by exposing the complete event-affinity inventory through additive private schema-v32 diagnostics. | Implemented and automated-validated; exact events and unknown callbacks coexist in one bounded proposal-correlated record without descriptors, identities, scheduler mutation, or lifecycle authority |
+| 2026-07-21 | Accept the Slice 91 scheduled-scenery owner route and add concise private command aliases. | Owner-validated; the pending magic-tree record contains the sole exact fixed effect at `(524,489)` in candidate source `(10,10)`, the post-respawn record contains none, legacy hint/unattributed callbacks remain blocking, visuals/collision/interaction remain normal, `::lp` aliases `::layerparity`, and the existing `::tp` alias is documented |
 
 ## Next Discussion
 
@@ -8864,14 +8891,16 @@ hint/unattributed counts stay visible and blocking. The route must let the
 callback complete naturally and must not cancel, reschedule, restore, or retire
 anything.
 
-Slice 91 supplies that complete private exposure. The next owner route should
-start a proposal near a harvestable tree, perform the ordinary action that
-replaces it and schedules its respawn, mark while the respawn is pending, wait
-for the original scenery to return naturally, mark again, then stop. The trace
-must show an exact fixed-location event at the tree coordinate only while the
-callback is pending, preserve all other hint/unattributed counts, and retain
-false cancellation, rescheduling, restoration, and lifecycle flags. Visual
-replacement, collision, interaction, and natural respawn must remain normal.
+Slice 91 now supplies and owner-validates that complete private exposure. The
+pending magic-tree record shows exactly one fixed effect at `(524,489)` in
+candidate source `(10,10)`; after natural respawn the exact event is absent.
+All 3,783 owner-position hints and 98 unattributed callbacks remain visible and
+blocking, every mutating authority flag stays false, and the owner reports
+normal replacement, collision, interaction, and natural respawn. The next
+focused gate should define the narrow dormant restoration-state contract for
+the two known scenery callbacks without serializing arbitrary callback state,
+preserving a live scheduler handle, or implementing cancellation, reschedule,
+teardown, reload, or replay.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

@@ -149,7 +149,8 @@ public final class Development implements CommandTrigger {
 		else if (command.equalsIgnoreCase("coords")) {
 			currentCoordinates(player, args);
 		}
-		else if (command.equalsIgnoreCase("layerparity")
+		else if (command.equalsIgnoreCase("lp")
+			|| command.equalsIgnoreCase("layerparity")
 			|| command.equalsIgnoreCase("layeredparity")) {
 			layeredCoordinateParity(player, command, args);
 		}

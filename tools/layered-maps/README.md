@@ -171,6 +171,11 @@ Then use:
 ::layerparity stop
 ```
 
+For time-sensitive private routes, `::lp` is an exact alias for
+`::layerparity`, so commands such as `::lp mark before-ladder` use the same
+checks and capture path. The existing `::tp X Y` alias may be used in place of
+`::teleport X Y`.
+
 While ACTIVE, ordinary movement and teleports are captured automatically.
 Leave capture active through logout/reconnect if that transition is under
 test; `stop` deliberately ends it. Logs are isolated by database ID and

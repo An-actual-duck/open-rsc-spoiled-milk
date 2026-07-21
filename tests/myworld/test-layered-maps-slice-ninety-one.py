@@ -91,6 +91,7 @@ class LayeredMapsSliceNinetyOneTest(unittest.TestCase):
         readme = README.read_text(encoding="utf-8")
         self.assertIn("layered-map-parity-event-v32.schema.json", readme)
         self.assertIn("descriptors, UUIDs, callback classes", readme)
+        self.assertIn("::lp mark", readme)
 
     def test_living_plan_records_slice_ninety_one_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")
@@ -98,7 +99,8 @@ class LayeredMapsSliceNinetyOneTest(unittest.TestCase):
             "### Slice 91: Private event-ownership diagnostics", plan
         )
         self.assertIn("schema-v32", plan)
-        self.assertIn("Private owner validation remains", plan)
+        self.assertIn("Private owner validation status", plan)
+        self.assertIn("exact fixed effect at `(524,489)`", plan)
         self.assertIn("No event is cancelled", plan)
 
 
