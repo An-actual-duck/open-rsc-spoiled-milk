@@ -18,6 +18,7 @@ import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.database.impl.mysql.queries.player.login.PlayerOnlineFlagQuery;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.SingleEvent;
+import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.external.NPCLoc;
@@ -184,6 +185,12 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 
 	public void delayedRemoveObject(final GameObject object, final int delay) {
 		getServer().getGameEventHandler().add(new SingleEvent(this, null, delay, "Delayed Remove Object") {
+			@Override
+			public GameTickEventSpatialAffinity getSpatialAffinity() {
+				return GameTickEventSpatialAffinity.exactFixedLocation(
+					object.getX(), object.getY());
+			}
+
 			public void action() {
 				unregisterGameObject(object);
 			}
@@ -195,6 +202,12 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	 */
 	public void delayedSpawnObject(final GameObjectLoc loc, final int respawnTime, final boolean forceFullBlock) {
 		getServer().getGameEventHandler().add(new SingleEvent(this, null, respawnTime, "Delayed Spawn Object") {
+			@Override
+			public GameTickEventSpatialAffinity getSpatialAffinity() {
+				return GameTickEventSpatialAffinity.exactFixedLocation(
+					loc.getX(), loc.getY());
+			}
+
 			public void action() {
 				registerGameObject(new GameObject(getWorld(), loc));
 				if (forceFullBlock) {

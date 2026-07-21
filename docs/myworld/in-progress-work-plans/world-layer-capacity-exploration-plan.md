@@ -3,26 +3,25 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, and 87 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, and 89 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, and 90 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 89 adds the bounded, read-only
-runtime seam for Slice 88's event-affinity inventory. Every legacy Mob-owned
-event becomes only a current-position hint and every legacy null-owned event
-remains unattributed; exact spatial or non-spatial scope requires an explicit
-immutable event declaration. The capture copies scheduler order, running state,
-countdown, execution count, owner kind, and declared coordinates without
-descriptors, UUIDs, implementation classes, reflection, or retained handles.
-It remains disconnected from private diagnostics. Callback implementation
-state, preservation, cancellation, rescheduling, reload, and all lifecycle
-authority remain absent. The next gate is narrow exact-affinity adoption for
-known spatial callbacks before private schema exposure; Packed Region lookup,
-eager loading, release, eviction, pathing, packets, and persistence remain
-unchanged
+Current milestone: automated-validated Slice 90 gives only delayed scenery
+removal and delayed scenery spawn callbacks exact fixed-location affinity. Each
+declaration derives its coordinate from the same captured object or placement
+record used by the callback action. Ground-item and NPC respawns, projectiles,
+combat, plugins, generic submitted runnables, and global maintenance events
+remain conservatively unclassified. The runtime inventory is still disconnected
+from private diagnostics. Exact location does not capture callback
+implementation state or authorize preservation, cancellation, rescheduling,
+reload, or any lifecycle action. The next gate is additive private schema
+exposure so an owner can compare exact scenery events with the remaining real
+scheduler uncertainty; Packed Region lookup, eager loading, release, eviction,
+pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -8291,6 +8290,54 @@ Status: implemented and automated-validated. Exact-affinity adoption, private
 schema exposure, owner validation, and all event/lifecycle authority remain
 absent.
 
+### Slice 90: Exact fixed-location scenery event affinity
+
+Objective: adopt Slice 89's explicit exact-affinity declaration only for the
+two existing World callbacks whose effect coordinate is identical to the
+captured scenery input used when the callback runs.
+
+Implemented:
+
+- delayed scenery removal declares one exact fixed effect at the captured
+  `GameObject` coordinate before unregistering that same object;
+- delayed scenery spawn declares one exact fixed effect at the captured
+  `GameObjectLoc` coordinate before constructing and registering that same
+  placement;
+- both declarations use the default-compatible event API and change no delay,
+  duplication, action, registration, collision, or callback behavior; and
+- no other callback is classified in this slice: ground-item/NPC respawns,
+  timed NPCs, generic submitted runnables, projectiles, combat, plugins, and
+  global events retain their prior conservative default.
+
+Automated validation status:
+
+- source guards isolate exactly two declarations in `World`, prove each uses
+  the same captured input as its action, and prove the known ground-item, NPC,
+  and generic plugin callbacks remain unclassified;
+- source guards prove the runtime inventory remains disconnected from private
+  diagnostics, so this metadata cannot affect current captures or gameplay;
+  and
+- the complete layered-map suite passes 239 tests across 89 focused files; and
+- the authoritative bundled-Ant build compiles 772 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- exact spatial affinity means only that the callback effect is anchored to a
+  known coordinate. It does not serialize the captured object/placement,
+  callback body, countdown identity, collision side effects, or restoration
+  behavior;
+- partial adoption must not make the global scheduler or any candidate source
+  attribution-complete while other callbacks remain hints or unattributed; and
+- No event is cancelled, stopped, removed by the observer, run, recreated, or
+  rescheduled. No source is loaded, retained, retired, reconstructed, or gated,
+  and no preservation, reload, registry, teardown, transaction, rollback, or
+  lifecycle authority is created.
+
+Status: implemented and automated-validated. Private schema exposure, owner
+validation, callback restoration, and all event/lifecycle authority remain
+absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8589,6 +8636,7 @@ private environment should validate at least:
 | 2026-07-21 | Accept the Slice 87 dynamic-object create-capture-remove route. | Owner-validated; ten v31 events pass 10,240 reconciliations, all three record-bearing proposals find the exact temporary stump in `(3,13)`, privacy and inert-authority boundaries hold, cleanup leaves no queued world edit, and the owner reports normal visuals, collision, and interaction |
 | 2026-07-21 | Continue with Slice 88 by defining a dormant event-ownership inventory over exact refinement candidates. | Implemented and automated-validated; exact spatial affinity, owner-position hints, explicit non-spatial scope, and unknown callbacks remain distinct, multi-source effects are bounded, and no event or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 89 by detaching one bounded global scheduler snapshot into the event-ownership inventory. | Implemented and automated-validated; legacy Mob owners remain position hints, null-owned callbacks remain unattributed, exact/global scope requires an explicit declaration, and no scheduler or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 90 by declaring exact fixed-location affinity for delayed scenery spawn/remove callbacks only. | Implemented and automated-validated; both declarations use the action's captured coordinate, every other callback remains conservative, and no event or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -8752,6 +8800,14 @@ remaining unattributed scheduler population. Ground-item and NPC respawns,
 projectiles, combat, plugins, and global maintenance events must stay unchanged
 until each receives its own semantics; an event-location annotation still does
 not capture or authorize restoration.
+
+Slice 90 supplies only that narrow scenery annotation. The next focused gate
+should expose Slice 89's complete bounded inventory through additive private
+diagnostics, not merely the exact subset. A deliberate object-replacement route
+should then prove one scheduled scenery respawn is exact while the real legacy
+hint/unattributed counts stay visible and blocking. The route must let the
+callback complete naturally and must not cancel, reschedule, restore, or retire
+anything.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
