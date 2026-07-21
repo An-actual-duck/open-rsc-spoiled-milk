@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v36.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v37.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -38,6 +38,7 @@ SCHEMA_V32 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v32.sche
 SCHEMA_V33 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v33.schema.json"
 SCHEMA_V34 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v34.schema.json"
 SCHEMA_V35 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v35.schema.json"
+SCHEMA_V36 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v36.schema.json"
 
 
 POINT_STUB = r'''
@@ -873,7 +874,8 @@ public final class LayeredCoordinateParityObserverFixture {
 								LayeredPackedRegionEventOwnershipInventory
 									.ExecutionSemantics.ONE_SHOT,
 								LayeredPackedRegionEventOwnershipInventory
-									.TimeProgressionPolicy.CONTINUE_SERVER_TICKS)),
+									.TimeProgressionPolicy.CONTINUE_SERVER_TICKS),
+							true),
 						LayeredPackedRegionEventOwnershipInventory.EventState.of(
 							1, 102L,
 							LayeredPackedRegionEventOwnershipInventory.OwnerKind.NONE,
@@ -1187,7 +1189,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v36" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v37" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -2091,9 +2093,10 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertTrue(event_ownership["executionSemanticsCaptured"])
             self.assertTrue(event_ownership["executionSemanticsComplete"])
             self.assertEqual(
-                0, event_ownership["atomicTimingCapturedEventCount"]
+                1, event_ownership["atomicTimingCapturedEventCount"]
             )
-            self.assertFalse(event_ownership["atomicTimingCaptured"])
+            self.assertTrue(event_ownership["atomicTimingCaptured"])
+            self.assertTrue(event_ownership["atomicTimingComplete"])
             self.assertEqual(
                 [101, 102],
                 [event["registrationSequence"]
@@ -2102,6 +2105,12 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(
                 "EXACT_SPATIAL",
                 event_ownership["events"][0]["attributionKind"],
+            )
+            self.assertTrue(
+                event_ownership["events"][0]["atomicTimingCaptured"]
+            )
+            self.assertFalse(
+                event_ownership["events"][1]["atomicTimingCaptured"]
             )
             self.assertEqual(
                 {"role": "FIXED_EFFECT_LOCATION", "packedX": 193,
@@ -2117,7 +2126,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             restoration = event_ownership["events"][0]["restorationState"]
             self.assertEqual((
                 "SCENERY_SPAWN", True, "NOT_REQUIRED", True,
-                "ONE_SHOT", "CONTINUE_SERVER_TICKS", True, False,
+                "ONE_SHOT", "CONTINUE_SERVER_TICKS", True, True,
                 False, False, False,
             ), (
                 restoration["kind"], restoration["forceFullBlock"],
@@ -2314,6 +2323,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v33 = json.loads(SCHEMA_V33.read_text(encoding="utf-8"))
                 v34 = json.loads(SCHEMA_V34.read_text(encoding="utf-8"))
                 v35 = json.loads(SCHEMA_V35.read_text(encoding="utf-8"))
+                v36 = json.loads(SCHEMA_V36.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -2338,6 +2348,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v33["$id"], Resource.from_contents(v33)),
                     (v34["$id"], Resource.from_contents(v34)),
                     (v35["$id"], Resource.from_contents(v35)),
+                    (v36["$id"], Resource.from_contents(v36)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

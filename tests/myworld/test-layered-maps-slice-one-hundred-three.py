@@ -55,7 +55,7 @@ class LayeredMapsSliceOneHundredThreeTest(unittest.TestCase):
 
     def test_observer_exposes_only_detached_semantic_values(self):
         source = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v36"', source)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v37"', source)
         boundary = source[
             source.index("private static void appendPackedRegionEventOwnership("):
             source.index("private static void appendIntegerList(")
@@ -70,8 +70,8 @@ class LayeredMapsSliceOneHundredThreeTest(unittest.TestCase):
             self.assertIn(method, boundary)
         self.assertIn("atomicTimingCapturedEventCount", boundary)
         self.assertIn("atomicTimingCaptured", boundary)
-        self.assertIn(".append(0).append(',')", boundary)
-        self.assertIn(".append(false).append(',')", boundary)
+        self.assertIn("getAtomicTimingCapturedEventCount()", boundary)
+        self.assertIn("isAtomicTimingCaptured()", boundary)
         for forbidden in (
             "GameTickEventStore",
             "GameTickEvent",

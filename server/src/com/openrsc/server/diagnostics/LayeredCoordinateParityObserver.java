@@ -53,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v36";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v37";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4078,9 +4078,11 @@ public final class LayeredCoordinateParityObserver {
 		out.append("\"executionSemanticsComplete\":")
 			.append(inventory.isExecutionSemanticsComplete()).append(',');
 		out.append("\"atomicTimingCapturedEventCount\":")
-			.append(0).append(',');
+			.append(inventory.getAtomicTimingCapturedEventCount()).append(',');
 		out.append("\"atomicTimingCaptured\":")
-			.append(false).append(',');
+			.append(inventory.isAtomicTimingCaptured()).append(',');
+		out.append("\"atomicTimingComplete\":")
+			.append(inventory.isAtomicTimingComplete()).append(',');
 		out.append("\"candidateAttributionComplete\":")
 			.append(inventory.isCandidateAttributionComplete()).append(',');
 		out.append("\"restorationStateCompleteEventCount\":")
@@ -4149,12 +4151,16 @@ public final class LayeredCoordinateParityObserver {
 			out.append("\"running\":").append(event.isRunning()).append(',');
 			out.append("\"ticksBeforeRun\":").append(event.getTicksBeforeRun()).append(',');
 			out.append("\"timesRan\":").append(event.getTimesRan()).append(',');
+			out.append("\"atomicTimingCaptured\":")
+				.append(event.isAtomicTimingCaptured()).append(',');
 			out.append("\"candidateRelated\":").append(event.isCandidateRelated()).append(',');
 			out.append("\"attributionComplete\":").append(event.isAttributionComplete()).append(',');
 			out.append("\"restorationStateComplete\":")
 				.append(event.isRestorationStateComplete()).append(',');
 			out.append("\"restorationState\":");
-			appendEventRestorationState(out, event.getRestorationState());
+			appendEventRestorationState(
+				out, event.getRestorationState(),
+				event.isAtomicTimingCaptured());
 			out.append(',');
 			appendIntegerList(out, "candidateSourceOrdinals",
 				event.getCandidateSourceOrdinals());
@@ -4177,7 +4183,8 @@ public final class LayeredCoordinateParityObserver {
 	private static void appendEventRestorationState(
 		final StringBuilder out,
 		final LayeredPackedRegionEventOwnershipInventory.EventRestorationState
-			state) {
+			state,
+		final boolean atomicTimingCaptured) {
 		if (state.getKind()
 			== LayeredPackedRegionEventOwnershipInventory.RestorationKind
 				.UNAVAILABLE) {
@@ -4201,7 +4208,7 @@ public final class LayeredCoordinateParityObserver {
 		out.append("\"executionSemanticsCaptured\":")
 			.append(state.isExecutionSemanticsCaptured()).append(',');
 		out.append("\"atomicTimingCaptured\":")
-			.append(state.isAtomicTimingCaptured()).append(',');
+			.append(atomicTimingCaptured).append(',');
 		out.append("\"schedulerIdentityCaptured\":")
 			.append(state.isSchedulerIdentityCaptured()).append(',');
 		out.append("\"targetBindingLookupPerformed\":")

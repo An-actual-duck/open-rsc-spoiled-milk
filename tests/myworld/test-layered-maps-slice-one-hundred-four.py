@@ -263,16 +263,16 @@ class LayeredMapsSliceOneHundredFourTest(unittest.TestCase):
         self.assertIn("registrationChangeRefusesAtomicTimingSnapshot", fixture)
         self.assertIn("mixed-registration atomic timing snapshot is refused", fixture)
 
-    def test_atomic_timing_is_consumed_but_remains_unpublished(self):
+    def test_atomic_timing_foundation_is_consumed_by_current_head(self):
         handler = HANDLER.read_text(encoding="utf-8")
         inventory = INVENTORY.read_text(encoding="utf-8")
         observer = OBSERVER.read_text(encoding="utf-8")
         self.assertIn("getTrackedEventAtomicTimingSnapshot(", handler)
         self.assertIn("getAtomicTimingCapturedEventCount()", inventory)
         self.assertIn("isAtomicTimingComplete()", inventory)
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v36"', observer)
-        self.assertIn('.append(0).append(\',\')', observer)
-        self.assertIn('.append(false).append(\',\')', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v37"', observer)
+        self.assertIn("getAtomicTimingCapturedEventCount()", observer)
+        self.assertIn("isAtomicTimingCaptured()", observer)
 
     def test_living_plan_records_slice_one_hundred_four_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")

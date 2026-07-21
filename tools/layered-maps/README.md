@@ -183,16 +183,17 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v36.schema.json`. Each v36 record
-retains the complete v35 position, logical-window, interest-delta,
+traces emit `schema/layered-map-parity-event-v37.schema.json`. Each v37 record
+retains the complete v36 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v35 schemas remain
+repeating the tile comparisons on every movement. The v1-v36 schemas remain
 alongside it—including
+`schema/layered-map-parity-event-v36.schema.json`,
 `schema/layered-map-parity-event-v35.schema.json`,
 `schema/layered-map-parity-event-v34.schema.json`,
 `schema/layered-map-parity-event-v33.schema.json`,
@@ -205,7 +206,7 @@ alongside it—including
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
-explicit readable contracts. The v19-v35 schemas likewise remain immutable
+explicit readable contracts. The v19-v36 schemas likewise remain immutable
 contracts for earlier records.
 When a bounded refinement proposal is available, v30 records a
 same-order, point-in-time preservation-burden inventory. Its five explicit
@@ -257,6 +258,15 @@ counters remain point-in-time observations: atomic timing is explicitly false
 with zero captured events. These fields do not identify, cancel, reschedule,
 invoke, or replay a callback, and standalone restoration and every scheduler/
 lifecycle-authority flag remain false.
+V37 publishes the atomic timing provenance already detached at the scheduler
+boundary. Aggregate counts report how many known restoration records carry a
+single-lock running/countdown/execution tuple and whether every available
+restoration record is covered; each event and known restoration record also
+states its own timing status. Unknown callbacks remain visible but explicitly
+non-atomic. The shared observation tick labels the bounded capture—it is not a
+due tick, replay cursor, or rescheduling instruction. Callback handles,
+invocation, cancellation, replay, standalone restoration, and every scheduler/
+lifecycle-authority flag remain absent or false.
 Marker and stop records may additionally summarize the latest 16 contiguous
 ordinary walking steps since the previous reset, including per-step decisions,
 aggregate parity, capacity evictions, and discontinuities. Teleports, login,

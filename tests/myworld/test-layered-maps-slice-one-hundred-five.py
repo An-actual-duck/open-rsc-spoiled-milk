@@ -208,15 +208,15 @@ class LayeredMapsSliceOneHundredFiveTest(unittest.TestCase):
         self.assertIn("Atomic timing requires explicit execution semantics", source)
         self.assertIn("isAtomicTimingCaptured()", source)
 
-    def test_v36_output_remains_explicitly_non_atomic(self):
+    def test_v36_contract_remains_explicitly_non_atomic(self):
         schema = json.loads(SCHEMA_V36.read_text(encoding="utf-8"))
         observer = OBSERVER.read_text(encoding="utf-8")
         aggregate = schema["$defs"]["eventOwnership"]["properties"]
         self.assertEqual(0, aggregate["atomicTimingCapturedEventCount"]["const"])
         self.assertFalse(aggregate["atomicTimingCaptured"]["const"])
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v36"', observer)
-        self.assertIn('.append(0).append(\',\')', observer)
-        self.assertIn('.append(false).append(\',\')', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v37"', observer)
+        self.assertIn("getAtomicTimingCapturedEventCount()", observer)
+        self.assertIn("isAtomicTimingComplete()", observer)
         self.assertIn("registrationChangeRefusesAtomicTimingSnapshot",
                       STORE_FIXTURE.read_text(encoding="utf-8"))
 
