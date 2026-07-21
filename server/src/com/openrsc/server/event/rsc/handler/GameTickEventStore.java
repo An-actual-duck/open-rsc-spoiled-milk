@@ -17,7 +17,10 @@ import org.apache.logging.log4j.Logger;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,6 +34,14 @@ class GameTickEventStore {
      * Tracks whether the event should be added using the criteria determined by the key
      */
     private final Map<GameTickKey, GameTickEvent> events = new LinkedHashMap<>();
+
+    /**
+     * Process-local identity for one accepted stay in this store. This is not
+     * the event UUID or store key and is removed with the registration.
+     */
+    private final Map<GameTickEvent, Long> registrationSequences =
+        new IdentityHashMap<>();
+    private long nextRegistrationSequence;
 
     /**
      * Indexes events by username for fast-lookup during individual player tick processing
@@ -57,13 +68,7 @@ class GameTickEventStore {
                 return false;
             }
 
-            events.put(eventKey, event);
-            byType.put(Key.get(event.getClass()), event);
-            if (isPlayerOwner(event)) {
-                byUsernameHash.put(((Player) event.getOwner()).getUsernameHash(), event);
-            } else {
-                nonPlayerEvents.put(eventKey, event);
-            }
+            registerAccepted(eventKey, event);
             return true;
         }
     }
@@ -85,13 +90,7 @@ class GameTickEventStore {
 					remove(existingEvent);
 				}
 	
-				events.put(eventKey, event);
-				byType.put(Key.get(event.getClass()), event);
-				if (isPlayerOwner(event)) {
-					byUsernameHash.put(((Player) event.getOwner()).getUsernameHash(), event);
-				} else {
-					nonPlayerEvents.put(eventKey, event);
-				}
+				registerAccepted(eventKey, event);
 				return true;
 			}
 		}
@@ -112,13 +111,18 @@ class GameTickEventStore {
                 return;
             }
 
+            GameTickEvent registeredEvent = events.get(eventKey);
             events.remove(eventKey);
-            byType.remove(Key.get(event.getClass()), event);
-            if(isPlayerOwner(event)) {
-                byUsernameHash.remove(((Player) event.getOwner()).getUsernameHash(), event);
+            byType.remove(
+                Key.get(registeredEvent.getClass()), registeredEvent);
+            if(isPlayerOwner(registeredEvent)) {
+                byUsernameHash.remove(
+                    ((Player) registeredEvent.getOwner()).getUsernameHash(),
+                    registeredEvent);
             } else {
                 nonPlayerEvents.remove(eventKey);
             }
+            registrationSequences.remove(registeredEvent);
         }
     }
 
@@ -155,6 +159,65 @@ class GameTickEventStore {
     public Collection<GameTickEvent> getTrackedEvents() {
         synchronized (LOCK) {
             return new ArrayList<>(events.values());
+        }
+    }
+
+    /** One atomic scheduler-local order/identity view for read-only capture. */
+    List<RegisteredEvent> getTrackedEventRegistrations() {
+        synchronized (LOCK) {
+            List<RegisteredEvent> registrations =
+                new ArrayList<>(events.size());
+            for (GameTickEvent event : events.values()) {
+                Long sequence = registrationSequences.get(event);
+                if (sequence == null) {
+                    throw new IllegalStateException(
+                        "Tracked event has no registration identity");
+                }
+                registrations.add(new RegisteredEvent(
+                    event, sequence.longValue()));
+            }
+            return Collections.unmodifiableList(registrations);
+        }
+    }
+
+    private void registerAccepted(
+        final GameTickKey eventKey,
+        final GameTickEvent event) {
+        if (nextRegistrationSequence == Long.MAX_VALUE) {
+            throw new IllegalStateException(
+                "Event registration identity exhausted");
+        }
+        long registrationSequence = nextRegistrationSequence + 1L;
+        events.put(eventKey, event);
+        byType.put(Key.get(event.getClass()), event);
+        if (isPlayerOwner(event)) {
+            byUsernameHash.put(
+                ((Player) event.getOwner()).getUsernameHash(), event);
+        } else {
+            nonPlayerEvents.put(eventKey, event);
+        }
+        registrationSequences.put(event, Long.valueOf(registrationSequence));
+        nextRegistrationSequence = registrationSequence;
+    }
+
+    /** Internal handle/identity pair; no reference crosses diagnostics. */
+    static final class RegisteredEvent {
+        private final GameTickEvent event;
+        private final long registrationSequence;
+
+        private RegisteredEvent(
+            final GameTickEvent event,
+            final long registrationSequence) {
+            this.event = event;
+            this.registrationSequence = registrationSequence;
+        }
+
+        GameTickEvent getEvent() {
+            return event;
+        }
+
+        long getRegistrationSequence() {
+            return registrationSequence;
         }
     }
 

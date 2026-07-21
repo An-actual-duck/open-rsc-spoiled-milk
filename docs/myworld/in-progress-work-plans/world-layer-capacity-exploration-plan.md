@@ -3,26 +3,23 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, and 94 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, and 94 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, and 95 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 94 exposes the narrow Slice 93
-scenery-event restoration state through additive private schema-v33.
-Aggregate, source, and event records distinguish state availability from
-detached callback-payload completeness while standalone restoration remains
-zero. The schema publishes owner presence but never raw owner text, and keeps
-legacy hint/unattributed events in the same bounded snapshot. Scheduler
-identity, target lookup, preservation, cancellation, reschedule, replay, and
-all lifecycle authority remain absent. The accepted private route proves one
-natural magic-tree callback is present with the expected state, naturally
-completes, and is replaced by a distinct callback after the returned tree is
-used again. The next gate can define an opaque process-local registration
-identity so repeated snapshots can distinguish those event instances without
-publishing UUIDs or granting scheduler authority;
+Current milestone: automated-validated Slice 95 assigns a monotonically
+increasing process-local sequence to each accepted scheduler registration.
+Repeated internal snapshots retain the same sequence, rejected duplicates do
+not consume one, and removal/re-registration or stopped-event replacement gets
+a new sequence. Existing event UUIDs, keys, descriptors, classes, owners, and
+callbacks are not copied. The identity remains inside `GameTickEventStore` and
+is not yet read by the layered inventory, observer, schema, or any mutation
+consumer. Cancellation, reschedule, replay, preservation, and all lifecycle
+authority remain absent. The next gate can detach this identity into the
+bounded event inventory while keeping private schema-v33 unchanged;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8611,8 +8608,63 @@ has contiguous sequences and exact packed/layered round trips, and records:
 - raw owner text remains absent. The owner reported normal visuals, collision,
   natural respawn, and interaction.
 
-Status: implemented and automated-validated. Private owner validation,
-executable restoration, and all event/lifecycle authority remain absent.
+Status: implemented, automated-validated, and owner-validated. Executable
+restoration and all event/lifecycle authority remain absent.
+
+### Slice 95: Scheduler-local event registration identity
+
+Objective: distinguish one accepted stay in the live event store from a
+rejected duplicate or a later replacement, without publishing or reusing the
+event's existing UUID/key and without creating scheduler-control authority.
+
+Implemented:
+
+- `GameTickEventStore` assigns a positive monotonically increasing sequence
+  only after an event registration is accepted;
+- repeated atomic store snapshots retain the same sequence for the same
+  registered instance and preserve the existing canonical tracked-event order;
+- a rejected duplicate or rejected `addOrUpdate` does not consume a sequence;
+  removal followed by re-registration and replacement of a stopped event each
+  receive a new sequence, even if the same Java object is reused;
+- registration identity is removed with the actual registered instance. A
+  key-equivalent removal can no longer leave the original instance in the
+  type/player indexes or identity bookkeeping; and
+- the event-handle/sequence pair is package-private scheduler state. Neither
+  `GameEventHandler`, the layered inventory, parity observer, schema-v33, nor
+  any command or lifecycle consumer reads it in this slice.
+
+Automated validation status:
+
+- an executable store fixture proves accepted monotonic identity, stable
+  repeated snapshots, rejected duplicate non-consumption, immutable snapshot
+  lists, key-equivalent removal, re-registration, stopped-event replacement,
+  and unchanged Player indexing;
+- source guards prove the new snapshot boundary reads no UUID, descriptor,
+  event key, owner UUID, callback, or execution/mutation method;
+- source guards prove registration sequences remain scheduler-internal and are
+  absent from the handler and observer;
+- the complete layered-map suite passes 261 tests across 94 focused files; and
+- the authoritative bundled-Ant build compiles 773 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- the sequence is process-local and store-local. It is not stable across
+  server restart, not globally unique, not persisted, and cannot be compared
+  across scheduler instances without later explicit instance evidence;
+- it is neither the existing event UUID nor the duplication key and exposes no
+  descriptor, class, callback, owner, coordinate, or private identity;
+- snapshot entries retain event handles only inside the scheduler package so a
+  later handler can detach primitive evidence; they do not cross diagnostics;
+  and
+- No event is cancelled, stopped, removed for lifecycle purposes, rescheduled,
+  recreated, or run. No source is loaded, retained, retired, reconstructed, or
+  gated, and no preservation, reload, registry, teardown, transaction,
+  rollback, or lifecycle authority is created.
+
+Status: implemented and automated-validated. Layered capture, private schema
+exposure, owner validation, restart identity, executable restoration, and all
+event/lifecycle authority remain absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -8920,6 +8972,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 94 by exposing the narrow scenery restoration state through additive private schema-v33 diagnostics. | Implemented and automated-validated; aggregate/source/event records retain exact correlation, owner presence replaces owner text, historical schema-v32 remains immutable, and every scheduler/recovery/lifecycle authority remains false |
 | 2026-07-21 | Record the first Slice 94 private magic-tree route without overstating its evidence. | Inconclusive; the pending marker arrived 8.313 seconds after source release, before the 16-tick retirement grace, so its inventory is null. The post-respawn stop is coherent and empty of exact/restoration events, behavior looked normal, but paired owner validation remains pending |
 | 2026-07-21 | Accept the timing-corrected Slice 94 magic-tree restoration-state route. | Owner-validated; pending contains exactly one complete detached authored spawn payload, the return teleport proves its natural completion, re-chopping the returned tree creates a new equivalent callback, privacy holds, and all scheduler/recovery/lifecycle authority remains false |
+| 2026-07-21 | Continue with Slice 95 by assigning scheduler-local identity to accepted event registrations. | Implemented and automated-validated; repeated snapshots retain one process-local sequence, rejected duplicates consume none, removal/re-registration and replacement receive new identities, UUID/key/private state stays internal, and no scheduler-control or lifecycle authority is created |
 
 ## Next Discussion
 
@@ -9131,6 +9184,16 @@ descriptors, classes, owner identities, or callback data; must distinguish an
 accepted add, a rejected duplicate, removal, and `addOrUpdate` replacement; and
 must initially remain disconnected from the layered inventory and all event
 mutation consumers.
+
+Slice 95 now supplies that scheduler-internal identity and distinguishes every
+accepted registration lifetime without changing event execution. The next
+focused gate should make `GameEventHandler` consume the store's single atomic
+order/identity snapshot and copy only the positive registration sequence into
+the bounded event inventory. Snapshot ordinals must remain contiguous and
+separate from identity; rejected or missing identity must refuse the entire
+capture; process/store-instance identity must remain explicitly uncaptured;
+schema-v33 must remain unchanged; and no UUID, key, descriptor, class, owner
+identity, event handle, or scheduler mutation may cross the inventory boundary.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
