@@ -24750,8 +24750,8 @@
     },
     {
       "id": 2328,
-      "name": "Tier 1 Agility Pouch",
-      "description": "A reward pouch earned from lower-tier agility courses.",
+      "name": "Agility Stronghold Chest",
+      "description": "A reward chest earned from the Gnome Stronghold agility course.",
       "command": "Open",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -24773,8 +24773,8 @@
     },
     {
       "id": 2329,
-      "name": "Tier 2 Agility Pouch",
-      "description": "A reward pouch earned from mid-tier agility courses.",
+      "name": "Agility Outpost Chest",
+      "description": "A reward chest earned from the Barbarian Outpost agility course.",
       "command": "Open",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -24796,8 +24796,8 @@
     },
     {
       "id": 2330,
-      "name": "Tier 3 Agility Pouch",
-      "description": "A reward pouch earned from high-tier agility courses.",
+      "name": "Agility Wilderness Chest",
+      "description": "A reward chest earned from the Wilderness agility course.",
       "command": "Open",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

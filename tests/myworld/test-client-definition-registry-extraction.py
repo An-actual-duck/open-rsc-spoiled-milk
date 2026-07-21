@@ -17,7 +17,7 @@ FALLBACKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/ClientDefi
 
 EXPECTED: dict[str, tuple[int, str]] = {
     "npcs": (845, "e7c568cc81969df8b35d0fb94a74d5a5c13ed662efd85ff83672d9a6879e3f69"),
-    "items": (3281, "56ca75db26b2abdad0d4c5e862ce6e4b6f6ef37d1531a0e62ee954e66d27935f"),
+    "items": (3281, "e1286311c99d4919d6700694d5d0da921c2606d80c0c1a256236905343aab5d9"),
     "textures": (55, "f2641fe74967a839ad0c6121e5e67d4016cb05666aaf3e4774ed989ea3c8d951"),
     "animations": (1060, "2315c562283f5b0dc21d7af97d9a5920f857c1ca36ce2bd59532e2d26c18fd6d"),
     "projectiles": (41, "c79c74303e8ce5c5c345640227a0023ccbc63285f0a652f404794c35c1d5385f"),
@@ -28,7 +28,7 @@ EXPECTED: dict[str, tuple[int, str]] = {
     "tiles": (26, "a8b4c871d4dee459ac027405533983ef4baa25d8cbc6744aeaed4a046d312204"),
     "doors": (214, "399ac9b9dbd5f68f89deca97b3e75c1b3c60ffbd6a6107dadf5397f5d3c2886a"),
     "elevations": (6, "bb07d92231318705f2b9b9838b676b2cb78fe11ad01d40dd678f644b459bb265"),
-    "objects": (1329, "47ffbd48e4c29f4fede777f9132a53c5407e74e74d59ae023a4e7717f1640ffb"),
+    "objects": (1332, "9d4809e75b9aae1c883a8e05711e20bf8997c030c58e83607a56c95648d3226c"),
     "models": (459, "727dba404ab78527b20c62c4bd058610b087346166566acb24db0430011a52b0"),
     "bankTemplates": (2, "3bca944c9b7466fb6cba8a6542a214a4d7cd69af59a1c4296c58ddaa4304b1fc"),
     "prayers-zamorak": (16, "948045525d172f41e7b6464f3cb7a072dd96b829c63a015facd277aeb9d3210e"),

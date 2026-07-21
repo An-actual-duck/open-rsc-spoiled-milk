@@ -828,10 +828,10 @@ public final class SkillGuideInterface {
 		}
 		if (mc.getSkillGuideChosen().equals("Agility")) {
 			if (curTab == 0) {
-				skillMenuEntries.add(new SkillMenuItem(2328, "1", "Gnome Stronghold Course - Tier 1 pouch per lap"));
+				skillMenuEntries.add(new SkillMenuItem(2328, "1", "Gnome Stronghold Course - Stronghold Chest per lap"));
 				skillMenuEntries.add(new SkillMenuItem(981, "1", "Gnomeball minigame"));
-				skillMenuEntries.add(new SkillMenuItem(2329, "35", "Barbarian Outpost Course - Tier 2 pouch per lap"));
-				skillMenuEntries.add(new SkillMenuItem(2330, "52", "Wilderness Course - Tier 3 pouch per lap"));
+				skillMenuEntries.add(new SkillMenuItem(2329, "35", "Barbarian Outpost Course - Outpost Chest per lap"));
+				skillMenuEntries.add(new SkillMenuItem(2330, "52", "Wilderness Course - Wilderness Chest per lap"));
 			} else if (curTab == 1) {
 				skillMenuEntries.add(new SkillMenuItem(410, "5", "Falador West enter handholds"));
 				skillMenuEntries.add(new SkillMenuItem(410, "10", "Brimhaven treeswing"));
@@ -863,8 +863,8 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(410, "70", "Taverly Dungeon pipe crawl"));
 				skillMenuEntries.add(new SkillMenuItem(410, "85", "Karamja river stepping stone"));
 			} else if (curTab == 2) {
-				skillMenuEntries.add(new SkillMenuItem(2328, "", "Pouches are earned for completing obstacle courses"));
-				skillMenuEntries.add(new SkillMenuItem(2329, "", "Pouches reward the player with various resources"));
+				skillMenuEntries.add(new SkillMenuItem(2328, "", "Chests are earned for completing obstacle courses"));
+				skillMenuEntries.add(new SkillMenuItem(2329, "", "Chests reward the player with various resources"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
 					addSkillCapeGuide(1518, "Agility");
 				}
