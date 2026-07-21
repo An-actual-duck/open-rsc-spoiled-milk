@@ -67,6 +67,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	private final int nonSpatialGlobalEventCount;
 	private final int unattributedEventCount;
 	private final int candidateRelatedEventCount;
+	private final int restorationStateAvailableEventCount;
+	private final int detachedCallbackPayloadCompleteEventCount;
 
 	private LayeredPackedRegionEventOwnershipInventory(
 		final long proposalGeneration,
@@ -78,7 +80,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		final int ownerPositionHintEventCount,
 		final int nonSpatialGlobalEventCount,
 		final int unattributedEventCount,
-		final int candidateRelatedEventCount) {
+		final int candidateRelatedEventCount,
+		final int restorationStateAvailableEventCount,
+		final int detachedCallbackPayloadCompleteEventCount) {
 		this.proposalGeneration = proposalGeneration;
 		this.observedAtTick = observedAtTick;
 		this.sources = Collections.unmodifiableList(sources);
@@ -89,6 +93,10 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		this.nonSpatialGlobalEventCount = nonSpatialGlobalEventCount;
 		this.unattributedEventCount = unattributedEventCount;
 		this.candidateRelatedEventCount = candidateRelatedEventCount;
+		this.restorationStateAvailableEventCount =
+			restorationStateAvailableEventCount;
+		this.detachedCallbackPayloadCompleteEventCount =
+			detachedCallbackPayloadCompleteEventCount;
 	}
 
 	/**
@@ -143,6 +151,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			emptyEventOrdinalsBySource(checkedSources.size());
 		List<List<Integer>> hintsBySource =
 			emptyEventOrdinalsBySource(checkedSources.size());
+		List<List<Integer>> restorationBySource =
+			emptyEventOrdinalsBySource(checkedSources.size());
 		List<EventRecord> eventRecords =
 			new ArrayList<EventRecord>(eventStates.size());
 		int referenceCount = 0;
@@ -151,6 +161,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		int globalCount = 0;
 		int unknownCount = 0;
 		int candidateEventCount = 0;
+		int restorationAvailableCount = 0;
+		int callbackPayloadCompleteCount = 0;
 		for (int index = 0; index < eventStates.size(); index++) {
 			EventState state = Objects.requireNonNull(
 				eventStates.get(index), "eventStates[" + index + "]");
@@ -179,6 +191,17 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 					state.getAttributionKind() == AttributionKind.EXACT_SPATIAL
 						? exactBySource : hintsBySource;
 				destination.get(sourceOrdinal.intValue()).add(Integer.valueOf(index));
+				if (state.getRestorationState().getKind()
+						!= RestorationKind.UNAVAILABLE) {
+					restorationBySource.get(sourceOrdinal.intValue()).add(
+						Integer.valueOf(index));
+				}
+			}
+			if (state.getRestorationState().getKind()
+					!= RestorationKind.UNAVAILABLE) {
+				restorationAvailableCount++;
+				callbackPayloadCompleteCount += state.getRestorationState()
+					.isDetachedCallbackPayloadComplete() ? 1 : 0;
 			}
 			candidateEventCount += candidateOrdinals.isEmpty() ? 0 : 1;
 			switch (state.getAttributionKind()) {
@@ -206,12 +229,14 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		for (int index = 0; index < checkedSources.size(); index++) {
 			sourceRecords.add(new SourceRecord(
 				checkedSources.get(index), exactBySource.get(index),
-				hintsBySource.get(index), unknownCount));
+				hintsBySource.get(index), restorationBySource.get(index),
+				unknownCount));
 		}
 		return new LayeredPackedRegionEventOwnershipInventory(
 			proposalGeneration, observedAtTick, sourceRecords, eventRecords,
 			referenceCount, exactCount, hintCount, globalCount, unknownCount,
-			candidateEventCount);
+			candidateEventCount, restorationAvailableCount,
+			callbackPayloadCompleteCount);
 	}
 
 	private static List<List<Integer>> emptyEventOrdinalsBySource(
@@ -249,6 +274,12 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	public int getCandidateRelatedEventCount() {
 		return candidateRelatedEventCount;
 	}
+	public int getRestorationStateAvailableEventCount() {
+		return restorationStateAvailableEventCount;
+	}
+	public int getDetachedCallbackPayloadCompleteEventCount() {
+		return detachedCallbackPayloadCompleteEventCount;
+	}
 	public boolean isCandidateAttributionComplete() {
 		return ownerPositionHintEventCount == 0 && unattributedEventCount == 0;
 	}
@@ -285,6 +316,27 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		SUBJECT_CURRENT_POSITION,
 		TARGET_CURRENT_POSITION,
 		FIXED_EFFECT_LOCATION
+	}
+
+	public enum RestorationKind {
+		UNAVAILABLE,
+		SCENERY_SPAWN,
+		SCENERY_REMOVE
+	}
+
+	public enum TargetBindingEvidence {
+		UNAVAILABLE,
+		NOT_REQUIRED,
+		AUTHORED_PLACEMENT_IDENTITY,
+		LIVE_ENTITY_REFERENCE_ONLY
+	}
+
+	public enum AuthoredConstructionKind {
+		SCENERY,
+		BOUNDARY,
+		NPC_SPAWN,
+		GROUND_ITEM_SPAWN,
+		HARVESTING_SCENERY
 	}
 
 	/** One exact candidate source supplied in canonical proposal order. */
@@ -344,6 +396,204 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		public int getY() { return y; }
 	}
 
+	/** Detached callback input, still incapable of replay or rescheduling. */
+	public static final class EventRestorationState {
+		private static final EventRestorationState UNAVAILABLE =
+			new EventRestorationState(
+				RestorationKind.UNAVAILABLE, null, false,
+				TargetBindingEvidence.UNAVAILABLE, false);
+
+		private final RestorationKind kind;
+		private final SceneryRestorationState scenery;
+		private final boolean forceFullBlock;
+		private final TargetBindingEvidence targetBindingEvidence;
+		private final boolean detachedCallbackPayloadComplete;
+
+		private EventRestorationState(
+			final RestorationKind kind,
+			final SceneryRestorationState scenery,
+			final boolean forceFullBlock,
+			final TargetBindingEvidence targetBindingEvidence,
+			final boolean detachedCallbackPayloadComplete) {
+			this.kind = Objects.requireNonNull(kind, "kind");
+			this.scenery = scenery;
+			this.forceFullBlock = forceFullBlock;
+			this.targetBindingEvidence = Objects.requireNonNull(
+				targetBindingEvidence, "targetBindingEvidence");
+			this.detachedCallbackPayloadComplete =
+				detachedCallbackPayloadComplete;
+			if (kind == RestorationKind.UNAVAILABLE) {
+				if (scenery != null || forceFullBlock
+					|| targetBindingEvidence
+						!= TargetBindingEvidence.UNAVAILABLE
+					|| detachedCallbackPayloadComplete) {
+					throw new IllegalArgumentException(
+						"Unavailable event restoration state contains data");
+				}
+			} else if (scenery == null) {
+				throw new IllegalArgumentException(
+					"Scenery event restoration state requires scenery data");
+			}
+		}
+
+		public static EventRestorationState unavailable() {
+			return UNAVAILABLE;
+		}
+
+		public static EventRestorationState scenerySpawn(
+			final SceneryRestorationState scenery,
+			final boolean forceFullBlock) {
+			return new EventRestorationState(
+				RestorationKind.SCENERY_SPAWN,
+				Objects.requireNonNull(scenery, "scenery"), forceFullBlock,
+				TargetBindingEvidence.NOT_REQUIRED, true);
+		}
+
+		public static EventRestorationState sceneryRemove(
+			final SceneryRestorationState scenery) {
+			SceneryRestorationState checked = Objects.requireNonNull(
+				scenery, "scenery");
+			boolean authored = checked.getAuthoredPlacement() != null;
+			return new EventRestorationState(
+				RestorationKind.SCENERY_REMOVE, checked, false,
+				authored
+					? TargetBindingEvidence.AUTHORED_PLACEMENT_IDENTITY
+					: TargetBindingEvidence.LIVE_ENTITY_REFERENCE_ONLY,
+				authored);
+		}
+
+		public RestorationKind getKind() { return kind; }
+		public SceneryRestorationState getScenery() { return scenery; }
+		public boolean isForceFullBlock() { return forceFullBlock; }
+		public TargetBindingEvidence getTargetBindingEvidence() {
+			return targetBindingEvidence;
+		}
+		public boolean isDetachedCallbackPayloadComplete() {
+			return detachedCallbackPayloadComplete;
+		}
+		public boolean isSchedulerIdentityCaptured() { return false; }
+		public boolean isTargetBindingLookupPerformed() { return false; }
+		public boolean isStandaloneRestorationComplete() { return false; }
+	}
+
+	/** Privacy-sensitive constructor input retained internally, not in JSON. */
+	public static final class SceneryRestorationState {
+		private final int objectId;
+		private final int permanentObjectId;
+		private final int x;
+		private final int y;
+		private final int direction;
+		private final int type;
+		private final String owner;
+		private final int runtimeAttributeCount;
+		private final AuthoredPlacementRestorationState authoredPlacement;
+
+		private SceneryRestorationState(
+			final int objectId,
+			final int permanentObjectId,
+			final int x,
+			final int y,
+			final int direction,
+			final int type,
+			final String owner,
+			final int runtimeAttributeCount,
+			final AuthoredPlacementRestorationState authoredPlacement) {
+			if (objectId < 0 || permanentObjectId < 0 || x < 0 || y < 0
+				|| direction < 0 || direction > 7
+				|| (type != 0 && type != 1)
+				|| runtimeAttributeCount < 0) {
+				throw new IllegalArgumentException(
+					"Scenery event restoration state is invalid");
+			}
+			this.objectId = objectId;
+			this.permanentObjectId = permanentObjectId;
+			this.x = x;
+			this.y = y;
+			this.direction = direction;
+			this.type = type;
+			this.owner = owner;
+			this.runtimeAttributeCount = runtimeAttributeCount;
+			this.authoredPlacement = authoredPlacement;
+		}
+
+		public static SceneryRestorationState of(
+			final int objectId,
+			final int permanentObjectId,
+			final int x,
+			final int y,
+			final int direction,
+			final int type,
+			final String owner,
+			final int runtimeAttributeCount,
+			final AuthoredPlacementRestorationState authoredPlacement) {
+			return new SceneryRestorationState(
+				objectId, permanentObjectId, x, y, direction, type, owner,
+				runtimeAttributeCount, authoredPlacement);
+		}
+
+		public int getObjectId() { return objectId; }
+		public int getPermanentObjectId() { return permanentObjectId; }
+		public int getX() { return x; }
+		public int getY() { return y; }
+		public int getDirection() { return direction; }
+		public int getType() { return type; }
+		public String getOwner() { return owner; }
+		public boolean hasOwner() { return owner != null; }
+		public int getRuntimeAttributeCount() {
+			return runtimeAttributeCount;
+		}
+		public AuthoredPlacementRestorationState getAuthoredPlacement() {
+			return authoredPlacement;
+		}
+	}
+
+	public static final class AuthoredPlacementRestorationState {
+		private final long generation;
+		private final int packedRegionX;
+		private final int packedRegionY;
+		private final int sourceOrdinal;
+		private final AuthoredConstructionKind constructionKind;
+
+		private AuthoredPlacementRestorationState(
+			final long generation,
+			final int packedRegionX,
+			final int packedRegionY,
+			final int sourceOrdinal,
+			final AuthoredConstructionKind constructionKind) {
+			if (generation <= 0L || packedRegionX < 0 || packedRegionY < 0
+				|| sourceOrdinal <= 0
+				|| sourceOrdinal > 262144) {
+				throw new IllegalArgumentException(
+					"Authored event restoration state is invalid");
+			}
+			this.generation = generation;
+			this.packedRegionX = packedRegionX;
+			this.packedRegionY = packedRegionY;
+			this.sourceOrdinal = sourceOrdinal;
+			this.constructionKind = Objects.requireNonNull(
+				constructionKind, "constructionKind");
+		}
+
+		public static AuthoredPlacementRestorationState of(
+			final long generation,
+			final int packedRegionX,
+			final int packedRegionY,
+			final int sourceOrdinal,
+			final AuthoredConstructionKind constructionKind) {
+			return new AuthoredPlacementRestorationState(
+				generation, packedRegionX, packedRegionY, sourceOrdinal,
+				constructionKind);
+		}
+
+		public long getGeneration() { return generation; }
+		public int getPackedRegionX() { return packedRegionX; }
+		public int getPackedRegionY() { return packedRegionY; }
+		public int getSourceOrdinal() { return sourceOrdinal; }
+		public AuthoredConstructionKind getConstructionKind() {
+			return constructionKind;
+		}
+	}
+
 	/** One event's detached scheduler and affinity facts. */
 	public static final class EventState {
 		private final int snapshotOrdinal;
@@ -353,6 +603,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		private final long ticksBeforeRun;
 		private final int timesRan;
 		private final List<SpatialReference> spatialReferences;
+		private final EventRestorationState restorationState;
 
 		private EventState(
 			final int snapshotOrdinal,
@@ -361,7 +612,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final boolean running,
 			final long ticksBeforeRun,
 			final int timesRan,
-			final List<SpatialReference> spatialReferences) {
+			final List<SpatialReference> spatialReferences,
+			final EventRestorationState restorationState) {
 			if (snapshotOrdinal < 0 || timesRan < 0) {
 				throw new IllegalArgumentException(
 					"Event scheduler state is invalid");
@@ -380,10 +632,36 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			}
 			Collections.sort(copied, REFERENCE_ORDER);
 			validateAttribution(ownerKind, attributionKind, copied);
+			this.restorationState = Objects.requireNonNull(
+				restorationState, "restorationState");
+			validateRestoration(attributionKind, copied, restorationState);
 			this.running = running;
 			this.ticksBeforeRun = ticksBeforeRun;
 			this.timesRan = timesRan;
 			this.spatialReferences = Collections.unmodifiableList(copied);
+		}
+
+		private static void validateRestoration(
+			final AttributionKind attributionKind,
+			final List<SpatialReference> references,
+			final EventRestorationState restorationState) {
+			if (restorationState.getKind() == RestorationKind.UNAVAILABLE) {
+				return;
+			}
+			if (attributionKind != AttributionKind.EXACT_SPATIAL) {
+				throw new IllegalArgumentException(
+					"Restoration state requires exact spatial attribution");
+			}
+			SceneryRestorationState scenery = restorationState.getScenery();
+			for (SpatialReference reference : references) {
+				if (reference.getRole() == SpatialRole.FIXED_EFFECT_LOCATION
+					&& reference.getX() == scenery.getX()
+					&& reference.getY() == scenery.getY()) {
+					return;
+				}
+			}
+			throw new IllegalArgumentException(
+				"Scenery restoration coordinate does not match fixed affinity");
 		}
 
 		private static void validateAttribution(
@@ -421,7 +699,23 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final List<SpatialReference> spatialReferences) {
 			return new EventState(
 				snapshotOrdinal, ownerKind, attributionKind, running,
-				ticksBeforeRun, timesRan, spatialReferences);
+				ticksBeforeRun, timesRan, spatialReferences,
+				EventRestorationState.unavailable());
+		}
+
+		public static EventState of(
+			final int snapshotOrdinal,
+			final OwnerKind ownerKind,
+			final AttributionKind attributionKind,
+			final boolean running,
+			final long ticksBeforeRun,
+			final int timesRan,
+			final List<SpatialReference> spatialReferences,
+			final EventRestorationState restorationState) {
+			return new EventState(
+				snapshotOrdinal, ownerKind, attributionKind, running,
+				ticksBeforeRun, timesRan, spatialReferences,
+				restorationState);
 		}
 
 		public int getSnapshotOrdinal() { return snapshotOrdinal; }
@@ -434,6 +728,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		public int getTimesRan() { return timesRan; }
 		public List<SpatialReference> getSpatialReferences() {
 			return spatialReferences;
+		}
+		public EventRestorationState getRestorationState() {
+			return restorationState;
 		}
 	}
 
@@ -461,6 +758,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		public List<SpatialReference> getSpatialReferences() {
 			return state.getSpatialReferences();
 		}
+		public EventRestorationState getRestorationState() {
+			return state.getRestorationState();
+		}
 		public List<Integer> getCandidateSourceOrdinals() {
 			return candidateSourceOrdinals;
 		}
@@ -480,18 +780,22 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		private final PackedSource source;
 		private final List<Integer> exactSpatialEventOrdinals;
 		private final List<Integer> ownerPositionHintEventOrdinals;
+		private final List<Integer> restorationStateEventOrdinals;
 		private final int unattributedEventCount;
 
 		private SourceRecord(
 			final PackedSource source,
 			final List<Integer> exactSpatialEventOrdinals,
 			final List<Integer> ownerPositionHintEventOrdinals,
+			final List<Integer> restorationStateEventOrdinals,
 			final int unattributedEventCount) {
 			this.source = source;
 			this.exactSpatialEventOrdinals = Collections.unmodifiableList(
 				new ArrayList<Integer>(exactSpatialEventOrdinals));
 			this.ownerPositionHintEventOrdinals = Collections.unmodifiableList(
 				new ArrayList<Integer>(ownerPositionHintEventOrdinals));
+			this.restorationStateEventOrdinals = Collections.unmodifiableList(
+				new ArrayList<Integer>(restorationStateEventOrdinals));
 			this.unattributedEventCount = unattributedEventCount;
 		}
 
@@ -508,6 +812,12 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		}
 		public int getOwnerPositionHintEventCount() {
 			return ownerPositionHintEventOrdinals.size();
+		}
+		public List<Integer> getRestorationStateEventOrdinals() {
+			return restorationStateEventOrdinals;
+		}
+		public int getRestorationStateEventCount() {
+			return restorationStateEventOrdinals.size();
 		}
 		public int getUnattributedEventCount() {
 			return unattributedEventCount;

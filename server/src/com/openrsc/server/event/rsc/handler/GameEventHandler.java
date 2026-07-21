@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.handler;
 
 import com.openrsc.server.Server;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.GameTickEventRestorationState;
 import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.event.rsc.ImmediateEvent;
 import com.openrsc.server.model.entity.Mob;
@@ -9,9 +10,13 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AttributionKind;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AuthoredConstructionKind;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AuthoredPlacementRestorationState;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.OwnerKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.PackedSource;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SceneryRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SpatialReference;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SpatialRole;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
@@ -445,7 +450,43 @@ public class GameEventHandler {
 		}
 		return EventState.of(
 			ordinal, ownerKind, attribution, event.isRunning(),
-			event.getTicksBeforeRun(), event.getTimesRan(), references);
+			event.getTicksBeforeRun(), event.getTimesRan(), references,
+			detachEventRestorationState(Objects.requireNonNull(
+				event.getRestorationState(), "event restoration state")));
+	}
+
+	private EventRestorationState detachEventRestorationState(
+		final GameTickEventRestorationState state) {
+		if (state.getKind()
+			== GameTickEventRestorationState.Kind.UNAVAILABLE) {
+			return EventRestorationState.unavailable();
+		}
+		GameTickEventRestorationState.SceneryState scenery =
+			Objects.requireNonNull(state.getScenery(), "restoration scenery");
+		GameTickEventRestorationState.AuthoredPlacementState authored =
+			scenery.getAuthoredPlacement();
+		AuthoredPlacementRestorationState detachedAuthored = authored == null
+			? null
+			: AuthoredPlacementRestorationState.of(
+				authored.getGeneration(), authored.getPackedRegionX(),
+				authored.getPackedRegionY(), authored.getSourceOrdinal(),
+				AuthoredConstructionKind.valueOf(
+					authored.getConstructionKind().name()));
+		SceneryRestorationState detachedScenery = SceneryRestorationState.of(
+			scenery.getObjectId(), scenery.getPermanentObjectId(),
+			scenery.getX(), scenery.getY(), scenery.getDirection(),
+			scenery.getType(), scenery.getOwner(),
+			scenery.getRuntimeAttributeCount(), detachedAuthored);
+		switch (state.getKind()) {
+			case SCENERY_SPAWN:
+				return EventRestorationState.scenerySpawn(
+					detachedScenery, state.isForceFullBlock());
+			case SCENERY_REMOVE:
+				return EventRestorationState.sceneryRemove(detachedScenery);
+			default:
+				throw new IllegalStateException(
+					"Unhandled event restoration-state kind");
+		}
 	}
 
 	public boolean hasEvent(Class<? extends GameTickEvent> type) {

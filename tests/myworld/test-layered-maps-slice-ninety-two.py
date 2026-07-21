@@ -219,7 +219,7 @@ class LayeredMapsSliceNinetyTwoTest(unittest.TestCase):
         self.assertIn("loc.getAuthoredPlacementIdentity()", world)
         self.assertIn("forceFullBlock", world)
 
-    def test_contract_is_detached_and_runtime_capture_remains_absent(self):
+    def test_contract_is_detached_and_later_capture_remains_private(self):
         source = STATE.read_text(encoding="utf-8")
         for forbidden in (
             "import com.openrsc.server.model.entity",
@@ -230,7 +230,7 @@ class LayeredMapsSliceNinetyTwoTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, source)
         method = "getRestorationState()"
-        self.assertNotIn(method, HANDLER.read_text(encoding="utf-8"))
+        self.assertIn(method, HANDLER.read_text(encoding="utf-8"))
         self.assertNotIn(method, OBSERVER.read_text(encoding="utf-8"))
 
     def test_living_plan_records_slice_ninety_two_boundary(self):
