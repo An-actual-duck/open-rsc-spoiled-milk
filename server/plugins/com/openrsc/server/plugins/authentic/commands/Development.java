@@ -34,6 +34,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -1419,7 +1420,8 @@ public final class Development implements CommandTrigger {
 					layeredPackedRegionActiveNpcResidencySource(player),
 					layeredPackedRegionRetirementRefinementReassessmentSource(player),
 					layeredPackedRegionPreservationBurdenSource(player),
-					layeredPackedRegionDynamicObjectPreservationSource(player));
+					layeredPackedRegionDynamicObjectPreservationSource(player),
+					layeredPackedRegionEventOwnershipSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1946,6 +1948,22 @@ public final class Development implements CommandTrigger {
 				return player.getWorld().getRegionManager()
 					.captureLayeredPackedRegionDynamicObjectPreservationRecord(
 						proposal, maximumCandidateSources, maximumDynamicObjects);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionEventOwnershipSource
+		layeredPackedRegionEventOwnershipSource(final Player player) {
+		return new LayeredCoordinateParityObserver.PackedRegionEventOwnershipSource() {
+			@Override
+			public LayeredPackedRegionEventOwnershipInventory capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumEvents,
+				final int maximumSpatialReferences) {
+				return player.getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionEventOwnershipInventory(
+						proposal, player.getWorld().getServer().getCurrentTick(),
+						maximumEvents, maximumSpatialReferences);
 			}
 		};
 	}

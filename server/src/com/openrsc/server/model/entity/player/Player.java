@@ -49,6 +49,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -3551,6 +3552,22 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver.PackedRegionEventOwnershipSource
+		layeredPackedRegionEventOwnershipSource() {
+		return new LayeredCoordinateParityObserver.PackedRegionEventOwnershipSource() {
+			@Override
+			public LayeredPackedRegionEventOwnershipInventory capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumEvents,
+				final int maximumSpatialReferences) {
+				return getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionEventOwnershipInventory(
+						proposal, getWorld().getServer().getCurrentTick(),
+						maximumEvents, maximumSpatialReferences);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3683,7 +3700,8 @@ public final class Player extends Mob {
 				loggedIn ? layeredPackedRegionPreservationBurdenSource() : null,
 				loggedIn
 					? layeredPackedRegionDynamicObjectPreservationSource()
-					: null);
+					: null,
+				loggedIn ? layeredPackedRegionEventOwnershipSource() : null);
 		}
 	}
 

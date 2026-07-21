@@ -40,7 +40,11 @@ class LayeredMapsSliceNinetyTest(unittest.TestCase):
         self.assertNotIn(declaration, NPC.read_text(encoding="utf-8"))
         self.assertNotIn(declaration, FUNCTIONS.read_text(encoding="utf-8"))
 
-    def test_exact_affinity_remains_disconnected_from_private_diagnostics(self):
+    def test_exact_affinity_is_visible_only_through_private_diagnostics(self):
+        self.assertIn(
+            "PackedRegionEventOwnershipSource",
+            OBSERVER.read_text(encoding="utf-8"),
+        )
         self.assertNotIn(
             "captureLayeredPackedRegionEventOwnershipInventory(",
             OBSERVER.read_text(encoding="utf-8"),

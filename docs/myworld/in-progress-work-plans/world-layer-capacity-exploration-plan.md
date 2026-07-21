@@ -3,25 +3,25 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, and 87 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, and 90 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, and 91 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 90 gives only delayed scenery
-removal and delayed scenery spawn callbacks exact fixed-location affinity. Each
-declaration derives its coordinate from the same captured object or placement
-record used by the callback action. Ground-item and NPC respawns, projectiles,
-combat, plugins, generic submitted runnables, and global maintenance events
-remain conservatively unclassified. The runtime inventory is still disconnected
-from private diagnostics. Exact location does not capture callback
-implementation state or authorize preservation, cancellation, rescheduling,
-reload, or any lifecycle action. The next gate is additive private schema
-exposure so an owner can compare exact scenery events with the remaining real
-scheduler uncertainty; Packed Region lookup, eager loading, release, eviction,
-pathing, packets, and persistence remain unchanged
+Current milestone: automated-validated Slice 91 exposes Slice 89/90 event-
+affinity evidence through additive private schema-v32 diagnostics. The same
+proposal used for preservation burden and dynamic-object records supplies exact
+generation and source order. Bounded scheduler ordinals, owner/affinity kinds,
+countdowns, execution counts, candidate relationships, and packed references
+are visible; descriptors, UUIDs, callback classes, closure state, and owner
+identities are absent. The deterministic fixture proves exact scenery-style and
+unattributed events coexist without manufacturing complete attribution. No
+event is preserved, cancelled, rescheduled, restored, or granted lifecycle
+authority. A deliberate private scheduled-scenery route is the next gate;
+Packed Region lookup, eager loading, release, eviction, pathing, packets, and
+persistence remain unchanged
 
 ## Purpose
 
@@ -8338,6 +8338,60 @@ Status: implemented and automated-validated. Private schema exposure, owner
 validation, callback restoration, and all event/lifecycle authority remain
 absent.
 
+### Slice 91: Private event-ownership diagnostics
+
+Objective: expose Slice 89's complete bounded scheduler-affinity inventory
+through the opt-in parity workflow so exact scenery callbacks can be measured
+without hiding owner hints or unattributed legacy events.
+
+Implemented:
+
+- additive `layered-map-parity-event-v32` records retain the complete v31
+  contract and add nullable `packedRegionEventOwnership` evidence;
+- proposal creation, same-tick deferral, and fresh reassessment use the same
+  proposal selected for preservation burden and dynamic-object records, with
+  strict generation, source-count, and coordinate-order correlation;
+- aggregate, proposal-source, event, candidate-ordinal, and spatial-reference
+  records expose all four affinity classes and their completeness honestly;
+- scheduler ordinals, owner kinds, running/countdown/execution counters, roles,
+  and packed coordinates are serialized, while descriptors, UUIDs, scheduler
+  keys, callback/closure implementation, and owner identity are omitted; and
+- private command start and Player reconnect paths both use the one bounded
+  `GameEventHandler` capture seam; records without a proposal emit null.
+
+Automated validation status:
+
+- the executable observer fixture emits one exact fixed-location event and one
+  unattributed event over the same two-source proposal and validates both as a
+  single incomplete inventory rather than dropping the unknown callback;
+- schema-v32 closes every aggregate, source, event, ordinal, and reference
+  shape, limits events to 65,536 and references to 262,144, fixes every
+  scheduler/recovery/lifecycle authority flag false, and leaves v31 immutable;
+- current-head guards, proposal correlation, both private runtime paths,
+  privacy-safe serialization, and exact-plus-unknown coexistence have focused
+  regression coverage; and
+- the complete layered-map suite passes 244 tests across 90 focused files; and
+- the authoritative bundled-Ant build compiles 772 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- the diagnostic is a point-in-time scheduler inventory, not callback
+  serialization, a scheduler key, event registry, cancellation request,
+  reschedule request, restoration record, or commit token;
+- exact spatial attribution does not imply restoration completeness, and
+  unattributed events continue to block every candidate from claiming complete
+  event evidence;
+- no descriptor, UUID, callback class, closure field, owner identity, Mob/event
+  handle, or Region handle crosses the JSON boundary; and
+- No event is cancelled, stopped, removed by the observer, run, recreated, or
+  rescheduled. No source is loaded, retained, retired, reconstructed, or gated,
+  and no preservation, reload, registry, teardown, transaction, rollback, or
+  lifecycle authority is created.
+
+Status: implemented and automated-validated. Private owner validation remains
+pending; callback restoration and all event/lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8637,6 +8691,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 88 by defining a dormant event-ownership inventory over exact refinement candidates. | Implemented and automated-validated; exact spatial affinity, owner-position hints, explicit non-spatial scope, and unknown callbacks remain distinct, multi-source effects are bounded, and no event or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 89 by detaching one bounded global scheduler snapshot into the event-ownership inventory. | Implemented and automated-validated; legacy Mob owners remain position hints, null-owned callbacks remain unattributed, exact/global scope requires an explicit declaration, and no scheduler or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 90 by declaring exact fixed-location affinity for delayed scenery spawn/remove callbacks only. | Implemented and automated-validated; both declarations use the action's captured coordinate, every other callback remains conservative, and no event or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 91 by exposing the complete event-affinity inventory through additive private schema-v32 diagnostics. | Implemented and automated-validated; exact events and unknown callbacks coexist in one bounded proposal-correlated record without descriptors, identities, scheduler mutation, or lifecycle authority |
 
 ## Next Discussion
 
@@ -8808,6 +8863,15 @@ should then prove one scheduled scenery respawn is exact while the real legacy
 hint/unattributed counts stay visible and blocking. The route must let the
 callback complete naturally and must not cancel, reschedule, restore, or retire
 anything.
+
+Slice 91 supplies that complete private exposure. The next owner route should
+start a proposal near a harvestable tree, perform the ordinary action that
+replaces it and schedules its respawn, mark while the respawn is pending, wait
+for the original scenery to return naturally, mark again, then stop. The trace
+must show an exact fixed-location event at the tree coordinate only while the
+callback is pending, preserve all other hint/unattributed counts, and retain
+false cancellation, rescheduling, restoration, and lifecycle flags. Visual
+replacement, collision, interaction, and natural respawn must remain normal.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

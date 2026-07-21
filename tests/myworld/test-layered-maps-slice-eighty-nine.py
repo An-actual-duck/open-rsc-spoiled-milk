@@ -179,11 +179,11 @@ class LayeredMapsSliceEightyNineTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, boundary)
 
-    def test_runtime_snapshot_remains_disconnected_from_private_observer(self):
+    def test_runtime_snapshot_is_connected_through_private_observer(self):
         method = "captureLayeredPackedRegionEventOwnershipInventory("
         self.assertNotIn(method, OBSERVER.read_text(encoding="utf-8"))
-        self.assertNotIn(method, PLAYER.read_text(encoding="utf-8"))
-        self.assertNotIn(method, COMMAND.read_text(encoding="utf-8"))
+        self.assertIn(method, PLAYER.read_text(encoding="utf-8"))
+        self.assertIn(method, COMMAND.read_text(encoding="utf-8"))
 
     def test_living_plan_records_slice_eighty_nine_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")

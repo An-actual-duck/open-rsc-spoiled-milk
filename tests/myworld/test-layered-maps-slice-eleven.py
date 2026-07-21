@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v31.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v32.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -33,6 +33,7 @@ SCHEMA_V27 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v27.sche
 SCHEMA_V28 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v28.schema.json"
 SCHEMA_V29 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v29.schema.json"
 SCHEMA_V30 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v30.schema.json"
+SCHEMA_V31 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v31.schema.json"
 
 
 POINT_STUB = r'''
@@ -113,6 +114,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionRecipe;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
@@ -828,7 +830,42 @@ public final class LayeredCoordinateParityObserverFixture {
 			decisionActiveNpcResidencySource,
 			decisionRefinementReassessmentSource,
 			decisionPreservationBurdenSource,
-			decisionDynamicObjectPreservationSource);
+			decisionDynamicObjectPreservationSource,
+			(proposal, maximumEvents, maximumReferences) -> {
+				List<LayeredPackedRegionEventOwnershipInventory.PackedSource>
+					sources = new ArrayList<
+						LayeredPackedRegionEventOwnershipInventory.PackedSource>();
+				for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+						candidate : proposal.getCandidates()) {
+					sources.add(LayeredPackedRegionEventOwnershipInventory.PackedSource
+						.of(candidate.getPackedRegionX(), candidate.getPackedRegionY()));
+				}
+				List<LayeredPackedRegionEventOwnershipInventory.EventState> states =
+					Arrays.asList(
+						LayeredPackedRegionEventOwnershipInventory.EventState.of(
+							0,
+							LayeredPackedRegionEventOwnershipInventory.OwnerKind.NONE,
+							LayeredPackedRegionEventOwnershipInventory.AttributionKind
+								.EXACT_SPATIAL,
+							true, 5L, 0,
+							Collections.singletonList(
+								LayeredPackedRegionEventOwnershipInventory
+									.SpatialReference.of(
+										LayeredPackedRegionEventOwnershipInventory
+											.SpatialRole.FIXED_EFFECT_LOCATION,
+										193, 2))),
+						LayeredPackedRegionEventOwnershipInventory.EventState.of(
+							1,
+							LayeredPackedRegionEventOwnershipInventory.OwnerKind.NONE,
+							LayeredPackedRegionEventOwnershipInventory.AttributionKind
+								.UNATTRIBUTED,
+							true, 10L, 1, Collections.emptyList()));
+				return LayeredPackedRegionEventOwnershipInventory.inventory(
+					proposal.getGeneration(),
+					Math.max(proposal.getSafetyObservedAtTick(), decisionTick[0]),
+					sources, states, sources.size(), maximumEvents,
+					maximumReferences);
+			});
         decisionTick[0] = 1L;
         LayeredRegionInterestOwnershipLedger.Change decisionRelease =
             decisionOwnership.synchronizeOwner(
@@ -1129,13 +1166,17 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v31" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v32" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
             ))
             self.assertTrue(all(
                 event["packedRegionDynamicObjectPreservation"] is None
+                for event in events
+            ))
+            self.assertTrue(all(
+                event["packedRegionEventOwnership"] is None
                 for event in events
             ))
             self.assertTrue(all(
@@ -1998,6 +2039,31 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 recorded[0],
             )
             self.assertNotIn("private-owner", json.dumps(decision_events))
+            event_ownership = decision_events[2]["packedRegionEventOwnership"]
+            self.assertEqual((2, 2, 1, 0, 0, 1), (
+                event_ownership["sourceCount"], event_ownership["eventCount"],
+                event_ownership["exactSpatialEventCount"],
+                event_ownership["ownerPositionHintEventCount"],
+                event_ownership["nonSpatialGlobalEventCount"],
+                event_ownership["unattributedEventCount"],
+            ))
+            self.assertFalse(event_ownership["candidateAttributionComplete"])
+            self.assertEqual(
+                "EXACT_SPATIAL",
+                event_ownership["events"][0]["attributionKind"],
+            )
+            self.assertEqual(
+                {"role": "FIXED_EFFECT_LOCATION", "packedX": 193,
+                 "packedY": 2},
+                event_ownership["events"][0]["spatialReferences"][0],
+            )
+            for authority_flag in (
+                "callbackStateCaptured", "schedulerIdentityCaptured",
+                "preservationPerformed", "reloadRequest", "eventCancellation",
+                "eventReschedule", "entityRegistry", "arrivalGate",
+                "teardownTransaction", "lifecycleAuthority",
+            ):
+                self.assertFalse(event_ownership[authority_flag])
             for authority_flag in (
                 "runtimeAttributesCaptured", "eventOwnershipCaptured",
                 "preservationPerformed", "reloadRequest", "entityRegistry",
@@ -2147,6 +2213,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v28 = json.loads(SCHEMA_V28.read_text(encoding="utf-8"))
                 v29 = json.loads(SCHEMA_V29.read_text(encoding="utf-8"))
                 v30 = json.loads(SCHEMA_V30.read_text(encoding="utf-8"))
+                v31 = json.loads(SCHEMA_V31.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -2166,6 +2233,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v28["$id"], Resource.from_contents(v28)),
                     (v29["$id"], Resource.from_contents(v29)),
                     (v30["$id"], Resource.from_contents(v30)),
+                    (v31["$id"], Resource.from_contents(v31)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry
