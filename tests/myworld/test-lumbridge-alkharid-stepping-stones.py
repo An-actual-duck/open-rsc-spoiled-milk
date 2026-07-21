@@ -11,6 +11,9 @@ CLIENT_DEFS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHa
 SKILL_GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 SCENERY_IDS = ROOT / "server/src/com/openrsc/server/constants/SceneryId.java"
 SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryLocs.json"
+SCENERY_REMOVALS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryRemovals.json"
+NPC_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldNpcLocs.json"
+NPC_REMOVALS = ROOT / "server/conf/server/defs/locs/MyWorldNpcRemovals.json"
 HANDLER = (
     ROOT
     / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/agility/"
@@ -84,6 +87,50 @@ def main() -> None:
         ),
         "The crossing still contains authentic Wilderness object 707",
     )
+    require(
+        any(
+            int(entry["id"]) == 942
+            and int(entry["pos"]["X"]) == 111
+            and int(entry["pos"]["Y"]) == 650
+            and int(entry["direction"]) == 4
+            for entry in locations
+        ),
+        "The saved Lumbridge bank chest placement is missing",
+    )
+
+    scenery_removals = json.loads(SCENERY_REMOVALS.read_text(encoding="utf-8"))["scenery_removals"]
+    removed_positions = {
+        (int(entry["pos"]["X"]), int(entry["pos"]["Y"])) for entry in scenery_removals
+    }
+    expected_removals = {
+        (101, 688), (102, 686), (104, 685), (106, 651), (108, 686),
+        (110, 650), (110, 651), (111, 656), (112, 653), (113, 657),
+        (114, 653), (114, 654), (114, 655), (114, 657), (115, 648),
+        (115, 651), (115, 652), (115, 653), (115, 654), (115, 655),
+        (115, 656), (115, 657), (115, 659), (116, 648), (116, 658),
+    }
+    require(
+        expected_removals <= removed_positions,
+        f"Saved scenery removals are missing: {sorted(expected_removals - removed_positions)}",
+    )
+
+    npc_locations = json.loads(NPC_LOCS.read_text(encoding="utf-8"))["npclocs"]
+    require(
+        any(
+            int(entry["id"]) == 95
+            and int(entry["start"]["X"]) == 111
+            and int(entry["start"]["Y"]) == 652
+            for entry in npc_locations
+        ),
+        "The saved banker placement is missing",
+    )
+    npc_removals = json.loads(NPC_REMOVALS.read_text(encoding="utf-8"))["npc_removals"]
+    removed_npcs = {
+        (int(entry["id"]), int(entry["start"]["X"]), int(entry["start"]["Y"]))
+        for entry in npc_removals
+    }
+    require((62, 124, 664) in removed_npcs, "The saved goblin removal is missing")
+    require((95, 111, 651) in removed_npcs, "The superseded banker removal is missing")
 
     handler = HANDLER.read_text(encoding="utf-8")
     for snippet in (
