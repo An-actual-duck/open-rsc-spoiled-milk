@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v28.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v29.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -30,6 +30,7 @@ SCHEMA_V24 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v24.sche
 SCHEMA_V25 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v25.schema.json"
 SCHEMA_V26 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v26.schema.json"
 SCHEMA_V27 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v27.schema.json"
+SCHEMA_V28 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v28.schema.json"
 
 
 POINT_STUB = r'''
@@ -97,6 +98,7 @@ import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentit
 import com.openrsc.server.model.world.coordinate.LayeredCoordinateParitySnapshot;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation.NpcInstanceSnapshot;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcBoundaryRequirementProjection;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory;
@@ -109,6 +111,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionRecipe;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
@@ -677,6 +681,73 @@ public final class LayeredCoordinateParityObserverFixture {
 			LayeredPackedRegionActiveNpcResidencyObservation.observe(
 				activeNpcRecipe, safety, 3L, activeNpcCensus, maximumInstances,
 				maximumRelevantDetails);
+		final int[] reassessmentAttempts = {0};
+		LayeredCoordinateParityObserver
+			.PackedRegionRetirementRefinementReassessmentSource
+				decisionRefinementReassessmentSource =
+					(previous, maximumCandidates, maximumSupport,
+						maximumInstances, maximumRelevantDetails,
+						maximumActiveRequirements) -> {
+			if (reassessmentAttempts[0]++ == 0) {
+				return null;
+			}
+			long freshTick = Math.max(
+				previous.getSafetyObservedAtTick(),
+				previous.getCensusObservedAtTick()) + 1L;
+			List<LayeredPackedRegionRetirementSafetyAssessment.PackedSourceContents>
+				contents = new ArrayList<
+					LayeredPackedRegionRetirementSafetyAssessment
+						.PackedSourceContents>();
+			LayeredPackedRegionAuthoredPlacementManifest.Builder manifest =
+				LayeredPackedRegionAuthoredPlacementManifest.builder(
+					previous.getGeneration());
+			LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+				dependencies =
+					LayeredPackedRegionAuthoredPlacementDependencyInventory.builder(
+						previous.getGeneration());
+			for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+					candidate : previous.getCandidates()) {
+				int x = candidate.getPackedRegionX();
+				int y = candidate.getPackedRegionY();
+				contents.add(
+					LayeredPackedRegionRetirementSafetyAssessment
+						.PackedSourceContents.of(
+							x, y, true, true, false, 0, 0, 0, 0));
+				manifest.recordScenery(
+					x, y, 100, 100, x * 48, y * 48, 0, 0, null);
+				dependencies.record(
+					LayeredPackedRegionAuthoredConstructionInventory
+						.ConstructionKind.SCENERY,
+					LayeredPackedRegionAuthoredPlacementDependencyInventory
+						.DependencyKind.OBJECT_FOOTPRINT,
+					x, y, x * 48, x * 48, y * 48, y * 48,
+					x, x, y, y);
+			}
+			LayeredPackedRegionRetirementSafetyAssessment freshSafety =
+				LayeredPackedRegionRetirementSafetyAssessment
+					.assessDiagnosticSelection(
+						contents, freshTick, maximumCandidates);
+			LayeredPackedRegionAuthoredPlacementManifest builtManifest =
+				manifest.build();
+			LayeredPackedRegionAuthoredReconstructionRecipe recipe =
+				LayeredPackedRegionAuthoredReconstructionRecipe.derive(
+					builtManifest, dependencies.build(),
+					LayeredPackedRegionAuthoredPopulationOutcome
+						.builder(previous.getGeneration()).build(builtManifest));
+			LayeredPackedRegionAuthoredReconstructionCohortAnalysis cohort =
+				LayeredPackedRegionAuthoredReconstructionCohortAnalysis.analyze(
+					recipe, freshSafety, maximumCandidates, maximumSupport);
+			LayeredPackedRegionActiveNpcResidencyObservation freshActiveNpc =
+				LayeredPackedRegionActiveNpcResidencyObservation.observe(
+					recipe, freshSafety, freshTick,
+					Collections.<NpcInstanceSnapshot>emptyList(),
+					maximumInstances, maximumRelevantDetails);
+			return LayeredPackedRegionRetirementRefinementReassessment.reassess(
+				previous, freshSafety, cohort,
+				LayeredPackedRegionActiveNpcBoundaryRequirementProjection.project(
+					freshActiveNpc, maximumActiveRequirements),
+				maximumCandidates, maximumSupport);
+		};
 		LayeredCoordinateParityObserver.start(
 			decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
 			tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
@@ -686,7 +757,8 @@ public final class LayeredCoordinateParityObserverFixture {
 			wrappedDecisionReconstructionCohortSource,
 			decisionReconstructionCohortAttributionSource, null,
 			decisionReconstructionDependencySemanticsSource,
-			decisionActiveNpcResidencySource);
+			decisionActiveNpcResidencySource,
+			decisionRefinementReassessmentSource);
         decisionTick[0] = 1L;
         LayeredRegionInterestOwnershipLedger.Change decisionRelease =
             decisionOwnership.synchronizeOwner(
@@ -987,7 +1059,11 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v28" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v29" for event in events))
+            self.assertTrue(all(
+                event["packedRegionRetirementRefinementReassessment"] is None
+                for event in events
+            ))
             self.assertTrue(all(
                 event["packedRegionAuthoredConstruction"] is None
                 for event in events
@@ -1773,6 +1849,58 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 self.assertFalse(
                     eligible_retirement_refinement[authority_flag]
                 )
+            deferred_reassessment = decision_events[3][
+                "packedRegionRetirementRefinementReassessment"
+            ]
+            self.assertEqual(
+                "DEFERRED_NOT_NEWER", deferred_reassessment["status"]
+            )
+            self.assertTrue(deferred_reassessment["attempted"])
+            self.assertTrue(deferred_reassessment["deferredNotNewer"])
+            self.assertTrue(deferred_reassessment["pendingRetained"])
+            self.assertEqual(2, deferred_reassessment[
+                "pendingBeforeCandidateSourceCount"
+            ])
+            self.assertEqual(2, deferred_reassessment[
+                "pendingAfterCandidateSourceCount"
+            ])
+            self.assertIsNone(deferred_reassessment["reassessment"])
+            stable_reassessment = decision_events[4][
+                "packedRegionRetirementRefinementReassessment"
+            ]
+            self.assertEqual("STABLE", stable_reassessment["status"])
+            self.assertFalse(stable_reassessment["deferredNotNewer"])
+            self.assertFalse(stable_reassessment["pendingRetained"])
+            self.assertEqual(0, stable_reassessment[
+                "pendingAfterCandidateSourceCount"
+            ])
+            stable_result = stable_reassessment["reassessment"]
+            self.assertTrue(stable_result["freshEvidenceAligned"])
+            self.assertTrue(stable_result[
+                "candidateSetStableAtObservation"
+            ])
+            self.assertTrue(stable_result[
+                "refinementConvergedAtObservation"
+            ])
+            self.assertFalse(stable_result["retirementReadinessEvidence"])
+            self.assertEqual(0, stable_result[
+                "lifecycleReadyEvidenceSourceCount"
+            ])
+            self.assertEqual(2, stable_result["freshSafety"]["sourceCount"])
+            self.assertEqual(
+                {"DIAGNOSTIC_SELECTION_ONLY"},
+                {
+                    entry["readinessState"]
+                    for entry in stable_result["freshSafety"]["entries"]
+                },
+            )
+            for authority_flag in (
+                "candidateSelectionMutated",
+                "fixedPointLifecycleClosureProved", "loadRequest",
+                "entityRegistry", "arrivalGate", "retirementCommitToken",
+                "lifecycleAuthority",
+            ):
+                self.assertFalse(stable_result[authority_flag])
             refusal = decision_events[3]["regionRetirementDecisions"]
             self.assertEqual((1, 0, 1), (
                 refusal["candidateCount"], refusal["eligibleCount"],
@@ -1849,6 +1977,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v25 = json.loads(SCHEMA_V25.read_text(encoding="utf-8"))
                 v26 = json.loads(SCHEMA_V26.read_text(encoding="utf-8"))
                 v27 = json.loads(SCHEMA_V27.read_text(encoding="utf-8"))
+                v28 = json.loads(SCHEMA_V28.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -1865,6 +1994,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v25["$id"], Resource.from_contents(v25)),
                     (v26["$id"], Resource.from_contents(v26)),
                     (v27["$id"], Resource.from_contents(v27)),
+                    (v28["$id"], Resource.from_contents(v28)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

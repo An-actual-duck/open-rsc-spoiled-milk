@@ -33,6 +33,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
@@ -1412,7 +1414,8 @@ public final class Development implements CommandTrigger {
 					layeredPackedRegionAuthoredReconstructionTopologySource(player),
 					layeredPackedRegionAuthoredReconstructionDependencySemanticsSource(
 						player),
-					layeredPackedRegionActiveNpcResidencySource(player));
+					layeredPackedRegionActiveNpcResidencySource(player),
+					layeredPackedRegionRetirementRefinementReassessmentSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1879,6 +1882,34 @@ public final class Development implements CommandTrigger {
 							.getAuthoredReconstructionRecipe(),
 						safety, player.getWorld().getServer().getCurrentTick(),
 						maximumInstances, maximumRelevantDetails);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionRetirementRefinementReassessmentSource
+			layeredPackedRegionRetirementRefinementReassessmentSource(
+				final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionRetirementRefinementReassessmentSource() {
+			@Override
+			public LayeredPackedRegionRetirementRefinementReassessment
+				captureIfFresh(
+					final LayeredPackedRegionRetirementRefinementProposal
+						previousProposal,
+					final int maximumCandidateSources,
+					final int maximumSupportSources,
+					final int maximumNpcInstances,
+					final int maximumRelevantNpcDetails,
+					final int maximumActiveNpcRequirements) {
+				return player.getWorld().getRegionManager()
+					.captureLayeredPackedRegionRetirementRefinementReassessmentIfFresh(
+						previousProposal,
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						maximumCandidateSources, maximumSupportSources,
+						maximumNpcInstances, maximumRelevantNpcDetails,
+						maximumActiveNpcRequirements);
 			}
 		};
 	}

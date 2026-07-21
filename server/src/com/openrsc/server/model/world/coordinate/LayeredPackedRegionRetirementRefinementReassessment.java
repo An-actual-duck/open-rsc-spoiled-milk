@@ -177,6 +177,9 @@ public final class LayeredPackedRegionRetirementRefinementReassessment {
 	public int getLifecycleReadyEvidenceSourceCount() {
 		return freshSafety.getLifecycleReadySourceCount();
 	}
+	public LayeredPackedRegionRetirementSafetyAssessment getFreshSafety() {
+		return freshSafety;
+	}
 	public LayeredPackedRegionRetirementRefinementProposal getNextProposal() {
 		return nextProposal;
 	}

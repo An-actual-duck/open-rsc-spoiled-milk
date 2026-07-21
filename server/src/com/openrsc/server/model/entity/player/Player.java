@@ -48,6 +48,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredRegionMembershipMirror;
@@ -3488,6 +3490,33 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver
+		.PackedRegionRetirementRefinementReassessmentSource
+			layeredPackedRegionRetirementRefinementReassessmentSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionRetirementRefinementReassessmentSource() {
+			@Override
+			public LayeredPackedRegionRetirementRefinementReassessment
+				captureIfFresh(
+					final LayeredPackedRegionRetirementRefinementProposal
+						previousProposal,
+					final int maximumCandidateSources,
+					final int maximumSupportSources,
+					final int maximumNpcInstances,
+					final int maximumRelevantNpcDetails,
+					final int maximumActiveNpcRequirements) {
+				return getWorld().getRegionManager()
+					.captureLayeredPackedRegionRetirementRefinementReassessmentIfFresh(
+						previousProposal,
+						getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						maximumCandidateSources, maximumSupportSources,
+						maximumNpcInstances, maximumRelevantNpcDetails,
+						maximumActiveNpcRequirements);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3613,7 +3642,10 @@ public final class Player extends Mob {
 				loggedIn
 					? layeredPackedRegionAuthoredReconstructionDependencySemanticsSource()
 					: null,
-				loggedIn ? layeredPackedRegionActiveNpcResidencySource() : null);
+				loggedIn ? layeredPackedRegionActiveNpcResidencySource() : null,
+				loggedIn
+					? layeredPackedRegionRetirementRefinementReassessmentSource()
+					: null);
 		}
 	}
 

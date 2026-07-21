@@ -178,23 +178,23 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v22.schema.json`. Each v22 record
-retains the complete v21 position, logical-window, interest-delta,
+traces emit `schema/layered-map-parity-event-v29.schema.json`. Each v29 record
+retains the complete v28 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v18 schemas remain
+repeating the tile comparisons on every movement. The v1-v28 schemas remain
 alongside it—including
 `schema/layered-map-parity-event-v18.schema.json`,
 `schema/layered-map-parity-event-v17.schema.json`,
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
-explicit readable contracts. The v19-v21 schemas remain immutable contracts for
-earlier records.
+explicit readable contracts. The v19-v28 schemas likewise remain immutable
+contracts for earlier records.
 Marker and stop records may additionally summarize the latest 16 contiguous
 ordinary walking steps since the previous reset, including per-step decisions,
 aggregate parity, capacity evictions, and discontinuities. Teleports, login,
@@ -292,6 +292,22 @@ metadata for cross-source placements. Edge and bridge lists each refuse beyond
 8,192 entries. The observer passes the exact v21 cohort object into attribution,
 and the payload remains identity-only evidence with no entity registry or
 lifecycle authority.
+v23 compares the forward cohort with bounded whole-recipe incoming-edge and
+component topology. v24 separates source-local replay, outbound spatial
+support, and incoming-owner evidence. v25 records detached active-NPC authored
+ownership and current residency, while v26 assesses point-in-time containment
+without treating it as readiness. v27 projects exact missing sources for
+recognized active-NPC boundary crossings and retains non-expandable blockers.
+v28 combines exact safety seeds, authored expansion, active-NPC requirements,
+support coordinates, and hard blockers into one inert refinement proposal.
+v29 retains only the latest immutable proposal inside the private trace and
+reassesses it on a strictly newer atomic observation. It distinguishes
+`DEFERRED_NOT_NEWER`, `STABLE`, `EXPANDED`, `HARD_BLOCKED`, and
+`EXPANDED_AND_HARD_BLOCKED`, includes the full diagnostic-only fresh safety and
+next proposal, and clears state only after a stable unblocked observation.
+Diagnostic selections explicitly have no retirement-readiness evidence,
+commit token, entity registry, arrival gate, load request, or lifecycle
+authority.
 
 ## Checked Player mirror
 

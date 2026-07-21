@@ -3,20 +3,22 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, and 78 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, and 81 automated-validated on the active refinement branch
+76, 77, 78, 79, 80, 81, and 82 automated-validated on the active refinement
+branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 81 composes Slice 80 candidate observation,
-authored-cohort analysis, an active-NPC census, and Slice 79 reassessment behind
-one bounded same-tick RegionManager call. A tick that is not newer returns no
-sample rather than manufacturing freshness. The seam remains unconnected to
-the observer and normal runtime. No selection mutation, source load, entity
-registry, arrival gate, commit token, retention decision, or lifecycle
-authority is authorized, and packed Region lookup, eager loading, release,
-eviction, pathing, packets, and persistence remain unchanged
+Current milestone: automated Slice 82 exposes the Slice 81 fresh reassessment
+through additive private schema-v29 diagnostics. Each trace retains only its
+latest immutable proposal, reports same-tick deferral explicitly, advances an
+expanding or blocked proposal without losing it, and clears a stable unblocked
+proposal. Diagnostic-only safety remains visibly distinct from retirement
+readiness. No selection mutation, source load, entity registry, arrival gate,
+commit token, retention decision, or lifecycle authority is authorized, and
+packed Region lookup, eager loading, release, eviction, pathing, packets, and
+persistence remain unchanged
 
 ## Purpose
 
@@ -7704,6 +7706,68 @@ Safety boundary:
 Status: implemented and automated-validated. Observer state, schema exposure,
 and private owner validation remain absent.
 
+### Slice 82: Stateful refinement reassessment diagnostics
+
+Objective: expose Slice 81 through additive private diagnostics while retaining
+only the latest immutable proposal and keeping every result non-authoritative.
+
+Implemented:
+
+- additive `layered-map-parity-event-v29` records add
+  `packedRegionRetirementRefinementReassessment` without changing any v28
+  field;
+- one optional callback invokes the Slice 81 RegionManager seam from both the
+  dev-command and logged-in Player paths using the completed immutable authored
+  recipe and the observer's existing explicit budgets;
+- each trace retains at most the latest immutable proposal. A newer expanding
+  or hard-blocked result replaces it with that result's immutable next proposal;
+  a stable unblocked result clears it;
+- a current event can seed tracking only when no proposal was pending at event
+  start, preventing the ordinary same-event projection from overwriting an
+  ongoing refinement chain or immediately reseeding a converged chain;
+- `DEFERRED_NOT_NEWER` is serialized distinctly from no pending attempt and
+  from stable, expanded, hard-blocked, or expanded-and-hard-blocked results;
+- successful records include the prior and reassessed evidence ticks, exact
+  before/after counts, full diagnostic-only fresh safety, exact new-candidate
+  coordinates, and the full next proposal; and
+- the layered-maps operator README now identifies v29 as the current trace
+  contract and summarizes the retained-proposal state machine; and
+- the result states that it has no retirement-readiness evidence, fixed-point
+  lifecycle proof, load request, entity registry, arrival gate, retirement
+  commit token, or lifecycle authority.
+
+Automated validation status:
+
+- the executable observer fixture creates a non-empty two-source proposal,
+  proves one deferred attempt retains it unchanged, then proves one strictly
+  newer stable reassessment clears it while serializing both diagnostic-only
+  safety entries;
+- schema validation covers every fixture event through v29 and retains the
+  complete v11-v28 reference chain;
+- focused source guards cover state replacement, convergence clearing, no
+  same-event overwrite, private runtime wiring, bounded schema fields, and all
+  authority flags;
+- the complete layered-map suite passes 209 tests across 81 focused files; and
+- the authoritative bundled-Ant build compiles 768 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- retained state is an immutable diagnostic proposal, not a Region/entity
+  handle, lease, pin, registry, arrival gate, teardown transaction, or load
+  request;
+- a deferred attempt samples nothing and cannot be interpreted as convergence,
+  while a stable attempt is explicitly point-in-time only;
+- diagnostic safety uses `DIAGNOSTIC_SELECTION_ONLY`, readiness/ownership/
+  residency versions of `-1`, zero lifecycle-ready sources, and false
+  retirement-readiness evidence; and
+- No lifecycle authority, retirement decision, commit token, source load,
+  arrival rejection, entity registry, transaction, teardown, reconstruction,
+  or rollback is created.
+
+Status: implemented and automated-validated. Private owner validation remains
+pending.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -7991,6 +8055,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 79 by reassessing an exact proposed candidate set against strictly newer atomic evidence. | Implemented and automated-validated; stable, expanding, and non-expandable-blocked outcomes remain distinct, stale/incomplete inputs refuse, and candidate-set convergence grants no lifecycle authority |
 | 2026-07-20 | Continue with Slice 80 by observing exact refinement candidates without manufacturing retirement eligibility or loading absent Regions. | Implemented and automated-validated; every diagnostic source is explicitly non-ready, absent sources remain absent, count evidence is detached, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 81 by composing one strictly newer, same-tick candidate observation and reassessment behind a dormant RegionManager seam. | Implemented and automated-validated; same-tick repeats defer before sampling, all evidence shares one observation lock/tick, the observer remains disconnected, and no lifecycle authority exists |
+| 2026-07-20 | Continue with Slice 82 by retaining and reassessing the latest immutable proposal through additive private schema-v29 diagnostics. | Implemented and automated-validated; deferral, stable, expanding, and hard-blocked states are explicit, diagnostic-only safety remains non-ready, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -8079,14 +8144,18 @@ same-tick NPC census, and Slice 79 reassessment behind a single dormant
 RegionManager call. It defers before sampling when the tick has not advanced,
 and it retains no runtime state or authority.
 
-The next focused checkpoint is additive private diagnostic exposure. Observer
-state may retain only the latest immutable proposal, invoke the Slice 81 source
-on a later event, replace that proposal only with an immutable next proposal,
-and serialize whether reassessment was deferred, stable, expanding, or hard-
-blocked. Normal runtime and existing schema consumers must remain unchanged.
-Equivalent preservation treatment is still required for players, dynamic
-objects, ground items, collision/reload products, and owned events before any
-runtime consumer can act.
+Slice 82 supplies that private exposure. Observer state retains only the latest
+immutable proposal, invokes Slice 81 on later events, preserves it across an
+explicit same-tick deferral, replaces it only with an immutable expanding or
+hard-blocked next proposal, and clears it only after a stable unblocked
+point-in-time result. Schema-v29 exposes full diagnostic safety and visibly
+states that it is not retirement-readiness evidence.
+
+The next focused gate is private owner validation of a real proposal chain.
+After that evidence is accepted, the safest implementation direction is to
+inventory the equivalent preservation and reload burdens for players, dynamic
+objects, ground items, collision products, and owned events before creating any
+runtime lifecycle consumer.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
