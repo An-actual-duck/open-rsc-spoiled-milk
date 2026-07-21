@@ -163,6 +163,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		int candidateEventCount = 0;
 		int restorationAvailableCount = 0;
 		int callbackPayloadCompleteCount = 0;
+		long previousRegistrationSequence = 0L;
 		for (int index = 0; index < eventStates.size(); index++) {
 			EventState state = Objects.requireNonNull(
 				eventStates.get(index), "eventStates[" + index + "]");
@@ -170,6 +171,12 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 				throw new IllegalArgumentException(
 					"Event ordinals must preserve contiguous snapshot order");
 			}
+			if (state.getRegistrationSequence()
+				<= previousRegistrationSequence) {
+				throw new IllegalArgumentException(
+					"Event registration identities must preserve accepted order");
+			}
+			previousRegistrationSequence = state.getRegistrationSequence();
 			referenceCount = Math.addExact(
 				referenceCount, state.getSpatialReferences().size());
 			if (referenceCount > maximumSpatialReferences) {
@@ -284,6 +291,12 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		return ownerPositionHintEventCount == 0 && unattributedEventCount == 0;
 	}
 	public int getRestorationStateCompleteEventCount() { return 0; }
+	public int getRegistrationIdentityCapturedEventCount() {
+		return events.size();
+	}
+	public boolean isRegistrationIdentityCaptured() { return true; }
+	public boolean isRegistrationIdentityComplete() { return true; }
+	public boolean isSchedulerInstanceIdentityCaptured() { return false; }
 
 	public boolean isPointInTimeOnly() { return true; }
 	public boolean isDetachedPrimitiveCopy() { return true; }
@@ -597,6 +610,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	/** One event's detached scheduler and affinity facts. */
 	public static final class EventState {
 		private final int snapshotOrdinal;
+		private final long registrationSequence;
 		private final OwnerKind ownerKind;
 		private final AttributionKind attributionKind;
 		private final boolean running;
@@ -607,6 +621,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 
 		private EventState(
 			final int snapshotOrdinal,
+			final long registrationSequence,
 			final OwnerKind ownerKind,
 			final AttributionKind attributionKind,
 			final boolean running,
@@ -614,11 +629,13 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final int timesRan,
 			final List<SpatialReference> spatialReferences,
 			final EventRestorationState restorationState) {
-			if (snapshotOrdinal < 0 || timesRan < 0) {
+			if (snapshotOrdinal < 0 || registrationSequence <= 0L
+				|| timesRan < 0) {
 				throw new IllegalArgumentException(
 					"Event scheduler state is invalid");
 			}
 			this.snapshotOrdinal = snapshotOrdinal;
+			this.registrationSequence = registrationSequence;
 			this.ownerKind = Objects.requireNonNull(ownerKind, "ownerKind");
 			this.attributionKind = Objects.requireNonNull(
 				attributionKind, "attributionKind");
@@ -691,6 +708,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 
 		public static EventState of(
 			final int snapshotOrdinal,
+			final long registrationSequence,
 			final OwnerKind ownerKind,
 			final AttributionKind attributionKind,
 			final boolean running,
@@ -698,13 +716,15 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final int timesRan,
 			final List<SpatialReference> spatialReferences) {
 			return new EventState(
-				snapshotOrdinal, ownerKind, attributionKind, running,
+				snapshotOrdinal, registrationSequence, ownerKind, attributionKind,
+				running,
 				ticksBeforeRun, timesRan, spatialReferences,
 				EventRestorationState.unavailable());
 		}
 
 		public static EventState of(
 			final int snapshotOrdinal,
+			final long registrationSequence,
 			final OwnerKind ownerKind,
 			final AttributionKind attributionKind,
 			final boolean running,
@@ -713,12 +733,14 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final List<SpatialReference> spatialReferences,
 			final EventRestorationState restorationState) {
 			return new EventState(
-				snapshotOrdinal, ownerKind, attributionKind, running,
+				snapshotOrdinal, registrationSequence, ownerKind, attributionKind,
+				running,
 				ticksBeforeRun, timesRan, spatialReferences,
 				restorationState);
 		}
 
 		public int getSnapshotOrdinal() { return snapshotOrdinal; }
+		public long getRegistrationSequence() { return registrationSequence; }
 		public OwnerKind getOwnerKind() { return ownerKind; }
 		public AttributionKind getAttributionKind() {
 			return attributionKind;
@@ -748,6 +770,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		}
 
 		public int getSnapshotOrdinal() { return state.getSnapshotOrdinal(); }
+		public long getRegistrationSequence() {
+			return state.getRegistrationSequence();
+		}
 		public OwnerKind getOwnerKind() { return state.getOwnerKind(); }
 		public AttributionKind getAttributionKind() {
 			return state.getAttributionKind();

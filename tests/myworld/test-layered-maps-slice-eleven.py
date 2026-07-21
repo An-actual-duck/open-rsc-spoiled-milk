@@ -844,7 +844,7 @@ public final class LayeredCoordinateParityObserverFixture {
 				List<LayeredPackedRegionEventOwnershipInventory.EventState> states =
 					Arrays.asList(
 						LayeredPackedRegionEventOwnershipInventory.EventState.of(
-							0,
+							0, 101L,
 							LayeredPackedRegionEventOwnershipInventory.OwnerKind.NONE,
 							LayeredPackedRegionEventOwnershipInventory.AttributionKind
 								.EXACT_SPATIAL,
@@ -868,7 +868,7 @@ public final class LayeredCoordinateParityObserverFixture {
 														.AuthoredConstructionKind.SCENERY)),
 									true)),
 						LayeredPackedRegionEventOwnershipInventory.EventState.of(
-							1,
+							1, 102L,
 							LayeredPackedRegionEventOwnershipInventory.OwnerKind.NONE,
 							LayeredPackedRegionEventOwnershipInventory.AttributionKind
 								.UNATTRIBUTED,

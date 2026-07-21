@@ -301,12 +301,13 @@ class LayeredMapsSliceNinetyFiveTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, boundary)
 
-    def test_registration_identity_remains_scheduler_internal(self):
+    def test_registration_identity_reaches_only_the_detached_inventory(self):
         handler = HANDLER.read_text(encoding="utf-8")
         observer = OBSERVER.read_text(encoding="utf-8")
-        for source in (handler, observer):
-            self.assertNotIn("getTrackedEventRegistrations()", source)
-            self.assertNotIn("getRegistrationSequence()", source)
+        self.assertIn("getTrackedEventRegistrations()", handler)
+        self.assertIn("getRegistrationSequence()", handler)
+        self.assertNotIn("getTrackedEventRegistrations()", observer)
+        self.assertNotIn("getRegistrationSequence()", observer)
 
     def test_living_plan_records_slice_ninety_five_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")

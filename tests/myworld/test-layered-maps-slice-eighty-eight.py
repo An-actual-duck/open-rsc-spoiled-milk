@@ -71,25 +71,25 @@ public final class EventOwnershipInventoryFixture {
                 7L, 99L,
                 Arrays.asList(PackedSource.of(2, 10), PackedSource.of(3, 10)),
                 Arrays.asList(
-                    EventState.of(0, OwnerKind.NONE,
+                    EventState.of(0, 11L, OwnerKind.NONE,
                         AttributionKind.EXACT_SPATIAL, true, 4L, 0,
                         Collections.singletonList(SpatialReference.of(
                             SpatialRole.FIXED_EFFECT_LOCATION, 100, 500))),
-                    EventState.of(1, OwnerKind.NPC,
+                    EventState.of(1, 12L, OwnerKind.NPC,
                         AttributionKind.EXACT_SPATIAL, true, 0L, 3,
                         Arrays.asList(
                             SpatialReference.of(
                                 SpatialRole.SUBJECT_CURRENT_POSITION, 101, 500),
                             SpatialReference.of(
                                 SpatialRole.TARGET_CURRENT_POSITION, 150, 500))),
-                    EventState.of(2, OwnerKind.PLAYER,
+                    EventState.of(2, 13L, OwnerKind.PLAYER,
                         AttributionKind.OWNER_POSITION_HINT, true, -1L, 8,
                         Collections.singletonList(SpatialReference.of(
                             SpatialRole.OWNER_CURRENT_POSITION, 145, 500))),
-                    EventState.of(3, OwnerKind.NONE,
+                    EventState.of(3, 14L, OwnerKind.NONE,
                         AttributionKind.NON_SPATIAL_GLOBAL, true, 20L, 0,
                         Collections.emptyList()),
-                    EventState.of(4, OwnerKind.NONE,
+                    EventState.of(4, 15L, OwnerKind.NONE,
                         AttributionKind.UNATTRIBUTED, false, 0L, 1,
                         Collections.emptyList())),
                 2, 5, 4);
@@ -143,13 +143,13 @@ public final class EventOwnershipInventoryFixture {
         PackedSource source = PackedSource.of(2, 10);
         SpatialReference fixed = SpatialReference.of(
             SpatialRole.FIXED_EFFECT_LOCATION, 100, 500);
-        expectIllegal(() -> EventState.of(0, OwnerKind.NONE,
+        expectIllegal(() -> EventState.of(0, 1L, OwnerKind.NONE,
             AttributionKind.EXACT_SPATIAL, true, 0L, 0,
             Collections.emptyList()));
-        expectIllegal(() -> EventState.of(0, OwnerKind.NONE,
+        expectIllegal(() -> EventState.of(0, 1L, OwnerKind.NONE,
             AttributionKind.OWNER_POSITION_HINT, true, 0L, 0,
             Collections.singletonList(fixed)));
-        expectIllegal(() -> EventState.of(0, OwnerKind.NONE,
+        expectIllegal(() -> EventState.of(0, 1L, OwnerKind.NONE,
             AttributionKind.NON_SPATIAL_GLOBAL, true, 0L, 0,
             Collections.singletonList(fixed)));
         expectIllegal(() -> LayeredPackedRegionEventOwnershipInventory
@@ -158,12 +158,12 @@ public final class EventOwnershipInventoryFixture {
                 Collections.emptyList(), 2, 0, 0));
         expectIllegal(() -> LayeredPackedRegionEventOwnershipInventory
             .inventory(1L, 1L, Collections.singletonList(source),
-                Collections.singletonList(EventState.of(1, OwnerKind.NONE,
+                Collections.singletonList(EventState.of(1, 1L, OwnerKind.NONE,
                     AttributionKind.UNATTRIBUTED, true, 0L, 0,
                     Collections.emptyList())), 1, 1, 0));
         expectIllegal(() -> LayeredPackedRegionEventOwnershipInventory
             .inventory(1L, 1L, Collections.singletonList(source),
-                Collections.singletonList(EventState.of(0, OwnerKind.NONE,
+                Collections.singletonList(EventState.of(0, 1L, OwnerKind.NONE,
                     AttributionKind.EXACT_SPATIAL, true, 0L, 0,
                     Collections.singletonList(fixed))), 1, 1, 0));
     }

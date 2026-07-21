@@ -386,20 +386,27 @@ public class GameEventHandler {
 				source.getPackedRegionX(), source.getPackedRegionY()));
 		}
 
-		List<GameTickEvent> liveEvents = getEvents();
+		List<GameTickEventStore.RegisteredEvent> liveRegistrations =
+			eventStore.getTrackedEventRegistrations();
 		if (maximumEvents < 0
 			|| maximumEvents
 				> LayeredPackedRegionEventOwnershipInventory.MAXIMUM_EVENTS
-			|| liveEvents.size() > maximumEvents) {
+			|| liveRegistrations.size() > maximumEvents) {
 			throw new IllegalArgumentException(
 				"Event ownership snapshot exceeds its event budget");
 		}
 		List<EventState> eventStates =
-			new ArrayList<EventState>(liveEvents.size());
-		for (int ordinal = 0; ordinal < liveEvents.size(); ordinal++) {
+			new ArrayList<EventState>(liveRegistrations.size());
+		for (int ordinal = 0; ordinal < liveRegistrations.size(); ordinal++) {
+			GameTickEventStore.RegisteredEvent registration =
+				Objects.requireNonNull(
+					liveRegistrations.get(ordinal),
+					"liveRegistrations[" + ordinal + "]");
 			GameTickEvent event = Objects.requireNonNull(
-				liveEvents.get(ordinal), "liveEvents[" + ordinal + "]");
-			eventStates.add(detachEventState(event, ordinal));
+				registration.getEvent(),
+				"liveRegistrations[" + ordinal + "].event");
+			eventStates.add(detachEventState(
+				event, ordinal, registration.getRegistrationSequence()));
 		}
 		return LayeredPackedRegionEventOwnershipInventory.inventory(
 			checked.getGeneration(), observedAtTick, packedSources, eventStates,
@@ -409,7 +416,8 @@ public class GameEventHandler {
 
 	private EventState detachEventState(
 		final GameTickEvent event,
-		final int ordinal) {
+		final int ordinal,
+		final long registrationSequence) {
 		Mob owner = event.getOwner();
 		OwnerKind ownerKind = owner == null
 			? OwnerKind.NONE
@@ -449,7 +457,8 @@ public class GameEventHandler {
 					"Unhandled event spatial-affinity scope");
 		}
 		return EventState.of(
-			ordinal, ownerKind, attribution, event.isRunning(),
+			ordinal, registrationSequence, ownerKind, attribution,
+			event.isRunning(),
 			event.getTicksBeforeRun(), event.getTimesRan(), references,
 			detachEventRestorationState(Objects.requireNonNull(
 				event.getRestorationState(), "event restoration state")));

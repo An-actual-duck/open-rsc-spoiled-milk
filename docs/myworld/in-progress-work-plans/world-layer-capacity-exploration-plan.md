@@ -3,23 +3,24 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, and 94 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, and 95 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, and 96 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 95 assigns a monotonically
-increasing process-local sequence to each accepted scheduler registration.
-Repeated internal snapshots retain the same sequence, rejected duplicates do
-not consume one, and removal/re-registration or stopped-event replacement gets
-a new sequence. Existing event UUIDs, keys, descriptors, classes, owners, and
-callbacks are not copied. The identity remains inside `GameTickEventStore` and
-is not yet read by the layered inventory, observer, schema, or any mutation
-consumer. Cancellation, reschedule, replay, preservation, and all lifecycle
-authority remain absent. The next gate can detach this identity into the
-bounded event inventory while keeping private schema-v33 unchanged;
+Current milestone: automated-validated Slice 96 copies Slice 95's positive
+process-local registration sequence through the same atomic tracked-event
+snapshot into every bounded event record. Snapshot ordinal and registration
+identity remain distinct, and missing, duplicate, or descending identities
+refuse the entire inventory. Existing UUIDs, keys, descriptors, classes,
+owners, callbacks, and handles do not cross the detached boundary. Scheduler-
+instance identity remains explicitly absent, so the sequence cannot be compared
+across restarts. The observer and schema-v33 remain unchanged; cancellation,
+reschedule, replay, preservation, and all lifecycle authority remain absent.
+The next gate can expose this minimum primitive evidence through additive
+private schema-v34 for owner validation;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8666,6 +8667,59 @@ Status: implemented and automated-validated. Layered capture, private schema
 exposure, owner validation, restart identity, executable restoration, and all
 event/lifecycle authority remain absent.
 
+### Slice 96: Bounded event registration identity capture
+
+Objective: detach Slice 95's scheduler-local registration sequence into every
+event in the existing bounded ownership inventory without changing private
+schema-v33 or exposing any scheduler handle/key.
+
+Implemented:
+
+- `GameEventHandler` now obtains event order, live handle, and registration
+  sequence from one atomic `GameTickEventStore` snapshot rather than obtaining
+  an event list separately from identity bookkeeping;
+- each detached event state and record carries one positive registration
+  sequence beside, but distinct from, its contiguous snapshot ordinal;
+- the inventory requires registration sequences to be strictly increasing in
+  tracked-event order, so zero, missing, duplicate, or descending identity
+  refuses the complete bounded capture rather than producing partial evidence;
+- aggregate evidence reports identity for every captured event while keeping
+  scheduler-instance identity and full scheduler identity explicitly false;
+  and
+- schema-v33 remains unchanged. Neither the observer nor JSON serializer reads
+  the registration sequence in this slice.
+
+Automated validation status:
+
+- an executable inventory fixture proves non-contiguous positive registration
+  sequences remain distinct from contiguous snapshot ordinals and that zero,
+  duplicate, and descending identities refuse;
+- source guards prove the handler consumes one store registration snapshot and
+  copies no UUID, key, descriptor, class, callback, or owner identity;
+- source guards prove the detached inventory has no event/store handles and
+  the observer does not read or publish the new identity;
+- the complete layered-map suite passes 265 tests across 95 focused files; and
+- the authoritative bundled-Ant build compiles 773 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- a process-local registration sequence can correlate repeated observations
+  only while the same scheduler instance remains alive. Because scheduler-
+  instance identity is absent, it must not be compared across server restarts;
+- complete identity capture means every bounded event has the store sequence;
+  it does not mean callback, scheduler, or restoration state is complete;
+- event handles stay inside `GameEventHandler` long enough to detach existing
+  primitive evidence and never enter the inventory or diagnostics; and
+- No event is cancelled, stopped, removed, rescheduled, recreated, or run. No
+  source is loaded, retained, retired, reconstructed, or gated, and no
+  preservation, reload, registry, teardown, transaction, rollback, or
+  lifecycle authority is created.
+
+Status: implemented and automated-validated. Private schema exposure, owner
+validation, scheduler-instance identity, executable restoration, and all
+event/lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8973,6 +9027,7 @@ private environment should validate at least:
 | 2026-07-21 | Record the first Slice 94 private magic-tree route without overstating its evidence. | Inconclusive; the pending marker arrived 8.313 seconds after source release, before the 16-tick retirement grace, so its inventory is null. The post-respawn stop is coherent and empty of exact/restoration events, behavior looked normal, but paired owner validation remains pending |
 | 2026-07-21 | Accept the timing-corrected Slice 94 magic-tree restoration-state route. | Owner-validated; pending contains exactly one complete detached authored spawn payload, the return teleport proves its natural completion, re-chopping the returned tree creates a new equivalent callback, privacy holds, and all scheduler/recovery/lifecycle authority remains false |
 | 2026-07-21 | Continue with Slice 95 by assigning scheduler-local identity to accepted event registrations. | Implemented and automated-validated; repeated snapshots retain one process-local sequence, rejected duplicates consume none, removal/re-registration and replacement receive new identities, UUID/key/private state stays internal, and no scheduler-control or lifecycle authority is created |
+| 2026-07-21 | Continue with Slice 96 by copying accepted registration identity into the bounded event inventory. | Implemented and automated-validated; one atomic store snapshot preserves ordinal/identity distinction, invalid identity refuses the whole capture, scheduler-instance identity and schema-v33 remain absent, and no event or lifecycle authority is created |
 
 ## Next Discussion
 
@@ -9194,6 +9249,16 @@ separate from identity; rejected or missing identity must refuse the entire
 capture; process/store-instance identity must remain explicitly uncaptured;
 schema-v33 must remain unchanged; and no UUID, key, descriptor, class, owner
 identity, event handle, or scheduler mutation may cross the inventory boundary.
+
+Slice 96 now supplies that detached identity capture and refuses incomplete or
+ambiguous registration order. The next focused gate should expose the positive
+registration sequence and aggregate completeness through additive private
+schema-v34. It must also publish `schedulerInstanceIdentityCaptured=false`,
+retain `schedulerIdentityCaptured=false`, leave UUID/key/descriptor/class/owner
+identity absent, and keep historical schema-v33 immutable. A private route can
+then mark the same pending tree callback twice before respawn, prove the
+registration sequence is stable while countdown decreases, prove it disappears
+after natural completion, and prove re-chopping creates a greater new sequence.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

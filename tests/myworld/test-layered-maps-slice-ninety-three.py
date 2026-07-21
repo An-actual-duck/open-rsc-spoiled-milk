@@ -91,16 +91,16 @@ public final class EventRestorationInventoryFixture {
                 9L, 120L,
                 Collections.singletonList(PackedSource.of(10, 10)),
                 Arrays.asList(
-                    EventState.of(0, OwnerKind.NONE,
+                    EventState.of(0, 21L, OwnerKind.NONE,
                         AttributionKind.EXACT_SPATIAL, true, 41L, 0,
                         Collections.singletonList(tree),
                         EventRestorationState.scenerySpawn(
                             spawnScenery, true)),
-                    EventState.of(1, OwnerKind.NONE,
+                    EventState.of(1, 22L, OwnerKind.NONE,
                         AttributionKind.EXACT_SPATIAL, true, 10L, 0,
                         Collections.singletonList(stump),
                         EventRestorationState.sceneryRemove(removalScenery)),
-                    EventState.of(2, OwnerKind.NONE,
+                    EventState.of(2, 23L, OwnerKind.NONE,
                         AttributionKind.UNATTRIBUTED, true, 1L, 4,
                         Collections.emptyList())),
                 1, 3, 2);
@@ -144,10 +144,10 @@ public final class EventRestorationInventoryFixture {
         EventRestorationState state =
             EventRestorationState.scenerySpawn(scenery, false);
         expectIllegal(() -> EventState.of(
-            0, OwnerKind.NONE, AttributionKind.EXACT_SPATIAL, true, 1L, 0,
+            0, 1L, OwnerKind.NONE, AttributionKind.EXACT_SPATIAL, true, 1L, 0,
             Collections.singletonList(fixed), state));
         expectIllegal(() -> EventState.of(
-            0, OwnerKind.PLAYER, AttributionKind.OWNER_POSITION_HINT,
+            0, 1L, OwnerKind.PLAYER, AttributionKind.OWNER_POSITION_HINT,
             true, 1L, 0,
             Collections.singletonList(SpatialReference.of(
                 SpatialRole.OWNER_CURRENT_POSITION, 525, 489)), state));
