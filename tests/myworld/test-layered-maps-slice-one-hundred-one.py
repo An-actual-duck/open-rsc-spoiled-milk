@@ -52,7 +52,7 @@ class LayeredMapsSliceOneHundredOneTest(unittest.TestCase):
         self.assertIn("ExecutionSemantics.UNAVAILABLE", fixture)
         self.assertIn("!unavailable.isExecutionSemanticsCaptured()", fixture)
 
-    def test_semantics_are_not_yet_detached_or_published(self):
+    def test_semantics_are_detached_but_not_yet_published(self):
         handler = HANDLER.read_text(encoding="utf-8")
         inventory = INVENTORY.read_text(encoding="utf-8")
         observer = OBSERVER.read_text(encoding="utf-8")
@@ -61,9 +61,10 @@ class LayeredMapsSliceOneHundredOneTest(unittest.TestCase):
             "getTimeProgressionPolicy()",
             "isExecutionSemanticsCaptured()",
         ):
-            self.assertNotIn(method, handler)
-            self.assertNotIn(method, inventory)
+            self.assertIn(method, inventory)
             self.assertNotIn(method, observer)
+        self.assertIn("state.getExecutionSemantics()", handler)
+        self.assertIn("state.getTimeProgressionPolicy()", handler)
         for forbidden in (
             "registerGameObject",
             "unregisterGameObject",

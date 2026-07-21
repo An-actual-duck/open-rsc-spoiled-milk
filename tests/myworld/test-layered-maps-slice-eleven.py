@@ -868,7 +868,11 @@ public final class LayeredCoordinateParityObserverFixture {
 													7L, 4, 0, 42,
 													LayeredPackedRegionEventOwnershipInventory
 														.AuthoredConstructionKind.SCENERY)),
-									true)),
+									true,
+								LayeredPackedRegionEventOwnershipInventory
+									.ExecutionSemantics.ONE_SHOT,
+								LayeredPackedRegionEventOwnershipInventory
+									.TimeProgressionPolicy.CONTINUE_SERVER_TICKS)),
 						LayeredPackedRegionEventOwnershipInventory.EventState.of(
 							1, 102L,
 							LayeredPackedRegionEventOwnershipInventory.OwnerKind.NONE,

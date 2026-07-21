@@ -73,6 +73,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	private final int candidateRelatedEventCount;
 	private final int restorationStateAvailableEventCount;
 	private final int detachedCallbackPayloadCompleteEventCount;
+	private final int executionSemanticsCapturedEventCount;
 
 	private LayeredPackedRegionEventOwnershipInventory(
 		final long proposalGeneration,
@@ -87,7 +88,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		final int unattributedEventCount,
 		final int candidateRelatedEventCount,
 		final int restorationStateAvailableEventCount,
-		final int detachedCallbackPayloadCompleteEventCount) {
+		final int detachedCallbackPayloadCompleteEventCount,
+		final int executionSemanticsCapturedEventCount) {
 		this.proposalGeneration = proposalGeneration;
 		this.observedAtTick = observedAtTick;
 		this.schedulerInstanceIdentity = schedulerInstanceIdentity;
@@ -103,6 +105,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			restorationStateAvailableEventCount;
 		this.detachedCallbackPayloadCompleteEventCount =
 			detachedCallbackPayloadCompleteEventCount;
+		this.executionSemanticsCapturedEventCount =
+			executionSemanticsCapturedEventCount;
 	}
 
 	/**
@@ -173,6 +177,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		int candidateEventCount = 0;
 		int restorationAvailableCount = 0;
 		int callbackPayloadCompleteCount = 0;
+		int executionSemanticsCapturedCount = 0;
 		long previousRegistrationSequence = 0L;
 		for (int index = 0; index < eventStates.size(); index++) {
 			EventState state = Objects.requireNonNull(
@@ -219,6 +224,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 				restorationAvailableCount++;
 				callbackPayloadCompleteCount += state.getRestorationState()
 					.isDetachedCallbackPayloadComplete() ? 1 : 0;
+				executionSemanticsCapturedCount += state.getRestorationState()
+					.isExecutionSemanticsCaptured() ? 1 : 0;
 			}
 			candidateEventCount += candidateOrdinals.isEmpty() ? 0 : 1;
 			switch (state.getAttributionKind()) {
@@ -254,7 +261,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			sourceRecords, eventRecords,
 			referenceCount, exactCount, hintCount, globalCount, unknownCount,
 			candidateEventCount, restorationAvailableCount,
-			callbackPayloadCompleteCount);
+			callbackPayloadCompleteCount, executionSemanticsCapturedCount);
 	}
 
 	private static List<List<Integer>> emptyEventOrdinalsBySource(
@@ -301,6 +308,18 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	public int getDetachedCallbackPayloadCompleteEventCount() {
 		return detachedCallbackPayloadCompleteEventCount;
 	}
+	public int getExecutionSemanticsCapturedEventCount() {
+		return executionSemanticsCapturedEventCount;
+	}
+	public boolean isExecutionSemanticsCaptured() {
+		return executionSemanticsCapturedEventCount > 0;
+	}
+	public boolean isExecutionSemanticsComplete() {
+		return executionSemanticsCapturedEventCount
+			== restorationStateAvailableEventCount;
+	}
+	public int getAtomicTimingCapturedEventCount() { return 0; }
+	public boolean isAtomicTimingCaptured() { return false; }
 	public boolean isCandidateAttributionComplete() {
 		return ownerPositionHintEventCount == 0 && unattributedEventCount == 0;
 	}
@@ -356,6 +375,16 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		NOT_REQUIRED,
 		AUTHORED_PLACEMENT_IDENTITY,
 		LIVE_ENTITY_REFERENCE_ONLY
+	}
+
+	public enum ExecutionSemantics {
+		UNAVAILABLE,
+		ONE_SHOT
+	}
+
+	public enum TimeProgressionPolicy {
+		UNAVAILABLE,
+		CONTINUE_SERVER_TICKS
 	}
 
 	public enum AuthoredConstructionKind {
@@ -428,20 +457,26 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		private static final EventRestorationState UNAVAILABLE =
 			new EventRestorationState(
 				RestorationKind.UNAVAILABLE, null, false,
-				TargetBindingEvidence.UNAVAILABLE, false);
+				TargetBindingEvidence.UNAVAILABLE, false,
+				ExecutionSemantics.UNAVAILABLE,
+				TimeProgressionPolicy.UNAVAILABLE);
 
 		private final RestorationKind kind;
 		private final SceneryRestorationState scenery;
 		private final boolean forceFullBlock;
 		private final TargetBindingEvidence targetBindingEvidence;
 		private final boolean detachedCallbackPayloadComplete;
+		private final ExecutionSemantics executionSemantics;
+		private final TimeProgressionPolicy timeProgressionPolicy;
 
 		private EventRestorationState(
 			final RestorationKind kind,
 			final SceneryRestorationState scenery,
 			final boolean forceFullBlock,
 			final TargetBindingEvidence targetBindingEvidence,
-			final boolean detachedCallbackPayloadComplete) {
+			final boolean detachedCallbackPayloadComplete,
+			final ExecutionSemantics executionSemantics,
+			final TimeProgressionPolicy timeProgressionPolicy) {
 			this.kind = Objects.requireNonNull(kind, "kind");
 			this.scenery = scenery;
 			this.forceFullBlock = forceFullBlock;
@@ -449,17 +484,32 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 				targetBindingEvidence, "targetBindingEvidence");
 			this.detachedCallbackPayloadComplete =
 				detachedCallbackPayloadComplete;
+			this.executionSemantics = Objects.requireNonNull(
+				executionSemantics, "executionSemantics");
+			this.timeProgressionPolicy = Objects.requireNonNull(
+				timeProgressionPolicy, "timeProgressionPolicy");
 			if (kind == RestorationKind.UNAVAILABLE) {
 				if (scenery != null || forceFullBlock
 					|| targetBindingEvidence
 						!= TargetBindingEvidence.UNAVAILABLE
-					|| detachedCallbackPayloadComplete) {
+					|| detachedCallbackPayloadComplete
+					|| executionSemantics != ExecutionSemantics.UNAVAILABLE
+					|| timeProgressionPolicy
+						!= TimeProgressionPolicy.UNAVAILABLE) {
 					throw new IllegalArgumentException(
 						"Unavailable event restoration state contains data");
 				}
-			} else if (scenery == null) {
-				throw new IllegalArgumentException(
-					"Scenery event restoration state requires scenery data");
+			} else {
+				if (scenery == null) {
+					throw new IllegalArgumentException(
+						"Scenery event restoration state requires scenery data");
+				}
+				if (executionSemantics != ExecutionSemantics.ONE_SHOT
+					|| timeProgressionPolicy
+						!= TimeProgressionPolicy.CONTINUE_SERVER_TICKS) {
+					throw new IllegalArgumentException(
+						"Known scenery state requires one-shot timing semantics");
+				}
 			}
 		}
 
@@ -469,15 +519,20 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 
 		public static EventRestorationState scenerySpawn(
 			final SceneryRestorationState scenery,
-			final boolean forceFullBlock) {
+			final boolean forceFullBlock,
+			final ExecutionSemantics executionSemantics,
+			final TimeProgressionPolicy timeProgressionPolicy) {
 			return new EventRestorationState(
 				RestorationKind.SCENERY_SPAWN,
 				Objects.requireNonNull(scenery, "scenery"), forceFullBlock,
-				TargetBindingEvidence.NOT_REQUIRED, true);
+				TargetBindingEvidence.NOT_REQUIRED, true,
+				executionSemantics, timeProgressionPolicy);
 		}
 
 		public static EventRestorationState sceneryRemove(
-			final SceneryRestorationState scenery) {
+			final SceneryRestorationState scenery,
+			final ExecutionSemantics executionSemantics,
+			final TimeProgressionPolicy timeProgressionPolicy) {
 			SceneryRestorationState checked = Objects.requireNonNull(
 				scenery, "scenery");
 			boolean authored = checked.getAuthoredPlacement() != null;
@@ -486,7 +541,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 				authored
 					? TargetBindingEvidence.AUTHORED_PLACEMENT_IDENTITY
 					: TargetBindingEvidence.LIVE_ENTITY_REFERENCE_ONLY,
-				authored);
+				authored, executionSemantics, timeProgressionPolicy);
 		}
 
 		public RestorationKind getKind() { return kind; }
@@ -497,6 +552,15 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		}
 		public boolean isDetachedCallbackPayloadComplete() {
 			return detachedCallbackPayloadComplete;
+		}
+		public ExecutionSemantics getExecutionSemantics() {
+			return executionSemantics;
+		}
+		public TimeProgressionPolicy getTimeProgressionPolicy() {
+			return timeProgressionPolicy;
+		}
+		public boolean isExecutionSemanticsCaptured() {
+			return executionSemantics != ExecutionSemantics.UNAVAILABLE;
 		}
 		public boolean isSchedulerIdentityCaptured() { return false; }
 		public boolean isTargetBindingLookupPerformed() { return false; }

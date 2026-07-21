@@ -14,11 +14,13 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AuthoredPlacementRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventState;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.ExecutionSemantics;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.OwnerKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.PackedSource;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SceneryRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SpatialReference;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SpatialRole;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TimeProgressionPolicy;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.util.NamedThreadFactory;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -490,12 +492,20 @@ public class GameEventHandler {
 			scenery.getX(), scenery.getY(), scenery.getDirection(),
 			scenery.getType(), scenery.getOwner(),
 			scenery.getRuntimeAttributeCount(), detachedAuthored);
+		ExecutionSemantics executionSemantics = ExecutionSemantics.valueOf(
+			state.getExecutionSemantics().name());
+		TimeProgressionPolicy timeProgressionPolicy =
+			TimeProgressionPolicy.valueOf(
+				state.getTimeProgressionPolicy().name());
 		switch (state.getKind()) {
 			case SCENERY_SPAWN:
 				return EventRestorationState.scenerySpawn(
-					detachedScenery, state.isForceFullBlock());
+					detachedScenery, state.isForceFullBlock(),
+					executionSemantics, timeProgressionPolicy);
 			case SCENERY_REMOVE:
-				return EventRestorationState.sceneryRemove(detachedScenery);
+				return EventRestorationState.sceneryRemove(
+					detachedScenery, executionSemantics,
+					timeProgressionPolicy);
 			default:
 				throw new IllegalStateException(
 					"Unhandled event restoration-state kind");

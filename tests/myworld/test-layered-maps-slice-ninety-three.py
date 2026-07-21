@@ -54,6 +54,8 @@ import com.openrsc.server.model.world.coordinate
 import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory.EventState;
 import com.openrsc.server.model.world.coordinate
+    .LayeredPackedRegionEventOwnershipInventory.ExecutionSemantics;
+import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory.OwnerKind;
 import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory.PackedSource;
@@ -63,6 +65,8 @@ import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory.SpatialReference;
 import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory.SpatialRole;
+import com.openrsc.server.model.world.coordinate
+    .LayeredPackedRegionEventOwnershipInventory.TimeProgressionPolicy;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -95,11 +99,14 @@ public final class EventRestorationInventoryFixture {
                         AttributionKind.EXACT_SPATIAL, true, 41L, 0,
                         Collections.singletonList(tree),
                         EventRestorationState.scenerySpawn(
-                            spawnScenery, true)),
+                            spawnScenery, true, ExecutionSemantics.ONE_SHOT,
+                            TimeProgressionPolicy.CONTINUE_SERVER_TICKS)),
                     EventState.of(1, 22L, OwnerKind.NONE,
                         AttributionKind.EXACT_SPATIAL, true, 10L, 0,
                         Collections.singletonList(stump),
-                        EventRestorationState.sceneryRemove(removalScenery)),
+                        EventRestorationState.sceneryRemove(
+                            removalScenery, ExecutionSemantics.ONE_SHOT,
+                            TimeProgressionPolicy.CONTINUE_SERVER_TICKS)),
                     EventState.of(2, 23L, OwnerKind.NONE,
                         AttributionKind.UNATTRIBUTED, true, 1L, 4,
                         Collections.emptyList())),
@@ -108,8 +115,13 @@ public final class EventRestorationInventoryFixture {
         check(inventory.getRestorationStateAvailableEventCount() == 2
             && inventory
                 .getDetachedCallbackPayloadCompleteEventCount() == 1
+            && inventory.getExecutionSemanticsCapturedEventCount() == 2
+            && inventory.isExecutionSemanticsCaptured()
+            && inventory.isExecutionSemanticsComplete()
+            && inventory.getAtomicTimingCapturedEventCount() == 0
+            && !inventory.isAtomicTimingCaptured()
             && inventory.getRestorationStateCompleteEventCount() == 0,
-            "available callback payload is not restoration completeness");
+            "execution semantics do not imply atomic restoration timing");
         check(inventory.getSources().get(0)
                 .getRestorationStateEventOrdinals().equals(Arrays.asList(0, 1))
             && inventory.getSources().get(0)
@@ -118,6 +130,11 @@ public final class EventRestorationInventoryFixture {
         check(inventory.getEvents().get(0).getRestorationState().getKind()
                 == LayeredPackedRegionEventOwnershipInventory.RestorationKind
                     .SCENERY_SPAWN
+            && inventory.getEvents().get(0).getRestorationState()
+                .getExecutionSemantics() == ExecutionSemantics.ONE_SHOT
+            && inventory.getEvents().get(0).getRestorationState()
+                .getTimeProgressionPolicy()
+                    == TimeProgressionPolicy.CONTINUE_SERVER_TICKS
             && inventory.getEvents().get(0).getRestorationState()
                 .isDetachedCallbackPayloadComplete()
             && inventory.getEvents().get(0).getRestorationState()
@@ -142,7 +159,12 @@ public final class EventRestorationInventoryFixture {
         SceneryRestorationState scenery = SceneryRestorationState.of(
             310, 310, 525, 489, 0, 0, null, 0, null);
         EventRestorationState state =
-            EventRestorationState.scenerySpawn(scenery, false);
+            EventRestorationState.scenerySpawn(
+                scenery, false, ExecutionSemantics.ONE_SHOT,
+                TimeProgressionPolicy.CONTINUE_SERVER_TICKS);
+        expectIllegal(() -> EventRestorationState.scenerySpawn(
+            scenery, false, ExecutionSemantics.UNAVAILABLE,
+            TimeProgressionPolicy.CONTINUE_SERVER_TICKS));
         expectIllegal(() -> EventState.of(
             0, 1L, OwnerKind.NONE, AttributionKind.EXACT_SPATIAL, true, 1L, 0,
             Collections.singletonList(fixed), state));
