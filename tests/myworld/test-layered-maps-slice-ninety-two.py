@@ -54,6 +54,12 @@ public final class EventRestorationStateFixture {
             && state.getTargetBindingEvidence()
                 == GameTickEventRestorationState.TargetBindingEvidence
                     .NOT_REQUIRED
+            && state.getExecutionSemantics()
+                == GameTickEventRestorationState.ExecutionSemantics.ONE_SHOT
+            && state.getTimeProgressionPolicy()
+                == GameTickEventRestorationState.TimeProgressionPolicy
+                    .CONTINUE_SERVER_TICKS
+            && state.isExecutionSemanticsCaptured()
             && state.isForceFullBlock()
             && state.isDetachedCallbackPayloadComplete(),
             "spawn retains complete callback inputs");
@@ -94,6 +100,11 @@ public final class EventRestorationStateFixture {
             && unresolved.getTargetBindingEvidence()
                 == GameTickEventRestorationState.TargetBindingEvidence
                     .LIVE_ENTITY_REFERENCE_ONLY
+            && unresolved.getExecutionSemantics()
+                == GameTickEventRestorationState.ExecutionSemantics.ONE_SHOT
+            && unresolved.getTimeProgressionPolicy()
+                == GameTickEventRestorationState.TimeProgressionPolicy
+                    .CONTINUE_SERVER_TICKS
             && !unresolved.isDetachedCallbackPayloadComplete()
             && unresolved.getScenery().getRuntimeAttributeCount() == 3,
             "identity-less removal remains bound to an uncaptured live target");
@@ -120,7 +131,13 @@ public final class EventRestorationStateFixture {
             && unavailable.getScenery() == null
             && unavailable.getTargetBindingEvidence()
                 == GameTickEventRestorationState.TargetBindingEvidence
-                    .UNAVAILABLE,
+                    .UNAVAILABLE
+            && unavailable.getExecutionSemantics()
+                == GameTickEventRestorationState.ExecutionSemantics.UNAVAILABLE
+            && unavailable.getTimeProgressionPolicy()
+                == GameTickEventRestorationState.TimeProgressionPolicy
+                    .UNAVAILABLE
+            && !unavailable.isExecutionSemanticsCaptured(),
             "legacy callbacks default to unavailable state");
     }
 

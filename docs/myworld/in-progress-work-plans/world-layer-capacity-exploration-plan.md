@@ -3,24 +3,22 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, and 100 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, and 100 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, and 101 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 100 exposes Slice 99's detached
-opaque scheduler-instance scope through additive private schema-v35. Every
-proposal-bearing inventory publishes one canonical token and true narrow-scope
-capture while full scheduler identity stays false. Historical closed schema-v34
-remains token-free and false. No store, event UUID/key, callback, class, owner,
-or scheduler handle crosses the observer boundary. The accepted restart route
-holds one token/registration stable in each private runtime while the two
-runtime tokens differ, proving numeric registration values are comparable only
-inside matching scope. A mistaken intermediate session is closed, inventory-
-free, and mechanically isolated from the clean redo. Cancellation, reschedule,
-replay, preservation, and all lifecycle authority remain absent;
+Current milestone: automated-validated Slice 101 explicitly declares the two
+known delayed scenery callbacks as `ONE_SHOT` with
+`CONTINUE_SERVER_TICKS` progression. This descriptive MMORPG policy prevents a
+future unloaded source from freezing depleted resources: elapsed server ticks
+continue and an overdue future reconstruction must precede player arrival.
+Unavailable callbacks remain explicitly unclassified. The semantics do not yet
+cross into the inventory or schema, and atomic countdown capture, arrival
+ordering, replay, cancellation, reschedule, preservation, and all lifecycle
+authority remain absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8962,6 +8960,62 @@ reports normal tree return, visuals, collision, and interaction.
 Status: implemented, automated-validated, and owner-validated. Executable
 restoration and all event/lifecycle authority remain absent.
 
+### Slice 101: Dormant scenery-event execution semantics
+
+Objective: explicitly describe how the two known delayed scenery callbacks
+execute and how their timers should progress while a packed source is absent,
+without capturing live timing or creating replay behavior.
+
+Implemented:
+
+- `GameTickEventRestorationState` adds closed `ExecutionSemantics` and
+  `TimeProgressionPolicy` values. Unavailable callbacks carry only
+  `UNAVAILABLE`; known scenery spawn/removal callbacks carry `ONE_SHOT` and
+  `CONTINUE_SERVER_TICKS`;
+- both existing factories bind the semantics directly to their already-known
+  callback contract rather than inferring behavior from a class name,
+  descriptor, reflection, UUID, or scheduler key;
+- the continuing-tick policy records the intended MMORPG behavior: resource
+  respawn/removal time continues while its source is absent, so a later overdue
+  reconstruction must happen before player arrival instead of freezing the
+  timer off-screen;
+- `isExecutionSemanticsCaptured` distinguishes an explicit contract from an
+  unavailable legacy callback; and
+- scheduler identity, countdown, atomic timing, target lookup, arrival
+  ordering, replay, cancellation, reschedule, restoration, and lifecycle
+  authority remain explicitly outside this value.
+
+Automated validation status:
+
+- the executable restoration-state fixture proves spawn, authored removal, and
+  identity-less removal all carry the one-shot/continuing-tick contract while
+  unavailable state carries neither;
+- construction guards require the two enum values to move together and refuse
+  a known scenery value without its explicit execution contract;
+- current-head guards prove the handler, detached inventory, schema-v35, and
+  observer do not yet consume or publish these semantics;
+- the complete layered-map suite passes 290 tests across 100 focused files;
+  and
+- the authoritative bundled-Ant build compiles 773 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- `ONE_SHOT` describes callback lifecycle; it is not a callback class, event
+  handle, or permission to invoke it;
+- `CONTINUE_SERVER_TICKS` is a future timing policy, not an implemented clock,
+  due tick, arrival gate, or replay instruction;
+- current running/countdown/execution fields remain observational and are not
+  promoted to atomic restoration state; and
+- No callback is cancelled, stopped, removed, rescheduled, recreated, or run.
+  No source is loaded, retained, retired, reconstructed, or gated, and no
+  preservation, reload, registry, teardown, transaction, rollback, or
+  lifecycle authority is created.
+
+Status: implemented and automated-validated. Inventory capture, private schema
+exposure, owner validation, atomic timing, executable restoration, and all
+event/lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -9276,6 +9330,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 99 by detaching scheduler-instance scope into the bounded event inventory. | Implemented and automated-validated; one atomic snapshot supplies token and registrations, canonical scope is required even when empty, schema-v34 remains unchanged and private, full scheduler identity stays false, and no event or lifecycle authority is created |
 | 2026-07-21 | Continue with Slice 100 by exposing scheduler-instance scope through additive private schema-v35. | Implemented and automated-validated; one canonical detached token scopes registration comparison, historical v34 remains closed and false, full scheduler identity stays absent, and no event or lifecycle authority is created |
 | 2026-07-21 | Accept the Slice 100 cross-restart scheduler-scope route. | Owner-validated; Phase A and clean Phase B each retain one stable token/registration with falling countdowns, their tokens differ across the private restart, the mistaken intermediate session is closed and inventory-free, all 15 v35 records validate, and no scheduler or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 101 by declaring dormant execution semantics for known scenery callbacks. | Implemented and automated-validated; spawn/removal explicitly declare one-shot execution and continuing server-tick progression, unavailable callbacks remain unclassified, no live timing is promoted, and no event or lifecycle authority is created |
 
 ## Next Discussion
 
@@ -9572,6 +9627,16 @@ respawn is reconstructed before player arrival, rather than freezing depleted
 resources off-screen. This slice must remain descriptive only; atomic timing
 capture, arrival ordering, replay, cancellation, and rescheduling stay later
 gates.
+
+Slice 101 now supplies that dormant callback declaration. The next focused
+gate should detach its execution semantics and time-progression policy into the
+bounded event inventory only when restoration state is available. Unavailable
+events must retain explicit unavailable semantics; aggregate counts must
+distinguish semantic availability from callback-payload and standalone-
+restoration completeness; and mismatched combinations must refuse. Existing
+running/countdown/times-ran values must remain observational and explicitly
+non-atomic. Schema-v35 and the observer should remain unchanged until a later
+additive private contract.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

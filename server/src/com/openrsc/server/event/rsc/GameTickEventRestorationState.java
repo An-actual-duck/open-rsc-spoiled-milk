@@ -8,9 +8,10 @@ import java.util.Objects;
  *
  * <p>This value is deliberately not executable. It contains no event, entity,
  * World, Region, scheduler, registry, callback, UUID, or collection handle.
- * Scheduler identity/countdown capture, target lookup, cancellation,
- * rescheduling, replay, and lifecycle authority are all outside this
- * contract.</p>
+ * Known scenery values describe one-shot execution and continuing server-tick
+ * progression, but scheduler identity/countdown capture, atomic timing,
+ * target lookup, cancellation, rescheduling, replay, arrival ordering, and
+ * lifecycle authority are all outside this contract.</p>
  */
 public final class GameTickEventRestorationState {
 	public static final int MAXIMUM_AUTHORED_SOURCE_ORDINAL = 262144;
@@ -18,20 +19,26 @@ public final class GameTickEventRestorationState {
 	private static final GameTickEventRestorationState UNAVAILABLE =
 		new GameTickEventRestorationState(
 			Kind.UNAVAILABLE, null, false,
-			TargetBindingEvidence.UNAVAILABLE, false);
+			TargetBindingEvidence.UNAVAILABLE, false,
+			ExecutionSemantics.UNAVAILABLE,
+			TimeProgressionPolicy.UNAVAILABLE);
 
 	private final Kind kind;
 	private final SceneryState scenery;
 	private final boolean forceFullBlock;
 	private final TargetBindingEvidence targetBindingEvidence;
 	private final boolean detachedCallbackPayloadComplete;
+	private final ExecutionSemantics executionSemantics;
+	private final TimeProgressionPolicy timeProgressionPolicy;
 
 	private GameTickEventRestorationState(
 		final Kind kind,
 		final SceneryState scenery,
 		final boolean forceFullBlock,
 		final TargetBindingEvidence targetBindingEvidence,
-		final boolean detachedCallbackPayloadComplete) {
+		final boolean detachedCallbackPayloadComplete,
+		final ExecutionSemantics executionSemantics,
+		final TimeProgressionPolicy timeProgressionPolicy) {
 		this.kind = Objects.requireNonNull(kind, "kind");
 		this.scenery = scenery;
 		this.forceFullBlock = forceFullBlock;
@@ -39,17 +46,32 @@ public final class GameTickEventRestorationState {
 			targetBindingEvidence, "targetBindingEvidence");
 		this.detachedCallbackPayloadComplete =
 			detachedCallbackPayloadComplete;
+		this.executionSemantics = Objects.requireNonNull(
+			executionSemantics, "executionSemantics");
+		this.timeProgressionPolicy = Objects.requireNonNull(
+			timeProgressionPolicy, "timeProgressionPolicy");
 		if (kind == Kind.UNAVAILABLE) {
 			if (scenery != null || forceFullBlock
 				|| targetBindingEvidence
 					!= TargetBindingEvidence.UNAVAILABLE
-				|| detachedCallbackPayloadComplete) {
+				|| detachedCallbackPayloadComplete
+				|| executionSemantics != ExecutionSemantics.UNAVAILABLE
+				|| timeProgressionPolicy
+					!= TimeProgressionPolicy.UNAVAILABLE) {
 				throw new IllegalArgumentException(
 					"Unavailable restoration state cannot contain callback data");
 			}
-		} else if (scenery == null) {
-			throw new IllegalArgumentException(
-				"Scenery restoration state requires constructor data");
+		} else {
+			if (scenery == null) {
+				throw new IllegalArgumentException(
+					"Scenery restoration state requires constructor data");
+			}
+			if (executionSemantics != ExecutionSemantics.ONE_SHOT
+				|| timeProgressionPolicy
+					!= TimeProgressionPolicy.CONTINUE_SERVER_TICKS) {
+				throw new IllegalArgumentException(
+					"Known scenery callbacks require explicit one-shot timing");
+			}
 		}
 	}
 
@@ -67,7 +89,9 @@ public final class GameTickEventRestorationState {
 		final boolean forceFullBlock) {
 		return new GameTickEventRestorationState(
 			Kind.SCENERY_SPAWN, Objects.requireNonNull(scenery, "scenery"),
-			forceFullBlock, TargetBindingEvidence.NOT_REQUIRED, true);
+			forceFullBlock, TargetBindingEvidence.NOT_REQUIRED, true,
+			ExecutionSemantics.ONE_SHOT,
+			TimeProgressionPolicy.CONTINUE_SERVER_TICKS);
 	}
 
 	/**
@@ -85,7 +109,8 @@ public final class GameTickEventRestorationState {
 			authoredBinding
 				? TargetBindingEvidence.AUTHORED_PLACEMENT_IDENTITY
 				: TargetBindingEvidence.LIVE_ENTITY_REFERENCE_ONLY,
-			authoredBinding);
+			authoredBinding, ExecutionSemantics.ONE_SHOT,
+			TimeProgressionPolicy.CONTINUE_SERVER_TICKS);
 	}
 
 	public Kind getKind() { return kind; }
@@ -96,6 +121,15 @@ public final class GameTickEventRestorationState {
 	}
 	public boolean isDetachedCallbackPayloadComplete() {
 		return detachedCallbackPayloadComplete;
+	}
+	public ExecutionSemantics getExecutionSemantics() {
+		return executionSemantics;
+	}
+	public TimeProgressionPolicy getTimeProgressionPolicy() {
+		return timeProgressionPolicy;
+	}
+	public boolean isExecutionSemanticsCaptured() {
+		return executionSemantics != ExecutionSemantics.UNAVAILABLE;
 	}
 
 	public boolean isPointInTimeOnly() { return true; }
@@ -125,6 +159,21 @@ public final class GameTickEventRestorationState {
 		NOT_REQUIRED,
 		AUTHORED_PLACEMENT_IDENTITY,
 		LIVE_ENTITY_REFERENCE_ONLY
+	}
+
+	/** Explicit callback lifecycle; no implementation class is retained. */
+	public enum ExecutionSemantics {
+		UNAVAILABLE,
+		ONE_SHOT
+	}
+
+	/**
+	 * Resource timers advance with the live server even while their source is
+	 * absent; an overdue future reconstruction must precede player arrival.
+	 */
+	public enum TimeProgressionPolicy {
+		UNAVAILABLE,
+		CONTINUE_SERVER_TICKS
 	}
 
 	/** Constructor and provenance values detached from scenery callback input. */
