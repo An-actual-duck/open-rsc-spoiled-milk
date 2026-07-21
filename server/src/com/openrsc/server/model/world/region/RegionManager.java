@@ -22,6 +22,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRe
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcBoundaryRequirementProjection;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
@@ -952,6 +953,81 @@ public class RegionManager {
 						contents, observedAtTick, maximumPackedSources);
 			return LayeredPackedRegionPreservationBurdenAssessment.assess(
 				safety, inventories, observedAtTick, maximumPackedSources);
+		}
+	}
+
+	/**
+	 * Detaches bounded constructor-state records for every identity-less object
+	 * in the exact proposal order. Opaque attributes and external event ownership
+	 * remain explicitly outside the record; no entity is removed or retained.
+	 */
+	public LayeredPackedRegionDynamicObjectPreservationRecord
+		captureLayeredPackedRegionDynamicObjectPreservationRecord(
+			final LayeredPackedRegionRetirementRefinementProposal proposal,
+			final int maximumPackedSources,
+			final int maximumDynamicObjects) {
+		LayeredPackedRegionRetirementRefinementProposal checked =
+			Objects.requireNonNull(proposal, "proposal");
+		if (maximumPackedSources < 0
+			|| maximumPackedSources
+				> MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN
+			|| checked.getCandidateSourceCount() > maximumPackedSources
+			|| maximumDynamicObjects < 0
+			|| maximumDynamicObjects
+				> LayeredPackedRegionDynamicObjectPreservationRecord
+					.MAXIMUM_DYNAMIC_OBJECTS) {
+			throw new IllegalArgumentException(
+				"Dynamic-object preservation capture exceeds its budget");
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			long observedAtTick = getWorld().getServer().getCurrentTick();
+			List<LayeredPackedRegionDynamicObjectPreservationRecord
+				.PackedSourceCapture> captures = new ArrayList<
+					LayeredPackedRegionDynamicObjectPreservationRecord
+						.PackedSourceCapture>(checked.getCandidateSourceCount());
+			int capturedObjectCount = 0;
+			for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+				candidate : checked.getCandidates()) {
+				Region region = peekRegionFromSectorCoordinates(
+					candidate.getPackedRegionX(), candidate.getPackedRegionY());
+				Region.RetirementContentsSnapshot snapshot = region == null
+					? null : region.captureRetirementContentsSnapshot();
+				List<LayeredPackedRegionDynamicObjectPreservationRecord
+					.DynamicObjectState> objects = new ArrayList<
+						LayeredPackedRegionDynamicObjectPreservationRecord
+							.DynamicObjectState>();
+				if (snapshot != null) {
+					for (Region.DynamicObjectSnapshot object
+						: snapshot.getDynamicObjects()) {
+						if (object.getX() / Constants.REGION_SIZE
+								!= candidate.getPackedRegionX()
+							|| object.getY() / Constants.REGION_SIZE
+								!= candidate.getPackedRegionY()) {
+							throw new IllegalStateException(
+								"Dynamic object escaped its Region snapshot");
+						}
+						capturedObjectCount = Math.addExact(
+							capturedObjectCount, 1);
+						if (capturedObjectCount > maximumDynamicObjects) {
+							throw new IllegalArgumentException(
+								"Dynamic-object preservation capture exceeds its object budget");
+						}
+						objects.add(LayeredPackedRegionDynamicObjectPreservationRecord
+							.DynamicObjectState.of(
+								object.getObjectId(), object.getPermanentObjectId(),
+								object.getX(), object.getY(), object.getDirection(),
+								object.getType(), object.getOwner(),
+								object.getRuntimeAttributeCount()));
+					}
+				}
+				captures.add(LayeredPackedRegionDynamicObjectPreservationRecord
+					.PackedSourceCapture.of(
+						candidate.getPackedRegionX(), candidate.getPackedRegionY(),
+						region != null, objects));
+			}
+			return LayeredPackedRegionDynamicObjectPreservationRecord.record(
+				checked.getGeneration(), observedAtTick, captures,
+				maximumPackedSources, maximumDynamicObjects);
 		}
 	}
 

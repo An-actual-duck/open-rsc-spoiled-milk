@@ -103,6 +103,15 @@ public abstract class Entity {
 		attributes.put(string, object);
 	}
 
+	/**
+	 * Reports how much opaque runtime metadata is attached without exposing its
+	 * keys, values, or backing collection. Region retirement diagnostics use
+	 * this only to refuse an incomplete entity-preservation claim.
+	 */
+	public final int getRuntimeAttributeCount() {
+		return attributes.size();
+	}
+
 	public final World getWorld() {
 		return world;
 	}

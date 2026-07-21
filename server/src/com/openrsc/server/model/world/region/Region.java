@@ -16,6 +16,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class Region {
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -104,16 +108,19 @@ public class Region {
 			synchronized (npcs) {
 				synchronized (objects) {
 					synchronized (items) {
-						int dynamicObjectCount = 0;
+						List<DynamicObjectSnapshot> dynamicObjects =
+							new ArrayList<DynamicObjectSnapshot>();
 						for (GameObject object : objects.values()) {
 							if (object.getAuthoredPlacementIdentity() == null) {
-								dynamicObjectCount++;
+								dynamicObjects.add(new DynamicObjectSnapshot(object));
 							}
 						}
+						Collections.sort(dynamicObjects,
+							DynamicObjectSnapshot.ORDER);
 						return new RetirementContentsSnapshot(
 							tiles != null || tile != null,
 							players.size(), npcs.size(), objects.size(), items.size(),
-							dynamicObjectCount, countCollisionProductTiles());
+							dynamicObjects, countCollisionProductTiles());
 					}
 				}
 			}
@@ -180,7 +187,7 @@ public class Region {
 		private final int npcCount;
 		private final int objectCount;
 		private final int groundItemCount;
-		private final int dynamicObjectCount;
+		private final List<DynamicObjectSnapshot> dynamicObjects;
 		private final int collisionProductTileCount;
 
 		private RetirementContentsSnapshot(
@@ -189,14 +196,15 @@ public class Region {
 			final int npcCount,
 			final int objectCount,
 			final int groundItemCount,
-			final int dynamicObjectCount,
+			final List<DynamicObjectSnapshot> dynamicObjects,
 			final int collisionProductTileCount) {
 			this.tileStorageAvailable = tileStorageAvailable;
 			this.playerCount = playerCount;
 			this.npcCount = npcCount;
 			this.objectCount = objectCount;
 			this.groundItemCount = groundItemCount;
-			this.dynamicObjectCount = dynamicObjectCount;
+			this.dynamicObjects = Collections.unmodifiableList(
+				new ArrayList<DynamicObjectSnapshot>(dynamicObjects));
 			this.collisionProductTileCount = collisionProductTileCount;
 		}
 
@@ -205,10 +213,73 @@ public class Region {
 		int getNpcCount() { return npcCount; }
 		int getObjectCount() { return objectCount; }
 		int getGroundItemCount() { return groundItemCount; }
-		int getDynamicObjectCount() { return dynamicObjectCount; }
+		int getDynamicObjectCount() { return dynamicObjects.size(); }
+		List<DynamicObjectSnapshot> getDynamicObjects() {
+			return dynamicObjects;
+		}
 		int getCollisionProductTileCount() {
 			return collisionProductTileCount;
 		}
+	}
+
+	/** Detached constructor-state evidence for one identity-less object. */
+	static final class DynamicObjectSnapshot {
+		private static final Comparator<DynamicObjectSnapshot> ORDER =
+			new Comparator<DynamicObjectSnapshot>() {
+				@Override
+				public int compare(
+					final DynamicObjectSnapshot left,
+					final DynamicObjectSnapshot right) {
+					int compared = Integer.compare(left.y, right.y);
+					if (compared != 0) { return compared; }
+					compared = Integer.compare(left.x, right.x);
+					if (compared != 0) { return compared; }
+					compared = Integer.compare(left.type, right.type);
+					if (compared != 0) { return compared; }
+					compared = Integer.compare(left.direction, right.direction);
+					if (compared != 0) { return compared; }
+					compared = Integer.compare(left.objectId, right.objectId);
+					if (compared != 0) { return compared; }
+					compared = Integer.compare(
+						left.permanentObjectId, right.permanentObjectId);
+					if (compared != 0) { return compared; }
+					if (left.owner == null) { return right.owner == null ? 0 : -1; }
+					if (right.owner == null) { return 1; }
+					compared = left.owner.compareTo(right.owner);
+					return compared != 0 ? compared : Integer.compare(
+						left.runtimeAttributeCount,
+						right.runtimeAttributeCount);
+				}
+			};
+
+		private final int objectId;
+		private final int permanentObjectId;
+		private final int x;
+		private final int y;
+		private final int direction;
+		private final int type;
+		private final String owner;
+		private final int runtimeAttributeCount;
+
+		private DynamicObjectSnapshot(final GameObject object) {
+			this.objectId = object.getID();
+			this.permanentObjectId = object.getLoc().getPermId();
+			this.x = object.getX();
+			this.y = object.getY();
+			this.direction = object.getDirection();
+			this.type = object.getType();
+			this.owner = object.getOwner();
+			this.runtimeAttributeCount = object.getRuntimeAttributeCount();
+		}
+
+		int getObjectId() { return objectId; }
+		int getPermanentObjectId() { return permanentObjectId; }
+		int getX() { return x; }
+		int getY() { return y; }
+		int getDirection() { return direction; }
+		int getType() { return type; }
+		String getOwner() { return owner; }
+		int getRuntimeAttributeCount() { return runtimeAttributeCount; }
 	}
 
 	/**

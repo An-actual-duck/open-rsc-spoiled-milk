@@ -255,7 +255,7 @@ class LayeredMapsSliceEightyFourTest(unittest.TestCase):
         tile = TILE_VALUE.read_text(encoding="utf-8")
         start = manager.index("assessLayeredPackedRegionPreservationBurden(")
         end = manager.index(
-            "/**\n\t * Captures one strictly newer", start
+            "/**\n\t * Detaches bounded constructor-state records", start
         )
         boundary = manager[start:end]
         self.assertIn("synchronized (layeredRegionLifecycleLock)", boundary)
