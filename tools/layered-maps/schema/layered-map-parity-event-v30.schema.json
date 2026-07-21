@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v30.schema.json",
+  "title": "Layered Map Parity Event v30",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency", "packedRegionActiveNpcContainment",
+    "packedRegionActiveNpcBoundaryRequirements",
+    "packedRegionRetirementRefinement",
+    "packedRegionRetirementRefinementReassessment",
+    "packedRegionPreservationBurden", "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v30"},
+    "eventType": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionAuthoredReconstructionTopology"},
+    "packedRegionAuthoredReconstructionDependencySemantics": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics"},
+    "packedRegionActiveNpcResidency": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionActiveNpcResidency"},
+    "packedRegionActiveNpcContainment": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionActiveNpcContainment"},
+    "packedRegionActiveNpcBoundaryRequirements": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionActiveNpcBoundaryRequirements"},
+    "packedRegionRetirementRefinement": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionRetirementRefinement"},
+    "packedRegionRetirementRefinementReassessment": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/packedRegionRetirementRefinementReassessment"},
+    "packedRegionPreservationBurden": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/preservationBurden"}
+      ]
+    },
+    "roundTripExact": {"$ref": "layered-map-parity-event-v29.schema.json#/properties/roundTripExact"}
+  },
+  "$defs": {
+    "boundedCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+    "preservationBurden": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observedAtTick", "safetyObservedAtTick",
+        "retirementReadinessEvidence", "sourceCount",
+        "burdenSatisfiedSourceCount", "blockedSourceCount",
+        "pointInTimeOnly", "candidateSelectionMutated",
+        "preservationPerformed", "reloadRequest", "entityRegistry",
+        "arrivalGate", "teardownTransaction", "lifecycleAuthority",
+        "familySummaries", "sources"
+      ],
+      "properties": {
+        "observedAtTick": {"type": "integer", "minimum": 0},
+        "safetyObservedAtTick": {"type": "integer", "minimum": 0},
+        "retirementReadinessEvidence": {"const": false},
+        "sourceCount": {"$ref": "#/$defs/boundedCount"},
+        "burdenSatisfiedSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "blockedSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "pointInTimeOnly": {"const": true},
+        "candidateSelectionMutated": {"const": false},
+        "preservationPerformed": {"const": false},
+        "reloadRequest": {"const": false},
+        "entityRegistry": {"const": false},
+        "arrivalGate": {"const": false},
+        "teardownTransaction": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "familySummaries": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {"$ref": "#/$defs/familySummary"}
+        },
+        "sources": {
+          "type": "array",
+          "maxItems": 8192,
+          "items": {"$ref": "#/$defs/sourceBurden"}
+        }
+      }
+    },
+    "familySummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family", "policy", "completeSourceCount", "partialSourceCount",
+        "unavailableSourceCount", "blockedSourceCount",
+        "knownObservedInstanceCount"
+      ],
+      "properties": {
+        "family": {"$ref": "#/$defs/family"},
+        "policy": {"$ref": "#/$defs/policy"},
+        "completeSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "partialSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "unavailableSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "blockedSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "knownObservedInstanceCount": {"type": "integer", "minimum": 0}
+      }
+    },
+    "sourceBurden": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packedRegionX", "packedRegionY", "safetyContentQuiescent",
+        "safetyLifecycleReady", "blockedFamilyCount",
+        "burdenSatisfiedAtObservation", "families"
+      ],
+      "properties": {
+        "packedRegionX": {"type": "integer", "minimum": 0},
+        "packedRegionY": {"type": "integer", "minimum": 0},
+        "safetyContentQuiescent": {"type": "boolean"},
+        "safetyLifecycleReady": {"const": false},
+        "blockedFamilyCount": {"type": "integer", "minimum": 0, "maximum": 5},
+        "burdenSatisfiedAtObservation": {"type": "boolean"},
+        "families": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {"$ref": "#/$defs/familyBurden"}
+        }
+      }
+    },
+    "familyBurden": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family", "policy", "evidenceCompleteness",
+        "observedInstanceCount", "preservationSupported",
+        "reloadSupported", "burdenSatisfiedAtObservation", "blockers"
+      ],
+      "properties": {
+        "family": {"$ref": "#/$defs/family"},
+        "policy": {"$ref": "#/$defs/policy"},
+        "evidenceCompleteness": {
+          "enum": ["COMPLETE", "PARTIAL", "UNAVAILABLE"]
+        },
+        "observedInstanceCount": {"type": "integer", "minimum": -1},
+        "preservationSupported": {"const": false},
+        "reloadSupported": {"const": false},
+        "burdenSatisfiedAtObservation": {"type": "boolean"},
+        "blockers": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {"enum": [
+            "EVIDENCE_PARTIAL", "EVIDENCE_UNAVAILABLE",
+            "ACTIVE_PLAYERS_PRESENT", "PRESERVATION_PATH_UNAVAILABLE",
+            "RELOAD_PATH_UNAVAILABLE"
+          ]}
+        }
+      }
+    },
+    "family": {
+      "enum": [
+        "PLAYER_SESSION", "DYNAMIC_OBJECT", "GROUND_ITEM",
+        "COLLISION_PRODUCT", "OWNED_EVENT"
+      ]
+    },
+    "policy": {
+      "enum": [
+        "BLOCK_WHEN_PRESENT", "PRESERVE_AND_RESTORE",
+        "REBUILD_DERIVED_STATE"
+      ]
+    }
+  }
+}

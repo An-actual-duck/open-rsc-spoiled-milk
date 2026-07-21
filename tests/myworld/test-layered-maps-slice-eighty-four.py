@@ -279,12 +279,12 @@ class LayeredMapsSliceEightyFourTest(unittest.TestCase):
         self.assertIn("countCollisionProductTiles()", region)
         self.assertIn("hasCollisionProductState()", tile)
 
-    def test_capture_is_not_attached_to_runtime_consumers_or_diagnostics(self):
+    def test_capture_is_attached_only_to_private_diagnostics(self):
         name = "LayeredPackedRegionPreservationBurdenAssessment"
         method = "assessLayeredPackedRegionPreservationBurden("
-        self.assertNotIn(name, OBSERVER.read_text(encoding="utf-8"))
-        self.assertNotIn(method, PLAYER.read_text(encoding="utf-8"))
-        self.assertNotIn(method, COMMAND.read_text(encoding="utf-8"))
+        self.assertIn(name, OBSERVER.read_text(encoding="utf-8"))
+        self.assertIn(method, PLAYER.read_text(encoding="utf-8"))
+        self.assertIn(method, COMMAND.read_text(encoding="utf-8"))
 
     def test_living_plan_records_slice_eighty_four_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")

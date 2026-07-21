@@ -380,7 +380,7 @@ class LayeredMapsSliceEightyThreeTest(unittest.TestCase):
         self.assertIn(
             "LayeredPackedRegionPreservationBurdenAssessment", manager
         )
-        self.assertNotIn(
+        self.assertIn(
             "LayeredPackedRegionPreservationBurdenAssessment", observer
         )
         self.assertNotIn(

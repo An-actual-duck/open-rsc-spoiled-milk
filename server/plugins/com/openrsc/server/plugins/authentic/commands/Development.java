@@ -32,6 +32,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -1415,7 +1416,8 @@ public final class Development implements CommandTrigger {
 					layeredPackedRegionAuthoredReconstructionDependencySemanticsSource(
 						player),
 					layeredPackedRegionActiveNpcResidencySource(player),
-					layeredPackedRegionRetirementRefinementReassessmentSource(player));
+					layeredPackedRegionRetirementRefinementReassessmentSource(player),
+					layeredPackedRegionPreservationBurdenSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1910,6 +1912,21 @@ public final class Development implements CommandTrigger {
 						maximumCandidateSources, maximumSupportSources,
 						maximumNpcInstances, maximumRelevantNpcDetails,
 						maximumActiveNpcRequirements);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionPreservationBurdenSource
+		layeredPackedRegionPreservationBurdenSource(final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionPreservationBurdenSource() {
+			@Override
+			public LayeredPackedRegionPreservationBurdenAssessment capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumCandidateSources) {
+				return player.getWorld().getRegionManager()
+					.assessLayeredPackedRegionPreservationBurden(
+						proposal, maximumCandidateSources);
 			}
 		};
 	}

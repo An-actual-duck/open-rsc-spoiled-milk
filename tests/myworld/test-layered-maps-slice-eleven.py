@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v29.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v30.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -31,6 +31,7 @@ SCHEMA_V25 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v25.sche
 SCHEMA_V26 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v26.schema.json"
 SCHEMA_V27 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v27.schema.json"
 SCHEMA_V28 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v28.schema.json"
+SCHEMA_V29 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v29.schema.json"
 
 
 POINT_STUB = r'''
@@ -110,6 +111,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionRecipe;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -748,6 +750,36 @@ public final class LayeredCoordinateParityObserverFixture {
 					freshActiveNpc, maximumActiveRequirements),
 				maximumCandidates, maximumSupport);
 		};
+		LayeredCoordinateParityObserver.PackedRegionPreservationBurdenSource
+			decisionPreservationBurdenSource =
+				(proposal, maximumCandidates) -> {
+			List<LayeredPackedRegionRetirementSafetyAssessment.PackedSourceContents>
+				contents = new ArrayList<
+					LayeredPackedRegionRetirementSafetyAssessment
+						.PackedSourceContents>();
+			List<LayeredPackedRegionPreservationBurdenAssessment.PackedSourceInventory>
+				inventories = new ArrayList<
+					LayeredPackedRegionPreservationBurdenAssessment
+						.PackedSourceInventory>();
+			for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+					candidate : proposal.getCandidates()) {
+				int x = candidate.getPackedRegionX();
+				int y = candidate.getPackedRegionY();
+				contents.add(LayeredPackedRegionRetirementSafetyAssessment
+					.PackedSourceContents.of(
+						x, y, true, true, false, 0, 0, 0, 0));
+				inventories.add(LayeredPackedRegionPreservationBurdenAssessment
+					.currentRuntimeInventory(x, y, 0, 0, 0, 0));
+			}
+			long observedAtTick = Math.max(
+				proposal.getSafetyObservedAtTick(), decisionTick[0]);
+			LayeredPackedRegionRetirementSafetyAssessment safety =
+				LayeredPackedRegionRetirementSafetyAssessment
+					.assessDiagnosticSelection(
+						contents, observedAtTick, maximumCandidates);
+			return LayeredPackedRegionPreservationBurdenAssessment.assess(
+				safety, inventories, observedAtTick, maximumCandidates);
+		};
 		LayeredCoordinateParityObserver.start(
 			decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
 			tileParity, tileNeighborhood, adjacentCollision, traversalCollision,
@@ -758,7 +790,8 @@ public final class LayeredCoordinateParityObserverFixture {
 			decisionReconstructionCohortAttributionSource, null,
 			decisionReconstructionDependencySemanticsSource,
 			decisionActiveNpcResidencySource,
-			decisionRefinementReassessmentSource);
+			decisionRefinementReassessmentSource,
+			decisionPreservationBurdenSource);
         decisionTick[0] = 1L;
         LayeredRegionInterestOwnershipLedger.Change decisionRelease =
             decisionOwnership.synchronizeOwner(
@@ -1059,7 +1092,11 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v29" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v30" for event in events))
+            self.assertTrue(all(
+                event["packedRegionPreservationBurden"] is None
+                for event in events
+            ))
             self.assertTrue(all(
                 event["packedRegionRetirementRefinementReassessment"] is None
                 for event in events
@@ -1849,6 +1886,37 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 self.assertFalse(
                     eligible_retirement_refinement[authority_flag]
                 )
+            preservation_burden = decision_events[2][
+                "packedRegionPreservationBurden"
+            ]
+            self.assertEqual((2, 0, 2), (
+                preservation_burden["sourceCount"],
+                preservation_burden["burdenSatisfiedSourceCount"],
+                preservation_burden["blockedSourceCount"],
+            ))
+            self.assertEqual(
+                [
+                    "PLAYER_SESSION", "DYNAMIC_OBJECT", "GROUND_ITEM",
+                    "COLLISION_PRODUCT", "OWNED_EVENT",
+                ],
+                [
+                    summary["family"]
+                    for summary in preservation_burden["familySummaries"]
+                ],
+            )
+            self.assertTrue(all(
+                source["blockedFamilyCount"] == 3
+                and not source["burdenSatisfiedAtObservation"]
+                and len(source["families"]) == 5
+                for source in preservation_burden["sources"]
+            ))
+            for authority_flag in (
+                "retirementReadinessEvidence", "candidateSelectionMutated",
+                "preservationPerformed", "reloadRequest", "entityRegistry",
+                "arrivalGate", "teardownTransaction", "lifecycleAuthority",
+            ):
+                self.assertFalse(preservation_burden[authority_flag])
+            self.assertTrue(preservation_burden["pointInTimeOnly"])
             deferred_reassessment = decision_events[3][
                 "packedRegionRetirementRefinementReassessment"
             ]
@@ -1865,6 +1933,12 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 "pendingAfterCandidateSourceCount"
             ])
             self.assertIsNone(deferred_reassessment["reassessment"])
+            self.assertEqual(
+                2,
+                decision_events[3]["packedRegionPreservationBurden"][
+                    "sourceCount"
+                ],
+            )
             stable_reassessment = decision_events[4][
                 "packedRegionRetirementRefinementReassessment"
             ]
@@ -1887,6 +1961,12 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 "lifecycleReadyEvidenceSourceCount"
             ])
             self.assertEqual(2, stable_result["freshSafety"]["sourceCount"])
+            self.assertEqual(
+                2,
+                decision_events[4]["packedRegionPreservationBurden"][
+                    "sourceCount"
+                ],
+            )
             self.assertEqual(
                 {"DIAGNOSTIC_SELECTION_ONLY"},
                 {
@@ -1978,6 +2058,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v26 = json.loads(SCHEMA_V26.read_text(encoding="utf-8"))
                 v27 = json.loads(SCHEMA_V27.read_text(encoding="utf-8"))
                 v28 = json.loads(SCHEMA_V28.read_text(encoding="utf-8"))
+                v29 = json.loads(SCHEMA_V29.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -1995,6 +2076,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v26["$id"], Resource.from_contents(v26)),
                     (v27["$id"], Resource.from_contents(v27)),
                     (v28["$id"], Resource.from_contents(v28)),
+                    (v29["$id"], Resource.from_contents(v29)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

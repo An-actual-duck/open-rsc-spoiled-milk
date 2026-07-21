@@ -47,6 +47,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -3517,6 +3518,21 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver.PackedRegionPreservationBurdenSource
+		layeredPackedRegionPreservationBurdenSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionPreservationBurdenSource() {
+			@Override
+			public LayeredPackedRegionPreservationBurdenAssessment capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumCandidateSources) {
+				return getWorld().getRegionManager()
+					.assessLayeredPackedRegionPreservationBurden(
+						proposal, maximumCandidateSources);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3645,7 +3661,8 @@ public final class Player extends Mob {
 				loggedIn ? layeredPackedRegionActiveNpcResidencySource() : null,
 				loggedIn
 					? layeredPackedRegionRetirementRefinementReassessmentSource()
-					: null);
+					: null,
+				loggedIn ? layeredPackedRegionPreservationBurdenSource() : null);
 		}
 	}
 

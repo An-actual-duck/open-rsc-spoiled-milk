@@ -14,6 +14,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -50,7 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v29";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v30";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -524,6 +525,58 @@ public final class LayeredCoordinateParityObserver {
 			packedRegionActiveNpcResidencySource,
 		PackedRegionRetirementRefinementReassessmentSource
 			packedRegionRetirementRefinementReassessmentSource) {
+		return start(
+			playerId, usernameHash, current, viewGridDistance, tileSnapshotSource,
+			tileParitySource, tileNeighborhoodSource, adjacentCollisionSource,
+			traversalCollisionSource, regionResidencySource,
+			interestOwnershipSource, regionRetirementSource,
+			regionRetirementDecisionSource, packedRegionRetirementSafetySource,
+			packedRegionAuthoredConstructionSource,
+			packedRegionAuthoredProvenanceSource,
+			packedRegionAuthoredReconstructionSource,
+			packedRegionAuthoredReconstructionCohortSource,
+			packedRegionAuthoredReconstructionCohortAttributionSource,
+			packedRegionAuthoredReconstructionTopologySource,
+			packedRegionAuthoredReconstructionDependencySemanticsSource,
+			packedRegionActiveNpcResidencySource,
+			packedRegionRetirementRefinementReassessmentSource, null);
+	}
+
+	public static Status start(
+		int playerId,
+		long usernameHash,
+		Point current,
+		int viewGridDistance,
+		TileSnapshotSource tileSnapshotSource,
+		TileParitySource tileParitySource,
+		TileNeighborhoodSource tileNeighborhoodSource,
+		AdjacentCollisionSource adjacentCollisionSource,
+		TraversalCollisionSource traversalCollisionSource,
+		RegionResidencySource regionResidencySource,
+		InterestOwnershipSource interestOwnershipSource,
+		RegionRetirementSource regionRetirementSource,
+		RegionRetirementDecisionSource regionRetirementDecisionSource,
+		PackedRegionRetirementSafetySource packedRegionRetirementSafetySource,
+		PackedRegionAuthoredConstructionSource
+			packedRegionAuthoredConstructionSource,
+		PackedRegionAuthoredProvenanceSource
+			packedRegionAuthoredProvenanceSource,
+		PackedRegionAuthoredReconstructionSource
+			packedRegionAuthoredReconstructionSource,
+		PackedRegionAuthoredReconstructionCohortSource
+			packedRegionAuthoredReconstructionCohortSource,
+		PackedRegionAuthoredReconstructionCohortAttributionSource
+			packedRegionAuthoredReconstructionCohortAttributionSource,
+		PackedRegionAuthoredReconstructionTopologySource
+			packedRegionAuthoredReconstructionTopologySource,
+		PackedRegionAuthoredReconstructionDependencySemanticsSource
+			packedRegionAuthoredReconstructionDependencySemanticsSource,
+		PackedRegionActiveNpcResidencySource
+			packedRegionActiveNpcResidencySource,
+		PackedRegionRetirementRefinementReassessmentSource
+			packedRegionRetirementRefinementReassessmentSource,
+		PackedRegionPreservationBurdenSource
+			packedRegionPreservationBurdenSource) {
 		Objects.requireNonNull(tileSnapshotSource, "tileSnapshotSource");
 		Objects.requireNonNull(tileParitySource, "tileParitySource");
 		Objects.requireNonNull(tileNeighborhoodSource, "tileNeighborhoodSource");
@@ -547,7 +600,8 @@ public final class LayeredCoordinateParityObserver {
 			packedRegionAuthoredReconstructionTopologySource,
 			packedRegionAuthoredReconstructionDependencySemanticsSource,
 			packedRegionActiveNpcResidencySource,
-			packedRegionRetirementRefinementReassessmentSource);
+			packedRegionRetirementRefinementReassessmentSource,
+			packedRegionPreservationBurdenSource);
 		TraceState state = TRACES.putIfAbsent(key, created);
 		boolean newlyStarted = state == null;
 		if (newlyStarted) {
@@ -978,6 +1032,53 @@ public final class LayeredCoordinateParityObserver {
 			currentPackedRegionActiveNpcResidencySource,
 		PackedRegionRetirementRefinementReassessmentSource
 			currentPackedRegionRetirementRefinementReassessmentSource) {
+		onSession(
+			playerId, usernameHash, current, loggedIn, ownershipChange,
+			currentInterestOwnershipSource, currentRegionRetirementSource,
+			currentRegionRetirementDecisionSource,
+			currentPackedRegionRetirementSafetySource,
+			currentPackedRegionAuthoredConstructionSource,
+			currentPackedRegionAuthoredProvenanceSource,
+			currentPackedRegionAuthoredReconstructionSource,
+			currentPackedRegionAuthoredReconstructionCohortSource,
+			currentPackedRegionAuthoredReconstructionCohortAttributionSource,
+			currentPackedRegionAuthoredReconstructionTopologySource,
+			currentPackedRegionAuthoredReconstructionDependencySemanticsSource,
+			currentPackedRegionActiveNpcResidencySource,
+			currentPackedRegionRetirementRefinementReassessmentSource, null);
+	}
+
+	public static void onSession(
+		int playerId,
+		long usernameHash,
+		Point current,
+		boolean loggedIn,
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange,
+		InterestOwnershipSource currentInterestOwnershipSource,
+		RegionRetirementSource currentRegionRetirementSource,
+		RegionRetirementDecisionSource currentRegionRetirementDecisionSource,
+		PackedRegionRetirementSafetySource
+			currentPackedRegionRetirementSafetySource,
+		PackedRegionAuthoredConstructionSource
+			currentPackedRegionAuthoredConstructionSource,
+		PackedRegionAuthoredProvenanceSource
+			currentPackedRegionAuthoredProvenanceSource,
+		PackedRegionAuthoredReconstructionSource
+			currentPackedRegionAuthoredReconstructionSource,
+		PackedRegionAuthoredReconstructionCohortSource
+			currentPackedRegionAuthoredReconstructionCohortSource,
+		PackedRegionAuthoredReconstructionCohortAttributionSource
+			currentPackedRegionAuthoredReconstructionCohortAttributionSource,
+		PackedRegionAuthoredReconstructionTopologySource
+			currentPackedRegionAuthoredReconstructionTopologySource,
+		PackedRegionAuthoredReconstructionDependencySemanticsSource
+			currentPackedRegionAuthoredReconstructionDependencySemanticsSource,
+		PackedRegionActiveNpcResidencySource
+			currentPackedRegionActiveNpcResidencySource,
+		PackedRegionRetirementRefinementReassessmentSource
+			currentPackedRegionRetirementRefinementReassessmentSource,
+		PackedRegionPreservationBurdenSource
+			currentPackedRegionPreservationBurdenSource) {
 		TraceState state = TRACES.get(new TraceKey(playerId, usernameHash));
 		if (state != null && current != null) {
 			synchronized (state) {
@@ -1044,6 +1145,11 @@ public final class LayeredCoordinateParityObserver {
 						!= null) {
 					state.packedRegionRetirementRefinementReassessmentSource =
 						currentPackedRegionRetirementRefinementReassessmentSource;
+				}
+				if (loggedIn
+					&& currentPackedRegionPreservationBurdenSource != null) {
+					state.packedRegionPreservationBurdenSource =
+						currentPackedRegionPreservationBurdenSource;
 				}
 				write(
 					state, loggedIn ? "login" : "logout", null, current, null, null,
@@ -1122,8 +1228,12 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionRetirementRefinement = null;
 				RetirementRefinementReassessmentMetadata
 					packedRegionRetirementRefinementReassessment = null;
+				LayeredPackedRegionPreservationBurdenAssessment
+					packedRegionPreservationBurden = null;
 				LayeredPackedRegionRetirementRefinementProposal pendingAtEventStart =
 					state.pendingPackedRegionRetirementRefinement;
+				LayeredPackedRegionRetirementRefinementProposal
+					preservationBurdenProposal = pendingAtEventStart;
 				LayeredPackedRegionRetirementRefinementProposal pendingAfterEvent =
 					pendingAtEventStart;
 				boolean hadPendingRefinementAtEventStart = pendingAtEventStart != null;
@@ -1144,6 +1254,7 @@ public final class LayeredCoordinateParityObserver {
 							RetirementRefinementReassessmentMetadata.deferred(
 								pendingAtEventStart);
 					} else {
+						preservationBurdenProposal = reassessment.getNextProposal();
 						boolean retainNext =
 							!reassessment.isRefinementConvergedAtObservation();
 						pendingAfterEvent = retainNext
@@ -1363,6 +1474,18 @@ public final class LayeredCoordinateParityObserver {
 					&& packedRegionRetirementRefinement != null
 					&& packedRegionRetirementRefinement.getCandidateSourceCount() > 0) {
 					pendingAfterEvent = packedRegionRetirementRefinement;
+					preservationBurdenProposal = packedRegionRetirementRefinement;
+				}
+				if (preservationBurdenProposal != null
+					&& state.packedRegionPreservationBurdenSource != null) {
+					packedRegionPreservationBurden = Objects.requireNonNull(
+						state.packedRegionPreservationBurdenSource.capture(
+							preservationBurdenProposal,
+							MAX_TRACE_RETIREMENT_REFINEMENT_CANDIDATES),
+						"packedRegionPreservationBurdenSource result");
+					requirePreservationBurdenMatchesProposal(
+						preservationBurdenProposal,
+						packedRegionPreservationBurden);
 				}
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
@@ -1382,7 +1505,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionActiveNpcContainment,
 					packedRegionActiveNpcBoundaryRequirements,
 					packedRegionRetirementRefinement,
-					packedRegionRetirementRefinementReassessment);
+					packedRegionRetirementRefinementReassessment,
+					packedRegionPreservationBurden);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -1460,7 +1584,9 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionRetirementRefinementProposal
 			packedRegionRetirementRefinement,
 		RetirementRefinementReassessmentMetadata
-			packedRegionRetirementRefinementReassessment) {
+			packedRegionRetirementRefinementReassessment,
+		LayeredPackedRegionPreservationBurdenAssessment
+			packedRegionPreservationBurden) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -1647,6 +1773,13 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendPackedRegionRetirementRefinementReassessment(
 				out, packedRegionRetirementRefinementReassessment);
+		}
+		out.append(",\"packedRegionPreservationBurden\":");
+		if (packedRegionPreservationBurden == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionPreservationBurden(
+				out, packedRegionPreservationBurden);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -3386,6 +3519,132 @@ public final class LayeredCoordinateParityObserver {
 		out.append('}');
 	}
 
+	private static void appendPackedRegionPreservationBurden(
+		final StringBuilder out,
+		final LayeredPackedRegionPreservationBurdenAssessment assessment) {
+		out.append('{');
+		out.append("\"observedAtTick\":")
+			.append(assessment.getObservedAtTick()).append(',');
+		out.append("\"safetyObservedAtTick\":")
+			.append(assessment.getSafetyObservedAtTick()).append(',');
+		out.append("\"retirementReadinessEvidence\":")
+			.append(assessment.hasRetirementReadinessEvidence()).append(',');
+		out.append("\"sourceCount\":")
+			.append(assessment.getSourceCount()).append(',');
+		out.append("\"burdenSatisfiedSourceCount\":")
+			.append(assessment.getBurdenSatisfiedSourceCount()).append(',');
+		out.append("\"blockedSourceCount\":")
+			.append(assessment.getBlockedSourceCount()).append(',');
+		out.append("\"pointInTimeOnly\":")
+			.append(assessment.isPointInTimeOnly()).append(',');
+		out.append("\"candidateSelectionMutated\":")
+			.append(assessment.isCandidateSelectionMutated()).append(',');
+		out.append("\"preservationPerformed\":")
+			.append(assessment.isPreservationPerformed()).append(',');
+		out.append("\"reloadRequest\":")
+			.append(assessment.isReloadRequest()).append(',');
+		out.append("\"entityRegistry\":")
+			.append(assessment.isEntityRegistry()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(assessment.isArrivalGate()).append(',');
+		out.append("\"teardownTransaction\":")
+			.append(assessment.isTeardownTransaction()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(assessment.isLifecycleAuthority()).append(',');
+		out.append("\"familySummaries\":[");
+		boolean first = true;
+		for (LayeredPackedRegionPreservationBurdenAssessment.FamilySummary summary
+			: assessment.getFamilySummaries()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			field(out, "family", summary.getFamily().name()).append(',');
+			field(out, "policy", summary.getFamily().getPolicy().name())
+				.append(',');
+			out.append("\"completeSourceCount\":")
+				.append(summary.getCompleteSourceCount()).append(',');
+			out.append("\"partialSourceCount\":")
+				.append(summary.getPartialSourceCount()).append(',');
+			out.append("\"unavailableSourceCount\":")
+				.append(summary.getUnavailableSourceCount()).append(',');
+			out.append("\"blockedSourceCount\":")
+				.append(summary.getBlockedSourceCount()).append(',');
+			out.append("\"knownObservedInstanceCount\":")
+				.append(summary.getKnownObservedInstanceCount()).append('}');
+		}
+		out.append("],\"sources\":[");
+		first = true;
+		for (LayeredPackedRegionPreservationBurdenAssessment.SourceAssessment source
+			: assessment.getSources()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			out.append("\"packedRegionX\":")
+				.append(source.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(source.getPackedRegionY()).append(',');
+			out.append("\"safetyContentQuiescent\":")
+				.append(source.isSafetyContentQuiescent()).append(',');
+			out.append("\"safetyLifecycleReady\":")
+				.append(source.isSafetyLifecycleReady()).append(',');
+			out.append("\"blockedFamilyCount\":")
+				.append(source.getBlockedFamilyCount()).append(',');
+			out.append("\"burdenSatisfiedAtObservation\":")
+				.append(source.isBurdenSatisfiedAtObservation()).append(',');
+			out.append("\"families\":[");
+			boolean firstFamily = true;
+			for (LayeredPackedRegionPreservationBurdenAssessment.FamilyAssessment family
+				: source.getFamilies()) {
+				if (!firstFamily) { out.append(','); }
+				firstFamily = false;
+				out.append('{');
+				field(out, "family", family.getFamily().name()).append(',');
+				field(out, "policy", family.getPolicy().name()).append(',');
+				field(out, "evidenceCompleteness",
+					family.getEvidenceCompleteness().name()).append(',');
+				out.append("\"observedInstanceCount\":")
+					.append(family.getObservedInstanceCount()).append(',');
+				out.append("\"preservationSupported\":")
+					.append(family.isPreservationSupported()).append(',');
+				out.append("\"reloadSupported\":")
+					.append(family.isReloadSupported()).append(',');
+				out.append("\"burdenSatisfiedAtObservation\":")
+					.append(family.isBurdenSatisfiedAtObservation()).append(',');
+				out.append("\"blockers\":[");
+				boolean firstBlocker = true;
+				for (LayeredPackedRegionPreservationBurdenAssessment.Blocker blocker
+					: family.getBlockers()) {
+					if (!firstBlocker) { out.append(','); }
+					firstBlocker = false;
+					quoted(out, blocker.name());
+				}
+				out.append("]}");
+			}
+			out.append("]}");
+		}
+		out.append("]}");
+	}
+
+	private static void requirePreservationBurdenMatchesProposal(
+		final LayeredPackedRegionRetirementRefinementProposal proposal,
+		final LayeredPackedRegionPreservationBurdenAssessment assessment) {
+		if (proposal.getCandidateSourceCount() != assessment.getSourceCount()) {
+			throw new IllegalStateException(
+				"Preservation burden source count differs from its proposal");
+		}
+		for (int index = 0; index < proposal.getCandidateSourceCount(); index++) {
+			LayeredPackedRegionRetirementRefinementProposal.CandidateSource candidate =
+				proposal.getCandidates().get(index);
+			LayeredPackedRegionPreservationBurdenAssessment.SourceAssessment source =
+				assessment.getSources().get(index);
+			if (candidate.getPackedRegionX() != source.getPackedRegionX()
+				|| candidate.getPackedRegionY() != source.getPackedRegionY()) {
+				throw new IllegalStateException(
+					"Preservation burden source order differs from its proposal");
+			}
+		}
+	}
+
 	private static void appendPackedRegionAuthoredPopulationSupersession(
 		final StringBuilder out,
 		final LayeredPackedRegionAuthoredPopulationOutcome.Supersession
@@ -4310,6 +4569,14 @@ public final class LayeredCoordinateParityObserver {
 			int maximumNpcInstances,
 			int maximumRelevantNpcDetails,
 			int maximumActiveNpcRequirements);
+	}
+
+	/** Captures detached runtime preservation burdens for one exact proposal. */
+	@FunctionalInterface
+	public interface PackedRegionPreservationBurdenSource {
+		LayeredPackedRegionPreservationBurdenAssessment capture(
+			LayeredPackedRegionRetirementRefinementProposal proposal,
+			int maximumCandidateSources);
 	}
 
 	/** Immutable ownership aggregate; never a Region retention or eviction order. */
@@ -6574,6 +6841,8 @@ public final class LayeredCoordinateParityObserver {
 			packedRegionActiveNpcResidencySource;
 		PackedRegionRetirementRefinementReassessmentSource
 			packedRegionRetirementRefinementReassessmentSource;
+		PackedRegionPreservationBurdenSource
+			packedRegionPreservationBurdenSource;
 		LayeredPackedRegionRetirementRefinementProposal
 			pendingPackedRegionRetirementRefinement;
 		final List<WorldLocation> recentTraversal =
@@ -6624,7 +6893,9 @@ public final class LayeredCoordinateParityObserver {
 			PackedRegionActiveNpcResidencySource
 				packedRegionActiveNpcResidencySource,
 			PackedRegionRetirementRefinementReassessmentSource
-				packedRegionRetirementRefinementReassessmentSource) {
+				packedRegionRetirementRefinementReassessmentSource,
+			PackedRegionPreservationBurdenSource
+				packedRegionPreservationBurdenSource) {
 			if (viewGridDistance < 0) {
 				throw new IllegalArgumentException("View grid distance must not be negative");
 			}
@@ -6661,6 +6932,8 @@ public final class LayeredCoordinateParityObserver {
 				packedRegionActiveNpcResidencySource;
 			this.packedRegionRetirementRefinementReassessmentSource =
 				packedRegionRetirementRefinementReassessmentSource;
+			this.packedRegionPreservationBurdenSource =
+				packedRegionPreservationBurdenSource;
 		}
 
 		Status status(boolean enabled) {

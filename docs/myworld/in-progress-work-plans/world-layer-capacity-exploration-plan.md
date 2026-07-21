@@ -3,22 +3,21 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, and 82 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, and 84 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, and 85 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 84 attaches Slice 83's five-family contract
-to one dormant, bounded RegionManager capture. One Region-local snapshot now
-supplies exact Player, active object, and active ground-item counts, exact
-active identity-less object attribution, and a collision-product tile count.
-The contract deliberately classifies ground items and collision as partial and
-owned events as unavailable. The method is not connected to a Player, command,
-observer, or lifecycle consumer and grants no preservation, reload, selection,
-registry, teardown, or lifecycle authority. Packed Region lookup, eager
-loading, release, eviction, pathing, packets, and persistence remain unchanged
+Current milestone: automated Slice 85 exposes Slice 84's bounded five-family
+capture through additive private schema-v30 diagnostics. Proposal creation,
+same-tick deferral, and fresh reassessment each sample the same exact proposal
+order that the event describes, while records without a proposal carry null.
+The stream distinguishes complete, partial, and unavailable evidence and
+grants no preservation, reload, selection, registry, teardown, or lifecycle
+authority. Packed Region lookup, eager loading, release, eviction, pathing,
+packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -7940,6 +7939,73 @@ Safety boundary:
 Status: implemented and automated-validated. Private schema exposure and owner
 validation remain absent.
 
+### Slice 85: Private preservation-burden diagnostics
+
+Objective: make Slice 84's exact, bounded runtime burden visible in the
+existing private parity workflow while keeping every result observational and
+preserving the proposal chain that produced it.
+
+Implemented:
+
+- additive `layered-map-parity-event-v30` records retain the complete v29
+  contract and add nullable `packedRegionPreservationBurden` evidence;
+- a newly created proposal is assessed on its creation event, a same-tick
+  deferral assesses the retained proposal, and a fresh reassessment assesses
+  that reassessment's immutable next proposal even when the stable result then
+  clears observer state;
+- the observer refuses a source-count or coordinate-order mismatch, so the
+  burden families always describe the same exact proposal order serialized by
+  the event rather than a nearby or independently selected set;
+- each source reports all five policy families, evidence completeness, known
+  instance count or the `-1` unavailable sentinel, preservation/reload support,
+  ordered blockers, and a per-source satisfied result;
+- family summaries retain complete, partial, unavailable, blocked, and known-
+  instance totals without converting unknown values to zero;
+- Player reconnect rebind and development-command start paths both call the
+  single RegionManager assessment seam; and
+- records without a non-empty proposal use an explicit null and perform no
+  burden capture.
+
+Automated validation status:
+
+- the executable observer fixture emits and schema-validates non-null burdens
+  for proposal creation, same-tick deferral, and stable reassessment, preserving
+  two exact candidate sources and five ordered families per source;
+- fixture evidence proves zero-instance complete Player/object families remain
+  satisfied while partial ground-item/collision families and unavailable event
+  ownership keep every source blocked;
+- the closed v30 schema bounds source arrays to 8,192, family arrays to exactly
+  five, blocker enumerations to the current contract, and every mutation or
+  lifecycle flag to false;
+- source guards cover exact proposal/result correlation and both duplicated
+  private runtime wiring paths;
+- the complete layered-map suite passes 220 tests across 84 focused files; and
+- the authoritative bundled-Ant build compiles 769 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- the assessment occurs only after a proposal exists and under the existing
+  RegionManager observation lock; it does not influence which sources enter or
+  leave that proposal;
+- schema-v30 states that readiness evidence, preservation, reload, candidate
+  mutation, entity registry, arrival gate, teardown transaction, and lifecycle
+  authority are all false;
+- exact Player/object counts are point-in-time observations, while ground-item,
+  collision, and event evidence remains conservatively incomplete; and
+- No lifecycle authority, retirement decision, commit token, source load,
+  arrival rejection, entity registry, transaction, teardown, reconstruction,
+  rollback, pathing, packet, persistence, or world-data mutation is created.
+
+Status: implemented and automated-validated.
+
+Private owner validation status: pending. The focused route should create one
+proposal after a broad teleport, capture one retained/fresh follow-up, and stop
+while the owner confirms that ordinary scenery, NPCs, movement, and interaction
+remain visually normal. The resulting v30 records must validate, retain exact
+candidate order, show all five family summaries, and keep every authority flag
+false.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8231,6 +8297,7 @@ private environment should validate at least:
 | 2026-07-20 | Accept the Slice 82 Lumbridge-to-Varrock refinement route. | Owner-validated; one fresh reassessment expanded the exact candidate set from 40 to 41 for active-NPC ownership at `(4,11)`, the next fresh reassessment stabilized at 41 and cleared the pending proposal, all five v29 records and round trips passed, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 83 by defining a bounded five-family preservation/reload burden contract over exact safety sources. | Implemented and automated-validated; complete, partial, and unavailable evidence remain distinct, each family retains its own blocking or recovery policy, and the dormant value grants no preservation, reload, teardown, or lifecycle authority |
 | 2026-07-21 | Continue with Slice 84 by capturing the current five-family burden from one non-creating Region snapshot per exact refinement candidate. | Implemented and automated-validated; exact local Player/dynamic-object counts remain distinct from partial ground-item/collision evidence and unavailable event ownership, the seam remains disconnected, and no lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 85 by exposing exact proposal-ordered preservation burdens through additive private schema-v30 diagnostics. | Implemented and automated-validated; proposal creation, deferral, and reassessment retain bounded five-family evidence, every mutating authority flag remains false, and private owner validation is pending |
 
 ## Next Discussion
 
@@ -8349,6 +8416,13 @@ because the event store has no packed-source index. The next focused gate is
 additive private diagnostic exposure of this exact assessment so a real route
 can measure how those burdens vary across candidate sets without granting the
 observer any runtime authority.
+
+Slice 85 now supplies that private exposure. The event samples the proposal it
+actually creates, retains, or freshly reassesses, checks the assessment against
+the same exact proposal order, and emits all five burden families through
+schema-v30. The next gate is owner validation of one broad transition and
+follow-up capture before any family receives a preservation, rebuild, event-
+ownership, arrival-gate, teardown, or recovery implementation.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
