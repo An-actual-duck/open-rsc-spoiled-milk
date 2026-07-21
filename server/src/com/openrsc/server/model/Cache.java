@@ -151,7 +151,7 @@ public class Cache {
 			throw new NoSuchElementException("No object found for that key: " + key);
 
 		Object value = storage.get(key);
-		if (!(value instanceof Long)) {
+		if (value instanceof String) value = Long.parseLong((String) value); else if (value instanceof Integer) value = ((Integer) value).longValue(); if (!(value instanceof Long)) {
 			throw new IllegalArgumentException("Object found, but not a Long: " + key);
 		}
 		return (Long) value;
