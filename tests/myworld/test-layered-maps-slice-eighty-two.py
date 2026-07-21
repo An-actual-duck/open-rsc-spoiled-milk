@@ -143,6 +143,9 @@ class LayeredMapsSliceEightyTwoTest(unittest.TestCase):
         )
         self.assertIn("schema-v29", plan)
         self.assertIn("latest immutable proposal", plan)
+        self.assertIn("Private owner validation status:", plan)
+        self.assertIn("`EXPANDED` 40-to-41 transition", plan)
+        self.assertIn("`STABLE`, and cleared the pending proposal", plan)
         self.assertIn("No lifecycle authority", plan)
 
 

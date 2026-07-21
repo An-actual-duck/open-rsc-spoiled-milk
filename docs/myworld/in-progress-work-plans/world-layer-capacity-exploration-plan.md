@@ -1,24 +1,24 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, and 78 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, and 82 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, and 82 automated-validated on the active refinement
-branch
+76, 77, 78, 79, 80, and 81 automated-validated on the active refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 82 exposes the Slice 81 fresh reassessment
-through additive private schema-v29 diagnostics. Each trace retains only its
-latest immutable proposal, reports same-tick deferral explicitly, advances an
-expanding or blocked proposal without losing it, and clears a stable unblocked
-proposal. Diagnostic-only safety remains visibly distinct from retirement
-readiness. No selection mutation, source load, entity registry, arrival gate,
-commit token, retention decision, or lifecycle authority is authorized, and
-packed Region lookup, eager loading, release, eviction, pathing, packets, and
-persistence remain unchanged
+Current milestone: owner-validated Slice 82 exposes the Slice 81 fresh
+reassessment through additive private schema-v29 diagnostics. The accepted
+runtime chain expanded one real 40-source proposal to 41 sources for an exact
+active-NPC ownership requirement, retained that immutable proposal, and then
+cleared it after a strictly newer stable 41-source reassessment. Diagnostic-only
+safety remained visibly distinct from retirement readiness. No selection
+mutation, source load, entity registry, arrival gate, commit token, retention
+decision, or lifecycle authority is authorized, and packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
+unchanged
 
 ## Purpose
 
@@ -7751,6 +7751,33 @@ Automated validation status:
 - the authoritative bundled-Ant build compiles 768 core and 488 plugin
   sources.
 
+Private owner validation status:
+
+- one five-record schema-v29 route covered start in Lumbridge, teleport to
+  Varrock, the `proposal-ready` and `reassessment` markers, and stop; all five
+  layered-coordinate round trips were exact and every record passed the full
+  v29 schema chain;
+- the first marker at tick 2307 expanded 18 safety sources into 40 candidates
+  through 22 authored additions. One active-NPC requirement at packed source
+  `(1,13)` already belonged to that authored cohort, the external static
+  support requirement remained separate at `(1,17)`, and no hard blocker was
+  present;
+- the fresh tick-2320 reassessment retained all 40 candidates and added exactly
+  packed source `(4,11)` for one external-owner-authored active instance,
+  producing the expected `EXPANDED` 40-to-41 transition without a hard
+  blocker;
+- the fresh tick-2328 stop reassessment retained all 41 candidates, added none,
+  reported no active-NPC requirement or hard blocker in its next proposal,
+  produced `STABLE`, and cleared the pending proposal;
+- both fresh safety observations remained entirely diagnostic: 0 sources were
+  lifecycle-ready and all 40/41 observed sources were blocked, with readiness,
+  ownership, and residency versions held at `-1` and every authority flag
+  false; and
+- the private server logged no observer error during the route, and the owner
+  completed the requested client route without reporting a visual or movement
+  issue. The accepted trace is preserved locally as
+  `player-1-10651088446.slice82-owner-validated.jsonl`.
+
 Safety boundary:
 
 - retained state is an immutable diagnostic proposal, not a Region/entity
@@ -7765,8 +7792,8 @@ Safety boundary:
   arrival rejection, entity registry, transaction, teardown, reconstruction,
   or rollback is created.
 
-Status: implemented and automated-validated. Private owner validation remains
-pending.
+Status: implemented, automated-validated, and owner-validated. No lifecycle
+authority is granted.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -8056,6 +8083,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 80 by observing exact refinement candidates without manufacturing retirement eligibility or loading absent Regions. | Implemented and automated-validated; every diagnostic source is explicitly non-ready, absent sources remain absent, count evidence is detached, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 81 by composing one strictly newer, same-tick candidate observation and reassessment behind a dormant RegionManager seam. | Implemented and automated-validated; same-tick repeats defer before sampling, all evidence shares one observation lock/tick, the observer remains disconnected, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 82 by retaining and reassessing the latest immutable proposal through additive private schema-v29 diagnostics. | Implemented and automated-validated; deferral, stable, expanding, and hard-blocked states are explicit, diagnostic-only safety remains non-ready, and no lifecycle authority exists |
+| 2026-07-20 | Accept the Slice 82 Lumbridge-to-Varrock refinement route. | Owner-validated; one fresh reassessment expanded the exact candidate set from 40 to 41 for active-NPC ownership at `(4,11)`, the next fresh reassessment stabilized at 41 and cleared the pending proposal, all five v29 records and round trips passed, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -8151,11 +8179,14 @@ hard-blocked next proposal, and clears it only after a stable unblocked
 point-in-time result. Schema-v29 exposes full diagnostic safety and visibly
 states that it is not retirement-readiness evidence.
 
-The next focused gate is private owner validation of a real proposal chain.
-After that evidence is accepted, the safest implementation direction is to
-inventory the equivalent preservation and reload burdens for players, dynamic
-objects, ground items, collision products, and owned events before creating any
-runtime lifecycle consumer.
+The real proposal-chain gate is now owner-validated. Its first fresh
+observation legitimately expands the exact set from 40 to 41 for active-NPC
+ownership at `(4,11)`; its next fresh observation retains all 41 sources,
+requires no further active-NPC expansion, and clears the stable proposal. The
+safest implementation direction is now to inventory the equivalent
+preservation and reload burdens for players, dynamic objects, ground items,
+collision products, and owned events before creating any runtime lifecycle
+consumer.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
