@@ -48,6 +48,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -3533,6 +3534,23 @@ public final class Player extends Mob {
 		};
 	}
 
+	private LayeredCoordinateParityObserver
+		.PackedRegionDynamicObjectPreservationSource
+			layeredPackedRegionDynamicObjectPreservationSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionDynamicObjectPreservationSource() {
+			@Override
+			public LayeredPackedRegionDynamicObjectPreservationRecord capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumCandidateSources,
+				final int maximumDynamicObjects) {
+				return getWorld().getRegionManager()
+					.captureLayeredPackedRegionDynamicObjectPreservationRecord(
+						proposal, maximumCandidateSources, maximumDynamicObjects);
+			}
+		};
+	}
+
 	private LayeredRegionInterestOwnershipLedger.Change
 		synchronizeLayeredMirrors(final Point point) {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(point);
@@ -3662,7 +3680,10 @@ public final class Player extends Mob {
 				loggedIn
 					? layeredPackedRegionRetirementRefinementReassessmentSource()
 					: null,
-				loggedIn ? layeredPackedRegionPreservationBurdenSource() : null);
+				loggedIn ? layeredPackedRegionPreservationBurdenSource() : null,
+				loggedIn
+					? layeredPackedRegionDynamicObjectPreservationSource()
+					: null);
 		}
 	}
 

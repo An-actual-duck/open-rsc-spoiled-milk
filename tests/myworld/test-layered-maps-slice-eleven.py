@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v30.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v31.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -32,6 +32,7 @@ SCHEMA_V26 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v26.sche
 SCHEMA_V27 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v27.schema.json"
 SCHEMA_V28 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v28.schema.json"
 SCHEMA_V29 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v29.schema.json"
+SCHEMA_V30 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v30.schema.json"
 
 
 POINT_STUB = r'''
@@ -111,6 +112,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionRecipe;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
@@ -765,11 +767,14 @@ public final class LayeredCoordinateParityObserverFixture {
 					candidate : proposal.getCandidates()) {
 				int x = candidate.getPackedRegionX();
 				int y = candidate.getPackedRegionY();
+				int dynamicObjectCount = x == 4 && y == 0 ? 1 : 0;
 				contents.add(LayeredPackedRegionRetirementSafetyAssessment
 					.PackedSourceContents.of(
-						x, y, true, true, false, 0, 0, 0, 0));
+						x, y, true, true, false, 0, 0,
+						dynamicObjectCount, 0));
 				inventories.add(LayeredPackedRegionPreservationBurdenAssessment
-					.currentRuntimeInventory(x, y, 0, 0, 0, 0));
+					.currentRuntimeInventory(
+						x, y, 0, dynamicObjectCount, 0, 0));
 			}
 			long observedAtTick = Math.max(
 				proposal.getSafetyObservedAtTick(), decisionTick[0]);
@@ -779,6 +784,37 @@ public final class LayeredCoordinateParityObserverFixture {
 						contents, observedAtTick, maximumCandidates);
 			return LayeredPackedRegionPreservationBurdenAssessment.assess(
 				safety, inventories, observedAtTick, maximumCandidates);
+		};
+		LayeredCoordinateParityObserver
+			.PackedRegionDynamicObjectPreservationSource
+				decisionDynamicObjectPreservationSource =
+					(proposal, maximumCandidates, maximumDynamicObjects) -> {
+			List<LayeredPackedRegionDynamicObjectPreservationRecord
+				.PackedSourceCapture> captures = new ArrayList<
+					LayeredPackedRegionDynamicObjectPreservationRecord
+						.PackedSourceCapture>();
+			for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+					candidate : proposal.getCandidates()) {
+				int x = candidate.getPackedRegionX();
+				int y = candidate.getPackedRegionY();
+				List<LayeredPackedRegionDynamicObjectPreservationRecord
+					.DynamicObjectState> objects = new ArrayList<
+						LayeredPackedRegionDynamicObjectPreservationRecord
+							.DynamicObjectState>();
+				if (x == 4 && y == 0) {
+					objects.add(LayeredPackedRegionDynamicObjectPreservationRecord
+						.DynamicObjectState.of(
+							64, 63, x * 48 + 1, y * 48 + 2, 4, 0,
+							"private-owner", 2));
+				}
+				captures.add(LayeredPackedRegionDynamicObjectPreservationRecord
+					.PackedSourceCapture.of(x, y, true, objects));
+			}
+			long observedAtTick = Math.max(
+				proposal.getSafetyObservedAtTick(), decisionTick[0]);
+			return LayeredPackedRegionDynamicObjectPreservationRecord.record(
+				proposal.getGeneration(), observedAtTick, captures,
+				maximumCandidates, maximumDynamicObjects);
 		};
 		LayeredCoordinateParityObserver.start(
 			decisionPlayerId, decisionHash, firstDecisionPoint, 0, tileSnapshots,
@@ -791,7 +827,8 @@ public final class LayeredCoordinateParityObserverFixture {
 			decisionReconstructionDependencySemanticsSource,
 			decisionActiveNpcResidencySource,
 			decisionRefinementReassessmentSource,
-			decisionPreservationBurdenSource);
+			decisionPreservationBurdenSource,
+			decisionDynamicObjectPreservationSource);
         decisionTick[0] = 1L;
         LayeredRegionInterestOwnershipLedger.Change decisionRelease =
             decisionOwnership.synchronizeOwner(
@@ -1092,9 +1129,13 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v30" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v31" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
+                for event in events
+            ))
+            self.assertTrue(all(
+                event["packedRegionDynamicObjectPreservation"] is None
                 for event in events
             ))
             self.assertTrue(all(
@@ -1904,9 +1945,14 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     for summary in preservation_burden["familySummaries"]
                 ],
             )
+            self.assertEqual(
+                [3, 4], sorted(
+                    source["blockedFamilyCount"]
+                    for source in preservation_burden["sources"]
+                )
+            )
             self.assertTrue(all(
-                source["blockedFamilyCount"] == 3
-                and not source["burdenSatisfiedAtObservation"]
+                not source["burdenSatisfiedAtObservation"]
                 and len(source["families"]) == 5
                 for source in preservation_burden["sources"]
             ))
@@ -1917,6 +1963,47 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             ):
                 self.assertFalse(preservation_burden[authority_flag])
             self.assertTrue(preservation_burden["pointInTimeOnly"])
+            dynamic_objects = decision_events[2][
+                "packedRegionDynamicObjectPreservation"
+            ]
+            self.assertEqual((2, 1, 1, 1, 0), (
+                dynamic_objects["sourceCount"],
+                dynamic_objects["dynamicObjectCount"],
+                dynamic_objects["objectsWithRuntimeAttributesCount"],
+                dynamic_objects["constructorStateCompleteObjectCount"],
+                dynamic_objects["standaloneRestorationCompleteObjectCount"],
+            ))
+            self.assertTrue(dynamic_objects["pointInTimeOnly"])
+            self.assertTrue(dynamic_objects["detachedPrimitiveCopy"])
+            recorded = [
+                obj
+                for source in dynamic_objects["sources"]
+                for obj in source["objects"]
+            ]
+            self.assertEqual(1, len(recorded))
+            self.assertEqual(
+                {
+                    "sourceOrdinal": 0,
+                    "objectId": 64,
+                    "permanentObjectId": 63,
+                    "packedX": 193,
+                    "packedY": 2,
+                    "direction": 4,
+                    "type": 0,
+                    "ownerPresent": True,
+                    "runtimeAttributeCount": 2,
+                    "constructorStateComplete": True,
+                    "standaloneRestorationComplete": False,
+                },
+                recorded[0],
+            )
+            self.assertNotIn("private-owner", json.dumps(decision_events))
+            for authority_flag in (
+                "runtimeAttributesCaptured", "eventOwnershipCaptured",
+                "preservationPerformed", "reloadRequest", "entityRegistry",
+                "arrivalGate", "teardownTransaction", "lifecycleAuthority",
+            ):
+                self.assertFalse(dynamic_objects[authority_flag])
             deferred_reassessment = decision_events[3][
                 "packedRegionRetirementRefinementReassessment"
             ]
@@ -2059,6 +2146,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v27 = json.loads(SCHEMA_V27.read_text(encoding="utf-8"))
                 v28 = json.loads(SCHEMA_V28.read_text(encoding="utf-8"))
                 v29 = json.loads(SCHEMA_V29.read_text(encoding="utf-8"))
+                v30 = json.loads(SCHEMA_V30.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -2077,6 +2165,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v27["$id"], Resource.from_contents(v27)),
                     (v28["$id"], Resource.from_contents(v28)),
                     (v29["$id"], Resource.from_contents(v29)),
+                    (v30["$id"], Resource.from_contents(v30)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

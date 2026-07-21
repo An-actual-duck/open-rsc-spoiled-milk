@@ -3,24 +3,24 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, and 85 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, and 86 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, and 87 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 86 records deterministic,
-detached constructor state for identity-less dynamic scenery across one exact
-refinement proposal. It retains current/permanent IDs, packed coordinates,
-direction, type, optional owner, and only the count of opaque runtime
-attributes; attribute values and external event ownership remain deliberately
-uncaptured, so standalone restoration stays false. No object is unregistered,
-recreated, or retained and every preservation, reload, registry, arrival,
-teardown, and lifecycle-authority flag remains false. Private diagnostic
-exposure and a deliberate dynamic-object owner route remain the next gate;
-Packed Region lookup, eager loading, release, eviction, pathing, packets, and
-persistence remain unchanged
+Current milestone: automated-validated Slice 87 exposes Slice 86's detached
+dynamic-scenery records through additive private schema-v31 diagnostics. The
+same proposal chosen for preservation burden supplies source order and
+generation; current/permanent IDs, packed coordinates, direction/type, owner
+presence, and opaque-attribute counts are visible, but owner text and attribute
+values are not. Standalone restoration remains false because event ownership
+is still uncaptured. No object is unregistered, recreated, or retained and
+every preservation, reload, registry, arrival, teardown, and lifecycle-
+authority flag remains false. A deliberate private dynamic-object owner route
+is the next gate; Packed Region lookup, eager loading, release, eviction,
+pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -8093,6 +8093,63 @@ Safety boundary:
 Status: implemented and automated-validated. Private diagnostics and owner
 validation remain absent.
 
+### Slice 87: Private dynamic-object preservation diagnostics
+
+Objective: expose Slice 86's exact detached record through the opt-in parity
+workflow so a deliberate live dynamic object can be reconciled against its
+existing burden count without publishing owner text or granting recovery
+authority.
+
+Implemented:
+
+- additive `layered-map-parity-event-v31` records retain the full v30 contract
+  and add nullable `packedRegionDynamicObjectPreservation` evidence;
+- proposal creation, same-tick deferral, and fresh reassessment use the same
+  proposal-selection rule as preservation burden, and the observer refuses a
+  generation, source-count, or coordinate-order mismatch;
+- aggregate and per-source counts expose deterministic object records with
+  source-local ordinals, current/permanent IDs, packed coordinates, direction,
+  type, owner presence, runtime-attribute count, constructor completeness, and
+  standalone-restoration incompleteness;
+- owner text and opaque attribute keys/values are intentionally omitted from
+  JSON; only owner presence and the attribute count cross the diagnostic
+  boundary; and
+- private start and reconnect paths both use the single bounded RegionManager
+  capture seam, while traces without a proposal or source emit explicit null.
+
+Automated validation status:
+
+- the executable observer fixture emits one dynamic object in the first of two
+  exact proposal sources, reconciles the existing dynamic-object burden count,
+  and retains its current/permanent IDs, packed position, direction/type,
+  owner-presence bit, and two opaque attributes;
+- the fixture proves the sentinel owner text never appears anywhere in emitted
+  JSON and schema-validates proposal creation, deferral, and stable
+  reassessment records;
+- schema-v31 closes every aggregate, source, and object shape; bounds candidate
+  sources to 8,192 and dynamic records to 65,536; fixes every recovery and
+  lifecycle flag to false; and keeps historical v30 immutable;
+- current-head guards, private runtime wiring, proposal correlation, and
+  privacy-safe serialization have focused regression coverage; and
+- the complete layered-map suite passes 228 tests across 86 focused files; and
+- the authoritative bundled-Ant build compiles 770 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- diagnostics never serialize `owner`, attribute values, event handles, entity
+  references, or Region references; `ownerPresent` is evidence only;
+- constructor completeness does not imply gameplay restoration completeness,
+  and no record can be consumed to create or register an object;
+- the record remains an observation of the proposal actually created,
+  retained, or reassessed rather than an independent selection; and
+- No object is unregistered, removed, recreated, retained, or reindexed. No
+  preservation, reload, teardown, rollback, loading, pathing, packet,
+  persistence, world-data mutation, or lifecycle authority is created.
+
+Status: implemented and automated-validated. Private owner validation remains
+pending.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8387,6 +8444,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 85 by exposing exact proposal-ordered preservation burdens through additive private schema-v30 diagnostics. | Implemented and automated-validated; proposal creation, deferral, and reassessment retain bounded five-family evidence, every mutating authority flag remains false, and private owner validation is pending |
 | 2026-07-21 | Accept the Slice 85 Lumbridge-to-Varrock preservation-burden route. | Owner-validated; four v30 records pass 1,222 reconciliations, the exact assessment expands from 40 to 41 sources with `(4,11)`, one Player remains a hard block, incomplete ground-item/collision/event evidence blocks every source, and no lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 86 by recording detached dynamic-object constructor state for exact refinement candidates. | Implemented and automated-validated; deterministic bounded records retain recreation inputs and opaque-attribute counts, external event ownership keeps standalone restoration incomplete, and no object or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 87 by exposing privacy-safe dynamic-object preservation records through additive private schema-v31 diagnostics. | Implemented and automated-validated; exact proposal generation/order and constructor-state records are visible without owner text, while standalone restoration and all lifecycle authority remain false |
 
 ## Next Discussion
 
@@ -8524,6 +8582,13 @@ ownership remains unavailable, this is not yet a restorable object snapshot.
 The next focused gate is privacy-safe additive diagnostics that correlate this
 record with the existing dynamic-object burden count, followed by a deliberate
 private object-creation/removal route; teardown and reload must remain absent.
+
+Slice 87 supplies that private exposure. The next owner route should create one
+temporary identity-less scenery object on an otherwise empty tile, start or
+advance a proposal that includes its packed source, confirm the record and
+burden both report it, then remove the test object and discard the queued world
+edit. The test must confirm ordinary scenery interaction and movement remain
+normal; it must not invoke retirement, teardown, restoration, or export.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

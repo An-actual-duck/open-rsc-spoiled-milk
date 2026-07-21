@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v31.schema.json",
+  "title": "Layered Map Parity Event v31",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency", "packedRegionActiveNpcContainment",
+    "packedRegionActiveNpcBoundaryRequirements",
+    "packedRegionRetirementRefinement",
+    "packedRegionRetirementRefinementReassessment",
+    "packedRegionPreservationBurden",
+    "packedRegionDynamicObjectPreservation", "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v31"},
+    "eventType": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionAuthoredReconstructionTopology"},
+    "packedRegionAuthoredReconstructionDependencySemantics": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics"},
+    "packedRegionActiveNpcResidency": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionActiveNpcResidency"},
+    "packedRegionActiveNpcContainment": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionActiveNpcContainment"},
+    "packedRegionActiveNpcBoundaryRequirements": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionActiveNpcBoundaryRequirements"},
+    "packedRegionRetirementRefinement": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionRetirementRefinement"},
+    "packedRegionRetirementRefinementReassessment": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionRetirementRefinementReassessment"},
+    "packedRegionPreservationBurden": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/packedRegionPreservationBurden"},
+    "packedRegionDynamicObjectPreservation": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/dynamicObjectPreservation"}
+      ]
+    },
+    "roundTripExact": {"$ref": "layered-map-parity-event-v30.schema.json#/properties/roundTripExact"}
+  },
+  "$defs": {
+    "boundedSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+    "boundedObjectCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+    "dynamicObjectPreservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposalGeneration", "observedAtTick", "sourceCount",
+        "dynamicObjectCount", "objectsWithRuntimeAttributesCount",
+        "constructorStateCompleteObjectCount",
+        "standaloneRestorationCompleteObjectCount", "pointInTimeOnly",
+        "detachedPrimitiveCopy", "runtimeAttributesCaptured",
+        "eventOwnershipCaptured", "preservationPerformed", "reloadRequest",
+        "entityRegistry", "arrivalGate", "teardownTransaction",
+        "lifecycleAuthority", "sources"
+      ],
+      "properties": {
+        "proposalGeneration": {"type": "integer", "minimum": 0},
+        "observedAtTick": {"type": "integer", "minimum": 0},
+        "sourceCount": {"$ref": "#/$defs/boundedSourceCount"},
+        "dynamicObjectCount": {"$ref": "#/$defs/boundedObjectCount"},
+        "objectsWithRuntimeAttributesCount": {"$ref": "#/$defs/boundedObjectCount"},
+        "constructorStateCompleteObjectCount": {"$ref": "#/$defs/boundedObjectCount"},
+        "standaloneRestorationCompleteObjectCount": {"const": 0},
+        "pointInTimeOnly": {"const": true},
+        "detachedPrimitiveCopy": {"const": true},
+        "runtimeAttributesCaptured": {"const": false},
+        "eventOwnershipCaptured": {"const": false},
+        "preservationPerformed": {"const": false},
+        "reloadRequest": {"const": false},
+        "entityRegistry": {"const": false},
+        "arrivalGate": {"const": false},
+        "teardownTransaction": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "sources": {
+          "type": "array",
+          "maxItems": 8192,
+          "items": {"$ref": "#/$defs/dynamicObjectSource"}
+        }
+      }
+    },
+    "dynamicObjectSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packedRegionX", "packedRegionY", "regionPresent",
+        "dynamicObjectCount", "objects"
+      ],
+      "properties": {
+        "packedRegionX": {"type": "integer", "minimum": 0},
+        "packedRegionY": {"type": "integer", "minimum": 0},
+        "regionPresent": {"type": "boolean"},
+        "dynamicObjectCount": {"$ref": "#/$defs/boundedObjectCount"},
+        "objects": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {"$ref": "#/$defs/dynamicObjectRecord"}
+        }
+      }
+    },
+    "dynamicObjectRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceOrdinal", "objectId", "permanentObjectId", "packedX",
+        "packedY", "direction", "type", "ownerPresent",
+        "runtimeAttributeCount", "constructorStateComplete",
+        "standaloneRestorationComplete"
+      ],
+      "properties": {
+        "sourceOrdinal": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "objectId": {"type": "integer", "minimum": 0},
+        "permanentObjectId": {"type": "integer", "minimum": 0},
+        "packedX": {"type": "integer", "minimum": 0},
+        "packedY": {"type": "integer", "minimum": 0},
+        "direction": {"type": "integer", "minimum": 0, "maximum": 7},
+        "type": {"enum": [0, 1]},
+        "ownerPresent": {"type": "boolean"},
+        "runtimeAttributeCount": {"type": "integer", "minimum": 0},
+        "constructorStateComplete": {"const": true},
+        "standaloneRestorationComplete": {"const": false}
+      }
+    }
+  }
+}

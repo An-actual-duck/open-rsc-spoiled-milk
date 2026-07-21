@@ -33,6 +33,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -1417,7 +1418,8 @@ public final class Development implements CommandTrigger {
 						player),
 					layeredPackedRegionActiveNpcResidencySource(player),
 					layeredPackedRegionRetirementRefinementReassessmentSource(player),
-					layeredPackedRegionPreservationBurdenSource(player));
+					layeredPackedRegionPreservationBurdenSource(player),
+					layeredPackedRegionDynamicObjectPreservationSource(player));
 			} else if ("snapshot".equals(action) || "capture".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1927,6 +1929,23 @@ public final class Development implements CommandTrigger {
 				return player.getWorld().getRegionManager()
 					.assessLayeredPackedRegionPreservationBurden(
 						proposal, maximumCandidateSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionDynamicObjectPreservationSource
+			layeredPackedRegionDynamicObjectPreservationSource(final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionDynamicObjectPreservationSource() {
+			@Override
+			public LayeredPackedRegionDynamicObjectPreservationRecord capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumCandidateSources,
+				final int maximumDynamicObjects) {
+				return player.getWorld().getRegionManager()
+					.captureLayeredPackedRegionDynamicObjectPreservationRecord(
+						proposal, maximumCandidateSources, maximumDynamicObjects);
 			}
 		};
 	}
