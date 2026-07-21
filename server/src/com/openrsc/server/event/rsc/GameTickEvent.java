@@ -160,4 +160,12 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	public int getTimesRan() {
 		return timesRan;
 	}
+
+	/**
+	 * Declares spatial effect only when the event implementation can do so
+	 * explicitly. Owner position is classified separately by diagnostics.
+	 */
+	public GameTickEventSpatialAffinity getSpatialAffinity() {
+		return GameTickEventSpatialAffinity.unspecified();
+	}
 }

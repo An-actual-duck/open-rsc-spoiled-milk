@@ -3,25 +3,26 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, and 87 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, and 88 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, and 89 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 88 defines the first bounded
-event-ownership inventory without inspecting or adopting a live scheduler
-callback. It keeps exact spatial affinity, Mob-owner position hints, explicitly
-non-spatial global events, and unattributed callbacks distinct across one exact
-proposal order. Multi-source effects remain visible, while every owner hint and
-anonymous null-owned callback keeps candidate attribution incomplete. Callback
-implementation state, scheduler identity, preservation, cancellation,
-rescheduling, reload, and all lifecycle authority remain absent. The next gate
-is a bounded runtime snapshot that defaults every legacy event conservatively
-and permits exact affinity only through an explicit event-provided contract;
-Packed Region lookup, eager loading, release, eviction, pathing, packets, and
-persistence remain unchanged
+Current milestone: automated-validated Slice 89 adds the bounded, read-only
+runtime seam for Slice 88's event-affinity inventory. Every legacy Mob-owned
+event becomes only a current-position hint and every legacy null-owned event
+remains unattributed; exact spatial or non-spatial scope requires an explicit
+immutable event declaration. The capture copies scheduler order, running state,
+countdown, execution count, owner kind, and declared coordinates without
+descriptors, UUIDs, implementation classes, reflection, or retained handles.
+It remains disconnected from private diagnostics. Callback implementation
+state, preservation, cancellation, rescheduling, reload, and all lifecycle
+authority remain absent. The next gate is narrow exact-affinity adoption for
+known spatial callbacks before private schema exposure; Packed Region lookup,
+eager loading, release, eviction, pathing, packets, and persistence remain
+unchanged
 
 ## Purpose
 
@@ -8232,6 +8233,64 @@ Safety boundary:
 Status: implemented and automated-validated. Runtime capture, private schema
 exposure, owner validation, and all event/lifecycle authority remain absent.
 
+### Slice 89: Bounded runtime event-affinity snapshot
+
+Objective: detach the live scheduler's currently observable primitive state
+into Slice 88 without inferring spatial safety from an owner, null owner,
+descriptor, callback class, or closure implementation.
+
+Implemented:
+
+- immutable `GameTickEventSpatialAffinity` declarations default every existing
+  event to `UNSPECIFIED`; an event must explicitly declare `EXACT_SPATIAL` with
+  one or more role-labelled coordinates or `NON_SPATIAL_GLOBAL` with none;
+- `GameTickEvent` exposes the immutable declaration through a default method,
+  preserving source and behavior compatibility for every legacy event;
+- one bounded `GameEventHandler` capture copies the tracked scheduler order and
+  current running state, ticks-before-run, execution count, owner kind, and
+  declared spatial references into Slice 88's detached values;
+- legacy Player/NPC owners become `OWNER_POSITION_HINT` at their current
+  coordinate, while legacy null-owned events remain unattributed; neither path
+  can become exact evidence accidentally;
+- exact proposal generation and canonical candidate order are retained, stale
+  observation ticks and event/reference overflow refuse the complete capture,
+  and no event is silently truncated; and
+- descriptors, UUIDs, scheduler keys, callback types, closure fields, owner
+  identities, Mob handles, event handles, and Region handles do not cross the
+  snapshot boundary.
+
+Automated validation status:
+
+- an executable compiled fixture proves unspecified, exact multi-location,
+  exact fixed-location, and explicitly non-spatial declarations are immutable
+  and invalid declarations refuse;
+- source guards prove runtime mapping distinguishes all four Slice 88
+  attribution kinds, never reads descriptors, UUIDs, callback classes, or
+  reflected fields, and invokes no scheduler or event mutation;
+- source guards also prove the capture remains disconnected from the parity
+  observer, Player session wiring, and development commands; and
+- the complete layered-map suite passes 235 tests across 88 focused files; and
+- the authoritative bundled-Ant build compiles 772 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- the tracked-event list is a point-in-time observation, not a scheduler lock,
+  lease, registry, commit token, or durable event identity;
+- an owner coordinate remains a moving hint, exact scope is trusted only when
+  explicitly supplied by the event implementation, and legacy null-owned
+  events remain unattributed;
+- even an exact location does not capture callback implementation state or make
+  the event restorable; and
+- No event is cancelled, stopped, removed, run, recreated, or rescheduled. No
+  source is loaded, retained, retired, reconstructed, or gated, and no
+  preservation, reload, registry, teardown, transaction, rollback, or
+  lifecycle authority is created.
+
+Status: implemented and automated-validated. Exact-affinity adoption, private
+schema exposure, owner validation, and all event/lifecycle authority remain
+absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8529,6 +8588,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 87 by exposing privacy-safe dynamic-object preservation records through additive private schema-v31 diagnostics. | Implemented and automated-validated; exact proposal generation/order and constructor-state records are visible without owner text, while standalone restoration and all lifecycle authority remain false |
 | 2026-07-21 | Accept the Slice 87 dynamic-object create-capture-remove route. | Owner-validated; ten v31 events pass 10,240 reconciliations, all three record-bearing proposals find the exact temporary stump in `(3,13)`, privacy and inert-authority boundaries hold, cleanup leaves no queued world edit, and the owner reports normal visuals, collision, and interaction |
 | 2026-07-21 | Continue with Slice 88 by defining a dormant event-ownership inventory over exact refinement candidates. | Implemented and automated-validated; exact spatial affinity, owner-position hints, explicit non-spatial scope, and unknown callbacks remain distinct, multi-source effects are bounded, and no event or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 89 by detaching one bounded global scheduler snapshot into the event-ownership inventory. | Implemented and automated-validated; legacy Mob owners remain position hints, null-owned callbacks remain unattributed, exact/global scope requires an explicit declaration, and no scheduler or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -8684,6 +8744,14 @@ legacy events must default to an owner-position hint or unattributed callback,
 while exact spatial and non-spatial classifications require a narrow explicit
 contract on the event itself. Capture must occur without cancellation,
 rescheduling, callback reflection, or scheduler-key mutation.
+
+Slice 89 supplies that runtime seam and keeps it disconnected from diagnostics.
+The next focused gate should explicitly annotate only the known fixed-location
+scenery spawn/remove callbacks, then prove those exact events coexist with the
+remaining unattributed scheduler population. Ground-item and NPC respawns,
+projectiles, combat, plugins, and global maintenance events must stay unchanged
+until each receives its own semantics; an event-location annotation still does
+not capture or authorize restoration.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

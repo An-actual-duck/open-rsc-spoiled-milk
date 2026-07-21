@@ -2,8 +2,19 @@ package com.openrsc.server.event.rsc.handler;
 
 import com.openrsc.server.Server;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.event.rsc.ImmediateEvent;
+import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AttributionKind;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventState;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.OwnerKind;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.PackedSource;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SpatialReference;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SpatialRole;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.util.NamedThreadFactory;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
@@ -341,6 +352,100 @@ public class GameEventHandler {
 
 	public List<GameTickEvent> getEvents() {
 		return new ArrayList<>(eventStore.getTrackedEvents());
+	}
+
+	/**
+	 * Detaches one bounded, non-reflective scheduler snapshot for an exact
+	 * refinement proposal. Legacy ownership is only a position hint; exact or
+	 * global scope must be declared by the event implementation.
+	 */
+	public LayeredPackedRegionEventOwnershipInventory
+		captureLayeredPackedRegionEventOwnershipInventory(
+			final LayeredPackedRegionRetirementRefinementProposal proposal,
+			final long observedAtTick,
+			final int maximumEvents,
+			final int maximumSpatialReferences) {
+		LayeredPackedRegionRetirementRefinementProposal checked =
+			Objects.requireNonNull(proposal, "proposal");
+		if (observedAtTick < checked.getSafetyObservedAtTick()
+			|| observedAtTick < checked.getCensusObservedAtTick()) {
+			throw new IllegalArgumentException(
+				"Event ownership snapshot is older than its proposal");
+		}
+
+		List<PackedSource> packedSources = new ArrayList<PackedSource>(
+			checked.getCandidateSourceCount());
+		for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+			source : checked.getCandidates()) {
+			packedSources.add(PackedSource.of(
+				source.getPackedRegionX(), source.getPackedRegionY()));
+		}
+
+		List<GameTickEvent> liveEvents = getEvents();
+		if (maximumEvents < 0
+			|| maximumEvents
+				> LayeredPackedRegionEventOwnershipInventory.MAXIMUM_EVENTS
+			|| liveEvents.size() > maximumEvents) {
+			throw new IllegalArgumentException(
+				"Event ownership snapshot exceeds its event budget");
+		}
+		List<EventState> eventStates =
+			new ArrayList<EventState>(liveEvents.size());
+		for (int ordinal = 0; ordinal < liveEvents.size(); ordinal++) {
+			GameTickEvent event = Objects.requireNonNull(
+				liveEvents.get(ordinal), "liveEvents[" + ordinal + "]");
+			eventStates.add(detachEventState(event, ordinal));
+		}
+		return LayeredPackedRegionEventOwnershipInventory.inventory(
+			checked.getGeneration(), observedAtTick, packedSources, eventStates,
+			checked.getCandidateSourceCount(), maximumEvents,
+			maximumSpatialReferences);
+	}
+
+	private EventState detachEventState(
+		final GameTickEvent event,
+		final int ordinal) {
+		Mob owner = event.getOwner();
+		OwnerKind ownerKind = owner == null
+			? OwnerKind.NONE
+			: owner instanceof Player
+				? OwnerKind.PLAYER
+				: owner instanceof Npc ? OwnerKind.NPC : OwnerKind.NONE;
+		GameTickEventSpatialAffinity affinity = Objects.requireNonNull(
+			event.getSpatialAffinity(), "event spatial affinity");
+		AttributionKind attribution;
+		List<SpatialReference> references =
+			new ArrayList<SpatialReference>();
+		switch (affinity.getScope()) {
+			case EXACT_SPATIAL:
+				attribution = AttributionKind.EXACT_SPATIAL;
+				for (GameTickEventSpatialAffinity.Reference reference
+					: affinity.getReferences()) {
+					references.add(SpatialReference.of(
+						SpatialRole.valueOf(reference.getRole().name()),
+						reference.getX(), reference.getY()));
+				}
+				break;
+			case NON_SPATIAL_GLOBAL:
+				attribution = AttributionKind.NON_SPATIAL_GLOBAL;
+				break;
+			case UNSPECIFIED:
+				if (owner != null) {
+					attribution = AttributionKind.OWNER_POSITION_HINT;
+					references.add(SpatialReference.of(
+						SpatialRole.OWNER_CURRENT_POSITION,
+						owner.getX(), owner.getY()));
+				} else {
+					attribution = AttributionKind.UNATTRIBUTED;
+				}
+				break;
+			default:
+				throw new IllegalStateException(
+					"Unhandled event spatial-affinity scope");
+		}
+		return EventState.of(
+			ordinal, ownerKind, attribution, event.isRunning(),
+			event.getTicksBeforeRun(), event.getTimesRan(), references);
 	}
 
 	public boolean hasEvent(Class<? extends GameTickEvent> type) {

@@ -247,10 +247,6 @@ class LayeredMapsSliceEightyEightTest(unittest.TestCase):
             "LayeredPackedRegionEventOwnershipInventory",
             REGION_MANAGER.read_text(encoding="utf-8"),
         )
-        self.assertNotIn(
-            "LayeredPackedRegionEventOwnershipInventory",
-            EVENT_HANDLER.read_text(encoding="utf-8"),
-        )
 
     def test_living_plan_records_slice_eighty_eight_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")
