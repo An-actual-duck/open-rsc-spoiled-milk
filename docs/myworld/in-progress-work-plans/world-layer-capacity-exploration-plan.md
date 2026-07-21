@@ -1,7 +1,7 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, 82, 85, 87, 91, 94, 97, and 100 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, 82, 85, 87, 91, 94, 97, 100, and 103 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, and 103 automated-validated on the active
 refinement branch
@@ -10,7 +10,7 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 103 exposes Slice 102's detached
+Current milestone: owner-validated Slice 103 exposes Slice 102's detached
 one-shot/continuing-server-tick semantics through additive private schema-v36.
 Aggregate and per-event evidence distinguish semantic completeness from
 callback-payload and standalone-restoration completeness. Atomic timing remains
@@ -9126,9 +9126,21 @@ Safety boundary:
   preservation, reload, registry, teardown, transaction, rollback, or
   lifecycle authority is created.
 
-Status: implemented and automated-validated. Private owner validation, atomic
-timing, executable restoration, and all event/lifecycle authority remain
-absent.
+Private owner validation status: accepted. Six contiguous schema-v36 records
+validate against the complete local schema chain. Both pending markers retain
+scheduler-instance token `ae1af8a0-a355-4aeb-93dc-23d4de947e4e` and
+registration 3900 while the observed countdown falls exactly from 24 to 10
+across 14 server ticks. Each contains the same exact authored magic-tree spawn
+at `(524,489)`, reports `ONE_SHOT` with `CONTINUE_SERVER_TICKS`, reconciles one
+captured and complete semantic record, and keeps atomic timing false/zero and
+standalone restoration false. The return teleport and stop retain the same
+instance scope but contain no exact callback after natural completion. Every
+registration/count invariant reconciles, all authority flags remain false,
+coordinate round trips remain exact, and the owner completed the return and
+interaction checks with no issue reported.
+
+Status: implemented, automated-validated, and owner-validated. Atomic timing,
+executable restoration, and all event/lifecycle authority remain absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -9447,6 +9459,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 101 by declaring dormant execution semantics for known scenery callbacks. | Implemented and automated-validated; spawn/removal explicitly declare one-shot execution and continuing server-tick progression, unavailable callbacks remain unclassified, no live timing is promoted, and no event or lifecycle authority is created |
 | 2026-07-21 | Continue with Slice 102 by detaching known execution semantics into the bounded event inventory. | Implemented and automated-validated; explicit enum mapping preserves one-shot/continuing-tick policy, aggregate semantic completeness stays distinct from payload/restoration completeness, atomic timing remains false, and no event or lifecycle authority is created |
 | 2026-07-21 | Continue with Slice 103 by exposing detached execution semantics through additive private diagnostics. | Implemented and automated-validated; schema-v36 publishes closed one-shot/continuing-tick values and reconciled counts, historical v35 remains immutable, atomic timing stays explicitly false and zero, and no event or lifecycle authority is created |
+| 2026-07-21 | Accept the Slice 103 scenery-event execution-semantics route. | Owner-validated; both pending records retain token `ae1af8a0-a355-4aeb-93dc-23d4de947e4e` and registration 3900 while ticks fall 24 to 10, one-shot/continuing-tick semantics and counts reconcile, natural completion empties the exact callback, and atomic timing plus every authority remain false |
 
 ## Next Discussion
 
@@ -9764,16 +9777,19 @@ then verify a pending magic-tree spawn reports one-shot continuing-tick
 semantics while its observed countdown falls, without claiming the countdown
 is safe for replay.
 
-Slice 103 now supplies that additive private exposure while keeping historical
-v35 and all timing/replay boundaries intact. The next gate is owner validation,
-not lifecycle implementation: capture one pending magic-tree spawn in two
-markers, verify its scheduler-instance token and registration identity remain
-stable while the observed countdown falls, and require `ONE_SHOT`,
-`CONTINUE_SERVER_TICKS`, semantic completeness, false/zero atomic timing,
-false standalone restoration, and false authority flags throughout. Normal
-tree return, visuals, collision, and interaction remain part of acceptance.
-Only after that route is accepted should atomic timing capture be designed
-under one explicit event-lifecycle lock.
+The accepted Slice 103 route proves the descriptive contract matches a real
+pending callback: one token and registration remain stable while the countdown
+falls by the exact server-tick delta, one-shot/continuing-tick semantics remain
+complete, and natural completion removes the event. It also confirms the
+remaining gap rather than closing it: those timing values are still sampled
+without one event-lifecycle lock and cannot support replay. The next focused
+gate should define the smallest atomic timing snapshot at the scheduler
+boundary—one observation tick bound to running state, remaining delay, and
+execution count for the same accepted registration—then detach it without
+adding cancellation, reschedule, callback invocation, due-event execution,
+arrival ordering, or lifecycle authority. Historical schema-v36 and the
+observer should remain unchanged until the atomic contract is executable and
+refuses mixed-time or mixed-registration construction.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
