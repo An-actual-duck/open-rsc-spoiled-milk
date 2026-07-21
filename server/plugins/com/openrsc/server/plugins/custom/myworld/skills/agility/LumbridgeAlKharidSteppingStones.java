@@ -1,13 +1,16 @@
 package com.openrsc.server.plugins.custom.myworld.skills.agility;
 
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.SceneryId;
+import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
-import com.openrsc.server.util.rsc.DataConversions;
+import com.openrsc.server.util.rsc.Formulae;
 
 import static com.openrsc.server.plugins.Functions.delay;
+import static com.openrsc.server.plugins.Functions.getCurrentLevel;
 import static com.openrsc.server.plugins.Functions.teleport;
 
 public final class LumbridgeAlKharidSteppingStones implements OpLocTrigger {
@@ -17,7 +20,8 @@ public final class LumbridgeAlKharidSteppingStones implements OpLocTrigger {
 	private static final Point CENTRE_STONE = Point.location(104, STONE_Y);
 	private static final Point EAST_STONE = Point.location(105, STONE_Y);
 	private static final Point LUMBRIDGE_BANK = Point.location(106, STONE_Y);
-	private static final int SLIP_CHANCE_PERCENT = 10;
+	private static final int REQUIRED_AGILITY_LEVEL = 25;
+	private static final int LEVEL_STOP_FAIL = REQUIRED_AGILITY_LEVEL + 30;
 
 	@Override
 	public boolean blockOpLoc(Player player, GameObject obj, String command) {
@@ -26,6 +30,11 @@ public final class LumbridgeAlKharidSteppingStones implements OpLocTrigger {
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
+		if (getCurrentLevel(player, Skill.AGILITY.id()) < REQUIRED_AGILITY_LEVEL) {
+			player.message("You need an agility level of 25 to use this shortcut.");
+			return;
+		}
+
 		if (isAlKharidEndpoint(obj)) {
 			cross(player, AL_KHARID_BANK, LUMBRIDGE_BANK, WEST_STONE, EAST_STONE);
 		} else if (isLumbridgeEndpoint(obj)) {
@@ -51,7 +60,7 @@ public final class LumbridgeAlKharidSteppingStones implements OpLocTrigger {
 		teleport(player, CENTRE_STONE.getX(), CENTRE_STONE.getY());
 		delay();
 
-		if (DataConversions.random(1, 100) <= SLIP_CHANCE_PERCENT) {
+		if (!succeeds(player)) {
 			player.message("You slip and splash into the river.");
 			delay();
 			teleport(player, departureBank.getX(), departureBank.getY());
@@ -63,5 +72,13 @@ public final class LumbridgeAlKharidSteppingStones implements OpLocTrigger {
 		delay();
 		teleport(player, destinationBank.getX(), destinationBank.getY());
 		player.message("You make it safely to the other bank.");
+	}
+
+	private static boolean succeeds(Player player) {
+		if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.AGILITY_CAPE.id())) {
+			return true;
+		}
+		return Formulae.calcProductionSuccessfulLegacy(REQUIRED_AGILITY_LEVEL,
+			getCurrentLevel(player, Skill.AGILITY.id()), false, LEVEL_STOP_FAIL);
 	}
 }

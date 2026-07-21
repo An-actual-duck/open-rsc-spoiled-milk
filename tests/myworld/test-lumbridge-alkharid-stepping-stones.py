@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SERVER_DEFS = ROOT / "server/conf/server/defs/GameObjectDef.xml"
 CLIENT_DEFS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+SKILL_GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 SCENERY_IDS = ROOT / "server/src/com/openrsc/server/constants/SceneryId.java"
 SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryLocs.json"
 HANDLER = (
@@ -93,7 +94,13 @@ def main() -> None:
         "LUMBRIDGE_BANK = Point.location(106, STONE_Y)",
         "obj.getX() == WEST_STONE.getX() && obj.getY() == WEST_STONE.getY()",
         "obj.getX() == EAST_STONE.getX() && obj.getY() == EAST_STONE.getY()",
-        "DataConversions.random(1, 100) <= SLIP_CHANCE_PERCENT",
+        "REQUIRED_AGILITY_LEVEL = 25",
+        "LEVEL_STOP_FAIL = REQUIRED_AGILITY_LEVEL + 30",
+        "getCurrentLevel(player, Skill.AGILITY.id()) < REQUIRED_AGILITY_LEVEL",
+        'player.message("You need an agility level of 25 to use this shortcut.")',
+        "Formulae.calcProductionSuccessfulLegacy(REQUIRED_AGILITY_LEVEL,",
+        "getCurrentLevel(player, Skill.AGILITY.id()), false, LEVEL_STOP_FAIL)",
+        "hasEquipped(ItemId.AGILITY_CAPE.id())",
         "teleport(player, departureBank.getX(), departureBank.getY())",
         "teleport(player, destinationBank.getX(), destinationBank.getY())",
     ):
@@ -107,6 +114,16 @@ def main() -> None:
         "player.damage(",
     ):
         require(forbidden not in handler, f"Crossing handler must not contain {forbidden}")
+
+    guide = SKILL_GUIDE.read_text(encoding="utf-8")
+    require(
+        'new SkillMenuItem(410, "25", "Lum river stepping stone")' in guide,
+        "Agility guide must list the Lum River stepping stones at level 25",
+    )
+    require(
+        'new SkillMenuItem(410, "25", "Glough\'s watch tower")' in guide,
+        "Agility guide lost the other level-25 Agility shortcut",
+    )
 
     wilderness = WILDERNESS.read_text(encoding="utf-8")
     require("private static final int STONE = 707;" in wilderness, "Wilderness stone ID changed")
