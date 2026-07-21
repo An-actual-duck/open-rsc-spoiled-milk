@@ -21,6 +21,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRe
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcBoundaryRequirementProjection;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
@@ -890,6 +891,67 @@ public class RegionManager {
 			return assessLayeredPackedRegionRetirementRefinementCandidatesLocked(
 				checked, maximumPackedSources,
 				getWorld().getServer().getCurrentTick());
+		}
+	}
+
+	/**
+	 * Captures one bounded, read-only preservation burden inventory from the
+	 * exact proposal order. Absent Regions stay absent and event ownership stays
+	 * unavailable; this method cannot load, preserve, reload, or retire anything.
+	 */
+	public LayeredPackedRegionPreservationBurdenAssessment
+		assessLayeredPackedRegionPreservationBurden(
+			final LayeredPackedRegionRetirementRefinementProposal proposal,
+			final int maximumPackedSources) {
+		LayeredPackedRegionRetirementRefinementProposal checked =
+			Objects.requireNonNull(proposal, "proposal");
+		if (maximumPackedSources < 0
+			|| maximumPackedSources
+				> MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN
+			|| checked.getCandidateSourceCount() > maximumPackedSources) {
+			throw new IllegalArgumentException(
+				"Preservation burden assessment exceeds the source budget");
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			long observedAtTick = getWorld().getServer().getCurrentTick();
+			List<LayeredPackedRegionRetirementSafetyAssessment.PackedSourceContents>
+				contents = new ArrayList<LayeredPackedRegionRetirementSafetyAssessment
+					.PackedSourceContents>(checked.getCandidateSourceCount());
+			List<LayeredPackedRegionPreservationBurdenAssessment
+				.PackedSourceInventory> inventories = new ArrayList<
+					LayeredPackedRegionPreservationBurdenAssessment
+						.PackedSourceInventory>(checked.getCandidateSourceCount());
+			for (LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+				candidate : checked.getCandidates()) {
+				Region region = peekRegionFromSectorCoordinates(
+					candidate.getPackedRegionX(), candidate.getPackedRegionY());
+				Region.RetirementContentsSnapshot snapshot = region == null
+					? null : region.captureRetirementContentsSnapshot();
+				contents.add(LayeredPackedRegionRetirementSafetyAssessment
+					.PackedSourceContents.of(
+						candidate.getPackedRegionX(), candidate.getPackedRegionY(),
+						region != null,
+						snapshot != null && snapshot.isTileStorageAvailable(),
+						LAYERED_PACKED_REGION_RELOAD_SUPPORTED,
+						snapshot == null ? 0 : snapshot.getPlayerCount(),
+						snapshot == null ? 0 : snapshot.getNpcCount(),
+						snapshot == null ? 0 : snapshot.getObjectCount(),
+						snapshot == null ? 0 : snapshot.getGroundItemCount()));
+				inventories.add(LayeredPackedRegionPreservationBurdenAssessment
+					.currentRuntimeInventory(
+						candidate.getPackedRegionX(), candidate.getPackedRegionY(),
+						snapshot == null ? 0 : snapshot.getPlayerCount(),
+						snapshot == null ? 0 : snapshot.getDynamicObjectCount(),
+						snapshot == null ? 0 : snapshot.getGroundItemCount(),
+						snapshot == null
+							? -1 : snapshot.getCollisionProductTileCount()));
+			}
+			LayeredPackedRegionRetirementSafetyAssessment safety =
+				LayeredPackedRegionRetirementSafetyAssessment
+					.assessDiagnosticSelection(
+						contents, observedAtTick, maximumPackedSources);
+			return LayeredPackedRegionPreservationBurdenAssessment.assess(
+				safety, inventories, observedAtTick, maximumPackedSources);
 		}
 	}
 

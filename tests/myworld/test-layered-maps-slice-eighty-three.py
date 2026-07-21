@@ -372,12 +372,12 @@ class LayeredMapsSliceEightyThreeTest(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
 
-    def test_assessment_remains_dormant_and_handle_free(self):
+    def test_assessment_remains_handle_free_and_non_authoritative(self):
         source = ASSESSMENT.read_text(encoding="utf-8")
         manager = REGION_MANAGER.read_text(encoding="utf-8")
         path_validation = PATH_VALIDATION.read_text(encoding="utf-8")
         observer = OBSERVER.read_text(encoding="utf-8")
-        self.assertNotIn(
+        self.assertIn(
             "LayeredPackedRegionPreservationBurdenAssessment", manager
         )
         self.assertNotIn(

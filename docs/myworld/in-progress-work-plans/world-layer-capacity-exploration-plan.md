@@ -3,23 +3,22 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, and 82 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, and 83 automated-validated on the active refinement
-branch
+76, 77, 78, 79, 80, 81, 83, and 84 automated-validated on the active
+refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated Slice 83 defines the dormant preservation/reload
-burden contract that must follow Slice 82's accepted refinement chain. Every
-exact safety source now has a stable five-family vocabulary for player
-sessions, dynamic objects, ground items, collision products, and owned events.
-Complete, partial, and unavailable evidence remain distinct; an empty
-point-in-time observation is not an arrival gate or lifecycle decision. The
-contract retains no runtime handles and grants no preservation, reload,
-selection, registry, teardown, or lifecycle authority. Packed Region lookup,
-eager loading, release, eviction, pathing, packets, and persistence remain
-unchanged
+Current milestone: automated Slice 84 attaches Slice 83's five-family contract
+to one dormant, bounded RegionManager capture. One Region-local snapshot now
+supplies exact Player, active object, and active ground-item counts, exact
+active identity-less object attribution, and a collision-product tile count.
+The contract deliberately classifies ground items and collision as partial and
+owned events as unavailable. The method is not connected to a Player, command,
+observer, or lifecycle consumer and grants no preservation, reload, selection,
+registry, teardown, or lifecycle authority. Packed Region lookup, eager
+loading, release, eviction, pathing, packets, and persistence remain unchanged
 
 ## Purpose
 
@@ -7873,6 +7872,74 @@ Safety boundary:
 Status: implemented and automated-validated. Runtime capture, schema exposure,
 and owner validation remain absent.
 
+### Slice 84: Bounded runtime preservation burden capture
+
+Objective: populate Slice 83 from one non-creating Region-local snapshot per
+exact refinement candidate while preserving incomplete evidence honestly and
+keeping the capture disconnected from diagnostics and gameplay.
+
+Implemented:
+
+- `Region.RetirementContentsSnapshot` now additionally returns an exact count
+  of active identity-less objects and one collision-product tile count without
+  exposing an object, tile, collection, or Region handle;
+- identity-less object counting uses Slice 56's generation-fenced authored
+  identity. Authored objects and explicit replacements retain identity, while
+  active dynamic constructions remain identity-less;
+- collision-product counting identifies tiles with current terrain collision,
+  blocking scenery, dynamic collision counters, or terrain/dynamic projectile
+  blockers. A compact uniform Region contributes either zero or all 2,304
+  tiles, and absent tile storage reports `-1` rather than zero;
+- `currentRuntimeInventory` classifies the Region-local Player and dynamic-
+  object counts as `COMPLETE`, active ground items and collision products as
+  `PARTIAL`, and owned events as `UNAVAILABLE` with count `-1`;
+- the partial ground-item status preserves the unobserved burden of authored
+  items that are validly absent during registry-generation/respawn delay, and
+  the partial collision status preserves missing mutation ownership and cross-
+  source rebuild evidence;
+- `RegionManager.assessLayeredPackedRegionPreservationBurden` walks the exact
+  proposal order under the existing lifecycle observation lock, uses
+  non-creating `peekRegionFromSectorCoordinates`, captures each Region once,
+  constructs diagnostic-only safety and matching family evidence from that
+  same detached snapshot, and enforces the existing source budget; and
+- the seam is dormant: neither Player, the development command, private
+  observer, PathValidation, nor any lifecycle consumer invokes it.
+
+Automated validation status:
+
+- a compiled fixture proves exact current-runtime classification for an
+  occupied source: one Player hard blocker, three dynamic objects requiring
+  preservation/reload, two active ground items retaining partial evidence,
+  seven collision-product tiles retaining partial rebuild evidence, and
+  unavailable owned events;
+- an absent-source fixture proves exact zero local Players/objects without
+  manufacturing ground-item completeness, collision evidence, or event
+  evidence;
+- invalid counts below the `-1` unavailable sentinel refuse;
+- source guards prove one Region snapshot per source, the lifecycle lock,
+  non-creating lookup, exact proposal order, and the absence of registration,
+  removal, unload, runtime attachment, or diagnostic exposure; and
+- the complete layered-map suite passes 216 tests across 83 focused files; and
+- the authoritative bundled-Ant build compiles 769 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- complete means only that the Region-local active count was exact during that
+  one snapshot; it does not mean the corresponding runtime state is
+  serializable, restorable, or protected against later arrival or mutation;
+- the collision-product tile count is intentionally partial even when its
+  numeric scan is exact, because it does not attribute products to terrain,
+  anchored objects, neighboring objects, or events and cannot rebuild them;
+- no absent Region is created, no event store is read, no registry or cache is
+  retained, and no Player/entity/tile reference escapes the capture; and
+- No lifecycle authority, retirement decision, commit token, source load,
+  arrival rejection, entity registry, transaction, teardown, reconstruction,
+  or rollback is created.
+
+Status: implemented and automated-validated. Private schema exposure and owner
+validation remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -8163,6 +8230,7 @@ private environment should validate at least:
 | 2026-07-20 | Continue with Slice 82 by retaining and reassessing the latest immutable proposal through additive private schema-v29 diagnostics. | Implemented and automated-validated; deferral, stable, expanding, and hard-blocked states are explicit, diagnostic-only safety remains non-ready, and no lifecycle authority exists |
 | 2026-07-20 | Accept the Slice 82 Lumbridge-to-Varrock refinement route. | Owner-validated; one fresh reassessment expanded the exact candidate set from 40 to 41 for active-NPC ownership at `(4,11)`, the next fresh reassessment stabilized at 41 and cleared the pending proposal, all five v29 records and round trips passed, and no lifecycle authority exists |
 | 2026-07-20 | Continue with Slice 83 by defining a bounded five-family preservation/reload burden contract over exact safety sources. | Implemented and automated-validated; complete, partial, and unavailable evidence remain distinct, each family retains its own blocking or recovery policy, and the dormant value grants no preservation, reload, teardown, or lifecycle authority |
+| 2026-07-21 | Continue with Slice 84 by capturing the current five-family burden from one non-creating Region snapshot per exact refinement candidate. | Implemented and automated-validated; exact local Player/dynamic-object counts remain distinct from partial ground-item/collision evidence and unavailable event ownership, the seam remains disconnected, and no lifecycle authority exists |
 
 ## Next Discussion
 
@@ -8272,6 +8340,15 @@ active objects, active ground items, and collision-product counts, while event
 ownership and absent authored-item respawn state remain explicitly partial or
 unavailable. Only after that capture is deterministic should an additive
 private schema expose it for owner validation.
+
+Slice 84 now supplies that bounded runtime capture. It uses the exact proposal
+order and one Region-local snapshot per source, but keeps active ground items
+partial because absent authored respawns are external, keeps collision partial
+because product ownership/rebuild is external, and keeps events unavailable
+because the event store has no packed-source index. The next focused gate is
+additive private diagnostic exposure of this exact assessment so a real route
+can measure how those burdens vary across candidate sets without granting the
+observer any runtime authority.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

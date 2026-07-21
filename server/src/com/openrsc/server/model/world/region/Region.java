@@ -104,13 +104,47 @@ public class Region {
 			synchronized (npcs) {
 				synchronized (objects) {
 					synchronized (items) {
+						int dynamicObjectCount = 0;
+						for (GameObject object : objects.values()) {
+							if (object.getAuthoredPlacementIdentity() == null) {
+								dynamicObjectCount++;
+							}
+						}
 						return new RetirementContentsSnapshot(
 							tiles != null || tile != null,
-							players.size(), npcs.size(), objects.size(), items.size());
+							players.size(), npcs.size(), objects.size(), items.size(),
+							dynamicObjectCount, countCollisionProductTiles());
 					}
 				}
 			}
 		}
+	}
+
+	/**
+	 * Counts tiles with current collision products without copying or exposing a
+	 * TileValue. Mutation ownership is not captured, so callers must classify
+	 * this count as partial evidence.
+	 */
+	private int countCollisionProductTiles() {
+		TileValue shared = tile;
+		if (shared != null) {
+			return shared.hasCollisionProductState()
+				? Constants.REGION_SIZE * Constants.REGION_SIZE : 0;
+		}
+		TileValue[][] expanded = tiles;
+		if (expanded == null) {
+			return -1;
+		}
+		int count = 0;
+		for (int x = 0; x < Constants.REGION_SIZE; x++) {
+			for (int y = 0; y < Constants.REGION_SIZE; y++) {
+				TileValue value = expanded[x][y];
+				if (value != null && value.hasCollisionProductState()) {
+					count++;
+				}
+			}
+		}
+		return count;
 	}
 
 	/** Records detached authored identity metadata for active objects/items. */
@@ -146,18 +180,24 @@ public class Region {
 		private final int npcCount;
 		private final int objectCount;
 		private final int groundItemCount;
+		private final int dynamicObjectCount;
+		private final int collisionProductTileCount;
 
 		private RetirementContentsSnapshot(
 			final boolean tileStorageAvailable,
 			final int playerCount,
 			final int npcCount,
 			final int objectCount,
-			final int groundItemCount) {
+			final int groundItemCount,
+			final int dynamicObjectCount,
+			final int collisionProductTileCount) {
 			this.tileStorageAvailable = tileStorageAvailable;
 			this.playerCount = playerCount;
 			this.npcCount = npcCount;
 			this.objectCount = objectCount;
 			this.groundItemCount = groundItemCount;
+			this.dynamicObjectCount = dynamicObjectCount;
+			this.collisionProductTileCount = collisionProductTileCount;
 		}
 
 		boolean isTileStorageAvailable() { return tileStorageAvailable; }
@@ -165,6 +205,10 @@ public class Region {
 		int getNpcCount() { return npcCount; }
 		int getObjectCount() { return objectCount; }
 		int getGroundItemCount() { return groundItemCount; }
+		int getDynamicObjectCount() { return dynamicObjectCount; }
+		int getCollisionProductTileCount() {
+			return collisionProductTileCount;
+		}
 	}
 
 	/**

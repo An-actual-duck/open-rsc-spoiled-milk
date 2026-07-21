@@ -193,6 +193,50 @@ public final class LayeredPackedRegionPreservationBurdenAssessment {
 		RELOAD_PATH_UNAVAILABLE
 	}
 
+	/**
+	 * Builds the deliberately conservative evidence currently available from one
+	 * Region-local snapshot. Player and active dynamic-object counts are exact.
+	 * Ground-item evidence remains partial because absent authored respawns live
+	 * outside the Region. Collision evidence is partial because mutation
+	 * ownership and cross-source rebuild are not represented. Event evidence is
+	 * unavailable because the global event store has no packed-source index.
+	 */
+	public static PackedSourceInventory currentRuntimeInventory(
+		final int packedRegionX,
+		final int packedRegionY,
+		final int playerCount,
+		final int dynamicObjectCount,
+		final int groundItemCount,
+		final int collisionProductTileCount) {
+		if (playerCount < 0 || dynamicObjectCount < 0 || groundItemCount < 0
+			|| collisionProductTileCount < -1) {
+			throw new IllegalArgumentException(
+				"Current runtime preservation counts are invalid");
+		}
+		List<FamilyEvidence> families =
+			new ArrayList<FamilyEvidence>(BurdenFamily.values().length);
+		families.add(FamilyEvidence.of(
+			BurdenFamily.PLAYER_SESSION, EvidenceCompleteness.COMPLETE,
+			playerCount, false, false));
+		families.add(FamilyEvidence.of(
+			BurdenFamily.DYNAMIC_OBJECT, EvidenceCompleteness.COMPLETE,
+			dynamicObjectCount, false, false));
+		families.add(FamilyEvidence.of(
+			BurdenFamily.GROUND_ITEM, EvidenceCompleteness.PARTIAL,
+			groundItemCount, false, false));
+		families.add(FamilyEvidence.of(
+			BurdenFamily.COLLISION_PRODUCT,
+			collisionProductTileCount < 0
+				? EvidenceCompleteness.UNAVAILABLE
+				: EvidenceCompleteness.PARTIAL,
+			collisionProductTileCount, false, false));
+		families.add(FamilyEvidence.of(
+			BurdenFamily.OWNED_EVENT, EvidenceCompleteness.UNAVAILABLE,
+			-1, false, false));
+		return PackedSourceInventory.of(
+			packedRegionX, packedRegionY, families);
+	}
+
 	/** Detached evidence supplied for one family in one packed source. */
 	public static final class FamilyEvidence {
 		private final BurdenFamily family;
