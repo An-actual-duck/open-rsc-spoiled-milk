@@ -1,7 +1,7 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, 82, 85, 87, 91, 94, and 97 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, 82, 85, 87, 91, 94, 97, and 100 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, and 100 automated-validated on the active
 refinement branch
@@ -10,15 +10,17 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: automated-validated Slice 100 exposes Slice 99's detached
+Current milestone: owner-validated Slice 100 exposes Slice 99's detached
 opaque scheduler-instance scope through additive private schema-v35. Every
 proposal-bearing inventory publishes one canonical token and true narrow-scope
 capture while full scheduler identity stays false. Historical closed schema-v34
 remains token-free and false. No store, event UUID/key, callback, class, owner,
-or scheduler handle crosses the observer boundary. The current gate is a
-private restart route proving registration sequences are comparable only when
-their scheduler-instance identities match. Cancellation, reschedule, replay,
-preservation, and all lifecycle authority remain absent;
+or scheduler handle crosses the observer boundary. The accepted restart route
+holds one token/registration stable in each private runtime while the two
+runtime tokens differ, proving numeric registration values are comparable only
+inside matching scope. A mistaken intermediate session is closed, inventory-
+free, and mechanically isolated from the clean redo. Cancellation, reschedule,
+replay, preservation, and all lifecycle authority remain absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -8942,17 +8944,23 @@ Safety boundary:
   preservation, reload, registry, teardown, transaction, rollback, or
   lifecycle authority is created.
 
-Private owner validation status: pending. Capture a pending magic-tree callback
-under one private server instance, restart only that private runtime, then
-capture a new pending callback at the same authored placement. Each record must
-validate; same-instance observations must retain one token and registration,
-the restarted process must publish a different token, and numeric registration
-values must never be compared across those different scopes. Visuals,
-collision, interaction, privacy, and all inert-authority flags remain part of
-acceptance.
+Private owner validation status: accepted. Fifteen schema-v35 records across
+three closed sessions validate against the complete local schema chain. Phase
+A retains token `83f7d250-5b6c-443f-848b-25aaee7a6880` and registration 3901
+while countdown falls from 40 to 23 ticks; natural completion leaves the
+return/stop records empty of exact callbacks. The mistaken first Phase B
+attempt is a separate four-record session with no proposal/event inventory and
+is ignored without contaminating either accepted session. The clean restarted
+Phase B retains token `f8af12f8-2c71-4226-a99a-36ff379f230f` and registration
+3960 while countdown falls from 31 to 14 to 4 ticks. The two runtime tokens
+differ, so their numeric registration sequences are correctly incomparable.
+Every proposal-bearing inventory reconciles event/identity counts, retains
+exact coordinate round trips and the same complete authored spawn payload,
+keeps full scheduler identity and every authority flag false, and the owner
+reports normal tree return, visuals, collision, and interaction.
 
-Status: implemented and automated-validated. Private owner validation,
-executable restoration, and all event/lifecycle authority remain absent.
+Status: implemented, automated-validated, and owner-validated. Executable
+restoration and all event/lifecycle authority remain absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -9267,6 +9275,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 98 by defining an opaque scheduler-instance scope for registration identity. | Implemented and automated-validated; one immutable atomic snapshot binds a stable same-store identity to accepted registration order, different stores differ, no token leaves the scheduler yet, and no event or lifecycle authority is created |
 | 2026-07-21 | Continue with Slice 99 by detaching scheduler-instance scope into the bounded event inventory. | Implemented and automated-validated; one atomic snapshot supplies token and registrations, canonical scope is required even when empty, schema-v34 remains unchanged and private, full scheduler identity stays false, and no event or lifecycle authority is created |
 | 2026-07-21 | Continue with Slice 100 by exposing scheduler-instance scope through additive private schema-v35. | Implemented and automated-validated; one canonical detached token scopes registration comparison, historical v34 remains closed and false, full scheduler identity stays absent, and no event or lifecycle authority is created |
+| 2026-07-21 | Accept the Slice 100 cross-restart scheduler-scope route. | Owner-validated; Phase A and clean Phase B each retain one stable token/registration with falling countdowns, their tokens differ across the private restart, the mistaken intermediate session is closed and inventory-free, all 15 v35 records validate, and no scheduler or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -9541,17 +9550,28 @@ pending callback, restart the private server, capture a new callback, and
 prove registration sequences are comparable only when their instance identity
 matches.
 
-Slice 100 now supplies that additive private exposure. Its owner gate should
-first mark the same pending tree callback twice under one private runtime and
-verify both token and registration sequence stay equal while countdown falls.
-After natural completion, restart only the private server, reconnect, re-chop
-the returned tree, leave the source, and mark the new pending callback. The
-second runtime must publish a different scheduler-instance identity. Its
-registration number is deliberately not ordered against the first runtime's
-number; the differing scope is the proof that such comparison is invalid.
-Both schema-v35 sessions must retain exact coordinate round trips, complete
-registration identity, false full scheduler identity, privacy, and every inert
-authority flag.
+The accepted Slice 100 route proves the intended scope rule. Phase A keeps one
+token and registration while its countdown falls; the clean post-restart Phase
+B keeps a different token and registration while its countdown falls. The
+mistaken intermediate attempt is a separate closed inventory-free session and
+cannot contaminate either accepted capture. Numeric registration values are
+therefore comparable only inside matching scheduler-instance identity.
+
+Inspection of the live scheduler after acceptance shows the next restoration
+gap is execution semantics, not more identity. Delayed scenery spawn/removal
+callbacks are `SingleEvent` one-shots; `GameTickEvent.doRun()` decrements the
+countdown, invokes a due callback, increments `timesRan`, and resets the
+configured delay even though the one-shot stops itself. The inventory currently
+records running/countdown/execution counters but does not explicitly declare
+one-shot semantics or whether time continues while a source is absent, and
+those fields are not captured under one event-lifecycle lock. The next focused
+gate should first define a dormant explicit execution-semantics contract for
+the two known scenery callbacks. For MMORPG resource behavior, the recommended
+policy is that server ticks continue while a source is absent so an overdue
+respawn is reconstructed before player arrival, rather than freezing depleted
+resources off-screen. This slice must remain descriptive only; atomic timing
+capture, arrival ordering, replay, cancellation, and rescheduling stay later
+gates.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
