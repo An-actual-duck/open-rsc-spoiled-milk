@@ -12,6 +12,7 @@ INVENTORY = ROOT / (
 )
 OBSERVER = ROOT / "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java"
 SCHEMA_V35 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v35.schema.json"
+SCHEMA_V36 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v36.schema.json"
 FIXTURE = ROOT / "tests/myworld/test-layered-maps-slice-ninety-three.py"
 PLAN = ROOT / "docs/myworld/in-progress-work-plans/world-layer-capacity-exploration-plan.md"
 
@@ -57,10 +58,12 @@ class LayeredMapsSliceOneHundredTwoTest(unittest.TestCase):
         self.assertIn("ExecutionSemantics.UNAVAILABLE", fixture)
         self.assertIn("CONTINUE_SERVER_TICKS", fixture)
 
-    def test_schema_v35_and_observer_remain_unchanged(self):
-        schema = json.loads(SCHEMA_V35.read_text(encoding="utf-8"))
+    def test_schema_v35_stays_immutable_while_v36_publishes_semantics(self):
+        schema_v35 = json.loads(SCHEMA_V35.read_text(encoding="utf-8"))
+        schema_v36 = json.loads(SCHEMA_V36.read_text(encoding="utf-8"))
         observer = OBSERVER.read_text(encoding="utf-8")
-        contract = schema["$defs"]["eventOwnership"]
+        old_contract = schema_v35["$defs"]["eventOwnership"]
+        new_contract = schema_v36["$defs"]["eventOwnership"]
         for name in (
             "executionSemanticsCapturedEventCount",
             "executionSemanticsCaptured",
@@ -68,10 +71,11 @@ class LayeredMapsSliceOneHundredTwoTest(unittest.TestCase):
             "atomicTimingCapturedEventCount",
             "atomicTimingCaptured",
         ):
-            self.assertNotIn(name, contract["properties"])
-            self.assertNotIn(name, observer)
-        self.assertNotIn("getExecutionSemantics()", observer)
-        self.assertNotIn("getTimeProgressionPolicy()", observer)
+            self.assertNotIn(name, old_contract["properties"])
+            self.assertIn(name, new_contract["properties"])
+            self.assertIn(name, observer)
+        self.assertIn("getExecutionSemantics()", observer)
+        self.assertIn("getTimeProgressionPolicy()", observer)
 
     def test_living_plan_records_slice_one_hundred_two_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")

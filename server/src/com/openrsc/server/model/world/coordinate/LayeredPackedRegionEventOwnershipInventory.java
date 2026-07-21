@@ -562,6 +562,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		public boolean isExecutionSemanticsCaptured() {
 			return executionSemantics != ExecutionSemantics.UNAVAILABLE;
 		}
+		public boolean isAtomicTimingCaptured() { return false; }
 		public boolean isSchedulerIdentityCaptured() { return false; }
 		public boolean isTargetBindingLookupPerformed() { return false; }
 		public boolean isStandaloneRestorationComplete() { return false; }
