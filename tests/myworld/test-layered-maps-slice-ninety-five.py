@@ -84,6 +84,23 @@ public class GameTickEvent {
     public boolean hasOwner() { return owner != null; }
     public boolean isRunning() { return running; }
     public void stop() { running = false; }
+    public AtomicTimingSnapshot captureAtomicTimingSnapshot() {
+        return new AtomicTimingSnapshot(running, 7L, 2);
+    }
+    public static final class AtomicTimingSnapshot {
+        private final boolean running;
+        private final long ticksBeforeRun;
+        private final int timesRan;
+        public AtomicTimingSnapshot(
+                boolean running, long ticksBeforeRun, int timesRan) {
+            this.running = running;
+            this.ticksBeforeRun = ticksBeforeRun;
+            this.timesRan = timesRan;
+        }
+        public boolean isRunning() { return running; }
+        public long getTicksBeforeRun() { return ticksBeforeRun; }
+        public int getTimesRan() { return timesRan; }
+    }
 }
 '''
 
@@ -109,6 +126,8 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.entity.player.Player;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class GameTickEventRegistrationFixture {
     private static final class ServerEventA extends GameTickEvent {
@@ -125,11 +144,26 @@ public final class GameTickEventRegistrationFixture {
             super(owner, DuplicationStrategy.ONE_PER_MOB);
         }
     }
+    private static final class BlockingTimingEvent extends GameTickEvent {
+        private final CountDownLatch entered = new CountDownLatch(1);
+        private final CountDownLatch release = new CountDownLatch(1);
+        BlockingTimingEvent() {
+            super(null, DuplicationStrategy.ONE_PER_SERVER);
+        }
+        @Override
+        public AtomicTimingSnapshot captureAtomicTimingSnapshot() {
+            entered.countDown();
+            await(release);
+            return super.captureAtomicTimingSnapshot();
+        }
+    }
 
     public static void main(String[] args) {
         acceptedAndRejectedAddsKeepStableIdentity();
         removalAndReplacementCreateNewRegistrations();
         schedulerInstanceIdentityScopesAtomicSnapshots();
+        atomicTimingBindsTickRegistrationAndState();
+        registrationChangeRefusesAtomicTimingSnapshot();
     }
 
     private static void acceptedAndRejectedAddsKeepStableIdentity() {
@@ -220,6 +254,51 @@ public final class GameTickEventRegistrationFixture {
         expectUnsupported(() -> first.getRegistrations().clear());
     }
 
+    private static void atomicTimingBindsTickRegistrationAndState() {
+        GameTickEventStore store = new GameTickEventStore();
+        ServerEventA event = new ServerEventA();
+        check(store.add(event), "timed snapshot event accepted");
+        GameTickEventStore.StoreAtomicTimingSnapshot snapshot =
+            store.getTrackedEventAtomicTimingSnapshot(77L);
+        check(snapshot.getObservedAtTick() == 77L
+                && snapshot.getSchedulerInstanceIdentity().matches(
+                    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+                && snapshot.getRegistrations().size() == 1,
+            "store scope and observation tick bind one timing snapshot");
+        GameTickEventStore.AtomicTimedRegisteredEvent timed =
+            snapshot.getRegistrations().get(0);
+        check(timed.getEvent() == event
+                && timed.getRegistrationSequence() == 1L
+                && timed.getTiming().isRunning()
+                && timed.getTiming().getTicksBeforeRun() == 7L
+                && timed.getTiming().getTimesRan() == 2,
+            "registration and event-local timing remain correlated");
+        expectUnsupported(() -> snapshot.getRegistrations().clear());
+        expectIllegal(() -> store.getTrackedEventAtomicTimingSnapshot(-1L));
+    }
+
+    private static void registrationChangeRefusesAtomicTimingSnapshot() {
+        GameTickEventStore store = new GameTickEventStore();
+        BlockingTimingEvent blocking = new BlockingTimingEvent();
+        check(store.add(blocking), "blocking timing event accepted");
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        Thread capture = new Thread(() -> {
+            try {
+                store.getTrackedEventAtomicTimingSnapshot(88L);
+            } catch (Throwable caught) {
+                failure.set(caught);
+            }
+        });
+        capture.start();
+        await(blocking.entered);
+        check(store.add(new ServerEventA()),
+            "registration set changes during event-local capture");
+        blocking.release.countDown();
+        join(capture);
+        check(failure.get() instanceof IllegalStateException,
+            "mixed-registration atomic timing snapshot is refused");
+    }
+
     private static long sequenceOf(
         GameTickEventStore store,
         GameTickEvent expected) {
@@ -239,6 +318,34 @@ public final class GameTickEventRegistrationFixture {
             return;
         }
         throw new AssertionError("expected UnsupportedOperationException");
+    }
+
+    private static void expectIllegal(Runnable action) {
+        try {
+            action.run();
+        } catch (IllegalArgumentException expected) {
+            return;
+        }
+        throw new AssertionError("expected IllegalArgumentException");
+    }
+
+    private static void await(CountDownLatch latch) {
+        try {
+            latch.await();
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError(interrupted);
+        }
+    }
+
+    private static void join(Thread thread) {
+        try {
+            thread.join(5000L);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError(interrupted);
+        }
+        check(!thread.isAlive(), "timing capture thread completed");
     }
 
     private static void check(boolean condition, String message) {

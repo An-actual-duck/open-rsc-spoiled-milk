@@ -3,21 +3,22 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, and 103 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, and 103 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, and 104 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 103 exposes Slice 102's detached
-one-shot/continuing-server-tick semantics through additive private schema-v36.
-Aggregate and per-event evidence distinguish semantic completeness from
-callback-payload and standalone-restoration completeness. Atomic timing remains
-false and zero: existing running, countdown, and execution counters are still
-observational. Historical schema-v35 remains immutable; arrival ordering,
-replay, cancellation, reschedule, preservation, and all lifecycle authority
-remain absent;
+Current milestone: automated-validated Slice 104 defines the internal atomic
+timing foundation beneath the accepted Slice 103 contract. One event-local
+lifecycle lock captures running state, remaining delay, and execution count as
+one immutable tuple; the scheduler binds that tuple to one observation tick,
+instance scope, and accepted registration set, refusing a concurrent
+registration-version change. The handler, detached inventory, schema-v36, and
+observer remain unchanged and explicitly non-atomic; arrival ordering, replay,
+cancellation, reschedule, preservation, and all lifecycle authority remain
+absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -9142,6 +9143,68 @@ interaction checks with no issue reported.
 Status: implemented, automated-validated, and owner-validated. Atomic timing,
 executable restoration, and all event/lifecycle authority remain absent.
 
+### Slice 104: Atomic scheduler event-timing foundation
+
+Objective: capture the smallest timing tuple for one accepted event under one
+event-local lifecycle lock and bind it to one scheduler observation tick and
+registration set without publishing or consuming it yet.
+
+Implemented:
+
+- `GameTickEvent` owns one private timing lock. Its tick, due callback,
+  execution-count increment, countdown reset, and stop transition complete
+  before `captureAtomicTimingSnapshot` can return the immutable running/
+  remaining-ticks/execution-count tuple;
+- the callback continues to execute normally. The lock does not add a replay
+  method, callback accessor, due-event executor, cancellation path, or timing
+  mutation interface;
+- `GameTickEventStore` adds a read-only two-phase timing snapshot: it first
+  copies store scope and accepted registrations, releases the store lock while
+  taking each event-local snapshot, then verifies the registration version is
+  unchanged before returning one immutable store-scope/observation-tick list;
+- this lock order prevents the store lock from being held across callback
+  lifecycle capture. Any add, remove, replacement, or re-registration during
+  capture changes the version and refuses the whole snapshot as mixed-
+  registration evidence; and
+- the existing registration-only snapshot remains available unchanged. The
+  handler does not consume the new timing snapshot, and the detached inventory,
+  schema-v36, observer, and already-captured records remain explicitly
+  non-atomic.
+
+Automated validation status:
+
+- an executable event fixture blocks inside a due one-shot-style callback and
+  proves timing capture cannot observe its partially executed lifecycle; after
+  release it receives the complete stopped/reset/one-execution tuple;
+- the executable store fixture binds canonical scheduler scope, observation
+  tick, registration identity, and event-local timing, keeps the returned list
+  immutable, refuses a negative observation tick, and deterministically
+  refuses a registration added during a blocked capture;
+- structural guards prove the handler and observer do not reach the new store
+  method, while detached atomic-timing counts and flags remain zero/false;
+- the complete layered-map suite passes 305 tests across 103 focused files;
+  and
+- the authoritative bundled-Ant build compiles 773 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- atomicity applies to the captured primitive timing tuple and its validated
+  accepted registration set; it does not make callback inputs, target binding,
+  authored reconstruction, or the whole scheduler independently restorable;
+- the observation tick labels the scheduler capture and does not become a due
+  tick, wall-clock deadline, frozen-time policy, or replay instruction;
+- a registration-version race refuses evidence rather than retrying, blocking
+  an event, or mutating the scheduler; and
+- No callback is cancelled, stopped by the capture, removed, rescheduled,
+  recreated, or run by the capture. No source is loaded, retained, retired,
+  reconstructed, or gated, and no preservation, reload, registry, teardown,
+  transaction, rollback, or lifecycle authority is created.
+
+Status: implemented and automated-validated. Detachment, private schema
+exposure, owner validation, executable restoration, and all event/lifecycle
+authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -9460,6 +9523,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 102 by detaching known execution semantics into the bounded event inventory. | Implemented and automated-validated; explicit enum mapping preserves one-shot/continuing-tick policy, aggregate semantic completeness stays distinct from payload/restoration completeness, atomic timing remains false, and no event or lifecycle authority is created |
 | 2026-07-21 | Continue with Slice 103 by exposing detached execution semantics through additive private diagnostics. | Implemented and automated-validated; schema-v36 publishes closed one-shot/continuing-tick values and reconciled counts, historical v35 remains immutable, atomic timing stays explicitly false and zero, and no event or lifecycle authority is created |
 | 2026-07-21 | Accept the Slice 103 scenery-event execution-semantics route. | Owner-validated; both pending records retain token `ae1af8a0-a355-4aeb-93dc-23d4de947e4e` and registration 3900 while ticks fall 24 to 10, one-shot/continuing-tick semantics and counts reconcile, natural completion empties the exact callback, and atomic timing plus every authority remain false |
+| 2026-07-21 | Continue with Slice 104 by defining an atomic scheduler event-timing foundation. | Implemented and automated-validated; one event-local lock captures the timing tuple, one version-fenced store snapshot binds it to tick/scope/registration, mixed-registration capture refuses, diagnostics remain non-atomic and unchanged, and no event or lifecycle authority is created |
 
 ## Next Discussion
 
@@ -9790,6 +9854,17 @@ adding cancellation, reschedule, callback invocation, due-event execution,
 arrival ordering, or lifecycle authority. Historical schema-v36 and the
 observer should remain unchanged until the atomic contract is executable and
 refuses mixed-time or mixed-registration construction.
+
+Slice 104 now supplies that executable scheduler boundary while leaving it
+unconsumed. The next focused gate should make the handler request exactly one
+atomic timing snapshot for a refinement observation and detach its observation
+tick plus each event's running/remaining/execution tuple only when the same
+registration carries an available one-shot/continuing-tick restoration state.
+The detached inventory must require timing identity/count/order to reconcile,
+refuse mismatched observation ticks or registrations, keep unavailable events
+explicitly non-atomic, and distinguish atomic timing from standalone
+restoration. Schema-v36 and the observer should remain unchanged until that
+detached contract is executable and bounded.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

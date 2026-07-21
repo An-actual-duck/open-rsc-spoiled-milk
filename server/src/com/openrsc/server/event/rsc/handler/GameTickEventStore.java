@@ -44,6 +44,7 @@ class GameTickEventStore {
     private final String schedulerInstanceIdentity =
         UUID.randomUUID().toString();
     private long nextRegistrationSequence;
+    private long registrationVersion;
 
     /**
      * Indexes events by username for fast-lookup during individual player tick processing
@@ -112,6 +113,10 @@ class GameTickEventStore {
                 LOGGER.warn("Failed to remove event: {}", eventKey);
                 return;
             }
+            if (registrationVersion == Long.MAX_VALUE) {
+                throw new IllegalStateException(
+                    "Event registration version exhausted");
+            }
 
             GameTickEvent registeredEvent = events.get(eventKey);
             events.remove(eventKey);
@@ -125,6 +130,7 @@ class GameTickEventStore {
                 nonPlayerEvents.remove(eventKey);
             }
             registrationSequences.remove(registeredEvent);
+            advanceRegistrationVersion();
         }
     }
 
@@ -189,7 +195,41 @@ class GameTickEventStore {
             }
             return new RegistrationSnapshot(
                 schedulerInstanceIdentity,
+                registrationVersion,
                 Collections.unmodifiableList(registrations));
+        }
+    }
+
+    /**
+     * Captures registration identity and each event's timing tuple without
+     * holding the store lock while acquiring an event lifecycle lock. A
+     * changed registration set refuses the whole snapshot rather than mixing
+     * timing from one accepted stay with another.
+     */
+    StoreAtomicTimingSnapshot getTrackedEventAtomicTimingSnapshot(
+        final long observedAtTick) {
+        if (observedAtTick < 0L) {
+            throw new IllegalArgumentException(
+                "Atomic timing observation tick must be non-negative");
+        }
+        RegistrationSnapshot registrations =
+            getTrackedEventRegistrationSnapshot();
+        List<AtomicTimedRegisteredEvent> timedRegistrations =
+            new ArrayList<>(registrations.getRegistrations().size());
+        for (RegisteredEvent registration : registrations.getRegistrations()) {
+            timedRegistrations.add(new AtomicTimedRegisteredEvent(
+                registration.getEvent(),
+                registration.getRegistrationSequence(),
+                registration.getEvent().captureAtomicTimingSnapshot()));
+        }
+        synchronized (LOCK) {
+            if (registrationVersion != registrations.getRegistrationVersion()) {
+                throw new IllegalStateException(
+                    "Scheduler registrations changed during atomic timing snapshot");
+            }
+            return new StoreAtomicTimingSnapshot(
+                registrations.getSchedulerInstanceIdentity(), observedAtTick,
+                Collections.unmodifiableList(timedRegistrations));
         }
     }
 
@@ -199,6 +239,10 @@ class GameTickEventStore {
         if (nextRegistrationSequence == Long.MAX_VALUE) {
             throw new IllegalStateException(
                 "Event registration identity exhausted");
+        }
+        if (registrationVersion == Long.MAX_VALUE) {
+            throw new IllegalStateException(
+                "Event registration version exhausted");
         }
         long registrationSequence = nextRegistrationSequence + 1L;
         events.put(eventKey, event);
@@ -211,6 +255,15 @@ class GameTickEventStore {
         }
         registrationSequences.put(event, Long.valueOf(registrationSequence));
         nextRegistrationSequence = registrationSequence;
+        advanceRegistrationVersion();
+    }
+
+    private void advanceRegistrationVersion() {
+        if (registrationVersion == Long.MAX_VALUE) {
+            throw new IllegalStateException(
+                "Event registration version exhausted");
+        }
+        registrationVersion++;
     }
 
     /** Internal handle/identity pair; no reference crosses diagnostics. */
@@ -237,12 +290,15 @@ class GameTickEventStore {
     /** Immutable store-lifetime identity plus one atomic registration view. */
     static final class RegistrationSnapshot {
         private final String schedulerInstanceIdentity;
+        private final long registrationVersion;
         private final List<RegisteredEvent> registrations;
 
         private RegistrationSnapshot(
             final String schedulerInstanceIdentity,
+            final long registrationVersion,
             final List<RegisteredEvent> registrations) {
             this.schedulerInstanceIdentity = schedulerInstanceIdentity;
+            this.registrationVersion = registrationVersion;
             this.registrations = registrations;
         }
 
@@ -250,7 +306,57 @@ class GameTickEventStore {
             return schedulerInstanceIdentity;
         }
 
+        long getRegistrationVersion() {
+            return registrationVersion;
+        }
+
         List<RegisteredEvent> getRegistrations() {
+            return registrations;
+        }
+    }
+
+    /** Internal registration plus a detached event-local timing tuple. */
+    static final class AtomicTimedRegisteredEvent {
+        private final GameTickEvent event;
+        private final long registrationSequence;
+        private final GameTickEvent.AtomicTimingSnapshot timing;
+
+        private AtomicTimedRegisteredEvent(
+            final GameTickEvent event,
+            final long registrationSequence,
+            final GameTickEvent.AtomicTimingSnapshot timing) {
+            this.event = event;
+            this.registrationSequence = registrationSequence;
+            this.timing = timing;
+        }
+
+        GameTickEvent getEvent() { return event; }
+        long getRegistrationSequence() { return registrationSequence; }
+        GameTickEvent.AtomicTimingSnapshot getTiming() { return timing; }
+    }
+
+    /** Immutable store-scope/tick/registration/timing observation. */
+    static final class StoreAtomicTimingSnapshot {
+        private final String schedulerInstanceIdentity;
+        private final long observedAtTick;
+        private final List<AtomicTimedRegisteredEvent> registrations;
+
+        private StoreAtomicTimingSnapshot(
+            final String schedulerInstanceIdentity,
+            final long observedAtTick,
+            final List<AtomicTimedRegisteredEvent> registrations) {
+            this.schedulerInstanceIdentity = schedulerInstanceIdentity;
+            this.observedAtTick = observedAtTick;
+            this.registrations = registrations;
+        }
+
+        String getSchedulerInstanceIdentity() {
+            return schedulerInstanceIdentity;
+        }
+
+        long getObservedAtTick() { return observedAtTick; }
+
+        List<AtomicTimedRegisteredEvent> getRegistrations() {
             return registrations;
         }
     }

@@ -16,11 +16,12 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
 
-	protected boolean running = true;
+	private final Object timingLock = new Object();
+	protected volatile boolean running = true;
 	private final Mob owner;
 	private final World world;
-	private long delayTicks;
-	private long ticksBeforeRun = -1;
+	private volatile long delayTicks;
+	private volatile long ticksBeforeRun = -1;
 	private String descriptor;
 	private long lastEventDuration = 0;
 	private final UUID uuid;
@@ -41,14 +42,16 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	public abstract void run();
 
 	public final long doRun() {
-		lastEventDuration = getWorld().getServer().bench(() -> {
-			tick();
-			if (shouldRun()) {
-				run();
-				timesRan++;
-				resetCountdown();
-			}
-		});
+		synchronized (timingLock) {
+			lastEventDuration = getWorld().getServer().bench(() -> {
+				tick();
+				if (shouldRun()) {
+					run();
+					timesRan++;
+					resetCountdown();
+				}
+			});
+		}
 
 		return lastEventDuration;
 	}
@@ -70,7 +73,9 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	}
 
 	public void stop() {
-		running = false;
+		synchronized (timingLock) {
+			running = false;
+		}
 	}
 
 	public boolean isRunning() {
@@ -78,20 +83,29 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	}
 
 	protected void setDelayTicks(long delayTicks) {
-		this.delayTicks = delayTicks;
-		resetCountdown();
+		synchronized (timingLock) {
+			this.delayTicks = delayTicks;
+			resetCountdown();
+		}
 	}
 
 	public void resetCountdown() {
-		ticksBeforeRun = delayTicks;
+		synchronized (timingLock) {
+			ticksBeforeRun = delayTicks;
+		}
 	}
 
 	public void tick() {
-		ticksBeforeRun--;
+		synchronized (timingLock) {
+			ticksBeforeRun--;
+		}
 	}
 
 	public long timeTillNextRun() {
-		return System.currentTimeMillis() + (ticksBeforeRun * getWorld().getServer().getConfig().GAME_TICK);
+		synchronized (timingLock) {
+			return System.currentTimeMillis()
+				+ (ticksBeforeRun * getWorld().getServer().getConfig().GAME_TICK);
+		}
 	}
 
 	public final boolean shouldRemove() {
@@ -159,6 +173,38 @@ public abstract class GameTickEvent implements Callable<Integer> {
 
 	public int getTimesRan() {
 		return timesRan;
+	}
+
+	/**
+	 * Captures the smallest replay-relevant timing tuple under one event-local
+	 * lifecycle lock. Registration identity and the observing server tick are
+	 * bound by the scheduler store; this value has no mutation capability.
+	 */
+	public final AtomicTimingSnapshot captureAtomicTimingSnapshot() {
+		synchronized (timingLock) {
+			return new AtomicTimingSnapshot(
+				running, ticksBeforeRun, timesRan);
+		}
+	}
+
+	/** Immutable, detached event-local timing evidence. */
+	public static final class AtomicTimingSnapshot {
+		private final boolean running;
+		private final long ticksBeforeRun;
+		private final int timesRan;
+
+		private AtomicTimingSnapshot(
+			final boolean running,
+			final long ticksBeforeRun,
+			final int timesRan) {
+			this.running = running;
+			this.ticksBeforeRun = ticksBeforeRun;
+			this.timesRan = timesRan;
+		}
+
+		public boolean isRunning() { return running; }
+		public long getTicksBeforeRun() { return ticksBeforeRun; }
+		public int getTimesRan() { return timesRan; }
 	}
 
 	/**
