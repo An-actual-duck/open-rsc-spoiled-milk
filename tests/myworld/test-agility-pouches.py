@@ -40,9 +40,9 @@ def main() -> None:
     defs = json.loads(ITEM_DEFS_CUSTOM_PATH.read_text(encoding="utf-8"))["items"]
     by_id = {item["id"]: item for item in defs}
     expected = {
-        2328: ("Tier 1 Agility Pouch", 1),
-        2329: ("Tier 2 Agility Pouch", 35),
-        2330: ("Tier 3 Agility Pouch", 52),
+        2328: ("Agility Stronghold Chest", 1),
+        2329: ("Agility Outpost Chest", 35),
+        2330: ("Agility Wilderness Chest", 52),
     }
     for item_id, (name, req) in expected.items():
         item = by_id.get(item_id)
@@ -55,9 +55,9 @@ def main() -> None:
         if item["requiredLevel"] != req or item["requiredSkillID"] != 16:
             fail(f"Agility pouch {item_id} should record agility requirement {req}")
 
-    require(ENTITY_HANDLER_PATH, 'setCustomItemDefinition(2328, new ItemDef("Tier 1 Agility Pouch"', "EntityHandler.java")
-    require(ENTITY_HANDLER_PATH, 'setCustomItemDefinition(2329, new ItemDef("Tier 2 Agility Pouch"', "EntityHandler.java")
-    require(ENTITY_HANDLER_PATH, 'setCustomItemDefinition(2330, new ItemDef("Tier 3 Agility Pouch"', "EntityHandler.java")
+    require(ENTITY_HANDLER_PATH, 'setCustomItemDefinition(2328, new ItemDef("Agility Stronghold Chest"', "EntityHandler.java")
+    require(ENTITY_HANDLER_PATH, 'setCustomItemDefinition(2329, new ItemDef("Agility Outpost Chest"', "EntityHandler.java")
+    require(ENTITY_HANDLER_PATH, 'setCustomItemDefinition(2330, new ItemDef("Agility Wilderness Chest"', "EntityHandler.java")
     require(ENTITY_HANDLER_PATH, '300, 187, "items:187"', "Tier 1 temporary built-in casket sprite")
     require(ENTITY_HANDLER_PATH, '900, 187, "items:187"', "Tier 2 temporary built-in casket sprite")
     require(ENTITY_HANDLER_PATH, '1800, 187, "items:187"', "Tier 3 temporary built-in casket sprite")

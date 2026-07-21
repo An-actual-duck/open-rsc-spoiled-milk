@@ -5256,9 +5256,9 @@ public class EntityHandler {
 		setCustomItemDefinition(2047, new ItemDef("Copper Pickaxe", "Used for mining", "", 18, 72, "items:72", false, true, 16, 0xc86a2b, false, false, true, 2047));
 		setCustomItemDefinition(2048, new ItemDef("Titan Steel Pickaxe", "Used for mining", "", 90, 72, "items:72", false, true, 16, 0x8ea6bb, false, false, true, 2048));
 		setCustomItemDefinition(2049, new ItemDef("Orichalcum Pickaxe", "Used for mining", "", 270, 72, "items:72", false, true, 16, 0x5a3f7d, false, false, true, 2049));
-		setCustomItemDefinition(2328, new ItemDef("Tier 1 Agility Pouch", "A reward pouch earned from lower-tier agility courses.", "open", 300, 187, "items:187", true, false, 0, 0, false, false, false, 2328));
-		setCustomItemDefinition(2329, new ItemDef("Tier 2 Agility Pouch", "A reward pouch earned from mid-tier agility courses.", "open", 900, 187, "items:187", true, false, 0, 0, false, false, false, 2329));
-		setCustomItemDefinition(2330, new ItemDef("Tier 3 Agility Pouch", "A reward pouch earned from high-tier agility courses.", "open", 1800, 187, "items:187", true, false, 0, 0, false, false, false, 2330));
+		setCustomItemDefinition(2328, new ItemDef("Agility Stronghold Chest", "A reward chest earned from the Gnome Stronghold agility course.", "open", 300, 187, "items:187", true, false, 0, 0, false, false, false, 2328));
+		setCustomItemDefinition(2329, new ItemDef("Agility Outpost Chest", "A reward chest earned from the Barbarian Outpost agility course.", "open", 900, 187, "items:187", true, false, 0, 0, false, false, false, 2329));
+		setCustomItemDefinition(2330, new ItemDef("Agility Wilderness Chest", "A reward chest earned from the Wilderness agility course.", "open", 1800, 187, "items:187", true, false, 0, 0, false, false, false, 2330));
 		setCustomItemDefinition(2753, new ItemDef("Pig Iron bar", "An impure pink iron bar", "", 12, 79, "items:79", false, false, 0, 0xFF8FB8, false, false, true, 2753));
 		addWoolAccessoryDefinitions();
 		applyMyWorldWoolRobeDescriptions();
@@ -9577,6 +9577,9 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Safety Deposit Box", "A secure box for items barred from Entrana", "Deposit", "Withdraw", 1, 1, 1, 0, "ChestClosed", ++i)); //1326
 		objects.add(new GameObjectDef("Pumpkin", "A ripe event pumpkin ready for harvest", "Harvest", "Examine", 0, 1, 1, 0, "pumpkinwhite", ++i)); //1327
 		objects.add(new GameObjectDef("Dragon sulfur rock", "A volatile sulfur-stained rock", "Mine", "Prospect", 1, 1, 1, 0, "copperrock1", ++i)); //1328
+		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "Jump to", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1329 - Al Kharid to Lumbridge
+		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "WalkTo", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1330 - visual centre
+		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "Jump to", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1331 - Lumbridge to Al Kharid
 	}
 
 	public static void load(boolean loadMembers) {
