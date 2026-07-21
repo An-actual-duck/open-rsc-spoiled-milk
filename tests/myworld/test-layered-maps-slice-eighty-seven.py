@@ -123,7 +123,7 @@ class LayeredMapsSliceEightySevenTest(unittest.TestCase):
         )
         self.assertIn("schema-v31", plan)
         self.assertIn("owner text", plan)
-        self.assertIn("Private owner validation remains", plan)
+        self.assertIn("Private owner validation status:", plan)
         self.assertIn("No object is unregistered", plan)
 
 
