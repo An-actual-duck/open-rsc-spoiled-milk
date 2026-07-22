@@ -56,10 +56,10 @@ class LayeredMapsSliceOneHundredFourteenTest(unittest.TestCase):
         self.assertIn(loc_transfer, replacement)
         self.assertIn(entity_transfer, replacement)
         self.assertLess(replacement.index(loc_transfer), replacement.index(
-            "unregisterGameObject(old);"
+            "applyGameObjectTransaction(old, _new, false);"
         ))
         self.assertLess(replacement.index(entity_transfer), replacement.index(
-            "registerGameObject(_new);"
+            "applyGameObjectTransaction(old, _new, false);"
         ))
 
         for source_path in (WOODCUTTING, HARVESTING):

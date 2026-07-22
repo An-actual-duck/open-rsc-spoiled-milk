@@ -198,7 +198,8 @@ class LayeredMapsSliceOneHundredThirtyTwoTest(unittest.TestCase):
         self.assertIn("Constants.objectsProjectileClipAllowed", world)
         self.assertNotIn("for (final String s :", world)
         self.assertNotIn('.contains("tree")', world)
-        self.assertIn("private void applyGameObjectCollision", world)
+        self.assertIn("planGameObjectCollision(", world)
+        self.assertIn("applyGameObjectTransaction(", world)
         self.assertIn("public void registerGameObject", world)
         self.assertIn("public void unregisterGameObject", world)
 

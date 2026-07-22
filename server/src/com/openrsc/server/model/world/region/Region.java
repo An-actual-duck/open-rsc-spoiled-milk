@@ -642,7 +642,10 @@ public class Region {
 	 * @return The list of objects.
 	 */
 	public Collection<GameObject> getGameObjects() {
-		return objects.values();
+		synchronized (objects) {
+			return Collections.unmodifiableList(
+				new ArrayList<GameObject>(objects.values()));
+		}
 	}
 
 	protected Collection<GroundItem> getGroundItems() {
@@ -659,8 +662,8 @@ public class Region {
 		} else if (entity.isNpc()) {
 			npcs.remove(location, entity);
 		} else if (entity instanceof GameObject) {
-			objects.remove(location, entity);
-			regionManager.invalidateVisibleObjectWindowCache(this);
+			throw new IllegalStateException(
+				"GameObject membership removal requires its ordered collision transaction");
 		} else if (entity instanceof GroundItem) {
 			items.remove(location, entity);
 		}
@@ -678,9 +681,8 @@ public class Region {
 				npcs.put(entity.getLocation(), (Npc) entity);
 				break;
 			case GAME_OBJECT:
-				objects.put(entity.getLocation(), (GameObject) entity);
-				regionManager.invalidateVisibleObjectWindowCache(this);
-				break;
+				throw new IllegalStateException(
+					"GameObject membership registration requires its ordered collision transaction");
 			case GROUND_ITEM:
 				items.put(entity.getLocation(), (GroundItem) entity);
 				break;
@@ -718,13 +720,59 @@ public class Region {
 	}
 
 	private GameObject getGameObject(Point location, Entity observer, GameObjectType type, Integer direction) {
-		return objects.get(location)
-			.stream()
-			.filter(obj -> type == null || obj.getGameObjectType() == type)
-			.filter(obj -> observer == null || !obj.isInvisibleTo(observer))
-			.filter(obj -> direction == null || obj.getDirection() == direction)
-			.findFirst()
-			.orElse(null);
+		synchronized (objects) {
+			return objects.get(location)
+				.stream()
+				.filter(obj -> type == null || obj.getGameObjectType() == type)
+				.filter(obj -> observer == null || !obj.isInvisibleTo(observer))
+				.filter(obj -> direction == null || obj.getDirection() == direction)
+				.findFirst()
+				.orElse(null);
+		}
+	}
+
+	Object getGameObjectTransactionMonitor() { return objects; }
+
+	boolean containsGameObjectIdentityUnderTransaction(
+		final GameObject object) {
+		requireGameObjectTransactionBoundary();
+		for (GameObject candidate : objects.get(object.getLocation())) {
+			if (candidate == object) { return true; }
+		}
+		return false;
+	}
+
+	GameObject getCollidingGameObjectUnderTransaction(
+		final Point location,
+		final GameObjectType type,
+		final int direction) {
+		requireGameObjectTransactionBoundary();
+		for (GameObject candidate : objects.get(location)) {
+			if (candidate.getGameObjectType() == type
+				&& (type == GameObjectType.SCENERY
+					|| candidate.getDirection() == direction)) {
+				return candidate;
+			}
+		}
+		return null;
+	}
+
+	boolean addGameObjectUnderTransaction(final GameObject object) {
+		requireGameObjectTransactionBoundary();
+		return objects.put(object.getLocation(), object);
+	}
+
+	boolean removeGameObjectUnderTransaction(final GameObject object) {
+		requireGameObjectTransactionBoundary();
+		return objects.remove(object.getLocation(), object);
+	}
+
+	private void requireGameObjectTransactionBoundary() {
+		if (!objectCollisionMutationBoundary.isHeldByCurrentThread()
+			|| !Thread.holdsLock(objects)) {
+			throw new IllegalStateException(
+				"GameObject membership escaped its ordered Region boundary");
+		}
 	}
 
 	public GameObject getGameObject(Point location) {

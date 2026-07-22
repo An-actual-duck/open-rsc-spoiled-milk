@@ -164,6 +164,7 @@ final class RegionObjectCollisionMutationBoundary {
 
 	int getRegionX() { return regionX; }
 	int getRegionY() { return regionY; }
+	boolean isHeldByCurrentThread() { return Thread.holdsLock(monitor); }
 
 	interface ReadOnlyOperation {
 		void run(HeldBoundarySet heldBoundaries);

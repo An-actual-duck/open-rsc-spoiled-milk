@@ -289,20 +289,18 @@ class LayeredMapsSliceOneHundredThirtyFiveTest(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
 
-    def test_world_routes_only_collision_counters_through_the_adapter(self):
+    def test_world_collision_adoption_is_superseded_by_composed_transaction(self):
         world = WORLD.read_text(encoding="utf-8")
         start = world.index("public void registerGameObject(final GameObject o)")
         end = world.index("public void registerItem(final GroundItem i)", start)
         registration = world[start:end]
-        self.assertLess(
-            registration.index("o.setLocation("),
-            registration.index("applyGameObjectCollision("),
-        )
         self.assertIn("Operation.REGISTER", registration)
         self.assertIn("Operation.UNREGISTER", world)
         self.assertIn(
-            "applyCollisionFootprintUnderOrderedBoundaries", registration
+            "applyObjectMembershipAndCollisionTransaction", registration
         )
+        self.assertNotIn("o.setLocation(", registration)
+        self.assertNotIn("o.remove()", world)
         for direct_mutation in (
             "addBlockingScenery", "removeBlockingScenery",
             "addDynamicCollision", "removeDynamicCollision",
@@ -320,6 +318,10 @@ class LayeredMapsSliceOneHundredThirtyFiveTest(unittest.TestCase):
         manager = REGION_MANAGER.read_text(encoding="utf-8")
         self.assertIn(
             "public void applyCollisionFootprintUnderOrderedBoundaries(",
+            manager,
+        )
+        self.assertIn(
+            "public void applyObjectMembershipAndCollisionTransaction(",
             manager,
         )
         self.assertIn("applyCollisionFootprintUnderOrderedBoundaries(footprint, true)", manager)

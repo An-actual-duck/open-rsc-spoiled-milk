@@ -175,7 +175,7 @@ class LayeredMapsSliceFiftySixTest(unittest.TestCase):
         self.assertIn("_new.getLoc().assignAuthoredPlacementIdentity", replacement)
         self.assertLess(
             replacement.index("assignAuthoredPlacementIdentity"),
-            replacement.index("unregisterGameObject(old)"),
+            replacement.index("applyGameObjectTransaction(old, _new, false)"),
         )
         registration = world.split(
             "public void registerGameObject(final GameObject o)", 1

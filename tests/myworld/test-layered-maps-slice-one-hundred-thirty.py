@@ -290,10 +290,17 @@ class LayeredMapsSliceOneHundredThirtyTest(unittest.TestCase):
         self.assertIn(
             "RegionObjectCollisionMutationBoundary.executeReadOnly(", manager
         )
+        read_only_start = manager.index(
+            "executeUnderExistingOrderedObjectCollisionBoundaries("
+        )
+        read_only_end = manager.index(
+            "private static int comparePackedRegionCoordinates(",
+            read_only_start,
+        )
         self.assertNotIn(
             "getRegionFromSectorCoordinates(\n"
             "\t\t\t\t\tcoordinate.getRegionX()",
-            manager,
+            manager[read_only_start:read_only_end],
         )
 
     def test_boundary_is_not_used_by_existing_mutation_or_event_paths(self):

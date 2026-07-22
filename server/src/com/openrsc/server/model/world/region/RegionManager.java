@@ -51,6 +51,7 @@ import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -1732,6 +1733,125 @@ public class RegionManager {
 		if (!result.isApplied()) {
 			throw new IllegalStateException(
 				"Object collision mutation refused: " + result.getReason());
+		}
+	}
+
+	/**
+	 * Runtime seam composing exact GameObject membership and collision counters
+	 * under one canonical union of their required packed Regions.
+	 */
+	public void applyObjectMembershipAndCollisionTransaction(
+		final GameObject oldObject,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			oldUnregisterFootprint,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			oldRollbackRegisterFootprint,
+		final GameObject newObject,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			newRegisterFootprint) {
+		if (oldObject == null && newObject == null) {
+			throw new IllegalArgumentException(
+				"Object membership/collision transaction is empty");
+		}
+		List<GameTickEventRestorationCollisionTransactionContract
+			.PackedRegionCoordinate> required =
+			new ArrayList<GameTickEventRestorationCollisionTransactionContract
+				.PackedRegionCoordinate>();
+		if (oldObject != null) {
+			required.addAll(Objects.requireNonNull(
+				oldUnregisterFootprint,
+				"oldUnregisterFootprint").getRequiredRegions());
+			required.addAll(Objects.requireNonNull(
+				oldRollbackRegisterFootprint,
+				"oldRollbackRegisterFootprint").getRequiredRegions());
+		}
+		if (newObject != null) {
+			required.addAll(Objects.requireNonNull(
+				newRegisterFootprint,
+				"newRegisterFootprint").getRequiredRegions());
+		}
+		Collections.sort(required,
+			new Comparator<GameTickEventRestorationCollisionTransactionContract
+				.PackedRegionCoordinate>() {
+				@Override
+				public int compare(
+					final GameTickEventRestorationCollisionTransactionContract
+						.PackedRegionCoordinate left,
+					final GameTickEventRestorationCollisionTransactionContract
+						.PackedRegionCoordinate right) {
+					return comparePackedRegionCoordinates(left, right);
+				}
+			});
+		List<GameTickEventRestorationCollisionTransactionContract
+			.PackedRegionCoordinate> unique =
+			new ArrayList<GameTickEventRestorationCollisionTransactionContract
+				.PackedRegionCoordinate>();
+		for (GameTickEventRestorationCollisionTransactionContract
+				.PackedRegionCoordinate coordinate : required) {
+			if (unique.isEmpty()
+				|| comparePackedRegionCoordinates(
+					unique.get(unique.size() - 1), coordinate) != 0) {
+				unique.add(coordinate);
+			}
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			final Map<Long, Region> resolved = new HashMap<Long, Region>();
+			List<RegionObjectCollisionMutationBoundary> boundaries =
+				new ArrayList<RegionObjectCollisionMutationBoundary>();
+			for (GameTickEventRestorationCollisionTransactionContract
+					.PackedRegionCoordinate coordinate : unique) {
+				Region region = getRegionFromSectorCoordinates(
+					coordinate.getRegionX(), coordinate.getRegionY());
+				resolved.put(
+					packRegionCoordinateKey(
+						coordinate.getRegionX(), coordinate.getRegionY()),
+					region);
+				boundaries.add(region.getObjectCollisionMutationBoundary());
+			}
+			Region oldRegion = oldObject == null ? null
+				: resolved.get(packRegionCoordinateKey(
+					Math.floorDiv(oldObject.getX(), Constants.REGION_SIZE),
+					Math.floorDiv(oldObject.getY(), Constants.REGION_SIZE)));
+			Region newRegion = newObject == null ? null
+				: resolved.get(packRegionCoordinateKey(
+					Math.floorDiv(
+						newObject.getLoc().getX(), Constants.REGION_SIZE),
+					Math.floorDiv(
+						newObject.getLoc().getY(), Constants.REGION_SIZE)));
+			RegionObjectCollisionTransactionExecutor.Result result =
+				RegionObjectCollisionTransactionExecutor.execute(
+					boundaries,
+					oldRegion, oldObject, oldUnregisterFootprint,
+					oldRollbackRegisterFootprint,
+					newRegion, newObject, newRegisterFootprint,
+					new RegionCollisionFootprintMutationExecutor
+						.MutableTileAccess() {
+						@Override
+						public TileValue getMutableTile(
+							final int x, final int y) {
+							int regionX = Math.floorDiv(
+								x, Constants.REGION_SIZE);
+							int regionY = Math.floorDiv(
+								y, Constants.REGION_SIZE);
+							Region region = resolved.get(
+								packRegionCoordinateKey(regionX, regionY));
+							return region == null ? null
+								: region.getMutableTileValue(
+									Math.floorMod(x, Constants.REGION_SIZE),
+									Math.floorMod(y, Constants.REGION_SIZE));
+						}
+					},
+					new RegionObjectCollisionTransactionExecutor.CacheInvalidator() {
+						@Override
+						public void invalidate(final Region region) {
+							invalidateVisibleObjectWindowCache(region);
+						}
+					});
+			if (!result.isApplied()) {
+				throw new IllegalStateException(
+					"Object membership/collision transaction refused: "
+						+ result.getReason());
+			}
 		}
 	}
 

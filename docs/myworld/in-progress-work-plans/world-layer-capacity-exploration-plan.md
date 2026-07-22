@@ -10924,7 +10924,7 @@ Automated validation status:
   only its immutable packed-Region coordinates through a disconnected
   RegionManager boundary seam; Store, handler, Region, and World mutation paths
   remain disconnected;
-- the existing lexical migration inventory intentionally advances from 211 to
+- the existing lexical migration inventory intentionally advanced from 211 to
   212 unresolved Java coordinate owners because this contract contains Region-
   size coordinate arithmetic; the deterministic classifier records the new
   file as `simulation-spatial-runtime` rather than hiding that migration owner;
@@ -10985,8 +10985,9 @@ Automated validation status:
 - the fixture proves a canonical two-Region operation holds both monitors,
   preserves coordinate order, releases normally, and retains no operation or
   result;
-- reverse-order, duplicate, empty, invalid-coordinate, and unavailable-Region
-  paths refuse before a read operation can be invoked;
+- reverse-order, duplicate, empty, and unavailable-Region paths refuse before
+  a read operation can be invoked, while signed Region coordinates remain
+  valid and canonical;
 - source guards prove Region creates exactly its boundary, RegionManager uses
   lifecycle-protected non-creating lookup, no plausible mutation/event consumer
   references the boundary, and the boundary itself knows no GameObject,
@@ -11358,6 +11359,77 @@ Owner validation:
 Status: implemented, automated-validated, and owner-validated. Slice 135 is
 accepted.
 
+### Slice 136: Atomic object membership and collision
+
+Objective: compose exact GameObject slot membership and the already ordered
+collision executor under one canonical Region set, closing the normal runtime
+split left deliberately open by Slice 135.
+
+Implemented:
+
+- `World` projects immutable unregister, rollback-register, and register
+  footprints before entering RegionManager, then sends ordinary registration,
+  unregistration, explicit replacement, and collision-slot replacement through
+  one transaction instead of calling `Entity.setLocation` or `Entity.remove`;
+- RegionManager creates the exact canonical union of every forward and rollback
+  footprint under its existing lifecycle lock, resolves both anchor Regions,
+  and delegates membership plus collision without exposing the package-local
+  executor to World or scheduler code;
+- `RegionObjectCollisionTransactionExecutor` acquires that union once, then
+  acquires distinct anchor object monitors in the same Region order. Exact slot
+  identity, existing-old membership, detached-new state, and collision-slot
+  occupancy are revalidated inside those boundaries;
+- register retains membership-before-collision order, unregister retains
+  membership-removal-before-collision order, and replacement performs the old
+  removal before the new registration while holding the complete union;
+- a refused old collision restores old membership immediately; a refused new
+  membership or collision restores the new object to its detached state and
+  re-registers the old membership plus collision before releasing any Region
+  boundary;
+- Region's generic entity add/remove paths now refuse GameObjects, making the
+  composed transaction the only normal membership writer. Exact lookups and
+  immutable object snapshots share the Region object monitor, and visibility
+  caches are invalidated only for committed anchor changes before boundary
+  release; and
+- collision application can consume an exact footprint while a wider composed
+  boundary union is already held, without reacquiring or weakening its own
+  coverage checks.
+
+Automated validation status:
+
+- executable fixtures prove composed register/unregister state, a replacement
+  whose old two-by-two footprint spans four Regions and whose new anchor adds a
+  fifth, and exact removal of the old contribution before the new one remains;
+- forced arithmetic refusal of the new collision restores the old object and
+  counters exactly, leaves the new object detached, and preserves the refused
+  tile value; an unacknowledged occupied slot refuses without mutation;
+- a deterministic two-thread latch holds the first operation inside tile
+  capture and proves a second same-Region membership/collision transaction
+  cannot enter until the first releases;
+- source guards prove World uses only the public composed seam, Region rejects
+  generic GameObject membership writes, and scheduler Store/handler code has no
+  transaction executor authority;
+- the complete layered-map suite passes 446 tests across 135 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 790 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this is atomic exclusion and rollback for normal GameObject membership plus
+  counted collision contributions; it does not discover, invoke, cancel, or
+  restore a scheduler callback;
+- authored identity is still transferred only by explicit replacement before
+  the transaction, preserving ordinary collision replacement's distinct
+  identity behavior; packet construction and callback timing remain in their
+  existing later phases; and
+- the transaction is not a restoration commit token, arrival gate, Region
+  retirement decision, true layered-storage mutation, or lifecycle authority.
+
+Status: implemented and automated-validated. A private owner route should
+repeat one resource depletion/return and door cycle, then exercise a second
+object family before accepting the runtime milestone.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -11717,6 +11789,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 134 by adding the disconnected ordered collision executor. | Implemented and automated-validated; exact current TileValue capture, Slice 133 precondition evaluation, counted apply, post-state verification, internal reversal, multi-Region add/remove round-trip, same-footprint exclusion, underflow/missing-tile no-partial-change, and reverse-order refusal are proved under real monitors, World remains disconnected, and 438 focused tests plus the 789/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 135 by routing normal World collision counters through the ordered executor. | Implemented and automated-validated; definition projection stays outside Region locks, exact Region coverage is created and acquired canonically, World keeps membership/replacement order but no longer writes object collision counters directly, delayed force-full-block joins registration, object ID 1147 retains explicit saturating unregister compatibility, and 442 focused tests plus the 789/488 Ant build pass; private owner validation is pending |
 | 2026-07-22 | Accept the corrected Slice 135 private runtime route. | Owner-validated; successful login remains connected after signed edge Regions are admitted, normal tree depletion/return, a door open/close cycle, blocking scenery, and packed-boundary travel behave normally, the initial fence refusal is legitimate authored collision, and no new runtime collision/update exception appears |
+| 2026-07-22 | Continue with Slice 136 by composing exact GameObject membership and collision under one ordered Region union. | Implemented and automated-validated; register/unregister/replacement share exact slot revalidation and rollback, generic Region GameObject writes refuse, cache invalidation follows committed membership, deterministic refusal and concurrency fixtures close split writer state, and 446 focused tests plus the 790/488 Ant build pass; private owner validation is pending |
 
 ## Next Discussion
 
@@ -12197,16 +12270,15 @@ executor, and its first normal World collision-counter adoption. Object
 membership remains in its legacy order outside those monitors, so this is not
 yet the full object-plus-collision transaction required by restoration.
 
-Slice 135 private owner acceptance is complete: resource depletion and natural
-return, a door open/close cycle, blocking scenery, and ordinary packed-boundary
-travel all behave normally after the signed-edge correction. The safest next
-implementation slice should compose exact object-slot membership
-comparison/change with the already ordered collision footprint under the same
-Region boundaries. It must preserve colliding-object replacement, authored
-identity, visibility-cache invalidation, packet order, and callback semantics;
-define rollback for membership plus counters together; and remain independent
-from scheduler restoration until deterministic races prove no object/collision
-split state can escape.
+Slice 136 now composes exact object-slot membership and collision counters under
+one ordered Region union with rollback and deterministic writer exclusion. Its
+immediate gate is a private owner route covering a resource replacement and
+natural return, a door cycle, and another temporary or explicit replacement
+family while checking visibility, interaction, and collision. After acceptance,
+the next safe slice can connect the already fenced scheduler target
+revalidation to this transaction through a typed, generation-checked commit
+request; it must not give the scheduler direct Region, entity, or lifecycle
+authority.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

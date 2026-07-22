@@ -310,7 +310,8 @@ class LayeredMapsSliceOneHundredThirtyOneTest(unittest.TestCase):
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
         world = WORLD.read_text(encoding="utf-8")
         self.assertIn(name, world)
-        self.assertIn("applyGameObjectCollision", world)
+        self.assertIn("planGameObjectCollision", world)
+        self.assertIn("applyGameObjectTransaction", world)
         manager = REGION_MANAGER.read_text(encoding="utf-8")
         self.assertIn(name, manager)
         self.assertIn(

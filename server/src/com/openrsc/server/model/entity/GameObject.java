@@ -5,6 +5,7 @@ import com.openrsc.server.external.GameObjectDef;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.region.Region;
 
 import java.util.ArrayList;
 
@@ -47,6 +48,30 @@ public class GameObject extends Entity {
 
 	public GameObject(World world, Point location, int id, int direction, int type, String owner) {
 		this(world, new GameObjectLoc(id, location.getX(), location.getY(), direction, type, owner));
+	}
+
+	/** Used only by RegionManager's ordered membership/collision transaction. */
+	public void attachOrderedTransactionState(
+		final Point point,
+		final Region region) {
+		attachGameObjectTransactionState(point, region);
+	}
+
+	/** Used only to reverse a refused ordered registration. */
+	public void detachOrderedTransactionState(
+		final Point expectedPoint,
+		final Region expectedRegion) {
+		detachGameObjectTransactionState(expectedPoint, expectedRegion);
+	}
+
+	/** Used only after exact membership removal under ordered boundaries. */
+	public void removeOrderedTransactionState(final Region expectedRegion) {
+		removeGameObjectTransactionState(expectedRegion);
+	}
+
+	/** Used only to reverse a refused ordered unregistration. */
+	public void restoreOrderedTransactionState(final Region expectedRegion) {
+		restoreGameObjectTransactionState(expectedRegion);
 	}
 
 	public final Point[] getObjectBoundary() {

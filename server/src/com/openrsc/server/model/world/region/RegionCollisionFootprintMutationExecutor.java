@@ -64,6 +64,36 @@ final class RegionCollisionFootprintMutationExecutor {
 			execution.getDeclaredBoundaryCount());
 	}
 
+	/** Applies one exact footprint while a wider composed transaction holds it. */
+	static Result executeInsideHeldBoundaries(
+		final List<RegionObjectCollisionMutationBoundary> boundaries,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result footprint,
+		final MutableTileAccess tileAccess) {
+		List<RegionObjectCollisionMutationBoundary> checkedBoundaries =
+			Objects.requireNonNull(boundaries, "boundaries");
+		GameTickEventRestorationCollisionFootprintPlanner.Result checkedFootprint =
+			Objects.requireNonNull(footprint, "footprint");
+		MutableTileAccess checkedTileAccess = Objects.requireNonNull(
+			tileAccess, "tileAccess");
+		if (!checkedFootprint.isFootprintAvailable()) {
+			return Result.refused(Reason.FOOTPRINT_UNAVAILABLE, null);
+		}
+		if (!matchesBoundaryCoverage(
+				checkedBoundaries, checkedFootprint.getRequiredRegions())) {
+			throw new IllegalArgumentException(
+				"Collision mutation boundary coverage is not canonical and exact");
+		}
+		for (RegionObjectCollisionMutationBoundary boundary
+				: checkedBoundaries) {
+			if (!boundary.isHeldByCurrentThread()) {
+				throw new IllegalStateException(
+					"Collision mutation boundary is not held by the transaction");
+			}
+		}
+		return applyInsideBoundary(checkedFootprint, checkedTileAccess)
+			.withBoundaryCount(checkedBoundaries.size());
+	}
+
 	static Result refuseRequiredRegionUnavailable() {
 		return Result.refused(Reason.REQUIRED_REGION_UNAVAILABLE, null);
 	}

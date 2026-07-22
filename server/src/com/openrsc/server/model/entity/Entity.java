@@ -8,6 +8,7 @@ import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentit
 import com.openrsc.server.model.world.region.Region;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -158,6 +159,55 @@ public abstract class Entity {
 	public void setInitialLocation(Point player) {
 		// Used when logging in a player in order to not cause exceptions of missing locations while updating the region
 		location.set(player);
+	}
+
+	/** Internal state half of an ordered GameObject membership transaction. */
+	protected final synchronized void attachGameObjectTransactionState(
+		final Point point,
+		final Region targetRegion) {
+		if (entityType != EntityType.GAME_OBJECT || location.get() != null
+			|| region.get() != null || removed) {
+			throw new IllegalStateException(
+				"GameObject is not ready for ordered registration");
+		}
+		location.set(Objects.requireNonNull(point, "point"));
+		region.set(Objects.requireNonNull(targetRegion, "targetRegion"));
+	}
+
+	/** Restores a failed ordered registration to its exact detached state. */
+	protected final synchronized void detachGameObjectTransactionState(
+		final Point expectedPoint,
+		final Region expectedRegion) {
+		if (entityType != EntityType.GAME_OBJECT || removed
+			|| !Objects.equals(location.get(), expectedPoint)
+			|| region.get() != expectedRegion) {
+			throw new IllegalStateException(
+				"GameObject registration rollback state is inconsistent");
+		}
+		location.set(null);
+		region.set(null);
+	}
+
+	/** Marks membership removal while its ordered collision transaction is held. */
+	protected final synchronized void removeGameObjectTransactionState(
+		final Region expectedRegion) {
+		if (entityType != EntityType.GAME_OBJECT || location.get() == null
+			|| region.get() != expectedRegion || removed) {
+			throw new IllegalStateException(
+				"GameObject is not ready for ordered unregistration");
+		}
+		removed = true;
+	}
+
+	/** Reopens an object whose ordered unregistration was rolled back. */
+	protected final synchronized void restoreGameObjectTransactionState(
+		final Region expectedRegion) {
+		if (entityType != EntityType.GAME_OBJECT || location.get() == null
+			|| region.get() != expectedRegion || !removed) {
+			throw new IllegalStateException(
+				"GameObject unregistration rollback state is inconsistent");
+		}
+		removed = false;
 	}
 
 	public Region getRegion() {

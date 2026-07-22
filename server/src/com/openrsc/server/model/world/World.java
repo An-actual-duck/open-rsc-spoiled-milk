@@ -560,19 +560,18 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		final GameObject o,
 		final boolean forceFullBlock) {
 		Point objectCoordinates = Point.location(o.getLoc().getX(), o.getLoc().getY());
-		final GameObject collidingGameObject = getRegionManager().getRegion(objectCoordinates).getGameObject(objectCoordinates, null);
-		final GameObject collidingWallObject = getRegionManager().getRegion(objectCoordinates).getWallGameObject(objectCoordinates, o.getLoc().getDirection());
-		if (collidingGameObject != null && o.getType() == 0) {
-			unregisterGameObject(collidingGameObject);
-		}
-		if (collidingWallObject != null && o.getType() == 1) {
-			unregisterGameObject(collidingWallObject);
-		}
-		o.setLocation(Point.location(o.getLoc().getX(), o.getLoc().getY()));
-		applyGameObjectCollision(o, Operation.REGISTER, forceFullBlock);
+		final GameObject collidingObject = o.getType() == 0
+			? getRegionManager().getRegion(objectCoordinates)
+				.getGameObject(objectCoordinates, null)
+			: getRegionManager().getRegion(objectCoordinates)
+				.getWallGameObject(
+					objectCoordinates, o.getLoc().getDirection());
+		applyGameObjectTransaction(
+			collidingObject, o, forceFullBlock);
 	}
 
-	private void applyGameObjectCollision(
+	private GameTickEventRestorationCollisionFootprintPlanner.Result
+		planGameObjectCollision(
 		final GameObject object,
 		final Operation operation,
 		final boolean forceFullBlock) {
@@ -592,16 +591,33 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 					Constants.objectsProjectileClipAllowed);
 			}
 		}
-		GameTickEventRestorationCollisionFootprintPlanner.Result footprint =
-			GameTickEventRestorationCollisionFootprintPlanner.plan(
+		return GameTickEventRestorationCollisionFootprintPlanner.plan(
 				operation,
 				ConstructorState.of(
 					object.getID(), object.getX(), object.getY(),
 					object.getDirection(), object.getType()),
 				definition, forceFullBlock,
 				WorldBounds.of(Constants.MAX_WIDTH, Constants.MAX_HEIGHT));
-		getRegionManager().applyCollisionFootprintUnderOrderedBoundaries(
-			footprint);
+	}
+
+	private void applyGameObjectTransaction(
+		final GameObject oldObject,
+		final GameObject newObject,
+		final boolean forceFullBlock) {
+		GameTickEventRestorationCollisionFootprintPlanner.Result
+			oldUnregister = oldObject == null ? null
+				: planGameObjectCollision(
+					oldObject, Operation.UNREGISTER, false);
+		GameTickEventRestorationCollisionFootprintPlanner.Result
+			oldRollbackRegister = oldObject == null ? null
+				: planGameObjectCollision(
+					oldObject, Operation.REGISTER, false);
+		GameTickEventRestorationCollisionFootprintPlanner.Result newRegister =
+			newObject == null ? null : planGameObjectCollision(
+				newObject, Operation.REGISTER, forceFullBlock);
+		getRegionManager().applyObjectMembershipAndCollisionTransaction(
+			oldObject, oldUnregister, oldRollbackRegister,
+			newObject, newRegister);
 	}
 
 	public void registerItem(final GroundItem i) {
@@ -742,8 +758,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			_new.getLoc().assignAuthoredPlacementIdentity(authoredIdentity);
 			_new.assignAuthoredPlacementIdentity(authoredIdentity);
 		}
-		unregisterGameObject(old);
-		registerGameObject(_new);
+		applyGameObjectTransaction(old, _new, false);
 	}
 
 	public void sendKilledUpdate(final long killedHash, final long killerHash, final int type) {
@@ -778,8 +793,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	 * Removes an object from the server
 	 */
 	public void unregisterGameObject(final GameObject o) {
-		o.remove();
-		applyGameObjectCollision(o, Operation.UNREGISTER, false);
+		applyGameObjectTransaction(o, null, false);
 	}
 
 	public GlobalMessage getNextGlobalMessage() {
