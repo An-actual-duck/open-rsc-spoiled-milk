@@ -536,7 +536,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 
 	public enum MutationPrecondition {
 		UNAVAILABLE,
-		DESTINATION_SLOT_EMPTY,
+		DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT,
 		EXACT_AUTHORED_ENTITY_PRESENT
 	}
 
@@ -753,7 +753,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 						: DesiredState.AUTHORED_SCENERY_ABSENT;
 				MutationPrecondition requiredPrecondition = kind
 					== RestorationKind.SCENERY_SPAWN
-						? MutationPrecondition.DESTINATION_SLOT_EMPTY
+						? MutationPrecondition
+							.DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT
 						: MutationPrecondition.EXACT_AUTHORED_ENTITY_PRESENT;
 				if (desiredState != requiredState
 					|| mutationPrecondition != requiredPrecondition) {
@@ -787,7 +788,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 				GenerationBindingRequirement.MATCH_RECONSTRUCTION_GENERATION,
 				DesiredState.AUTHORED_SCENERY_PRESENT,
 				IdempotencyPolicy.ALREADY_SATISFIED_IS_NO_OP_SUCCESS,
-				MutationPrecondition.DESTINATION_SLOT_EMPTY);
+				MutationPrecondition
+					.DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT);
 		}
 
 		public static EventRestorationState scenerySpawn(

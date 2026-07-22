@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v39.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v40.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -41,6 +41,7 @@ SCHEMA_V35 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v35.sche
 SCHEMA_V36 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v36.schema.json"
 SCHEMA_V37 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v37.schema.json"
 SCHEMA_V38 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v38.schema.json"
+SCHEMA_V39 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v39.schema.json"
 
 
 POINT_STUB = r'''
@@ -1191,7 +1192,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v39" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v40" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -2176,7 +2177,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 "MATCH_RECONSTRUCTION_GENERATION", True, True,
                 "AUTHORED_SCENERY_PRESENT",
                 "ALREADY_SATISFIED_IS_NO_OP_SUCCESS",
-                "DESTINATION_SLOT_EMPTY", True,
+                "DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT", True,
                 False, False, False,
             ), (
                 restoration["kind"], restoration["forceFullBlock"],
@@ -2390,6 +2391,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v36 = json.loads(SCHEMA_V36.read_text(encoding="utf-8"))
                 v37 = json.loads(SCHEMA_V37.read_text(encoding="utf-8"))
                 v38 = json.loads(SCHEMA_V38.read_text(encoding="utf-8"))
+                v39 = json.loads(SCHEMA_V39.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -2417,6 +2419,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v36["$id"], Resource.from_contents(v36)),
                     (v37["$id"], Resource.from_contents(v37)),
                     (v38["$id"], Resource.from_contents(v38)),
+                    (v39["$id"], Resource.from_contents(v39)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

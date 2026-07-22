@@ -183,7 +183,7 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v39.schema.json`. Each v39 record
+traces emit `schema/layered-map-parity-event-v40.schema.json`. Each v40 record
 retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
@@ -191,8 +191,9 @@ Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v38 schemas remain
+repeating the tile comparisons on every movement. The v1-v39 schemas remain
 alongside it—including
+`schema/layered-map-parity-event-v39.schema.json`,
 `schema/layered-map-parity-event-v38.schema.json`,
 `schema/layered-map-parity-event-v37.schema.json`,
 `schema/layered-map-parity-event-v36.schema.json`,
@@ -208,7 +209,7 @@ alongside it—including
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
-explicit readable contracts. The v19-v38 schemas likewise remain immutable
+explicit readable contracts. The v19-v39 schemas likewise remain immutable
 contracts for earlier records.
 When a bounded refinement proposal is available, v30 records a
 same-order, point-in-time preservation-burden inventory. Its five explicit
@@ -289,6 +290,15 @@ already-satisfied desired state is a no-op success. These are decision-table
 descriptions only: target lookup, target-state inspection, achieved desired
 state, mutation, callback execution, replay, arrival gating, and every
 scheduler/lifecycle-authority flag remain absent or false.
+V40 corrects the spawn mutation prerequisite after auditing the existing
+harvest/replacement path. `replaceGameObject` transfers the authored placement
+identity to a stump or other transient replacement, so a pending authored spawn
+may validly find either an empty destination or one exact-identity authored
+transient (`DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT`). A different
+identity, an identity-less occupant, or ambiguous
+occupancy must still refuse. V40 remains descriptive: it performs no lookup,
+target-state inspection, mutation, callback execution, replay, arrival gate, or
+lifecycle operation. V39 remains the immutable contract for prior captures.
 Marker and stop records may additionally summarize the latest 16 contiguous
 ordinary walking steps since the previous reset, including per-step decisions,
 aggregate parity, capacity evictions, and discontinuities. Teleports, login,

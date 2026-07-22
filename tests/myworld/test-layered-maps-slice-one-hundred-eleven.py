@@ -40,7 +40,7 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationState
 
 public final class GenerationIdempotencyRequirementFixture {
     public static void main(String[] args) {
-        spawnRequiresGenerationAndEmptySlot();
+        spawnRequiresGenerationAndOwnedDestination();
         removalRequiresGenerationAndExactEntity();
         missingIdentityRetainsRulesButCannotBind();
         unavailableStateRetainsNothing();
@@ -55,7 +55,7 @@ public final class GenerationIdempotencyRequirementFixture {
             310, 310, 524, 489, 0, 0, null, 0, identity);
     }
 
-    private static void spawnRequiresGenerationAndEmptySlot() {
+    private static void spawnRequiresGenerationAndOwnedDestination() {
         GameTickEventRestorationRequirement value =
             GameTickEventRestorationRequirement.from(
                 GameTickEventRestorationState.scenerySpawn(
@@ -68,7 +68,8 @@ public final class GenerationIdempotencyRequirementFixture {
             && value.getIdempotencyPolicy()
                 == IdempotencyPolicy.ALREADY_SATISFIED_IS_NO_OP_SUCCESS
             && value.getMutationPrecondition()
-                == MutationPrecondition.DESTINATION_SLOT_EMPTY,
+                == MutationPrecondition
+                    .DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT,
             "spawn is desired-state idempotent and generation fenced");
         assertCapturedButDormant(value);
     }
@@ -217,7 +218,7 @@ class LayeredMapsSliceOneHundredElevenTest(unittest.TestCase):
             "AUTHORED_SCENERY_PRESENT",
             "AUTHORED_SCENERY_ABSENT",
             "ALREADY_SATISFIED_IS_NO_OP_SUCCESS",
-            "DESTINATION_SLOT_EMPTY",
+            "DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT",
             "EXACT_AUTHORED_ENTITY_PRESENT",
         ):
             self.assertIn(declaration, source)

@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, and 113 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, and 113 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, and 114 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -23,6 +23,9 @@ remain absent;
 owner-validated Slices 111-113 define, detach, privately expose, and validate
 generation matching and idempotent desired-state rules without inspecting a
 target or performing a mutation;
+automated-validated Slice 114 corrects the spawn prerequisite to accept an
+empty slot or one exact-identity authored transient, preserving schema-v39 and
+publishing the correction through inert schema-v40 diagnostics;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -9651,7 +9654,7 @@ Implemented:
   to the reconstruction generation; a callback retained from another authored
   population pass cannot bind by coordinate or ordinal coincidence;
 - spawn describes `AUTHORED_SCENERY_PRESENT` as its desired state and may only
-  mutate an empty destination slot, while removal describes
+  mutate what was initially described as an empty destination slot, while removal describes
   `AUTHORED_SCENERY_ABSENT` and may only mutate the exact authored entity;
 - both operations use `ALREADY_SATISFIED_IS_NO_OP_SUCCESS`, separating a
   successful desired-state reconciliation from whether a side effect is
@@ -9829,6 +9832,77 @@ Private owner validation status:
 
 Status: implemented, automated-validated, and owner-validated. Target-state
 inspection, executable restoration, and all lifecycle authority remain absent.
+
+### Slice 114: Correct authored-transient spawn prerequisite
+
+Objective: correct the dormant spawn decision table before target inspection
+is introduced, preserving prior diagnostic history while representing the
+existing harvest/replacement lifecycle accurately.
+
+Audit finding:
+
+- `World.replaceGameObject` transfers the old object's authored placement
+  identity to both the replacement location and replacement entity before it
+  unregisters the old object and registers the new one;
+- authentic woodcutting and custom harvesting replace a resource with a stump
+  or depleted object and then schedule the original authored location for
+  delayed spawn; therefore a valid pending spawn commonly has one exact-
+  identity authored transient at its destination rather than an empty slot;
+- the accepted v39 route correctly captured the rule it was given, but it did
+  not inspect the destination. Its `DESTINATION_SLOT_EMPTY` wording is thus a
+  superseded descriptive assumption, not evidence that the live tree slot was
+  empty; and
+- treating every occupied destination as a conflict would reject the normal
+  tree/stump lifecycle, while allowing arbitrary occupancy would recreate the
+  destructive collision replacement behavior this fail-closed design is meant
+  to avoid.
+
+Implemented:
+
+- the dormant requirement and detached inventory now use
+  `DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT` for scenery spawn. Empty is
+  valid; exactly one occupant with the same generation-fenced authored identity
+  may be a valid transient; a different identity, identity-less occupant, or
+  ambiguous occupancy must still refuse;
+- scenery removal retains `EXACT_AUTHORED_ENTITY_PRESENT`, because a changed
+  same-identity successor must not be removed merely because the original
+  delayed callback once closed over its predecessor;
+- corrective schema-v40 publishes the accurate spawn prerequisite while
+  schema-v39 remains byte-for-byte compatible with already captured records;
+  and
+- the guide identifies v40 as current and explicitly distinguishes this
+  prerequisite from a performed target lookup, target-state classification,
+  achieved-state decision, or mutation.
+
+Automated validation status:
+
+- executable Slice 111 and inventory fixtures require the corrected spawn rule
+  while retaining removal, missing-identity, stale-generation, and unavailable
+  refusal behavior;
+- schema guards prove v39 retains its historical empty-slot value and v40 uses
+  the corrected authored-transient value only for spawn;
+- source guards prove replacement identity transfer occurs before replacement
+  registration and the audited harvesting paths replace before scheduling the
+  delayed authored spawn; and
+- the observer remains detached and publishes no target state, target lookup,
+  achieved-state result, entity handle, callback handle, or mutation authority.
+- the complete layered-map suite passes 352 tests across 113 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 774 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- “exact authored transient” is a prerequisite category for a later classifier,
+  not a claim that the current destination has been inspected or accepted;
+- schema-v40 changes no callback timing or natural resource respawn behavior;
+  and
+- no target lookup, state inspection, mutation, callback execution, replay,
+  arrival gate, reconstruction, preservation, registry, teardown, transaction,
+  rollback, packet, or lifecycle authority is added.
+
+Status: implemented and automated-validated. Runtime target inspection, owner
+validation, executable restoration, and all lifecycle authority remain absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -10162,6 +10236,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 112 by detaching generation and idempotency prerequisites into the bounded event inventory. | Implemented and automated-validated; captured rules, satisfied proposal-generation matches, and idempotency completeness reconcile separately, identity-less/stale callbacks remain incomplete, schema-v38 is unchanged, and no target inspection, mutation, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 113 by exposing detached generation and idempotency prerequisites through additive private diagnostics. | Implemented and automated-validated; schema-v39 publishes reconciled aggregate/per-restoration rules, schema-v38 remains immutable, and no target-state inspection, achieved-state claim, mutation, or lifecycle authority exists |
 | 2026-07-21 | Accept the Slice 113 private generation/idempotency route. | Owner-validated; seven schema-v39 records retain registration 3892 while ticks 1419->1435 and remaining delay 33->17 reconcile exactly, proposal/authored generation 1 and all declared rules agree at both pending markers, natural completion removes the record, and every authority flag remains false |
+| 2026-07-21 | Correct the authored spawn mutation prerequisite before target inspection. | Slice 114 implemented and automated-validated; the audited harvest path transfers authored identity to stump/depleted replacements, spawn now permits empty or one exact-identity authored transient, schema-v39 remains immutable, schema-v40 publishes the correction, and no target inspection or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -10528,11 +10603,19 @@ through additive schema-v39 while preserving v38 unchanged. The accepted
 private authored magic-tree route shows a matched proposal/authored generation,
 the declared spawn desired state and mutation precondition at both pending
 markers, exact timer progression on one scheduler registration, and zero
-restoration records after natural completion. The next gate is a dormant,
-read-only target-state classification seam. Before defining it, audit the
-existing harvest/replacement path so an authored transient replacement is not
-mistaken for a conflicting destination or an empty-slot requirement. The seam
-must classify detached observations only and must not mutate the world or gate
+restoration records after natural completion. Slice 114 audits the existing
+resource-replacement lifecycle and corrects the spawn prerequisite: a stump or
+depleted resource inherits the exact authored identity, so a safe future spawn
+must accept an empty destination or one exact-identity authored transient while
+still refusing unrelated, identity-less, or ambiguous occupancy. Corrective
+schema-v40 publishes that rule and preserves v39 as historical evidence. The
+next gate is a dormant target-state decision classifier over explicit detached
+inputs. It should distinguish unavailable observation, empty destination,
+exact desired scenery, exact authored transient, mismatched/identity-less
+occupancy, and ambiguity; generation mismatch and incomplete binding must
+refuse before occupancy is interpreted. The classifier may return no-op
+success, mutation-precondition satisfied, or a typed refusal, but it must
+perform no runtime lookup, retain no entity, mutate nothing, and gate no
 arrival. The observer still has no event, store, callback,
 key, target lookup, due-event executor, cancellation, reschedule, load, or
 arrival-gate authority.

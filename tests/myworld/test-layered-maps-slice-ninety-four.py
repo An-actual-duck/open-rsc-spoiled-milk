@@ -74,7 +74,7 @@ class LayeredMapsSliceNinetyFourTest(unittest.TestCase):
 
     def test_observer_serializes_minimum_state_without_raw_owner(self):
         source = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v39"', source)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v40"', source)
         self.assertIn("appendEventRestorationState(", source)
         self.assertIn("getRestorationStateAvailableEventCount()", source)
         self.assertIn("getDetachedCallbackPayloadCompleteEventCount()", source)

@@ -75,7 +75,7 @@ class LayeredMapsSliceSixtyEightTest(unittest.TestCase):
     def test_observer_serializes_same_cohort_with_topology_budgets(self):
         observer = OBSERVER.read_text(encoding="utf-8")
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v39"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v40"', observer
         )
         self.assertIn(
             "PackedRegionAuthoredReconstructionTopologySource", observer

@@ -106,7 +106,8 @@ public final class GameTickEventRestorationRequirement {
 					: DesiredState.AUTHORED_SCENERY_ABSENT;
 			MutationPrecondition requiredPrecondition = targetSubject
 				== TargetSubject.AUTHORED_DESTINATION_SLOT
-					? MutationPrecondition.DESTINATION_SLOT_EMPTY
+					? MutationPrecondition
+						.DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT
 					: MutationPrecondition.EXACT_AUTHORED_ENTITY_PRESENT;
 			if (desiredState != requiredState
 				|| mutationPrecondition != requiredPrecondition) {
@@ -146,7 +147,8 @@ public final class GameTickEventRestorationRequirement {
 			case SCENERY_SPAWN:
 				subject = TargetSubject.AUTHORED_DESTINATION_SLOT;
 				desiredState = DesiredState.AUTHORED_SCENERY_PRESENT;
-				mutationPrecondition = MutationPrecondition.DESTINATION_SLOT_EMPTY;
+				mutationPrecondition = MutationPrecondition
+					.DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT;
 				break;
 			case SCENERY_REMOVE:
 				subject = TargetSubject.AUTHORED_EXISTING_ENTITY;
@@ -271,10 +273,16 @@ public final class GameTickEventRestorationRequirement {
 		ALREADY_SATISFIED_IS_NO_OP_SUCCESS
 	}
 
-	/** State required before a future path may perform the one-shot mutation. */
+
+	/**
+	 * State required before a future path may perform the one-shot mutation.
+	 * Spawn accepts an empty destination or one exact-identity transient because
+	 * harvested stumps and similar replacements inherit the authored identity.
+	 * A different, identity-less, or ambiguous occupant must still refuse.
+	 */
 	public enum MutationPrecondition {
 		UNAVAILABLE,
-		DESTINATION_SLOT_EMPTY,
+		DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT,
 		EXACT_AUTHORED_ENTITY_PRESENT
 	}
 

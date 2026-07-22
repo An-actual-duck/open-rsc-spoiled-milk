@@ -208,7 +208,8 @@ public final class EventRestorationInventoryFixture {
                         .ALREADY_SATISFIED_IS_NO_OP_SUCCESS
             && inventory.getEvents().get(0).getRestorationState()
                 .getMutationPrecondition()
-                    == MutationPrecondition.DESTINATION_SLOT_EMPTY,
+                    == MutationPrecondition
+                        .DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT,
             "spawn generation and idempotency rules survive detachment");
         check(inventory.getEvents().get(1).getRestorationState()
                 .getTargetBindingEvidence()
@@ -257,7 +258,8 @@ public final class EventRestorationInventoryFixture {
             GenerationBindingRequirement.MATCH_RECONSTRUCTION_GENERATION,
             DesiredState.AUTHORED_SCENERY_PRESENT,
             IdempotencyPolicy.ALREADY_SATISFIED_IS_NO_OP_SUCCESS,
-            MutationPrecondition.DESTINATION_SLOT_EMPTY));
+            MutationPrecondition
+                .DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT));
         expectIllegal(() -> EventState.of(
             0, 1L, OwnerKind.NONE, AttributionKind.EXACT_SPATIAL, true, 1L, 0,
             Collections.singletonList(fixed), state));

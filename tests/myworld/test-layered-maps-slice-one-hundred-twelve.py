@@ -37,7 +37,7 @@ class LayeredMapsSliceOneHundredTwelveTest(unittest.TestCase):
             "enum IdempotencyPolicy",
             "ALREADY_SATISFIED_IS_NO_OP_SUCCESS",
             "enum MutationPrecondition",
-            "DESTINATION_SLOT_EMPTY",
+            "DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT",
             "EXACT_AUTHORED_ENTITY_PRESENT",
         ):
             self.assertIn(declaration, source)
@@ -88,7 +88,7 @@ class LayeredMapsSliceOneHundredTwelveTest(unittest.TestCase):
             ".isGenerationBindingComplete(9L)",
             "DesiredState.AUTHORED_SCENERY_PRESENT",
             "DesiredState.AUTHORED_SCENERY_ABSENT",
-            "MutationPrecondition.DESTINATION_SLOT_EMPTY",
+            "DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT",
             "MutationPrecondition.EXACT_AUTHORED_ENTITY_PRESENT",
         ):
             self.assertIn(evidence, fixture)
@@ -103,7 +103,7 @@ class LayeredMapsSliceOneHundredTwelveTest(unittest.TestCase):
     def test_schema_v38_history_and_living_plan_keep_boundary(self):
         observer = OBSERVER.read_text(encoding="utf-8")
         schema_v38 = json.loads(SCHEMA_V38.read_text(encoding="utf-8"))
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v39"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v40"', observer)
         for absent in (
             "generationBindingRequirementCapturedEventCount",
             "generationBindingCompleteEventCount",
