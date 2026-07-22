@@ -83,6 +83,23 @@ public final class GameTickEventRestorationTargetRevalidation {
 '''
 
 
+COMMIT_REQUEST_STUB = r'''
+package com.openrsc.server.event.rsc;
+public final class GameTickEventRestorationCommitRequest {
+    public static GameTickEventRestorationCommitRequest request(
+            String scheduler, long sequence, long proposal, long authored,
+            long lifecycle, boolean executionHeld, boolean storeHeld,
+            boolean registrationValidated, boolean lifecycleHeld,
+            GameTickEventRestorationTargetDecision.TargetOperation operation,
+            int objectId, int permanentObjectId, int x, int y,
+            int direction, int type, boolean forceFullBlock,
+            int regionX, int regionY, int ordinal, String kind) {
+        return new GameTickEventRestorationCommitRequest();
+    }
+}
+'''
+
+
 REGION_MANAGER_STUB = r'''
 package com.openrsc.server.model.world.region;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
@@ -135,6 +152,24 @@ public class GameTickEvent {
     }
     public boolean isExecutionBoundaryHeldByCurrentThread() {
         return Thread.holdsLock(executionLock);
+    }
+    public boolean withinStableRestorationLifecycleBoundary(
+            long expectedLifecycleVersion,
+            StableRestorationLifecycleOperation operation) {
+        operation.execute(
+            new StableRestorationLifecycleBoundary(expectedLifecycleVersion));
+        return true;
+    }
+    public interface StableRestorationLifecycleOperation {
+        void execute(StableRestorationLifecycleBoundary boundary);
+    }
+    public static final class StableRestorationLifecycleBoundary {
+        private final long lifecycleVersion;
+        StableRestorationLifecycleBoundary(long lifecycleVersion) {
+            this.lifecycleVersion = lifecycleVersion;
+        }
+        public long getLifecycleVersion() { return lifecycleVersion; }
+        public boolean isLifecycleBoundaryHeld() { return true; }
     }
     public interface ExecutionBoundaryOperation<T> { T execute(); }
     public GameTickEventRestorationState getRestorationState() {
@@ -471,6 +506,9 @@ class LayeredMapsSliceOneHundredTwentyOneTest(unittest.TestCase):
             "com/openrsc/server/event/rsc/"
             "GameTickEventRestorationTargetRevalidation.java":
                 TARGET_REVALIDATION_STUB,
+            "com/openrsc/server/event/rsc/"
+            "GameTickEventRestorationCommitRequest.java":
+                COMMIT_REQUEST_STUB,
             "com/openrsc/server/event/rsc/handler/"
             "RegistrationFenceFixture.java": FIXTURE,
         }

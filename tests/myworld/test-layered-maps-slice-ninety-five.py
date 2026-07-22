@@ -97,6 +97,24 @@ public class GameTickEvent {
     public boolean isExecutionBoundaryHeldByCurrentThread() {
         return Thread.holdsLock(executionLock);
     }
+    public boolean withinStableRestorationLifecycleBoundary(
+            long expectedLifecycleVersion,
+            StableRestorationLifecycleOperation operation) {
+        operation.execute(
+            new StableRestorationLifecycleBoundary(expectedLifecycleVersion));
+        return true;
+    }
+    public interface StableRestorationLifecycleOperation {
+        void execute(StableRestorationLifecycleBoundary boundary);
+    }
+    public static final class StableRestorationLifecycleBoundary {
+        private final long lifecycleVersion;
+        StableRestorationLifecycleBoundary(long lifecycleVersion) {
+            this.lifecycleVersion = lifecycleVersion;
+        }
+        public long getLifecycleVersion() { return lifecycleVersion; }
+        public boolean isLifecycleBoundaryHeld() { return true; }
+    }
     public interface ExecutionBoundaryOperation<T> { T execute(); }
     public GameTickEventRestorationState getRestorationState() {
         return GameTickEventRestorationState.unavailable();
@@ -431,6 +449,7 @@ class LayeredMapsSliceNinetyFiveTest(unittest.TestCase):
                     "server/src/com/openrsc/server/event/rsc/"
                     "GameTickEventSpatialAffinity.java"
                 )),
+                str(SHARED["COMMIT_REQUEST"]),
                 *(str(path) for path in paths),
             ],
             cwd=ROOT,

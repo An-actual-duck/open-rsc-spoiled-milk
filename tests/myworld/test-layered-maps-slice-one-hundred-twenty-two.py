@@ -15,6 +15,10 @@ AFFINITY = ROOT / (
     "server/src/com/openrsc/server/event/rsc/"
     "GameTickEventSpatialAffinity.java"
 )
+COMMIT_REQUEST = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/"
+    "GameTickEventRestorationCommitRequest.java"
+)
 STORE = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventStore.java"
@@ -536,6 +540,7 @@ class LayeredMapsSliceOneHundredTwentyTwoTest(unittest.TestCase):
                 "javac", "-Xlint:all", "-source", "8", "-target", "8",
                 "-cp", classpath, "-d", str(cls.classes),
                 str(STORE), str(EVENT), str(STATE), str(AFFINITY),
+                str(COMMIT_REQUEST),
                 str(ROOT / (
                     "server/src/com/openrsc/server/event/rsc/"
                     "DuplicationStrategy.java"

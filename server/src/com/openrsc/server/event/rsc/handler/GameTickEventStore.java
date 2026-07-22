@@ -6,6 +6,7 @@ import com.google.common.collect.Multimap;
 import com.google.inject.Key;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCommitRequest;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
@@ -464,6 +465,132 @@ class GameTickEventStore {
 			outer.getLifecycleVersionAfterOperation());
 	}
 
+	/**
+	 * Produces one ephemeral, generation-checked commit request while the exact
+	 * scheduler registration, event execution boundary, and unchanged event
+	 * lifecycle boundary remain valid. No mutation consumer is attached here;
+	 * the operation receives only the closed request.
+	 */
+	RestorationCommitRequestExecution withValidatedRestorationCommitRequest(
+		final String expectedSchedulerInstanceIdentity,
+		final long expectedRegistrationSequence,
+		final long expectedProposalGeneration,
+		final RestorationCommitRequestOperation operation) {
+		if (expectedSchedulerInstanceIdentity == null
+			|| expectedSchedulerInstanceIdentity.isEmpty()
+			|| expectedRegistrationSequence <= 0L
+			|| expectedProposalGeneration <= 0L) {
+			throw new IllegalArgumentException(
+				"Expected restoration commit registration is invalid");
+		}
+		final RestorationCommitRequestOperation checkedOperation =
+			Objects.requireNonNull(operation, "operation");
+		final GameTickEvent candidate;
+		synchronized (LOCK) {
+			if (!schedulerInstanceIdentity.equals(
+				expectedSchedulerInstanceIdentity)) {
+				return RestorationCommitRequestExecution.refused(
+					RestorationRegistrationFenceReason
+						.SCHEDULER_INSTANCE_MISMATCH);
+			}
+			GameTickEvent found = null;
+			for (Map.Entry<GameTickEvent, Long> registration
+				: registrationSequences.entrySet()) {
+				Long sequence = registration.getValue();
+				if (sequence != null
+					&& sequence.longValue()
+						== expectedRegistrationSequence) {
+					if (found != null) {
+						return RestorationCommitRequestExecution.refused(
+							RestorationRegistrationFenceReason
+								.DUPLICATE_REGISTRATION_SEQUENCE);
+					}
+					found = registration.getKey();
+				}
+			}
+			if (found == null || events.get(getKey(found)) != found) {
+				return RestorationCommitRequestExecution.refused(
+					RestorationRegistrationFenceReason.EVENT_NOT_REGISTERED);
+			}
+			candidate = found;
+		}
+
+		final RestorationRegistrationFenceExecution[] restoration =
+			new RestorationRegistrationFenceExecution[1];
+		final boolean[] lifecycleBoundaryEntered = new boolean[1];
+		final boolean[] requestDelivered = new boolean[1];
+		final long[] commitLifecycleVersion = new long[] { -1L };
+		RegistrationFenceExecution registration =
+			withValidatedRegistrationFence(
+				candidate, expectedSchedulerInstanceIdentity,
+				expectedRegistrationSequence, registrationFence ->
+					restoration[0] = executeRestorationRegistrationFence(
+						candidate, registrationFence,
+						expectedProposalGeneration, fence -> {
+							boolean entered = candidate
+								.withinStableRestorationLifecycleBoundary(
+									fence.getLifecycleVersion(), lifecycle -> {
+										lifecycleBoundaryEntered[0] = true;
+										commitLifecycleVersion[0] =
+											lifecycle.getLifecycleVersion();
+										GameTickEventRestorationCommitRequest request =
+											GameTickEventRestorationCommitRequest.request(
+												fence.getSchedulerInstanceIdentity(),
+												fence.getRegistrationSequence(),
+												fence.getExpectedProposalGeneration(),
+												fence.getObservedAuthoredGeneration(),
+												lifecycle.getLifecycleVersion(),
+												fence.isEventExecutionBoundaryHeld(),
+												fence.isSchedulerStoreBoundaryHeld(),
+												fence
+													.isRegistrationValidatedBeforeInnerBoundary(),
+												lifecycle.isLifecycleBoundaryHeld(),
+												GameTickEventRestorationTargetDecision
+													.TargetOperation.valueOf(
+														fence.getRestorationKind().name()),
+												fence.getObjectId(),
+												fence.getPermanentObjectId(),
+												fence.getX(), fence.getY(),
+												fence.getDirection(), fence.getType(),
+												fence.isForceFullBlock(),
+												fence.getAuthoredPackedRegionX(),
+												fence.getAuthoredPackedRegionY(),
+												fence.getAuthoredSourceOrdinal(),
+												fence.getAuthoredConstructionKind().name());
+										checkedOperation.execute(request);
+										requestDelivered[0] = true;
+									});
+							if (!entered) {
+								lifecycleBoundaryEntered[0] = false;
+							}
+						}));
+		if (!registration.isAccepted()) {
+			return RestorationCommitRequestExecution.refused(
+				mapRegistrationFenceReason(registration.getReason()));
+		}
+		if (restoration[0] == null) {
+			throw new IllegalStateException(
+				"Accepted restoration commit request did not execute");
+		}
+		if (!restoration[0].isAccepted()) {
+			if (requestDelivered[0] && lifecycleBoundaryEntered[0]) {
+				return RestorationCommitRequestExecution.delivered(
+					commitLifecycleVersion[0]);
+			}
+			return RestorationCommitRequestExecution.refusedAfterOperation(
+				restoration[0].getReason(),
+				restoration[0].getLifecycleVersionBeforeOperation(),
+				restoration[0].getLifecycleVersionAfterOperation(),
+				lifecycleBoundaryEntered[0], requestDelivered[0]);
+		}
+		if (!lifecycleBoundaryEntered[0] || !requestDelivered[0]) {
+			throw new IllegalStateException(
+				"Accepted restoration lifecycle boundary delivered no request");
+		}
+		return RestorationCommitRequestExecution.delivered(
+			commitLifecycleVersion[0]);
+	}
+
 	private static RestorationRegistrationFenceExecution
 		executeRestorationRegistrationFence(
 			final GameTickEvent event,
@@ -875,6 +1002,11 @@ class GameTickEventStore {
 		void execute(RestorationRegistrationFence fence);
 	}
 
+	@FunctionalInterface
+	interface RestorationCommitRequestOperation {
+		void execute(GameTickEventRestorationCommitRequest request);
+	}
+
 	enum RestorationRegistrationFenceReason {
 		SCHEDULER_INSTANCE_MISMATCH,
 		EVENT_NOT_REGISTERED,
@@ -1145,6 +1277,94 @@ class GameTickEventStore {
 		boolean isCommitToken() { return false; }
 		boolean isMutationPerformed() { return false; }
 		boolean isExecutableRestoration() { return false; }
+		boolean isArrivalGate() { return false; }
+		boolean isLifecycleAuthority() { return false; }
+	}
+
+	/**
+	 * Closed scheduler-side outcome. The ephemeral request is never retained by
+	 * this value and no mutation result is claimed.
+	 */
+	static final class RestorationCommitRequestExecution {
+		private final RestorationRegistrationFenceReason reason;
+		private final long lifecycleVersionBeforeOperation;
+		private final long lifecycleVersionAfterOperation;
+		private final boolean lifecycleBoundaryEntered;
+		private final boolean requestDelivered;
+
+		private RestorationCommitRequestExecution(
+			final RestorationRegistrationFenceReason reason,
+			final long lifecycleVersionBeforeOperation,
+			final long lifecycleVersionAfterOperation,
+			final boolean lifecycleBoundaryEntered,
+			final boolean requestDelivered) {
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.lifecycleVersionBeforeOperation =
+				lifecycleVersionBeforeOperation;
+			this.lifecycleVersionAfterOperation =
+				lifecycleVersionAfterOperation;
+			this.lifecycleBoundaryEntered = lifecycleBoundaryEntered;
+			this.requestDelivered = requestDelivered;
+			boolean delivered = reason
+				== RestorationRegistrationFenceReason.OPERATION_COMPLETED;
+			if (delivered != requestDelivered
+				|| requestDelivered != lifecycleBoundaryEntered
+				|| (requestDelivered
+					&& (lifecycleVersionBeforeOperation <= 0L
+						|| lifecycleVersionBeforeOperation
+							!= lifecycleVersionAfterOperation))
+				|| (!requestDelivered
+					&& ((lifecycleVersionBeforeOperation > 0L)
+						!= (lifecycleVersionAfterOperation > 0L)))) {
+				throw new IllegalArgumentException(
+					"Restoration commit-request result is inconsistent");
+			}
+		}
+
+		private static RestorationCommitRequestExecution refused(
+			final RestorationRegistrationFenceReason reason) {
+			return new RestorationCommitRequestExecution(
+				reason, -1L, -1L, false, false);
+		}
+
+		private static RestorationCommitRequestExecution refusedAfterOperation(
+			final RestorationRegistrationFenceReason reason,
+			final long lifecycleVersionBeforeOperation,
+			final long lifecycleVersionAfterOperation,
+			final boolean lifecycleBoundaryEntered,
+			final boolean requestDelivered) {
+			return new RestorationCommitRequestExecution(
+				reason, lifecycleVersionBeforeOperation,
+				lifecycleVersionAfterOperation, lifecycleBoundaryEntered,
+				requestDelivered);
+		}
+
+		private static RestorationCommitRequestExecution delivered(
+			final long lifecycleVersion) {
+			return new RestorationCommitRequestExecution(
+				RestorationRegistrationFenceReason.OPERATION_COMPLETED,
+				lifecycleVersion, lifecycleVersion, true, true);
+		}
+
+		boolean isRequestDelivered() { return requestDelivered; }
+		RestorationRegistrationFenceReason getReason() { return reason; }
+		long getLifecycleVersionBeforeOperation() {
+			return lifecycleVersionBeforeOperation;
+		}
+		long getLifecycleVersionAfterOperation() {
+			return lifecycleVersionAfterOperation;
+		}
+		boolean isLifecycleBoundaryEntered() {
+			return lifecycleBoundaryEntered;
+		}
+		boolean isRequestRetained() { return false; }
+		boolean isMutationAuthorized() { return false; }
+		boolean isMutationPerformed() { return false; }
+		boolean isCallbackInvoked() { return false; }
+		boolean isEventCancellation() { return false; }
+		boolean isEventReschedule() { return false; }
+		boolean isExecutableRestoration() { return false; }
+		boolean isCommitToken() { return false; }
 		boolean isArrivalGate() { return false; }
 		boolean isLifecycleAuthority() { return false; }
 	}

@@ -96,6 +96,76 @@ public abstract class GameTickEvent implements Callable<Integer> {
 		return Thread.holdsLock(executionLock);
 	}
 
+	/**
+	 * Runs one narrow scheduler-internal operation while both the existing event
+	 * execution boundary and an unchanged zero-run lifecycle tuple are held.
+	 *
+	 * <p>This is intentionally separate from callback execution. The supplied
+	 * operation must receive only closed restoration scalars and must not invoke
+	 * arbitrary callback, plugin, packet, or owner code. Holding the timing
+	 * boundary prevents stop/reset/tick from invalidating a future Region commit
+	 * between its final lifecycle check and completion.</p>
+	 */
+	public final boolean withinStableRestorationLifecycleBoundary(
+		final long expectedLifecycleVersion,
+		final StableRestorationLifecycleOperation operation) {
+		if (expectedLifecycleVersion <= 0L) {
+			throw new IllegalArgumentException(
+				"Expected restoration lifecycle version must be positive");
+		}
+		if (operation == null) {
+			throw new NullPointerException("operation");
+		}
+		if (!isExecutionBoundaryHeldByCurrentThread()) {
+			throw new IllegalStateException(
+				"Restoration lifecycle boundary requires event execution boundary");
+		}
+		synchronized (timingLock) {
+			if (!running || timesRan != 0
+				|| lifecycleVersion != expectedLifecycleVersion) {
+				return false;
+			}
+			operation.execute(
+				new StableRestorationLifecycleBoundary(
+					lifecycleVersion, Thread.holdsLock(timingLock)));
+			if (lifecycleVersion != expectedLifecycleVersion) {
+				throw new IllegalStateException(
+					"Restoration operation changed its guarded event lifecycle");
+			}
+			return true;
+		}
+	}
+
+	@FunctionalInterface
+	public interface StableRestorationLifecycleOperation {
+		void execute(StableRestorationLifecycleBoundary boundary);
+	}
+
+	/** Closed proof valid only during a stable restoration operation. */
+	public static final class StableRestorationLifecycleBoundary {
+		private final long lifecycleVersion;
+		private final boolean lifecycleBoundaryHeld;
+
+		private StableRestorationLifecycleBoundary(
+			final long lifecycleVersion,
+			final boolean lifecycleBoundaryHeld) {
+			if (lifecycleVersion <= 0L || !lifecycleBoundaryHeld) {
+				throw new IllegalStateException(
+					"Stable restoration lifecycle boundary is invalid");
+			}
+			this.lifecycleVersion = lifecycleVersion;
+			this.lifecycleBoundaryHeld = true;
+		}
+
+		public long getLifecycleVersion() { return lifecycleVersion; }
+		public boolean isLifecycleBoundaryHeld() {
+			return lifecycleBoundaryHeld;
+		}
+		public boolean isReusablePermit() { return false; }
+		public boolean isMutationAuthorized() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
+	}
+
 	@FunctionalInterface
 	public interface ExecutionBoundaryOperation<T> {
 		T execute();

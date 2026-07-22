@@ -11431,9 +11431,84 @@ Safety boundary:
 - the transaction is not a restoration commit token, arrival gate, Region
   retirement decision, true layered-storage mutation, or lifecycle authority.
 
-Status: implemented and automated-validated. A private owner route should
-repeat one resource depletion/return and door cycle, then exercise a second
-object family before accepting the runtime milestone.
+Owner validation:
+
+- the owner repeated normal tree depletion and natural return, then interacted
+  with the restored tree without a visual or collision issue;
+- the nearby door completed an open/close/open cycle with expected passage and
+  blocking;
+- dropped logs became a temporary fire, the fire expired normally, and it left
+  no invisible obstruction; and
+- the private server log corroborates all three object families and contains no
+  object/collision transaction refusal, exception, logout, or update failure in
+  the route window.
+
+Status: implemented, automated-validated, and owner-validated. Slice 136 is
+accepted.
+
+### Slice 137: Scheduler-fenced restoration commit request
+
+Objective: create the smallest typed request that can cross from the exact
+scheduler registration/generation fence toward a future Region commit while
+preventing event lifecycle changes during the operation and retaining no
+runtime handle or mutation authority.
+
+Implemented:
+
+- `GameTickEventRestorationCommitRequest` copies only scheduler identity,
+  registration sequence, equal proposal/authored generation, one positive
+  lifecycle version, callback operation, scenery constructor fields,
+  `forceFullBlock`, and authored source identity;
+- `GameTickEventStore.withValidatedRestorationCommitRequest` locates the exact
+  registration internally, reuses the accepted handle-free callback payload,
+  affinity, construction-kind, and generation fence, and never exposes the
+  event to its operation;
+- after the scheduler-store monitor is released, the existing event execution
+  boundary is retained and `GameTickEvent` acquires a narrow lifecycle boundary
+  only if the event is still running, has run zero times, and has the exact
+  expected version;
+- stop/reset/tick wait until the closed request operation releases that timing
+  boundary, so a later Region commit cannot be invalidated between its final
+  lifecycle comparison and completion;
+- a lifecycle change that wins before the timing boundary refuses without
+  delivering a request, while a change after the request operation has fully
+  completed cannot retroactively invalidate its closed boundary; and
+- the Store result retains only reason/version/entered/delivered facts. The
+  request and result both deny reusable-permit, callback, cancellation,
+  reschedule, mutation, executable-restoration, commit-token, arrival, and
+  lifecycle authority.
+
+Automated validation status:
+
+- an executable fixture proves a valid authored scenery event copies every
+  exact scalar while the execution and lifecycle boundaries are held and the
+  scheduler-store boundary is absent;
+- a concurrent stop is demonstrably blocked until the request operation
+  completes, then proceeds normally, while stale generation and already-
+  stopped events refuse before request delivery;
+- source guards enforce execution-before-timing order, registration-before-
+  lifecycle order, request construction inside that boundary, inert authority
+  flags, and disconnection from RegionManager, GameObject mutation, callback,
+  and event-stop operations; and
+- the complete layered-map suite passes 450 tests across 136 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 791 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- no Region mutation consumer is connected in this slice. Delivering a request
+  proves only that its scheduler registration, authored generation, and event
+  lifecycle were exact during the supplied closed operation;
+- the request is not safe to retain or replay after the operation and does not
+  find, construct, register, replace, or remove an object;
+- the narrow timing boundary may wrap only internal closed restoration work,
+  never arbitrary callback, plugin, packet, owner, or Player code; and
+- event cancellation/reschedule, callback consumption, Region retirement,
+  reconstruction, arrival gating, and all lifecycle authority remain absent.
+
+Status: implemented and automated-validated. No owner route is required because
+the new seam is disconnected from gameplay.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -11796,6 +11871,7 @@ private environment should validate at least:
 | 2026-07-22 | Accept the corrected Slice 135 private runtime route. | Owner-validated; successful login remains connected after signed edge Regions are admitted, normal tree depletion/return, a door open/close cycle, blocking scenery, and packed-boundary travel behave normally, the initial fence refusal is legitimate authored collision, and no new runtime collision/update exception appears |
 | 2026-07-22 | Continue with Slice 136 by composing exact GameObject membership and collision under one ordered Region union. | Implemented and automated-validated; register/unregister/replacement share exact slot revalidation and rollback, generic Region GameObject writes refuse, cache invalidation follows committed membership, deterministic refusal and concurrency fixtures close split writer state, and 446 focused tests plus the 790/488 Ant build pass |
 | 2026-07-22 | Accept the Slice 136 private runtime route. | Owner-validated; a normal tree depleted and returned, its restored form remained interactive, a door completed an open/close/open cycle with expected passage and blocking, and a dropped log became a temporary fire and expired without an invisible obstruction; the private log corroborates every interaction with no transaction refusal, exception, logout, or collision/update error in the route window |
+| 2026-07-22 | Continue with Slice 137 by creating an ephemeral scheduler-fenced restoration commit request. | Implemented and automated-validated; exact registration and authored generation are revalidated before an unchanged zero-run event lifecycle boundary excludes stop/reset/tick, only closed constructor/provenance scalars cross the seam, no Region mutation consumer is connected, 450 focused tests pass across 136 files, and the 791/488 Ant build passes |
 
 ## Next Discussion
 
@@ -12281,10 +12357,14 @@ one ordered Region union with rollback and deterministic writer exclusion. Its
 private owner route is accepted: a resource replacement and natural return, a
 door cycle, and a temporary fire registration/removal all retained normal
 visibility, interaction, and collision, and the private log contains no
-transaction refusal or runtime error during the route. The next safe slice can
-connect the already fenced scheduler target revalidation to this transaction
-through a typed, generation-checked commit request; it must not give the
-scheduler direct Region, entity, or lifecycle authority.
+transaction refusal or runtime error during the route. Slice 137 now produces
+the typed, generation-checked commit request only inside the exact registration,
+execution, and stable lifecycle boundaries, with the scheduler-store monitor
+absent. No Region mutation consumer is connected. The next safe slice can let
+RegionManager consume that ephemeral request inside the existing atomic object/
+collision transaction, initially as a disconnected executable seam with typed
+fresh-target/no-op/refusal results; it must not invoke, cancel, or reschedule the
+callback or give the scheduler direct Region, entity, or lifecycle authority.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
