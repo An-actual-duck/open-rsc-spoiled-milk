@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v38.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v39.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -40,6 +40,7 @@ SCHEMA_V34 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v34.sche
 SCHEMA_V35 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v35.schema.json"
 SCHEMA_V36 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v36.schema.json"
 SCHEMA_V37 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v37.schema.json"
+SCHEMA_V38 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v38.schema.json"
 
 
 POINT_STUB = r'''
@@ -1190,7 +1191,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v38" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v39" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -2116,6 +2117,28 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             )
             self.assertTrue(event_ownership["arrivalOrderingCaptured"])
             self.assertTrue(event_ownership["arrivalOrderingComplete"])
+            self.assertEqual(1, event_ownership[
+                "generationBindingRequirementCapturedEventCount"
+            ])
+            self.assertTrue(event_ownership[
+                "generationBindingRequirementCaptured"
+            ])
+            self.assertTrue(event_ownership[
+                "generationBindingRequirementComplete"
+            ])
+            self.assertEqual(
+                1, event_ownership["generationBindingCompleteEventCount"]
+            )
+            self.assertTrue(event_ownership["generationBindingComplete"])
+            self.assertEqual(1, event_ownership[
+                "idempotencyRequirementCapturedEventCount"
+            ])
+            self.assertTrue(event_ownership[
+                "idempotencyRequirementCaptured"
+            ])
+            self.assertTrue(event_ownership[
+                "idempotencyRequirementComplete"
+            ])
             self.assertEqual(
                 [101, 102],
                 [event["registrationSequence"]
@@ -2150,6 +2173,10 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 "AUTHORED_PLACEMENT_IDENTITY",
                 "REFUSE_MISMATCH_OR_AMBIGUITY", True, True,
                 "RECONCILE_BEFORE_FIRST_VISIBILITY", True,
+                "MATCH_RECONSTRUCTION_GENERATION", True, True,
+                "AUTHORED_SCENERY_PRESENT",
+                "ALREADY_SATISFIED_IS_NO_OP_SUCCESS",
+                "DESTINATION_SLOT_EMPTY", True,
                 False, False, False,
             ), (
                 restoration["kind"], restoration["forceFullBlock"],
@@ -2166,6 +2193,13 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 restoration["targetBindingComplete"],
                 restoration["arrivalOrderingRequirement"],
                 restoration["arrivalOrderingCaptured"],
+                restoration["generationBindingRequirement"],
+                restoration["generationBindingRequirementCaptured"],
+                restoration["generationBindingComplete"],
+                restoration["desiredState"],
+                restoration["idempotencyPolicy"],
+                restoration["mutationPrecondition"],
+                restoration["idempotencyRequirementCaptured"],
                 restoration["schedulerIdentityCaptured"],
                 restoration["targetBindingLookupPerformed"],
                 restoration["standaloneRestorationComplete"],
@@ -2355,6 +2389,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v35 = json.loads(SCHEMA_V35.read_text(encoding="utf-8"))
                 v36 = json.loads(SCHEMA_V36.read_text(encoding="utf-8"))
                 v37 = json.loads(SCHEMA_V37.read_text(encoding="utf-8"))
+                v38 = json.loads(SCHEMA_V38.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -2381,6 +2416,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v35["$id"], Resource.from_contents(v35)),
                     (v36["$id"], Resource.from_contents(v36)),
                     (v37["$id"], Resource.from_contents(v37)),
+                    (v38["$id"], Resource.from_contents(v38)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

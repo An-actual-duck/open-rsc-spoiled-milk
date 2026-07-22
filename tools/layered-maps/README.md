@@ -183,16 +183,17 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v38.schema.json`. Each v38 record
-retains the complete v37 position, logical-window, interest-delta,
+traces emit `schema/layered-map-parity-event-v39.schema.json`. Each v39 record
+retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
 Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v37 schemas remain
+repeating the tile comparisons on every movement. The v1-v38 schemas remain
 alongside it—including
+`schema/layered-map-parity-event-v38.schema.json`,
 `schema/layered-map-parity-event-v37.schema.json`,
 `schema/layered-map-parity-event-v36.schema.json`,
 `schema/layered-map-parity-event-v35.schema.json`,
@@ -207,7 +208,7 @@ alongside it—including
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
-explicit readable contracts. The v19-v37 schemas likewise remain immutable
+explicit readable contracts. The v19-v38 schemas likewise remain immutable
 contracts for earlier records.
 When a bounded refinement proposal is available, v30 records a
 same-order, point-in-time preservation-burden inventory. Its five explicit
@@ -278,6 +279,16 @@ and incomplete binding. Every known record requires reconciliation before its
 first visibility snapshot, but this remains an ordering statement only: target
 lookup, arrival gating, callback invocation, replay, standalone restoration,
 and every scheduler/lifecycle-authority flag remain absent or false.
+V39 publishes only the subsequently detached generation and idempotency rules.
+Aggregate counts distinguish complete rule capture from authored targets whose
+generation actually matches the enclosing reconstruction proposal. Each known
+spawn requires authored scenery present and permits a mutation only at an empty
+destination slot; each known removal requires authored scenery absent and
+permits a mutation only for the exact authored entity. Both state that an
+already-satisfied desired state is a no-op success. These are decision-table
+descriptions only: target lookup, target-state inspection, achieved desired
+state, mutation, callback execution, replay, arrival gating, and every
+scheduler/lifecycle-authority flag remain absent or false.
 Marker and stop records may additionally summarize the latest 16 contiguous
 ordinary walking steps since the previous reset, including per-step decisions,
 aggregate parity, capacity evictions, and discontinuities. Teleports, login,

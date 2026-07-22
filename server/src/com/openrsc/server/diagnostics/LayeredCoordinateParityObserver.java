@@ -53,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v38";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v39";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4100,6 +4100,24 @@ public final class LayeredCoordinateParityObserver {
 			.append(inventory.isArrivalOrderingCaptured()).append(',');
 		out.append("\"arrivalOrderingComplete\":")
 			.append(inventory.isArrivalOrderingComplete()).append(',');
+		out.append("\"generationBindingRequirementCapturedEventCount\":")
+			.append(inventory
+				.getGenerationBindingRequirementCapturedEventCount()).append(',');
+		out.append("\"generationBindingRequirementCaptured\":")
+			.append(inventory.isGenerationBindingRequirementCaptured()).append(',');
+		out.append("\"generationBindingRequirementComplete\":")
+			.append(inventory.isGenerationBindingRequirementComplete()).append(',');
+		out.append("\"generationBindingCompleteEventCount\":")
+			.append(inventory.getGenerationBindingCompleteEventCount()).append(',');
+		out.append("\"generationBindingComplete\":")
+			.append(inventory.isGenerationBindingComplete()).append(',');
+		out.append("\"idempotencyRequirementCapturedEventCount\":")
+			.append(inventory
+				.getIdempotencyRequirementCapturedEventCount()).append(',');
+		out.append("\"idempotencyRequirementCaptured\":")
+			.append(inventory.isIdempotencyRequirementCaptured()).append(',');
+		out.append("\"idempotencyRequirementComplete\":")
+			.append(inventory.isIdempotencyRequirementComplete()).append(',');
 		out.append("\"candidateAttributionComplete\":")
 			.append(inventory.isCandidateAttributionComplete()).append(',');
 		out.append("\"restorationStateCompleteEventCount\":")
@@ -4177,7 +4195,8 @@ public final class LayeredCoordinateParityObserver {
 			out.append("\"restorationState\":");
 			appendEventRestorationState(
 				out, event.getRestorationState(),
-				event.isAtomicTimingCaptured());
+				event.isAtomicTimingCaptured(),
+				inventory.getProposalGeneration());
 			out.append(',');
 			appendIntegerList(out, "candidateSourceOrdinals",
 				event.getCandidateSourceOrdinals());
@@ -4201,7 +4220,8 @@ public final class LayeredCoordinateParityObserver {
 		final StringBuilder out,
 		final LayeredPackedRegionEventOwnershipInventory.EventRestorationState
 			state,
-		final boolean atomicTimingCaptured) {
+		final boolean atomicTimingCaptured,
+		final long reconstructionGeneration) {
 		if (state.getKind()
 			== LayeredPackedRegionEventOwnershipInventory.RestorationKind
 				.UNAVAILABLE) {
@@ -4239,6 +4259,20 @@ public final class LayeredCoordinateParityObserver {
 			state.getArrivalOrderingRequirement().name()).append(',');
 		out.append("\"arrivalOrderingCaptured\":")
 			.append(state.isArrivalOrderingCaptured()).append(',');
+		field(out, "generationBindingRequirement",
+			state.getGenerationBindingRequirement().name()).append(',');
+		out.append("\"generationBindingRequirementCaptured\":")
+			.append(state.isGenerationBindingRequirementCaptured()).append(',');
+		out.append("\"generationBindingComplete\":")
+			.append(state.isGenerationBindingComplete(reconstructionGeneration))
+			.append(',');
+		field(out, "desiredState", state.getDesiredState().name()).append(',');
+		field(out, "idempotencyPolicy",
+			state.getIdempotencyPolicy().name()).append(',');
+		field(out, "mutationPrecondition",
+			state.getMutationPrecondition().name()).append(',');
+		out.append("\"idempotencyRequirementCaptured\":")
+			.append(state.isIdempotencyRequirementCaptured()).append(',');
 		out.append("\"schedulerIdentityCaptured\":")
 			.append(state.isSchedulerIdentityCaptured()).append(',');
 		out.append("\"targetBindingLookupPerformed\":")

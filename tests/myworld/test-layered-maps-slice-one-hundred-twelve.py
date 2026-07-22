@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import subprocess
 import unittest
 from pathlib import Path
@@ -13,6 +14,9 @@ INVENTORY = ROOT / (
 OBSERVER = ROOT / (
     "server/src/com/openrsc/server/diagnostics/"
     "LayeredCoordinateParityObserver.java"
+)
+SCHEMA_V38 = ROOT / (
+    "tools/layered-maps/schema/layered-map-parity-event-v38.schema.json"
 )
 FIXTURE = ROOT / "tests/myworld/test-layered-maps-slice-ninety-three.py"
 PLAN = ROOT / (
@@ -96,19 +100,18 @@ class LayeredMapsSliceOneHundredTwelveTest(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
 
-    def test_schema_v38_observer_and_living_plan_keep_boundary(self):
+    def test_schema_v38_history_and_living_plan_keep_boundary(self):
         observer = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v38"', observer)
+        schema_v38 = json.loads(SCHEMA_V38.read_text(encoding="utf-8"))
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v39"', observer)
         for absent in (
-            "getGenerationBindingRequirementCapturedEventCount",
-            "getGenerationBindingCompleteEventCount",
-            "getIdempotencyRequirementCapturedEventCount",
-            "state.getGenerationBindingRequirement()",
-            "state.getDesiredState()",
-            "state.getIdempotencyPolicy()",
-            "state.getMutationPrecondition()",
+            "generationBindingRequirementCapturedEventCount",
+            "generationBindingCompleteEventCount",
+            "idempotencyRequirementCapturedEventCount",
+            "desiredState",
+            "mutationPrecondition",
         ):
-            self.assertNotIn(absent, observer)
+            self.assertNotIn(absent, json.dumps(schema_v38))
         plan = PLAN.read_text(encoding="utf-8")
         self.assertIn(
             "### Slice 112: Detached generation and idempotency prerequisites",
