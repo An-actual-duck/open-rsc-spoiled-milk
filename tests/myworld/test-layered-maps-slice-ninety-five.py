@@ -2,6 +2,7 @@
 import subprocess
 import tempfile
 import unittest
+import runpy
 from pathlib import Path
 
 
@@ -21,6 +22,11 @@ PLAN = ROOT / (
     "docs/myworld/in-progress-work-plans/"
     "world-layer-capacity-exploration-plan.md"
 )
+SLICE_122 = ROOT / (
+    "tests/myworld/"
+    "test-layered-maps-slice-one-hundred-twenty-two.py"
+)
+SHARED = runpy.run_path(str(SLICE_122))
 
 
 MOB_STUB = r'''
@@ -387,6 +393,17 @@ class LayeredMapsSliceNinetyFiveTest(unittest.TestCase):
             "com/openrsc/server/event/rsc/GameTickEvent.java": EVENT_STUB,
             "com/openrsc/server/event/rsc/PluginTickEvent.java":
                 PLUGIN_EVENT_STUB,
+            "com/openrsc/server/model/world/region/RegionManager.java":
+                SHARED["REGION_MANAGER_STUB"],
+            "com/openrsc/server/event/rsc/"
+            "GameTickEventRestorationTargetDecision.java":
+                SHARED["TARGET_DECISION_STUB"],
+            "com/openrsc/server/event/rsc/"
+            "GameTickEventRestorationTargetRevalidationRequest.java":
+                SHARED["TARGET_REVALIDATION_REQUEST_STUB"],
+            "com/openrsc/server/event/rsc/"
+            "GameTickEventRestorationTargetRevalidation.java":
+                SHARED["TARGET_REVALIDATION_STUB"],
             "com/openrsc/server/event/rsc/handler/"
             "GameTickEventRegistrationFixture.java": FIXTURE,
         }

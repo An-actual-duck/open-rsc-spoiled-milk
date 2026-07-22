@@ -1,6 +1,9 @@
 package com.openrsc.server.model.world.region;
 
 import com.openrsc.server.constants.Constants;
+import com.openrsc.server.event.rsc.GameTickEventRestorationAtomicRevalidationContract;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision
 	.TargetOperation;
@@ -1145,6 +1148,83 @@ public class RegionManager {
 				checked.getProposalGeneration(), checked.getObservedAtTick(),
 				targetObservedAtTick, checked.getSchedulerInstanceIdentity(),
 				targets, maximumTargetRecords);
+		}
+	}
+
+	/**
+	 * Revalidates one scheduler-fenced restoration target inside its real Region
+	 * object boundary. The supplied request and returned value are detached;
+	 * this method does not retain a scheduler/event handle or alter the target.
+	 */
+	public GameTickEventRestorationTargetRevalidation
+		captureGameTickEventRestorationTargetRevalidation(
+			final GameTickEventRestorationTargetRevalidationRequest request) {
+		GameTickEventRestorationTargetRevalidationRequest checked =
+			Objects.requireNonNull(request, "request");
+		synchronized (layeredRegionLifecycleLock) {
+			Region region = peekRegionFromSectorCoordinates(
+				checked.getX() / WorldRegionKey.REGION_SIZE,
+				checked.getY() / WorldRegionKey.REGION_SIZE);
+			int slotObjectCount = 0;
+			int exactRestorationSceneryCount = 0;
+			int exactAuthoredIdentityCount = 0;
+			boolean objectBoundaryHeldDuringClassification = false;
+			GameTickEventRestorationTargetDecision.ObservedTargetState
+				observedTargetState = GameTickEventRestorationTargetDecision
+					.ObservedTargetState.UNAVAILABLE;
+			if (region != null) {
+				Region.RestorationTargetMatchRequirement requirement =
+					Region.RestorationTargetMatchRequirement.of(
+						checked.getObjectId(), checked.getPermanentObjectId(),
+						checked.getX(), checked.getY(), checked.getDirection(),
+						checked.getType(), null, 0,
+						checked.getAuthoredGeneration(),
+						checked.getAuthoredPackedRegionX(),
+						checked.getAuthoredPackedRegionY(),
+						checked.getAuthoredSourceOrdinal(),
+						checked.getAuthoredConstructionKind());
+				Region.RestorationTargetBoundarySnapshot boundary =
+					region.captureRestorationTargetBoundarySnapshot(
+						requirement, checked.isTargetBindingComplete());
+				slotObjectCount = boundary.getSlotObjectCount();
+				exactRestorationSceneryCount =
+					boundary.getExactRestorationSceneryCount();
+				exactAuthoredIdentityCount =
+					boundary.getExactAuthoredIdentityCount();
+				objectBoundaryHeldDuringClassification =
+					boundary.isObjectBoundaryHeldDuringClassification();
+				observedTargetState = GameTickEventRestorationTargetDecision
+					.ObservedTargetState.valueOf(
+						boundary.getObservedTargetState().name());
+			}
+			GameTickEventRestorationTargetDecision decision =
+				GameTickEventRestorationTargetDecision.decideDetached(
+					checked.getTargetOperation(),
+					checked.isTargetBindingComplete(),
+					checked.getAuthoredGeneration(),
+					checked.getProposalGeneration(), observedTargetState);
+			GameTickEventRestorationAtomicRevalidationContract contract =
+				GameTickEventRestorationAtomicRevalidationContract.evaluate(
+					GameTickEventRestorationAtomicRevalidationContract
+						.BoundaryDeclaration.declare(
+							checked.getSchedulerInstanceIdentity(),
+							checked.getSchedulerInstanceIdentity(),
+							checked.getRegistrationSequence(),
+							checked.getRegistrationSequence(),
+							checked.getProposalGeneration(),
+							checked.getAuthoredGeneration(),
+							checked.isEventExecutionBoundaryHeld(),
+							checked.isSchedulerStoreBoundaryHeld(),
+							checked
+								.isRegistrationValidatedBeforeRegionBoundary(),
+							objectBoundaryHeldDuringClassification,
+							region != null),
+					decision);
+			return GameTickEventRestorationTargetRevalidation.observe(
+				region != null, slotObjectCount,
+				exactRestorationSceneryCount, exactAuthoredIdentityCount,
+				observedTargetState,
+				objectBoundaryHeldDuringClassification, decision, contract);
 		}
 	}
 

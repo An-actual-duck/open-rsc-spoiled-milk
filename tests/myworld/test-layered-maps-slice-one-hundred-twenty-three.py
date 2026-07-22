@@ -246,8 +246,19 @@ class LayeredMapsSliceOneHundredTwentyThreeTest(unittest.TestCase):
             "com/openrsc/server/Server.java": SHARED["SERVER_STUB"],
             "com/openrsc/server/model/world/World.java":
                 SHARED["WORLD_STUB"],
+            "com/openrsc/server/model/world/region/RegionManager.java":
+                SHARED["REGION_MANAGER_STUB"],
             "com/openrsc/server/event/rsc/PluginTickEvent.java":
                 SHARED["PLUGIN_STUB"],
+            "com/openrsc/server/event/rsc/"
+            "GameTickEventRestorationTargetDecision.java":
+                SHARED["TARGET_DECISION_STUB"],
+            "com/openrsc/server/event/rsc/"
+            "GameTickEventRestorationTargetRevalidationRequest.java":
+                SHARED["TARGET_REVALIDATION_REQUEST_STUB"],
+            "com/openrsc/server/event/rsc/"
+            "GameTickEventRestorationTargetRevalidation.java":
+                SHARED["TARGET_REVALIDATION_STUB"],
             "com/openrsc/server/event/rsc/handler/"
             "EventLifecycleVersionFenceFixture.java": FIXTURE,
         }

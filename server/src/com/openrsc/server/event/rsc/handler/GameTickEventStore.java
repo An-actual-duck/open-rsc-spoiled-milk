@@ -6,11 +6,15 @@ import com.google.common.collect.Multimap;
 import com.google.inject.Key;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
 import com.openrsc.server.event.rsc.GameTickEventRestorationState;
 import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.event.rsc.PluginTickEvent;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.region.RegionManager;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -397,6 +401,67 @@ class GameTickEventStore {
 				"Accepted restoration registration did not execute");
 		}
 		return execution[0];
+	}
+
+	/**
+	 * Composes the handle-free scheduler/generation fence with one real,
+	 * read-only Region-boundary target classification. The RegionManager handle
+	 * remains local to this operation, and a lifecycle-version mismatch discards
+	 * the detached target result before returning.
+	 */
+	RestorationTargetRevalidationExecution
+		withValidatedRestorationTargetRevalidation(
+			final RegionManager regionManager,
+			final String expectedSchedulerInstanceIdentity,
+			final long expectedRegistrationSequence,
+			final long expectedProposalGeneration) {
+		final RegionManager checkedRegionManager = Objects.requireNonNull(
+			regionManager, "regionManager");
+		final GameTickEventRestorationTargetRevalidation[] target =
+			new GameTickEventRestorationTargetRevalidation[1];
+		RestorationRegistrationFenceExecution outer =
+			withValidatedRestorationRegistrationFence(
+				expectedSchedulerInstanceIdentity,
+				expectedRegistrationSequence,
+				expectedProposalGeneration, fence -> {
+					GameTickEventRestorationTargetRevalidationRequest request =
+						GameTickEventRestorationTargetRevalidationRequest.request(
+							fence.getSchedulerInstanceIdentity(),
+							fence.getRegistrationSequence(),
+							fence.getExpectedProposalGeneration(),
+							fence.getObservedAuthoredGeneration(),
+							fence.isEventExecutionBoundaryHeld(),
+							fence.isSchedulerStoreBoundaryHeld(),
+							fence
+								.isRegistrationValidatedBeforeInnerBoundary(),
+							GameTickEventRestorationTargetDecision
+								.TargetOperation.valueOf(
+									fence.getRestorationKind().name()),
+							fence.getObjectId(), fence.getPermanentObjectId(),
+							fence.getX(), fence.getY(), fence.getDirection(),
+							fence.getType(),
+							fence.getAuthoredPackedRegionX(),
+							fence.getAuthoredPackedRegionY(),
+							fence.getAuthoredSourceOrdinal(),
+							fence.getAuthoredConstructionKind().name());
+					target[0] = checkedRegionManager
+						.captureGameTickEventRestorationTargetRevalidation(
+							request);
+				});
+		if (!outer.isAccepted()) {
+			return RestorationTargetRevalidationExecution.refused(
+				outer.getReason(),
+				outer.getLifecycleVersionBeforeOperation(),
+				outer.getLifecycleVersionAfterOperation(),
+				outer.isOperationInvoked());
+		}
+		if (target[0] == null) {
+			throw new IllegalStateException(
+				"Accepted restoration target revalidation did not execute");
+		}
+		return RestorationTargetRevalidationExecution.observed(
+			target[0], outer.getLifecycleVersionBeforeOperation(),
+			outer.getLifecycleVersionAfterOperation());
 	}
 
 	private static RestorationRegistrationFenceExecution
@@ -1080,6 +1145,104 @@ class GameTickEventStore {
 		boolean isCommitToken() { return false; }
 		boolean isMutationPerformed() { return false; }
 		boolean isExecutableRestoration() { return false; }
+		boolean isArrivalGate() { return false; }
+		boolean isLifecycleAuthority() { return false; }
+	}
+
+	/**
+	 * Detached outcome of the composed outer scheduler fence and inner Region
+	 * target observation. A failed outer postcheck never retains target facts.
+	 */
+	static final class RestorationTargetRevalidationExecution {
+		private final RestorationRegistrationFenceReason outerFenceReason;
+		private final GameTickEventRestorationTargetRevalidation target;
+		private final long lifecycleVersionBeforeOperation;
+		private final long lifecycleVersionAfterOperation;
+		private final boolean operationInvoked;
+
+		private RestorationTargetRevalidationExecution(
+			final RestorationRegistrationFenceReason outerFenceReason,
+			final GameTickEventRestorationTargetRevalidation target,
+			final long lifecycleVersionBeforeOperation,
+			final long lifecycleVersionAfterOperation,
+			final boolean operationInvoked) {
+			this.outerFenceReason = Objects.requireNonNull(
+				outerFenceReason, "outerFenceReason");
+			this.target = target;
+			this.lifecycleVersionBeforeOperation =
+				lifecycleVersionBeforeOperation;
+			this.lifecycleVersionAfterOperation =
+				lifecycleVersionAfterOperation;
+			this.operationInvoked = operationInvoked;
+			boolean outerAccepted = outerFenceReason
+				== RestorationRegistrationFenceReason.OPERATION_COMPLETED;
+			if (outerAccepted != (target != null)
+				|| (operationInvoked
+					!= (lifecycleVersionBeforeOperation > 0L
+						&& lifecycleVersionAfterOperation > 0L))
+				|| (outerAccepted
+					&& (!operationInvoked
+						|| lifecycleVersionBeforeOperation
+							!= lifecycleVersionAfterOperation))
+				|| (!outerAccepted && target != null)) {
+				throw new IllegalArgumentException(
+					"Restoration target revalidation result is inconsistent");
+			}
+		}
+
+		private static RestorationTargetRevalidationExecution refused(
+			final RestorationRegistrationFenceReason outerFenceReason,
+			final long lifecycleVersionBeforeOperation,
+			final long lifecycleVersionAfterOperation,
+			final boolean operationInvoked) {
+			return new RestorationTargetRevalidationExecution(
+				outerFenceReason, null, lifecycleVersionBeforeOperation,
+				lifecycleVersionAfterOperation, operationInvoked);
+		}
+
+		private static RestorationTargetRevalidationExecution observed(
+			final GameTickEventRestorationTargetRevalidation target,
+			final long lifecycleVersionBeforeOperation,
+			final long lifecycleVersionAfterOperation) {
+			return new RestorationTargetRevalidationExecution(
+				RestorationRegistrationFenceReason.OPERATION_COMPLETED,
+				Objects.requireNonNull(target, "target"),
+				lifecycleVersionBeforeOperation,
+				lifecycleVersionAfterOperation, true);
+		}
+
+		RestorationRegistrationFenceReason getOuterFenceReason() {
+			return outerFenceReason;
+		}
+		GameTickEventRestorationTargetRevalidation getTarget() {
+			return target;
+		}
+		long getLifecycleVersionBeforeOperation() {
+			return lifecycleVersionBeforeOperation;
+		}
+		long getLifecycleVersionAfterOperation() {
+			return lifecycleVersionAfterOperation;
+		}
+		boolean isOperationInvoked() { return operationInvoked; }
+		boolean isOuterFenceAccepted() {
+			return outerFenceReason
+				== RestorationRegistrationFenceReason.OPERATION_COMPLETED;
+		}
+		boolean isTimingStableAcrossOperation() {
+			return isOuterFenceAccepted()
+				&& lifecycleVersionBeforeOperation
+					== lifecycleVersionAfterOperation;
+		}
+		boolean isRuntimeTargetLookupPerformed() { return operationInvoked; }
+		boolean isRuntimeRevalidationPerformed() {
+			return target != null && target.isRuntimeRevalidationPerformed();
+		}
+		boolean isEventHandleRetained() { return false; }
+		boolean isRegionHandleRetained() { return false; }
+		boolean isEntityHandleRetained() { return false; }
+		boolean isMutationPerformed() { return false; }
+		boolean isExecutableRestoration() { return false; }
+		boolean isCommitToken() { return false; }
 		boolean isArrivalGate() { return false; }
 		boolean isLifecycleAuthority() { return false; }
 	}

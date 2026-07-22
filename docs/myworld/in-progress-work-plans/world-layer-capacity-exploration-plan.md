@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, and 120 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, and 123 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, and 124 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -55,6 +55,10 @@ generation under that fence, and passes only closed detached scalars onward;
 automated-validated Slice 123 versions every event-local timing/lifecycle
 transition and rejects read-only fenced work if stop/reset/tick or execution
 changes that version, without holding the timing monitor across the operation;
+automated-validated Slice 124 composes that handle-free outer fence with the
+real Region object-boundary target classifier, returns only detached read-only
+facts after a stable lifecycle postcheck, and discards provisional target facts
+when the event lifecycle changes;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10512,6 +10516,64 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required for
 these machine-controlled races.
 
+### Slice 124: Composed read-only target revalidation
+
+Objective: implement Slice 118's declared outer-scheduler/inner-Region order
+end to end for one read-only target observation without retaining runtime
+handles or authorizing restoration.
+
+Implemented:
+
+- the event store's handle-free entry point reuses Slice 122's exact scheduler,
+  registration, callback-state, affinity, and authored-generation validation;
+- only a closed target request crosses inward after the scheduler-store monitor
+  is released while the event execution boundary remains held;
+- `RegionManager` resolves the exact packed Region, constructs the owner-free
+  authored match requirement, and invokes Slice 119's real object-boundary
+  classifier before applying the Slice 115 target decision and Slice 118
+  boundary contract;
+- the returned value retains only Region availability, exact-slot counts, the
+  closed observed state, boundary fact, target decision, and contract result;
+- Slice 123's lifecycle version is sampled again after the Region operation;
+  a lifecycle mismatch discards the provisional target and returns only the
+  before/after mismatch evidence; and
+- a stable result remains stale immediately after release of the Region object
+  boundary and event execution boundary.
+
+Automated validation status:
+
+- a deterministic executable fixture holds the Region classification boundary
+  while proving target change blocks at that boundary and registration removal
+  plus callback execution block at the outer event boundary;
+- the same fixture proves `stop` completes without waiting for Region work and
+  the changed lifecycle version discards the already-produced provisional
+  target evidence;
+- source-order guards require outer registration/generation validation before
+  the Region call, exact Region classification before the target decision and
+  contract, and the lifecycle postcheck before a result is accepted;
+- handle-exclusion guards reject event, Region, entity, World, collection,
+  monitor, key, UUID, owner, mutation, callback, packet, arrival, and lifecycle
+  authority from the detached request/result; and
+- the complete layered-map suite passes 397 tests across 123 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 779 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this is one point-in-time read-only composition, not a lease. Target state can
+  change immediately after the inner object boundary is released and event
+  state can change immediately after the outer execution boundary is released;
+- a target-decision mutation precondition remains descriptive and cannot be
+  consumed as a commit token;
+- no object is created, removed, replaced, registered, or unregistered; no
+  callback is invoked, cancelled, rescheduled, or replayed; and
+- no diagnostic schema, arrival gate, executable restoration, commit token,
+  persistence behavior, or lifecycle authority is added.
+
+Status: implemented and automated-validated. No owner route is required for
+the machine-controlled boundary races.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10856,6 +10918,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 121 by implementing the scheduler-registration side of the outer revalidation boundary. | Implemented and automated-validated; add/remove/replacement share the existing event execution boundary before the store monitor, exact scope/registration validation releases the store before running the fenced operation, automated removal/replacement/callback races replace sub-second owner timing, 382 focused tests and the 777/488 Ant build pass, and no Region, target, mutation, callback, arrival, or lifecycle authority is added |
 | 2026-07-22 | Continue with Slice 122 by removing the caller event handle and validating authored generation inside the outer fence. | Implemented and automated-validated; exact scope/sequence lookup stays internal, complete owner-free authored callback state, active zero-run timing, object-family identity, and fixed affinity must match the expected proposal generation, only detached closed scalars reach the operation, stopped/stale/private/incomplete states refuse, 387 focused tests and the 777/488 Ant build pass, and no Region, target inspection, mutation, callback, arrival, or lifecycle authority is added |
 | 2026-07-22 | Continue with Slice 123 by detecting event-local timing changes across handle-free read-only work. | Implemented and automated-validated; every timing/lifecycle transition advances one atomic version, the generation fence compares versions around an unlocked read-only operation, concurrent stop/reset/tick races are detected after the operation without recreating the timing-lock inversion, 392 focused tests and the 777/488 Ant build pass, and no Region, target, mutation, callback, arrival, or lifecycle authority is added |
+| 2026-07-22 | Continue with Slice 124 by composing the validated outer event fence with the real inner Region target boundary. | Implemented and automated-validated; the handle-free request enters Region lookup only after scheduler registration and generation checks, target comparison and classification occur under the real object boundary, lifecycle mismatch discards provisional target facts, deterministic boundary races replace sub-second owner timing, 397 focused tests and the 779/488 Ant build pass, and no mutation, callback, diagnostic, arrival, commit-token, or lifecycle authority is added |
 
 ## Next Discussion
 
@@ -11290,16 +11353,25 @@ Automated stop/reset/tick races finish without recreating Slice 107's lock
 inversion. The evidence remains detection, not a lease or commit token: a
 post-operation mismatch cannot authorize or roll back a mutation.
 
-The next focused gate should compose Slice 122/123's handle-free outer fence
-with Slice 119's real Region-boundary target classification for one read-only
-operation, implementing Slice 118's declared ordering end to end. It must enter
-the Region object boundary only after scheduler identity, registration, and
-generation validation; return only detached target facts; then apply the
-lifecycle-version postcheck. Automated races should prove registration changes
-and callback execution remain excluded, target changes cannot cross the Region
-classification boundary, and event-local changes are detected afterward. No
-mutation, callback invocation, diagnostic schema, arrival behavior, commit
-token, or lifecycle consumer should be added yet.
+Slice 124 now composes those boundaries for one real read-only target
+revalidation. The scheduler store monitor is absent before Region lookup, the
+event execution boundary excludes registration change and callback execution,
+the Region object boundary protects exact comparison/classification, and the
+lifecycle postcheck rejects an event-local change. Only detached target facts
+survive a stable window; they are stale immediately after return and cannot
+authorize mutation.
+
+The next focused gate should expose a bounded result from this composed seam
+through an additive private diagnostic schema for the already-observed authored
+restoration records. It should correlate proposal generation, scheduler scope,
+registration sequence, stable lifecycle versions, Region availability,
+boundary-performed classification, target decision, and Slice 118 contract
+outcome while preserving every historical schema. Refused outer fences and
+missing Regions must remain explicit rather than disappearing. That private
+runtime route should validate the composition on natural resource replacement
+with broad human timing; all sub-second exclusion races remain automated. No
+mutation, callback invocation, arrival behavior, commit token, or lifecycle
+consumer should be added.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

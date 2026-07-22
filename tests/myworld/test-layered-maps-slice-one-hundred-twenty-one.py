@@ -48,6 +48,54 @@ public enum DuplicationStrategy {
 '''
 
 
+TARGET_DECISION_STUB = r'''
+package com.openrsc.server.event.rsc;
+public final class GameTickEventRestorationTargetDecision {
+    public enum TargetOperation {
+        UNAVAILABLE, SCENERY_SPAWN, SCENERY_REMOVE
+    }
+}
+'''
+
+
+TARGET_REVALIDATION_REQUEST_STUB = r'''
+package com.openrsc.server.event.rsc;
+public final class GameTickEventRestorationTargetRevalidationRequest {
+    public static GameTickEventRestorationTargetRevalidationRequest request(
+            String scheduler, long sequence, long proposal, long authored,
+            boolean executionHeld, boolean storeHeld, boolean validated,
+            GameTickEventRestorationTargetDecision.TargetOperation operation,
+            int objectId, int permanentObjectId, int x, int y,
+            int direction, int type, int regionX, int regionY,
+            int ordinal, String kind) {
+        return new GameTickEventRestorationTargetRevalidationRequest();
+    }
+}
+'''
+
+
+TARGET_REVALIDATION_STUB = r'''
+package com.openrsc.server.event.rsc;
+public final class GameTickEventRestorationTargetRevalidation {
+    public boolean isRuntimeRevalidationPerformed() { return true; }
+}
+'''
+
+
+REGION_MANAGER_STUB = r'''
+package com.openrsc.server.model.world.region;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
+public class RegionManager {
+    public GameTickEventRestorationTargetRevalidation
+            captureGameTickEventRestorationTargetRevalidation(
+                GameTickEventRestorationTargetRevalidationRequest request) {
+        return new GameTickEventRestorationTargetRevalidation();
+    }
+}
+'''
+
+
 EVENT_STUB = r'''
 package com.openrsc.server.event.rsc;
 
@@ -411,6 +459,17 @@ class LayeredMapsSliceOneHundredTwentyOneTest(unittest.TestCase):
             "com/openrsc/server/event/rsc/GameTickEvent.java": EVENT_STUB,
             "com/openrsc/server/event/rsc/PluginTickEvent.java":
                 PLUGIN_EVENT_STUB,
+            "com/openrsc/server/model/world/region/RegionManager.java":
+                REGION_MANAGER_STUB,
+            "com/openrsc/server/event/rsc/"
+            "GameTickEventRestorationTargetDecision.java":
+                TARGET_DECISION_STUB,
+            "com/openrsc/server/event/rsc/"
+            "GameTickEventRestorationTargetRevalidationRequest.java":
+                TARGET_REVALIDATION_REQUEST_STUB,
+            "com/openrsc/server/event/rsc/"
+            "GameTickEventRestorationTargetRevalidation.java":
+                TARGET_REVALIDATION_STUB,
             "com/openrsc/server/event/rsc/handler/"
             "RegistrationFenceFixture.java": FIXTURE,
         }
