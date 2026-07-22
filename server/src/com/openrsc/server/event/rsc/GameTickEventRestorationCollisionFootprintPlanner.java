@@ -541,7 +541,13 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 			}
 			contribution.blockingSceneryCount = Math.addExact(
 				contribution.blockingSceneryCount, blockingSceneryCount);
-			contribution.dynamicCollisionMask |= dynamicCollisionMask;
+			for (int bit = 0;
+					bit < contribution.dynamicCollisionCounts.length; bit++) {
+				if ((dynamicCollisionMask & (1 << bit)) != 0) {
+					contribution.dynamicCollisionCounts[bit] = Math.addExact(
+						contribution.dynamicCollisionCounts[bit], 1);
+				}
+			}
 			contribution.dynamicProjectileCount = Math.addExact(
 				contribution.dynamicProjectileCount, dynamicProjectileCount);
 			return true;
@@ -578,10 +584,10 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 				MutableContribution contribution = contributions.get(coordinate);
 				immutableContributions.add(
 					GameTickEventRestorationTransientRollbackSnapshot
-						.CollisionContribution.of(
+						.CollisionContribution.ofCounts(
 							coordinate.x, coordinate.y,
 							contribution.blockingSceneryCount,
-							contribution.dynamicCollisionMask,
+							contribution.dynamicCollisionCounts,
 							contribution.dynamicProjectileCount));
 				uniqueRegions.add(
 					GameTickEventRestorationCollisionTransactionContract
@@ -636,7 +642,7 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 
 	private static final class MutableContribution {
 		private int blockingSceneryCount;
-		private int dynamicCollisionMask;
+		private final int[] dynamicCollisionCounts = new int[6];
 		private int dynamicProjectileCount;
 	}
 }

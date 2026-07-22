@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, and 125 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, and 132 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, and 133 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -91,6 +91,9 @@ and delayed force-full-block state, while remaining disconnected from runtime;
 automated-validated Slice 132 extracts the behavior-identical legacy projectile-
 clipping classifier, makes both World and Slice 131's detached definitions use
 that one pure policy, and leaves collision mutation order and locking unchanged;
+automated-validated Slice 133 retains all six dynamic-collision contribution
+counters and defines fail-closed detached register/unregister arithmetic with
+exact coverage, freshness, underflow, and overflow validation but no mutation;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10825,10 +10828,10 @@ Implemented:
   refuses as `RUNTIME_ATTRIBUTES_NOT_RESTORABLE` rather than claiming that an
   object reconstructed from constructor state would be exact;
 - collision state is represented as a bounded canonical list of unique packed
-  tiles and the displaced object's exact blocking-scenery count, six-bit
-  dynamic-collision contribution, and dynamic-projectile contribution on each
-  tile. A complete collisionless object is represented by an explicit empty
-  list rather than unavailable evidence; and
+  tiles and the displaced object's exact blocking-scenery count, all six
+  dynamic-collision counters, derived six-bit mask, and dynamic-projectile
+  contribution on each tile. A complete collisionless object is represented by
+  an explicit empty list rather than unavailable evidence; and
 - collision capture requires a separately declared ordered collision boundary.
   This accommodates footprints and adjacent wall/projectile effects that can
   cross Region boundaries; the Region object boundary alone is not promoted to
@@ -11121,6 +11124,69 @@ Safety boundary:
 
 Status: implemented and automated-validated. No owner route is required for
 this classification extraction; collision mutation behavior is unchanged.
+
+### Slice 133: Detached collision-application arithmetic
+
+Objective: prove exact register/unregister counter arithmetic and every
+coverage/freshness precondition before permitting a real TileValue mutation
+under Slice 130's ordered boundaries.
+
+Implemented:
+
+- Slice 128's `CollisionContribution` now retains a defensive six-element
+  dynamic-collision count vector in addition to its derived compatibility mask;
+  its existing mask factory maps each present bit to a count of one, while the
+  count factory preserves multiplicity;
+- Slice 131's accumulator increments each affected collision-bit count rather
+  than collapsing contributions through OR, so overlapping same-bit effects
+  cannot be lost;
+- `GameTickEventRestorationCollisionApplicationContract` accepts one available
+  footprint plus a detached declaration of operation, canonical Region
+  coverage, ordered-boundary scope, fresh comparison, and exact current
+  per-tile blocking, six-bit dynamic, and projectile counters;
+- declared Regions must exactly equal the footprint's canonical anchor-plus-
+  contribution coverage, and current tiles must be unique, row-major, and
+  exactly equal the contribution coordinate set with no missing or extra tile;
+- register projects every counter through checked addition, while unregister
+  requires every current counter to cover its exact contribution before
+  subtraction; and
+- success returns only immutable exact projected post-state. A collisionless
+  object produces an explicit available empty projection while retaining its
+  separately checked anchor Region.
+
+Automated validation status:
+
+- executable fixtures prove independent multiplicity for all six dynamic-collision counters
+  and defensive array copies;
+- register and unregister fixtures project blocking, every dynamic bit, and
+  projectile counters over a multi-tile directional footprint without touching
+  runtime state;
+- blocking underflow and integer overflow refuse without returning a partial
+  projection;
+- unavailable footprint, operation mismatch, missing boundary, stale
+  comparison, reversed/mismatched Region coverage, duplicate/reversed/missing
+  tile coverage, collisionless success, immutable results, and every false
+  authority flag are checked;
+- source guards prove World, RegionManager, Store, and handler do not consume
+  the contract, and the contract knows no World, Region, GameObject, TileValue,
+  lock, or mutation method;
+- the complete layered-map suite passes 434 tests across 132 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 788 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- boundary-held and fresh-comparison booleans are detached declarations; this
+  class does not prove either condition in runtime;
+- projected post-state is not a write set or commit token, is stale immediately
+  after its declared comparison boundary, and authorizes no apply or rollback;
+  and
+- no runtime TileValue, object membership, callback, packet, arrival,
+  retirement, or lifecycle behavior changes in this slice.
+
+Status: implemented and automated-validated. No owner route is required for
+this disconnected arithmetic contract; no runtime state changed.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -11477,6 +11543,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 130 by adding disconnected ordered Region object/collision boundaries. | Implemented and automated-validated; one real per-Region monitor plus a lifecycle-protected non-creating canonical runner proves same-Region exclusion, cross-Region acquisition, reverse-order/duplicate refusal, and unavailable-Region refusal, while every existing mutation/event path remains disconnected, and 422 focused tests plus the 785/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 131 by defining the exact detached collision-footprint planner. | Implemented and automated-validated; scenery rotation, blocking counts, six-bit directional collision, projectile overlap counts, boundary axes, object ID 1147's asymmetric early return, delayed force-full-block, bounded world effects, unique tiles, and canonical Region coverage are executable-table tested, all runtime consumers remain disconnected, and 426 focused tests plus the 786/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 132 by sharing the exact projectile-clipping classifier. | Implemented and automated-validated; the tree, one-by-one non-chest, allowlist, chest, size, case, and boundary rules now live in one pure policy consumed by both World and Slice 131 definitions, the extraction is behavior-identical and leaves mutation order/locking unchanged, and 430 focused tests plus the 787/488 Ant build pass |
+| 2026-07-22 | Continue with Slice 133 by defining detached collision-application arithmetic. | Implemented and automated-validated; exact six-counter collision multiplicity, blocking/projectile counts, canonical Region and tile coverage, freshness, checked register addition, fail-closed unregister subtraction, underflow/overflow, and collisionless projection are executable-tested, all results remain inert and disconnected, and 434 focused tests plus the 788/488 Ant build pass |
 
 ## Next Discussion
 
@@ -11951,23 +12018,21 @@ canonical Region order, exact footprint coverage, shared-mutation exclusion,
 fresh comparison, and unchanged-state rollback obligations, but it deliberately
 does not manufacture a runtime lock.
 
-Slices 130-132 now supply the disconnected lock-order, exact footprint, and
-shared projectile-classification foundations. One real monitor belongs to each
-packed Region, and the pure planner can identify every Region touched by one
-legacy collision operation from consistently classified definition values.
-Existing mutation paths remain outside those monitors, so the foundation does
-not yet prove stable world state.
+Slices 130-133 now supply the lock order, exact footprint, shared projectile
+classification, and exact fail-closed counter arithmetic. Existing mutation
+paths remain outside the new monitors, so none of these foundations yet proves
+stable world state or executes a change.
 
-The next focused gate should define a disconnected collision-application
-precondition over one available Slice 131 footprint and detached current
-per-tile counters. It must model register additions and unregister removals,
-validate every one of the six dynamic-collision counters rather than only an OR
-mask, retain exact blocking-scenery and projectile counts, refuse underflow,
-overflow, duplicate/missing/extra tiles, operation mismatch, stale comparison,
-or Region-coverage mismatch, and return only the exact projected post-state.
-It must not read or mutate TileValue, acquire Slice 130's runner, or change
-World. Only after that arithmetic is executable and fail-closed should a real
-ordered-boundary apply seam be considered.
+The next focused gate should add the smallest package-local, still-disconnected
+real collision apply seam. Given an already available Slice 131 footprint, it
+must resolve only existing Regions, enter their Slice 130 monitors in canonical
+order, capture every exact TileValue counter inside that boundary, evaluate
+Slice 133 as fresh, apply only the accepted projected counters, and verify the
+post-state before release. Deterministic fixtures must prove same-footprint
+exclusion, exact add/remove round-trip, multi-Region application, underflow
+refusal without partial mutation, and reverse-order refusal. World object
+registration/unregistration and callbacks must remain unchanged until this
+executor itself is mechanically safe.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

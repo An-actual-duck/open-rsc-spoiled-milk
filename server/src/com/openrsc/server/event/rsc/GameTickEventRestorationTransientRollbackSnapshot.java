@@ -369,28 +369,42 @@ public final class GameTickEventRestorationTransientRollbackSnapshot {
 		private final int y;
 		private final int blockingSceneryCount;
 		private final int dynamicCollisionMask;
+		private final int[] dynamicCollisionCounts;
 		private final int dynamicProjectileCount;
 
 		private CollisionContribution(
 			final int x,
 			final int y,
 			final int blockingSceneryCount,
-			final int dynamicCollisionMask,
+			final int[] dynamicCollisionCounts,
 			final int dynamicProjectileCount) {
-			if (x < 0 || y < 0 || blockingSceneryCount < 0
-				|| dynamicCollisionMask < 0
-				|| dynamicCollisionMask > MAXIMUM_DYNAMIC_COLLISION_MASK
-				|| dynamicProjectileCount < 0
-				|| (blockingSceneryCount == 0
-					&& dynamicCollisionMask == 0
-					&& dynamicProjectileCount == 0)) {
+			int[] checkedCounts = Objects.requireNonNull(
+				dynamicCollisionCounts, "dynamicCollisionCounts");
+			if (checkedCounts.length != 6 || x < 0 || y < 0
+				|| blockingSceneryCount < 0 || dynamicProjectileCount < 0) {
 				throw new IllegalArgumentException(
 					"Collision contribution is invalid");
+			}
+			int mask = 0;
+			for (int bit = 0; bit < checkedCounts.length; bit++) {
+				if (checkedCounts[bit] < 0) {
+					throw new IllegalArgumentException(
+						"Collision contribution count is invalid");
+				}
+				if (checkedCounts[bit] > 0) {
+					mask |= 1 << bit;
+				}
+			}
+			if (blockingSceneryCount == 0 && mask == 0
+				&& dynamicProjectileCount == 0) {
+				throw new IllegalArgumentException(
+					"Collision contribution is empty");
 			}
 			this.x = x;
 			this.y = y;
 			this.blockingSceneryCount = blockingSceneryCount;
-			this.dynamicCollisionMask = dynamicCollisionMask;
+			this.dynamicCollisionMask = mask;
+			this.dynamicCollisionCounts = checkedCounts.clone();
 			this.dynamicProjectileCount = dynamicProjectileCount;
 		}
 
@@ -400,8 +414,28 @@ public final class GameTickEventRestorationTransientRollbackSnapshot {
 			final int blockingSceneryCount,
 			final int dynamicCollisionMask,
 			final int dynamicProjectileCount) {
+			if (dynamicCollisionMask < 0
+				|| dynamicCollisionMask > MAXIMUM_DYNAMIC_COLLISION_MASK) {
+				throw new IllegalArgumentException(
+					"Collision contribution mask is invalid");
+			}
+			int[] counts = new int[6];
+			for (int bit = 0; bit < counts.length; bit++) {
+				counts[bit] = (dynamicCollisionMask & (1 << bit)) == 0
+					? 0 : 1;
+			}
 			return new CollisionContribution(
-				x, y, blockingSceneryCount, dynamicCollisionMask,
+				x, y, blockingSceneryCount, counts, dynamicProjectileCount);
+		}
+
+		public static CollisionContribution ofCounts(
+			final int x,
+			final int y,
+			final int blockingSceneryCount,
+			final int[] dynamicCollisionCounts,
+			final int dynamicProjectileCount) {
+			return new CollisionContribution(
+				x, y, blockingSceneryCount, dynamicCollisionCounts,
 				dynamicProjectileCount);
 		}
 
@@ -412,6 +446,16 @@ public final class GameTickEventRestorationTransientRollbackSnapshot {
 		}
 		public int getDynamicCollisionMask() {
 			return dynamicCollisionMask;
+		}
+		public int[] getDynamicCollisionCounts() {
+			return dynamicCollisionCounts.clone();
+		}
+		public int getDynamicCollisionCount(final int bit) {
+			if (bit < 0 || bit >= dynamicCollisionCounts.length) {
+				throw new IllegalArgumentException(
+					"Dynamic collision bit is invalid");
+			}
+			return dynamicCollisionCounts[bit];
 		}
 		public int getDynamicProjectileCount() {
 			return dynamicProjectileCount;
