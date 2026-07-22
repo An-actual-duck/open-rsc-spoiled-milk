@@ -55,7 +55,7 @@ class LayeredMapsSliceOneHundredThreeTest(unittest.TestCase):
 
     def test_observer_exposes_only_detached_semantic_values(self):
         source = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v42"', source)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v43"', source)
         boundary = source[
             source.index("private static void appendPackedRegionEventOwnership("):
             source.index("private static void appendIntegerList(")

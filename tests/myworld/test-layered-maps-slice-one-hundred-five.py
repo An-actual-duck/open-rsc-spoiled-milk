@@ -214,7 +214,7 @@ class LayeredMapsSliceOneHundredFiveTest(unittest.TestCase):
         aggregate = schema["$defs"]["eventOwnership"]["properties"]
         self.assertEqual(0, aggregate["atomicTimingCapturedEventCount"]["const"])
         self.assertFalse(aggregate["atomicTimingCaptured"]["const"])
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v42"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v43"', observer)
         self.assertIn("getAtomicTimingCapturedEventCount()", observer)
         self.assertIn("isAtomicTimingComplete()", observer)
         self.assertIn("registrationChangeRefusesAtomicTimingSnapshot",

@@ -4,12 +4,22 @@ import com.openrsc.server.Server;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.GameTickEventRestorationRequirement;
 import com.openrsc.server.event.rsc.GameTickEventRestorationState;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
 import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.event.rsc.ImmediateEvent;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation.OuterFenceReason;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation.Record;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation.TargetEvidence;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation.ObservedTargetState;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation.TargetOutcome;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation.TargetReason;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation.ContractOutcome;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation.ContractReason;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AttributionKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.ArrivalOrderingRequirement;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AuthoredConstructionKind;
@@ -428,6 +438,83 @@ public class GameEventHandler {
 			packedSources, eventStates,
 			checked.getCandidateSourceCount(), maximumEvents,
 			maximumSpatialReferences);
+	}
+
+	/**
+	 * Revalidates every restoration-capable record from one detached inventory
+	 * through the composed scheduler/Region read-only boundary.
+	 */
+	public LayeredPackedRegionEventAtomicTargetRevalidation
+		captureLayeredPackedRegionEventAtomicTargetRevalidation(
+			final LayeredPackedRegionEventOwnershipInventory inventory,
+			final int maximumRecords) {
+		LayeredPackedRegionEventOwnershipInventory checked =
+			Objects.requireNonNull(inventory, "inventory");
+		if (maximumRecords < 0
+			|| maximumRecords
+				> LayeredPackedRegionEventAtomicTargetRevalidation.MAXIMUM_RECORDS
+			|| checked.getRestorationStateAvailableEventCount()
+				> maximumRecords) {
+			throw new IllegalArgumentException(
+				"Atomic target revalidation exceeds its record budget");
+		}
+		List<Record> records = new ArrayList<Record>(
+			checked.getRestorationStateAvailableEventCount());
+		for (LayeredPackedRegionEventOwnershipInventory.EventRecord event
+			: checked.getEvents()) {
+			LayeredPackedRegionEventOwnershipInventory.EventRestorationState
+				restoration = event.getRestorationState();
+			if (restoration.getKind()
+				== LayeredPackedRegionEventOwnershipInventory
+					.RestorationKind.UNAVAILABLE) {
+				continue;
+			}
+			LayeredPackedRegionEventOwnershipInventory.SceneryRestorationState
+				scenery = Objects.requireNonNull(
+					restoration.getScenery(), "restoration scenery");
+			GameTickEventStore.RestorationTargetRevalidationExecution execution =
+				eventStore.withValidatedRestorationTargetRevalidation(
+					getServer().getWorld().getRegionManager(),
+					checked.getSchedulerInstanceIdentity(),
+					event.getRegistrationSequence(),
+					checked.getProposalGeneration());
+			long before = execution.getLifecycleVersionBeforeOperation();
+			long after = execution.getLifecycleVersionAfterOperation();
+			GameTickEventRestorationTargetRevalidation runtimeTarget =
+				execution.getTarget();
+			TargetEvidence target = runtimeTarget == null ? null
+				: TargetEvidence.evidence(
+					runtimeTarget.isRegionAvailable(),
+					runtimeTarget.getSlotObjectCount(),
+					runtimeTarget.getExactRestorationSceneryCount(),
+					runtimeTarget.getExactAuthoredIdentityCount(),
+					runtimeTarget
+						.isObjectBoundaryHeldDuringClassification(),
+					ObservedTargetState.valueOf(
+						runtimeTarget.getObservedTargetState().name()),
+					TargetOutcome.valueOf(
+						runtimeTarget.getTargetDecision().getOutcome().name()),
+					TargetReason.valueOf(
+						runtimeTarget.getTargetDecision().getReason().name()),
+					ContractOutcome.valueOf(
+						runtimeTarget.getContract().getOutcome().name()),
+					ContractReason.valueOf(
+						runtimeTarget.getContract().getReason().name()));
+			records.add(Record.record(
+				event.getSnapshotOrdinal(), event.getRegistrationSequence(),
+				scenery.getX(), scenery.getY(),
+				OuterFenceReason.valueOf(
+					execution.getOuterFenceReason().name()),
+				execution.isOperationInvoked(),
+				before > 0L ? Long.valueOf(before) : null,
+				after > 0L ? Long.valueOf(after) : null,
+				execution.isTimingStableAcrossOperation(),
+				execution.isRuntimeTargetLookupPerformed(), target));
+		}
+		return LayeredPackedRegionEventAtomicTargetRevalidation.observation(
+			checked.getProposalGeneration(), checked.getObservedAtTick(),
+			getServer().getCurrentTick(),
+			checked.getSchedulerInstanceIdentity(), records, maximumRecords);
 	}
 
 	private EventState detachEventState(

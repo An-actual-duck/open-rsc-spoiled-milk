@@ -95,7 +95,7 @@ class LayeredMapsSliceOneHundredTwentyTest(unittest.TestCase):
 
     def test_observer_validates_and_serializes_only_detached_boundary_facts(self):
         source = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v42"', source)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v43"', source)
         matching = source[
             source.index("private static void requireEventTargetsMatchInventory("):
             source.index(
@@ -145,7 +145,8 @@ class LayeredMapsSliceOneHundredTwentyTest(unittest.TestCase):
         fixture = FIXTURE.read_text(encoding="utf-8")
         readme = README.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
-        self.assertIn("layered-map-parity-event-v42.schema.json", fixture)
+        self.assertTrue(SCHEMA_V42.is_file())
+        self.assertIn("layered-map-parity-event-v43.schema.json", fixture)
         self.assertIn("layered-map-parity-event-v42.schema.json", readme)
         self.assertIn(
             "### Slice 120: Private Region-boundary target diagnostics", plan

@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, and 120 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, and 124 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, and 125 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -59,6 +59,9 @@ automated-validated Slice 124 composes that handle-free outer fence with the
 real Region object-boundary target classifier, returns only detached read-only
 facts after a stable lifecycle postcheck, and discards provisional target facts
 when the event lifecycle changes;
+automated-validated Slice 125 exposes bounded composed-target results and every
+outer refusal through additive private schema-v43 while preserving v42 and all
+non-authoritative boundaries;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10574,6 +10577,61 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required for
 the machine-controlled boundary races.
 
+### Slice 125: Private composed-target diagnostics
+
+Objective: expose Slice 124's bounded read-only results for real restoration
+records through an additive private schema without turning the diagnostic into
+a restoration consumer.
+
+Implemented:
+
+- `GameEventHandler` correlates every restoration-capable event-inventory entry
+  by proposal generation, scheduler instance, registration sequence, snapshot
+  ordinal, and exact target coordinate, then invokes the composed Store/Region
+  seam with a fixed record budget;
+- stable outer-fence results detach lifecycle versions, Region availability,
+  exact-slot counts, boundary classification, target outcome/reason, and Slice
+  118 contract outcome/reason;
+- every outer refusal remains an explicit ordered record, including unknown or
+  changed registration, stopped/executed/incomplete callback state, stale
+  generation, and lifecycle change during the Region operation;
+- lifecycle-change records retain only before/after versions and the fact that
+  lookup ran; their provisional target evidence remains discarded;
+- additive private schema-v43 preserves v42 unchanged and adds
+  `packedRegionEventAtomicTargetRevalidation`, with closed per-record stable,
+  refused, and lifecycle-race shapes; and
+- the Player-owned private source wires the observer to `GameEventHandler` only
+  while the existing opt-in development diagnostic is active.
+
+Automated validation status:
+
+- schema guards prove v42 lacks the new field, v43 requires it, stable accepted
+  and lifecycle-mismatch samples validate, and unsafe extra/mismatched target
+  evidence refuses;
+- source guards prove exact inventory correlation, bounded capture, closed
+  detached serialization, historical schema preservation, and the absence of
+  object mutation or callback invocation;
+- the observer fixture validates ordinary null-evidence records against v43;
+- the complete layered-map suite passes 402 tests across 124 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 780 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- diagnostic records are point-in-time and non-atomic with their earlier event
+  inventory and with any later mutation;
+- a satisfied target contract is explanatory evidence, not achieved state,
+  executable restoration, or a commit token;
+- no event, callback, scheduler, World, Region, entity, collection, key, UUID,
+  owner value, or runtime-attribute value enters the diagnostic; and
+- all mutation, callback, packet, arrival-gate, persistence, teardown, reload,
+  and lifecycle authority remains absent.
+
+Status: implemented and automated-validated. After checkpoint, one private
+natural resource-replacement route with broad human timing is required for
+owner acceptance.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10919,6 +10977,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 122 by removing the caller event handle and validating authored generation inside the outer fence. | Implemented and automated-validated; exact scope/sequence lookup stays internal, complete owner-free authored callback state, active zero-run timing, object-family identity, and fixed affinity must match the expected proposal generation, only detached closed scalars reach the operation, stopped/stale/private/incomplete states refuse, 387 focused tests and the 777/488 Ant build pass, and no Region, target inspection, mutation, callback, arrival, or lifecycle authority is added |
 | 2026-07-22 | Continue with Slice 123 by detecting event-local timing changes across handle-free read-only work. | Implemented and automated-validated; every timing/lifecycle transition advances one atomic version, the generation fence compares versions around an unlocked read-only operation, concurrent stop/reset/tick races are detected after the operation without recreating the timing-lock inversion, 392 focused tests and the 777/488 Ant build pass, and no Region, target, mutation, callback, arrival, or lifecycle authority is added |
 | 2026-07-22 | Continue with Slice 124 by composing the validated outer event fence with the real inner Region target boundary. | Implemented and automated-validated; the handle-free request enters Region lookup only after scheduler registration and generation checks, target comparison and classification occur under the real object boundary, lifecycle mismatch discards provisional target facts, deterministic boundary races replace sub-second owner timing, 397 focused tests and the 779/488 Ant build pass, and no mutation, callback, diagnostic, arrival, commit-token, or lifecycle authority is added |
+| 2026-07-22 | Continue with Slice 125 by exposing bounded composed-target results through additive private diagnostics. | Implemented and automated-validated; schema-v43 preserves v42, correlates every restoration record with explicit outer-fence/lifecycle/Region/target/contract evidence or refusal, keeps provisional target facts absent after lifecycle mismatch, 402 focused tests and the 780/488 Ant build pass, and no mutation, callback, achieved-state, arrival, commit-token, or lifecycle authority is added |
 
 ## Next Discussion
 
@@ -11361,17 +11420,22 @@ lifecycle postcheck rejects an event-local change. Only detached target facts
 survive a stable window; they are stale immediately after return and cannot
 authorize mutation.
 
-The next focused gate should expose a bounded result from this composed seam
-through an additive private diagnostic schema for the already-observed authored
-restoration records. It should correlate proposal generation, scheduler scope,
-registration sequence, stable lifecycle versions, Region availability,
-boundary-performed classification, target decision, and Slice 118 contract
-outcome while preserving every historical schema. Refused outer fences and
-missing Regions must remain explicit rather than disappearing. That private
-runtime route should validate the composition on natural resource replacement
-with broad human timing; all sub-second exclusion races remain automated. No
-mutation, callback invocation, arrival behavior, commit token, or lifecycle
-consumer should be added.
+Slice 125 now exposes that bounded composition through additive private
+schema-v43 while preserving v42 unchanged. Every restoration record carries an
+explicit outer-fence outcome; stable records add lifecycle versions, Region
+boundary facts, target decision, and Slice 118 contract result, while
+lifecycle-mismatch records discard provisional target facts. The diagnostic
+remains read-only, point-in-time, and non-authoritative.
+
+The next gate is owner acceptance rather than another implementation slice.
+Use one natural authored resource replacement: start capture nearby, create the
+pending replacement, mark `atomic-pending` during its broad pending window,
+allow natural completion, mark `atomic-after`, and stop. Schema-v43 must show a
+stable accepted outer fence and Region-boundary target contract at the pending
+marker, then no restoration record after completion; visuals and interaction
+must remain normal. Human input is not expected to hit a sub-second interval.
+Do not add mutation, callback invocation, arrival behavior, commit tokens, or a
+lifecycle consumer on the strength of diagnostics alone.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

@@ -16,6 +16,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
@@ -54,7 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v42";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v43";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -99,6 +100,8 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionEventOwnershipInventory.MAXIMUM_SPATIAL_REFERENCES;
 	private static final int MAX_TRACE_EVENT_TARGET_RECORDS =
 		LayeredPackedRegionEventTargetObservation.MAXIMUM_TARGET_RECORDS;
+	private static final int MAX_TRACE_EVENT_ATOMIC_TARGET_RECORDS =
+		LayeredPackedRegionEventAtomicTargetRevalidation.MAXIMUM_RECORDS;
 	private static final int MAX_TRACE_TRAVERSAL_STEPS = 16;
 
 	private static final Logger LOGGER = LogManager.getLogger(LayeredCoordinateParityObserver.class);
@@ -1472,6 +1475,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionEventOwnership = null;
 				LayeredPackedRegionEventTargetObservation
 					packedRegionEventTargets = null;
+				LayeredPackedRegionEventAtomicTargetRevalidation
+					packedRegionEventAtomicTargetRevalidation = null;
 				LayeredPackedRegionRetirementRefinementProposal pendingAtEventStart =
 					state.pendingPackedRegionRetirementRefinement;
 				LayeredPackedRegionRetirementRefinementProposal
@@ -1760,6 +1765,16 @@ public final class LayeredCoordinateParityObserver {
 							packedRegionEventOwnership,
 							packedRegionEventTargets);
 					}
+					packedRegionEventAtomicTargetRevalidation =
+						state.packedRegionEventOwnershipSource
+							.captureAtomicTargetRevalidation(
+								packedRegionEventOwnership,
+								MAX_TRACE_EVENT_ATOMIC_TARGET_RECORDS);
+					if (packedRegionEventAtomicTargetRevalidation != null) {
+						requireAtomicEventTargetsMatchInventory(
+							packedRegionEventOwnership,
+							packedRegionEventAtomicTargetRevalidation);
+					}
 				}
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
@@ -1783,7 +1798,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionPreservationBurden,
 					packedRegionDynamicObjectPreservation,
 					packedRegionEventOwnership,
-					packedRegionEventTargets);
+					packedRegionEventTargets,
+					packedRegionEventAtomicTargetRevalidation);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -1867,7 +1883,9 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionDynamicObjectPreservationRecord
 			packedRegionDynamicObjectPreservation,
 		LayeredPackedRegionEventOwnershipInventory packedRegionEventOwnership,
-		LayeredPackedRegionEventTargetObservation packedRegionEventTargets) {
+		LayeredPackedRegionEventTargetObservation packedRegionEventTargets,
+		LayeredPackedRegionEventAtomicTargetRevalidation
+			packedRegionEventAtomicTargetRevalidation) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -2080,6 +2098,13 @@ public final class LayeredCoordinateParityObserver {
 			out.append("null");
 		} else {
 			appendPackedRegionEventTargets(out, packedRegionEventTargets);
+		}
+		out.append(",\"packedRegionEventAtomicTargetRevalidation\":");
+		if (packedRegionEventAtomicTargetRevalidation == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionEventAtomicTargetRevalidation(
+				out, packedRegionEventAtomicTargetRevalidation);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -4334,6 +4359,134 @@ public final class LayeredCoordinateParityObserver {
 		out.append("]}");
 	}
 
+	private static void appendPackedRegionEventAtomicTargetRevalidation(
+		final StringBuilder out,
+		final LayeredPackedRegionEventAtomicTargetRevalidation observation) {
+		out.append('{');
+		out.append("\"proposalGeneration\":")
+			.append(observation.getProposalGeneration()).append(',');
+		out.append("\"eventInventoryObservedAtTick\":")
+			.append(observation.getEventInventoryObservedAtTick()).append(',');
+		out.append("\"revalidationObservedAtTick\":")
+			.append(observation.getRevalidationObservedAtTick()).append(',');
+		field(out, "schedulerInstanceIdentity",
+			observation.getSchedulerInstanceIdentity()).append(',');
+		out.append("\"recordCount\":")
+			.append(observation.getRecordCount()).append(',');
+		out.append("\"outerFenceAcceptedCount\":")
+			.append(observation.getOuterFenceAcceptedCount()).append(',');
+		out.append("\"outerFenceRefusedCount\":")
+			.append(observation.getOuterFenceRefusedCount()).append(',');
+		out.append("\"lifecycleChangeDetectedCount\":")
+			.append(observation.getLifecycleChangeDetectedCount()).append(',');
+		out.append("\"runtimeTargetLookupPerformedCount\":")
+			.append(observation.getRuntimeTargetLookupPerformedCount()).append(',');
+		out.append("\"runtimeRevalidationPerformedCount\":")
+			.append(observation.getRuntimeRevalidationPerformedCount()).append(',');
+		out.append("\"contractRefusedCount\":")
+			.append(observation.getContractRefusedCount()).append(',');
+		out.append("\"noOpContractSatisfiedCount\":")
+			.append(observation.getNoOpContractSatisfiedCount()).append(',');
+		out.append("\"mutationPreconditionContractSatisfiedCount\":")
+			.append(observation
+				.getMutationPreconditionContractSatisfiedCount()).append(',');
+		out.append("\"outerOutcomeCountComplete\":")
+			.append(observation.isOuterOutcomeCountComplete()).append(',');
+		out.append("\"acceptedContractOutcomeCountComplete\":")
+			.append(observation
+				.isAcceptedContractOutcomeCountComplete()).append(',');
+		out.append("\"pointInTimeOnly\":")
+			.append(observation.isPointInTimeOnly()).append(',');
+		out.append("\"atomicWithEventInventory\":")
+			.append(observation.isAtomicWithEventInventory()).append(',');
+		out.append("\"runtimeTargetLookupPerformed\":")
+			.append(observation.isRuntimeTargetLookupPerformed()).append(',');
+		out.append("\"runtimeRevalidationPerformed\":")
+			.append(observation.isRuntimeRevalidationPerformed()).append(',');
+		out.append("\"atomicWithMutation\":")
+			.append(observation.isAtomicWithMutation()).append(',');
+		out.append("\"entityHandleRetained\":")
+			.append(observation.isEntityHandleRetained()).append(',');
+		out.append("\"achievedStateClaimed\":")
+			.append(observation.isAchievedStateClaimed()).append(',');
+		out.append("\"commitToken\":")
+			.append(observation.isCommitToken()).append(',');
+		out.append("\"mutationPerformed\":")
+			.append(observation.isMutationPerformed()).append(',');
+		out.append("\"executableRestoration\":")
+			.append(observation.isExecutableRestoration()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(observation.isArrivalGate()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(observation.isLifecycleAuthority()).append(',');
+		out.append("\"records\":[");
+		boolean first = true;
+		for (LayeredPackedRegionEventAtomicTargetRevalidation.Record record
+			: observation.getRecords()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			out.append("\"snapshotOrdinal\":")
+				.append(record.getSnapshotOrdinal()).append(',');
+			out.append("\"registrationSequence\":")
+				.append(record.getRegistrationSequence()).append(',');
+			out.append("\"packedX\":").append(record.getX()).append(',');
+			out.append("\"packedY\":").append(record.getY()).append(',');
+			field(out, "outerFenceReason",
+				record.getOuterFenceReason().name()).append(',');
+			out.append("\"outerFenceAccepted\":")
+				.append(record.isOuterFenceAccepted()).append(',');
+			out.append("\"operationInvoked\":")
+				.append(record.isOperationInvoked()).append(',');
+			out.append("\"lifecycleVersionBeforeOperation\":");
+			appendNullableLong(
+				out, record.getLifecycleVersionBeforeOperation());
+			out.append(",\"lifecycleVersionAfterOperation\":");
+			appendNullableLong(
+				out, record.getLifecycleVersionAfterOperation());
+			out.append(",\"timingStableAcrossOperation\":")
+				.append(record.isTimingStableAcrossOperation()).append(',');
+			out.append("\"lifecycleChangeDetected\":")
+				.append(record.isLifecycleChangeDetected()).append(',');
+			out.append("\"runtimeTargetLookupPerformed\":")
+				.append(record.isRuntimeTargetLookupPerformed()).append(',');
+			out.append("\"runtimeRevalidationPerformed\":")
+				.append(record.isRuntimeRevalidationPerformed()).append(',');
+			out.append("\"target\":");
+			LayeredPackedRegionEventAtomicTargetRevalidation.TargetEvidence
+				target = record.getTarget();
+			if (target == null) {
+				out.append("null");
+			} else {
+				out.append('{');
+				out.append("\"regionAvailable\":")
+					.append(target.isRegionAvailable()).append(',');
+				out.append("\"slotObjectCount\":")
+					.append(target.getSlotObjectCount()).append(',');
+				out.append("\"exactRestorationSceneryCount\":")
+					.append(target.getExactRestorationSceneryCount()).append(',');
+				out.append("\"exactAuthoredIdentityCount\":")
+					.append(target.getExactAuthoredIdentityCount()).append(',');
+				out.append("\"objectBoundaryHeldDuringClassification\":")
+					.append(target
+						.isObjectBoundaryHeldDuringClassification()).append(',');
+				field(out, "observedTargetState",
+					target.getObservedTargetState().name()).append(',');
+				field(out, "targetOutcome",
+					target.getTargetOutcome().name()).append(',');
+				field(out, "targetReason",
+					target.getTargetReason().name()).append(',');
+				field(out, "contractOutcome",
+					target.getContractOutcome().name()).append(',');
+				field(out, "contractReason",
+					target.getContractReason().name());
+				out.append('}');
+			}
+			out.append('}');
+		}
+		out.append("]}");
+	}
+
 	private static void appendEventRestorationState(
 		final StringBuilder out,
 		final LayeredPackedRegionEventOwnershipInventory.EventRestorationState
@@ -4502,6 +4655,47 @@ public final class LayeredCoordinateParityObserver {
 				|| scenery.getY() != target.getY()) {
 				throw new IllegalStateException(
 					"Event target order differs from its restoration record");
+			}
+		}
+	}
+
+	private static void requireAtomicEventTargetsMatchInventory(
+		final LayeredPackedRegionEventOwnershipInventory inventory,
+		final LayeredPackedRegionEventAtomicTargetRevalidation observation) {
+		if (inventory.getProposalGeneration()
+				!= observation.getProposalGeneration()
+			|| inventory.getObservedAtTick()
+				!= observation.getEventInventoryObservedAtTick()
+			|| !inventory.getSchedulerInstanceIdentity().equals(
+				observation.getSchedulerInstanceIdentity())
+			|| inventory.getRestorationStateAvailableEventCount()
+				!= observation.getRecordCount()
+			|| !observation.isOuterOutcomeCountComplete()
+			|| !observation.isAcceptedContractOutcomeCountComplete()) {
+			throw new IllegalStateException(
+				"Atomic event target revalidation differs from its inventory");
+		}
+		int recordIndex = 0;
+		for (LayeredPackedRegionEventOwnershipInventory.EventRecord event
+			: inventory.getEvents()) {
+			LayeredPackedRegionEventOwnershipInventory.EventRestorationState
+				restoration = event.getRestorationState();
+			if (restoration.getKind()
+				== LayeredPackedRegionEventOwnershipInventory.RestorationKind
+					.UNAVAILABLE) {
+				continue;
+			}
+			LayeredPackedRegionEventAtomicTargetRevalidation.Record record =
+				observation.getRecords().get(recordIndex++);
+			LayeredPackedRegionEventOwnershipInventory.SceneryRestorationState
+				scenery = restoration.getScenery();
+			if (event.getSnapshotOrdinal() != record.getSnapshotOrdinal()
+				|| event.getRegistrationSequence()
+					!= record.getRegistrationSequence()
+				|| scenery.getX() != record.getX()
+				|| scenery.getY() != record.getY()) {
+				throw new IllegalStateException(
+					"Atomic target order differs from its restoration record");
 			}
 		}
 	}
@@ -5460,6 +5654,13 @@ public final class LayeredCoordinateParityObserver {
 		default LayeredPackedRegionEventTargetObservation captureTargets(
 			final LayeredPackedRegionEventOwnershipInventory inventory,
 			final int maximumTargetRecords) {
+			return null;
+		}
+
+		default LayeredPackedRegionEventAtomicTargetRevalidation
+			captureAtomicTargetRevalidation(
+				final LayeredPackedRegionEventOwnershipInventory inventory,
+				final int maximumTargetRecords) {
 			return null;
 		}
 	}

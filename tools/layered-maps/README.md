@@ -183,7 +183,7 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v42.schema.json`. Each v42 record
+traces emit `schema/layered-map-parity-event-v43.schema.json`. Each v43 record
 retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
@@ -191,8 +191,14 @@ Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. The v1-v41 schemas remain
+repeating the tile comparisons on every movement. V43 additionally records a
+bounded composed scheduler/Region revalidation for each restoration-capable
+event: outer-fence outcome, lifecycle-version stability, exact Region-boundary
+target facts, target decision, and dormant contract result. These facts are
+read-only and point-in-time; all mutation, commit-token, executable-restoration,
+arrival-gate, and lifecycle-authority flags remain false. The v1-v42 schemas remain
 alongside it—including
+`schema/layered-map-parity-event-v42.schema.json`,
 `schema/layered-map-parity-event-v41.schema.json`,
 `schema/layered-map-parity-event-v40.schema.json`,
 `schema/layered-map-parity-event-v39.schema.json`,
@@ -211,7 +217,7 @@ alongside it—including
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
-explicit readable contracts. The v19-v41 schemas likewise remain immutable
+explicit readable contracts. The v19-v42 schemas likewise remain immutable
 contracts for earlier records.
 When a bounded refinement proposal is available, v30 records a
 same-order, point-in-time preservation-burden inventory. Its five explicit

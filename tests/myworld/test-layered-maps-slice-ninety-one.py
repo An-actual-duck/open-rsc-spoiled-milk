@@ -61,7 +61,7 @@ class LayeredMapsSliceNinetyOneTest(unittest.TestCase):
 
     def test_observer_correlates_and_serializes_complete_inventory(self):
         source = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v42"', source)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v43"', source)
         self.assertIn("PackedRegionEventOwnershipSource", source)
         self.assertIn("appendPackedRegionEventOwnership(", source)
         self.assertIn("requireEventOwnershipMatchesProposal(", source)
