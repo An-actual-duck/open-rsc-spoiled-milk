@@ -10,6 +10,10 @@ CONTRACT = ROOT / (
     "server/src/com/openrsc/server/event/rsc/"
     "GameTickEventRestorationRecoveryBatchContract.java"
 )
+COORDINATOR = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/"
+    "GameTickEventRestorationRecoveryCoordinatorContract.java"
+)
 STORE = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventStore.java"
@@ -241,7 +245,7 @@ class LayeredMapsSliceOneHundredFortyThreeTest(unittest.TestCase):
         name = "GameTickEventRestorationRecoveryBatchContract"
         self.assertNotIn(name, STORE.read_text(encoding="utf-8"))
         for path in (ROOT / "server/src").rglob("*.java"):
-            if path == CONTRACT:
+            if path in (CONTRACT, COORDINATOR):
                 continue
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
 

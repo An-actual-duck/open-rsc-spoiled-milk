@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, and 144 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, and 145 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -136,6 +136,11 @@ snapshot, keeps the current constructor/provenance/collision separate from the
 callback's final desired state and retains its remaining positive scheduler
 countdown, while owner-bound, opaque, incomplete, mismatched, or unbounded
 state refuses and every runtime consumer remains disconnected;
+automated-validated Slice 145 correlates each bounded recovery step to exactly
+one typed overdue or future operation, requires every future step's exact
+Slice 144 snapshot, and reduces only fixture-supplied typed outcomes into the
+existing monotonic prefix/refusal/readiness policy without invoking work or
+releasing visibility;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -11991,6 +11996,69 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the snapshot remains disconnected from all runtime consumers.
 
+### Slice 145: Detached recovery coordinator contract
+
+Objective: close the batch-level correlation and outcome surface before any
+runtime coordinator is permitted to invoke overdue or future recovery work.
+
+Implemented:
+
+- `GameTickEventRestorationRecoveryCoordinatorContract` accepts one already
+  validated bounded Slice 143 plan and an explicitly bounded set of detached
+  Slice 144 future snapshots;
+- every sorted plan step maps to exactly one typed operation: overdue work maps
+  to desired-state commit plus terminal event consumption, while future work
+  maps to current-state restoration plus retention of the scheduled event;
+- every future step requires exactly one snapshot with matching scheduler
+  instance, registration, proposal generation, lifecycle version, and positive
+  countdown. Missing, duplicate, stale, unmatched, or incorrectly attached
+  snapshots refuse preparation;
+- overdue steps explicitly reject future snapshots, preventing a current-state
+  value from bypassing the established desired-state/consumption path;
+- immutable directives retain only index, registration, generation, lifecycle,
+  countdown, operation kind, and snapshot-correlation fact; no operation,
+  callback, event, object, or Region handle is retained;
+- fixture-supplied typed outcomes are accepted only in directive order and
+  only when the result belongs to that operation kind. Desired-state applied/
+  no-op results cannot satisfy future work, and current-state restoration
+  cannot satisfy overdue work; and
+- compatible results reduce to Slice 143's existing monotonic completed-prefix,
+  fresh-inventory retry, and contractual first-visibility readiness policy.
+
+Automated validation status:
+
+- the executable fixture proves a mixed batch sorts and maps one overdue and
+  one future registration to their distinct operations;
+- missing, duplicate, stale, and overdue-attached snapshots refuse before any
+  directive list is available;
+- pending, refused, ready, and action-mismatched fixture-supplied typed outcomes
+  preserve the exact Slice 143 prefix semantics;
+- an empty accepted batch can reach contractual readiness while visibility and
+  arrival remain untouched;
+- source guards enforce no runtime imports, scheduler/Region operation,
+  synchronization, loading, arrival gate, visibility release, or lifecycle
+  authority; and
+- the complete layered-map suite passes 482 tests across 144 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 795 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- preparation and completion consume immutable detached values only. They do
+  not invoke either typed operation, restore scenery, commit desired state,
+  consume or retain a real event, or acquire scheduler/Region boundaries;
+- `READY_FOR_FIRST_VISIBILITY_CONTRACT` is a closed policy result, not an
+  arrival gate and not permission to publish a player-visible source;
+- any refusal requires the runtime design to reacquire a fresh exact inventory;
+  this contract provides no rollback or retry loop itself; and
+- runtime current-state capture/application, executable batch orchestration,
+  loading, arrival integration, retirement, and persistence remain later
+  gates.
+
+Status: implemented and automated-validated. No owner route is required because
+all operation outcomes are fixture supplied and no runtime caller exists.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -12883,15 +12951,21 @@ identity/classification, and duplicate collision tiles. The value performs no
 runtime capture or application and remains disconnected from Region loading,
 scheduling, arrival, and visibility.
 
-The next safe slice should define the private recovery coordinator contract
-that maps each Slice 143 step to exactly one typed operation: Slice 142's
-desired-state commit/consumption for overdue callbacks or Slice 144's current-
-state restoration with scheduler retention for future callbacks. It must
-revalidate one bounded inventory, preserve deterministic prefix/refusal
-semantics, make no loading or visibility claim, and initially consume fixture-
-supplied typed outcomes rather than reaching a production arrival path. Runtime
-current-state capture and application should remain separate until the
-coordinator's correlation and refusal surface are closed.
+Slice 145 now supplies the detached batch coordinator contract. Every Slice
+143 step maps to exactly one typed operation, every future step requires one
+exactly correlated Slice 144 snapshot, overdue steps reject those snapshots,
+and only in-order fixture-supplied typed outcomes reduce into the existing
+monotonic prefix/refusal/readiness policy. Contractual readiness still neither
+invokes an operation nor releases visibility.
+
+The next safe slice should define the disconnected Region-side application of
+one Slice 144 current-state snapshot. It must reconstruct the exact current
+constructor/provenance and apply the captured collision contribution under the
+existing canonical object/collision transaction, be idempotent for an already-
+matching current object, refuse every conflict or stale generation, and leave
+the scheduler event untouched. It should initially be reachable only from an
+automated fixture; Store/coordinator, loading, arrival, and visibility paths
+must remain disconnected until exact application and rollback are proven.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

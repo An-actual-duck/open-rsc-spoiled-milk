@@ -14,6 +14,10 @@ SNAPSHOT = ROOT / (
     "server/src/com/openrsc/server/event/rsc/"
     "GameTickEventRestorationCurrentStateRecoverySnapshot.java"
 )
+COORDINATOR = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/"
+    "GameTickEventRestorationRecoveryCoordinatorContract.java"
+)
 PLAN = ROOT / (
     "docs/myworld/in-progress-work-plans/"
     "world-layer-capacity-exploration-plan.md"
@@ -330,7 +334,7 @@ class LayeredMapsSliceOneHundredFortyFourTest(unittest.TestCase):
     def test_runtime_consumers_remain_disconnected(self):
         name = "GameTickEventRestorationCurrentStateRecoverySnapshot"
         for path in (ROOT / "server/src").rglob("*.java"):
-            if path == SNAPSHOT:
+            if path in (SNAPSHOT, COORDINATOR):
                 continue
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
 
