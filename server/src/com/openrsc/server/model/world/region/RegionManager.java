@@ -1,6 +1,9 @@
 package com.openrsc.server.model.world.region;
 
 import com.openrsc.server.constants.Constants;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision
+	.TargetOperation;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
@@ -23,6 +26,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRe
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcBoundaryRequirementProjection;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
@@ -1029,6 +1034,154 @@ public class RegionManager {
 				checked.getGeneration(), observedAtTick, captures,
 				maximumPackedSources, maximumDynamicObjects);
 		}
+	}
+
+	/**
+	 * Captures bounded exact-slot evidence for every known restoration record.
+	 *
+	 * <p>The event inventory is already detached. Region-local object monitors
+	 * provide one exact-slot copy at a time; the result deliberately does not
+	 * claim atomicity with the earlier scheduler snapshot. No entity handle is
+	 * returned and no object, event, callback, or Region is changed.</p>
+	 */
+	public LayeredPackedRegionEventTargetObservation
+		captureLayeredPackedRegionEventTargetObservation(
+			final LayeredPackedRegionEventOwnershipInventory inventory,
+			final int maximumTargetRecords) {
+		LayeredPackedRegionEventOwnershipInventory checked =
+			Objects.requireNonNull(inventory, "inventory");
+		if (maximumTargetRecords < 0
+			|| maximumTargetRecords
+				> LayeredPackedRegionEventTargetObservation
+					.MAXIMUM_TARGET_RECORDS
+			|| checked.getRestorationStateAvailableEventCount()
+				> maximumTargetRecords) {
+			throw new IllegalArgumentException(
+				"Event target observation exceeds its record budget");
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			long targetObservedAtTick =
+				getWorld().getServer().getCurrentTick();
+			List<LayeredPackedRegionEventTargetObservation.TargetRecord>
+				targets = new ArrayList<
+					LayeredPackedRegionEventTargetObservation.TargetRecord>(
+						checked.getRestorationStateAvailableEventCount());
+			for (LayeredPackedRegionEventOwnershipInventory.EventRecord event
+				: checked.getEvents()) {
+				LayeredPackedRegionEventOwnershipInventory.EventRestorationState
+					restoration = event.getRestorationState();
+				if (restoration.getKind()
+					== LayeredPackedRegionEventOwnershipInventory
+						.RestorationKind.UNAVAILABLE) {
+					continue;
+				}
+				LayeredPackedRegionEventOwnershipInventory
+					.SceneryRestorationState scenery = restoration.getScenery();
+				Region region = peekRegionFromSectorCoordinates(
+					scenery.getX() / WorldRegionKey.REGION_SIZE,
+					scenery.getY() / WorldRegionKey.REGION_SIZE);
+				int slotObjectCount = 0;
+				int exactRestorationSceneryCount = 0;
+				int exactAuthoredIdentityCount = 0;
+				if (region != null) {
+					Region.RestorationTargetSlotSnapshot slot =
+						region.captureRestorationTargetSlotSnapshot(
+							scenery.getX(), scenery.getY(), scenery.getType(),
+							scenery.getDirection());
+					slotObjectCount = slot.getObjectCount();
+					for (Region.RestorationTargetObjectSnapshot object
+						: slot.getObjects()) {
+						exactRestorationSceneryCount +=
+							matchesRestorationScenery(object, scenery) ? 1 : 0;
+						exactAuthoredIdentityCount +=
+							matchesAuthoredIdentity(object, scenery) ? 1 : 0;
+					}
+				}
+				LayeredPackedRegionEventOwnershipInventory
+					.AuthoredPlacementRestorationState authored =
+						scenery.getAuthoredPlacement();
+				LayeredPackedRegionEventTargetObservation.ObservedTargetState
+					observedTargetState = LayeredPackedRegionEventTargetObservation
+						.TargetRecord.classifyObservedTargetState(
+							region != null, slotObjectCount,
+							exactRestorationSceneryCount,
+							exactAuthoredIdentityCount,
+							restoration.isTargetBindingComplete());
+				GameTickEventRestorationTargetDecision decision =
+					GameTickEventRestorationTargetDecision.decideDetached(
+						targetOperation(restoration.getKind()),
+						restoration.isTargetBindingComplete(),
+						authored == null ? 0L : authored.getGeneration(),
+						checked.getProposalGeneration(),
+						GameTickEventRestorationTargetDecision
+							.ObservedTargetState.valueOf(
+								observedTargetState.name()));
+				targets.add(
+					LayeredPackedRegionEventTargetObservation.TargetRecord
+						.observe(
+							event.getSnapshotOrdinal(),
+							event.getRegistrationSequence(),
+							scenery.getX(), scenery.getY(), region != null,
+							slotObjectCount, exactRestorationSceneryCount,
+							exactAuthoredIdentityCount,
+							restoration.isTargetBindingComplete(),
+							LayeredPackedRegionEventTargetObservation.Outcome
+								.valueOf(decision.getOutcome().name()),
+							LayeredPackedRegionEventTargetObservation.Reason
+								.valueOf(decision.getReason().name())));
+			}
+			return LayeredPackedRegionEventTargetObservation.observation(
+				checked.getProposalGeneration(), checked.getObservedAtTick(),
+				targetObservedAtTick, checked.getSchedulerInstanceIdentity(),
+				targets, maximumTargetRecords);
+		}
+	}
+
+	private static TargetOperation targetOperation(
+		final LayeredPackedRegionEventOwnershipInventory.RestorationKind kind) {
+		switch (kind) {
+			case SCENERY_SPAWN:
+				return TargetOperation.SCENERY_SPAWN;
+			case SCENERY_REMOVE:
+				return TargetOperation.SCENERY_REMOVE;
+			default:
+				return TargetOperation.UNAVAILABLE;
+		}
+	}
+
+	private static boolean matchesRestorationScenery(
+		final Region.RestorationTargetObjectSnapshot object,
+		final LayeredPackedRegionEventOwnershipInventory
+			.SceneryRestorationState scenery) {
+		return object.getObjectId() == scenery.getObjectId()
+			&& object.getPermanentObjectId()
+				== scenery.getPermanentObjectId()
+			&& object.getX() == scenery.getX()
+			&& object.getY() == scenery.getY()
+			&& object.getDirection() == scenery.getDirection()
+			&& object.getType() == scenery.getType()
+			&& Objects.equals(object.getOwner(), scenery.getOwner())
+			&& object.getRuntimeAttributeCount()
+				== scenery.getRuntimeAttributeCount();
+	}
+
+	private static boolean matchesAuthoredIdentity(
+		final Region.RestorationTargetObjectSnapshot object,
+		final LayeredPackedRegionEventOwnershipInventory
+			.SceneryRestorationState scenery) {
+		LayeredPackedRegionEventOwnershipInventory
+			.AuthoredPlacementRestorationState authored =
+				scenery.getAuthoredPlacement();
+		return authored != null && object.hasAuthoredIdentity()
+			&& object.getAuthoredGeneration() == authored.getGeneration()
+			&& object.getAuthoredPackedRegionX()
+				== authored.getPackedRegionX()
+			&& object.getAuthoredPackedRegionY()
+				== authored.getPackedRegionY()
+			&& object.getAuthoredSourceOrdinal()
+				== authored.getSourceOrdinal()
+			&& object.getAuthoredConstructionKind().equals(
+				authored.getConstructionKind().name());
 	}
 
 	/**

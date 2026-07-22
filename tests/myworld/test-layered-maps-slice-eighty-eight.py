@@ -10,9 +10,6 @@ COORDINATES = ROOT / "server/src/com/openrsc/server/model/world/coordinate"
 INVENTORY = COORDINATES / (
     "LayeredPackedRegionEventOwnershipInventory.java"
 )
-REGION_MANAGER = ROOT / (
-    "server/src/com/openrsc/server/model/world/region/RegionManager.java"
-)
 EVENT_HANDLER = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/GameEventHandler.java"
 )
@@ -245,10 +242,6 @@ class LayeredMapsSliceEightyEightTest(unittest.TestCase):
             "eventStore.add",
         ):
             self.assertNotIn(forbidden, source)
-        self.assertNotIn(
-            "LayeredPackedRegionEventOwnershipInventory",
-            REGION_MANAGER.read_text(encoding="utf-8"),
-        )
 
     def test_living_plan_records_slice_eighty_eight_boundary(self):
         plan = PLAN.read_text(encoding="utf-8")

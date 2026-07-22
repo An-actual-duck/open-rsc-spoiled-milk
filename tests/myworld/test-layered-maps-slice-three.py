@@ -297,6 +297,7 @@ class LayeredMapsSliceThreeTest(unittest.TestCase):
                 "LayeredPackedRegionPreservationBurdenAssessment.java",
                 "LayeredPackedRegionDynamicObjectPreservationRecord.java",
                 "LayeredPackedRegionEventOwnershipInventory.java",
+                "LayeredPackedRegionEventTargetObservation.java",
                 "LayeredRegionInterestOwnershipLedger.java",
                 "LayeredRegionInterestResidencyComparison.java",
                 "LayeredRegionMembershipMirror.java",

@@ -41,31 +41,61 @@ public final class GameTickEventRestorationTargetDecision {
 		final ObservedTargetState observedTargetState) {
 		GameTickEventRestorationRequirement checked =
 			Objects.requireNonNull(requirement, "requirement");
+		TargetOperation operation;
+		switch (checked.getTargetSubject()) {
+			case AUTHORED_DESTINATION_SLOT:
+				operation = TargetOperation.SCENERY_SPAWN;
+				break;
+			case AUTHORED_EXISTING_ENTITY:
+				operation = TargetOperation.SCENERY_REMOVE;
+				break;
+			default:
+				operation = TargetOperation.UNAVAILABLE;
+				break;
+		}
+		return decideDetached(
+			operation, checked.isTargetBindingComplete(),
+			checked.getAuthoredTarget() == null
+				? 0L : checked.getAuthoredTarget().getGeneration(),
+			reconstructionGeneration, observedTargetState);
+	}
+
+	/**
+	 * Entry point for a later runtime seam that has already detached the same
+	 * closed requirement scalars. No runtime value or handle is retained.
+	 */
+	public static GameTickEventRestorationTargetDecision decideDetached(
+		final TargetOperation targetOperation,
+		final boolean targetBindingComplete,
+		final long authoredGeneration,
+		final long reconstructionGeneration,
+		final ObservedTargetState observedTargetState) {
+		TargetOperation operation = Objects.requireNonNull(
+			targetOperation, "targetOperation");
 		ObservedTargetState observation = Objects.requireNonNull(
 			observedTargetState, "observedTargetState");
-		if (reconstructionGeneration <= 0L) {
+		if (reconstructionGeneration <= 0L || authoredGeneration < 0L
+			|| (targetBindingComplete && authoredGeneration == 0L)) {
 			throw new IllegalArgumentException(
-				"Reconstruction generation must be positive");
+				"Restoration generations are invalid");
 		}
-		if (checked.getTargetSubject()
-			== GameTickEventRestorationRequirement.TargetSubject.UNAVAILABLE) {
+		if (operation == TargetOperation.UNAVAILABLE) {
 			return refused(Reason.REQUIREMENT_UNAVAILABLE, observation);
 		}
-		if (!checked.isTargetBindingComplete()) {
+		if (!targetBindingComplete) {
 			return refused(Reason.TARGET_BINDING_INCOMPLETE, observation);
 		}
-		if (checked.getAuthoredTarget().getGeneration()
-			!= reconstructionGeneration) {
+		if (authoredGeneration != reconstructionGeneration) {
 			return refused(Reason.GENERATION_MISMATCH, observation);
 		}
 		if (observation == ObservedTargetState.UNAVAILABLE) {
 			return refused(Reason.TARGET_OBSERVATION_UNAVAILABLE, observation);
 		}
 
-		switch (checked.getTargetSubject()) {
-			case AUTHORED_DESTINATION_SLOT:
+		switch (operation) {
+			case SCENERY_SPAWN:
 				return decideSpawn(observation);
-			case AUTHORED_EXISTING_ENTITY:
+			case SCENERY_REMOVE:
 				return decideRemoval(observation);
 			default:
 				return refused(Reason.REQUIREMENT_UNAVAILABLE, observation);
@@ -169,6 +199,13 @@ public final class GameTickEventRestorationTargetDecision {
 		REFUSED,
 		NO_OP_SUCCESS,
 		MUTATION_PRECONDITION_SATISFIED
+	}
+
+	/** Closed operation identity detached from callback and target handles. */
+	public enum TargetOperation {
+		UNAVAILABLE,
+		SCENERY_SPAWN,
+		SCENERY_REMOVE
 	}
 
 	/** Detached category supplied by a later read-only observation seam. */

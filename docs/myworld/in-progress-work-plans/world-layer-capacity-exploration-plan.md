@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, and 113 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, and 115 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, and 116 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -28,6 +28,8 @@ empty slot or one exact-identity authored transient, preserving schema-v39 and
 publishing the correction through inert schema-v40 diagnostics;
 automated-validated Slice 115 defines the pure detached target-decision table
 without adding runtime lookup, state capture, mutation, or arrival authority;
+automated-validated Slice 116 adds bounded read-only exact-slot observation,
+retaining scheduler/event correlation but no handles or mutation authority;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -9962,6 +9964,67 @@ Status: implemented and automated-validated. Runtime observation, inventory
 detachment, private diagnostics, executable restoration, and all lifecycle
 authority remain absent.
 
+### Slice 116: Read-only restoration target observation
+
+Objective: produce bounded, detached point-in-time evidence from current exact
+object slots for the Slice 115 classifier without retaining or mutating any
+runtime target.
+
+Implemented:
+
+- `Region.captureRestorationTargetSlotSnapshot` copies every object in the
+  exact collision slot while holding the Region object monitor. Scenery slots
+  match type `0`; boundary slots match type `1` plus direction. The capture
+  never trusts the existing first-match `getGameObject` lookup and returns no
+  entity handle;
+- each ephemeral object copy includes the constructor values and authored-
+  identity scalars needed for comparison. Owner text is used only for the
+  in-memory equality check and is not retained by the final observation;
+- `RegionManager.captureLayeredPackedRegionEventTargetObservation` walks known
+  restoration records in event snapshot order under the existing layered
+  lifecycle lock, correlates snapshot ordinal, registration sequence,
+  scheduler-instance scope, proposal generation, and both observation ticks,
+  and applies the exact Slice 115 decision table;
+- a missing packed Region becomes `UNAVAILABLE`, zero relevant objects becomes
+  `EMPTY`, multiple relevant objects become `AMBIGUOUS_OCCUPANCY`, and one
+  object becomes exact restoration scenery, exact authored transient, or
+  mismatched/identity-less from explicit scalar comparisons;
+- the immutable result reconciles available/unavailable, no-op, mutation-
+  precondition, and refused counts. It explicitly states that it is point-in-
+  time, not atomic with the event inventory, and incapable of mutation.
+
+Automated validation status:
+
+- an executable Java fixture covers exact transient spawn, exact removal,
+  already-absent removal, ambiguous spawn, unavailable Region, and exact state
+  with incomplete authored binding, and reconciles all aggregate outcomes;
+- invalid observation order, tick order, record budget, and unavailable-Region
+  contents fail closed;
+- Region guards require the object monitor and complete exact-slot iteration,
+  while RegionManager guards require scheduler/event correlation, constructor
+  and identity comparisons, and prohibit first-match lookup, registration,
+  removal, callback execution, packets, and entity mutation;
+- the complete layered-map suite passes 359 tests across 115 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 776 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the target observation occurs after the already-detached event inventory and
+  is not atomic with callback execution. It is diagnostic evidence, not a
+  commit token or executable precondition;
+- exact authored identity identifies the placement owner but does not retain
+  the current object or permit later mutation through a stale observation; and
+- no object is registered, unregistered, replaced, retained, or returned. No
+  event is cancelled, rescheduled, invoked, or replayed; no arrival is gated;
+  and no reconstruction, preservation, registry, teardown, transaction,
+  rollback, packet, or lifecycle authority is added.
+
+Status: implemented and automated-validated. Private diagnostic exposure,
+owner validation, executable restoration, arrival gating, and all lifecycle
+authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10296,6 +10359,7 @@ private environment should validate at least:
 | 2026-07-21 | Accept the Slice 113 private generation/idempotency route. | Owner-validated; seven schema-v39 records retain registration 3892 while ticks 1419->1435 and remaining delay 33->17 reconcile exactly, proposal/authored generation 1 and all declared rules agree at both pending markers, natural completion removes the record, and every authority flag remains false |
 | 2026-07-21 | Correct the authored spawn mutation prerequisite before target inspection. | Slice 114 implemented and automated-validated; the audited harvest path transfers authored identity to stump/depleted replacements, spawn now permits empty or one exact-identity authored transient, schema-v39 remains immutable, schema-v40 publishes the correction, and no target inspection or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 115 by defining a pure detached target-state decision table. | Implemented and automated-validated; binding/generation failures precede occupancy, spawn accepts empty or exact authored transient and no-ops on exact restored scenery, removal protects changed authored successors, every conflict is typed, and no runtime lookup, mutation, arrival gate, or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 116 by capturing bounded read-only restoration target evidence. | Implemented and automated-validated; every exact collision-slot occupant is copied under the Region object monitor, missing/empty/exact/transient/mismatch/ambiguity remain distinct, scheduler/event correlation is retained, the capture is explicitly non-atomic with callback execution, and no entity handle, mutation, or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -10672,16 +10736,19 @@ Slice 115 classifier now distinguishes unavailable observation, empty
 destination, exact restoration scenery, exact authored transient,
 mismatched/identity-less occupancy, and ambiguity. Binding and generation
 failures take precedence; spawn and removal retain distinct no-op, mutation-
-precondition, and refusal outcomes. The next gate is a bounded read-only
-runtime observation seam. It should snapshot every relevant object in the
-exact collision slot, not trust `Region.getGameObject`'s first-match result,
-and detach only counts, constructor-state comparisons, authored-identity
-comparisons, observation category, and classifier outcome. A missing Region
-must remain unavailable rather than appearing empty, multiple slot occupants
-must remain ambiguous, and the event registration/scheduler scope must stay
-attached to the evidence. The capture may be diagnostic point-in-time evidence
-but must not claim atomicity with callback execution, retain an entity, mutate
-anything, or gate arrival. The observer still has no event, store, callback,
+precondition, and refusal outcomes. Slice 116 supplies the bounded read-only
+runtime seam: it snapshots every relevant object in the exact collision slot,
+retains scheduler/event correlation, classifies missing, empty, exact,
+transient, mismatched, and ambiguous states, and explicitly remains non-atomic
+with callback execution. The next gate is additive private diagnostic exposure.
+It should capture targets immediately after the exact detached event inventory,
+verify proposal generation, inventory observation tick, scheduler-instance
+scope, restoration count, snapshot ordinal, and registration sequence, and
+publish only detached counts/categories/outcomes. The owner route should prove
+the pending magic-tree target is an exact authored transient rather than empty,
+then prove natural completion removes both event and target evidence. No field
+may claim an executed mutation, commit token, achieved restoration, or arrival
+gate. The observer still has no event, store, callback,
 key, target lookup, due-event executor, cancellation, reschedule, load, or
 arrival-gate authority.
 

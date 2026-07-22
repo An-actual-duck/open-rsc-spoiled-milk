@@ -11,6 +11,7 @@ import com.openrsc.server.model.entity.GameObjectType;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -280,6 +281,108 @@ public class Region {
 		int getType() { return type; }
 		String getOwner() { return owner; }
 		int getRuntimeAttributeCount() { return runtimeAttributeCount; }
+	}
+
+	/**
+	 * Copies every object in one exact collision slot while holding the Region's
+	 * object monitor. The returned values contain no entity handles.
+	 */
+	RestorationTargetSlotSnapshot captureRestorationTargetSlotSnapshot(
+		final int x,
+		final int y,
+		final int type,
+		final int direction) {
+		if (x < 0 || y < 0 || (type != 0 && type != 1)
+			|| direction < 0 || direction > 7
+			|| x / Constants.REGION_SIZE != regionX
+			|| y / Constants.REGION_SIZE != regionY) {
+			throw new IllegalArgumentException(
+				"Restoration target slot is outside this Region");
+		}
+		Point location = Point.location(x, y);
+		List<RestorationTargetObjectSnapshot> snapshots =
+			new ArrayList<RestorationTargetObjectSnapshot>();
+		synchronized (objects) {
+			for (GameObject object : objects.get(location)) {
+				if (object.getType() == type
+					&& (type == 0 || object.getDirection() == direction)) {
+					snapshots.add(
+						new RestorationTargetObjectSnapshot(object));
+				}
+			}
+		}
+		return new RestorationTargetSlotSnapshot(snapshots);
+	}
+
+	/** Exact-slot detached values; collection and members are immutable. */
+	static final class RestorationTargetSlotSnapshot {
+		private final List<RestorationTargetObjectSnapshot> objects;
+
+		private RestorationTargetSlotSnapshot(
+			final List<RestorationTargetObjectSnapshot> objects) {
+			this.objects = Collections.unmodifiableList(
+				new ArrayList<RestorationTargetObjectSnapshot>(objects));
+		}
+
+		List<RestorationTargetObjectSnapshot> getObjects() { return objects; }
+		int getObjectCount() { return objects.size(); }
+	}
+
+	/** Constructor and authored-identity scalars copied from one slot object. */
+	static final class RestorationTargetObjectSnapshot {
+		private final int objectId;
+		private final int permanentObjectId;
+		private final int x;
+		private final int y;
+		private final int direction;
+		private final int type;
+		private final String owner;
+		private final int runtimeAttributeCount;
+		private final long authoredGeneration;
+		private final int authoredPackedRegionX;
+		private final int authoredPackedRegionY;
+		private final int authoredSourceOrdinal;
+		private final String authoredConstructionKind;
+
+		private RestorationTargetObjectSnapshot(final GameObject object) {
+			this.objectId = object.getID();
+			this.permanentObjectId = object.getLoc().getPermId();
+			this.x = object.getX();
+			this.y = object.getY();
+			this.direction = object.getDirection();
+			this.type = object.getType();
+			this.owner = object.getOwner();
+			this.runtimeAttributeCount = object.getRuntimeAttributeCount();
+			LayeredAuthoredPlacementIdentity identity =
+				object.getAuthoredPlacementIdentity();
+			this.authoredGeneration = identity == null
+				? 0L : identity.getGeneration();
+			this.authoredPackedRegionX = identity == null
+				? -1 : identity.getPackedRegionX();
+			this.authoredPackedRegionY = identity == null
+				? -1 : identity.getPackedRegionY();
+			this.authoredSourceOrdinal = identity == null
+				? 0 : identity.getSourceOrdinal();
+			this.authoredConstructionKind = identity == null
+				? null : identity.getConstructionKind().name();
+		}
+
+		int getObjectId() { return objectId; }
+		int getPermanentObjectId() { return permanentObjectId; }
+		int getX() { return x; }
+		int getY() { return y; }
+		int getDirection() { return direction; }
+		int getType() { return type; }
+		String getOwner() { return owner; }
+		int getRuntimeAttributeCount() { return runtimeAttributeCount; }
+		boolean hasAuthoredIdentity() { return authoredGeneration > 0L; }
+		long getAuthoredGeneration() { return authoredGeneration; }
+		int getAuthoredPackedRegionX() { return authoredPackedRegionX; }
+		int getAuthoredPackedRegionY() { return authoredPackedRegionY; }
+		int getAuthoredSourceOrdinal() { return authoredSourceOrdinal; }
+		String getAuthoredConstructionKind() {
+			return authoredConstructionKind;
+		}
 	}
 
 	/**
