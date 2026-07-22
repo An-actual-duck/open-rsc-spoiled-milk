@@ -2,6 +2,7 @@ package com.openrsc.server.model.world.region;
 
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.event.rsc.GameTickEventRestorationAtomicRevalidationContract;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionTransactionContract;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
@@ -1704,6 +1705,72 @@ public class RegionManager {
 			left.getRegionX(), right.getRegionX());
 		return compared != 0 ? compared : Integer.compare(
 			left.getRegionY(), right.getRegionY());
+	}
+
+	/**
+	 * Resolves existing Regions and delegates one exact collision footprint to
+	 * the disconnected ordered-boundary executor. World does not call this seam.
+	 */
+	RegionCollisionFootprintMutationExecutor.Result
+		applyCollisionFootprintUnderExistingOrderedBoundaries(
+			final GameTickEventRestorationCollisionFootprintPlanner.Result
+				footprint) {
+		GameTickEventRestorationCollisionFootprintPlanner.Result checked =
+			Objects.requireNonNull(footprint, "footprint");
+		if (!checked.isFootprintAvailable()) {
+			return RegionCollisionFootprintMutationExecutor.execute(
+				Collections.<RegionObjectCollisionMutationBoundary>emptyList(),
+				checked,
+				new RegionCollisionFootprintMutationExecutor.MutableTileAccess() {
+					@Override
+					public TileValue getMutableTile(final int x, final int y) {
+						throw new IllegalStateException(
+							"Unavailable footprint cannot access a tile");
+					}
+				});
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			final Map<Long, Region> resolved = new HashMap<Long, Region>();
+			List<RegionObjectCollisionMutationBoundary> boundaries =
+				new ArrayList<RegionObjectCollisionMutationBoundary>();
+			for (GameTickEventRestorationCollisionTransactionContract
+					.PackedRegionCoordinate coordinate
+						: checked.getRequiredRegions()) {
+				Region region = peekRegionFromSectorCoordinates(
+					coordinate.getRegionX(), coordinate.getRegionY());
+				if (region == null) {
+					return RegionCollisionFootprintMutationExecutor
+						.refuseRequiredRegionUnavailable();
+				}
+				resolved.put(
+					packRegionCoordinateKey(
+						coordinate.getRegionX(), coordinate.getRegionY()),
+					region);
+				boundaries.add(region.getObjectCollisionMutationBoundary());
+			}
+			return RegionCollisionFootprintMutationExecutor.execute(
+				boundaries, checked,
+				new RegionCollisionFootprintMutationExecutor.MutableTileAccess() {
+					@Override
+					public TileValue getMutableTile(final int x, final int y) {
+						int regionX = Math.floorDiv(
+							x, GameTickEventRestorationCollisionTransactionContract
+								.PACKED_REGION_SIZE);
+						int regionY = Math.floorDiv(
+							y, GameTickEventRestorationCollisionTransactionContract
+								.PACKED_REGION_SIZE);
+						Region region = resolved.get(
+							packRegionCoordinateKey(regionX, regionY));
+						return region == null ? null : region.getMutableTileValue(
+							Math.floorMod(
+								x, GameTickEventRestorationCollisionTransactionContract
+									.PACKED_REGION_SIZE),
+							Math.floorMod(
+								y, GameTickEventRestorationCollisionTransactionContract
+									.PACKED_REGION_SIZE));
+					}
+				});
+		}
 	}
 
 	/**

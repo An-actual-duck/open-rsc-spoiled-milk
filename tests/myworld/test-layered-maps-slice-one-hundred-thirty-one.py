@@ -305,8 +305,13 @@ class LayeredMapsSliceOneHundredThirtyOneTest(unittest.TestCase):
 
     def test_planner_remains_disconnected_from_existing_runtime_paths(self):
         name = "GameTickEventRestorationCollisionFootprintPlanner"
-        for path in (WORLD, STORE, HANDLER, REGION_MANAGER):
+        for path in (WORLD, STORE, HANDLER):
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
+        manager = REGION_MANAGER.read_text(encoding="utf-8")
+        self.assertIn(name, manager)
+        self.assertIn(
+            "applyCollisionFootprintUnderExistingOrderedBoundaries", manager
+        )
 
     def test_living_plan_records_slice_one_hundred_thirty_one(self):
         plan = PLAN.read_text(encoding="utf-8")

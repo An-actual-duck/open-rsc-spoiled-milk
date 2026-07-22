@@ -8,9 +8,10 @@ import java.util.Objects;
 /**
  * Package-local runtime foundation for canonically ordered Region boundaries.
  *
- * <p>The boundary is deliberately disconnected from object and collision
- * mutation. Its only entry point runs a caller-supplied read-only operation
- * while every declared monitor is held. It retains no operation or result.</p>
+ * <p>The read-only entry point remains non-authoritative. A separate package-
+ * local mutation entry point is consumed only by the disconnected exact
+ * collision executor; ordinary World object paths do not yet use it. Neither
+ * entry point retains its operation or result.</p>
  */
 final class RegionObjectCollisionMutationBoundary {
 	static final int MAXIMUM_BOUNDARIES = 4097;
@@ -57,6 +58,21 @@ final class RegionObjectCollisionMutationBoundary {
 		}
 		return Execution.refused(
 			Reason.REQUIRED_REGION_UNAVAILABLE, declaredBoundaryCount);
+	}
+
+	/** Acquires the same canonical monitor set for one explicit mutation. */
+	static MutationExecution executeMutation(
+		final List<RegionObjectCollisionMutationBoundary> boundaries,
+		final MutationOperation operation) {
+		List<RegionObjectCollisionMutationBoundary> checked =
+			checkedCanonicalBoundaries(boundaries);
+		MutationOperation checkedOperation = Objects.requireNonNull(
+			operation, "operation");
+		boolean[] allHeldDuringOperation = new boolean[]{false};
+		executeMutationAt(
+			checked, 0, checkedOperation, allHeldDuringOperation);
+		return MutationExecution.completed(
+			checked.size(), allHeldDuringOperation[0]);
 	}
 
 	private static List<RegionObjectCollisionMutationBoundary>
@@ -119,11 +135,46 @@ final class RegionObjectCollisionMutationBoundary {
 		}
 	}
 
+	private static void executeMutationAt(
+		final List<RegionObjectCollisionMutationBoundary> boundaries,
+		final int index,
+		final MutationOperation operation,
+		final boolean[] allHeldDuringOperation) {
+		RegionObjectCollisionMutationBoundary boundary = boundaries.get(index);
+		synchronized (boundary.monitor) {
+			if (index + 1 < boundaries.size()) {
+				executeMutationAt(
+					boundaries, index + 1, operation,
+					allHeldDuringOperation);
+			} else {
+				boolean allHeld = true;
+				List<Coordinate> coordinates = new ArrayList<Coordinate>();
+				for (RegionObjectCollisionMutationBoundary candidate
+						: boundaries) {
+					allHeld &= Thread.holdsLock(candidate.monitor);
+					coordinates.add(new Coordinate(
+						candidate.regionX, candidate.regionY));
+				}
+				allHeldDuringOperation[0] = allHeld;
+				if (!allHeld) {
+					throw new IllegalStateException(
+						"Canonical boundary escaped before mutation");
+				}
+				operation.run(new HeldMutationBoundarySet(
+					coordinates, true));
+			}
+		}
+	}
+
 	int getRegionX() { return regionX; }
 	int getRegionY() { return regionY; }
 
 	interface ReadOnlyOperation {
 		void run(HeldBoundarySet heldBoundaries);
+	}
+
+	interface MutationOperation {
+		void run(HeldMutationBoundarySet heldBoundaries);
 	}
 
 	static final class HeldBoundarySet {
@@ -158,6 +209,26 @@ final class RegionObjectCollisionMutationBoundary {
 
 		int getRegionX() { return regionX; }
 		int getRegionY() { return regionY; }
+	}
+
+	static final class HeldMutationBoundarySet {
+		private final List<Coordinate> coordinates;
+		private final boolean allBoundariesHeld;
+
+		private HeldMutationBoundarySet(
+			final List<Coordinate> coordinates,
+			final boolean allBoundariesHeld) {
+			this.coordinates = Collections.unmodifiableList(
+				new ArrayList<Coordinate>(coordinates));
+			this.allBoundariesHeld = allBoundariesHeld;
+		}
+
+		List<Coordinate> getCoordinates() { return coordinates; }
+		int getBoundaryCount() { return coordinates.size(); }
+		boolean areAllBoundariesHeld() { return allBoundariesHeld; }
+		boolean isMutationAuthorized() { return allBoundariesHeld; }
+		boolean isRollbackAuthorized() { return false; }
+		boolean isLifecycleAuthority() { return false; }
 	}
 
 	enum Outcome {
@@ -229,6 +300,44 @@ final class RegionObjectCollisionMutationBoundary {
 		boolean isMutationPerformed() { return false; }
 		boolean isRollbackAuthorized() { return false; }
 		boolean isRollbackPerformed() { return false; }
+		boolean isExecutableRestoration() { return false; }
+		boolean isCommitToken() { return false; }
+		boolean isArrivalGate() { return false; }
+		boolean isLifecycleAuthority() { return false; }
+	}
+
+	static final class MutationExecution {
+		private final int declaredBoundaryCount;
+		private final boolean allBoundariesHeldDuringOperation;
+
+		private MutationExecution(
+			final int declaredBoundaryCount,
+			final boolean allBoundariesHeldDuringOperation) {
+			if (declaredBoundaryCount <= 0
+				|| declaredBoundaryCount > MAXIMUM_BOUNDARIES
+				|| !allBoundariesHeldDuringOperation) {
+				throw new IllegalArgumentException(
+					"Object/collision mutation execution is inconsistent");
+			}
+			this.declaredBoundaryCount = declaredBoundaryCount;
+			this.allBoundariesHeldDuringOperation =
+				allBoundariesHeldDuringOperation;
+		}
+
+		private static MutationExecution completed(
+			final int boundaryCount,
+			final boolean allHeld) {
+			return new MutationExecution(boundaryCount, allHeld);
+		}
+
+		int getDeclaredBoundaryCount() { return declaredBoundaryCount; }
+		boolean wereAllBoundariesHeldDuringOperation() {
+			return allBoundariesHeldDuringOperation;
+		}
+		boolean isOperationRetained() { return false; }
+		boolean isMutationAuthorized() { return true; }
+		boolean isMutationOperationInvoked() { return true; }
+		boolean isRollbackAuthorized() { return false; }
 		boolean isExecutableRestoration() { return false; }
 		boolean isCommitToken() { return false; }
 		boolean isArrivalGate() { return false; }

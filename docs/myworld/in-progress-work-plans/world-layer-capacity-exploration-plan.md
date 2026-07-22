@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, and 125 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, and 133 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, and 134 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -94,6 +94,9 @@ that one pure policy, and leaves collision mutation order and locking unchanged;
 automated-validated Slice 133 retains all six dynamic-collision contribution
 counters and defines fail-closed detached register/unregister arithmetic with
 exact coverage, freshness, underflow, and overflow validation but no mutation;
+automated-validated Slice 134 adds a package-local real TileValue executor that
+captures, validates, applies, verifies, and if necessary reverses one footprint
+under canonical Region monitors while remaining disconnected from World;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -11188,6 +11191,69 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required for
 this disconnected arithmetic contract; no runtime state changed.
 
+### Slice 134: Disconnected ordered collision executor
+
+Objective: mechanically prove the first real TileValue apply seam under Slice
+130's canonical Region monitors while keeping all ordinary World object and
+callback paths disconnected.
+
+Implemented:
+
+- `RegionObjectCollisionMutationBoundary` retains its inert read-only entry
+  point and adds a distinct package-local mutation operation that acquires the
+  same strict canonical monitor set and invokes work only while every monitor
+  is held;
+- `RegionCollisionFootprintMutationExecutor` requires boundary coordinates to
+  exactly equal Slice 131's anchor-plus-contribution Region coverage before
+  tile access;
+- inside those monitors it captures exact current blocking, six-counter
+  dynamic-collision, and projectile state for every contribution tile, invokes
+  Slice 133 with a fresh in-boundary declaration, and refuses before mutation
+  if any tile or arithmetic precondition is unavailable;
+- an accepted projection applies only the exact counted contribution through
+  existing TileValue APIs, verifies every projected counter before monitor
+  release, and reverses the contribution in reverse tile order if post-state
+  verification ever fails;
+- RegionManager exposes one package-local lifecycle-protected adapter that
+  resolves only existing Regions, maps footprint tiles to their already-
+  resolved Region, and delegates to the executor; and
+- World registration, unregistration, replacement, delayed callbacks, object
+  membership, packets, visibility invalidation, and persistence do not call the
+  new executor.
+
+Automated validation status:
+
+- a deterministic multi-Region fixture proves exact register/unregister
+  add/remove round-trip across packed Region X `0 -> 1`;
+- a two-thread latch proves same-footprint mutations cannot enter concurrently
+  and that the second enters after canonical monitor release;
+- underflow refusal and missing-tile paths complete without partially changing any
+  counter, while reversed boundary coverage refuses before tile access;
+- applied results report exact boundary count and mutation completion, refused
+  results report no mutation authority, and rollback/commit/arrival/lifecycle
+  flags remain closed except the executor's internal verified reversal path;
+- source guards prove only RegionManager references the package-local executor
+  and that no World, Store, handler, object-membership, callback, or packet path
+  consumes it;
+- the complete layered-map suite passes 438 tests across 133 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 789 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the executor is real mutation capability but has no ordinary runtime caller;
+  its deterministic fixture owns isolated TileValues;
+- existing World collision mutations still do not share Slice 130's monitors,
+  so holding them outside this executor does not yet prove stable live state;
+  and
+- object collection membership is not part of this executor. It cannot make
+  registration/unregistration atomic, restore an object, emit packets, gate
+  arrival, or alter Region lifecycle.
+
+Status: implemented and automated-validated. No owner route is required for
+this disconnected executor; normal game collision behavior is unchanged.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -11544,6 +11610,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 131 by defining the exact detached collision-footprint planner. | Implemented and automated-validated; scenery rotation, blocking counts, six-bit directional collision, projectile overlap counts, boundary axes, object ID 1147's asymmetric early return, delayed force-full-block, bounded world effects, unique tiles, and canonical Region coverage are executable-table tested, all runtime consumers remain disconnected, and 426 focused tests plus the 786/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 132 by sharing the exact projectile-clipping classifier. | Implemented and automated-validated; the tree, one-by-one non-chest, allowlist, chest, size, case, and boundary rules now live in one pure policy consumed by both World and Slice 131 definitions, the extraction is behavior-identical and leaves mutation order/locking unchanged, and 430 focused tests plus the 787/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 133 by defining detached collision-application arithmetic. | Implemented and automated-validated; exact six-counter collision multiplicity, blocking/projectile counts, canonical Region and tile coverage, freshness, checked register addition, fail-closed unregister subtraction, underflow/overflow, and collisionless projection are executable-tested, all results remain inert and disconnected, and 434 focused tests plus the 788/488 Ant build pass |
+| 2026-07-22 | Continue with Slice 134 by adding the disconnected ordered collision executor. | Implemented and automated-validated; exact current TileValue capture, Slice 133 precondition evaluation, counted apply, post-state verification, internal reversal, multi-Region add/remove round-trip, same-footprint exclusion, underflow/missing-tile no-partial-change, and reverse-order refusal are proved under real monitors, World remains disconnected, and 438 focused tests plus the 789/488 Ant build pass |
 
 ## Next Discussion
 
@@ -12018,21 +12085,24 @@ canonical Region order, exact footprint coverage, shared-mutation exclusion,
 fresh comparison, and unchanged-state rollback obligations, but it deliberately
 does not manufacture a runtime lock.
 
-Slices 130-133 now supply the lock order, exact footprint, shared projectile
-classification, and exact fail-closed counter arithmetic. Existing mutation
-paths remain outside the new monitors, so none of these foundations yet proves
-stable world state or executes a change.
+Slices 130-134 now supply the lock order, exact footprint, shared projectile
+classification, fail-closed arithmetic, and a mechanically proven real
+TileValue executor. Existing World mutations remain outside the new monitors,
+so live world state is not yet protected by that executor.
 
-The next focused gate should add the smallest package-local, still-disconnected
-real collision apply seam. Given an already available Slice 131 footprint, it
-must resolve only existing Regions, enter their Slice 130 monitors in canonical
-order, capture every exact TileValue counter inside that boundary, evaluate
-Slice 133 as fresh, apply only the accepted projected counters, and verify the
-post-state before release. Deterministic fixtures must prove same-footprint
-exclusion, exact add/remove round-trip, multi-Region application, underflow
-refusal without partial mutation, and reverse-order refusal. World object
-registration/unregistration and callbacks must remain unchanged until this
-executor itself is mechanically safe.
+The next focused gate should route the collision-counter portions of every
+World `registerGameObject` and `unregisterGameObject` operation through one
+publicly narrow RegionManager adapter to Slice 134 while preserving the current
+object-membership, colliding-object replacement, location, visibility-cache,
+packet, and callback order. Definition projection must occur before Region
+locking; normal collisionless objects and object ID 1147 must retain exact
+behavior; delayed `forceFullBlock` must either join the planned contribution or
+remain explicitly outside with a documented follow-up. Automated parity must
+cover scenery types 0/1/2, all relevant rotations, boundary directions 0-3,
+projectile overlap, multi-Region footprints, replacement, and repeated add/
+remove cycles. Because this changes normal runtime collision paths, completion
+must build and launch the private client for an owner route covering resource
+depletion/respawn, doors or gates, blocking scenery, and cross-boundary travel.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
