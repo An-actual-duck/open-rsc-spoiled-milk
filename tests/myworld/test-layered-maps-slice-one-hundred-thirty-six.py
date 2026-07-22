@@ -508,6 +508,11 @@ class LayeredMapsSliceOneHundredThirtySixTest(unittest.TestCase):
         manager = REGION_MANAGER.read_text(encoding="utf-8")
         self.assertIn("applyGameObjectTransaction(", world)
         self.assertIn(
+            "currentLocation == null\n"
+            "\t\t\t? object.getLoc().getX() : currentLocation.getX()",
+            world,
+        )
+        self.assertIn(
             "applyObjectMembershipAndCollisionTransaction(", world
         )
         self.assertNotIn("o.setLocation(", world)

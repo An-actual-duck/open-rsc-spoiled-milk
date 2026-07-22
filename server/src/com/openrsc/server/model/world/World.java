@@ -575,6 +575,11 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		final GameObject object,
 		final Operation operation,
 		final boolean forceFullBlock) {
+		Point currentLocation = object.getLocation();
+		int objectX = currentLocation == null
+			? object.getLoc().getX() : currentLocation.getX();
+		int objectY = currentLocation == null
+			? object.getLoc().getY() : currentLocation.getY();
 		Definition definition = null;
 		if (object.getID() != 1147 || operation != Operation.REGISTER) {
 			if (object.isScenery()) {
@@ -594,7 +599,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		return GameTickEventRestorationCollisionFootprintPlanner.plan(
 				operation,
 				ConstructorState.of(
-					object.getID(), object.getX(), object.getY(),
+					object.getID(), objectX, objectY,
 					object.getDirection(), object.getType()),
 				definition, forceFullBlock,
 				WorldBounds.of(Constants.MAX_WIDTH, Constants.MAX_HEIGHT));

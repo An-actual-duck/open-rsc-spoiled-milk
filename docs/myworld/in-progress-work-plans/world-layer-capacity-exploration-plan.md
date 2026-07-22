@@ -11393,7 +11393,12 @@ Implemented:
   release; and
 - collision application can consume an exact footprint while a wider composed
   boundary union is already held, without reacquiring or weakening its own
-  coverage checks.
+  coverage checks; and
+- the first private startup exposed that a newly constructed GameObject has no
+  entity location until this transaction attaches it. Registration planning
+  now reads detached X/Y from its immutable location definition, while an
+  already attached old object retains its current entity location; full world
+  population therefore remains a required startup regression.
 
 Automated validation status:
 
