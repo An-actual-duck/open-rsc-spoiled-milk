@@ -353,7 +353,7 @@ class LayeredMapsSliceTwoTest(unittest.TestCase):
             self.assertEqual(60680, summary["coordinateCount"])
             self.assertEqual(60679, summary["normalizedCoordinateCount"])
             self.assertEqual(1, summary["unresolvedCoordinateCount"])
-            self.assertEqual(211, summary["unresolvedSourceOwnerCount"])
+            self.assertEqual(212, summary["unresolvedSourceOwnerCount"])
             self.assertEqual(6549, summary_document["findings"][0]["legacyY"])
             self.assertTrue((Path(workspace) / "world-inventory.json").stat().st_size > 1_000_000)
             self.assertEqual(hashes_before, [hashlib.sha256(path.read_bytes()).hexdigest() for path in protected])

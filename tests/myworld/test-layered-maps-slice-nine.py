@@ -223,15 +223,15 @@ class LayeredMapsSliceNineTest(unittest.TestCase):
                 )
                 report = json.loads((Path(first_dir) / report_name).read_text(encoding="utf-8"))
                 summary = report["summary"]
-                self.assertEqual(211, summary["classifiedSourceOwnerCount"])
-                self.assertEqual(211, len(report["owners"]))
+                self.assertEqual(212, summary["classifiedSourceOwnerCount"])
+                self.assertEqual(212, len(report["owners"]))
                 for count_map in (
                     summary["sourceOwnerCountByDisposition"],
                     summary["sourceOwnerCountByFamily"],
                     summary["sourceOwnerCountByRisk"],
                     summary["sourceOwnerCountByRole"],
                 ):
-                    self.assertEqual(211, sum(count_map.values()))
+                    self.assertEqual(212, sum(count_map.values()))
                 self.assertTrue(
                     all(owner["classificationStatus"] == "classified-unparsed"
                         for owner in report["owners"])
@@ -254,6 +254,13 @@ class LayeredMapsSliceNineTest(unittest.TestCase):
                 self.assertEqual(
                     "terrain-region-storage",
                     owners["server/src/com/openrsc/server/io/WorldLoader.java"]["primaryFamily"],
+                )
+                self.assertEqual(
+                    "simulation-spatial-runtime",
+                    owners[
+                        "server/src/com/openrsc/server/event/rsc/"
+                        "GameTickEventRestorationCollisionTransactionContract.java"
+                    ]["primaryFamily"],
                 )
                 self.assertEqual(
                     "simulation-spatial-runtime",
