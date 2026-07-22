@@ -191,6 +191,13 @@ public final class RestorationRegistrationFenceFixture {
                         .RestorationRegistrationFenceReason
                             .OPERATION_COMPLETED
                 && execution.getFence() != null
+                && execution.isOperationInvoked()
+                && execution.isTimingStableAcrossOperation()
+                && !execution.isEventLifecycleChangeDetected()
+                && execution.getLifecycleVersionBeforeOperation()
+                    == execution.getLifecycleVersionAfterOperation()
+                && execution.getLifecycleVersionBeforeOperation()
+                    == execution.getFence().getLifecycleVersion()
                 && !execution.isRuntimeTargetLookupPerformed()
                 && !execution.isRuntimeRevalidationPerformed()
                 && !execution.isCommitToken()

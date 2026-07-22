@@ -114,6 +114,7 @@ public class GameTickEvent {
         public boolean isRunning() { return running; }
         public long getTicksBeforeRun() { return ticksBeforeRun; }
         public int getTimesRan() { return timesRan; }
+        public long getLifecycleVersion() { return 1L; }
     }
 }
 '''

@@ -476,6 +476,7 @@ class GameTickEventStore {
 				RestorationKind.valueOf(state.getKind().name()),
 				expectedProposalGeneration, authored.getGeneration(),
 				timing.getTicksBeforeRun(), timing.getTimesRan(),
+				timing.getLifecycleVersion(),
 				scenery.getObjectId(), scenery.getPermanentObjectId(),
 				scenery.getX(), scenery.getY(), scenery.getDirection(),
 				scenery.getType(), state.isForceFullBlock(),
@@ -484,7 +485,16 @@ class GameTickEventStore {
 				AuthoredConstructionKind.valueOf(
 					authored.getConstructionKind().name()));
 		operation.execute(fence);
-		return RestorationRegistrationFenceExecution.accepted(fence);
+		GameTickEvent.AtomicTimingSnapshot after =
+			event.captureAtomicTimingSnapshot();
+		if (after.getLifecycleVersion() != timing.getLifecycleVersion()) {
+			return RestorationRegistrationFenceExecution.refusedAfterOperation(
+				RestorationRegistrationFenceReason
+					.EVENT_LIFECYCLE_CHANGED_DURING_OPERATION,
+				timing.getLifecycleVersion(), after.getLifecycleVersion());
+		}
+		return RestorationRegistrationFenceExecution.accepted(
+			fence, timing.getLifecycleVersion());
 	}
 
 	private static boolean matchesExactSceneryAffinity(
@@ -815,6 +825,7 @@ class GameTickEventStore {
 		AUTHORED_CONSTRUCTION_KIND_MISMATCH,
 		SPATIAL_AFFINITY_MISMATCH,
 		PROPOSAL_GENERATION_MISMATCH,
+		EVENT_LIFECYCLE_CHANGED_DURING_OPERATION,
 		OPERATION_COMPLETED
 	}
 
@@ -846,6 +857,7 @@ class GameTickEventStore {
 		private final long observedAuthoredGeneration;
 		private final long ticksBeforeRun;
 		private final int timesRan;
+		private final long lifecycleVersion;
 		private final int objectId;
 		private final int permanentObjectId;
 		private final int x;
@@ -869,6 +881,7 @@ class GameTickEventStore {
 			final long observedAuthoredGeneration,
 			final long ticksBeforeRun,
 			final int timesRan,
+			final long lifecycleVersion,
 			final int objectId,
 			final int permanentObjectId,
 			final int x,
@@ -892,6 +905,7 @@ class GameTickEventStore {
 			this.observedAuthoredGeneration = observedAuthoredGeneration;
 			this.ticksBeforeRun = ticksBeforeRun;
 			this.timesRan = timesRan;
+			this.lifecycleVersion = lifecycleVersion;
 			this.objectId = objectId;
 			this.permanentObjectId = permanentObjectId;
 			this.x = x;
@@ -914,6 +928,7 @@ class GameTickEventStore {
 				|| observedAuthoredGeneration
 					!= expectedProposalGeneration
 				|| timesRan != 0
+				|| lifecycleVersion <= 0L
 				|| objectId < 0 || permanentObjectId < 0
 				|| x < 0 || y < 0
 				|| direction < 0 || direction > 7
@@ -948,6 +963,7 @@ class GameTickEventStore {
 		}
 		long getTicksBeforeRun() { return ticksBeforeRun; }
 		int getTimesRan() { return timesRan; }
+		long getLifecycleVersion() { return lifecycleVersion; }
 		boolean isAtomicTimingCaptured() { return true; }
 		boolean isTimingStableAcrossOperation() { return false; }
 		boolean isEventCancellationExcluded() { return false; }
@@ -975,15 +991,40 @@ class GameTickEventStore {
 	static final class RestorationRegistrationFenceExecution {
 		private final RestorationRegistrationFenceReason reason;
 		private final RestorationRegistrationFence fence;
+		private final long lifecycleVersionBeforeOperation;
+		private final long lifecycleVersionAfterOperation;
+		private final boolean operationInvoked;
 
 		private RestorationRegistrationFenceExecution(
 			final RestorationRegistrationFenceReason reason,
-			final RestorationRegistrationFence fence) {
+			final RestorationRegistrationFence fence,
+			final long lifecycleVersionBeforeOperation,
+			final long lifecycleVersionAfterOperation,
+			final boolean operationInvoked) {
 			this.reason = Objects.requireNonNull(reason, "reason");
 			this.fence = fence;
+			this.lifecycleVersionBeforeOperation =
+				lifecycleVersionBeforeOperation;
+			this.lifecycleVersionAfterOperation =
+				lifecycleVersionAfterOperation;
+			this.operationInvoked = operationInvoked;
 			if ((reason
 				== RestorationRegistrationFenceReason.OPERATION_COMPLETED)
-				!= (fence != null)) {
+				!= (fence != null)
+				|| (operationInvoked
+					!= (lifecycleVersionBeforeOperation > 0L
+						&& lifecycleVersionAfterOperation > 0L))
+				|| (fence != null
+					&& (lifecycleVersionBeforeOperation
+							!= lifecycleVersionAfterOperation
+						|| fence.getLifecycleVersion()
+							!= lifecycleVersionBeforeOperation))
+				|| (reason
+					== RestorationRegistrationFenceReason
+						.EVENT_LIFECYCLE_CHANGED_DURING_OPERATION
+					&& (!operationInvoked
+						|| lifecycleVersionBeforeOperation
+							== lifecycleVersionAfterOperation))) {
 				throw new IllegalArgumentException(
 					"Restoration registration result is inconsistent");
 			}
@@ -991,12 +1032,24 @@ class GameTickEventStore {
 
 		private static RestorationRegistrationFenceExecution refused(
 			final RestorationRegistrationFenceReason reason) {
-			return new RestorationRegistrationFenceExecution(reason, null);
+			return new RestorationRegistrationFenceExecution(
+				reason, null, -1L, -1L, false);
+		}
+		private static RestorationRegistrationFenceExecution
+			refusedAfterOperation(
+				final RestorationRegistrationFenceReason reason,
+				final long lifecycleVersionBeforeOperation,
+				final long lifecycleVersionAfterOperation) {
+			return new RestorationRegistrationFenceExecution(
+				reason, null, lifecycleVersionBeforeOperation,
+				lifecycleVersionAfterOperation, true);
 		}
 		private static RestorationRegistrationFenceExecution accepted(
-			final RestorationRegistrationFence fence) {
+			final RestorationRegistrationFence fence,
+			final long lifecycleVersion) {
 			return new RestorationRegistrationFenceExecution(
-				RestorationRegistrationFenceReason.OPERATION_COMPLETED, fence);
+				RestorationRegistrationFenceReason.OPERATION_COMPLETED, fence,
+				lifecycleVersion, lifecycleVersion, true);
 		}
 
 		boolean isAccepted() {
@@ -1005,6 +1058,23 @@ class GameTickEventStore {
 		}
 		RestorationRegistrationFenceReason getReason() { return reason; }
 		RestorationRegistrationFence getFence() { return fence; }
+		long getLifecycleVersionBeforeOperation() {
+			return lifecycleVersionBeforeOperation;
+		}
+		long getLifecycleVersionAfterOperation() {
+			return lifecycleVersionAfterOperation;
+		}
+		boolean isOperationInvoked() { return operationInvoked; }
+		boolean isTimingStableAcrossOperation() {
+			return isAccepted()
+				&& lifecycleVersionBeforeOperation
+					== lifecycleVersionAfterOperation;
+		}
+		boolean isEventLifecycleChangeDetected() {
+			return reason
+				== RestorationRegistrationFenceReason
+					.EVENT_LIFECYCLE_CHANGED_DURING_OPERATION;
+		}
 		boolean isRuntimeTargetLookupPerformed() { return false; }
 		boolean isRuntimeRevalidationPerformed() { return false; }
 		boolean isCommitToken() { return false; }

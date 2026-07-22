@@ -23,6 +23,7 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	private final World world;
 	private volatile long delayTicks;
 	private volatile long ticksBeforeRun = -1;
+	private long lifecycleVersion;
 	private String descriptor;
 	private long lastEventDuration = 0;
 	private final UUID uuid;
@@ -47,7 +48,9 @@ public abstract class GameTickEvent implements Callable<Integer> {
 			lastEventDuration = getWorld().getServer().bench(() -> {
 				final boolean runNow;
 				synchronized (timingLock) {
+				requireLifecycleVersionAvailable();
 					ticksBeforeRun--;
+					advanceLifecycleVersion();
 					runNow = running && ticksBeforeRun <= 0;
 				}
 				if (runNow) {
@@ -56,8 +59,10 @@ public abstract class GameTickEvent implements Callable<Integer> {
 					// capture this event's detached timing tuple.
 					run();
 					synchronized (timingLock) {
+						requireLifecycleVersionAvailable();
 						timesRan++;
 						ticksBeforeRun = delayTicks;
+						advanceLifecycleVersion();
 					}
 				}
 			});
@@ -114,7 +119,11 @@ public abstract class GameTickEvent implements Callable<Integer> {
 
 	public void stop() {
 		synchronized (timingLock) {
-			running = false;
+			if (running) {
+				requireLifecycleVersionAvailable();
+				running = false;
+				advanceLifecycleVersion();
+			}
 		}
 	}
 
@@ -124,20 +133,26 @@ public abstract class GameTickEvent implements Callable<Integer> {
 
 	protected void setDelayTicks(long delayTicks) {
 		synchronized (timingLock) {
+			requireLifecycleVersionAvailable();
 			this.delayTicks = delayTicks;
-			resetCountdown();
+			ticksBeforeRun = delayTicks;
+			advanceLifecycleVersion();
 		}
 	}
 
 	public void resetCountdown() {
 		synchronized (timingLock) {
+			requireLifecycleVersionAvailable();
 			ticksBeforeRun = delayTicks;
+			advanceLifecycleVersion();
 		}
 	}
 
 	public void tick() {
 		synchronized (timingLock) {
+			requireLifecycleVersionAvailable();
 			ticksBeforeRun--;
+			advanceLifecycleVersion();
 		}
 	}
 
@@ -223,8 +238,19 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	public final AtomicTimingSnapshot captureAtomicTimingSnapshot() {
 		synchronized (timingLock) {
 			return new AtomicTimingSnapshot(
-				running, ticksBeforeRun, timesRan);
+				running, ticksBeforeRun, timesRan, lifecycleVersion);
 		}
+	}
+
+	private void requireLifecycleVersionAvailable() {
+		if (lifecycleVersion == Long.MAX_VALUE) {
+			throw new IllegalStateException(
+				"Event lifecycle version exhausted");
+		}
+	}
+
+	private void advanceLifecycleVersion() {
+		lifecycleVersion++;
 	}
 
 	/** Immutable, detached event-local timing evidence. */
@@ -232,19 +258,23 @@ public abstract class GameTickEvent implements Callable<Integer> {
 		private final boolean running;
 		private final long ticksBeforeRun;
 		private final int timesRan;
+		private final long lifecycleVersion;
 
 		private AtomicTimingSnapshot(
 			final boolean running,
 			final long ticksBeforeRun,
-			final int timesRan) {
+			final int timesRan,
+			final long lifecycleVersion) {
 			this.running = running;
 			this.ticksBeforeRun = ticksBeforeRun;
 			this.timesRan = timesRan;
+			this.lifecycleVersion = lifecycleVersion;
 		}
 
 		public boolean isRunning() { return running; }
 		public long getTicksBeforeRun() { return ticksBeforeRun; }
 		public int getTimesRan() { return timesRan; }
+		public long getLifecycleVersion() { return lifecycleVersion; }
 	}
 
 	/**

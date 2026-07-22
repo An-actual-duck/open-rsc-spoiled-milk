@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, and 120 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, and 122 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, and 123 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -52,6 +52,9 @@ removal, replacement, and callback execution cannot cross an accepted fence;
 automated-validated Slice 122 locates the exact registration internally,
 validates complete owner-free authored callback state and matching proposal
 generation under that fence, and passes only closed detached scalars onward;
+automated-validated Slice 123 versions every event-local timing/lifecycle
+transition and rejects read-only fenced work if stop/reset/tick or execution
+changes that version, without holding the timing monitor across the operation;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10449,6 +10452,66 @@ this internal concurrency/generation proof. Timing stability across the
 operation, a Region object boundary, target revalidation, mutation, executable
 restoration, arrival gating, and all lifecycle authority remain absent.
 
+### Slice 123: Event lifecycle-version detection
+
+Objective: detect event-local running/countdown/execution changes across Slice
+122's read-only operation without holding the timing monitor across arbitrary
+code or converting post-operation detection into mutation authority.
+
+Implemented:
+
+- `GameTickEvent` owns one monotonic lifecycle version under `timingLock`;
+  countdown decrement, due-run completion/reset, first stop, delay/reset, and
+  standalone tick transitions all advance it;
+- exhaustion refuses before changing the protected state, repeated `stop` after
+  the event is already stopped is version-neutral, and the complete version is
+  copied into the existing atomic timing snapshot;
+- Slice 122's handle-free generation fence captures one active zero-run timing
+  tuple and its version, releases the timing monitor, invokes its explicitly
+  read-only operation under the execution/registration fence, and captures a
+  second tuple afterward;
+- matching versions produce closed stability evidence; any intervening stop,
+  reset, tick, or execution change produces
+  `EVENT_LIFECYCLE_CHANGED_DURING_OPERATION` after the operation and discards
+  the provisional fence;
+- the result distinguishes an operation that never ran from a read-only
+  operation whose lifecycle window became stale and retains only before/after
+  version scalars; and
+- the provisional value passed into the operation remains explicitly
+  unproven-stable. Only the returned accepted result says the observed read-only
+  window kept one version.
+
+Automated validation status:
+
+- an executable fixture proves every timing mutation advances the version,
+  stable read-only work retains one version, and concurrent stop, reset, and
+  tick operations all finish while the read-only operation is blocked and are
+  detected afterward;
+- that completion proves the timing monitor is not retained across arbitrary
+  operation code and preserves Slice 107's lock-inversion fix;
+- source-order guards require atomic timing capture before and after the
+  operation, version comparison afterward, and no timing monitor access in the
+  store operation seam;
+- the complete layered-map suite passes 392 tests across 122 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 777 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this is detection for read-only work. A post-operation mismatch cannot roll
+  back or make safe a mutation that already happened, so no mutating consumer
+  is permitted;
+- lifecycle stability ends with the post-operation sample; the result is not a
+  lease and can become stale immediately after return;
+- no Region object boundary or target is inspected, and no callback is invoked,
+  cancelled, rescheduled, or replayed by the fence; and
+- no commit token, mutation, executable restoration, arrival gate, or lifecycle
+  authority is created.
+
+Status: implemented and automated-validated. No owner route is required for
+these machine-controlled races.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10792,6 +10855,7 @@ private environment should validate at least:
 | 2026-07-22 | Accept the Slice 120 private Region-boundary target route. | Owner-validated; `boundary-pending` retains registration 3892 with ten ticks remaining, one available target was classified under the Region object boundary as the exact authored transient with its mutation precondition satisfied, 86 ticks later natural completion clears target evidence, all six v42 records validate, visuals and interaction remain normal, and ordinary human timing was sufficient |
 | 2026-07-22 | Continue with Slice 121 by implementing the scheduler-registration side of the outer revalidation boundary. | Implemented and automated-validated; add/remove/replacement share the existing event execution boundary before the store monitor, exact scope/registration validation releases the store before running the fenced operation, automated removal/replacement/callback races replace sub-second owner timing, 382 focused tests and the 777/488 Ant build pass, and no Region, target, mutation, callback, arrival, or lifecycle authority is added |
 | 2026-07-22 | Continue with Slice 122 by removing the caller event handle and validating authored generation inside the outer fence. | Implemented and automated-validated; exact scope/sequence lookup stays internal, complete owner-free authored callback state, active zero-run timing, object-family identity, and fixed affinity must match the expected proposal generation, only detached closed scalars reach the operation, stopped/stale/private/incomplete states refuse, 387 focused tests and the 777/488 Ant build pass, and no Region, target inspection, mutation, callback, arrival, or lifecycle authority is added |
+| 2026-07-22 | Continue with Slice 123 by detecting event-local timing changes across handle-free read-only work. | Implemented and automated-validated; every timing/lifecycle transition advances one atomic version, the generation fence compares versions around an unlocked read-only operation, concurrent stop/reset/tick races are detected after the operation without recreating the timing-lock inversion, 392 focused tests and the 777/488 Ant build pass, and no Region, target, mutation, callback, arrival, or lifecycle authority is added |
 
 ## Next Discussion
 
@@ -11218,18 +11282,24 @@ passing closed detached scalars onward. Missing, duplicate, inactive,
 already-executed, identity-less, private, incomplete, mismatched, and stale
 states refuse without invoking the operation.
 
-The remaining pre-Region gap is event-local timing stability: `stop`, countdown
-reset, and the legacy standalone `tick` use the separate timing monitor and are
-not excluded merely because the execution boundary is held. The next focused
-gate should add one monotonic event-lifecycle version covering every running,
-delay, countdown, and execution-count mutation, include it in the atomic timing
-snapshot, and let the handle-free fence compare versions before and after a
-read-only internal operation. Automated races must prove stop/reset/tick changes
-are detected without holding the timing monitor across arbitrary code or
-recreating Slice 107's lock inversion. This is detection for read-only work,
-not a commit token: post-operation mismatch cannot authorize or roll back a
-mutation. Keep Region lookup, scenery mutation, callbacks, diagnostics,
-arrival, and lifecycle consumers disconnected.
+Slice 123 now supplies event-local lifecycle-change detection around that
+handle-free work. Every running, delay, countdown, and execution-count mutation
+advances one version under the timing monitor; the outer fence samples before
+and after its unlocked read-only operation and refuses a changed window.
+Automated stop/reset/tick races finish without recreating Slice 107's lock
+inversion. The evidence remains detection, not a lease or commit token: a
+post-operation mismatch cannot authorize or roll back a mutation.
+
+The next focused gate should compose Slice 122/123's handle-free outer fence
+with Slice 119's real Region-boundary target classification for one read-only
+operation, implementing Slice 118's declared ordering end to end. It must enter
+the Region object boundary only after scheduler identity, registration, and
+generation validation; return only detached target facts; then apply the
+lifecycle-version postcheck. Automated races should prove registration changes
+and callback execution remain excluded, target changes cannot cross the Region
+classification boundary, and event-local changes are detected afterward. No
+mutation, callback invocation, diagnostic schema, arrival behavior, commit
+token, or lifecycle consumer should be added yet.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
