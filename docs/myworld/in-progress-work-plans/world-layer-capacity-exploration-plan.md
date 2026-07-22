@@ -10600,8 +10600,9 @@ Implemented:
 - additive private schema-v43 preserves v42 unchanged and adds
   `packedRegionEventAtomicTargetRevalidation`, with closed per-record stable,
   refused, and lifecycle-race shapes; and
-- the Player-owned private source wires the observer to `GameEventHandler` only
-  while the existing opt-in development diagnostic is active.
+- both the Player session source and the duplicated `::lp start` development-
+  command source wire the observer to `GameEventHandler` only while the
+  existing opt-in development diagnostic is active.
 
 Automated validation status:
 
@@ -10612,6 +10613,8 @@ Automated validation status:
   detached serialization, historical schema preservation, and the absence of
   object mutation or callback invocation;
 - the observer fixture validates ordinary null-evidence records against v43;
+- a source guard covers both runtime observer entry paths so the development-
+  command source cannot silently fall back to nullable legacy target behavior;
 - the complete layered-map suite passes 402 tests across 124 focused files;
   and
 - the authoritative bundled-Ant server build compiles 780 core and 488 plugin
@@ -10628,9 +10631,21 @@ Safety boundary:
 - all mutation, callback, packet, arrival-gate, persistence, teardown, reload,
   and lifecycle authority remains absent.
 
-Status: implemented and automated-validated. After checkpoint, one private
-natural resource-replacement route with broad human timing is required for
-owner acceptance.
+Owner validation findings:
+
+- the first route remained inside source `(10,10)`, so its seven schema-v43
+  records correctly carried no retirement selection or event evidence;
+- the corrected leave/wait/return route captured the pending authored spawn in
+  the existing ownership and target observations, but exposed that `::lp
+  start`'s duplicated development-command source had not overridden the new
+  atomic capture method; and
+- this was a diagnostic wiring omission, not a world-event or visual failure.
+  The owner reported normal resource replacement, natural return, visuals, and
+  interaction in both routes.
+
+Status: implemented and automated-validated; the development-command wiring
+correction requires one final private natural resource-replacement route with
+broad human timing for owner acceptance.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -10978,6 +10993,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 123 by detecting event-local timing changes across handle-free read-only work. | Implemented and automated-validated; every timing/lifecycle transition advances one atomic version, the generation fence compares versions around an unlocked read-only operation, concurrent stop/reset/tick races are detected after the operation without recreating the timing-lock inversion, 392 focused tests and the 777/488 Ant build pass, and no Region, target, mutation, callback, arrival, or lifecycle authority is added |
 | 2026-07-22 | Continue with Slice 124 by composing the validated outer event fence with the real inner Region target boundary. | Implemented and automated-validated; the handle-free request enters Region lookup only after scheduler registration and generation checks, target comparison and classification occur under the real object boundary, lifecycle mismatch discards provisional target facts, deterministic boundary races replace sub-second owner timing, 397 focused tests and the 779/488 Ant build pass, and no mutation, callback, diagnostic, arrival, commit-token, or lifecycle authority is added |
 | 2026-07-22 | Continue with Slice 125 by exposing bounded composed-target results through additive private diagnostics. | Implemented and automated-validated; schema-v43 preserves v42, correlates every restoration record with explicit outer-fence/lifecycle/Region/target/contract evidence or refusal, keeps provisional target facts absent after lifecycle mismatch, 402 focused tests and the 780/488 Ant build pass, and no mutation, callback, achieved-state, arrival, commit-token, or lifecycle authority is added |
+| 2026-07-22 | Correct the duplicated `::lp start` source exposed by Slice 125 owner testing. | Implemented and automated-validated; the first route correctly had no candidate while the player remained inside the source, the corrected route exposed a null atomic field despite valid ownership/target evidence, both runtime source paths now invoke the same bounded handler capture, the regression guard covers the command path, and 402 focused tests plus the 780/488 Ant build pass |
 
 ## Next Discussion
 
@@ -11427,13 +11443,15 @@ boundary facts, target decision, and Slice 118 contract result, while
 lifecycle-mismatch records discard provisional target facts. The diagnostic
 remains read-only, point-in-time, and non-authoritative.
 
-The next gate is owner acceptance rather than another implementation slice.
-Use one natural authored resource replacement: start capture nearby, create the
-pending replacement, mark `atomic-pending` during its broad pending window,
-allow natural completion, mark `atomic-after`, and stop. Schema-v43 must show a
-stable accepted outer fence and Region-boundary target contract at the pending
-marker, then no restoration record after completion; visuals and interaction
-must remain normal. Human input is not expected to hit a sub-second interval.
+The next gate remains owner acceptance rather than another implementation
+slice. Use one natural authored resource replacement: start capture nearby,
+create the pending replacement, leave its packed source, wait through the
+16-tick retirement grace, and mark `atomic-pending` during the broad pending
+window. Return and wait for natural completion, leave the source again, wait
+through the grace, mark `atomic-after`, and stop. Schema-v43 must show a stable
+accepted outer fence and Region-boundary target contract at the pending marker,
+then no restoration record after completion; visuals and interaction must
+remain normal. Human input is not expected to hit a sub-second interval.
 Do not add mutation, callback invocation, arrival behavior, commit tokens, or a
 lifecycle consumer on the strength of diagnostics alone.
 

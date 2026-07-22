@@ -17,6 +17,10 @@ OBSERVER = ROOT / (
     "LayeredCoordinateParityObserver.java"
 )
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+DEVELOPMENT = ROOT / (
+    "server/plugins/com/openrsc/server/plugins/authentic/commands/"
+    "Development.java"
+)
 SCHEMA_V42 = ROOT / (
     "tools/layered-maps/schema/"
     "layered-map-parity-event-v42.schema.json"
@@ -181,6 +185,7 @@ class LayeredMapsSliceOneHundredTwentyFiveTest(unittest.TestCase):
     def test_observer_and_player_emit_bounded_non_authoritative_v43(self):
         observer = OBSERVER.read_text(encoding="utf-8")
         player = PLAYER.read_text(encoding="utf-8")
+        development = DEVELOPMENT.read_text(encoding="utf-8")
         dto = DTO.read_text(encoding="utf-8")
         readme = README.read_text(encoding="utf-8")
         self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v43"', observer)
@@ -194,6 +199,18 @@ class LayeredMapsSliceOneHundredTwentyFiveTest(unittest.TestCase):
         self.assertIn(
             "captureLayeredPackedRegionEventAtomicTargetRevalidation(",
             player,
+        )
+        command_source_start = development.index(
+            "layeredPackedRegionEventOwnershipSource(final Player player)"
+        )
+        command_source_end = development.index(
+            "private List<LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata>",
+            command_source_start,
+        )
+        command_source = development[command_source_start:command_source_end]
+        self.assertIn(
+            "captureLayeredPackedRegionEventAtomicTargetRevalidation(",
+            command_source,
         )
         for required in (
             "isAtomicWithMutation() { return false; }",
