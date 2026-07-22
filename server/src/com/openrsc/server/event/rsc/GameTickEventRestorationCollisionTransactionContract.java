@@ -347,7 +347,7 @@ public final class GameTickEventRestorationCollisionTransactionContract {
 			return new PackedRegionCoordinate(regionX, regionY);
 		}
 
-		private static PackedRegionCoordinate fromTile(
+		static PackedRegionCoordinate fromTile(
 			final int x,
 			final int y) {
 			return of(
