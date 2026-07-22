@@ -1,9 +1,9 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, and 113 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, and 117 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, and 117 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, and 116 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -30,8 +30,10 @@ automated-validated Slice 115 defines the pure detached target-decision table
 without adding runtime lookup, state capture, mutation, or arrival authority;
 automated-validated Slice 116 adds bounded read-only exact-slot observation,
 retaining scheduler/event correlation but no handles or mutation authority;
-automated-validated Slice 117 exposes that detached observation through private
-schema-v41 without adding a commit token, mutation, or arrival authority;
+owner-validated Slice 117 exposes that detached observation through private
+schema-v41 and proves one pending authored stump is classified as the exact
+transient mutation prerequisite before natural completion clears the evidence,
+without adding a commit token, mutation, or arrival authority;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10082,8 +10084,25 @@ Safety boundary:
   and no reconstruction, preservation, registry, teardown, transaction,
   rollback, packet, or lifecycle authority is added.
 
-Status: implemented and automated-validated. Owner validation, executable
-restoration, arrival gating, and all lifecycle authority remain absent.
+Owner validation:
+
+- the seven-record private magic-tree route validates against schema-v41 in
+  exact `start`, source teleport, `target-a`, `target-b`, return teleport,
+  `target-return`, `stop` order;
+- at event-inventory tick 73761, `target-a` retains scheduler registration 3892
+  with eight ticks remaining and reports one object at `(524,489)`, zero exact
+  restoration-scenery matches, one exact authored-identity match,
+  `EXACT_AUTHORED_TRANSIENT_PRESENT`, and
+  `MUTATION_PRECONDITION_SATISFIED`;
+- 29 ticks later, `target-b` reports zero restoration targets because the
+  callback completed naturally between human-entered markers; the return
+  teleport, `target-return`, and stop remain at zero; and
+- future owner instructions must state tolerant real-time or tick windows.
+  Human-entered commands are never assumed instantaneous; any gate requiring
+  sub-second precision must use an automated private fixture instead.
+
+Status: implemented and owner-validated. Executable restoration, arrival
+gating, and all lifecycle authority remain absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -10421,6 +10440,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 115 by defining a pure detached target-state decision table. | Implemented and automated-validated; binding/generation failures precede occupancy, spawn accepts empty or exact authored transient and no-ops on exact restored scenery, removal protects changed authored successors, every conflict is typed, and no runtime lookup, mutation, arrival gate, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 116 by capturing bounded read-only restoration target evidence. | Implemented and automated-validated; every exact collision-slot occupant is copied under the Region object monitor, missing/empty/exact/transient/mismatch/ambiguity remain distinct, scheduler/event correlation is retained, the capture is explicitly non-atomic with callback execution, and no entity handle, mutation, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 117 by exposing detached restoration-target evidence through private diagnostics. | Implemented and automated-validated; additive schema-v41 correlates the point-in-time target snapshot with the exact event inventory, publishes only bounded counts/categories/outcomes, preserves schema-v40, and explicitly grants no achieved-state claim, commit token, mutation, arrival gate, or lifecycle authority |
+| 2026-07-22 | Accept the Slice 117 private restoration-target route and formalize human timing tolerance. | Owner-validated; `target-a` captures registration 3892 with eight ticks remaining and one exact authored stump classified as a satisfied spawn mutation precondition, 29 ticks later natural completion clears target evidence, all seven v41 records validate, and future sub-second gates require automation rather than instantaneous owner input |
 
 ## Next Discussion
 
@@ -10806,13 +10826,20 @@ additive private schema-v41: capture immediately follows the exact event
 inventory, correlation covers proposal generation, inventory observation tick,
 scheduler-instance scope, restoration count, snapshot ordinal, registration
 sequence, and target coordinate, and only detached counts/categories/outcomes
-are published. The next gate is owner validation. Its magic-tree route should
-prove the pending target is one exact authored transient rather than empty,
-then prove natural completion removes both event and target evidence. No field
-claims an executed mutation, commit token, achieved restoration, or arrival
-gate. The observer now performs only that bounded read-only target lookup; it
-still has no event, store, callback, key, entity handle, due-event executor,
-cancellation, reschedule, load, mutation, or arrival-gate authority.
+are published. The owner route now proves one pending magic-tree target is an
+exact authored transient with eight ticks remaining; natural completion clears
+both event and target evidence before the second human-entered marker. Every
+record remains schema-valid, and owner timing is explicitly treated as a broad
+window rather than instantaneous input. No field claims an executed mutation,
+commit token, achieved restoration, or arrival gate. The observer performs
+only that bounded read-only target lookup; it still has no event, store,
+callback, key, entity handle, due-event executor, cancellation, reschedule,
+load, mutation, or arrival-gate authority. The next design gate is atomic
+revalidation: before any executable restoration exists, define how binding,
+generation, scheduler registration, and exact-slot state must be checked again
+inside the future mutation boundary without retaining a stale entity handle or
+reintroducing a scheduler/Region lock cycle. Start with a dormant fail-closed
+contract and executable fixture; do not wire a live mutation consumer yet.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
