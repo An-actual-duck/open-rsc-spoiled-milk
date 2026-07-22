@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, and 107 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, and 107 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, and 108 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -11,13 +11,14 @@ Branch: `docs/layered-map-rebuild-refinement`
 Started: 2026-07-17
 
 Current milestone: owner-validated Slice 107 corrects the callback-lock
-deadlock exposed by the first Slice 106 owner route. Event execution remains
-serialized, but the timing monitor now protects only primitive state
-transitions and is never held across arbitrary callback/plugin code. Atomic
-capture can therefore observe an executing tuple without forming a lock cycle;
-schema-v37 and every authority boundary remain unchanged. Arrival ordering,
-replay, cancellation, reschedule, preservation, and all lifecycle authority
-remain absent;
+deadlock exposed by the first Slice 106 owner route, and automated-validated
+Slice 108 defines the next dormant restoration prerequisite. Known authored
+spawns must bind an exact destination slot, known authored removals must bind
+an exact existing entity, any mismatch or missing authored identity refuses,
+and timer/transient state must be reconciled before the first visibility
+snapshot. The contract performs no lookup or arrival gate; replay,
+cancellation, reschedule, preservation, and all lifecycle authority remain
+absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -9409,6 +9410,86 @@ route completes both markers without disconnect or tick stall, preserves exact
 timing arithmetic, and reaches natural completion; executable restoration,
 arrival ordering, and all event/lifecycle authority remain absent.
 
+### Slice 108: Dormant scenery target and arrival requirements
+
+Objective: define the fail-closed target-binding and pre-visibility ordering
+requirements for the two known scenery callbacks without performing a target
+lookup, reconstructing a source, or gating player arrival.
+
+Runtime inspection finding:
+
+- delayed scenery spawn currently calls `registerGameObject`, whose normal
+  collision behavior unregisters the occupant at the destination. Exact X/Y is
+  therefore insufficient recovery authority: a future restoration path must
+  prove the authored destination slot before it may replace anything;
+- delayed scenery removal closes over one live `GameObject` and calls
+  `unregisterGameObject` on that reference. Once a source has been torn down,
+  only detached authored placement identity can safely name the intended
+  reconstructed entity; an identity-less live reference cannot be rebound;
+- successful login is loaded on the asynchronous login executor, then queued
+  as a non-player `ImmediateEvent`. Its `loadingComplete` path calls
+  `ActionSender.sendLogin`, which registers the Player and builds the first
+  scenery visibility snapshot inside that same event. A future source recovery
+  cannot rely on finishing later in the tick; reconciliation must precede that
+  first snapshot; and
+- the same requirement applies to movement and teleport arrivals even though
+  no source-loading path or shared arrival seam exists yet.
+
+Implemented:
+
+- immutable `GameTickEventRestorationRequirement` derives only from Slice 101's
+  detached restoration state and copies authored target identity into scalar
+  generation, source-coordinate, ordinal, and construction-kind fields;
+- authored spawn declares `AUTHORED_DESTINATION_SLOT`, while authored removal
+  declares `AUTHORED_EXISTING_ENTITY`. Both require authored placement identity
+  and `REFUSE_MISMATCH_OR_AMBIGUITY`; exact coordinates alone never satisfy the
+  binding;
+- identity-less spawn and removal remain visible as
+  `MISSING_AUTHORED_PLACEMENT_IDENTITY` with incomplete binding. Unknown
+  callbacks remain wholly unavailable rather than inheriting scenery rules;
+- `RECONCILE_BEFORE_FIRST_VISIBILITY` states the ordering rule for continuing
+  server time: an overdue one-shot result must already be reflected before the
+  first snapshot, while a not-yet-due callback must expose its pending transient
+  state and resumed remaining timer before that snapshot; and
+- the value explicitly reports false for target lookup, arrival gate,
+  executable restoration, and lifecycle authority. It retains no World,
+  Region, entity, event, scheduler, callback, registry, login, or packet handle.
+
+Automated validation status:
+
+- an executable Java fixture proves authored spawn/removal produce different
+  exact target subjects with the same fail-closed conflict and arrival rules;
+- the fixture proves identity-less variants cannot claim complete binding,
+  unavailable callbacks gain no inferred rule, and every path remains dormant;
+- structural guards trace the existing login event through registration to its
+  immediate first visibility snapshot, and verify non-player events execute
+  before normal Player processing;
+- observer guards prove schema-v37 and private diagnostics do not consume or
+  publish the dormant requirement; and
+- the complete layered-map suite passes 325 tests across 107 focused files,
+  while the authoritative bundled-Ant server build compiles 774 core and 488
+  plugin sources.
+
+Safety boundary:
+
+- authored identity is evidence a future resolver must validate, not proof
+  that a corresponding current entity exists. No target lookup is performed;
+- the arrival requirement is an ordering invariant, not an arrival gate,
+  player-registration hook, visibility suppressor, loader, or due-event
+  executor;
+- the contract does not decide how an authored predecessor is related to a
+  later population generation, whether an absent same-identity target is an
+  idempotent success, or how callback completion is journaled. Those questions
+  remain fail-closed for later slices; and
+- No callback is cancelled, stopped, removed, rescheduled, recreated, or run.
+  No source is loaded, retained, retired, reconstructed, or gated, and no
+  preservation, reload, registry, teardown, transaction, rollback, or
+  lifecycle authority is created.
+
+Status: implemented and automated-validated. Inventory detachment, private
+diagnostic exposure, owner validation, executable restoration, arrival gating,
+and all lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -9732,6 +9813,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 106 by exposing detached atomic timing through an additive private contract. | Implemented and automated-validated; schema-v37 publishes reconciled aggregate/per-event timing provenance, known restorations are atomic, unknown callbacks remain non-atomic, schema-v36 stays immutable, and no event or lifecycle authority is created |
 | 2026-07-21 | Correct the private marker deadlock exposed by the first Slice 106 owner route. | Slice 107 implemented and automated-validated; an exact thread dump proves the callback/timing lock cycle, `doRun` remains serialized without holding the timing monitor across callback code, the executable inversion fixture completes, and no event or lifecycle authority is created |
 | 2026-07-21 | Accept the corrected Slice 106/107 atomic-timing route. | Owner-validated; both markers complete without disconnect, retain one token and registration 3945, ticks 323→334 reconcile exactly with remaining delay 39→28, aggregate/event/restoration atomic claims agree, natural completion removes the callback, all six records validate against v37, and every authority flag remains false |
+| 2026-07-21 | Continue with Slice 108 by defining fail-closed scenery target-binding and pre-visibility arrival requirements. | Implemented and automated-validated; authored spawn binds a destination slot, authored removal binds an existing entity, missing identity or mismatch refuses, reconciliation must precede first visibility, and no lookup, arrival gate, executable restoration, or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -10078,13 +10160,17 @@ Slice 106 supplies that additive private contract while keeping v36 immutable
 and explicitly non-atomic. Its first owner marker exposed the Slice 104 timing-
 monitor scope defect rather than producing valid evidence; Slice 107 corrects
 that exact deadlock with an executable lock-inversion regression, and the clean
-repeat now validates both slices through natural callback completion. The next
-focused implementation gate should address the next restoration prerequisite:
-define immutable target-binding evidence for the known scenery callback and
-the arrival-order rule that prevents a returning player from observing a stale
-depleted object. It must begin as a dormant, fail-closed contract; the observer
-must continue to receive no event, store, callback, key, due-event executor,
-cancellation, reschedule, load, or arrival-gate authority.
+repeat now validates both slices through natural callback completion. Slice 108
+adds the dormant, fail-closed target and arrival requirement: spawn and removal
+have distinct authored subjects, exact coordinates cannot substitute for
+authored identity, conflicts refuse, and restoration state must be reconciled
+before first visibility. The next focused gate should detach this requirement
+into the bounded event inventory only when the corresponding known restoration
+state and authored target agree. It must reconcile counts and completeness,
+retain identity-less callbacks as explicit incomplete evidence, leave schema-
+v37 and the observer unchanged, and grant no event, store, callback, key,
+target lookup, due-event executor, cancellation, reschedule, load, or arrival-
+gate authority.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
