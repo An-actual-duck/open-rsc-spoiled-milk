@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, and 143 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, and 144 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -131,6 +131,11 @@ automated-validated Slice 143 defines bounded recovery order and separates
 overdue desired-state consumption from future transient-state preservation,
 with monotonic completed prefixes and first visibility withheld through any
 refusal or incomplete batch;
+automated-validated Slice 144 defines the detached future current-state
+snapshot, keeps the current constructor/provenance/collision separate from the
+callback's final desired state and retains its remaining positive scheduler
+countdown, while owner-bound, opaque, incomplete, mismatched, or unbounded
+state refuses and every runtime consumer remains disconnected;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -11917,6 +11922,75 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the policy has no runtime consumer or authority.
 
+### Slice 144: Future current-state recovery snapshot
+
+Objective: close the detached state definition required when a reconstruction
+batch encounters a callback whose countdown remains in the future, without
+executing that callback early or changing its scheduler lifecycle.
+
+Implemented:
+
+- `GameTickEventRestorationCurrentStateRecoverySnapshot` keeps the callback's
+  final desired constructor separate from the exact scenery constructor that
+  is present now, and copies the scheduler-instance identity, registration,
+  proposal generation, lifecycle version, and remaining positive scheduler
+  countdown needed to correlate a later recovery attempt;
+- Spawn and removal callbacks share one closed snapshot shape but require
+  different current-target evidence: spawn preserves one exact authored
+  transient, while removal preserves the exact restoration scenery that the
+  callback will eventually remove;
+- both paths require one matching authored generation, packed source,
+  placement ordinal, construction kind, coordinate, type, and boundary
+  direction. A future removal additionally requires its current object and
+  permanent IDs to match the callback constructor exactly;
+- the current object retains its exact constructor and canonical bounded
+  per-tile blocking, six-counter directional collision, and projectile
+  contribution rather than deriving collision from the callback's eventual
+  desired state;
+- an accepted callback must still be running, never executed, one-shot, using
+  continuing server-tick progression, and have a strictly positive remaining
+  countdown. Overdue work remains Slice 142 desired-state consumption;
+- the declaration requires event-execution, stable-lifecycle, Region-object,
+  and ordered collision boundaries to have covered one exact slot during
+  capture; and
+- owner-bound callback/current scenery, opaque runtime attributes, mismatched
+  identity or target classification, incomplete collision state, duplicate
+  collision tiles, or absent boundaries refuse without yielding a snapshot.
+
+Automated validation status:
+
+- the executable fixture proves a future spawn retains a stump constructor,
+  collision, and countdown separately from the eventual tree constructor;
+- it proves the same contract accepts a future exact-removal object and rejects
+  a different current constructor;
+- overdue, already-run, generation-mismatched, classification-mismatched,
+  owner-bound, opaque, incomplete, duplicate-collision, and missing-boundary
+  paths refuse explicitly;
+- source guards enforce no runtime model/import, synchronization, callback,
+  scheduler mutation, Region loading, visibility, arrival, or lifecycle
+  consumer; and
+- the complete layered-map suite passes 478 tests across 143 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 794 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this value consumes only detached declarations and performs no runtime
+  observation, reconstruction, registration lookup, Region or collision
+  mutation, callback invocation, cancellation, reschedule, loading, arrival
+  gating, or visibility release;
+- boundary claims are inputs that a later private coordinator must establish;
+  this class cannot acquire those boundaries or turn the snapshot into a
+  reusable permit;
+- the existing callback remains scheduled; the snapshot records the countdown
+  but neither pauses nor rewrites it; and
+- runtime capture/application, batch coordination, first-visibility
+  integration, loading, retirement, and persistence remain later gates.
+
+Status: implemented and automated-validated. No owner route is required because
+the snapshot remains disconnected from all runtime consumers.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -12799,15 +12873,25 @@ successful prefix is monotonic, but any refusal or incomplete suffix keeps
 first visibility withheld and requires a fresh exact inventory retry. No
 runtime consumer or visibility gate is attached.
 
-The next safe slice should define the missing detached current-state recovery
-snapshot for future callbacks. It must capture the exact present transient
-constructor/provenance and collision contribution plus the remaining scheduler
-countdown without converting that state into the callback's final desired
-state. Spawn and removal callbacks need symmetric definitions, opaque runtime
-attributes and unreconstructable owner-bound state must refuse, and the value
-must remain disconnected from Region loading, mutation, scheduling, and
-visibility. Only after that snapshot is closed should a private coordinator be
-considered.
+Slice 144 now supplies that missing detached future current-state snapshot. It
+keeps the exact present constructor, authored provenance, canonical collision
+contribution, and positive remaining countdown separate from the callback's
+eventual desired constructor. Spawn requires an exact authored transient;
+removal requires the exact scenery it will later remove. Both refuse owner-
+bound or opaque state, incomplete boundary/collision evidence, mismatched
+identity/classification, and duplicate collision tiles. The value performs no
+runtime capture or application and remains disconnected from Region loading,
+scheduling, arrival, and visibility.
+
+The next safe slice should define the private recovery coordinator contract
+that maps each Slice 143 step to exactly one typed operation: Slice 142's
+desired-state commit/consumption for overdue callbacks or Slice 144's current-
+state restoration with scheduler retention for future callbacks. It must
+revalidate one bounded inventory, preserve deterministic prefix/refusal
+semantics, make no loading or visibility claim, and initially consume fixture-
+supplied typed outcomes rather than reaching a production arrival path. Runtime
+current-state capture and application should remain separate until the
+coordinator's correlation and refusal surface are closed.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
