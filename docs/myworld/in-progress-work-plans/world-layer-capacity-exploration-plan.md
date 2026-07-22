@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, and 125 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, and 131 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, and 132 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -88,6 +88,9 @@ automated-validated Slice 131 adds a pure exact collision-footprint planner for
 register and unregister operations, including rotation, overlapping wall and
 projectile contributions, packed-Region coverage, the object ID 1147 asymmetry,
 and delayed force-full-block state, while remaining disconnected from runtime;
+automated-validated Slice 132 extracts the behavior-identical legacy projectile-
+clipping classifier, makes both World and Slice 131's detached definitions use
+that one pure policy, and leaves collision mutation order and locking unchanged;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -11005,9 +11008,9 @@ Implemented:
 
 - `GameTickEventRestorationCollisionFootprintPlanner` accepts an explicit
   register/unregister operation, detached constructor scalars, detached
-  scenery or boundary definition values, the already-resolved legacy
-  projectile-clipping classification, delayed-spawn `forceFullBlock`, and
-  explicit world bounds;
+  scenery or boundary definition values, delayed-spawn `forceFullBlock`, and
+  explicit world bounds. Slice 132 makes its public definition factories derive
+  projectile classification through the shared legacy policy;
 - scenery width/height rotation follows directions `0/4` versus all other
   directions; blocking definition type 1 contributes counted full-blocking
   scenery, while definition type 2 contributes the legacy directional wall
@@ -11053,9 +11056,9 @@ Automated validation status:
 
 Safety boundary:
 
-- the projectile-clipping boolean is a detached caller declaration; this slice
-  does not yet resolve or prove it against live definitions and the legacy name
-  allowlist;
+- the retained projectile-clipping boolean is derived by Slice 132's shared
+  pure policy, but the footprint is still detached data and not a live
+  definition-table observation;
 - an available footprint is data, not evidence that Regions exist, their
   monitors are held, current tile counters equal the contribution, or every
   competing mutation shares Slice 130's boundary; and
@@ -11064,6 +11067,60 @@ Safety boundary:
 
 Status: implemented and automated-validated. No owner route is required for
 this disconnected pure planner; no runtime collision behavior changed.
+
+### Slice 132: Shared projectile-clipping classification
+
+Objective: remove Slice 131's caller-declared projectile classification by
+extracting the exact legacy decision order into one pure policy used by both
+the authoritative World path and detached collision definitions.
+
+Implemented:
+
+- `LegacyObjectProjectileCollisionPolicy` preserves the current scenery rule
+  order: any case-normalized name containing `tree` clips first; while the
+  allowlist loop is populated, one-by-one non-chests clip; larger scenery clips
+  only on a case-insensitive allowlist match;
+- boundary objects retain their distinct rule and clip only when their name
+  matches the allowlist; they do not inherit the scenery dimension shortcut;
+- World's private `isProjectileClipAllowed` now projects the same live
+  definition name/width/height and existing constant allowlist into the shared
+  pure classifier;
+- Slice 131's public scenery and boundary definition factories accept the same
+  detached name/allowlist inputs and derive their retained classification only
+  through that policy; and
+- null names, arrays, or entries refuse before a classification can be used.
+
+Automated validation status:
+
+- executable fixtures cover mixed-case tree substrings, one-by-one non-chests,
+  mixed-case chests, larger allowlisted scenery, larger non-allowlisted
+  scenery, allowlisted and ordinary boundaries, and the exact legacy behavior
+  of an empty allowlist;
+- the fixture proves policy-derived planner definitions produce or omit
+  projectile contributions as expected and rejects missing classification
+  inputs;
+- source guards prove the policy imports no runtime model or constants and
+  performs no observation, locking, or mutation;
+- source guards prove World delegates both object families to the policy while
+  its registration, unregistration, collision loops, and operation order stay
+  in place; Store, handler, and RegionManager remain disconnected;
+- the complete layered-map suite passes 430 tests across 131 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 787 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this is a behavior-identical extraction for valid loaded definitions, not a
+  redesign of which scenery or boundaries should block projectiles;
+- World still performs its historical object-membership and collision changes
+  outside Slice 130's monitors, and Slice 131 still does not observe a live
+  definition or TileValue; and
+- the policy and projected definition grant no registration, collision,
+  rollback, packet, arrival, retirement, or lifecycle authority.
+
+Status: implemented and automated-validated. No owner route is required for
+this classification extraction; collision mutation behavior is unchanged.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -11419,6 +11476,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 129 by specifying the dormant ordered collision transaction contract. | Implemented and automated-validated; anchor/collision tiles derive exact canonical packed-Region coverage, every Region and competing object/collision mutation must share the declared boundary, fresh compare and unchanged-state rollback checks are mandatory, the new coordinate owner is explicitly inventoried/classified, all declarations remain inert and disconnected, and 418 focused tests plus the 784/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 130 by adding disconnected ordered Region object/collision boundaries. | Implemented and automated-validated; one real per-Region monitor plus a lifecycle-protected non-creating canonical runner proves same-Region exclusion, cross-Region acquisition, reverse-order/duplicate refusal, and unavailable-Region refusal, while every existing mutation/event path remains disconnected, and 422 focused tests plus the 785/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 131 by defining the exact detached collision-footprint planner. | Implemented and automated-validated; scenery rotation, blocking counts, six-bit directional collision, projectile overlap counts, boundary axes, object ID 1147's asymmetric early return, delayed force-full-block, bounded world effects, unique tiles, and canonical Region coverage are executable-table tested, all runtime consumers remain disconnected, and 426 focused tests plus the 786/488 Ant build pass |
+| 2026-07-22 | Continue with Slice 132 by sharing the exact projectile-clipping classifier. | Implemented and automated-validated; the tree, one-by-one non-chest, allowlist, chest, size, case, and boundary rules now live in one pure policy consumed by both World and Slice 131 definitions, the extraction is behavior-identical and leaves mutation order/locking unchanged, and 430 focused tests plus the 787/488 Ant build pass |
 
 ## Next Discussion
 
@@ -11893,21 +11951,23 @@ canonical Region order, exact footprint coverage, shared-mutation exclusion,
 fresh comparison, and unchanged-state rollback obligations, but it deliberately
 does not manufacture a runtime lock.
 
-Slices 130 and 131 now supply the disconnected lock-order and footprint
-foundations. One real monitor belongs to each packed Region, and the pure
-planner can identify every Region touched by one legacy collision operation.
-Existing mutation paths remain untouched, so neither foundation yet proves
-stable world state.
+Slices 130-132 now supply the disconnected lock-order, exact footprint, and
+shared projectile-classification foundations. One real monitor belongs to each
+packed Region, and the pure planner can identify every Region touched by one
+legacy collision operation from consistently classified definition values.
+Existing mutation paths remain outside those monitors, so the foundation does
+not yet prove stable world state.
 
-The next focused gate should extract one pure legacy projectile-classification
-policy from the current name/dimension/allowlist rules and use it both in
-World's existing check and in a detached definition projection for Slice 131.
-Executable fixtures must cover trees, one-by-one non-chests, allowlisted
-scenery and boundaries, case handling, chests, larger non-allowlisted scenery,
-and missing definitions. The replacement must be behavior-identical and must
-not acquire Slice 130's runner or change object/collision mutation order. This
-removes the planner's remaining caller-declared classification ambiguity before
-any mutation entry point is moved behind the new boundary.
+The next focused gate should define a disconnected collision-application
+precondition over one available Slice 131 footprint and detached current
+per-tile counters. It must model register additions and unregister removals,
+validate every one of the six dynamic-collision counters rather than only an OR
+mask, retain exact blocking-scenery and projectile counts, refuse underflow,
+overflow, duplicate/missing/extra tiles, operation mismatch, stale comparison,
+or Region-coverage mismatch, and return only the exact projected post-state.
+It must not read or mutate TileValue, acquire Slice 130's runner, or change
+World. Only after that arithmetic is executable and fail-closed should a real
+ordered-boundary apply seam be considered.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

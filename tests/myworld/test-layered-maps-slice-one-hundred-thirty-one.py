@@ -20,6 +20,10 @@ PLANNER = RSC / "GameTickEventRestorationCollisionFootprintPlanner.java"
 COLLISION_FLAG = ROOT / (
     "server/src/com/openrsc/server/util/rsc/CollisionFlag.java"
 )
+PROJECTILE_POLICY = ROOT / (
+    "server/src/com/openrsc/server/util/rsc/"
+    "LegacyObjectProjectileCollisionPolicy.java"
+)
 WORLD = ROOT / "server/src/com/openrsc/server/model/world/World.java"
 STORE = RSC / "handler/GameTickEventStore.java"
 HANDLER = RSC / "handler/GameEventHandler.java"
@@ -54,6 +58,7 @@ import com.openrsc.server.event.rsc
 
 public final class RestorationCollisionFootprintFixture {
     private static final WorldBounds BOUNDS = WorldBounds.of(1008, 4032);
+    private static final String[] ALLOWLIST = {"gate", "chair"};
 
     public static void main(String[] args) {
         fullBlockingSceneryRotatesAndAggregatesForce();
@@ -67,7 +72,7 @@ public final class RestorationCollisionFootprintFixture {
     private static void fullBlockingSceneryRotatesAndAggregatesForce() {
         Result result = plan(
             Operation.REGISTER, 5, 47, 10, 0, 0,
-            Definition.scenery(1, 2, 1, true), true);
+            Definition.scenery(1, 2, 1, "tree", ALLOWLIST), true);
         check(result.isFootprintAvailable()
                 && result.getContributionTileCount() == 2
                 && result.getRequiredRegionCount() == 2,
@@ -91,7 +96,7 @@ public final class RestorationCollisionFootprintFixture {
     private static void directionalSceneryAggregatesOverlap() {
         Result result = plan(
             Operation.UNREGISTER, 6, 47, 10, 2, 0,
-            Definition.scenery(2, 2, 1, true), false);
+            Definition.scenery(2, 2, 1, "gate", ALLOWLIST), false);
         check(result.getContributionTileCount() == 3,
             "rotated directional scenery has three unique affected tiles");
         CollisionContribution first = result.getContributions().get(0);
@@ -114,7 +119,7 @@ public final class RestorationCollisionFootprintFixture {
     private static void boundaryPreservesLegacyCollisionAndProjectileAxes() {
         Result result = plan(
             Operation.REGISTER, 7, 48, 10, 0, 1,
-            Definition.boundary(1, true), false);
+            Definition.boundary(1, "gate", ALLOWLIST), false);
         check(result.getContributionTileCount() == 3,
             "boundary direction zero affects three unique tiles");
         List<CollisionContribution> contributions = result.getContributions();
@@ -148,7 +153,7 @@ public final class RestorationCollisionFootprintFixture {
             "delayed force-full-block remains after the special early return");
         Result unregistered = plan(
             Operation.UNREGISTER, 1147, 100, 100, 0, 0,
-            Definition.scenery(1, 1, 1, false), false);
+            Definition.scenery(1, 1, 1, "chest", ALLOWLIST), false);
         check(unregistered.getContributionTileCount() == 1
                 && unregistered.getContributions().get(0)
                     .getBlockingSceneryCount() == 1,
@@ -161,22 +166,22 @@ public final class RestorationCollisionFootprintFixture {
             "ordinary missing definition refuses");
         check(plan(
                 Operation.REGISTER, 8, 10, 10, 0, 0,
-                Definition.boundary(1, false), false).getReason()
+                Definition.boundary(1, "door", ALLOWLIST), false).getReason()
                     == Reason.DEFINITION_KIND_MISMATCH,
             "constructor and definition kind mismatch refuses");
         check(plan(
                 Operation.REGISTER, 8, 0, 10, 0, 0,
-                Definition.scenery(2, 1, 1, false), false).getReason()
+                Definition.scenery(2, 1, 1, "chest", ALLOWLIST), false).getReason()
                     == Reason.OUT_OF_WORLD_EFFECT,
             "directional neighbor outside the world refuses");
         check(plan(
                 Operation.REGISTER, 8, 10, 10, 0, 0,
-                Definition.scenery(1, 65, 64, false), false).getReason()
+                Definition.scenery(1, 65, 64, "statue", ALLOWLIST), false).getReason()
                     == Reason.CONTRIBUTION_TILE_LIMIT_EXCEEDED,
             "oversized contribution refuses before expansion");
         check(plan(
                 Operation.UNREGISTER, 8, 10, 10, 0, 0,
-                Definition.scenery(1, 1, 1, false), true).getReason()
+                Definition.scenery(1, 1, 1, "chest", ALLOWLIST), true).getReason()
                     == Reason.FORCE_FULL_BLOCK_REQUIRES_REGISTER_OPERATION,
             "force-full-block cannot be invented for unregister");
     }
@@ -184,14 +189,14 @@ public final class RestorationCollisionFootprintFixture {
     private static void keepsEmptyAndPopulatedResultsImmutableAndInert() {
         Result empty = plan(
             Operation.REGISTER, 9, 20, 20, 0, 0,
-            Definition.scenery(0, 1, 1, true), false);
+            Definition.scenery(0, 1, 1, "tree", ALLOWLIST), false);
         check(empty.isFootprintAvailable()
                 && empty.getContributionTileCount() == 0
                 && empty.getRequiredRegionCount() == 1,
             "non-colliding definition remains explicit and anchor-qualified");
         Result result = plan(
             Operation.REGISTER, 10, 20, 20, 0, 0,
-            Definition.scenery(1, 1, 1, false), false);
+            Definition.scenery(1, 1, 1, "chest", ALLOWLIST), false);
         expectUnsupported(() -> result.getContributions().clear());
         expectUnsupported(() -> result.getRequiredRegions().clear());
         check(!result.isRuntimeObservationPerformed()
@@ -249,7 +254,8 @@ class LayeredMapsSliceOneHundredThirtyOneTest(unittest.TestCase):
             [
                 "javac", "-Xlint:all", "-source", "8", "-target", "8",
                 "-encoding", "UTF-8", "-d", str(cls.classes),
-                str(COLLISION_FLAG), str(STATE), str(REQUIREMENT),
+                str(COLLISION_FLAG), str(PROJECTILE_POLICY),
+                str(STATE), str(REQUIREMENT),
                 str(DECISION), str(ATOMIC_CONTRACT), str(REQUEST),
                 str(REVALIDATION), str(INTENT), str(ROLLBACK),
                 str(TRANSACTION), str(PLANNER), str(fixture),

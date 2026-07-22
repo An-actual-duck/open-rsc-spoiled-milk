@@ -55,6 +55,7 @@ import com.openrsc.server.util.PlayerList;
 import com.openrsc.server.util.SimpleSubscriber;
 import com.openrsc.server.util.ThreadSafeIPTracker;
 import com.openrsc.server.util.rsc.CollisionFlag;
+import com.openrsc.server.util.rsc.LegacyObjectProjectileCollisionPolicy;
 import com.openrsc.server.util.rsc.MessageType;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
@@ -634,28 +635,20 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	}
 
 	private boolean isProjectileClipAllowed(GameObject o) {
-		if (o.getType() == 0 && o.getGameObjectDef().getName().toLowerCase().contains("tree")) {
-			return true;
+		if (o.getType() == 0) {
+			return LegacyObjectProjectileCollisionPolicy
+				.allowsSceneryProjectileClip(
+					o.getGameObjectDef().getName(),
+					o.getGameObjectDef().getWidth(),
+					o.getGameObjectDef().getHeight(),
+					com.openrsc.server.constants.Constants
+						.objectsProjectileClipAllowed);
 		}
-
-		for (final String s : com.openrsc.server.constants.Constants.objectsProjectileClipAllowed) {
-			if (o.getType() == 0) {
-				// there are many of the objects that need to
-				// have clip enabled.
-				if (!o.getGameObjectDef().getName().equalsIgnoreCase("tree")) {
-					if (o.getGameObjectDef().getHeight() == 1 && o.getGameObjectDef().getWidth() == 1 && !o.getGameObjectDef().getName().toLowerCase().equalsIgnoreCase("chest"))
-						return true;
-				}
-				if (o.getGameObjectDef().getName().toLowerCase().equalsIgnoreCase(s)) {
-					return true;
-				}
-			} else if (o.getType() == 1) {
-				if (o.getDoorDef().getName().toLowerCase().equalsIgnoreCase(s)) {
-					return true;
-				}
-			}
-		}
-		return false;
+		return LegacyObjectProjectileCollisionPolicy
+			.allowsBoundaryProjectileClip(
+				o.getDoorDef().getName(),
+				com.openrsc.server.constants.Constants
+					.objectsProjectileClipAllowed);
 	}
 
 	private void handleProjectileClipAllowance(final int x, final int y, final int dir, final int type, final int objectType, final int doorType) {

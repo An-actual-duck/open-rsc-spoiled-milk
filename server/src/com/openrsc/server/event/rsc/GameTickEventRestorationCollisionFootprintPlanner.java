@@ -1,6 +1,7 @@
 package com.openrsc.server.event.rsc;
 
 import com.openrsc.server.util.rsc.CollisionFlag;
+import com.openrsc.server.util.rsc.LegacyObjectProjectileCollisionPolicy;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -301,7 +302,7 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 		public int getType() { return type; }
 	}
 
-	/** Detached definition values after legacy projectile classification. */
+	/** Detached definition values classified by the shared legacy policy. */
 	public static final class Definition {
 		private final int objectType;
 		private final int collisionType;
@@ -332,18 +333,24 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 			final int collisionType,
 			final int width,
 			final int height,
-			final boolean projectileClipAllowed) {
+			final String name,
+			final String[] projectileClipAllowedNames) {
 			return new Definition(
 				ConstructorState.SCENERY, collisionType, width, height,
-				projectileClipAllowed);
+				LegacyObjectProjectileCollisionPolicy
+					.allowsSceneryProjectileClip(
+						name, width, height, projectileClipAllowedNames));
 		}
 
 		public static Definition boundary(
 			final int doorType,
-			final boolean projectileClipAllowed) {
+			final String name,
+			final String[] projectileClipAllowedNames) {
 			return new Definition(
 				ConstructorState.BOUNDARY, doorType, 1, 1,
-				projectileClipAllowed);
+				LegacyObjectProjectileCollisionPolicy
+					.allowsBoundaryProjectileClip(
+						name, projectileClipAllowedNames));
 		}
 
 		public int getObjectType() { return objectType; }
