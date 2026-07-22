@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, and 113 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, and 114 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, and 115 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -26,6 +26,8 @@ target or performing a mutation;
 automated-validated Slice 114 corrects the spawn prerequisite to accept an
 empty slot or one exact-identity authored transient, preserving schema-v39 and
 publishing the correction through inert schema-v40 diagnostics;
+automated-validated Slice 115 defines the pure detached target-decision table
+without adding runtime lookup, state capture, mutation, or arrival authority;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -9904,6 +9906,62 @@ Safety boundary:
 Status: implemented and automated-validated. Runtime target inspection, owner
 validation, executable restoration, and all lifecycle authority remain absent.
 
+### Slice 115: Dormant target-state decision classifier
+
+Objective: define the complete fail-closed decision table over explicit,
+detached target observations before any runtime seam is allowed to produce
+those observations.
+
+Implemented:
+
+- `GameTickEventRestorationTargetDecision` accepts only a dormant requirement,
+  a positive reconstruction generation, and one closed detached observation
+  category. It retains no supplied requirement, target, entity, or runtime
+  handle;
+- a binding failure or generation failure takes precedence over occupancy
+  interpretation. An unavailable rule, missing authored identity, stale
+  generation, or unavailable observation yields a typed refusal before any
+  no-op or mutation-precondition result;
+- spawn treats empty and exact-authored-transient destinations as satisfied
+  mutation preconditions, treats exact restoration scenery as already-present
+  no-op success, and refuses mismatched, identity-less, or ambiguous occupancy;
+- removal treats empty as already-absent no-op success, permits only exact
+  restoration scenery as its mutation precondition, and refuses an authored
+  transient successor rather than deleting it by inherited identity alone;
+- every result contains only outcome, reason, and the supplied detached
+  observation category. `MUTATION_PRECONDITION_SATISFIED` is explanatory
+  evidence, not permission or an executable operation.
+
+Automated validation status:
+
+- an executable Java fixture covers the complete spawn and removal matrices,
+  including exact desired state, exact transient, empty, mismatched/identity-
+  less, ambiguous, unavailable, missing-binding, and stale-generation cases;
+- the fixture proves binding/generation refusal precedence and validates all
+  typed outcome/reason pairs plus explicit inert capability flags;
+- structural guards prohibit runtime model/network imports, World/Region/
+  entity/event handles, target lookup, object registration/removal, packet
+  sends, callback execution, and lifecycle authority;
+- the complete layered-map suite passes 355 tests across 114 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 775 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the classifier does not discover or snapshot occupancy. It interprets only
+  a caller-supplied detached category;
+- no result claims that state was atomically observed with the event inventory,
+  remains current, or is safe to consume after the decision returns; and
+- no target lookup, runtime state inspection, entity retention, mutation,
+  callback execution, replay, arrival gate, reconstruction, preservation,
+  registry, teardown, transaction, rollback, packet, or lifecycle authority
+  is added.
+
+Status: implemented and automated-validated. Runtime observation, inventory
+detachment, private diagnostics, executable restoration, and all lifecycle
+authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10237,6 +10295,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 113 by exposing detached generation and idempotency prerequisites through additive private diagnostics. | Implemented and automated-validated; schema-v39 publishes reconciled aggregate/per-restoration rules, schema-v38 remains immutable, and no target-state inspection, achieved-state claim, mutation, or lifecycle authority exists |
 | 2026-07-21 | Accept the Slice 113 private generation/idempotency route. | Owner-validated; seven schema-v39 records retain registration 3892 while ticks 1419->1435 and remaining delay 33->17 reconcile exactly, proposal/authored generation 1 and all declared rules agree at both pending markers, natural completion removes the record, and every authority flag remains false |
 | 2026-07-21 | Correct the authored spawn mutation prerequisite before target inspection. | Slice 114 implemented and automated-validated; the audited harvest path transfers authored identity to stump/depleted replacements, spawn now permits empty or one exact-identity authored transient, schema-v39 remains immutable, schema-v40 publishes the correction, and no target inspection or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 115 by defining a pure detached target-state decision table. | Implemented and automated-validated; binding/generation failures precede occupancy, spawn accepts empty or exact authored transient and no-ops on exact restored scenery, removal protects changed authored successors, every conflict is typed, and no runtime lookup, mutation, arrival gate, or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -10609,14 +10668,20 @@ depleted resource inherits the exact authored identity, so a safe future spawn
 must accept an empty destination or one exact-identity authored transient while
 still refusing unrelated, identity-less, or ambiguous occupancy. Corrective
 schema-v40 publishes that rule and preserves v39 as historical evidence. The
-next gate is a dormant target-state decision classifier over explicit detached
-inputs. It should distinguish unavailable observation, empty destination,
-exact desired scenery, exact authored transient, mismatched/identity-less
-occupancy, and ambiguity; generation mismatch and incomplete binding must
-refuse before occupancy is interpreted. The classifier may return no-op
-success, mutation-precondition satisfied, or a typed refusal, but it must
-perform no runtime lookup, retain no entity, mutate nothing, and gate no
-arrival. The observer still has no event, store, callback,
+Slice 115 classifier now distinguishes unavailable observation, empty
+destination, exact restoration scenery, exact authored transient,
+mismatched/identity-less occupancy, and ambiguity. Binding and generation
+failures take precedence; spawn and removal retain distinct no-op, mutation-
+precondition, and refusal outcomes. The next gate is a bounded read-only
+runtime observation seam. It should snapshot every relevant object in the
+exact collision slot, not trust `Region.getGameObject`'s first-match result,
+and detach only counts, constructor-state comparisons, authored-identity
+comparisons, observation category, and classifier outcome. A missing Region
+must remain unavailable rather than appearing empty, multiple slot occupants
+must remain ambiguous, and the event registration/scheduler scope must stay
+attached to the evidence. The capture may be diagnostic point-in-time evidence
+but must not claim atomicity with callback execution, retain an entity, mutate
+anything, or gate arrival. The observer still has no event, store, callback,
 key, target lookup, due-event executor, cancellation, reschedule, load, or
 arrival-gate authority.
 
