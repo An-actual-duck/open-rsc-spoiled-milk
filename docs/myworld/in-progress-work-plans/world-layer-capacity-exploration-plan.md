@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, and 110 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, and 111 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, and 112 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -20,8 +20,9 @@ satisfied binding and executable restoration. They perform no lookup or
 arrival gate;
 replay, cancellation, reschedule, preservation, and all lifecycle authority
 remain absent;
-automated-validated Slice 111 defines generation matching and idempotent
-desired-state rules without inspecting a target or performing a mutation;
+automated-validated Slices 111-112 define and detach generation matching and
+idempotent desired-state rules without inspecting a target or performing a
+mutation;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -9694,6 +9695,67 @@ Status: implemented and automated-validated. Inventory detachment, generation
 comparison, diagnostics, executable restoration, and all lifecycle authority
 remain absent.
 
+### Slice 112: Detached generation and idempotency prerequisites
+
+Objective: copy Slice 111's closed rules into the bounded event inventory and
+compare authored generation only with the exact proposal generation already
+owned by that immutable inventory.
+
+Implemented:
+
+- each known restoration state detaches generation-binding requirement,
+  desired state, idempotency policy, and mutation precondition alongside its
+  existing authored placement scalars;
+- the inventory separately counts captured generation rules, authored targets
+  whose generation matches its exact proposal generation, and complete
+  idempotency-rule tuples;
+- requirement completeness and satisfied generation binding remain distinct:
+  a missing authored identity or a stale generation retains the captured rule
+  but cannot contribute to the satisfied-generation count;
+- spawn accepts only present/empty-slot rules and removal accepts only absent/
+  exact-entity rules, while both require no-op success for an already-satisfied
+  desired state; and
+- the handler copies enum names from the dormant requirement and the inventory
+  compares only detached authored generation with its own proposal generation.
+  Neither path reads a World, Region, entity registry, target slot, packet,
+  callback, or Player-arrival state.
+
+Automated validation status:
+
+- the executable inventory fixture uses proposal generation 7, retains one
+  matching authored spawn and one identity-less removal, reconciles two
+  captured generation/idempotency rules with one satisfied generation, and
+  proves the same authored event rejects comparison with generation 9;
+- constructor guards retain the exact spawn/removal desired-state pairs and
+  refuse mismatched target, binding, generation, idempotency, or mutation-
+  precondition combinations;
+- handler guards require all four detached requirement mappings and prohibit
+  lookup, registration, removal, packet, callback, scheduler-mutation, and
+  lifecycle paths;
+- schema-v38 and the observer remain unchanged and expose none of the new
+  private inventory values;
+- the complete layered-map suite passes 343 tests across 111 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 774 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- a true generation-binding aggregate means only that an authored placement
+  scalar equals the observation's reconstruction-proposal generation. It does
+  not prove a live target exists, is exact, or is safe to mutate;
+- idempotency completeness describes a closed future decision table, not an
+  inspected or achieved desired state;
+- No target lookup, state inspection, object mutation, callback execution,
+  cancellation, reschedule, replay, arrival gate, reconstruction, or
+  preservation is performed; and
+- every event, scheduler, registry, teardown, transaction, rollback, packet,
+  arrival, and lifecycle authority remains absent.
+
+Status: implemented and automated-validated. Private diagnostic exposure,
+target inspection, executable restoration, and all lifecycle authority remain
+absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10023,6 +10085,7 @@ private environment should validate at least:
 | 2026-07-21 | Record the first Slice 110 private magic-tree route without overstating its evidence. | Inconclusive; two complete sequences produce 11 schema-valid v38 records, but remaining inside source region `(10,10)` yields zero retirement candidates and null event inventories. The corrected route must teleport away and pass the 16-tick grace before its pending markers |
 | 2026-07-21 | Accept the corrected Slice 110 target/arrival route. | Owner-validated; seven v38 records retain one authored spawn registration while its remaining delay falls exactly with the observation-tick delta, both pending markers reconcile authored destination binding and pre-visibility ordering, natural completion removes the restoration record, and every authority flag remains false |
 | 2026-07-21 | Continue with Slice 111 by defining generation matching and idempotent desired-state prerequisites. | Implemented and automated-validated; stale authored generations must refuse, already-satisfied desired state is a no-op success, spawn/remove retain distinct mutation preconditions, and no comparison, inspection, mutation, or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 112 by detaching generation and idempotency prerequisites into the bounded event inventory. | Implemented and automated-validated; captured rules, satisfied proposal-generation matches, and idempotency completeness reconcile separately, identity-less/stale callbacks remain incomplete, schema-v38 is unchanged, and no target inspection, mutation, or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -10381,12 +10444,15 @@ v37 unchanged. The corrected owner route now proves a real pending authored
 spawn satisfies both requirements and disappears after natural completion.
 Slice 111 defines the next dormant generation/idempotency rule: a stale
 authored generation must refuse, an already-satisfied exact desired state is a
-no-op success, and spawn/removal have distinct mutation preconditions. The next
-gate should detach these rules into the bounded event inventory and compare an
-authored target generation only to that inventory's exact reconstruction-
-proposal generation. Captured rule completeness and satisfied generation
-matching must remain separate; an identity-less callback must remain visibly
-incomplete. The observer still has no event, store, callback,
+no-op success, and spawn/removal have distinct mutation preconditions. Slice
+112 detaches those rules, compares authored generation only to the inventory's
+exact reconstruction-proposal generation, and keeps captured rules separate
+from satisfied generation binding. The next gate should expose only these
+detached values through additive schema-v39 while preserving v38 unchanged.
+Aggregate and per-restoration values must keep captured generation rule,
+satisfied generation match, and idempotency-rule completeness separate from
+target-state inspection or achieved desired state. The observer still has no
+event, store, callback,
 key, target lookup, due-event executor, cancellation, reschedule, load, or
 arrival-gate authority.
 

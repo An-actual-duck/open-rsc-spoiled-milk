@@ -15,9 +15,13 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AuthoredConstructionKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AuthoredPlacementRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.BindingEvidence;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.DesiredState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.ExecutionSemantics;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.GenerationBindingRequirement;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.IdempotencyPolicy;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.MutationPrecondition;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.OwnerKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.PackedSource;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SceneryRestorationState;
@@ -518,6 +522,16 @@ public class GameEventHandler {
 		ArrivalOrderingRequirement arrivalOrderingRequirement =
 			ArrivalOrderingRequirement.valueOf(
 				requirement.getArrivalOrderingRequirement().name());
+		GenerationBindingRequirement generationBindingRequirement =
+			GenerationBindingRequirement.valueOf(
+				requirement.getGenerationBindingRequirement().name());
+		DesiredState desiredState = DesiredState.valueOf(
+			requirement.getDesiredState().name());
+		IdempotencyPolicy idempotencyPolicy = IdempotencyPolicy.valueOf(
+			requirement.getIdempotencyPolicy().name());
+		MutationPrecondition mutationPrecondition =
+			MutationPrecondition.valueOf(
+				requirement.getMutationPrecondition().name());
 		validateDetachedRestorationTarget(
 			requirement, authored, detachedAuthored);
 		switch (state.getKind()) {
@@ -526,12 +540,15 @@ public class GameEventHandler {
 					detachedScenery, state.isForceFullBlock(),
 					executionSemantics, timeProgressionPolicy,
 					targetSubject, bindingEvidence, targetConflictPolicy,
-					arrivalOrderingRequirement);
+					arrivalOrderingRequirement, generationBindingRequirement,
+					desiredState, idempotencyPolicy, mutationPrecondition);
 			case SCENERY_REMOVE:
 				return EventRestorationState.sceneryRemove(
 					detachedScenery, executionSemantics,
 					timeProgressionPolicy, targetSubject, bindingEvidence,
-					targetConflictPolicy, arrivalOrderingRequirement);
+					targetConflictPolicy, arrivalOrderingRequirement,
+					generationBindingRequirement, desiredState,
+					idempotencyPolicy, mutationPrecondition);
 			default:
 				throw new IllegalStateException(
 					"Unhandled event restoration-state kind");
