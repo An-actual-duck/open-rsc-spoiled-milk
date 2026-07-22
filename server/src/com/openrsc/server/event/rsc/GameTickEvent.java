@@ -166,6 +166,134 @@ public abstract class GameTickEvent implements Callable<Integer> {
 		public boolean isLifecycleAuthority() { return false; }
 	}
 
+	/**
+	 * Runs one scheduler-internal restoration outcome while the same stable
+	 * zero-run lifecycle boundary is held. Only this method may apply the
+	 * returned terminal-consumption disposition; the operation receives no
+	 * mutable event handle or lifecycle authority.
+	 */
+	public final StableRestorationConsumptionExecution
+		withinStableRestorationConsumptionBoundary(
+			final long expectedLifecycleVersion,
+			final StableRestorationConsumptionOperation operation) {
+		if (expectedLifecycleVersion <= 0L) {
+			throw new IllegalArgumentException(
+				"Expected restoration lifecycle version must be positive");
+		}
+		if (operation == null) {
+			throw new NullPointerException("operation");
+		}
+		if (!isExecutionBoundaryHeldByCurrentThread()) {
+			throw new IllegalStateException(
+				"Restoration consumption requires event execution boundary");
+		}
+		synchronized (timingLock) {
+			if (!running || timesRan != 0
+				|| lifecycleVersion != expectedLifecycleVersion
+				|| lifecycleVersion == Long.MAX_VALUE) {
+				return StableRestorationConsumptionExecution.refused(
+					expectedLifecycleVersion, lifecycleVersion);
+			}
+			RestorationLifecycleDisposition disposition =
+				operation.execute(
+					new StableRestorationLifecycleBoundary(
+						lifecycleVersion, Thread.holdsLock(timingLock)));
+			if (disposition == null) {
+				throw new NullPointerException("restoration disposition");
+			}
+			if (lifecycleVersion != expectedLifecycleVersion) {
+				throw new IllegalStateException(
+					"Restoration operation changed its guarded event lifecycle");
+			}
+			if (disposition
+					== RestorationLifecycleDisposition.TERMINALLY_CONSUME) {
+				requireLifecycleVersionAvailable();
+				running = false;
+				advanceLifecycleVersion();
+			}
+			return StableRestorationConsumptionExecution.completed(
+				disposition, expectedLifecycleVersion, lifecycleVersion);
+		}
+	}
+
+	@FunctionalInterface
+	public interface StableRestorationConsumptionOperation {
+		RestorationLifecycleDisposition execute(
+			StableRestorationLifecycleBoundary boundary);
+	}
+
+	public enum RestorationLifecycleDisposition {
+		RETAIN_SCHEDULED,
+		TERMINALLY_CONSUME
+	}
+
+	/** Closed lifecycle result with no event, callback, or monitor handle. */
+	public static final class StableRestorationConsumptionExecution {
+		private final boolean boundaryEntered;
+		private final RestorationLifecycleDisposition disposition;
+		private final long lifecycleVersionBefore;
+		private final long lifecycleVersionAfter;
+
+		private StableRestorationConsumptionExecution(
+			final boolean boundaryEntered,
+			final RestorationLifecycleDisposition disposition,
+			final long lifecycleVersionBefore,
+			final long lifecycleVersionAfter) {
+			this.boundaryEntered = boundaryEntered;
+			this.disposition = disposition;
+			this.lifecycleVersionBefore = lifecycleVersionBefore;
+			this.lifecycleVersionAfter = lifecycleVersionAfter;
+			if (lifecycleVersionBefore <= 0L
+				|| lifecycleVersionAfter <= 0L
+				|| boundaryEntered != (disposition != null)
+				|| (disposition
+						== RestorationLifecycleDisposition.RETAIN_SCHEDULED
+					&& lifecycleVersionAfter != lifecycleVersionBefore)
+				|| (disposition
+						== RestorationLifecycleDisposition.TERMINALLY_CONSUME
+					&& lifecycleVersionAfter != lifecycleVersionBefore + 1L)) {
+				throw new IllegalArgumentException(
+					"Restoration consumption result is inconsistent");
+			}
+		}
+
+		private static StableRestorationConsumptionExecution refused(
+			final long expectedVersion,
+			final long observedVersion) {
+			return new StableRestorationConsumptionExecution(
+				false, null, expectedVersion, observedVersion);
+		}
+
+		private static StableRestorationConsumptionExecution completed(
+			final RestorationLifecycleDisposition disposition,
+			final long before,
+			final long after) {
+			return new StableRestorationConsumptionExecution(
+				true, disposition, before, after);
+		}
+
+		public boolean isBoundaryEntered() { return boundaryEntered; }
+		public RestorationLifecycleDisposition getDisposition() {
+			return disposition;
+		}
+		public long getLifecycleVersionBefore() {
+			return lifecycleVersionBefore;
+		}
+		public long getLifecycleVersionAfter() {
+			return lifecycleVersionAfter;
+		}
+		public boolean isTerminallyConsumed() {
+			return disposition
+				== RestorationLifecycleDisposition.TERMINALLY_CONSUME;
+		}
+		public boolean isRuntimeHandleRetained() { return false; }
+		public boolean isCallbackInvoked() { return false; }
+		public boolean isEventReschedule() { return false; }
+		public boolean isCommitToken() { return false; }
+		public boolean isArrivalGate() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
+	}
+
 	@FunctionalInterface
 	public interface ExecutionBoundaryOperation<T> {
 		T execute();

@@ -107,6 +107,40 @@ public class GameTickEvent {
     public interface StableRestorationLifecycleOperation {
         void execute(StableRestorationLifecycleBoundary boundary);
     }
+    public StableRestorationConsumptionExecution
+            withinStableRestorationConsumptionBoundary(
+                long expectedLifecycleVersion,
+                StableRestorationConsumptionOperation operation) {
+        RestorationLifecycleDisposition disposition = operation.execute(
+            new StableRestorationLifecycleBoundary(expectedLifecycleVersion));
+        if (disposition == RestorationLifecycleDisposition.TERMINALLY_CONSUME) {
+            running = false;
+        }
+        return new StableRestorationConsumptionExecution(
+            disposition, expectedLifecycleVersion);
+    }
+    public interface StableRestorationConsumptionOperation {
+        RestorationLifecycleDisposition execute(
+            StableRestorationLifecycleBoundary boundary);
+    }
+    public enum RestorationLifecycleDisposition {
+        RETAIN_SCHEDULED, TERMINALLY_CONSUME
+    }
+    public static final class StableRestorationConsumptionExecution {
+        private final RestorationLifecycleDisposition disposition;
+        private final long before;
+        StableRestorationConsumptionExecution(
+                RestorationLifecycleDisposition disposition, long before) {
+            this.disposition = disposition;
+            this.before = before;
+        }
+        public boolean isBoundaryEntered() { return true; }
+        public long getLifecycleVersionBefore() { return before; }
+        public long getLifecycleVersionAfter() {
+            return before + (disposition
+                == RestorationLifecycleDisposition.TERMINALLY_CONSUME ? 1L : 0L);
+        }
+    }
     public static final class StableRestorationLifecycleBoundary {
         private final long lifecycleVersion;
         StableRestorationLifecycleBoundary(long lifecycleVersion) {
@@ -441,6 +475,10 @@ class LayeredMapsSliceNinetyFiveTest(unittest.TestCase):
             [
                 "javac", "-cp", classpath, "-d", str(cls.classes),
                 str(STORE),
+                str(ROOT / (
+                    "server/src/com/openrsc/server/event/rsc/"
+                    "GameTickEventRestorationOneShotConsumptionContract.java"
+                )),
                 str(ROOT / (
                     "server/src/com/openrsc/server/event/rsc/"
                     "GameTickEventRestorationState.java"

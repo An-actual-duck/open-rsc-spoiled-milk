@@ -20,6 +20,10 @@ COMMIT_REQUEST = ROOT / (
     "server/src/com/openrsc/server/event/rsc/"
     "GameTickEventRestorationCommitRequest.java"
 )
+ONE_SHOT_CONTRACT = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/"
+    "GameTickEventRestorationOneShotConsumptionContract.java"
+)
 STORE = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventStore.java"
@@ -283,7 +287,7 @@ class LayeredMapsSliceOneHundredTwentyThreeTest(unittest.TestCase):
                 "javac", "-Xlint:all", "-source", "8", "-target", "8",
                 "-cp", classpath, "-d", str(cls.classes),
                 str(STORE), str(EVENT), str(STATE), str(AFFINITY),
-                str(COMMIT_REQUEST),
+                str(COMMIT_REQUEST), str(ONE_SHOT_CONTRACT),
                 str(ROOT / (
                     "server/src/com/openrsc/server/event/rsc/"
                     "DuplicationStrategy.java"
@@ -355,22 +359,26 @@ class LayeredMapsSliceOneHundredTwentyThreeTest(unittest.TestCase):
                 method_start,
             )
         ]
-        first = method.index("event.captureAtomicTimingSnapshot()")
-        operation = method.index("operation.execute(fence)", first)
+        preparation = method.index("prepareRestorationRegistrationFence(")
+        operation = method.index("operation.execute(fence)", preparation)
         second = method.index("event.captureAtomicTimingSnapshot()", operation)
+        first = method.index("event.captureAtomicTimingSnapshot()", second + 1)
         mismatch = method.index(
-            "EVENT_LIFECYCLE_CHANGED_DURING_OPERATION", second
+            "EVENT_LIFECYCLE_CHANGED_DURING_OPERATION", operation
         )
-        self.assertLess(first, operation)
+        self.assertLess(preparation, operation)
         self.assertLess(operation, second)
         self.assertLess(second, mismatch)
+        self.assertGreater(first, mismatch)
         self.assertNotIn("timingLock", method)
         self.assertNotIn("synchronized", method)
 
     def test_detection_remains_read_only_and_non_authoritative(self):
         source = STORE.read_text(encoding="utf-8")
         execution = source[
-            source.index("class RestorationRegistrationFenceExecution"):]
+            source.index("class RestorationRegistrationFenceExecution"):
+            source.index("class RestorationCommitRequestExecution")
+        ]
         for required in (
             "isTimingStableAcrossOperation()",
             "isEventLifecycleChangeDetected()",

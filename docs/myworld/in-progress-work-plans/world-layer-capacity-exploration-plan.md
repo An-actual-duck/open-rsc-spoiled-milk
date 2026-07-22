@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, and 140 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, and 141 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -118,7 +118,11 @@ Store remains disconnected; and
 automated-validated Slice 140 defines the still-dormant scheduler-local rule
 that Region refusal retains the exact one-shot event unchanged, while applied
 or no-op desired state requires exact terminal consumption without callback
-invocation or reschedule;
+invocation or reschedule; and
+automated-validated Slice 141 implements that terminal-consumption primitive
+under the real scheduler registration, event execution, and lifecycle
+boundaries, using only a fixture-supplied detached Region outcome while
+RegionManager remains disconnected;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -11706,6 +11710,74 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 there is no runtime consumer.
 
+### Slice 141: Scheduler-local exact one-shot consumption
+
+Objective: implement Slice 140's exact terminal-consumption behavior behind
+the real scheduler registration, event execution, and event lifecycle
+boundaries while retaining a fixture-supplied detached Region outcome and
+leaving the runtime Region consumer disconnected.
+
+Implemented:
+
+- `GameTickEvent` now owns a narrow stable restoration-consumption boundary;
+  it requires the existing event execution boundary, holds the timing boundary,
+  admits only a running zero-run event at the expected lifecycle version, and
+  alone converts a terminal disposition into stopped state plus one lifecycle
+  advance;
+- `GameTickEventStore` locates one exact scheduler registration internally,
+  revalidates scheduler scope, registration sequence, authored generation,
+  exact fixed-location affinity, complete owner-free restoration payload, and
+  one-shot/continuing-tick semantics before constructing the ephemeral commit
+  request;
+- the fixture-supplied detached Region outcome is evaluated while the event
+  execution and lifecycle boundaries remain held and the Store monitor remains
+  absent;
+- Region refusal retains the exact registration, running state, zero execution
+  count, lifecycle version, and Store registration version unchanged;
+- applied and desired-state no-op outcomes reacquire the Store only after the
+  supplied Region operation returns, remove the same exact registration once,
+  then terminally stop the event without invoking or rescheduling its callback;
+  and
+- the returned result records only the closed outcome, required disposition,
+  lifecycle versions, and registration-removal fact. It retains no request,
+  event, Store, callback, Region handle, commit token, arrival gate, or reusable
+  lifecycle authority.
+
+Automated validation status:
+
+- an executable fixture proves applied and no-op outcomes remove exactly one
+  registration, advance Store state once, stop the event with exactly one
+  lifecycle advance, and leave callback/execution counts at zero;
+- the fixture proves a refused outcome retains the same sequence, Store version,
+  running state, and lifecycle unchanged, while stale generation and stopped
+  lifecycle refuse before outcome delivery;
+- deterministic latches prove concurrent callback execution, stop, and removal
+  cannot cross the accepted consumption boundary and callback code never runs;
+- source guards enforce Region-work-before-Store-removal ordering, the closed
+  result's inert authority flags, and runtime Region disconnection;
+- the complete layered-map suite passes 466 tests across 140 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 792 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this slice performs real scheduler registration removal and event terminal
+  consumption, but only when its package-local test seam is explicitly supplied
+  a detached outcome; no production call site reaches it;
+- RegionManager remains disconnected: no real Region comparison, mutation, or
+  desired-state result is invoked by the Store;
+- refusal never removes or stops the pending callback, while applied/no-op
+  fixture outcomes cannot invoke callback code or reschedule the consumed event;
+  and
+- connecting the real Region consumer, defining arrival/recovery invocation,
+  Region retirement, reconstruction, loading, persistence, and true layered
+  storage remain later gates.
+
+Status: implemented and automated-validated. No owner route is required because
+the runtime Region consumer and every production invocation path remain
+disconnected.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -12071,6 +12143,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 138 by adding a disconnected restoration object-state consumer. | Implemented and automated-validated; existing Regions are resolved without creation, collision footprints are projected before canonical boundaries, fresh exact-slot comparison precedes atomic spawn/remove or idempotent no-op, authored-transient replacement remains refused, the Store stays disconnected, 454 focused tests pass across 137 files, and the 791/488 Ant build passes |
 | 2026-07-22 | Continue with Slice 139 by connecting exact authored-transient rollback state. | Implemented and automated-validated; one zero-attribute exact authored transient with reversible collision projection can be atomically replaced, opaque runtime attributes and object ID 1147's asymmetric collision refuse unchanged, the scheduler Store stays disconnected, 458 focused tests pass across 138 files, and the 791/488 Ant build passes |
 | 2026-07-22 | Continue with Slice 140 by defining exact one-shot restoration consumption. | Implemented and automated-validated; Region refusal retains the exact pending event unchanged, applied or no-op desired state requires terminal exact-registration consumption with no callback or reschedule, invalid identity/boundary/outcome/post-state claims refuse, no runtime consumer is connected, 462 focused tests pass across 139 files, and the 792/488 Ant build passes |
+| 2026-07-22 | Continue with Slice 141 by implementing scheduler-local exact one-shot consumption. | Implemented and automated-validated; the real registration/execution/lifecycle boundaries consume a fixture-supplied detached Region outcome, refusal retains exact state, applied/no-op removes one registration and terminally stops without callback or reschedule, concurrent callback/stop/removal cannot cross, RegionManager remains disconnected, 466 focused tests pass across 140 files, and the 792/488 Ant build passes |
 
 ## Next Discussion
 
@@ -12568,21 +12641,23 @@ attribute transient with symmetric unregister/rollback collision projection can
 be replaced, while opaque or asymmetric state refuses unchanged. The scheduler
 Store remains disconnected.
 
-Slice 140 now supplies the scheduler-local disposition and postcondition table.
-Region refusal retains the exact pending registration and unchanged lifecycle;
-applied or no-op desired state requires terminal removal, a stopped/newer
-lifecycle, zero callback runs, and no reschedule, with Store acquisition only
-after Region work. The contract has no runtime consumer.
+Slice 140 supplies the scheduler-local disposition and postcondition table.
+Slice 141 now executes that table under the real exact registration, event
+execution, and stable lifecycle boundaries: refusal retains the same pending
+callback unchanged, while fixture-reported applied/no-op desired state removes
+the exact registration once and terminally stops the zero-run event without
+callback execution or reschedule. Deterministic races prove callback, stop, and
+removal cannot cross the accepted window. The supplied outcome remains detached
+test evidence and RegionManager remains disconnected.
 
-The next safe slice should implement that terminal-consumption primitive under
-the real event execution and lifecycle boundaries, then remove the same exact
-registration under the Store boundary only after the supplied disconnected
-operation reports applied or no-op. A deterministic fixture must prove refusal
-retains the callback, success prevents a concurrent callback/stop/removal from
-crossing, exact registration removal advances Store state once, and callback
-code never runs. That implementation should initially consume a fixture-
-supplied detached outcome rather than invoke RegionManager, keeping the Store-
-to-Region connection for a later slice.
+The next safe slice should connect this scheduler-local consumer to
+`RegionManager.applyGameTickEventRestorationCommitRequest` through one narrow
+package-internal operation, retaining the proven event-before-Store and
+event/lifecycle-before-Region ordering and acquiring the Store only after the
+Region result returns. It should remain unreachable from arrival or gameplay
+while a deterministic real-Region fixture proves all applied, no-op, and
+refused shapes compose with the exact scheduler disposition. Production
+recovery invocation should remain a separate later approval gate.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

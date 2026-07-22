@@ -7,6 +7,9 @@ import com.google.inject.Key;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCommitRequest;
+import com.openrsc.server.event.rsc.GameTickEventRestorationOneShotConsumptionContract;
+import com.openrsc.server.event.rsc.GameTickEventRestorationOneShotConsumptionContract.RegionCommitOutcome;
+import com.openrsc.server.event.rsc.GameTickEventRestorationOneShotConsumptionContract.RequiredAction;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
@@ -591,73 +594,313 @@ class GameTickEventStore {
 			commitLifecycleVersion[0]);
 	}
 
+	/**
+	 * Exercises exact one-shot disposition behind the real scheduler and event
+	 * boundaries using a detached fixture-supplied Region outcome. This seam is
+	 * not connected to the runtime Region service.
+	 */
+	RestorationOneShotConsumptionExecution
+		withValidatedRestorationOneShotConsumption(
+			final String expectedSchedulerInstanceIdentity,
+			final long expectedRegistrationSequence,
+			final long expectedProposalGeneration,
+			final RestorationRegionOutcomeOperation operation) {
+		if (expectedSchedulerInstanceIdentity == null
+			|| expectedSchedulerInstanceIdentity.isEmpty()
+			|| expectedRegistrationSequence <= 0L
+			|| expectedProposalGeneration <= 0L) {
+			throw new IllegalArgumentException(
+				"Expected restoration consumption registration is invalid");
+		}
+		final RestorationRegionOutcomeOperation checkedOperation =
+			Objects.requireNonNull(operation, "operation");
+		final GameTickEvent candidate;
+		synchronized (LOCK) {
+			if (!schedulerInstanceIdentity.equals(
+				expectedSchedulerInstanceIdentity)) {
+				return RestorationOneShotConsumptionExecution.refused(
+					RestorationOneShotConsumptionReason
+						.SCHEDULER_INSTANCE_MISMATCH);
+			}
+			GameTickEvent found = null;
+			for (Map.Entry<GameTickEvent, Long> registration
+					: registrationSequences.entrySet()) {
+				Long sequence = registration.getValue();
+				if (sequence != null
+					&& sequence.longValue() == expectedRegistrationSequence) {
+					if (found != null) {
+						return RestorationOneShotConsumptionExecution.refused(
+							RestorationOneShotConsumptionReason
+								.DUPLICATE_REGISTRATION_SEQUENCE);
+					}
+					found = registration.getKey();
+				}
+			}
+			if (found == null || events.get(getKey(found)) != found) {
+				return RestorationOneShotConsumptionExecution.refused(
+					RestorationOneShotConsumptionReason.EVENT_NOT_REGISTERED);
+			}
+			candidate = found;
+		}
+
+		final RestorationOneShotConsumptionExecution[] result =
+			new RestorationOneShotConsumptionExecution[1];
+		RegistrationFenceExecution registration =
+			withValidatedRegistrationFence(
+				candidate, expectedSchedulerInstanceIdentity,
+				expectedRegistrationSequence, registrationFence -> {
+					RestorationRegistrationFencePreparation preparation =
+						prepareRestorationRegistrationFence(
+							candidate, registrationFence,
+							expectedProposalGeneration);
+					if (preparation.isRefused()) {
+						result[0] = RestorationOneShotConsumptionExecution
+							.refused(mapOneShotPreparationReason(
+								preparation.getReason()));
+						return;
+					}
+					RestorationRegistrationFence fence =
+						preparation.getFence();
+					if (!fence.isOneShotExecution()
+						|| !fence.isContinuingServerTickProgression()) {
+						result[0] = RestorationOneShotConsumptionExecution
+							.refused(RestorationOneShotConsumptionReason
+								.EXECUTION_SEMANTICS_REFUSED);
+						return;
+					}
+					final RegionCommitOutcome[] regionOutcome =
+						new RegionCommitOutcome[1];
+					final GameTickEventRestorationOneShotConsumptionContract
+						.Decision[] decision =
+							new GameTickEventRestorationOneShotConsumptionContract
+								.Decision[1];
+					final boolean[] registrationRemoved = new boolean[1];
+					GameTickEvent.StableRestorationConsumptionExecution
+						lifecycle = candidate
+							.withinStableRestorationConsumptionBoundary(
+								fence.getLifecycleVersion(), boundary -> {
+									GameTickEventRestorationCommitRequest request =
+										GameTickEventRestorationCommitRequest.request(
+											fence.getSchedulerInstanceIdentity(),
+											fence.getRegistrationSequence(),
+											fence.getExpectedProposalGeneration(),
+											fence.getObservedAuthoredGeneration(),
+											boundary.getLifecycleVersion(),
+											fence.isEventExecutionBoundaryHeld(),
+											fence.isSchedulerStoreBoundaryHeld(),
+											fence
+												.isRegistrationValidatedBeforeInnerBoundary(),
+											boundary.isLifecycleBoundaryHeld(),
+											GameTickEventRestorationTargetDecision
+												.TargetOperation.valueOf(
+													fence.getRestorationKind().name()),
+											fence.getObjectId(),
+											fence.getPermanentObjectId(),
+											fence.getX(), fence.getY(),
+											fence.getDirection(), fence.getType(),
+											fence.isForceFullBlock(),
+											fence.getAuthoredPackedRegionX(),
+											fence.getAuthoredPackedRegionY(),
+											fence.getAuthoredSourceOrdinal(),
+											fence.getAuthoredConstructionKind().name());
+									regionOutcome[0] = Objects.requireNonNull(
+										checkedOperation.execute(request),
+										"region outcome");
+									decision[0] =
+										GameTickEventRestorationOneShotConsumptionContract
+											.assess(
+												GameTickEventRestorationOneShotConsumptionContract
+													.Precondition.declare(
+														regionOutcome[0], true, true, true,
+														fence.isEventExecutionBoundaryHeld(),
+														fence.isSchedulerStoreBoundaryHeld(),
+														boundary.isLifecycleBoundaryHeld(),
+														fence.isOneShotExecution(),
+														fence
+															.isContinuingServerTickProgression(),
+														true, fence.getTimesRan(),
+														boundary.getLifecycleVersion(),
+														regionOutcome[0]
+															== RegionCommitOutcome.APPLIED,
+														regionOutcome[0]
+															!= RegionCommitOutcome.REFUSED,
+														false));
+									if (decision[0].isRefused()) {
+										throw new IllegalStateException(
+											"Closed one-shot consumption contract refused");
+									}
+									if (decision[0].getRequiredAction()
+											== RequiredAction.TERMINALLY_CONSUME) {
+										synchronized (LOCK) {
+											Long observed =
+												registrationSequences.get(candidate);
+											if (events.get(getKey(candidate)) != candidate
+												|| observed == null
+												|| observed.longValue()
+													!= expectedRegistrationSequence) {
+												throw new IllegalStateException(
+													"Restoration registration changed inside its execution boundary");
+											}
+											unregisterAccepted(
+												getKey(candidate), candidate);
+											registrationRemoved[0] = true;
+										}
+									}
+									return decision[0].getRequiredAction()
+										== RequiredAction.TERMINALLY_CONSUME
+											? GameTickEvent
+												.RestorationLifecycleDisposition
+													.TERMINALLY_CONSUME
+											: GameTickEvent
+												.RestorationLifecycleDisposition
+													.RETAIN_SCHEDULED;
+								});
+					if (!lifecycle.isBoundaryEntered()) {
+						result[0] = RestorationOneShotConsumptionExecution
+							.refused(RestorationOneShotConsumptionReason
+								.EVENT_LIFECYCLE_CHANGED_BEFORE_OPERATION);
+						return;
+					}
+					GameTickEvent.AtomicTimingSnapshot after =
+						candidate.captureAtomicTimingSnapshot();
+					boolean registrationPresent;
+					boolean sameRegistrationPresent;
+					synchronized (LOCK) {
+						Long observed = registrationSequences.get(candidate);
+						registrationPresent =
+							events.get(getKey(candidate)) == candidate;
+						sameRegistrationPresent = registrationPresent
+							&& observed != null
+							&& observed.longValue()
+								== expectedRegistrationSequence;
+					}
+					GameTickEventRestorationOneShotConsumptionContract
+						.Verification verification =
+							GameTickEventRestorationOneShotConsumptionContract
+								.verifyPostcondition(
+									decision[0],
+									GameTickEventRestorationOneShotConsumptionContract
+										.Postcondition.declare(
+											registrationPresent,
+											sameRegistrationPresent,
+											registrationRemoved[0],
+											after.isRunning(),
+											after.getTimesRan(),
+											after.getLifecycleVersion(),
+											false, false,
+											registrationRemoved[0]));
+					if (!verification.isSatisfied()) {
+						throw new IllegalStateException(
+							"One-shot consumption postcondition refused: "
+								+ verification.getReason());
+					}
+					result[0] = RestorationOneShotConsumptionExecution.completed(
+						regionOutcome[0], decision[0].getRequiredAction(),
+						lifecycle.getLifecycleVersionBefore(),
+						lifecycle.getLifecycleVersionAfter(),
+						registrationRemoved[0]);
+				});
+		if (!registration.isAccepted()) {
+			return RestorationOneShotConsumptionExecution.refused(
+				mapOneShotRegistrationReason(registration.getReason()));
+		}
+		if (result[0] == null) {
+			throw new IllegalStateException(
+				"Accepted one-shot consumption produced no result");
+		}
+		return result[0];
+	}
+
 	private static RestorationRegistrationFenceExecution
 		executeRestorationRegistrationFence(
 			final GameTickEvent event,
 			final RegistrationFence registrationFence,
 			final long expectedProposalGeneration,
 			final RestorationRegistrationFenceOperation operation) {
+		RestorationRegistrationFencePreparation preparation =
+			prepareRestorationRegistrationFence(
+				event, registrationFence, expectedProposalGeneration);
+		if (preparation.isRefused()) {
+			return RestorationRegistrationFenceExecution.refused(
+				preparation.getReason());
+		}
+		RestorationRegistrationFence fence = preparation.getFence();
+		operation.execute(fence);
+		GameTickEvent.AtomicTimingSnapshot after =
+			event.captureAtomicTimingSnapshot();
+		if (after.getLifecycleVersion() != fence.getLifecycleVersion()) {
+			return RestorationRegistrationFenceExecution.refusedAfterOperation(
+				RestorationRegistrationFenceReason
+					.EVENT_LIFECYCLE_CHANGED_DURING_OPERATION,
+				fence.getLifecycleVersion(), after.getLifecycleVersion());
+		}
+		return RestorationRegistrationFenceExecution.accepted(
+			fence, fence.getLifecycleVersion());
+	}
+
+	private static RestorationRegistrationFencePreparation
+		prepareRestorationRegistrationFence(
+			final GameTickEvent event,
+			final RegistrationFence registrationFence,
+			final long expectedProposalGeneration) {
 		GameTickEventRestorationState state = Objects.requireNonNull(
 			event.getRestorationState(), "event restoration state");
 		if (state.getKind()
 			== GameTickEventRestorationState.Kind.UNAVAILABLE) {
-			return RestorationRegistrationFenceExecution.refused(
+			return RestorationRegistrationFencePreparation.refused(
 				RestorationRegistrationFenceReason
 					.RESTORATION_STATE_UNAVAILABLE);
 		}
 		GameTickEvent.AtomicTimingSnapshot timing =
 			event.captureAtomicTimingSnapshot();
 		if (!timing.isRunning()) {
-			return RestorationRegistrationFenceExecution.refused(
+			return RestorationRegistrationFencePreparation.refused(
 				RestorationRegistrationFenceReason.EVENT_NOT_RUNNING);
 		}
 		if (timing.getTimesRan() != 0) {
-			return RestorationRegistrationFenceExecution.refused(
+			return RestorationRegistrationFencePreparation.refused(
 				RestorationRegistrationFenceReason.EVENT_ALREADY_EXECUTED);
 		}
 		GameTickEventRestorationState.SceneryState scenery =
 			state.getScenery();
 		if (scenery == null || !state.isDetachedCallbackPayloadComplete()) {
-			return RestorationRegistrationFenceExecution.refused(
+			return RestorationRegistrationFencePreparation.refused(
 				RestorationRegistrationFenceReason
 					.RESTORATION_PAYLOAD_INCOMPLETE);
 		}
 		GameTickEventRestorationState.AuthoredPlacementState authored =
 			scenery.getAuthoredPlacement();
 		if (authored == null) {
-			return RestorationRegistrationFenceExecution.refused(
-				RestorationRegistrationFenceReason
-					.AUTHORED_IDENTITY_MISSING);
+			return RestorationRegistrationFencePreparation.refused(
+				RestorationRegistrationFenceReason.AUTHORED_IDENTITY_MISSING);
 		}
 		if (scenery.hasOwner()) {
-			return RestorationRegistrationFenceExecution.refused(
-				RestorationRegistrationFenceReason
-					.OWNER_BOUND_STATE_REFUSED);
+			return RestorationRegistrationFencePreparation.refused(
+				RestorationRegistrationFenceReason.OWNER_BOUND_STATE_REFUSED);
 		}
 		if (scenery.getRuntimeAttributeCount() != 0) {
-			return RestorationRegistrationFenceExecution.refused(
+			return RestorationRegistrationFencePreparation.refused(
 				RestorationRegistrationFenceReason
 					.RUNTIME_ATTRIBUTE_STATE_INCOMPLETE);
 		}
 		if (!matchesSceneryConstructionKind(
-			authored.getConstructionKind(), scenery.getType())) {
-			return RestorationRegistrationFenceExecution.refused(
+				authored.getConstructionKind(), scenery.getType())) {
+			return RestorationRegistrationFencePreparation.refused(
 				RestorationRegistrationFenceReason
 					.AUTHORED_CONSTRUCTION_KIND_MISMATCH);
 		}
 		GameTickEventSpatialAffinity affinity = Objects.requireNonNull(
 			event.getSpatialAffinity(), "event spatial affinity");
 		if (!matchesExactSceneryAffinity(affinity, scenery)) {
-			return RestorationRegistrationFenceExecution.refused(
-				RestorationRegistrationFenceReason
-					.SPATIAL_AFFINITY_MISMATCH);
+			return RestorationRegistrationFencePreparation.refused(
+				RestorationRegistrationFenceReason.SPATIAL_AFFINITY_MISMATCH);
 		}
 		if (authored.getGeneration() != expectedProposalGeneration) {
-			return RestorationRegistrationFenceExecution.refused(
+			return RestorationRegistrationFencePreparation.refused(
 				RestorationRegistrationFenceReason
 					.PROPOSAL_GENERATION_MISMATCH);
 		}
-		RestorationRegistrationFence fence =
+		return RestorationRegistrationFencePreparation.accepted(
 			new RestorationRegistrationFence(
 				registrationFence.getSchedulerInstanceIdentity(),
 				registrationFence.getRegistrationSequence(),
@@ -675,18 +918,12 @@ class GameTickEventStore {
 				authored.getPackedRegionX(), authored.getPackedRegionY(),
 				authored.getSourceOrdinal(),
 				AuthoredConstructionKind.valueOf(
-					authored.getConstructionKind().name()));
-		operation.execute(fence);
-		GameTickEvent.AtomicTimingSnapshot after =
-			event.captureAtomicTimingSnapshot();
-		if (after.getLifecycleVersion() != timing.getLifecycleVersion()) {
-			return RestorationRegistrationFenceExecution.refusedAfterOperation(
-				RestorationRegistrationFenceReason
-					.EVENT_LIFECYCLE_CHANGED_DURING_OPERATION,
-				timing.getLifecycleVersion(), after.getLifecycleVersion());
-		}
-		return RestorationRegistrationFenceExecution.accepted(
-			fence, timing.getLifecycleVersion());
+					authored.getConstructionKind().name()),
+				state.getExecutionSemantics()
+					== GameTickEventRestorationState.ExecutionSemantics.ONE_SHOT,
+				state.getTimeProgressionPolicy()
+					== GameTickEventRestorationState.TimeProgressionPolicy
+						.CONTINUE_SERVER_TICKS));
 	}
 
 	private static boolean matchesExactSceneryAffinity(
@@ -736,6 +973,61 @@ class GameTickEventStore {
 			default:
 				throw new IllegalStateException(
 					"Accepted registration fence cannot be mapped as refusal");
+		}
+	}
+
+	private static RestorationOneShotConsumptionReason
+		mapOneShotRegistrationReason(final RegistrationFenceReason reason) {
+		switch (reason) {
+			case SCHEDULER_INSTANCE_MISMATCH:
+				return RestorationOneShotConsumptionReason
+					.SCHEDULER_INSTANCE_MISMATCH;
+			case EVENT_NOT_REGISTERED:
+				return RestorationOneShotConsumptionReason.EVENT_NOT_REGISTERED;
+			case REGISTRATION_SEQUENCE_MISMATCH:
+				return RestorationOneShotConsumptionReason
+					.REGISTRATION_SEQUENCE_MISMATCH;
+			default:
+				throw new IllegalStateException(
+					"Accepted registration fence cannot be mapped as refusal");
+		}
+	}
+
+	private static RestorationOneShotConsumptionReason
+		mapOneShotPreparationReason(
+			final RestorationRegistrationFenceReason reason) {
+		switch (reason) {
+			case RESTORATION_STATE_UNAVAILABLE:
+				return RestorationOneShotConsumptionReason
+					.RESTORATION_STATE_UNAVAILABLE;
+			case EVENT_NOT_RUNNING:
+				return RestorationOneShotConsumptionReason.EVENT_NOT_RUNNING;
+			case EVENT_ALREADY_EXECUTED:
+				return RestorationOneShotConsumptionReason.EVENT_ALREADY_EXECUTED;
+			case RESTORATION_PAYLOAD_INCOMPLETE:
+				return RestorationOneShotConsumptionReason
+					.RESTORATION_PAYLOAD_INCOMPLETE;
+			case AUTHORED_IDENTITY_MISSING:
+				return RestorationOneShotConsumptionReason
+					.AUTHORED_IDENTITY_MISSING;
+			case OWNER_BOUND_STATE_REFUSED:
+				return RestorationOneShotConsumptionReason
+					.OWNER_BOUND_STATE_REFUSED;
+			case RUNTIME_ATTRIBUTE_STATE_INCOMPLETE:
+				return RestorationOneShotConsumptionReason
+					.RUNTIME_ATTRIBUTE_STATE_INCOMPLETE;
+			case AUTHORED_CONSTRUCTION_KIND_MISMATCH:
+				return RestorationOneShotConsumptionReason
+					.AUTHORED_CONSTRUCTION_KIND_MISMATCH;
+			case SPATIAL_AFFINITY_MISMATCH:
+				return RestorationOneShotConsumptionReason
+					.SPATIAL_AFFINITY_MISMATCH;
+			case PROPOSAL_GENERATION_MISMATCH:
+				return RestorationOneShotConsumptionReason
+					.PROPOSAL_GENERATION_MISMATCH;
+			default:
+				throw new IllegalStateException(
+					"Accepted restoration preparation cannot be mapped as refusal");
 		}
 	}
 
@@ -1007,6 +1299,33 @@ class GameTickEventStore {
 		void execute(GameTickEventRestorationCommitRequest request);
 	}
 
+	@FunctionalInterface
+	interface RestorationRegionOutcomeOperation {
+		RegionCommitOutcome execute(
+			GameTickEventRestorationCommitRequest request);
+	}
+
+	enum RestorationOneShotConsumptionReason {
+		SCHEDULER_INSTANCE_MISMATCH,
+		EVENT_NOT_REGISTERED,
+		DUPLICATE_REGISTRATION_SEQUENCE,
+		REGISTRATION_SEQUENCE_MISMATCH,
+		RESTORATION_STATE_UNAVAILABLE,
+		EVENT_NOT_RUNNING,
+		EVENT_ALREADY_EXECUTED,
+		RESTORATION_PAYLOAD_INCOMPLETE,
+		AUTHORED_IDENTITY_MISSING,
+		OWNER_BOUND_STATE_REFUSED,
+		RUNTIME_ATTRIBUTE_STATE_INCOMPLETE,
+		AUTHORED_CONSTRUCTION_KIND_MISMATCH,
+		SPATIAL_AFFINITY_MISMATCH,
+		PROPOSAL_GENERATION_MISMATCH,
+		EXECUTION_SEMANTICS_REFUSED,
+		EVENT_LIFECYCLE_CHANGED_BEFORE_OPERATION,
+		REGION_COMMIT_REFUSED_RETAINED,
+		EVENT_TERMINALLY_CONSUMED
+	}
+
 	enum RestorationRegistrationFenceReason {
 		SCHEDULER_INSTANCE_MISMATCH,
 		EVENT_NOT_REGISTERED,
@@ -1066,6 +1385,8 @@ class GameTickEventStore {
 		private final int authoredPackedRegionY;
 		private final int authoredSourceOrdinal;
 		private final AuthoredConstructionKind authoredConstructionKind;
+		private final boolean oneShotExecution;
+		private final boolean continuingServerTickProgression;
 
 		private RestorationRegistrationFence(
 			final String schedulerInstanceIdentity,
@@ -1089,7 +1410,9 @@ class GameTickEventStore {
 			final int authoredPackedRegionX,
 			final int authoredPackedRegionY,
 			final int authoredSourceOrdinal,
-			final AuthoredConstructionKind authoredConstructionKind) {
+			final AuthoredConstructionKind authoredConstructionKind,
+			final boolean oneShotExecution,
+			final boolean continuingServerTickProgression) {
 			this.schedulerInstanceIdentity = schedulerInstanceIdentity;
 			this.registrationSequence = registrationSequence;
 			this.eventExecutionBoundaryHeld = eventExecutionBoundaryHeld;
@@ -1115,6 +1438,9 @@ class GameTickEventStore {
 			this.authoredSourceOrdinal = authoredSourceOrdinal;
 			this.authoredConstructionKind = Objects.requireNonNull(
 				authoredConstructionKind, "authoredConstructionKind");
+			this.oneShotExecution = oneShotExecution;
+			this.continuingServerTickProgression =
+				continuingServerTickProgression;
 			if (schedulerInstanceIdentity == null
 				|| schedulerInstanceIdentity.isEmpty()
 				|| registrationSequence <= 0L
@@ -1177,12 +1503,49 @@ class GameTickEventStore {
 		AuthoredConstructionKind getAuthoredConstructionKind() {
 			return authoredConstructionKind;
 		}
+		boolean isOneShotExecution() { return oneShotExecution; }
+		boolean isContinuingServerTickProgression() {
+			return continuingServerTickProgression;
+		}
 		boolean isSpatialAffinityValidated() { return true; }
 		boolean isAuthoredGenerationValidated() { return true; }
 		boolean isOwnerStateRetained() { return false; }
 		boolean isRuntimeAttributeStateRetained() { return false; }
 		boolean isEventHandleRetained() { return false; }
 		boolean isStoreHandleRetained() { return false; }
+	}
+
+	/** Internal preparation result; no event or Store handle is retained. */
+	private static final class RestorationRegistrationFencePreparation {
+		private final RestorationRegistrationFenceReason reason;
+		private final RestorationRegistrationFence fence;
+
+		private RestorationRegistrationFencePreparation(
+			final RestorationRegistrationFenceReason reason,
+			final RestorationRegistrationFence fence) {
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.fence = fence;
+			if ((reason
+					== RestorationRegistrationFenceReason.OPERATION_COMPLETED)
+				!= (fence != null)) {
+				throw new IllegalArgumentException(
+					"Restoration fence preparation is inconsistent");
+			}
+		}
+
+		private static RestorationRegistrationFencePreparation refused(
+			final RestorationRegistrationFenceReason reason) {
+			return new RestorationRegistrationFencePreparation(reason, null);
+		}
+		private static RestorationRegistrationFencePreparation accepted(
+			final RestorationRegistrationFence fence) {
+			return new RestorationRegistrationFencePreparation(
+				RestorationRegistrationFenceReason.OPERATION_COMPLETED, fence);
+		}
+
+		boolean isRefused() { return fence == null; }
+		RestorationRegistrationFenceReason getReason() { return reason; }
+		RestorationRegistrationFence getFence() { return fence; }
 	}
 
 	static final class RestorationRegistrationFenceExecution {
@@ -1362,6 +1725,123 @@ class GameTickEventStore {
 		boolean isMutationPerformed() { return false; }
 		boolean isCallbackInvoked() { return false; }
 		boolean isEventCancellation() { return false; }
+		boolean isEventReschedule() { return false; }
+		boolean isExecutableRestoration() { return false; }
+		boolean isCommitToken() { return false; }
+		boolean isArrivalGate() { return false; }
+		boolean isLifecycleAuthority() { return false; }
+	}
+
+	/**
+	 * Closed result of one scheduler-local consumption attempt. The supplied
+	 * Region outcome is detached test evidence; this value retains no request,
+	 * event, Store, callback, or lifecycle handle.
+	 */
+	static final class RestorationOneShotConsumptionExecution {
+		private final RestorationOneShotConsumptionReason reason;
+		private final RegionCommitOutcome regionCommitOutcome;
+		private final RequiredAction requiredAction;
+		private final long lifecycleVersionBefore;
+		private final long lifecycleVersionAfter;
+		private final boolean requestDelivered;
+		private final boolean registrationRemoved;
+
+		private RestorationOneShotConsumptionExecution(
+			final RestorationOneShotConsumptionReason reason,
+			final RegionCommitOutcome regionCommitOutcome,
+			final RequiredAction requiredAction,
+			final long lifecycleVersionBefore,
+			final long lifecycleVersionAfter,
+			final boolean requestDelivered,
+			final boolean registrationRemoved) {
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.regionCommitOutcome = regionCommitOutcome;
+			this.requiredAction = Objects.requireNonNull(
+				requiredAction, "requiredAction");
+			this.lifecycleVersionBefore = lifecycleVersionBefore;
+			this.lifecycleVersionAfter = lifecycleVersionAfter;
+			this.requestDelivered = requestDelivered;
+			this.registrationRemoved = registrationRemoved;
+			boolean completed = regionCommitOutcome != null;
+			boolean consumed = requiredAction
+				== RequiredAction.TERMINALLY_CONSUME;
+			boolean retained = requiredAction
+				== RequiredAction.RETAIN_SCHEDULED;
+			if (completed != requestDelivered
+				|| completed != (consumed || retained)
+				|| registrationRemoved != consumed
+				|| (!completed
+					&& (requiredAction != RequiredAction.NONE
+						|| lifecycleVersionBefore != -1L
+						|| lifecycleVersionAfter != -1L))
+				|| (retained
+					&& (reason
+							!= RestorationOneShotConsumptionReason
+								.REGION_COMMIT_REFUSED_RETAINED
+						|| regionCommitOutcome != RegionCommitOutcome.REFUSED
+						|| lifecycleVersionBefore <= 0L
+						|| lifecycleVersionAfter
+							!= lifecycleVersionBefore))
+				|| (consumed
+					&& (reason
+							!= RestorationOneShotConsumptionReason
+								.EVENT_TERMINALLY_CONSUMED
+						|| regionCommitOutcome == RegionCommitOutcome.REFUSED
+						|| lifecycleVersionBefore <= 0L
+						|| lifecycleVersionAfter
+							!= lifecycleVersionBefore + 1L))) {
+				throw new IllegalArgumentException(
+					"One-shot consumption execution is inconsistent");
+			}
+		}
+
+		private static RestorationOneShotConsumptionExecution refused(
+			final RestorationOneShotConsumptionReason reason) {
+			return new RestorationOneShotConsumptionExecution(
+				reason, null, RequiredAction.NONE, -1L, -1L,
+				false, false);
+		}
+
+		private static RestorationOneShotConsumptionExecution completed(
+			final RegionCommitOutcome outcome,
+			final RequiredAction requiredAction,
+			final long lifecycleVersionBefore,
+			final long lifecycleVersionAfter,
+			final boolean registrationRemoved) {
+			return new RestorationOneShotConsumptionExecution(
+				requiredAction == RequiredAction.TERMINALLY_CONSUME
+					? RestorationOneShotConsumptionReason
+						.EVENT_TERMINALLY_CONSUMED
+					: RestorationOneShotConsumptionReason
+						.REGION_COMMIT_REFUSED_RETAINED,
+				Objects.requireNonNull(outcome, "outcome"), requiredAction,
+				lifecycleVersionBefore, lifecycleVersionAfter, true,
+				registrationRemoved);
+		}
+
+		RestorationOneShotConsumptionReason getReason() { return reason; }
+		RegionCommitOutcome getRegionCommitOutcome() {
+			return regionCommitOutcome;
+		}
+		RequiredAction getRequiredAction() { return requiredAction; }
+		long getLifecycleVersionBefore() { return lifecycleVersionBefore; }
+		long getLifecycleVersionAfter() { return lifecycleVersionAfter; }
+		boolean isRequestDelivered() { return requestDelivered; }
+		boolean isRegistrationRemoved() { return registrationRemoved; }
+		boolean isExactRegistrationRetained() {
+			return requiredAction == RequiredAction.RETAIN_SCHEDULED;
+		}
+		boolean isEventTerminallyConsumed() {
+			return requiredAction == RequiredAction.TERMINALLY_CONSUME;
+		}
+		boolean isFixtureReportedRegionMutation() {
+			return regionCommitOutcome == RegionCommitOutcome.APPLIED;
+		}
+		boolean isRuntimeRegionManagerInvoked() { return false; }
+		boolean isRequestRetained() { return false; }
+		boolean isRuntimeHandleRetained() { return false; }
+		boolean isMutationAuthorized() { return false; }
+		boolean isCallbackInvoked() { return false; }
 		boolean isEventReschedule() { return false; }
 		boolean isExecutableRestoration() { return false; }
 		boolean isCommitToken() { return false; }

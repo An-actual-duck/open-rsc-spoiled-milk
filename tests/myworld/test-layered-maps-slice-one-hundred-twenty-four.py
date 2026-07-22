@@ -20,6 +20,10 @@ COMMIT_REQUEST = ROOT / (
     "server/src/com/openrsc/server/event/rsc/"
     "GameTickEventRestorationCommitRequest.java"
 )
+ONE_SHOT_CONTRACT = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/"
+    "GameTickEventRestorationOneShotConsumptionContract.java"
+)
 DECISION = ROOT / (
     "server/src/com/openrsc/server/event/rsc/"
     "GameTickEventRestorationTargetDecision.java"
@@ -387,6 +391,7 @@ class LayeredMapsSliceOneHundredTwentyFourTest(unittest.TestCase):
                 str(STORE), str(EVENT), str(STATE), str(AFFINITY),
                 str(DECISION), str(REQUIREMENT), str(CONTRACT), str(REQUEST),
                 str(REVALIDATION), str(COMMIT_REQUEST),
+                str(ONE_SHOT_CONTRACT),
                 str(ROOT / (
                     "server/src/com/openrsc/server/event/rsc/"
                     "DuplicationStrategy.java"

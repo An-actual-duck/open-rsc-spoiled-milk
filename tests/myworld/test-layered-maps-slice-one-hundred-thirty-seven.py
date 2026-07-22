@@ -20,6 +20,10 @@ REQUEST = ROOT / (
     "server/src/com/openrsc/server/event/rsc/"
     "GameTickEventRestorationCommitRequest.java"
 )
+ONE_SHOT_CONTRACT = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/"
+    "GameTickEventRestorationOneShotConsumptionContract.java"
+)
 STORE = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventStore.java"
@@ -280,7 +284,7 @@ class LayeredMapsSliceOneHundredThirtySevenTest(unittest.TestCase):
                 "javac", "-Xlint:all", "-source", "8", "-target", "8",
                 "-cp", classpath, "-d", str(cls.classes),
                 str(STORE), str(EVENT), str(STATE), str(AFFINITY),
-                str(REQUEST), str(ROOT / (
+                str(REQUEST), str(ONE_SHOT_CONTRACT), str(ROOT / (
                     "server/src/com/openrsc/server/event/rsc/"
                     "DuplicationStrategy.java"
                 )),
@@ -364,7 +368,7 @@ class LayeredMapsSliceOneHundredThirtySevenTest(unittest.TestCase):
         commit = store[store.index(
             "withValidatedRestorationCommitRequest("
         ):store.index(
-            "private static RestorationRegistrationFenceExecution",
+            "withValidatedRestorationOneShotConsumption(",
             store.index("withValidatedRestorationCommitRequest("),
         )]
         self.assertLess(

@@ -227,9 +227,9 @@ class LayeredMapsSliceOneHundredFortyTest(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_runtime_consumers_remain_disconnected(self):
+    def test_region_runtime_consumer_remains_disconnected(self):
         name = "GameTickEventRestorationOneShotConsumptionContract"
-        self.assertNotIn(name, STORE.read_text(encoding="utf-8"))
+        self.assertIn(name, STORE.read_text(encoding="utf-8"))
         self.assertNotIn(name, REGION_MANAGER.read_text(encoding="utf-8"))
 
     def test_living_plan_records_slice_one_hundred_forty(self):
