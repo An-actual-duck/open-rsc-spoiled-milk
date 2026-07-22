@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, and 120 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, and 121 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, and 122 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -49,6 +49,9 @@ automated-validated Slice 121 makes scheduler registration changes share the
 existing event execution boundary, validates exact scheduler scope and
 registration before releasing the store monitor, and mechanically proves
 removal, replacement, and callback execution cannot cross an accepted fence;
+automated-validated Slice 122 locates the exact registration internally,
+validates complete owner-free authored callback state and matching proposal
+generation under that fence, and passes only closed detached scalars onward;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10377,6 +10380,75 @@ this sub-second concurrency proof. Proposal-generation validation, a Region
 object boundary, target revalidation, mutation, executable restoration,
 arrival gating, and all lifecycle authority remain absent.
 
+### Slice 122: Handle-free authored-generation fence
+
+Objective: locate one exact scheduler registration internally and prove its
+live authored scenery callback still belongs to the expected reconstruction
+proposal while Slice 121's outer execution fence remains held, without exposing
+an event handle or entering a Region.
+
+Implemented:
+
+- the caller supplies no event handle: it provides only the expected opaque
+  scheduler-instance identity, positive registration sequence, positive
+  reconstruction-proposal generation, and a package-internal operation;
+- the store locates the sole matching registration under its monitor, rejects a
+  missing or duplicate sequence, releases that monitor, and reacquires Slice
+  121's exact execution/registration fence before inspecting callback metadata;
+- only explicit scenery spawn/removal restoration state with a complete
+  detached payload, one exact fixed-effect affinity matching the scenery
+  coordinate, an authored placement identity, no private owner, and zero
+  uncaptured runtime attributes may proceed;
+- one atomic event-local timing tuple must still report a running one-shot that
+  has executed zero times; stopped or already-executed callbacks refuse. This
+  tuple is point-in-time and does not yet exclude a concurrent later `stop` or
+  countdown reset across the supplied operation;
+- the live authored generation must equal the expected reconstruction-proposal
+  generation. Stale generation refuses before the operation runs;
+- the operation receives only a closed detached value containing scheduler
+  scope/registration, boundary facts, scenery constructor scalars, exact
+  coordinate, authored placement provenance, and matched generations; and
+- no event, store, key, UUID, callback, owner text, runtime-attribute value,
+  monitor, World, Region, entity, or collection handle enters that value.
+
+Automated validation status:
+
+- an executable fixture proves handle-free lookup for both authored spawn and
+  removal, exact detached values, and continued exclusion of concurrent removal
+  while the generation operation is active;
+- the same fixture proves closed refusal for wrong scheduler scope, unknown
+  registration, unavailable restoration state, incomplete identity-less
+  removal, stopped or already-executed callback state, missing authored
+  identity, private owner state, uncaptured runtime attributes, non-object
+  authored construction kind, spatial-affinity mismatch, and stale proposal
+  generation;
+- source guards require a handle-free caller signature and detached operation,
+  prohibit runtime handles and owner text from the closed fence, and prohibit
+  Region lookup, object mutation, callback invocation, packets, or authority;
+- the complete layered-map suite passes 387 tests across 121 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 777 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the event handle is local to the store implementation and remains protected
+  by the execution boundary until the supplied operation returns;
+- owner-bound or runtime-attribute-bearing callbacks refuse rather than leaking
+  private/incomplete state into the detached fence;
+- No Region object boundary is entered, no target state is inspected, and no
+  runtime target revalidation is claimed; and
+- the event execution fence excludes callback execution and registration
+  change, but the separate timing monitor is not retained across the operation;
+  timing stability and cancellation exclusion remain explicit false gaps; and
+- the result is not a commit token, performs no mutation or callback, is not
+  executable restoration or an arrival gate, and has no lifecycle authority.
+
+Status: implemented and automated-validated. No owner route is required for
+this internal concurrency/generation proof. Timing stability across the
+operation, a Region object boundary, target revalidation, mutation, executable
+restoration, arrival gating, and all lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10719,6 +10791,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 120 by exposing only the detached Region-boundary target facts through private diagnostics. | Implemented and automated-validated; additive schema-v42 reports classified count/completeness and the per-target boundary boolean, preserves schema-v41, requires available targets to carry the fact, and explicitly remains non-atomic with mutation with no runtime revalidation, achieved-state claim, commit token, executable restoration, arrival gate, or lifecycle authority |
 | 2026-07-22 | Accept the Slice 120 private Region-boundary target route. | Owner-validated; `boundary-pending` retains registration 3892 with ten ticks remaining, one available target was classified under the Region object boundary as the exact authored transient with its mutation precondition satisfied, 86 ticks later natural completion clears target evidence, all six v42 records validate, visuals and interaction remain normal, and ordinary human timing was sufficient |
 | 2026-07-22 | Continue with Slice 121 by implementing the scheduler-registration side of the outer revalidation boundary. | Implemented and automated-validated; add/remove/replacement share the existing event execution boundary before the store monitor, exact scope/registration validation releases the store before running the fenced operation, automated removal/replacement/callback races replace sub-second owner timing, 382 focused tests and the 777/488 Ant build pass, and no Region, target, mutation, callback, arrival, or lifecycle authority is added |
+| 2026-07-22 | Continue with Slice 122 by removing the caller event handle and validating authored generation inside the outer fence. | Implemented and automated-validated; exact scope/sequence lookup stays internal, complete owner-free authored callback state, active zero-run timing, object-family identity, and fixed affinity must match the expected proposal generation, only detached closed scalars reach the operation, stopped/stale/private/incomplete states refuse, 387 focused tests and the 777/488 Ant build pass, and no Region, target inspection, mutation, callback, arrival, or lifecycle authority is added |
 
 ## Next Discussion
 
@@ -11137,17 +11210,26 @@ execution boundary, the store monitor is released before the fenced operation,
 and removal, replacement, and callback execution cannot cross it. Automated
 latches prove the sub-second races without relying on owner reaction time.
 
-The next focused gate should remove the remaining caller-handle and generation
-gaps without entering a Region: locate one event internally by exact scheduler
-scope and registration sequence, acquire and revalidate the same fence, and
-compare the live callback's exact authored generation with the expected
-reconstruction-proposal generation. The operation must expose only detached
-closed facts to its internal consumer; no event handle, key, callback, UUID,
-owner, store, or monitor may escape. Missing, replaced, duplicate, wrong-kind,
-identity-less, or stale-generation registrations must refuse. Keep World
-scenery callbacks, Region target lookup, mutation, diagnostics, arrival, and
-lifecycle consumers disconnected until that handle-free generation fence is
-automated-validated.
+Slice 122 now supplies the handle-free generation fence. It locates one exact
+registration internally, revalidates scope/sequence under the execution fence,
+requires complete owner-free authored scenery state with exact fixed affinity,
+and compares the live authored generation with the expected proposal before
+passing closed detached scalars onward. Missing, duplicate, inactive,
+already-executed, identity-less, private, incomplete, mismatched, and stale
+states refuse without invoking the operation.
+
+The remaining pre-Region gap is event-local timing stability: `stop`, countdown
+reset, and the legacy standalone `tick` use the separate timing monitor and are
+not excluded merely because the execution boundary is held. The next focused
+gate should add one monotonic event-lifecycle version covering every running,
+delay, countdown, and execution-count mutation, include it in the atomic timing
+snapshot, and let the handle-free fence compare versions before and after a
+read-only internal operation. Automated races must prove stop/reset/tick changes
+are detected without holding the timing monitor across arbitrary code or
+recreating Slice 107's lock inversion. This is detection for read-only work,
+not a commit token: post-operation mismatch cannot authorize or roll back a
+mutation. Keep Region lookup, scenery mutation, callbacks, diagnostics,
+arrival, and lifecycle consumers disconnected.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

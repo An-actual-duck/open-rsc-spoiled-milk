@@ -92,6 +92,12 @@ public class GameTickEvent {
         return Thread.holdsLock(executionLock);
     }
     public interface ExecutionBoundaryOperation<T> { T execute(); }
+    public GameTickEventRestorationState getRestorationState() {
+        return GameTickEventRestorationState.unavailable();
+    }
+    public GameTickEventSpatialAffinity getSpatialAffinity() {
+        return GameTickEventSpatialAffinity.unspecified();
+    }
     public AtomicTimingSnapshot captureAtomicTimingSnapshot() {
         return new AtomicTimingSnapshot(running, 7L, 2);
     }
@@ -398,7 +404,16 @@ class LayeredMapsSliceNinetyFiveTest(unittest.TestCase):
         result = subprocess.run(
             [
                 "javac", "-cp", classpath, "-d", str(cls.classes),
-                str(STORE), *(str(path) for path in paths),
+                str(STORE),
+                str(ROOT / (
+                    "server/src/com/openrsc/server/event/rsc/"
+                    "GameTickEventRestorationState.java"
+                )),
+                str(ROOT / (
+                    "server/src/com/openrsc/server/event/rsc/"
+                    "GameTickEventSpatialAffinity.java"
+                )),
+                *(str(path) for path in paths),
             ],
             cwd=ROOT,
             text=True,

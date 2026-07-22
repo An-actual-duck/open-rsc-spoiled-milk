@@ -88,6 +88,12 @@ public class GameTickEvent {
         return Thread.holdsLock(executionLock);
     }
     public interface ExecutionBoundaryOperation<T> { T execute(); }
+    public GameTickEventRestorationState getRestorationState() {
+        return GameTickEventRestorationState.unavailable();
+    }
+    public GameTickEventSpatialAffinity getSpatialAffinity() {
+        return GameTickEventSpatialAffinity.unspecified();
+    }
     public AtomicTimingSnapshot captureAtomicTimingSnapshot() {
         return new AtomicTimingSnapshot(running, 7L, 2);
     }
@@ -423,6 +429,14 @@ class LayeredMapsSliceOneHundredTwentyOneTest(unittest.TestCase):
             [
                 "javac", "-Xlint:all", "-source", "8", "-target", "8",
                 "-cp", classpath, "-d", str(cls.classes), str(STORE),
+                str(ROOT / (
+                    "server/src/com/openrsc/server/event/rsc/"
+                    "GameTickEventRestorationState.java"
+                )),
+                str(ROOT / (
+                    "server/src/com/openrsc/server/event/rsc/"
+                    "GameTickEventSpatialAffinity.java"
+                )),
                 *(str(path) for path in paths),
             ],
             cwd=ROOT,
@@ -511,7 +525,9 @@ class LayeredMapsSliceOneHundredTwentyOneTest(unittest.TestCase):
     def test_validated_operation_releases_store_boundary_and_stays_inert(self):
         source = STORE.read_text(encoding="utf-8")
         start = source.index("withValidatedRegistrationFence(")
-        end = source.index("private void registerAccepted", start)
+        end = source.index(
+            "withValidatedRestorationRegistrationFence(", start
+        )
         method = source[start:end]
         self.assertLess(
             method.index("synchronized (LOCK)"),

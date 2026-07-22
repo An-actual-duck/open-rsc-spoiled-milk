@@ -6,6 +6,8 @@ import com.google.common.collect.Multimap;
 import com.google.inject.Key;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.GameTickEventRestorationState;
+import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.event.rsc.PluginTickEvent;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
@@ -327,6 +329,214 @@ class GameTickEventStore {
 		});
 	}
 
+	/**
+	 * Locates one exact registration internally and validates its authored
+	 * scenery generation behind the registration fence. The caller supplies no
+	 * event handle, and the operation receives only closed detached scalars.
+	 */
+	RestorationRegistrationFenceExecution
+		withValidatedRestorationRegistrationFence(
+			final String expectedSchedulerInstanceIdentity,
+			final long expectedRegistrationSequence,
+			final long expectedProposalGeneration,
+			final RestorationRegistrationFenceOperation operation) {
+		if (expectedSchedulerInstanceIdentity == null
+			|| expectedSchedulerInstanceIdentity.isEmpty()
+			|| expectedRegistrationSequence <= 0L
+			|| expectedProposalGeneration <= 0L) {
+			throw new IllegalArgumentException(
+				"Expected restoration registration is invalid");
+		}
+		final RestorationRegistrationFenceOperation checkedOperation =
+			Objects.requireNonNull(operation, "operation");
+		final GameTickEvent candidate;
+		synchronized (LOCK) {
+			if (!schedulerInstanceIdentity.equals(
+				expectedSchedulerInstanceIdentity)) {
+				return RestorationRegistrationFenceExecution.refused(
+					RestorationRegistrationFenceReason
+						.SCHEDULER_INSTANCE_MISMATCH);
+			}
+			GameTickEvent found = null;
+			for (Map.Entry<GameTickEvent, Long> registration
+				: registrationSequences.entrySet()) {
+				Long sequence = registration.getValue();
+				if (sequence != null
+					&& sequence.longValue()
+						== expectedRegistrationSequence) {
+					if (found != null) {
+						return RestorationRegistrationFenceExecution.refused(
+							RestorationRegistrationFenceReason
+								.DUPLICATE_REGISTRATION_SEQUENCE);
+					}
+					found = registration.getKey();
+				}
+			}
+			if (found == null || events.get(getKey(found)) != found) {
+				return RestorationRegistrationFenceExecution.refused(
+					RestorationRegistrationFenceReason.EVENT_NOT_REGISTERED);
+			}
+			candidate = found;
+		}
+		final RestorationRegistrationFenceExecution[] execution =
+			new RestorationRegistrationFenceExecution[1];
+		RegistrationFenceExecution registrationExecution =
+			withValidatedRegistrationFence(
+				candidate, expectedSchedulerInstanceIdentity,
+				expectedRegistrationSequence, registrationFence ->
+					execution[0] = executeRestorationRegistrationFence(
+						candidate, registrationFence,
+						expectedProposalGeneration, checkedOperation));
+		if (!registrationExecution.isAccepted()) {
+			return RestorationRegistrationFenceExecution.refused(
+				mapRegistrationFenceReason(
+					registrationExecution.getReason()));
+		}
+		if (execution[0] == null) {
+			throw new IllegalStateException(
+				"Accepted restoration registration did not execute");
+		}
+		return execution[0];
+	}
+
+	private static RestorationRegistrationFenceExecution
+		executeRestorationRegistrationFence(
+			final GameTickEvent event,
+			final RegistrationFence registrationFence,
+			final long expectedProposalGeneration,
+			final RestorationRegistrationFenceOperation operation) {
+		GameTickEventRestorationState state = Objects.requireNonNull(
+			event.getRestorationState(), "event restoration state");
+		if (state.getKind()
+			== GameTickEventRestorationState.Kind.UNAVAILABLE) {
+			return RestorationRegistrationFenceExecution.refused(
+				RestorationRegistrationFenceReason
+					.RESTORATION_STATE_UNAVAILABLE);
+		}
+		GameTickEvent.AtomicTimingSnapshot timing =
+			event.captureAtomicTimingSnapshot();
+		if (!timing.isRunning()) {
+			return RestorationRegistrationFenceExecution.refused(
+				RestorationRegistrationFenceReason.EVENT_NOT_RUNNING);
+		}
+		if (timing.getTimesRan() != 0) {
+			return RestorationRegistrationFenceExecution.refused(
+				RestorationRegistrationFenceReason.EVENT_ALREADY_EXECUTED);
+		}
+		GameTickEventRestorationState.SceneryState scenery =
+			state.getScenery();
+		if (scenery == null || !state.isDetachedCallbackPayloadComplete()) {
+			return RestorationRegistrationFenceExecution.refused(
+				RestorationRegistrationFenceReason
+					.RESTORATION_PAYLOAD_INCOMPLETE);
+		}
+		GameTickEventRestorationState.AuthoredPlacementState authored =
+			scenery.getAuthoredPlacement();
+		if (authored == null) {
+			return RestorationRegistrationFenceExecution.refused(
+				RestorationRegistrationFenceReason
+					.AUTHORED_IDENTITY_MISSING);
+		}
+		if (scenery.hasOwner()) {
+			return RestorationRegistrationFenceExecution.refused(
+				RestorationRegistrationFenceReason
+					.OWNER_BOUND_STATE_REFUSED);
+		}
+		if (scenery.getRuntimeAttributeCount() != 0) {
+			return RestorationRegistrationFenceExecution.refused(
+				RestorationRegistrationFenceReason
+					.RUNTIME_ATTRIBUTE_STATE_INCOMPLETE);
+		}
+		if (!matchesSceneryConstructionKind(
+			authored.getConstructionKind(), scenery.getType())) {
+			return RestorationRegistrationFenceExecution.refused(
+				RestorationRegistrationFenceReason
+					.AUTHORED_CONSTRUCTION_KIND_MISMATCH);
+		}
+		GameTickEventSpatialAffinity affinity = Objects.requireNonNull(
+			event.getSpatialAffinity(), "event spatial affinity");
+		if (!matchesExactSceneryAffinity(affinity, scenery)) {
+			return RestorationRegistrationFenceExecution.refused(
+				RestorationRegistrationFenceReason
+					.SPATIAL_AFFINITY_MISMATCH);
+		}
+		if (authored.getGeneration() != expectedProposalGeneration) {
+			return RestorationRegistrationFenceExecution.refused(
+				RestorationRegistrationFenceReason
+					.PROPOSAL_GENERATION_MISMATCH);
+		}
+		RestorationRegistrationFence fence =
+			new RestorationRegistrationFence(
+				registrationFence.getSchedulerInstanceIdentity(),
+				registrationFence.getRegistrationSequence(),
+				registrationFence.isEventExecutionBoundaryHeld(),
+				registrationFence.isSchedulerStoreBoundaryHeld(),
+				registrationFence
+					.isRegistrationValidatedBeforeInnerBoundary(),
+				RestorationKind.valueOf(state.getKind().name()),
+				expectedProposalGeneration, authored.getGeneration(),
+				timing.getTicksBeforeRun(), timing.getTimesRan(),
+				scenery.getObjectId(), scenery.getPermanentObjectId(),
+				scenery.getX(), scenery.getY(), scenery.getDirection(),
+				scenery.getType(), state.isForceFullBlock(),
+				authored.getPackedRegionX(), authored.getPackedRegionY(),
+				authored.getSourceOrdinal(),
+				AuthoredConstructionKind.valueOf(
+					authored.getConstructionKind().name()));
+		operation.execute(fence);
+		return RestorationRegistrationFenceExecution.accepted(fence);
+	}
+
+	private static boolean matchesExactSceneryAffinity(
+		final GameTickEventSpatialAffinity affinity,
+		final GameTickEventRestorationState.SceneryState scenery) {
+		if (affinity.getScope()
+			!= GameTickEventSpatialAffinity.Scope.EXACT_SPATIAL
+			|| affinity.getReferences().size() != 1) {
+			return false;
+		}
+		GameTickEventSpatialAffinity.Reference reference =
+			affinity.getReferences().get(0);
+		return reference.getRole()
+				== GameTickEventSpatialAffinity.Role.FIXED_EFFECT_LOCATION
+			&& reference.getX() == scenery.getX()
+			&& reference.getY() == scenery.getY();
+	}
+
+	private static boolean matchesSceneryConstructionKind(
+		final GameTickEventRestorationState.AuthoredConstructionKind kind,
+		final int objectType) {
+		return (kind
+				== GameTickEventRestorationState.AuthoredConstructionKind
+					.SCENERY
+			|| kind
+				== GameTickEventRestorationState.AuthoredConstructionKind
+					.HARVESTING_SCENERY)
+			? objectType == 0
+			: kind
+				== GameTickEventRestorationState.AuthoredConstructionKind
+					.BOUNDARY
+				&& objectType == 1;
+	}
+
+	private static RestorationRegistrationFenceReason
+		mapRegistrationFenceReason(final RegistrationFenceReason reason) {
+		switch (reason) {
+			case SCHEDULER_INSTANCE_MISMATCH:
+				return RestorationRegistrationFenceReason
+					.SCHEDULER_INSTANCE_MISMATCH;
+			case EVENT_NOT_REGISTERED:
+				return RestorationRegistrationFenceReason
+					.EVENT_NOT_REGISTERED;
+			case REGISTRATION_SEQUENCE_MISMATCH:
+				return RestorationRegistrationFenceReason
+					.REGISTRATION_SEQUENCE_MISMATCH;
+			default:
+				throw new IllegalStateException(
+					"Accepted registration fence cannot be mapped as refusal");
+		}
+	}
+
     private void registerAccepted(
         final GameTickKey eventKey,
         final GameTickEvent event,
@@ -578,6 +788,225 @@ class GameTickEventStore {
 		}
 		RegistrationFenceReason getReason() { return reason; }
 		RegistrationFence getFence() { return fence; }
+		boolean isCommitToken() { return false; }
+		boolean isMutationPerformed() { return false; }
+		boolean isExecutableRestoration() { return false; }
+		boolean isArrivalGate() { return false; }
+		boolean isLifecycleAuthority() { return false; }
+	}
+
+	@FunctionalInterface
+	interface RestorationRegistrationFenceOperation {
+		void execute(RestorationRegistrationFence fence);
+	}
+
+	enum RestorationRegistrationFenceReason {
+		SCHEDULER_INSTANCE_MISMATCH,
+		EVENT_NOT_REGISTERED,
+		DUPLICATE_REGISTRATION_SEQUENCE,
+		REGISTRATION_SEQUENCE_MISMATCH,
+		RESTORATION_STATE_UNAVAILABLE,
+		EVENT_NOT_RUNNING,
+		EVENT_ALREADY_EXECUTED,
+		RESTORATION_PAYLOAD_INCOMPLETE,
+		AUTHORED_IDENTITY_MISSING,
+		OWNER_BOUND_STATE_REFUSED,
+		RUNTIME_ATTRIBUTE_STATE_INCOMPLETE,
+		AUTHORED_CONSTRUCTION_KIND_MISMATCH,
+		SPATIAL_AFFINITY_MISMATCH,
+		PROPOSAL_GENERATION_MISMATCH,
+		OPERATION_COMPLETED
+	}
+
+	enum RestorationKind {
+		SCENERY_SPAWN,
+		SCENERY_REMOVE
+	}
+
+	enum AuthoredConstructionKind {
+		SCENERY,
+		BOUNDARY,
+		NPC_SPAWN,
+		GROUND_ITEM_SPAWN,
+		HARVESTING_SCENERY
+	}
+
+	/**
+	 * Detached live callback facts proven while the execution/registration
+	 * fence is held. No owner text or runtime handle is retained.
+	 */
+	static final class RestorationRegistrationFence {
+		private final String schedulerInstanceIdentity;
+		private final long registrationSequence;
+		private final boolean eventExecutionBoundaryHeld;
+		private final boolean schedulerStoreBoundaryHeld;
+		private final boolean registrationValidatedBeforeInnerBoundary;
+		private final RestorationKind restorationKind;
+		private final long expectedProposalGeneration;
+		private final long observedAuthoredGeneration;
+		private final long ticksBeforeRun;
+		private final int timesRan;
+		private final int objectId;
+		private final int permanentObjectId;
+		private final int x;
+		private final int y;
+		private final int direction;
+		private final int type;
+		private final boolean forceFullBlock;
+		private final int authoredPackedRegionX;
+		private final int authoredPackedRegionY;
+		private final int authoredSourceOrdinal;
+		private final AuthoredConstructionKind authoredConstructionKind;
+
+		private RestorationRegistrationFence(
+			final String schedulerInstanceIdentity,
+			final long registrationSequence,
+			final boolean eventExecutionBoundaryHeld,
+			final boolean schedulerStoreBoundaryHeld,
+			final boolean registrationValidatedBeforeInnerBoundary,
+			final RestorationKind restorationKind,
+			final long expectedProposalGeneration,
+			final long observedAuthoredGeneration,
+			final long ticksBeforeRun,
+			final int timesRan,
+			final int objectId,
+			final int permanentObjectId,
+			final int x,
+			final int y,
+			final int direction,
+			final int type,
+			final boolean forceFullBlock,
+			final int authoredPackedRegionX,
+			final int authoredPackedRegionY,
+			final int authoredSourceOrdinal,
+			final AuthoredConstructionKind authoredConstructionKind) {
+			this.schedulerInstanceIdentity = schedulerInstanceIdentity;
+			this.registrationSequence = registrationSequence;
+			this.eventExecutionBoundaryHeld = eventExecutionBoundaryHeld;
+			this.schedulerStoreBoundaryHeld = schedulerStoreBoundaryHeld;
+			this.registrationValidatedBeforeInnerBoundary =
+				registrationValidatedBeforeInnerBoundary;
+			this.restorationKind = Objects.requireNonNull(
+				restorationKind, "restorationKind");
+			this.expectedProposalGeneration = expectedProposalGeneration;
+			this.observedAuthoredGeneration = observedAuthoredGeneration;
+			this.ticksBeforeRun = ticksBeforeRun;
+			this.timesRan = timesRan;
+			this.objectId = objectId;
+			this.permanentObjectId = permanentObjectId;
+			this.x = x;
+			this.y = y;
+			this.direction = direction;
+			this.type = type;
+			this.forceFullBlock = forceFullBlock;
+			this.authoredPackedRegionX = authoredPackedRegionX;
+			this.authoredPackedRegionY = authoredPackedRegionY;
+			this.authoredSourceOrdinal = authoredSourceOrdinal;
+			this.authoredConstructionKind = Objects.requireNonNull(
+				authoredConstructionKind, "authoredConstructionKind");
+			if (schedulerInstanceIdentity == null
+				|| schedulerInstanceIdentity.isEmpty()
+				|| registrationSequence <= 0L
+				|| !eventExecutionBoundaryHeld
+				|| schedulerStoreBoundaryHeld
+				|| !registrationValidatedBeforeInnerBoundary
+				|| expectedProposalGeneration <= 0L
+				|| observedAuthoredGeneration
+					!= expectedProposalGeneration
+				|| timesRan != 0
+				|| objectId < 0 || permanentObjectId < 0
+				|| x < 0 || y < 0
+				|| direction < 0 || direction > 7
+				|| (type != 0 && type != 1)
+				|| authoredPackedRegionX < 0
+				|| authoredPackedRegionY < 0
+				|| authoredSourceOrdinal <= 0) {
+				throw new IllegalArgumentException(
+					"Restoration registration fence is invalid");
+			}
+		}
+
+		String getSchedulerInstanceIdentity() {
+			return schedulerInstanceIdentity;
+		}
+		long getRegistrationSequence() { return registrationSequence; }
+		boolean isEventExecutionBoundaryHeld() {
+			return eventExecutionBoundaryHeld;
+		}
+		boolean isSchedulerStoreBoundaryHeld() {
+			return schedulerStoreBoundaryHeld;
+		}
+		boolean isRegistrationValidatedBeforeInnerBoundary() {
+			return registrationValidatedBeforeInnerBoundary;
+		}
+		RestorationKind getRestorationKind() { return restorationKind; }
+		long getExpectedProposalGeneration() {
+			return expectedProposalGeneration;
+		}
+		long getObservedAuthoredGeneration() {
+			return observedAuthoredGeneration;
+		}
+		long getTicksBeforeRun() { return ticksBeforeRun; }
+		int getTimesRan() { return timesRan; }
+		boolean isAtomicTimingCaptured() { return true; }
+		boolean isTimingStableAcrossOperation() { return false; }
+		boolean isEventCancellationExcluded() { return false; }
+		int getObjectId() { return objectId; }
+		int getPermanentObjectId() { return permanentObjectId; }
+		int getX() { return x; }
+		int getY() { return y; }
+		int getDirection() { return direction; }
+		int getType() { return type; }
+		boolean isForceFullBlock() { return forceFullBlock; }
+		int getAuthoredPackedRegionX() { return authoredPackedRegionX; }
+		int getAuthoredPackedRegionY() { return authoredPackedRegionY; }
+		int getAuthoredSourceOrdinal() { return authoredSourceOrdinal; }
+		AuthoredConstructionKind getAuthoredConstructionKind() {
+			return authoredConstructionKind;
+		}
+		boolean isSpatialAffinityValidated() { return true; }
+		boolean isAuthoredGenerationValidated() { return true; }
+		boolean isOwnerStateRetained() { return false; }
+		boolean isRuntimeAttributeStateRetained() { return false; }
+		boolean isEventHandleRetained() { return false; }
+		boolean isStoreHandleRetained() { return false; }
+	}
+
+	static final class RestorationRegistrationFenceExecution {
+		private final RestorationRegistrationFenceReason reason;
+		private final RestorationRegistrationFence fence;
+
+		private RestorationRegistrationFenceExecution(
+			final RestorationRegistrationFenceReason reason,
+			final RestorationRegistrationFence fence) {
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.fence = fence;
+			if ((reason
+				== RestorationRegistrationFenceReason.OPERATION_COMPLETED)
+				!= (fence != null)) {
+				throw new IllegalArgumentException(
+					"Restoration registration result is inconsistent");
+			}
+		}
+
+		private static RestorationRegistrationFenceExecution refused(
+			final RestorationRegistrationFenceReason reason) {
+			return new RestorationRegistrationFenceExecution(reason, null);
+		}
+		private static RestorationRegistrationFenceExecution accepted(
+			final RestorationRegistrationFence fence) {
+			return new RestorationRegistrationFenceExecution(
+				RestorationRegistrationFenceReason.OPERATION_COMPLETED, fence);
+		}
+
+		boolean isAccepted() {
+			return reason
+				== RestorationRegistrationFenceReason.OPERATION_COMPLETED;
+		}
+		RestorationRegistrationFenceReason getReason() { return reason; }
+		RestorationRegistrationFence getFence() { return fence; }
+		boolean isRuntimeTargetLookupPerformed() { return false; }
+		boolean isRuntimeRevalidationPerformed() { return false; }
 		boolean isCommitToken() { return false; }
 		boolean isMutationPerformed() { return false; }
 		boolean isExecutableRestoration() { return false; }
