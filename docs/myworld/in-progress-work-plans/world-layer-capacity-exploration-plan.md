@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, and 107 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, and 109 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, and 110 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -12,12 +12,14 @@ Started: 2026-07-17
 
 Current milestone: owner-validated Slice 107 corrects the callback-lock
 deadlock exposed by the first Slice 106 owner route. Automated-validated Slices
-108-109 define and detach the next restoration prerequisite: known authored
+108-110 define, detach, and privately expose the next restoration prerequisite:
+known authored
 spawns bind an exact destination slot, known authored removals bind an exact
 existing entity, any mismatch or missing authored identity refuses, and timer/
 transient state must be reconciled before the first visibility snapshot. The
-bounded inventory keeps requirement completeness separate from satisfied
-binding and executable restoration. It performs no lookup or arrival gate;
+bounded inventory and schema-v38 keep requirement completeness separate from
+satisfied binding and executable restoration. They perform no lookup or
+arrival gate;
 replay, cancellation, reschedule, preservation, and all lifecycle authority
 remain absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
@@ -9556,6 +9558,64 @@ Status: implemented and automated-validated. Private diagnostic exposure,
 owner validation, executable restoration, arrival gating, and all lifecycle
 authority remain absent.
 
+### Slice 110: Private scenery target and arrival diagnostics
+
+Objective: expose Slice 109's already-detached target and arrival requirements
+through one additive private schema without granting the observer a target,
+callback, scheduler, or Player-arrival handle.
+
+Implemented:
+
+- additive `layered-map-parity-event-v38` preserves the complete v37 record and
+  adds aggregate target-requirement, satisfied-binding, and arrival-order counts
+  plus captured/completeness flags;
+- each known restoration record publishes its closed target subject, authored-
+  identity or missing-identity evidence, mismatch-refusal policy, requirement-
+  capture and satisfied-binding flags, and pre-visibility ordering requirement;
+- v38 schema conditions bind spawn to `AUTHORED_DESTINATION_SLOT`, removal to
+  `AUTHORED_EXISTING_ENTITY`, authored evidence to a non-null authored placement
+  and true binding, and missing evidence to null placement and false binding;
+- Historical schema-v37 remains immutable and contains none of the new fields,
+  so accepted JSONL preserves its exact closed contract; and
+- the layered-maps guide identifies v38 as current and explains that the
+  arrival value is an ordering invariant rather than an implemented gate.
+
+Automated validation status:
+
+- the executable observer fixture emits one authored atomic spawn and one
+  unknown event, reconciles aggregate requirement/binding/arrival counts, and
+  validates every record against schema-v38 through the full historical schema
+  registry;
+- schema guards prove v37 remains unchanged, v38 distinguishes complete rule
+  capture from satisfied target binding, and authored/missing evidence is
+  fail-closed;
+- observer guards require only detached inventory getters and prohibit the
+  Slice 108 requirement object, live events/store, object mutation, packet
+  sends, callback execution, cancellation, or rescheduling;
+- the complete layered-map suite passes 335 tests across 109 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 774 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- a true aggregate or per-restoration binding flag means authored identity was
+  present in the detached snapshot. It does not prove the target currently
+  exists or authorize a lookup, replacement, or removal;
+- `RECONCILE_BEFORE_FIRST_VISIBILITY` describes the required future order. It
+  does not intercept login, teleport, movement, Player registration, or packet
+  visibility;
+- standalone restoration, target lookup, callback execution, scheduler
+  identity, preservation, and every event/lifecycle authority remain false;
+  and
+- No target lookup is performed. No callback is cancelled, stopped, removed,
+  rescheduled, recreated, or run. No source is loaded, retained, retired,
+  reconstructed, or gated, and no preservation, reload, registry, teardown,
+  transaction, rollback, or lifecycle authority is created.
+
+Status: implemented and automated-validated. Owner validation, executable
+restoration, arrival gating, and all lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -9881,6 +9941,7 @@ private environment should validate at least:
 | 2026-07-21 | Accept the corrected Slice 106/107 atomic-timing route. | Owner-validated; both markers complete without disconnect, retain one token and registration 3945, ticks 323→334 reconcile exactly with remaining delay 39→28, aggregate/event/restoration atomic claims agree, natural completion removes the callback, all six records validate against v37, and every authority flag remains false |
 | 2026-07-21 | Continue with Slice 108 by defining fail-closed scenery target-binding and pre-visibility arrival requirements. | Implemented and automated-validated; authored spawn binds a destination slot, authored removal binds an existing entity, missing identity or mismatch refuses, reconciliation must precede first visibility, and no lookup, arrival gate, executable restoration, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 109 by detaching scenery target and arrival requirements into the bounded event inventory. | Implemented and automated-validated; target-rule capture, satisfied authored binding, and arrival ordering reconcile independently, identity-less callbacks remain explicitly incomplete, schema-v37 is unchanged, and no lookup, arrival gate, executable restoration, or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 110 by exposing detached scenery target and arrival requirements through additive private diagnostics. | Implemented and automated-validated; schema-v38 publishes reconciled aggregate/per-restoration requirements, authored and missing binding remain distinct, schema-v37 is immutable, and no lookup, arrival gate, executable restoration, or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -10233,15 +10294,16 @@ have distinct authored subjects, exact coordinates cannot substitute for
 authored identity, conflicts refuse, and restoration state must be reconciled
 before first visibility. Slice 109 now detaches that requirement into the
 bounded inventory, reconciles requirement/satisfied-binding/arrival counts, and
-retains identity-less states as explicit incomplete evidence. The next focused
-gate should expose only these detached values through additive private schema-
-v38 diagnostics while preserving v37 unchanged. Aggregate and per-restoration
-records must make captured requirement, satisfied binding, and arrival-order
-completeness visibly distinct from target lookup and standalone restoration. A
-private authored magic-tree route can then verify the pending spawn reports an
-authored destination and pre-visibility requirement before natural completion.
-The observer must gain no event, store, callback, key, target lookup, due-event
-executor, cancellation, reschedule, load, or arrival-gate authority.
+retains identity-less states as explicit incomplete evidence. Slice 110 exposes
+only those detached values through additive private schema-v38 while preserving
+v37 unchanged. The next gate is owner validation: a private authored magic-tree
+route should verify the pending spawn reports one captured and satisfied
+authored destination requirement plus pre-visibility ordering, then natural
+completion removes that restoration record. Only after acceptance should the
+next implementation slice decide the narrower unresolved generation-binding or
+idempotency prerequisite. The observer still has no event, store, callback,
+key, target lookup, due-event executor, cancellation, reschedule, load, or
+arrival-gate authority.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

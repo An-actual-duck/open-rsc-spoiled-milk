@@ -53,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v37";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v38";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4083,6 +4083,23 @@ public final class LayeredCoordinateParityObserver {
 			.append(inventory.isAtomicTimingCaptured()).append(',');
 		out.append("\"atomicTimingComplete\":")
 			.append(inventory.isAtomicTimingComplete()).append(',');
+		out.append("\"targetBindingRequirementCapturedEventCount\":")
+			.append(inventory.getTargetBindingRequirementCapturedEventCount())
+			.append(',');
+		out.append("\"targetBindingRequirementCaptured\":")
+			.append(inventory.isTargetBindingRequirementCaptured()).append(',');
+		out.append("\"targetBindingRequirementComplete\":")
+			.append(inventory.isTargetBindingRequirementComplete()).append(',');
+		out.append("\"targetBindingCompleteEventCount\":")
+			.append(inventory.getTargetBindingCompleteEventCount()).append(',');
+		out.append("\"targetBindingComplete\":")
+			.append(inventory.isTargetBindingComplete()).append(',');
+		out.append("\"arrivalOrderingCapturedEventCount\":")
+			.append(inventory.getArrivalOrderingCapturedEventCount()).append(',');
+		out.append("\"arrivalOrderingCaptured\":")
+			.append(inventory.isArrivalOrderingCaptured()).append(',');
+		out.append("\"arrivalOrderingComplete\":")
+			.append(inventory.isArrivalOrderingComplete()).append(',');
 		out.append("\"candidateAttributionComplete\":")
 			.append(inventory.isCandidateAttributionComplete()).append(',');
 		out.append("\"restorationStateCompleteEventCount\":")
@@ -4209,6 +4226,19 @@ public final class LayeredCoordinateParityObserver {
 			.append(state.isExecutionSemanticsCaptured()).append(',');
 		out.append("\"atomicTimingCaptured\":")
 			.append(atomicTimingCaptured).append(',');
+		field(out, "targetSubject", state.getTargetSubject().name()).append(',');
+		field(out, "bindingEvidence", state.getBindingEvidence().name())
+			.append(',');
+		field(out, "targetConflictPolicy",
+			state.getTargetConflictPolicy().name()).append(',');
+		out.append("\"targetBindingRequirementCaptured\":")
+			.append(state.isTargetBindingRequirementCaptured()).append(',');
+		out.append("\"targetBindingComplete\":")
+			.append(state.isTargetBindingComplete()).append(',');
+		field(out, "arrivalOrderingRequirement",
+			state.getArrivalOrderingRequirement().name()).append(',');
+		out.append("\"arrivalOrderingCaptured\":")
+			.append(state.isArrivalOrderingCaptured()).append(',');
 		out.append("\"schedulerIdentityCaptured\":")
 			.append(state.isSchedulerIdentityCaptured()).append(',');
 		out.append("\"targetBindingLookupPerformed\":")

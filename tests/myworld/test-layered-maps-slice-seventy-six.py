@@ -85,7 +85,7 @@ class LayeredMapsSliceSeventySixTest(unittest.TestCase):
     def test_observer_projects_from_the_same_exact_census(self):
         observer = OBSERVER.read_text(encoding="utf-8")
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v37"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v38"', observer
         )
         self.assertIn("MAX_TRACE_ACTIVE_NPC_BOUNDARY_REQUIREMENTS", observer)
         self.assertRegex(
