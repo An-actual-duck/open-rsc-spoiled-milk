@@ -1,7 +1,7 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, and 110 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, and 113 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, and 113 automated-validated on the active
 refinement branch
@@ -20,7 +20,7 @@ satisfied binding and executable restoration. They perform no lookup or
 arrival gate;
 replay, cancellation, reschedule, preservation, and all lifecycle authority
 remain absent;
-automated-validated Slices 111-113 define, detach, and privately expose
+owner-validated Slices 111-113 define, detach, privately expose, and validate
 generation matching and idempotent desired-state rules without inspecting a
 target or performing a mutation;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
@@ -9808,7 +9808,26 @@ Safety boundary:
 - every event, scheduler, registry, teardown, transaction, rollback, packet,
   arrival, and lifecycle authority remains absent.
 
-Status: implemented and automated-validated. Owner validation, target-state
+Private owner validation status:
+
+- the accepted route emitted seven complete schema-v39 records in the exact
+  `start`, outbound teleport, `gen-a`, `gen-b`, return teleport, `gen-return`,
+  `stop` sequence, and every record validates through the complete historical
+  schema registry;
+- both pending markers retain scheduler registration `3892`, proposal and
+  authored generation `1`, and the exact authored spawn rule: present desired
+  state, empty-slot mutation precondition, and already-satisfied no-op success;
+- observation ticks `1419 -> 1435` and remaining delays `33 -> 17` reconcile
+  by the same 16-tick delta without changing the scheduler registration;
+- after natural completion, the return marker and stop record contain zero
+  restoration, generation-binding, and idempotency requirements while all
+  completeness arithmetic remains true;
+- privacy round trips succeed and every registry, callback, mutation, packet,
+  arrival-gate, reconstruction, and lifecycle authority flag remains false;
+  and
+- the owner completed the visual route without reporting an issue.
+
+Status: implemented, automated-validated, and owner-validated. Target-state
 inspection, executable restoration, and all lifecycle authority remain absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
@@ -10142,6 +10161,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 111 by defining generation matching and idempotent desired-state prerequisites. | Implemented and automated-validated; stale authored generations must refuse, already-satisfied desired state is a no-op success, spawn/remove retain distinct mutation preconditions, and no comparison, inspection, mutation, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 112 by detaching generation and idempotency prerequisites into the bounded event inventory. | Implemented and automated-validated; captured rules, satisfied proposal-generation matches, and idempotency completeness reconcile separately, identity-less/stale callbacks remain incomplete, schema-v38 is unchanged, and no target inspection, mutation, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 113 by exposing detached generation and idempotency prerequisites through additive private diagnostics. | Implemented and automated-validated; schema-v39 publishes reconciled aggregate/per-restoration rules, schema-v38 remains immutable, and no target-state inspection, achieved-state claim, mutation, or lifecycle authority exists |
+| 2026-07-21 | Accept the Slice 113 private generation/idempotency route. | Owner-validated; seven schema-v39 records retain registration 3892 while ticks 1419->1435 and remaining delay 33->17 reconcile exactly, proposal/authored generation 1 and all declared rules agree at both pending markers, natural completion removes the record, and every authority flag remains false |
 
 ## Next Discussion
 
@@ -10504,14 +10524,16 @@ no-op success, and spawn/removal have distinct mutation preconditions. Slice
 112 detaches those rules, compares authored generation only to the inventory's
 exact reconstruction-proposal generation, and keeps captured rules separate
 from satisfied generation binding. Slice 113 exposes only those detached values
-through additive schema-v39 while preserving v38 unchanged. The next gate is
-owner validation: the private authored magic-tree route should show a matched
-proposal/authored generation, present desired state, empty-slot mutation
-precondition, and no-op-success policy at both pending markers, then zero
-restoration records after natural completion. Only after acceptance should a
-later slice define a read-only target-state classification seam; it must not yet
-mutate the world or gate arrival. The observer still has no event, store,
-callback,
+through additive schema-v39 while preserving v38 unchanged. The accepted
+private authored magic-tree route shows a matched proposal/authored generation,
+the declared spawn desired state and mutation precondition at both pending
+markers, exact timer progression on one scheduler registration, and zero
+restoration records after natural completion. The next gate is a dormant,
+read-only target-state classification seam. Before defining it, audit the
+existing harvest/replacement path so an authored transient replacement is not
+mistaken for a conflicting destination or an empty-slot requirement. The seam
+must classify detached observations only and must not mutate the world or gate
+arrival. The observer still has no event, store, callback,
 key, target lookup, due-event executor, cancellation, reschedule, load, or
 arrival-gate authority.
 
