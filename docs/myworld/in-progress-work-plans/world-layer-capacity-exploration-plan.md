@@ -11794,7 +11794,8 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 134 by adding the disconnected ordered collision executor. | Implemented and automated-validated; exact current TileValue capture, Slice 133 precondition evaluation, counted apply, post-state verification, internal reversal, multi-Region add/remove round-trip, same-footprint exclusion, underflow/missing-tile no-partial-change, and reverse-order refusal are proved under real monitors, World remains disconnected, and 438 focused tests plus the 789/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 135 by routing normal World collision counters through the ordered executor. | Implemented and automated-validated; definition projection stays outside Region locks, exact Region coverage is created and acquired canonically, World keeps membership/replacement order but no longer writes object collision counters directly, delayed force-full-block joins registration, object ID 1147 retains explicit saturating unregister compatibility, and 442 focused tests plus the 789/488 Ant build pass; private owner validation is pending |
 | 2026-07-22 | Accept the corrected Slice 135 private runtime route. | Owner-validated; successful login remains connected after signed edge Regions are admitted, normal tree depletion/return, a door open/close cycle, blocking scenery, and packed-boundary travel behave normally, the initial fence refusal is legitimate authored collision, and no new runtime collision/update exception appears |
-| 2026-07-22 | Continue with Slice 136 by composing exact GameObject membership and collision under one ordered Region union. | Implemented and automated-validated; register/unregister/replacement share exact slot revalidation and rollback, generic Region GameObject writes refuse, cache invalidation follows committed membership, deterministic refusal and concurrency fixtures close split writer state, and 446 focused tests plus the 790/488 Ant build pass; private owner validation is pending |
+| 2026-07-22 | Continue with Slice 136 by composing exact GameObject membership and collision under one ordered Region union. | Implemented and automated-validated; register/unregister/replacement share exact slot revalidation and rollback, generic Region GameObject writes refuse, cache invalidation follows committed membership, deterministic refusal and concurrency fixtures close split writer state, and 446 focused tests plus the 790/488 Ant build pass |
+| 2026-07-22 | Accept the Slice 136 private runtime route. | Owner-validated; a normal tree depleted and returned, its restored form remained interactive, a door completed an open/close/open cycle with expected passage and blocking, and a dropped log became a temporary fire and expired without an invisible obstruction; the private log corroborates every interaction with no transaction refusal, exception, logout, or collision/update error in the route window |
 
 ## Next Discussion
 
@@ -12277,13 +12278,13 @@ yet the full object-plus-collision transaction required by restoration.
 
 Slice 136 now composes exact object-slot membership and collision counters under
 one ordered Region union with rollback and deterministic writer exclusion. Its
-immediate gate is a private owner route covering a resource replacement and
-natural return, a door cycle, and another temporary or explicit replacement
-family while checking visibility, interaction, and collision. After acceptance,
-the next safe slice can connect the already fenced scheduler target
-revalidation to this transaction through a typed, generation-checked commit
-request; it must not give the scheduler direct Region, entity, or lifecycle
-authority.
+private owner route is accepted: a resource replacement and natural return, a
+door cycle, and a temporary fire registration/removal all retained normal
+visibility, interaction, and collision, and the private log contains no
+transaction refusal or runtime error during the route. The next safe slice can
+connect the already fenced scheduler target revalidation to this transaction
+through a typed, generation-checked commit request; it must not give the
+scheduler direct Region, entity, or lifecycle authority.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
