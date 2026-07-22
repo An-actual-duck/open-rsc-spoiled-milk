@@ -1,7 +1,7 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, and 107 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, and 110 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, and 110 automated-validated on the active
 refinement branch
@@ -10,10 +10,8 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slice 107 corrects the callback-lock
-deadlock exposed by the first Slice 106 owner route. Automated-validated Slices
-108-110 define, detach, and privately expose the next restoration prerequisite:
-known authored
+Current milestone: owner-validated Slices 108-110 define, detach, privately
+expose, and validate the next restoration prerequisite: known authored
 spawns bind an exact destination slot, known authored removals bind an exact
 existing entity, any mismatch or missing authored identity refuses, and timer/
 transient state must be reconciled before the first visibility snapshot. The
@@ -9613,7 +9611,7 @@ Safety boundary:
   reconstructed, or gated, and no preservation, reload, registry, teardown,
   transaction, rollback, or lifecycle authority is created.
 
-Private owner validation status: pending. The first owner route produced two
+Private owner validation status: accepted. The first owner route produced two
 complete start/marker/stop sequences and all 11 records validate against
 schema-v38, but neither sequence exercised the bounded event inventory. The
 player remained within source region `(10,10)`, so every marker correctly
@@ -9624,7 +9622,19 @@ the magic-tree callback, teleport outside the original visibility window, wait
 past the 16-tick retirement grace, capture two pending markers, then return
 after natural completion.
 
-Status: implemented and automated-validated. Owner validation, executable
+The corrected seven-record route validates against the complete schema-v38
+chain. Both pending markers retain one scheduler-instance scope and
+registration `4021`; observation ticks advance `3992` to `4014` while the
+atomic remaining delay falls exactly `37` to `15`. Each marker contains the
+sole exact magic-tree spawn at `(524,489)`, its authored placement identity at
+source `(10,10)` ordinal 22, `AUTHORED_DESTINATION_SLOT`, authored binding,
+mismatch refusal, and `RECONCILE_BEFORE_FIRST_VISIBILITY`. Aggregate and event
+claims reconcile. The return teleport, marker, and stop contain zero
+restoration records after natural completion. Exact coordinate round trips,
+username privacy, and every inert authority flag hold; the owner reports no
+visual, collision, interaction, or respawn issue.
+
+Status: implemented, automated-validated, and owner-validated. Executable
 restoration, arrival gating, and all lifecycle authority remain absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
@@ -9954,6 +9964,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 109 by detaching scenery target and arrival requirements into the bounded event inventory. | Implemented and automated-validated; target-rule capture, satisfied authored binding, and arrival ordering reconcile independently, identity-less callbacks remain explicitly incomplete, schema-v37 is unchanged, and no lookup, arrival gate, executable restoration, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 110 by exposing detached scenery target and arrival requirements through additive private diagnostics. | Implemented and automated-validated; schema-v38 publishes reconciled aggregate/per-restoration requirements, authored and missing binding remain distinct, schema-v37 is immutable, and no lookup, arrival gate, executable restoration, or lifecycle authority exists |
 | 2026-07-21 | Record the first Slice 110 private magic-tree route without overstating its evidence. | Inconclusive; two complete sequences produce 11 schema-valid v38 records, but remaining inside source region `(10,10)` yields zero retirement candidates and null event inventories. The corrected route must teleport away and pass the 16-tick grace before its pending markers |
+| 2026-07-21 | Accept the corrected Slice 110 target/arrival route. | Owner-validated; seven v38 records retain one authored spawn registration while its remaining delay falls exactly with the observation-tick delta, both pending markers reconcile authored destination binding and pre-visibility ordering, natural completion removes the restoration record, and every authority flag remains false |
 
 ## Next Discussion
 
@@ -10308,12 +10319,13 @@ before first visibility. Slice 109 now detaches that requirement into the
 bounded inventory, reconciles requirement/satisfied-binding/arrival counts, and
 retains identity-less states as explicit incomplete evidence. Slice 110 exposes
 only those detached values through additive private schema-v38 while preserving
-v37 unchanged. The next gate is owner validation: a private authored magic-tree
-route should verify the pending spawn reports one captured and satisfied
-authored destination requirement plus pre-visibility ordering, then natural
-completion removes that restoration record. Only after acceptance should the
-next implementation slice decide the narrower unresolved generation-binding or
-idempotency prerequisite. The observer still has no event, store, callback,
+v37 unchanged. The corrected owner route now proves a real pending authored
+spawn satisfies both requirements and disappears after natural completion.
+The next implementation slice should define the narrower unresolved generation-
+binding and idempotency prerequisite before any target lookup: a stale authored
+generation must refuse, an already-satisfied exact desired state must be a
+no-op success, and an empty or exact authored target may only describe its
+permitted future action. The observer still has no event, store, callback,
 key, target lookup, due-event executor, cancellation, reschedule, load, or
 arrival-gate authority.
 
