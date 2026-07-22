@@ -66,6 +66,36 @@ public abstract class GameTickEvent implements Callable<Integer> {
 		return lastEventDuration;
 	}
 
+	/**
+	 * Executes one scheduler-internal operation while this event's existing
+	 * execution boundary is held. The monitor itself never escapes, and the
+	 * operation cannot retain the boundary after this method returns.
+	 *
+	 * <p>This is a lock-order seam, not callback, restoration, or mutation
+	 * authority. Scheduler registration changes use it before acquiring their
+	 * store monitor so a future inner Region operation never needs to carry the
+	 * scheduler-store monitor inward.</p>
+	 */
+	public final <T> T withinExecutionBoundary(
+		final ExecutionBoundaryOperation<T> operation) {
+		if (operation == null) {
+			throw new NullPointerException("operation");
+		}
+		synchronized (executionLock) {
+			return operation.execute();
+		}
+	}
+
+	/** Current-thread proof used only while an execution-bound operation runs. */
+	public final boolean isExecutionBoundaryHeldByCurrentThread() {
+		return Thread.holdsLock(executionLock);
+	}
+
+	@FunctionalInterface
+	public interface ExecutionBoundaryOperation<T> {
+		T execute();
+	}
+
 	@Override
 	public Integer call() {
 		try {

@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, and 120 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, and 120 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, and 121 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -45,6 +45,10 @@ owner-validated Slice 120 exposes only the detached Region-boundary count,
 completeness, and per-target fact through additive private schema-v42, proves
 the pending authored stump was classified while the Region object boundary was
 held, and retains explicit non-atomic and non-authoritative flags;
+automated-validated Slice 121 makes scheduler registration changes share the
+existing event execution boundary, validates exact scheduler scope and
+registration before releasing the store monitor, and mechanically proves
+removal, replacement, and callback execution cannot cross an accepted fence;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10309,6 +10313,70 @@ Status: implemented and owner-validated. Runtime mutation revalidation,
 executable restoration, arrival gating, and all lifecycle authority remain
 absent.
 
+### Slice 121: Scheduler registration execution fence
+
+Objective: make the scheduler-instance and registration portion of Slice 118's
+outer boundary executable without carrying the scheduler-store monitor into a
+future Region object boundary or adding callback, mutation, arrival, or
+lifecycle authority.
+
+Implemented:
+
+- `GameTickEvent.withinExecutionBoundary` runs a scoped internal operation
+  under the same private monitor that already serializes `doRun`; the monitor
+  itself never escapes, and current-thread ownership is checked with
+  `Thread.holdsLock`;
+- accepted add, remove, and stopped-event replacement now acquire the event
+  execution boundary before `GameTickEventStore.LOCK`. Internal registration
+  and removal helpers refuse the inverse order;
+- `withValidatedRegistrationFence` checks the exact scheduler-instance token,
+  event identity, and positive registration sequence while both boundaries are
+  ordered, releases the store monitor, and only then invokes the supplied
+  internal operation while retaining the event execution boundary;
+- every registration mutation uses that same event-before-store order, so an
+  accepted operation excludes removal, replacement, cleanup removal, and event
+  callback execution until it returns;
+- scope mismatch, missing/replaced registration, and registration-sequence
+  mismatch refuse before invoking the operation; and
+- the detached fence result retains no event or store handle and explicitly is
+  not a commit token, mutation, executable restoration, arrival gate, or
+  lifecycle authority.
+
+Automated validation status:
+
+- an automated concurrency fixture uses deterministic latches to prove a
+  validated operation blocks concurrent removal and stopped-event replacement,
+  callback execution blocks removal through the same outer boundary, and a
+  replacement receives a distinct greater registration sequence;
+- the fixture also proves exact scope/registration acceptance, closed mismatch
+  refusals, absent operation invocation on refusal, store-monitor release before
+  the operation, and every inert authority flag;
+- source-order guards require the event boundary before the store boundary for
+  add, replacement, and removal, and prohibit World, Region, GameObject,
+  callback invocation, packets, or scenery mutation from the fence seam;
+- the complete layered-map suite passes 382 tests across 120 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 777 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the operation is scheduler-internal and only package-visible through the
+  store. The returned facts describe the boundary held during execution and are
+  stale after the operation returns;
+- no Region object boundary is entered, no target is observed, and proposal or
+  authored generation is not yet validated by this slice;
+- the scheduler store monitor is never held while the internal operation runs,
+  preventing a later inner Region boundary from inheriting the store lock; and
+- no callback is invoked, cancelled, rescheduled, or replayed by the fence; no
+  event, object, collision, packet, arrival, or lifecycle state is changed by
+  an accepted validation operation.
+
+Status: implemented and automated-validated. No owner route is required for
+this sub-second concurrency proof. Proposal-generation validation, a Region
+object boundary, target revalidation, mutation, executable restoration,
+arrival gating, and all lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10650,6 +10718,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 119 by proving exact target classification inside the real Region object boundary. | Implemented and automated-validated; every relevant exact-slot object is compared and classified while `objects` is held, the boundary fact is checked with `Thread.holdsLock`, only detached counts/state return, scheduler/event locks and all mutations remain absent, and the result is explicitly stale after release |
 | 2026-07-22 | Continue with Slice 120 by exposing only the detached Region-boundary target facts through private diagnostics. | Implemented and automated-validated; additive schema-v42 reports classified count/completeness and the per-target boundary boolean, preserves schema-v41, requires available targets to carry the fact, and explicitly remains non-atomic with mutation with no runtime revalidation, achieved-state claim, commit token, executable restoration, arrival gate, or lifecycle authority |
 | 2026-07-22 | Accept the Slice 120 private Region-boundary target route. | Owner-validated; `boundary-pending` retains registration 3892 with ten ticks remaining, one available target was classified under the Region object boundary as the exact authored transient with its mutation precondition satisfied, 86 ticks later natural completion clears target evidence, all six v42 records validate, visuals and interaction remain normal, and ordinary human timing was sufficient |
+| 2026-07-22 | Continue with Slice 121 by implementing the scheduler-registration side of the outer revalidation boundary. | Implemented and automated-validated; add/remove/replacement share the existing event execution boundary before the store monitor, exact scope/registration validation releases the store before running the fenced operation, automated removal/replacement/callback races replace sub-second owner timing, 382 focused tests and the 777/488 Ant build pass, and no Region, target, mutation, callback, arrival, or lifecycle authority is added |
 
 ## Next Discussion
 
@@ -11062,17 +11131,23 @@ with its mutation precondition satisfied; after natural completion the target
 is absent and the returned tree behaves normally. All six records validate,
 and ordinary human timing was sufficient.
 
-The next focused gate should establish the scheduler side of Slice 118's outer
-boundary before attempting any Region mutation: audit and specify an internal
-registration fence for the exact scheduler instance, event registration, and
-proposal generation while the existing `GameTickEvent` execution boundary is
-held. Removal, replacement, cleanup, and callback execution must receive an
-executable concurrency/lock-order proof that registration cannot become stale
-between its validation and a later inner Region operation, without carrying
-the scheduler-store lock into the Region object boundary. Keep this first fence
-disconnected from World scenery callbacks, Region mutation, diagnostics,
-arrival, and lifecycle consumers. No owner route should be requested for a
-sub-second race; use an automated private concurrency fixture.
+Slice 121 now supplies the scheduler side of Slice 118's outer boundary. Exact
+scheduler scope and registration are validated under the existing event
+execution boundary, the store monitor is released before the fenced operation,
+and removal, replacement, and callback execution cannot cross it. Automated
+latches prove the sub-second races without relying on owner reaction time.
+
+The next focused gate should remove the remaining caller-handle and generation
+gaps without entering a Region: locate one event internally by exact scheduler
+scope and registration sequence, acquire and revalidate the same fence, and
+compare the live callback's exact authored generation with the expected
+reconstruction-proposal generation. The operation must expose only detached
+closed facts to its internal consumer; no event handle, key, callback, UUID,
+owner, store, or monitor may escape. Missing, replaced, duplicate, wrong-kind,
+identity-less, or stale-generation registrations must refuse. Keep World
+scenery callbacks, Region target lookup, mutation, diagnostics, arrival, and
+lifecycle consumers disconnected until that handle-free generation fence is
+automated-validated.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

@@ -66,6 +66,7 @@ import com.openrsc.server.model.entity.Mob;
 import java.util.UUID;
 
 public class GameTickEvent {
+    private final Object executionLock = new Object();
     private final Mob owner;
     private final DuplicationStrategy duplicationStrategy;
     private final UUID uuid = UUID.randomUUID();
@@ -84,6 +85,13 @@ public class GameTickEvent {
     public boolean hasOwner() { return owner != null; }
     public boolean isRunning() { return running; }
     public void stop() { running = false; }
+    public <T> T withinExecutionBoundary(ExecutionBoundaryOperation<T> operation) {
+        synchronized (executionLock) { return operation.execute(); }
+    }
+    public boolean isExecutionBoundaryHeldByCurrentThread() {
+        return Thread.holdsLock(executionLock);
+    }
+    public interface ExecutionBoundaryOperation<T> { T execute(); }
     public AtomicTimingSnapshot captureAtomicTimingSnapshot() {
         return new AtomicTimingSnapshot(running, 7L, 2);
     }

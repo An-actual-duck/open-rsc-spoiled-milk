@@ -22,6 +22,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,6 +47,9 @@ class GameTickEventStore {
     private long nextRegistrationSequence;
     private long registrationVersion;
 
+	private static final int REMOVE_RETRY = 0;
+	private static final int REMOVE_COMPLETE = 1;
+
     /**
      * Indexes events by username for fast-lookup during individual player tick processing
      */
@@ -62,76 +66,108 @@ class GameTickEventStore {
     private final Multimap<Key<? extends GameTickEvent>, GameTickEvent> byType = LinkedHashMultimap.create();
 
     public boolean add(GameTickEvent event) {
-        synchronized (LOCK) {
-            final GameTickKey eventKey = getKey(event);
-
-            if (events.containsKey(eventKey)) {
-                // We already have an instance of this event
-                // LOGGER.warn("Tried to add duplicate event: {}", eventKey);
-                return false;
-            }
-
-            registerAccepted(eventKey, event);
-            return true;
-        }
+		final GameTickEvent checked = Objects.requireNonNull(event, "event");
+		return checked.withinExecutionBoundary(() -> {
+			synchronized (LOCK) {
+				final GameTickKey eventKey = getKey(checked);
+				if (events.containsKey(eventKey)) {
+					// We already have an instance of this event.
+					return false;
+				}
+				registerAccepted(eventKey, checked, checked);
+				return true;
+			}
+		});
     }
 
 	public boolean addOrUpdate(GameTickEvent event) {
-		{
+		final GameTickEvent replacement = Objects.requireNonNull(event, "event");
+		final GameTickKey eventKey = getKey(replacement);
+		while (true) {
+			final GameTickEvent existing;
 			synchronized (LOCK) {
-				final GameTickKey eventKey = getKey(event);
-	
-				if (events.containsKey(eventKey)) {
-					GameTickEvent existingEvent = events.get(eventKey);
-					if (existingEvent.isRunning()) {
-						// We already have an instance of this event that is running
-						// LOGGER.warn("Tried to add duplicate event: {}", eventKey);
+				existing = events.get(eventKey);
+			}
+			if (existing == null) {
+				Boolean added = replacement.withinExecutionBoundary(() -> {
+					synchronized (LOCK) {
+						if (events.containsKey(eventKey)) {
+							return null;
+						}
+						registerAccepted(
+							eventKey, replacement, replacement);
+						return Boolean.TRUE;
+					}
+				});
+				if (added != null) {
+					return added.booleanValue();
+				}
+				continue;
+			}
+			if (existing.isRunning()) {
+				synchronized (LOCK) {
+					if (events.get(eventKey) == existing) {
 						return false;
 					}
-					// Remove existing stopped event
-					// LOGGER.warn("Replaced stopped event: {}", eventKey);
-					remove(existingEvent);
 				}
-	
-				registerAccepted(eventKey, event);
-				return true;
+				continue;
+			}
+			Boolean replaced = existing.withinExecutionBoundary(() -> {
+					synchronized (LOCK) {
+						if (events.get(eventKey) != existing) {
+							return null;
+						}
+						if (existing.isRunning()) {
+							return Boolean.FALSE;
+						}
+						unregisterAccepted(eventKey, existing);
+						registerAccepted(
+							eventKey, replacement, existing);
+						return Boolean.TRUE;
+					}
+				});
+			if (replaced != null) {
+				return replaced.booleanValue();
 			}
 		}
 	}
 
     public boolean eventIsContained(GameTickEvent event) {
 		final GameTickKey eventKey = getKey(event);
-		return events.containsKey(eventKey);
-	}
+		synchronized (LOCK) {
+			return events.containsKey(eventKey);
+		}
+    }
 
     public void remove(GameTickEvent event) {
-        synchronized (LOCK) {
-            final GameTickKey eventKey = getKey(event);
-
-            if(!events.containsKey(eventKey)) {
-                // Event does not exist
-                LOGGER.warn("Failed to remove event: {}", eventKey);
-                return;
-            }
-            if (registrationVersion == Long.MAX_VALUE) {
-                throw new IllegalStateException(
-                    "Event registration version exhausted");
-            }
-
-            GameTickEvent registeredEvent = events.get(eventKey);
-            events.remove(eventKey);
-            byType.remove(
-                Key.get(registeredEvent.getClass()), registeredEvent);
-            if(isPlayerOwner(registeredEvent)) {
-                byUsernameHash.remove(
-                    ((Player) registeredEvent.getOwner()).getUsernameHash(),
-                    registeredEvent);
-            } else {
-                nonPlayerEvents.remove(eventKey);
-            }
-            registrationSequences.remove(registeredEvent);
-            advanceRegistrationVersion();
-        }
+		final GameTickEvent requested = Objects.requireNonNull(event, "event");
+		final GameTickKey eventKey = getKey(requested);
+		boolean observedRegistration = false;
+		while (true) {
+			final GameTickEvent registered;
+			synchronized (LOCK) {
+				registered = events.get(eventKey);
+			}
+			if (registered == null) {
+				if (!observedRegistration) {
+					LOGGER.warn("Failed to remove event: {}", eventKey);
+				}
+				return;
+			}
+			observedRegistration = true;
+			Integer result = registered.withinExecutionBoundary(() -> {
+				synchronized (LOCK) {
+					if (events.get(eventKey) != registered) {
+						return Integer.valueOf(REMOVE_RETRY);
+					}
+					unregisterAccepted(eventKey, registered);
+					return Integer.valueOf(REMOVE_COMPLETE);
+				}
+			});
+			if (result.intValue() == REMOVE_COMPLETE) {
+				return;
+			}
+		}
     }
 
     public Collection<GameTickEvent> getPlayerEvents(Player player) {
@@ -233,9 +269,74 @@ class GameTickEventStore {
         }
     }
 
+	/**
+	 * Runs one internal operation behind a validated scheduler-registration
+	 * fence. The event execution boundary is acquired before the store monitor;
+	 * the store monitor is released before the operation begins. Because every
+	 * registration mutation follows the same outer-to-inner order, removal or
+	 * replacement cannot invalidate the accepted registration until the
+	 * operation returns.
+	 *
+	 * <p>The detached fence is not a commit token and is stale after the
+	 * operation. This seam does not inspect a Region, invoke the event callback,
+	 * or perform restoration.</p>
+	 */
+	RegistrationFenceExecution withValidatedRegistrationFence(
+		final GameTickEvent event,
+		final String expectedSchedulerInstanceIdentity,
+		final long expectedRegistrationSequence,
+		final RegistrationFenceOperation operation) {
+		final GameTickEvent checked = Objects.requireNonNull(event, "event");
+		if (expectedSchedulerInstanceIdentity == null
+			|| expectedSchedulerInstanceIdentity.isEmpty()
+			|| expectedRegistrationSequence <= 0L) {
+			throw new IllegalArgumentException(
+				"Expected scheduler registration is invalid");
+		}
+		final RegistrationFenceOperation checkedOperation =
+			Objects.requireNonNull(operation, "operation");
+		return checked.withinExecutionBoundary(() -> {
+			final long observedRegistrationSequence;
+			synchronized (LOCK) {
+				if (!schedulerInstanceIdentity.equals(
+					expectedSchedulerInstanceIdentity)) {
+					return RegistrationFenceExecution.refused(
+						RegistrationFenceReason
+							.SCHEDULER_INSTANCE_MISMATCH);
+				}
+				Long observed = registrationSequences.get(checked);
+				if (events.get(getKey(checked)) != checked
+					|| observed == null) {
+					return RegistrationFenceExecution.refused(
+						RegistrationFenceReason.EVENT_NOT_REGISTERED);
+				}
+				observedRegistrationSequence = observed.longValue();
+				if (observedRegistrationSequence
+					!= expectedRegistrationSequence) {
+					return RegistrationFenceExecution.refused(
+						RegistrationFenceReason
+							.REGISTRATION_SEQUENCE_MISMATCH);
+				}
+			}
+			RegistrationFence fence = new RegistrationFence(
+				schedulerInstanceIdentity, observedRegistrationSequence,
+				checked.isExecutionBoundaryHeldByCurrentThread(),
+				Thread.holdsLock(LOCK), true);
+			checkedOperation.execute(fence);
+			return RegistrationFenceExecution.accepted(fence);
+		});
+	}
+
     private void registerAccepted(
         final GameTickKey eventKey,
-        final GameTickEvent event) {
+        final GameTickEvent event,
+		final GameTickEvent mutationBoundaryEvent) {
+		if (!Thread.holdsLock(LOCK)
+			|| !mutationBoundaryEvent
+				.isExecutionBoundaryHeldByCurrentThread()) {
+			throw new IllegalStateException(
+				"Registration requires event boundary before store boundary");
+		}
         if (nextRegistrationSequence == Long.MAX_VALUE) {
             throw new IllegalStateException(
                 "Event registration identity exhausted");
@@ -257,6 +358,32 @@ class GameTickEventStore {
         nextRegistrationSequence = registrationSequence;
         advanceRegistrationVersion();
     }
+
+	private void unregisterAccepted(
+		final GameTickKey eventKey,
+		final GameTickEvent registeredEvent) {
+		if (!Thread.holdsLock(LOCK)
+			|| !registeredEvent.isExecutionBoundaryHeldByCurrentThread()) {
+			throw new IllegalStateException(
+				"Removal requires event boundary before store boundary");
+		}
+		if (registrationVersion == Long.MAX_VALUE) {
+			throw new IllegalStateException(
+				"Event registration version exhausted");
+		}
+		events.remove(eventKey);
+		byType.remove(
+			Key.get(registeredEvent.getClass()), registeredEvent);
+		if (isPlayerOwner(registeredEvent)) {
+			byUsernameHash.remove(
+				((Player) registeredEvent.getOwner()).getUsernameHash(),
+				registeredEvent);
+		} else {
+			nonPlayerEvents.remove(eventKey);
+		}
+		registrationSequences.remove(registeredEvent);
+		advanceRegistrationVersion();
+	}
 
     private void advanceRegistrationVersion() {
         if (registrationVersion == Long.MAX_VALUE) {
@@ -360,6 +487,103 @@ class GameTickEventStore {
             return registrations;
         }
     }
+
+	@FunctionalInterface
+	interface RegistrationFenceOperation {
+		void execute(RegistrationFence fence);
+	}
+
+	/** Detached facts that are valid only during the supplied operation. */
+	static final class RegistrationFence {
+		private final String schedulerInstanceIdentity;
+		private final long registrationSequence;
+		private final boolean eventExecutionBoundaryHeld;
+		private final boolean schedulerStoreBoundaryHeld;
+		private final boolean registrationValidatedBeforeInnerBoundary;
+
+		private RegistrationFence(
+			final String schedulerInstanceIdentity,
+			final long registrationSequence,
+			final boolean eventExecutionBoundaryHeld,
+			final boolean schedulerStoreBoundaryHeld,
+			final boolean registrationValidatedBeforeInnerBoundary) {
+			this.schedulerInstanceIdentity = schedulerInstanceIdentity;
+			this.registrationSequence = registrationSequence;
+			this.eventExecutionBoundaryHeld = eventExecutionBoundaryHeld;
+			this.schedulerStoreBoundaryHeld = schedulerStoreBoundaryHeld;
+			this.registrationValidatedBeforeInnerBoundary =
+				registrationValidatedBeforeInnerBoundary;
+			if (schedulerInstanceIdentity == null
+				|| schedulerInstanceIdentity.isEmpty()
+				|| registrationSequence <= 0L
+				|| !eventExecutionBoundaryHeld
+				|| schedulerStoreBoundaryHeld
+				|| !registrationValidatedBeforeInnerBoundary) {
+				throw new IllegalStateException(
+					"Accepted scheduler-registration fence is invalid");
+			}
+		}
+
+		String getSchedulerInstanceIdentity() {
+			return schedulerInstanceIdentity;
+		}
+		long getRegistrationSequence() { return registrationSequence; }
+		boolean isEventExecutionBoundaryHeld() {
+			return eventExecutionBoundaryHeld;
+		}
+		boolean isSchedulerStoreBoundaryHeld() {
+			return schedulerStoreBoundaryHeld;
+		}
+		boolean isRegistrationValidatedBeforeInnerBoundary() {
+			return registrationValidatedBeforeInnerBoundary;
+		}
+	}
+
+	enum RegistrationFenceReason {
+		SCHEDULER_INSTANCE_MISMATCH,
+		EVENT_NOT_REGISTERED,
+		REGISTRATION_SEQUENCE_MISMATCH,
+		OPERATION_COMPLETED
+	}
+
+	/** Accepted/refused result; neither the event nor the store is retained. */
+	static final class RegistrationFenceExecution {
+		private final RegistrationFenceReason reason;
+		private final RegistrationFence fence;
+
+		private RegistrationFenceExecution(
+			final RegistrationFenceReason reason,
+			final RegistrationFence fence) {
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.fence = fence;
+			if ((reason == RegistrationFenceReason.OPERATION_COMPLETED)
+				!= (fence != null)) {
+				throw new IllegalArgumentException(
+					"Registration-fence result is inconsistent");
+			}
+		}
+
+		private static RegistrationFenceExecution refused(
+			final RegistrationFenceReason reason) {
+			return new RegistrationFenceExecution(reason, null);
+		}
+		private static RegistrationFenceExecution accepted(
+			final RegistrationFence fence) {
+			return new RegistrationFenceExecution(
+				RegistrationFenceReason.OPERATION_COMPLETED, fence);
+		}
+
+		boolean isAccepted() {
+			return reason == RegistrationFenceReason.OPERATION_COMPLETED;
+		}
+		RegistrationFenceReason getReason() { return reason; }
+		RegistrationFence getFence() { return fence; }
+		boolean isCommitToken() { return false; }
+		boolean isMutationPerformed() { return false; }
+		boolean isExecutableRestoration() { return false; }
+		boolean isArrivalGate() { return false; }
+		boolean isLifecycleAuthority() { return false; }
+	}
 
     private boolean isPlayerOwner(GameTickEvent event) {
         return event.hasOwner() && event.getOwner() instanceof Player;
