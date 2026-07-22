@@ -1,7 +1,7 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, and 117 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, and 120 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, and 120 automated-validated on the active
 refinement branch
@@ -41,9 +41,10 @@ lock inward, while making no runtime revalidation or atomicity claim;
 automated-validated Slice 119 moves exact constructor/identity comparison and
 closed target classification inside the real Region object monitor, returns
 only detached counts/state, and remains stale and non-atomic with mutation;
-automated-validated Slice 120 exposes only the detached Region-boundary count,
-completeness, and per-target fact through additive private schema-v42 while
-retaining explicit non-atomic and non-authoritative flags;
+owner-validated Slice 120 exposes only the detached Region-boundary count,
+completeness, and per-target fact through additive private schema-v42, proves
+the pending authored stump was classified while the Region object boundary was
+held, and retains explicit non-atomic and non-authoritative flags;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10284,9 +10285,29 @@ Safety boundary:
   registered, removed, or replaced; and no arrival or lifecycle path consumes
   the diagnostic.
 
-Status: implemented and automated-validated. Owner validation, runtime mutation
-revalidation, executable restoration, arrival gating, and all lifecycle
-authority remain absent.
+Owner validation:
+
+- the six-record private route validates against schema-v42 in exact `start`,
+  source teleport, `boundary-pending`, `boundary-after`, return teleport, and
+  `stop` order using the complete 42-resource local schema registry;
+- at event-inventory tick 5715, `boundary-pending` retains scheduler
+  registration 3892 with ten ticks remaining and reports one available target,
+  one boundary-classified target, complete available-target boundary coverage,
+  and `runtimeTargetClassificationPerformed=true`;
+- that target is the exact authored slot `(524,489)`, contains one object and
+  one exact authored-identity match, and records
+  `objectBoundaryHeldDuringClassification=true`,
+  `EXACT_AUTHORED_TRANSIENT_PRESENT`, and
+  `MUTATION_PRECONDITION_SATISFIED`;
+- 86 server ticks later, `boundary-after` reports zero targets after natural
+  callback completion. The return tree is visible and interactable, and the
+  owner reports no visual, collision, or interaction issues; and
+- the route succeeded with ordinary typing and broad wait windows. It neither
+  requires nor demonstrates instantaneous owner input.
+
+Status: implemented and owner-validated. Runtime mutation revalidation,
+executable restoration, arrival gating, and all lifecycle authority remain
+absent.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -10628,6 +10649,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 118 by specifying fail-closed atomic target revalidation before any mutation seam. | Implemented and automated-validated; the dormant contract requires an outer event-execution boundary, forbids carrying the scheduler-store lock into the inner Region object boundary, matches scheduler scope/registration/generation, requires fresh in-boundary target classification, preserves exact refusal/no-op/precondition outcomes, and grants no atomicity claim, mutation authorization, commit token, or lifecycle authority |
 | 2026-07-22 | Continue with Slice 119 by proving exact target classification inside the real Region object boundary. | Implemented and automated-validated; every relevant exact-slot object is compared and classified while `objects` is held, the boundary fact is checked with `Thread.holdsLock`, only detached counts/state return, scheduler/event locks and all mutations remain absent, and the result is explicitly stale after release |
 | 2026-07-22 | Continue with Slice 120 by exposing only the detached Region-boundary target facts through private diagnostics. | Implemented and automated-validated; additive schema-v42 reports classified count/completeness and the per-target boundary boolean, preserves schema-v41, requires available targets to carry the fact, and explicitly remains non-atomic with mutation with no runtime revalidation, achieved-state claim, commit token, executable restoration, arrival gate, or lifecycle authority |
+| 2026-07-22 | Accept the Slice 120 private Region-boundary target route. | Owner-validated; `boundary-pending` retains registration 3892 with ten ticks remaining, one available target was classified under the Region object boundary as the exact authored transient with its mutation precondition satisfied, 86 ticks later natural completion clears target evidence, all six v42 records validate, visuals and interaction remain normal, and ordinary human timing was sufficient |
 
 ## Next Discussion
 
@@ -11034,13 +11056,23 @@ and no scheduler/event lock or mutation enters that boundary. The result is
 still stale immediately after release and is unconsumed by callbacks. Slice 120
 now exposes only the boundary-performed count/completeness and per-target fact
 through additive private schema-v42 while preserving schema-v41 and every
-non-atomic/non-authoritative flag. The next gate is owner validation on the
-same authored magic-tree transient. One human-tolerant marker inside the broad
-pending window should show one available/classified target, complete boundary
-coverage, `objectBoundaryHeldDuringClassification=true`, and the unchanged
-exact-authored-transient mutation-precondition category. A later marker may
-legitimately show zero after natural completion. No route needs sub-second or
-instantaneous owner input; automate any future test that does.
+non-atomic/non-authoritative flag. Its accepted route records one pending target
+classified under the Region object boundary as the exact authored transient
+with its mutation precondition satisfied; after natural completion the target
+is absent and the returned tree behaves normally. All six records validate,
+and ordinary human timing was sufficient.
+
+The next focused gate should establish the scheduler side of Slice 118's outer
+boundary before attempting any Region mutation: audit and specify an internal
+registration fence for the exact scheduler instance, event registration, and
+proposal generation while the existing `GameTickEvent` execution boundary is
+held. Removal, replacement, cleanup, and callback execution must receive an
+executable concurrency/lock-order proof that registration cannot become stale
+between its validation and a later inner Region operation, without carrying
+the scheduler-store lock into the Region object boundary. Keep this first fence
+disconnected from World scenery callbacks, Region mutation, diagnostics,
+arrival, and lifecycle consumers. No owner route should be requested for a
+sub-second race; use an automated private concurrency fixture.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
