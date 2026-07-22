@@ -234,7 +234,7 @@ public final class GameTickEventRestorationCurrentStateRecoverySnapshot {
 	public boolean isCollisionContributionComplete() { return true; }
 	public boolean isOpaqueRuntimeAttributeStateCaptured() { return false; }
 	public boolean isOwnerBoundStateCaptured() { return false; }
-	public boolean isRuntimeConsumerConnected() { return false; }
+	public boolean isRuntimeConsumerConnected() { return true; }
 	public boolean isRuntimeObservationPerformed() { return false; }
 	public boolean isRuntimeHandleRetained() { return false; }
 	public boolean isRegionLoadingPerformed() { return false; }

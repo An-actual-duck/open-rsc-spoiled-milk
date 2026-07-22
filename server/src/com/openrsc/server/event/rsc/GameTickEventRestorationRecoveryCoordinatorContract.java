@@ -124,7 +124,7 @@ public final class GameTickEventRestorationRecoveryCoordinatorContract {
 			&& snapshot.isFutureCallback()
 			&& snapshot.isCallbackRetainedScheduled()
 			&& snapshot.isCurrentStateKeptSeparateFromDesiredState()
-			&& !snapshot.isRuntimeConsumerConnected()
+			&& snapshot.isRuntimeConsumerConnected()
 			&& !snapshot.isMutationPerformed()
 			&& !snapshot.isEventCancellation()
 			&& !snapshot.isEventReschedule()

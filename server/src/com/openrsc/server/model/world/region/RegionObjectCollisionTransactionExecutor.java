@@ -5,6 +5,7 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPl
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionTransactionContract;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionTransactionContract.PackedRegionCoordinate;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCommitRequest;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCurrentStateRecoverySnapshot;
 import com.openrsc.server.event.rsc.GameTickEventRestorationMutationIntent.AuthoredConstructionKind;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision.TargetOperation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTransientRollbackSnapshot;
@@ -205,6 +206,221 @@ final class RegionObjectCollisionTransactionExecutor {
 		}
 		return result[0].withBoundaryCount(
 			execution.getDeclaredBoundaryCount());
+	}
+
+	/**
+	 * Applies one detached future-callback current-state snapshot without
+	 * observing or changing its scheduler registration. Only an empty slot may
+	 * be populated; one already-matching exact object is an idempotent no-op.
+	 */
+	static CurrentStateRecoveryResult executeCurrentStateRecovery(
+		final List<RegionObjectCollisionMutationBoundary> transactionBoundaries,
+		final Region targetRegion,
+		final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot,
+		final GameObject observedCandidate,
+		final GameObject currentStateObject,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			currentStateRegisterFootprint,
+		final RegionCollisionFootprintMutationExecutor.MutableTileAccess tileAccess,
+		final CacheInvalidator cacheInvalidator) {
+		List<RegionObjectCollisionMutationBoundary> checkedBoundaries =
+			Objects.requireNonNull(transactionBoundaries, "transactionBoundaries");
+		Region checkedRegion = Objects.requireNonNull(targetRegion, "targetRegion");
+		GameTickEventRestorationCurrentStateRecoverySnapshot checkedSnapshot =
+			Objects.requireNonNull(snapshot, "snapshot");
+		GameObject checkedCurrent = Objects.requireNonNull(
+			currentStateObject, "currentStateObject");
+		GameTickEventRestorationCollisionFootprintPlanner.Result checkedFootprint =
+			Objects.requireNonNull(
+				currentStateRegisterFootprint, "currentStateRegisterFootprint");
+		RegionCollisionFootprintMutationExecutor.MutableTileAccess
+			checkedTileAccess = Objects.requireNonNull(tileAccess, "tileAccess");
+		CacheInvalidator checkedInvalidator = Objects.requireNonNull(
+			cacheInvalidator, "cacheInvalidator");
+
+		if (!checkedSnapshot.isFutureCallback()
+			|| !checkedSnapshot.isCallbackRetainedScheduled()
+			|| !checkedSnapshot.isCurrentStateKeptSeparateFromDesiredState()
+			|| checkedSnapshot.getTicksBeforeRun() <= 0L
+			|| !checkedSnapshot.isRuntimeConsumerConnected()
+			|| checkedSnapshot.isMutationPerformed()
+			|| checkedSnapshot.isEventCancellation()
+			|| checkedSnapshot.isEventReschedule()) {
+			return CurrentStateRecoveryResult.refused(
+				CurrentStateRecoveryReason.SNAPSHOT_CONTRACT_REFUSED);
+		}
+		if (!currentObjectMatchesSnapshot(checkedCurrent, checkedSnapshot)) {
+			return CurrentStateRecoveryResult.refused(
+				CurrentStateRecoveryReason.CURRENT_CONSTRUCTOR_REFUSED);
+		}
+		if (!footprintMatchesCurrentStateSnapshot(
+			checkedFootprint, checkedSnapshot)) {
+			return CurrentStateRecoveryResult.refused(
+				CurrentStateRecoveryReason
+					.CURRENT_COLLISION_SNAPSHOT_MISMATCH);
+		}
+
+		Change newChange = Change.newObject(
+			checkedRegion, checkedCurrent, checkedFootprint);
+		List<PackedRegionCoordinate> union =
+			requiredCurrentStateRecoveryRegionUnion(
+				checkedSnapshot, newChange);
+		if (!matchesBoundaryCoverage(checkedBoundaries, union)) {
+			throw new IllegalArgumentException(
+				"Current-state recovery boundary coverage is not exact");
+		}
+
+		final CurrentStateRecoveryResult[] result =
+			new CurrentStateRecoveryResult[1];
+		RegionObjectCollisionMutationBoundary.MutationExecution execution =
+			RegionObjectCollisionMutationBoundary.executeMutation(
+				checkedBoundaries,
+				new RegionObjectCollisionMutationBoundary.MutationOperation() {
+					@Override
+					public void run(
+						final RegionObjectCollisionMutationBoundary
+							.HeldMutationBoundarySet heldBoundaries) {
+						if (!heldBoundaries.areAllBoundariesHeld()
+							|| !heldBoundaries.isMutationAuthorized()) {
+							throw new IllegalStateException(
+								"Current-state recovery escaped its Region boundaries");
+						}
+						synchronized (
+							checkedRegion.getGameObjectTransactionMonitor()) {
+							result[0] =
+								executeCurrentStateRecoveryInsideBoundaries(
+									checkedBoundaries, checkedRegion,
+									checkedSnapshot, observedCandidate,
+									newChange, checkedTileAccess,
+									checkedInvalidator);
+						}
+					}
+				});
+		if (!execution.isMutationOperationInvoked()
+			|| !execution.wereAllBoundariesHeldDuringOperation()
+			|| result[0] == null) {
+			throw new IllegalStateException(
+				"Current-state recovery transaction did not complete");
+		}
+		return result[0].withBoundaryCount(
+			execution.getDeclaredBoundaryCount());
+	}
+
+	private static CurrentStateRecoveryResult
+		executeCurrentStateRecoveryInsideBoundaries(
+			final List<RegionObjectCollisionMutationBoundary>
+				transactionBoundaries,
+			final Region targetRegion,
+			final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot,
+			final GameObject observedCandidate,
+			final Change newChange,
+			final RegionCollisionFootprintMutationExecutor.MutableTileAccess
+				tileAccess,
+			final CacheInvalidator cacheInvalidator) {
+		Region.RestorationTargetMatchRequirement requirement =
+			Region.RestorationTargetMatchRequirement.of(
+				snapshot.getCurrentObjectId(),
+				snapshot.getCurrentPermanentObjectId(),
+				snapshot.getX(), snapshot.getY(), snapshot.getDirection(),
+				snapshot.getType(), null, 0,
+				snapshot.getAuthoredGeneration(),
+				snapshot.getAuthoredPackedRegionX(),
+				snapshot.getAuthoredPackedRegionY(),
+				snapshot.getAuthoredSourceOrdinal(),
+				snapshot.getAuthoredConstructionKind().name());
+		Region.RestorationTargetBoundarySnapshot target =
+			targetRegion.captureRestorationTargetBoundarySnapshot(
+				requirement, true);
+		if (target.getSlotObjectCount() == 0) {
+			if (observedCandidate != null) {
+				return CurrentStateRecoveryResult.refused(
+					CurrentStateRecoveryReason.TARGET_CHANGED_BEFORE_RECOVERY);
+			}
+			Result applied = executeInsideBoundaries(
+				transactionBoundaries, null, newChange,
+				tileAccess, cacheInvalidator);
+			return applied.isApplied()
+				? CurrentStateRecoveryResult.applied()
+				: CurrentStateRecoveryResult.refused(
+					CurrentStateRecoveryReason.OBJECT_TRANSACTION_REFUSED);
+		}
+		if (target.getSlotObjectCount() != 1
+			|| observedCandidate == null
+			|| !targetRegion.containsGameObjectIdentityUnderTransaction(
+				observedCandidate)) {
+			return CurrentStateRecoveryResult.refused(
+				CurrentStateRecoveryReason.TARGET_CHANGED_BEFORE_RECOVERY);
+		}
+		if (target.getObservedTargetState()
+			!= Region.RestorationTargetBoundaryState
+				.EXACT_RESTORATION_SCENERY_PRESENT
+			|| !currentObjectMatchesSnapshot(observedCandidate, snapshot)) {
+			return CurrentStateRecoveryResult.refused(
+				CurrentStateRecoveryReason.TARGET_CLASSIFICATION_REFUSED);
+		}
+		return CurrentStateRecoveryResult.noOp();
+	}
+
+	private static boolean currentObjectMatchesSnapshot(
+		final GameObject object,
+		final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
+		if (object.getAuthoredPlacementIdentity() == null) { return false; }
+		return object.getID() == snapshot.getCurrentObjectId()
+			&& object.getLoc().getPermId()
+				== snapshot.getCurrentPermanentObjectId()
+			&& object.getLoc().getX() == snapshot.getX()
+			&& object.getLoc().getY() == snapshot.getY()
+			&& object.getDirection() == snapshot.getDirection()
+			&& object.getType() == snapshot.getType()
+			&& object.getOwner() == null
+			&& object.getRuntimeAttributeCount() == 0
+			&& object.getAuthoredPlacementIdentity().getGeneration()
+				== snapshot.getAuthoredGeneration()
+			&& object.getAuthoredPlacementIdentity().getPackedRegionX()
+				== snapshot.getAuthoredPackedRegionX()
+			&& object.getAuthoredPlacementIdentity().getPackedRegionY()
+				== snapshot.getAuthoredPackedRegionY()
+			&& object.getAuthoredPlacementIdentity().getSourceOrdinal()
+				== snapshot.getAuthoredSourceOrdinal()
+			&& object.getAuthoredPlacementIdentity().getConstructionKind().name()
+				.equals(snapshot.getAuthoredConstructionKind().name());
+	}
+
+	private static boolean footprintMatchesCurrentStateSnapshot(
+		final GameTickEventRestorationCollisionFootprintPlanner.Result footprint,
+		final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
+		if (!footprint.isFootprintAvailable()
+			|| footprint.getOperation() != Operation.REGISTER
+			|| footprint.isLegacySaturatingUnregister()
+			|| footprint.getContributionTileCount()
+				!= snapshot.getCollisionContributionTileCount()) {
+			return false;
+		}
+		for (int index = 0;
+				index < footprint.getContributionTileCount(); index++) {
+			GameTickEventRestorationTransientRollbackSnapshot
+				.CollisionContribution actual =
+					footprint.getContributions().get(index);
+			GameTickEventRestorationCurrentStateRecoverySnapshot
+				.CollisionContribution expected =
+					snapshot.getCollisionContributions().get(index);
+			if (actual.getX() != expected.getX()
+				|| actual.getY() != expected.getY()
+				|| actual.getBlockingSceneryCount()
+					!= expected.getBlockingSceneryCount()
+				|| actual.getDynamicProjectileCount()
+					!= expected.getDynamicProjectileCount()) {
+				return false;
+			}
+			int[] expectedCounts = expected.getDynamicCollisionCounts();
+			for (int bit = 0; bit < expectedCounts.length; bit++) {
+				if (actual.getDynamicCollisionCount(bit)
+					!= expectedCounts[bit]) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private static RestorationResult executeRestorationInsideBoundaries(
@@ -634,6 +850,35 @@ final class RegionObjectCollisionTransactionExecutor {
 		return Collections.unmodifiableList(unique);
 	}
 
+	private static List<PackedRegionCoordinate>
+		requiredCurrentStateRecoveryRegionUnion(
+			final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot,
+			final Change newChange) {
+		List<PackedRegionCoordinate> result =
+			new ArrayList<PackedRegionCoordinate>();
+		result.add(PackedRegionCoordinate.of(
+			Math.floorDiv(
+				snapshot.getX(),
+				GameTickEventRestorationCollisionTransactionContract
+					.PACKED_REGION_SIZE),
+			Math.floorDiv(
+				snapshot.getY(),
+				GameTickEventRestorationCollisionTransactionContract
+					.PACKED_REGION_SIZE)));
+		result.addAll(newChange.forward.getRequiredRegions());
+		Collections.sort(result, PACKED_REGION_COMPARATOR);
+		List<PackedRegionCoordinate> unique =
+			new ArrayList<PackedRegionCoordinate>();
+		for (PackedRegionCoordinate coordinate : result) {
+			if (unique.isEmpty()
+				|| PACKED_REGION_COMPARATOR.compare(
+					unique.get(unique.size() - 1), coordinate) != 0) {
+				unique.add(coordinate);
+			}
+		}
+		return Collections.unmodifiableList(unique);
+	}
+
 	private static List<RegionObjectCollisionMutationBoundary> boundariesFor(
 		final List<RegionObjectCollisionMutationBoundary> transactionBoundaries,
 		final List<PackedRegionCoordinate> requiredRegions) {
@@ -835,6 +1080,99 @@ final class RegionObjectCollisionTransactionExecutor {
 		boolean isExecutableRestoration() { return false; }
 		boolean isCommitToken() { return false; }
 		boolean isArrivalGate() { return false; }
+		boolean isLifecycleAuthority() { return false; }
+	}
+
+	enum CurrentStateRecoveryOutcome { REFUSED, NO_OP, APPLIED }
+
+	enum CurrentStateRecoveryReason {
+		SNAPSHOT_CONTRACT_REFUSED,
+		CURRENT_CONSTRUCTOR_REFUSED,
+		CURRENT_COLLISION_SNAPSHOT_MISMATCH,
+		TARGET_CHANGED_BEFORE_RECOVERY,
+		TARGET_CLASSIFICATION_REFUSED,
+		OBJECT_TRANSACTION_REFUSED,
+		CURRENT_STATE_ALREADY_SATISFIED,
+		CURRENT_STATE_RESTORED
+	}
+
+	static final class CurrentStateRecoveryResult {
+		private final CurrentStateRecoveryOutcome outcome;
+		private final CurrentStateRecoveryReason reason;
+		private final boolean registered;
+		private final int boundaryCount;
+
+		private CurrentStateRecoveryResult(
+			final CurrentStateRecoveryOutcome outcome,
+			final CurrentStateRecoveryReason reason,
+			final boolean registered,
+			final int boundaryCount) {
+			this.outcome = Objects.requireNonNull(outcome, "outcome");
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.registered = registered;
+			this.boundaryCount = boundaryCount;
+			if (boundaryCount < 0
+				|| (outcome == CurrentStateRecoveryOutcome.APPLIED)
+					!= (reason
+						== CurrentStateRecoveryReason.CURRENT_STATE_RESTORED)
+				|| (outcome == CurrentStateRecoveryOutcome.NO_OP)
+					!= (reason
+						== CurrentStateRecoveryReason
+							.CURRENT_STATE_ALREADY_SATISFIED)
+				|| registered
+					!= (outcome == CurrentStateRecoveryOutcome.APPLIED)) {
+				throw new IllegalArgumentException(
+					"Current-state recovery result is inconsistent");
+			}
+		}
+
+		private static CurrentStateRecoveryResult refused(
+			final CurrentStateRecoveryReason reason) {
+			return new CurrentStateRecoveryResult(
+				CurrentStateRecoveryOutcome.REFUSED, reason, false, 0);
+		}
+
+		private static CurrentStateRecoveryResult noOp() {
+			return new CurrentStateRecoveryResult(
+				CurrentStateRecoveryOutcome.NO_OP,
+				CurrentStateRecoveryReason.CURRENT_STATE_ALREADY_SATISFIED,
+				false, 0);
+		}
+
+		private static CurrentStateRecoveryResult applied() {
+			return new CurrentStateRecoveryResult(
+				CurrentStateRecoveryOutcome.APPLIED,
+				CurrentStateRecoveryReason.CURRENT_STATE_RESTORED,
+				true, 0);
+		}
+
+		private CurrentStateRecoveryResult withBoundaryCount(final int count) {
+			return new CurrentStateRecoveryResult(
+				outcome, reason, registered, count);
+		}
+
+		CurrentStateRecoveryOutcome getOutcome() { return outcome; }
+		CurrentStateRecoveryReason getReason() { return reason; }
+		boolean isApplied() {
+			return outcome == CurrentStateRecoveryOutcome.APPLIED;
+		}
+		boolean isNoOp() {
+			return outcome == CurrentStateRecoveryOutcome.NO_OP;
+		}
+		boolean isRefused() {
+			return outcome == CurrentStateRecoveryOutcome.REFUSED;
+		}
+		boolean isMembershipRegistered() { return registered; }
+		int getBoundaryCount() { return boundaryCount; }
+		boolean isSnapshotRetained() { return false; }
+		boolean isEventHandleRetained() { return false; }
+		boolean isSchedulerStateTouched() { return false; }
+		boolean isCallbackInvoked() { return false; }
+		boolean isEventCancellation() { return false; }
+		boolean isEventReschedule() { return false; }
+		boolean isLoadingPerformed() { return false; }
+		boolean isArrivalGate() { return false; }
+		boolean isVisibilityReleased() { return false; }
 		boolean isLifecycleAuthority() { return false; }
 	}
 

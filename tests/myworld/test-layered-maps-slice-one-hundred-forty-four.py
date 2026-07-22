@@ -18,6 +18,10 @@ COORDINATOR = ROOT / (
     "server/src/com/openrsc/server/event/rsc/"
     "GameTickEventRestorationRecoveryCoordinatorContract.java"
 )
+TRANSACTION = ROOT / (
+    "server/src/com/openrsc/server/model/world/region/"
+    "RegionObjectCollisionTransactionExecutor.java"
+)
 PLAN = ROOT / (
     "docs/myworld/in-progress-work-plans/"
     "world-layer-capacity-exploration-plan.md"
@@ -89,7 +93,7 @@ public final class RestorationCurrentStateRecoveryFixture {
                 && snapshot.isCurrentStateKeptSeparateFromDesiredState()
                 && snapshot.isCallbackRetainedScheduled(),
             "future spawn preserves the stump and countdown, not desired state");
-        check(!snapshot.isRuntimeConsumerConnected()
+        check(snapshot.isRuntimeConsumerConnected()
                 && !snapshot.isRegionLoadingPerformed()
                 && !snapshot.isMutationPerformed()
                 && !snapshot.isCallbackInvoked()
@@ -98,7 +102,7 @@ public final class RestorationCurrentStateRecoveryFixture {
                 && !snapshot.isArrivalGate()
                 && !snapshot.isVisibilityReleased()
                 && !snapshot.isLifecycleAuthority(),
-            "available snapshot remains disconnected and non-authoritative");
+            "available snapshot has only the disconnected Region consumer");
     }
 
     private static void futureRemovalUsesTheSameCurrentStateContract() {
@@ -305,7 +309,7 @@ class LayeredMapsSliceOneHundredFortyFourTest(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
 
-    def test_snapshot_has_no_runtime_or_arrival_capability(self):
+    def test_snapshot_has_only_disconnected_region_consumer(self):
         source = SNAPSHOT.read_text(encoding="utf-8")
         for forbidden in (
             "import com.openrsc.server.model",
@@ -316,7 +320,7 @@ class LayeredMapsSliceOneHundredFortyFourTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, source)
         for required in (
-            "isRuntimeConsumerConnected() { return false; }",
+            "isRuntimeConsumerConnected() { return true; }",
             "isRuntimeObservationPerformed() { return false; }",
             "isRuntimeHandleRetained() { return false; }",
             "isRegionLoadingPerformed() { return false; }",
@@ -331,12 +335,13 @@ class LayeredMapsSliceOneHundredFortyFourTest(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_runtime_consumers_remain_disconnected(self):
+    def test_only_region_transaction_consumer_is_connected(self):
         name = "GameTickEventRestorationCurrentStateRecoverySnapshot"
         for path in (ROOT / "server/src").rglob("*.java"):
-            if path in (SNAPSHOT, COORDINATOR):
+            if path in (SNAPSHOT, COORDINATOR, TRANSACTION):
                 continue
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
+        self.assertIn(name, TRANSACTION.read_text(encoding="utf-8"))
 
     def test_living_plan_records_slice_one_hundred_forty_four(self):
         plan = PLAN.read_text(encoding="utf-8")

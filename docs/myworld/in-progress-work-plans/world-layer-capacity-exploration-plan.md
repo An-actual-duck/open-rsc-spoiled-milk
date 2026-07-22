@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, and 145 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, and 146 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -140,7 +140,12 @@ automated-validated Slice 145 correlates each bounded recovery step to exactly
 one typed overdue or future operation, requires every future step's exact
 Slice 144 snapshot, and reduces only fixture-supplied typed outcomes into the
 existing monotonic prefix/refusal/readiness policy without invoking work or
-releasing visibility;
+releasing visibility; and
+automated-validated Slice 146 connects that future snapshot only to the real
+ordered Region object/collision transaction, restores an empty slot or accepts
+one already-matching current object as an idempotent no-op, refuses stale,
+conflicting, or collision-mismatched state unchanged, and leaves the scheduler,
+RegionManager, loading, arrival, and visibility paths disconnected;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -11971,9 +11976,9 @@ Automated validation status:
 - overdue, already-run, generation-mismatched, classification-mismatched,
   owner-bound, opaque, incomplete, duplicate-collision, and missing-boundary
   paths refuse explicitly;
-- source guards enforce no runtime model/import, synchronization, callback,
-  scheduler mutation, Region loading, visibility, arrival, or lifecycle
-  consumer; and
+- source guards enforce no runtime model/import, synchronization, callback, or
+  scheduler mutation in the value itself and constrain its sole runtime
+  reference to the later disconnected Region transaction consumer; and
 - the complete layered-map suite passes 478 tests across 143 focused files;
   and
 - the authoritative bundled-Ant server build compiles 794 core and 488 plugin
@@ -11981,20 +11986,21 @@ Automated validation status:
 
 Safety boundary:
 
-- this value consumes only detached declarations and performs no runtime
+- this value consumes only detached declarations and itself performs no runtime
   observation, reconstruction, registration lookup, Region or collision
   mutation, callback invocation, cancellation, reschedule, loading, arrival
-  gating, or visibility release;
+  gating, or visibility release. Slice 146 may read it only inside its
+  disconnected Region transaction seam;
 - boundary claims are inputs that a later private coordinator must establish;
   this class cannot acquire those boundaries or turn the snapshot into a
   reusable permit;
 - the existing callback remains scheduled; the snapshot records the countdown
   but neither pauses nor rewrites it; and
-- runtime capture/application, batch coordination, first-visibility
-  integration, loading, retirement, and persistence remain later gates.
+- runtime capture, executable batch coordination, first-visibility integration,
+  loading, retirement, and persistence remain later gates.
 
 Status: implemented and automated-validated. No owner route is required because
-the snapshot remains disconnected from all runtime consumers.
+its only runtime consumer remains unreachable from production callers.
 
 ### Slice 145: Detached recovery coordinator contract
 
@@ -12058,6 +12064,68 @@ Safety boundary:
 
 Status: implemented and automated-validated. No owner route is required because
 all operation outcomes are fixture supplied and no runtime caller exists.
+
+### Slice 146: Disconnected future current-state application
+
+Objective: prove that one exact Slice 144 current-state snapshot can be applied
+through the real canonical Region object/collision transaction without changing
+the future scheduler callback or making recovery reachable from production.
+
+Implemented:
+
+- `RegionObjectCollisionTransactionExecutor.executeCurrentStateRecovery`
+  consumes one future snapshot, one exact reconstructed current object, and its
+  projected register footprint only after validating the snapshot's positive
+  countdown, retained-scheduled state, complete constructor, authored identity,
+  and captured collision contribution;
+- the required packed-Region union is derived from the exact current-state
+  collision footprint and must equal the caller's canonical ordered boundary
+  set before any mutation is attempted;
+- the target slot is classified again while every collision boundary and the
+  target Region's object transaction monitor are held. An empty slot may add
+  the current object and collision together, while one already-matching current
+  object is an idempotent no-op;
+- a conflicting occupant, stale observed identity, incomplete or mismatched
+  constructor/provenance, owner/runtime attributes, collision mismatch, or
+  changed target refuses without replacing an object or changing collision;
+- application reuses the Slice 136 atomic object/collision executor, including
+  its validation, verification, cache invalidation, and rollback behavior; and
+- the typed result reports only refused, no-op, or applied state plus exact
+  reason and boundary count. The scheduler event remains untouched: no handle
+  is retained, callback invoked, event cancelled, or countdown rescheduled.
+
+Automated validation status:
+
+- the executable real-Region fixture proves future spawn-state reconstruction
+  into an empty slot and a repeated already-satisfied application as a no-op;
+- the same application contract accepts a future removal callback's exact
+  current scenery without executing its later removal;
+- conflicting occupants and stale observed identities refuse while preserving
+  the target membership and collision counters;
+- collision contribution disagreement refuses before acquiring mutation
+  authority; source guards keep Store, RegionManager, loading, arrival,
+  visibility, and lifecycle consumers disconnected;
+- the complete layered-map suite passes 486 tests across 145 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 795 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this is a package-local executable seam reached only by its automated fixture;
+  no scheduler Store, recovery coordinator, RegionManager, loading, player
+  arrival, diagnostics, or gameplay caller invokes it;
+- the caller-supplied object and collision projection must exactly match the
+  immutable snapshot. The seam cannot discover/load a Region or capture live
+  event state by itself;
+- it never replaces an occupied slot and cannot consume, cancel, invoke, pause,
+  or reschedule the retained future callback; and
+- runtime capture, non-loading Region resolution, executable batch
+  orchestration, retry, first-visibility integration, retirement, and
+  persistence remain later gates.
+
+Status: implemented and automated-validated. No owner route is required because
+the application seam is not reachable from production.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -12958,14 +13026,22 @@ and only in-order fixture-supplied typed outcomes reduce into the existing
 monotonic prefix/refusal/readiness policy. Contractual readiness still neither
 invokes an operation nor releases visibility.
 
-The next safe slice should define the disconnected Region-side application of
-one Slice 144 current-state snapshot. It must reconstruct the exact current
-constructor/provenance and apply the captured collision contribution under the
-existing canonical object/collision transaction, be idempotent for an already-
-matching current object, refuse every conflict or stale generation, and leave
-the scheduler event untouched. It should initially be reachable only from an
-automated fixture; Store/coordinator, loading, arrival, and visibility paths
-must remain disconnected until exact application and rollback are proven.
+Slice 146 now supplies that disconnected Region-side application. It validates
+the exact current constructor, authored provenance, and captured collision
+contribution, then uses the canonical ordered object/collision transaction to
+populate only an empty slot. One already-matching current object is a no-op;
+stale identity, conflicting occupancy, and collision mismatch refuse unchanged.
+The scheduler event remains untouched, and Store, RegionManager, coordinator,
+loading, arrival, and visibility remain disconnected.
+
+The next safe slice should define a disconnected, non-loading RegionManager
+adapter for one Slice 144 snapshot. It should reconstruct the exact current
+`GameObjectLoc` and authored identity, select only a collision projection that
+matches the captured contribution, resolve every required packed Region with
+non-creating lookups, and then invoke Slice 146. A missing Region, definition,
+identity, or projection must refuse without loading or mutation. Store,
+coordinator execution, arrival, and visibility must remain disconnected until
+the adapter's exact reconstruction and Region coverage are proven.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
