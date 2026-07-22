@@ -102,9 +102,27 @@ public final class GameTickEventRestorationCommitRequest {
 
 REGION_MANAGER_STUB = r'''
 package com.openrsc.server.model.world.region;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCommitRequest;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
 public class RegionManager {
+	public enum RestorationCommitOutcome { REFUSED, NO_OP, APPLIED }
+	public enum RestorationCommitReason { FIXTURE }
+	public static final class RestorationCommitResult {
+		public RestorationCommitOutcome getOutcome() {
+			return RestorationCommitOutcome.REFUSED;
+		}
+		public RestorationCommitReason getReason() {
+			return RestorationCommitReason.FIXTURE;
+		}
+		public boolean isMembershipRemoved() { return false; }
+		public boolean isMembershipRegistered() { return false; }
+		public int getBoundaryCount() { return 0; }
+	}
+	public RestorationCommitResult applyGameTickEventRestorationCommitRequest(
+			GameTickEventRestorationCommitRequest request) {
+		return new RestorationCommitResult();
+	}
     public GameTickEventRestorationTargetRevalidation
             captureGameTickEventRestorationTargetRevalidation(
                 GameTickEventRestorationTargetRevalidationRequest request) {

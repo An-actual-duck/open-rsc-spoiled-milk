@@ -125,9 +125,9 @@ public final class RestorationOneShotSchedulerFixture {
                     && !result.isExactRegistrationRetained()
                     && result.getLifecycleVersionBefore() == lifecycle
                     && result.getLifecycleVersionAfter() == lifecycle + 1L
-                    && result.isFixtureReportedRegionMutation()
+                    && result.isRegionMutationReported()
                         == (outcome == RegionCommitOutcome.APPLIED)
-                    && !result.isRuntimeRegionManagerInvoked()
+                    && !result.isRegionManagerHandleRetained()
                     && !result.isRequestRetained()
                     && !result.isRuntimeHandleRetained()
                     && !result.isMutationAuthorized()
@@ -453,7 +453,7 @@ class LayeredMapsSliceOneHundredFortyOneTest(unittest.TestCase):
             store.index("class RestorationOneShotConsumptionExecution"),
         )]
         for required in (
-            "isRuntimeRegionManagerInvoked() { return false; }",
+            "isRegionManagerHandleRetained() { return false; }",
             "isRequestRetained() { return false; }",
             "isRuntimeHandleRetained() { return false; }",
             "isMutationAuthorized() { return false; }",

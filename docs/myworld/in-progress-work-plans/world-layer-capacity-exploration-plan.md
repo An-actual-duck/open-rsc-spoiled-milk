@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, and 141 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, and 142 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -122,7 +122,11 @@ invocation or reschedule; and
 automated-validated Slice 141 implements that terminal-consumption primitive
 under the real scheduler registration, event execution, and lifecycle
 boundaries, using only a fixture-supplied detached Region outcome while
-RegionManager remains disconnected;
+RegionManager remains disconnected; and
+automated-validated Slice 142 composes that primitive with the real Region
+commit seam, preserves its typed outcome/reason and closed membership facts,
+and remains unreachable from arrival, gameplay, diagnostics, or any other
+production caller;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -11778,6 +11782,71 @@ Status: implemented and automated-validated. No owner route is required because
 the runtime Region consumer and every production invocation path remain
 disconnected.
 
+### Slice 142: Disconnected Region/scheduler composition
+
+Objective: compose Slice 138/139's real Region object/collision commit with
+Slice 141's exact scheduler/event consumption boundary while keeping the
+combined operation unreachable from every production recovery, arrival, and
+gameplay path.
+
+Implemented:
+
+- `GameTickEventStore.withValidatedRestorationRegionCommitConsumption` accepts
+  the Region manager plus only expected scheduler identity, registration
+  sequence, and authored proposal generation, then delegates every scheduler,
+  event, lifecycle, semantics, and request check to Slice 141;
+- the ephemeral request is passed directly to the existing
+  `RegionManager.applyGameTickEventRestorationCommitRequest` seam while the
+  event execution and stable lifecycle boundaries remain held and the Store
+  monitor remains absent;
+- the Region result maps by exact closed outcome name into Slice 140's
+  disposition: `REFUSED` retains the exact event, while `APPLIED` and `NO_OP`
+  remove and terminally consume it only after Region work returns;
+- the composed result copies the Region outcome, typed reason, membership
+  removal/registration facts, and ordered-boundary count alongside the closed
+  scheduler result without retaining the Region result or a runtime handle;
+  and
+- a scheduler or lifecycle refusal occurs before Region invocation, so invalid
+  registration/generation/event state cannot reach object or collision
+  mutation.
+
+Automated validation status:
+
+- a deterministic composition fixture proves applied Region state consumes the
+  exact registration, copies mutation/membership evidence, and never invokes
+  callback code;
+- the fixture proves an idempotent Region no-op also consumes the obsolete
+  callback, while Region refusal retains the same running registration and
+  lifecycle unchanged;
+- stale authored generation proves the scheduler refusal path never calls the
+  Region seam or constructs Region result evidence;
+- Slice 138/139's real transaction fixtures continue proving exact empty spawn,
+  exact removal, desired-state no-op, exact authored-transient replacement,
+  rollback, and typed refusal inside the real ordered Region union;
+- source guards require the existing real Region method, the Slice 141 consumer,
+  closed authority flags, and no production caller;
+- the complete layered-map suite passes 470 tests across 141 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 792 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the combined package-local method is executable and can mutate real Region
+  membership/collision plus terminally consume one event, but no production
+  caller reaches it;
+- arrival and gameplay remain disconnected, as do parity diagnostics, Region
+  loading/retirement, and reconstruction orchestration;
+- no request, Region result, object, Region, event, Store, callback, monitor,
+  commit token, arrival gate, or lifecycle authority escapes the operation;
+  and
+- selecting recovery candidates, ordering a batch, deciding overdue-versus-
+  future callback behavior, invoking recovery before first visibility, and
+  integrating loading/persistence remain separately gated.
+
+Status: implemented and automated-validated. No owner route is required because
+there is no production caller and arrival and gameplay remain disconnected.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -12144,6 +12213,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 139 by connecting exact authored-transient rollback state. | Implemented and automated-validated; one zero-attribute exact authored transient with reversible collision projection can be atomically replaced, opaque runtime attributes and object ID 1147's asymmetric collision refuse unchanged, the scheduler Store stays disconnected, 458 focused tests pass across 138 files, and the 791/488 Ant build passes |
 | 2026-07-22 | Continue with Slice 140 by defining exact one-shot restoration consumption. | Implemented and automated-validated; Region refusal retains the exact pending event unchanged, applied or no-op desired state requires terminal exact-registration consumption with no callback or reschedule, invalid identity/boundary/outcome/post-state claims refuse, no runtime consumer is connected, 462 focused tests pass across 139 files, and the 792/488 Ant build passes |
 | 2026-07-22 | Continue with Slice 141 by implementing scheduler-local exact one-shot consumption. | Implemented and automated-validated; the real registration/execution/lifecycle boundaries consume a fixture-supplied detached Region outcome, refusal retains exact state, applied/no-op removes one registration and terminally stops without callback or reschedule, concurrent callback/stop/removal cannot cross, RegionManager remains disconnected, 466 focused tests pass across 140 files, and the 792/488 Ant build passes |
+| 2026-07-22 | Continue with Slice 142 by composing the real Region commit with exact scheduler consumption. | Implemented and automated-validated; the ephemeral request reaches the existing ordered Region object/collision seam under the stable event boundary, Region refusal retains the exact callback, applied/no-op consumes it after Region work, typed Region facts are copied without handles, no production caller exists, arrival/gameplay remain disconnected, 470 focused tests pass across 141 files, and the 792/488 Ant build passes |
 
 ## Next Discussion
 
@@ -12641,23 +12711,24 @@ attribute transient with symmetric unregister/rollback collision projection can
 be replaced, while opaque or asymmetric state refuses unchanged. The scheduler
 Store remains disconnected.
 
-Slice 140 supplies the scheduler-local disposition and postcondition table.
-Slice 141 now executes that table under the real exact registration, event
-execution, and stable lifecycle boundaries: refusal retains the same pending
-callback unchanged, while fixture-reported applied/no-op desired state removes
-the exact registration once and terminally stops the zero-run event without
-callback execution or reschedule. Deterministic races prove callback, stop, and
-removal cannot cross the accepted window. The supplied outcome remains detached
-test evidence and RegionManager remains disconnected.
+Slice 140 supplies the scheduler-local disposition and postcondition table,
+and Slice 141 executes it under the real exact registration, event execution,
+and stable lifecycle boundaries. Slice 142 now composes that scheduler
+consumer with the existing real Region object/collision commit: refusal retains
+the pending callback, while applied/no-op desired state removes and terminally
+stops it only after Region work. The closed result preserves the typed Region
+reason and membership/boundary facts, but no production caller reaches the
+combined operation and arrival/gameplay remain disconnected.
 
-The next safe slice should connect this scheduler-local consumer to
-`RegionManager.applyGameTickEventRestorationCommitRequest` through one narrow
-package-internal operation, retaining the proven event-before-Store and
-event/lifecycle-before-Region ordering and acquiring the Store only after the
-Region result returns. It should remain unreachable from arrival or gameplay
-while a deterministic real-Region fixture proves all applied, no-op, and
-refused shapes compose with the exact scheduler disposition. Production
-recovery invocation should remain a separate later approval gate.
+The next safe slice should define a pure recovery-candidate and invocation-
+ordering contract before attaching any caller. It should specify bounded batch
+identity/order, exact scheduler-instance/registration/proposal tuples, duplicate
+and partial-failure behavior, and the rule that every applicable restoration is
+settled before the first visibility snapshot. It must also distinguish an
+overdue callback from one whose countdown remains in the future, preserve
+continuing server-tick semantics, and grant no loading, arrival, callback,
+reschedule, or Region invocation authority. Only after that policy is closed
+should a private recovery coordinator or owner test route be considered.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

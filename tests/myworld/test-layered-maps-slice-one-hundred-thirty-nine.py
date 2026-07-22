@@ -170,10 +170,13 @@ class LayeredMapsSliceOneHundredThirtyNineTest(unittest.TestCase):
         self.assertIn("oldChange.forward.getContributions()", method)
         self.assertIn("collisionRollbackIsExact(", transaction)
 
-    def test_scheduler_store_remains_disconnected(self):
+    def test_scheduler_store_connection_remains_closed_to_gameplay(self):
         store = STORE.read_text(encoding="utf-8")
-        self.assertNotIn(
+        self.assertIn(
             "applyGameTickEventRestorationCommitRequest(", store
+        )
+        self.assertIn(
+            "withValidatedRestorationRegionCommitConsumption(", store
         )
         rollback = ROLLBACK.read_text(encoding="utf-8")
         self.assertIn("isDormantSnapshot() { return false; }", rollback)

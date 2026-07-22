@@ -596,8 +596,8 @@ class GameTickEventStore {
 
 	/**
 	 * Exercises exact one-shot disposition behind the real scheduler and event
-	 * boundaries using a detached fixture-supplied Region outcome. This seam is
-	 * not connected to the runtime Region service.
+	 * boundaries using a caller-supplied detached Region outcome. It owns no
+	 * Region handle; Slice 142 supplies the separately bounded runtime adapter.
 	 */
 	RestorationOneShotConsumptionExecution
 		withValidatedRestorationOneShotConsumption(
@@ -956,6 +956,36 @@ class GameTickEventStore {
 				== GameTickEventRestorationState.AuthoredConstructionKind
 					.BOUNDARY
 				&& objectType == 1;
+	}
+
+	/**
+	 * Composes the exact scheduler-local consumption boundary with the real
+	 * Region commit seam. No arrival or gameplay path calls this operation yet.
+	 */
+	RestorationRegionCommitConsumptionExecution
+		withValidatedRestorationRegionCommitConsumption(
+			final RegionManager regionManager,
+			final String expectedSchedulerInstanceIdentity,
+			final long expectedRegistrationSequence,
+			final long expectedProposalGeneration) {
+		final RegionManager checkedRegionManager = Objects.requireNonNull(
+			regionManager, "regionManager");
+		final RegionManager.RestorationCommitResult[] regionResult =
+			new RegionManager.RestorationCommitResult[1];
+		RestorationOneShotConsumptionExecution schedulerResult =
+			withValidatedRestorationOneShotConsumption(
+				expectedSchedulerInstanceIdentity,
+				expectedRegistrationSequence,
+				expectedProposalGeneration, request -> {
+					regionResult[0] = Objects.requireNonNull(
+						checkedRegionManager
+							.applyGameTickEventRestorationCommitRequest(request),
+						"region restoration result");
+					return RegionCommitOutcome.valueOf(
+						regionResult[0].getOutcome().name());
+				});
+		return RestorationRegionCommitConsumptionExecution.compose(
+			schedulerResult, regionResult[0]);
 	}
 
 	private static RestorationRegistrationFenceReason
@@ -1734,7 +1764,7 @@ class GameTickEventStore {
 
 	/**
 	 * Closed result of one scheduler-local consumption attempt. The supplied
-	 * Region outcome is detached test evidence; this value retains no request,
+	 * Region outcome is detached evidence; this value retains no request,
 	 * event, Store, callback, or lifecycle handle.
 	 */
 	static final class RestorationOneShotConsumptionExecution {
@@ -1834,13 +1864,103 @@ class GameTickEventStore {
 		boolean isEventTerminallyConsumed() {
 			return requiredAction == RequiredAction.TERMINALLY_CONSUME;
 		}
-		boolean isFixtureReportedRegionMutation() {
+		boolean isRegionMutationReported() {
 			return regionCommitOutcome == RegionCommitOutcome.APPLIED;
 		}
-		boolean isRuntimeRegionManagerInvoked() { return false; }
+		boolean isRegionManagerHandleRetained() { return false; }
 		boolean isRequestRetained() { return false; }
 		boolean isRuntimeHandleRetained() { return false; }
 		boolean isMutationAuthorized() { return false; }
+		boolean isCallbackInvoked() { return false; }
+		boolean isEventReschedule() { return false; }
+		boolean isExecutableRestoration() { return false; }
+		boolean isCommitToken() { return false; }
+		boolean isArrivalGate() { return false; }
+		boolean isLifecycleAuthority() { return false; }
+	}
+
+	/**
+	 * Detached composition result. Region reason and membership counts are
+	 * copied from the closed Region result; neither runtime handle is retained.
+	 */
+	static final class RestorationRegionCommitConsumptionExecution {
+		private final RestorationOneShotConsumptionExecution scheduler;
+		private final RegionManager.RestorationCommitOutcome regionOutcome;
+		private final RegionManager.RestorationCommitReason regionReason;
+		private final boolean membershipRemoved;
+		private final boolean membershipRegistered;
+		private final int boundaryCount;
+
+		private RestorationRegionCommitConsumptionExecution(
+			final RestorationOneShotConsumptionExecution scheduler,
+			final RegionManager.RestorationCommitOutcome regionOutcome,
+			final RegionManager.RestorationCommitReason regionReason,
+			final boolean membershipRemoved,
+			final boolean membershipRegistered,
+			final int boundaryCount) {
+			this.scheduler = Objects.requireNonNull(scheduler, "scheduler");
+			this.regionOutcome = regionOutcome;
+			this.regionReason = regionReason;
+			this.membershipRemoved = membershipRemoved;
+			this.membershipRegistered = membershipRegistered;
+			this.boundaryCount = boundaryCount;
+			boolean invoked = regionOutcome != null;
+			if (invoked != scheduler.isRequestDelivered()
+				|| invoked != (regionReason != null)
+				|| boundaryCount < 0
+				|| (!invoked
+					&& (membershipRemoved || membershipRegistered
+						|| boundaryCount != 0))
+				|| (invoked
+					&& RegionCommitOutcome.valueOf(regionOutcome.name())
+						!= scheduler.getRegionCommitOutcome())
+				|| (regionOutcome
+						!= RegionManager.RestorationCommitOutcome.APPLIED
+					&& (membershipRemoved || membershipRegistered))) {
+				throw new IllegalArgumentException(
+					"Region/scheduler consumption composition is inconsistent");
+			}
+		}
+
+		private static RestorationRegionCommitConsumptionExecution compose(
+			final RestorationOneShotConsumptionExecution scheduler,
+			final RegionManager.RestorationCommitResult region) {
+			return region == null
+				? new RestorationRegionCommitConsumptionExecution(
+					scheduler, null, null, false, false, 0)
+				: new RestorationRegionCommitConsumptionExecution(
+					scheduler, region.getOutcome(), region.getReason(),
+					region.isMembershipRemoved(),
+					region.isMembershipRegistered(),
+					region.getBoundaryCount());
+		}
+
+		RestorationOneShotConsumptionExecution getSchedulerResult() {
+			return scheduler;
+		}
+		RegionManager.RestorationCommitOutcome getRegionOutcome() {
+			return regionOutcome;
+		}
+		RegionManager.RestorationCommitReason getRegionReason() {
+			return regionReason;
+		}
+		boolean isRegionCommitInvoked() { return regionOutcome != null; }
+		boolean isMembershipRemoved() { return membershipRemoved; }
+		boolean isMembershipRegistered() { return membershipRegistered; }
+		int getBoundaryCount() { return boundaryCount; }
+		boolean isMutationPerformed() {
+			return regionOutcome
+				== RegionManager.RestorationCommitOutcome.APPLIED;
+		}
+		boolean isEventTerminallyConsumed() {
+			return scheduler.isEventTerminallyConsumed();
+		}
+		boolean isExactRegistrationRetained() {
+			return scheduler.isExactRegistrationRetained();
+		}
+		boolean isRegionResultRetained() { return false; }
+		boolean isRequestRetained() { return false; }
+		boolean isRuntimeHandleRetained() { return false; }
 		boolean isCallbackInvoked() { return false; }
 		boolean isEventReschedule() { return false; }
 		boolean isExecutableRestoration() { return false; }

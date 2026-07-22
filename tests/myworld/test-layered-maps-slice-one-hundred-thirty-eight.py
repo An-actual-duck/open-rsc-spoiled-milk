@@ -314,11 +314,14 @@ class LayeredMapsSliceOneHundredThirtyEightTest(unittest.TestCase):
             "loc.assignSerializedAuthoredPlacementIdentity(", manager
         )
 
-    def test_runtime_scheduler_remains_disconnected_and_transient_refuses(self):
+    def test_region_seam_is_connected_only_behind_closed_store_composition(self):
         store = STORE.read_text(encoding="utf-8")
         transaction = TRANSACTION.read_text(encoding="utf-8")
-        self.assertNotIn(
+        self.assertIn(
             "applyGameTickEventRestorationCommitRequest(", store
+        )
+        self.assertIn(
+            "withValidatedRestorationRegionCommitConsumption(", store
         )
         self.assertIn(
             "GameTickEventRestorationTransientRollbackSnapshot", transaction

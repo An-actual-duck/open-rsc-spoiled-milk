@@ -67,6 +67,7 @@ package com.openrsc.server.model.world.region;
 
 import com.openrsc.server.event.rsc
     .GameTickEventRestorationAtomicRevalidationContract;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCommitRequest;
 import com.openrsc.server.event.rsc
     .GameTickEventRestorationTargetDecision;
 import com.openrsc.server.event.rsc
@@ -76,6 +77,23 @@ import com.openrsc.server.event.rsc
 import java.util.concurrent.CountDownLatch;
 
 public class RegionManager {
+	public enum RestorationCommitOutcome { REFUSED, NO_OP, APPLIED }
+	public enum RestorationCommitReason { FIXTURE }
+	public static final class RestorationCommitResult {
+		public RestorationCommitOutcome getOutcome() {
+			return RestorationCommitOutcome.REFUSED;
+		}
+		public RestorationCommitReason getReason() {
+			return RestorationCommitReason.FIXTURE;
+		}
+		public boolean isMembershipRemoved() { return false; }
+		public boolean isMembershipRegistered() { return false; }
+		public int getBoundaryCount() { return 0; }
+	}
+	public RestorationCommitResult applyGameTickEventRestorationCommitRequest(
+			GameTickEventRestorationCommitRequest request) {
+		return new RestorationCommitResult();
+	}
     private final Object objects = new Object();
     private final CountDownLatch classificationCaptured =
         new CountDownLatch(1);

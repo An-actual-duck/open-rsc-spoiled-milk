@@ -1859,9 +1859,9 @@ public class RegionManager {
 	}
 
 	/**
-	 * Disconnected executable consumer for one scheduler-fenced restoration
-	 * request. The Store does not call this seam yet; fixtures use it to prove
-	 * fresh target classification and rollback-complete object/collision apply.
+	 * Executable consumer for one scheduler-fenced restoration request. The
+	 * Store's closed Slice 142 adapter may call this seam, but no recovery,
+	 * arrival, or gameplay path reaches that adapter yet.
 	 */
 	public RestorationCommitResult applyGameTickEventRestorationCommitRequest(
 		final GameTickEventRestorationCommitRequest request) {
