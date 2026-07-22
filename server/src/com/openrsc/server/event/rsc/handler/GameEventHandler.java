@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.handler;
 
 import com.openrsc.server.Server;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.GameTickEventRestorationRequirement;
 import com.openrsc.server.event.rsc.GameTickEventRestorationState;
 import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.event.rsc.ImmediateEvent;
@@ -10,8 +11,10 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AttributionKind;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.ArrivalOrderingRequirement;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AuthoredConstructionKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AuthoredPlacementRestorationState;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.BindingEvidence;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.ExecutionSemantics;
@@ -20,6 +23,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SceneryRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SpatialReference;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SpatialRole;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TargetConflictPolicy;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TargetSubject;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TimeProgressionPolicy;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.util.NamedThreadFactory;
@@ -476,6 +481,8 @@ public class GameEventHandler {
 
 	private EventRestorationState detachEventRestorationState(
 		final GameTickEventRestorationState state) {
+		GameTickEventRestorationRequirement requirement =
+			GameTickEventRestorationRequirement.from(state);
 		if (state.getKind()
 			== GameTickEventRestorationState.Kind.UNAVAILABLE) {
 			return EventRestorationState.unavailable();
@@ -501,18 +508,69 @@ public class GameEventHandler {
 		TimeProgressionPolicy timeProgressionPolicy =
 			TimeProgressionPolicy.valueOf(
 				state.getTimeProgressionPolicy().name());
+		TargetSubject targetSubject = TargetSubject.valueOf(
+			requirement.getTargetSubject().name());
+		BindingEvidence bindingEvidence = BindingEvidence.valueOf(
+			requirement.getBindingEvidence().name());
+		TargetConflictPolicy targetConflictPolicy =
+			TargetConflictPolicy.valueOf(
+				requirement.getTargetConflictPolicy().name());
+		ArrivalOrderingRequirement arrivalOrderingRequirement =
+			ArrivalOrderingRequirement.valueOf(
+				requirement.getArrivalOrderingRequirement().name());
+		validateDetachedRestorationTarget(
+			requirement, authored, detachedAuthored);
 		switch (state.getKind()) {
 			case SCENERY_SPAWN:
 				return EventRestorationState.scenerySpawn(
 					detachedScenery, state.isForceFullBlock(),
-					executionSemantics, timeProgressionPolicy);
+					executionSemantics, timeProgressionPolicy,
+					targetSubject, bindingEvidence, targetConflictPolicy,
+					arrivalOrderingRequirement);
 			case SCENERY_REMOVE:
 				return EventRestorationState.sceneryRemove(
 					detachedScenery, executionSemantics,
-					timeProgressionPolicy);
+					timeProgressionPolicy, targetSubject, bindingEvidence,
+					targetConflictPolicy, arrivalOrderingRequirement);
 			default:
 				throw new IllegalStateException(
 					"Unhandled event restoration-state kind");
+		}
+	}
+
+	private static void validateDetachedRestorationTarget(
+		final GameTickEventRestorationRequirement requirement,
+		final GameTickEventRestorationState.AuthoredPlacementState authored,
+		final AuthoredPlacementRestorationState detachedAuthored) {
+		GameTickEventRestorationRequirement.AuthoredTarget target =
+			requirement.getAuthoredTarget();
+		if (target == null) {
+			if (authored != null || detachedAuthored != null
+				|| requirement.isTargetBindingComplete()) {
+				throw new IllegalArgumentException(
+					"Missing restoration target disagrees with authored state");
+			}
+			return;
+		}
+		if (authored == null || detachedAuthored == null
+			|| !requirement.isTargetBindingComplete()
+			|| target.getGeneration() != authored.getGeneration()
+			|| target.getPackedRegionX() != authored.getPackedRegionX()
+			|| target.getPackedRegionY() != authored.getPackedRegionY()
+			|| target.getSourceOrdinal() != authored.getSourceOrdinal()
+			|| target.getConstructionKind()
+				!= authored.getConstructionKind()
+			|| target.getGeneration() != detachedAuthored.getGeneration()
+			|| target.getPackedRegionX()
+				!= detachedAuthored.getPackedRegionX()
+			|| target.getPackedRegionY()
+				!= detachedAuthored.getPackedRegionY()
+			|| target.getSourceOrdinal()
+				!= detachedAuthored.getSourceOrdinal()
+			|| !target.getConstructionKind().name().equals(
+				detachedAuthored.getConstructionKind().name())) {
+			throw new IllegalArgumentException(
+				"Restoration target disagrees with detached authored state");
 		}
 	}
 

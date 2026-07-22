@@ -45,10 +45,14 @@ package com.openrsc.server.model.world.coordinate;
 import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory.AttributionKind;
 import com.openrsc.server.model.world.coordinate
+    .LayeredPackedRegionEventOwnershipInventory.ArrivalOrderingRequirement;
+import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory.AuthoredConstructionKind;
 import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory
         .AuthoredPlacementRestorationState;
+import com.openrsc.server.model.world.coordinate
+    .LayeredPackedRegionEventOwnershipInventory.BindingEvidence;
 import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory.EventRestorationState;
 import com.openrsc.server.model.world.coordinate
@@ -67,6 +71,10 @@ import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory.SpatialRole;
 import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory.TimeProgressionPolicy;
+import com.openrsc.server.model.world.coordinate
+    .LayeredPackedRegionEventOwnershipInventory.TargetConflictPolicy;
+import com.openrsc.server.model.world.coordinate
+    .LayeredPackedRegionEventOwnershipInventory.TargetSubject;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -120,8 +128,17 @@ public final class EventRestorationInventoryFixture {
             && inventory.isExecutionSemanticsComplete()
             && inventory.getAtomicTimingCapturedEventCount() == 0
             && !inventory.isAtomicTimingCaptured()
+            && inventory
+                .getTargetBindingRequirementCapturedEventCount() == 2
+            && inventory.isTargetBindingRequirementCaptured()
+            && inventory.isTargetBindingRequirementComplete()
+            && inventory.getTargetBindingCompleteEventCount() == 1
+            && !inventory.isTargetBindingComplete()
+            && inventory.getArrivalOrderingCapturedEventCount() == 2
+            && inventory.isArrivalOrderingCaptured()
+            && inventory.isArrivalOrderingComplete()
             && inventory.getRestorationStateCompleteEventCount() == 0,
-            "execution semantics do not imply atomic restoration timing");
+            "requirements remain distinct from executable restoration");
         check(inventory.getSources().get(0)
                 .getRestorationStateEventOrdinals().equals(Arrays.asList(0, 1))
             && inventory.getSources().get(0)
@@ -142,12 +159,34 @@ public final class EventRestorationInventoryFixture {
             && inventory.getEvents().get(0).getRestorationState()
                 .getScenery().getAuthoredPlacement().getSourceOrdinal() == 42,
             "spawn constructor and provenance state survive detachment");
+        check(inventory.getEvents().get(0).getRestorationState()
+                .getTargetSubject() == TargetSubject.AUTHORED_DESTINATION_SLOT
+            && inventory.getEvents().get(0).getRestorationState()
+                .getBindingEvidence()
+                    == BindingEvidence.AUTHORED_PLACEMENT_IDENTITY
+            && inventory.getEvents().get(0).getRestorationState()
+                .getTargetConflictPolicy()
+                    == TargetConflictPolicy.REFUSE_MISMATCH_OR_AMBIGUITY
+            && inventory.getEvents().get(0).getRestorationState()
+                .getArrivalOrderingRequirement()
+                    == ArrivalOrderingRequirement
+                        .RECONCILE_BEFORE_FIRST_VISIBILITY
+            && inventory.getEvents().get(0).getRestorationState()
+                .isTargetBindingComplete(),
+            "authored spawn retains its destination and arrival requirement");
         check(inventory.getEvents().get(1).getRestorationState()
                 .getTargetBindingEvidence()
                 == LayeredPackedRegionEventOwnershipInventory
                     .TargetBindingEvidence.LIVE_ENTITY_REFERENCE_ONLY
             && !inventory.getEvents().get(1).getRestorationState()
                 .isDetachedCallbackPayloadComplete()
+            && inventory.getEvents().get(1).getRestorationState()
+                .getTargetSubject() == TargetSubject.AUTHORED_EXISTING_ENTITY
+            && inventory.getEvents().get(1).getRestorationState()
+                .getBindingEvidence()
+                    == BindingEvidence.MISSING_AUTHORED_PLACEMENT_IDENTITY
+            && !inventory.getEvents().get(1).getRestorationState()
+                .isTargetBindingComplete()
             && !inventory.getEvents().get(1).getRestorationState()
                 .isStandaloneRestorationComplete(),
             "identity-less removal remains incomplete and inert");
@@ -165,6 +204,13 @@ public final class EventRestorationInventoryFixture {
         expectIllegal(() -> EventRestorationState.scenerySpawn(
             scenery, false, ExecutionSemantics.UNAVAILABLE,
             TimeProgressionPolicy.CONTINUE_SERVER_TICKS));
+        expectIllegal(() -> EventRestorationState.scenerySpawn(
+            scenery, false, ExecutionSemantics.ONE_SHOT,
+            TimeProgressionPolicy.CONTINUE_SERVER_TICKS,
+            TargetSubject.AUTHORED_EXISTING_ENTITY,
+            BindingEvidence.AUTHORED_PLACEMENT_IDENTITY,
+            TargetConflictPolicy.REFUSE_MISMATCH_OR_AMBIGUITY,
+            ArrivalOrderingRequirement.RECONCILE_BEFORE_FIRST_VISIBILITY));
         expectIllegal(() -> EventState.of(
             0, 1L, OwnerKind.NONE, AttributionKind.EXACT_SPATIAL, true, 1L, 0,
             Collections.singletonList(fixed), state));
