@@ -31,6 +31,10 @@ HANDLER = RSC / "handler/GameEventHandler.java"
 REGION_MANAGER = ROOT / (
     "server/src/com/openrsc/server/model/world/region/RegionManager.java"
 )
+EXECUTOR = ROOT / (
+    "server/src/com/openrsc/server/model/world/region/"
+    "RegionCollisionFootprintMutationExecutor.java"
+)
 PLAN = ROOT / (
     "docs/myworld/in-progress-work-plans/"
     "world-layer-capacity-exploration-plan.md"
@@ -78,6 +82,7 @@ public final class RestorationCollisionApplicationFixture {
         retainsExactSixBitContributionCounts();
         projectsRegisterAndUnregisterWithoutMutation();
         refusesUnderflowAndOverflow();
+        preservesSpecialObjectSaturatingUnregister();
         refusesEveryCoverageAndFreshnessMismatch();
         acceptsCollisionlessAnchorAndKeepsResultsInert();
     }
@@ -164,6 +169,22 @@ public final class RestorationCollisionApplicationFixture {
         expectReason(evaluate(
             adding, Operation.REGISTER, true, true,
             adding.getRequiredRegions(), maximum), Reason.COUNTER_OVERFLOW);
+    }
+
+    private static void preservesSpecialObjectSaturatingUnregister() {
+        Result special = GameTickEventRestorationCollisionFootprintPlanner.plan(
+            Operation.UNREGISTER, ConstructorState.of(1147, 50, 50, 0, 0),
+            Definition.scenery(1, 1, 1, "chest", ALLOWLIST),
+            false, BOUNDS);
+        List<CurrentTileState> zero = Collections.singletonList(
+            CurrentTileState.of(50, 50, 0, new int[6], 0));
+        Evaluation saturated = evaluate(
+            special, Operation.UNREGISTER, true, true,
+            special.getRequiredRegions(), zero);
+        check(saturated.isProjectedPostStateAvailable()
+                && saturated.getProjectedTiles().get(0)
+                    .getBlockingSceneryCount() == 0,
+            "object 1147 preserves legacy saturating unregister arithmetic");
     }
 
     private static void refusesEveryCoverageAndFreshnessMismatch() {
@@ -366,8 +387,9 @@ class LayeredMapsSliceOneHundredThirtyThreeTest(unittest.TestCase):
 
     def test_application_contract_remains_disconnected_from_runtime(self):
         name = "GameTickEventRestorationCollisionApplicationContract"
-        for path in (WORLD, STORE, HANDLER, REGION_MANAGER):
+        for path in (WORLD, STORE, HANDLER):
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
+        self.assertIn(name, EXECUTOR.read_text(encoding="utf-8"))
 
     def test_living_plan_records_slice_one_hundred_thirty_three(self):
         plan = PLAN.read_text(encoding="utf-8")

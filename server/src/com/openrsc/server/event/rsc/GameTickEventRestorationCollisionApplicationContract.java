@@ -66,7 +66,8 @@ public final class GameTickEventRestorationCollisionApplicationContract {
 			ProjectedTileState next;
 			try {
 				next = project(
-					checkedRequest.getOperation(), contribution, current);
+					checkedRequest.getOperation(), contribution, current,
+					checkedFootprint.isLegacySaturatingUnregister());
 			} catch (CounterUnderflow underflow) {
 				return Evaluation.refused(Reason.COUNTER_UNDERFLOW);
 			} catch (ArithmeticException overflow) {
@@ -81,18 +82,21 @@ public final class GameTickEventRestorationCollisionApplicationContract {
 		final GameTickEventRestorationCollisionFootprintPlanner.Operation operation,
 		final GameTickEventRestorationTransientRollbackSnapshot
 			.CollisionContribution contribution,
-		final CurrentTileState current) {
+		final CurrentTileState current,
+		final boolean legacySaturatingUnregister) {
 		int blockingSceneryCount = combine(
 			operation, current.getBlockingSceneryCount(),
-			contribution.getBlockingSceneryCount());
+			contribution.getBlockingSceneryCount(), legacySaturatingUnregister);
 		int dynamicProjectileCount = combine(
 			operation, current.getDynamicProjectileCount(),
-			contribution.getDynamicProjectileCount());
+			contribution.getDynamicProjectileCount(),
+			legacySaturatingUnregister);
 		int[] dynamicCollisionCounts = current.getDynamicCollisionCounts();
 		for (int bit = 0; bit < dynamicCollisionCounts.length; bit++) {
 			dynamicCollisionCounts[bit] = combine(
 				operation, dynamicCollisionCounts[bit],
-				contribution.getDynamicCollisionCount(bit));
+				contribution.getDynamicCollisionCount(bit),
+				legacySaturatingUnregister);
 		}
 		return ProjectedTileState.of(
 			current.getX(), current.getY(), blockingSceneryCount,
@@ -102,12 +106,16 @@ public final class GameTickEventRestorationCollisionApplicationContract {
 	private static int combine(
 		final GameTickEventRestorationCollisionFootprintPlanner.Operation operation,
 		final int current,
-		final int contribution) {
+		final int contribution,
+		final boolean legacySaturatingUnregister) {
 		if (operation
 			== GameTickEventRestorationCollisionFootprintPlanner.Operation.REGISTER) {
 			return Math.addExact(current, contribution);
 		}
 		if (current < contribution) {
+			if (legacySaturatingUnregister) {
+				return 0;
+			}
 			throw new CounterUnderflow();
 		}
 		return current - contribution;

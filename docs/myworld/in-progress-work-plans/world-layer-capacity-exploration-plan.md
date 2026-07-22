@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, and 125 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, and 134 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, and 135 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -97,6 +97,12 @@ exact coverage, freshness, underflow, and overflow validation but no mutation;
 automated-validated Slice 134 adds a package-local real TileValue executor that
 captures, validates, applies, verifies, and if necessary reverses one footprint
 under canonical Region monitors while remaining disconnected from World;
+automated-validated Slice 135 routes normal World scenery and boundary
+collision counters through that executor, keeps definition projection outside
+the Region boundaries, preserves object membership and replacement order,
+joins delayed force-full-block registration, and explicitly preserves object
+ID 1147's legacy saturating unregister arithmetic; private owner validation is
+pending;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -11254,6 +11260,77 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required for
 this disconnected executor; normal game collision behavior is unchanged.
 
+### Slice 135: Ordered runtime collision-counter adoption
+
+Objective: make every normal World scenery/boundary collision-counter change
+share Slice 130's canonical Region monitors without changing the surrounding
+object lifecycle order.
+
+Implemented:
+
+- `World.registerGameObject` retains colliding-object replacement before the
+  new object's location/membership assignment, then delegates only its
+  collision contribution; `unregisterGameObject` retains membership removal
+  before collision subtraction, and `replaceGameObject` still transfers
+  authored identity before unregister-then-register;
+- one World helper projects immutable constructor and definition scalars before
+  entering RegionManager. Scenery type/width/height/name and boundary door
+  type/name continue to use Slice 132's shared projectile policy through the
+  planner definition factories;
+- RegionManager's narrow public runtime adapter creates required packed Regions
+  exactly as the former mutable-tile lookups did, holds the lifecycle boundary,
+  enters all exact footprint monitors in canonical order, and fails loudly if
+  the verified executor refuses;
+- all blocking-scenery, six-bit dynamic collision, and dynamic projectile
+  register/unregister loops were removed from World, leaving Slice 134 as their
+  sole ordinary object-collision executor;
+- delayed `forceFullBlock` now joins the same planned registration footprint
+  rather than being added after the ordered boundary. As before, a later normal
+  unregister does not infer or subtract that optional extra contribution; no
+  current call site supplies `true`, and retaining that provenance is a
+  separate restoration-transaction concern; and
+- object ID 1147 keeps its exact legacy asymmetry: registration requires no
+  definition and contributes no ordinary collision, while definition-driven
+  unregister uses saturating removal. That compatibility is now an explicit
+  footprint property, so ordinary objects retain strict underflow refusal.
+
+Automated validation status:
+
+- an executable table covers scenery collision types `0`, `1`, and `2` across
+  rotations `0/2/4/6`, boundary directions `0-3`, exact overlapping projectile
+  counts, and add/remove round trips;
+- a two-by-two footprint at packed coordinate `(47,47)` proves four-Region
+  coverage, five repeated cycles return every counter to zero, and an
+  unregister-then-register replacement sequence remains reversible;
+- object ID 1147 applies its collisionless register and saturating unregister
+  from zero without weakening the ordinary underflow fixture;
+- source guards prove World retains membership and delayed-callback order, has
+  no direct object collision-counter writes, reaches only RegionManager's
+  public adapter, and does not expose the package-local executor to scheduler
+  Store or handler paths;
+- the complete layered-map suite passes 442 tests across 134 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 789 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this slice makes the collision-counter executor live, but object membership
+  remains outside the new Region monitors in its legacy order. It is not yet a
+  fully atomic object-plus-collision transaction or restoration commit token;
+- the executor refuses before collision mutation on missing state or arithmetic
+  failure and internally reverses a verified post-state mismatch, but an
+  unexpected failure after the legacy membership step is surfaced rather than
+  silently hidden; and
+- no callback is rediscovered, revalidated, invoked, cancelled, or restored;
+  packets, arrival, retirement, persistence, true layered storage, and Region
+  eviction remain unchanged.
+
+Status: implementation is automated-validated; the required private owner
+route is pending. Test resource depletion/respawn, one door or gate, blocking
+scenery collision, and ordinary travel across packed Region boundaries before
+accepting this runtime milestone.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -11611,6 +11688,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 132 by sharing the exact projectile-clipping classifier. | Implemented and automated-validated; the tree, one-by-one non-chest, allowlist, chest, size, case, and boundary rules now live in one pure policy consumed by both World and Slice 131 definitions, the extraction is behavior-identical and leaves mutation order/locking unchanged, and 430 focused tests plus the 787/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 133 by defining detached collision-application arithmetic. | Implemented and automated-validated; exact six-counter collision multiplicity, blocking/projectile counts, canonical Region and tile coverage, freshness, checked register addition, fail-closed unregister subtraction, underflow/overflow, and collisionless projection are executable-tested, all results remain inert and disconnected, and 434 focused tests plus the 788/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 134 by adding the disconnected ordered collision executor. | Implemented and automated-validated; exact current TileValue capture, Slice 133 precondition evaluation, counted apply, post-state verification, internal reversal, multi-Region add/remove round-trip, same-footprint exclusion, underflow/missing-tile no-partial-change, and reverse-order refusal are proved under real monitors, World remains disconnected, and 438 focused tests plus the 789/488 Ant build pass |
+| 2026-07-22 | Continue with Slice 135 by routing normal World collision counters through the ordered executor. | Implemented and automated-validated; definition projection stays outside Region locks, exact Region coverage is created and acquired canonically, World keeps membership/replacement order but no longer writes object collision counters directly, delayed force-full-block joins registration, object ID 1147 retains explicit saturating unregister compatibility, and 442 focused tests plus the 789/488 Ant build pass; private owner validation is pending |
 
 ## Next Discussion
 
@@ -12085,24 +12163,22 @@ canonical Region order, exact footprint coverage, shared-mutation exclusion,
 fresh comparison, and unchanged-state rollback obligations, but it deliberately
 does not manufacture a runtime lock.
 
-Slices 130-134 now supply the lock order, exact footprint, shared projectile
-classification, fail-closed arithmetic, and a mechanically proven real
-TileValue executor. Existing World mutations remain outside the new monitors,
-so live world state is not yet protected by that executor.
+Slices 130-135 now supply the lock order, exact footprint, shared projectile
+classification, fail-closed arithmetic, a mechanically proven real TileValue
+executor, and its first normal World collision-counter adoption. Object
+membership remains in its legacy order outside those monitors, so this is not
+yet the full object-plus-collision transaction required by restoration.
 
-The next focused gate should route the collision-counter portions of every
-World `registerGameObject` and `unregisterGameObject` operation through one
-publicly narrow RegionManager adapter to Slice 134 while preserving the current
-object-membership, colliding-object replacement, location, visibility-cache,
-packet, and callback order. Definition projection must occur before Region
-locking; normal collisionless objects and object ID 1147 must retain exact
-behavior; delayed `forceFullBlock` must either join the planned contribution or
-remain explicitly outside with a documented follow-up. Automated parity must
-cover scenery types 0/1/2, all relevant rotations, boundary directions 0-3,
-projectile overlap, multi-Region footprints, replacement, and repeated add/
-remove cycles. Because this changes normal runtime collision paths, completion
-must build and launch the private client for an owner route covering resource
-depletion/respawn, doors or gates, blocking scenery, and cross-boundary travel.
+The immediate gate is private owner acceptance of the Slice 135 route:
+resource depletion and natural respawn, a door or gate open/close cycle,
+blocking scenery, and ordinary travel across packed Region boundaries. After
+that acceptance, the safest next implementation slice should compose exact
+object-slot membership comparison/change with the already ordered collision
+footprint under the same Region boundaries. It must preserve colliding-object
+replacement, authored identity, visibility-cache invalidation, packet order,
+and callback semantics; define rollback for membership plus counters together;
+and remain independent from scheduler restoration until deterministic races
+prove no object/collision split state can escape.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

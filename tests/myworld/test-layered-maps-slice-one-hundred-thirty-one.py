@@ -156,7 +156,8 @@ public final class RestorationCollisionFootprintFixture {
             Definition.scenery(1, 1, 1, "chest", ALLOWLIST), false);
         check(unregistered.getContributionTileCount() == 1
                 && unregistered.getContributions().get(0)
-                    .getBlockingSceneryCount() == 1,
+                    .getBlockingSceneryCount() == 1
+                && unregistered.isLegacySaturatingUnregister(),
             "legacy unregister does not contain the 1147 early return");
     }
 
@@ -303,10 +304,13 @@ class LayeredMapsSliceOneHundredThirtyOneTest(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_planner_remains_disconnected_from_existing_runtime_paths(self):
+    def test_planner_connects_only_through_the_slice_135_runtime_seam(self):
         name = "GameTickEventRestorationCollisionFootprintPlanner"
-        for path in (WORLD, STORE, HANDLER):
+        for path in (STORE, HANDLER):
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
+        world = WORLD.read_text(encoding="utf-8")
+        self.assertIn(name, world)
+        self.assertIn("applyGameObjectCollision", world)
         manager = REGION_MANAGER.read_text(encoding="utf-8")
         self.assertIn(name, manager)
         self.assertIn(

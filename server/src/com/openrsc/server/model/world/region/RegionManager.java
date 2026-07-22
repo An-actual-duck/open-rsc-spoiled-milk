@@ -1709,12 +1709,37 @@ public class RegionManager {
 
 	/**
 	 * Resolves existing Regions and delegates one exact collision footprint to
-	 * the disconnected ordered-boundary executor. World does not call this seam.
+	 * the ordered-boundary executor without creating missing Regions. This
+	 * package-local form remains the refusal-path test seam.
 	 */
 	RegionCollisionFootprintMutationExecutor.Result
 		applyCollisionFootprintUnderExistingOrderedBoundaries(
 			final GameTickEventRestorationCollisionFootprintPlanner.Result
 				footprint) {
+		return applyCollisionFootprintUnderOrderedBoundaries(footprint, false);
+	}
+
+	/**
+	 * Runtime entry point for one already projected object-collision footprint.
+	 * Definition lookup remains outside the Region boundaries; required packed
+	 * Regions are created exactly as the former World tile access created them.
+	 */
+	public void applyCollisionFootprintUnderOrderedBoundaries(
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			footprint) {
+		RegionCollisionFootprintMutationExecutor.Result result =
+			applyCollisionFootprintUnderOrderedBoundaries(footprint, true);
+		if (!result.isApplied()) {
+			throw new IllegalStateException(
+				"Object collision mutation refused: " + result.getReason());
+		}
+	}
+
+	private RegionCollisionFootprintMutationExecutor.Result
+		applyCollisionFootprintUnderOrderedBoundaries(
+			final GameTickEventRestorationCollisionFootprintPlanner.Result
+				footprint,
+			final boolean createRequiredRegions) {
 		GameTickEventRestorationCollisionFootprintPlanner.Result checked =
 			Objects.requireNonNull(footprint, "footprint");
 		if (!checked.isFootprintAvailable()) {
@@ -1736,8 +1761,11 @@ public class RegionManager {
 			for (GameTickEventRestorationCollisionTransactionContract
 					.PackedRegionCoordinate coordinate
 						: checked.getRequiredRegions()) {
-				Region region = peekRegionFromSectorCoordinates(
-					coordinate.getRegionX(), coordinate.getRegionY());
+				Region region = createRequiredRegions
+					? getRegionFromSectorCoordinates(
+						coordinate.getRegionX(), coordinate.getRegionY())
+					: peekRegionFromSectorCoordinates(
+						coordinate.getRegionX(), coordinate.getRegionY());
 				if (region == null) {
 					return RegionCollisionFootprintMutationExecutor
 						.refuseRequiredRegionUnavailable();

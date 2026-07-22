@@ -190,16 +190,15 @@ class LayeredMapsSliceOneHundredThirtyTwoTest(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
 
-    def test_world_delegates_without_changing_collision_mutation_order(self):
+    def test_world_projects_definitions_through_the_shared_policy_factory(self):
         world = WORLD.read_text(encoding="utf-8")
-        self.assertEqual(
-            3, world.count("LegacyObjectProjectileCollisionPolicy")
-        )
-        self.assertIn(".allowsSceneryProjectileClip(", world)
-        self.assertIn(".allowsBoundaryProjectileClip(", world)
+        self.assertNotIn("LegacyObjectProjectileCollisionPolicy", world)
+        self.assertIn("Definition.scenery(", world)
+        self.assertIn("Definition.boundary(", world)
+        self.assertIn("Constants.objectsProjectileClipAllowed", world)
         self.assertNotIn("for (final String s :", world)
         self.assertNotIn('.contains("tree")', world)
-        self.assertIn("private boolean isProjectileClipAllowed", world)
+        self.assertIn("private void applyGameObjectCollision", world)
         self.assertIn("public void registerGameObject", world)
         self.assertIn("public void unregisterGameObject", world)
 

@@ -390,6 +390,7 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 		private final Operation operation;
 		private final Outcome outcome;
 		private final Reason reason;
+		private final boolean legacySaturatingUnregister;
 		private final List<GameTickEventRestorationTransientRollbackSnapshot
 			.CollisionContribution> contributions;
 		private final List<GameTickEventRestorationCollisionTransactionContract
@@ -399,6 +400,7 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 			final Operation operation,
 			final Outcome outcome,
 			final Reason reason,
+			final boolean legacySaturatingUnregister,
 			final List<GameTickEventRestorationTransientRollbackSnapshot
 				.CollisionContribution> contributions,
 			final List<GameTickEventRestorationCollisionTransactionContract
@@ -406,6 +408,7 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 			this.operation = Objects.requireNonNull(operation, "operation");
 			this.outcome = Objects.requireNonNull(outcome, "outcome");
 			this.reason = Objects.requireNonNull(reason, "reason");
+			this.legacySaturatingUnregister = legacySaturatingUnregister;
 			this.contributions = Collections.unmodifiableList(
 				new ArrayList<GameTickEventRestorationTransientRollbackSnapshot
 					.CollisionContribution>(contributions));
@@ -414,6 +417,8 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 					.PackedRegionCoordinate>(requiredRegions));
 			boolean available = outcome == Outcome.FOOTPRINT_AVAILABLE;
 			if (available != (reason == Reason.FOOTPRINT_AVAILABLE)
+				|| legacySaturatingUnregister
+					&& (!available || operation != Operation.UNREGISTER)
 				|| !available && (!contributions.isEmpty()
 					|| !requiredRegions.isEmpty())
 				|| available && requiredRegions.isEmpty()) {
@@ -426,7 +431,7 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 			final Operation operation,
 			final Reason reason) {
 			return new Result(
-				operation, Outcome.REFUSED, reason,
+				operation, Outcome.REFUSED, reason, false,
 				Collections.<GameTickEventRestorationTransientRollbackSnapshot
 					.CollisionContribution>emptyList(),
 				Collections.<GameTickEventRestorationCollisionTransactionContract
@@ -435,18 +440,23 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 
 		private static Result available(
 			final Operation operation,
+			final boolean legacySaturatingUnregister,
 			final List<GameTickEventRestorationTransientRollbackSnapshot
 				.CollisionContribution> contributions,
 			final List<GameTickEventRestorationCollisionTransactionContract
 				.PackedRegionCoordinate> regions) {
 			return new Result(
 				operation, Outcome.FOOTPRINT_AVAILABLE,
-				Reason.FOOTPRINT_AVAILABLE, contributions, regions);
+				Reason.FOOTPRINT_AVAILABLE, legacySaturatingUnregister,
+				contributions, regions);
 		}
 
 		public Operation getOperation() { return operation; }
 		public Outcome getOutcome() { return outcome; }
 		public Reason getReason() { return reason; }
+		public boolean isLegacySaturatingUnregister() {
+			return legacySaturatingUnregister;
+		}
 		public boolean isRefused() { return outcome == Outcome.REFUSED; }
 		public boolean isFootprintAvailable() {
 			return outcome == Outcome.FOOTPRINT_AVAILABLE;
@@ -615,7 +625,11 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 					}
 				});
 			return Result.available(
-				operation, immutableContributions, regions);
+				operation,
+				operation == Operation.UNREGISTER
+					&& constructor.getObjectId()
+						== SPECIAL_COLLISIONLESS_REGISTER_OBJECT_ID,
+				immutableContributions, regions);
 		}
 	}
 

@@ -179,7 +179,7 @@ class LayeredMapsSliceFiftySixTest(unittest.TestCase):
         )
         registration = world.split(
             "public void registerGameObject(final GameObject o)", 1
-        )[1].split("private boolean isProjectileClipAllowed", 1)[0]
+        )[1].split("public void registerItem(final GroundItem i)", 1)[0]
         self.assertNotIn("AuthoredPlacementIdentity", registration)
 
         identity_name = "LayeredAuthoredPlacementIdentity"
