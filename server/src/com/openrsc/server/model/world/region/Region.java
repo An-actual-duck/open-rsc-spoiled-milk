@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public class Region {
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -312,6 +313,232 @@ public class Region {
 			}
 		}
 		return new RestorationTargetSlotSnapshot(snapshots);
+	}
+
+	/**
+	 * Compares one exact restoration slot while the Region object monitor is
+	 * genuinely held. The returned snapshot contains counts and a closed state
+	 * only; it retains no entity, collection, Region, or monitor handle and is
+	 * stale as soon as the boundary is released.
+	 */
+	RestorationTargetBoundarySnapshot
+		captureRestorationTargetBoundarySnapshot(
+			final RestorationTargetMatchRequirement requirement,
+			final boolean targetBindingComplete) {
+		RestorationTargetMatchRequirement checked =
+			Objects.requireNonNull(requirement, "requirement");
+		if (checked.getX() / Constants.REGION_SIZE != regionX
+			|| checked.getY() / Constants.REGION_SIZE != regionY) {
+			throw new IllegalArgumentException(
+				"Restoration target boundary is outside this Region");
+		}
+		Point location = Point.location(checked.getX(), checked.getY());
+		synchronized (objects) {
+			int slotObjectCount = 0;
+			int exactRestorationSceneryCount = 0;
+			int exactAuthoredIdentityCount = 0;
+			for (GameObject object : objects.get(location)) {
+				if (object.getType() != checked.getType()
+					|| (checked.getType() != 0
+						&& object.getDirection() != checked.getDirection())) {
+					continue;
+				}
+				slotObjectCount++;
+				exactRestorationSceneryCount +=
+					checked.matchesRestorationScenery(object) ? 1 : 0;
+				exactAuthoredIdentityCount +=
+					checked.matchesAuthoredIdentity(object) ? 1 : 0;
+			}
+			RestorationTargetBoundaryState state =
+				RestorationTargetBoundaryState.classify(
+					slotObjectCount, exactRestorationSceneryCount,
+					exactAuthoredIdentityCount, targetBindingComplete);
+			return new RestorationTargetBoundarySnapshot(
+				slotObjectCount, exactRestorationSceneryCount,
+				exactAuthoredIdentityCount, state,
+				Thread.holdsLock(objects));
+		}
+	}
+
+	/** Detached constructor/provenance scalars used only during comparison. */
+	static final class RestorationTargetMatchRequirement {
+		private final int objectId;
+		private final int permanentObjectId;
+		private final int x;
+		private final int y;
+		private final int direction;
+		private final int type;
+		private final String owner;
+		private final int runtimeAttributeCount;
+		private final long authoredGeneration;
+		private final int authoredPackedRegionX;
+		private final int authoredPackedRegionY;
+		private final int authoredSourceOrdinal;
+		private final String authoredConstructionKind;
+
+		private RestorationTargetMatchRequirement(
+			final int objectId,
+			final int permanentObjectId,
+			final int x,
+			final int y,
+			final int direction,
+			final int type,
+			final String owner,
+			final int runtimeAttributeCount,
+			final long authoredGeneration,
+			final int authoredPackedRegionX,
+			final int authoredPackedRegionY,
+			final int authoredSourceOrdinal,
+			final String authoredConstructionKind) {
+			if (objectId < 0 || permanentObjectId < 0 || x < 0 || y < 0
+				|| direction < 0 || direction > 7
+				|| (type != 0 && type != 1)
+				|| runtimeAttributeCount < 0 || authoredGeneration < 0L
+				|| (authoredGeneration == 0L
+					&& (authoredPackedRegionX != -1
+						|| authoredPackedRegionY != -1
+						|| authoredSourceOrdinal != 0
+						|| authoredConstructionKind != null))
+				|| (authoredGeneration > 0L
+					&& (authoredPackedRegionX < 0
+						|| authoredPackedRegionY < 0
+						|| authoredSourceOrdinal <= 0
+						|| authoredConstructionKind == null
+						|| authoredConstructionKind.isEmpty()))) {
+				throw new IllegalArgumentException(
+					"Restoration target match requirement is invalid");
+			}
+			this.objectId = objectId;
+			this.permanentObjectId = permanentObjectId;
+			this.x = x;
+			this.y = y;
+			this.direction = direction;
+			this.type = type;
+			this.owner = owner;
+			this.runtimeAttributeCount = runtimeAttributeCount;
+			this.authoredGeneration = authoredGeneration;
+			this.authoredPackedRegionX = authoredPackedRegionX;
+			this.authoredPackedRegionY = authoredPackedRegionY;
+			this.authoredSourceOrdinal = authoredSourceOrdinal;
+			this.authoredConstructionKind = authoredConstructionKind;
+		}
+
+		static RestorationTargetMatchRequirement of(
+			final int objectId,
+			final int permanentObjectId,
+			final int x,
+			final int y,
+			final int direction,
+			final int type,
+			final String owner,
+			final int runtimeAttributeCount,
+			final long authoredGeneration,
+			final int authoredPackedRegionX,
+			final int authoredPackedRegionY,
+			final int authoredSourceOrdinal,
+			final String authoredConstructionKind) {
+			return new RestorationTargetMatchRequirement(
+				objectId, permanentObjectId, x, y, direction, type, owner,
+				runtimeAttributeCount, authoredGeneration, authoredPackedRegionX,
+				authoredPackedRegionY, authoredSourceOrdinal,
+				authoredConstructionKind);
+		}
+
+		private boolean matchesRestorationScenery(final GameObject object) {
+			return object.getID() == objectId
+				&& object.getLoc().getPermId() == permanentObjectId
+				&& object.getX() == x && object.getY() == y
+				&& object.getDirection() == direction
+				&& object.getType() == type
+				&& Objects.equals(object.getOwner(), owner)
+				&& object.getRuntimeAttributeCount() == runtimeAttributeCount;
+		}
+
+		private boolean matchesAuthoredIdentity(final GameObject object) {
+			LayeredAuthoredPlacementIdentity identity =
+				object.getAuthoredPlacementIdentity();
+			return identity != null && authoredGeneration > 0L
+				&& identity.getGeneration() == authoredGeneration
+				&& identity.getPackedRegionX() == authoredPackedRegionX
+				&& identity.getPackedRegionY() == authoredPackedRegionY
+				&& identity.getSourceOrdinal() == authoredSourceOrdinal
+				&& identity.getConstructionKind().name().equals(
+					authoredConstructionKind);
+		}
+
+		int getX() { return x; }
+		int getY() { return y; }
+		int getDirection() { return direction; }
+		int getType() { return type; }
+	}
+
+	/** Exact-slot counts and classification produced inside the object monitor. */
+	static final class RestorationTargetBoundarySnapshot {
+		private final int slotObjectCount;
+		private final int exactRestorationSceneryCount;
+		private final int exactAuthoredIdentityCount;
+		private final RestorationTargetBoundaryState observedTargetState;
+		private final boolean objectBoundaryHeldDuringClassification;
+
+		private RestorationTargetBoundarySnapshot(
+			final int slotObjectCount,
+			final int exactRestorationSceneryCount,
+			final int exactAuthoredIdentityCount,
+			final RestorationTargetBoundaryState observedTargetState,
+			final boolean objectBoundaryHeldDuringClassification) {
+			if (!objectBoundaryHeldDuringClassification) {
+				throw new IllegalStateException(
+					"Target classification escaped the Region object boundary");
+			}
+			this.slotObjectCount = slotObjectCount;
+			this.exactRestorationSceneryCount =
+				exactRestorationSceneryCount;
+			this.exactAuthoredIdentityCount = exactAuthoredIdentityCount;
+			this.observedTargetState = Objects.requireNonNull(
+				observedTargetState, "observedTargetState");
+			this.objectBoundaryHeldDuringClassification = true;
+		}
+
+		int getSlotObjectCount() { return slotObjectCount; }
+		int getExactRestorationSceneryCount() {
+			return exactRestorationSceneryCount;
+		}
+		int getExactAuthoredIdentityCount() {
+			return exactAuthoredIdentityCount;
+		}
+		RestorationTargetBoundaryState getObservedTargetState() {
+			return observedTargetState;
+		}
+		boolean isObjectBoundaryHeldDuringClassification() {
+			return objectBoundaryHeldDuringClassification;
+		}
+	}
+
+	/** Closed state classified without returning the objects used to derive it. */
+	static enum RestorationTargetBoundaryState {
+		EMPTY,
+		EXACT_RESTORATION_SCENERY_PRESENT,
+		EXACT_AUTHORED_TRANSIENT_PRESENT,
+		MISMATCHED_OR_IDENTITYLESS_OCCUPANT,
+		AMBIGUOUS_OCCUPANCY;
+
+		private static RestorationTargetBoundaryState classify(
+			final int slotObjectCount,
+			final int exactRestorationSceneryCount,
+			final int exactAuthoredIdentityCount,
+			final boolean targetBindingComplete) {
+			if (slotObjectCount == 0) { return EMPTY; }
+			if (slotObjectCount > 1) { return AMBIGUOUS_OCCUPANCY; }
+			if (targetBindingComplete
+				&& exactRestorationSceneryCount == 1
+				&& exactAuthoredIdentityCount == 1) {
+				return EXACT_RESTORATION_SCENERY_PRESENT;
+			}
+			if (targetBindingComplete && exactAuthoredIdentityCount == 1) {
+				return EXACT_AUTHORED_TRANSIENT_PRESENT;
+			}
+			return MISMATCHED_OR_IDENTITYLESS_OCCUPANT;
+		}
 	}
 
 	/** Exact-slot detached values; collection and members are immutable. */

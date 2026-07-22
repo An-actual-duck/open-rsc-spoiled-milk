@@ -72,7 +72,8 @@ public final class EventTargetObservationFixture {
         return TargetRecord.observe(
             ordinal, registration, 524 + ordinal, 489, regionAvailable,
             slotCount, exactSceneryCount, exactIdentityCount,
-            binding, Outcome.valueOf(decision.getOutcome().name()),
+            binding, regionAvailable,
+            Outcome.valueOf(decision.getOutcome().name()),
             Reason.valueOf(decision.getReason().name()));
     }
 
@@ -103,6 +104,9 @@ public final class EventTargetObservationFixture {
         check(observation.getTargetCount() == 5
             && observation.getAvailableTargetCount() == 4
             && observation.getUnavailableTargetCount() == 1
+            && observation.getObjectBoundaryClassifiedTargetCount() == 4
+            && observation
+                .isAvailableTargetObjectBoundaryClassificationComplete()
             && observation.getNoOpSuccessCount() == 1
             && observation.getMutationPreconditionSatisfiedCount() == 2
             && observation.getRefusedTargetCount() == 2
@@ -110,6 +114,9 @@ public final class EventTargetObservationFixture {
             && observation.isPointInTimeOnly()
             && !observation.isAtomicWithEventInventory()
             && observation.isReadOnlyTargetLookupPerformed()
+            && observation.isRuntimeTargetClassificationPerformed()
+            && !observation.isAtomicWithMutation()
+            && !observation.isRuntimeRevalidationPerformed()
             && !observation.isEntityHandleRetained()
             && !observation.isMutationPerformed()
             && !observation.isExecutableRestoration()
@@ -170,7 +177,8 @@ public final class EventTargetObservationFixture {
                 Collections.singletonList(first), 0));
         expectIllegal(() -> TargetRecord.observe(
             0, 21L, 524, 489, false, 1, 0, 0,
-            true, Outcome.REFUSED, Reason.TARGET_OBSERVATION_UNAVAILABLE));
+            true, false, Outcome.REFUSED,
+            Reason.TARGET_OBSERVATION_UNAVAILABLE));
     }
 
     private static void expectIllegal(Runnable operation) {
@@ -259,8 +267,9 @@ class LayeredMapsSliceOneHundredSixteenTest(unittest.TestCase):
             "synchronized (layeredRegionLifecycleLock)",
             "event.getSnapshotOrdinal()", "event.getRegistrationSequence()",
             "checked.getSchedulerInstanceIdentity()",
-            "captureRestorationTargetSlotSnapshot(",
-            "matchesRestorationScenery(", "matchesAuthoredIdentity(",
+            "captureRestorationTargetBoundarySnapshot(",
+            "RestorationTargetMatchRequirement.of(",
+            "isObjectBoundaryHeldDuringClassification()",
             "TargetRecord", "targetOperation(restoration.getKind())",
         ):
             self.assertIn(required, boundary)

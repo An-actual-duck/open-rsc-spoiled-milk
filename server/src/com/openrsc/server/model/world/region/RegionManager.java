@@ -1080,33 +1080,43 @@ public class RegionManager {
 				Region region = peekRegionFromSectorCoordinates(
 					scenery.getX() / WorldRegionKey.REGION_SIZE,
 					scenery.getY() / WorldRegionKey.REGION_SIZE);
-				int slotObjectCount = 0;
-				int exactRestorationSceneryCount = 0;
-				int exactAuthoredIdentityCount = 0;
-				if (region != null) {
-					Region.RestorationTargetSlotSnapshot slot =
-						region.captureRestorationTargetSlotSnapshot(
-							scenery.getX(), scenery.getY(), scenery.getType(),
-							scenery.getDirection());
-					slotObjectCount = slot.getObjectCount();
-					for (Region.RestorationTargetObjectSnapshot object
-						: slot.getObjects()) {
-						exactRestorationSceneryCount +=
-							matchesRestorationScenery(object, scenery) ? 1 : 0;
-						exactAuthoredIdentityCount +=
-							matchesAuthoredIdentity(object, scenery) ? 1 : 0;
-					}
-				}
 				LayeredPackedRegionEventOwnershipInventory
 					.AuthoredPlacementRestorationState authored =
 						scenery.getAuthoredPlacement();
+				int slotObjectCount = 0;
+				int exactRestorationSceneryCount = 0;
+				int exactAuthoredIdentityCount = 0;
+				boolean objectBoundaryHeldDuringClassification = false;
 				LayeredPackedRegionEventTargetObservation.ObservedTargetState
 					observedTargetState = LayeredPackedRegionEventTargetObservation
-						.TargetRecord.classifyObservedTargetState(
-							region != null, slotObjectCount,
-							exactRestorationSceneryCount,
-							exactAuthoredIdentityCount,
-							restoration.isTargetBindingComplete());
+						.ObservedTargetState.UNAVAILABLE;
+				if (region != null) {
+					Region.RestorationTargetMatchRequirement requirement =
+						Region.RestorationTargetMatchRequirement.of(
+							scenery.getObjectId(), scenery.getPermanentObjectId(),
+							scenery.getX(), scenery.getY(), scenery.getDirection(),
+							scenery.getType(), scenery.getOwner(),
+							scenery.getRuntimeAttributeCount(),
+							authored == null ? 0L : authored.getGeneration(),
+							authored == null ? -1 : authored.getPackedRegionX(),
+							authored == null ? -1 : authored.getPackedRegionY(),
+							authored == null ? 0 : authored.getSourceOrdinal(),
+							authored == null ? null
+								: authored.getConstructionKind().name());
+					Region.RestorationTargetBoundarySnapshot boundary =
+						region.captureRestorationTargetBoundarySnapshot(
+							requirement, restoration.isTargetBindingComplete());
+					slotObjectCount = boundary.getSlotObjectCount();
+					exactRestorationSceneryCount =
+						boundary.getExactRestorationSceneryCount();
+					exactAuthoredIdentityCount =
+						boundary.getExactAuthoredIdentityCount();
+					objectBoundaryHeldDuringClassification =
+						boundary.isObjectBoundaryHeldDuringClassification();
+					observedTargetState = LayeredPackedRegionEventTargetObservation
+						.ObservedTargetState.valueOf(
+							boundary.getObservedTargetState().name());
+				}
 				GameTickEventRestorationTargetDecision decision =
 					GameTickEventRestorationTargetDecision.decideDetached(
 						targetOperation(restoration.getKind()),
@@ -1125,6 +1135,7 @@ public class RegionManager {
 							slotObjectCount, exactRestorationSceneryCount,
 							exactAuthoredIdentityCount,
 							restoration.isTargetBindingComplete(),
+							objectBoundaryHeldDuringClassification,
 							LayeredPackedRegionEventTargetObservation.Outcome
 								.valueOf(decision.getOutcome().name()),
 							LayeredPackedRegionEventTargetObservation.Reason

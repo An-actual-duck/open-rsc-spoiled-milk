@@ -21,6 +21,7 @@ public final class LayeredPackedRegionEventTargetObservation {
 	private final String schedulerInstanceIdentity;
 	private final List<TargetRecord> targets;
 	private final int availableTargetCount;
+	private final int objectBoundaryClassifiedTargetCount;
 	private final int noOpSuccessCount;
 	private final int mutationPreconditionSatisfiedCount;
 	private final int refusedTargetCount;
@@ -55,6 +56,7 @@ public final class LayeredPackedRegionEventTargetObservation {
 		int previousSnapshotOrdinal = -1;
 		long previousRegistrationSequence = 0L;
 		int available = 0;
+		int objectBoundaryClassified = 0;
 		int noOp = 0;
 		int mutationPrecondition = 0;
 		int refused = 0;
@@ -70,6 +72,8 @@ public final class LayeredPackedRegionEventTargetObservation {
 			previousSnapshotOrdinal = target.getSnapshotOrdinal();
 			previousRegistrationSequence = target.getRegistrationSequence();
 			available += target.isRegionAvailable() ? 1 : 0;
+			objectBoundaryClassified +=
+				target.isObjectBoundaryHeldDuringClassification() ? 1 : 0;
 			switch (target.getDecisionOutcome()) {
 				case NO_OP_SUCCESS:
 					noOp++;
@@ -92,6 +96,7 @@ public final class LayeredPackedRegionEventTargetObservation {
 		this.schedulerInstanceIdentity = schedulerInstanceIdentity;
 		this.targets = Collections.unmodifiableList(copied);
 		this.availableTargetCount = available;
+		this.objectBoundaryClassifiedTargetCount = objectBoundaryClassified;
 		this.noOpSuccessCount = noOp;
 		this.mutationPreconditionSatisfiedCount = mutationPrecondition;
 		this.refusedTargetCount = refused;
@@ -124,6 +129,12 @@ public final class LayeredPackedRegionEventTargetObservation {
 	public int getUnavailableTargetCount() {
 		return targets.size() - availableTargetCount;
 	}
+	public int getObjectBoundaryClassifiedTargetCount() {
+		return objectBoundaryClassifiedTargetCount;
+	}
+	public boolean isAvailableTargetObjectBoundaryClassificationComplete() {
+		return objectBoundaryClassifiedTargetCount == availableTargetCount;
+	}
 	public int getNoOpSuccessCount() { return noOpSuccessCount; }
 	public int getMutationPreconditionSatisfiedCount() {
 		return mutationPreconditionSatisfiedCount;
@@ -137,6 +148,11 @@ public final class LayeredPackedRegionEventTargetObservation {
 	public boolean isPointInTimeOnly() { return true; }
 	public boolean isAtomicWithEventInventory() { return false; }
 	public boolean isReadOnlyTargetLookupPerformed() { return true; }
+	public boolean isRuntimeTargetClassificationPerformed() {
+		return objectBoundaryClassifiedTargetCount > 0;
+	}
+	public boolean isAtomicWithMutation() { return false; }
+	public boolean isRuntimeRevalidationPerformed() { return false; }
 	public boolean isEntityHandleRetained() { return false; }
 	public boolean isAchievedStateClaimed() { return false; }
 	public boolean isCommitToken() { return false; }
@@ -155,6 +171,7 @@ public final class LayeredPackedRegionEventTargetObservation {
 		private final int slotObjectCount;
 		private final int exactRestorationSceneryCount;
 		private final int exactAuthoredIdentityCount;
+		private final boolean objectBoundaryHeldDuringClassification;
 		private final ObservedTargetState observedTargetState;
 		private final Outcome decisionOutcome;
 		private final Reason decisionReason;
@@ -169,6 +186,7 @@ public final class LayeredPackedRegionEventTargetObservation {
 			final int exactRestorationSceneryCount,
 			final int exactAuthoredIdentityCount,
 			final boolean targetBindingComplete,
+			final boolean objectBoundaryHeldDuringClassification,
 			final Outcome decisionOutcome,
 			final Reason decisionReason) {
 			if (snapshotOrdinal < 0 || registrationSequence <= 0L
@@ -185,6 +203,10 @@ public final class LayeredPackedRegionEventTargetObservation {
 				|| exactAuthoredIdentityCount != 0)) {
 				throw new IllegalArgumentException(
 					"Unavailable Region cannot report target contents");
+			}
+			if (objectBoundaryHeldDuringClassification && !regionAvailable) {
+				throw new IllegalArgumentException(
+					"Unavailable Region cannot hold an object boundary");
 			}
 			ObservedTargetState observation = classifyObservedTargetState(
 				regionAvailable, slotObjectCount,
@@ -207,6 +229,8 @@ public final class LayeredPackedRegionEventTargetObservation {
 			this.exactRestorationSceneryCount =
 				exactRestorationSceneryCount;
 			this.exactAuthoredIdentityCount = exactAuthoredIdentityCount;
+			this.objectBoundaryHeldDuringClassification =
+				objectBoundaryHeldDuringClassification;
 			this.observedTargetState = observation;
 			this.decisionOutcome = outcome;
 			this.decisionReason = reason;
@@ -222,13 +246,16 @@ public final class LayeredPackedRegionEventTargetObservation {
 			final int exactRestorationSceneryCount,
 			final int exactAuthoredIdentityCount,
 			final boolean targetBindingComplete,
+			final boolean objectBoundaryHeldDuringClassification,
 			final Outcome decisionOutcome,
 			final Reason decisionReason) {
 			return new TargetRecord(
 				snapshotOrdinal, registrationSequence, x, y, regionAvailable,
 				slotObjectCount, exactRestorationSceneryCount,
 				exactAuthoredIdentityCount,
-				targetBindingComplete, decisionOutcome, decisionReason);
+				targetBindingComplete,
+				objectBoundaryHeldDuringClassification,
+				decisionOutcome, decisionReason);
 		}
 
 		public static ObservedTargetState classifyObservedTargetState(
@@ -272,6 +299,9 @@ public final class LayeredPackedRegionEventTargetObservation {
 		}
 		public int getExactAuthoredIdentityCount() {
 			return exactAuthoredIdentityCount;
+		}
+		public boolean isObjectBoundaryHeldDuringClassification() {
+			return objectBoundaryHeldDuringClassification;
 		}
 		public ObservedTargetState getObservedTargetState() {
 			return observedTargetState;
