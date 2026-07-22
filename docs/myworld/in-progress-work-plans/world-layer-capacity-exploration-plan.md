@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, and 113 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, and 116 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, and 117 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -30,6 +30,8 @@ automated-validated Slice 115 defines the pure detached target-decision table
 without adding runtime lookup, state capture, mutation, or arrival authority;
 automated-validated Slice 116 adds bounded read-only exact-slot observation,
 retaining scheduler/event correlation but no handles or mutation authority;
+automated-validated Slice 117 exposes that detached observation through private
+schema-v41 without adding a commit token, mutation, or arrival authority;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10025,6 +10027,64 @@ Status: implemented and automated-validated. Private diagnostic exposure,
 owner validation, executable restoration, arrival gating, and all lifecycle
 authority remain absent.
 
+### Slice 117: Private restoration target diagnostics
+
+Objective: expose Slice 116's already-detached exact-slot evidence through one
+additive private schema while preserving the event-inventory correlation and
+every inert boundary.
+
+Implemented:
+
+- the existing event-ownership source gains a default-null target capture so
+  historical fixtures remain valid; both real Player and development-command
+  sources override it with the RegionManager read-only observation;
+- the observer requests the target observation immediately after the exact
+  event inventory and verifies proposal generation, event-inventory tick,
+  scheduler-instance identity, restoration count, snapshot ordinal,
+  registration sequence, and target coordinate before serializing it;
+- `packedRegionEventTargets` publishes aggregate available/unavailable, no-op,
+  mutation-precondition, and refusal counts plus each target's exact-slot
+  object counts, constructor/identity match counts, observation category,
+  decision outcome, and reason;
+- every record explicitly marks point-in-time-only, non-atomic-with-inventory,
+  read-only lookup, no entity handle, no achieved-state claim, no commit token,
+  no mutation, no executable restoration, no arrival gate, and no lifecycle
+  authority; and
+- additive schema-v41 requires the new nullable section and closes every target
+  category/outcome pair. Schema-v40 remains immutable for prior captures.
+
+Automated validation status:
+
+- schema guards prove v40 lacks the new property, v41 requires it, every inert
+  flag is constant, unavailable/empty/exact/transient/mismatch/ambiguity states
+  retain closed count rules, and owner/entity payloads are absent;
+- observer guards require immediate inventory-to-target correlation and the
+  exact detached serializer while prohibiting entity handles, object mutation,
+  callback execution, commit tokens, packets, and arrival operations;
+- runtime wiring guards require both real source paths to invoke the same
+  RegionManager capture, while the default-null method keeps non-runtime
+  fixtures explicit;
+- the complete layered-map suite passes 364 tests across 116 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 776 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the JSON is a point-in-time explanation of a read-only lookup. A satisfied
+  mutation precondition is not proof that the slot remains unchanged and is not
+  permission to replace or remove anything;
+- observer correlation prevents mixing target evidence with a different
+  detached inventory but does not make the two captures atomic with callback
+  execution; and
+- no entity or owner text is serialized or retained. No object/event/callback
+  is mutated, invoked, cancelled, rescheduled, or replayed; no arrival is gated;
+  and no reconstruction, preservation, registry, teardown, transaction,
+  rollback, packet, or lifecycle authority is added.
+
+Status: implemented and automated-validated. Owner validation, executable
+restoration, arrival gating, and all lifecycle authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10360,6 +10420,7 @@ private environment should validate at least:
 | 2026-07-21 | Correct the authored spawn mutation prerequisite before target inspection. | Slice 114 implemented and automated-validated; the audited harvest path transfers authored identity to stump/depleted replacements, spawn now permits empty or one exact-identity authored transient, schema-v39 remains immutable, schema-v40 publishes the correction, and no target inspection or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 115 by defining a pure detached target-state decision table. | Implemented and automated-validated; binding/generation failures precede occupancy, spawn accepts empty or exact authored transient and no-ops on exact restored scenery, removal protects changed authored successors, every conflict is typed, and no runtime lookup, mutation, arrival gate, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 116 by capturing bounded read-only restoration target evidence. | Implemented and automated-validated; every exact collision-slot occupant is copied under the Region object monitor, missing/empty/exact/transient/mismatch/ambiguity remain distinct, scheduler/event correlation is retained, the capture is explicitly non-atomic with callback execution, and no entity handle, mutation, or lifecycle authority exists |
+| 2026-07-21 | Continue with Slice 117 by exposing detached restoration-target evidence through private diagnostics. | Implemented and automated-validated; additive schema-v41 correlates the point-in-time target snapshot with the exact event inventory, publishes only bounded counts/categories/outcomes, preserves schema-v40, and explicitly grants no achieved-state claim, commit token, mutation, arrival gate, or lifecycle authority |
 
 ## Next Discussion
 
@@ -10740,17 +10801,18 @@ precondition, and refusal outcomes. Slice 116 supplies the bounded read-only
 runtime seam: it snapshots every relevant object in the exact collision slot,
 retains scheduler/event correlation, classifies missing, empty, exact,
 transient, mismatched, and ambiguous states, and explicitly remains non-atomic
-with callback execution. The next gate is additive private diagnostic exposure.
-It should capture targets immediately after the exact detached event inventory,
-verify proposal generation, inventory observation tick, scheduler-instance
-scope, restoration count, snapshot ordinal, and registration sequence, and
-publish only detached counts/categories/outcomes. The owner route should prove
-the pending magic-tree target is an exact authored transient rather than empty,
+with callback execution. Slice 117 now exposes that detached evidence through
+additive private schema-v41: capture immediately follows the exact event
+inventory, correlation covers proposal generation, inventory observation tick,
+scheduler-instance scope, restoration count, snapshot ordinal, registration
+sequence, and target coordinate, and only detached counts/categories/outcomes
+are published. The next gate is owner validation. Its magic-tree route should
+prove the pending target is one exact authored transient rather than empty,
 then prove natural completion removes both event and target evidence. No field
-may claim an executed mutation, commit token, achieved restoration, or arrival
-gate. The observer still has no event, store, callback,
-key, target lookup, due-event executor, cancellation, reschedule, load, or
-arrival-gate authority.
+claims an executed mutation, commit token, achieved restoration, or arrival
+gate. The observer now performs only that bounded read-only target lookup; it
+still has no event, store, callback, key, entity handle, due-event executor,
+cancellation, reschedule, load, mutation, or arrival-gate authority.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

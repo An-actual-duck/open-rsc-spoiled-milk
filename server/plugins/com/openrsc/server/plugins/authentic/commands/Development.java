@@ -35,6 +35,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -1965,6 +1966,15 @@ public final class Development implements CommandTrigger {
 					.captureLayeredPackedRegionEventOwnershipInventory(
 						proposal, player.getWorld().getServer().getCurrentTick(),
 						maximumEvents, maximumSpatialReferences);
+			}
+
+			@Override
+			public LayeredPackedRegionEventTargetObservation captureTargets(
+				final LayeredPackedRegionEventOwnershipInventory inventory,
+				final int maximumTargetRecords) {
+				return player.getWorld().getRegionManager()
+					.captureLayeredPackedRegionEventTargetObservation(
+						inventory, maximumTargetRecords);
 			}
 		};
 	}

@@ -138,6 +138,8 @@ public final class LayeredPackedRegionEventTargetObservation {
 	public boolean isAtomicWithEventInventory() { return false; }
 	public boolean isReadOnlyTargetLookupPerformed() { return true; }
 	public boolean isEntityHandleRetained() { return false; }
+	public boolean isAchievedStateClaimed() { return false; }
+	public boolean isCommitToken() { return false; }
 	public boolean isMutationPerformed() { return false; }
 	public boolean isExecutableRestoration() { return false; }
 	public boolean isArrivalGate() { return false; }
