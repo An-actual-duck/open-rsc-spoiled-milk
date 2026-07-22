@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, and 117 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, and 116 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, and 118 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -34,6 +34,10 @@ owner-validated Slice 117 exposes that detached observation through private
 schema-v41 and proves one pending authored stump is classified as the exact
 transient mutation prerequisite before natural completion clears the evidence,
 without adding a commit token, mutation, or arrival authority;
+automated-validated Slice 118 defines the dormant outer-event/inner-Region
+revalidation order, requires scheduler identity, registration, generation, and
+fresh in-boundary target agreement, and forbids carrying the scheduler-store
+lock inward, while making no runtime revalidation or atomicity claim;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10104,6 +10108,64 @@ Owner validation:
 Status: implemented and owner-validated. Executable restoration, arrival
 gating, and all lifecycle authority remain absent.
 
+### Slice 118: Dormant atomic revalidation contract
+
+Objective: define the fail-closed boundary order that any future exact-slot
+restoration mutation must satisfy, without acquiring a runtime lock, looking up
+an event or target, authorizing mutation, or claiming atomicity.
+
+Implemented:
+
+- `GameTickEventRestorationAtomicRevalidationContract` evaluates only explicit
+  detached declarations and the existing pure Slice 115 target decision;
+- the contract first requires an outer event-execution boundary, refuses if a
+  scheduler-store lock is carried inward, and requires scheduler registration
+  validation before entering the Region object boundary;
+- scheduler-instance identity, registration sequence, and reconstruction-
+  proposal generation must match before the Region boundary is considered;
+- the exact target must then be observed and classified again inside the Region
+  object boundary. A stale external Slice 116/117 observation cannot satisfy
+  this requirement;
+- a target refusal remains a refusal with its original target reason retained;
+  an idempotent no-op and a satisfied mutation precondition receive distinct
+  contract outcomes; and
+- even a satisfied contract explicitly provides no runtime revalidation, no
+  atomicity claim, no entity handle, no mutation authorization or mutation, no
+  executable restoration, no commit token, no arrival gate, and no lifecycle
+  authority.
+
+Automated validation status:
+
+- an executable Java fixture covers the satisfied transient-spawn and
+  already-restored no-op paths, every boundary/identity/generation fence,
+  retained exact target refusal, invalid scalar declarations, and null inputs;
+- source guards prohibit runtime model/network imports, synchronization,
+  World/Region/GameObject/event handles, lookup, registration/removal, callback
+  execution, packets, and mutation;
+- ordering guards require event execution, absent scheduler-store lock,
+  pre-Region registration validation, Region object boundary, and in-boundary
+  target observation in that order;
+- the complete layered-map suite passes 368 tests across 117 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 777 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- boundary booleans are declarations consumed by an executable specification;
+  this class does not prove that the caller actually holds a lock;
+- a contract-satisfied mutation precondition is not a commit token and cannot
+  be passed to `registerGameObject`, `unregisterGameObject`, or any callback;
+- no scheduler/store lock may be acquired inside the Region object boundary;
+  the outer event-execution boundary is the only declared bridge across the
+  pre-Region scheduler check and inner target revalidation; and
+- no live callback, Region, scheduler, observer, reconstruction path, arrival
+  path, packet path, or teardown path consumes this contract.
+
+Status: implemented and automated-validated. A runtime boundary implementation,
+mutation, executable restoration, arrival gating, and all lifecycle authority
+remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10441,6 +10503,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 116 by capturing bounded read-only restoration target evidence. | Implemented and automated-validated; every exact collision-slot occupant is copied under the Region object monitor, missing/empty/exact/transient/mismatch/ambiguity remain distinct, scheduler/event correlation is retained, the capture is explicitly non-atomic with callback execution, and no entity handle, mutation, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 117 by exposing detached restoration-target evidence through private diagnostics. | Implemented and automated-validated; additive schema-v41 correlates the point-in-time target snapshot with the exact event inventory, publishes only bounded counts/categories/outcomes, preserves schema-v40, and explicitly grants no achieved-state claim, commit token, mutation, arrival gate, or lifecycle authority |
 | 2026-07-22 | Accept the Slice 117 private restoration-target route and formalize human timing tolerance. | Owner-validated; `target-a` captures registration 3892 with eight ticks remaining and one exact authored stump classified as a satisfied spawn mutation precondition, 29 ticks later natural completion clears target evidence, all seven v41 records validate, and future sub-second gates require automation rather than instantaneous owner input |
+| 2026-07-22 | Continue with Slice 118 by specifying fail-closed atomic target revalidation before any mutation seam. | Implemented and automated-validated; the dormant contract requires an outer event-execution boundary, forbids carrying the scheduler-store lock into the inner Region object boundary, matches scheduler scope/registration/generation, requires fresh in-boundary target classification, preserves exact refusal/no-op/precondition outcomes, and grants no atomicity claim, mutation authorization, commit token, or lifecycle authority |
 
 ## Next Discussion
 
@@ -10834,12 +10897,17 @@ window rather than instantaneous input. No field claims an executed mutation,
 commit token, achieved restoration, or arrival gate. The observer performs
 only that bounded read-only target lookup; it still has no event, store,
 callback, key, entity handle, due-event executor, cancellation, reschedule,
-load, mutation, or arrival-gate authority. The next design gate is atomic
-revalidation: before any executable restoration exists, define how binding,
-generation, scheduler registration, and exact-slot state must be checked again
-inside the future mutation boundary without retaining a stale entity handle or
-reintroducing a scheduler/Region lock cycle. Start with a dormant fail-closed
-contract and executable fixture; do not wire a live mutation consumer yet.
+load, mutation, or arrival-gate authority. Slice 118 now defines the dormant
+atomic-revalidation contract: an outer event-execution boundary bridges a
+pre-Region scheduler identity/registration/generation check to fresh exact-slot
+classification inside the Region object boundary, and the scheduler-store lock
+is forbidden inside that boundary. The executable fixture proves the ordering
+and every fail-closed outcome, but the declarations make no atomicity claim and
+grant no mutation authority. The next gate is a read-only runtime boundary
+proof: demonstrate that exact-slot classification can execute while the Region
+object boundary is genuinely held, return only a detached result, and avoid
+acquiring scheduler or event locks from inside that boundary. It must remain
+unconsumed by callbacks and must not register, remove, or replace scenery.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
