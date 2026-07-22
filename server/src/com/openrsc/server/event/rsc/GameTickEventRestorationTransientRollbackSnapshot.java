@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Dormant exact rollback state for one displaced authored transient.
+ * Detached exact rollback state for one displaced authored transient.
  *
  * <p>The input is a detached declaration of state that a future atomic Region
  * seam would have to capture. This class never observes an entity or tile. It
@@ -17,9 +17,10 @@ import java.util.Set;
  * plus a complete, bounded per-tile collision contribution captured under a
  * separately declared ordered collision boundary.</p>
  *
- * <p>Even an available snapshot is not executable rollback. It contains no
- * World, Region, entity, tile, collection owner, monitor, scheduler, callback,
- * or lifecycle handle, and no runtime path consumes it.</p>
+ * <p>Even an available snapshot is not standalone executable rollback. It
+ * contains no World, Region, entity, tile, collection owner, monitor,
+ * scheduler, callback, or lifecycle handle. Slice 139 consumes it only inside
+ * the disconnected ordered Region transaction that performed the capture.</p>
  */
 public final class GameTickEventRestorationTransientRollbackSnapshot {
 	public static final int MAXIMUM_COLLISION_CONTRIBUTION_TILES = 4096;
@@ -105,6 +106,59 @@ public final class GameTickEventRestorationTransientRollbackSnapshot {
 			return Creation.refused(
 				Reason.TRANSIENT_AUTHORED_IDENTITY_MISMATCH);
 		}
+		return assessRestorableState(checkedCandidate);
+	}
+
+	/**
+	 * Revalidates the same closed transient snapshot against one ephemeral
+	 * scheduler-fenced commit request. Runtime code still supplies detached
+	 * candidate scalars; this value performs no observation or mutation.
+	 */
+	public static Creation assess(
+		final GameTickEventRestorationCommitRequest request,
+		final Candidate candidate) {
+		GameTickEventRestorationCommitRequest checkedRequest =
+			Objects.requireNonNull(request, "request");
+		Candidate checkedCandidate = Objects.requireNonNull(
+			candidate, "candidate");
+		if (checkedRequest.getTargetOperation()
+				!= GameTickEventRestorationTargetDecision.TargetOperation
+					.SCENERY_SPAWN) {
+			return Creation.refused(Reason.INTENT_NOT_TRANSIENT_REPLACEMENT);
+		}
+		if (!checkedCandidate.isRegionObjectBoundaryHeldDuringCapture()) {
+			return Creation.refused(Reason.REGION_OBJECT_BOUNDARY_MISSING);
+		}
+		if (checkedCandidate.getExactSlotObjectCount() != 1) {
+			return Creation.refused(Reason.EXACT_SLOT_NOT_SINGLE_OBJECT);
+		}
+		if (checkedCandidate.getX() != checkedRequest.getX()
+			|| checkedCandidate.getY() != checkedRequest.getY()
+			|| checkedCandidate.getType() != checkedRequest.getType()
+			|| (checkedRequest.getType() == 1
+				&& checkedCandidate.getDirection()
+					!= checkedRequest.getDirection())) {
+			return Creation.refused(
+				Reason.TRANSIENT_COORDINATE_OR_TYPE_MISMATCH);
+		}
+		if (checkedCandidate.getAuthoredGeneration()
+				!= checkedRequest.getAuthoredGeneration()
+			|| checkedCandidate.getAuthoredPackedRegionX()
+				!= checkedRequest.getAuthoredPackedRegionX()
+			|| checkedCandidate.getAuthoredPackedRegionY()
+				!= checkedRequest.getAuthoredPackedRegionY()
+			|| checkedCandidate.getAuthoredSourceOrdinal()
+				!= checkedRequest.getAuthoredSourceOrdinal()
+			|| !checkedCandidate.getAuthoredConstructionKind().name().equals(
+				checkedRequest.getAuthoredConstructionKind())) {
+			return Creation.refused(
+				Reason.TRANSIENT_AUTHORED_IDENTITY_MISMATCH);
+		}
+		return assessRestorableState(checkedCandidate);
+	}
+
+	private static Creation assessRestorableState(
+		final Candidate checkedCandidate) {
 		if (checkedCandidate.getRuntimeAttributeCount() != 0) {
 			return Creation.refused(Reason.RUNTIME_ATTRIBUTES_NOT_RESTORABLE);
 		}
@@ -153,7 +207,8 @@ public final class GameTickEventRestorationTransientRollbackSnapshot {
 		return collisionContributions.size();
 	}
 
-	public boolean isDormantSnapshot() { return true; }
+	public boolean isDormantSnapshot() { return false; }
+	public boolean isRuntimeConsumerConnected() { return true; }
 	public boolean isConstructorStateComplete() { return true; }
 	public boolean isAuthoredIdentityComplete() { return true; }
 	public boolean isOpaqueRuntimeAttributeStateCaptured() { return false; }

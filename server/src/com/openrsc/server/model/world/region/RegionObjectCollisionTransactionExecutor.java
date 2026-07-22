@@ -5,7 +5,9 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPl
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionTransactionContract;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionTransactionContract.PackedRegionCoordinate;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCommitRequest;
+import com.openrsc.server.event.rsc.GameTickEventRestorationMutationIntent.AuthoredConstructionKind;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision.TargetOperation;
+import com.openrsc.server.event.rsc.GameTickEventRestorationTransientRollbackSnapshot;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 
@@ -103,9 +105,9 @@ final class RegionObjectCollisionTransactionExecutor {
 	/**
 	 * Consumes one scheduler-fenced request inside the same ordered Region and
 	 * membership boundaries as ordinary object/collision transactions. This
-	 * disconnected seam supports only rollback-complete shapes; exact authored
-	 * transient replacement remains refused until its captured collision state
-	 * is connected.
+	 * disconnected seam supports only rollback-complete shapes, including an
+	 * exact authored transient whose constructor and collision contribution can
+	 * be captured and reversibly revalidated inside the boundary.
 	 */
 	static RestorationResult executeRestoration(
 		final List<RegionObjectCollisionMutationBoundary> transactionBoundaries,
@@ -181,7 +183,8 @@ final class RegionObjectCollisionTransactionExecutor {
 					public void run(
 						final RegionObjectCollisionMutationBoundary
 							.HeldMutationBoundarySet heldBoundaries) {
-						if (!heldBoundaries.areAllBoundariesHeld()) {
+						if (!heldBoundaries.areAllBoundariesHeld()
+							|| !heldBoundaries.isMutationAuthorized()) {
 							throw new IllegalStateException(
 								"Restoration escaped its Region boundaries");
 						}
@@ -251,9 +254,10 @@ final class RegionObjectCollisionTransactionExecutor {
 							transactionBoundaries, null, newChange,
 							tileAccess, cacheInvalidator);
 					case EXACT_AUTHORED_TRANSIENT_PRESENT:
-						return RestorationResult.refused(
-							RestorationReason
-								.TRANSIENT_ROLLBACK_STATE_NOT_CONNECTED);
+						return applyTransientReplacement(
+							transactionBoundaries, request, target,
+							oldChange, newChange, tileAccess,
+							cacheInvalidator);
 					default:
 						return RestorationResult.refused(
 							RestorationReason.TARGET_CLASSIFICATION_REFUSED);
@@ -278,6 +282,103 @@ final class RegionObjectCollisionTransactionExecutor {
 				return RestorationResult.refused(
 					RestorationReason.TARGET_CLASSIFICATION_REFUSED);
 		}
+	}
+
+	private static RestorationResult applyTransientReplacement(
+		final List<RegionObjectCollisionMutationBoundary> transactionBoundaries,
+		final GameTickEventRestorationCommitRequest request,
+		final Region.RestorationTargetBoundarySnapshot target,
+		final Change oldChange,
+		final Change newChange,
+		final RegionCollisionFootprintMutationExecutor.MutableTileAccess tileAccess,
+		final CacheInvalidator cacheInvalidator) {
+		if (oldChange == null || newChange == null) {
+			return RestorationResult.refused(
+				RestorationReason.TARGET_CHANGED_BEFORE_COMMIT);
+		}
+		if (!collisionRollbackIsExact(
+				oldChange.forward, oldChange.rollback)) {
+			return RestorationResult.refused(
+				RestorationReason.TRANSIENT_COLLISION_ROLLBACK_MISMATCH);
+		}
+		if (oldChange.object.getAuthoredPlacementIdentity() == null) {
+			return RestorationResult.refused(
+				RestorationReason.TRANSIENT_ROLLBACK_SNAPSHOT_REFUSED);
+		}
+		AuthoredConstructionKind constructionKind;
+		try {
+			constructionKind = AuthoredConstructionKind.valueOf(
+				oldChange.object.getAuthoredPlacementIdentity()
+					.getConstructionKind().name());
+		} catch (IllegalArgumentException unsupported) {
+			return RestorationResult.refused(
+				RestorationReason.TRANSIENT_ROLLBACK_SNAPSHOT_REFUSED);
+		}
+		GameTickEventRestorationTransientRollbackSnapshot.Candidate candidate =
+			GameTickEventRestorationTransientRollbackSnapshot.Candidate.declare(
+				oldChange.object.getID(),
+				oldChange.object.getLoc().getPermId(),
+				oldChange.object.getX(), oldChange.object.getY(),
+				oldChange.object.getDirection(), oldChange.object.getType(),
+				oldChange.object.getOwner(),
+				oldChange.object.getRuntimeAttributeCount(),
+				oldChange.object.getAuthoredPlacementIdentity().getGeneration(),
+				oldChange.object.getAuthoredPlacementIdentity().getPackedRegionX(),
+				oldChange.object.getAuthoredPlacementIdentity().getPackedRegionY(),
+				oldChange.object.getAuthoredPlacementIdentity().getSourceOrdinal(),
+				constructionKind, target.getSlotObjectCount(), true, true, true,
+				oldChange.forward.getContributions());
+		GameTickEventRestorationTransientRollbackSnapshot.Creation snapshot =
+			GameTickEventRestorationTransientRollbackSnapshot.assess(
+				request, candidate);
+		if (!snapshot.isSnapshotAvailable()) {
+			return RestorationResult.refused(
+				RestorationReason.TRANSIENT_ROLLBACK_SNAPSHOT_REFUSED);
+		}
+		return applyRestorationTransaction(
+			transactionBoundaries, oldChange, newChange,
+			tileAccess, cacheInvalidator);
+	}
+
+	private static boolean collisionRollbackIsExact(
+		final GameTickEventRestorationCollisionFootprintPlanner.Result forward,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result rollback) {
+		if (!forward.isFootprintAvailable()
+			|| !rollback.isFootprintAvailable()
+			|| forward.getOperation() != Operation.UNREGISTER
+			|| rollback.getOperation() != Operation.REGISTER
+			|| forward.isLegacySaturatingUnregister()
+			|| rollback.isLegacySaturatingUnregister()
+			|| !forward.getRequiredRegions().equals(
+				rollback.getRequiredRegions())
+			|| forward.getContributionTileCount()
+				!= rollback.getContributionTileCount()) {
+			return false;
+		}
+		for (int index = 0;
+				index < forward.getContributionTileCount(); index++) {
+			GameTickEventRestorationTransientRollbackSnapshot
+				.CollisionContribution left =
+					forward.getContributions().get(index);
+			GameTickEventRestorationTransientRollbackSnapshot
+				.CollisionContribution right =
+					rollback.getContributions().get(index);
+			if (left.getX() != right.getX()
+				|| left.getY() != right.getY()
+				|| left.getBlockingSceneryCount()
+					!= right.getBlockingSceneryCount()
+				|| left.getDynamicProjectileCount()
+					!= right.getDynamicProjectileCount()) {
+				return false;
+			}
+			for (int bit = 0; bit < 6; bit++) {
+				if (left.getDynamicCollisionCount(bit)
+					!= right.getDynamicCollisionCount(bit)) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private static RestorationResult applyRestorationTransaction(
@@ -654,6 +755,8 @@ final class RegionObjectCollisionTransactionExecutor {
 		TARGET_CHANGED_BEFORE_COMMIT,
 		TARGET_CLASSIFICATION_REFUSED,
 		TRANSIENT_ROLLBACK_STATE_NOT_CONNECTED,
+		TRANSIENT_ROLLBACK_SNAPSHOT_REFUSED,
+		TRANSIENT_COLLISION_ROLLBACK_MISMATCH,
 		OBJECT_TRANSACTION_REFUSED,
 		DESIRED_STATE_ALREADY_SATISFIED,
 		RESTORATION_APPLIED

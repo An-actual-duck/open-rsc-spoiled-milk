@@ -94,7 +94,7 @@ EXTRA_METHODS = r'''
             "already-absent removal is an idempotent no-op");
     }
 
-    private static void authoredTransientReplacementRefusesUnchanged() {
+    private static void authoredTransientReplacementCommitsAtomically() {
         FixtureWorld world = new FixtureWorld();
         GameObject transientObject = authoredObject(70, 70, 321, 320);
         Prepared.register(world, transientObject, BLOCKING).execute();
@@ -103,16 +103,14 @@ EXTRA_METHODS = r'''
             TargetOperation.SCENERY_SPAWN, 320, 320, 70, 70);
         RegionObjectCollisionTransactionExecutor.RestorationResult result =
             restoration(world, spawn, transientObject, desired);
-        check(result.isRefused()
-                && result.getReason()
-                    == RegionObjectCollisionTransactionExecutor
-                        .RestorationReason
-                            .TRANSIENT_ROLLBACK_STATE_NOT_CONNECTED
-                && world.regionAt(70, 70).getGameObjects()
-                    .contains(transientObject)
+        check(result.isApplied()
+                && result.isMembershipRemoved()
+                && result.isMembershipRegistered()
+                && transientObject.isRemoved()
+                && world.regionAt(70, 70).getGameObjects().contains(desired)
                 && world.tiles.get(70, 70).getBlockingSceneryCount() == 1
-                && desired.getLocation() == null,
-            "transient replacement refuses without exact rollback state");
+                && desired.getLocation() != null,
+            "exact transient replacement commits membership and collision");
     }
 
     private static void staleCandidateRefusesWithoutMutation() {
@@ -215,7 +213,7 @@ def build_fixture():
         "        sameRegionTransactionsExcludeEachOther();",
         "        sameRegionTransactionsExcludeEachOther();\n"
         "        restorationSpawnNoOpAndRemovalAreAtomic();\n"
-        "        authoredTransientReplacementRefusesUnchanged();\n"
+        "        authoredTransientReplacementCommitsAtomically();\n"
         "        staleCandidateRefusesWithoutMutation();",
     )
     fixture = fixture.replace(
@@ -323,7 +321,7 @@ class LayeredMapsSliceOneHundredThirtyEightTest(unittest.TestCase):
             "applyGameTickEventRestorationCommitRequest(", store
         )
         self.assertIn(
-            "TRANSIENT_ROLLBACK_STATE_NOT_CONNECTED", transaction
+            "GameTickEventRestorationTransientRollbackSnapshot", transaction
         )
         result = REGION_MANAGER.read_text(encoding="utf-8")
         for required in (

@@ -16,6 +16,7 @@ POLICY = ROOT / (
 STATE = RSC / "GameTickEventRestorationState.java"
 REQUIREMENT = RSC / "GameTickEventRestorationRequirement.java"
 DECISION = RSC / "GameTickEventRestorationTargetDecision.java"
+COMMIT_REQUEST = RSC / "GameTickEventRestorationCommitRequest.java"
 ATOMIC = RSC / "GameTickEventRestorationAtomicRevalidationContract.java"
 REQUEST = RSC / "GameTickEventRestorationTargetRevalidationRequest.java"
 REVALIDATION = RSC / "GameTickEventRestorationTargetRevalidation.java"
@@ -260,7 +261,7 @@ class LayeredMapsSliceOneHundredThirtyFiveTest(unittest.TestCase):
                 "-encoding", "UTF-8", "-d", str(cls.classes),
                 str(COLLISION_FLAG), str(POLICY), str(STATE),
                 str(REQUIREMENT), str(DECISION), str(ATOMIC), str(REQUEST),
-                str(REVALIDATION), str(INTENT), str(ROLLBACK),
+                str(REVALIDATION), str(COMMIT_REQUEST), str(INTENT), str(ROLLBACK),
                 str(TRANSACTION), str(PLANNER), str(APPLICATION), str(TILE),
                 str(BOUNDARY), str(EXECUTOR), str(fixture),
             ],
