@@ -51,6 +51,21 @@ public final class LayeredAuthoredPlacementIdentity {
 		this.constructionKind = constructionKind;
 	}
 
+	/**
+	 * Recreates one identity from a detached serialized construction kind while
+	 * keeping runtime consumers independent of the authored inventory type.
+	 */
+	public static LayeredAuthoredPlacementIdentity fromSerializedConstructionKind(
+		final long generation,
+		final int packedRegionX,
+		final int packedRegionY,
+		final int sourceOrdinal,
+		final String constructionKind) {
+		return new LayeredAuthoredPlacementIdentity(
+			generation, packedRegionX, packedRegionY, sourceOrdinal,
+			ConstructionKind.valueOf(constructionKind));
+	}
+
 	public long getGeneration() { return generation; }
 	public int getPackedRegionX() { return packedRegionX; }
 	public int getPackedRegionY() { return packedRegionY; }

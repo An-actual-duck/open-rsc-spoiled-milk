@@ -605,6 +605,18 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 				WorldBounds.of(Constants.MAX_WIDTH, Constants.MAX_HEIGHT));
 	}
 
+	/**
+	 * Projects one detached GameObject collision footprint before an ordered
+	 * Region transaction acquires any runtime boundary.
+	 */
+	public GameTickEventRestorationCollisionFootprintPlanner.Result
+		projectGameObjectCollisionFootprint(
+		final GameObject object,
+		final Operation operation,
+		final boolean forceFullBlock) {
+		return planGameObjectCollision(object, operation, forceFullBlock);
+	}
+
 	private void applyGameObjectTransaction(
 		final GameObject oldObject,
 		final GameObject newObject,

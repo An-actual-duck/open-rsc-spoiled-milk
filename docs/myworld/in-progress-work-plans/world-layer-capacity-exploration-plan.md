@@ -1,9 +1,9 @@
 # World Layer Capacity Exploration Plan
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, and 125 owner-validated, Slice 60 private-runtime validated, Slice 76's
+74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, and 135 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, and 138 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -101,8 +101,16 @@ automated-validated Slice 135 routes normal World scenery and boundary
 collision counters through that executor, keeps definition projection outside
 the Region boundaries, preserves object membership and replacement order,
 joins delayed force-full-block registration, and explicitly preserves object
-ID 1147's legacy saturating unregister arithmetic; private owner validation is
-pending;
+ID 1147's legacy saturating unregister arithmetic;
+owner-validated Slice 136 composes object membership and collision under one
+ordered Region union and confirms normal resource, door, and temporary-object
+behavior through a private route;
+automated-validated Slice 137 creates an ephemeral scheduler-fenced restoration
+request inside an exact stable event lifecycle boundary but connects no Region
+consumer; and
+automated-validated Slice 138 adds the first disconnected Region consumer for
+rollback-complete exact spawn/removal and no-op shapes, while authored-transient
+replacement and scheduler-store integration remain refused;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -11510,6 +11518,65 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the new seam is disconnected from gameplay.
 
+### Slice 138: Disconnected restoration object-state commit
+
+Objective: consume one Slice 137 scheduler-fenced request in a real but
+disconnected RegionManager seam, freshly compare the exact object slot under
+the ordered object/collision boundaries, and apply only rollback-complete
+desired-state shapes without changing callback lifecycle.
+
+Implemented:
+
+- `RegionManager.applyGameTickEventRestorationCommitRequest` accepts only a
+  request whose registration, generation, execution boundary, and lifecycle
+  boundary remain closed, then resolves existing required Regions without
+  creating or loading missing state;
+- collision footprints are projected before any ordered Region boundary is
+  acquired, and spawn construction recreates the exact authored identity from
+  the request's generation, source coordinate, ordinal, and construction kind;
+- the executor acquires the canonical union of the target and every collision
+  footprint Region, then freshly classifies the slot while the anchor Region's
+  GameObject transaction monitor is held;
+- spawn into an exact empty slot and removal of one exact desired object use
+  Slice 136's atomic membership/collision transaction, while an already-present
+  spawn or already-absent removal returns an idempotent no-op;
+- stale candidate identity, ambiguity, mismatch, unavailable Regions,
+  incomplete collision footprints, unsupported construction, and transaction
+  refusal all fail closed with typed results; and
+- authored-transient replacement remains refused until Slice 128's exact
+  transient rollback state is connected to the runtime transaction.
+
+Automated validation status:
+
+- the executable Java fixture proves spawn into empty and exact removal update
+  both membership and blocking collision, proves both desired-state no-ops,
+  proves authored-transient replacement changes nothing, and proves an object
+  identity change after planning refuses without partial mutation;
+- source guards require non-creating Region lookup, pre-boundary footprint
+  projection, exact request consumption, closed result flags, and that the
+  Store remains disconnected from the new consumer;
+- the complete layered-map suite passes 454 tests across 137 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 791 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the scheduler Store does not call this method. It is executable only through
+  its direct disconnected seam and therefore changes no current callback or
+  gameplay behavior;
+- the result retains no request, event, entity, Region, callback, commit token,
+  arrival gate, or lifecycle authority, and it cannot be replayed;
+- the seam never invokes, consumes, cancels, or reschedules the callback. A
+  future scheduler connection must make object commit and one-shot callback
+  consumption one closed operation so the callback cannot execute twice; and
+- exact authored-transient replacement, arrival ordering, Region retirement,
+  reconstruction, loading, persistence, and true layered storage remain later
+  gates.
+
+Status: implemented and automated-validated. No owner route is required because
+the Store remains disconnected and gameplay cannot reach this seam.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -11872,6 +11939,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 136 by composing exact GameObject membership and collision under one ordered Region union. | Implemented and automated-validated; register/unregister/replacement share exact slot revalidation and rollback, generic Region GameObject writes refuse, cache invalidation follows committed membership, deterministic refusal and concurrency fixtures close split writer state, and 446 focused tests plus the 790/488 Ant build pass |
 | 2026-07-22 | Accept the Slice 136 private runtime route. | Owner-validated; a normal tree depleted and returned, its restored form remained interactive, a door completed an open/close/open cycle with expected passage and blocking, and a dropped log became a temporary fire and expired without an invisible obstruction; the private log corroborates every interaction with no transaction refusal, exception, logout, or collision/update error in the route window |
 | 2026-07-22 | Continue with Slice 137 by creating an ephemeral scheduler-fenced restoration commit request. | Implemented and automated-validated; exact registration and authored generation are revalidated before an unchanged zero-run event lifecycle boundary excludes stop/reset/tick, only closed constructor/provenance scalars cross the seam, no Region mutation consumer is connected, 450 focused tests pass across 136 files, and the 791/488 Ant build passes |
+| 2026-07-22 | Continue with Slice 138 by adding a disconnected restoration object-state consumer. | Implemented and automated-validated; existing Regions are resolved without creation, collision footprints are projected before canonical boundaries, fresh exact-slot comparison precedes atomic spawn/remove or idempotent no-op, authored-transient replacement remains refused, the Store stays disconnected, 454 focused tests pass across 137 files, and the 791/488 Ant build passes |
 
 ## Next Discussion
 
@@ -12360,11 +12428,15 @@ visibility, interaction, and collision, and the private log contains no
 transaction refusal or runtime error during the route. Slice 137 now produces
 the typed, generation-checked commit request only inside the exact registration,
 execution, and stable lifecycle boundaries, with the scheduler-store monitor
-absent. No Region mutation consumer is connected. The next safe slice can let
-RegionManager consume that ephemeral request inside the existing atomic object/
-collision transaction, initially as a disconnected executable seam with typed
-fresh-target/no-op/refusal results; it must not invoke, cancel, or reschedule the
-callback or give the scheduler direct Region, entity, or lifecycle authority.
+absent. Slice 138 now lets RegionManager consume that ephemeral request inside
+the existing atomic object/collision transaction as a disconnected executable
+seam. Exact empty-spawn and exact desired-removal shapes apply, satisfied state
+is a no-op, and stale or conflicting state refuses; the Store remains
+disconnected. The next safe slice should connect Slice 128's exact transient
+rollback snapshot to the replacement shape while preserving the same closed
+Region union. It still must not connect the Store or invoke, cancel, consume, or
+reschedule the callback until mutation and one-shot event consumption can be
+proved as one scheduler-fenced operation.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

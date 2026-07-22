@@ -3,7 +3,9 @@ package com.openrsc.server.model.world.region;
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.event.rsc.GameTickEventRestorationAtomicRevalidationContract;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Operation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionTransactionContract;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCommitRequest;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
@@ -47,6 +49,7 @@ import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
+import com.openrsc.server.external.GameObjectLoc;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1853,6 +1856,277 @@ public class RegionManager {
 						+ result.getReason());
 			}
 		}
+	}
+
+	/**
+	 * Disconnected executable consumer for one scheduler-fenced restoration
+	 * request. The Store does not call this seam yet; fixtures use it to prove
+	 * fresh target classification and rollback-complete object/collision apply.
+	 */
+	public RestorationCommitResult applyGameTickEventRestorationCommitRequest(
+		final GameTickEventRestorationCommitRequest request) {
+		GameTickEventRestorationCommitRequest checked =
+			Objects.requireNonNull(request, "request");
+		if (!checked.isEventExecutionBoundaryHeld()
+			|| checked.isSchedulerStoreBoundaryHeld()
+			|| !checked.isRegistrationRevalidated()
+			|| !checked.isLifecycleBoundaryHeld()
+			|| checked.getProposalGeneration()
+				!= checked.getAuthoredGeneration()) {
+			return RestorationCommitResult.refused(
+				RestorationCommitReason.SCHEDULER_BOUNDARY_REFUSED);
+		}
+		final Point targetLocation = Point.location(
+			checked.getX(), checked.getY());
+		synchronized (layeredRegionLifecycleLock) {
+			Region targetRegion = peekRegionFromSectorCoordinates(
+				Math.floorDiv(checked.getX(), Constants.REGION_SIZE),
+				Math.floorDiv(checked.getY(), Constants.REGION_SIZE));
+			if (targetRegion == null) {
+				return RestorationCommitResult.refused(
+					RestorationCommitReason.TARGET_REGION_UNAVAILABLE);
+			}
+			GameObject candidate = checked.getType() == 0
+				? targetRegion.getGameObject(targetLocation, null)
+				: targetRegion.getWallGameObject(
+					targetLocation, checked.getDirection());
+
+			GameTickEventRestorationCollisionFootprintPlanner.Result
+				candidateUnregister = candidate == null ? null
+					: world.projectGameObjectCollisionFootprint(
+						candidate, Operation.UNREGISTER, false);
+			GameTickEventRestorationCollisionFootprintPlanner.Result
+				candidateRollback = candidate == null ? null
+					: world.projectGameObjectCollisionFootprint(
+						candidate, Operation.REGISTER, false);
+
+			GameObject desired = null;
+			GameTickEventRestorationCollisionFootprintPlanner.Result
+				desiredRegister = null;
+			if (checked.getTargetOperation() == TargetOperation.SCENERY_SPAWN) {
+				String constructionKind =
+					checked.getAuthoredConstructionKind();
+				if ((checked.getType() == 0
+						&& !"SCENERY".equals(constructionKind)
+						&& !"HARVESTING_SCENERY".equals(constructionKind))
+					|| (checked.getType() == 1
+						&& !"BOUNDARY".equals(constructionKind))) {
+					return RestorationCommitResult.refused(
+						RestorationCommitReason
+							.AUTHORED_CONSTRUCTION_KIND_REFUSED);
+				}
+				GameObjectLoc loc = new GameObjectLoc(
+					checked.getObjectId(), checked.getPermanentObjectId(),
+					checked.getX(), checked.getY(), checked.getDirection(),
+					checked.getType());
+				try {
+					loc.assignSerializedAuthoredPlacementIdentity(
+						checked.getAuthoredGeneration(),
+						checked.getAuthoredPackedRegionX(),
+						checked.getAuthoredPackedRegionY(),
+						checked.getAuthoredSourceOrdinal(), constructionKind);
+				} catch (IllegalArgumentException unsupported) {
+					return RestorationCommitResult.refused(
+						RestorationCommitReason
+							.AUTHORED_CONSTRUCTION_KIND_REFUSED);
+				}
+				desired = new GameObject(world, loc);
+				desiredRegister = world.projectGameObjectCollisionFootprint(
+					desired, Operation.REGISTER,
+					checked.isForceFullBlock());
+			} else if (checked.getTargetOperation()
+				!= TargetOperation.SCENERY_REMOVE) {
+				return RestorationCommitResult.refused(
+					RestorationCommitReason.TARGET_OPERATION_REFUSED);
+			}
+			if ((candidateUnregister != null
+					&& !candidateUnregister.isFootprintAvailable())
+				|| (candidateRollback != null
+					&& !candidateRollback.isFootprintAvailable())
+				|| (desiredRegister != null
+					&& !desiredRegister.isFootprintAvailable())) {
+				return RestorationCommitResult.refused(
+					RestorationCommitReason.COLLISION_FOOTPRINT_UNAVAILABLE);
+			}
+
+			List<GameTickEventRestorationCollisionTransactionContract
+				.PackedRegionCoordinate> required =
+				new ArrayList<GameTickEventRestorationCollisionTransactionContract
+					.PackedRegionCoordinate>();
+			required.add(GameTickEventRestorationCollisionTransactionContract
+				.PackedRegionCoordinate.of(
+					Math.floorDiv(checked.getX(), Constants.REGION_SIZE),
+					Math.floorDiv(checked.getY(), Constants.REGION_SIZE)));
+			if (candidateUnregister != null) {
+				required.addAll(candidateUnregister.getRequiredRegions());
+				required.addAll(candidateRollback.getRequiredRegions());
+			}
+			if (desiredRegister != null) {
+				required.addAll(desiredRegister.getRequiredRegions());
+			}
+			Collections.sort(required,
+				new Comparator<GameTickEventRestorationCollisionTransactionContract
+					.PackedRegionCoordinate>() {
+					@Override
+					public int compare(
+						final GameTickEventRestorationCollisionTransactionContract
+							.PackedRegionCoordinate left,
+						final GameTickEventRestorationCollisionTransactionContract
+							.PackedRegionCoordinate right) {
+						return comparePackedRegionCoordinates(left, right);
+					}
+				});
+			List<GameTickEventRestorationCollisionTransactionContract
+				.PackedRegionCoordinate> unique =
+				new ArrayList<GameTickEventRestorationCollisionTransactionContract
+					.PackedRegionCoordinate>();
+			for (GameTickEventRestorationCollisionTransactionContract
+					.PackedRegionCoordinate coordinate : required) {
+				if (unique.isEmpty()
+					|| comparePackedRegionCoordinates(
+						unique.get(unique.size() - 1), coordinate) != 0) {
+					unique.add(coordinate);
+				}
+			}
+
+			final Map<Long, Region> resolved = new HashMap<Long, Region>();
+			List<RegionObjectCollisionMutationBoundary> boundaries =
+				new ArrayList<RegionObjectCollisionMutationBoundary>();
+			for (GameTickEventRestorationCollisionTransactionContract
+					.PackedRegionCoordinate coordinate : unique) {
+				Region region = peekRegionFromSectorCoordinates(
+					coordinate.getRegionX(), coordinate.getRegionY());
+				if (region == null) {
+					return RestorationCommitResult.refused(
+						RestorationCommitReason.REQUIRED_REGION_UNAVAILABLE);
+				}
+				resolved.put(packRegionCoordinateKey(
+					coordinate.getRegionX(), coordinate.getRegionY()), region);
+				boundaries.add(region.getObjectCollisionMutationBoundary());
+			}
+
+			RegionObjectCollisionTransactionExecutor.RestorationResult result =
+				RegionObjectCollisionTransactionExecutor.executeRestoration(
+					boundaries, targetRegion, checked, candidate,
+					candidateUnregister, candidateRollback,
+					desired, desiredRegister,
+					new RegionCollisionFootprintMutationExecutor
+						.MutableTileAccess() {
+						@Override
+						public TileValue getMutableTile(
+							final int x, final int y) {
+							Region region = resolved.get(packRegionCoordinateKey(
+								Math.floorDiv(x, Constants.REGION_SIZE),
+								Math.floorDiv(y, Constants.REGION_SIZE)));
+							return region == null ? null
+								: region.getMutableTileValue(
+									Math.floorMod(x, Constants.REGION_SIZE),
+									Math.floorMod(y, Constants.REGION_SIZE));
+						}
+					},
+					new RegionObjectCollisionTransactionExecutor
+						.CacheInvalidator() {
+						@Override
+						public void invalidate(final Region region) {
+							invalidateVisibleObjectWindowCache(region);
+						}
+					});
+			return RestorationCommitResult.from(result);
+		}
+	}
+
+	public enum RestorationCommitOutcome { REFUSED, NO_OP, APPLIED }
+
+	public enum RestorationCommitReason {
+		SCHEDULER_BOUNDARY_REFUSED,
+		TARGET_REGION_UNAVAILABLE,
+		REQUIRED_REGION_UNAVAILABLE,
+		AUTHORED_CONSTRUCTION_KIND_REFUSED,
+		TARGET_OPERATION_REFUSED,
+		COLLISION_FOOTPRINT_UNAVAILABLE,
+		TARGET_CHANGED_BEFORE_COMMIT,
+		TARGET_CLASSIFICATION_REFUSED,
+		TRANSIENT_ROLLBACK_STATE_NOT_CONNECTED,
+		OBJECT_TRANSACTION_REFUSED,
+		DESIRED_STATE_ALREADY_SATISFIED,
+		RESTORATION_APPLIED
+	}
+
+	/** Closed result with no entity, Region, event, or callback handle. */
+	public static final class RestorationCommitResult {
+		private final RestorationCommitOutcome outcome;
+		private final RestorationCommitReason reason;
+		private final boolean removed;
+		private final boolean registered;
+		private final int boundaryCount;
+
+		private RestorationCommitResult(
+			final RestorationCommitOutcome outcome,
+			final RestorationCommitReason reason,
+			final boolean removed,
+			final boolean registered,
+			final int boundaryCount) {
+			this.outcome = Objects.requireNonNull(outcome, "outcome");
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.removed = removed;
+			this.registered = registered;
+			this.boundaryCount = boundaryCount;
+			if (boundaryCount < 0
+				|| (outcome == RestorationCommitOutcome.APPLIED)
+					!= (reason == RestorationCommitReason.RESTORATION_APPLIED)
+				|| (outcome == RestorationCommitOutcome.NO_OP)
+					!= (reason
+						== RestorationCommitReason
+							.DESIRED_STATE_ALREADY_SATISFIED)
+				|| (outcome != RestorationCommitOutcome.APPLIED
+					&& (removed || registered))) {
+				throw new IllegalArgumentException(
+					"Restoration commit result is inconsistent");
+			}
+		}
+
+		private static RestorationCommitResult refused(
+			final RestorationCommitReason reason) {
+			return new RestorationCommitResult(
+				RestorationCommitOutcome.REFUSED, reason, false, false, 0);
+		}
+
+		private static RestorationCommitResult from(
+			final RegionObjectCollisionTransactionExecutor.RestorationResult
+				result) {
+			return new RestorationCommitResult(
+				RestorationCommitOutcome.valueOf(result.getOutcome().name()),
+				RestorationCommitReason.valueOf(result.getReason().name()),
+				result.isMembershipRemoved(),
+				result.isMembershipRegistered(), result.getBoundaryCount());
+		}
+
+		public RestorationCommitOutcome getOutcome() { return outcome; }
+		public RestorationCommitReason getReason() { return reason; }
+		public boolean isApplied() {
+			return outcome == RestorationCommitOutcome.APPLIED;
+		}
+		public boolean isNoOp() {
+			return outcome == RestorationCommitOutcome.NO_OP;
+		}
+		public boolean isRefused() {
+			return outcome == RestorationCommitOutcome.REFUSED;
+		}
+		public boolean isMembershipRemoved() { return removed; }
+		public boolean isMembershipRegistered() { return registered; }
+		public int getBoundaryCount() { return boundaryCount; }
+		public boolean isRequestRetained() { return false; }
+		public boolean isEventHandleRetained() { return false; }
+		public boolean isEntityHandleRetained() { return false; }
+		public boolean isRegionHandleRetained() { return false; }
+		public boolean isMutationPerformed() { return isApplied(); }
+		public boolean isCallbackInvoked() { return false; }
+		public boolean isEventCancellation() { return false; }
+		public boolean isEventReschedule() { return false; }
+		public boolean isExecutableRestoration() { return false; }
+		public boolean isCommitToken() { return false; }
+		public boolean isArrivalGate() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
 	}
 
 	private RegionCollisionFootprintMutationExecutor.Result

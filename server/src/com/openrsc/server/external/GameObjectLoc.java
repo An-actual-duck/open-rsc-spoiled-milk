@@ -79,6 +79,19 @@ public class GameObjectLoc {
 		authoredPlacementIdentity.assign(identity);
 	}
 
+	/** Assigns detached authored provenance without exposing its inventory type. */
+	public final void assignSerializedAuthoredPlacementIdentity(
+		final long generation,
+		final int packedRegionX,
+		final int packedRegionY,
+		final int sourceOrdinal,
+		final String constructionKind) {
+		assignAuthoredPlacementIdentity(
+			LayeredAuthoredPlacementIdentity.fromSerializedConstructionKind(
+				generation, packedRegionX, packedRegionY, sourceOrdinal,
+				constructionKind));
+	}
+
 	public final int getDirection() {
 		return direction;
 	}
