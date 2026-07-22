@@ -9613,6 +9613,17 @@ Safety boundary:
   reconstructed, or gated, and no preservation, reload, registry, teardown,
   transaction, rollback, or lifecycle authority is created.
 
+Private owner validation status: pending. The first owner route produced two
+complete start/marker/stop sequences and all 11 records validate against
+schema-v38, but neither sequence exercised the bounded event inventory. The
+player remained within source region `(10,10)`, so every marker correctly
+reported zero tracked retirement candidates and null preservation-burden,
+dynamic-preservation, and event-ownership sections. This is an inconclusive
+route rather than a runtime or schema failure. A corrected repeat must create
+the magic-tree callback, teleport outside the original visibility window, wait
+past the 16-tick retirement grace, capture two pending markers, then return
+after natural completion.
+
 Status: implemented and automated-validated. Owner validation, executable
 restoration, arrival gating, and all lifecycle authority remain absent.
 
@@ -9942,6 +9953,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 108 by defining fail-closed scenery target-binding and pre-visibility arrival requirements. | Implemented and automated-validated; authored spawn binds a destination slot, authored removal binds an existing entity, missing identity or mismatch refuses, reconciliation must precede first visibility, and no lookup, arrival gate, executable restoration, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 109 by detaching scenery target and arrival requirements into the bounded event inventory. | Implemented and automated-validated; target-rule capture, satisfied authored binding, and arrival ordering reconcile independently, identity-less callbacks remain explicitly incomplete, schema-v37 is unchanged, and no lookup, arrival gate, executable restoration, or lifecycle authority exists |
 | 2026-07-21 | Continue with Slice 110 by exposing detached scenery target and arrival requirements through additive private diagnostics. | Implemented and automated-validated; schema-v38 publishes reconciled aggregate/per-restoration requirements, authored and missing binding remain distinct, schema-v37 is immutable, and no lookup, arrival gate, executable restoration, or lifecycle authority exists |
+| 2026-07-21 | Record the first Slice 110 private magic-tree route without overstating its evidence. | Inconclusive; two complete sequences produce 11 schema-valid v38 records, but remaining inside source region `(10,10)` yields zero retirement candidates and null event inventories. The corrected route must teleport away and pass the 16-tick grace before its pending markers |
 
 ## Next Discussion
 
