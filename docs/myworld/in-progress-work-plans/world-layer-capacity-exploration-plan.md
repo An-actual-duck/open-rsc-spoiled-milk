@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, and 142 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, and 143 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -126,7 +126,11 @@ RegionManager remains disconnected; and
 automated-validated Slice 142 composes that primitive with the real Region
 commit seam, preserves its typed outcome/reason and closed membership facts,
 and remains unreachable from arrival, gameplay, diagnostics, or any other
-production caller;
+production caller; and
+automated-validated Slice 143 defines bounded recovery order and separates
+overdue desired-state consumption from future transient-state preservation,
+with monotonic completed prefixes and first visibility withheld through any
+refusal or incomplete batch;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -11847,6 +11851,72 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 there is no production caller and arrival and gameplay remain disconnected.
 
+### Slice 143: Recovery batch and timing policy
+
+Objective: define the bounded, deterministic recovery plan that must be
+complete before first visibility, including the materially different treatment
+of overdue desired state and a callback whose countdown remains in the future.
+
+Implemented:
+
+- `GameTickEventRestorationRecoveryBatchContract` accepts only one canonical
+  scheduler-instance identity, observation tick, explicit candidate bound,
+  first-visibility withholding fact, current-state recovery capability, and
+  detached exact candidate tuples;
+- every candidate carries scheduler scope, registration sequence, proposal
+  generation, lifecycle version, countdown, running/execution state, and
+  one-shot/continuing-tick semantics; cross-scope, duplicate, inactive,
+  already-executed, recurring, or frozen-time candidates refuse the batch;
+- accepted candidates sort by exact registration sequence so recovery and
+  retry order do not depend on collection iteration;
+- an overdue candidate (`ticksBeforeRun <= 0`) requires desired-state commit
+  followed by terminal callback consumption, while a future candidate requires
+  current transient state restoration and retention of its scheduled callback;
+- future transient state cannot be replaced by an early desired-state commit;
+  it refuses planning until an independent current-state recovery capability is
+  available;
+- progress accepts only an in-order compatible prefix. A refusal is terminal
+  for that attempt, retains the successful monotonic prefix, withholds first
+  visibility, and requires a fresh inventory retry rather than rollback; and
+- only a complete compatible outcome for every ordered step is ready for first
+  visibility. Extra, reordered, post-refusal, or action-mismatched outcomes are
+  invalid evidence.
+
+Automated validation status:
+
+- the executable fixture proves deterministic sorting and distinct overdue/
+  future actions;
+- it proves future transient state refuses without its separate capability,
+  while an overdue callback remains independently plan-compatible;
+- scope, duplicate registration, visibility, and execution-semantics failures
+  refuse without producing steps;
+- pending, refused, ready, reordered, and action-mismatched progress paths prove
+  complete-prefix visibility and fresh inventory retry behavior;
+- source guards enforce no runtime imports, synchronization, callback, Region,
+  Store, loading, arrival, or lifecycle authority and no runtime consumer;
+- the complete layered-map suite passes 474 tests across 142 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 793 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this is a pure dormant policy and performs no inventory capture, Region
+  invocation, object/collision mutation, callback consumption, cancellation,
+  reschedule, loading, arrival gating, or first-visibility publication;
+- the existing Slice 142 seam is valid only for overdue desired-state work; it
+  must not be used to complete a future callback early;
+- completed recovery prefixes are deliberately monotonic because Slice 142's
+  atomic idempotent commits cannot be rolled back as one cross-Region batch;
+  after refusal, visibility remains withheld and a fresh exact inventory is
+  required; and
+- current transient-state reconstruction, runtime inventory consumption, a
+  private coordinator, loading, persistence, and actual first-visibility
+  integration remain later gates.
+
+Status: implemented and automated-validated. No owner route is required because
+the policy has no runtime consumer or authority.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -12214,6 +12284,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 140 by defining exact one-shot restoration consumption. | Implemented and automated-validated; Region refusal retains the exact pending event unchanged, applied or no-op desired state requires terminal exact-registration consumption with no callback or reschedule, invalid identity/boundary/outcome/post-state claims refuse, no runtime consumer is connected, 462 focused tests pass across 139 files, and the 792/488 Ant build passes |
 | 2026-07-22 | Continue with Slice 141 by implementing scheduler-local exact one-shot consumption. | Implemented and automated-validated; the real registration/execution/lifecycle boundaries consume a fixture-supplied detached Region outcome, refusal retains exact state, applied/no-op removes one registration and terminally stops without callback or reschedule, concurrent callback/stop/removal cannot cross, RegionManager remains disconnected, 466 focused tests pass across 140 files, and the 792/488 Ant build passes |
 | 2026-07-22 | Continue with Slice 142 by composing the real Region commit with exact scheduler consumption. | Implemented and automated-validated; the ephemeral request reaches the existing ordered Region object/collision seam under the stable event boundary, Region refusal retains the exact callback, applied/no-op consumes it after Region work, typed Region facts are copied without handles, no production caller exists, arrival/gameplay remain disconnected, 470 focused tests pass across 141 files, and the 792/488 Ant build passes |
+| 2026-07-22 | Continue with Slice 143 by defining recovery batch and timing policy before any caller. | Implemented and automated-validated; bounded exact registrations sort deterministically, overdue callbacks require desired-state commit/consumption, future callbacks require transient-state reconstruction/retention, incomplete or refused prefixes withhold visibility and require fresh inventory retry, all runtime consumers remain disconnected, 474 focused tests pass across 142 files, and the 793/488 Ant build passes |
 
 ## Next Discussion
 
@@ -12720,15 +12791,23 @@ stops it only after Region work. The closed result preserves the typed Region
 reason and membership/boundary facts, but no production caller reaches the
 combined operation and arrival/gameplay remain disconnected.
 
-The next safe slice should define a pure recovery-candidate and invocation-
-ordering contract before attaching any caller. It should specify bounded batch
-identity/order, exact scheduler-instance/registration/proposal tuples, duplicate
-and partial-failure behavior, and the rule that every applicable restoration is
-settled before the first visibility snapshot. It must also distinguish an
-overdue callback from one whose countdown remains in the future, preserve
-continuing server-tick semantics, and grant no loading, arrival, callback,
-reschedule, or Region invocation authority. Only after that policy is closed
-should a private recovery coordinator or owner test route be considered.
+Slice 143 now supplies the pure bounded recovery and timing policy. Exact
+registrations sort deterministically. Overdue callbacks may use Slice 142 to
+commit desired state and consume the obsolete event; future callbacks instead
+require future transient state reconstruction and must remain scheduled. A
+successful prefix is monotonic, but any refusal or incomplete suffix keeps
+first visibility withheld and requires a fresh exact inventory retry. No
+runtime consumer or visibility gate is attached.
+
+The next safe slice should define the missing detached current-state recovery
+snapshot for future callbacks. It must capture the exact present transient
+constructor/provenance and collision contribution plus the remaining scheduler
+countdown without converting that state into the callback's final desired
+state. Spawn and removal callbacks need symmetric definitions, opaque runtime
+attributes and unreconstructable owner-bound state must refuse, and the value
+must remain disconnected from Region loading, mutation, scheduling, and
+visibility. Only after that snapshot is closed should a private coordinator be
+considered.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
