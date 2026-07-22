@@ -70,6 +70,10 @@ public class Region {
 	 */
 	private final int regionY;
 
+	/** Dormant shared boundary for future object/collision transactions. */
+	private final RegionObjectCollisionMutationBoundary
+		objectCollisionMutationBoundary;
+
 	/**
 	 * This constructor is used to create a blank region
 	 *
@@ -81,6 +85,8 @@ public class Region {
 		this.regionManager = regionManager;
 		this.regionX = regionX;
 		this.regionY = regionY;
+		this.objectCollisionMutationBoundary =
+			new RegionObjectCollisionMutationBoundary(regionX, regionY);
 
 		this.tiles = new TileValue[Constants.REGION_SIZE][Constants.REGION_SIZE];
 		this.tile = null;
@@ -801,6 +807,11 @@ public class Region {
 
 	public RegionManager getRegionManager() {
 		return regionManager;
+	}
+
+	RegionObjectCollisionMutationBoundary
+		getObjectCollisionMutationBoundary() {
+		return objectCollisionMutationBoundary;
 	}
 
 	public int getRegionX() {

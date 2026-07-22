@@ -2,6 +2,7 @@ package com.openrsc.server.model.world.region;
 
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.event.rsc.GameTickEventRestorationAtomicRevalidationContract;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionTransactionContract;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
@@ -1640,6 +1641,69 @@ public class RegionManager {
 		final int packedRegionY) {
 		ConcurrentHashMap<Integer, Region> yRegions = regions.get(packedRegionX);
 		return yRegions == null ? null : yRegions.get(packedRegionY);
+	}
+
+	/**
+	 * Resolves existing packed Regions without creating them, then enters their
+	 * dormant object/collision boundaries in canonical order for one read-only
+	 * operation. Existing World object and tile mutations do not use this seam.
+	 */
+	RegionObjectCollisionMutationBoundary.Execution
+		executeUnderExistingOrderedObjectCollisionBoundaries(
+			final List<GameTickEventRestorationCollisionTransactionContract
+				.PackedRegionCoordinate> coordinates,
+			final RegionObjectCollisionMutationBoundary.ReadOnlyOperation
+				operation) {
+		List<GameTickEventRestorationCollisionTransactionContract
+			.PackedRegionCoordinate> checked = Objects.requireNonNull(
+				coordinates, "coordinates");
+		Objects.requireNonNull(operation, "operation");
+		if (checked.isEmpty()
+			|| checked.size()
+				> RegionObjectCollisionMutationBoundary.MAXIMUM_BOUNDARIES
+			|| checked.contains(null)) {
+			throw new IllegalArgumentException(
+				"Ordered object/collision Region set is invalid");
+		}
+		GameTickEventRestorationCollisionTransactionContract
+			.PackedRegionCoordinate previous = null;
+		for (GameTickEventRestorationCollisionTransactionContract
+				.PackedRegionCoordinate current : checked) {
+			if (previous != null
+				&& comparePackedRegionCoordinates(previous, current) >= 0) {
+				throw new IllegalArgumentException(
+					"Object/collision Regions are not in canonical order");
+			}
+			previous = current;
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			List<RegionObjectCollisionMutationBoundary> boundaries =
+				new ArrayList<RegionObjectCollisionMutationBoundary>();
+			for (GameTickEventRestorationCollisionTransactionContract
+					.PackedRegionCoordinate coordinate : checked) {
+				Region region = peekRegionFromSectorCoordinates(
+					coordinate.getRegionX(), coordinate.getRegionY());
+				if (region == null) {
+					return RegionObjectCollisionMutationBoundary
+						.refuseUnavailable(checked.size());
+				}
+				boundaries.add(
+					region.getObjectCollisionMutationBoundary());
+			}
+			return RegionObjectCollisionMutationBoundary.executeReadOnly(
+				boundaries, operation);
+		}
+	}
+
+	private static int comparePackedRegionCoordinates(
+		final GameTickEventRestorationCollisionTransactionContract
+			.PackedRegionCoordinate left,
+		final GameTickEventRestorationCollisionTransactionContract
+			.PackedRegionCoordinate right) {
+		int compared = Integer.compare(
+			left.getRegionX(), right.getRegionX());
+		return compared != 0 ? compared : Integer.compare(
+			left.getRegionY(), right.getRegionY());
 	}
 
 	/**

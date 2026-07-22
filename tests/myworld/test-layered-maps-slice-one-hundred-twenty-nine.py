@@ -366,10 +366,14 @@ class LayeredMapsSliceOneHundredTwentyNineTest(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_transaction_contract_remains_disconnected_from_runtime(self):
+    def test_transaction_contract_remains_disconnected_from_mutation_runtime(self):
         name = "GameTickEventRestorationCollisionTransactionContract"
-        for path in (STORE, HANDLER, REGION, REGION_MANAGER, WORLD):
+        for path in (STORE, HANDLER, REGION, WORLD):
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
+        manager = REGION_MANAGER.read_text(encoding="utf-8")
+        self.assertIn(
+            "executeUnderExistingOrderedObjectCollisionBoundaries", manager
+        )
 
     def test_living_plan_records_slice_one_hundred_twenty_nine(self):
         plan = PLAN.read_text(encoding="utf-8")

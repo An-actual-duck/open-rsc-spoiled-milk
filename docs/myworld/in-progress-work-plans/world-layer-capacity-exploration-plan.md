@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, and 125 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, and 129 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, and 130 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -80,6 +80,10 @@ automated-validated Slice 129 specifies that dormant canonical multi-Region
 transaction boundary, derives exact Region coverage from the rollback footprint,
 and requires every competing object/collision mutation plus rollback freshness
 to share it without acquiring locks or mutating runtime;
+automated-validated Slice 130 adds the disconnected real per-Region monitor and
+non-creating canonical RegionManager runner, mechanically proving same-Region
+exclusion and cross-Region ordered acquisition while leaving every existing
+object, collision, event, and callback mutation path unchanged;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10896,9 +10900,11 @@ Automated validation status:
 - declaration/result defensive-copy and immutability checks pass, and all
   runtime-lock, comparison, atomicity, rollback, mutation, commit, arrival, and
   lifecycle flags remain false;
-- source guards prove the contract imports no runtime model, performs no lock,
-  tile, object, callback, or packet operation, and remains disconnected from
-  Store, handler, Region, RegionManager, and World;
+- source guards prove the contract imports no runtime model and performs no
+  lock, tile, object, callback, or packet operation. Slice 130 later consumes
+  only its immutable packed-Region coordinates through a disconnected
+  RegionManager boundary seam; Store, handler, Region, and World mutation paths
+  remain disconnected;
 - the existing lexical migration inventory intentionally advances from 211 to
   212 unresolved Java coordinate owners because this contract contains Region-
   size coordinate arithmetic; the deterministic classifier records the new
@@ -10917,11 +10923,73 @@ Safety boundary:
   claim and cannot authorize apply or rollback after the declaring boundary
   ends; and
 - no Slice 126-129 value reaches runtime registration, callback execution,
-  collision/pathing, packets, persistence, loading, retirement, or arrival.
+  collision/pathing, packets, persistence, loading, retirement, or arrival;
+  Slice 130's coordinate-only boundary seam does not alter that guarantee.
 
 Status: implemented and automated-validated. No owner route is required for
 this disconnected transaction specification; no lock, rollback, mutation, or
 lifecycle authority is authorized.
+
+### Slice 130: Disconnected ordered Region boundaries
+
+Objective: establish and mechanically prove the smallest real canonical
+multi-Region monitor foundation while keeping it disconnected from all object,
+collision, event, and callback mutation paths.
+
+Implemented:
+
+- every `Region` owns one package-local
+  `RegionObjectCollisionMutationBoundary` keyed by its immutable packed Region
+  coordinate; the monitor is distinct from the existing object collection and
+  tile-expansion monitors so no historical lock order is silently changed;
+- `executeReadOnly` accepts a bounded nonempty list only in strict
+  `(regionX, regionY)` order, rejects reverse order and duplicates before
+  acquiring a monitor, nests monitor acquisition recursively, invokes one
+  void read-only operation only while every monitor is held, and releases in
+  reverse order through monitor unwinding;
+- the held-boundary view copies only immutable coordinates and proves with
+  `Thread.holdsLock` that the full set is held during the operation. Neither the
+  operation nor a result value is retained;
+- RegionManager's package-local helper validates the same canonical coordinate
+  order, holds the existing Region lifecycle boundary, resolves only through
+  non-creating `peekRegionFromSectorCoordinates`, returns a typed unavailable
+  refusal if any Region is absent, and otherwise delegates to the ordered
+  runner; and
+- no World registration, unregistration, replacement, tile update, target
+  observation, Store fence, handler, callback, packet, or public API consumes
+  the new boundary.
+
+Automated validation status:
+
+- a deterministic two-thread latch fixture proves same-Region exclusion: the
+  second operation cannot enter until the first releases its monitor;
+- the fixture proves a canonical two-Region operation holds both monitors,
+  preserves coordinate order, releases normally, and retains no operation or
+  result;
+- reverse-order, duplicate, empty, invalid-coordinate, and unavailable-Region
+  paths refuse before a read operation can be invoked;
+- source guards prove Region creates exactly its boundary, RegionManager uses
+  lifecycle-protected non-creating lookup, no plausible mutation/event consumer
+  references the boundary, and the boundary itself knows no GameObject,
+  TileValue, callback, or packet type;
+- the complete layered-map suite passes 422 tests across 129 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 785 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- “read-only” is an API contract, not a Java capability sandbox; the runner is
+  package-local and deliberately has no runtime caller while later specialized
+  operations are designed;
+- ordinary object and collision mutations do not yet share these monitors, so
+  holding them does not currently prove stable world state or satisfy Slice
+  129's shared-mutation prerequisite; and
+- completed execution is not a permit, mutation/rollback authority, atomicity
+  claim, commit token, arrival gate, or lifecycle authority.
+
+Status: implemented and automated-validated. No owner route is required for
+this disconnected lock-order foundation; no world mutation behavior changed.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -11275,6 +11343,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 127 by specifying the dormant in-boundary compare-and-apply contract. | Implemented and automated-validated; exact scheduler/registration/generation/lifecycle and fresh Region target comparisons precede typed no-op or apply shapes, all applying paths require collision rollback, transient replacement additionally requires exact transient rollback state, the pure contract remains disconnected and non-authoritative, and 410 focused tests plus the 782/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 128 by defining the dormant exact transient rollback snapshot. | Implemented and automated-validated; exact zero-attribute transient constructor/provenance and bounded canonical per-tile collision contributions are retained, ambiguous/opaque/incomplete/mismatched state refuses, a distinct ordered potentially multi-Region collision boundary is required but not implemented, the snapshot remains disconnected and non-authoritative, and 414 focused tests plus the 783/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 129 by specifying the dormant ordered collision transaction contract. | Implemented and automated-validated; anchor/collision tiles derive exact canonical packed-Region coverage, every Region and competing object/collision mutation must share the declared boundary, fresh compare and unchanged-state rollback checks are mandatory, the new coordinate owner is explicitly inventoried/classified, all declarations remain inert and disconnected, and 418 focused tests plus the 784/488 Ant build pass |
+| 2026-07-22 | Continue with Slice 130 by adding disconnected ordered Region object/collision boundaries. | Implemented and automated-validated; one real per-Region monitor plus a lifecycle-protected non-creating canonical runner proves same-Region exclusion, cross-Region acquisition, reverse-order/duplicate refusal, and unavailable-Region refusal, while every existing mutation/event path remains disconnected, and 422 focused tests plus the 785/488 Ant build pass |
 
 ## Next Discussion
 
@@ -11749,15 +11818,23 @@ canonical Region order, exact footprint coverage, shared-mutation exclusion,
 fresh comparison, and unchanged-state rollback obligations, but it deliberately
 does not manufacture a runtime lock.
 
-The next focused gate should add the smallest disconnected runtime foundation:
-one dedicated object/collision mutation monitor per packed Region and a bounded
-RegionManager helper that resolves an already-declared canonical Region set,
-refuses absent/duplicate/out-of-order coordinates, acquires those monitors in
-order, executes only a read-only fixture operation, and releases them in reverse
-order. Deterministic latch tests must prove same-Region and cross-Region
-exclusion and reversed-input refusal. Existing World registration,
-unregistration, replacement, target observation, and callback execution must
-remain unmodified until that boundary itself is mechanically safe.
+Slice 130 now supplies that disconnected runtime foundation. One real monitor
+belongs to each packed Region; canonical multi-Region acquisition and reverse
+release are mechanically proven, Region resolution is non-creating under the
+lifecycle boundary, and existing mutation paths remain untouched. Because
+ordinary World mutations do not share the boundary, this is lock-order
+capability rather than stable-world-state evidence.
+
+The next focused gate should define a disconnected exact collision-footprint
+planner for one scenery or boundary constructor. It must reproduce the legacy
+registration/removal rules for width/height rotation, blocking scenery, six-bit
+dynamic collision, projectile contributions, neighbor tiles, object ID 1147,
+and the delayed-spawn `forceFullBlock` addition; return unique contribution
+tiles and their canonical packed Region set; refuse missing definitions or
+out-of-world effects; and compare its output to executable table fixtures. It
+must not read or mutate a Region, acquire Slice 130's runner, or change World
+registration yet. Only after footprint parity is proved can existing mutation
+entry points know which monitors must be shared.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
