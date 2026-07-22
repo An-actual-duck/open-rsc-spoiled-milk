@@ -21,20 +21,31 @@ public final class GameTickEventRestorationRequirement {
 		new GameTickEventRestorationRequirement(
 			TargetSubject.UNAVAILABLE, BindingEvidence.UNAVAILABLE, null,
 			TargetConflictPolicy.UNAVAILABLE,
-			ArrivalOrderingRequirement.UNAVAILABLE);
+			ArrivalOrderingRequirement.UNAVAILABLE,
+			GenerationBindingRequirement.UNAVAILABLE,
+			DesiredState.UNAVAILABLE, IdempotencyPolicy.UNAVAILABLE,
+			MutationPrecondition.UNAVAILABLE);
 
 	private final TargetSubject targetSubject;
 	private final BindingEvidence bindingEvidence;
 	private final AuthoredTarget authoredTarget;
 	private final TargetConflictPolicy targetConflictPolicy;
 	private final ArrivalOrderingRequirement arrivalOrderingRequirement;
+	private final GenerationBindingRequirement generationBindingRequirement;
+	private final DesiredState desiredState;
+	private final IdempotencyPolicy idempotencyPolicy;
+	private final MutationPrecondition mutationPrecondition;
 
 	private GameTickEventRestorationRequirement(
 		final TargetSubject targetSubject,
 		final BindingEvidence bindingEvidence,
 		final AuthoredTarget authoredTarget,
 		final TargetConflictPolicy targetConflictPolicy,
-		final ArrivalOrderingRequirement arrivalOrderingRequirement) {
+		final ArrivalOrderingRequirement arrivalOrderingRequirement,
+		final GenerationBindingRequirement generationBindingRequirement,
+		final DesiredState desiredState,
+		final IdempotencyPolicy idempotencyPolicy,
+		final MutationPrecondition mutationPrecondition) {
 		this.targetSubject = Objects.requireNonNull(
 			targetSubject, "targetSubject");
 		this.bindingEvidence = Objects.requireNonNull(
@@ -44,13 +55,26 @@ public final class GameTickEventRestorationRequirement {
 			targetConflictPolicy, "targetConflictPolicy");
 		this.arrivalOrderingRequirement = Objects.requireNonNull(
 			arrivalOrderingRequirement, "arrivalOrderingRequirement");
+		this.generationBindingRequirement = Objects.requireNonNull(
+			generationBindingRequirement, "generationBindingRequirement");
+		this.desiredState = Objects.requireNonNull(
+			desiredState, "desiredState");
+		this.idempotencyPolicy = Objects.requireNonNull(
+			idempotencyPolicy, "idempotencyPolicy");
+		this.mutationPrecondition = Objects.requireNonNull(
+			mutationPrecondition, "mutationPrecondition");
 
 		if (targetSubject == TargetSubject.UNAVAILABLE) {
 			if (bindingEvidence != BindingEvidence.UNAVAILABLE
 				|| authoredTarget != null
 				|| targetConflictPolicy != TargetConflictPolicy.UNAVAILABLE
 				|| arrivalOrderingRequirement
-					!= ArrivalOrderingRequirement.UNAVAILABLE) {
+					!= ArrivalOrderingRequirement.UNAVAILABLE
+				|| generationBindingRequirement
+					!= GenerationBindingRequirement.UNAVAILABLE
+				|| desiredState != DesiredState.UNAVAILABLE
+				|| idempotencyPolicy != IdempotencyPolicy.UNAVAILABLE
+				|| mutationPrecondition != MutationPrecondition.UNAVAILABLE) {
 				throw new IllegalArgumentException(
 					"Unavailable restoration requirement cannot contain data");
 			}
@@ -60,15 +84,34 @@ public final class GameTickEventRestorationRequirement {
 					!= TargetConflictPolicy.REFUSE_MISMATCH_OR_AMBIGUITY
 				|| arrivalOrderingRequirement
 					!= ArrivalOrderingRequirement
-						.RECONCILE_BEFORE_FIRST_VISIBILITY) {
+						.RECONCILE_BEFORE_FIRST_VISIBILITY
+				|| generationBindingRequirement
+					!= GenerationBindingRequirement
+						.MATCH_RECONSTRUCTION_GENERATION
+				|| idempotencyPolicy
+					!= IdempotencyPolicy
+						.ALREADY_SATISFIED_IS_NO_OP_SUCCESS) {
 				throw new IllegalArgumentException(
-					"Known restoration requirement must fail closed before arrival");
+					"Known restoration requirement must fail closed and be idempotent");
 			}
 			if ((bindingEvidence
 					== BindingEvidence.AUTHORED_PLACEMENT_IDENTITY)
 				!= (authoredTarget != null)) {
 				throw new IllegalArgumentException(
 					"Authored binding evidence and target must agree");
+			}
+			DesiredState requiredState = targetSubject
+				== TargetSubject.AUTHORED_DESTINATION_SLOT
+					? DesiredState.AUTHORED_SCENERY_PRESENT
+					: DesiredState.AUTHORED_SCENERY_ABSENT;
+			MutationPrecondition requiredPrecondition = targetSubject
+				== TargetSubject.AUTHORED_DESTINATION_SLOT
+					? MutationPrecondition.DESTINATION_SLOT_EMPTY
+					: MutationPrecondition.EXACT_AUTHORED_ENTITY_PRESENT;
+			if (desiredState != requiredState
+				|| mutationPrecondition != requiredPrecondition) {
+				throw new IllegalArgumentException(
+					"Restoration desired state does not match its target subject");
 			}
 		}
 	}
@@ -97,12 +140,19 @@ public final class GameTickEventRestorationRequirement {
 		AuthoredTarget target = authored == null
 			? null : AuthoredTarget.copyOf(authored);
 		TargetSubject subject;
+		DesiredState desiredState;
+		MutationPrecondition mutationPrecondition;
 		switch (checked.getKind()) {
 			case SCENERY_SPAWN:
 				subject = TargetSubject.AUTHORED_DESTINATION_SLOT;
+				desiredState = DesiredState.AUTHORED_SCENERY_PRESENT;
+				mutationPrecondition = MutationPrecondition.DESTINATION_SLOT_EMPTY;
 				break;
 			case SCENERY_REMOVE:
 				subject = TargetSubject.AUTHORED_EXISTING_ENTITY;
+				desiredState = DesiredState.AUTHORED_SCENERY_ABSENT;
+				mutationPrecondition =
+					MutationPrecondition.EXACT_AUTHORED_ENTITY_PRESENT;
 				break;
 			default:
 				throw new IllegalStateException(
@@ -111,7 +161,11 @@ public final class GameTickEventRestorationRequirement {
 		return new GameTickEventRestorationRequirement(
 			subject, evidence, target,
 			TargetConflictPolicy.REFUSE_MISMATCH_OR_AMBIGUITY,
-			ArrivalOrderingRequirement.RECONCILE_BEFORE_FIRST_VISIBILITY);
+			ArrivalOrderingRequirement.RECONCILE_BEFORE_FIRST_VISIBILITY,
+			GenerationBindingRequirement.MATCH_RECONSTRUCTION_GENERATION,
+			desiredState,
+			IdempotencyPolicy.ALREADY_SATISFIED_IS_NO_OP_SUCCESS,
+			mutationPrecondition);
 	}
 
 	public TargetSubject getTargetSubject() { return targetSubject; }
@@ -123,6 +177,16 @@ public final class GameTickEventRestorationRequirement {
 	public ArrivalOrderingRequirement getArrivalOrderingRequirement() {
 		return arrivalOrderingRequirement;
 	}
+	public GenerationBindingRequirement getGenerationBindingRequirement() {
+		return generationBindingRequirement;
+	}
+	public DesiredState getDesiredState() { return desiredState; }
+	public IdempotencyPolicy getIdempotencyPolicy() {
+		return idempotencyPolicy;
+	}
+	public MutationPrecondition getMutationPrecondition() {
+		return mutationPrecondition;
+	}
 	public boolean isTargetBindingComplete() {
 		return bindingEvidence
 			== BindingEvidence.AUTHORED_PLACEMENT_IDENTITY
@@ -132,10 +196,26 @@ public final class GameTickEventRestorationRequirement {
 		return arrivalOrderingRequirement
 			!= ArrivalOrderingRequirement.UNAVAILABLE;
 	}
+	public boolean isGenerationBindingRequirementCaptured() {
+		return generationBindingRequirement
+			!= GenerationBindingRequirement.UNAVAILABLE;
+	}
+	public boolean isDesiredStateCaptured() {
+		return desiredState != DesiredState.UNAVAILABLE;
+	}
+	public boolean isIdempotencyPolicyCaptured() {
+		return idempotencyPolicy != IdempotencyPolicy.UNAVAILABLE;
+	}
+	public boolean isMutationPreconditionCaptured() {
+		return mutationPrecondition != MutationPrecondition.UNAVAILABLE;
+	}
 
 	public boolean isPointInTimeOnly() { return true; }
 	public boolean isDetachedPrimitiveCopy() { return true; }
 	public boolean isTargetLookupPerformed() { return false; }
+	public boolean isGenerationMatchPerformed() { return false; }
+	public boolean isTargetStateInspected() { return false; }
+	public boolean isMutationPerformed() { return false; }
 	public boolean isArrivalGate() { return false; }
 	public boolean isExecutableRestoration() { return false; }
 	public boolean isLifecycleAuthority() { return false; }
@@ -170,6 +250,32 @@ public final class GameTickEventRestorationRequirement {
 	public enum ArrivalOrderingRequirement {
 		UNAVAILABLE,
 		RECONCILE_BEFORE_FIRST_VISIBILITY
+	}
+
+	/** A stale authored callback cannot bind into another population pass. */
+	public enum GenerationBindingRequirement {
+		UNAVAILABLE,
+		MATCH_RECONSTRUCTION_GENERATION
+	}
+
+	/** Desired post-callback state, independent of whether mutation is needed. */
+	public enum DesiredState {
+		UNAVAILABLE,
+		AUTHORED_SCENERY_PRESENT,
+		AUTHORED_SCENERY_ABSENT
+	}
+
+	/** Repeating reconciliation after success must not repeat its side effect. */
+	public enum IdempotencyPolicy {
+		UNAVAILABLE,
+		ALREADY_SATISFIED_IS_NO_OP_SUCCESS
+	}
+
+	/** State required before a future path may perform the one-shot mutation. */
+	public enum MutationPrecondition {
+		UNAVAILABLE,
+		DESTINATION_SLOT_EMPTY,
+		EXACT_AUTHORED_ENTITY_PRESENT
 	}
 
 	/** Scalar copy of the generation-fenced authored target address. */

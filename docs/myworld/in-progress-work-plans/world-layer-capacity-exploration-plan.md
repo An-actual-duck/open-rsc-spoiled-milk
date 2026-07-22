@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, and 110 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, and 110 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, and 111 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -20,6 +20,8 @@ satisfied binding and executable restoration. They perform no lookup or
 arrival gate;
 replay, cancellation, reschedule, preservation, and all lifecycle authority
 remain absent;
+automated-validated Slice 111 defines generation matching and idempotent
+desired-state rules without inspecting a target or performing a mutation;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -9637,6 +9639,61 @@ visual, collision, interaction, or respawn issue.
 Status: implemented, automated-validated, and owner-validated. Executable
 restoration, arrival gating, and all lifecycle authority remain absent.
 
+### Slice 111: Dormant generation and idempotency prerequisites
+
+Objective: define the next fail-closed prerequisite for known scenery callback
+restoration before permitting any target lookup, state inspection, or mutation.
+
+Implemented:
+
+- every known scenery requirement must match its authored placement generation
+  to the reconstruction generation; a callback retained from another authored
+  population pass cannot bind by coordinate or ordinal coincidence;
+- spawn describes `AUTHORED_SCENERY_PRESENT` as its desired state and may only
+  mutate an empty destination slot, while removal describes
+  `AUTHORED_SCENERY_ABSENT` and may only mutate the exact authored entity;
+- both operations use `ALREADY_SATISFIED_IS_NO_OP_SUCCESS`, separating a
+  successful desired-state reconciliation from whether a side effect is
+  needed and preventing repeated reconciliation from duplicating a spawn or
+  removal;
+- missing authored identity retains the closed rule descriptions but still
+  cannot bind a target, while an unavailable callback gains none of the new
+  requirements; and
+- generation binding, desired state, idempotency, and mutation precondition are
+  immutable detached enums. The value retains no reconstruction generation,
+  target, entity, Region, World, event, scheduler, callback, packet, registry,
+  or arrival handle.
+
+Automated validation status:
+
+- an executable compiled fixture proves the distinct spawn/removal desired-
+  state and mutation-precondition pairs, the shared generation/idempotency
+  rules, missing-identity refusal, and the unavailable state;
+- constructor guards require every known rule and refuse a desired-state or
+  precondition pair that disagrees with its target subject;
+- source guards prohibit runtime model/network imports, target lookup, object
+  registration/removal, packet sends, callback execution, and event mutation;
+- the complete layered-map suite passes 339 tests across 110 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 774 core and 488 plugin
+  sources.
+
+Safety boundary:
+
+- `MATCH_RECONSTRUCTION_GENERATION` is a requirement only. This slice has no
+  candidate reconstruction generation and performs no comparison;
+- an idempotent desired state does not claim the target is present, absent,
+  empty, exact, safe to mutate, or already satisfied;
+- No target state is inspected. No generation match, target lookup, object
+  mutation, callback execution, cancellation, reschedule, replay, arrival
+  gate, reconstruction, or preservation is performed; and
+- every event, scheduler, registry, teardown, transaction, rollback, packet,
+  arrival, and lifecycle authority remains absent.
+
+Status: implemented and automated-validated. Inventory detachment, generation
+comparison, diagnostics, executable restoration, and all lifecycle authority
+remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -9965,6 +10022,7 @@ private environment should validate at least:
 | 2026-07-21 | Continue with Slice 110 by exposing detached scenery target and arrival requirements through additive private diagnostics. | Implemented and automated-validated; schema-v38 publishes reconciled aggregate/per-restoration requirements, authored and missing binding remain distinct, schema-v37 is immutable, and no lookup, arrival gate, executable restoration, or lifecycle authority exists |
 | 2026-07-21 | Record the first Slice 110 private magic-tree route without overstating its evidence. | Inconclusive; two complete sequences produce 11 schema-valid v38 records, but remaining inside source region `(10,10)` yields zero retirement candidates and null event inventories. The corrected route must teleport away and pass the 16-tick grace before its pending markers |
 | 2026-07-21 | Accept the corrected Slice 110 target/arrival route. | Owner-validated; seven v38 records retain one authored spawn registration while its remaining delay falls exactly with the observation-tick delta, both pending markers reconcile authored destination binding and pre-visibility ordering, natural completion removes the restoration record, and every authority flag remains false |
+| 2026-07-21 | Continue with Slice 111 by defining generation matching and idempotent desired-state prerequisites. | Implemented and automated-validated; stale authored generations must refuse, already-satisfied desired state is a no-op success, spawn/remove retain distinct mutation preconditions, and no comparison, inspection, mutation, or lifecycle authority exists |
 
 ## Next Discussion
 
@@ -10321,11 +10379,14 @@ retains identity-less states as explicit incomplete evidence. Slice 110 exposes
 only those detached values through additive private schema-v38 while preserving
 v37 unchanged. The corrected owner route now proves a real pending authored
 spawn satisfies both requirements and disappears after natural completion.
-The next implementation slice should define the narrower unresolved generation-
-binding and idempotency prerequisite before any target lookup: a stale authored
-generation must refuse, an already-satisfied exact desired state must be a
-no-op success, and an empty or exact authored target may only describe its
-permitted future action. The observer still has no event, store, callback,
+Slice 111 defines the next dormant generation/idempotency rule: a stale
+authored generation must refuse, an already-satisfied exact desired state is a
+no-op success, and spawn/removal have distinct mutation preconditions. The next
+gate should detach these rules into the bounded event inventory and compare an
+authored target generation only to that inventory's exact reconstruction-
+proposal generation. Captured rule completeness and satisfied generation
+matching must remain separate; an identity-less callback must remain visibly
+incomplete. The observer still has no event, store, callback,
 key, target lookup, due-event executor, cancellation, reschedule, load, or
 arrival-gate authority.
 
