@@ -83,6 +83,15 @@ public final class WorldCollisionRuntimeFixture {
                     definition, new TileStore());
             }
         }
+        Result zeroSized = plan(
+            Operation.REGISTER, 180, 60, 60, 0, 0,
+            Definition.scenery(1, 0, 0, "Watch tower", ALLOWLIST));
+        check(zeroSized.isFootprintAvailable()
+                && zeroSized.getContributionTileCount() == 0,
+            "legacy zero-sized definitions remain collisionless");
+        roundTrip(769, 60, 60, 8, 0,
+            Definition.scenery(1, 2, 3, "Travel Cart", ALLOWLIST),
+            new TileStore());
     }
 
     private static void coversBoundaryDirectionsAndProjectileOverlap() {

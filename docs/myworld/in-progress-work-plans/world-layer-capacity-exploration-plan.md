@@ -11298,7 +11298,8 @@ Automated validation status:
 
 - an executable table covers scenery collision types `0`, `1`, and `2` across
   rotations `0/2/4/6`, boundary directions `0-3`, exact overlapping projectile
-  counts, and add/remove round trips;
+  counts, legacy zero-sized collision definitions, the authored direction-8
+  travel cart, and add/remove round trips;
 - a two-by-two footprint at packed coordinate `(47,47)` proves four-Region
   coverage, five repeated cycles return every counter to zero, and an
   unregister-then-register replacement sequence remains reversible;

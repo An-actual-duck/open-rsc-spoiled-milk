@@ -274,7 +274,7 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 			final int direction,
 			final int type) {
 			if (objectId < 0 || x < 0 || y < 0
-				|| direction < 0 || direction > 7
+				|| direction < 0 || direction > 8
 				|| (type != SCENERY && type != BOUNDARY)) {
 				throw new IllegalArgumentException(
 					"Collision constructor state is invalid");
@@ -318,7 +318,7 @@ public final class GameTickEventRestorationCollisionFootprintPlanner {
 			final boolean projectileClipAllowed) {
 			if ((objectType != ConstructorState.SCENERY
 					&& objectType != ConstructorState.BOUNDARY)
-				|| collisionType < 0 || width <= 0 || height <= 0) {
+				|| collisionType < 0 || width < 0 || height < 0) {
 				throw new IllegalArgumentException(
 					"Collision definition is invalid");
 			}
