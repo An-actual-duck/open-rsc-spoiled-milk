@@ -23,10 +23,6 @@ final class RegionObjectCollisionMutationBoundary {
 	RegionObjectCollisionMutationBoundary(
 		final int regionX,
 		final int regionY) {
-		if (regionX < 0 || regionY < 0) {
-			throw new IllegalArgumentException(
-				"Object/collision mutation boundary coordinate is invalid");
-		}
 		this.regionX = regionX;
 		this.regionY = regionY;
 	}

@@ -41,8 +41,28 @@ public final class RegionObjectCollisionMutationBoundaryFixture {
     public static void main(String[] args) throws Exception {
         sameRegionOperationsExcludeEachOther();
         crossRegionOperationHoldsCanonicalSet();
+        signedRegionCoordinatesRemainValid();
         reversedAndDuplicateInputsRefuseBeforeOperation();
         unavailableAndCompletedResultsRemainInert();
+    }
+
+    private static void signedRegionCoordinatesRemainValid() {
+        RegionObjectCollisionMutationBoundary negative =
+            new RegionObjectCollisionMutationBoundary(-1, -2);
+        RegionObjectCollisionMutationBoundary originColumn =
+            new RegionObjectCollisionMutationBoundary(0, -2);
+        AtomicBoolean ran = new AtomicBoolean();
+        RegionObjectCollisionMutationBoundary.executeReadOnly(
+            Arrays.asList(negative, originColumn), held -> {
+                check(held.getCoordinates().get(0).getRegionX() == -1
+                        && held.getCoordinates().get(0).getRegionY() == -2
+                        && held.getCoordinates().get(1).getRegionX() == 0
+                        && held.getCoordinates().get(1).getRegionY() == -2,
+                    "signed Region coordinates retain canonical order");
+                ran.set(true);
+            });
+        check(ran.get(),
+            "visibility-edge signed Region boundaries remain usable");
     }
 
     private static void sameRegionOperationsExcludeEachOther()
@@ -134,7 +154,6 @@ public final class RegionObjectCollisionMutationBoundaryFixture {
             .executeReadOnly(Arrays.asList(first, first), held -> ran.set(true)));
         expectIllegal(() -> RegionObjectCollisionMutationBoundary
             .executeReadOnly(Collections.emptyList(), held -> ran.set(true)));
-        expectIllegal(() -> new RegionObjectCollisionMutationBoundary(-1, 0));
         check(!ran.get(), "invalid order refuses before operation invocation");
     }
 

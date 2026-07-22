@@ -11314,6 +11314,20 @@ Automated validation status:
 - the authoritative bundled-Ant server build compiles 789 core and 488 plugin
   sources and passes its build/classpath audit.
 
+Private-launch correction:
+
+- the first owner login reached successful response `86`, then ordinary
+  visibility at `(122,509)` requested packed Region X `-1` because the view
+  window extends west of world tile X `0`;
+- the Slice 130 boundary constructor incorrectly rejected negative Region
+  coordinates even though the existing visibility cache intentionally creates
+  those edge Regions and the confirmed layered coordinate model is signed;
+- collision boundaries now accept the full signed integer Region-coordinate
+  domain, while nonempty, bounded, distinct, and canonical-order checks remain
+  at execution; and
+- the executable boundary fixture covers a canonically ordered signed pair so
+  this normal login/visibility path cannot regress to constructor refusal.
+
 Safety boundary:
 
 - this slice makes the collision-counter executor live, but object membership
