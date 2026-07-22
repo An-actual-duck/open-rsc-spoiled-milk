@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, and 125 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, and 127 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, and 128 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -72,6 +72,10 @@ automated-validated Slice 127 specifies the still-dormant in-boundary compare-
 and-apply refusal table, distinguishes exact apply/no-op/rollback shapes, and
 proves that authored-transient replacement still lacks a closed exact rollback
 snapshot before any runtime mutation seam can be considered;
+automated-validated Slice 128 defines that dormant rollback snapshot over one
+exact zero-attribute transient and its bounded per-tile collision contribution,
+while proving collision needs its own ordered potentially multi-Region boundary
+before runtime capture or replacement can be safe;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10784,6 +10788,71 @@ Status: implemented and automated-validated. No owner route is required for
 this disconnected pure compare-and-apply specification; no mutation or
 lifecycle authority is authorized.
 
+### Slice 128: Dormant transient rollback snapshot
+
+Objective: define the smallest closed state needed to reconstruct one exact
+authored transient displaced by a future restoration spawn, including its own
+collision contribution, without observing runtime state or authorizing
+rollback.
+
+Implemented:
+
+- `GameTickEventRestorationTransientRollbackSnapshot.assess` accepts only a
+  Slice 126 scenery-spawn intent whose expected target is one exact authored
+  transient, then requires one exact-slot object captured under the Region
+  object boundary at the same coordinate/type and with the exact authored
+  generation/source/construction identity;
+- the immutable snapshot retains the displaced object's ID, permanent ID,
+  coordinate, direction, type, nullable constructor owner, and authored
+  identity. A boundary object must also retain the intent direction, while a
+  scenery transient may preserve its distinct replacement direction;
+- opaque runtime attributes are not copied: any nonzero runtime-attribute count
+  refuses as `RUNTIME_ATTRIBUTES_NOT_RESTORABLE` rather than claiming that an
+  object reconstructed from constructor state would be exact;
+- collision state is represented as a bounded canonical list of unique packed
+  tiles and the displaced object's exact blocking-scenery count, six-bit
+  dynamic-collision contribution, and dynamic-projectile contribution on each
+  tile. A complete collisionless object is represented by an explicit empty
+  list rather than unavailable evidence; and
+- collision capture requires a separately declared ordered collision boundary.
+  This accommodates footprints and adjacent wall/projectile effects that can
+  cross Region boundaries; the Region object boundary alone is not promoted to
+  collision authority.
+
+Automated validation status:
+
+- an executable Java fixture accepts an exact transient with an unsorted two-
+  tile collision footprint, verifies canonical order and every retained scalar,
+  and accepts an explicitly complete collisionless snapshot;
+- the fixture refusal-tests the wrong intent shape, missing object boundary,
+  ambiguous slot, coordinate/type mismatch, authored-identity mismatch, opaque
+  runtime attributes, missing ordered collision boundary, incomplete collision
+  contribution, and duplicate tiles;
+- bounds, invalid empty contributions, defensive copies, immutable returned
+  lists, inert results, and all false authority flags are mechanically checked;
+- source guards prove the snapshot imports no runtime model, performs no
+  observation or mutation, and remains disconnected from the Slice 127
+  contract, Store, handler, and RegionManager;
+- the complete layered-map suite passes 414 tests across 127 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 783 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- boundary booleans are detached declarations, not proof that this class
+  acquired the Region object monitor or an ordered collision boundary;
+- an available snapshot is still not standalone rollback: it cannot construct
+  or register an object, inspect or restore a tile, invoke/cancel/reschedule a
+  callback, emit a packet, persist state, or alter loading/retirement; and
+- the snapshot retains no runtime attribute values, entity/tile/Region/World
+  handle, scheduler identity, lifecycle version, monitor, callback, or mutable
+  input collection. No runtime path constructs or consumes it.
+
+Status: implemented and automated-validated. No owner route is required for
+this disconnected pure rollback-state contract; no rollback, mutation, or
+lifecycle authority is authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -11134,6 +11203,7 @@ private environment should validate at least:
 | 2026-07-22 | Accept the corrected Slice 125 composed-target route. | Owner-validated; all seven v43 records validate locally, pending registration 3961 remains lifecycle-stable at 48 -> 48, the Region-boundary exact authored transient satisfies `MUTATION_PRECONDITION_REVALIDATED`, natural completion leaves zero restoration records at the after marker and stop, visuals and interaction remain normal, and every mutation/commit/lifecycle flag remains false |
 | 2026-07-22 | Continue with Slice 126 by defining a dormant exact mutation intent. | Implemented and automated-validated; only stable satisfied spawn/removal evidence constructs the immutable scalar intent, force-full-block is retained, lifecycle/no-op/conflict/count/operation/construction failures remain typed, the intent is not a reusable permit and has no runtime consumer, 406 focused tests and the 781/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 127 by specifying the dormant in-boundary compare-and-apply contract. | Implemented and automated-validated; exact scheduler/registration/generation/lifecycle and fresh Region target comparisons precede typed no-op or apply shapes, all applying paths require collision rollback, transient replacement additionally requires exact transient rollback state, the pure contract remains disconnected and non-authoritative, and 410 focused tests plus the 782/488 Ant build pass |
+| 2026-07-22 | Continue with Slice 128 by defining the dormant exact transient rollback snapshot. | Implemented and automated-validated; exact zero-attribute transient constructor/provenance and bounded canonical per-tile collision contributions are retained, ambiguous/opaque/incomplete/mismatched state refuses, a distinct ordered potentially multi-Region collision boundary is required but not implemented, the snapshot remains disconnected and non-authoritative, and 414 focused tests plus the 783/488 Ant build pass |
 
 ## Next Discussion
 
@@ -11593,14 +11663,22 @@ Slice 126 now supplies that immutable intent and refusal table while preserving
 its deliberately stale, non-authoritative boundary. Slice 127 specifies the
 required compare-and-apply ordering and distinguishes three exact applying
 shapes from idempotent no-op satisfaction and typed refusal. That specification
-also exposes the next concrete gap: replacing an exact authored transient
-cannot be rollback-safe with constructor/provenance counts alone. The exact
-displaced transient constructor, authored identity, and collision-relevant
-state must be captured as a closed immutable rollback snapshot while the Region
-object boundary is held. The next focused gate should define that bounded pure
-snapshot and its exact-intent comparison rules without retaining a live entity,
-performing a target lookup, changing collision, mutating a Region, or connecting
-the Slice 126/127 values to runtime execution.
+also exposed that replacing an exact authored transient cannot be rollback-safe
+with constructor/provenance counts alone. Slice 128 now defines the closed
+zero-runtime-attribute constructor/provenance snapshot and a bounded exact per-
+tile collision contribution, but deliberately requires a collision boundary it
+does not implement.
+
+That separation reflects the runtime audit: the Region `objects` monitor guards
+slot membership, while `World.registerGameObject` and
+`World.unregisterGameObject` change object membership and collision counters in
+separate steps; object footprints and adjacent wall/projectile effects may also
+touch more than the anchor Region. The next focused gate should specify a
+deadlock-safe ordered multi-Region collision transaction boundary and a closed
+capture/compare/rollback protocol. It must define lock ordering, the relation
+between object membership and affected `TileValue` counters, unchanged-state
+comparison before rollback, and failure behavior, while remaining dormant and
+without yet routing Slice 126-128 into live registration or callback execution.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
