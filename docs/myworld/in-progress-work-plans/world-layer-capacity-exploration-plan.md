@@ -11341,10 +11341,22 @@ Safety boundary:
   packets, arrival, retirement, persistence, true layered storage, and Region
   eviction remain unchanged.
 
-Status: implementation is automated-validated; the required private owner
-route is pending. Test resource depletion/respawn, one door or gate, blocking
-scenery collision, and ordinary travel across packed Region boundaries before
-accepting this runtime milestone.
+Owner validation:
+
+- after the signed-edge correction, `devduck` authenticated with successful
+  response `86`, remained connected, and produced no new object/collision or
+  update exception;
+- the owner depleted a normal tree, observed its natural return, completed an
+  open/close door cycle, and confirmed ordinary blocking scenery collision;
+- the originally suggested direct crossing at `(190,620)` was correctly
+  blocked by an authored fence, so it was not treated as a failure; the
+  corrected route continued through the packed X `192` boundary to X
+  `193-195` with normal visibility and movement; and
+- the server log corroborates the door, tree, teleport, and boundary movement
+  sequence while retaining the expected fence collision.
+
+Status: implemented, automated-validated, and owner-validated. Slice 135 is
+accepted.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -11704,6 +11716,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 133 by defining detached collision-application arithmetic. | Implemented and automated-validated; exact six-counter collision multiplicity, blocking/projectile counts, canonical Region and tile coverage, freshness, checked register addition, fail-closed unregister subtraction, underflow/overflow, and collisionless projection are executable-tested, all results remain inert and disconnected, and 434 focused tests plus the 788/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 134 by adding the disconnected ordered collision executor. | Implemented and automated-validated; exact current TileValue capture, Slice 133 precondition evaluation, counted apply, post-state verification, internal reversal, multi-Region add/remove round-trip, same-footprint exclusion, underflow/missing-tile no-partial-change, and reverse-order refusal are proved under real monitors, World remains disconnected, and 438 focused tests plus the 789/488 Ant build pass |
 | 2026-07-22 | Continue with Slice 135 by routing normal World collision counters through the ordered executor. | Implemented and automated-validated; definition projection stays outside Region locks, exact Region coverage is created and acquired canonically, World keeps membership/replacement order but no longer writes object collision counters directly, delayed force-full-block joins registration, object ID 1147 retains explicit saturating unregister compatibility, and 442 focused tests plus the 789/488 Ant build pass; private owner validation is pending |
+| 2026-07-22 | Accept the corrected Slice 135 private runtime route. | Owner-validated; successful login remains connected after signed edge Regions are admitted, normal tree depletion/return, a door open/close cycle, blocking scenery, and packed-boundary travel behave normally, the initial fence refusal is legitimate authored collision, and no new runtime collision/update exception appears |
 
 ## Next Discussion
 
@@ -12184,16 +12197,16 @@ executor, and its first normal World collision-counter adoption. Object
 membership remains in its legacy order outside those monitors, so this is not
 yet the full object-plus-collision transaction required by restoration.
 
-The immediate gate is private owner acceptance of the Slice 135 route:
-resource depletion and natural respawn, a door or gate open/close cycle,
-blocking scenery, and ordinary travel across packed Region boundaries. After
-that acceptance, the safest next implementation slice should compose exact
-object-slot membership comparison/change with the already ordered collision
-footprint under the same Region boundaries. It must preserve colliding-object
-replacement, authored identity, visibility-cache invalidation, packet order,
-and callback semantics; define rollback for membership plus counters together;
-and remain independent from scheduler restoration until deterministic races
-prove no object/collision split state can escape.
+Slice 135 private owner acceptance is complete: resource depletion and natural
+return, a door open/close cycle, blocking scenery, and ordinary packed-boundary
+travel all behave normally after the signed-edge correction. The safest next
+implementation slice should compose exact object-slot membership
+comparison/change with the already ordered collision footprint under the same
+Region boundaries. It must preserve colliding-object replacement, authored
+identity, visibility-cache invalidation, packet order, and callback semantics;
+define rollback for membership plus counters together; and remain independent
+from scheduler restoration until deterministic races prove no object/collision
+split state can escape.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
