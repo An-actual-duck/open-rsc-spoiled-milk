@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, and 117 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, and 119 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, and 120 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -41,6 +41,9 @@ lock inward, while making no runtime revalidation or atomicity claim;
 automated-validated Slice 119 moves exact constructor/identity comparison and
 closed target classification inside the real Region object monitor, returns
 only detached counts/state, and remains stale and non-atomic with mutation;
+automated-validated Slice 120 exposes only the detached Region-boundary count,
+completeness, and per-target fact through additive private schema-v42 while
+retaining explicit non-atomic and non-authoritative flags;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10230,6 +10233,61 @@ Status: implemented and automated-validated. Private diagnostic exposure of
 the boundary fact, runtime mutation revalidation, executable restoration,
 arrival gating, and all lifecycle authority remain absent.
 
+### Slice 120: Private Region-boundary target diagnostics
+
+Objective: expose Slice 119's detached object-boundary classification fact in
+one additive private schema without converting it into runtime revalidation,
+mutation readiness, or lifecycle authority.
+
+Implemented:
+
+- schema-v42 preserves the complete v41 record and adds aggregate
+  `objectBoundaryClassifiedTargetCount`, available-target boundary-
+  classification completeness, runtime-classification-performed, explicit
+  non-atomic-with-mutation, and runtime-revalidation-performed fields;
+- each target adds only `objectBoundaryHeldDuringClassification`; available
+  Regions require true and unavailable Regions require false;
+- the observer refuses a non-null target observation unless every available
+  target carries the Region object-boundary fact, preserving exact inventory
+  generation/tick/scheduler/ordinal/registration/coordinate correlation;
+- zero available targets require zero boundary classifications and false
+  runtime-classification-performed; one or more available targets require a
+  positive classified count and true runtime-classification-performed; and
+- schema-v41 remains immutable for the accepted Slice 117 capture.
+
+Automated validation status:
+
+- schema guards prove v41 lacks every new field, v42 requires the closed
+  additions, and available/unavailable targets require the matching boundary
+  boolean;
+- every authority field remains constant false, including atomic-with-mutation,
+  runtime revalidation, entity handle, achieved state, commit token, mutation,
+  executable restoration, arrival gate, and lifecycle authority;
+- observer guards require aggregate completeness before serialization and
+  publish only detached counts/booleans plus the existing target categories;
+- the complete layered-map suite passes 377 tests across 119 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 777 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- `objectBoundaryHeldDuringClassification=true` describes where the earlier
+  comparison ran; it does not state that the boundary remains held when JSON is
+  serialized or read;
+- the target observation remains non-atomic with the event inventory and
+  non-atomic with any later mutation, and it cannot satisfy Slice 118 after the
+  Region monitor has been released;
+- no owner/entity text, monitor, event, callback, scheduler, Region, or object
+  handle enters the schema; and
+- no callback is invoked, cancelled, rescheduled, or replayed; no scenery is
+  registered, removed, or replaced; and no arrival or lifecycle path consumes
+  the diagnostic.
+
+Status: implemented and automated-validated. Owner validation, runtime mutation
+revalidation, executable restoration, arrival gating, and all lifecycle
+authority remain absent.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -10569,6 +10627,7 @@ private environment should validate at least:
 | 2026-07-22 | Accept the Slice 117 private restoration-target route and formalize human timing tolerance. | Owner-validated; `target-a` captures registration 3892 with eight ticks remaining and one exact authored stump classified as a satisfied spawn mutation precondition, 29 ticks later natural completion clears target evidence, all seven v41 records validate, and future sub-second gates require automation rather than instantaneous owner input |
 | 2026-07-22 | Continue with Slice 118 by specifying fail-closed atomic target revalidation before any mutation seam. | Implemented and automated-validated; the dormant contract requires an outer event-execution boundary, forbids carrying the scheduler-store lock into the inner Region object boundary, matches scheduler scope/registration/generation, requires fresh in-boundary target classification, preserves exact refusal/no-op/precondition outcomes, and grants no atomicity claim, mutation authorization, commit token, or lifecycle authority |
 | 2026-07-22 | Continue with Slice 119 by proving exact target classification inside the real Region object boundary. | Implemented and automated-validated; every relevant exact-slot object is compared and classified while `objects` is held, the boundary fact is checked with `Thread.holdsLock`, only detached counts/state return, scheduler/event locks and all mutations remain absent, and the result is explicitly stale after release |
+| 2026-07-22 | Continue with Slice 120 by exposing only the detached Region-boundary target facts through private diagnostics. | Implemented and automated-validated; additive schema-v42 reports classified count/completeness and the per-target boundary boolean, preserves schema-v41, requires available targets to carry the fact, and explicitly remains non-atomic with mutation with no runtime revalidation, achieved-state claim, commit token, executable restoration, arrival gate, or lifecycle authority |
 
 ## Next Discussion
 
@@ -10972,11 +11031,16 @@ grant no mutation authority. Slice 119 supplies the read-only runtime boundary
 proof: exact constructor/identity comparison and state classification occur
 while the real Region object monitor is held, the returned value is detached,
 and no scheduler/event lock or mutation enters that boundary. The result is
-still stale immediately after release and is unconsumed by callbacks. The next
-gate is additive private diagnostic exposure of only the boundary-performed
-count/completeness and per-target fact. Preserve schema-v41 unchanged, keep
-non-atomic-with-inventory and non-atomic-with-mutation explicit, and do not
-publish a mutation-ready, achieved-state, commit-token, or arrival claim.
+still stale immediately after release and is unconsumed by callbacks. Slice 120
+now exposes only the boundary-performed count/completeness and per-target fact
+through additive private schema-v42 while preserving schema-v41 and every
+non-atomic/non-authoritative flag. The next gate is owner validation on the
+same authored magic-tree transient. One human-tolerant marker inside the broad
+pending window should show one available/classified target, complete boundary
+coverage, `objectBoundaryHeldDuringClassification=true`, and the unchanged
+exact-authored-transient mutation-precondition category. A later marker may
+legitimately show zero after natural completion. No route needs sub-second or
+instantaneous owner input; automate any future test that does.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

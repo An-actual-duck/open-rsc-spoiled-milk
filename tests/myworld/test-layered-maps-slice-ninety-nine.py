@@ -73,7 +73,7 @@ class LayeredMapsSliceNinetyNineTest(unittest.TestCase):
                 "const"
             ]
         )
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v41"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v42"', observer)
         self.assertIn("getSchedulerInstanceIdentity()", observer)
         self.assertIn("isSchedulerInstanceIdentityCaptured()", observer)
         self.assertIn(

@@ -54,7 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v41";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v42";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4256,6 +4256,13 @@ public final class LayeredCoordinateParityObserver {
 			.append(observation.getAvailableTargetCount()).append(',');
 		out.append("\"unavailableTargetCount\":")
 			.append(observation.getUnavailableTargetCount()).append(',');
+		out.append("\"objectBoundaryClassifiedTargetCount\":")
+			.append(observation.getObjectBoundaryClassifiedTargetCount())
+			.append(',');
+		out.append("\"availableTargetObjectBoundaryClassificationComplete\":")
+			.append(observation
+				.isAvailableTargetObjectBoundaryClassificationComplete())
+			.append(',');
 		out.append("\"noOpSuccessCount\":")
 			.append(observation.getNoOpSuccessCount()).append(',');
 		out.append("\"mutationPreconditionSatisfiedCount\":")
@@ -4271,6 +4278,13 @@ public final class LayeredCoordinateParityObserver {
 			.append(observation.isAtomicWithEventInventory()).append(',');
 		out.append("\"readOnlyTargetLookupPerformed\":")
 			.append(observation.isReadOnlyTargetLookupPerformed()).append(',');
+		out.append("\"runtimeTargetClassificationPerformed\":")
+			.append(observation.isRuntimeTargetClassificationPerformed())
+			.append(',');
+		out.append("\"atomicWithMutation\":")
+			.append(observation.isAtomicWithMutation()).append(',');
+		out.append("\"runtimeRevalidationPerformed\":")
+			.append(observation.isRuntimeRevalidationPerformed()).append(',');
 		out.append("\"entityHandleRetained\":")
 			.append(observation.isEntityHandleRetained()).append(',');
 		out.append("\"achievedStateClaimed\":")
@@ -4306,6 +4320,9 @@ public final class LayeredCoordinateParityObserver {
 				.append(target.getExactRestorationSceneryCount()).append(',');
 			out.append("\"exactAuthoredIdentityCount\":")
 				.append(target.getExactAuthoredIdentityCount()).append(',');
+			out.append("\"objectBoundaryHeldDuringClassification\":")
+				.append(target.isObjectBoundaryHeldDuringClassification())
+				.append(',');
 			field(out, "observedTargetState",
 				target.getObservedTargetState().name()).append(',');
 			field(out, "decisionOutcome",
@@ -4458,7 +4475,9 @@ public final class LayeredCoordinateParityObserver {
 			|| !inventory.getSchedulerInstanceIdentity().equals(
 				observation.getSchedulerInstanceIdentity())
 			|| inventory.getRestorationStateAvailableEventCount()
-				!= observation.getTargetCount()) {
+				!= observation.getTargetCount()
+			|| !observation
+				.isAvailableTargetObjectBoundaryClassificationComplete()) {
 			throw new IllegalStateException(
 				"Event target observation differs from its inventory");
 		}
