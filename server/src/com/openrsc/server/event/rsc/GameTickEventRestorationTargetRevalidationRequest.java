@@ -26,6 +26,7 @@ public final class GameTickEventRestorationTargetRevalidationRequest {
 	private final int y;
 	private final int direction;
 	private final int type;
+	private final boolean forceFullBlock;
 	private final int authoredPackedRegionX;
 	private final int authoredPackedRegionY;
 	private final int authoredSourceOrdinal;
@@ -47,6 +48,7 @@ public final class GameTickEventRestorationTargetRevalidationRequest {
 		final int y,
 		final int direction,
 		final int type,
+		final boolean forceFullBlock,
 		final int authoredPackedRegionX,
 		final int authoredPackedRegionY,
 		final int authoredSourceOrdinal,
@@ -71,8 +73,14 @@ public final class GameTickEventRestorationTargetRevalidationRequest {
 			|| x < 0 || y < 0
 			|| direction < 0 || direction > 7
 			|| (type != 0 && type != 1)
+			|| (targetOperation
+				== GameTickEventRestorationTargetDecision.TargetOperation
+					.SCENERY_REMOVE && forceFullBlock)
 			|| authoredPackedRegionX < 0 || authoredPackedRegionY < 0
 			|| authoredSourceOrdinal <= 0
+			|| authoredSourceOrdinal
+				> GameTickEventRestorationState
+					.MAXIMUM_AUTHORED_SOURCE_ORDINAL
 			|| authoredConstructionKind.isEmpty()) {
 			throw new IllegalArgumentException(
 				"Restoration target revalidation request is invalid");
@@ -90,6 +98,7 @@ public final class GameTickEventRestorationTargetRevalidationRequest {
 		this.y = y;
 		this.direction = direction;
 		this.type = type;
+		this.forceFullBlock = forceFullBlock;
 		this.authoredPackedRegionX = authoredPackedRegionX;
 		this.authoredPackedRegionY = authoredPackedRegionY;
 		this.authoredSourceOrdinal = authoredSourceOrdinal;
@@ -111,6 +120,7 @@ public final class GameTickEventRestorationTargetRevalidationRequest {
 		final int y,
 		final int direction,
 		final int type,
+		final boolean forceFullBlock,
 		final int authoredPackedRegionX,
 		final int authoredPackedRegionY,
 		final int authoredSourceOrdinal,
@@ -120,7 +130,7 @@ public final class GameTickEventRestorationTargetRevalidationRequest {
 			proposalGeneration, authoredGeneration,
 			eventExecutionBoundaryHeld, schedulerStoreBoundaryHeld,
 			registrationValidatedBeforeRegionBoundary, targetOperation,
-			objectId, permanentObjectId, x, y, direction, type,
+			objectId, permanentObjectId, x, y, direction, type, forceFullBlock,
 			authoredPackedRegionX, authoredPackedRegionY,
 			authoredSourceOrdinal, authoredConstructionKind);
 	}
@@ -150,6 +160,7 @@ public final class GameTickEventRestorationTargetRevalidationRequest {
 	public int getY() { return y; }
 	public int getDirection() { return direction; }
 	public int getType() { return type; }
+	public boolean isForceFullBlock() { return forceFullBlock; }
 	public int getAuthoredPackedRegionX() { return authoredPackedRegionX; }
 	public int getAuthoredPackedRegionY() { return authoredPackedRegionY; }
 	public int getAuthoredSourceOrdinal() { return authoredSourceOrdinal; }

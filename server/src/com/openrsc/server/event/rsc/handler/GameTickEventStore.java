@@ -439,7 +439,7 @@ class GameTickEventStore {
 									fence.getRestorationKind().name()),
 							fence.getObjectId(), fence.getPermanentObjectId(),
 							fence.getX(), fence.getY(), fence.getDirection(),
-							fence.getType(),
+							fence.getType(), fence.isForceFullBlock(),
 							fence.getAuthoredPackedRegionX(),
 							fence.getAuthoredPackedRegionY(),
 							fence.getAuthoredSourceOrdinal(),

@@ -66,7 +66,8 @@ public final class GameTickEventRestorationTargetRevalidationRequest {
             boolean executionHeld, boolean storeHeld, boolean validated,
             GameTickEventRestorationTargetDecision.TargetOperation operation,
             int objectId, int permanentObjectId, int x, int y,
-            int direction, int type, int regionX, int regionY,
+            int direction, int type, boolean forceFullBlock,
+            int regionX, int regionY,
             int ordinal, String kind) {
         return new GameTickEventRestorationTargetRevalidationRequest();
     }

@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, and 125 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, and 125 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, and 126 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -64,6 +64,10 @@ outer refusal through additive private schema-v43, corrects both runtime source
 paths, and proves one pending authored stump passes the stable lifecycle,
 Region-boundary, and dormant contract checks before natural completion clears
 the record, while preserving v42 and all non-authoritative boundaries;
+automated-validated Slice 126 derives only a dormant exact mutation intent from
+stable satisfied revalidation evidence, retains force-full-block and authored
+identity without scheduler or lifecycle identity, and remains disconnected
+from every runtime consumer;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -10655,6 +10659,66 @@ Owner validation findings:
 Status: implemented, automated-validated, and owner-validated. No mutation or
 lifecycle authority is authorized.
 
+### Slice 126: Dormant exact mutation intent
+
+Objective: define the smallest exact authored scenery mutation description
+that can exist only after stable satisfied Slice 118 evidence, without turning
+the detached result into mutation authority or connecting it to runtime.
+
+Implemented:
+
+- the target-revalidation request now retains `forceFullBlock`, the final known
+  scenery-spawn constructor scalar that an exact future intent would require;
+  removal requests reject a true value, and authored source ordinals retain the
+  existing global bound;
+- `GameTickEventRestorationMutationIntent.assess` applies one ordered refusal
+  table to positive equal lifecycle versions, Region availability, real object-
+  boundary classification, the satisfied mutation-precondition contract,
+  exact target-count/state agreement, operation-specific outcome/reason, and
+  construction-kind/type agreement;
+- only accepted spawn-empty, spawn-exact-authored-transient, and removal-exact-
+  restoration-target states construct an intent. No-op, refused, unavailable,
+  lifecycle-changing, count-inconsistent, operation-mismatched, and unsupported
+  construction states retain explicit refusal reasons and no intent;
+- the accepted immutable value copies operation, desired present/absent state,
+  expected target state, scenery constructor fields, force-full-block, and
+  authored generation/source identity; and
+- scheduler instance, registration sequence, lifecycle version, event,
+  callback, Region, entity, collection, owner, runtime attributes, key, UUID,
+  and every runtime handle remain absent. Store, handler, RegionManager,
+  observer, loading, retirement, arrival, and event execution do not consume
+  the value.
+
+Automated validation status:
+
+- an executable Java fixture accepts exact empty/transient spawn intents and an
+  exact removal intent, retaining force-full-block and desired state;
+- the same fixture exercises lifecycle, Region, no-op, refused target,
+  contradictory count, operation mismatch, construction mismatch, unsupported
+  construction, removal force-block, and authored-ordinal refusal paths;
+- source guards prove the value has no runtime/mutation capability, remains
+  disconnected from all three plausible runtime consumers, and that the
+  request/store path does not drop force-full-block;
+- the complete layered-map suite passes 406 tests across 125 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 781 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the intent is stale immediately after its source Region boundary releases;
+  it is not a reusable permit, authorization, commit token, achieved-state
+  claim, or proof that its target still matches;
+- constructing it performs no lookup, comparison, mutation, callback,
+  cancellation, reschedule, packet, persistence, loading, retirement,
+  reconstruction, rollback, or arrival operation; and
+- no runtime path can currently obtain or consume it. A later compare-and-apply
+  design must re-establish every boundary and compare the exact target again.
+
+Status: implemented and automated-validated. No owner route is required for
+this disconnected pure refusal/intent contract; no mutation or lifecycle
+authority is authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -11003,6 +11067,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 125 by exposing bounded composed-target results through additive private diagnostics. | Implemented and automated-validated; schema-v43 preserves v42, correlates every restoration record with explicit outer-fence/lifecycle/Region/target/contract evidence or refusal, keeps provisional target facts absent after lifecycle mismatch, 402 focused tests and the 780/488 Ant build pass, and no mutation, callback, achieved-state, arrival, commit-token, or lifecycle authority is added |
 | 2026-07-22 | Correct the duplicated `::lp start` source exposed by Slice 125 owner testing. | Implemented and automated-validated; the first route correctly had no candidate while the player remained inside the source, the corrected route exposed a null atomic field despite valid ownership/target evidence, both runtime source paths now invoke the same bounded handler capture, the regression guard covers the command path, and 402 focused tests plus the 780/488 Ant build pass |
 | 2026-07-22 | Accept the corrected Slice 125 composed-target route. | Owner-validated; all seven v43 records validate locally, pending registration 3961 remains lifecycle-stable at 48 -> 48, the Region-boundary exact authored transient satisfies `MUTATION_PRECONDITION_REVALIDATED`, natural completion leaves zero restoration records at the after marker and stop, visuals and interaction remain normal, and every mutation/commit/lifecycle flag remains false |
+| 2026-07-22 | Continue with Slice 126 by defining a dormant exact mutation intent. | Implemented and automated-validated; only stable satisfied spawn/removal evidence constructs the immutable scalar intent, force-full-block is retained, lifecycle/no-op/conflict/count/operation/construction failures remain typed, the intent is not a reusable permit and has no runtime consumer, 406 focused tests and the 781/488 Ant build pass |
 
 ## Next Discussion
 
@@ -11458,15 +11523,16 @@ authored generation, classified under the Region object boundary, and checked
 against a stable event lifecycle. It still proves only a point-in-time read: the
 returned detached evidence is stale immediately after the fence releases.
 
-The next focused gate should therefore remain dormant and fail closed: define
-the smallest exact mutation-intent value that can be constructed only from a
-stable satisfied Slice 118 contract result, without retaining the result as a
-permit, invoking a callback, or changing a Region. It must preserve spawn and
-removal as distinct operations, encode expected authored identity and desired
-state, reject no-op/refused/mismatched outcomes, and remain unconsumed by
-loading, retirement, arrival, reconstruction, or event execution. Only after
-that immutable intent and its refusal table are executable and bounded should
-a later slice consider an in-boundary compare-and-apply primitive.
+Slice 126 now supplies that immutable intent and refusal table while preserving
+its deliberately stale, non-authoritative boundary. The next focused gate
+should specify a dormant in-boundary compare-and-apply contract: it must require
+the event execution boundary to remain held, the scheduler-store boundary to
+remain absent, the exact registration/generation and lifecycle version to be
+revalidated, and the exact authored target state to be compared again under the
+Region object boundary. The contract must define distinct spawn-empty, spawn-
+transient replacement, and removal-present operations, plus rollback/failure
+outcomes, without yet mutating a Region or consuming the Slice 126 intent in
+runtime code.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
