@@ -76,6 +76,7 @@ public class PayloadValidator {
 		put(OpcodeOut.SEND_PRODUCTION_INTERFACE, ProductionInterfaceStruct.class); // custom
 		put(OpcodeOut.SEND_BANK_PIN_INTERFACE, BankPinStruct.class); // custom
 		put(OpcodeOut.SEND_ONLINE_LIST, OnlineListStruct.class); // custom
+		put(OpcodeOut.SEND_HISCORES, HiscoresStruct.class); // custom
 		put(OpcodeOut.SEND_SHOP_CLOSE, NoPayloadStruct.class);
 		put(OpcodeOut.SEND_NPC_KILLS, MobKillsStruct.class); // custom
 		put(OpcodeOut.SEND_OPENPK_POINTS_TO_GP_RATIO, NoPayloadStruct.class); // custom

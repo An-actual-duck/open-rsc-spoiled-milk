@@ -1,6 +1,7 @@
 package com.openrsc.server.database.impl.mysql;
 
 import com.openrsc.server.Server;
+import com.openrsc.server.constants.HiscoreSkills;
 import com.openrsc.server.external.SkillDef;
 
 public class MySqlQueries {
@@ -30,6 +31,8 @@ public class MySqlQueries {
 	public final String save_IronMan, checkMute, updateMute, updatePlayerLocation;
 	public final String selectFriendNameUsername, fixFriendNameCapitalization, insertFormerName, insertLoginAttempt, playerGetFormerNameInvoluntaryChange;
 	public final String save_SelectFriends, save_UpdateFriends, save_DeleteFriendsExcept, save_DeleteFriends;
+	public final String[] hiscoreSkillTop, hiscoreSkillRank;
+	public final String hiscoreOverallTop, hiscoreOverallRank;
 	private final Server server;
 
 	private String getDatabaseSkillColumn(SkillDef skill) {
@@ -90,6 +93,44 @@ public class MySqlQueries {
 		playerExp = playerExp + "FROM `" + PREFIX + "experience` WHERE `playerID`=?";
 		playerCurExp = playerCurExp + "FROM `" + PREFIX + "curstats` WHERE `playerID`=?";
 		playerMaxExp = playerMaxExp + "FROM `" + PREFIX + "maxstats` WHERE `playerID`=?";
+
+		// In-game hiscores: on-demand rankings over the experience/maxstats tables.
+		// Exp columns hold raw x4 fixed point in signed 32-bit storage; values past
+		// Integer.MAX_VALUE wrap negative, so mask to unsigned before comparing.
+		final String hiscoreFrom = "FROM `" + PREFIX + "experience` e "
+			+ "INNER JOIN `" + PREFIX + "maxstats` m ON m.`playerID` = e.`playerID` "
+			+ "INNER JOIN `" + PREFIX + "players` p ON p.`id` = e.`playerID` "
+			+ "WHERE p.`banned` <> '-1' AND p.`group_id` NOT IN (0, 1)";
+		final int hiscoreSkillCount = getServer().getConstants().getSkills().getSkillsCount();
+		hiscoreSkillTop = new String[hiscoreSkillCount];
+		hiscoreSkillRank = new String[hiscoreSkillCount];
+		final StringBuilder totalLevelExpr = new StringBuilder("(");
+		final StringBuilder totalExpExpr = new StringBuilder("(");
+		boolean firstOverallColumn = true;
+		for (int skillId = 0; skillId < hiscoreSkillCount; skillId++) {
+			final SkillDef skill = getServer().getConstants().getSkills().getSkill(skillId);
+			final String column = getDatabaseSkillColumn(skill);
+			final String maskedExp = "(e.`" + column + "` & 4294967295)";
+			hiscoreSkillTop[skillId] = "SELECT p.`username` AS `username`, m.`" + column + "` AS `lvl`, "
+				+ maskedExp + " AS `xp` " + hiscoreFrom + " ORDER BY `xp` DESC, p.`id` ASC LIMIT 100";
+			hiscoreSkillRank[skillId] = "SELECT COUNT(*) AS `cnt` " + hiscoreFrom
+				+ " AND p.`id` <> ? AND " + maskedExp + " > ?";
+			if (HiscoreSkills.countsTowardOverall(skill)) {
+				if (!firstOverallColumn) {
+					totalLevelExpr.append(" + ");
+					totalExpExpr.append(" + ");
+				}
+				totalLevelExpr.append("m.`").append(column).append("`");
+				totalExpExpr.append(maskedExp);
+				firstOverallColumn = false;
+			}
+		}
+		totalLevelExpr.append(")");
+		totalExpExpr.append(")");
+		hiscoreOverallTop = "SELECT p.`username` AS `username`, " + totalLevelExpr + " AS `lvl`, "
+			+ totalExpExpr + " AS `xp` " + hiscoreFrom + " ORDER BY `lvl` DESC, `xp` DESC, p.`id` ASC LIMIT 100";
+		hiscoreOverallRank = "SELECT COUNT(*) AS `cnt` " + hiscoreFrom + " AND p.`id` <> ? AND ("
+			+ totalLevelExpr + " > ? OR (" + totalLevelExpr + " = ? AND " + totalExpExpr + " > ?))";
 
 		copyPassword = "UPDATE `" + PREFIX + "players` SET `pass` = ?, `salt` = ? WHERE LOWER(`username`) = LOWER(?)";
 		createPlayer = "INSERT INTO `" + PREFIX + "players` (`username`, `email`, `pass`, `creation_date`, `creation_ip`, `cameraauto`) VALUES (?, ?, ?, ?, ?, 0)";

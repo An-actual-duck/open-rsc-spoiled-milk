@@ -676,6 +676,8 @@ public final class mudclient implements Runnable {
 	public IronManInterface ironmanInterface;
 	public AuctionHouse auctionHouse;
 	public SkillGuideInterface skillGuideInterface;
+	public HiscoreData hiscoreData = new HiscoreData();
+	private int hiscoreGuideSkillId = -1;
 	public QuestGuideInterface questGuideInterface;
 	public PointInterface pointInterface;
 	public PointsToGpInterface pointsToGpInterface;
@@ -14783,12 +14785,14 @@ public final class mudclient implements Runnable {
 						if (isAndroid() && this.mouseButtonClick == 1 && this.uiTabPlayerInfoSubTab == 0) {
 							if (doubleClick() && S_WANT_SKILL_MENUS) {
 								setSkillGuideChosen(skillNameLong[currSkill]);
+								skillGuideInterface.setHiscoresMode(false);
 								skillGuideInterface.setVisible(true);
 								if (!C_CUSTOM_UI)
 									this.showUiTab = 0;
 							}
 						} else if (!isAndroid() && this.mouseButtonClick == 1 && this.uiTabPlayerInfoSubTab == 0 && S_WANT_SKILL_MENUS) {
 							setSkillGuideChosen(skillNameLong[currSkill]);
+							skillGuideInterface.setHiscoresMode(false);
 							skillGuideInterface.setVisible(true);
 							if (!C_CUSTOM_UI)
 								this.showUiTab = 0;
@@ -14869,7 +14873,21 @@ public final class mudclient implements Runnable {
 
 				heightMargin = yOffset + 8;
 				if (currentlyHoveredSkill == -1) {
-					this.getSurface().drawString("Overall levels", x + 5, heightMargin, textColourHeading, 1);
+					boolean overallHiscoresEnabled = S_WANT_SKILL_MENUS && S_WANT_HISCORES;
+					boolean overallHovered = overallHiscoresEnabled
+						&& this.mouseX >= x + 5
+						&& this.mouseX <= x + 5 + this.getSurface().stringWidth(1, "Overall levels")
+						&& this.mouseY >= heightMargin - 10 && this.mouseY <= heightMargin + 2;
+					this.getSurface().drawString("Overall levels", x + 5, heightMargin,
+						overallHovered ? textColourHovered : textColourHeading, 1);
+					if (overallHovered && this.mouseButtonClick == 1) {
+						this.mouseButtonClick = 0;
+						setSkillGuideChosen("Overall");
+						skillGuideInterface.setHiscoresMode(true);
+						skillGuideInterface.setVisible(true);
+						if (!C_CUSTOM_UI)
+							this.showUiTab = 0;
+					}
 					heightMargin += 12;
 					int currSkillTotal = 0;
 					totalXp = 0;
@@ -21405,6 +21423,9 @@ public final class mudclient implements Runnable {
 			for (NComponent n : mainComponent.subComponents())
 				n.setVisible(false);
 
+			// Unload any hiscore data when the session ends
+			hiscoreData.clear();
+
 			clan.putClan(false);
 			party.putParty(false);
 			if (S_EXPERIENCE_DROPS_TOGGLE)
@@ -21517,6 +21538,24 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "client.UC(" + (var1 != null ? "{...}" : "null") + ',' + "dummy" + ')');
 		}
+	}
+
+	public final void sendHiscoreRequest(int skillId) {
+		try {
+			this.packetHandler.getClientStream().newPacket(Opcodes.Out.HISCORE_REQUEST.getOpcode());
+			this.packetHandler.getClientStream().bufferBits.putByte(skillId);
+			this.packetHandler.getClientStream().finishPacket();
+		} catch (RuntimeException var4) {
+			throw GenUtil.makeThrowable(var4, "client.sendHiscoreRequest(" + skillId + ')');
+		}
+	}
+
+	public HiscoreData getHiscoreData() {
+		return hiscoreData;
+	}
+
+	public int getHiscoreGuideSkillId() {
+		return hiscoreGuideSkillId;
 	}
 
 	private boolean canUseClickTeleport() {
@@ -25679,6 +25718,19 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Traits");
 			skillGuideChosenTabs.add("Info");
 		}
+
+		hiscoreGuideSkillId = -1;
+		if (skillGuideChosen.equalsIgnoreCase("Overall")) {
+			hiscoreGuideSkillId = HiscoreData.OVERALL_ID;
+		} else if (skillNameLong != null) {
+			for (int i = 0; i < skillNameLong.length; i++) {
+				if (skillNameLong[i].equalsIgnoreCase(skillGuideChosen)) {
+					hiscoreGuideSkillId = i;
+					break;
+				}
+			}
+		}
+		hiscoreData.clear();
 	}
 
 	private void drawQuestGuide() {
@@ -25888,7 +25940,7 @@ public final class mudclient implements Runnable {
 				panelClan.scrollMethodList(controlClanPanel, x);
 			}
 		} else if (skillGuideInterface.isVisible() && uiTabPlayerInfoSubTab == 0) {
-			skillGuideInterface.skillGuide.scrollMethodList(skillGuideInterface.skillGuideScroll, x);
+			skillGuideInterface.skillGuide.scrollMethodList(skillGuideInterface.activeScrollControl(), x);
 		} else if (questGuideInterface.isVisible() && uiTabPlayerInfoSubTab == 1) {
 			questGuideInterface.questGuide.scrollMethodList(questGuideInterface.questGuideScroll, x);
 		} else if (onlineList.isVisible()) {

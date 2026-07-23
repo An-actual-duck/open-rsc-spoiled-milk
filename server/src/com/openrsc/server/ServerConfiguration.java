@@ -150,6 +150,7 @@ public class ServerConfiguration {
 	public int GLOBAL_MESSAGE_TOTAL_LEVEL_REQ;
 	public int GLOBAL_MESSAGE_READING_TOTAL_LEVEL_REQ;
 	public boolean WANT_SKILL_MENUS;
+	public boolean WANT_HISCORES;
 	public boolean WANT_QUEST_MENUS;
 	public boolean WANT_EXPERIENCE_ELIXIRS;
 	public int WANT_KEYBOARD_SHORTCUTS;
@@ -610,6 +611,7 @@ public class ServerConfiguration {
 		SHOW_ROOF_TOGGLE = tryReadBool("show_roof_toggle").orElse(false);
 		SHOW_UNDERGROUND_FLICKER_TOGGLE = tryReadBool("show_underground_flicker_toggle").orElse(false);
 		WANT_SKILL_MENUS = tryReadBool("want_skill_menus").orElse(false);
+		WANT_HISCORES = tryReadBool("want_hiscores").orElse(false);
 		WANT_QUEST_MENUS = tryReadBool("want_quest_menus").orElse(false);
 		WANT_QUEST_STARTED_INDICATOR = tryReadBool("want_quest_started_indicator").orElse(false);
 		WANT_HIDE_IP = tryReadBool("want_hide_ip").orElse(false);

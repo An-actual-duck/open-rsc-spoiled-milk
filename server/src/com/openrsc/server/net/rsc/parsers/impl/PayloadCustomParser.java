@@ -266,6 +266,9 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case 152:
 				opcode = OpcodeIn.WORLD_EDITOR_REQUEST;
 				break;
+			case 154:
+				opcode = OpcodeIn.HISCORE_REQUEST;
+				break;
 			case 0:
 				opcode = OpcodeIn.LOGIN;
 				break;
@@ -471,6 +474,8 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				return packet.getLength() >= 4;
 			case WORLD_EDITOR_REQUEST:
 				return isWorldEditorPacketLength(packet.getLength());
+			case HISCORE_REQUEST:
+				return packet.getLength() == 1;
 		}
 		return true;
 	}
@@ -522,6 +527,11 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 					editor.terrainTiles=new int[count][2];for(int i=0;i<count;i++){editor.terrainTiles[i][0]=packet.readShort();editor.terrainTiles[i][1]=packet.readShort();}
 				}
 				result = editor;
+				break;
+			case HISCORE_REQUEST:
+				HiscoreRequestStruct hiscoreRequest = new HiscoreRequestStruct();
+				hiscoreRequest.skillId = packet.readByte() & 0xff;
+				result = hiscoreRequest;
 				break;
 			case COMBAT_STYLE_CHANGED:
 				CombatStyleStruct c = new CombatStyleStruct();
