@@ -36,6 +36,44 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
 		final long boundaryObservedAtTick,
 		final int maximumOwners) {
+		return capture(
+			eventStore, worldNpcs, requirements, boundaryObservedAtTick,
+			maximumOwners, null);
+	}
+
+	/**
+	 * Runs one caller operation only while the complete source-bound owner
+	 * scope remains active. A refused boundary never invokes the operation, and
+	 * the supplied scope is invalidated before any enclosing gate releases.
+	 */
+	static boolean withinPreservationScope(
+		final GameTickEventStore eventStore,
+		final EntityList<Npc> worldNpcs,
+		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
+		final long boundaryObservedAtTick,
+		final int maximumOwners,
+		final ScopedPreservationOperation operation) {
+		final ScopedPreservationOperation checkedOperation =
+			Objects.requireNonNull(operation, "operation");
+		final boolean[] invoked = new boolean[1];
+		capture(
+			eventStore, worldNpcs, requirements, boundaryObservedAtTick,
+			maximumOwners, scope -> {
+				checkedOperation.execute(scope);
+				invoked[0] = true;
+			});
+		return invoked[0];
+	}
+
+	private static
+		LayeredPackedRegionNpcOwnerPreservationBoundaryObservation capture(
+			final GameTickEventStore eventStore,
+			final EntityList<Npc> worldNpcs,
+			final LayeredPackedRegionNpcOwnerPreservationRequirements
+				requirements,
+			final long boundaryObservedAtTick,
+			final int maximumOwners,
+			final ScopedPreservationOperation scopeOperation) {
 		GameTickEventStore checkedStore =
 			Objects.requireNonNull(eventStore, "eventStore");
 		EntityList<Npc> checkedWorldNpcs =
@@ -65,7 +103,7 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		if (capture.registrationSetComplete) {
 			captureIterativeBoundaries(
 				checkedStore, expectedRegistrations, expectedOwners,
-				checkedWorldNpcs, checked, capture);
+				checkedWorldNpcs, checked, capture, scopeOperation);
 		}
 		return observation(
 			checked, boundaryObservedAtTick, true,
@@ -116,7 +154,8 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		final List<ExpectedNpcOwner> owners,
 		final EntityList<Npc> worldNpcs,
 		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
-		final NpcOwnerBoundaryCapture capture) {
+		final NpcOwnerBoundaryCapture capture,
+		final ScopedPreservationOperation scopeOperation) {
 		List<GameTickEvent> events =
 			new ArrayList<GameTickEvent>(registrations.size());
 		List<Long> registrationSequences =
@@ -152,7 +191,8 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 									"Registration set supplied invalid evidence");
 							}
 							captureWorldAndNpcBoundaries(
-								owners, worldNpcs, capture);
+								owners, worldNpcs, requirements, capture,
+								scopeOperation);
 						});
 				if (!registrationsHeld) {
 					capture.registrationSetComplete = false;
@@ -163,7 +203,9 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 	private static void captureWorldAndNpcBoundaries(
 		final List<ExpectedNpcOwner> owners,
 		final EntityList<Npc> worldNpcs,
-		final NpcOwnerBoundaryCapture capture) {
+		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
+		final NpcOwnerBoundaryCapture capture,
+		final ScopedPreservationOperation scopeOperation) {
 		synchronized (worldNpcs) {
 			capture.worldRegistrationBoundaryHeld =
 				Thread.holdsLock(worldNpcs);
@@ -177,7 +219,8 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 			}
 			if (allExact(correlatedOwners)) {
 				captureIterativeNpcLifecycleBoundaries(
-					correlatedOwners, worldNpcs, capture);
+					correlatedOwners, worldNpcs, requirements, capture,
+					scopeOperation);
 			}
 		}
 	}
@@ -195,7 +238,9 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 	private static void captureIterativeNpcLifecycleBoundaries(
 		final List<CorrelatedOwner> owners,
 		final EntityList<Npc> worldNpcs,
-		final NpcOwnerBoundaryCapture capture) {
+		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
+		final NpcOwnerBoundaryCapture capture,
+		final ScopedPreservationOperation scopeOperation) {
 		List<Npc> ownerNpcs = new ArrayList<Npc>(owners.size());
 		for (CorrelatedOwner owner : owners) {
 			ownerNpcs.add(owner.npc);
@@ -222,6 +267,20 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 				capture.npcLifecycleBoundaryCount =
 					boundary.getOwnerCount();
 				capture.regionAbsenceQuiescenceHeld = true;
+				if (scopeOperation != null) {
+					GameTickEventNpcOwnerPreservationScope scope =
+						GameTickEventNpcOwnerPreservationScope.open(
+							requirements,
+							capture.eventExecutionBoundaryCount,
+							capture.npcLifecycleBoundaryCount,
+							capture.worldRegistrationBoundaryHeld,
+							capture.regionAbsenceQuiescenceHeld);
+					try {
+						scopeOperation.execute(scope);
+					} finally {
+						scope.invalidate();
+					}
+				}
 			});
 	}
 
@@ -372,5 +431,10 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		private boolean regionAbsenceQuiescenceHeld;
 		private final List<OwnerBoundaryState> ownerStates =
 			new ArrayList<OwnerBoundaryState>();
+	}
+
+	@FunctionalInterface
+	interface ScopedPreservationOperation {
+		void execute(GameTickEventNpcOwnerPreservationScope scope);
 	}
 }

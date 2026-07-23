@@ -51,6 +51,7 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 	private final int relatedEventLinkCount;
 	private final int supportingEventLinkCount;
 	private final int eventLinkCount;
+	private final List<SelectedSource> selectedSources;
 	private final List<OwnerRequirement> owners;
 
 	private LayeredPackedRegionNpcOwnerPreservationRequirements(
@@ -85,6 +86,14 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 		this.eventLinkCount = eventLinkCount;
 		this.supportingEventLinkCount =
 			eventLinkCount - relatedEventLinkCount;
+		List<SelectedSource> sources =
+			new ArrayList<SelectedSource>(inventory.getSourceCount());
+		for (LayeredPackedRegionEventOwnershipInventory.SourceRecord source
+			: inventory.getSources()) {
+			sources.add(new SelectedSource(
+				source.getPackedRegionX(), source.getPackedRegionY()));
+		}
+		this.selectedSources = Collections.unmodifiableList(sources);
 		this.owners = Collections.unmodifiableList(
 			new ArrayList<OwnerRequirement>(owners));
 
@@ -113,7 +122,8 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 			|| supportingEventLinkCount < 0
 			|| ownerLinks != eventLinkCount
 			|| ownerPreservationRequired != preservationRequiredEventCount
-			|| ownerPreviouslyEligible != previouslyEligibleEventCount) {
+			|| ownerPreviouslyEligible != previouslyEligibleEventCount
+			|| selectedSources.size() != selectedSourceCount) {
 			throw new IllegalArgumentException(
 				"NPC owner preservation requirement arithmetic is inconsistent");
 		}
@@ -305,6 +315,9 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 		return supportingEventLinkCount;
 	}
 	public int getEventLinkCount() { return eventLinkCount; }
+	public List<SelectedSource> getSelectedSources() {
+		return selectedSources;
+	}
 	public List<OwnerRequirement> getOwners() { return owners; }
 	public boolean isNpcRequirementSetComplete() {
 		return npcHardBlockerEventCount == 0
@@ -327,6 +340,22 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 	public boolean isEntityRegistry() { return false; }
 	public boolean isArrivalGate() { return false; }
 	public boolean isLifecycleAuthority() { return false; }
+
+	/** One exact packed source copied from the inventory's canonical order. */
+	public static final class SelectedSource {
+		private final int packedRegionX;
+		private final int packedRegionY;
+
+		private SelectedSource(
+			final int packedRegionX,
+			final int packedRegionY) {
+			this.packedRegionX = packedRegionX;
+			this.packedRegionY = packedRegionY;
+		}
+
+		public int getPackedRegionX() { return packedRegionX; }
+		public int getPackedRegionY() { return packedRegionY; }
+	}
 
 	/** One exact authored NPC owner and every correlated callback identity. */
 	public static final class OwnerRequirement {
