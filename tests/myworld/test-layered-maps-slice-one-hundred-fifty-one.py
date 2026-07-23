@@ -166,6 +166,11 @@ public class RegionManager {
         }
         return result;
     }
+    public CurrentStateRecoveryApplicationResult
+            verifyGameTickEventCurrentStateRecoverySnapshot(
+                GameTickEventRestorationCurrentStateRecoverySnapshot checked) {
+        return applyGameTickEventCurrentStateRecoverySnapshot(checked);
+    }
     private static void await(CountDownLatch latch) {
         try { latch.await(); }
         catch (InterruptedException interrupted) {

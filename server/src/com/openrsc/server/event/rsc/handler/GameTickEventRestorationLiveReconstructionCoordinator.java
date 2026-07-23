@@ -54,6 +54,21 @@ final class GameTickEventRestorationLiveReconstructionCoordinator {
 	LiveLifecycleExecution reconstructThenRecover(
 		final LiveCapturedRecovery captured,
 		final ReconstructionOperation reconstructionOperation) {
+		return reconstructThenRecover(
+			captured, reconstructionOperation, true);
+	}
+
+	LiveLifecycleExecution verifyAfterNoOpReconstruction(
+		final LiveCapturedRecovery captured,
+		final ReconstructionOperation reconstructionOperation) {
+		return reconstructThenRecover(
+			captured, reconstructionOperation, false);
+	}
+
+	private LiveLifecycleExecution reconstructThenRecover(
+		final LiveCapturedRecovery captured,
+		final ReconstructionOperation reconstructionOperation,
+		final boolean mutationAllowed) {
 		LiveCapturedRecovery checked = Objects.requireNonNull(
 			captured, "captured");
 		ReconstructionOperation operation = Objects.requireNonNull(
@@ -61,8 +76,11 @@ final class GameTickEventRestorationLiveReconstructionCoordinator {
 		if (!checked.isCaptured()) {
 			return LiveLifecycleExecution.captureRefused(checked);
 		}
-		LifecycleExecution execution = lifecycle.reconstructThenRecover(
-			checked.getCapturedRecovery(), operation);
+		LifecycleExecution execution = mutationAllowed
+			? lifecycle.reconstructThenRecover(
+				checked.getCapturedRecovery(), operation)
+			: lifecycle.verifyAfterNoOpReconstruction(
+				checked.getCapturedRecovery(), operation);
 		return LiveLifecycleExecution.executed(checked, execution);
 	}
 
@@ -241,6 +259,22 @@ final class GameTickEventRestorationLiveReconstructionCoordinator {
 		boolean requiresFreshInventoryRetry() {
 			return lifecycleExecution != null
 				&& lifecycleExecution.requiresFreshInventoryRetry();
+		}
+		int getRuntimeOperationCount() {
+			return lifecycleExecution == null
+				? 0 : lifecycleExecution.getRuntimeOperationCount();
+		}
+		int getMutationOperationCount() {
+			return lifecycleExecution == null
+				? 0 : lifecycleExecution.getMutationOperationCount();
+		}
+		int getTerminalEventConsumptionCount() {
+			return lifecycleExecution == null
+				? 0 : lifecycleExecution.getTerminalEventConsumptionCount();
+		}
+		boolean isMutationAllowed() {
+			return lifecycleExecution != null
+				&& lifecycleExecution.isMutationAllowed();
 		}
 		boolean isRetryPerformed() { return false; }
 		boolean isArrivalGate() { return false; }

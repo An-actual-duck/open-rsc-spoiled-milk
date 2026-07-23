@@ -34,6 +34,15 @@ final class GameTickEventRestorationRecoveryDirectiveExecutor {
 		final int directiveIndex,
 		final GameTickEventRestorationCurrentStateRecoverySnapshot
 			futureSnapshot) {
+		return execute(preparation, directiveIndex, futureSnapshot, true);
+	}
+
+	DirectiveExecution execute(
+		final Preparation preparation,
+		final int directiveIndex,
+		final GameTickEventRestorationCurrentStateRecoverySnapshot
+			futureSnapshot,
+		final boolean mutationAllowed) {
 		Preparation checked = Objects.requireNonNull(
 			preparation, "preparation");
 		if (!checked.isReady()) {
@@ -50,7 +59,8 @@ final class GameTickEventRestorationRecoveryDirectiveExecutor {
 		switch (directive.getOperationKind()) {
 			case DESIRED_STATE_COMMIT_AND_EVENT_CONSUME:
 				if (futureSnapshot != null
-					|| directive.isFutureSnapshotCorrelated()) {
+					|| directive.isFutureSnapshotCorrelated()
+					|| !mutationAllowed) {
 					return DirectiveExecution.refused(
 						directive, Reason.DIRECTIVE_INPUT_MISMATCH);
 				}
@@ -63,7 +73,8 @@ final class GameTickEventRestorationRecoveryDirectiveExecutor {
 					return DirectiveExecution.refused(
 						directive, Reason.DIRECTIVE_INPUT_MISMATCH);
 				}
-				return executeFuture(directive, futureSnapshot);
+				return executeFuture(
+					directive, futureSnapshot, mutationAllowed);
 			default:
 				return DirectiveExecution.refused(
 					directive, Reason.DIRECTIVE_INPUT_MISMATCH);
@@ -93,9 +104,12 @@ final class GameTickEventRestorationRecoveryDirectiveExecutor {
 
 	private DirectiveExecution executeFuture(
 		final Directive directive,
-		final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
+		final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot,
+		final boolean mutationAllowed) {
 		GameTickEventRestorationFutureStateApplicationCoordinator
-			.ApplicationExecution result = futureApplication.apply(snapshot);
+			.ApplicationExecution result = mutationAllowed
+				? futureApplication.apply(snapshot)
+				: futureApplication.verifyAlreadySatisfied(snapshot);
 		OperationOutcome outcome = result.isCurrentStateRestored()
 			|| result.isCurrentStateAlreadySatisfied()
 				? OperationOutcome.CURRENT_STATE_RESTORED_AND_EVENT_RETAINED

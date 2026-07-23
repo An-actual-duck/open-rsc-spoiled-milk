@@ -70,30 +70,60 @@ APPLICATION_STUB = r'''
         REFUSED, NO_OP, APPLIED
     }
     public enum CurrentStateRecoveryApplicationReason {
-        CURRENT_STATE_RESTORED
+        CURRENT_STATE_ALREADY_SATISFIED, CURRENT_STATE_RESTORED
     }
     public static final class CurrentStateRecoveryApplicationResult {
+        private final CurrentStateRecoveryApplicationOutcome outcome;
+        private final CurrentStateRecoveryApplicationReason reason;
+        private CurrentStateRecoveryApplicationResult(
+                CurrentStateRecoveryApplicationOutcome outcome,
+                CurrentStateRecoveryApplicationReason reason) {
+            this.outcome = outcome;
+            this.reason = reason;
+        }
+        public static CurrentStateRecoveryApplicationResult applied() {
+            return new CurrentStateRecoveryApplicationResult(
+                CurrentStateRecoveryApplicationOutcome.APPLIED,
+                CurrentStateRecoveryApplicationReason.CURRENT_STATE_RESTORED);
+        }
+        public static CurrentStateRecoveryApplicationResult noOp() {
+            return new CurrentStateRecoveryApplicationResult(
+                CurrentStateRecoveryApplicationOutcome.NO_OP,
+                CurrentStateRecoveryApplicationReason
+                    .CURRENT_STATE_ALREADY_SATISFIED);
+        }
         public CurrentStateRecoveryApplicationOutcome getOutcome() {
-            return CurrentStateRecoveryApplicationOutcome.APPLIED;
+            return outcome;
         }
         public CurrentStateRecoveryApplicationReason getReason() {
-            return CurrentStateRecoveryApplicationReason
-                .CURRENT_STATE_RESTORED;
+            return reason;
         }
-        public boolean isApplied() { return true; }
-        public boolean isNoOp() { return false; }
-        public boolean isMembershipRegistered() { return true; }
+        public boolean isApplied() {
+            return outcome == CurrentStateRecoveryApplicationOutcome.APPLIED;
+        }
+        public boolean isNoOp() {
+            return outcome == CurrentStateRecoveryApplicationOutcome.NO_OP;
+        }
+        public boolean isMembershipRegistered() { return isApplied(); }
         public boolean isForceFullBlockProjectionSelected() { return false; }
         public int getBoundaryCount() { return 1; }
     }
     private int applicationCalls;
+    private int verificationCalls;
     public CurrentStateRecoveryApplicationResult
             applyGameTickEventCurrentStateRecoverySnapshot(
                 GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
         applicationCalls++;
-        return new CurrentStateRecoveryApplicationResult();
+        return CurrentStateRecoveryApplicationResult.applied();
+    }
+    public CurrentStateRecoveryApplicationResult
+            verifyGameTickEventCurrentStateRecoverySnapshot(
+                GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
+        verificationCalls++;
+        return CurrentStateRecoveryApplicationResult.noOp();
     }
     public int getApplicationCalls() { return applicationCalls; }
+    public int getVerificationCalls() { return verificationCalls; }
 '''
 REGION_MANAGER_STUB = (
     SHARED_150["REGION_MANAGER_STUB"].rsplit("}", 1)[0]

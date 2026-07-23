@@ -24,6 +24,17 @@ final class GameTickEventRestorationFutureStateApplicationCoordinator {
 
 	ApplicationExecution apply(
 		final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
+		return apply(snapshot, true);
+	}
+
+	ApplicationExecution verifyAlreadySatisfied(
+		final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
+		return apply(snapshot, false);
+	}
+
+	private ApplicationExecution apply(
+		final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot,
+		final boolean mutationAllowed) {
 		final GameTickEventRestorationCurrentStateRecoverySnapshot checked =
 			Objects.requireNonNull(snapshot, "snapshot");
 		final boolean[] correlationMatched = new boolean[1];
@@ -39,9 +50,13 @@ final class GameTickEventRestorationFutureStateApplicationCoordinator {
 					}
 					correlationMatched[0] = true;
 					application[0] = Objects.requireNonNull(
-						regionManager
-							.applyGameTickEventCurrentStateRecoverySnapshot(
-								checked),
+						mutationAllowed
+							? regionManager
+								.applyGameTickEventCurrentStateRecoverySnapshot(
+									checked)
+							: regionManager
+								.verifyGameTickEventCurrentStateRecoverySnapshot(
+									checked),
 						"current-state application result");
 				});
 		if (!scheduler.isAccepted()) {

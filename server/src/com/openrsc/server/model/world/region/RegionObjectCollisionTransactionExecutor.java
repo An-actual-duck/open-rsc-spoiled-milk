@@ -224,6 +224,23 @@ final class RegionObjectCollisionTransactionExecutor {
 			currentStateRegisterFootprint,
 		final RegionCollisionFootprintMutationExecutor.MutableTileAccess tileAccess,
 		final CacheInvalidator cacheInvalidator) {
+		return executeCurrentStateRecovery(
+			transactionBoundaries, targetRegion, snapshot, observedCandidate,
+			currentStateObject, currentStateRegisterFootprint, tileAccess,
+			cacheInvalidator, true);
+	}
+
+	static CurrentStateRecoveryResult executeCurrentStateRecovery(
+		final List<RegionObjectCollisionMutationBoundary> transactionBoundaries,
+		final Region targetRegion,
+		final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot,
+		final GameObject observedCandidate,
+		final GameObject currentStateObject,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			currentStateRegisterFootprint,
+		final RegionCollisionFootprintMutationExecutor.MutableTileAccess tileAccess,
+		final CacheInvalidator cacheInvalidator,
+		final boolean mutationAllowed) {
 		List<RegionObjectCollisionMutationBoundary> checkedBoundaries =
 			Objects.requireNonNull(transactionBoundaries, "transactionBoundaries");
 		Region checkedRegion = Objects.requireNonNull(targetRegion, "targetRegion");
@@ -293,7 +310,7 @@ final class RegionObjectCollisionTransactionExecutor {
 									checkedBoundaries, checkedRegion,
 									checkedSnapshot, observedCandidate,
 									newChange, checkedTileAccess,
-									checkedInvalidator);
+									checkedInvalidator, mutationAllowed);
 						}
 					}
 				});
@@ -317,7 +334,8 @@ final class RegionObjectCollisionTransactionExecutor {
 			final Change newChange,
 			final RegionCollisionFootprintMutationExecutor.MutableTileAccess
 				tileAccess,
-			final CacheInvalidator cacheInvalidator) {
+			final CacheInvalidator cacheInvalidator,
+			final boolean mutationAllowed) {
 		Region.RestorationTargetMatchRequirement requirement =
 			Region.RestorationTargetMatchRequirement.of(
 				snapshot.getCurrentObjectId(),
@@ -336,6 +354,10 @@ final class RegionObjectCollisionTransactionExecutor {
 			if (observedCandidate != null) {
 				return CurrentStateRecoveryResult.refused(
 					CurrentStateRecoveryReason.TARGET_CHANGED_BEFORE_RECOVERY);
+			}
+			if (!mutationAllowed) {
+				return CurrentStateRecoveryResult.refused(
+					CurrentStateRecoveryReason.RECOVERY_MUTATION_DISABLED);
 			}
 			Result applied = executeInsideBoundaries(
 				transactionBoundaries, null, newChange,
@@ -1100,6 +1122,7 @@ final class RegionObjectCollisionTransactionExecutor {
 		CURRENT_COLLISION_SNAPSHOT_MISMATCH,
 		TARGET_CHANGED_BEFORE_RECOVERY,
 		TARGET_CLASSIFICATION_REFUSED,
+		RECOVERY_MUTATION_DISABLED,
 		OBJECT_TRANSACTION_REFUSED,
 		CURRENT_STATE_ALREADY_SATISFIED,
 		CURRENT_STATE_RESTORED

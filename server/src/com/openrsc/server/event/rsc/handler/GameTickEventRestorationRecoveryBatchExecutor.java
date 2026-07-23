@@ -36,6 +36,16 @@ final class GameTickEventRestorationRecoveryBatchExecutor {
 		final List<GameTickEventRestorationCurrentStateRecoverySnapshot>
 			futureSnapshots,
 		final int maximumCandidates) {
+		return execute(
+			preparation, futureSnapshots, maximumCandidates, true);
+	}
+
+	BatchExecution execute(
+		final Preparation preparation,
+		final List<GameTickEventRestorationCurrentStateRecoverySnapshot>
+			futureSnapshots,
+		final int maximumCandidates,
+		final boolean mutationAllowed) {
 		Preparation checked = Objects.requireNonNull(
 			preparation, "preparation");
 		List<GameTickEventRestorationCurrentStateRecoverySnapshot> snapshots =
@@ -93,6 +103,8 @@ final class GameTickEventRestorationRecoveryBatchExecutor {
 		List<OperationResult> results = new ArrayList<OperationResult>(
 			checked.getDirectives().size());
 		int runtimeOperationCount = 0;
+		int mutationOperationCount = 0;
+		int terminalEventConsumptionCount = 0;
 		Completion completion = GameTickEventRestorationRecoveryCoordinatorContract
 			.assess(checked, results);
 		for (int index = 0; index < checked.getDirectives().size(); index++) {
@@ -100,7 +112,8 @@ final class GameTickEventRestorationRecoveryBatchExecutor {
 			GameTickEventRestorationRecoveryDirectiveExecutor.DirectiveExecution
 				step = executor.execute(
 					checked, index, futureByRegistration.get(
-						Long.valueOf(directive.getRegistrationSequence())));
+						Long.valueOf(directive.getRegistrationSequence())),
+					mutationAllowed);
 			if (step.getOperationResult() == null) {
 				return BatchExecution.invalid(
 					Reason.DIRECTIVE_EXECUTION_INVALID);
@@ -108,6 +121,12 @@ final class GameTickEventRestorationRecoveryBatchExecutor {
 			results.add(step.getOperationResult());
 			if (step.isRuntimeOperationInvoked()) {
 				runtimeOperationCount++;
+			}
+			if (step.isRegionMutationPerformed()) {
+				mutationOperationCount++;
+			}
+			if (step.isEventTerminallyConsumed()) {
+				terminalEventConsumptionCount++;
 			}
 			completion =
 				GameTickEventRestorationRecoveryCoordinatorContract.assess(
@@ -119,7 +138,8 @@ final class GameTickEventRestorationRecoveryBatchExecutor {
 		}
 		return BatchExecution.completed(
 			completion, results, runtimeOperationCount,
-			checked.getDirectives().size());
+			mutationOperationCount, terminalEventConsumptionCount,
+			checked.getDirectives().size(), mutationAllowed);
 	}
 
 	enum Reason {
@@ -140,7 +160,10 @@ final class GameTickEventRestorationRecoveryBatchExecutor {
 		private final int completedPrefixCount;
 		private final long refusedRegistrationSequence;
 		private final int runtimeOperationCount;
+		private final int mutationOperationCount;
+		private final int terminalEventConsumptionCount;
 		private final int directiveCount;
+		private final boolean mutationAllowed;
 
 		private BatchExecution(
 			final Reason reason,
@@ -148,25 +171,43 @@ final class GameTickEventRestorationRecoveryBatchExecutor {
 			final int completedPrefixCount,
 			final long refusedRegistrationSequence,
 			final int runtimeOperationCount,
-			final int directiveCount) {
+			final int mutationOperationCount,
+			final int terminalEventConsumptionCount,
+			final int directiveCount,
+			final boolean mutationAllowed) {
 			this.reason = Objects.requireNonNull(reason, "reason");
 			this.operationResults = operationResults;
 			this.completedPrefixCount = completedPrefixCount;
 			this.refusedRegistrationSequence = refusedRegistrationSequence;
 			this.runtimeOperationCount = runtimeOperationCount;
+			this.mutationOperationCount = mutationOperationCount;
+			this.terminalEventConsumptionCount =
+				terminalEventConsumptionCount;
 			this.directiveCount = directiveCount;
+			this.mutationAllowed = mutationAllowed;
 			boolean executed = operationResults != null;
 			if (executed != (directiveCount >= 0)
 				|| (!executed
 					&& (completedPrefixCount != 0
 						|| refusedRegistrationSequence != -1L
-						|| runtimeOperationCount != 0))
+						|| runtimeOperationCount != 0
+						|| mutationOperationCount != 0
+						|| terminalEventConsumptionCount != 0
+						|| mutationAllowed))
 				|| (executed
 					&& (completedPrefixCount < 0
 						|| completedPrefixCount > operationResults.size()
 						|| operationResults.size() > directiveCount
 						|| runtimeOperationCount < 0
-						|| runtimeOperationCount > operationResults.size()))) {
+						|| runtimeOperationCount > operationResults.size()
+						|| mutationOperationCount < 0
+						|| mutationOperationCount > runtimeOperationCount
+						|| terminalEventConsumptionCount < 0
+						|| terminalEventConsumptionCount
+							> operationResults.size()
+						|| (!mutationAllowed
+							&& (mutationOperationCount != 0
+								|| terminalEventConsumptionCount != 0))))) {
 				throw new IllegalArgumentException(
 					"Recovery batch execution is inconsistent");
 			}
@@ -174,14 +215,17 @@ final class GameTickEventRestorationRecoveryBatchExecutor {
 
 		private static BatchExecution invalid(final Reason reason) {
 			return new BatchExecution(
-				reason, null, 0, -1L, 0, -1);
+				reason, null, 0, -1L, 0, 0, 0, -1, false);
 		}
 
 		private static BatchExecution completed(
 			final Completion completion,
 			final List<OperationResult> results,
 			final int runtimeOperationCount,
-			final int directiveCount) {
+			final int mutationOperationCount,
+			final int terminalEventConsumptionCount,
+			final int directiveCount,
+			final boolean mutationAllowed) {
 			Reason reason;
 			switch (completion.getReason()) {
 				case BATCH_PENDING:
@@ -204,7 +248,9 @@ final class GameTickEventRestorationRecoveryBatchExecutor {
 					new ArrayList<OperationResult>(results)),
 				completion.getCompletedPrefixCount(),
 				completion.getRefusedRegistrationSequence(),
-				runtimeOperationCount, directiveCount);
+				runtimeOperationCount, mutationOperationCount,
+				terminalEventConsumptionCount, directiveCount,
+				mutationAllowed);
 		}
 
 		Reason getReason() { return reason; }
@@ -217,7 +263,12 @@ final class GameTickEventRestorationRecoveryBatchExecutor {
 			return refusedRegistrationSequence;
 		}
 		int getRuntimeOperationCount() { return runtimeOperationCount; }
+		int getMutationOperationCount() { return mutationOperationCount; }
+		int getTerminalEventConsumptionCount() {
+			return terminalEventConsumptionCount;
+		}
 		int getDirectiveCount() { return directiveCount; }
+		boolean isMutationAllowed() { return mutationAllowed; }
 		boolean isContractuallyReadyForFirstVisibility() {
 			return reason == Reason.CONTRACTUALLY_READY_FOR_FIRST_VISIBILITY;
 		}

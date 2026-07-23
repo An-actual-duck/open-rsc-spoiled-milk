@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, and 156 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, and 157 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -188,6 +188,11 @@ automated-validated Slice 156 composes that live capture directly with the
 single-use reconstruction lifecycle, prevents caller substitution of its
 generation, bound, preparation, or snapshots, and still exposes neither a real
 loader nor first visibility;
+automated-validated Slice 157 adds a verification-only policy to that composed
+lifecycle, accepts only already-satisfied future current state, refuses missing
+state rather than restoring it, rejects every overdue callback before execution,
+and returns only a detached no-op diagnostic with zero mutation and terminal-
+consumption counts;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12784,6 +12789,68 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the full composition still has only a fixture-supplied reconstruction operation.
 
+### Slice 157: Verification-only no-op diagnostic
+
+Objective: close the safety gap between the full live reconstruction composition
+and its first private owner exercise by creating a policy that can verify an
+unchanged world but cannot repair it or consume an overdue callback.
+
+Implemented:
+
+- `RegionObjectCollisionTransactionExecutor` and `RegionManager` retain their
+  existing mutating recovery entry points, while an explicit verification path
+  uses the same ordered object/collision boundaries and exact-state comparison;
+- an already-satisfied exact current object remains an idempotent no-op, but an
+  empty target that ordinary recovery would restore now refuses with
+  `RECOVERY_MUTATION_DISABLED` before membership, collision, provenance, or
+  cache state can change;
+- the future-state, directive, batch, lifecycle, and live-composition layers
+  carry the closed policy without changing their existing default behavior.
+  Verification-only batches report runtime verification, mutation, and terminal
+  event-consumption counts and reject inconsistent nonzero side effects;
+- verification-only directive execution rejects every overdue desired-state
+  operation before the Slice 142 terminal-consumption seam and routes future
+  operations only through the no-mutation Region verifier; and
+- `GameTickEventRestorationNoOpDiagnostic` accepts one exact proposal-scoped
+  inventory, rejects any non-future candidate before reconstruction, invokes a
+  typed no-op reconstruction completion for future-only work, and returns an
+  immutable, handle-free result. It never permits Region mutation and never
+  consumes an overdue callback.
+
+Automated validation status:
+
+- an executable composed fixture proves a future callback reaches exactly one
+  Region verification, zero Region applications, zero terminal consumption,
+  and contractual readiness while the callback remains registered;
+- the same fixture proves an overdue callback and an incomplete live inventory
+  reach neither reconstruction nor recovery;
+- a real ordered Region transaction fixture proves verification accepts exact
+  already-satisfied state without another cache invalidation, but refuses an
+  empty target without membership or collision changes;
+- source guards require the pre-mutation policy check and explicit overdue
+  refusal while excluding loading, retry, arrival, visibility, Player, and
+  runtime handles;
+- the complete layered-map suite passes 523 tests across 156 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 804 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this diagnostic still uses a typed fixture-equivalent no-op reconstruction
+  completion. It cannot load, unload, reconstruct, tear down, retire, or make a
+  first-visibility decision;
+- incomplete or drifting live event evidence refuses closed. An overdue
+  candidate cannot be silently omitted, reordered, or consumed;
+- a future callback whose current object disappeared between capture and
+  verification refuses and requires fresh evidence; the diagnostic never
+  repairs that change; and
+- no command, observer schema, gameplay path, persistence path, retry loop, or
+  public/live caller is connected yet.
+
+Status: implemented and automated-validated. Private diagnostic exposure is the
+next separately gated slice.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13757,16 +13824,20 @@ preparation flows into a private single-use captured lifecycle, callers cannot
 retrieve or substitute its inputs, and reconstruction refusal or capture
 refusal excludes every later phase.
 
-The next safe slice should add a deliberately narrow private diagnostic around
-this composition. It should accept an already-produced proposal-scoped event
-inventory, use a no-op reconstruction operation that unloads and changes
-nothing, and exercise only future callbacks whose current state is therefore
-expected to be an idempotent no-op recovery. The result should emit stable
-AI-readable counts/reasons through the existing opt-in parity trace, remain
-disabled by default, and never run overdue consumption, real reconstruction,
-retry, arrival, or visibility release. This will provide the first meaningful
-owner validation of the complete capture/order/recovery wiring without risking
-world teardown.
+Slice 157 now wraps that composition in a deliberately closed verification-only
+policy. It accepts only future callbacks, uses a typed no-op reconstruction
+completion, verifies already-satisfied current scenery under the real ordered
+Region boundaries, and refuses rather than restoring missing state. Its
+detached result proves zero Region mutations and zero terminal event
+consumptions; no runtime route invokes it yet.
+
+The next safe slice should expose Slice 157 only through an explicit action in
+the existing opt-in private parity trace. The route should consume the exact
+proposal-scoped event inventory already captured by that observer, write stable
+AI-readable counts/reasons in an additive schema revision, remain disabled by
+default, and never run from ordinary movement or marker capture. That route
+will provide the first meaningful owner validation of the complete capture/
+order/verification wiring without risking world teardown.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

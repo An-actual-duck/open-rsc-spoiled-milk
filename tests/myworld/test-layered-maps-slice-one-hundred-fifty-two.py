@@ -161,6 +161,12 @@ public class RegionManager {
         applicationCalls++;
         return applicationResult;
     }
+    public CurrentStateRecoveryApplicationResult
+            verifyGameTickEventCurrentStateRecoverySnapshot(
+                GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
+        applicationCalls++;
+        return applicationResult;
+    }
     public GameTickEventRestorationTargetRevalidation
             captureGameTickEventRestorationTargetRevalidation(
                 GameTickEventRestorationTargetRevalidationRequest request) {

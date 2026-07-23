@@ -2300,6 +2300,20 @@ public class RegionManager {
 	public CurrentStateRecoveryApplicationResult
 		applyGameTickEventCurrentStateRecoverySnapshot(
 			final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
+		return applyGameTickEventCurrentStateRecoverySnapshot(snapshot, true);
+	}
+
+	/** Verifies idempotent satisfaction and refuses instead of restoring. */
+	public CurrentStateRecoveryApplicationResult
+		verifyGameTickEventCurrentStateRecoverySnapshot(
+			final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
+		return applyGameTickEventCurrentStateRecoverySnapshot(snapshot, false);
+	}
+
+	private CurrentStateRecoveryApplicationResult
+		applyGameTickEventCurrentStateRecoverySnapshot(
+			final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot,
+			final boolean mutationAllowed) {
 		return applyGameTickEventCurrentStateRecoverySnapshot(
 			snapshot, new CurrentStateCollisionProjector() {
 				@Override
@@ -2314,13 +2328,22 @@ public class RegionManager {
 						return null;
 					}
 				}
-			});
+			}, mutationAllowed);
 	}
 
 	CurrentStateRecoveryApplicationResult
 		applyGameTickEventCurrentStateRecoverySnapshot(
 			final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot,
 			final CurrentStateCollisionProjector collisionProjector) {
+		return applyGameTickEventCurrentStateRecoverySnapshot(
+			snapshot, collisionProjector, true);
+	}
+
+	CurrentStateRecoveryApplicationResult
+		applyGameTickEventCurrentStateRecoverySnapshot(
+			final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot,
+			final CurrentStateCollisionProjector collisionProjector,
+			final boolean mutationAllowed) {
 		GameTickEventRestorationCurrentStateRecoverySnapshot checked =
 			Objects.requireNonNull(snapshot, "snapshot");
 		CurrentStateCollisionProjector checkedProjector =
@@ -2442,7 +2465,7 @@ public class RegionManager {
 										invalidateVisibleObjectWindowCache(region);
 									}
 								}
-							});
+							}, mutationAllowed);
 			return CurrentStateRecoveryApplicationResult.from(
 				result, selectedForceFullBlock);
 		}

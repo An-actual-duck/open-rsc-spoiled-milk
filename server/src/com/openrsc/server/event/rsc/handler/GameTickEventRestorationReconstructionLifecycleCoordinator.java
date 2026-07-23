@@ -106,6 +106,21 @@ final class GameTickEventRestorationReconstructionLifecycleCoordinator {
 	LifecycleExecution reconstructThenRecover(
 		final CapturedRecovery captured,
 		final ReconstructionOperation reconstructionOperation) {
+		return reconstructThenRecover(
+			captured, reconstructionOperation, true);
+	}
+
+	LifecycleExecution verifyAfterNoOpReconstruction(
+		final CapturedRecovery captured,
+		final ReconstructionOperation reconstructionOperation) {
+		return reconstructThenRecover(
+			captured, reconstructionOperation, false);
+	}
+
+	private LifecycleExecution reconstructThenRecover(
+		final CapturedRecovery captured,
+		final ReconstructionOperation reconstructionOperation,
+		final boolean mutationAllowed) {
 		CapturedRecovery checked = Objects.requireNonNull(
 			captured, "captured");
 		ReconstructionOperation operation = Objects.requireNonNull(
@@ -142,7 +157,7 @@ final class GameTickEventRestorationReconstructionLifecycleCoordinator {
 		GameTickEventRestorationRecoveryBatchExecutor.BatchExecution recovery =
 			batchExecutor.execute(
 				checked.getPreparation(), checked.getFutureSnapshots(),
-				checked.getMaximumCandidates());
+				checked.getMaximumCandidates(), mutationAllowed);
 		if (recovery.isContractuallyReadyForFirstVisibility()) {
 			return LifecycleExecution.completed(
 				LifecycleReason.CONTRACTUALLY_READY_FOR_FIRST_VISIBILITY,
@@ -454,6 +469,19 @@ final class GameTickEventRestorationReconstructionLifecycleCoordinator {
 		}
 		int getCompletedRecoveryPrefixCount() {
 			return recovery == null ? 0 : recovery.getCompletedPrefixCount();
+		}
+		int getRuntimeOperationCount() {
+			return recovery == null ? 0 : recovery.getRuntimeOperationCount();
+		}
+		int getMutationOperationCount() {
+			return recovery == null ? 0 : recovery.getMutationOperationCount();
+		}
+		int getTerminalEventConsumptionCount() {
+			return recovery == null
+				? 0 : recovery.getTerminalEventConsumptionCount();
+		}
+		boolean isMutationAllowed() {
+			return recovery != null && recovery.isMutationAllowed();
 		}
 		boolean isRetryPerformed() { return false; }
 		boolean isArrivalGate() { return false; }
