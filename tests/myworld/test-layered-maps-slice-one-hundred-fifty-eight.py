@@ -155,7 +155,7 @@ class LayeredMapsSliceOneHundredFiftyEightTest(unittest.TestCase):
             command.index('"recover-noop".equals(action)'),
         )
         self.assertIn("LayeredCoordinateParityObserver.recoverNoOp(", command)
-        self.assertIn("recover-noop|stop", development)
+        self.assertIn("recover-noop|preserve-noop|stop", development)
 
     def test_living_docs_record_slice_one_hundred_fifty_eight(self):
         readme = README.read_text(encoding="utf-8")

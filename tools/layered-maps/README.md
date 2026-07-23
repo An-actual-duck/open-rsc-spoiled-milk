@@ -168,6 +168,7 @@ Then use:
 ::layerparity mark before-ladder
 ::layerparity snapshot
 ::layerparity recover-noop
+::layerparity preserve-noop
 ::layerparity status
 ::layerparity stop
 ```
@@ -184,7 +185,7 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v47.schema.json`. Each v47 record
+traces emit `schema/layered-map-parity-event-v48.schema.json`. Each v48 record
 retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
@@ -211,6 +212,12 @@ includes proposal-related and supporting callback registrations, and reports
 the nested scheduler, event-timing, World-registration, owner-reference, NPC
 lifecycle, and Region-quiescence boundary result. A scope-ready result is
 explicitly point-in-time and does not establish a durable preservation fact.
+V48 adds nullable `packedRegionNpcOwnerPreservationNoOp` evidence. Only
+`::layerparity preserve-noop` (or `::lp preserve-noop`) populates it. The
+current expected result is `SOURCE_LIFECYCLE_UNAVAILABLE`: the exact owner
+scope was entered, but no packed source was removed or reconstructed, no
+preserved consumer ran, and no Region, arrival, or visibility authority was
+enabled.
 The owner correlation accompanies proposal-scoped event
 inventories; only the explicit `::layerparity recover-noop` action may populate
 the separate recovery result, while ordinary movement, snapshots, and markers

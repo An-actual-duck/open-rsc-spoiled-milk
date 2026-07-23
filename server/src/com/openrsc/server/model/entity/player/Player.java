@@ -17,6 +17,7 @@ import com.openrsc.server.database.impl.mysql.queries.logging.LiveFeedLog;
 import com.openrsc.server.database.struct.PlayerInventory;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionEventRecoveryNoOpMetadata;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionNpcOwnerPreservationNoOpMetadata;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.PluginTask;
@@ -3617,6 +3618,17 @@ public final class Player extends Mob {
 					final int maximumOwners) {
 				return getWorld().getServer().getGameEventHandler()
 					.captureLayeredPackedRegionNpcOwnerPreservationBoundary(
+						requirements, maximumOwners);
+			}
+
+			@Override
+			public PackedRegionNpcOwnerPreservationNoOpMetadata
+				captureNpcOwnerPreservationNoOp(
+					final LayeredPackedRegionNpcOwnerPreservationRequirements
+						requirements,
+					final int maximumOwners) {
+				return getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionNpcOwnerPreservationNoOpDiagnostic(
 						requirements, maximumOwners);
 			}
 

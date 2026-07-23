@@ -173,7 +173,7 @@ class LayeredMapsSliceOneHundredSixtySevenTest(unittest.TestCase):
                 ),
             )
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v47"',
+            'EVENT_SCHEMA = "layered-map-parity-event-v48"',
             observer,
         )
         self.assertIn(
@@ -186,7 +186,7 @@ class LayeredMapsSliceOneHundredSixtySevenTest(unittest.TestCase):
             observer,
         )
         self.assertIn(
-            "layered-map-parity-event-v47.schema.json",
+            "layered-map-parity-event-v48.schema.json",
             README.read_text(encoding="utf-8"),
         )
 

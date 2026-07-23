@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.handler;
 
 import com.openrsc.server.Server;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionEventRecoveryNoOpMetadata;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionNpcOwnerPreservationNoOpMetadata;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.GameTickEventRestorationRequirement;
 import com.openrsc.server.event.rsc.GameTickEventRestorationState;
@@ -504,15 +505,26 @@ public class GameEventHandler {
 	 * Enters the real NPC-owner scope but deliberately refuses at the still
 	 * unavailable source lifecycle. No source absence or preserved work runs.
 	 */
-	GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result
+	public PackedRegionNpcOwnerPreservationNoOpMetadata
 		captureLayeredPackedRegionNpcOwnerPreservationNoOpDiagnostic(
 			final LayeredPackedRegionNpcOwnerPreservationRequirements
 				requirements,
 			final int maximumOwners) {
-		return GameTickEventNpcOwnerPreservationNoOpDiagnostic.capture(
-			eventStore, getServer().getWorld().getNpcs(),
-			Objects.requireNonNull(requirements, "requirements"),
-			getServer().getCurrentTick(), maximumOwners);
+		GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result result =
+			GameTickEventNpcOwnerPreservationNoOpDiagnostic.capture(
+				eventStore, getServer().getWorld().getNpcs(),
+				Objects.requireNonNull(requirements, "requirements"),
+				getServer().getCurrentTick(), maximumOwners);
+		return PackedRegionNpcOwnerPreservationNoOpMetadata.of(
+			result.getReason().name(), result.getGeneration(),
+			result.getRequirementsObservedAtTick(),
+			result.getSelectedSourceCount(),
+			result.getRequiredEventLinkCount(),
+			result.getRequiredOwnerCount(), result.isOwnerScopeEntered(),
+			result.isSourceLifecycleInvoked(),
+			result.getAbsentSourceCount(),
+			result.getReconstructedSourceCount(),
+			result.isPreservedConsumerInvoked());
 	}
 
 	/**

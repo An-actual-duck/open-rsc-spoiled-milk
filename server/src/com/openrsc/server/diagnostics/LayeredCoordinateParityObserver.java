@@ -58,8 +58,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v47";
-	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v46";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v48";
+	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v47";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -777,6 +777,16 @@ public final class LayeredCoordinateParityObserver {
 		TraceState state = TRACES.get(key);
 		return state == null ? Status.disabled(logPath(key))
 			: write(state, "recovery-noop", null, current, null, null, null);
+	}
+
+	public static Status preserveNoOp(
+		int playerId,
+		long usernameHash,
+		Point current) {
+		TraceKey key = new TraceKey(playerId, usernameHash);
+		TraceState state = TRACES.get(key);
+		return state == null ? Status.disabled(logPath(key))
+			: write(state, "preservation-noop", null, current, null, null, null);
 	}
 
 	public static Status stop(int playerId, long usernameHash, Point current) {
@@ -1501,6 +1511,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionNpcOwnerEventContinuity = null;
 				LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
 					packedRegionNpcOwnerPreservationBoundary = null;
+				PackedRegionNpcOwnerPreservationNoOpMetadata
+					packedRegionNpcOwnerPreservationNoOp = null;
 				LayeredPackedRegionEventTargetObservation
 					packedRegionEventTargets = null;
 				LayeredPackedRegionEventAtomicTargetRevalidation
@@ -1811,6 +1823,15 @@ public final class LayeredCoordinateParityObserver {
 										preservationRequirements,
 										MAX_TRACE_NPC_OWNER_PRESERVATION_OWNERS),
 								"packedRegionEventOwnershipSource NPC owner preservation boundary");
+						if ("preservation-noop".equals(eventType)) {
+							packedRegionNpcOwnerPreservationNoOp =
+								Objects.requireNonNull(
+									state.packedRegionEventOwnershipSource
+										.captureNpcOwnerPreservationNoOp(
+											preservationRequirements,
+											MAX_TRACE_NPC_OWNER_PRESERVATION_OWNERS),
+									"packedRegionEventOwnershipSource NPC owner preservation no-op");
+						}
 					}
 					packedRegionEventTargets =
 						state.packedRegionEventOwnershipSource.captureTargets(
@@ -1864,6 +1885,7 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionEventOwnership,
 					packedRegionNpcOwnerEventContinuity,
 					packedRegionNpcOwnerPreservationBoundary,
+					packedRegionNpcOwnerPreservationNoOp,
 					packedRegionEventTargets,
 					packedRegionEventAtomicTargetRevalidation,
 					packedRegionEventRecoveryNoOp);
@@ -1954,6 +1976,8 @@ public final class LayeredCoordinateParityObserver {
 			packedRegionNpcOwnerEventContinuity,
 		LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
 			packedRegionNpcOwnerPreservationBoundary,
+		PackedRegionNpcOwnerPreservationNoOpMetadata
+			packedRegionNpcOwnerPreservationNoOp,
 		LayeredPackedRegionEventTargetObservation packedRegionEventTargets,
 		LayeredPackedRegionEventAtomicTargetRevalidation
 			packedRegionEventAtomicTargetRevalidation,
@@ -2179,6 +2203,13 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendPackedRegionNpcOwnerPreservationBoundary(
 				out, packedRegionNpcOwnerPreservationBoundary);
+		}
+		out.append(",\"packedRegionNpcOwnerPreservationNoOp\":");
+		if (packedRegionNpcOwnerPreservationNoOp == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionNpcOwnerPreservationNoOp(
+				out, packedRegionNpcOwnerPreservationNoOp);
 		}
 		out.append(",\"packedRegionEventTargets\":");
 		if (packedRegionEventTargets == null) {
@@ -4582,6 +4613,42 @@ public final class LayeredCoordinateParityObserver {
 		out.append("]}");
 	}
 
+	private static void appendPackedRegionNpcOwnerPreservationNoOp(
+		final StringBuilder out,
+		final PackedRegionNpcOwnerPreservationNoOpMetadata diagnostic) {
+		out.append('{');
+		field(out, "reason", diagnostic.getReason()).append(',');
+		out.append("\"generation\":").append(diagnostic.getGeneration())
+			.append(',');
+		out.append("\"requirementsObservedAtTick\":")
+			.append(diagnostic.getRequirementsObservedAtTick()).append(',');
+		out.append("\"selectedSourceCount\":")
+			.append(diagnostic.getSelectedSourceCount()).append(',');
+		out.append("\"requiredEventLinkCount\":")
+			.append(diagnostic.getRequiredEventLinkCount()).append(',');
+		out.append("\"requiredOwnerCount\":")
+			.append(diagnostic.getRequiredOwnerCount()).append(',');
+		out.append("\"ownerScopeEntered\":")
+			.append(diagnostic.isOwnerScopeEntered()).append(',');
+		out.append("\"sourceLifecycleInvoked\":")
+			.append(diagnostic.isSourceLifecycleInvoked()).append(',');
+		out.append("\"absentSourceCount\":")
+			.append(diagnostic.getAbsentSourceCount()).append(',');
+		out.append("\"reconstructedSourceCount\":")
+			.append(diagnostic.getReconstructedSourceCount()).append(',');
+		out.append("\"preservedConsumerInvoked\":")
+			.append(diagnostic.isPreservedConsumerInvoked()).append(',');
+		out.append("\"preservationEstablishedForConsumedWork\":false,");
+		out.append("\"preservationPerformed\":false,");
+		out.append("\"sourceAbsencePerformed\":false,");
+		out.append("\"sourceReconstructionPerformed\":false,");
+		out.append("\"regionMutationPerformed\":false,");
+		out.append("\"runtimeHandleRetained\":false,");
+		out.append("\"arrivalGate\":false,");
+		out.append("\"visibilityReleased\":false,");
+		out.append("\"lifecycleAuthority\":false}");
+	}
+
 	private static void appendPackedRegionEventTargets(
 		final StringBuilder out,
 		final LayeredPackedRegionEventTargetObservation observation) {
@@ -6056,6 +6123,103 @@ public final class LayeredCoordinateParityObserver {
 			int maximumDynamicObjects);
 	}
 
+	/** Detached verification-only NPC owner preservation refusal. */
+	public static final class PackedRegionNpcOwnerPreservationNoOpMetadata {
+		private final String reason;
+		private final long generation;
+		private final long requirementsObservedAtTick;
+		private final int selectedSourceCount;
+		private final int requiredEventLinkCount;
+		private final int requiredOwnerCount;
+		private final boolean ownerScopeEntered;
+		private final boolean sourceLifecycleInvoked;
+		private final int absentSourceCount;
+		private final int reconstructedSourceCount;
+		private final boolean preservedConsumerInvoked;
+
+		private PackedRegionNpcOwnerPreservationNoOpMetadata(
+			final String reason,
+			final long generation,
+			final long requirementsObservedAtTick,
+			final int selectedSourceCount,
+			final int requiredEventLinkCount,
+			final int requiredOwnerCount,
+			final boolean ownerScopeEntered,
+			final boolean sourceLifecycleInvoked,
+			final int absentSourceCount,
+			final int reconstructedSourceCount,
+			final boolean preservedConsumerInvoked) {
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.generation = generation;
+			this.requirementsObservedAtTick = requirementsObservedAtTick;
+			this.selectedSourceCount = selectedSourceCount;
+			this.requiredEventLinkCount = requiredEventLinkCount;
+			this.requiredOwnerCount = requiredOwnerCount;
+			this.ownerScopeEntered = ownerScopeEntered;
+			this.sourceLifecycleInvoked = sourceLifecycleInvoked;
+			this.absentSourceCount = absentSourceCount;
+			this.reconstructedSourceCount = reconstructedSourceCount;
+			this.preservedConsumerInvoked = preservedConsumerInvoked;
+			if ((!"OWNER_SCOPE_REFUSED".equals(reason)
+					&& !"SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason))
+				|| generation < 0L || requirementsObservedAtTick < 0L
+				|| selectedSourceCount < 0 || requiredEventLinkCount < 0
+				|| requiredOwnerCount < 0 || absentSourceCount != 0
+				|| reconstructedSourceCount != 0
+				|| preservedConsumerInvoked
+				|| ownerScopeEntered != sourceLifecycleInvoked
+				|| ("OWNER_SCOPE_REFUSED".equals(reason)
+					&& ownerScopeEntered)
+				|| ("SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason)
+					&& !ownerScopeEntered)) {
+				throw new IllegalArgumentException(
+					"NPC owner preservation no-op metadata is inconsistent");
+			}
+		}
+
+		public static PackedRegionNpcOwnerPreservationNoOpMetadata of(
+			final String reason,
+			final long generation,
+			final long requirementsObservedAtTick,
+			final int selectedSourceCount,
+			final int requiredEventLinkCount,
+			final int requiredOwnerCount,
+			final boolean ownerScopeEntered,
+			final boolean sourceLifecycleInvoked,
+			final int absentSourceCount,
+			final int reconstructedSourceCount,
+			final boolean preservedConsumerInvoked) {
+			return new PackedRegionNpcOwnerPreservationNoOpMetadata(
+				reason, generation, requirementsObservedAtTick,
+				selectedSourceCount, requiredEventLinkCount,
+				requiredOwnerCount, ownerScopeEntered,
+				sourceLifecycleInvoked, absentSourceCount,
+				reconstructedSourceCount, preservedConsumerInvoked);
+		}
+
+		public String getReason() { return reason; }
+		public long getGeneration() { return generation; }
+		public long getRequirementsObservedAtTick() {
+			return requirementsObservedAtTick;
+		}
+		public int getSelectedSourceCount() { return selectedSourceCount; }
+		public int getRequiredEventLinkCount() {
+			return requiredEventLinkCount;
+		}
+		public int getRequiredOwnerCount() { return requiredOwnerCount; }
+		public boolean isOwnerScopeEntered() { return ownerScopeEntered; }
+		public boolean isSourceLifecycleInvoked() {
+			return sourceLifecycleInvoked;
+		}
+		public int getAbsentSourceCount() { return absentSourceCount; }
+		public int getReconstructedSourceCount() {
+			return reconstructedSourceCount;
+		}
+		public boolean isPreservedConsumerInvoked() {
+			return preservedConsumerInvoked;
+		}
+	}
+
 	/** Immutable JSON-facing copy of the runtime verification-only result. */
 	public static final class PackedRegionEventRecoveryNoOpMetadata {
 		private final String reason;
@@ -6316,6 +6480,14 @@ public final class LayeredCoordinateParityObserver {
 
 		default LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
 			captureNpcOwnerPreservationBoundary(
+				final LayeredPackedRegionNpcOwnerPreservationRequirements
+					requirements,
+				final int maximumOwners) {
+			return null;
+		}
+
+		default PackedRegionNpcOwnerPreservationNoOpMetadata
+			captureNpcOwnerPreservationNoOp(
 				final LayeredPackedRegionNpcOwnerPreservationRequirements
 					requirements,
 				final int maximumOwners) {

@@ -12,6 +12,7 @@ import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.content.worldedit.WorldEditorAccessService;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionEventRecoveryNoOpMetadata;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionNpcOwnerPreservationNoOpMetadata;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
@@ -1452,6 +1453,15 @@ public final class Development implements CommandTrigger {
 				status = LayeredCoordinateParityObserver.recoverNoOp(
 					player.getDatabaseID(), player.getUsernameHash(),
 					player.getLocation());
+			} else if ("preserve-noop".equals(action)
+				|| "preservenoop".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.preserveNoOp(
+					player.getDatabaseID(), player.getUsernameHash(),
+					player.getLocation());
 			} else if ("stop".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -2047,6 +2057,17 @@ public final class Development implements CommandTrigger {
 			}
 
 			@Override
+			public PackedRegionNpcOwnerPreservationNoOpMetadata
+				captureNpcOwnerPreservationNoOp(
+					final LayeredPackedRegionNpcOwnerPreservationRequirements
+						requirements,
+					final int maximumOwners) {
+				return player.getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionNpcOwnerPreservationNoOpDiagnostic(
+						requirements, maximumOwners);
+			}
+
+			@Override
 			public PackedRegionEventRecoveryNoOpMetadata captureRecoveryNoOp(
 				final LayeredPackedRegionEventOwnershipInventory inventory,
 				final int maximumCandidates) {
@@ -2085,7 +2106,7 @@ public final class Development implements CommandTrigger {
 
 	private void layeredParitySyntax(Player player, String command) {
 		player.message(badSyntaxPrefix + command.toUpperCase()
-			+ " [start|status|snapshot|mark LABEL|recover-noop|stop]");
+			+ " [start|status|snapshot|mark LABEL|recover-noop|preserve-noop|stop]");
 	}
 
 	private void testNpcDrops(Player player, String command, String[] args) {
