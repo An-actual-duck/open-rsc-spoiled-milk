@@ -27,7 +27,8 @@ public enum InterfaceOptions {
 	PRODUCTION_START(19),
 	PRODUCTION_CLOSE(20),
 	AUTO_CAST_SPELL(21),
-	CAST_SUMMON(22);
+	CAST_SUMMON(22),
+	BANK_ITEM_PIN(23);
 
 	private int option;
 

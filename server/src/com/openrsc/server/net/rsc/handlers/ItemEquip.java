@@ -51,7 +51,10 @@ public final class ItemEquip implements PayloadProcessor<EquipStruct, OpcodeIn> 
 				return;
 			}
 
-			request.item = player.getBank().get(bankSlot);
+				request.item = player.getConfig().WANT_CUSTOM_BANKS
+					&& player.getClientLimitations().supportsBankItemPinning
+					? player.getBank().getDisplayItem(bankSlot)
+					: player.getBank().get(bankSlot);
 			request.requestType = EquipRequest.RequestType.FROM_BANK;
 			request.bankSlot = bankSlot;
 		} else {

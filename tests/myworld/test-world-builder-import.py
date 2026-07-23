@@ -73,7 +73,7 @@ class WorldBuilderImportTest(unittest.TestCase):
                     "server_bind_address: 0.0.0.0",
                     f"server_port: {port}",
                     "max_players: 100",
-                    "client_version: 10046",
+                    "client_version: 10047",
                     "member_world: true",
                     "based_map_data: 64",
                     "want_myworld: true",

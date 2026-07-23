@@ -1264,7 +1264,7 @@ public final class Player extends Mob {
 	}
 
 	public int getFreeBankSlots() {
-		return getWorld().getMaxBankSize() - getBank().size();
+		return getWorld().getMaxBankSize() - getBank().getUsedSlotCount();
 	}
 
 	public synchronized Bank getBank() {

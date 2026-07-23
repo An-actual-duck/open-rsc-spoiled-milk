@@ -22,9 +22,11 @@ public class Bank {
 	 * The asynchronous logger.
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final String ITEM_PINS_CACHE_KEY = "bank_item_pins";
 
 	// TODO: Use an ItemContainer rather than a list here.
 	private List<Item> list = Collections.synchronizedList(new ArrayList<>());
+	private final NavigableMap<Integer, Integer> pinnedSlots = new TreeMap<>();
 	private final Player player;
 	private final BankPreset[] bankPresets;
 
@@ -33,6 +35,203 @@ public class Bank {
 		this.bankPresets = new BankPreset[BankPreset.PRESET_COUNT];
 		for (int i = 0; i < bankPresets.length; ++i)
 			bankPresets[i] = new BankPreset(player);
+	}
+
+	/**
+	 * Loads the metadata-only pinned slot map after both bank rows and the
+	 * persistent player cache have been loaded.
+	 */
+	public void loadPinnedSlotsFromCache() {
+		synchronized (list) {
+			pinnedSlots.clear();
+			if (player.getCache().hasKey(ITEM_PINS_CACHE_KEY)) {
+				try {
+					pinnedSlots.putAll(BankPinLayout.parse(
+						player.getCache().getString(ITEM_PINS_CACHE_KEY)));
+				} catch (RuntimeException ex) {
+					LOGGER.warn("Ignoring invalid bank item pin metadata for player {}", player.getDatabaseID());
+				}
+			}
+			normalizePinnedSlots();
+			persistPinnedSlots();
+		}
+	}
+
+	/**
+	 * Returns the logical custom-bank view. Empty pins have a null item and a
+	 * positive catalog ID; no zero-quantity Item enters server ownership.
+	 */
+	public List<DisplaySlot> getDisplaySlots() {
+		synchronized (list) {
+			return getDisplaySlotsInternal();
+		}
+	}
+
+	public DisplaySlot getDisplaySlot(int slot) {
+		synchronized (list) {
+			final List<DisplaySlot> displaySlots = getDisplaySlotsInternal();
+			return slot >= 0 && slot < displaySlots.size() ? displaySlots.get(slot) : null;
+		}
+	}
+
+	public Item getDisplayItem(int slot) {
+		final DisplaySlot displaySlot = getDisplaySlot(slot);
+		return displaySlot == null ? null : displaySlot.getItem();
+	}
+
+	public int getUsedSlotCount() {
+		synchronized (list) {
+			return getDisplaySlotsInternal().size();
+		}
+	}
+
+	public boolean pinDisplaySlot(int slot, int expectedCatalogId) {
+		synchronized (list) {
+			final DisplaySlot displaySlot = getDisplaySlotInternal(slot);
+			if (displaySlot == null || displaySlot.getItem() == null || displaySlot.isPinned()
+				|| displaySlot.getCatalogId() != expectedCatalogId
+				|| pinnedSlots.containsValue(expectedCatalogId)) {
+				return false;
+			}
+			pinnedSlots.put(slot, expectedCatalogId);
+			normalizePinnedSlots();
+			persistPinnedSlots();
+			return true;
+		}
+	}
+
+	public boolean unpinDisplaySlot(int slot, int expectedCatalogId) {
+		synchronized (list) {
+			final DisplaySlot displaySlot = getDisplaySlotInternal(slot);
+			if (displaySlot == null || !displaySlot.isPinned()
+				|| displaySlot.getCatalogId() != expectedCatalogId) {
+				return false;
+			}
+			final boolean wasEmpty = displaySlot.getItem() == null;
+			pinnedSlots.remove(slot);
+			if (wasEmpty) {
+				shiftPinsAfterRemovedDisplaySlot(slot);
+			}
+			normalizePinnedSlots();
+			persistPinnedSlots();
+			return true;
+		}
+	}
+
+	private List<DisplaySlot> getDisplaySlotsInternal() {
+		final List<Integer> catalogIds = new ArrayList<>(list.size());
+		for (Item item : list) {
+			catalogIds.add(item.getCatalogId());
+		}
+		final BankPinLayout.Layout layout = BankPinLayout.build(
+			catalogIds, pinnedSlots, player.getWorld().getMaxBankSize());
+		if (!layout.getPins().equals(pinnedSlots)) {
+			pinnedSlots.clear();
+			pinnedSlots.putAll(layout.getPins());
+		}
+		final List<DisplaySlot> displaySlots = new ArrayList<>(layout.getSlots().size());
+		for (BankPinLayout.Slot slot : layout.getSlots()) {
+			final Item item = slot.getSourceIndex() >= 0 ? list.get(slot.getSourceIndex()) : null;
+			displaySlots.add(new DisplaySlot(item, slot.getCatalogId(), slot.isPinned()));
+		}
+		return displaySlots;
+	}
+
+	private DisplaySlot getDisplaySlotInternal(int slot) {
+		final List<DisplaySlot> displaySlots = getDisplaySlotsInternal();
+		return slot >= 0 && slot < displaySlots.size() ? displaySlots.get(slot) : null;
+	}
+
+	private int findDisplaySlotByIdentity(Item item) {
+		final List<DisplaySlot> displaySlots = getDisplaySlotsInternal();
+		for (int slot = 0; slot < displaySlots.size(); slot++) {
+			if (displaySlots.get(slot).getItem() == item) {
+				return slot;
+			}
+		}
+		return -1;
+	}
+
+	private boolean hasEmptyPin(int catalogId) {
+		for (DisplaySlot slot : getDisplaySlotsInternal()) {
+			if (slot.isPinned() && slot.getItem() == null && slot.getCatalogId() == catalogId) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void normalizePinnedSlots() {
+		pinnedSlots.entrySet().removeIf(entry ->
+			player.getWorld().getServer().getEntityHandler().getItemDef(entry.getValue()) == null);
+		final List<Integer> catalogIds = new ArrayList<>(list.size());
+		for (Item item : list) {
+			catalogIds.add(item.getCatalogId());
+		}
+		final NavigableMap<Integer, Integer> normalized = BankPinLayout.build(
+			catalogIds, pinnedSlots, player.getWorld().getMaxBankSize()).getPins();
+		pinnedSlots.clear();
+		pinnedSlots.putAll(normalized);
+	}
+
+	private void persistPinnedSlots() {
+		if (pinnedSlots.isEmpty()) {
+			player.getCache().remove(ITEM_PINS_CACHE_KEY);
+		} else {
+			player.getCache().store(ITEM_PINS_CACHE_KEY, BankPinLayout.serialize(pinnedSlots));
+		}
+	}
+
+	private void shiftPinsAfterRemovedDisplaySlot(int removedSlot) {
+		final NavigableMap<Integer, Integer> shifted =
+			BankPinLayout.shiftAfterRemoval(pinnedSlots, removedSlot);
+		pinnedSlots.clear();
+		pinnedSlots.putAll(shifted);
+	}
+
+	private boolean supportsPinnedBankDisplay() {
+		return player.isUsingCustomClient()
+			&& player.getConfig().WANT_CUSTOM_BANKS
+			&& player.getClientLimitations().supportsBankItemPinning;
+	}
+
+	private void updateCustomBankOrSlot(boolean updateClient, int slot, Item item, int amount) {
+		if (!updateClient) {
+			return;
+		}
+		if (supportsPinnedBankDisplay() && !pinnedSlots.isEmpty()) {
+			ActionSender.showBank(player);
+		} else {
+			ActionSender.updateBankItem(player, slot, item, amount);
+		}
+	}
+
+	public static final class DisplaySlot {
+		private final Item item;
+		private final int catalogId;
+		private final boolean pinned;
+
+		private DisplaySlot(Item item, int catalogId, boolean pinned) {
+			this.item = item;
+			this.catalogId = catalogId;
+			this.pinned = pinned;
+		}
+
+		public Item getItem() {
+			return item;
+		}
+
+		public int getCatalogId() {
+			return catalogId;
+		}
+
+		public int getAmount() {
+			return item == null ? 0 : item.getAmount();
+		}
+
+		public boolean isPinned() {
+			return pinned;
+		}
 	}
 
 	/**
@@ -74,7 +273,8 @@ public class Bank {
 			// There is none of this item in the bank yet - create a new stack.
 			if (existingStack == null) {
 				// Make sure they have room in the bank
-				if (list.size() >= player.getWorld().getMaxBankSize())
+				if (getUsedSlotCount() >= player.getWorld().getMaxBankSize()
+					&& !hasEmptyPin(itemToAdd.getCatalogId()))
 					return false;
 
 				long itemID = player.getWorld().getServer().getDatabase().incrementMaxItemId(player);
@@ -84,15 +284,17 @@ public class Bank {
 				list.add(itemToAdd);
 
 				// Update the client bank
-				if (updateClient) {
-					ActionSender.updateBankItem(player, list.size() - 1, itemToAdd, itemToAdd.getAmount());
-				}
+				updateCustomBankOrSlot(updateClient, list.size() - 1, itemToAdd, itemToAdd.getAmount());
 
 			// A stack exists of this item in the bank already.
 			} else {
 
 				// We will always update the existing stack, but if it overflows we need a second stack.
 				int remainingSize = Integer.MAX_VALUE - existingStack.getAmount();
+				if (remainingSize < itemToAdd.getAmount()
+					&& getUsedSlotCount() >= player.getWorld().getMaxBankSize()) {
+					return false;
+				}
 
 				// In the first case, we have enough space to fit what we are depositing.
 				if (remainingSize >= itemToAdd.getAmount()) {
@@ -102,9 +304,7 @@ public class Bank {
 					rememberLastItemDurability(existingStack, itemToAdd);
 
 					// Update the client bank
-					if (updateClient) {
-						ActionSender.updateBankItem(player, index, existingStack, existingStack.getAmount());
-					}
+					updateCustomBankOrSlot(updateClient, index, existingStack, existingStack.getAmount());
 
 				// In the second case, we must made a new stack as well as updating the old one. (First is full.)
 				} else {
@@ -122,8 +322,12 @@ public class Bank {
 
 					// Update the client - both stacks
 					if (updateClient) {
-						ActionSender.updateBankItem(player, index, existingStack, Integer.MAX_VALUE);
-						ActionSender.updateBankItem(player, list.size() - 1, itemToAdd, itemToAdd.getAmount());
+						if (supportsPinnedBankDisplay()) {
+							ActionSender.showBank(player);
+						} else {
+							ActionSender.updateBankItem(player, index, existingStack, Integer.MAX_VALUE);
+							ActionSender.updateBankItem(player, list.size() - 1, itemToAdd, itemToAdd.getAmount());
+						}
 					}
 				}
 			}
@@ -163,16 +367,22 @@ public class Bank {
 			if (bankItem == null) return false;
 
 			final int amountToRemove = Math.min(amount, bankItem.getAmount());
+			final int displaySlot = findDisplaySlotByIdentity(bankItem);
+			final boolean removingPinnedItem = displaySlot >= 0
+				&& getDisplaySlotInternal(displaySlot).isPinned();
 
 			if (amountToRemove == bankItem.getAmount()) {
 				this.list.remove(bankItemIndex);
-				if (updateClient)
-					ActionSender.updateBankItem(this.player, bankItemIndex, bankItem, 0);
+				if (!removingPinnedItem && displaySlot >= 0) {
+					shiftPinsAfterRemovedDisplaySlot(displaySlot);
+				}
+				normalizePinnedSlots();
+				persistPinnedSlots();
+				updateCustomBankOrSlot(updateClient, bankItemIndex, bankItem, 0);
 			} else {
 				bankItem.setAmount(bankItem.getAmount() - amountToRemove);
 
-				if (updateClient)
-					ActionSender.updateBankItem(this.player, bankItemIndex, bankItem, bankItem.getAmount());
+				updateCustomBankOrSlot(updateClient, bankItemIndex, bankItem, bankItem.getAmount());
 			}
 
 			return true;
@@ -195,7 +405,7 @@ public class Bank {
 
 	public boolean canHold(Item item) {
 		synchronized(list) {
-			return (getPlayer().getWorld().getMaxBankSize() - list.size()) >= getRequiredSlots(item);
+			return (getPlayer().getWorld().getMaxBankSize() - getUsedSlotCount()) >= getRequiredSlots(item);
 		}
 	}
 
@@ -222,7 +432,7 @@ public class Bank {
 
 	public boolean full() {
 		synchronized(list) {
-			return list.size() >= getPlayer().getWorld().getMaxBankSize();
+			return getUsedSlotCount() >= getPlayer().getWorld().getMaxBankSize();
 		}
 	}
 
@@ -281,6 +491,10 @@ public class Bank {
 				return remainingSize < item.getAmount() ? 1 : 0;
 			}
 
+			if (hasEmptyPin(item.getCatalogId())) {
+				return 0;
+			}
+
 			//No existing stack was found
 			return 1;
 		}
@@ -311,84 +525,36 @@ public class Bank {
 
 	public boolean swap(int slot, int to) {
 		synchronized(list) {
-			if (slot < 0 || to < 0 || slot == to) {
-				return false;
-			}
-
-			final int bankSize = list.size();
-
-			if (slot >= bankSize || to >= bankSize) {
-				return false;
-			}
-
-			final Item item1 = get(slot);
-			final Item item2 = get(to);
-
-			if (item1 == null || item2 == null) {
-				return false;
-			}
-
-			list.set(slot, item2);
-			list.set(to, item1);
-			return true;
+			return rearrangeDisplaySlots(slot, to, false);
 		}
 	}
 
 	public boolean insert(int slot, int to) {
 		synchronized(list) {
-			if (slot < 0 || to < 0 || to == slot) {
-				return false;
-			}
-
-			final int bankSize = list.size();
-
-			if (slot >= bankSize || to >= bankSize) {
-				return false;
-			}
-
-			final Item item = get(slot);
-
-			if (item == null) {
-				return false;
-			}
-
-			final Item[] array = list.toArray(new Item[0]);
-
-			// we reset the item in the from slot
-			array[slot] = null;
-
-			// find which direction to shift in
-			if (slot > to) {
-				int shiftFrom = to;
-				int shiftTo = slot;
-				for (int i = (to + 1); i < slot; i++) {
-					if (array[i] == null) {
-						shiftTo = i;
-						break;
-					}
-				}
-				Item[] slice = new Item[shiftTo - shiftFrom];
-				System.arraycopy(array, shiftFrom, slice, 0, slice.length);
-				System.arraycopy(slice, 0, array, shiftFrom + 1, slice.length);
-			} else {
-				int sliceStart = slot + 1;
-				int sliceEnd = to;
-				for (int i = (sliceEnd - 1); i >= sliceStart; i--) {
-					if (array[i] == null) {
-						sliceStart = i;
-						break;
-					}
-				}
-				Item[] slice = new Item[sliceEnd - sliceStart + 1];
-				System.arraycopy(array, sliceStart, slice, 0, slice.length);
-				System.arraycopy(slice, 0, array, sliceStart - 1, slice.length);
-			}
-
-			// now fill in the target slot
-			array[to] = item;
-			list = new ArrayList<Item>(Arrays.asList(array));
-			return true;
+			return rearrangeDisplaySlots(slot, to, true);
 		}
+	}
+
+	private boolean rearrangeDisplaySlots(int from, int to, boolean insert) {
+		final List<Item> sourceItems = new ArrayList<>(list);
+		final List<Integer> catalogIds = new ArrayList<>(sourceItems.size());
+		for (Item item : sourceItems) {
+			catalogIds.add(item.getCatalogId());
+		}
+		final BankPinLayout.Rearrangement rearrangement = BankPinLayout.rearrange(
+			catalogIds, pinnedSlots, player.getWorld().getMaxBankSize(), from, to, insert);
+		if (rearrangement == null) {
+			return false;
+		}
+		list.clear();
+		for (Integer sourceIndex : rearrangement.getSourceOrder()) {
+			list.add(sourceItems.get(sourceIndex));
+		}
+		pinnedSlots.clear();
+		pinnedSlots.putAll(rearrangement.getPins());
+		normalizePinnedSlots();
+		persistPinnedSlots();
+		return true;
 	}
 
 	/**

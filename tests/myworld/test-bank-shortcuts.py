@@ -17,12 +17,13 @@ def require(text: str, needle: str, description: str) -> None:
 def main() -> None:
     text = BANK.read_text(encoding="utf-8")
 
-    withdraw_branch = "if (mc.getMouseClick() == 1 && mc.controlPressed && !equipmentMode)"
+    withdraw_branch = "if (mc.getMouseClick() == 1 && mc.controlPressed && !equipmentMode"
     deposit_branch = "else if (mc.getMouseClick() == 1 && mc.controlPressed"
     organize_branch = "else if (organizeMode > 0 && !rightClickMenu"
 
     require(text, withdraw_branch, "Ctrl-click bank withdraw branch")
     require(text, "sendWithdraw(Integer.MAX_VALUE);", "full bank stack withdrawal action")
+    require(text, "&& !bankItem.isPlaceholder())", "empty pinned slot withdrawal guard")
     require(text, deposit_branch, "Ctrl-click inventory deposit branch")
     require(text, "sendDeposit(Integer.MAX_VALUE);", "full inventory stack deposit action")
     if "NPE while searching bank" in text:

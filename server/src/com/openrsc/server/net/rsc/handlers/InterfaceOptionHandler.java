@@ -86,10 +86,15 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 				if (!player.getConfig().SPAWN_IRON_MAN_NPCS) return;
 				handleIronmanMode(player, payload);
 				break;
-			case BANK_PIN:
-				if (!player.getConfig().WANT_BANK_PINS && !player.getConfig().TOLERATE_BANK_PINS) return;
-				handleBankPinEntry(player, payload);
-				break;
+				case BANK_PIN:
+					if (!player.getConfig().WANT_BANK_PINS && !player.getConfig().TOLERATE_BANK_PINS) return;
+					handleBankPinEntry(player, payload);
+					break;
+				case BANK_ITEM_PIN:
+					if (!player.getConfig().WANT_CUSTOM_BANKS
+						|| !player.getClientLimitations().supportsBankItemPinning) return;
+					handleBankItemPin(player, payload);
+					break;
 			case AUCTION:
 				if (!player.getConfig().SPAWN_AUCTION_NPCS) return;
 				handleAuction(player, payload);
@@ -249,21 +254,41 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 	}
 
 	private void handleBankSwap(Player player, OptionsStruct payload) {
+		if (!player.accessingBank()) {
+			return;
+		}
 		int slot = payload.slot;
 		int to = payload.to;
 
 		if (player.getBank().swap(slot, to)) {
-			ActionSender.updateBankItem(player, slot, player.getBank().get(slot),
-				player.getBank().get(slot).getAmount());
-			ActionSender.updateBankItem(player, to, player.getBank().get(to),
-				player.getBank().get(to).getAmount());
+			ActionSender.showBank(player);
 		}
 	}
 
 	private void handleBankInsert(Player player, OptionsStruct payload) {
+		if (!player.accessingBank()) {
+			return;
+		}
 		int slot = payload.slot;
 		int to = payload.to;
 		if (player.getBank().insert(slot, to)) {
+			ActionSender.showBank(player);
+		}
+	}
+
+	private void handleBankItemPin(Player player, OptionsStruct payload) {
+		if (!player.accessingBank()) {
+			return;
+		}
+		final boolean changed;
+		if (payload.value == 1) {
+			changed = player.getBank().pinDisplaySlot(payload.slot, payload.id);
+		} else if (payload.value == 0) {
+			changed = player.getBank().unpinDisplaySlot(payload.slot, payload.id);
+		} else {
+			return;
+		}
+		if (changed) {
 			ActionSender.showBank(player);
 		}
 	}

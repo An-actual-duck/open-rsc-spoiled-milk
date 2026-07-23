@@ -9,4 +9,6 @@ public class BankStruct extends AbstractStruct<OpcodeOut> {
 	public int maxBankSize;
 	public int[] catalogIDs;
 	public int[] amount;
+	public boolean includesPinMetadata;
+	public boolean[] pinned;
 }
