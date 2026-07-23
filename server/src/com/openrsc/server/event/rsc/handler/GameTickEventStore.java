@@ -704,6 +704,41 @@ class GameTickEventStore {
 			final long expectedRegistrationSequence,
 			final long expectedProposalGeneration,
 			final RestorationRegionOutcomeOperation operation) {
+		return withValidatedRestorationOneShotConsumptionInternal(
+			expectedSchedulerInstanceIdentity,
+			expectedRegistrationSequence, expectedProposalGeneration,
+			false, 0L, 0L, operation);
+	}
+
+	/** Exact planned-timing variant used only by recovery directives. */
+	RestorationOneShotConsumptionExecution
+		withValidatedRestorationOneShotConsumption(
+			final String expectedSchedulerInstanceIdentity,
+			final long expectedRegistrationSequence,
+			final long expectedProposalGeneration,
+			final long expectedLifecycleVersion,
+			final long expectedTicksBeforeRun,
+			final RestorationRegionOutcomeOperation operation) {
+		if (expectedLifecycleVersion <= 0L) {
+			throw new IllegalArgumentException(
+				"Expected directive lifecycle version must be positive");
+		}
+		return withValidatedRestorationOneShotConsumptionInternal(
+			expectedSchedulerInstanceIdentity,
+			expectedRegistrationSequence, expectedProposalGeneration,
+			true, expectedLifecycleVersion, expectedTicksBeforeRun,
+			operation);
+	}
+
+	private RestorationOneShotConsumptionExecution
+		withValidatedRestorationOneShotConsumptionInternal(
+			final String expectedSchedulerInstanceIdentity,
+			final long expectedRegistrationSequence,
+			final long expectedProposalGeneration,
+			final boolean requireExactPlannedTiming,
+			final long expectedLifecycleVersion,
+			final long expectedTicksBeforeRun,
+			final RestorationRegionOutcomeOperation operation) {
 		if (expectedSchedulerInstanceIdentity == null
 			|| expectedSchedulerInstanceIdentity.isEmpty()
 			|| expectedRegistrationSequence <= 0L
@@ -765,6 +800,16 @@ class GameTickEventStore {
 						result[0] = RestorationOneShotConsumptionExecution
 							.refused(RestorationOneShotConsumptionReason
 								.EXECUTION_SEMANTICS_REFUSED);
+						return;
+					}
+					if (requireExactPlannedTiming
+						&& (fence.getLifecycleVersion()
+								!= expectedLifecycleVersion
+							|| fence.getTicksBeforeRun()
+								!= expectedTicksBeforeRun)) {
+						result[0] = RestorationOneShotConsumptionExecution
+							.refused(RestorationOneShotConsumptionReason
+								.DIRECTIVE_TIMING_MISMATCH);
 						return;
 					}
 					final RegionCommitOutcome[] regionOutcome =
@@ -1067,15 +1112,49 @@ class GameTickEventStore {
 			final String expectedSchedulerInstanceIdentity,
 			final long expectedRegistrationSequence,
 			final long expectedProposalGeneration) {
+		return withValidatedRestorationRegionCommitConsumptionInternal(
+			regionManager, expectedSchedulerInstanceIdentity,
+			expectedRegistrationSequence, expectedProposalGeneration,
+			false, 0L, 0L);
+	}
+
+	RestorationRegionCommitConsumptionExecution
+		withValidatedRestorationRegionCommitConsumption(
+			final RegionManager regionManager,
+			final String expectedSchedulerInstanceIdentity,
+			final long expectedRegistrationSequence,
+			final long expectedProposalGeneration,
+			final long expectedLifecycleVersion,
+			final long expectedTicksBeforeRun) {
+		if (expectedLifecycleVersion <= 0L) {
+			throw new IllegalArgumentException(
+				"Expected directive lifecycle version must be positive");
+		}
+		return withValidatedRestorationRegionCommitConsumptionInternal(
+			regionManager, expectedSchedulerInstanceIdentity,
+			expectedRegistrationSequence, expectedProposalGeneration,
+			true, expectedLifecycleVersion, expectedTicksBeforeRun);
+	}
+
+	private RestorationRegionCommitConsumptionExecution
+		withValidatedRestorationRegionCommitConsumptionInternal(
+			final RegionManager regionManager,
+			final String expectedSchedulerInstanceIdentity,
+			final long expectedRegistrationSequence,
+			final long expectedProposalGeneration,
+			final boolean requireExactPlannedTiming,
+			final long expectedLifecycleVersion,
+			final long expectedTicksBeforeRun) {
 		final RegionManager checkedRegionManager = Objects.requireNonNull(
 			regionManager, "regionManager");
 		final RegionManager.RestorationCommitResult[] regionResult =
 			new RegionManager.RestorationCommitResult[1];
 		RestorationOneShotConsumptionExecution schedulerResult =
-			withValidatedRestorationOneShotConsumption(
+			withValidatedRestorationOneShotConsumptionInternal(
 				expectedSchedulerInstanceIdentity,
 				expectedRegistrationSequence,
-				expectedProposalGeneration, request -> {
+				expectedProposalGeneration, requireExactPlannedTiming,
+				expectedLifecycleVersion, expectedTicksBeforeRun, request -> {
 					regionResult[0] = Objects.requireNonNull(
 						checkedRegionManager
 							.applyGameTickEventRestorationCommitRequest(request),
@@ -1455,6 +1534,7 @@ class GameTickEventStore {
 		SPATIAL_AFFINITY_MISMATCH,
 		PROPOSAL_GENERATION_MISMATCH,
 		EXECUTION_SEMANTICS_REFUSED,
+		DIRECTIVE_TIMING_MISMATCH,
 		EVENT_LIFECYCLE_CHANGED_BEFORE_OPERATION,
 		REGION_COMMIT_REFUSED_RETAINED,
 		EVENT_TERMINALLY_CONSUMED

@@ -26,6 +26,10 @@ APPLICATION_COORDINATOR = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventRestorationFutureStateApplicationCoordinator.java"
 )
+DIRECTIVE_EXECUTOR = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/handler/"
+    "GameTickEventRestorationRecoveryDirectiveExecutor.java"
+)
 TRANSACTION = ROOT / (
     "server/src/com/openrsc/server/model/world/region/"
     "RegionObjectCollisionTransactionExecutor.java"
@@ -351,7 +355,7 @@ class LayeredMapsSliceOneHundredFortyFourTest(unittest.TestCase):
         for path in (ROOT / "server/src").rglob("*.java"):
             if path in (
                 SNAPSHOT, COORDINATOR, CAPTURE_COORDINATOR,
-                APPLICATION_COORDINATOR,
+                APPLICATION_COORDINATOR, DIRECTIVE_EXECUTOR,
                 TRANSACTION, REGION_MANAGER,
             ):
                 continue

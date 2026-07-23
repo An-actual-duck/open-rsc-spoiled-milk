@@ -28,6 +28,10 @@ STORE = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventStore.java"
 )
+DIRECTIVE_EXECUTOR = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/handler/"
+    "GameTickEventRestorationRecoveryDirectiveExecutor.java"
+)
 REGION_MANAGER = ROOT / (
     "server/src/com/openrsc/server/model/world/region/RegionManager.java"
 )
@@ -422,7 +426,7 @@ class LayeredMapsSliceOneHundredFortyTwoTest(unittest.TestCase):
             "applyGameTickEventRestorationCommitRequest(request)", method
         )
         self.assertIn(
-            "withValidatedRestorationOneShotConsumption(", method
+            "withValidatedRestorationOneShotConsumptionInternal(", method
         )
         self.assertIn(
             "RegionObjectCollisionTransactionExecutor.executeRestoration(",
@@ -437,7 +441,7 @@ class LayeredMapsSliceOneHundredFortyTwoTest(unittest.TestCase):
                 continue
             if needle in path.read_text(encoding="utf-8"):
                 callers.append(path)
-        self.assertEqual([], callers)
+        self.assertEqual([DIRECTIVE_EXECUTOR], callers)
         result = STORE.read_text(encoding="utf-8")
         result = result[result.index(
             "class RestorationRegionCommitConsumptionExecution"

@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, and 151 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, and 152 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -167,7 +167,11 @@ batch execution, arrival, and visibility disconnected; and
 automated-validated Slice 151 applies one previously captured future current
 state under a freshly correlated exact registration/execution/stable-lifecycle
 boundary, retains its callback/countdown on apply, no-op, and refusal, and
-leaves batch reduction, arrival, and visibility disconnected;
+leaves batch reduction, arrival, and visibility disconnected; and
+automated-validated Slice 152 routes one already-prepared executable recovery
+directive to only its overdue or future operation, adds exact planned timing to
+overdue consumption, and returns one typed Slice 145 result without looping,
+retrying, arriving, or releasing visibility;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12470,6 +12474,69 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 batch selection and all arrival/visibility paths remain disconnected.
 
+### Slice 152: Executable recovery directive adapter
+
+Objective: execute exactly one already-prepared Slice 145 directive through
+its matching overdue or future runtime path and return one typed operation
+result without creating a batch loop.
+
+Implemented:
+
+- `GameTickEventRestorationRecoveryDirectiveExecutor` accepts a ready Slice 145
+  preparation, exact directive index, and an optional future snapshot. It
+  rejects refused preparation, invalid/noncanonical index, or operation/input
+  mismatches before reaching either runtime path;
+- overdue directives accept no future snapshot and route only to Slice 142's
+  desired-state commit plus terminal one-shot consumption. Future directives
+  require the exactly correlated prepared snapshot and route only to Slice
+  151's current-state application plus event retention;
+- the Store's overdue consumption seam now has an exact planned-timing variant.
+  It compares the prepared lifecycle version and remaining countdown inside the
+  registration/execution boundary before Region mutation or event consumption;
+- applied and no-op overdue results map to the two matching Slice 145 consumed-
+  event outcomes; any scheduler or Region refusal maps to `REFUSED`. Applied
+  and already-satisfied future state both map to current-state-restored/event-
+  retained, while any correlation or Region refusal maps to `REFUSED`;
+- each execution returns exactly one Slice 145 `OperationResult` with the
+  directive's original registration and operation kind plus closed event-
+  consumed/retained and Region-mutation facts; and
+- the adapter neither iterates the preparation nor calls Slice 145 progress
+  assessment. A later bounded batch runner must own prefix and stop-on-refusal
+  behavior.
+
+Automated validation status:
+
+- an executable fixture proves an overdue applied directive invokes only the
+  desired-state path and terminally consumes its event, while a future applied
+  directive invokes only current-state application and retains its event and
+  countdown;
+- changing an overdue callback lifecycle after preparation now produces the
+  new typed timing refusal before Region invocation or event consumption;
+- extra future input on an overdue directive and missing future input on a
+  future directive both refuse before either runtime path;
+- source guards prohibit loops, retry, loading, progress assessment, arrival,
+  visibility release, runtime handles, and lifecycle authority;
+- the complete layered-map suite passes 507 tests across 151 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 799 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this is one-directive execution only. It trusts a closed ready preparation
+  but revalidates exact live scheduler state at each mutation boundary;
+- no outcome after a refusal can run because this adapter never owns more than
+  one directive. Monotonic prefix enforcement remains with the next batch gate;
+- overdue consumption still occurs only after Region apply/no-op succeeds;
+  Region refusal leaves the callback registered, and future outcomes never
+  terminally consume their callback; and
+- reconstruction orchestration, loading, retry, arrival integration, first-
+  visibility release, retirement, persistence, and production callers remain
+  absent.
+
+Status: implemented and automated-validated. No owner route is required because
+the adapter remains a disconnected one-step executor.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13414,13 +13481,19 @@ live callback, and only then invokes Slice 147. Applied, already-satisfied, and
 refused Region outcomes all retain the future callback and its countdown. Batch
 selection/reduction, loading, retry, arrival, and visibility remain disconnected.
 
-The next safe slice should implement a bounded executable adapter for one
-already-prepared Slice 145 directive. It should route overdue directives only
-to Slice 142 and future directives only to Slice 151, translate their closed
-typed outcomes into Slice 145 operation results, and preserve exact directive/
-registration order. It must stop at the first refusal and return only a
-monotonic completed prefix; it must not load Regions, retry, release first
-visibility, or connect to arrival/gameplay yet.
+Slice 152 now executes one already-prepared directive, routing overdue work only
+to Slice 142 and future work only to Slice 151. Overdue execution additionally
+requires the prepared lifecycle/countdown to match inside the scheduler
+boundary. Each path returns one correctly typed Slice 145 operation result, but
+no loop or progress reduction exists yet.
+
+The next safe slice should add a bounded batch runner over a ready Slice 145
+preparation and the exact prepared future snapshots. It must call Slice 152 in
+directive order, append one result at a time, reduce progress through Slice 145,
+and stop immediately on the first refusal. It may report only pending, fresh-
+inventory-retry, or contractually-ready state; it must not retry, load Regions,
+connect arrival/gameplay, or translate contractual readiness into first
+visibility release.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
