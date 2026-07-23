@@ -217,6 +217,9 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 		final Player casterPlayer = (Player) caster;
+		if (Summoning.isPlayerAreaEffectSuppressed(casterPlayer)) {
+			return;
+		}
 		final double chainChance = casterPlayer.getCarriedItems().getEquipment().getChaosNecklaceChainLightningChance();
 		if (chainChance <= 0.0D) {
 			return;
@@ -564,6 +567,9 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 		final Player casterPlayer = (Player) caster;
+		if (Summoning.isPlayerAreaEffectSuppressed(casterPlayer)) {
+			return;
+		}
 		final Npc splinterTarget = selectSplinterTarget(casterPlayer, opponent);
 		if (splinterTarget == null) {
 			return;
@@ -778,7 +784,8 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void applyBloodRobeSplash(final Player casterPlayer, final int damageDealt) {
-		if (!bloodSpell || opponent == null || !opponent.isNpc()) {
+		if (Summoning.isPlayerAreaEffectSuppressed(casterPlayer)
+			|| !bloodSpell || opponent == null || !opponent.isNpc()) {
 			return;
 		}
 		final double splashPercent = casterPlayer.getBloodRobeSpellSplashPercent();
@@ -815,7 +822,8 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private void applyDeathRobeOverkillSplash(final Player player, final Npc primaryTarget, final int overkillDamage) {
 		final double splashPercent = player.getDeathRobeOverkillSplashPercent();
-		if (overkillDamage <= 0 || splashPercent <= 0.0D) {
+		if (Summoning.isPlayerAreaEffectSuppressed(player)
+			|| overkillDamage <= 0 || splashPercent <= 0.0D) {
 			return;
 		}
 		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));
@@ -855,7 +863,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		for (Player splashTarget : balrog.getViewArea().getPlayersInView()) {
 			if (splashTarget == null || splashTarget == primaryTarget || splashTarget.isRemoved()
 				|| splashTarget.getSkills().getLevel(Skill.HITS.id()) <= 0
-				|| !splashTarget.withinRange(primaryTarget.getLocation(), 2)) {
+				|| !splashTarget.withinRange(primaryTarget.getLocation(), 2)
+				|| !Summoning.canSummonAttack(balrog, splashTarget)) {
 				continue;
 			}
 			int splashDamage = splashTarget.applyRobeDamageMitigation(baseSplashDamage, magicElement);

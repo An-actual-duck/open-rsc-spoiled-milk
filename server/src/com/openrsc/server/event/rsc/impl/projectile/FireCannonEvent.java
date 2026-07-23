@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.impl.projectile;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.PathValidation;
@@ -29,7 +30,7 @@ public class FireCannonEvent extends GameTickEvent {
 	private final World world;
 	private final Comparator<Mob> comparator;
 
-	private Mob targetNpc;
+	private Npc targetNpc;
 
 	private int shots;
 
@@ -58,10 +59,20 @@ public class FireCannonEvent extends GameTickEvent {
 		this.player.message("searching for targets");
 
 		final List<Npc> validTargets = new ArrayList<>();
-
-		for (final Npc npc : this.player.getLocalNpcs()) {
-			if (this.isValidTarget(npc)) {
-				validTargets.add(npc);
+		final boolean singleTarget = Summoning.isPlayerAreaEffectSuppressed(this.player);
+		if (singleTarget) {
+			final Npc guardDogTarget = Summoning.getGuardDogPrimaryEnemy(this.player);
+			if (this.isValidTarget(guardDogTarget, true)) {
+				validTargets.add(guardDogTarget);
+			} else if (this.isValidTarget(this.targetNpc, true)) {
+				validTargets.add(this.targetNpc);
+			}
+		}
+		if (validTargets.isEmpty()) {
+			for (final Npc npc : this.player.getLocalNpcs()) {
+				if (this.isValidTarget(npc, singleTarget)) {
+					validTargets.add(npc);
+				}
 			}
 		}
 
@@ -77,6 +88,9 @@ public class FireCannonEvent extends GameTickEvent {
 
 		validTargets.sort(this.comparator);
 		this.targetNpc = validTargets.get(0);
+		if (singleTarget) {
+			Summoning.selectGuardDogPrimaryEnemy(this.player, this.targetNpc);
+		}
 
 		this.player.face(this.targetNpc);
 
@@ -93,11 +107,13 @@ public class FireCannonEvent extends GameTickEvent {
 		this.player.playSound("shoot");
 	}
 
-	private boolean isValidTarget(final Npc npc) {
+	private boolean isValidTarget(final Npc npc, final boolean allowPreviousTarget) {
 		final int x = this.player.getX();
 		final int y = this.player.getY();
 
-		return (this.targetNpc == null || this.targetNpc.getUUID() != npc.getUUID()) &&
+		return npc != null &&
+			(allowPreviousTarget || this.targetNpc == null || this.targetNpc.getUUID() != npc.getUUID()) &&
+			!Summoning.isSummon(npc) &&
 			npc.getDef().isAttackable() &&
 			npc.getSkills().getLevel(Skill.HITS.id()) > 0 &&
 			npc.getLocation().inBounds(x - MAX_DISTANCE, y - MAX_DISTANCE, x + MAX_DISTANCE, y + MAX_DISTANCE) &&

@@ -23,6 +23,7 @@ SUMMON_NAMES = [
     "Bound Battleaxe",
     "Mourning Unicorn",
     "Restless Shade",
+    "Guard Dog",
     "Delivery Camel",
     "Astral Wraith",
     "Abyssal Demon",
@@ -58,7 +59,9 @@ def main() -> int:
         failures.append("summon icon filenames must be derived from dashed summon names")
     if "drawSprite(summonIcon" not in client:
         failures.append("summon menu must draw summon icon sprites when present")
-    expected_icon_names = [asset_name(name) + ".png" for name in SUMMON_NAMES]
+    expected_icon_names = [
+        asset_name(name) + ".png" for name in SUMMON_NAMES if name != "Guard Dog"
+    ]
     for filename in expected_icon_names:
         if filename not in plan:
             failures.append(f"summoning plan should document icon filename {filename}")
@@ -73,6 +76,10 @@ def main() -> int:
         width, height = struct.unpack(">II", data[16:24])
         if width <= 0 or height <= 0:
             failures.append(f"summon icon must have positive geometry: {filename}")
+    if "no purpose-made\n`guard-dog.png` has been supplied" not in plan:
+        failures.append("summoning plan should document Guard Dog's intentional initials fallback")
+    if "this.getSpellInitials(SUMMONING_NAMES[summonIndex])" not in client:
+        failures.append("client must retain initials fallback for summons without icon art")
 
     if failures:
         print("FAIL:")

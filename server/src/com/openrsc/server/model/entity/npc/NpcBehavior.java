@@ -354,11 +354,7 @@ public class NpcBehavior {
 		}
 
 		if (!Summoning.canSummonAttack(npc, target)) {
-			npc.resetCombatEvent();
-			npc.setOpponent(null);
-			npc.setLastOpponent(null);
-			npc.clearHostility();
-			setRoaming();
+			disengageFrom((Player) target);
 			return;
 		}
 
@@ -426,6 +422,10 @@ public class NpcBehavior {
 	}
 
 	private void handleCombat(final long now) {
+		if (target != null && target.isPlayer() && !Summoning.canSummonAttack(npc, target)) {
+			disengageFrom((Player) target);
+			return;
+		}
 
 		// No target, return to roaming.
 		if (target == null || npc.isRespawning() || npc.isRemoved() || target.isRemoved()) {
@@ -703,6 +703,10 @@ public class NpcBehavior {
 	}
 
 	public void setChasing(final Player player) {
+		if (!Summoning.canSummonAttack(npc, player)) {
+			disengageFrom(player);
+			return;
+		}
 		state = State.AGGRO;
 		target = player;
 	}
@@ -731,6 +735,29 @@ public class NpcBehavior {
 
 	public Mob getChaseTarget() {
 		return target;
+	}
+
+	public void disengageFrom(final Player player) {
+		if (player == null) {
+			return;
+		}
+		if (npc.getPvmMeleeEvent() != null
+			&& npc.getPvmMeleeEvent().isRunning()
+			&& npc.getPvmMeleeEvent().getTarget() == player) {
+			npc.getPvmMeleeEvent().resetCombat(false);
+		}
+		if (npc.getOpponent() == player) {
+			npc.setOpponent(null);
+		}
+		if (npc.getLastOpponent() == player) {
+			npc.setLastOpponent(null);
+		}
+		if (npc.isHostileToward(player)) {
+			npc.clearHostility();
+		}
+		if (target == player) {
+			setRoaming();
+		}
 	}
 
 	public void setRoaming() {

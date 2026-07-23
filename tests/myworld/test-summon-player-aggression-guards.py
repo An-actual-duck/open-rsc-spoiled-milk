@@ -40,7 +40,7 @@ def main() -> None:
     )
     require(
         summoning,
-        "return !isSummon(attacker) || target == null || !target.isPlayer();",
+        "if (isSummon(attacker) && target != null && target.isPlayer())",
         "Summons should not be allowed to attack player targets",
     )
     require(

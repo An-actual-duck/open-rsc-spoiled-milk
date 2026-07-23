@@ -2038,6 +2038,11 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 	private void applyGodSpellAreaEffects(final Player caster, final Mob primaryTarget, final Spells spellEnum, final int primaryDamage) {
 		final boolean advancedSpell = SpellClassification.isAdvancedGodSpell(spellEnum);
+		if (Summoning.isPlayerAreaEffectSuppressed(caster)) {
+			applyGodSpellSpecialEffect(caster, primaryTarget, spellEnum, primaryDamage, true);
+			applyGodSpellLifesteal(caster, spellEnum, Math.max(0, primaryDamage));
+			return;
+		}
 		final double secondaryDamagePercent = advancedSpell ? 0.50D : 0.25D;
 		final int secondaryMax = Math.max(1, (int) Math.ceil(CombatFormula.getGodSpellMax(caster, advancedSpell) * secondaryDamagePercent));
 		int totalDamage = Math.max(0, primaryDamage);
@@ -2057,6 +2062,9 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private void applyIbanBlastAreaEffects(final Player caster, final Mob primaryTarget) {
+		if (Summoning.isPlayerAreaEffectSuppressed(caster)) {
+			return;
+		}
 		final int secondaryMax = 8;
 		for (Npc npc : caster.getViewArea().getNpcsInView()) {
 			if (npc == primaryTarget || !isValidIbanBlastAreaTarget(primaryTarget, npc)) {

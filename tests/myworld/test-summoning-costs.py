@@ -123,7 +123,7 @@ def main() -> int:
         fail("Summoning skill guide should not show Delivery Camel bones")
     if "{37, 36, 42, 40}" not in client or "{1, 2, 2, 2}" not in client:
         fail("Summoning tooltip should show Delivery Camel without bones")
-    if client_cost_item_ids[10] != [37, 36, 42, 40] or client_cost_amounts[10] != [1, 2, 2, 2]:
+    if client_cost_item_ids[11] != [37, 36, 42, 40] or client_cost_amounts[11] != [1, 2, 2, 2]:
         fail("Delivery Camel dropdown cost icons should be life, body, law, nature only")
 
     upkeep_checks = (
