@@ -5,7 +5,7 @@ Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 contained path, Slice 158's safe refusal path, Slice 162's corrected owner
 continuity route, and Slices 167-168's corrected owner-preservation route
 owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, and 172 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, and 174 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -284,6 +284,12 @@ while holding the lifecycle monitor, supplies only detached coordinates and a
 mirror version, and invalidates the boundary before release. Both owner
 capture paths now reach the event/World/NPC scope only through that boundary,
 while source absence, reconstruction, and authority remain absent;
+automated-validated Slice 174 inventories exact Region-local source-absence
+blockers inside that boundary. It separates active players, NPC membership,
+authored and dynamic objects, ground items, collision products, tile storage,
+and the still-unavailable reload path into detached per-source counts and
+typed summaries, while no Region becomes absent and no runtime handle or
+authority survives capture;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13996,6 +14002,66 @@ read-only source-absence preflight inside this boundary so the generic
 `SOURCE_SET_UNAVAILABLE` refusal can identify concrete remaining blockers
 without removing a Region.
 
+### Slice 174: Exact source-absence preflight
+
+Objective: inventory the exact runtime dependencies that still prevent a
+selected packed-source set from becoming temporarily absent, without
+performing source absence or granting lifecycle authority.
+
+Implemented:
+
+- `LayeredPackedRegionSourceAbsencePreflight` binds generation, requirements
+  tick, capture tick, residency-mirror version, and exact selected-source order
+  to immutable Region-local inventories;
+- each source distinguishes tile-storage availability, active players, NPC
+  membership, authored objects, identity-less dynamic objects, ground items,
+  and collision-product tiles;
+- stable typed blockers distinguish unavailable NPC membership preservation,
+  authored reload, dynamic-object preservation, ground-item preservation,
+  collision rebuild, and the Region reload path rather than collapsing them
+  into one generic lifecycle refusal;
+- source and whole-selection totals reconcile independently, and blocker
+  summaries count affected exact sources rather than runtime instances; and
+- RegionManager captures the inventory only while the Slice 173 boundary and
+  `layeredRegionLifecycleLock` remain active, rechecks residency-mirror
+  version and membership, uses non-creating Region lookup, and rejects
+  unavailable collision storage.
+
+Safety boundary:
+
+- no Region becomes absent, unloaded, removed, created, reconstructed, or
+  registered through the preflight;
+- the result retains no Region, tile, entity, collection, registry, scheduler,
+  event, or other runtime handle;
+- Region storage, residency mirror, visibility caches, arrival, pathing,
+  packets, persistence, and gameplay remain unchanged;
+- every result is point-in-time evidence only and explicitly denies source
+  mutation, reconstruction, arrival-gate, and lifecycle authority; and
+- the capture remains disconnected from the parity observer and
+  source-lifecycle consumer, so schema-v48 and the accepted private route are
+  unchanged.
+
+Automated validation status:
+
+- an executable fixture proves exact source-order binding, detached survival
+  after boundary invalidation, totals, stable blockers and summaries,
+  immutable results, invalid inventory refusal, and every non-authoritative
+  flag;
+- structural guards prove RegionManager requires the real lifecycle monitor,
+  mirror version and exact residency, performs only non-creating lookup and
+  read-only retirement snapshots, and contains no removal, unload, registry,
+  or cache mutation;
+- the complete layered-map suite passes 583 tests across 173 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 814 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. Owner validation is deferred
+because the preflight has no private diagnostic caller yet. The next focused
+slice should attach this detached result to the explicit
+`preserve-noop` route through an additive schema so the owner can inspect real
+dense- and quiet-area blocker distributions without permitting absence.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14384,6 +14450,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 172 by exposing the safe source-lifecycle refusal through private diagnostics. | Implemented and automated-validated; additive schema-v48 and explicit `preserve-noop` report the exact owner-scope/lifecycle stopping point, both private sources share the handler adapter, ordinary events remain null, every source/consumer/mutation/authority fact is fixed at zero or false, 575 focused tests pass across 171 files, and the 812/488 Ant build passes; private owner validation is pending |
 | 2026-07-23 | Accept the Slice 172 private source-lifecycle refusal route. | Owner-validated; all four v48 records validate, the dense record covers 36 sources, 457 related callbacks, 449 exact NPC owners and links, and 8 separate non-NPC callbacks, every owner boundary is complete, `preserve-noop` reaches only `SOURCE_LIFECYCLE_UNAVAILABLE` with zero absence/reconstruction/consumer work and zero authority, and dialogue, gate, scenery, and movement interactions remain normal afterward |
 | 2026-07-23 | Continue with Slice 173 by replacing assumed Region quiescence with a real packed-source lifecycle boundary. | Implemented and automated-validated; RegionManager checks the exact unique selected sources against packed storage and its residency mirror under the lifecycle monitor, exposes only an ephemeral detached source/mirror-version boundary, invalidates it before release, and gates both owner-capture paths through it; no source mutation or schema change occurs, 579 focused tests pass across 172 files, and the 813/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 174 by inventorying exact source-absence blockers inside the real lifecycle boundary. | Implemented and automated-validated; the detached preflight separates Region-local players, NPC membership, authored/dynamic objects, ground items, collision products, tile storage, and reload-path blockers in exact source order while retaining no runtime handles and performing no source mutation; 583 focused tests pass across 173 files, and the 814/488 Ant build passes |
 
 ## Next Discussion
 

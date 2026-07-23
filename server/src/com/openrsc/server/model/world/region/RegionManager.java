@@ -678,6 +678,62 @@ public class RegionManager {
 		}
 	}
 
+	/**
+	 * Captures exact Region-local absence blockers inside an active packed-source
+	 * lifecycle boundary. No absent Region is created and no runtime handle is
+	 * retained by the detached result.
+	 */
+	public LayeredPackedRegionSourceAbsencePreflight
+		captureLayeredPackedRegionSourceAbsencePreflight(
+			final LayeredPackedRegionSourceLifecycleBoundary boundary) {
+		LayeredPackedRegionSourceLifecycleBoundary checked =
+			Objects.requireNonNull(boundary, "boundary");
+		if (!Thread.holdsLock(layeredRegionLifecycleLock)
+			|| !checked.isRegionLifecycleBoundaryHeld()
+			|| checked.getSelectedSourceCount() <= 0
+			|| checked.getSelectedSourceCount()
+				> MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN
+			|| checked.getResidencyMirrorVersion()
+				!= layeredRegionResidencyMirror.getVersion()) {
+			throw new IllegalStateException(
+				"Packed-source absence preflight lacks its lifecycle boundary");
+		}
+		List<LayeredPackedRegionSourceAbsencePreflight.SourceInventory>
+			inventories = new ArrayList<
+				LayeredPackedRegionSourceAbsencePreflight.SourceInventory>(
+					checked.getSelectedSourceCount());
+		for (LayeredPackedRegionSourceLifecycleBoundary.PackedSource source
+			: checked.getSelectedSources()) {
+			Region region = peekRegionFromSectorCoordinates(
+				source.getPackedRegionX(), source.getPackedRegionY());
+			if (region == null
+				|| !layeredRegionResidencyMirror.isPackedRegionRegistered(
+					source.getPackedRegionX(), source.getPackedRegionY())) {
+				throw new IllegalStateException(
+					"Packed source changed inside its lifecycle boundary");
+			}
+			Region.RetirementContentsSnapshot snapshot =
+				region.captureRetirementContentsSnapshot();
+			if (snapshot.getCollisionProductTileCount() < 0) {
+				throw new IllegalStateException(
+					"Packed source has unavailable collision storage");
+			}
+			inventories.add(
+				LayeredPackedRegionSourceAbsencePreflight.SourceInventory.of(
+					source.getPackedRegionX(), source.getPackedRegionY(),
+					snapshot.isTileStorageAvailable(),
+					snapshot.getPlayerCount(), snapshot.getNpcCount(),
+					snapshot.getObjectCount(),
+					snapshot.getDynamicObjectCount(),
+					snapshot.getGroundItemCount(),
+					snapshot.getCollisionProductTileCount()));
+		}
+		return LayeredPackedRegionSourceAbsencePreflight.assess(
+			checked, inventories, getWorld().getServer().getCurrentTick(),
+			LAYERED_PACKED_REGION_RELOAD_SUPPORTED,
+			Thread.holdsLock(layeredRegionLifecycleLock));
+	}
+
 	/** Opens one dormant owner and atomically assigns its first logical window. */
 	public LayeredRegionInterestOwnershipLedger.OpenedOwner
 		openLayeredRegionInterestOwner(final WorldRegionWindow currentWindow) {
