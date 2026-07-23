@@ -270,11 +270,13 @@ through a verification-only handler adapter, then deliberately returns
 `SOURCE_LIFECYCLE_UNAVAILABLE`. It proves the accepted scope reaches the exact
 missing authority while performing no source absence, reconstruction,
 preserved work, Region mutation, arrival, or visibility action;
-automated-validated Slice 172 exposes that safe refusal only through the
+owner-validated Slice 172 exposes that safe refusal only through the
 explicit private `preserve-noop` action and additive schema-v48. Ordinary
 events carry null evidence, both private sources share the handler seam, and
 the schema makes every absent/reconstruction/consumer/authority fact
-immutably false;
+immutably false. The accepted dense route entered the complete 36-source,
+449-NPC-owner boundary, reached only `SOURCE_LIFECYCLE_UNAVAILABLE`, and left
+dialogue, scenery interaction, and movement normal afterward;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13894,12 +13896,32 @@ Automated validation status:
 - the authoritative bundled-Ant server build compiles 812 core and 488 plugin
   sources and passes its build/classpath audit.
 
-Status: implemented and automated-validated; private owner validation is
-pending. The meaningful route is one fresh dense capture followed by
-`::lp preserve-noop` and stop. Expected evidence is the same complete 449-owner
-boundary plus `SOURCE_LIFECYCLE_UNAVAILABLE`, scope/lifecycle true, zero absent
-or reconstructed sources, zero preserved-consumer invocations, and every
-authority flag false.
+Owner validation:
+
+- the exact pushed checkpoint emitted a four-record v48
+  start/teleport/preservation-noop/stop segment, and all four records validate
+  against the additive schema registry;
+- the dense record at `(122,509,L0)` selected 36 packed sources and correlated
+  457 proposal-related callbacks: 449 exact NPC owners plus 8 separate
+  non-NPC/player callbacks;
+- all 449 required owners and event links passed the exact registration,
+  execution, timing, World-registration, NPC-lifecycle, reference, and
+  Region-absence-quiescence boundaries, producing
+  `PRESERVATION_SCOPE_READY`;
+- the explicit no-op then reported `SOURCE_LIFECYCLE_UNAVAILABLE` with
+  owner-scope entry and source-lifecycle invocation true, but zero absent
+  sources, zero reconstructed sources, zero preserved-consumer invocations,
+  and every mutation, handle, arrival, visibility, and lifecycle-authority
+  field false; and
+- the owner observed a fully loaded dense area and normal movement and
+  interaction. Server/client evidence records successful NPC dialogue, gate
+  operation, and scenery examination after the capture, with no command,
+  logout, stack, or runtime failure.
+
+Status: implemented, automated-validated, owner-validated, checkpointed, and
+accepted. Slice 172 proves the real exact owner scope reaches the deliberately
+disconnected source-lifecycle boundary without granting or exercising source
+mutation authority.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -14287,6 +14309,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 170 by composing an ephemeral preserved source lifecycle. | Implemented and automated-validated; only one exact request-bound full absence/reconstruction/restoration cycle with first visibility withheld admits one consumer, completion cannot cross scopes, request and evidence leakage fail after return or exception, the detached success is historical rather than reusable authority, no production caller exists, 567 focused tests pass across 169 files, and the 811/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 171 by connecting the real owner boundary to a typed source-lifecycle refusal. | Implemented and automated-validated; accepted event/registration/World/NPC scopes reach `SOURCE_LIFECYCLE_UNAVAILABLE`, refused scopes invoke nothing, both paths report zero absent/reconstructed sources and zero preserved-consumer invocations, no Region/source/gameplay authority is connected, 571 focused tests pass across 170 files, and the 812/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 172 by exposing the safe source-lifecycle refusal through private diagnostics. | Implemented and automated-validated; additive schema-v48 and explicit `preserve-noop` report the exact owner-scope/lifecycle stopping point, both private sources share the handler adapter, ordinary events remain null, every source/consumer/mutation/authority fact is fixed at zero or false, 575 focused tests pass across 171 files, and the 812/488 Ant build passes; private owner validation is pending |
+| 2026-07-23 | Accept the Slice 172 private source-lifecycle refusal route. | Owner-validated; all four v48 records validate, the dense record covers 36 sources, 457 related callbacks, 449 exact NPC owners and links, and 8 separate non-NPC callbacks, every owner boundary is complete, `preserve-noop` reaches only `SOURCE_LIFECYCLE_UNAVAILABLE` with zero absence/reconstruction/consumer work and zero authority, and dialogue, gate, scenery, and movement interactions remain normal afterward |
 
 ## Next Discussion
 
