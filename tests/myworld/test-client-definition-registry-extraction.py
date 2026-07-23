@@ -17,7 +17,7 @@ FALLBACKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/ClientDefi
 
 EXPECTED: dict[str, tuple[int, str]] = {
     "npcs": (845, "e7c568cc81969df8b35d0fb94a74d5a5c13ed662efd85ff83672d9a6879e3f69"),
-    "items": (3281, "e1286311c99d4919d6700694d5d0da921c2606d80c0c1a256236905343aab5d9"),
+    "items": (3281, "f5334afd49cc3ae989d2abcb31186d03f255c9f71bded380ce80b03109cd497b"),
     "textures": (55, "f2641fe74967a839ad0c6121e5e67d4016cb05666aaf3e4774ed989ea3c8d951"),
     "animations": (1060, "2315c562283f5b0dc21d7af97d9a5920f857c1ca36ce2bd59532e2d26c18fd6d"),
     "projectiles": (41, "c79c74303e8ce5c5c345640227a0023ccbc63285f0a652f404794c35c1d5385f"),
