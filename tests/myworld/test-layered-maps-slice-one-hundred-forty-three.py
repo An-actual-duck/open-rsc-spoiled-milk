@@ -26,6 +26,10 @@ LIVE_PREPARATION_COORDINATOR = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventRestorationLivePreparationCoordinator.java"
 )
+LIVE_RECONSTRUCTION_COORDINATOR = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/handler/"
+    "GameTickEventRestorationLiveReconstructionCoordinator.java"
+)
 STORE = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventStore.java"
@@ -260,6 +264,7 @@ class LayeredMapsSliceOneHundredFortyThreeTest(unittest.TestCase):
             if path in (
                 CONTRACT, COORDINATOR, BATCH_EXECUTOR,
                 LIFECYCLE_COORDINATOR, LIVE_PREPARATION_COORDINATOR,
+                LIVE_RECONSTRUCTION_COORDINATOR,
             ):
                 continue
             self.assertNotIn(name, path.read_text(encoding="utf-8"))

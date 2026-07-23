@@ -42,6 +42,10 @@ LIVE_PREPARATION_COORDINATOR = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventRestorationLivePreparationCoordinator.java"
 )
+LIVE_RECONSTRUCTION_COORDINATOR = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/handler/"
+    "GameTickEventRestorationLiveReconstructionCoordinator.java"
+)
 TRANSACTION = ROOT / (
     "server/src/com/openrsc/server/model/world/region/"
     "RegionObjectCollisionTransactionExecutor.java"
@@ -369,6 +373,7 @@ class LayeredMapsSliceOneHundredFortyFourTest(unittest.TestCase):
                 SNAPSHOT, COORDINATOR, CAPTURE_COORDINATOR,
                 APPLICATION_COORDINATOR, DIRECTIVE_EXECUTOR, BATCH_EXECUTOR,
                 LIFECYCLE_COORDINATOR, LIVE_PREPARATION_COORDINATOR,
+                LIVE_RECONSTRUCTION_COORDINATOR,
                 TRANSACTION, REGION_MANAGER,
             ):
                 continue

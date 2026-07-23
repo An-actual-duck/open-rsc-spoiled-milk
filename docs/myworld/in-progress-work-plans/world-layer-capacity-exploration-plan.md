@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, and 155 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, and 156 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -184,6 +184,10 @@ automated-validated Slice 155 converts one exact proposal-scoped live event
 inventory into a ready recovery preparation, captures future current state,
 rejects incomplete related callbacks and scheduler drift, and retains only
 detached inputs for Slice 154;
+automated-validated Slice 156 composes that live capture directly with the
+single-use reconstruction lifecycle, prevents caller substitution of its
+generation, bound, preparation, or snapshots, and still exposes neither a real
+loader nor first visibility;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12724,6 +12728,62 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the preparation result remains disconnected from diagnostics and reconstruction.
 
+### Slice 156: Live reconstruction composition
+
+Objective: compose Slice 155's exact live preparation directly with Slice
+154's single-use lifecycle so no caller can substitute a different preparation,
+proposal generation, candidate bound, or future-snapshot list between phases.
+
+Implemented:
+
+- `GameTickEventRestorationLiveReconstructionCoordinator` owns both package-
+  local coordinators over the same exact Store and RegionManager instances;
+- `captureBeforeReconstruction` first runs Slice 155 and, only when ready,
+  passes its internal preparation, defensive future snapshots, generation, and
+  bound directly into Slice 154. The returned facade value exposes only closed
+  counts/reasons and the proposal generation;
+- the underlying captured recovery remains private to the facade. Callers can
+  neither retrieve nor replace it before `reconstructThenRecover` invokes the
+  already-proven single-use lifecycle;
+- live-preparation refusal reaches no reconstruction operation, while a
+  reconstruction refusal reaches no recovery operation; and
+- a successful fixture-supplied reconstruction completion flows through the
+  exact future-state recovery path and returns contractual readiness without
+  translating it into first visibility.
+
+Automated validation status:
+
+- an executable future-callback fixture proves exact live inventory capture,
+  one current-state snapshot, one reconstruction callback, one future Region
+  application, callback retention, and contractual readiness through the full
+  composition;
+- an incomplete live inventory invokes neither reconstruction nor recovery,
+  while explicit reconstruction refusal leaves recovery untouched;
+- source-order guards require live preparation before lifecycle capture and
+  lifecycle capture before execution, and assert that input substitution is
+  unavailable;
+- no World loader, Player, retry, arrival gate, visibility release, or runtime
+  handle is attached;
+- the complete layered-map suite passes 519 tests across 155 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 803 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the only reconstruction operation remains fixture-supplied. This facade
+  creates no source loader, teardown transaction, retirement permit, or Region
+  registry mutation;
+- the full event-recovery composition cannot satisfy the separate Player, NPC,
+  dynamic-object, ground-item, collision, terrain, and loader prerequisites;
+- contractual readiness remains internal evidence and performs no packet,
+  entity, Region, or Player visibility action; and
+- production diagnostics, commands, gameplay/arrival, retry, persistence, and
+  public/live callers remain absent.
+
+Status: implemented and automated-validated. No owner route is required because
+the full composition still has only a fixture-supplied reconstruction operation.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13692,14 +13752,21 @@ under a fresh stable scheduler lifecycle, captures future current scenery
 through Slice 150, and rejects Store registration or selected timing drift
 before returning the detached Slice 145 preparation and snapshots.
 
-The next safe slice should connect Slice 155 directly to Slice 154 inside the
-package-local handler boundary so callers cannot mix a preparation with another
-proposal generation, bound, or future-snapshot list. The first integration
-should use only a fixture-supplied reconstruction operation and return the same
-closed lifecycle result; it must not attach a real loader, observer, command,
-arrival gate, retry, or visibility release. Once that composition is proven, a
-separate private diagnostic can exercise a no-op reconstruction declaration
-against one deliberately pending future callback without unloading anything.
+Slice 156 now supplies the direct package-local composition. The exact live
+preparation flows into a private single-use captured lifecycle, callers cannot
+retrieve or substitute its inputs, and reconstruction refusal or capture
+refusal excludes every later phase.
+
+The next safe slice should add a deliberately narrow private diagnostic around
+this composition. It should accept an already-produced proposal-scoped event
+inventory, use a no-op reconstruction operation that unloads and changes
+nothing, and exercise only future callbacks whose current state is therefore
+expected to be an idempotent no-op recovery. The result should emit stable
+AI-readable counts/reasons through the existing opt-in parity trace, remain
+disabled by default, and never run overdue consumption, real reconstruction,
+retry, arrival, or visibility release. This will provide the first meaningful
+owner validation of the complete capture/order/recovery wiring without risking
+world teardown.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
