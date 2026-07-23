@@ -39,6 +39,7 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 	private final long generation;
 	private final long eventObservedAtTick;
 	private final long censusObservedAtTick;
+	private final String schedulerInstanceIdentity;
 	private final int selectedSourceCount;
 	private final int proposalRelatedEventCount;
 	private final int relatedOwnerPositionHintEventCount;
@@ -63,6 +64,8 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 		this.generation = inventory.getProposalGeneration();
 		this.eventObservedAtTick = inventory.getObservedAtTick();
 		this.censusObservedAtTick = continuity.getCensusObservedAtTick();
+		this.schedulerInstanceIdentity =
+			inventory.getSchedulerInstanceIdentity();
 		this.selectedSourceCount = inventory.getSourceCount();
 		this.proposalRelatedEventCount =
 			inventory.getCandidateRelatedEventCount();
@@ -245,6 +248,9 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 	public long getGeneration() { return generation; }
 	public long getEventObservedAtTick() { return eventObservedAtTick; }
 	public long getCensusObservedAtTick() { return censusObservedAtTick; }
+	public String getSchedulerInstanceIdentity() {
+		return schedulerInstanceIdentity;
+	}
 	public int getSelectedSourceCount() { return selectedSourceCount; }
 	public int getProposalRelatedEventCount() {
 		return proposalRelatedEventCount;

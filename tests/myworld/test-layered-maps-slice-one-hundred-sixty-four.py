@@ -45,6 +45,8 @@ METHODS = r'''
         check(requirements.getGeneration() == 9L
                 && requirements.getEventObservedAtTick() == 12L
                 && requirements.getCensusObservedAtTick() == 13L
+                && requirements.getSchedulerInstanceIdentity().equals(
+                    "00000000-0000-0000-0000-000000000161")
                 && requirements.getSelectedSourceCount() == 1
                 && requirements.getProposalRelatedEventCount() == 3
                 && requirements.getRelatedOwnerPositionHintEventCount() == 3

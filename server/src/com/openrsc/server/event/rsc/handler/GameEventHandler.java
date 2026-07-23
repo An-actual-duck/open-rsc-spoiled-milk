@@ -40,6 +40,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SceneryRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SpatialReference;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SpatialRole;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationBoundaryObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationRequirements;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TargetConflictPolicy;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TargetSubject;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TimeProgressionPolicy;
@@ -479,6 +481,23 @@ public class GameEventHandler {
 			diagnostic.isRecoveryInvoked(),
 			diagnostic.isContractuallyReadyForFirstVisibility(),
 			diagnostic.isFreshInventoryRetryRequired());
+	}
+
+	/**
+	 * Captures one nested scheduler/timing/World-registration boundary for the
+	 * exact NPC owner requirements. NPC movement/removal quiescence remains
+	 * deliberately absent, so this observation cannot establish preservation.
+	 */
+	public LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
+		captureLayeredPackedRegionNpcOwnerPreservationBoundary(
+			final LayeredPackedRegionNpcOwnerPreservationRequirements
+				requirements,
+			final int maximumOwners) {
+		return GameTickEventNpcOwnerPreservationBoundary.capture(
+			eventStore,
+			getServer().getWorld().getNpcs(),
+			Objects.requireNonNull(requirements, "requirements"),
+			getServer().getCurrentTick(), maximumOwners);
 	}
 
 	/**

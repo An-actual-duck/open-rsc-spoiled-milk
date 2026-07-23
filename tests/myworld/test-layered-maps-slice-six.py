@@ -262,6 +262,7 @@ class LayeredMapsSliceSixTest(unittest.TestCase):
                 "server/src/com/openrsc/server/database/WorldPopulator.java",
                 "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
                 "server/src/com/openrsc/server/event/rsc/handler/GameEventHandler.java",
+                "server/src/com/openrsc/server/event/rsc/handler/GameTickEventNpcOwnerPreservationBoundary.java",
                 "server/src/com/openrsc/server/event/rsc/handler/GameTickEventRestorationLivePreparationCoordinator.java",
                 "server/src/com/openrsc/server/event/rsc/handler/GameTickEventRestorationLiveReconstructionCoordinator.java",
                 "server/src/com/openrsc/server/event/rsc/handler/GameTickEventRestorationNoOpDiagnostic.java",

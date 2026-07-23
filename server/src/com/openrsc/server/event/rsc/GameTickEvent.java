@@ -136,6 +136,79 @@ public abstract class GameTickEvent implements Callable<Integer> {
 		}
 	}
 
+	/**
+	 * Runs one internal owner-preservation operation while this event is both
+	 * execution-fenced and running with an unchanged timing lifecycle.
+	 *
+	 * <p>Unlike scenery restoration, owner-bound periodic callbacks may already
+	 * have run many times. This boundary therefore requires only a currently
+	 * running event. It invokes no callback and grants no mutation authority.</p>
+	 */
+	public final boolean withinRunningOwnerPreservationLifecycleBoundary(
+		final OwnerPreservationLifecycleOperation operation) {
+		if (operation == null) {
+			throw new NullPointerException("operation");
+		}
+		if (!isExecutionBoundaryHeldByCurrentThread()) {
+			throw new IllegalStateException(
+				"Owner preservation lifecycle requires event execution boundary");
+		}
+		synchronized (timingLock) {
+			if (!running) {
+				return false;
+			}
+			long expectedLifecycleVersion = lifecycleVersion;
+			operation.execute(new OwnerPreservationLifecycleBoundary(
+				ticksBeforeRun, timesRan, lifecycleVersion,
+				Thread.holdsLock(timingLock)));
+			if (lifecycleVersion != expectedLifecycleVersion) {
+				throw new IllegalStateException(
+					"Owner preservation operation changed event lifecycle");
+			}
+			return true;
+		}
+	}
+
+	@FunctionalInterface
+	public interface OwnerPreservationLifecycleOperation {
+		void execute(OwnerPreservationLifecycleBoundary boundary);
+	}
+
+	/** Closed facts valid only during a running owner-preservation operation. */
+	public static final class OwnerPreservationLifecycleBoundary {
+		private final long ticksBeforeRun;
+		private final int timesRan;
+		private final long lifecycleVersion;
+		private final boolean lifecycleBoundaryHeld;
+
+		private OwnerPreservationLifecycleBoundary(
+			final long ticksBeforeRun,
+			final int timesRan,
+			final long lifecycleVersion,
+			final boolean lifecycleBoundaryHeld) {
+			if (timesRan < 0 || lifecycleVersion <= 0L
+				|| !lifecycleBoundaryHeld) {
+				throw new IllegalStateException(
+					"Owner preservation lifecycle boundary is invalid");
+			}
+			this.ticksBeforeRun = ticksBeforeRun;
+			this.timesRan = timesRan;
+			this.lifecycleVersion = lifecycleVersion;
+			this.lifecycleBoundaryHeld = true;
+		}
+
+		public long getTicksBeforeRun() { return ticksBeforeRun; }
+		public int getTimesRan() { return timesRan; }
+		public long getLifecycleVersion() { return lifecycleVersion; }
+		public boolean isLifecycleBoundaryHeld() {
+			return lifecycleBoundaryHeld;
+		}
+		public boolean isCallbackInvoked() { return false; }
+		public boolean isMutationAuthorized() { return false; }
+		public boolean isReusablePermit() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
+	}
+
 	@FunctionalInterface
 	public interface StableRestorationLifecycleOperation {
 		void execute(StableRestorationLifecycleBoundary boundary);
