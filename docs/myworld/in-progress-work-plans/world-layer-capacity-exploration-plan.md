@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path and Slice 158's safe refusal path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, and 160 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, and 161 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -206,6 +206,10 @@ automated-validated Slice 160 detaches the exact generation-fenced authored
 identity and definition ID of an NPC event owner without retaining its entity
 or unstable world index, while missing/dynamic owner identity remains explicit
 and does not prove owner preservation;
+automated-validated Slice 161 correlates owner-position callbacks with a
+bounded active-NPC census, refuses missing/stale/duplicate/unrecognized/drifted
+owners, and distinguishes a point-in-time exact match from separately supplied
+preservation proof without changing recovery readiness;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13047,6 +13051,61 @@ Automated validation status:
 Status: implemented and automated-validated. The next slice must correlate this
 key with a fresh bounded active-NPC census and distinguish owner-continuity
 eligibility from actual preservation.
+
+### Slice 161: NPC owner-event continuity policy
+
+Objective: determine which proposal-related owner-position callbacks have one
+exact active NPC owner at a bounded observation, while keeping actual owner
+preservation as a separate prerequisite.
+
+Implemented:
+
+- the pure assessment accepts only an exact-selection-aligned event inventory
+  and active-NPC census with matching generation/source counts and a census no
+  older than the event observation;
+- every proposal-related owner-position callback is classified in stable event
+  order. NPC identity is matched by authored generation, packed source, and
+  source ordinal, then checked for unique active occurrence, recognized recipe
+  identity, definition-ID agreement, and current residency inside the selected
+  source boundary;
+- explicit outcomes cover non-NPC owners, missing identity, stale generation,
+  absent/ambiguous active owner, unrecognized identity, definition mismatch,
+  and event/census position drift;
+- an exact point-in-time match without an independently supplied preservation
+  fact reports `OWNER_PRESERVATION_UNPROVED`; only a fixture-supplied fact can
+  produce `OWNER_CONTINUITY_ELIGIBLE`; and
+- bounded totals distinguish all related owner hints, NPC owners, captured
+  identities, unique active matches, preservation-unproved matches, eligible
+  events, hard blockers, and the first stable unmet outcome.
+
+Safety boundary:
+
+- the production runtime does not yet supply an owner-preservation fact or
+  consume this policy. Slice 159 therefore still rejects every owner callback
+  without standalone restoration evidence;
+- a point-in-time match is stale immediately after return and is not retention,
+  scheduler continuity, callback survival, a commit token, or lifecycle proof;
+- the assessment retains only detached evidence and cannot find an entity by
+  world index, stop/reschedule a callback, preserve an owner, load/retire a
+  Region, reconstruct state, release visibility, or create an arrival gate; and
+- source-count coincidence is not accepted: the caller must establish that the
+  census used the inventory's exact selected source set.
+
+Automated validation status:
+
+- the executable fixture proves exact-match preservation refusal, an explicitly
+  supplied eligible policy case, missing/non-NPC blockers, stale-generation and
+  duplicate-active-identity refusal, selection alignment, and detail-budget
+  enforcement;
+- source guards prove the assessment imports no entity, Region, or event
+  runtime and exposes no preservation or lifecycle authority;
+- the complete layered-map suite passes 537 tests across 160 focused files; and
+- the authoritative bundled-Ant server build compiles 805 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated as a dormant policy. The next slice
+must capture an exact fresh census from the proposal sources and expose the
+production result with preservation deliberately unproved.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
