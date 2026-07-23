@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, and 153 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, and 154 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -176,6 +176,10 @@ automated-validated Slice 153 runs one ready bounded batch in deterministic
 directive order, reassesses its monotonic prefix after every result, stops at
 the first refusal, and reports contractual readiness without retrying, loading,
 arriving, or releasing visibility;
+automated-validated Slice 154 freezes exact recovery inputs before invoking one
+caller-supplied reconstruction operation, runs recovery only after successful
+correlated reconstruction, and makes that captured lifecycle single-use while
+retaining the first-visibility barrier;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12595,6 +12599,63 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the bounded runner remains disconnected from reconstruction and arrival.
 
+### Slice 154: Reconstruction lifecycle coordinator
+
+Objective: enforce one closed capture-before-reconstruction, recovery-after-
+reconstruction sequence without implementing Region loading or granting first-
+visibility authority.
+
+Implemented:
+
+- `GameTickEventRestorationReconstructionLifecycleCoordinator` validates a
+  ready Slice 145 preparation, its exact future-snapshot set, one proposal
+  generation, and the established candidate bound before any reconstruction
+  operation can run;
+- accepted inputs are defensively copied into one single-use captured recovery.
+  A synchronized claim prevents a second reconstruction or recovery attempt
+  from reusing the same pre-reconstruction evidence;
+- the coordinator invokes exactly one caller-supplied reconstruction operation
+  with only scheduler scope, proposal generation, capture-before-operation,
+  and first-visibility-withheld facts. The boundary is explicitly not a Region
+  load permit and performs no loading itself;
+- refused or mismatched reconstruction stops before Slice 153. A successfully
+  correlated completion invokes the bounded recovery runner exactly once; and
+- the final closed result distinguishes reconstruction refusal, fresh-
+  inventory recovery refusal, invalid recovery, and contractual readiness.
+  None releases visibility or performs retry.
+
+Automated validation status:
+
+- an executable fixture proves completed reconstruction precedes one overdue
+  Region recovery and terminal callback consumption, while a second use of the
+  captured evidence invokes neither operation;
+- reconstruction refusal leaves the pending callback and Region unchanged;
+- a mismatched proposal generation refuses during pre-reconstruction capture
+  and never invokes the supplied reconstruction operation;
+- source guards mechanically order reconstruction before batch execution and
+  prohibit World loading, Player coupling, retry, arrival gating, visibility
+  release, and retained runtime handles;
+- the complete layered-map suite passes 513 tests across 153 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 801 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the caller-supplied operation is the future integration seam; no production
+  reconstruction, retirement, loader, or gameplay caller is attached here;
+- the operation result can authorize only the immediately following recovery
+  attempt inside this package-local coordinator, never a reusable load or
+  visibility capability;
+- recovery refusal is terminal for the captured evidence and only reports that
+  a fresh exact inventory is required; and
+- Region registry mutation, source loading/teardown, arrival integration,
+  first-visibility release, retirement, persistence, and public/live callers
+  remain absent.
+
+Status: implemented and automated-validated. No owner route is required because
+the reconstruction operation remains fixture-supplied and disconnected.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13551,13 +13612,20 @@ reassesses Slice 145 after every result, and stops immediately on the first
 refusal. Its successful terminal state is only contractual readiness; retry,
 loading, arrival, and visibility remain absent.
 
-The next safe slice should define the smallest closed reconstruction-lifecycle
-orchestration boundary around the existing pieces: exact inventory and future-
-state capture must precede reconstruction, while batch execution must follow
-reconstruction and precede any visibility decision. The first gate should
-identify and validate those phases without loading a Region, retrying a refused
-batch, connecting Player arrival/gameplay, or converting contractual readiness
-into packet/entity visibility.
+Slice 154 now supplies the first executable reconstruction lifecycle ordering.
+It freezes and validates exact recovery inputs, invokes one caller-supplied
+reconstruction operation, permits Slice 153 only after correlated completion,
+and prevents reuse of the captured evidence. The operation remains disconnected
+from every real loader, and contractual readiness still releases nothing.
+
+The next safe slice should build the exact live pre-reconstruction preparation
+from one already-detached proposal-scoped event inventory. It must select only
+candidate-related restoration callbacks, reject any related callback whose
+restoration/timing/binding evidence is incomplete, capture future current state
+through Slice 150, derive overdue timing without carrying event handles, and
+produce the ready Slice 145 preparation plus exact future snapshots consumed by
+Slice 154. Registration-set drift during capture must fail closed. It must not
+invoke reconstruction, retry, arrival, or visibility.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

@@ -18,6 +18,10 @@ BATCH_EXECUTOR = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventRestorationRecoveryBatchExecutor.java"
 )
+LIFECYCLE_COORDINATOR = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/handler/"
+    "GameTickEventRestorationReconstructionLifecycleCoordinator.java"
+)
 STORE = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventStore.java"
@@ -249,7 +253,10 @@ class LayeredMapsSliceOneHundredFortyThreeTest(unittest.TestCase):
         name = "GameTickEventRestorationRecoveryBatchContract"
         self.assertNotIn(name, STORE.read_text(encoding="utf-8"))
         for path in (ROOT / "server/src").rglob("*.java"):
-            if path in (CONTRACT, COORDINATOR, BATCH_EXECUTOR):
+            if path in (
+                CONTRACT, COORDINATOR, BATCH_EXECUTOR,
+                LIFECYCLE_COORDINATOR,
+            ):
                 continue
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
 
