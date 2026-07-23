@@ -2,9 +2,10 @@
 
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
-contained path, Slice 158's safe refusal path, and Slice 162's corrected owner
-continuity route owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, and 167 automated-validated on the active
+contained path, Slice 158's safe refusal path, Slice 162's corrected owner
+continuity route, and Slices 167-168's corrected owner-preservation route
+owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, and 168 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -250,7 +251,10 @@ automated-validated Slice 168 replaces both recursive dimensions with
 stable-order, all-or-nothing iterative lifecycle gates, validates the exact
 registration set inside the complete event scope, revalidates owner references
 inside the complete NPC scope, and proves the observed 449-member cardinality
-under a 256 KB Java stack. Corrected private owner validation is pending;
+under a 256 KB Java stack. Its corrected private route is owner-validated:
+both dense records complete without stack exhaustion, cover all 449 exact
+owners and their 449 exact event links, and retain every non-authoritative
+boundary;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13550,12 +13554,12 @@ Automated validation status:
 - the authoritative bundled-Ant server build compiles 809 core and 488 plugin
   sources and passes its build/classpath audit.
 
-Status: implemented and automated-validated; owner validation is pending. The
-meaningful private test is one fresh marker against the same dense selected
-source set used for Slices 162-164, followed by a stop record. The expected NPC
-path is `PRESERVATION_SCOPE_READY` with every required event and owner boundary
-count complete, zero identity/reference failures, and all durable authority
-flags false; the 8 player-owned callbacks should remain separate.
+Status: implemented, automated-validated, and owner-validated through Slice
+168's corrected iterative boundary. The accepted route emits
+`PRESERVATION_SCOPE_READY` for both the dense marker and stop record with every
+required event and owner boundary count complete, zero identity/reference
+failures, and all durable authority flags false. The 8 player-owned callbacks
+remain separate.
 
 ### Slice 168: High-cardinality preservation-boundary correction
 
@@ -13615,11 +13619,30 @@ Automated validation status:
 - the authoritative bundled-Ant server build compiles 809 core and 488 plugin
   sources and passes its build/classpath audit.
 
-Status: implemented and automated-validated; corrected owner validation is
-pending. The failed route is not accepted as Slice 167 owner validation. The
-same origin-to-dense route should now emit either a complete
-`PRESERVATION_SCOPE_READY` result or a typed transient boundary refusal without
-stack exhaustion or an inert command.
+Private owner validation status:
+
+- accepted. The fresh four-record schema-v47 sequence contains start at
+  `(120,620)`, teleport to dense `(122,503)`, marker
+  `owner-boundary-iterative`, and stop; every record is schema-valid and
+  round-trips exactly;
+- both dense records select 36 sources and classify all 457 related callbacks:
+  449 NPC-owned callbacks and 8 separate non-NPC/player-owned callbacks;
+- the NPC boundary acquires and validates all 449 required event links, 449
+  execution boundaries, 449 timing boundaries, and 449 NPC lifecycle
+  boundaries. The World registration boundary and Region-absence quiescence
+  are held, every owner outcome is `EXACT_REFERENCE_BOUNDARY`, and the result
+  is `PRESERVATION_SCOPE_READY`;
+- no stack exhaustion, partial record, inert command, or server exception
+  occurs. Client interaction remains normal; and
+- preservation remains deliberately point-in-time only. Preservation fact,
+  retained runtime handle, performed preservation, reschedule, entity
+  registry, arrival gate, lifecycle authority, recovery mutation, and
+  terminal consumption all remain absent.
+
+Status: implemented, automated-validated, and owner-validated. The original
+recursive route remains rejected evidence; this corrected result validates the
+same dense cardinality through the iterative boundary without weakening the
+all-or-nothing or non-authoritative contract.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -14002,6 +14025,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 167 by exposing the nested NPC owner boundary through additive private diagnostics. | Implemented and automated-validated; schema-v47 reports requirement, registration, event, World, reference, lifecycle, quiescence, and stable per-owner outcomes, both private sources use the same GameEventHandler seam, every durable authority flag remains false, 556 focused tests pass across 166 files, and the 809/488 Ant build passes; owner validation is pending |
 | 2026-07-23 | Checkpoint the first Slice 167 owner route after parity commands appeared to stop responding. | The start/origin/teleport v47 records are intact, but the dense 36-source marker overflowed the Java stack while recursively nesting 449 event fences plus 449 NPC gates; no partial marker was written, other commands and the server remained live, and Slice 168 must replace both recursive boundaries with bounded iterative acquisition plus a real-cardinality regression before owner validation resumes |
 | 2026-07-23 | Implement Slice 168's high-cardinality preservation-boundary correction. | Event and NPC lifecycle sets now acquire iteratively in stable order, refuse busy members without waiting, release partial sets in reverse, validate exact registrations and owner references only inside the complete scope, and report unexpected private command failures; 449-member fixtures pass under a 256 KB Java stack, the complete 559-test suite and 809/488 Ant build pass, and corrected private owner validation is pending |
+| 2026-07-23 | Accept the corrected Slice 167/168 private NPC owner-preservation boundary. | Owner-validated; the schema-v47 start/teleport/dense-marker/stop sequence validates, both dense records report `PRESERVATION_SCOPE_READY` across 36 sources, 457 callbacks, 449 exact NPC owners and links, every event/World/NPC/quiescence boundary is complete, the 8 player-owned callbacks remain separate, no stack or command failure recurs, and every durable authority or mutation flag remains false |
 
 ## Next Discussion
 
