@@ -1,6 +1,6 @@
 # Persistent Bank Item Pinning
 
-Status: implementation in progress on `feat/bank-item-pinning`
+Status: implemented and visually verified on `feat/bank-item-pinning`
 
 ## Goal
 
@@ -82,6 +82,8 @@ display or rearrange them.
 
 - Right-click an occupied item for `Pin`; right-click a pinned item or empty
   placeholder for `Unpin`.
+- On desktop, Shift-left-click toggles `Pin`/`Unpin`. Ctrl-left-click retains
+  its existing withdraw-all priority when both modifiers are held.
 - Send slot, catalog ID, and requested action so stale menus cannot affect a
   different item.
 - Empty placeholders cannot withdraw, quick-withdraw, or equip.
@@ -112,3 +114,7 @@ display or rearrange them.
 - Client contract tests: packet width/version agreement, Pin/Unpin menu,
   placeholder rendering, search/filter inclusion, and blocked transfers.
 - Server and client authoritative builds plus focused My World regression tests.
+- Private-server visual testing confirmed occupied pinning, zero-quantity
+  placeholders, refill, rearrangement, filtering, empty-placeholder unpinning,
+  persistence across restart, and the desktop Shift-left-click toggle. Holding
+  Ctrl+Shift retained Ctrl-click's withdraw-all priority.

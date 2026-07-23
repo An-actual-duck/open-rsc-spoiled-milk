@@ -153,6 +153,25 @@ def main() -> None:
     require(packet_handler, "packetsIncoming.getUnsignedByte() == 1", "pin flag decoding")
     require(client_bank, "public boolean isPlaceholder()", "client placeholder state")
     require(custom_bank, 'bankItem.isPinned() ? "Unpin" : "Pin"', "Pin and Unpin menu")
+    require(custom_bank,
+            "mc.getMouseClick() == 1 && mc.controlPressed && !equipmentMode",
+            "Ctrl-click withdrawal precedence")
+    require(custom_bank,
+            "mc.getMouseClick() == 1 && mc.shiftPressed && !Config.isAndroid()",
+            "desktop Shift-click Pin shortcut")
+    require(custom_bank, "sendBankPinAction(bankItem);", "shared Pin action path")
+    ctrl_shortcut = custom_bank.index(
+        "mc.getMouseClick() == 1 && mc.controlPressed && !equipmentMode")
+    shift_shortcut = custom_bank.index(
+        "mc.getMouseClick() == 1 && mc.shiftPressed && !Config.isAndroid()")
+    organize_branch = custom_bank.index(
+        "} else if (organizeMode > 0", shift_shortcut)
+    if not ctrl_shortcut < shift_shortcut < organize_branch:
+        raise SystemExit("FAIL: Ctrl-click must retain priority and Shift-click must precede dragging")
+    shift_branch = custom_bank[shift_shortcut:organize_branch]
+    require(shift_branch, "&& !equipmentMode", "Shift-click normal-bank scope")
+    if "isPlaceholder()" in shift_branch:
+        raise SystemExit("FAIL: Shift-click must permit placeholder Unpin")
     require(custom_bank, "bankItems.get(selectedBankSlot).isPlaceholder() || i <= 0",
             "placeholder withdrawal guard")
     require(custom_bank, 'drawString("P"', "pin marker")

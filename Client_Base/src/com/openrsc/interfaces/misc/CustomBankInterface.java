@@ -432,6 +432,9 @@ public final class CustomBankInterface extends BankInterface {
 							&& !bankItem.isPlaceholder()) {
 							selectedBankSlot = bankItem.bankID;
 							sendWithdraw(Integer.MAX_VALUE);
+						} else if (mc.getMouseClick() == 1 && mc.shiftPressed && !Config.isAndroid()
+							&& !equipmentMode) {
+							sendBankPinAction(bankItem);
 						} else if (organizeMode > 0 && !rightClickMenu && !filtersActive) {
 							if (mc.getMouseButtonDownTime() > 0 && mc.getMouseButtonDown() == 1) {
 								if (mc.getMouseButtonDownTime() < 2
