@@ -21,9 +21,10 @@ import java.util.Objects;
  * generic scheduler Store.
  *
  * <p>Every registration uses the Store's existing execution/registration
- * fence. Owner timing boundaries and World-list correlation are nested inside
- * those fences without adding coordinate, NPC, or World dependencies to the
- * scheduler Store itself.</p>
+ * fence. Event and NPC lifecycle gates are acquired iteratively in stable
+ * order, then World-list correlation runs inside that complete scope without
+ * adding coordinate, NPC, or World dependencies to the scheduler Store
+ * itself.</p>
  */
 final class GameTickEventNpcOwnerPreservationBoundary {
 	private GameTickEventNpcOwnerPreservationBoundary() {
@@ -62,8 +63,8 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		List<ExpectedNpcOwnerRegistration> expectedRegistrations =
 			resolveRegistrations(snapshot, expectedOwners, capture);
 		if (capture.registrationSetComplete) {
-			captureNestedBoundaries(
-				checkedStore, 0, expectedRegistrations, expectedOwners,
+			captureIterativeBoundaries(
+				checkedStore, expectedRegistrations, expectedOwners,
 				checkedWorldNpcs, checked, capture);
 		}
 		return observation(
@@ -109,54 +110,75 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		return resolved;
 	}
 
-	private static void captureNestedBoundaries(
+	private static void captureIterativeBoundaries(
 		final GameTickEventStore eventStore,
-		final int index,
 		final List<ExpectedNpcOwnerRegistration> registrations,
 		final List<ExpectedNpcOwner> owners,
 		final EntityList<Npc> worldNpcs,
 		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
 		final NpcOwnerBoundaryCapture capture) {
-		if (index == registrations.size()) {
-			synchronized (worldNpcs) {
-				capture.worldRegistrationBoundaryHeld =
-					Thread.holdsLock(worldNpcs);
-				List<CorrelatedOwner> correlatedOwners =
-					new ArrayList<CorrelatedOwner>(owners.size());
-				for (ExpectedNpcOwner owner : owners) {
-					CorrelatedOwner correlated =
-						captureOwnerCorrelation(owner, worldNpcs);
-					correlatedOwners.add(correlated);
-					capture.ownerStates.add(correlated.state);
-				}
-				if (allExact(correlatedOwners)) {
-					captureNestedNpcLifecycleBoundaries(
-						0, correlatedOwners, worldNpcs, capture);
-				}
-			}
-			return;
+		List<GameTickEvent> events =
+			new ArrayList<GameTickEvent>(registrations.size());
+		List<Long> registrationSequences =
+			new ArrayList<Long>(registrations.size());
+		for (ExpectedNpcOwnerRegistration registration : registrations) {
+			events.add(registration.event);
+			registrationSequences.add(
+				Long.valueOf(registration.registrationSequence));
 		}
+		GameTickEvent.withinOwnerPreservationLifecycleBoundaries(
+			events, eventBoundary -> {
+				if (!eventBoundary.isCompleteSetHeld()
+					|| eventBoundary.getEventCount()
+						!= registrations.size()) {
+					throw new IllegalStateException(
+						"Event preservation set supplied invalid evidence");
+				}
+				capture.eventExecutionBoundaryCount =
+					eventBoundary.getEventCount();
+				capture.eventTimingBoundaryCount =
+					eventBoundary.getEventCount();
+				boolean registrationsHeld =
+					eventStore.withValidatedRegistrationSetFence(
+						events, registrationSequences,
+						requirements.getSchedulerInstanceIdentity(),
+						registrationBoundary -> {
+							if (!registrationBoundary
+									.isEventBoundarySetHeld()
+								|| registrationBoundary
+									.getRegistrationCount()
+										!= registrations.size()) {
+								throw new IllegalStateException(
+									"Registration set supplied invalid evidence");
+							}
+							captureWorldAndNpcBoundaries(
+								owners, worldNpcs, capture);
+						});
+				if (!registrationsHeld) {
+					capture.registrationSetComplete = false;
+				}
+			});
+	}
 
-		ExpectedNpcOwnerRegistration registration =
-			registrations.get(index);
-		GameTickEventStore.RegistrationFenceExecution execution =
-			eventStore.withValidatedRegistrationFence(
-				registration.event,
-				requirements.getSchedulerInstanceIdentity(),
-				registration.registrationSequence,
-				fence -> {
-					capture.eventExecutionBoundaryCount++;
-					registration.event
-						.withinRunningOwnerPreservationLifecycleBoundary(
-							boundary -> {
-								capture.eventTimingBoundaryCount++;
-								captureNestedBoundaries(
-									eventStore, index + 1, registrations,
-									owners, worldNpcs, requirements, capture);
-							});
-				});
-		if (!execution.isAccepted()) {
-			capture.registrationSetComplete = false;
+	private static void captureWorldAndNpcBoundaries(
+		final List<ExpectedNpcOwner> owners,
+		final EntityList<Npc> worldNpcs,
+		final NpcOwnerBoundaryCapture capture) {
+		synchronized (worldNpcs) {
+			capture.worldRegistrationBoundaryHeld =
+				Thread.holdsLock(worldNpcs);
+			List<CorrelatedOwner> correlatedOwners =
+				new ArrayList<CorrelatedOwner>(owners.size());
+			for (ExpectedNpcOwner owner : owners) {
+				CorrelatedOwner correlated =
+					captureOwnerCorrelation(owner, worldNpcs);
+				correlatedOwners.add(correlated);
+				capture.ownerStates.add(correlated.state);
+			}
+			if (allExact(correlatedOwners)) {
+				captureIterativeNpcLifecycleBoundaries(
+					correlatedOwners, worldNpcs, capture);
+			}
 		}
 	}
 
@@ -170,43 +192,37 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		return true;
 	}
 
-	private static void captureNestedNpcLifecycleBoundaries(
-		final int index,
+	private static void captureIterativeNpcLifecycleBoundaries(
 		final List<CorrelatedOwner> owners,
 		final EntityList<Npc> worldNpcs,
 		final NpcOwnerBoundaryCapture capture) {
-		if (index == owners.size()) {
-			List<OwnerBoundaryState> revalidated =
-				new ArrayList<OwnerBoundaryState>(owners.size());
-			for (CorrelatedOwner owner : owners) {
-				CorrelatedOwner current =
-					captureOwnerCorrelation(owner.expected, worldNpcs);
-				if (!current.exact || current.npc != owner.npc) {
-					return;
-				}
-				revalidated.add(current.state);
-			}
-			capture.ownerStates.clear();
-			capture.ownerStates.addAll(revalidated);
-			capture.regionAbsenceQuiescenceHeld = true;
-			return;
+		List<Npc> ownerNpcs = new ArrayList<Npc>(owners.size());
+		for (CorrelatedOwner owner : owners) {
+			ownerNpcs.add(owner.npc);
 		}
-
-		CorrelatedOwner owner = owners.get(index);
-		boolean entered = owner.npc
-			.withinLayeredOwnerPreservationLifecycleBoundary(boundary -> {
-				if (!boundary.isPreservationGateActive()
-					|| boundary.getLifecycleOperationsAtEntry() != 0) {
+		Npc.withinLayeredOwnerPreservationLifecycleBoundaries(
+			ownerNpcs, boundary -> {
+				if (!boundary.isCompleteSetHeld()
+					|| boundary.getOwnerCount() != owners.size()) {
 					throw new IllegalStateException(
-						"NPC lifecycle gate supplied invalid evidence");
+						"NPC preservation set supplied invalid evidence");
 				}
-				capture.npcLifecycleBoundaryCount++;
-				captureNestedNpcLifecycleBoundaries(
-					index + 1, owners, worldNpcs, capture);
+				List<OwnerBoundaryState> revalidated =
+					new ArrayList<OwnerBoundaryState>(owners.size());
+				for (CorrelatedOwner owner : owners) {
+					CorrelatedOwner current =
+						captureOwnerCorrelation(owner.expected, worldNpcs);
+					if (!current.exact || current.npc != owner.npc) {
+						return;
+					}
+					revalidated.add(current.state);
+				}
+				capture.ownerStates.clear();
+				capture.ownerStates.addAll(revalidated);
+				capture.npcLifecycleBoundaryCount =
+					boundary.getOwnerCount();
+				capture.regionAbsenceQuiescenceHeld = true;
 			});
-		if (!entered) {
-			capture.regionAbsenceQuiescenceHeld = false;
-		}
 	}
 
 	private static CorrelatedOwner captureOwnerCorrelation(

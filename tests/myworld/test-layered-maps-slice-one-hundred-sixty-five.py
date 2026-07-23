@@ -224,10 +224,10 @@ class LayeredMapsSliceOneHundredSixtyFiveTest(unittest.TestCase):
         self.assertIn("if (!running)", event)
         self.assertIn("withinExecutionBoundary", store)
         self.assertIn(
-            "withinRunningOwnerPreservationLifecycleBoundary",
+            "withinOwnerPreservationLifecycleBoundaries",
             adapter,
         )
-        self.assertIn("withValidatedRegistrationFence", adapter)
+        self.assertIn("withValidatedRegistrationSetFence", adapter)
         self.assertIn("getTrackedEventRegistrationSnapshot", adapter)
         self.assertIn("synchronized (worldNpcs)", adapter)
         self.assertIn("Thread.holdsLock(worldNpcs)", adapter)

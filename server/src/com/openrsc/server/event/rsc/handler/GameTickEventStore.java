@@ -338,6 +338,75 @@ class GameTickEventStore {
 	}
 
 	/**
+	 * Validates one exact stable-order registration set after the caller has
+	 * iteratively excluded execution/timing changes for every event.
+	 *
+	 * <p>The Store monitor is released before the supplied operation runs.
+	 * Required registration removal/replacement cannot cross the caller's event
+	 * lifecycle gates, while unrelated registrations remain free to progress.
+	 * This method retains no event or reusable fence after return.</p>
+	 */
+	boolean withValidatedRegistrationSetFence(
+		final List<GameTickEvent> expectedEvents,
+		final List<Long> expectedRegistrationSequences,
+		final String expectedSchedulerInstanceIdentity,
+		final RegistrationSetFenceOperation operation) {
+		if (expectedEvents == null) {
+			throw new NullPointerException("expectedEvents");
+		}
+		if (expectedRegistrationSequences == null) {
+			throw new NullPointerException(
+				"expectedRegistrationSequences");
+		}
+		if (expectedSchedulerInstanceIdentity == null
+			|| expectedSchedulerInstanceIdentity.isEmpty()
+			|| expectedEvents.size()
+				!= expectedRegistrationSequences.size()) {
+			throw new IllegalArgumentException(
+				"Expected scheduler registration set is invalid");
+		}
+		RegistrationSetFenceOperation checkedOperation =
+			Objects.requireNonNull(operation, "operation");
+		IdentityHashMap<GameTickEvent, Boolean> seen =
+			new IdentityHashMap<GameTickEvent, Boolean>();
+		for (int index = 0; index < expectedEvents.size(); index++) {
+			GameTickEvent event = Objects.requireNonNull(
+				expectedEvents.get(index), "expectedEvents[" + index + "]");
+			Long sequence = Objects.requireNonNull(
+				expectedRegistrationSequences.get(index),
+				"expectedRegistrationSequences[" + index + "]");
+			if (sequence.longValue() <= 0L
+				|| seen.put(event, Boolean.TRUE) != null) {
+				throw new IllegalArgumentException(
+					"Expected scheduler registration set is invalid");
+			}
+		}
+
+		synchronized (LOCK) {
+			if (!schedulerInstanceIdentity.equals(
+					expectedSchedulerInstanceIdentity)) {
+				return false;
+			}
+			for (int index = 0; index < expectedEvents.size(); index++) {
+				GameTickEvent event = expectedEvents.get(index);
+				Long observed = registrationSequences.get(event);
+				if (events.get(getKey(event)) != event
+					|| observed == null
+					|| observed.longValue()
+						!= expectedRegistrationSequences
+							.get(index).longValue()) {
+					return false;
+				}
+			}
+		}
+		checkedOperation.execute(
+			new RegistrationSetFence(
+				expectedSchedulerInstanceIdentity,
+				expectedEvents.size(), true, false, true));
+		return true;
+	}
+
+	/**
 	 * Locates one exact registration internally and validates its authored
 	 * scenery generation behind the registration fence. The caller supplies no
 	 * event handle, and the operation receives only closed detached scalars.
@@ -1403,6 +1472,60 @@ class GameTickEventStore {
 	@FunctionalInterface
 	interface RegistrationFenceOperation {
 		void execute(RegistrationFence fence);
+	}
+
+	@FunctionalInterface
+	interface RegistrationSetFenceOperation {
+		void execute(RegistrationSetFence fence);
+	}
+
+	/** Detached facts valid only while the iterative caller scope remains held. */
+	static final class RegistrationSetFence {
+		private final String schedulerInstanceIdentity;
+		private final int registrationCount;
+		private final boolean eventBoundarySetHeld;
+		private final boolean schedulerStoreBoundaryHeld;
+		private final boolean registrationValidatedBeforeInnerBoundary;
+
+		private RegistrationSetFence(
+			final String schedulerInstanceIdentity,
+			final int registrationCount,
+			final boolean eventBoundarySetHeld,
+			final boolean schedulerStoreBoundaryHeld,
+			final boolean registrationValidatedBeforeInnerBoundary) {
+			this.schedulerInstanceIdentity = Objects.requireNonNull(
+				schedulerInstanceIdentity, "schedulerInstanceIdentity");
+			this.registrationCount = registrationCount;
+			this.eventBoundarySetHeld = eventBoundarySetHeld;
+			this.schedulerStoreBoundaryHeld = schedulerStoreBoundaryHeld;
+			this.registrationValidatedBeforeInnerBoundary =
+				registrationValidatedBeforeInnerBoundary;
+			if (schedulerInstanceIdentity.isEmpty()
+				|| registrationCount < 0
+				|| !eventBoundarySetHeld
+				|| schedulerStoreBoundaryHeld
+				|| !registrationValidatedBeforeInnerBoundary) {
+				throw new IllegalStateException(
+					"Accepted scheduler-registration set fence is invalid");
+			}
+		}
+
+		String getSchedulerInstanceIdentity() {
+			return schedulerInstanceIdentity;
+		}
+		int getRegistrationCount() { return registrationCount; }
+		boolean isEventBoundarySetHeld() {
+			return eventBoundarySetHeld;
+		}
+		boolean isSchedulerStoreBoundaryHeld() {
+			return schedulerStoreBoundaryHeld;
+		}
+		boolean isRegistrationValidatedBeforeInnerBoundary() {
+			return registrationValidatedBeforeInnerBoundary;
+		}
+		boolean isCommitToken() { return false; }
+		boolean isMutationPerformed() { return false; }
+		boolean isLifecycleAuthority() { return false; }
 	}
 
 	/** Detached facts that are valid only during the supplied operation. */

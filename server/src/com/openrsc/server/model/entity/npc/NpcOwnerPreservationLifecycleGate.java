@@ -1,5 +1,8 @@
 package com.openrsc.server.model.entity.npc;
 
+import java.util.IdentityHashMap;
+import java.util.List;
+
 /**
  * Per-NPC exclusion gate for a short owner-preservation observation.
  *
@@ -19,27 +22,51 @@ final class NpcOwnerPreservationLifecycleGate {
 		if (operation == null) {
 			throw new NullPointerException("operation");
 		}
-		synchronized (lock) {
-			if (preservationBoundaryActive || operationsInProgress != 0) {
-				return false;
-			}
-			preservationBoundaryActive = true;
-			preservationBoundaryThread = Thread.currentThread();
+		if (!tryEnterPreservationBoundary()) {
+			return false;
 		}
 		try {
 			operation.execute(new Boundary(true, 0));
 			return true;
 		} finally {
-			synchronized (lock) {
-				if (!preservationBoundaryActive
-					|| preservationBoundaryThread != Thread.currentThread()
-					|| operationsInProgress != 0) {
-					throw new IllegalStateException(
-						"NPC owner preservation lifecycle gate changed");
+			exitPreservationBoundary();
+		}
+	}
+
+	static boolean withinPreservationBoundaries(
+		final List<NpcOwnerPreservationLifecycleGate> gates,
+		final PreservationSetOperation operation) {
+		if (gates == null) {
+			throw new NullPointerException("gates");
+		}
+		if (operation == null) {
+			throw new NullPointerException("operation");
+		}
+		IdentityHashMap<NpcOwnerPreservationLifecycleGate, Boolean> seen =
+			new IdentityHashMap<NpcOwnerPreservationLifecycleGate, Boolean>();
+		for (int index = 0; index < gates.size(); index++) {
+			NpcOwnerPreservationLifecycleGate gate = gates.get(index);
+			if (gate == null) {
+				throw new NullPointerException("gates[" + index + "]");
+			}
+			if (seen.put(gate, Boolean.TRUE) != null) {
+				throw new IllegalArgumentException(
+					"NPC preservation gate set contains a duplicate");
+			}
+		}
+
+		int acquired = 0;
+		try {
+			for (; acquired < gates.size(); acquired++) {
+				if (!gates.get(acquired).tryEnterPreservationBoundary()) {
+					return false;
 				}
-				preservationBoundaryActive = false;
-				preservationBoundaryThread = null;
-				lock.notifyAll();
+			}
+			operation.execute(new BoundarySet(gates.size()));
+			return true;
+		} finally {
+			for (int index = acquired - 1; index >= 0; index--) {
+				gates.get(index).exitPreservationBoundary();
 			}
 		}
 	}
@@ -82,9 +109,60 @@ final class NpcOwnerPreservationLifecycleGate {
 		}
 	}
 
+	private boolean tryEnterPreservationBoundary() {
+		synchronized (lock) {
+			if (preservationBoundaryActive || operationsInProgress != 0) {
+				return false;
+			}
+			preservationBoundaryActive = true;
+			preservationBoundaryThread = Thread.currentThread();
+			return true;
+		}
+	}
+
+	private void exitPreservationBoundary() {
+		synchronized (lock) {
+			if (!preservationBoundaryActive
+				|| preservationBoundaryThread != Thread.currentThread()
+				|| operationsInProgress != 0) {
+				throw new IllegalStateException(
+					"NPC owner preservation lifecycle gate changed");
+			}
+			preservationBoundaryActive = false;
+			preservationBoundaryThread = null;
+			lock.notifyAll();
+		}
+	}
+
 	@FunctionalInterface
 	interface PreservationOperation {
 		void execute(Boundary boundary);
+	}
+
+	@FunctionalInterface
+	interface PreservationSetOperation {
+		void execute(BoundarySet boundary);
+	}
+
+	/** Closed facts valid only while one complete iterative set is held. */
+	static final class BoundarySet {
+		private final int ownerCount;
+
+		private BoundarySet(final int ownerCount) {
+			if (ownerCount < 0) {
+				throw new IllegalArgumentException(
+					"NPC preservation boundary count must not be negative");
+			}
+			this.ownerCount = ownerCount;
+		}
+
+		int getOwnerCount() {
+			return ownerCount;
+		}
+
+		boolean isCompleteSetHeld() {
+			return true;
+		}
 	}
 
 	/** Closed facts valid only during one accepted operation. */

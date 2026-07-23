@@ -192,10 +192,10 @@ class LayeredMapsSliceOneHundredSixtySixTest(unittest.TestCase):
         self.assertIn("preservationBoundaryActive", gate)
         self.assertIn("lock.wait()", gate)
         self.assertIn(
-            "withinLayeredOwnerPreservationLifecycleBoundary",
+            "withinLayeredOwnerPreservationLifecycleBoundaries",
             adapter,
         )
-        self.assertIn("captureNestedNpcLifecycleBoundaries", adapter)
+        self.assertIn("captureIterativeNpcLifecycleBoundaries", adapter)
         self.assertIn("captureOwnerCorrelation", adapter)
         self.assertIn("capture.ownerStates.clear()", adapter)
         self.assertIn(

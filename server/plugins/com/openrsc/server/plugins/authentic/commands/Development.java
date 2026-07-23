@@ -1473,6 +1473,22 @@ public final class Development implements CommandTrigger {
 		} catch (IllegalArgumentException failure) {
 			player.message(messagePrefix + "Layered parity request refused: " + failure.getMessage());
 			return;
+		} catch (RuntimeException failure) {
+			LOGGER.error(
+				"Unexpected layered parity capture failure for action {}",
+				action, failure);
+			player.message(messagePrefix
+				+ "Layered parity capture failed; see the private server log."
+				+ " The trace remains active.");
+			return;
+		} catch (StackOverflowError failure) {
+			LOGGER.error(
+				"Layered parity capture exhausted the thread stack for action {}",
+				action, failure);
+			player.message(messagePrefix
+				+ "Layered parity capture exceeded its safe depth;"
+				+ " see the private server log. The trace remains active.");
+			return;
 		}
 
 		player.message(messagePrefix + "Layered parity "

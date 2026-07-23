@@ -7,6 +7,9 @@ import com.openrsc.server.model.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -18,6 +21,9 @@ public abstract class GameTickEvent implements Callable<Integer> {
 
 	private final Object executionLock = new Object();
 	private final Object timingLock = new Object();
+	private final GameTickEventOwnerPreservationLifecycleGate
+		ownerPreservationLifecycleGate =
+			new GameTickEventOwnerPreservationLifecycleGate();
 	protected volatile boolean running = true;
 	private final Mob owner;
 	private final World world;
@@ -44,28 +50,33 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	public abstract void run();
 
 	public final long doRun() {
-		synchronized (executionLock) {
-			lastEventDuration = getWorld().getServer().bench(() -> {
-				final boolean runNow;
-				synchronized (timingLock) {
-				requireLifecycleVersionAvailable();
-					ticksBeforeRun--;
-					advanceLifecycleVersion();
-					runNow = running && ticksBeforeRun <= 0;
-				}
-				if (runNow) {
-					// Never hold the timing monitor across arbitrary callback code.
-					// Callbacks may own plugin or entity monitors while diagnostics
-					// capture this event's detached timing tuple.
-					run();
+		beginOwnerPreservationLifecycleOperation();
+		try {
+			synchronized (executionLock) {
+				lastEventDuration = getWorld().getServer().bench(() -> {
+					final boolean runNow;
 					synchronized (timingLock) {
 						requireLifecycleVersionAvailable();
-						timesRan++;
-						ticksBeforeRun = delayTicks;
+						ticksBeforeRun--;
 						advanceLifecycleVersion();
+						runNow = running && ticksBeforeRun <= 0;
 					}
-				}
-			});
+					if (runNow) {
+						// Never hold the timing monitor across arbitrary callback code.
+						// Callbacks may own plugin or entity monitors while diagnostics
+						// capture this event's detached timing tuple.
+						run();
+						synchronized (timingLock) {
+							requireLifecycleVersionAvailable();
+							timesRan++;
+							ticksBeforeRun = delayTicks;
+							advanceLifecycleVersion();
+						}
+					}
+				});
+			}
+		} finally {
+			endOwnerPreservationLifecycleOperation();
 		}
 
 		return lastEventDuration;
@@ -86,8 +97,13 @@ public abstract class GameTickEvent implements Callable<Integer> {
 		if (operation == null) {
 			throw new NullPointerException("operation");
 		}
-		synchronized (executionLock) {
-			return operation.execute();
+		beginOwnerPreservationLifecycleOperation();
+		try {
+			synchronized (executionLock) {
+				return operation.execute();
+			}
+		} finally {
+			endOwnerPreservationLifecycleOperation();
 		}
 	}
 
@@ -167,6 +183,108 @@ public abstract class GameTickEvent implements Callable<Integer> {
 			}
 			return true;
 		}
+	}
+
+	/**
+	 * Iteratively excludes execution and timing changes for one exact event set.
+	 *
+	 * <p>Acquisition is stable-order and non-blocking. If any event is active,
+	 * every earlier gate is released and the operation is not invoked. The
+	 * supplied operation receives closed facts only; no event handle or permit
+	 * escapes after return.</p>
+	 */
+	public static boolean withinOwnerPreservationLifecycleBoundaries(
+		final List<GameTickEvent> events,
+		final OwnerPreservationLifecycleSetOperation operation) {
+		if (events == null) {
+			throw new NullPointerException("events");
+		}
+		if (operation == null) {
+			throw new NullPointerException("operation");
+		}
+		final List<GameTickEvent> checked =
+			new ArrayList<GameTickEvent>(events.size());
+		final List<GameTickEventOwnerPreservationLifecycleGate> gates =
+			new ArrayList<GameTickEventOwnerPreservationLifecycleGate>(
+				events.size());
+		for (int index = 0; index < events.size(); index++) {
+			GameTickEvent event = events.get(index);
+			if (event == null) {
+				throw new NullPointerException("events[" + index + "]");
+			}
+			checked.add(event);
+			gates.add(event.ownerPreservationLifecycleGate);
+		}
+
+		final boolean[] operationCompleted = new boolean[1];
+		boolean entered =
+			GameTickEventOwnerPreservationLifecycleGate
+				.withinPreservationBoundaries(gates, boundary -> {
+					long[] lifecycleVersions = new long[checked.size()];
+					for (int index = 0; index < checked.size(); index++) {
+						GameTickEvent event = checked.get(index);
+						if (!event.running) {
+							return;
+						}
+						lifecycleVersions[index] = event.lifecycleVersion;
+					}
+					operation.execute(
+						new OwnerPreservationLifecycleSetBoundary(
+							boundary.getEventCount(),
+							boundary.isCompleteSetHeld()));
+					for (int index = 0; index < checked.size(); index++) {
+						GameTickEvent event = checked.get(index);
+						if (!event.running
+							|| event.lifecycleVersion
+								!= lifecycleVersions[index]) {
+							throw new IllegalStateException(
+								"Event owner preservation lifecycle changed");
+						}
+					}
+					operationCompleted[0] = true;
+				});
+		return entered && operationCompleted[0];
+	}
+
+	private void beginOwnerPreservationLifecycleOperation() {
+		ownerPreservationLifecycleGate.beginOperation();
+	}
+
+	private void endOwnerPreservationLifecycleOperation() {
+		ownerPreservationLifecycleGate.endOperation();
+	}
+
+	@FunctionalInterface
+	public interface OwnerPreservationLifecycleSetOperation {
+		void execute(OwnerPreservationLifecycleSetBoundary boundary);
+	}
+
+	/** Closed facts valid only while one complete iterative event set is held. */
+	public static final class OwnerPreservationLifecycleSetBoundary {
+		private final int eventCount;
+		private final boolean completeSetHeld;
+
+		private OwnerPreservationLifecycleSetBoundary(
+			final int eventCount,
+			final boolean completeSetHeld) {
+			if (eventCount < 0 || !completeSetHeld) {
+				throw new IllegalArgumentException(
+					"Event preservation lifecycle set is invalid");
+			}
+			this.eventCount = eventCount;
+			this.completeSetHeld = true;
+		}
+
+		public int getEventCount() {
+			return eventCount;
+		}
+		public boolean isCompleteSetHeld() {
+			return completeSetHeld;
+		}
+		public boolean isPointInTimeOnly() { return true; }
+		public boolean isRuntimeHandleRetained() { return false; }
+		public boolean isMutationAuthorized() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
 	}
 
 	@FunctionalInterface
@@ -389,12 +507,17 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	}
 
 	public void stop() {
-		synchronized (timingLock) {
-			if (running) {
-				requireLifecycleVersionAvailable();
-				running = false;
-				advanceLifecycleVersion();
+		beginOwnerPreservationLifecycleOperation();
+		try {
+			synchronized (timingLock) {
+				if (running) {
+					requireLifecycleVersionAvailable();
+					running = false;
+					advanceLifecycleVersion();
+				}
 			}
+		} finally {
+			endOwnerPreservationLifecycleOperation();
 		}
 	}
 
@@ -403,27 +526,42 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	}
 
 	protected void setDelayTicks(long delayTicks) {
-		synchronized (timingLock) {
-			requireLifecycleVersionAvailable();
-			this.delayTicks = delayTicks;
-			ticksBeforeRun = delayTicks;
-			advanceLifecycleVersion();
+		beginOwnerPreservationLifecycleOperation();
+		try {
+			synchronized (timingLock) {
+				requireLifecycleVersionAvailable();
+				this.delayTicks = delayTicks;
+				ticksBeforeRun = delayTicks;
+				advanceLifecycleVersion();
+			}
+		} finally {
+			endOwnerPreservationLifecycleOperation();
 		}
 	}
 
 	public void resetCountdown() {
-		synchronized (timingLock) {
-			requireLifecycleVersionAvailable();
-			ticksBeforeRun = delayTicks;
-			advanceLifecycleVersion();
+		beginOwnerPreservationLifecycleOperation();
+		try {
+			synchronized (timingLock) {
+				requireLifecycleVersionAvailable();
+				ticksBeforeRun = delayTicks;
+				advanceLifecycleVersion();
+			}
+		} finally {
+			endOwnerPreservationLifecycleOperation();
 		}
 	}
 
 	public void tick() {
-		synchronized (timingLock) {
-			requireLifecycleVersionAvailable();
-			ticksBeforeRun--;
-			advanceLifecycleVersion();
+		beginOwnerPreservationLifecycleOperation();
+		try {
+			synchronized (timingLock) {
+				requireLifecycleVersionAvailable();
+				ticksBeforeRun--;
+				advanceLifecycleVersion();
+			}
+		} finally {
+			endOwnerPreservationLifecycleOperation();
 		}
 	}
 
@@ -507,9 +645,14 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	 * bound by the scheduler store; this value has no mutation capability.
 	 */
 	public final AtomicTimingSnapshot captureAtomicTimingSnapshot() {
-		synchronized (timingLock) {
-			return new AtomicTimingSnapshot(
-				running, ticksBeforeRun, timesRan, lifecycleVersion);
+		beginOwnerPreservationLifecycleOperation();
+		try {
+			synchronized (timingLock) {
+				return new AtomicTimingSnapshot(
+					running, ticksBeforeRun, timesRan, lifecycleVersion);
+			}
+		} finally {
+			endOwnerPreservationLifecycleOperation();
 		}
 	}
 
@@ -562,5 +705,151 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	 */
 	public GameTickEventRestorationState getRestorationState() {
 		return GameTickEventRestorationState.unavailable();
+	}
+}
+
+/**
+ * Per-event exclusion gate for a short owner-preservation observation.
+ *
+ * <p>Normal execution and timing operations increment an in-flight count
+ * without retaining this monitor while arbitrary callback code runs. A
+ * preservation boundary refuses instead of waiting when any required event is
+ * active, then acquires an entire stable-order set iteratively so runtime
+ * cardinality never becomes Java call-stack depth.</p>
+ */
+final class GameTickEventOwnerPreservationLifecycleGate {
+	private final Object lock = new Object();
+	private int operationsInProgress;
+	private boolean preservationBoundaryActive;
+	private Thread preservationBoundaryThread;
+
+	static boolean withinPreservationBoundaries(
+		final List<GameTickEventOwnerPreservationLifecycleGate> gates,
+		final PreservationSetOperation operation) {
+		if (gates == null) {
+			throw new NullPointerException("gates");
+		}
+		if (operation == null) {
+			throw new NullPointerException("operation");
+		}
+		IdentityHashMap<GameTickEventOwnerPreservationLifecycleGate, Boolean>
+			seen =
+				new IdentityHashMap<
+					GameTickEventOwnerPreservationLifecycleGate, Boolean>();
+		for (int index = 0; index < gates.size(); index++) {
+			GameTickEventOwnerPreservationLifecycleGate gate =
+				gates.get(index);
+			if (gate == null) {
+				throw new NullPointerException("gates[" + index + "]");
+			}
+			if (seen.put(gate, Boolean.TRUE) != null) {
+				throw new IllegalArgumentException(
+					"Event preservation gate set contains a duplicate");
+			}
+		}
+
+		int acquired = 0;
+		try {
+			for (; acquired < gates.size(); acquired++) {
+				if (!gates.get(acquired).tryEnterPreservationBoundary()) {
+					return false;
+				}
+			}
+			operation.execute(new BoundarySet(gates.size()));
+			return true;
+		} finally {
+			for (int index = acquired - 1; index >= 0; index--) {
+				gates.get(index).exitPreservationBoundary();
+			}
+		}
+	}
+
+	void beginOperation() {
+		boolean interrupted = false;
+		synchronized (lock) {
+			while (preservationBoundaryActive) {
+				if (preservationBoundaryThread == Thread.currentThread()) {
+					throw new IllegalStateException(
+						"Preservation boundary cannot invoke event lifecycle");
+				}
+				try {
+					lock.wait();
+				} catch (InterruptedException interruptedException) {
+					interrupted = true;
+				}
+			}
+			operationsInProgress++;
+			if (operationsInProgress <= 0) {
+				throw new IllegalStateException(
+					"Event owner lifecycle operation count overflow");
+			}
+		}
+		if (interrupted) {
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	void endOperation() {
+		synchronized (lock) {
+			if (operationsInProgress <= 0) {
+				throw new IllegalStateException(
+					"Event owner lifecycle operation count underflow");
+			}
+			operationsInProgress--;
+			if (operationsInProgress == 0) {
+				lock.notifyAll();
+			}
+		}
+	}
+
+	private boolean tryEnterPreservationBoundary() {
+		synchronized (lock) {
+			if (preservationBoundaryActive || operationsInProgress != 0) {
+				return false;
+			}
+			preservationBoundaryActive = true;
+			preservationBoundaryThread = Thread.currentThread();
+			return true;
+		}
+	}
+
+	private void exitPreservationBoundary() {
+		synchronized (lock) {
+			if (!preservationBoundaryActive
+				|| preservationBoundaryThread != Thread.currentThread()
+				|| operationsInProgress != 0) {
+				throw new IllegalStateException(
+					"Event owner preservation lifecycle gate changed");
+			}
+			preservationBoundaryActive = false;
+			preservationBoundaryThread = null;
+			lock.notifyAll();
+		}
+	}
+
+	@FunctionalInterface
+	interface PreservationSetOperation {
+		void execute(BoundarySet boundary);
+	}
+
+	/** Closed facts valid only while one complete iterative set is held. */
+	static final class BoundarySet {
+		private final int eventCount;
+
+		private BoundarySet(final int eventCount) {
+			if (eventCount < 0) {
+				throw new IllegalArgumentException(
+					"Event preservation boundary count must not be negative");
+			}
+			this.eventCount = eventCount;
+		}
+
+		int getEventCount() {
+			return eventCount;
+		}
+
+		boolean isCompleteSetHeld() {
+			return true;
+		}
 	}
 }

@@ -31,6 +31,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -1301,6 +1302,42 @@ public class Npc extends Mob {
 					boundary.getLifecycleOperationsAtEntry())));
 	}
 
+	/**
+	 * Iteratively enters one all-or-nothing preservation scope for an exact
+	 * stable-order NPC set.
+	 *
+	 * <p>If any owner is active, every earlier gate is released immediately and
+	 * the operation is not invoked. This method adds no registry or retained
+	 * owner handle; the caller's list remains valid only by its outer runtime
+	 * boundary.</p>
+	 */
+	public static boolean
+		withinLayeredOwnerPreservationLifecycleBoundaries(
+			final List<Npc> owners,
+			final LayeredOwnerPreservationLifecycleSetOperation operation) {
+		if (owners == null) {
+			throw new NullPointerException("owners");
+		}
+		if (operation == null) {
+			throw new NullPointerException("operation");
+		}
+		List<NpcOwnerPreservationLifecycleGate> gates =
+			new ArrayList<NpcOwnerPreservationLifecycleGate>(owners.size());
+		for (int index = 0; index < owners.size(); index++) {
+			Npc owner = owners.get(index);
+			if (owner == null) {
+				throw new NullPointerException("owners[" + index + "]");
+			}
+			gates.add(owner.layeredOwnerLifecycleGate);
+		}
+		return NpcOwnerPreservationLifecycleGate
+			.withinPreservationBoundaries(gates, boundary ->
+				operation.execute(
+					new LayeredOwnerPreservationLifecycleSetBoundary(
+						boundary.getOwnerCount(),
+						boundary.isCompleteSetHeld())));
+	}
+
 	private void beginLayeredOwnerLifecycleOperation() {
 		layeredOwnerLifecycleGate.beginOperation();
 	}
@@ -1313,6 +1350,37 @@ public class Npc extends Mob {
 	public interface LayeredOwnerPreservationLifecycleOperation {
 		void execute(
 			LayeredOwnerPreservationLifecycleBoundary boundary);
+	}
+
+	@FunctionalInterface
+	public interface LayeredOwnerPreservationLifecycleSetOperation {
+		void execute(
+			LayeredOwnerPreservationLifecycleSetBoundary boundary);
+	}
+
+	/** Closed facts valid only while one complete iterative owner set is held. */
+	public static final class
+		LayeredOwnerPreservationLifecycleSetBoundary {
+		private final int ownerCount;
+		private final boolean completeSetHeld;
+
+		private LayeredOwnerPreservationLifecycleSetBoundary(
+			final int ownerCount,
+			final boolean completeSetHeld) {
+			if (ownerCount < 0 || !completeSetHeld) {
+				throw new IllegalArgumentException(
+					"NPC owner preservation lifecycle set is invalid");
+			}
+			this.ownerCount = ownerCount;
+			this.completeSetHeld = true;
+		}
+
+		public int getOwnerCount() { return ownerCount; }
+		public boolean isCompleteSetHeld() { return completeSetHeld; }
+		public boolean isPointInTimeOnly() { return true; }
+		public boolean isPreservationFactEstablished() { return false; }
+		public boolean isRuntimeHandleRetained() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
 	}
 
 	/** Closed facts valid only while the supplied operation is executing. */

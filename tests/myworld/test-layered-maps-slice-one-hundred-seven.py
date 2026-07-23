@@ -26,7 +26,7 @@ class LayeredMapsSliceOneHundredSevenTest(unittest.TestCase):
             source.index("@Override", source.index("public final long doRun()"))
         ]
         first_timing = boundary.index("synchronized (timingLock)")
-        callback = boundary.index("\n\t\t\t\t\trun();")
+        callback = boundary.index("run();")
         second_timing = boundary.index(
             "synchronized (timingLock)", first_timing + 1
         )
