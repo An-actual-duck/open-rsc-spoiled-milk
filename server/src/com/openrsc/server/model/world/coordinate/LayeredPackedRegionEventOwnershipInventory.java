@@ -68,6 +68,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	private final int spatialReferenceCount;
 	private final int exactSpatialEventCount;
 	private final int ownerPositionHintEventCount;
+	private final int npcOwnerIdentityCapturedEventCount;
 	private final int nonSpatialGlobalEventCount;
 	private final int unattributedEventCount;
 	private final int candidateRelatedEventCount;
@@ -91,6 +92,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		final int spatialReferenceCount,
 		final int exactSpatialEventCount,
 		final int ownerPositionHintEventCount,
+		final int npcOwnerIdentityCapturedEventCount,
 		final int nonSpatialGlobalEventCount,
 		final int unattributedEventCount,
 		final int candidateRelatedEventCount,
@@ -112,6 +114,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		this.spatialReferenceCount = spatialReferenceCount;
 		this.exactSpatialEventCount = exactSpatialEventCount;
 		this.ownerPositionHintEventCount = ownerPositionHintEventCount;
+		this.npcOwnerIdentityCapturedEventCount =
+			npcOwnerIdentityCapturedEventCount;
 		this.nonSpatialGlobalEventCount = nonSpatialGlobalEventCount;
 		this.unattributedEventCount = unattributedEventCount;
 		this.candidateRelatedEventCount = candidateRelatedEventCount;
@@ -199,6 +203,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		int referenceCount = 0;
 		int exactCount = 0;
 		int hintCount = 0;
+		int npcOwnerIdentityCount = 0;
 		int globalCount = 0;
 		int unknownCount = 0;
 		int candidateEventCount = 0;
@@ -296,6 +301,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 					throw new IllegalStateException(
 						"Unhandled event attribution kind");
 			}
+			npcOwnerIdentityCount += state.getNpcOwnerIdentity() == null ? 0 : 1;
 			eventRecords.add(new EventRecord(state, candidateOrdinals));
 		}
 
@@ -310,7 +316,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		return new LayeredPackedRegionEventOwnershipInventory(
 			proposalGeneration, observedAtTick, schedulerInstanceIdentity,
 			sourceRecords, eventRecords,
-			referenceCount, exactCount, hintCount, globalCount, unknownCount,
+			referenceCount, exactCount, hintCount, npcOwnerIdentityCount,
+			globalCount, unknownCount,
 			candidateEventCount, restorationAvailableCount,
 			callbackPayloadCompleteCount, executionSemanticsCapturedCount,
 			atomicTimingCapturedCount,
@@ -351,6 +358,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	public int getExactSpatialEventCount() { return exactSpatialEventCount; }
 	public int getOwnerPositionHintEventCount() {
 		return ownerPositionHintEventCount;
+	}
+	public int getNpcOwnerIdentityCapturedEventCount() {
+		return npcOwnerIdentityCapturedEventCount;
 	}
 	public int getNonSpatialGlobalEventCount() {
 		return nonSpatialGlobalEventCount;
@@ -556,6 +566,73 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		NPC_SPAWN,
 		GROUND_ITEM_SPAWN,
 		HARVESTING_SCENERY
+	}
+
+	/**
+	 * Detached authored identity for one NPC event owner.
+	 *
+	 * <p>The runtime NPC ID is definition identity, not a mutable world index.
+	 * This value retains no entity, event, Region, registry, cache, callback,
+	 * lease, permit, or lifecycle authority.</p>
+	 */
+	public static final class NpcOwnerIdentity {
+		private static final int MAXIMUM_AUTHORED_SOURCE_ORDINAL = 262144;
+		private final long generation;
+		private final int packedRegionX;
+		private final int packedRegionY;
+		private final int sourceOrdinal;
+		private final int runtimeNpcId;
+
+		private NpcOwnerIdentity(
+			final long generation,
+			final int packedRegionX,
+			final int packedRegionY,
+			final int sourceOrdinal,
+			final String constructionKind,
+			final int runtimeNpcId) {
+			if (generation <= 0L || packedRegionX < 0 || packedRegionY < 0
+				|| sourceOrdinal <= 0
+				|| sourceOrdinal > MAXIMUM_AUTHORED_SOURCE_ORDINAL) {
+				throw new IllegalArgumentException(
+					"NPC owner authored identity is invalid");
+			}
+			if (!"NPC_SPAWN".equals(constructionKind)) {
+				throw new IllegalArgumentException(
+					"NPC owner identity must describe an authored NPC spawn");
+			}
+			if (runtimeNpcId < 0) {
+				throw new IllegalArgumentException(
+					"Runtime NPC ID must not be negative");
+			}
+			this.generation = generation;
+			this.packedRegionX = packedRegionX;
+			this.packedRegionY = packedRegionY;
+			this.sourceOrdinal = sourceOrdinal;
+			this.runtimeNpcId = runtimeNpcId;
+		}
+
+		public static NpcOwnerIdentity of(
+			final long generation,
+			final int packedRegionX,
+			final int packedRegionY,
+			final int sourceOrdinal,
+			final String constructionKind,
+			final int runtimeNpcId) {
+			return new NpcOwnerIdentity(
+				generation, packedRegionX, packedRegionY, sourceOrdinal,
+				constructionKind, runtimeNpcId);
+		}
+
+		public long getGeneration() { return generation; }
+		public int getPackedRegionX() { return packedRegionX; }
+		public int getPackedRegionY() { return packedRegionY; }
+		public int getSourceOrdinal() { return sourceOrdinal; }
+		public int getRuntimeNpcId() { return runtimeNpcId; }
+
+		public boolean isDetachedValue() { return true; }
+		public boolean isRuntimeIndex() { return false; }
+		public boolean isEntityHandle() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
 	}
 
 	/** One exact candidate source supplied in canonical proposal order. */
@@ -1067,6 +1144,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		private final int snapshotOrdinal;
 		private final long registrationSequence;
 		private final OwnerKind ownerKind;
+		private final NpcOwnerIdentity npcOwnerIdentity;
 		private final AttributionKind attributionKind;
 		private final boolean running;
 		private final long ticksBeforeRun;
@@ -1079,6 +1157,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final int snapshotOrdinal,
 			final long registrationSequence,
 			final OwnerKind ownerKind,
+			final NpcOwnerIdentity npcOwnerIdentity,
 			final AttributionKind attributionKind,
 			final boolean running,
 			final long ticksBeforeRun,
@@ -1094,6 +1173,11 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			this.snapshotOrdinal = snapshotOrdinal;
 			this.registrationSequence = registrationSequence;
 			this.ownerKind = Objects.requireNonNull(ownerKind, "ownerKind");
+			if (npcOwnerIdentity != null && ownerKind != OwnerKind.NPC) {
+				throw new IllegalArgumentException(
+					"Only an NPC-owned event may carry NPC owner identity");
+			}
+			this.npcOwnerIdentity = npcOwnerIdentity;
 			this.attributionKind = Objects.requireNonNull(
 				attributionKind, "attributionKind");
 			Objects.requireNonNull(spatialReferences, "spatialReferences");
@@ -1179,7 +1263,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final int timesRan,
 			final List<SpatialReference> spatialReferences) {
 			return new EventState(
-				snapshotOrdinal, registrationSequence, ownerKind, attributionKind,
+				snapshotOrdinal, registrationSequence, ownerKind, null,
+				attributionKind,
 				running,
 				ticksBeforeRun, timesRan, spatialReferences,
 				EventRestorationState.unavailable(), false);
@@ -1196,7 +1281,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final List<SpatialReference> spatialReferences,
 			final EventRestorationState restorationState) {
 			return new EventState(
-				snapshotOrdinal, registrationSequence, ownerKind, attributionKind,
+				snapshotOrdinal, registrationSequence, ownerKind, null,
+				attributionKind,
 				running,
 				ticksBeforeRun, timesRan, spatialReferences,
 				restorationState, false);
@@ -1214,14 +1300,37 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final EventRestorationState restorationState,
 			final boolean atomicTimingCaptured) {
 			return new EventState(
-				snapshotOrdinal, registrationSequence, ownerKind, attributionKind,
+				snapshotOrdinal, registrationSequence, ownerKind, null,
+				attributionKind,
 				running, ticksBeforeRun, timesRan, spatialReferences,
 				restorationState, atomicTimingCaptured);
+		}
+
+		public static EventState of(
+			final int snapshotOrdinal,
+			final long registrationSequence,
+			final OwnerKind ownerKind,
+			final NpcOwnerIdentity npcOwnerIdentity,
+			final AttributionKind attributionKind,
+			final boolean running,
+			final long ticksBeforeRun,
+			final int timesRan,
+			final List<SpatialReference> spatialReferences,
+			final EventRestorationState restorationState,
+			final boolean atomicTimingCaptured) {
+			return new EventState(
+				snapshotOrdinal, registrationSequence, ownerKind,
+				npcOwnerIdentity, attributionKind, running, ticksBeforeRun,
+				timesRan, spatialReferences, restorationState,
+				atomicTimingCaptured);
 		}
 
 		public int getSnapshotOrdinal() { return snapshotOrdinal; }
 		public long getRegistrationSequence() { return registrationSequence; }
 		public OwnerKind getOwnerKind() { return ownerKind; }
+		public NpcOwnerIdentity getNpcOwnerIdentity() {
+			return npcOwnerIdentity;
+		}
 		public AttributionKind getAttributionKind() {
 			return attributionKind;
 		}
@@ -1257,6 +1366,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			return state.getRegistrationSequence();
 		}
 		public OwnerKind getOwnerKind() { return state.getOwnerKind(); }
+		public NpcOwnerIdentity getNpcOwnerIdentity() {
+			return state.getNpcOwnerIdentity();
+		}
 		public AttributionKind getAttributionKind() {
 			return state.getAttributionKind();
 		}

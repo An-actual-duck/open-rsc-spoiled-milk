@@ -11,6 +11,7 @@ import com.openrsc.server.event.rsc.ImmediateEvent;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation.OuterFenceReason;
@@ -33,6 +34,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.GenerationBindingRequirement;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.IdempotencyPolicy;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.MutationPrecondition;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.NpcOwnerIdentity;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.OwnerKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.PackedSource;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.SceneryRestorationState;
@@ -602,8 +604,21 @@ public class GameEventHandler {
 		EventRestorationState restorationState =
 			detachEventRestorationState(Objects.requireNonNull(
 				event.getRestorationState(), "event restoration state"));
+		NpcOwnerIdentity npcOwnerIdentity = null;
+		if (ownerKind == OwnerKind.NPC) {
+			Npc npcOwner = (Npc) owner;
+			LayeredAuthoredPlacementIdentity identity =
+				npcOwner.getAuthoredPlacementIdentity();
+			if (identity != null) {
+				npcOwnerIdentity = NpcOwnerIdentity.of(
+					identity.getGeneration(), identity.getPackedRegionX(),
+					identity.getPackedRegionY(), identity.getSourceOrdinal(),
+					identity.getConstructionKind().name(), npcOwner.getID());
+			}
+		}
 		return EventState.of(
-			ordinal, registrationSequence, ownerKind, attribution,
+			ordinal, registrationSequence, ownerKind, npcOwnerIdentity,
+			attribution,
 			timing.isRunning(), timing.getTicksBeforeRun(),
 			timing.getTimesRan(), references, restorationState,
 			restorationState.isExecutionSemanticsCaptured());

@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path and Slice 158's safe refusal path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, and 159 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, and 160 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -202,6 +202,10 @@ live recovery work, separates total/complete/incomplete and attribution counts,
 publishes the first stable unmet requirement through additive schema-v45, and
 continues to refuse the entire proposal without scheduler or Region work when
 any callback is incomplete;
+automated-validated Slice 160 detaches the exact generation-fenced authored
+identity and definition ID of an NPC event owner without retaining its entity
+or unstable world index, while missing/dynamic owner identity remains explicit
+and does not prove owner preservation;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12998,6 +13002,51 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the preflight is already exercised by the accepted Slice 158 capture and adds
 no new runtime behavior or authority.
+
+### Slice 160: Detached NPC event-owner identity
+
+Objective: give each authored NPC-owned callback an exact, bounded correlation
+key before deciding whether the callback can remain scheduled with a preserved
+owner.
+
+Implemented:
+
+- event snapshots now detach the NPC owner's existing generation-fenced
+  authored placement identity plus its NPC definition ID;
+- the nested value copies only generation, packed source, authored source
+  ordinal, and definition ID. It deliberately does not copy the mutable world
+  index or retain the NPC, event, scheduler, or Region;
+- inventory records expose optional owner identity and an exact captured count;
+  dynamic or otherwise identity-less NPCs remain explicitly uncorrelated
+  rather than receiving a guessed identity; and
+- validation rejects owner identity on non-NPC events, non-NPC authored
+  construction kinds, and invalid definition IDs while retaining every
+  source-compatible older `EventState` constructor.
+
+Safety boundary:
+
+- the value is only a detached correlation key. It does not prove owner
+  preservation, owner activity, unique runtime identity, source containment,
+  callback continuity, or scheduler stability;
+- no global entity registry, runtime world-index lookup, event reschedule,
+  cancellation, reconstruction, loading, retirement, arrival gate, or lifecycle
+  authority is added; and
+- proposal readiness remains unchanged: every owner-position-hint callback
+  without standalone restoration evidence still blocks Slice 159 preflight.
+
+Automated validation status:
+
+- an executable fixture proves exact identity round-trip, optional missing
+  identity, aggregate counting, and closed invalid-kind/owner/ID rejection;
+- source guards prove the runtime capture uses authored identity and definition
+  ID without reading a world index;
+- the complete layered-map suite passes 534 tests across 159 focused files; and
+- the authoritative bundled-Ant server build compiles 804 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. The next slice must correlate this
+key with a fresh bounded active-NPC census and distinguish owner-continuity
+eligibility from actual preservation.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
