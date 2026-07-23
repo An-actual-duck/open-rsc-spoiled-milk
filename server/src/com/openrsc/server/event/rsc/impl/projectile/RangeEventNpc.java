@@ -68,7 +68,7 @@ public class RangeEventNpc extends GameTickEvent {
             owner.resetRange();
         } else {
             owner.resetPath();
-            if (!PathValidation.checkPath(getWorld(), owner.getLocation(), victim.getLocation(), true)) {
+            if (!PathValidation.checkHostileProjectilePath(getWorld(), owner.getLocation(), victim.getLocation())) {
                 owner.resetRange();
                 stop();
                 return;

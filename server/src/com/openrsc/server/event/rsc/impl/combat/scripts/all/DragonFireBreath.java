@@ -136,7 +136,8 @@ public class DragonFireBreath implements OnCombatStartScript {
 
 	private boolean canDragonBreathReachPlayer(final Npc dragon, final Player player) {
 		return dragon != null && player != null
-			&& PathValidation.checkPath(dragon.getWorld(), dragon.getLocation(), player.getLocation(), true);
+			&& PathValidation.checkHostileProjectilePath(
+				dragon.getWorld(), dragon.getLocation(), player.getLocation());
 	}
 
 	@Override

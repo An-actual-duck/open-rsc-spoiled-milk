@@ -1,7 +1,7 @@
 # Hostile NPC Projectile Reach Audit
 
-Status: investigation complete; no gameplay changes made; implementation
-policy selected
+Status: implementation complete; automated verification passed; private visual
+verification pending
 
 Date: 2026-07-23
 
@@ -15,7 +15,7 @@ This audit traces whether a hostile NPC can acquire, pursue, and hit a player
 with a ranged or magic projectile. The Elder Green Dragon safe spot across the
 lava in the underground Mining Guild area is the primary reproducible case.
 
-The investigation covers:
+The investigation and selected implementation cover:
 
 - natural aggression and existing-threat selection;
 - pursuit and movement collision;
@@ -23,16 +23,15 @@ The investigation covers:
 - projectile creation and delayed damage delivery;
 - terrain, wall, door, scenery, void, distance, and floor behavior;
 - modern ranged and magic NPC attacks;
-- legacy and boss-specific exceptions.
+- legacy and boss-specific exceptions;
+- semantic hostile-projectile collision ownership and all known launch paths.
 
-No server, client, map, definition, or gameplay behavior was changed.
-
-## Executive Finding
+## Pre-implementation Executive Finding
 
 The lava does not prevent the Elder Green Dragon from being an eligible target
 owner. It prevents both movement and projectile launch.
 
-The decisive launch check is:
+Before this implementation, the decisive launch check was:
 
 ```java
 PathValidation.checkPath(
@@ -129,7 +128,7 @@ If the player has not engaged the Elder first, natural acquisition can also
 fail simply because the configured aggression radius is one tile. That is a
 separate distance condition, not a lava visibility rule.
 
-## Complete Decision Path
+## Pre-implementation Decision Path
 
 ### 1. Attack-style classification
 
@@ -269,7 +268,7 @@ also prevents the projectile-triggered AOE roll. If an ordinary attack legally
 lands on another target, however, the resulting AOE can hit secondary players
 through walls, doors, or lava.
 
-## Collision Ownership and Naming
+## Pre-implementation Collision Ownership and Naming
 
 `TileValue` starts with `FULL_BLOCK` so missing/uninitialized world tiles are
 blocked. Loaded terrain then derives a traversal mask from several independent
@@ -321,7 +320,7 @@ The `OBJECT` collision bit is not itself tested by `checkPath`; registered game
 objects are relevant because they derive cardinal, diagonal, or full-tile
 flags.
 
-## Current Behavior Matrix
+## Pre-implementation Behavior Matrix
 
 “Acquire” describes collision's direct effect. Other target-state and distance
 rules can still reject the player. “Land” describes collision after an
@@ -351,7 +350,7 @@ default player path but **not** to the strict hostile path. Other walls and
 blocking scenery block both. Therefore “wall” and “scenery” do not currently
 have one universal player-projectile policy.
 
-## Ranged and Magic Comparison
+## Pre-implementation Ranged and Magic Comparison
 
 | Stage | Modern hostile ranged | Modern hostile magic |
 | --- | --- | --- |
@@ -368,7 +367,7 @@ have one universal player-projectile policy.
 The Elder's ordinary long-range attack is the right-hand column. Its configured
 ranged offense does not make that ordinary projectile a ranged attack.
 
-## Exceptional and Legacy Call Sites
+## Pre-implementation Exceptional and Legacy Call Sites
 
 ### Dragon fire on melee-combat start
 
@@ -403,7 +402,7 @@ if the central policy changes.
   path mode. They are not hostile-NPC policy call sites but demonstrate the
   current asymmetry.
 
-## Risks
+## Pre-implementation Risks
 
 1. **A one-boolean fix is too broad.** Changing the modern hostile call to the
    default mode simultaneously changes lava, water, fences, selected terrain
@@ -513,7 +512,7 @@ assuming that the existing Heroes Guild raw wall value represents every
 fence. An open gate or removed fence segment is transparent because its
 blocking collision is no longer present; a closed fence gate is opaque.
 
-## Recommended Regression Coverage
+## Regression Coverage Plan
 
 The implementation phase should add deterministic behavioral tests, not only
 source-string guards.
@@ -572,7 +571,58 @@ source-string guards.
 - Dead, removed, logged-out, or more-than-15-tiles-away target at delivery.
 - No duplicate damage when an ordinary Elder projectile rolls a special.
 
-## Existing Verification
+## Implementation
+
+The selected policy is now implemented through an explicit
+`PathValidation.checkHostileProjectilePath` API. It consumes a dedicated
+semantic mask from `TileValue` instead of either reusing all walking collision
+or honoring the old tile-wide transparency exemption.
+
+Collision ownership is derived as follows:
+
+- loaded cardinal and diagonal terrain walls remain hostile-projectile
+  collision;
+- uninitialized tiles and raw overlay `10` are opaque void;
+- registered boundary walls and closed doors own counted dynamic collision;
+- a central scenery classifier makes walls, closed doors/gates, and every
+  inventoried fence form opaque;
+- open doors/gates, water, lava, rocks, trees, and other ordinary scenery do
+  not add hostile-projectile collision;
+- registration and removal use counts, so overlapping hard-cover owners cannot
+  erase each other.
+
+The four pre-existing hostile launch paths now use the named API:
+
+1. autonomous ranged/magic attacks in `NpcBehavior`;
+2. legacy `RangeEventNpc`;
+3. combat-start dragon breath;
+4. legacy spell-triggered dragon breath.
+
+Elder fireshot and burn validate each prospective player through the same API
+before submitting their projectile visual or damage. Fireshot deliberately
+does not recheck collision at delayed delivery, and a legally started burn
+continues, preserving the selected launch-commit policy. The Elder melee sweep
+is not a projectile and remains unchanged. Administrator direct-projectile
+commands remain documented bypasses.
+
+### Implemented behavior matrix
+
+| Collision source | Walk | Hostile NPC projectile |
+| --- | --- | --- |
+| cardinal/diagonal terrain wall | blocked | blocked |
+| boundary wall or closed door/gate | blocked | blocked |
+| open/removed door or gate | open if no other owner blocks | transparent |
+| fence scenery, including type `0` | definition-dependent | blocked |
+| ordinary solid scenery such as rock/tree | blocked | transparent |
+| water overlay `2` | blocked | transparent |
+| lava overlay `11` | blocked | transparent |
+| void overlay `10` or uninitialized tile | blocked | blocked |
+| raw elevation change | unchanged | transparent |
+
+Player-originated projectiles retain the existing default path API and were
+not changed.
+
+## Verification
 
 The following existing tests are relevant to this audit:
 
@@ -582,7 +632,24 @@ The following existing tests are relevant to this audit:
 - `tests/myworld/test-mining-guild-smithing-expansion.py`
 - `tests/myworld/test-summoning-combat-assist.py`
 
-The current projectile-clipping test intentionally protects the strict hostile
-fence behavior. Any implementation that changes the policy must replace its
-source-string assertions with explicit behavior cases rather than merely
-editing the expected boolean.
+Focused implementation coverage is in
+`tests/myworld/test-hostile-projectile-collision-policy.py`. Its executable
+Java harness verifies terrain, void, ordinary-scenery, counted hard-cover,
+copy-on-write, open/closed gate, structural-wall, and all current fence
+definition fixtures. It also guards every known hostile call site, both Elder
+AOE launch loops, launch-versus-delivery timing, and unchanged player
+projectile routing.
+
+The following regression tests pass:
+
+- `tests/myworld/test-hostile-projectile-collision-policy.py`
+- `tests/myworld/test-npc-projectile-clipping.py`
+- `tests/myworld/test-combat-runtime-invariants.py`
+- `tests/myworld/test-combat-data.py`
+- `tests/myworld/test-npc-attack-styles.py`
+- `tests/myworld/test-world-editor-tile-collision.py`
+- `tests/myworld/test-world-editor-region-collision.py`
+
+The authoritative server and plugin build passes through
+`./scripts/build-server.sh`. Private visual verification remains required
+before final handoff.
