@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, and 152 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, and 153 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -172,6 +172,10 @@ automated-validated Slice 152 routes one already-prepared executable recovery
 directive to only its overdue or future operation, adds exact planned timing to
 overdue consumption, and returns one typed Slice 145 result without looping,
 retrying, arriving, or releasing visibility;
+automated-validated Slice 153 runs one ready bounded batch in deterministic
+directive order, reassesses its monotonic prefix after every result, stops at
+the first refusal, and reports contractual readiness without retrying, loading,
+arriving, or releasing visibility;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12537,6 +12541,60 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the adapter remains a disconnected one-step executor.
 
+### Slice 153: Bounded recovery batch runner
+
+Objective: execute one already-prepared bounded recovery batch in exact
+directive order, reduce progress after every operation, and stop at the first
+refusal without creating retry or first-visibility authority.
+
+Implemented:
+
+- `GameTickEventRestorationRecoveryBatchExecutor` accepts only a ready Slice
+  145 preparation, its exact future-snapshot set, and a bound no larger than
+  the established recovery candidate maximum;
+- it rejects an oversized batch, duplicate snapshot registration, a missing or
+  extra future snapshot, and any snapshot supplied for an overdue directive
+  before invoking the first runtime operation;
+- it calls Slice 152 once per directive in prepared order, appends exactly one
+  typed result, and immediately reassesses the monotonic Slice 145 completion;
+- the loop breaks on the first refused operation, so an unexecuted suffix
+  cannot mutate Regions or consume/retain callbacks based on stale inventory;
+  and
+- the closed result distinguishes pending work, refusal requiring a fresh
+  inventory retry, and contractual readiness for first visibility, while
+  explicitly performing none of those later actions.
+
+Automated validation status:
+
+- an executable mixed overdue/future fixture proves exact two-step ordering,
+  terminal consumption only for the overdue callback, and current-state
+  application plus retention only for the future callback;
+- a first-step Region refusal proves the future suffix is never invoked and
+  both callbacks remain registered;
+- missing and duplicate future-snapshot sets refuse before either Region path;
+- source guards require stop-on-refusal progress assessment and prohibit
+  retry, Region loading, arrival, visibility release, runtime handles, and
+  lifecycle authority;
+- the complete layered-map suite passes 510 tests across 152 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 800 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the caller still has to produce the preparation and pre-reconstruction
+  future snapshots and invoke this runner after the relevant reconstruction;
+- a refused batch only reports that a fresh exact inventory is required. It
+  does not perform that retry or reuse the accepted prefix;
+- contractual readiness remains a detached result and does not itself release
+  a player, packet, entity, or Region to visibility; and
+- reconstruction orchestration, source loading, retry, arrival integration,
+  first-visibility release, retirement, persistence, and public/live callers
+  remain absent.
+
+Status: implemented and automated-validated. No owner route is required because
+the bounded runner remains disconnected from reconstruction and arrival.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13485,15 +13543,21 @@ Slice 152 now executes one already-prepared directive, routing overdue work only
 to Slice 142 and future work only to Slice 151. Overdue execution additionally
 requires the prepared lifecycle/countdown to match inside the scheduler
 boundary. Each path returns one correctly typed Slice 145 operation result, but
-no loop or progress reduction exists yet.
+no loop or progress reduction exists at that one-step boundary.
 
-The next safe slice should add a bounded batch runner over a ready Slice 145
-preparation and the exact prepared future snapshots. It must call Slice 152 in
-directive order, append one result at a time, reduce progress through Slice 145,
-and stop immediately on the first refusal. It may report only pending, fresh-
-inventory-retry, or contractually-ready state; it must not retry, load Regions,
-connect arrival/gameplay, or translate contractual readiness into first
-visibility release.
+Slice 153 now supplies the bounded recovery batch runner. It validates the
+exact future-snapshot set before work, invokes Slice 152 in directive order,
+reassesses Slice 145 after every result, and stops immediately on the first
+refusal. Its successful terminal state is only contractual readiness; retry,
+loading, arrival, and visibility remain absent.
+
+The next safe slice should define the smallest closed reconstruction-lifecycle
+orchestration boundary around the existing pieces: exact inventory and future-
+state capture must precede reconstruction, while batch execution must follow
+reconstruction and precede any visibility decision. The first gate should
+identify and validate those phases without loading a Region, retrying a refused
+batch, connecting Player arrival/gameplay, or converting contractual readiness
+into packet/entity visibility.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

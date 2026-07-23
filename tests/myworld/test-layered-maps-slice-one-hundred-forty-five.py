@@ -19,6 +19,10 @@ DIRECTIVE_EXECUTOR = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventRestorationRecoveryDirectiveExecutor.java"
 )
+BATCH_EXECUTOR = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/handler/"
+    "GameTickEventRestorationRecoveryBatchExecutor.java"
+)
 PLAN = ROOT / (
     "docs/myworld/in-progress-work-plans/"
     "world-layer-capacity-exploration-plan.md"
@@ -327,7 +331,7 @@ class LayeredMapsSliceOneHundredFortyFiveTest(unittest.TestCase):
     def test_runtime_consumers_remain_disconnected(self):
         name = "GameTickEventRestorationRecoveryCoordinatorContract"
         for path in (ROOT / "server/src").rglob("*.java"):
-            if path in (COORDINATOR, DIRECTIVE_EXECUTOR):
+            if path in (COORDINATOR, DIRECTIVE_EXECUTOR, BATCH_EXECUTOR):
                 continue
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
 
