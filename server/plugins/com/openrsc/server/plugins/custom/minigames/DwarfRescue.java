@@ -27,7 +27,7 @@ public class DwarfRescue implements TalkNpcTrigger, OpInvTrigger {
 				+ "Complete Dwarf Youth Rescue to access the lava forge% "
 				+ "Repair the lava forge with 100 Black dragon scales and 1,000,000 coins% %"
 				+ "Dragon bar:% %"
-				+ "1 Raw dragon metal% "
+				+ "1 Dragon metal scrap% "
 				+ "6 Dragon sulfur% %"
 				+ "Purified Rune Bar:% %"
 				+ "1 Runite bar% "
@@ -106,7 +106,7 @@ public class DwarfRescue implements TalkNpcTrigger, OpInvTrigger {
 					npcsay("oi " + player.getUsername(),
 						"Gramat told me about you",
 						"this forge is yours to use",
-						"raw dragon metal and dragon sulfur can be smelted into bars");
+						"dragon metal scrap and dragon sulfur can be smelted into bars");
 				} else {
 					npcsay("oi " + player.getUsername(),
 						"Gramat told me about you",

@@ -1516,7 +1516,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(174, "54", "Adamantite bar - 1 adamantite ore and 4 coal"));
 			skillMenuEntries.add(new SkillMenuItem(1958, "62", "2 Orichalcum bars - 1 mithril, 1 adamantite, and 5 coal"));
 			skillMenuEntries.add(new SkillMenuItem(408, "70", "Runite bar - 1 runite ore and 6 coal"));
-			skillMenuEntries.add(new SkillMenuItem(1365, "80", "Dragon bar - raw dragon metal and 6 dragon sulfur"));
+			skillMenuEntries.add(new SkillMenuItem(1365, "80", "Dragon bar - dragon metal scrap and 6 dragon sulfur"));
 			skillMenuEntries.add(new SkillMenuItem(3261, "90", "Purified Rune Bar - rune bar and 14 dragon sulfur"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1383, "Smithing");
