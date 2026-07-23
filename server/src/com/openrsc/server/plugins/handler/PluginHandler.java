@@ -197,29 +197,31 @@ public final class PluginHandler implements IPluginHandler {
             boolean shouldBlockDefault = false;
 
             Collection<Object> triggerInstances = triggerTypeToInstance.get(triggerType);
-            if (triggerInstances.isEmpty()) {
-                LOGGER.warn("Unable to handle unknown plugin: {}", simpleName);
-            } else {
-                for (Object trigger : triggerInstances) {
-                    try {
-                        final Class<?>[] dataClasses = Arrays.stream(data)
-                                .map(Object::getClass)
-                                .toArray(Class<?>[]::new);
-                        final Method method = triggerType.getMethod("block" + triggerName, dataClasses);
-                        final boolean shouldBlock = (Boolean) method.invoke(trigger, data);
-                        if (shouldBlock) {
-                            shouldBlockDefault = true;
-                            invokePluginAction(triggerType, owner, trigger, data, walkToAction);
-                        }
-                    } catch (final Exception e) {
-                        LOGGER.error("Error while handling shouldBlockDefault plugin: " + simpleName, e);
+            final boolean defaultHandlerSupportsTrigger =
+                    defaultHandler != null && triggerType.isInstance(defaultHandler);
+            for (Object trigger : triggerInstances) {
+                try {
+                    final Class<?>[] dataClasses = Arrays.stream(data)
+                            .map(Object::getClass)
+                            .toArray(Class<?>[]::new);
+                    final Method method = triggerType.getMethod("block" + triggerName, dataClasses);
+                    final boolean shouldBlock = (Boolean) method.invoke(trigger, data);
+                    if (shouldBlock) {
+                        shouldBlockDefault = true;
+                        invokePluginAction(triggerType, owner, trigger, data, walkToAction);
                     }
+                } catch (final Exception e) {
+                    LOGGER.error("Error while handling shouldBlockDefault plugin: " + simpleName, e);
                 }
             }
 
             try {
                 if (!shouldBlockDefault) {
-                    invokePluginAction(triggerType, owner, defaultHandler, data, walkToAction);
+                    if (defaultHandlerSupportsTrigger) {
+                        invokePluginAction(triggerType, owner, defaultHandler, data, walkToAction);
+                    } else {
+                        LOGGER.warn("No plugin or default handler accepted trigger: {}", simpleName);
+                    }
                 }
             } catch (final Exception e) {
                 LOGGER.error("Error while handling shouldBlockDefault false plugin: " + simpleName, e);
