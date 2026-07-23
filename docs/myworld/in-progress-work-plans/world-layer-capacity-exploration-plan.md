@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, and 150 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, and 151 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -163,7 +163,11 @@ the scheduler Store, mutation, arrival, and visibility disconnected; and
 automated-validated Slice 150 composes that capture with the exact scheduler
 registration, event execution, and stable lifecycle boundaries, preserves the
 future callback and countdown at the capture boundary, and leaves application,
-batch execution, arrival, and visibility disconnected;
+batch execution, arrival, and visibility disconnected; and
+automated-validated Slice 151 applies one previously captured future current
+state under a freshly correlated exact registration/execution/stable-lifecycle
+boundary, retains its callback/countdown on apply, no-op, and refusal, and
+leaves batch reduction, arrival, and visibility disconnected;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12404,6 +12408,68 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the coordinator remains disconnected from recovery execution and visibility.
 
+### Slice 151: Future current-state application
+
+Objective: execute one future Slice 145 operation by applying a previously
+captured Slice 150 snapshot only while its exact live callback remains the same
+future registration and lifecycle.
+
+Implemented:
+
+- `GameTickEventRestorationFutureStateApplicationCoordinator` accepts one
+  detached current-state snapshot and re-enters the Store's exact scheduler,
+  event-execution, authored-generation, and stable zero-run lifecycle boundary;
+- inside that boundary it compares scheduler scope, registration sequence,
+  proposal/authored generation, lifecycle version, remaining countdown,
+  callback kind and desired constructor, coordinate/type, authored provenance,
+  and one-shot continuing-tick semantics to the snapshot;
+- a correlation mismatch refuses before Region mutation. A stale proposal,
+  missing registration, stopped callback, or already-run callback refuses even
+  earlier through the Store boundary;
+- only an exactly correlated snapshot reaches the now-public but narrowly
+  typed `RegionManager.applyGameTickEventCurrentStateRecoverySnapshot` seam.
+  Applied state and already-satisfied state both retain the exact callback and
+  countdown; Region refusal also retains them for a fresh-inventory retry;
+- Region application runs while stop/reset/tick timing changes remain excluded.
+  A later lifecycle change does not invalidate a completed mutation that was
+  correlated and applied inside the stable boundary; and
+- the closed result copies typed scheduler and Region outcome/reason, membership,
+  projection, and boundary-count facts without retaining the snapshot, Region
+  result, event, registration, or any monitor handle.
+
+Automated validation status:
+
+- an executable fixture proves applied, no-op, and refused Region outcomes all
+  retain the exact future registration and countdown, and only an applied
+  outcome reports mutation/membership registration;
+- lifecycle and countdown mismatches refuse before Region application, while a
+  proposal-generation mismatch refuses before entering the stable lifecycle;
+- deterministic latches prove concurrent stop cannot cross Region application
+  and that completed application remains valid before the later stop;
+- source guards keep capture, batch reduction, loading, callback invocation,
+  cancellation/reschedule, arrival, and visibility out of this coordinator;
+- the complete layered-map suite passes 504 tests across 150 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 798 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- capture and application are deliberately separate phases: Slice 150 records
+  current state before reconstruction can remove it, while this slice applies
+  that detached snapshot afterward under a fresh exact callback correlation;
+- the public Region method accepts only the closed Slice 144 snapshot and still
+  performs non-loading projection, Region availability, collision, membership,
+  and target freshness checks internally;
+- this slice executes only one caller-supplied future operation. It neither
+  selects a batch directive nor reports an outcome into Slice 145; and
+- overdue desired-state consumption, batch loops, recovery retry, loading,
+  arrival integration, first-visibility release, retirement, persistence, and
+  production callers remain absent.
+
+Status: implemented and automated-validated. No owner route is required because
+batch selection and all arrival/visibility paths remain disconnected.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13341,13 +13407,20 @@ reaches Region observation. The future event and countdown remain unchanged at
 the capture boundary, while Slice 147 application, batch execution, loading,
 arrival, and visibility remain disconnected.
 
-The next safe slice should execute one future Slice 145 operation by composing
-Slice 150 capture with Slice 147 current-state application under the same exact
-registration/execution/stable-lifecycle boundary. It must apply only the
-detached snapshot captured in that boundary, retain the future callback and its
-remaining countdown, refuse any registration/generation/lifecycle mismatch,
-and return a closed typed outcome. It must remain disconnected from overdue
-consumption, batch loops, loading, retry, arrival, and first visibility.
+Slice 151 now executes one caller-supplied future operation after reconstruction.
+It re-enters a fresh exact registration/execution/stable-lifecycle boundary,
+correlates every snapshot callback/timing/constructor/provenance field to the
+live callback, and only then invokes Slice 147. Applied, already-satisfied, and
+refused Region outcomes all retain the future callback and its countdown. Batch
+selection/reduction, loading, retry, arrival, and visibility remain disconnected.
+
+The next safe slice should implement a bounded executable adapter for one
+already-prepared Slice 145 directive. It should route overdue directives only
+to Slice 142 and future directives only to Slice 151, translate their closed
+typed outcomes into Slice 145 operation results, and preserve exact directive/
+registration order. It must stop at the first refusal and return only a
+monotonic completed prefix; it must not load Regions, retry, release first
+visibility, or connect to arrival/gameplay yet.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

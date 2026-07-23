@@ -2297,7 +2297,7 @@ public class RegionManager {
 	 * loading a missing Region or observing/changing the scheduler callback.
 	 * This package-local seam remains disconnected from production callers.
 	 */
-	CurrentStateRecoveryApplicationResult
+	public CurrentStateRecoveryApplicationResult
 		applyGameTickEventCurrentStateRecoverySnapshot(
 			final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
 		return applyGameTickEventCurrentStateRecoverySnapshot(
