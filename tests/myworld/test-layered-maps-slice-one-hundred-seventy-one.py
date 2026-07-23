@@ -55,6 +55,7 @@ final class GameTickEventNpcOwnerPreservationBoundary {
         LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
         long tick,
         int maximumOwners,
+        boolean regionLifecycleBoundaryHeld,
         ScopedPreservationOperation operation) {
         if (!GameTickEventNpcOwnerPreservationNoOpDiagnosticFixture
                 .enterScope) {
@@ -99,7 +100,7 @@ public final class
         GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result result =
             GameTickEventNpcOwnerPreservationNoOpDiagnostic.capture(
                 new GameTickEventStore(), new EntityList<Npc>(),
-                requirements(), 13L, 2);
+                requirements(), 13L, 2, true);
         check(result.getGeneration() == 9L
                 && result.getRequirementsObservedAtTick() == 12L
                 && result.getSelectedSourceCount() == 2
@@ -130,7 +131,7 @@ public final class
         GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result result =
             GameTickEventNpcOwnerPreservationNoOpDiagnostic.capture(
                 new GameTickEventStore(), new EntityList<Npc>(),
-                requirements(), 13L, 2);
+                requirements(), 13L, 2, true);
         check(!result.isOwnerScopeEntered()
                 && !result.isSourceLifecycleInvoked()
                 && !result.isPreservedConsumerInvoked()

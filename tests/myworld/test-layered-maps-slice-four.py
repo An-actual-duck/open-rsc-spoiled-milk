@@ -244,6 +244,7 @@ class LayeredMapsSliceFourTest(unittest.TestCase):
                 "server/src/com/openrsc/server/model/world/Area.java",
                 "server/src/com/openrsc/server/model/world/World.java",
                 "server/src/com/openrsc/server/model/world/region/LayeredAdjacentStepCollisionComparison.java",
+                "server/src/com/openrsc/server/model/world/region/LayeredPackedRegionSourceLifecycleBoundary.java",
                 "server/src/com/openrsc/server/model/world/region/LayeredRegionTileSnapshot.java",
                 "server/src/com/openrsc/server/model/world/region/LayeredTileNeighborhoodParityComparison.java",
                 "server/src/com/openrsc/server/model/world/region/LayeredTileStateParityComparison.java",

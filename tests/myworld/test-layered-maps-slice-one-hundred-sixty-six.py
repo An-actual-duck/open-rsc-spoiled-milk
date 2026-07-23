@@ -199,9 +199,10 @@ class LayeredMapsSliceOneHundredSixtySixTest(unittest.TestCase):
         self.assertIn("captureOwnerCorrelation", adapter)
         self.assertIn("capture.ownerStates.clear()", adapter)
         self.assertIn(
-            "capture.regionAbsenceQuiescenceHeld = true",
+            "capture.regionAbsenceQuiescenceHeld =",
             adapter,
         )
+        self.assertIn("regionLifecycleBoundaryHeld", adapter)
         self.assertIn(
             "for (EventRecord event : checkedInventory.getEvents())",
             requirements,

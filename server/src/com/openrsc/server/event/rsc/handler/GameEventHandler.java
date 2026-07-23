@@ -47,6 +47,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TargetSubject;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TimeProgressionPolicy;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
+import com.openrsc.server.model.world.region.LayeredPackedRegionSourceLifecycleBoundary;
 import com.openrsc.server.util.NamedThreadFactory;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
@@ -494,11 +495,30 @@ public class GameEventHandler {
 			final LayeredPackedRegionNpcOwnerPreservationRequirements
 				requirements,
 			final int maximumOwners) {
-		return GameTickEventNpcOwnerPreservationBoundary.capture(
-			eventStore,
-			getServer().getWorld().getNpcs(),
-			Objects.requireNonNull(requirements, "requirements"),
-			getServer().getCurrentTick(), maximumOwners);
+		LayeredPackedRegionNpcOwnerPreservationRequirements checked =
+			Objects.requireNonNull(requirements, "requirements");
+		final LayeredPackedRegionNpcOwnerPreservationBoundaryObservation[]
+			result =
+				new LayeredPackedRegionNpcOwnerPreservationBoundaryObservation[1];
+		boolean sourceBoundaryEntered =
+			getServer().getWorld().getRegionManager()
+				.withinLayeredPackedRegionSourceLifecycleBoundary(
+					checked, boundary -> {
+						requireExactPackedSourceBoundary(boundary, checked);
+						result[0] =
+							GameTickEventNpcOwnerPreservationBoundary.capture(
+								eventStore,
+								getServer().getWorld().getNpcs(),
+								checked, getServer().getCurrentTick(),
+								maximumOwners, true);
+					});
+		if (!sourceBoundaryEntered) {
+			result[0] = GameTickEventNpcOwnerPreservationBoundary.capture(
+				eventStore, getServer().getWorld().getNpcs(), checked,
+				getServer().getCurrentTick(), maximumOwners, false);
+		}
+		return Objects.requireNonNull(
+			result[0], "NPC owner preservation boundary result");
 	}
 
 	/**
@@ -510,11 +530,34 @@ public class GameEventHandler {
 			final LayeredPackedRegionNpcOwnerPreservationRequirements
 				requirements,
 			final int maximumOwners) {
+		LayeredPackedRegionNpcOwnerPreservationRequirements checked =
+			Objects.requireNonNull(requirements, "requirements");
+		final GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result[]
+			captured =
+				new GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result[1];
+		boolean sourceBoundaryEntered =
+			getServer().getWorld().getRegionManager()
+				.withinLayeredPackedRegionSourceLifecycleBoundary(
+					checked, boundary -> {
+						requireExactPackedSourceBoundary(boundary, checked);
+						captured[0] =
+							GameTickEventNpcOwnerPreservationNoOpDiagnostic
+								.capture(
+									eventStore,
+									getServer().getWorld().getNpcs(),
+									checked, getServer().getCurrentTick(),
+									maximumOwners, true);
+					});
+		if (!sourceBoundaryEntered) {
+			captured[0] =
+				GameTickEventNpcOwnerPreservationNoOpDiagnostic.capture(
+					eventStore, getServer().getWorld().getNpcs(),
+					checked, getServer().getCurrentTick(),
+					maximumOwners, false);
+		}
 		GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result result =
-			GameTickEventNpcOwnerPreservationNoOpDiagnostic.capture(
-				eventStore, getServer().getWorld().getNpcs(),
-				Objects.requireNonNull(requirements, "requirements"),
-				getServer().getCurrentTick(), maximumOwners);
+			Objects.requireNonNull(
+				captured[0], "NPC owner preservation no-op result");
 		return PackedRegionNpcOwnerPreservationNoOpMetadata.of(
 			result.getReason().name(), result.getGeneration(),
 			result.getRequirementsObservedAtTick(),
@@ -525,6 +568,22 @@ public class GameEventHandler {
 			result.getAbsentSourceCount(),
 			result.getReconstructedSourceCount(),
 			result.isPreservedConsumerInvoked());
+	}
+
+	private void requireExactPackedSourceBoundary(
+		final LayeredPackedRegionSourceLifecycleBoundary boundary,
+		final LayeredPackedRegionNpcOwnerPreservationRequirements
+			requirements) {
+		if (!boundary.isRegionLifecycleBoundaryHeld()
+			|| !boundary.isAllSourcesResidentAtEntry()
+			|| !boundary.matchesRequirements(requirements)
+			|| boundary.isSourceAbsencePerformed()
+			|| boundary.isSourceReconstructionPerformed()
+			|| boundary.isRuntimeHandleRetained()
+			|| boundary.isLifecycleAuthority()) {
+			throw new IllegalStateException(
+				"Packed-source lifecycle boundary differs from owner requirements");
+		}
 	}
 
 	/**

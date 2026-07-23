@@ -24,7 +24,8 @@ final class GameTickEventNpcOwnerPreservationNoOpDiagnostic {
 		final EntityList<Npc> worldNpcs,
 		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
 		final long boundaryObservedAtTick,
-		final int maximumOwners) {
+		final int maximumOwners,
+		final boolean regionLifecycleBoundaryHeld) {
 		GameTickEventStore checkedStore =
 			Objects.requireNonNull(eventStore, "eventStore");
 		EntityList<Npc> checkedWorldNpcs =
@@ -40,7 +41,8 @@ final class GameTickEventNpcOwnerPreservationNoOpDiagnostic {
 		boolean scopeEntered =
 			GameTickEventNpcOwnerPreservationBoundary.withinPreservationScope(
 				checkedStore, checkedWorldNpcs, checked,
-				boundaryObservedAtTick, maximumOwners, scope -> {
+				boundaryObservedAtTick, maximumOwners,
+				regionLifecycleBoundaryHeld, scope -> {
 					lifecycleResult[0] =
 						GameTickEventNpcOwnerPreservationLifecycle.execute(
 							scope,

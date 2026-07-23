@@ -131,6 +131,14 @@ public final class LayeredRegionResidencyMirror {
 		return packedRegionsByLogicalKey.size();
 	}
 
+	/** Checks one exact packed source without exposing the mutable index. */
+	public synchronized boolean isPackedRegionRegistered(
+		final int packedRegionX,
+		final int packedRegionY) {
+		return packedRegions.contains(packedKey(
+			packedRegionX, packedRegionY));
+	}
+
 	private static List<WorldRegionKey> coveredKeys(
 		final int packedRegionX,
 		final int packedRegionY) {

@@ -35,10 +35,11 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		final EntityList<Npc> worldNpcs,
 		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
 		final long boundaryObservedAtTick,
-		final int maximumOwners) {
+		final int maximumOwners,
+		final boolean regionLifecycleBoundaryHeld) {
 		return capture(
 			eventStore, worldNpcs, requirements, boundaryObservedAtTick,
-			maximumOwners, null);
+			maximumOwners, regionLifecycleBoundaryHeld, null);
 	}
 
 	/**
@@ -52,13 +53,14 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
 		final long boundaryObservedAtTick,
 		final int maximumOwners,
+		final boolean regionLifecycleBoundaryHeld,
 		final ScopedPreservationOperation operation) {
 		final ScopedPreservationOperation checkedOperation =
 			Objects.requireNonNull(operation, "operation");
 		final boolean[] invoked = new boolean[1];
 		capture(
 			eventStore, worldNpcs, requirements, boundaryObservedAtTick,
-			maximumOwners, scope -> {
+			maximumOwners, regionLifecycleBoundaryHeld, scope -> {
 				checkedOperation.execute(scope);
 				invoked[0] = true;
 			});
@@ -73,6 +75,7 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 				requirements,
 			final long boundaryObservedAtTick,
 			final int maximumOwners,
+			final boolean regionLifecycleBoundaryHeld,
 			final ScopedPreservationOperation scopeOperation) {
 		GameTickEventStore checkedStore =
 			Objects.requireNonNull(eventStore, "eventStore");
@@ -103,7 +106,8 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		if (capture.registrationSetComplete) {
 			captureIterativeBoundaries(
 				checkedStore, expectedRegistrations, expectedOwners,
-				checkedWorldNpcs, checked, capture, scopeOperation);
+				checkedWorldNpcs, checked, capture,
+				regionLifecycleBoundaryHeld, scopeOperation);
 		}
 		return observation(
 			checked, boundaryObservedAtTick, true,
@@ -155,6 +159,7 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		final EntityList<Npc> worldNpcs,
 		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
 		final NpcOwnerBoundaryCapture capture,
+		final boolean regionLifecycleBoundaryHeld,
 		final ScopedPreservationOperation scopeOperation) {
 		List<GameTickEvent> events =
 			new ArrayList<GameTickEvent>(registrations.size());
@@ -192,7 +197,7 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 							}
 							captureWorldAndNpcBoundaries(
 								owners, worldNpcs, requirements, capture,
-								scopeOperation);
+								regionLifecycleBoundaryHeld, scopeOperation);
 						});
 				if (!registrationsHeld) {
 					capture.registrationSetComplete = false;
@@ -205,6 +210,7 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		final EntityList<Npc> worldNpcs,
 		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
 		final NpcOwnerBoundaryCapture capture,
+		final boolean regionLifecycleBoundaryHeld,
 		final ScopedPreservationOperation scopeOperation) {
 		synchronized (worldNpcs) {
 			capture.worldRegistrationBoundaryHeld =
@@ -220,7 +226,7 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 			if (allExact(correlatedOwners)) {
 				captureIterativeNpcLifecycleBoundaries(
 					correlatedOwners, worldNpcs, requirements, capture,
-					scopeOperation);
+					regionLifecycleBoundaryHeld, scopeOperation);
 			}
 		}
 	}
@@ -240,6 +246,7 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		final EntityList<Npc> worldNpcs,
 		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
 		final NpcOwnerBoundaryCapture capture,
+		final boolean regionLifecycleBoundaryHeld,
 		final ScopedPreservationOperation scopeOperation) {
 		List<Npc> ownerNpcs = new ArrayList<Npc>(owners.size());
 		for (CorrelatedOwner owner : owners) {
@@ -266,8 +273,10 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 				capture.ownerStates.addAll(revalidated);
 				capture.npcLifecycleBoundaryCount =
 					boundary.getOwnerCount();
-				capture.regionAbsenceQuiescenceHeld = true;
-				if (scopeOperation != null) {
+				capture.regionAbsenceQuiescenceHeld =
+					regionLifecycleBoundaryHeld;
+				if (scopeOperation != null
+					&& capture.regionAbsenceQuiescenceHeld) {
 					GameTickEventNpcOwnerPreservationScope scope =
 						GameTickEventNpcOwnerPreservationScope.open(
 							requirements,

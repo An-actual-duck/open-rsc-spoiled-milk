@@ -40,6 +40,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservation
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerEventContinuityAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationRequirements;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationRequirements.SelectedSource;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcBoundaryRequirementProjection;
@@ -616,6 +618,63 @@ public class RegionManager {
 		getLayeredRegionResidencySnapshot(final WorldRegionKey logicalRegionKey) {
 		synchronized (layeredRegionLifecycleLock) {
 			return requireLayeredRegionResidencySnapshot(logicalRegionKey);
+		}
+	}
+
+	/**
+	 * Runs one operation only while the exact selected packed-source set remains
+	 * resident under the authoritative Region lifecycle monitor.
+	 *
+	 * <p>The supplied boundary contains detached coordinates only and expires
+	 * before the lifecycle monitor is released. Missing or mirror-inconsistent
+	 * sources refuse without invoking the operation. No Region is created,
+	 * removed, unloaded, or reconstructed.</p>
+	 */
+	public boolean withinLayeredPackedRegionSourceLifecycleBoundary(
+		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
+		final LayeredPackedRegionSourceLifecycleBoundary.Operation operation) {
+		LayeredPackedRegionNpcOwnerPreservationRequirements checked =
+			Objects.requireNonNull(requirements, "requirements");
+		LayeredPackedRegionSourceLifecycleBoundary.Operation checkedOperation =
+			Objects.requireNonNull(operation, "operation");
+		if (checked.getSelectedSourceCount() <= 0
+			|| checked.getSelectedSourceCount()
+				> MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN
+			|| checked.getSelectedSources().size()
+				!= checked.getSelectedSourceCount()) {
+			return false;
+		}
+		Set<Long> unique = new LinkedHashSet<Long>();
+		for (SelectedSource source : checked.getSelectedSources()) {
+			if (source == null
+				|| !unique.add(Long.valueOf(packRegionCoordinateKey(
+					source.getPackedRegionX(),
+					source.getPackedRegionY())))) {
+				return false;
+			}
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			for (SelectedSource source : checked.getSelectedSources()) {
+				if (peekRegionFromSectorCoordinates(
+						source.getPackedRegionX(),
+						source.getPackedRegionY()) == null
+					|| !layeredRegionResidencyMirror
+						.isPackedRegionRegistered(
+							source.getPackedRegionX(),
+							source.getPackedRegionY())) {
+					return false;
+				}
+			}
+			LayeredPackedRegionSourceLifecycleBoundary boundary =
+				LayeredPackedRegionSourceLifecycleBoundary.open(
+					checked, layeredRegionResidencyMirror.getVersion(),
+					Thread.holdsLock(layeredRegionLifecycleLock));
+			try {
+				checkedOperation.execute(boundary);
+				return true;
+			} finally {
+				boundary.invalidate();
+			}
 		}
 	}
 

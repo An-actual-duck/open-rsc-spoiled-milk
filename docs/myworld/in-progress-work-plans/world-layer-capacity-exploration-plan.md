@@ -277,6 +277,13 @@ the schema makes every absent/reconstruction/consumer/authority fact
 immutably false. The accepted dense route entered the complete 36-source,
 449-NPC-owner boundary, reached only `SOURCE_LIFECYCLE_UNAVAILABLE`, and left
 dialogue, scenery interaction, and movement normal afterward;
+automated-validated Slice 173 replaces the assumed Region-absence-quiescence
+fact with a real packed-source boundary. RegionManager verifies the exact
+unique source order against authoritative storage and its residency mirror
+while holding the lifecycle monitor, supplies only detached coordinates and a
+mirror version, and invalidates the boundary before release. Both owner
+capture paths now reach the event/World/NPC scope only through that boundary,
+while source absence, reconstruction, and authority remain absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13923,6 +13930,72 @@ accepted. Slice 172 proves the real exact owner scope reaches the deliberately
 disconnected source-lifecycle boundary without granting or exercising source
 mutation authority.
 
+### Slice 173: Real packed-source lifecycle boundary
+
+Objective: replace the earlier assumed Region-absence-quiescence fact with one
+real, exact RegionManager lifecycle boundary while keeping source mutation and
+reconstruction disconnected.
+
+Implemented:
+
+- `LayeredPackedRegionSourceLifecycleBoundary` is a thread-confined,
+  single-operation capability carrying only generation, requirements tick,
+  residency-mirror version, and the exact detached packed-source coordinates;
+- RegionManager validates a non-empty, bounded, unique source order, then
+  checks every selected Region in authoritative packed storage and every
+  matching residency mirror entry while holding
+  `layeredRegionLifecycleLock`;
+- the operation runs synchronously inside that lock, and the source boundary
+  is invalidated in `finally` before the monitor is released;
+- both the ordinary owner-boundary capture and the explicit preservation no-op
+  now enter that RegionManager source boundary before the event,
+  registration, World-list, and NPC lifecycle gates;
+- `regionAbsenceQuiescenceHeld` is derived from the real outer lifecycle
+  boundary rather than assigned unconditionally; and
+- unavailable, duplicate, missing, or mirror-inconsistent sources withhold the
+  preservation scope and are observed as quiescence-unproved/owner-scope
+  refusal without invoking lifecycle or preserved work.
+
+Safety boundary:
+
+- the source boundary contains no Region, tile, entity, collection, registry,
+  event, scheduler, or other runtime handle;
+- it reports no source absence, no source reconstruction, no retained handle,
+  and no lifecycle authority;
+- RegionManager performs no Region creation, removal, unload, mirror
+  registration change, cache invalidation, reconstruction, arrival, or
+  visibility action through the new method;
+- the outer Region lifecycle monitor is acquired before the World-list and NPC
+  gates. Event-gate acquisition is iterative and non-blocking, so a busy event
+  refuses and releases the Region boundary rather than waiting in a lock
+  cycle; and
+- schema-v48 and every ordinary gameplay, loading, lookup, packet, pathing,
+  persistence, and public-server path remain unchanged.
+
+Automated validation status:
+
+- an executable boundary fixture proves exact scalar/source binding,
+  immutable source order, thread confinement, post-invalidation refusal,
+  double-close refusal, and rejection without the lifecycle boundary;
+- structural guards prove real packed storage plus residency-mirror checks
+  occur under `layeredRegionLifecycleLock`, operation precedes invalidation,
+  and the method contains none of the forbidden source mutation or cache
+  operations;
+- structural integration guards prove both GameEventHandler paths use the
+  source boundary and the owner adapter can no longer manufacture Region
+  quiescence with a literal `true`;
+- the complete layered-map suite passes 579 tests across 172 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 813 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. Owner validation is deferred
+because the private v48 shape and player-facing behavior are unchanged and no
+source operation is connected. The next focused slice should derive an exact,
+read-only source-absence preflight inside this boundary so the generic
+`SOURCE_SET_UNAVAILABLE` refusal can identify concrete remaining blockers
+without removing a Region.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14310,6 +14383,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 171 by connecting the real owner boundary to a typed source-lifecycle refusal. | Implemented and automated-validated; accepted event/registration/World/NPC scopes reach `SOURCE_LIFECYCLE_UNAVAILABLE`, refused scopes invoke nothing, both paths report zero absent/reconstructed sources and zero preserved-consumer invocations, no Region/source/gameplay authority is connected, 571 focused tests pass across 170 files, and the 812/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 172 by exposing the safe source-lifecycle refusal through private diagnostics. | Implemented and automated-validated; additive schema-v48 and explicit `preserve-noop` report the exact owner-scope/lifecycle stopping point, both private sources share the handler adapter, ordinary events remain null, every source/consumer/mutation/authority fact is fixed at zero or false, 575 focused tests pass across 171 files, and the 812/488 Ant build passes; private owner validation is pending |
 | 2026-07-23 | Accept the Slice 172 private source-lifecycle refusal route. | Owner-validated; all four v48 records validate, the dense record covers 36 sources, 457 related callbacks, 449 exact NPC owners and links, and 8 separate non-NPC callbacks, every owner boundary is complete, `preserve-noop` reaches only `SOURCE_LIFECYCLE_UNAVAILABLE` with zero absence/reconstruction/consumer work and zero authority, and dialogue, gate, scenery, and movement interactions remain normal afterward |
+| 2026-07-23 | Continue with Slice 173 by replacing assumed Region quiescence with a real packed-source lifecycle boundary. | Implemented and automated-validated; RegionManager checks the exact unique selected sources against packed storage and its residency mirror under the lifecycle monitor, exposes only an ephemeral detached source/mirror-version boundary, invalidates it before release, and gates both owner-capture paths through it; no source mutation or schema change occurs, 579 focused tests pass across 172 files, and the 813/488 Ant build passes |
 
 ## Next Discussion
 
