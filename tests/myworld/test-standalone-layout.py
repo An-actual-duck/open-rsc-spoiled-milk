@@ -203,6 +203,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "god-relic-reward-plan.md",
             "herblaw-brawn-harvestable-ingredients-plan.md",
             "herblaw-side-ingredient-expansion-plan.md",
+            "hostile-npc-projectile-reach-audit.md",
             "how-to-acquire-dragon-armor.md",
             "in-game-world-editor-plan.md",
             "legacy-limits-audit.md",
