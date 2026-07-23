@@ -85,7 +85,7 @@ class LayeredMapsSliceOneHundredSeventeenTest(unittest.TestCase):
 
     def test_observer_captures_correlates_and_serializes_detached_targets(self):
         source = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v44"', source)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v45"', source)
         capture_start = source.index(
             "state.packedRegionEventOwnershipSource.capture("
         )

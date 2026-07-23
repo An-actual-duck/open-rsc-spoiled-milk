@@ -90,6 +90,7 @@ import com.openrsc.server.model.world.coordinate
     .LayeredPackedRegionEventOwnershipInventory
         .AuthoredPlacementRestorationState;
 import com.openrsc.server.model.world.region.RegionManager;
+import java.util.Arrays;
 import java.util.Collections;
 
 public final class LiveRecoveryPreparationFixture {
@@ -127,6 +128,7 @@ public final class LiveRecoveryPreparationFixture {
         futureStateIsCapturedIntoReadyPreparation();
         overdueStateNeedsNoCurrentSnapshot();
         incompleteRelatedEventRefusesBeforeSchedulerCapture();
+        mixedProposalPreflightClassifiesEveryRelatedEvent();
         changedRegistrationSetRefusesClosed();
     }
 
@@ -188,6 +190,43 @@ public final class LiveRecoveryPreparationFixture {
             "related event without recovery state refuses before live work");
     }
 
+    private static void mixedProposalPreflightClassifiesEveryRelatedEvent() {
+        GameTickEventStore store = new GameTickEventStore();
+        RestorableEvent incomplete = registered(store, false);
+        RestorableEvent complete = registered(store, false);
+        LayeredPackedRegionEventOwnershipInventory inventory =
+            mixedInventory(store, incomplete, complete);
+        GameTickEventRestorationLivePreparationCoordinator.RecoveryPreflight
+            preflight = GameTickEventRestorationLivePreparationCoordinator
+                .assessRecovery(inventory);
+        RegionManager region = new RegionManager(true);
+        GameTickEventRestorationLivePreparationCoordinator.PreparationCapture
+            result = coordinator(store, region).capture(inventory, 2);
+        check(preflight.getProposalRelatedEventCount() == 2
+                && preflight.getRecoveryCompleteEventCount() == 1
+                && preflight.getRecoveryIncompleteEventCount() == 1
+                && preflight.getIncompleteOwnerPositionHintEventCount() == 1
+                && preflight.getIncompleteExactSpatialEventCount() == 0
+                && preflight.getFirstIncompleteRegistrationSequence()
+                    .longValue() == sequenceOf(store, incomplete)
+                && preflight.getFirstIncompleteOwnerKind() == OwnerKind.NPC
+                && preflight.getFirstIncompleteAttributionKind()
+                    == AttributionKind.OWNER_POSITION_HINT
+                && preflight.getFirstIncompleteRequirement()
+                    == GameTickEventRestorationLivePreparationCoordinator
+                        .RecoveryRequirement.RESTORATION_STATE_UNAVAILABLE
+                && !preflight.isComplete()
+                && !preflight.isRuntimeHandleRetained()
+                && result.getReason()
+                    == GameTickEventRestorationLivePreparationCoordinator
+                        .Reason.RELATED_EVENT_RECOVERY_INCOMPLETE
+                && result.getRecoveryCandidateCount() == 1
+                && region.getCaptureCalls() == 0
+                && store.eventIsContained(incomplete)
+                && store.eventIsContained(complete),
+            "mixed proposal reports complete work and its first blocker");
+    }
+
     private static void changedRegistrationSetRefusesClosed() {
         GameTickEventStore store = new GameTickEventStore();
         RestorableEvent event = registered(store, false);
@@ -234,6 +273,44 @@ public final class LiveRecoveryPreparationFixture {
             GENERATION, 1L, scope(store),
             Collections.singletonList(PackedSource.of(10, 10)),
             Collections.singletonList(state), 1, 1, 1);
+    }
+    private static LayeredPackedRegionEventOwnershipInventory mixedInventory(
+            GameTickEventStore store,
+            RestorableEvent incomplete,
+            RestorableEvent complete) {
+        GameTickEvent.AtomicTimingSnapshot incompleteTiming =
+            incomplete.captureAtomicTimingSnapshot();
+        GameTickEvent.AtomicTimingSnapshot completeTiming =
+            complete.captureAtomicTimingSnapshot();
+        EventState incompleteState = EventState.of(
+            0, sequenceOf(store, incomplete), OwnerKind.NPC,
+            AttributionKind.OWNER_POSITION_HINT,
+            incompleteTiming.isRunning(),
+            incompleteTiming.getTicksBeforeRun(),
+            incompleteTiming.getTimesRan(),
+            Collections.singletonList(SpatialReference.of(
+                SpatialRole.OWNER_CURRENT_POSITION, 524, 489)),
+            EventRestorationState.unavailable(), false);
+        EventRestorationState restoration =
+            EventRestorationState.scenerySpawn(
+                SceneryRestorationState.of(
+                    310, 310, 524, 489, 0, 0, null, 0,
+                    AuthoredPlacementRestorationState.of(
+                        GENERATION, 10, 10, 22,
+                        AuthoredConstructionKind.SCENERY)),
+                true, ExecutionSemantics.ONE_SHOT,
+                TimeProgressionPolicy.CONTINUE_SERVER_TICKS);
+        EventState completeState = EventState.of(
+            1, sequenceOf(store, complete), OwnerKind.NONE,
+            AttributionKind.EXACT_SPATIAL, completeTiming.isRunning(),
+            completeTiming.getTicksBeforeRun(), completeTiming.getTimesRan(),
+            Collections.singletonList(SpatialReference.of(
+                SpatialRole.FIXED_EFFECT_LOCATION, 524, 489)),
+            restoration, true);
+        return LayeredPackedRegionEventOwnershipInventory.inventory(
+            GENERATION, 1L, scope(store),
+            Collections.singletonList(PackedSource.of(10, 10)),
+            Arrays.asList(incompleteState, completeState), 1, 2, 2);
     }
     private static RestorableEvent registered(
             GameTickEventStore store, boolean overdue) {

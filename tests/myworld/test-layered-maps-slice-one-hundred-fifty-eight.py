@@ -118,7 +118,6 @@ class LayeredMapsSliceOneHundredFiftyEightTest(unittest.TestCase):
         handler = HANDLER.read_text(encoding="utf-8")
         player = PLAYER.read_text(encoding="utf-8")
         development = DEVELOPMENT.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v44"', observer)
         self.assertIn('write(state, "recovery-noop"', observer)
         write = observer[
             observer.index("private static Status write("):

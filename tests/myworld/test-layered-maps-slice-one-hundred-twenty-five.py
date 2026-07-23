@@ -188,7 +188,7 @@ class LayeredMapsSliceOneHundredTwentyFiveTest(unittest.TestCase):
         development = DEVELOPMENT.read_text(encoding="utf-8")
         dto = DTO.read_text(encoding="utf-8")
         readme = README.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v44"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v45"', observer)
         for required in (
             "captureAtomicTargetRevalidation(",
             "requireAtomicEventTargetsMatchInventory(",

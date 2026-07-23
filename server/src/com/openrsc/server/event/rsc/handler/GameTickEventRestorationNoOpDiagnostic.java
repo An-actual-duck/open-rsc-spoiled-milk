@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.handler;
 
 import com.openrsc.server.event.rsc.handler.GameTickEventRestorationLiveReconstructionCoordinator.LiveCapturedRecovery;
 import com.openrsc.server.event.rsc.handler.GameTickEventRestorationLiveReconstructionCoordinator.LiveLifecycleExecution;
+import com.openrsc.server.event.rsc.handler.GameTickEventRestorationLivePreparationCoordinator.RecoveryPreflight;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.region.RegionManager;
 
@@ -18,6 +19,16 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 	private final long proposalGeneration;
 	private final int inventoryEventCount;
 	private final int recoveryCandidateCount;
+	private final int proposalRelatedEventCount;
+	private final int recoveryCompleteEventCount;
+	private final int recoveryIncompleteEventCount;
+	private final int incompleteOwnerPositionHintEventCount;
+	private final int incompleteExactSpatialEventCount;
+	private final Long firstIncompleteRegistrationSequence;
+	private final String firstIncompleteOwnerKind;
+	private final String firstIncompleteAttributionKind;
+	private final String firstIncompleteRecoveryRequirement;
+	private final boolean preflightComplete;
 	private final int futureSnapshotCount;
 	private final int runtimeVerificationCount;
 	private final int mutationOperationCount;
@@ -34,6 +45,7 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 		final long proposalGeneration,
 		final int inventoryEventCount,
 		final int recoveryCandidateCount,
+		final RecoveryPreflight preflight,
 		final int futureSnapshotCount,
 		final int runtimeVerificationCount,
 		final int mutationOperationCount,
@@ -49,6 +61,30 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 		this.proposalGeneration = proposalGeneration;
 		this.inventoryEventCount = inventoryEventCount;
 		this.recoveryCandidateCount = recoveryCandidateCount;
+		RecoveryPreflight checkedPreflight = Objects.requireNonNull(
+			preflight, "preflight");
+		this.proposalRelatedEventCount =
+			checkedPreflight.getProposalRelatedEventCount();
+		this.recoveryCompleteEventCount =
+			checkedPreflight.getRecoveryCompleteEventCount();
+		this.recoveryIncompleteEventCount =
+			checkedPreflight.getRecoveryIncompleteEventCount();
+		this.incompleteOwnerPositionHintEventCount =
+			checkedPreflight.getIncompleteOwnerPositionHintEventCount();
+		this.incompleteExactSpatialEventCount =
+			checkedPreflight.getIncompleteExactSpatialEventCount();
+		this.firstIncompleteRegistrationSequence =
+			checkedPreflight.getFirstIncompleteRegistrationSequence();
+		this.firstIncompleteOwnerKind =
+			checkedPreflight.getFirstIncompleteOwnerKind() == null ? null
+				: checkedPreflight.getFirstIncompleteOwnerKind().name();
+		this.firstIncompleteAttributionKind =
+			checkedPreflight.getFirstIncompleteAttributionKind() == null ? null
+				: checkedPreflight.getFirstIncompleteAttributionKind().name();
+		this.firstIncompleteRecoveryRequirement =
+			checkedPreflight.getFirstIncompleteRequirement() == null ? null
+				: checkedPreflight.getFirstIncompleteRequirement().name();
+		this.preflightComplete = checkedPreflight.isComplete();
 		this.futureSnapshotCount = futureSnapshotCount;
 		this.runtimeVerificationCount = runtimeVerificationCount;
 		this.mutationOperationCount = mutationOperationCount;
@@ -60,6 +96,20 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 		if (recoveryCandidateCount < 0 || futureSnapshotCount < 0
 			|| runtimeVerificationCount < 0 || mutationOperationCount != 0
 			|| terminalEventConsumptionCount != 0
+			|| proposalRelatedEventCount < 0
+			|| recoveryIncompleteEventCount < 0
+			|| recoveryCandidateCount != recoveryCompleteEventCount
+			|| proposalRelatedEventCount
+				!= recoveryCompleteEventCount + recoveryIncompleteEventCount
+			|| preflightComplete != (recoveryIncompleteEventCount == 0)
+			|| preflightComplete
+				!= (firstIncompleteRegistrationSequence == null)
+			|| preflightComplete != (firstIncompleteOwnerKind == null)
+			|| preflightComplete != (firstIncompleteAttributionKind == null)
+			|| preflightComplete
+				!= (firstIncompleteRecoveryRequirement == null)
+			|| firstIncompleteRegistrationSequence != null
+				&& firstIncompleteRegistrationSequence.longValue() <= 0L
 			|| recoveryInvoked && !reconstructionInvoked
 			|| contractualReadiness && !recoveryInvoked
 			|| (reason == Reason.NO_OP_VERIFICATION_READY)
@@ -76,6 +126,9 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 		final int maximumCandidates) {
 		LayeredPackedRegionEventOwnershipInventory checked =
 			Objects.requireNonNull(inventory, "inventory");
+		RecoveryPreflight preflight =
+			GameTickEventRestorationLivePreparationCoordinator
+				.assessRecovery(checked);
 		GameTickEventRestorationLiveReconstructionCoordinator coordinator =
 			new GameTickEventRestorationLiveReconstructionCoordinator(
 				Objects.requireNonNull(store, "store"),
@@ -87,7 +140,7 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 				Reason.LIVE_CAPTURE_REFUSED,
 				captured.getPreparationReason().name(), null,
 				checked.getProposalGeneration(), checked.getEventCount(),
-				captured.getRecoveryCandidateCount(), 0,
+				captured.getRecoveryCandidateCount(), preflight, 0,
 				0, false, false, false, false);
 		}
 		if (captured.getRecoveryCandidateCount() == 0) {
@@ -95,7 +148,7 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 				Reason.NO_RECOVERY_CANDIDATES,
 				captured.getPreparationReason().name(), null,
 				captured.getProposalGeneration(),
-				captured.getInventoryEventCount(), 0, 0,
+				captured.getInventoryEventCount(), 0, preflight, 0,
 				0, false, false, false, false);
 		}
 		if (captured.getFutureSnapshotCount()
@@ -106,7 +159,7 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 				captured.getProposalGeneration(),
 				captured.getInventoryEventCount(),
 				captured.getRecoveryCandidateCount(),
-				captured.getFutureSnapshotCount(), 0,
+				preflight, captured.getFutureSnapshotCount(), 0,
 				false, false, false, false);
 		}
 
@@ -131,7 +184,7 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 			captured.getProposalGeneration(),
 			captured.getInventoryEventCount(),
 			captured.getRecoveryCandidateCount(),
-			captured.getFutureSnapshotCount(),
+			preflight, captured.getFutureSnapshotCount(),
 			execution.getRuntimeOperationCount(),
 			execution.isReconstructionInvoked(),
 			execution.isRecoveryInvoked(),
@@ -146,6 +199,7 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 		final long proposalGeneration,
 		final int inventoryEventCount,
 		final int recoveryCandidateCount,
+		final RecoveryPreflight preflight,
 		final int futureSnapshotCount,
 		final int runtimeVerificationCount,
 		final boolean reconstructionInvoked,
@@ -154,7 +208,8 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 		final boolean freshInventoryRetryRequired) {
 		return new GameTickEventRestorationNoOpDiagnostic(
 			reason, preparationReason, lifecycleReason, proposalGeneration,
-			inventoryEventCount, recoveryCandidateCount, futureSnapshotCount,
+			inventoryEventCount, recoveryCandidateCount, preflight,
+			futureSnapshotCount,
 			runtimeVerificationCount, 0, 0, reconstructionInvoked,
 			recoveryInvoked, contractualReadiness,
 			freshInventoryRetryRequired);
@@ -174,6 +229,34 @@ public final class GameTickEventRestorationNoOpDiagnostic {
 	public long getProposalGeneration() { return proposalGeneration; }
 	public int getInventoryEventCount() { return inventoryEventCount; }
 	public int getRecoveryCandidateCount() { return recoveryCandidateCount; }
+	public int getProposalRelatedEventCount() {
+		return proposalRelatedEventCount;
+	}
+	public int getRecoveryCompleteEventCount() {
+		return recoveryCompleteEventCount;
+	}
+	public int getRecoveryIncompleteEventCount() {
+		return recoveryIncompleteEventCount;
+	}
+	public int getIncompleteOwnerPositionHintEventCount() {
+		return incompleteOwnerPositionHintEventCount;
+	}
+	public int getIncompleteExactSpatialEventCount() {
+		return incompleteExactSpatialEventCount;
+	}
+	public Long getFirstIncompleteRegistrationSequence() {
+		return firstIncompleteRegistrationSequence;
+	}
+	public String getFirstIncompleteOwnerKind() {
+		return firstIncompleteOwnerKind;
+	}
+	public String getFirstIncompleteAttributionKind() {
+		return firstIncompleteAttributionKind;
+	}
+	public String getFirstIncompleteRecoveryRequirement() {
+		return firstIncompleteRecoveryRequirement;
+	}
+	public boolean isPreflightComplete() { return preflightComplete; }
 	public int getFutureSnapshotCount() { return futureSnapshotCount; }
 	public int getRuntimeVerificationCount() {
 		return runtimeVerificationCount;

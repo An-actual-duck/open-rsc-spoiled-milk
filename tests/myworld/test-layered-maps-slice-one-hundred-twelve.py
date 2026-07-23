@@ -103,7 +103,7 @@ class LayeredMapsSliceOneHundredTwelveTest(unittest.TestCase):
     def test_schema_v38_history_and_living_plan_keep_boundary(self):
         observer = OBSERVER.read_text(encoding="utf-8")
         schema_v38 = json.loads(SCHEMA_V38.read_text(encoding="utf-8"))
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v44"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v45"', observer)
         for absent in (
             "generationBindingRequirementCapturedEventCount",
             "generationBindingCompleteEventCount",

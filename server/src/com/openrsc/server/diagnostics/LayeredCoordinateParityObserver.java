@@ -55,7 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v44";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v45";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4538,6 +4538,45 @@ public final class LayeredCoordinateParityObserver {
 			.append(diagnostic.getInventoryEventCount()).append(',');
 		out.append("\"recoveryCandidateCount\":")
 			.append(diagnostic.getRecoveryCandidateCount()).append(',');
+		out.append("\"proposalRelatedEventCount\":")
+			.append(diagnostic.getProposalRelatedEventCount()).append(',');
+		out.append("\"recoveryCompleteEventCount\":")
+			.append(diagnostic.getRecoveryCompleteEventCount()).append(',');
+		out.append("\"recoveryIncompleteEventCount\":")
+			.append(diagnostic.getRecoveryIncompleteEventCount()).append(',');
+		out.append("\"incompleteOwnerPositionHintEventCount\":")
+			.append(diagnostic.getIncompleteOwnerPositionHintEventCount())
+			.append(',');
+		out.append("\"incompleteExactSpatialEventCount\":")
+			.append(diagnostic.getIncompleteExactSpatialEventCount())
+			.append(',');
+		out.append("\"firstIncompleteRegistrationSequence\":");
+		if (diagnostic.getFirstIncompleteRegistrationSequence() == null) {
+			out.append("null");
+		} else {
+			out.append(
+				diagnostic.getFirstIncompleteRegistrationSequence().longValue());
+		}
+		out.append(",\"firstIncompleteOwnerKind\":");
+		if (diagnostic.getFirstIncompleteOwnerKind() == null) {
+			out.append("null");
+		} else {
+			quoted(out, diagnostic.getFirstIncompleteOwnerKind());
+		}
+		out.append(",\"firstIncompleteAttributionKind\":");
+		if (diagnostic.getFirstIncompleteAttributionKind() == null) {
+			out.append("null");
+		} else {
+			quoted(out, diagnostic.getFirstIncompleteAttributionKind());
+		}
+		out.append(",\"firstIncompleteRecoveryRequirement\":");
+		if (diagnostic.getFirstIncompleteRecoveryRequirement() == null) {
+			out.append("null");
+		} else {
+			quoted(out, diagnostic.getFirstIncompleteRecoveryRequirement());
+		}
+		out.append(",\"preflightComplete\":")
+			.append(diagnostic.isPreflightComplete()).append(',');
 		out.append("\"futureSnapshotCount\":")
 			.append(diagnostic.getFutureSnapshotCount()).append(',');
 		out.append("\"runtimeVerificationCount\":")
@@ -5738,6 +5777,16 @@ public final class LayeredCoordinateParityObserver {
 		private final long proposalGeneration;
 		private final int inventoryEventCount;
 		private final int recoveryCandidateCount;
+		private final int proposalRelatedEventCount;
+		private final int recoveryCompleteEventCount;
+		private final int recoveryIncompleteEventCount;
+		private final int incompleteOwnerPositionHintEventCount;
+		private final int incompleteExactSpatialEventCount;
+		private final Long firstIncompleteRegistrationSequence;
+		private final String firstIncompleteOwnerKind;
+		private final String firstIncompleteAttributionKind;
+		private final String firstIncompleteRecoveryRequirement;
+		private final boolean preflightComplete;
 		private final int futureSnapshotCount;
 		private final int runtimeVerificationCount;
 		private final int mutationOperationCount;
@@ -5754,6 +5803,16 @@ public final class LayeredCoordinateParityObserver {
 			final long proposalGeneration,
 			final int inventoryEventCount,
 			final int recoveryCandidateCount,
+			final int proposalRelatedEventCount,
+			final int recoveryCompleteEventCount,
+			final int recoveryIncompleteEventCount,
+			final int incompleteOwnerPositionHintEventCount,
+			final int incompleteExactSpatialEventCount,
+			final Long firstIncompleteRegistrationSequence,
+			final String firstIncompleteOwnerKind,
+			final String firstIncompleteAttributionKind,
+			final String firstIncompleteRecoveryRequirement,
+			final boolean preflightComplete,
 			final int futureSnapshotCount,
 			final int runtimeVerificationCount,
 			final int mutationOperationCount,
@@ -5769,6 +5828,21 @@ public final class LayeredCoordinateParityObserver {
 			this.proposalGeneration = proposalGeneration;
 			this.inventoryEventCount = inventoryEventCount;
 			this.recoveryCandidateCount = recoveryCandidateCount;
+			this.proposalRelatedEventCount = proposalRelatedEventCount;
+			this.recoveryCompleteEventCount = recoveryCompleteEventCount;
+			this.recoveryIncompleteEventCount = recoveryIncompleteEventCount;
+			this.incompleteOwnerPositionHintEventCount =
+				incompleteOwnerPositionHintEventCount;
+			this.incompleteExactSpatialEventCount =
+				incompleteExactSpatialEventCount;
+			this.firstIncompleteRegistrationSequence =
+				firstIncompleteRegistrationSequence;
+			this.firstIncompleteOwnerKind = firstIncompleteOwnerKind;
+			this.firstIncompleteAttributionKind =
+				firstIncompleteAttributionKind;
+			this.firstIncompleteRecoveryRequirement =
+				firstIncompleteRecoveryRequirement;
+			this.preflightComplete = preflightComplete;
 			this.futureSnapshotCount = futureSnapshotCount;
 			this.runtimeVerificationCount = runtimeVerificationCount;
 			this.mutationOperationCount = mutationOperationCount;
@@ -5781,6 +5855,27 @@ public final class LayeredCoordinateParityObserver {
 				"NO_OP_VERIFICATION_READY".equals(reason);
 			if (proposalGeneration < 0L || inventoryEventCount < 0
 				|| recoveryCandidateCount < 0 || futureSnapshotCount < 0
+				|| proposalRelatedEventCount < 0
+				|| recoveryIncompleteEventCount < 0
+				|| recoveryCandidateCount != recoveryCompleteEventCount
+				|| proposalRelatedEventCount
+					!= recoveryCompleteEventCount
+						+ recoveryIncompleteEventCount
+				|| incompleteOwnerPositionHintEventCount < 0
+				|| incompleteExactSpatialEventCount < 0
+				|| incompleteOwnerPositionHintEventCount
+					+ incompleteExactSpatialEventCount
+					> recoveryIncompleteEventCount
+				|| preflightComplete != (recoveryIncompleteEventCount == 0)
+				|| preflightComplete
+					!= (firstIncompleteRegistrationSequence == null)
+				|| preflightComplete != (firstIncompleteOwnerKind == null)
+				|| preflightComplete
+					!= (firstIncompleteAttributionKind == null)
+				|| preflightComplete
+					!= (firstIncompleteRecoveryRequirement == null)
+				|| firstIncompleteRegistrationSequence != null
+					&& firstIncompleteRegistrationSequence.longValue() <= 0L
 				|| futureSnapshotCount > recoveryCandidateCount
 				|| runtimeVerificationCount < 0
 				|| runtimeVerificationCount > recoveryCandidateCount
@@ -5800,6 +5895,16 @@ public final class LayeredCoordinateParityObserver {
 			final long proposalGeneration,
 			final int inventoryEventCount,
 			final int recoveryCandidateCount,
+			final int proposalRelatedEventCount,
+			final int recoveryCompleteEventCount,
+			final int recoveryIncompleteEventCount,
+			final int incompleteOwnerPositionHintEventCount,
+			final int incompleteExactSpatialEventCount,
+			final Long firstIncompleteRegistrationSequence,
+			final String firstIncompleteOwnerKind,
+			final String firstIncompleteAttributionKind,
+			final String firstIncompleteRecoveryRequirement,
+			final boolean preflightComplete,
 			final int futureSnapshotCount,
 			final int runtimeVerificationCount,
 			final int mutationOperationCount,
@@ -5810,7 +5915,15 @@ public final class LayeredCoordinateParityObserver {
 			final boolean freshInventoryRetryRequired) {
 			return new PackedRegionEventRecoveryNoOpMetadata(
 				reason, preparationReason, lifecycleReason, proposalGeneration,
-				inventoryEventCount, recoveryCandidateCount, futureSnapshotCount,
+				inventoryEventCount, recoveryCandidateCount,
+				proposalRelatedEventCount, recoveryCompleteEventCount,
+				recoveryIncompleteEventCount,
+				incompleteOwnerPositionHintEventCount,
+				incompleteExactSpatialEventCount,
+				firstIncompleteRegistrationSequence, firstIncompleteOwnerKind,
+				firstIncompleteAttributionKind,
+				firstIncompleteRecoveryRequirement, preflightComplete,
+				futureSnapshotCount,
 				runtimeVerificationCount, mutationOperationCount,
 				terminalEventConsumptionCount, reconstructionInvoked,
 				recoveryInvoked, contractualReadiness,
@@ -5825,6 +5938,34 @@ public final class LayeredCoordinateParityObserver {
 		public int getRecoveryCandidateCount() {
 			return recoveryCandidateCount;
 		}
+		public int getProposalRelatedEventCount() {
+			return proposalRelatedEventCount;
+		}
+		public int getRecoveryCompleteEventCount() {
+			return recoveryCompleteEventCount;
+		}
+		public int getRecoveryIncompleteEventCount() {
+			return recoveryIncompleteEventCount;
+		}
+		public int getIncompleteOwnerPositionHintEventCount() {
+			return incompleteOwnerPositionHintEventCount;
+		}
+		public int getIncompleteExactSpatialEventCount() {
+			return incompleteExactSpatialEventCount;
+		}
+		public Long getFirstIncompleteRegistrationSequence() {
+			return firstIncompleteRegistrationSequence;
+		}
+		public String getFirstIncompleteOwnerKind() {
+			return firstIncompleteOwnerKind;
+		}
+		public String getFirstIncompleteAttributionKind() {
+			return firstIncompleteAttributionKind;
+		}
+		public String getFirstIncompleteRecoveryRequirement() {
+			return firstIncompleteRecoveryRequirement;
+		}
+		public boolean isPreflightComplete() { return preflightComplete; }
 		public int getFutureSnapshotCount() { return futureSnapshotCount; }
 		public int getRuntimeVerificationCount() {
 			return runtimeVerificationCount;

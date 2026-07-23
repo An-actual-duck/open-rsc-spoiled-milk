@@ -9,6 +9,8 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationRecoveryCoordinatorC
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventRestorationState;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.AttributionKind;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.OwnerKind;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.RestorationKind;
 import com.openrsc.server.model.world.region.RegionManager;
 
@@ -54,22 +56,17 @@ final class GameTickEventRestorationLivePreparationCoordinator {
 				"Live recovery preparation bound is invalid");
 		}
 
-		List<EventRecord> related = new ArrayList<EventRecord>();
-		for (EventRecord event : checked.getEvents()) {
-			if (!event.isCandidateRelated()) {
-				continue;
-			}
-			if (related.size() == maximumCandidates) {
-				return PreparationCapture.refused(
-					Reason.CANDIDATE_BOUND_EXCEEDED, related.size() + 1);
-			}
-			if (!isCompleteRecoveryRecord(
-					event, checked.getProposalGeneration())) {
-				return PreparationCapture.refused(
-					Reason.RELATED_EVENT_RECOVERY_INCOMPLETE,
-					related.size() + 1);
-			}
-			related.add(event);
+		RecoveryPreflight preflight = assessRecovery(checked);
+		List<EventRecord> related = preflight.getCompleteRecoveryRecords();
+		if (preflight.getProposalRelatedEventCount() > maximumCandidates) {
+			return PreparationCapture.refused(
+				Reason.CANDIDATE_BOUND_EXCEEDED,
+				preflight.getRecoveryCompleteEventCount());
+		}
+		if (!preflight.isComplete()) {
+			return PreparationCapture.refused(
+				Reason.RELATED_EVENT_RECOVERY_INCOMPLETE,
+				preflight.getRecoveryCompleteEventCount());
 		}
 
 		GameTickEventStore.StoreAtomicTimingSnapshot before =
@@ -156,22 +153,89 @@ final class GameTickEventRestorationLivePreparationCoordinator {
 			checked.getEventCount(), related.size(), maximumCandidates);
 	}
 
-	private static boolean isCompleteRecoveryRecord(
+	static RecoveryPreflight assessRecovery(
+		final LayeredPackedRegionEventOwnershipInventory inventory) {
+		LayeredPackedRegionEventOwnershipInventory checked =
+			Objects.requireNonNull(inventory, "inventory");
+		List<EventRecord> complete = new ArrayList<EventRecord>();
+		int proposalRelatedEventCount = 0;
+		int incompleteOwnerPositionHintEventCount = 0;
+		int incompleteExactSpatialEventCount = 0;
+		EventRecord firstIncomplete = null;
+		RecoveryRequirement firstIncompleteRequirement = null;
+		for (EventRecord event : checked.getEvents()) {
+			if (!event.isCandidateRelated()) {
+				continue;
+			}
+			proposalRelatedEventCount++;
+			RecoveryRequirement requirement = recoveryRequirement(
+				event, checked.getProposalGeneration());
+			if (requirement == RecoveryRequirement.COMPLETE) {
+				complete.add(event);
+				continue;
+			}
+			if (event.getAttributionKind()
+				== AttributionKind.OWNER_POSITION_HINT) {
+				incompleteOwnerPositionHintEventCount++;
+			}
+			if (event.getAttributionKind() == AttributionKind.EXACT_SPATIAL) {
+				incompleteExactSpatialEventCount++;
+			}
+			if (firstIncomplete == null) {
+				firstIncomplete = event;
+				firstIncompleteRequirement = requirement;
+			}
+		}
+		return RecoveryPreflight.of(
+			proposalRelatedEventCount, complete,
+			incompleteOwnerPositionHintEventCount,
+			incompleteExactSpatialEventCount, firstIncomplete,
+			firstIncompleteRequirement);
+	}
+
+	private static RecoveryRequirement recoveryRequirement(
 		final EventRecord event,
 		final long proposalGeneration) {
 		EventRestorationState restoration = event.getRestorationState();
-		return restoration.getKind() != RestorationKind.UNAVAILABLE
-			&& event.isAtomicTimingCaptured()
-			&& event.isRunning()
-			&& event.getTimesRan() == 0
-			&& restoration.isDetachedCallbackPayloadComplete()
-			&& restoration.isExecutionSemanticsCaptured()
-			&& restoration.isTargetBindingRequirementCaptured()
-			&& restoration.isTargetBindingComplete()
-			&& restoration.isArrivalOrderingCaptured()
-			&& restoration.isGenerationBindingRequirementCaptured()
-			&& restoration.isGenerationBindingComplete(proposalGeneration)
-			&& restoration.isIdempotencyRequirementCaptured();
+		if (restoration.getKind() == RestorationKind.UNAVAILABLE) {
+			return RecoveryRequirement.RESTORATION_STATE_UNAVAILABLE;
+		}
+		if (!event.isAtomicTimingCaptured()) {
+			return RecoveryRequirement.ATOMIC_TIMING_UNAVAILABLE;
+		}
+		if (!event.isRunning()) {
+			return RecoveryRequirement.EVENT_NOT_RUNNING;
+		}
+		if (event.getTimesRan() != 0) {
+			return RecoveryRequirement.EVENT_ALREADY_EXECUTED;
+		}
+		if (!restoration.isDetachedCallbackPayloadComplete()) {
+			return RecoveryRequirement.DETACHED_PAYLOAD_INCOMPLETE;
+		}
+		if (!restoration.isExecutionSemanticsCaptured()) {
+			return RecoveryRequirement.EXECUTION_SEMANTICS_INCOMPLETE;
+		}
+		if (!restoration.isTargetBindingRequirementCaptured()) {
+			return RecoveryRequirement
+				.TARGET_BINDING_REQUIREMENT_INCOMPLETE;
+		}
+		if (!restoration.isTargetBindingComplete()) {
+			return RecoveryRequirement.TARGET_BINDING_INCOMPLETE;
+		}
+		if (!restoration.isArrivalOrderingCaptured()) {
+			return RecoveryRequirement.ARRIVAL_ORDERING_INCOMPLETE;
+		}
+		if (!restoration.isGenerationBindingRequirementCaptured()) {
+			return RecoveryRequirement
+				.GENERATION_BINDING_REQUIREMENT_INCOMPLETE;
+		}
+		if (!restoration.isGenerationBindingComplete(proposalGeneration)) {
+			return RecoveryRequirement.GENERATION_BINDING_MISMATCH;
+		}
+		if (!restoration.isIdempotencyRequirementCaptured()) {
+			return RecoveryRequirement.IDEMPOTENCY_REQUIREMENT_INCOMPLETE;
+		}
+		return RecoveryRequirement.COMPLETE;
 	}
 
 	private static boolean registrationSetMatches(
@@ -235,6 +299,125 @@ final class GameTickEventRestorationLivePreparationCoordinator {
 		FUTURE_CURRENT_STATE_CAPTURE_REFUSED,
 		REGISTRATION_OR_TIMING_DRIFT,
 		PREPARATION_CONTRACT_REFUSED
+	}
+
+	enum RecoveryRequirement {
+		COMPLETE,
+		RESTORATION_STATE_UNAVAILABLE,
+		ATOMIC_TIMING_UNAVAILABLE,
+		EVENT_NOT_RUNNING,
+		EVENT_ALREADY_EXECUTED,
+		DETACHED_PAYLOAD_INCOMPLETE,
+		EXECUTION_SEMANTICS_INCOMPLETE,
+		TARGET_BINDING_REQUIREMENT_INCOMPLETE,
+		TARGET_BINDING_INCOMPLETE,
+		ARRIVAL_ORDERING_INCOMPLETE,
+		GENERATION_BINDING_REQUIREMENT_INCOMPLETE,
+		GENERATION_BINDING_MISMATCH,
+		IDEMPOTENCY_REQUIREMENT_INCOMPLETE
+	}
+
+	/**
+	 * Bounded detached proposal preflight. It retains inventory records only
+	 * package-locally for the immediately following capture pass.
+	 */
+	static final class RecoveryPreflight {
+		private final int proposalRelatedEventCount;
+		private final List<EventRecord> completeRecoveryRecords;
+		private final int recoveryIncompleteEventCount;
+		private final int incompleteOwnerPositionHintEventCount;
+		private final int incompleteExactSpatialEventCount;
+		private final Long firstIncompleteRegistrationSequence;
+		private final OwnerKind firstIncompleteOwnerKind;
+		private final AttributionKind firstIncompleteAttributionKind;
+		private final RecoveryRequirement firstIncompleteRequirement;
+
+		private RecoveryPreflight(
+			final int proposalRelatedEventCount,
+			final List<EventRecord> completeRecoveryRecords,
+			final int incompleteOwnerPositionHintEventCount,
+			final int incompleteExactSpatialEventCount,
+			final EventRecord firstIncomplete,
+			final RecoveryRequirement firstIncompleteRequirement) {
+			this.proposalRelatedEventCount = proposalRelatedEventCount;
+			this.completeRecoveryRecords = Collections.unmodifiableList(
+				new ArrayList<EventRecord>(completeRecoveryRecords));
+			this.recoveryIncompleteEventCount =
+				proposalRelatedEventCount - completeRecoveryRecords.size();
+			this.incompleteOwnerPositionHintEventCount =
+				incompleteOwnerPositionHintEventCount;
+			this.incompleteExactSpatialEventCount =
+				incompleteExactSpatialEventCount;
+			this.firstIncompleteRegistrationSequence =
+				firstIncomplete == null ? null
+					: Long.valueOf(firstIncomplete.getRegistrationSequence());
+			this.firstIncompleteOwnerKind =
+				firstIncomplete == null ? null : firstIncomplete.getOwnerKind();
+			this.firstIncompleteAttributionKind = firstIncomplete == null
+				? null : firstIncomplete.getAttributionKind();
+			this.firstIncompleteRequirement = firstIncompleteRequirement;
+			boolean incomplete = recoveryIncompleteEventCount > 0;
+			if (proposalRelatedEventCount < 0
+				|| completeRecoveryRecords.size() > proposalRelatedEventCount
+				|| incompleteOwnerPositionHintEventCount < 0
+				|| incompleteExactSpatialEventCount < 0
+				|| incompleteOwnerPositionHintEventCount
+					+ incompleteExactSpatialEventCount
+					> recoveryIncompleteEventCount
+				|| incomplete != (firstIncomplete != null)
+				|| incomplete != (firstIncompleteRequirement != null)
+				|| firstIncompleteRequirement == RecoveryRequirement.COMPLETE) {
+				throw new IllegalArgumentException(
+					"Recovery preflight is inconsistent");
+			}
+		}
+
+		private static RecoveryPreflight of(
+			final int proposalRelatedEventCount,
+			final List<EventRecord> completeRecoveryRecords,
+			final int incompleteOwnerPositionHintEventCount,
+			final int incompleteExactSpatialEventCount,
+			final EventRecord firstIncomplete,
+			final RecoveryRequirement firstIncompleteRequirement) {
+			return new RecoveryPreflight(
+				proposalRelatedEventCount, completeRecoveryRecords,
+				incompleteOwnerPositionHintEventCount,
+				incompleteExactSpatialEventCount, firstIncomplete,
+				firstIncompleteRequirement);
+		}
+
+		int getProposalRelatedEventCount() {
+			return proposalRelatedEventCount;
+		}
+		int getRecoveryCompleteEventCount() {
+			return completeRecoveryRecords.size();
+		}
+		int getRecoveryIncompleteEventCount() {
+			return recoveryIncompleteEventCount;
+		}
+		int getIncompleteOwnerPositionHintEventCount() {
+			return incompleteOwnerPositionHintEventCount;
+		}
+		int getIncompleteExactSpatialEventCount() {
+			return incompleteExactSpatialEventCount;
+		}
+		Long getFirstIncompleteRegistrationSequence() {
+			return firstIncompleteRegistrationSequence;
+		}
+		OwnerKind getFirstIncompleteOwnerKind() {
+			return firstIncompleteOwnerKind;
+		}
+		AttributionKind getFirstIncompleteAttributionKind() {
+			return firstIncompleteAttributionKind;
+		}
+		RecoveryRequirement getFirstIncompleteRequirement() {
+			return firstIncompleteRequirement;
+		}
+		boolean isComplete() { return recoveryIncompleteEventCount == 0; }
+		List<EventRecord> getCompleteRecoveryRecords() {
+			return completeRecoveryRecords;
+		}
+		boolean isRuntimeHandleRetained() { return false; }
 	}
 
 	/** Closed detached preparation; no scheduler, event, or Region handle. */

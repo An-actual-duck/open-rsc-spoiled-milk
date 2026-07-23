@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v45.schema.json",
+  "title": "Layered Map Parity Event v45",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency", "packedRegionActiveNpcContainment",
+    "packedRegionActiveNpcBoundaryRequirements",
+    "packedRegionRetirementRefinement",
+    "packedRegionRetirementRefinementReassessment",
+    "packedRegionPreservationBurden",
+    "packedRegionDynamicObjectPreservation", "packedRegionEventOwnership",
+    "packedRegionEventTargets", "packedRegionEventAtomicTargetRevalidation",
+    "packedRegionEventRecoveryNoOp", "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v45"},
+    "eventType": {"enum": [
+      "start", "snapshot", "marker", "move", "teleport", "login",
+      "logout", "stop", "recovery-noop"
+    ]},
+    "sequence": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionAuthoredReconstructionTopology"},
+    "packedRegionAuthoredReconstructionDependencySemantics": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics"},
+    "packedRegionActiveNpcResidency": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionActiveNpcResidency"},
+    "packedRegionActiveNpcContainment": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionActiveNpcContainment"},
+    "packedRegionActiveNpcBoundaryRequirements": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionActiveNpcBoundaryRequirements"},
+    "packedRegionRetirementRefinement": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionRetirementRefinement"},
+    "packedRegionRetirementRefinementReassessment": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionRetirementRefinementReassessment"},
+    "packedRegionPreservationBurden": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionPreservationBurden"},
+    "packedRegionDynamicObjectPreservation": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionDynamicObjectPreservation"},
+    "packedRegionEventOwnership": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionEventOwnership"},
+    "packedRegionEventTargets": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionEventTargets"},
+    "packedRegionEventAtomicTargetRevalidation": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/packedRegionEventAtomicTargetRevalidation"},
+    "packedRegionEventRecoveryNoOp": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/recoveryNoOp"}
+      ]
+    },
+    "roundTripExact": {"$ref": "layered-map-parity-event-v44.schema.json#/properties/roundTripExact"}
+  },
+  "$defs": {
+    "recoveryNoOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason", "preparationReason", "lifecycleReason",
+        "proposalGeneration", "inventoryEventCount",
+        "recoveryCandidateCount", "proposalRelatedEventCount",
+        "recoveryCompleteEventCount", "recoveryIncompleteEventCount",
+        "incompleteOwnerPositionHintEventCount",
+        "incompleteExactSpatialEventCount",
+        "firstIncompleteRegistrationSequence",
+        "firstIncompleteOwnerKind", "firstIncompleteAttributionKind",
+        "firstIncompleteRecoveryRequirement", "preflightComplete",
+        "futureSnapshotCount", "runtimeVerificationCount",
+        "mutationOperationCount", "terminalEventConsumptionCount",
+        "reconstructionInvoked", "recoveryInvoked",
+        "contractuallyReadyForFirstVisibility",
+        "freshInventoryRetryRequired", "verificationOnly",
+        "noOpReconstruction", "regionMutationAllowed",
+        "overdueConsumptionAllowed", "regionLoadingPerformed",
+        "retryPerformed", "arrivalGate", "visibilityReleased",
+        "runtimeHandleRetained"
+      ],
+      "properties": {
+        "reason": {"enum": [
+          "LIVE_CAPTURE_REFUSED", "NO_RECOVERY_CANDIDATES",
+          "NON_FUTURE_CANDIDATE_REFUSED", "VERIFICATION_REFUSED",
+          "NO_OP_VERIFICATION_READY"
+        ]},
+        "preparationReason": {"enum": [
+          "READY_BEFORE_RECONSTRUCTION", "CANDIDATE_BOUND_EXCEEDED",
+          "RELATED_EVENT_RECOVERY_INCOMPLETE", "REGISTRATION_SET_DRIFT",
+          "SCHEDULER_CAPTURE_REFUSED",
+          "FUTURE_CURRENT_STATE_CAPTURE_REFUSED",
+          "REGISTRATION_OR_TIMING_DRIFT", "PREPARATION_CONTRACT_REFUSED"
+        ]},
+        "lifecycleReason": {
+          "oneOf": [
+            {"type": "null"},
+            {"enum": [
+              "CAPTURE_REFUSED", "CAPTURE_ALREADY_CONSUMED",
+              "RECONSTRUCTION_CORRELATION_REFUSED",
+              "RECONSTRUCTION_REFUSED",
+              "RECOVERY_REFUSED_REQUIRES_FRESH_INVENTORY",
+              "RECOVERY_EXECUTION_INVALID",
+              "CONTRACTUALLY_READY_FOR_FIRST_VISIBILITY"
+            ]}
+          ]
+        },
+        "proposalGeneration": {"type": "integer", "minimum": 0},
+        "inventoryEventCount": {"type": "integer", "minimum": 0},
+        "recoveryCandidateCount": {"type": "integer", "minimum": 0},
+        "proposalRelatedEventCount": {"type": "integer", "minimum": 0},
+        "recoveryCompleteEventCount": {"type": "integer", "minimum": 0},
+        "recoveryIncompleteEventCount": {"type": "integer", "minimum": 0},
+        "incompleteOwnerPositionHintEventCount": {
+          "type": "integer", "minimum": 0
+        },
+        "incompleteExactSpatialEventCount": {
+          "type": "integer", "minimum": 0
+        },
+        "firstIncompleteRegistrationSequence": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "integer", "minimum": 1}
+          ]
+        },
+        "firstIncompleteOwnerKind": {
+          "oneOf": [
+            {"type": "null"},
+            {"enum": ["NONE", "PLAYER", "NPC"]}
+          ]
+        },
+        "firstIncompleteAttributionKind": {
+          "oneOf": [
+            {"type": "null"},
+            {"enum": [
+              "EXACT_SPATIAL", "OWNER_POSITION_HINT",
+              "NON_SPATIAL_GLOBAL", "UNATTRIBUTED"
+            ]}
+          ]
+        },
+        "firstIncompleteRecoveryRequirement": {
+          "oneOf": [
+            {"type": "null"},
+            {"enum": [
+              "RESTORATION_STATE_UNAVAILABLE",
+              "ATOMIC_TIMING_UNAVAILABLE", "EVENT_NOT_RUNNING",
+              "EVENT_ALREADY_EXECUTED", "DETACHED_PAYLOAD_INCOMPLETE",
+              "EXECUTION_SEMANTICS_INCOMPLETE",
+              "TARGET_BINDING_REQUIREMENT_INCOMPLETE",
+              "TARGET_BINDING_INCOMPLETE",
+              "ARRIVAL_ORDERING_INCOMPLETE",
+              "GENERATION_BINDING_REQUIREMENT_INCOMPLETE",
+              "GENERATION_BINDING_MISMATCH",
+              "IDEMPOTENCY_REQUIREMENT_INCOMPLETE"
+            ]}
+          ]
+        },
+        "preflightComplete": {"type": "boolean"},
+        "futureSnapshotCount": {"type": "integer", "minimum": 0},
+        "runtimeVerificationCount": {"type": "integer", "minimum": 0},
+        "mutationOperationCount": {"const": 0},
+        "terminalEventConsumptionCount": {"const": 0},
+        "reconstructionInvoked": {"type": "boolean"},
+        "recoveryInvoked": {"type": "boolean"},
+        "contractuallyReadyForFirstVisibility": {"type": "boolean"},
+        "freshInventoryRetryRequired": {"type": "boolean"},
+        "verificationOnly": {"const": true},
+        "noOpReconstruction": {"const": true},
+        "regionMutationAllowed": {"const": false},
+        "overdueConsumptionAllowed": {"const": false},
+        "regionLoadingPerformed": {"const": false},
+        "retryPerformed": {"const": false},
+        "arrivalGate": {"const": false},
+        "visibilityReleased": {"const": false},
+        "runtimeHandleRetained": {"const": false}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"preflightComplete": {"const": true}}},
+          "then": {"properties": {
+            "recoveryIncompleteEventCount": {"const": 0},
+            "firstIncompleteRegistrationSequence": {"type": "null"},
+            "firstIncompleteOwnerKind": {"type": "null"},
+            "firstIncompleteAttributionKind": {"type": "null"},
+            "firstIncompleteRecoveryRequirement": {"type": "null"}
+          }},
+          "else": {"properties": {
+            "recoveryIncompleteEventCount": {
+              "type": "integer", "minimum": 1
+            },
+            "firstIncompleteRegistrationSequence": {
+              "type": "integer", "minimum": 1
+            },
+            "firstIncompleteOwnerKind": {"type": "string"},
+            "firstIncompleteAttributionKind": {"type": "string"},
+            "firstIncompleteRecoveryRequirement": {"type": "string"}
+          }}
+        },
+        {
+          "if": {"properties": {
+            "preparationReason": {
+              "const": "RELATED_EVENT_RECOVERY_INCOMPLETE"
+            }
+          }},
+          "then": {"properties": {"preflightComplete": {"const": false}}}
+        },
+        {
+          "if": {"properties": {
+            "reason": {"const": "NO_OP_VERIFICATION_READY"}
+          }},
+          "then": {"properties": {
+            "lifecycleReason": {
+              "const": "CONTRACTUALLY_READY_FOR_FIRST_VISIBILITY"
+            },
+            "preflightComplete": {"const": true},
+            "reconstructionInvoked": {"const": true},
+            "recoveryInvoked": {"const": true},
+            "contractuallyReadyForFirstVisibility": {"const": true},
+            "freshInventoryRetryRequired": {"const": false}
+          }},
+          "else": {"properties": {
+            "contractuallyReadyForFirstVisibility": {"const": false}
+          }}
+        },
+        {
+          "if": {"properties": {"reason": {"enum": [
+            "LIVE_CAPTURE_REFUSED", "NO_RECOVERY_CANDIDATES",
+            "NON_FUTURE_CANDIDATE_REFUSED"
+          ]}}},
+          "then": {"properties": {
+            "lifecycleReason": {"type": "null"},
+            "reconstructionInvoked": {"const": false},
+            "recoveryInvoked": {"const": false},
+            "runtimeVerificationCount": {"const": 0},
+            "freshInventoryRetryRequired": {"const": false}
+          }}
+        },
+        {
+          "if": {"properties": {"recoveryInvoked": {"const": true}}},
+          "then": {"properties": {
+            "reconstructionInvoked": {"const": true}
+          }}
+        },
+        {
+          "if": {"properties": {
+            "reason": {"const": "NO_RECOVERY_CANDIDATES"}
+          }},
+          "then": {"properties": {
+            "recoveryCandidateCount": {"const": 0},
+            "recoveryCompleteEventCount": {"const": 0},
+            "futureSnapshotCount": {"const": 0}
+          }}
+        }
+      ]
+    }
+  }
+}

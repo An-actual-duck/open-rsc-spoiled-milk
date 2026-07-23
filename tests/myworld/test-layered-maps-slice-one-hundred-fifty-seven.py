@@ -43,6 +43,16 @@ DIAGNOSTIC_METHODS = r'''
                 && result.getProposalGeneration() == GENERATION
                 && result.getInventoryEventCount() == 1
                 && result.getRecoveryCandidateCount() == 1
+                && result.getProposalRelatedEventCount() == 1
+                && result.getRecoveryCompleteEventCount() == 1
+                && result.getRecoveryIncompleteEventCount() == 0
+                && result.getIncompleteOwnerPositionHintEventCount() == 0
+                && result.getIncompleteExactSpatialEventCount() == 0
+                && result.getFirstIncompleteRegistrationSequence() == null
+                && result.getFirstIncompleteOwnerKind() == null
+                && result.getFirstIncompleteAttributionKind() == null
+                && result.getFirstIncompleteRecoveryRequirement() == null
+                && result.isPreflightComplete()
                 && result.getFutureSnapshotCount() == 1
                 && result.getRuntimeVerificationCount() == 1
                 && result.getMutationOperationCount() == 0
@@ -99,6 +109,18 @@ DIAGNOSTIC_METHODS = r'''
                     == GameTickEventRestorationNoOpDiagnostic.Reason
                         .LIVE_CAPTURE_REFUSED
                 && result.getRuntimeVerificationCount() == 0
+                && result.getProposalRelatedEventCount() == 1
+                && result.getRecoveryCompleteEventCount() == 0
+                && result.getRecoveryIncompleteEventCount() == 1
+                && result.getIncompleteOwnerPositionHintEventCount() == 0
+                && result.getIncompleteExactSpatialEventCount() == 1
+                && result.getFirstIncompleteRegistrationSequence() != null
+                && "NONE".equals(result.getFirstIncompleteOwnerKind())
+                && "EXACT_SPATIAL".equals(
+                    result.getFirstIncompleteAttributionKind())
+                && "RESTORATION_STATE_UNAVAILABLE".equals(
+                    result.getFirstIncompleteRecoveryRequirement())
+                && !result.isPreflightComplete()
                 && !result.isReconstructionInvoked()
                 && !result.isRecoveryInvoked()
                 && region.getApplicationCalls() == 0
