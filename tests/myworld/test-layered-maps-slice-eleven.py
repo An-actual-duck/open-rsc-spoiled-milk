@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v43.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v44.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -44,6 +44,7 @@ SCHEMA_V38 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v38.sche
 SCHEMA_V39 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v39.schema.json"
 SCHEMA_V40 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v40.schema.json"
 SCHEMA_V41 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v41.schema.json"
+SCHEMA_V43 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v43.schema.json"
 
 
 POINT_STUB = r'''
@@ -1194,7 +1195,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v43" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v44" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -1205,6 +1206,10 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             ))
             self.assertTrue(all(
                 event["packedRegionEventOwnership"] is None
+                for event in events
+            ))
+            self.assertTrue(all(
+                event["packedRegionEventRecoveryNoOp"] is None
                 for event in events
             ))
             self.assertTrue(all(
@@ -2396,6 +2401,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v39 = json.loads(SCHEMA_V39.read_text(encoding="utf-8"))
                 v40 = json.loads(SCHEMA_V40.read_text(encoding="utf-8"))
                 v41 = json.loads(SCHEMA_V41.read_text(encoding="utf-8"))
+                v43 = json.loads(SCHEMA_V43.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -2426,6 +2432,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v39["$id"], Resource.from_contents(v39)),
                     (v40["$id"], Resource.from_contents(v40)),
                     (v41["$id"], Resource.from_contents(v41)),
+                    (v43["$id"], Resource.from_contents(v43)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry
@@ -2460,7 +2467,9 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
         self.assertIn('command.equalsIgnoreCase("lp")', command)
         self.assertIn("player.isDev()", command)
         self.assertIn("WANT_LAYERED_MAP_PARITY_OBSERVER", command)
-        self.assertIn("[start|status|snapshot|mark LABEL|stop]", command)
+        self.assertIn(
+            "[start|status|snapshot|mark LABEL|recover-noop|stop]", command
+        )
         self.assertIn("want_layered_map_parity_observer: false", local_config)
         self.assertIn("want_layered_map_parity_observer: false", host_config)
         self.assertNotIn("LegacyPackedPointAdapter.toLegacyPoint", player)

@@ -167,6 +167,7 @@ Then use:
 ::layerparity start
 ::layerparity mark before-ladder
 ::layerparity snapshot
+::layerparity recover-noop
 ::layerparity status
 ::layerparity stop
 ```
@@ -183,7 +184,7 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v43.schema.json`. Each v43 record
+traces emit `schema/layered-map-parity-event-v44.schema.json`. Each v44 record
 retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
@@ -191,13 +192,22 @@ Start, marker, teleport, and stop records also carry all eight dormant adjacent
 tile-mask comparisons: directions and destinations, nullable decision/reason
 pairs, required-state counts, and exactness summaries. Tile masks and tile
 payloads are never written. Other event types carry explicit nulls instead of
-repeating the tile comparisons on every movement. V43 additionally records a
-bounded composed scheduler/Region revalidation for each restoration-capable
-event: outer-fence outcome, lifecycle-version stability, exact Region-boundary
+repeating the tile comparisons on every movement. V44 retains v43's bounded
+composed scheduler/Region revalidation and adds nullable
+`packedRegionEventRecoveryNoOp` evidence. Only the explicit
+`::layerparity recover-noop` action may populate it; ordinary movement,
+snapshots, and markers emit null. The result reports stable preparation,
+lifecycle, candidate, future-snapshot, runtime-verification, mutation, and
+terminal-consumption facts. It is verification-only: missing current state
+refuses rather than being restored, and overdue callbacks are never consumed.
+V43 records a bounded composed scheduler/Region revalidation for each
+restoration-capable event: outer-fence outcome, lifecycle-version stability,
+exact Region-boundary
 target facts, target decision, and dormant contract result. These facts are
 read-only and point-in-time; all mutation, commit-token, executable-restoration,
-arrival-gate, and lifecycle-authority flags remain false. The v1-v42 schemas remain
+arrival-gate, and lifecycle-authority flags remain false. The v1-v43 schemas remain
 alongside it—including
+`schema/layered-map-parity-event-v43.schema.json`,
 `schema/layered-map-parity-event-v42.schema.json`,
 `schema/layered-map-parity-event-v41.schema.json`,
 `schema/layered-map-parity-event-v40.schema.json`,
@@ -217,7 +227,7 @@ alongside it—including
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
-explicit readable contracts. The v19-v42 schemas likewise remain immutable
+explicit readable contracts. The v19-v43 schemas likewise remain immutable
 contracts for earlier records.
 When a bounded refinement proposal is available, v30 records a
 same-order, point-in-time preservation-burden inventory. Its five explicit

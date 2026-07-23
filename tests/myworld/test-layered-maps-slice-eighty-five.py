@@ -70,7 +70,7 @@ class LayeredMapsSliceEightyFiveTest(unittest.TestCase):
         observer = OBSERVER.read_text(encoding="utf-8")
         fixture = OBSERVER_FIXTURE_TEST.read_text(encoding="utf-8")
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v43"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v44"', observer
         )
         self.assertIn("PackedRegionPreservationBurdenSource", observer)
         self.assertIn(

@@ -67,7 +67,7 @@ class LayeredMapsSliceThirtyFiveTest(unittest.TestCase):
         player = PLAYER.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v43"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v44"', observer)
         self.assertIn("MAX_TRACE_TRAVERSAL_STEPS = 16", observer)
         self.assertIn("TraversalCollisionSource traversalCollisionSource", observer)
         self.assertIn("state.traversalCollisionSource.capture(", observer)

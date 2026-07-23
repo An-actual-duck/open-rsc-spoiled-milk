@@ -11,6 +11,7 @@ import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.content.worldedit.WorldEditorAccessService;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionEventRecoveryNoOpMetadata;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
@@ -1439,6 +1440,15 @@ public final class Development implements CommandTrigger {
 				}
 				status = LayeredCoordinateParityObserver.mark(
 					player.getDatabaseID(), player.getUsernameHash(), player.getLocation(), args[1]);
+			} else if ("recover-noop".equals(action)
+				|| "recovernoop".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.recoverNoOp(
+					player.getDatabaseID(), player.getUsernameHash(),
+					player.getLocation());
 			} else if ("stop".equals(action)) {
 				if (args.length != 1) {
 					layeredParitySyntax(player, command);
@@ -1987,6 +1997,15 @@ public final class Development implements CommandTrigger {
 					.captureLayeredPackedRegionEventAtomicTargetRevalidation(
 						inventory, maximumTargetRecords);
 			}
+
+			@Override
+			public PackedRegionEventRecoveryNoOpMetadata captureRecoveryNoOp(
+				final LayeredPackedRegionEventOwnershipInventory inventory,
+				final int maximumCandidates) {
+				return player.getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionEventRecoveryNoOpDiagnostic(
+						inventory, maximumCandidates);
+			}
 		};
 	}
 
@@ -2018,7 +2037,7 @@ public final class Development implements CommandTrigger {
 
 	private void layeredParitySyntax(Player player, String command) {
 		player.message(badSyntaxPrefix + command.toUpperCase()
-			+ " [start|status|snapshot|mark LABEL|stop]");
+			+ " [start|status|snapshot|mark LABEL|recover-noop|stop]");
 	}
 
 	private void testNpcDrops(Player player, String command, String[] args) {

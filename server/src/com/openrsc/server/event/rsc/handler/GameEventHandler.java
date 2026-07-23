@@ -1,6 +1,7 @@
 package com.openrsc.server.event.rsc.handler;
 
 import com.openrsc.server.Server;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionEventRecoveryNoOpMetadata;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.GameTickEventRestorationRequirement;
 import com.openrsc.server.event.rsc.GameTickEventRestorationState;
@@ -438,6 +439,34 @@ public class GameEventHandler {
 			packedSources, eventStates,
 			checked.getCandidateSourceCount(), maximumEvents,
 			maximumSpatialReferences);
+	}
+
+	/**
+	 * Runs the explicit private verification-only recovery diagnostic against
+	 * one exact detached inventory. No Region mutation or overdue callback
+	 * consumption is permitted by the diagnostic policy.
+	 */
+	public PackedRegionEventRecoveryNoOpMetadata
+		captureLayeredPackedRegionEventRecoveryNoOpDiagnostic(
+			final LayeredPackedRegionEventOwnershipInventory inventory,
+			final int maximumCandidates) {
+		GameTickEventRestorationNoOpDiagnostic diagnostic =
+			GameTickEventRestorationNoOpDiagnostic.capture(
+			eventStore, getServer().getWorld().getRegionManager(),
+			Objects.requireNonNull(inventory, "inventory"), maximumCandidates);
+		return PackedRegionEventRecoveryNoOpMetadata.of(
+			diagnostic.getReason().name(), diagnostic.getPreparationReason(),
+			diagnostic.getLifecycleReason(), diagnostic.getProposalGeneration(),
+			diagnostic.getInventoryEventCount(),
+			diagnostic.getRecoveryCandidateCount(),
+			diagnostic.getFutureSnapshotCount(),
+			diagnostic.getRuntimeVerificationCount(),
+			diagnostic.getMutationOperationCount(),
+			diagnostic.getTerminalEventConsumptionCount(),
+			diagnostic.isReconstructionInvoked(),
+			diagnostic.isRecoveryInvoked(),
+			diagnostic.isContractuallyReadyForFirstVisibility(),
+			diagnostic.isFreshInventoryRetryRequired());
 	}
 
 	/**

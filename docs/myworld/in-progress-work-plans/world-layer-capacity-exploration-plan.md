@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, and 157 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, and 158 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -193,6 +193,10 @@ lifecycle, accepts only already-satisfied future current state, refuses missing
 state rather than restoring it, rejects every overdue callback before execution,
 and returns only a detached no-op diagnostic with zero mutation and terminal-
 consumption counts;
+automated-validated Slice 158 exposes that diagnostic only through the explicit
+opt-in private `recover-noop` parity action and additive schema-v44, keeps all
+ordinary trace events null, and wires both Player-session and development-
+command sources to the same GameEventHandler seam;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12851,6 +12855,63 @@ Safety boundary:
 Status: implemented and automated-validated. Private diagnostic exposure is the
 next separately gated slice.
 
+### Slice 158: Explicit private no-op recovery route
+
+Objective: expose Slice 157 through one deliberate owner action in the existing
+private parity trace without allowing routine observation to execute recovery
+verification.
+
+Implemented:
+
+- `::layerparity recover-noop` and its concise `::lp recover-noop` form write
+  one `recovery-noop` record only while the existing layered-parity trace is
+  active and requires the opt-in private parity capability to be enabled;
+- the observer derives the exact proposal-scoped event inventory through its
+  existing bounded pipeline and invokes Slice 157 only inside an exact
+  `"recovery-noop"` event-type guard. Ordinary movement, snapshots, and markers
+  emit null `packedRegionEventRecoveryNoOp` evidence;
+- both the Player session-rebind source and the duplicated development-command
+  start source delegate the request to one `GameEventHandler` method over its
+  exact Store and the current World's RegionManager;
+- additive schema-v44 retains every v43 field and adds the explicit action plus
+  a closed nullable result containing preparation/lifecycle reasons, inventory,
+  candidate, future-snapshot and runtime-verification counts, and zero-only
+  mutation and terminal-consumption counts; and
+- the schema and serializer repeat all inert boundaries: verification-only,
+  no-op reconstruction, no Region mutation, no overdue consumption, no Region
+  loading, retry, arrival, visibility release, or runtime handle.
+
+Automated validation status:
+
+- schema fixtures accept both ready future verification and explicit overdue
+  refusal, while rejecting any nonzero mutation or terminal consumption;
+- source guards prove the diagnostic invocation appears exactly once in the
+  observer write path and only after the explicit event-type condition;
+- runtime wiring guards cover both real source paths, the shared handler seam,
+  the dev-only capability check, command syntax, and v43 immutability;
+- the existing executable observer fixture validates ordinary null-evidence
+  records against schema-v44;
+- the complete layered-map suite passes 527 tests across 157 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 804 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- an absent proposal or event inventory produces a null diagnostic field rather
+  than manufacturing recovery evidence. The other v44 fields explain whether a
+  candidate selection existed;
+- an inventory can reach the action only after all existing proposal,
+  preservation-burden, ownership, target, and atomic-target correlation checks;
+- Slice 157 independently refuses incomplete evidence, scheduler/timing drift,
+  overdue candidates, and missing current state; and
+- the action performs no real reconstruction, loading, teardown, retirement,
+  retry, arrival, or visibility release and remains unavailable on servers that
+  do not explicitly enable the private parity capability.
+
+Status: implemented and automated-validated. Private owner validation is the
+next gate; no lifecycle authority is authorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13829,15 +13890,22 @@ policy. It accepts only future callbacks, uses a typed no-op reconstruction
 completion, verifies already-satisfied current scenery under the real ordered
 Region boundaries, and refuses rather than restoring missing state. Its
 detached result proves zero Region mutations and zero terminal event
-consumptions; no runtime route invokes it yet.
+consumptions; Slice 158 later adds the separately gated private route.
 
-The next safe slice should expose Slice 157 only through an explicit action in
-the existing opt-in private parity trace. The route should consume the exact
-proposal-scoped event inventory already captured by that observer, write stable
-AI-readable counts/reasons in an additive schema revision, remain disabled by
-default, and never run from ordinary movement or marker capture. That route
-will provide the first meaningful owner validation of the complete capture/
-order/verification wiring without risking world teardown.
+Slice 158 now supplies that explicit private route. Only `recover-noop` invokes
+Slice 157 from the parity observer, both runtime source paths use the same
+Store/RegionManager seam, and additive schema-v44 publishes closed counts and
+reasons. Every other event writes a null result, and the existing disabled-by-
+default capability still gates the entire command.
+
+The next step is the first meaningful owner validation of the complete capture/
+order/verification wiring. It should create one real future authored scenery
+callback, move its packed source into the existing retirement-candidate path,
+wait through the tolerant retirement grace while the callback is still future,
+and issue `::lp recover-noop`. The record must report one already-satisfied
+runtime verification, zero mutations, zero terminal consumptions, callback
+retention, and contractual readiness. Natural callback completion and the
+world's visuals, collision, and interaction must remain normal afterward.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

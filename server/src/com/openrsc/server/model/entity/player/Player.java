@@ -16,6 +16,7 @@ import com.openrsc.server.database.impl.mysql.queries.logging.GenericLog;
 import com.openrsc.server.database.impl.mysql.queries.logging.LiveFeedLog;
 import com.openrsc.server.database.struct.PlayerInventory;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionEventRecoveryNoOpMetadata;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.PluginTask;
@@ -3585,6 +3586,15 @@ public final class Player extends Mob {
 				return getWorld().getServer().getGameEventHandler()
 					.captureLayeredPackedRegionEventAtomicTargetRevalidation(
 						inventory, maximumTargetRecords);
+			}
+
+			@Override
+			public PackedRegionEventRecoveryNoOpMetadata captureRecoveryNoOp(
+				final LayeredPackedRegionEventOwnershipInventory inventory,
+				final int maximumCandidates) {
+				return getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionEventRecoveryNoOpDiagnostic(
+						inventory, maximumCandidates);
 			}
 		};
 	}

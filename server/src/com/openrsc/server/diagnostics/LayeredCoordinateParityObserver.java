@@ -55,7 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v43";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v44";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -102,6 +102,8 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionEventTargetObservation.MAXIMUM_TARGET_RECORDS;
 	private static final int MAX_TRACE_EVENT_ATOMIC_TARGET_RECORDS =
 		LayeredPackedRegionEventAtomicTargetRevalidation.MAXIMUM_RECORDS;
+	private static final int MAX_TRACE_EVENT_RECOVERY_CANDIDATES =
+		4096;
 	private static final int MAX_TRACE_TRAVERSAL_STEPS = 16;
 
 	private static final Logger LOGGER = LogManager.getLogger(LayeredCoordinateParityObserver.class);
@@ -753,6 +755,16 @@ public final class LayeredCoordinateParityObserver {
 		TraceState state = TRACES.get(new TraceKey(playerId, usernameHash));
 		return state == null ? Status.disabled(logPath(new TraceKey(playerId, usernameHash)))
 			: write(state, "marker", null, current, null, sanitizeLabel(label), null);
+	}
+
+	public static Status recoverNoOp(
+		int playerId,
+		long usernameHash,
+		Point current) {
+		TraceKey key = new TraceKey(playerId, usernameHash);
+		TraceState state = TRACES.get(key);
+		return state == null ? Status.disabled(logPath(key))
+			: write(state, "recovery-noop", null, current, null, null, null);
 	}
 
 	public static Status stop(int playerId, long usernameHash, Point current) {
@@ -1477,6 +1489,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionEventTargets = null;
 				LayeredPackedRegionEventAtomicTargetRevalidation
 					packedRegionEventAtomicTargetRevalidation = null;
+				PackedRegionEventRecoveryNoOpMetadata
+					packedRegionEventRecoveryNoOp = null;
 				LayeredPackedRegionRetirementRefinementProposal pendingAtEventStart =
 					state.pendingPackedRegionRetirementRefinement;
 				LayeredPackedRegionRetirementRefinementProposal
@@ -1775,6 +1789,14 @@ public final class LayeredCoordinateParityObserver {
 							packedRegionEventOwnership,
 							packedRegionEventAtomicTargetRevalidation);
 					}
+					if ("recovery-noop".equals(eventType)) {
+						packedRegionEventRecoveryNoOp = Objects.requireNonNull(
+							state.packedRegionEventOwnershipSource
+								.captureRecoveryNoOp(
+									packedRegionEventOwnership,
+									MAX_TRACE_EVENT_RECOVERY_CANDIDATES),
+							"packedRegionEventOwnershipSource recovery result");
+					}
 				}
 				long nextSequence = state.sequence + 1L;
 				String line = eventJson(
@@ -1799,7 +1821,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionDynamicObjectPreservation,
 					packedRegionEventOwnership,
 					packedRegionEventTargets,
-					packedRegionEventAtomicTargetRevalidation);
+					packedRegionEventAtomicTargetRevalidation,
+					packedRegionEventRecoveryNoOp);
 				Files.createDirectories(state.path.getParent());
 				try (BufferedWriter writer = Files.newBufferedWriter(
 					state.path,
@@ -1885,7 +1908,9 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionEventOwnershipInventory packedRegionEventOwnership,
 		LayeredPackedRegionEventTargetObservation packedRegionEventTargets,
 		LayeredPackedRegionEventAtomicTargetRevalidation
-			packedRegionEventAtomicTargetRevalidation) {
+			packedRegionEventAtomicTargetRevalidation,
+		PackedRegionEventRecoveryNoOpMetadata
+			packedRegionEventRecoveryNoOp) {
 		StringBuilder out = new StringBuilder(1024);
 		out.append('{');
 		field(out, "schema", EVENT_SCHEMA).append(',');
@@ -2105,6 +2130,13 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendPackedRegionEventAtomicTargetRevalidation(
 				out, packedRegionEventAtomicTargetRevalidation);
+		}
+		out.append(",\"packedRegionEventRecoveryNoOp\":");
+		if (packedRegionEventRecoveryNoOp == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionEventRecoveryNoOp(
+				out, packedRegionEventRecoveryNoOp);
 		}
 		out.append(",\"roundTripExact\":")
 			.append(to.isRoundTripExact() && (from == null || from.isRoundTripExact()));
@@ -4487,6 +4519,61 @@ public final class LayeredCoordinateParityObserver {
 		out.append("]}");
 	}
 
+	private static void appendPackedRegionEventRecoveryNoOp(
+		final StringBuilder out,
+		final PackedRegionEventRecoveryNoOpMetadata diagnostic) {
+		out.append('{');
+		field(out, "reason", diagnostic.getReason()).append(',');
+		field(out, "preparationReason", diagnostic.getPreparationReason())
+			.append(',');
+		out.append("\"lifecycleReason\":");
+		if (diagnostic.getLifecycleReason() == null) {
+			out.append("null");
+		} else {
+			quoted(out, diagnostic.getLifecycleReason());
+		}
+		out.append(",\"proposalGeneration\":")
+			.append(diagnostic.getProposalGeneration()).append(',');
+		out.append("\"inventoryEventCount\":")
+			.append(diagnostic.getInventoryEventCount()).append(',');
+		out.append("\"recoveryCandidateCount\":")
+			.append(diagnostic.getRecoveryCandidateCount()).append(',');
+		out.append("\"futureSnapshotCount\":")
+			.append(diagnostic.getFutureSnapshotCount()).append(',');
+		out.append("\"runtimeVerificationCount\":")
+			.append(diagnostic.getRuntimeVerificationCount()).append(',');
+		out.append("\"mutationOperationCount\":")
+			.append(diagnostic.getMutationOperationCount()).append(',');
+		out.append("\"terminalEventConsumptionCount\":")
+			.append(diagnostic.getTerminalEventConsumptionCount()).append(',');
+		out.append("\"reconstructionInvoked\":")
+			.append(diagnostic.isReconstructionInvoked()).append(',');
+		out.append("\"recoveryInvoked\":")
+			.append(diagnostic.isRecoveryInvoked()).append(',');
+		out.append("\"contractuallyReadyForFirstVisibility\":")
+			.append(diagnostic.isContractuallyReadyForFirstVisibility())
+			.append(',');
+		out.append("\"freshInventoryRetryRequired\":")
+			.append(diagnostic.isFreshInventoryRetryRequired()).append(',');
+		out.append("\"verificationOnly\":true,");
+		out.append("\"noOpReconstruction\":true,");
+		out.append("\"regionMutationAllowed\":")
+			.append(diagnostic.isRegionMutationAllowed()).append(',');
+		out.append("\"overdueConsumptionAllowed\":")
+			.append(diagnostic.isOverdueConsumptionAllowed()).append(',');
+		out.append("\"regionLoadingPerformed\":")
+			.append(diagnostic.isRegionLoadingPerformed()).append(',');
+		out.append("\"retryPerformed\":")
+			.append(diagnostic.isRetryPerformed()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(diagnostic.isArrivalGate()).append(',');
+		out.append("\"visibilityReleased\":")
+			.append(diagnostic.isVisibilityReleased()).append(',');
+		out.append("\"runtimeHandleRetained\":")
+			.append(diagnostic.isRuntimeHandleRetained());
+		out.append('}');
+	}
+
 	private static void appendEventRestorationState(
 		final StringBuilder out,
 		final LayeredPackedRegionEventOwnershipInventory.EventRestorationState
@@ -5643,6 +5730,130 @@ public final class LayeredCoordinateParityObserver {
 			int maximumDynamicObjects);
 	}
 
+	/** Immutable JSON-facing copy of the runtime verification-only result. */
+	public static final class PackedRegionEventRecoveryNoOpMetadata {
+		private final String reason;
+		private final String preparationReason;
+		private final String lifecycleReason;
+		private final long proposalGeneration;
+		private final int inventoryEventCount;
+		private final int recoveryCandidateCount;
+		private final int futureSnapshotCount;
+		private final int runtimeVerificationCount;
+		private final int mutationOperationCount;
+		private final int terminalEventConsumptionCount;
+		private final boolean reconstructionInvoked;
+		private final boolean recoveryInvoked;
+		private final boolean contractualReadiness;
+		private final boolean freshInventoryRetryRequired;
+
+		private PackedRegionEventRecoveryNoOpMetadata(
+			final String reason,
+			final String preparationReason,
+			final String lifecycleReason,
+			final long proposalGeneration,
+			final int inventoryEventCount,
+			final int recoveryCandidateCount,
+			final int futureSnapshotCount,
+			final int runtimeVerificationCount,
+			final int mutationOperationCount,
+			final int terminalEventConsumptionCount,
+			final boolean reconstructionInvoked,
+			final boolean recoveryInvoked,
+			final boolean contractualReadiness,
+			final boolean freshInventoryRetryRequired) {
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.preparationReason = Objects.requireNonNull(
+				preparationReason, "preparationReason");
+			this.lifecycleReason = lifecycleReason;
+			this.proposalGeneration = proposalGeneration;
+			this.inventoryEventCount = inventoryEventCount;
+			this.recoveryCandidateCount = recoveryCandidateCount;
+			this.futureSnapshotCount = futureSnapshotCount;
+			this.runtimeVerificationCount = runtimeVerificationCount;
+			this.mutationOperationCount = mutationOperationCount;
+			this.terminalEventConsumptionCount = terminalEventConsumptionCount;
+			this.reconstructionInvoked = reconstructionInvoked;
+			this.recoveryInvoked = recoveryInvoked;
+			this.contractualReadiness = contractualReadiness;
+			this.freshInventoryRetryRequired = freshInventoryRetryRequired;
+			boolean readyReason =
+				"NO_OP_VERIFICATION_READY".equals(reason);
+			if (proposalGeneration < 0L || inventoryEventCount < 0
+				|| recoveryCandidateCount < 0 || futureSnapshotCount < 0
+				|| futureSnapshotCount > recoveryCandidateCount
+				|| runtimeVerificationCount < 0
+				|| runtimeVerificationCount > recoveryCandidateCount
+				|| mutationOperationCount != 0
+				|| terminalEventConsumptionCount != 0
+				|| recoveryInvoked && !reconstructionInvoked
+				|| readyReason != contractualReadiness) {
+				throw new IllegalArgumentException(
+					"No-op recovery metadata is inconsistent");
+			}
+		}
+
+		public static PackedRegionEventRecoveryNoOpMetadata of(
+			final String reason,
+			final String preparationReason,
+			final String lifecycleReason,
+			final long proposalGeneration,
+			final int inventoryEventCount,
+			final int recoveryCandidateCount,
+			final int futureSnapshotCount,
+			final int runtimeVerificationCount,
+			final int mutationOperationCount,
+			final int terminalEventConsumptionCount,
+			final boolean reconstructionInvoked,
+			final boolean recoveryInvoked,
+			final boolean contractualReadiness,
+			final boolean freshInventoryRetryRequired) {
+			return new PackedRegionEventRecoveryNoOpMetadata(
+				reason, preparationReason, lifecycleReason, proposalGeneration,
+				inventoryEventCount, recoveryCandidateCount, futureSnapshotCount,
+				runtimeVerificationCount, mutationOperationCount,
+				terminalEventConsumptionCount, reconstructionInvoked,
+				recoveryInvoked, contractualReadiness,
+				freshInventoryRetryRequired);
+		}
+
+		public String getReason() { return reason; }
+		public String getPreparationReason() { return preparationReason; }
+		public String getLifecycleReason() { return lifecycleReason; }
+		public long getProposalGeneration() { return proposalGeneration; }
+		public int getInventoryEventCount() { return inventoryEventCount; }
+		public int getRecoveryCandidateCount() {
+			return recoveryCandidateCount;
+		}
+		public int getFutureSnapshotCount() { return futureSnapshotCount; }
+		public int getRuntimeVerificationCount() {
+			return runtimeVerificationCount;
+		}
+		public int getMutationOperationCount() {
+			return mutationOperationCount;
+		}
+		public int getTerminalEventConsumptionCount() {
+			return terminalEventConsumptionCount;
+		}
+		public boolean isReconstructionInvoked() {
+			return reconstructionInvoked;
+		}
+		public boolean isRecoveryInvoked() { return recoveryInvoked; }
+		public boolean isContractuallyReadyForFirstVisibility() {
+			return contractualReadiness;
+		}
+		public boolean isFreshInventoryRetryRequired() {
+			return freshInventoryRetryRequired;
+		}
+		public boolean isRegionMutationAllowed() { return false; }
+		public boolean isOverdueConsumptionAllowed() { return false; }
+		public boolean isRegionLoadingPerformed() { return false; }
+		public boolean isRetryPerformed() { return false; }
+		public boolean isArrivalGate() { return false; }
+		public boolean isVisibilityReleased() { return false; }
+		public boolean isRuntimeHandleRetained() { return false; }
+	}
+
 	/** Captures detached scheduler affinity without event mutation or handles. */
 	@FunctionalInterface
 	public interface PackedRegionEventOwnershipSource {
@@ -5661,6 +5872,12 @@ public final class LayeredCoordinateParityObserver {
 			captureAtomicTargetRevalidation(
 				final LayeredPackedRegionEventOwnershipInventory inventory,
 				final int maximumTargetRecords) {
+			return null;
+		}
+
+		default PackedRegionEventRecoveryNoOpMetadata captureRecoveryNoOp(
+			final LayeredPackedRegionEventOwnershipInventory inventory,
+			final int maximumCandidates) {
 			return null;
 		}
 	}

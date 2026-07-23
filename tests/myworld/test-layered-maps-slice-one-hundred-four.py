@@ -276,7 +276,7 @@ class LayeredMapsSliceOneHundredFourTest(unittest.TestCase):
         self.assertIn("getTrackedEventAtomicTimingSnapshot(", handler)
         self.assertIn("getAtomicTimingCapturedEventCount()", inventory)
         self.assertIn("isAtomicTimingComplete()", inventory)
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v43"', observer)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v44"', observer)
         self.assertIn("getAtomicTimingCapturedEventCount()", observer)
         self.assertIn("isAtomicTimingCaptured()", observer)
 

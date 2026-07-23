@@ -95,7 +95,7 @@ class LayeredMapsSliceOneHundredTwentyTest(unittest.TestCase):
 
     def test_observer_validates_and_serializes_only_detached_boundary_facts(self):
         source = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v43"', source)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v44"', source)
         matching = source[
             source.index("private static void requireEventTargetsMatchInventory("):
             source.index(
