@@ -12909,8 +12909,29 @@ Safety boundary:
   retry, arrival, or visibility release and remains unavailable on servers that
   do not explicitly enable the private parity capability.
 
-Status: implemented and automated-validated. Private owner validation is the
-next gate; no lifecycle authority is authorized.
+Owner validation result:
+
+- the private route produced one schema-v44 `recovery-noop` record at
+  observation tick 1524 while the authored magic-tree spawn callback remained
+  future with 33 ticks left;
+- the proposal-scoped inventory contained 3,882 live registrations. Its
+  selected sources related 1,001 callbacks: one complete exact-spatial scenery
+  restoration and 1,000 owner-position-hint callbacks without standalone
+  recovery state;
+- live preparation therefore refused before reconstruction with
+  `RELATED_EVENT_RECOVERY_INCOMPLETE`. It performed zero runtime verifications,
+  Region mutations, and terminal event consumptions; the callback completed
+  naturally and the owner observed normal visuals, collision, and interaction;
+  and
+- this is a correct fail-closed result, not proof of the intended ready path.
+  The test assumption that the retirement proposal would isolate only the
+  magic-tree callback was false. The next slice must make complete and
+  incomplete candidate-related event burden explicit before choosing any
+  narrower recovery diagnostic or lifecycle policy.
+
+Status: implemented, automated-validated, and owner-validated for safe
+proposal-wide refusal. The complete ready path remains unproven and no
+lifecycle authority is authorized.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -13280,6 +13301,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 141 by implementing scheduler-local exact one-shot consumption. | Implemented and automated-validated; the real registration/execution/lifecycle boundaries consume a fixture-supplied detached Region outcome, refusal retains exact state, applied/no-op removes one registration and terminally stops without callback or reschedule, concurrent callback/stop/removal cannot cross, RegionManager remains disconnected, 466 focused tests pass across 140 files, and the 792/488 Ant build passes |
 | 2026-07-22 | Continue with Slice 142 by composing the real Region commit with exact scheduler consumption. | Implemented and automated-validated; the ephemeral request reaches the existing ordered Region object/collision seam under the stable event boundary, Region refusal retains the exact callback, applied/no-op consumes it after Region work, typed Region facts are copied without handles, no production caller exists, arrival/gameplay remain disconnected, 470 focused tests pass across 141 files, and the 792/488 Ant build passes |
 | 2026-07-22 | Continue with Slice 143 by defining recovery batch and timing policy before any caller. | Implemented and automated-validated; bounded exact registrations sort deterministically, overdue callbacks require desired-state commit/consumption, future callbacks require transient-state reconstruction/retention, incomplete or refused prefixes withhold visibility and require fresh inventory retry, all runtime consumers remain disconnected, 474 focused tests pass across 142 files, and the 793/488 Ant build passes |
+| 2026-07-22 | Record the Slice 158 private no-op recovery route without weakening proposal-wide recovery requirements. | Owner-validated safe refusal; schema-v44 records one future magic-tree callback at 33 ticks but also 1,000 candidate-related owner-position-hint callbacks without standalone recovery state, so preparation correctly returns `RELATED_EVENT_RECOVERY_INCOMPLETE`, performs zero verification/mutation/consumption, and natural callback completion plus visuals/collision/interaction remain normal. The assumed isolated ready route is unproven |
 
 ## Next Discussion
 
@@ -13898,14 +13920,21 @@ Store/RegionManager seam, and additive schema-v44 publishes closed counts and
 reasons. Every other event writes a null result, and the existing disabled-by-
 default capability still gates the entire command.
 
-The next step is the first meaningful owner validation of the complete capture/
-order/verification wiring. It should create one real future authored scenery
-callback, move its packed source into the existing retirement-candidate path,
-wait through the tolerant retirement grace while the callback is still future,
-and issue `::lp recover-noop`. The record must report one already-satisfied
-runtime verification, zero mutations, zero terminal consumptions, callback
-retention, and contractual readiness. Natural callback completion and the
-world's visuals, collision, and interaction must remain normal afterward.
+The first Slice 158 owner route correctly refused rather than silently ignoring
+proposal-related callbacks. It found the intended future magic-tree callback,
+but the same 60-source refinement proposal related 1,000 NPC-owned
+owner-position-hint callbacks without standalone recovery evidence. The
+proposal-wide pipeline must continue to treat every such callback as a blocker.
+
+The next step is to make that preflight burden exact and bounded: count complete
+recovery records and incomplete records by attribution/owner/restoration
+category, identify the first stable blocker without exposing a runtime handle,
+and distinguish `examined before refusal` from `total proposal-related`
+callbacks. That evidence should decide whether a later diagnostic can safely
+exercise only a complete subset while explicitly withholding proposal
+readiness, or whether entity/event preservation must be implemented first. Do
+not reinterpret a focused callback verification as proof that the containing
+proposal can retire or become visible.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
