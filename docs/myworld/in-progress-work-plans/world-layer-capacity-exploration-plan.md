@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path and Slice 158's safe refusal path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, and 162 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, and 163 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -214,6 +214,10 @@ automated-validated Slice 162 captures that census against the exact proposal
 source order and exposes authored owner identity plus closed correlation
 outcomes through additive private schema-v46, while production preservation and
 continuity eligibility remain explicitly false;
+automated-validated Slice 163 corrects the duplicated development-command
+source that omitted Slice 162's continuity delegate, guards both command-start
+and retained-session paths, and preserves every diagnostic-only and recovery
+refusal boundary;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13167,6 +13171,61 @@ Status: implemented and automated-validated. A private owner route is now
 meaningful: it should establish how many candidate-related NPC callbacks have
 exact active owners and which concrete blocker classes remain.
 
+### Slice 163: Complete private continuity-source wiring
+
+Objective: make the explicit private `::lp start` route invoke Slice 162's
+owner-continuity census instead of silently accepting the interface's
+fixture-compatible default-null method.
+
+Finding:
+
+- the first schema-v46 owner route completed normally and kept every recovery
+  side-effect count at zero;
+- its recovery record observed 3,881 total callbacks, 464 proposal-related
+  callbacks, 3,783 owner-position hints, and 3,775 captured NPC owner
+  identities;
+- `packedRegionNpcOwnerEventContinuity` was nevertheless null because the
+  retained Player-session source delegated the new capture method while the
+  duplicated development-command source used by `::lp start` did not; and
+- the null continuity block was a source-wiring omission, not an NPC
+  continuity result. The route therefore validates safe recovery refusal but
+  does not validate Slice 162's owner correlation.
+
+Implemented:
+
+- the development-command source now delegates the same proposal, inventory,
+  exact authored reconstruction recipe, and refusal budgets to RegionManager
+  as the retained Player-session source;
+- Slice 162's source guard now checks both production paths instead of only
+  Player; and
+- a focused regression extracts both anonymous sources independently and
+  proves command start and session rebind each reach the guarded continuity
+  delegate exactly once.
+
+Safety boundary:
+
+- the correction only restores the intended private diagnostic call; it adds
+  no entity handle, preservation fact, recovery eligibility, reconstruction,
+  event mutation, Region loading/retirement, arrival gate, or lifecycle
+  authority;
+- production still supplies `ownerPreservationProved=false`, so an exact
+  point-in-time owner match remains `OWNER_PRESERVATION_UNPROVED`; and
+- the incomplete proposal still refuses before mutation or terminal event
+  consumption.
+
+Automated validation status:
+
+- the amended Slice 162 guard and new three-case Slice 163 regression cover
+  both production sources and both runtime entry paths;
+- the complete layered-map suite passes 543 tests across 162 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 805 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. Repeat the same private owner
+route after restarting the private server; only that recapture can establish
+the real owner-continuity outcome.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13540,6 +13599,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 160 by detaching exact authored NPC event-owner identity. | Implemented and automated-validated; generation, authored packed source/ordinal, and NPC definition ID are copied without a world index or entity handle, missing identity remains explicit, recovery behavior is unchanged, 534 focused tests pass across 159 files, and the 804/488 Ant build passes |
 | 2026-07-22 | Continue with Slice 161 by defining a bounded NPC owner-event continuity policy. | Implemented and automated-validated; exact active-census correlation refuses missing, stale, duplicate, unrecognized, mismatched, and drifted owners, exact matches remain `OWNER_PRESERVATION_UNPROVED` without a separate fact, no runtime consumer or authority exists, 537 focused tests pass across 160 files, and the 805/488 Ant build passes |
 | 2026-07-22 | Continue with Slice 162 by exposing fresh NPC owner-event continuity diagnostics. | Implemented and automated-validated; exact proposal source order is recaptured with a same-or-newer bounded census, production preservation/eligibility remain false, additive schema-v46 exposes AI-readable owner identities and outcomes while v45 stays immutable, 540 focused tests pass across 161 files, and the 805/488 Ant build passes; private owner validation is pending |
+| 2026-07-23 | Correct Slice 162's duplicated private continuity-source wiring as Slice 163. | Implemented and automated-validated; the first owner route's null continuity was traced to `Development.java` omitting the new delegate rather than an NPC result, both command-start and retained-session sources now use the same bounded RegionManager census, 543 focused tests pass across 162 files, and the 805/488 Ant build passes; corrected private recapture is pending |
 
 ## Next Discussion
 

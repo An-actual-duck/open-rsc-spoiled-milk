@@ -21,6 +21,10 @@ REGION_MANAGER = ROOT / (
 PLAYER = ROOT / (
     "server/src/com/openrsc/server/model/entity/player/Player.java"
 )
+DEVELOPMENT = ROOT / (
+    "server/plugins/com/openrsc/server/plugins/authentic/commands/"
+    "Development.java"
+)
 README = ROOT / "tools/layered-maps/README.md"
 PLAN = ROOT / (
     "docs/myworld/in-progress-work-plans/"
@@ -153,6 +157,7 @@ class LayeredMapsSliceOneHundredSixtyTwoTest(unittest.TestCase):
         observer = OBSERVER.read_text(encoding="utf-8")
         manager = REGION_MANAGER.read_text(encoding="utf-8")
         player = PLAYER.read_text(encoding="utf-8")
+        development = DEVELOPMENT.read_text(encoding="utf-8")
         readme = README.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
         self.assertIn(
@@ -176,7 +181,16 @@ class LayeredMapsSliceOneHundredSixtyTwoTest(unittest.TestCase):
             "checkedInventory, observation, true, false,",
             manager,
         )
-        self.assertIn("captureNpcOwnerContinuity(", player)
+        for source in (player, development):
+            self.assertIn("captureNpcOwnerContinuity(", source)
+            self.assertIn(
+                "captureLayeredPackedRegionNpcOwnerEventContinuity(",
+                source,
+            )
+            self.assertIn(
+                "getAuthoredReconstructionRecipe()",
+                source,
+            )
         self.assertIn(
             "layered-map-parity-event-v46.schema.json",
             readme,

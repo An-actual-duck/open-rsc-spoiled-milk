@@ -38,6 +38,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjec
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerEventContinuityAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -1996,6 +1997,24 @@ public final class Development implements CommandTrigger {
 				return player.getWorld().getServer().getGameEventHandler()
 					.captureLayeredPackedRegionEventAtomicTargetRevalidation(
 						inventory, maximumTargetRecords);
+			}
+
+			@Override
+			public LayeredPackedRegionNpcOwnerEventContinuityAssessment
+				captureNpcOwnerContinuity(
+					final LayeredPackedRegionRetirementRefinementProposal proposal,
+					final LayeredPackedRegionEventOwnershipInventory inventory,
+					final int maximumCandidateSources,
+					final int maximumNpcInstances,
+					final int maximumRelevantNpcDetails,
+					final int maximumEventDetails) {
+				return player.getWorld().getRegionManager()
+					.captureLayeredPackedRegionNpcOwnerEventContinuity(
+						proposal, inventory,
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						maximumCandidateSources, maximumNpcInstances,
+						maximumRelevantNpcDetails, maximumEventDetails);
 			}
 
 			@Override
