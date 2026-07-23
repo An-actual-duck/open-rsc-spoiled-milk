@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, and 149 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, and 150 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -159,7 +159,11 @@ snapshot capture; and
 automated-validated Slice 149 captures one live current object and its exact
 registered collision provenance under the canonical non-loading Region/object/
 collision boundaries, revalidates identity inside those boundaries, and leaves
-the scheduler Store, mutation, arrival, and visibility disconnected;
+the scheduler Store, mutation, arrival, and visibility disconnected; and
+automated-validated Slice 150 composes that capture with the exact scheduler
+registration, event execution, and stable lifecycle boundaries, preserves the
+future callback and countdown at the capture boundary, and leaves application,
+batch execution, arrival, and visibility disconnected;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12334,6 +12338,72 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the scheduler Store remains disconnected.
 
+### Slice 150: Scheduler-fenced current-state capture
+
+Objective: compose Slice 149's live Region observation with one exact future
+callback registration and stable lifecycle boundary without applying the
+snapshot or changing scheduler state.
+
+Implemented:
+
+- `GameTickEventStore.withValidatedRestorationStableLifecycle` locates one
+  exact scheduler registration without a caller-held event handle, validates
+  its authored proposal generation, and enters the existing event execution
+  and stable zero-run lifecycle boundaries before invoking a handle-free
+  operation;
+- the scheduler store monitor is released before the operation. Registration
+  removal and callback execution remain excluded by the outer execution
+  boundary, while stop, reset, and tick timing changes remain excluded during
+  the inner stable lifecycle operation;
+- `GameTickEventRestorationCurrentStateCaptureCoordinator` constructs Slice
+  144's callback expectation entirely from fenced live event scalars, including
+  scheduler scope, registration sequence, proposal/authored generation,
+  lifecycle version, positive remaining countdown, exact constructor and
+  authored provenance, and one-shot continuing-tick semantics;
+- the coordinator calls Slice 149 only inside that stable lifecycle operation.
+  A stale proposal or unavailable/inactive registration refuses before Region
+  observation, while a Region refusal remains a closed typed result and leaves
+  the future event unchanged;
+- successful capture preserves the exact registration and remaining countdown
+  at the capture boundary. A stop that begins concurrently cannot cross the
+  stable capture, and a lifecycle change after the closed capture does not
+  invalidate evidence collected within that boundary; and
+- returned composition state retains only the detached snapshot and typed
+  scheduler/Region reasons. It retains no event, registration, Region, object,
+  or monitor handle.
+
+Automated validation status:
+
+- an executable scheduler/Region fixture proves exact future capture,
+  scheduler/registration/generation/lifecycle correlation, unchanged countdown
+  and registration, typed missing-target refusal, and refusal before Region
+  lookup for a stale proposal;
+- deterministic latches prove concurrent stop waits outside the stable capture
+  boundary and that the completed detached snapshot remains valid after the
+  later stop;
+- source guards prove the coordinator does not call Slice 147 application,
+  load a Region, invoke a callback, cancel/reschedule an event, release
+  visibility, or expose commit/lifecycle authority;
+- the complete layered-map suite passes 501 tests across 149 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 797 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this slice captures only the current half of a future callback. It does not
+  reconstruct that state into a different Region set, execute an overdue
+  desired-state commit, or reduce a Slice 145 batch;
+- the stable operation is package-local, ephemeral, and handle-free. Its
+  accepted result describes the capture boundary and is not a reusable permit;
+- Region refusal never cancels or consumes the future callback, and this path
+  does not call the callback early or alter its remaining delay; and
+- loading, recovery retry, arrival integration, first-visibility release,
+  retirement, persistence, and production callers remain absent.
+
+Status: implemented and automated-validated. No owner route is required because
+the coordinator remains disconnected from recovery execution and visibility.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13263,14 +13333,21 @@ boundaries, copies Slice 148 provenance, and feeds the result into Slice 144.
 Missing/stale identity or provenance and incomplete boundaries refuse without
 mutation. The scheduler Store remains disconnected.
 
-The next safe slice should compose Slice 149 with the exact registration,
-execution, and stable lifecycle boundaries already used by Slice 137. It must
-build the callback expectation from the fenced live event scalars, require a
-strictly positive remaining countdown, call the Region capture only inside the
-stable lifecycle operation, and discard the provisional snapshot if lifecycle
-postcheck changes. It must retain the future event unchanged and remain
-disconnected from Slice 147 application, batch execution, loading, arrival, and
-visibility.
+Slice 150 now composes the Region capture with the exact registration,
+execution, and stable lifecycle boundaries already used by Slice 137. The
+callback expectation comes only from fenced live event scalars, Region capture
+runs inside the stable lifecycle operation, and stale proposal state never
+reaches Region observation. The future event and countdown remain unchanged at
+the capture boundary, while Slice 147 application, batch execution, loading,
+arrival, and visibility remain disconnected.
+
+The next safe slice should execute one future Slice 145 operation by composing
+Slice 150 capture with Slice 147 current-state application under the same exact
+registration/execution/stable-lifecycle boundary. It must apply only the
+detached snapshot captured in that boundary, retain the future callback and its
+remaining countdown, refuse any registration/generation/lifecycle mismatch,
+and return a closed typed outcome. It must remain disconnected from overdue
+consumption, batch loops, loading, retry, arrival, and first visibility.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

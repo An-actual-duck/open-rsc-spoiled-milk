@@ -595,6 +595,105 @@ class GameTickEventStore {
 	}
 
 	/**
+	 * Runs one handle-free operation while the exact restoration registration,
+	 * event execution boundary, and unchanged zero-run lifecycle are held. This
+	 * scheduler seam supplies facts only; it grants no mutation or callback
+	 * authority and retains the event with its original countdown.
+	 */
+	RestorationStableLifecycleExecution
+		withValidatedRestorationStableLifecycle(
+			final String expectedSchedulerInstanceIdentity,
+			final long expectedRegistrationSequence,
+			final long expectedProposalGeneration,
+			final RestorationStableLifecycleOperation operation) {
+		if (expectedSchedulerInstanceIdentity == null
+			|| expectedSchedulerInstanceIdentity.isEmpty()
+			|| expectedRegistrationSequence <= 0L
+			|| expectedProposalGeneration <= 0L) {
+			throw new IllegalArgumentException(
+				"Expected stable restoration registration is invalid");
+		}
+		final RestorationStableLifecycleOperation checkedOperation =
+			Objects.requireNonNull(operation, "operation");
+		final GameTickEvent candidate;
+		synchronized (LOCK) {
+			if (!schedulerInstanceIdentity.equals(
+				expectedSchedulerInstanceIdentity)) {
+				return RestorationStableLifecycleExecution.refused(
+					RestorationRegistrationFenceReason
+						.SCHEDULER_INSTANCE_MISMATCH);
+			}
+			GameTickEvent found = null;
+			for (Map.Entry<GameTickEvent, Long> registration
+					: registrationSequences.entrySet()) {
+				Long sequence = registration.getValue();
+				if (sequence != null
+					&& sequence.longValue() == expectedRegistrationSequence) {
+					if (found != null) {
+						return RestorationStableLifecycleExecution.refused(
+							RestorationRegistrationFenceReason
+								.DUPLICATE_REGISTRATION_SEQUENCE);
+					}
+					found = registration.getKey();
+				}
+			}
+			if (found == null || events.get(getKey(found)) != found) {
+				return RestorationStableLifecycleExecution.refused(
+					RestorationRegistrationFenceReason.EVENT_NOT_REGISTERED);
+			}
+			candidate = found;
+		}
+
+		final RestorationRegistrationFenceExecution[] restoration =
+			new RestorationRegistrationFenceExecution[1];
+		final boolean[] lifecycleBoundaryEntered = new boolean[1];
+		final boolean[] operationInvoked = new boolean[1];
+		RegistrationFenceExecution registration =
+			withValidatedRegistrationFence(
+				candidate, expectedSchedulerInstanceIdentity,
+				expectedRegistrationSequence, registrationFence ->
+					restoration[0] = executeRestorationRegistrationFence(
+						candidate, registrationFence,
+						expectedProposalGeneration, fence -> {
+							boolean entered = candidate
+								.withinStableRestorationLifecycleBoundary(
+									fence.getLifecycleVersion(), lifecycle -> {
+										lifecycleBoundaryEntered[0] = true;
+										checkedOperation.execute(fence);
+										operationInvoked[0] = true;
+									});
+							if (!entered) {
+								lifecycleBoundaryEntered[0] = false;
+							}
+						}));
+		if (!registration.isAccepted()) {
+			return RestorationStableLifecycleExecution.refused(
+				mapRegistrationFenceReason(registration.getReason()));
+		}
+		if (restoration[0] == null) {
+			throw new IllegalStateException(
+				"Accepted stable restoration operation did not execute");
+		}
+		if (!restoration[0].isAccepted()) {
+			if (lifecycleBoundaryEntered[0] && operationInvoked[0]) {
+				return RestorationStableLifecycleExecution.completed(
+					restoration[0].getLifecycleVersionBeforeOperation());
+			}
+			return RestorationStableLifecycleExecution.refusedAfterOperation(
+				restoration[0].getReason(),
+				restoration[0].getLifecycleVersionBeforeOperation(),
+				restoration[0].getLifecycleVersionAfterOperation(),
+				lifecycleBoundaryEntered[0], operationInvoked[0]);
+		}
+		if (!lifecycleBoundaryEntered[0] || !operationInvoked[0]) {
+			throw new IllegalStateException(
+				"Accepted stable lifecycle boundary invoked no operation");
+		}
+		return RestorationStableLifecycleExecution.completed(
+			restoration[0].getLifecycleVersionBeforeOperation());
+	}
+
+	/**
 	 * Exercises exact one-shot disposition behind the real scheduler and event
 	 * boundaries using a caller-supplied detached Region outcome. It owns no
 	 * Region handle; Slice 142 supplies the separately bounded runtime adapter.
@@ -1330,6 +1429,11 @@ class GameTickEventStore {
 	}
 
 	@FunctionalInterface
+	interface RestorationStableLifecycleOperation {
+		void execute(RestorationRegistrationFence fence);
+	}
+
+	@FunctionalInterface
 	interface RestorationRegionOutcomeOperation {
 		RegionCommitOutcome execute(
 			GameTickEventRestorationCommitRequest request);
@@ -1670,6 +1774,103 @@ class GameTickEventStore {
 		boolean isCommitToken() { return false; }
 		boolean isMutationPerformed() { return false; }
 		boolean isExecutableRestoration() { return false; }
+		boolean isArrivalGate() { return false; }
+		boolean isLifecycleAuthority() { return false; }
+	}
+
+	/** Closed proof that a handle-free operation ran under stable event timing. */
+	static final class RestorationStableLifecycleExecution {
+		private final RestorationRegistrationFenceReason reason;
+		private final long lifecycleVersionBeforeOperation;
+		private final long lifecycleVersionAfterOperation;
+		private final boolean lifecycleBoundaryEntered;
+		private final boolean operationInvoked;
+
+		private RestorationStableLifecycleExecution(
+			final RestorationRegistrationFenceReason reason,
+			final long lifecycleVersionBeforeOperation,
+			final long lifecycleVersionAfterOperation,
+			final boolean lifecycleBoundaryEntered,
+			final boolean operationInvoked) {
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.lifecycleVersionBeforeOperation =
+				lifecycleVersionBeforeOperation;
+			this.lifecycleVersionAfterOperation =
+				lifecycleVersionAfterOperation;
+			this.lifecycleBoundaryEntered = lifecycleBoundaryEntered;
+			this.operationInvoked = operationInvoked;
+			boolean completed = reason
+				== RestorationRegistrationFenceReason.OPERATION_COMPLETED;
+			if ((completed
+					&& (!operationInvoked || !lifecycleBoundaryEntered))
+				|| (operationInvoked && !lifecycleBoundaryEntered)
+				|| (completed
+					&& (lifecycleVersionBeforeOperation <= 0L
+						|| lifecycleVersionBeforeOperation
+							!= lifecycleVersionAfterOperation))
+				|| ((lifecycleVersionBeforeOperation > 0L)
+					!= (lifecycleVersionAfterOperation > 0L))
+				|| (!completed && lifecycleVersionBeforeOperation > 0L
+					&& lifecycleVersionBeforeOperation
+						== lifecycleVersionAfterOperation)
+				|| (lifecycleVersionBeforeOperation <= 0L
+					&& (operationInvoked || lifecycleBoundaryEntered))) {
+				throw new IllegalArgumentException(
+					"Stable restoration execution is inconsistent");
+			}
+		}
+
+		private static RestorationStableLifecycleExecution refused(
+			final RestorationRegistrationFenceReason reason) {
+			return new RestorationStableLifecycleExecution(
+				reason, -1L, -1L, false, false);
+		}
+
+		private static RestorationStableLifecycleExecution
+			refusedAfterOperation(
+				final RestorationRegistrationFenceReason reason,
+				final long lifecycleVersionBeforeOperation,
+				final long lifecycleVersionAfterOperation,
+				final boolean lifecycleBoundaryEntered,
+				final boolean operationInvoked) {
+			return new RestorationStableLifecycleExecution(
+				reason, lifecycleVersionBeforeOperation,
+				lifecycleVersionAfterOperation,
+				lifecycleBoundaryEntered, operationInvoked);
+		}
+
+		private static RestorationStableLifecycleExecution completed(
+			final long lifecycleVersion) {
+			return new RestorationStableLifecycleExecution(
+				RestorationRegistrationFenceReason.OPERATION_COMPLETED,
+				lifecycleVersion, lifecycleVersion, true, true);
+		}
+
+		RestorationRegistrationFenceReason getReason() { return reason; }
+		long getLifecycleVersionBeforeOperation() {
+			return lifecycleVersionBeforeOperation;
+		}
+		long getLifecycleVersionAfterOperation() {
+			return lifecycleVersionAfterOperation;
+		}
+		boolean isAccepted() {
+			return reason
+				== RestorationRegistrationFenceReason.OPERATION_COMPLETED;
+		}
+		boolean isLifecycleBoundaryEntered() {
+			return lifecycleBoundaryEntered;
+		}
+		boolean isOperationInvoked() { return operationInvoked; }
+		boolean isExactRegistrationRetained() { return isAccepted(); }
+		boolean isCountdownRetained() { return isAccepted(); }
+		boolean isEventHandleRetained() { return false; }
+		boolean isRegistrationHandleRetained() { return false; }
+		boolean isMutationAuthorized() { return false; }
+		boolean isMutationPerformed() { return false; }
+		boolean isCallbackInvoked() { return false; }
+		boolean isEventCancellation() { return false; }
+		boolean isEventReschedule() { return false; }
+		boolean isCommitToken() { return false; }
 		boolean isArrivalGate() { return false; }
 		boolean isLifecycleAuthority() { return false; }
 	}
