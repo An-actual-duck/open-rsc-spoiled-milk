@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import re
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,6 +25,15 @@ def require_hidden_unique(drops: str, npc_name: str, item_name: str, rarity: str
 def load_items(path: Path) -> dict[int, dict]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     return {int(entry["id"]): entry for entry in payload["items"]}
+
+
+def java_int_array(source: str, name: str) -> list[int]:
+    match = re.search(
+        rf"private static final int\[\] {name} = new int\[\] \{{([^}}]+)\}};",
+        source,
+    )
+    require(match is not None, f"Client should define {name}")
+    return [int(value.strip()) for value in match.group(1).split(",")]
 
 
 def main() -> None:
@@ -57,8 +67,36 @@ def main() -> None:
         "Client should define Demon pitchfork")
     require('new AnimationDef("demonpitchfork", "equipment", 0, 0, true, false, 0)); // 1042 - Demon pitchfork' in client_defs,
         "Client should expose the demon pitchfork equipment animation")
-    require('loadExternalCombatMainHandEquipmentSprite("demonpitchfork", getExternalEquipmentNumberedFolder("demon-pitchfork"))' in mudclient,
-        "Client should load the external demon pitchfork frames")
+    require(
+        'loadExternalCombatMainHandEquipmentSprite("demonpitchfork", getExternalEquipmentNumberedFolder("demon-pitchfork"),\n'
+        '\t\t\tDEMON_PITCHFORK_EQUIPMENT_OFFSET_X, DEMON_PITCHFORK_EQUIPMENT_OFFSET_Y)' in mudclient,
+        "Client should load the external demon pitchfork frames with dedicated anchors",
+    )
+    require(
+        'loadExternalCombatMainHandEquipmentSprite("firesword", getExternalEquipmentNumberedFolder("fire-sword"),\n'
+        '\t\t\tSWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y)' in mudclient,
+        "Fire sword should retain the established sword anchors",
+    )
+    require(
+        'loadExternalCombatMainHandEquipmentSprite("icesword", getExternalEquipmentNumberedFolder("ice-sword"),\n'
+        '\t\t\tSWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y)' in mudclient,
+        "Ice sword should retain the established sword anchors",
+    )
+
+    expected_pitchfork_x = [13, 12, 11, 8, 10, 22, 17, 25, 35, 32, 37, 46, 41, 41, 41, 3, 22, 2]
+    expected_pitchfork_y = [16, 15, 13, 15, 15, 14, 16, 16, 14, 15, 13, 13, 15, 14, 11, -7, -4, 31]
+    require(
+        java_int_array(mudclient, "DEMON_PITCHFORK_EQUIPMENT_OFFSET_X") == expected_pitchfork_x,
+        "Demon pitchfork should preserve the canonical spear hand anchor in every X frame",
+    )
+    require(
+        java_int_array(mudclient, "DEMON_PITCHFORK_EQUIPMENT_OFFSET_Y") == expected_pitchfork_y,
+        "Demon pitchfork should preserve the canonical spear hand anchor in every Y frame",
+    )
+    require(
+        len(java_int_array(mudclient, "COMBAT_MAIN_HAND_EQUIPMENT_BOUND_WIDTH")) == 18,
+        "Combat equipment should retain one render bound per frame",
+    )
 
     pitchfork_frames = sorted((ROOT / "dev/myworld/assets/sprites/equipment/demon-pitchfork/numbered").glob("*.png"))
     require(len(pitchfork_frames) == 18, "Demon pitchfork should have 18 numbered equipment frames")
