@@ -92,7 +92,7 @@ def main() -> None:
 
     require(
         bank,
-        "if (mc.getMouseClick() == 1 && mc.controlPressed && !equipmentMode)",
+        "if (mc.getMouseClick() == 1 && mc.controlPressed && !equipmentMode",
         "Ctrl-click bank withdraw shortcut",
     )
     require(bank, "sendWithdraw(Integer.MAX_VALUE);", "full bank stack withdrawal")
