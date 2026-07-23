@@ -47,6 +47,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TargetSubject;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TimeProgressionPolicy;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
+import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceLifecycleBoundary;
 import com.openrsc.server.util.NamedThreadFactory;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -535,11 +536,17 @@ public class GameEventHandler {
 		final GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result[]
 			captured =
 				new GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result[1];
+		final LayeredPackedRegionSourceAbsencePreflight[] absencePreflight =
+			new LayeredPackedRegionSourceAbsencePreflight[1];
 		boolean sourceBoundaryEntered =
 			getServer().getWorld().getRegionManager()
 				.withinLayeredPackedRegionSourceLifecycleBoundary(
 					checked, boundary -> {
 						requireExactPackedSourceBoundary(boundary, checked);
+						absencePreflight[0] =
+							getServer().getWorld().getRegionManager()
+								.captureLayeredPackedRegionSourceAbsencePreflight(
+									boundary);
 						captured[0] =
 							GameTickEventNpcOwnerPreservationNoOpDiagnostic
 								.capture(
@@ -567,7 +574,7 @@ public class GameEventHandler {
 			result.isSourceLifecycleInvoked(),
 			result.getAbsentSourceCount(),
 			result.getReconstructedSourceCount(),
-			result.isPreservedConsumerInvoked());
+			result.isPreservedConsumerInvoked(), absencePreflight[0]);
 	}
 
 	private void requireExactPackedSourceBoundary(

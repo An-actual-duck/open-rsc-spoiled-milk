@@ -128,7 +128,7 @@ class LayeredMapsSliceOneHundredSeventyTwoTest(unittest.TestCase):
         readme = README.read_text(encoding="utf-8")
 
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v48"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v49"', observer
         )
         self.assertIn(
             '"preservation-noop".equals(eventType)', observer

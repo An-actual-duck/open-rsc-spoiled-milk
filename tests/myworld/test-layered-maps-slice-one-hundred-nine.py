@@ -101,7 +101,7 @@ class LayeredMapsSliceOneHundredNineTest(unittest.TestCase):
 
     def test_current_v38_observer_exposes_only_inventory_values(self):
         source = OBSERVER.read_text(encoding="utf-8")
-        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v48"', source)
+        self.assertIn('EVENT_SCHEMA = "layered-map-parity-event-v49"', source)
         for present in (
             "getTargetBindingRequirementCapturedEventCount",
             "getTargetBindingCompleteEventCount",

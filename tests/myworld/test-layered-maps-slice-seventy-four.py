@@ -73,7 +73,7 @@ class LayeredMapsSliceSeventyFourTest(unittest.TestCase):
     def test_observer_derives_containment_from_the_same_census(self):
         observer = OBSERVER.read_text(encoding="utf-8")
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v48"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v49"', observer
         )
         self.assertRegex(
             observer,

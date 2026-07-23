@@ -34,6 +34,7 @@ import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
+import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,8 +59,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v48";
-	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v47";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v49";
+	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v48";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4638,6 +4639,14 @@ public final class LayeredCoordinateParityObserver {
 			.append(diagnostic.getReconstructedSourceCount()).append(',');
 		out.append("\"preservedConsumerInvoked\":")
 			.append(diagnostic.isPreservedConsumerInvoked()).append(',');
+		out.append("\"sourceAbsencePreflight\":");
+		if (diagnostic.getSourceAbsencePreflight() == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionSourceAbsencePreflight(
+				out, diagnostic.getSourceAbsencePreflight());
+		}
+		out.append(',');
 		out.append("\"preservationEstablishedForConsumedWork\":false,");
 		out.append("\"preservationPerformed\":false,");
 		out.append("\"sourceAbsencePerformed\":false,");
@@ -4647,6 +4656,107 @@ public final class LayeredCoordinateParityObserver {
 		out.append("\"arrivalGate\":false,");
 		out.append("\"visibilityReleased\":false,");
 		out.append("\"lifecycleAuthority\":false}");
+	}
+
+	private static void appendPackedRegionSourceAbsencePreflight(
+		final StringBuilder out,
+		final LayeredPackedRegionSourceAbsencePreflight preflight) {
+		out.append('{');
+		out.append("\"generation\":").append(preflight.getGeneration())
+			.append(',');
+		out.append("\"requirementsObservedAtTick\":")
+			.append(preflight.getRequirementsObservedAtTick()).append(',');
+		out.append("\"observedAtTick\":")
+			.append(preflight.getObservedAtTick()).append(',');
+		out.append("\"residencyMirrorVersion\":")
+			.append(preflight.getResidencyMirrorVersion()).append(',');
+		out.append("\"sourceCount\":").append(preflight.getSourceCount())
+			.append(',');
+		out.append("\"readySourceCount\":")
+			.append(preflight.getReadySourceCount()).append(',');
+		out.append("\"blockedSourceCount\":")
+			.append(preflight.getBlockedSourceCount()).append(',');
+		out.append("\"absenceReadyAtObservation\":")
+			.append(preflight.isAbsenceReadyAtObservation()).append(',');
+		out.append("\"totals\":{");
+		out.append("\"players\":").append(preflight.getPlayerCount())
+			.append(',');
+		out.append("\"npcs\":").append(preflight.getNpcCount()).append(',');
+		out.append("\"authoredObjects\":")
+			.append(preflight.getAuthoredObjectCount()).append(',');
+		out.append("\"dynamicObjects\":")
+			.append(preflight.getDynamicObjectCount()).append(',');
+		out.append("\"groundItems\":")
+			.append(preflight.getGroundItemCount()).append(',');
+		out.append("\"collisionProductTiles\":")
+			.append(preflight.getCollisionProductTileCount()).append("},");
+		out.append("\"blockerSummaries\":[");
+		boolean first = true;
+		for (LayeredPackedRegionSourceAbsencePreflight.BlockerSummary summary
+			: preflight.getBlockerSummaries()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			field(out, "blocker", summary.getBlocker().name()).append(',');
+			out.append("\"blockedSourceCount\":")
+				.append(summary.getBlockedSourceCount()).append('}');
+		}
+		out.append("],\"pointInTimeOnly\":")
+			.append(preflight.isPointInTimeOnly()).append(',');
+		out.append("\"sourceAbsencePerformed\":")
+			.append(preflight.isSourceAbsencePerformed()).append(',');
+		out.append("\"sourceReconstructionPerformed\":")
+			.append(preflight.isSourceReconstructionPerformed()).append(',');
+		out.append("\"runtimeHandleRetained\":")
+			.append(preflight.isRuntimeHandleRetained()).append(',');
+		out.append("\"regionRegistryMutated\":")
+			.append(preflight.isRegionRegistryMutated()).append(',');
+		out.append("\"residencyMirrorMutated\":")
+			.append(preflight.isResidencyMirrorMutated()).append(',');
+		out.append("\"visibilityCacheMutated\":")
+			.append(preflight.isVisibilityCacheMutated()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(preflight.isArrivalGate()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(preflight.isLifecycleAuthority()).append(',');
+		out.append("\"sources\":[");
+		first = true;
+		for (LayeredPackedRegionSourceAbsencePreflight.SourceAssessment source
+			: preflight.getSources()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			out.append("\"packedRegionX\":")
+				.append(source.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(source.getPackedRegionY()).append(',');
+			out.append("\"tileStorageAvailable\":")
+				.append(source.isTileStorageAvailable()).append(',');
+			out.append("\"playerCount\":").append(source.getPlayerCount())
+				.append(',');
+			out.append("\"npcCount\":").append(source.getNpcCount())
+				.append(',');
+			out.append("\"authoredObjectCount\":")
+				.append(source.getAuthoredObjectCount()).append(',');
+			out.append("\"dynamicObjectCount\":")
+				.append(source.getDynamicObjectCount()).append(',');
+			out.append("\"groundItemCount\":")
+				.append(source.getGroundItemCount()).append(',');
+			out.append("\"collisionProductTileCount\":")
+				.append(source.getCollisionProductTileCount()).append(',');
+			out.append("\"absenceReadyAtObservation\":")
+				.append(source.isAbsenceReadyAtObservation()).append(',');
+			out.append("\"blockers\":[");
+			boolean firstBlocker = true;
+			for (LayeredPackedRegionSourceAbsencePreflight.Blocker blocker
+				: source.getBlockers()) {
+				if (!firstBlocker) { out.append(','); }
+				firstBlocker = false;
+				quoted(out, blocker.name());
+			}
+			out.append("]}");
+		}
+		out.append("]}");
 	}
 
 	private static void appendPackedRegionEventTargets(
@@ -6136,6 +6246,8 @@ public final class LayeredCoordinateParityObserver {
 		private final int absentSourceCount;
 		private final int reconstructedSourceCount;
 		private final boolean preservedConsumerInvoked;
+		private final LayeredPackedRegionSourceAbsencePreflight
+			sourceAbsencePreflight;
 
 		private PackedRegionNpcOwnerPreservationNoOpMetadata(
 			final String reason,
@@ -6148,7 +6260,9 @@ public final class LayeredCoordinateParityObserver {
 			final boolean sourceLifecycleInvoked,
 			final int absentSourceCount,
 			final int reconstructedSourceCount,
-			final boolean preservedConsumerInvoked) {
+			final boolean preservedConsumerInvoked,
+			final LayeredPackedRegionSourceAbsencePreflight
+				sourceAbsencePreflight) {
 			this.reason = Objects.requireNonNull(reason, "reason");
 			this.generation = generation;
 			this.requirementsObservedAtTick = requirementsObservedAtTick;
@@ -6160,6 +6274,7 @@ public final class LayeredCoordinateParityObserver {
 			this.absentSourceCount = absentSourceCount;
 			this.reconstructedSourceCount = reconstructedSourceCount;
 			this.preservedConsumerInvoked = preservedConsumerInvoked;
+			this.sourceAbsencePreflight = sourceAbsencePreflight;
 			if ((!"OWNER_SCOPE_REFUSED".equals(reason)
 					&& !"SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason))
 				|| generation < 0L || requirementsObservedAtTick < 0L
@@ -6171,7 +6286,21 @@ public final class LayeredCoordinateParityObserver {
 				|| ("OWNER_SCOPE_REFUSED".equals(reason)
 					&& ownerScopeEntered)
 				|| ("SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason)
-					&& !ownerScopeEntered)) {
+					&& (!ownerScopeEntered
+						|| sourceAbsencePreflight == null))
+				|| (sourceAbsencePreflight != null
+					&& (sourceAbsencePreflight.getGeneration() != generation
+						|| sourceAbsencePreflight
+							.getRequirementsObservedAtTick()
+								!= requirementsObservedAtTick
+						|| sourceAbsencePreflight.getSourceCount()
+							!= selectedSourceCount
+						|| sourceAbsencePreflight
+							.isSourceAbsencePerformed()
+						|| sourceAbsencePreflight
+							.isSourceReconstructionPerformed()
+						|| sourceAbsencePreflight.isRuntimeHandleRetained()
+						|| sourceAbsencePreflight.isLifecycleAuthority()))) {
 				throw new IllegalArgumentException(
 					"NPC owner preservation no-op metadata is inconsistent");
 			}
@@ -6188,13 +6317,16 @@ public final class LayeredCoordinateParityObserver {
 			final boolean sourceLifecycleInvoked,
 			final int absentSourceCount,
 			final int reconstructedSourceCount,
-			final boolean preservedConsumerInvoked) {
+			final boolean preservedConsumerInvoked,
+			final LayeredPackedRegionSourceAbsencePreflight
+				sourceAbsencePreflight) {
 			return new PackedRegionNpcOwnerPreservationNoOpMetadata(
 				reason, generation, requirementsObservedAtTick,
 				selectedSourceCount, requiredEventLinkCount,
 				requiredOwnerCount, ownerScopeEntered,
 				sourceLifecycleInvoked, absentSourceCount,
-				reconstructedSourceCount, preservedConsumerInvoked);
+				reconstructedSourceCount, preservedConsumerInvoked,
+				sourceAbsencePreflight);
 		}
 
 		public String getReason() { return reason; }
@@ -6217,6 +6349,10 @@ public final class LayeredCoordinateParityObserver {
 		}
 		public boolean isPreservedConsumerInvoked() {
 			return preservedConsumerInvoked;
+		}
+		public LayeredPackedRegionSourceAbsencePreflight
+			getSourceAbsencePreflight() {
+			return sourceAbsencePreflight;
 		}
 	}
 
