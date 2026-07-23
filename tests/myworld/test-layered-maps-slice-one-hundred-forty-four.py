@@ -22,6 +22,9 @@ TRANSACTION = ROOT / (
     "server/src/com/openrsc/server/model/world/region/"
     "RegionObjectCollisionTransactionExecutor.java"
 )
+REGION_MANAGER = ROOT / (
+    "server/src/com/openrsc/server/model/world/region/RegionManager.java"
+)
 PLAN = ROOT / (
     "docs/myworld/in-progress-work-plans/"
     "world-layer-capacity-exploration-plan.md"
@@ -335,13 +338,14 @@ class LayeredMapsSliceOneHundredFortyFourTest(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_only_region_transaction_consumer_is_connected(self):
+    def test_only_disconnected_region_consumers_are_connected(self):
         name = "GameTickEventRestorationCurrentStateRecoverySnapshot"
         for path in (ROOT / "server/src").rglob("*.java"):
-            if path in (SNAPSHOT, COORDINATOR, TRANSACTION):
+            if path in (SNAPSHOT, COORDINATOR, TRANSACTION, REGION_MANAGER):
                 continue
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
         self.assertIn(name, TRANSACTION.read_text(encoding="utf-8"))
+        self.assertIn(name, REGION_MANAGER.read_text(encoding="utf-8"))
 
     def test_living_plan_records_slice_one_hundred_forty_four(self):
         plan = PLAN.read_text(encoding="utf-8")

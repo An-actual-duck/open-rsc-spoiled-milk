@@ -6,6 +6,7 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPl
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Operation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionTransactionContract;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCommitRequest;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCurrentStateRecoverySnapshot;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
@@ -2033,6 +2034,274 @@ public class RegionManager {
 					});
 			return RestorationCommitResult.from(result);
 		}
+	}
+
+	/**
+	 * Reconstructs and applies one exact future-callback current state without
+	 * loading a missing Region or observing/changing the scheduler callback.
+	 * This package-local seam remains disconnected from production callers.
+	 */
+	CurrentStateRecoveryApplicationResult
+		applyGameTickEventCurrentStateRecoverySnapshot(
+			final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
+		return applyGameTickEventCurrentStateRecoverySnapshot(
+			snapshot, new CurrentStateCollisionProjector() {
+				@Override
+				public GameTickEventRestorationCollisionFootprintPlanner.Result
+					project(
+						final GameObject object,
+						final boolean forceFullBlock) {
+					try {
+						return world.projectGameObjectCollisionFootprint(
+							object, Operation.REGISTER, forceFullBlock);
+					} catch (RuntimeException unavailableDefinition) {
+						return null;
+					}
+				}
+			});
+	}
+
+	CurrentStateRecoveryApplicationResult
+		applyGameTickEventCurrentStateRecoverySnapshot(
+			final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot,
+			final CurrentStateCollisionProjector collisionProjector) {
+		GameTickEventRestorationCurrentStateRecoverySnapshot checked =
+			Objects.requireNonNull(snapshot, "snapshot");
+		CurrentStateCollisionProjector checkedProjector =
+			Objects.requireNonNull(collisionProjector, "collisionProjector");
+		String constructionKind = checked.getAuthoredConstructionKind().name();
+		if ((checked.getType() == 0
+				&& !"SCENERY".equals(constructionKind)
+				&& !"HARVESTING_SCENERY".equals(constructionKind))
+			|| (checked.getType() == 1
+				&& !"BOUNDARY".equals(constructionKind))) {
+			return CurrentStateRecoveryApplicationResult.refused(
+				CurrentStateRecoveryApplicationReason
+					.AUTHORED_CONSTRUCTION_KIND_REFUSED);
+		}
+
+		GameObjectLoc loc = new GameObjectLoc(
+			checked.getCurrentObjectId(),
+			checked.getCurrentPermanentObjectId(),
+			checked.getX(), checked.getY(), checked.getDirection(),
+			checked.getType());
+		try {
+			loc.assignSerializedAuthoredPlacementIdentity(
+				checked.getAuthoredGeneration(),
+				checked.getAuthoredPackedRegionX(),
+				checked.getAuthoredPackedRegionY(),
+				checked.getAuthoredSourceOrdinal(), constructionKind);
+		} catch (IllegalArgumentException unsupportedKind) {
+			return CurrentStateRecoveryApplicationResult.refused(
+				CurrentStateRecoveryApplicationReason
+					.AUTHORED_CONSTRUCTION_KIND_REFUSED);
+		}
+		GameObject current = new GameObject(world, loc);
+		GameTickEventRestorationCollisionFootprintPlanner.Result footprint =
+			checkedProjector.project(current, false);
+		boolean forceFullBlock = false;
+		if (!RegionObjectCollisionTransactionExecutor
+				.matchesCurrentStateRecoveryFootprint(footprint, checked)) {
+			footprint = checkedProjector.project(current, true);
+			forceFullBlock = true;
+		}
+		if (footprint == null || !footprint.isFootprintAvailable()) {
+			return CurrentStateRecoveryApplicationResult.refused(
+				CurrentStateRecoveryApplicationReason
+					.COLLISION_FOOTPRINT_UNAVAILABLE);
+		}
+		if (!RegionObjectCollisionTransactionExecutor
+				.matchesCurrentStateRecoveryFootprint(footprint, checked)) {
+			return CurrentStateRecoveryApplicationResult.refused(
+				CurrentStateRecoveryApplicationReason
+					.CURRENT_COLLISION_SNAPSHOT_MISMATCH);
+		}
+
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			selectedFootprint = footprint;
+		final boolean selectedForceFullBlock = forceFullBlock;
+		final Point targetLocation = Point.location(
+			checked.getX(), checked.getY());
+		synchronized (layeredRegionLifecycleLock) {
+			Region targetRegion = peekRegionFromSectorCoordinates(
+				Math.floorDiv(checked.getX(), Constants.REGION_SIZE),
+				Math.floorDiv(checked.getY(), Constants.REGION_SIZE));
+			if (targetRegion == null) {
+				return CurrentStateRecoveryApplicationResult.refused(
+					CurrentStateRecoveryApplicationReason
+						.TARGET_REGION_UNAVAILABLE);
+			}
+			GameObject candidate = checked.getType() == 0
+				? targetRegion.getGameObject(targetLocation, null)
+				: targetRegion.getWallGameObject(
+					targetLocation, checked.getDirection());
+
+			final Map<Long, Region> resolved = new HashMap<Long, Region>();
+			List<RegionObjectCollisionMutationBoundary> boundaries =
+				new ArrayList<RegionObjectCollisionMutationBoundary>();
+			for (GameTickEventRestorationCollisionTransactionContract
+					.PackedRegionCoordinate coordinate
+						: selectedFootprint.getRequiredRegions()) {
+				Region region = peekRegionFromSectorCoordinates(
+					coordinate.getRegionX(), coordinate.getRegionY());
+				if (region == null) {
+					return CurrentStateRecoveryApplicationResult.refused(
+						CurrentStateRecoveryApplicationReason
+							.REQUIRED_REGION_UNAVAILABLE);
+				}
+				resolved.put(packRegionCoordinateKey(
+					coordinate.getRegionX(), coordinate.getRegionY()), region);
+				boundaries.add(region.getObjectCollisionMutationBoundary());
+			}
+
+			RegionObjectCollisionTransactionExecutor.CurrentStateRecoveryResult
+				result = RegionObjectCollisionTransactionExecutor
+					.executeCurrentStateRecovery(
+						boundaries, targetRegion, checked, candidate, current,
+						selectedFootprint,
+						new RegionCollisionFootprintMutationExecutor
+							.MutableTileAccess() {
+								@Override
+								public TileValue getMutableTile(
+									final int x, final int y) {
+									Region region = resolved.get(
+										packRegionCoordinateKey(
+											Math.floorDiv(
+												x, Constants.REGION_SIZE),
+											Math.floorDiv(
+												y, Constants.REGION_SIZE)));
+									return region == null ? null
+										: region.getMutableTileValue(
+											Math.floorMod(
+												x, Constants.REGION_SIZE),
+											Math.floorMod(
+												y, Constants.REGION_SIZE));
+								}
+							},
+						new RegionObjectCollisionTransactionExecutor
+							.CacheInvalidator() {
+								@Override
+								public void invalidate(final Region region) {
+									if (world != null) {
+										invalidateVisibleObjectWindowCache(region);
+									}
+								}
+							});
+			return CurrentStateRecoveryApplicationResult.from(
+				result, selectedForceFullBlock);
+		}
+	}
+
+	interface CurrentStateCollisionProjector {
+		GameTickEventRestorationCollisionFootprintPlanner.Result project(
+			GameObject object, boolean forceFullBlock);
+	}
+
+	public enum CurrentStateRecoveryApplicationOutcome {
+		REFUSED,
+		NO_OP,
+		APPLIED
+	}
+
+	public enum CurrentStateRecoveryApplicationReason {
+		AUTHORED_CONSTRUCTION_KIND_REFUSED,
+		COLLISION_FOOTPRINT_UNAVAILABLE,
+		TARGET_REGION_UNAVAILABLE,
+		REQUIRED_REGION_UNAVAILABLE,
+		SNAPSHOT_CONTRACT_REFUSED,
+		CURRENT_CONSTRUCTOR_REFUSED,
+		CURRENT_COLLISION_SNAPSHOT_MISMATCH,
+		TARGET_CHANGED_BEFORE_RECOVERY,
+		TARGET_CLASSIFICATION_REFUSED,
+		OBJECT_TRANSACTION_REFUSED,
+		CURRENT_STATE_ALREADY_SATISFIED,
+		CURRENT_STATE_RESTORED
+	}
+
+	/** Closed current-state result with no object, Region, or event handle. */
+	public static final class CurrentStateRecoveryApplicationResult {
+		private final CurrentStateRecoveryApplicationOutcome outcome;
+		private final CurrentStateRecoveryApplicationReason reason;
+		private final boolean registered;
+		private final boolean forceFullBlockProjection;
+		private final int boundaryCount;
+
+		private CurrentStateRecoveryApplicationResult(
+			final CurrentStateRecoveryApplicationOutcome outcome,
+			final CurrentStateRecoveryApplicationReason reason,
+			final boolean registered,
+			final boolean forceFullBlockProjection,
+			final int boundaryCount) {
+			this.outcome = Objects.requireNonNull(outcome, "outcome");
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.registered = registered;
+			this.forceFullBlockProjection = forceFullBlockProjection;
+			this.boundaryCount = boundaryCount;
+			if (boundaryCount < 0
+				|| (outcome == CurrentStateRecoveryApplicationOutcome.APPLIED)
+					!= (reason == CurrentStateRecoveryApplicationReason
+						.CURRENT_STATE_RESTORED)
+				|| (outcome == CurrentStateRecoveryApplicationOutcome.NO_OP)
+					!= (reason == CurrentStateRecoveryApplicationReason
+						.CURRENT_STATE_ALREADY_SATISFIED)
+				|| registered
+					!= (outcome
+						== CurrentStateRecoveryApplicationOutcome.APPLIED)) {
+				throw new IllegalArgumentException(
+					"Current-state application result is inconsistent");
+			}
+		}
+
+		private static CurrentStateRecoveryApplicationResult refused(
+			final CurrentStateRecoveryApplicationReason reason) {
+			return new CurrentStateRecoveryApplicationResult(
+				CurrentStateRecoveryApplicationOutcome.REFUSED, reason,
+				false, false, 0);
+		}
+
+		private static CurrentStateRecoveryApplicationResult from(
+			final RegionObjectCollisionTransactionExecutor
+				.CurrentStateRecoveryResult result,
+			final boolean forceFullBlockProjection) {
+			return new CurrentStateRecoveryApplicationResult(
+				CurrentStateRecoveryApplicationOutcome.valueOf(
+					result.getOutcome().name()),
+				CurrentStateRecoveryApplicationReason.valueOf(
+					result.getReason().name()),
+				result.isMembershipRegistered(), forceFullBlockProjection,
+				result.getBoundaryCount());
+		}
+
+		public CurrentStateRecoveryApplicationOutcome getOutcome() {
+			return outcome;
+		}
+		public CurrentStateRecoveryApplicationReason getReason() {
+			return reason;
+		}
+		public boolean isApplied() {
+			return outcome == CurrentStateRecoveryApplicationOutcome.APPLIED;
+		}
+		public boolean isNoOp() {
+			return outcome == CurrentStateRecoveryApplicationOutcome.NO_OP;
+		}
+		public boolean isRefused() {
+			return outcome == CurrentStateRecoveryApplicationOutcome.REFUSED;
+		}
+		public boolean isMembershipRegistered() { return registered; }
+		public boolean isForceFullBlockProjectionSelected() {
+			return forceFullBlockProjection;
+		}
+		public int getBoundaryCount() { return boundaryCount; }
+		public boolean isSnapshotRetained() { return false; }
+		public boolean isEventHandleRetained() { return false; }
+		public boolean isSchedulerStateTouched() { return false; }
+		public boolean isCallbackInvoked() { return false; }
+		public boolean isEventCancellation() { return false; }
+		public boolean isEventReschedule() { return false; }
+		public boolean isLoadingPerformed() { return false; }
+		public boolean isArrivalGate() { return false; }
+		public boolean isVisibilityReleased() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
 	}
 
 	public enum RestorationCommitOutcome { REFUSED, NO_OP, APPLIED }

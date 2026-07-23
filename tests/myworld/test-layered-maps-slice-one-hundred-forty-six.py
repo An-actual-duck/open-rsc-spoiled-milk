@@ -350,14 +350,14 @@ class LayeredMapsSliceOneHundredFortySixTest(unittest.TestCase):
         self.assertIn("RegionObjectCollisionMutationBoundary.executeMutation(", method)
         self.assertIn("getGameObjectTransactionMonitor()", method)
         self.assertIn("executeInsideBoundaries(", method)
-        self.assertIn("footprintMatchesCurrentStateSnapshot(", method)
+        self.assertIn("matchesCurrentStateRecoveryFootprint(", method)
         self.assertIn("CURRENT_STATE_ALREADY_SATISFIED", source)
         self.assertIn("CURRENT_STATE_RESTORED", source)
 
-    def test_store_loading_and_region_manager_remain_disconnected(self):
+    def test_store_loading_and_arrival_remain_disconnected(self):
         method = "executeCurrentStateRecovery("
         self.assertNotIn(method, STORE.read_text(encoding="utf-8"))
-        self.assertNotIn(method, REGION_MANAGER.read_text(encoding="utf-8"))
+        self.assertIn(method, REGION_MANAGER.read_text(encoding="utf-8"))
         source = TRANSACTION.read_text(encoding="utf-8")
         for required in (
             "isEventHandleRetained() { return false; }",

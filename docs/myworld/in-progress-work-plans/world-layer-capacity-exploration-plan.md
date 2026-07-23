@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, and 146 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, and 147 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -145,7 +145,12 @@ automated-validated Slice 146 connects that future snapshot only to the real
 ordered Region object/collision transaction, restores an empty slot or accepts
 one already-matching current object as an idempotent no-op, refuses stale,
 conflicting, or collision-mismatched state unchanged, and leaves the scheduler,
-RegionManager, loading, arrival, and visibility paths disconnected;
+loading, arrival, and visibility paths disconnected; and
+automated-validated Slice 147 adds the non-loading RegionManager reconstruction
+adapter, rebuilds exact `GameObjectLoc` provenance, selects only a normal or
+force-full-block projection equal to the snapshot, resolves every Region by
+non-creating lookup, and leaves Store, coordinator execution, arrival, and
+visibility disconnected;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12112,20 +12117,83 @@ Automated validation status:
 
 Safety boundary:
 
-- this is a package-local executable seam reached only by its automated fixture;
-  no scheduler Store, recovery coordinator, RegionManager, loading, player
-  arrival, diagnostics, or gameplay caller invokes it;
+- this is a package-local executable seam reached only by its automated fixture
+  and Slice 147's still-disconnected RegionManager adapter; no scheduler Store,
+  recovery coordinator, loading, player arrival, diagnostics, or gameplay
+  caller invokes it;
 - the caller-supplied object and collision projection must exactly match the
   immutable snapshot. The seam cannot discover/load a Region or capture live
   event state by itself;
 - it never replaces an occupied slot and cannot consume, cancel, invoke, pause,
   or reschedule the retained future callback; and
-- runtime capture, non-loading Region resolution, executable batch
-  orchestration, retry, first-visibility integration, retirement, and
+- runtime capture, executable batch orchestration, retry, first-visibility
+  integration, retirement, and persistence remain later gates.
+
+Status: implemented and automated-validated. No owner route is required because
+the application seam and its Slice 147 adapter are not reachable from
+production.
+
+### Slice 147: Non-loading current-state reconstruction adapter
+
+Objective: prove that RegionManager can reconstruct one exact current object,
+select the captured collision shape, and resolve the complete transaction
+boundary without loading a missing Region or retaining scheduler state.
+
+Implemented:
+
+- package-local `applyGameTickEventCurrentStateRecoverySnapshot` reconstructs
+  the snapshot's current `GameObjectLoc`, including current/permanent IDs,
+  coordinate, direction, type, and serialized authored generation/source/
+  construction identity;
+- only scenery, harvesting scenery, or boundary construction kinds matching the
+  object's type are accepted. Unsupported provenance refuses before Region
+  lookup or mutation;
+- collision is projected first with normal registration semantics and, only if
+  that exact contribution does not match, with force-full-block registration.
+  Neither projection is accepted unless every captured per-tile blocking,
+  directional, and projectile contribution matches exactly;
+- the target and every collision footprint Region are resolved through
+  `peekRegionFromSectorCoordinates`; a missing target or missing required Region
+  refuses without creating storage, adding membership, or changing a tile;
+- the candidate identity is observed before entering Slice 146, then Slice 146
+  revalidates it inside the complete ordered Region/object boundary before
+  applying or returning an idempotent no-op; and
+- the closed result reports the typed refusal/application reason, membership,
+  exact boundary count, and whether the force-full-block projection was
+  selected, but retains no snapshot, object, Region, event, or scheduler handle.
+
+Automated validation status:
+
+- the real RegionManager/Region fixture proves exact reconstruction into one
+  pre-existing Region and an idempotent repeated no-op;
+- it proves normal and force-full-block projections are each selected only when
+  their complete contributions equal the snapshot;
+- a missing target Region, missing cross-Region collision neighbor, unavailable
+  definition projection, and two nonmatching projections all refuse without
+  partial membership or collision mutation;
+- source guards enforce only non-creating Region lookup and prove neither Store
+  nor the detached coordinator invokes the adapter;
+- the complete layered-map suite passes 490 tests across 146 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 795 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- the adapter is package-local and reached only by its automated fixture; it is
+  not a player, arrival, visibility, loading, or scheduler entry point;
+- the production projector may read object definitions but catches unavailable
+  projection state as a typed refusal. It cannot substitute a merely similar
+  normal/forced footprint for the exact captured collision contribution;
+- all Regions must already exist before the canonical mutation begins, and a
+  candidate observed before boundary acquisition is only advisory because
+  Slice 146 revalidates exact identity inside the transaction; and
+- runtime snapshot capture, scheduler-fenced invocation, executable batch
+  coordination, retry, first-visibility integration, retirement, and
   persistence remain later gates.
 
 Status: implemented and automated-validated. No owner route is required because
-the application seam is not reachable from production.
+the adapter has no production caller.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -13031,17 +13099,27 @@ the exact current constructor, authored provenance, and captured collision
 contribution, then uses the canonical ordered object/collision transaction to
 populate only an empty slot. One already-matching current object is a no-op;
 stale identity, conflicting occupancy, and collision mismatch refuse unchanged.
-The scheduler event remains untouched, and Store, RegionManager, coordinator,
+The scheduler event remains untouched, and Store, coordinator execution,
 loading, arrival, and visibility remain disconnected.
 
-The next safe slice should define a disconnected, non-loading RegionManager
-adapter for one Slice 144 snapshot. It should reconstruct the exact current
-`GameObjectLoc` and authored identity, select only a collision projection that
-matches the captured contribution, resolve every required packed Region with
-non-creating lookups, and then invoke Slice 146. A missing Region, definition,
-identity, or projection must refuse without loading or mutation. Store,
-coordinator execution, arrival, and visibility must remain disconnected until
-the adapter's exact reconstruction and Region coverage are proven.
+Slice 147 now supplies the non-loading RegionManager adapter. It rebuilds the
+exact current `GameObjectLoc` and authored identity, compares normal and force-
+full-block projections against the snapshot, resolves all required Regions by
+non-creating lookup, and invokes Slice 146 only with an exact projection and
+complete existing boundary. A missing Region, unavailable definition, or
+projection mismatch refuses without mutation. Store, coordinator execution,
+arrival, and visibility remain disconnected.
+
+The next safe slice should define runtime capture of one future callback's
+Slice 144 current-state snapshot while the exact scheduler execution/lifecycle,
+Region object, and collision boundaries are held in the established outer-to-
+inner order. It must read the present object's exact constructor, authored
+identity, zero owner/runtime-attribute requirement, positive remaining
+countdown, and actual collision contribution without retaining live handles.
+Any changed registration/lifecycle, missing Region, ambiguous target, collision
+disagreement, or incomplete boundary must refuse and leave the event scheduled.
+Application, batch execution, loading, arrival, and visibility should remain
+disconnected from this first runtime-capture proof.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

@@ -253,7 +253,7 @@ final class RegionObjectCollisionTransactionExecutor {
 			return CurrentStateRecoveryResult.refused(
 				CurrentStateRecoveryReason.CURRENT_CONSTRUCTOR_REFUSED);
 		}
-		if (!footprintMatchesCurrentStateSnapshot(
+		if (!matchesCurrentStateRecoveryFootprint(
 			checkedFootprint, checkedSnapshot)) {
 			return CurrentStateRecoveryResult.refused(
 				CurrentStateRecoveryReason
@@ -386,10 +386,11 @@ final class RegionObjectCollisionTransactionExecutor {
 				.equals(snapshot.getAuthoredConstructionKind().name());
 	}
 
-	private static boolean footprintMatchesCurrentStateSnapshot(
+	static boolean matchesCurrentStateRecoveryFootprint(
 		final GameTickEventRestorationCollisionFootprintPlanner.Result footprint,
 		final GameTickEventRestorationCurrentStateRecoverySnapshot snapshot) {
-		if (!footprint.isFootprintAvailable()
+		if (footprint == null
+			|| !footprint.isFootprintAvailable()
 			|| footprint.getOperation() != Operation.REGISTER
 			|| footprint.isLegacySaturatingUnregister()
 			|| footprint.getContributionTileCount()
