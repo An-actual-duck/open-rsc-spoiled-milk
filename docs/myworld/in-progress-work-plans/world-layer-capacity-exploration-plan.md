@@ -4,7 +4,7 @@ Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path, Slice 158's safe refusal path, and Slice 162's corrected owner
 continuity route owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, and 163 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, and 164 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -222,6 +222,11 @@ refusal boundary. Its corrected private capture proves all 449 selected
 NPC-owned callbacks have one recognized exact active owner inside the selected
 source boundary, while 8 player-owned callbacks remain a separate class and
 all 449 NPC callbacks still lack an actual preservation fact;
+automated-validated Slice 164 deduplicates those callback-level matches into
+one bounded exact requirement per authored NPC owner, retaining every scheduler
+registration link and requiring same-instance, World-registration,
+event-reference, and Region-absence-quiescence continuity without establishing
+the preservation fact or absorbing player-owned callbacks;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13260,6 +13265,59 @@ should use the now-closed NPC correlation result to define what a real,
 bounded owner-preservation fact would require; the 8 player-owned callbacks
 must remain a separately classified prerequisite.
 
+### Slice 164: Exact NPC owner preservation requirements
+
+Objective: convert callback-level continuity evidence into one bounded,
+deduplicated requirement per exact authored NPC owner before any live
+preservation mechanism is designed.
+
+Implemented:
+
+- one exact inventory/continuity pair is validated by generation, observation
+  tick, selected-source count, proposal-related count, event ordinal,
+  registration sequence, owner kind, and related owner-position attribution;
+- matched NPC callbacks are grouped in stable first-event order by authored
+  generation, packed source, source ordinal, and NPC definition ID. Multiple
+  callbacks owned by the same NPC become one owner requirement with every
+  exact scheduler registration sequence retained;
+- preservation-unproved, previously eligible, NPC-hard-blocker, and separate
+  non-NPC callback counts remain distinct. One matched owner cannot hide a
+  missing, stale, ambiguous, mismatched, or drifted NPC owner;
+- owner and event-link budgets refuse rather than truncate; and
+- each requirement explicitly states that a later implementation must retain
+  the same runtime NPC instance, stable World registration, every event-owner
+  reference, and quiescence while its Region is absent.
+
+Safety boundary:
+
+- this is a detached plan and does not establish the preservation fact required
+  by Slice 161;
+- it retains no NPC, event, Region, scheduler, registry, callback, permit,
+  lease, transaction, commit token, or runtime index;
+- player-owned callbacks remain separate blockers and are not relabeled as NPC
+  requirements; and
+- no event stop/reschedule, NPC registration/removal, Region load/retirement,
+  reconstruction, arrival gate, or lifecycle authority is added.
+
+Automated validation status:
+
+- an executable fixture proves two callbacks deduplicate to one exact owner
+  with both stable registration links, while one player-owned callback remains
+  separate;
+- the same fixture proves missing NPC identity keeps the NPC requirement set
+  incomplete and undersized owner/link budgets refuse;
+- source guards prove the contract has no entity, Region, event, registration,
+  removal, or lifecycle dependency;
+- the complete layered-map suite passes 546 tests across 163 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 806 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. No owner route is required because
+the slice is dormant and handle-free. The next slice must define a scoped
+runtime preservation boundary that can prove these requirements against the
+same NPC instances without becoming a global registry.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13635,6 +13693,7 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 162 by exposing fresh NPC owner-event continuity diagnostics. | Implemented and automated-validated; exact proposal source order is recaptured with a same-or-newer bounded census, production preservation/eligibility remain false, additive schema-v46 exposes AI-readable owner identities and outcomes while v45 stays immutable, 540 focused tests pass across 161 files, and the 805/488 Ant build passes; private owner validation is pending |
 | 2026-07-23 | Correct Slice 162's duplicated private continuity-source wiring as Slice 163. | Implemented and automated-validated; the first owner route's null continuity was traced to `Development.java` omitting the new delegate rather than an NPC result, both command-start and retained-session sources now use the same bounded RegionManager census, 543 focused tests pass across 162 files, and the 805/488 Ant build passes; corrected private recapture is pending |
 | 2026-07-23 | Accept the corrected Slice 162/163 private NPC owner-continuity capture. | Owner-validated; all 449 NPC-owned callbacks in the exact 36-source selection carried authored identity and uniquely matched a recognized active owner with the expected definition inside its selected source, every identity-failure class was zero, 8 player-owned hints remain separate, all NPC matches correctly remain preservation-unproved, and recovery refused all 457 callbacks with zero reconstruction, mutation, or terminal consumption |
+| 2026-07-23 | Continue with Slice 164 by deriving exact NPC owner-preservation requirements. | Implemented and automated-validated; callback evidence deduplicates by authored NPC identity, retains every exact registration link, requires same-instance/World-registration/event-reference continuity plus Region-absence quiescence, keeps NPC hard blockers and player callbacks separate, grants no preservation fact or runtime authority, 546 focused tests pass across 163 files, and the 806/488 Ant build passes |
 
 ## Next Discussion
 
