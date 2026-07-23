@@ -351,7 +351,7 @@ class LayeredMapsSliceOneHundredSeventyTest(unittest.TestCase):
             "GameTickEventNpcOwnerPreservationLifecycle", scope
         )
 
-    def test_outer_runtime_scope_has_no_production_consumer_yet(self):
+    def test_outer_runtime_scope_has_only_the_slice_171_refusal_consumer(self):
         consumers = []
         for path in (ROOT / "server/src").rglob("*.java"):
             if path == LIFECYCLE:
@@ -360,7 +360,13 @@ class LayeredMapsSliceOneHundredSeventyTest(unittest.TestCase):
                 encoding="utf-8"
             ):
                 consumers.append(path.relative_to(ROOT).as_posix())
-        self.assertEqual([], consumers)
+        self.assertEqual(
+            [
+                "server/src/com/openrsc/server/event/rsc/handler/"
+                "GameTickEventNpcOwnerPreservationNoOpDiagnostic.java"
+            ],
+            consumers,
+        )
 
     def test_living_plan_records_slice_one_hundred_seventy(self):
         plan = PLAN.read_text(encoding="utf-8")

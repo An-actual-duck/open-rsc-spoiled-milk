@@ -5,7 +5,7 @@ Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 contained path, Slice 158's safe refusal path, Slice 162's corrected owner
 continuity route, and Slices 167-168's corrected owner-preservation route
 owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, and 170 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, and 171 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -265,6 +265,11 @@ with one scope-local consumer. Only exact full source absence, reconstruction,
 restoration before return, and withheld first visibility admit the consumer;
 both request and preservation evidence expire before the outer scope, and the
 detached result is historical rather than reusable authority;
+automated-validated Slice 171 connects that lifecycle to the real owner scope
+through a verification-only handler adapter, then deliberately returns
+`SOURCE_LIFECYCLE_UNAVAILABLE`. It proves the accepted scope reaches the exact
+missing authority while performing no source absence, reconstruction,
+preserved work, Region mutation, arrival, or visibility action;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13782,6 +13787,59 @@ uses no Region mutation: it should prove a complete same-state source cycle can
 consume scoped preservation while every normal diagnostic and gameplay route
 remains unchanged.
 
+### Slice 171: Real-boundary source-lifecycle refusal
+
+Objective: connect Slice 170 to the real scheduler/World/NPC preservation scope
+without pretending that the still-absent authoritative source lifecycle exists.
+
+Implemented:
+
+- a package-local verification-only adapter calls Slice 169's real
+  `withinPreservationScope` boundary with the exact requirements, current tick,
+  and owner budget;
+- when the outer boundary refuses, the diagnostic returns
+  `OWNER_SCOPE_REFUSED` and proves no lifecycle or consumer call occurred;
+- when the full outer boundary is accepted, the adapter invokes Slice 170 with
+  the exact active scope and returns the typed
+  `SOURCE_SET_UNAVAILABLE` lifecycle refusal;
+- the closed aggregate reports generation, requirement tick, selected-source,
+  required-event, and required-owner counts plus scope/lifecycle/consumer
+  progress; and
+- `GameEventHandler` exposes only the package-local result for a future private
+  diagnostic adapter. No Player, command, observer, gameplay, retirement, or
+  recovery route calls it yet.
+
+Safety boundary:
+
+- an accepted scope still performs zero source absence, zero source
+  reconstruction, and zero preserved-consumer invocations;
+- the adapter asserts that its unavailable lifecycle returns no absent or
+  reconstructed source, never establishes preservation, and never invokes the
+  consumer;
+- every result explicitly denies preservation, Region mutation, runtime-handle
+  retention, arrival gating, visibility release, and lifecycle authority; and
+- no RegionManager, source registry, object/NPC registration, location,
+  callback, scheduler mutation, or loader dependency enters the adapter.
+
+Automated validation status:
+
+- an executable adapter fixture proves an accepted real-shape scope stops
+  exactly at `SOURCE_LIFECYCLE_UNAVAILABLE`, while a refused scope invokes
+  neither lifecycle nor consumer;
+- structural guards prove the handler seam, real scope entry, typed unavailable
+  completion, zero-authority flags, and absence of Region/source/world mutation
+  calls;
+- the complete layered-map suite passes 571 tests across 170 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 812 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. The next focused slice should
+expose this safe refusal through an additive, explicit private diagnostic
+action. A dense owner route can then confirm the real 449-owner scope reaches
+`SOURCE_LIFECYCLE_UNAVAILABLE` with zero preserved-consumer invocations and
+zero authority, without enabling source mutation.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14166,6 +14224,7 @@ private environment should validate at least:
 | 2026-07-23 | Accept the corrected Slice 167/168 private NPC owner-preservation boundary. | Owner-validated; the schema-v47 start/teleport/dense-marker/stop sequence validates, both dense records report `PRESERVATION_SCOPE_READY` across 36 sources, 457 callbacks, 449 exact NPC owners and links, every event/World/NPC/quiescence boundary is complete, the 8 player-owned callbacks remain separate, no stack or command failure recurs, and every durable authority or mutation flag remains false |
 | 2026-07-23 | Continue with Slice 169 by adding a source-bound NPC preservation scope. | Implemented and automated-validated; exact canonical selected sources now survive requirement derivation, a package-local caller can enter only inside the complete iterative event/registration/World/NPC/quiescence boundary, the handle-free scope is thread-confined and invalidated before gate release, ordinary diagnostics remain unchanged, 563 focused tests pass across 168 files, and the 810/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 170 by composing an ephemeral preserved source lifecycle. | Implemented and automated-validated; only one exact request-bound full absence/reconstruction/restoration cycle with first visibility withheld admits one consumer, completion cannot cross scopes, request and evidence leakage fail after return or exception, the detached success is historical rather than reusable authority, no production caller exists, 567 focused tests pass across 169 files, and the 811/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 171 by connecting the real owner boundary to a typed source-lifecycle refusal. | Implemented and automated-validated; accepted event/registration/World/NPC scopes reach `SOURCE_LIFECYCLE_UNAVAILABLE`, refused scopes invoke nothing, both paths report zero absent/reconstructed sources and zero preserved-consumer invocations, no Region/source/gameplay authority is connected, 571 focused tests pass across 170 files, and the 812/488 Ant build passes |
 
 ## Next Discussion
 

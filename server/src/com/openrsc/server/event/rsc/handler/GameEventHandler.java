@@ -485,8 +485,8 @@ public class GameEventHandler {
 
 	/**
 	 * Captures one nested scheduler/timing/World-registration boundary for the
-	 * exact NPC owner requirements. NPC movement/removal quiescence remains
-	 * deliberately absent, so this observation cannot establish preservation.
+	 * exact NPC owner requirements. The result remains a detached point-in-time
+	 * observation and cannot establish preservation after the boundary returns.
 	 */
 	public LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
 		captureLayeredPackedRegionNpcOwnerPreservationBoundary(
@@ -496,6 +496,21 @@ public class GameEventHandler {
 		return GameTickEventNpcOwnerPreservationBoundary.capture(
 			eventStore,
 			getServer().getWorld().getNpcs(),
+			Objects.requireNonNull(requirements, "requirements"),
+			getServer().getCurrentTick(), maximumOwners);
+	}
+
+	/**
+	 * Enters the real NPC-owner scope but deliberately refuses at the still
+	 * unavailable source lifecycle. No source absence or preserved work runs.
+	 */
+	GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result
+		captureLayeredPackedRegionNpcOwnerPreservationNoOpDiagnostic(
+			final LayeredPackedRegionNpcOwnerPreservationRequirements
+				requirements,
+			final int maximumOwners) {
+		return GameTickEventNpcOwnerPreservationNoOpDiagnostic.capture(
+			eventStore, getServer().getWorld().getNpcs(),
 			Objects.requireNonNull(requirements, "requirements"),
 			getServer().getCurrentTick(), maximumOwners);
 	}
