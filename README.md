@@ -251,7 +251,8 @@ New visual assets use the following source breakdown:
   Mischief Imp, Broodling Spider, Delivery Camel, Restless Shade, and Zamorak's
   Void icons.
 - **InDark**: Bound Battleaxe icon.
-- **Atelier Pixerelia**: many Magic, Enchanting, and spell-effect icons.
+- **Atelier Pixerelia**: the Guard Dog summon icon and many Magic, Enchanting,
+  and spell-effect icons.
 - **COLEVID-19**: modified Mourning Unicorn and Sacred Unicorn icons.
 - **Game-icons.net**: Prayer icons.
 - **Shutterstock royalty-free listing**: Pack Rat icon.

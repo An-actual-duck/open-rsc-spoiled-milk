@@ -76,7 +76,8 @@ from the summon display name in lowercase with spaces converted to dashes:
 `ironhide-bear.png`, `sacred-unicorn.png`, `duskwind-bat.png`, `pack-rat.png`,
 `bound-battleaxe.png`, `mourning-unicorn.png`, `restless-shade.png`,
 `guard-dog.png`, `delivery-camel.png`, `astral-wraith.png`, and
-`abyssal-demon.png`. Guard Dog uses its purpose-made `guard-dog.png` icon.
+`abyssal-demon.png`. Guard Dog uses its purpose-made `guard-dog.png` icon by
+Atelier Pixerelia.
 
 ## Summon Roles
 
