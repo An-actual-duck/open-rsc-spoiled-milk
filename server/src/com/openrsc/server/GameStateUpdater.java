@@ -1249,7 +1249,13 @@ public final class GameStateUpdater {
 					mobsUpdate.add(bit(NOT_MOVING, 1));
 					mobsUpdate.add(bit(REMOVE_NPC, 2));
 				} else {
-					if (localNpc.hasMoved() && !useCustomMovementStream) {
+					if (hasPendingDeathVisual) {
+						// Npc.remove() resets the server sprite to north before the final
+						// damage/effect appearance update is sent. Keep the client's last
+						// valid combat pose for that one update instead of turning every
+						// dying NPC north; the following update removes it normally.
+						mobsUpdate.add(bit(UPDATE_NOT_REQUIRED, 1));
+					} else if (localNpc.hasMoved() && !useCustomMovementStream) {
 						mobsUpdate.add(bit(UPDATE_REQUIRED, 1));
 						mobsUpdate.add(bit(MOVEMENT_UPDATE, 1)); // Tell player that the NPC has moved 1 tile in the direction that their sprite is facing
 						mobsUpdate.add(bit(localNpc.getSprite(), 3)); // sprite is limited to 3 bits for 8 directions, since NPC can't be fighting while moving

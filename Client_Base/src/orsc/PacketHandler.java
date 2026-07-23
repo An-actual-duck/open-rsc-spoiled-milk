@@ -2322,6 +2322,7 @@ public class PacketHandler {
 					if (nextSpriteOffset == 3) {
 						mc.detachNpcCombatEffect(npc);
 						if (npc != null) {
+							mc.invalidateCustomNpcMovementTarget(npc.serverIndex);
 							npc.clearTransientVisualState();
 						}
 						continue;

@@ -76,6 +76,11 @@ def main() -> None:
         "stationary NPC stance update should invalidate stale movement direction",
     )
     require(
+        packet_handler,
+        "if (nextSpriteOffset == 3) {\n\t\t\t\t\t\tmc.detachNpcCombatEffect(npc);\n\t\t\t\t\t\tif (npc != null) {\n\t\t\t\t\t\t\tmc.invalidateCustomNpcMovementTarget(npc.serverIndex);",
+        "removed NPC should invalidate stale movement direction",
+    )
+    require(
         client,
         "if (var8) {\n\t\t\t\tinvalidateCustomNpcMovementTarget(serverIndex);\n\t\t\t\tcharacter.animationNext = sprite;",
         "cached NPC refresh should preserve its direct combat stance",
@@ -94,6 +99,11 @@ def main() -> None:
         server_updater,
         "(localNpc.inCombat() && !hasPendingDeathVisual && !useCustomMovementStream)",
         "custom movement NPC combat cache stability",
+    )
+    require(
+        server_updater,
+        "mobsUpdate.add(bit(UPDATE_NOT_REQUIRED, 1));\n\t\t\t\t\t} else if (localNpc.hasMoved() && !useCustomMovementStream) {",
+        "custom movement NPC death visual should preserve its last client-facing pose",
     )
     require(
         server_updater,
