@@ -24,20 +24,20 @@ require(
     "Default projectile path validation must retain player-transparent barriers",
 )
 require(
-    "checkAdjacentDistance(world, curPoint, nextPoint, ignoreProjectileAllowed)"
+    "DistanceCollisionMode.HOSTILE_PROJECTILE"
     in path_validation,
-    "Strict projectile path validation must reach tile collision checks",
+    "Hostile projectile path validation must use its semantic collision mode",
 )
 
 require(
-    "PathValidation.checkPath(npc.getWorld(), npc.getLocation(), target.getLocation(), true)"
+    "PathValidation.checkHostileProjectilePath(npc.getWorld(), npc.getLocation(), target.getLocation())"
     in NPC_BEHAVIOR.read_text(),
-    "Modern hostile NPC projectiles must treat fences as blocking",
+    "Modern hostile NPC projectiles must use semantic hostile collision",
 )
 require(
-    "PathValidation.checkPath(getWorld(), owner.getLocation(), victim.getLocation(), true)"
+    "PathValidation.checkHostileProjectilePath(getWorld(), owner.getLocation(), victim.getLocation())"
     in NPC_RANGE.read_text(),
-    "Legacy hostile NPC ranged attacks must treat fences as blocking",
+    "Legacy hostile NPC ranged attacks must use semantic hostile collision",
 )
 
 for path in PLAYER_PROJECTILES:

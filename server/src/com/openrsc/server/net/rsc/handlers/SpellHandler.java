@@ -1535,7 +1535,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					Npc n = (Npc) affectedMob;
 
 					if (n.getID() == NpcId.DRAGON.id() || n.getID() == NpcId.KING_BLACK_DRAGON.id()) {
-						if (PathValidation.checkPath(getPlayer().getWorld(), n.getLocation(), getPlayer().getLocation(), true)) {
+						if (PathValidation.checkHostileProjectilePath(
+							getPlayer().getWorld(), n.getLocation(), getPlayer().getLocation())) {
 							getPlayer().playerServerMessage(MessageType.QUEST, "The dragon breathes fire at you");
 							int percentage = 20;
 							int fireDamage;

@@ -23,6 +23,7 @@ import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.io.WorldLoader;
 import com.openrsc.server.model.GlobalMessage;
+import com.openrsc.server.model.HostileProjectileCollision;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Shop;
@@ -514,9 +515,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		}
 		switch (o.getGameObjectType()) {
 			case SCENERY:
-				if (o.getGameObjectDef().getType() != 1 && o.getGameObjectDef().getType() != 2) {
-					return;
-				}
+				final boolean blocksHostileProjectiles = HostileProjectileCollision.blocksScenery(o.getGameObjectDef());
 				int width, height;
 				if (dir == 0 || dir == 4) {
 					width = o.getGameObjectDef().getWidth();
@@ -525,10 +524,25 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 					height = o.getGameObjectDef().getWidth();
 					width = o.getGameObjectDef().getHeight();
 				}
+				if (o.getGameObjectDef().getType() != 1 && o.getGameObjectDef().getType() != 2) {
+					if (blocksHostileProjectiles) {
+						for (int x = o.getX(); x < o.getX() + width; ++x) {
+							for (int y = o.getY(); y < o.getY() + height; ++y) {
+								updateHostileProjectileSceneryCollision(x, y, dir,
+									o.getGameObjectDef().getType(), true);
+							}
+						}
+					}
+					return;
+				}
 				for (int x = o.getX(); x < o.getX() + width; ++x) {
 					for (int y = o.getY(); y < o.getY() + height; ++y) {
 						if (isProjectileClipAllowed(o)) {
 							handleProjectileClipAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);
+						}
+						if (blocksHostileProjectiles) {
+							updateHostileProjectileSceneryCollision(x, y, dir,
+								o.getGameObjectDef().getType(), true);
 						}
 						if (o.getGameObjectDef().getType() == 1) {
 							getMutableTile(x, y).addBlockingScenery();
@@ -561,6 +575,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 				if (isProjectileClipAllowed(o)) {
 					handleProjectileClipAllowance(x, y, dir, o.getType(), -1, o.getDoorDef().getDoorType());
 				}
+				updateHostileProjectileBoundaryCollision(x, y, dir, true);
 				if (dir == 0) {
 
 					getMutableTile(x, y).addDynamicCollision(CollisionFlag.WALL_NORTH);
@@ -576,6 +591,64 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 					getMutableTile(x, y).addDynamicCollision(CollisionFlag.FULL_BLOCK_B);
 				}
 				break;
+		}
+	}
+
+	private void updateHostileProjectileSceneryCollision(final int x, final int y, final int dir,
+														 final int objectType, final boolean add) {
+		if (objectType != 2) {
+			updateHostileProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_C, add);
+			return;
+		}
+		if (dir == 0) {
+			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_EAST, add);
+			if (getTile(x - 1, y) != null) {
+				updateHostileProjectileCollision(x - 1, y, CollisionFlag.WALL_WEST, add);
+			}
+		} else if (dir == 2) {
+			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_SOUTH, add);
+			if (getTile(x, y + 1) != null) {
+				updateHostileProjectileCollision(x, y + 1, CollisionFlag.WALL_NORTH, add);
+			}
+		} else if (dir == 4) {
+			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_WEST, add);
+			if (getTile(x + 1, y) != null) {
+				updateHostileProjectileCollision(x + 1, y, CollisionFlag.WALL_EAST, add);
+			}
+		} else if (dir == 6) {
+			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_NORTH, add);
+			if (getTile(x, y - 1) != null) {
+				updateHostileProjectileCollision(x, y - 1, CollisionFlag.WALL_SOUTH, add);
+			}
+		}
+	}
+
+	private void updateHostileProjectileBoundaryCollision(final int x, final int y, final int dir,
+														  final boolean add) {
+		if (dir == 0) {
+			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_NORTH, add);
+			if (getTile(x, y - 1) != null) {
+				updateHostileProjectileCollision(x, y - 1, CollisionFlag.WALL_SOUTH, add);
+			}
+		} else if (dir == 1) {
+			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_EAST, add);
+			if (getTile(x - 1, y) != null) {
+				updateHostileProjectileCollision(x - 1, y, CollisionFlag.WALL_WEST, add);
+			}
+		} else if (dir == 2) {
+			updateHostileProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_A, add);
+		} else if (dir == 3) {
+			updateHostileProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_B, add);
+		}
+	}
+
+	private void updateHostileProjectileCollision(final int x, final int y, final int flags,
+												  final boolean add) {
+		final TileValue tile = getMutableTile(x, y);
+		if (add) {
+			tile.addHostileProjectileCollision(flags);
+		} else {
+			tile.removeHostileProjectileCollision(flags);
 		}
 	}
 
@@ -824,9 +897,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		final int dir = o.getDirection();
 		switch (o.getGameObjectType()) {
 			case SCENERY:
-				if (o.getGameObjectDef().getType() != 1 && o.getGameObjectDef().getType() != 2) {
-					return;
-				}
+				final boolean blocksHostileProjectiles = HostileProjectileCollision.blocksScenery(o.getGameObjectDef());
 				int width, height;
 				if (dir == 0 || dir == 4) {
 					width = o.getGameObjectDef().getWidth();
@@ -835,10 +906,25 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 					height = o.getGameObjectDef().getWidth();
 					width = o.getGameObjectDef().getHeight();
 				}
+				if (o.getGameObjectDef().getType() != 1 && o.getGameObjectDef().getType() != 2) {
+					if (blocksHostileProjectiles) {
+						for (int x = o.getX(); x < o.getX() + width; ++x) {
+							for (int y = o.getY(); y < o.getY() + height; ++y) {
+								updateHostileProjectileSceneryCollision(x, y, dir,
+									o.getGameObjectDef().getType(), false);
+							}
+						}
+					}
+					return;
+				}
 				for (int x = o.getX(); x < o.getX() + width; ++x) {
 					for (int y = o.getY(); y < o.getY() + height; ++y) {
 						if (isProjectileClipAllowed(o)) {
 							resetProjectileAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);
+						}
+						if (blocksHostileProjectiles) {
+							updateHostileProjectileSceneryCollision(x, y, dir,
+								o.getGameObjectDef().getType(), false);
 						}
 						if (o.getGameObjectDef().getType() == 1) {
 							getMutableTile(x, y).removeBlockingScenery();
@@ -867,6 +953,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 				if (isProjectileClipAllowed(o)) {
 					resetProjectileAllowance(x, y, dir, o.getType(), -1, o.getDoorDef().getDoorType());
 				}
+				updateHostileProjectileBoundaryCollision(x, y, dir, false);
 
 				if (dir == 0) {
 					getMutableTile(x, y).removeDynamicCollision(CollisionFlag.WALL_NORTH);

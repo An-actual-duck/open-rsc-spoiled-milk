@@ -288,11 +288,11 @@ def ensure_dragon_fire_breath_respects_obstructions() -> None:
     dragon_fire_breath = DRAGON_FIRE_BREATH_PATH.read_text(encoding="utf-8")
     spell_handler = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
 
-    require_text(dragon_fire_breath, "PathValidation.checkPath(dragon.getWorld(), dragon.getLocation(), player.getLocation(), true)",
+    require_text(dragon_fire_breath, "PathValidation.checkHostileProjectilePath(",
                  "Dragon fire breath combat-start obstruction check")
     require_text(dragon_fire_breath, "if (!canDragonBreathReachPlayer(dragon, player))",
                  "Dragon fire breath should skip damage when blocked by fences or walls")
-    require_text(spell_handler, "PathValidation.checkPath(getPlayer().getWorld(), n.getLocation(), getPlayer().getLocation(), true)",
+    require_text(spell_handler, "PathValidation.checkHostileProjectilePath(",
                  "Legacy spell-triggered dragon fire breath obstruction check")
 
 

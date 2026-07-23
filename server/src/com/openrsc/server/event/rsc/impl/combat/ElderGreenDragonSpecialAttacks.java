@@ -10,6 +10,7 @@ import com.openrsc.server.content.TrueDefense;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.SingleTickEvent;
+import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -102,7 +103,7 @@ public final class ElderGreenDragonSpecialAttacks {
 
 	private static void launchFireshotAoe(final World world, final Npc dragon) {
 		for (Player player : dragon.getViewArea().getPlayersInView()) {
-			if (!isValidPlayerTarget(dragon, player, AOE_RADIUS)) {
+			if (!isValidProjectilePlayerTarget(dragon, player, AOE_RADIUS)) {
 				continue;
 			}
 			player.getUpdateFlags().setProjectile(new Projectile(dragon, player, Projectile.FIREBALL));
@@ -125,7 +126,7 @@ public final class ElderGreenDragonSpecialAttacks {
 
 	private static void launchBurnAoe(final World world, final Npc dragon) {
 		for (Player player : dragon.getViewArea().getPlayersInView()) {
-			if (!isValidPlayerTarget(dragon, player, AOE_RADIUS)) {
+			if (!isValidProjectilePlayerTarget(dragon, player, AOE_RADIUS)) {
 				continue;
 			}
 			player.getUpdateFlags().setProjectile(new Projectile(dragon, player, Projectile.FIREBALL));
@@ -151,6 +152,12 @@ public final class ElderGreenDragonSpecialAttacks {
 			&& !player.isRemoved()
 			&& player.getSkills().getLevel(Skill.HITS.id()) > 0
 			&& player.withinRange(dragon, radius);
+	}
+
+	private static boolean isValidProjectilePlayerTarget(final Npc dragon, final Player player, final int radius) {
+		return isValidPlayerTarget(dragon, player, radius)
+			&& PathValidation.checkHostileProjectilePath(
+				dragon.getWorld(), dragon.getLocation(), player.getLocation());
 	}
 
 	private static int inflictPlayerDamage(final Npc dragon, final Player player, int damage, final DamageStyle style, final int hitSplatType) {

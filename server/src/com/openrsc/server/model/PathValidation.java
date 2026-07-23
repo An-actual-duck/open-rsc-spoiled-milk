@@ -33,6 +33,12 @@ public class PathValidation {
 	public static boolean DEBUG_DISTANCE = false;
 	public static boolean DEBUG = false;
 
+	private enum DistanceCollisionMode {
+		DEFAULT,
+		STRICT_TRAVERSAL,
+		HOSTILE_PROJECTILE
+	}
+
 	public static boolean checkPath(World world, Point src, Point dest) {
 		return checkPath(world, src, dest, false);
 	}
@@ -44,6 +50,21 @@ public class PathValidation {
 	 * barriers such as fences still block the path
 	 */
 	public static boolean checkPath(World world, Point src, Point dest, boolean ignoreProjectileAllowed) {
+		return checkPath(world, src, dest, ignoreProjectileAllowed
+			? DistanceCollisionMode.STRICT_TRAVERSAL
+			: DistanceCollisionMode.DEFAULT);
+	}
+
+	/**
+	 * Checks hostile NPC line of fire using semantic hard-cover collision.
+	 * Movement-only blockers such as lava, water, rocks, and trees remain
+	 * transparent; walls, closed doors, fences, and void block.
+	 */
+	public static boolean checkHostileProjectilePath(World world, Point src, Point dest) {
+		return checkPath(world, src, dest, DistanceCollisionMode.HOSTILE_PROJECTILE);
+	}
+
+	private static boolean checkPath(World world, Point src, Point dest, DistanceCollisionMode collisionMode) {
 		final Deque<Point> path = new ArrayDeque<>();
 
 		final Point curPoint = new Point(src.getX(), src.getY());
@@ -73,7 +94,8 @@ public class PathValidation {
 
 		Point nextPoint = null;
 		while ((nextPoint = path.poll()) != null) {
-			if (!checkAdjacentDistance(world, curPoint, nextPoint, ignoreProjectileAllowed)) return false;
+			if (!checkAdjacentDistance(world, curPoint.getX(), curPoint.getY(), nextPoint.getX(), nextPoint.getY(),
+				collisionMode, true)) return false;
 			curPoint.x = nextPoint.x;
 			curPoint.y = nextPoint.y;
 		}
@@ -136,34 +158,41 @@ public class PathValidation {
 	}
 
 	public static boolean checkAdjacentDistance(World world, int startX, int startY, int destX, int destY, boolean ignoreProjectileAllowed, boolean wantDiagCheck) {
+		return checkAdjacentDistance(world, startX, startY, destX, destY, ignoreProjectileAllowed
+			? DistanceCollisionMode.STRICT_TRAVERSAL
+			: DistanceCollisionMode.DEFAULT, wantDiagCheck);
+	}
+
+	private static boolean checkAdjacentDistance(World world, int startX, int startY, int destX, int destY,
+												 DistanceCollisionMode collisionMode, boolean wantDiagCheck) {
 		int[] coords = {startX, startY};
 		boolean myXBlocked = false, myYBlocked = false, newXBlocked = false, newYBlocked = false;
 		if (startX > destX) {
 			// Check for wall on east edge of current square,
-			myXBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_EAST, true, ignoreProjectileAllowed);
+			myXBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_EAST, true, collisionMode);
 			// Or on west edge of square we are travelling toward.
-			newXBlocked = checkBlockingDistance(world, startX - 1, startY, CollisionFlag.WALL_WEST, false, ignoreProjectileAllowed);
+			newXBlocked = checkBlockingDistance(world, startX - 1, startY, CollisionFlag.WALL_WEST, false, collisionMode);
 			coords[0] = startX - 1;
 		} else if (startX < destX) {
 			// Check for wall on west edge of current square,
-			myXBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_WEST, true, ignoreProjectileAllowed);
+			myXBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_WEST, true, collisionMode);
 			// Or on east edge of square we are travelling toward.
-			newXBlocked = checkBlockingDistance(world, startX + 1, startY, CollisionFlag.WALL_EAST, false, ignoreProjectileAllowed);
+			newXBlocked = checkBlockingDistance(world, startX + 1, startY, CollisionFlag.WALL_EAST, false, collisionMode);
 			coords[0] = startX + 1;
 		}
 
 		if (startY > destY) {
 			// Check for wall on north edge of current square,
-			myYBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_NORTH, true, ignoreProjectileAllowed);
+			myYBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_NORTH, true, collisionMode);
 			// Or on south edge of square we are travelling toward.
-			newYBlocked = checkBlockingDistance(world, startX, startY - 1, CollisionFlag.WALL_SOUTH, false, ignoreProjectileAllowed);
+			newYBlocked = checkBlockingDistance(world, startX, startY - 1, CollisionFlag.WALL_SOUTH, false, collisionMode);
 			coords[1] = startY - 1;
 
 		} else if (startY < destY) {
 			// Check for wall on south edge of current square,
-			myYBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_SOUTH, true, ignoreProjectileAllowed);
+			myYBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_SOUTH, true, collisionMode);
 			// Or on north edge of square we are travelling toward.
-			newYBlocked = checkBlockingDistance(world, startX, startY + 1, CollisionFlag.WALL_NORTH, false, ignoreProjectileAllowed);
+			newYBlocked = checkBlockingDistance(world, startX, startY + 1, CollisionFlag.WALL_NORTH, false, collisionMode);
 			coords[1] = startY + 1;
 		}
 
@@ -184,15 +213,15 @@ public class PathValidation {
 		if (newXBlocked && newYBlocked) return false;
 
 		if (coords[0] > startX) {
-			newXBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_EAST, false, ignoreProjectileAllowed);
+			newXBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_EAST, false, collisionMode);
 		} else if (coords[0] < startX) {
-			newXBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_WEST, false, ignoreProjectileAllowed);
+			newXBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_WEST, false, collisionMode);
 		}
 
 		if (coords[1] > startY) {
-			newYBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_NORTH, false, ignoreProjectileAllowed);
+			newYBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_NORTH, false, collisionMode);
 		} else if (coords[1] < startY) {
-			newYBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_SOUTH, false, ignoreProjectileAllowed);
+			newYBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_SOUTH, false, collisionMode);
 		}
 
 		// Destination X and Y blocked.
@@ -222,25 +251,25 @@ public class PathValidation {
 			if (DEBUG_DISTANCE) System.out.println("PathValidation 9");
 			bit = wantDiagCheck ? CollisionFlag.WALL_NORTH + CollisionFlag.WALL_EAST : -1;
 			diagonalBlocked = checkBlockingDistance(world, startX + 1, startY + 1,
-				bit, false, ignoreProjectileAllowed);
+				bit, false, collisionMode);
 		}
 		else if (startX + 1 == destX && startY - 1 == destY) {
 			if (DEBUG_DISTANCE) System.out.println("PathValidation 10");
 			bit = wantDiagCheck ? CollisionFlag.WALL_SOUTH + CollisionFlag.WALL_EAST : -1;
 			diagonalBlocked = checkBlockingDistance(world, startX + 1, startY - 1,
-				bit, false, ignoreProjectileAllowed);
+				bit, false, collisionMode);
 		}
 		else if (startX - 1 == destX && startY + 1 == destY) {
 			if (DEBUG_DISTANCE) System.out.println("PathValidation 11");
 			bit = wantDiagCheck ? CollisionFlag.WALL_NORTH + CollisionFlag.WALL_WEST : -1;
 			diagonalBlocked = checkBlockingDistance(world, startX - 1, startY + 1,
-				bit, false, ignoreProjectileAllowed);
+				bit, false, collisionMode);
 		}
 		else if (startX - 1 == destX && startY - 1 == destY) {
 			if (DEBUG_DISTANCE) System.out.println("PathValidation 12");
 			bit = wantDiagCheck ? CollisionFlag.WALL_SOUTH + CollisionFlag.WALL_WEST : -1;
 			diagonalBlocked = checkBlockingDistance(world, startX - 1, startY - 1,
-				bit, false, ignoreProjectileAllowed);
+				bit, false, collisionMode);
 		}
 
 		if (diagonalBlocked) return false;
@@ -254,8 +283,8 @@ public class PathValidation {
 			//Check for any possible diagonal walls if the mob is going diagonally.
 			//Bit of -2 is to strictly only check diagonals - full blocks are ignored here, as they should be validated in a prior check.
 			//This serves to block diagonal movement when the wall layout leads from a diagonal to a vertical/horizontal wall.
-			diagonalWallBlocksDiagonalMovement = checkBlockingDistance(world, startX + xDiff, startY, -2, false, ignoreProjectileAllowed)
-			|| checkBlockingDistance(world, startX, startY + yDiff, -2, false, ignoreProjectileAllowed);
+			diagonalWallBlocksDiagonalMovement = checkBlockingDistance(world, startX + xDiff, startY, -2, false, collisionMode)
+			|| checkBlockingDistance(world, startX, startY + yDiff, -2, false, collisionMode);
 		}
 
 		if (diagonalWallBlocksDiagonalMovement) return false;
@@ -264,9 +293,13 @@ public class PathValidation {
 		return true;
 	}
 
-	private static boolean checkBlockingDistance(World world, int x, int y, int bit, boolean isCurrentTile, boolean ignoreProjectileAllowed) {
+	private static boolean checkBlockingDistance(World world, int x, int y, int bit, boolean isCurrentTile,
+												 DistanceCollisionMode collisionMode) {
 		TileValue t = world.getTile(x, y);
-		if (!ignoreProjectileAllowed && t.projectileAllowed) {
+		if (collisionMode == DistanceCollisionMode.HOSTILE_PROJECTILE) {
+			return isBlocking(t.getHostileProjectileCollisionMask(), (byte) bit, isCurrentTile);
+		}
+		if (collisionMode == DistanceCollisionMode.DEFAULT && t.projectileAllowed) {
 			return false;
 		}
 
