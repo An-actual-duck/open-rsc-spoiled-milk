@@ -108,7 +108,7 @@ def main() -> None:
     require(client, 'skillGuideChosenTabs.add("Special");\n\t\t\tskillGuideChosenTabs.add("Info");', "smithing info tab")
     require(guide, 'int maceId, int scytheId, int spearId', "smithing guide helper should keep mace and scythe item IDs in call order")
     require(guide, 'new SkillMenuItem(1958, "62", "2 Orichalcum bars - 1 mithril, 1 adamantite, and 5 coal")', "orichalcum smelting guide")
-    require(guide, 'new SkillMenuItem(1365, "80", "Dragon bar - raw dragon metal and 6 dragon sulfur")', "compact dragon bar smelting guide")
+    require(guide, 'new SkillMenuItem(1365, "80", "Dragon bar - dragon metal scrap and 6 dragon sulfur")', "compact dragon bar smelting guide")
     require(guide, 'new SkillMenuItem(3261, "90", "Purified Rune Bar - rune bar and 14 dragon sulfur")', "compact purified rune bar smelting guide")
     require(guide, "Dragon bars require the repaired lava forge", "smithing info dragon lava forge guide")
     require(guide, "Purified Rune Bars require the repaired lava forge", "smithing info purified rune lava forge guide")

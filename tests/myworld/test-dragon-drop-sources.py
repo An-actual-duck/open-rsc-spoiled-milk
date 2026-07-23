@@ -113,7 +113,7 @@ def main() -> None:
     )
     forbid(kbd_custom, "DRAGON_2_HANDED_SWORD", "KBD custom rare table should not drop dragon weapons")
     forbid(kbd_custom, "KING_BLACK_DRAGON_SCALE", "KBD custom rare table should not drop black dragon scales")
-    forbid(kbd_custom, "RAW_DRAGON_METAL", "KBD custom rare table should not drop raw dragon metal")
+    forbid(kbd_custom, "RAW_DRAGON_METAL", "KBD custom rare table should not drop dragon metal scrap")
 
     hidden_unique = between(
         drops,
@@ -132,12 +132,12 @@ def main() -> None:
         "Black Demon should drop dragon full helm through the hidden unique layer",
     )
     for needle, message in (
-        ("addHiddenUniqueDrop(NpcId.ELDER_GREEN_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);", "Elder Green Dragon should drop raw dragon metal at 1/128"),
-        ("addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);", "King Black Dragon should drop raw dragon metal at 1/128"),
-        ("addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 512);", "Black Dragon should drop raw dragon metal at 1/512"),
-        ("addHiddenUniqueDrop(NpcId.RED_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 1024);", "Red Dragon should drop raw dragon metal at 1/1024"),
-        ("addHiddenUniqueDrop(NpcId.DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 2048);", "Green Dragon should drop raw dragon metal at 1/2048"),
-        ("addHiddenUniqueDrop(NpcId.BLUE_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 2048);", "Blue Dragon should drop raw dragon metal at 1/2048"),
+        ("addHiddenUniqueDrop(NpcId.ELDER_GREEN_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);", "Elder Green Dragon should drop dragon metal scrap at 1/128"),
+        ("addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);", "King Black Dragon should drop dragon metal scrap at 1/128"),
+        ("addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 512);", "Black Dragon should drop dragon metal scrap at 1/512"),
+        ("addHiddenUniqueDrop(NpcId.RED_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 1024);", "Red Dragon should drop dragon metal scrap at 1/1024"),
+        ("addHiddenUniqueDrop(NpcId.DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 2048);", "Green Dragon should drop dragon metal scrap at 1/2048"),
+        ("addHiddenUniqueDrop(NpcId.BLUE_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 2048);", "Blue Dragon should drop dragon metal scrap at 1/2048"),
     ):
         require(hidden_unique, needle, message)
     for reward_source, source_name in (

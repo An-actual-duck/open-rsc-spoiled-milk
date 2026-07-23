@@ -763,7 +763,7 @@ public class InvAction implements OpInvTrigger {
 			+ "Complete Dwarf Youth Rescue to access the lava forge% "
 			+ "Repair the lava forge with 100 Black dragon scales and 1,000,000 coins% %"
 			+ "Dragon bar:% %"
-			+ "1 Raw dragon metal% "
+			+ "1 Dragon metal scrap% "
 			+ "6 Dragon sulfur% %"
 			+ "Purified Rune Bar:% %"
 			+ "1 Runite bar% "

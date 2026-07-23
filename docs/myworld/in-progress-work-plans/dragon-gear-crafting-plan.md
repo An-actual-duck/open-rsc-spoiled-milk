@@ -81,7 +81,7 @@ Implemented lava forge behavior:
 - Requires one-time repair with `100 Black dragon scale` and
   `1,000,000 coins`.
 - Modern clients open a lava forge production UI.
-- `Dragon bar`: `1 Raw Dragon Metal`, `6 Dragon sulfur`, 80 Smithing,
+- `Dragon bar`: `1 Dragon Metal Scrap`, `6 Dragon sulfur`, 80 Smithing,
   `1000` Smithing XP.
 - `Purified Rune Bar`: `1 Runite bar`, `14 Dragon sulfur`, 90 Smithing,
   `500` Smithing XP.
@@ -96,7 +96,7 @@ Relevant file:
 
 - Black Dragon drops `1 Black dragon scale`.
 - King Black Dragon drops `2 Black dragon scale`.
-- Raw dragon metal is a hidden rare dragon-family drop:
+- Dragon metal scrap is a hidden rare dragon-family drop:
   - Elder Green Dragon: `1/128`
   - King Black Dragon: `1/128`
   - Black Dragon: `1/512`
@@ -178,7 +178,7 @@ Initial lava forge outputs:
 
 | Output | Ingredients | Notes |
 | --- | --- | --- |
-| `Dragon bar` | `1 Raw Dragon Metal`, `6 Dragon sulfur` | Dragon gear material |
+| `Dragon bar` | `1 Dragon Metal Scrap`, `6 Dragon sulfur` | Dragon gear material |
 | `Purified Rune Bar` | `1 Rune bar`, `14 Dragon sulfur` | Moved from regular furnace |
 
 The production UI should only become available once:
@@ -202,7 +202,7 @@ dragon tier instead of pushing it too close to tier 12.
 
 Dragon bars should require:
 
-- `1 Raw Dragon Metal`
+- `1 Dragon Metal Scrap`
 - `6 Dragon sulfur`
 
 Dragon bars should be created only at the repaired lava forge.
@@ -278,13 +278,13 @@ Rules:
 
 ## Dragon Drop Changes
 
-### Raw Dragon Metal
+### Dragon Metal Scrap
 
-Add raw dragon metal as a rare dragon-family drop.
+Add dragon metal scrap as a rare dragon-family drop.
 
 Target rates:
 
-| Source | Raw Dragon Metal rate |
+| Source | Dragon Metal Scrap rate |
 | --- | ---: |
 | Elder Green Dragon | `1/128` |
 | King Black Dragon | `1/128` |
@@ -301,7 +301,7 @@ player-facing odds.
 
 Elder Green Dragon should stop dropping direct dragon gear/ammunition rewards.
 
-Replace those direct dragon equipment drops with the `1/128` raw dragon metal
+Replace those direct dragon equipment drops with the `1/128` dragon metal scrap
 drop. This keeps the Elder Green Dragon valuable while moving dragon gear
 progression into the repaired-forge crafting loop.
 
@@ -348,7 +348,7 @@ Desired effects:
 - Dragon gear becomes a clear, achievable tier-11 crafting milestone.
 - Players have a reason to farm dragons before pursuing Exalted Rune.
 - Black dragons and KBD gain a clear role in forge repair.
-- Normal dragons contribute raw dragon metal at appropriate rarity.
+- Normal dragons contribute dragon metal scrap at appropriate rarity.
 - The one-time forge repair gives a strong account-progress moment.
 - Dragon sulfur bridges the Mining Guild expansion into dragon and Exalted Rune
   progression.
@@ -364,7 +364,7 @@ Desired effects:
       `1,000,000 coins`.
 - [x] Add repaired lava forge production UI.
 - [x] Move purified rune production from the regular furnace to lava forge UI.
-- [x] Change dragon bar production to require `1 Raw Dragon Metal` and
+- [x] Change dragon bar production to require `1 Dragon Metal Scrap` and
       `6 Dragon sulfur`.
 - [x] Remove dragon metal chains from the lava forge production choices.
 - [x] Lower dragon sulfur Mining requirement to `80`.
@@ -372,7 +372,7 @@ Desired effects:
 - [x] Remove the KBD scale chisel recipe.
 - [x] Keep chipped dragon scales as compatibility-only/inert items.
 - [x] Keep dragon metal chains as compatibility-only/inert items.
-- [x] Add raw dragon metal drops to dragons at the decided rates.
+- [x] Add dragon metal scrap drops to dragons at the decided rates.
 - [x] Remove direct dragon equipment/ammunition drops from Elder Green Dragon.
 - [x] Add dragon equipment recipes to normal anvil Smithing.
 - [x] Define the active acquisition route for every dragon equipment slot.
@@ -399,14 +399,14 @@ Desired effects:
 - [x] Repair consumes exactly `100 Black dragon scale` and `1,000,000 coins`.
 - [x] Repair state persists.
 - [x] Repaired lava forge opens the new production UI.
-- [x] Dragon bar recipe requires `1 Raw Dragon Metal` and `6 Dragon sulfur`.
+- [x] Dragon bar recipe requires `1 Dragon Metal Scrap` and `6 Dragon sulfur`.
 - [x] Dragon metal chains are not offered by the new lava forge UI.
 - [x] Purified Rune Bar recipe is unavailable at regular furnaces.
 - [x] Purified Rune Bar recipe works at repaired lava forge.
 - [x] Dragon sulfur mining and area entry require 80 Mining.
 - [x] Black dragon drops `1 Black dragon scale`.
 - [x] KBD drops `2 Black dragon scale`.
-- [x] Raw dragon metal rates are wired for blue, green, red, black, KBD, and
+- [x] Dragon metal scrap rates are wired for blue, green, red, black, KBD, and
       elder green dragons.
 - [x] Elder Green Dragon no longer drops direct dragon gear/ammunition.
 - [x] Chiseling KBD/black dragon scales no longer creates chipped scales.
@@ -441,7 +441,7 @@ This plan is complete when:
 - The repaired lava forge is the production home for dragon bars and purified
   rune bars.
 - Dragon sulfur and the Mining Guild expansion gate align at 80 Mining.
-- Dragon bars use raw dragon metal plus dragon sulfur.
+- Dragon bars use dragon metal scrap plus dragon sulfur.
 - Dragon equipment is normally smithable at anvils.
 - Dragon equipment recipes use bars only; dragon metal chains and chipped
   scales are hidden compatibility-only materials.
@@ -449,7 +449,7 @@ This plan is complete when:
   compatibility-only until their future roles are decided.
 - Every active dragon equipment route is accounted for in this plan.
 - Black dragon scales repair the forge as a one-time unlock.
-- Dragon-family raw dragon metal drops are live at the specified rates.
+- Dragon-family monsters drop dragon metal scrap at the specified rates.
 - Elder Green Dragon no longer directly drops dragon gear.
 - Chipped dragon scale production is removed.
 - Related player guides, docs, and tests reflect the new route.

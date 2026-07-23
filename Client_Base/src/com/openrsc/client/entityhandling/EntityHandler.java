@@ -3932,7 +3932,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Teddy head", "A fluffy teddy head", "", 1, -1, "items:544", false, false, 0, 16777124, false, true, false, 1363));
 		addItemDefinition(new ItemDef("Teddy", "A fluffy teddy", "", 1, -1, "items:542", false, false, 0, 16777124, false, true, false, 1364));
 		addItemDefinition(new ItemDef("Dragon bar", "it's a bar of dragon metal", "", 100000, -1, "items:79", false, false, 0, 16711748, true, false, true, 1365));
-		addItemDefinition(new ItemDef("Raw Dragon Metal", "Unrefined dragon metal", "", 100000, -1, "external-png:raw-dragon-metal@43x27", false, false, 0, 0, true, false, true, 3228));
+		addItemDefinition(new ItemDef("Dragon Metal Scrap", "Unrefined dragon metal", "", 100000, -1, "external-png:raw-dragon-metal@43x27", false, false, 0, 0, true, false, true, 3228));
 		addItemDefinition(new ItemDef("Chipped Dragon Scale", "A piece of dragon scale", "", 50, -1, "items:546", true, false, 0, 0, true, false, false, 1366));
 		addItemDefinition(new ItemDef("Dragon Metal Chain", "Linked dragon loops", "", 2000, -1, "items:547", true, false, 0, 0, true, false, false, 1367));
 		addItemDefinition(new ItemDef("Dragon Scale Mail Body", "A dragon chain mail reinforced with dragon scales", "", 1500000, -1, "items:537", false, true, 64, 15654365, false, false, true, 1368));

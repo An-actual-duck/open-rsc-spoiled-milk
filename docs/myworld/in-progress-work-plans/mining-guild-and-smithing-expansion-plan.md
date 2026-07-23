@@ -165,7 +165,7 @@ The new ore should behave like coal in the recipe structure:
 
 Likely recipe shapes to evaluate:
 
-- Repaired lava forge: `Raw Dragon Metal + 6 Dragon sulfur -> Dragon bar`
+- Repaired lava forge: `Dragon Metal Scrap + 6 Dragon sulfur -> Dragon bar`
 - Repaired lava forge: `Runite bar + 14 Dragon sulfur -> Purified Rune Bar`
 - Future dragon-rune option:
   `Dragon metal + Runite bar + Dragon sulfur -> Dragon rune bar`

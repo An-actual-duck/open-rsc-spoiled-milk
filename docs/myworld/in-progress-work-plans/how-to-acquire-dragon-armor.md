@@ -90,7 +90,7 @@ Dragon material setup:
 - King Black Dragon drops `2 Black dragon scale`.
 - Repairing the lava forge requires Dwarf Youth Rescue completion,
   `100 Black dragon scale`, and `1,000,000 coins`.
-- `Dragon bar` requires `1 Raw dragon metal` and `6 Dragon sulfur` at the
+- `Dragon bar` requires `1 Dragon metal scrap` and `6 Dragon sulfur` at the
   repaired lava forge.
 - `Purified Rune Bar` requires `1 Runite bar` and `14 Dragon sulfur` at the
   repaired lava forge.

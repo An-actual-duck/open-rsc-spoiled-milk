@@ -193,7 +193,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		}
 		SmeltRecipe recipe = getRetroLavaForgeRecipe(item.getCatalogId());
 		if (recipe == null) {
-			player.message("Use raw dragon metal or a runite bar on the repaired lava forge");
+			player.message("Use dragon metal scrap or a runite bar on the repaired lava forge");
 			return;
 		}
 		int repeat = player.getConfig().BATCH_PROGRESSION ? maxDirectSmelts(player, recipe) : 1;
@@ -337,7 +337,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 	private void openLavaForgeInterface(Player player) {
 		if (ActionSender.isRetroClient(player)) {
-			player.message("Use raw dragon metal or a runite bar on the repaired lava forge");
+			player.message("Use dragon metal scrap or a runite bar on the repaired lava forge");
 			return;
 		}
 		ProductionSession session = createLavaForgeProductionSession(player);
