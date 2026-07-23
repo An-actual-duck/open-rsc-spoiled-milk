@@ -77,7 +77,7 @@ class LayeredMapsSliceSixtySixTest(unittest.TestCase):
     def test_observer_serializes_same_cohort_with_independent_budgets(self):
         observer = OBSERVER.read_text(encoding="utf-8")
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v45"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v46"', observer
         )
         self.assertIn(
             "PackedRegionAuthoredReconstructionCohortAttributionSource",

@@ -14,7 +14,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v45.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v46.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -46,6 +46,7 @@ SCHEMA_V40 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v40.sche
 SCHEMA_V41 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v41.schema.json"
 SCHEMA_V43 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v43.schema.json"
 SCHEMA_V44 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v44.schema.json"
+SCHEMA_V45 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v45.schema.json"
 
 
 POINT_STUB = r'''
@@ -1196,7 +1197,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v45" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v46" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -2404,6 +2405,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v41 = json.loads(SCHEMA_V41.read_text(encoding="utf-8"))
                 v43 = json.loads(SCHEMA_V43.read_text(encoding="utf-8"))
                 v44 = json.loads(SCHEMA_V44.read_text(encoding="utf-8"))
+                v45 = json.loads(SCHEMA_V45.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -2436,6 +2438,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v41["$id"], Resource.from_contents(v41)),
                     (v43["$id"], Resource.from_contents(v43)),
                     (v44["$id"], Resource.from_contents(v44)),
+                    (v45["$id"], Resource.from_contents(v45)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

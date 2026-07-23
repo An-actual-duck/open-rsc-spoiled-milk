@@ -230,7 +230,10 @@ class LayeredMapsSliceEightyTest(unittest.TestCase):
             "assessLayeredPackedRegionRetirementRefinementCandidatesLocked"
         )
         self.assertIn(helper_name, public_method)
-        helper_start = source.rindex(helper_name)
+        helper_start = source.index(
+            "\n\tprivate LayeredPackedRegionRetirementSafetyAssessment\n"
+            "\t\t" + helper_name
+        )
         helper_end = source.index("\n\t/**", helper_start)
         helper = source[helper_start:helper_end]
         self.assertIn("peekRegionFromSectorCoordinates", helper)

@@ -51,6 +51,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerEventContinuityAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
@@ -3586,6 +3587,24 @@ public final class Player extends Mob {
 				return getWorld().getServer().getGameEventHandler()
 					.captureLayeredPackedRegionEventAtomicTargetRevalidation(
 						inventory, maximumTargetRecords);
+			}
+
+			@Override
+			public LayeredPackedRegionNpcOwnerEventContinuityAssessment
+				captureNpcOwnerContinuity(
+					final LayeredPackedRegionRetirementRefinementProposal proposal,
+					final LayeredPackedRegionEventOwnershipInventory inventory,
+					final int maximumCandidateSources,
+					final int maximumNpcInstances,
+					final int maximumRelevantNpcDetails,
+					final int maximumEventDetails) {
+				return getWorld().getRegionManager()
+					.captureLayeredPackedRegionNpcOwnerEventContinuity(
+						proposal, inventory,
+						getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						maximumCandidateSources, maximumNpcInstances,
+						maximumRelevantNpcDetails, maximumEventDetails);
 			}
 
 			@Override

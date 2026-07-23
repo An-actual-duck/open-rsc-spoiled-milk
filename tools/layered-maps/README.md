@@ -184,7 +184,7 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v45.schema.json`. Each v45 record
+traces emit `schema/layered-map-parity-event-v46.schema.json`. Each v46 record
 retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
@@ -199,9 +199,17 @@ preflight to that result: total related callbacks, complete and incomplete
 recovery counts, incomplete owner-position-hint and exact-spatial counts, and
 the first stable incomplete registration/owner/attribution/requirement. A
 preflight blocker remains a proposal-wide refusal; a complete callback elsewhere
-in the proposal is never used to imply readiness. Only the explicit
-`::layerparity recover-noop` action may populate it; ordinary movement,
-snapshots, and markers emit null. The result reports stable preparation,
+in the proposal is never used to imply readiness. V46 additionally detaches
+authored NPC event-owner identity and correlates
+proposal-related owner-position callbacks with a fresh bounded active-NPC
+census. It reports exact, missing, stale, duplicate, unrecognized, and
+position-drifted owner cases separately. Production always reports owner
+preservation as unproved and continuity eligibility as zero; the census is
+diagnostic evidence, not permission to retain an NPC or bypass standalone
+callback recovery. The owner correlation accompanies proposal-scoped event
+inventories; only the explicit `::layerparity recover-noop` action may populate
+the separate recovery result, while ordinary movement, snapshots, and markers
+emit null there. The recovery result reports stable preparation,
 lifecycle, candidate, future-snapshot, runtime-verification, mutation, and
 terminal-consumption facts. It is verification-only: missing current state
 refuses rather than being restored, and overdue callbacks are never consumed.
@@ -210,8 +218,9 @@ restoration-capable event: outer-fence outcome, lifecycle-version stability,
 exact Region-boundary
 target facts, target decision, and dormant contract result. These facts are
 read-only and point-in-time; all mutation, commit-token, executable-restoration,
-arrival-gate, and lifecycle-authority flags remain false. The v1-v44 schemas
+arrival-gate, and lifecycle-authority flags remain false. The v1-v45 schemas
 remain alongside it—including
+`schema/layered-map-parity-event-v45.schema.json`,
 `schema/layered-map-parity-event-v44.schema.json`,
 `schema/layered-map-parity-event-v43.schema.json`,
 `schema/layered-map-parity-event-v42.schema.json`,

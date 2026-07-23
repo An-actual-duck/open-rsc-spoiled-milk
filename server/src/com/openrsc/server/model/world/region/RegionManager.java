@@ -39,6 +39,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSa
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerEventContinuityAssessment;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcBoundaryRequirementProjection;
@@ -2879,6 +2880,70 @@ public class RegionManager {
 		return LayeredPackedRegionActiveNpcResidencyObservation.observe(
 			recipe, safety, observedAtTick, instances, maximumInstances,
 			maximumRelevantDetails);
+	}
+
+	/**
+	 * Correlates one exact proposal event inventory with a fresh bounded NPC
+	 * census. This diagnostic performs no owner preservation and cannot turn a
+	 * point-in-time match into lifecycle readiness.
+	 */
+	public LayeredPackedRegionNpcOwnerEventContinuityAssessment
+		captureLayeredPackedRegionNpcOwnerEventContinuity(
+			final LayeredPackedRegionRetirementRefinementProposal proposal,
+			final LayeredPackedRegionEventOwnershipInventory inventory,
+			final LayeredPackedRegionAuthoredReconstructionRecipe recipe,
+			final int maximumCandidateSources,
+			final int maximumNpcInstances,
+			final int maximumRelevantNpcDetails,
+			final int maximumEventDetails) {
+		LayeredPackedRegionRetirementRefinementProposal checkedProposal =
+			Objects.requireNonNull(proposal, "proposal");
+		LayeredPackedRegionEventOwnershipInventory checkedInventory =
+			Objects.requireNonNull(inventory, "inventory");
+		LayeredPackedRegionAuthoredReconstructionRecipe checkedRecipe =
+			Objects.requireNonNull(recipe, "recipe");
+		if (checkedProposal.getGeneration()
+				!= checkedInventory.getProposalGeneration()
+			|| checkedProposal.getGeneration() != checkedRecipe.getGeneration()
+			|| checkedProposal.getCandidateSourceCount()
+				!= checkedInventory.getSourceCount()
+			|| maximumCandidateSources < 0
+			|| maximumCandidateSources
+				> MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN
+			|| checkedProposal.getCandidateSourceCount()
+				> maximumCandidateSources) {
+			throw new IllegalArgumentException(
+				"NPC owner-event capture parents do not align");
+		}
+		for (int index = 0;
+			index < checkedProposal.getCandidateSourceCount(); index++) {
+			LayeredPackedRegionRetirementRefinementProposal.CandidateSource
+				candidate = checkedProposal.getCandidates().get(index);
+			LayeredPackedRegionEventOwnershipInventory.SourceRecord source =
+				checkedInventory.getSources().get(index);
+			if (candidate.getPackedRegionX() != source.getPackedRegionX()
+				|| candidate.getPackedRegionY() != source.getPackedRegionY()) {
+				throw new IllegalArgumentException(
+					"NPC owner-event capture source order does not align");
+			}
+		}
+		synchronized (layeredRegionLifecycleLock) {
+			long observedAtTick = getWorld().getServer().getCurrentTick();
+			if (observedAtTick < checkedInventory.getObservedAtTick()) {
+				throw new IllegalArgumentException(
+					"NPC owner-event census predates its event inventory");
+			}
+			LayeredPackedRegionRetirementSafetyAssessment safety =
+				assessLayeredPackedRegionRetirementRefinementCandidatesLocked(
+					checkedProposal, maximumCandidateSources, observedAtTick);
+			LayeredPackedRegionActiveNpcResidencyObservation observation =
+				captureActiveNpcResidency(
+					checkedRecipe, safety, observedAtTick, maximumNpcInstances,
+					maximumRelevantNpcDetails);
+			return LayeredPackedRegionNpcOwnerEventContinuityAssessment.assess(
+				checkedInventory, observation, true, false,
+				maximumEventDetails);
+		}
 	}
 
 	// originally private, set to public to access for reset event

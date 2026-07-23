@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path and Slice 158's safe refusal path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, and 161 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, and 162 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -210,6 +210,10 @@ automated-validated Slice 161 correlates owner-position callbacks with a
 bounded active-NPC census, refuses missing/stale/duplicate/unrecognized/drifted
 owners, and distinguishes a point-in-time exact match from separately supplied
 preservation proof without changing recovery readiness;
+automated-validated Slice 162 captures that census against the exact proposal
+source order and exposes authored owner identity plus closed correlation
+outcomes through additive private schema-v46, while production preservation and
+continuity eligibility remain explicitly false;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13107,6 +13111,62 @@ Status: implemented and automated-validated as a dormant policy. The next slice
 must capture an exact fresh census from the proposal sources and expose the
 production result with preservation deliberately unproved.
 
+### Slice 162: Private NPC owner-event continuity diagnostics
+
+Objective: measure the real owner identity/census shape behind Slice 158's
+1,000 owner-position callback blockers without allowing a point-in-time match
+to bypass standalone recovery.
+
+Implemented:
+
+- RegionManager validates the proposal, event inventory, reconstruction
+  generation, candidate count, and every ordered packed source before capturing
+  a same-or-newer diagnostic safety view and active-NPC census under the
+  existing layered lifecycle monitor;
+- the runtime feeds Slice 161 with exact selection alignment but hardcodes
+  owner preservation to false. It therefore can report recognized unique
+  owners as `OWNER_PRESERVATION_UNPROVED`, never as continuity-eligible;
+- event ownership now serializes an exact total and nullable per-event authored
+  NPC owner identity containing generation, packed source, source ordinal, and
+  NPC definition ID;
+- additive schema-v46 keeps v45 immutable and adds nullable
+  `packedRegionNpcOwnerEventContinuity` totals, first unmet result, and bounded
+  per-event outcomes. It closes every authority flag, production preservation,
+  continuity eligibility, and all-related readiness to false; and
+- both retained Player-session and development-command trace paths use the same
+  proposal/census source. Owner correlation accompanies proposal event
+  inventories; only `recover-noop` invokes the separate verification-only
+  recovery result.
+
+Safety boundary:
+
+- the diagnostic obtains no NPC/event handle from either detached parent,
+  performs no world-index lookup, and cannot retain an NPC after the census;
+- event inventory and NPC census are ordered observations, not one mutation
+  fence. Callback execution, NPC movement, removal, respawn, and new arrivals
+  can invalidate the result immediately;
+- missing, stale, duplicate, unrecognized, mismatched, or drifted evidence
+  remains a hard blocker, and exact matches remain preservation-unproved; and
+- Slice 159 recovery behavior is unchanged: every owner-position callback still
+  lacks standalone restoration state and refuses the full proposal before
+  scheduler or Region work.
+
+Automated validation status:
+
+- schema tests preserve v45, validate a 1,000-owner preservation-unproved shape,
+  and reject preservation, eligibility, reschedule, registry, arrival, and
+  lifecycle-authority claims;
+- source guards prove exact proposal-source validation, fresh bounded census
+  capture, production `preservation=false`, Player wiring, current schema, and
+  documentation;
+- the complete layered-map suite passes 540 tests across 161 focused files; and
+- the authoritative bundled-Ant server build compiles 805 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. A private owner route is now
+meaningful: it should establish how many candidate-related NPC callbacks have
+exact active owners and which concrete blocker classes remain.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13477,6 +13537,9 @@ private environment should validate at least:
 | 2026-07-22 | Continue with Slice 143 by defining recovery batch and timing policy before any caller. | Implemented and automated-validated; bounded exact registrations sort deterministically, overdue callbacks require desired-state commit/consumption, future callbacks require transient-state reconstruction/retention, incomplete or refused prefixes withhold visibility and require fresh inventory retry, all runtime consumers remain disconnected, 474 focused tests pass across 142 files, and the 793/488 Ant build passes |
 | 2026-07-22 | Record the Slice 158 private no-op recovery route without weakening proposal-wide recovery requirements. | Owner-validated safe refusal; schema-v44 records one future magic-tree callback at 33 ticks but also 1,000 candidate-related owner-position-hint callbacks without standalone recovery state, so preparation correctly returns `RELATED_EVENT_RECOVERY_INCOMPLETE`, performs zero verification/mutation/consumption, and natural callback completion plus visuals/collision/interaction remain normal. The assumed isolated ready route is unproven |
 | 2026-07-22 | Continue with Slice 159 by classifying the complete proposal-wide event-recovery preflight before live work. | Implemented; every proposal-related event receives one stable complete/unmet-requirement result, complete/incomplete and attribution counts reconcile, the first blocker is explicit, schema-v45 remains verification-only, and no incomplete callback can be ignored or converted into readiness |
+| 2026-07-22 | Continue with Slice 160 by detaching exact authored NPC event-owner identity. | Implemented and automated-validated; generation, authored packed source/ordinal, and NPC definition ID are copied without a world index or entity handle, missing identity remains explicit, recovery behavior is unchanged, 534 focused tests pass across 159 files, and the 804/488 Ant build passes |
+| 2026-07-22 | Continue with Slice 161 by defining a bounded NPC owner-event continuity policy. | Implemented and automated-validated; exact active-census correlation refuses missing, stale, duplicate, unrecognized, mismatched, and drifted owners, exact matches remain `OWNER_PRESERVATION_UNPROVED` without a separate fact, no runtime consumer or authority exists, 537 focused tests pass across 160 files, and the 805/488 Ant build passes |
+| 2026-07-22 | Continue with Slice 162 by exposing fresh NPC owner-event continuity diagnostics. | Implemented and automated-validated; exact proposal source order is recaptured with a same-or-newer bounded census, production preservation/eligibility remain false, additive schema-v46 exposes AI-readable owner identities and outcomes while v45 stays immutable, 540 focused tests pass across 161 files, and the 805/488 Ant build passes; private owner validation is pending |
 
 ## Next Discussion
 

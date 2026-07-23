@@ -88,7 +88,7 @@ class LayeredMapsSliceSeventyTwoTest(unittest.TestCase):
     def test_observer_serializes_census_with_independent_budgets(self):
         observer = OBSERVER.read_text(encoding="utf-8")
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v45"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v46"', observer
         )
         self.assertIn("PackedRegionActiveNpcResidencySource", observer)
         self.assertIn("MAX_TRACE_ACTIVE_NPC_INSTANCES", observer)

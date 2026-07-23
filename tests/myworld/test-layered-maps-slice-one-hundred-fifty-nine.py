@@ -171,7 +171,7 @@ class LayeredMapsSliceOneHundredFiftyNineTest(unittest.TestCase):
         self.assertIn("getProposalRelatedEventCount()", diagnostic)
         self.assertIn("getFirstIncompleteRecoveryRequirement()", diagnostic)
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v45"',
+            'EVENT_SCHEMA = "layered-map-parity-event-v46"',
             observer,
         )
         for field in (
