@@ -24,6 +24,8 @@ public class GameObject extends Entity {
 	 * Type 1: Wall Object
 	 */
 	private GameObjectType gameObjectType;
+	private volatile GameObjectCollisionRegistrationState
+		collisionRegistrationState;
 
 	public GameObject(final World world, final GameObjectLoc loc) {
 		super(world, EntityType.GAME_OBJECT);
@@ -72,6 +74,29 @@ public class GameObject extends Entity {
 	/** Used only to reverse a refused ordered unregistration. */
 	public void restoreOrderedTransactionState(final Region expectedRegion) {
 		restoreGameObjectTransactionState(expectedRegion);
+	}
+
+	/** Records the exact footprint only after its ordered registration succeeds. */
+	public void attachOrderedCollisionRegistrationState(
+		final GameObjectCollisionRegistrationState state) {
+		GameObjectCollisionRegistrationState checked =
+			java.util.Objects.requireNonNull(state, "state");
+		if (!checked.matchesConstructor(this)) {
+			throw new IllegalArgumentException(
+				"Collision registration state does not match GameObject");
+		}
+		collisionRegistrationState = checked;
+	}
+
+	/** Clears exact footprint provenance after an ordered removal commits. */
+	public void clearOrderedCollisionRegistrationState() {
+		collisionRegistrationState = null;
+	}
+
+	/** Immutable detached evidence; callers must still hold their boundaries. */
+	public GameObjectCollisionRegistrationState
+		getCollisionRegistrationState() {
+		return collisionRegistrationState;
 	}
 
 	public final Point[] getObjectBoundary() {

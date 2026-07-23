@@ -11,6 +11,7 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision.Targe
 import com.openrsc.server.event.rsc.GameTickEventRestorationTransientRollbackSnapshot;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GameObjectCollisionRegistrationState;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -698,6 +699,13 @@ final class RegionObjectCollisionTransactionExecutor {
 				"Object membership post-state verification failed");
 		}
 		if (oldChange != null) {
+			oldChange.object.clearOrderedCollisionRegistrationState();
+		}
+		if (newChange != null) {
+			newChange.object.attachOrderedCollisionRegistrationState(
+				newChange.registrationState);
+		}
+		if (oldChange != null) {
 			cacheInvalidator.invalidate(oldChange.region);
 		}
 		if (newChange != null
@@ -1185,18 +1193,21 @@ final class RegionObjectCollisionTransactionExecutor {
 			forward;
 		private final GameTickEventRestorationCollisionFootprintPlanner.Result
 			rollback;
+		private final GameObjectCollisionRegistrationState registrationState;
 
 		private Change(
 			final Region region,
 			final GameObject object,
 			final Point location,
 			final GameTickEventRestorationCollisionFootprintPlanner.Result forward,
-			final GameTickEventRestorationCollisionFootprintPlanner.Result rollback) {
+			final GameTickEventRestorationCollisionFootprintPlanner.Result rollback,
+			final GameObjectCollisionRegistrationState registrationState) {
 			this.region = region;
 			this.object = object;
 			this.location = location;
 			this.forward = forward;
 			this.rollback = rollback;
+			this.registrationState = registrationState;
 		}
 
 		private static Change oldObject(
@@ -1213,7 +1224,7 @@ final class RegionObjectCollisionTransactionExecutor {
 					"Old object transaction footprints are invalid");
 			}
 			return new Change(
-				region, object, object.getLocation(), forward, rollback);
+				region, object, object.getLocation(), forward, rollback, null);
 		}
 
 		private static Change newObject(
@@ -1227,7 +1238,9 @@ final class RegionObjectCollisionTransactionExecutor {
 			}
 			Point location = Point.location(
 				object.getLoc().getX(), object.getLoc().getY());
-			return new Change(region, object, location, forward, null);
+			return new Change(
+				region, object, location, forward, null,
+				GameObjectCollisionRegistrationState.capture(object, forward));
 		}
 	}
 

@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, and 147 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, and 148 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -150,7 +150,12 @@ automated-validated Slice 147 adds the non-loading RegionManager reconstruction
 adapter, rebuilds exact `GameObjectLoc` provenance, selects only a normal or
 force-full-block projection equal to the snapshot, resolves every Region by
 non-creating lookup, and leaves Store, coordinator execution, arrival, and
-visibility disconnected;
+visibility disconnected; and
+automated-validated Slice 148 records the exact successful collision register
+footprint as detached per-object provenance inside the canonical transaction,
+clears it only after committed removal, preserves it through refusal/rollback,
+and closes the normal-versus-force-full-block ambiguity required by future live
+snapshot capture;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12195,6 +12200,77 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the adapter has no production caller.
 
+### Slice 148: Exact collision-registration provenance
+
+Objective: retain the exact collision contribution that actually committed for
+each live scenery object so later recovery capture never guesses between normal
+versus force-full-block registration or attributes aggregate tile counters to
+the wrong object.
+
+Implementation finding:
+
+- re-projecting a live object's definition is not exact evidence of its applied
+  state. The same constructor can have normal or force-full-block registration,
+  and a TileValue contains aggregate counters from every contributor;
+- aggregate counters therefore cannot safely prove which portion belongs to one
+  object, especially at overlapping scenery/boundary footprints; and
+- runtime Slice 144 capture must consume transaction-authored provenance or
+  refuse. This prerequisite was inserted before connecting live capture.
+
+Implemented:
+
+- `GameObjectCollisionRegistrationState` is an immutable detached copy of one
+  successful register footprint: constructor/permanent ID, coordinate,
+  direction, type, every sorted per-tile blocking/directional/projectile
+  contribution, and exact required packed-Region coordinates;
+- the state copies primitive counters and Region coordinates only; it retains no
+  GameObject, World, Region, TileValue, scheduler, callback, or collection
+  authority;
+- every new `Change` prebuilds its registration state from the exact projected
+  footprint before mutation. After membership/collision postconditions pass,
+  the canonical transaction attaches that state to the new object;
+- a committed removal clears the old object's state. A committed replacement
+  therefore clears old provenance and attaches only the new exact footprint;
+- refusal before or during new collision application attaches nothing to the
+  new object and preserves the old object's existing provenance through the
+  established collision/membership rollback; and
+- no Store, recovery coordinator, RegionManager capture path, arrival path, or
+  visibility path reads this state yet.
+
+Automated validation status:
+
+- the real transaction fixture proves registration records exact constructor,
+  contribution, and Region coverage and committed removal clears it;
+- committed replacement transfers provenance to only the new object, while a
+  refused replacement preserves the identical old immutable state and leaves
+  the new object without provenance;
+- a force-full-block footprint preserves its exact doubled blocking
+  contribution rather than collapsing it to the normal definition projection;
+- source guards constrain attach/clear calls to the canonical transaction and
+  prove Store remains disconnected;
+- the complete layered-map suite passes 494 tests across 147 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 796 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- provenance is attached only after object membership and collision application
+  both succeed and their post-state is verified; failed registration never
+  advertises collision state that was not committed;
+- the snapshot is evidence, not mutation authority. Public access returns only
+  immutable detached values and cannot change Region membership or TileValue
+  counters;
+- objects that did not pass through the canonical transaction or whose
+  constructor later disagrees with their registration state must refuse future
+  runtime capture; no projection fallback may invent missing provenance; and
+- runtime capture, scheduler-fenced application, executable batch coordination,
+  loading, retry, first-visibility integration, retirement, and persistence
+  remain later gates.
+
+Status: implemented and automated-validated. No owner route is required because
+the new state is passive provenance and has no recovery consumer yet.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13110,16 +13186,24 @@ complete existing boundary. A missing Region, unavailable definition, or
 projection mismatch refuses without mutation. Store, coordinator execution,
 arrival, and visibility remain disconnected.
 
-The next safe slice should define runtime capture of one future callback's
+Slice 148 closes a prerequisite discovered during the live-capture audit. A
+definition re-projection cannot establish whether one object actually used its
+normal or force-full-block registration, and aggregate TileValue counters cannot
+attribute overlapping contributions. The canonical transaction now attaches an
+immutable exact register-footprint copy only after successful membership and
+collision commit, clears it after successful removal, and preserves the old
+copy across any refused replacement. Store and recovery remain disconnected.
+
+The next safe slice can now define runtime capture of one future callback's
 Slice 144 current-state snapshot while the exact scheduler execution/lifecycle,
 Region object, and collision boundaries are held in the established outer-to-
 inner order. It must read the present object's exact constructor, authored
 identity, zero owner/runtime-attribute requirement, positive remaining
-countdown, and actual collision contribution without retaining live handles.
-Any changed registration/lifecycle, missing Region, ambiguous target, collision
-disagreement, or incomplete boundary must refuse and leave the event scheduled.
-Application, batch execution, loading, arrival, and visibility should remain
-disconnected from this first runtime-capture proof.
+countdown, and Slice 148 collision-registration provenance without retaining
+live handles. Missing or stale provenance, changed registration/lifecycle,
+missing Region, ambiguous target, or incomplete boundary must refuse and leave
+the event scheduled. Application, batch execution, loading, arrival, and
+visibility should remain disconnected from this first runtime-capture proof.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
