@@ -38,6 +38,10 @@ LIFECYCLE_COORDINATOR = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventRestorationReconstructionLifecycleCoordinator.java"
 )
+LIVE_PREPARATION_COORDINATOR = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/handler/"
+    "GameTickEventRestorationLivePreparationCoordinator.java"
+)
 TRANSACTION = ROOT / (
     "server/src/com/openrsc/server/model/world/region/"
     "RegionObjectCollisionTransactionExecutor.java"
@@ -364,7 +368,7 @@ class LayeredMapsSliceOneHundredFortyFourTest(unittest.TestCase):
             if path in (
                 SNAPSHOT, COORDINATOR, CAPTURE_COORDINATOR,
                 APPLICATION_COORDINATOR, DIRECTIVE_EXECUTOR, BATCH_EXECUTOR,
-                LIFECYCLE_COORDINATOR,
+                LIFECYCLE_COORDINATOR, LIVE_PREPARATION_COORDINATOR,
                 TRANSACTION, REGION_MANAGER,
             ):
                 continue

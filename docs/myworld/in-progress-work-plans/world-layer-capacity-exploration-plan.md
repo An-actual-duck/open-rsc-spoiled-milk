@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, and 154 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, and 155 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -180,6 +180,10 @@ automated-validated Slice 154 freezes exact recovery inputs before invoking one
 caller-supplied reconstruction operation, runs recovery only after successful
 correlated reconstruction, and makes that captured lifecycle single-use while
 retaining the first-visibility barrier;
+automated-validated Slice 155 converts one exact proposal-scoped live event
+inventory into a ready recovery preparation, captures future current state,
+rejects incomplete related callbacks and scheduler drift, and retains only
+detached inputs for Slice 154;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12656,6 +12660,70 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the reconstruction operation remains fixture-supplied and disconnected.
 
+### Slice 155: Live recovery preparation
+
+Objective: transform one already-detached proposal-scoped event inventory into
+the exact ready preparation and future current-state snapshots required before
+Slice 154 can invoke reconstruction.
+
+Implemented:
+
+- `GameTickEventRestorationLivePreparationCoordinator` selects only events the
+  inventory relates to the exact reconstruction candidate set. Any related
+  event without known restoration state, atomic timing, one-shot semantics,
+  authored target binding, generation match, arrival ordering, or idempotency
+  evidence refuses the complete capture;
+- a fresh Store-wide atomic timing snapshot must exactly match the inventory's
+  scheduler instance and registration set before per-event work begins;
+- each selected callback is rediscovered without a caller-supplied event
+  handle and captured under its exact registration, proposal generation,
+  execution boundary, and stable lifecycle. Overdue callbacks produce a
+  detached Slice 143 candidate directly;
+- future callbacks additionally pass through Slice 150, so their current
+  scenery and exact collision provenance are captured while the callback
+  remains registered and its timing stable. The returned snapshot supplies the
+  candidate's final timing tuple;
+- a second Store-wide snapshot must retain the complete registration set and
+  every selected candidate's exact lifecycle/countdown/execution tuple before
+  Slice 143 and Slice 145 build the ready preparation; and
+- the result defensively copies only the preparation, future snapshots,
+  proposal generation, bounds, and closed counts. It retains no Store, event,
+  registration, Region, callback, or entity handle.
+
+Automated validation status:
+
+- an executable fixture proves one future callback produces a ready one-step
+  preparation plus exactly one current-state snapshot without changing its
+  registration;
+- one overdue callback produces a ready one-step preparation with no Region
+  current-state capture and remains pending until later execution;
+- candidate-related unavailable restoration state refuses before scheduler or
+  Region work, and adding a registration after inventory capture refuses the
+  exact registration-set correlation;
+- source guards require candidate-relation filtering, before/after scheduler
+  correlation, and Slice 150 capture while prohibiting reconstruction, retry,
+  arrival, and visibility;
+- the complete layered-map suite passes 516 tests across 154 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 802 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this seam trusts only an existing detached inventory; it neither selects a
+  retirement proposal nor decides that the candidate sources may be torn down;
+- complete recovery evidence for related callbacks cannot repair the other
+  Player, NPC, dynamic-object, ground-item, collision, terrain, or loader
+  prerequisites for reconstruction;
+- any scheduler or timing drift discards the complete preparation rather than
+  returning a partial prefix; and
+- reconstruction, source loading/teardown, retry, arrival integration, first-
+  visibility release, retirement, persistence, and public/live callers remain
+  absent.
+
+Status: implemented and automated-validated. No owner route is required because
+the preparation result remains disconnected from diagnostics and reconstruction.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13618,14 +13686,20 @@ reconstruction operation, permits Slice 153 only after correlated completion,
 and prevents reuse of the captured evidence. The operation remains disconnected
 from every real loader, and contractual readiness still releases nothing.
 
-The next safe slice should build the exact live pre-reconstruction preparation
-from one already-detached proposal-scoped event inventory. It must select only
-candidate-related restoration callbacks, reject any related callback whose
-restoration/timing/binding evidence is incomplete, capture future current state
-through Slice 150, derive overdue timing without carrying event handles, and
-produce the ready Slice 145 preparation plus exact future snapshots consumed by
-Slice 154. Registration-set drift during capture must fail closed. It must not
-invoke reconstruction, retry, arrival, or visibility.
+Slice 155 now supplies those exact live pre-reconstruction inputs. It accepts
+only candidate-related callbacks with complete recovery evidence, captures each
+under a fresh stable scheduler lifecycle, captures future current scenery
+through Slice 150, and rejects Store registration or selected timing drift
+before returning the detached Slice 145 preparation and snapshots.
+
+The next safe slice should connect Slice 155 directly to Slice 154 inside the
+package-local handler boundary so callers cannot mix a preparation with another
+proposal generation, bound, or future-snapshot list. The first integration
+should use only a fixture-supplied reconstruction operation and return the same
+closed lifecycle result; it must not attach a real loader, observer, command,
+arrival gate, retry, or visibility release. Once that composition is proven, a
+separate private diagnostic can exercise a no-op reconstruction declaration
+against one deliberately pending future callback without unloading anything.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

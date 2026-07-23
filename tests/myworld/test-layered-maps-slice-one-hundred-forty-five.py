@@ -27,6 +27,10 @@ LIFECYCLE_COORDINATOR = ROOT / (
     "server/src/com/openrsc/server/event/rsc/handler/"
     "GameTickEventRestorationReconstructionLifecycleCoordinator.java"
 )
+LIVE_PREPARATION_COORDINATOR = ROOT / (
+    "server/src/com/openrsc/server/event/rsc/handler/"
+    "GameTickEventRestorationLivePreparationCoordinator.java"
+)
 PLAN = ROOT / (
     "docs/myworld/in-progress-work-plans/"
     "world-layer-capacity-exploration-plan.md"
@@ -337,7 +341,7 @@ class LayeredMapsSliceOneHundredFortyFiveTest(unittest.TestCase):
         for path in (ROOT / "server/src").rglob("*.java"):
             if path in (
                 COORDINATOR, DIRECTIVE_EXECUTOR, BATCH_EXECUTOR,
-                LIFECYCLE_COORDINATOR,
+                LIFECYCLE_COORDINATOR, LIVE_PREPARATION_COORDINATOR,
             ):
                 continue
             self.assertNotIn(name, path.read_text(encoding="utf-8"))
