@@ -243,7 +243,10 @@ automated-validated Slice 167 exposes that complete nested result through
 additive private schema-v47, including proposal/owner/link cardinalities, every
 boundary count and refusal reason, per-owner reference evidence, and explicit
 point-in-time/non-authoritative flags. Both private command sources use the same
-GameEventHandler seam and owner validation is pending;
+GameEventHandler seam. Its first dense owner route exposed a real
+high-cardinality defect before validation: recursively nesting 449 event fences
+and 449 NPC gates overflowed the Java stack, so the boundary must become
+iterative before owner validation can resume;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13550,6 +13553,50 @@ path is `PRESERVATION_SCOPE_READY` with every required event and owner boundary
 count complete, zero identity/reference failures, and all durable authority
 flags false; the 8 player-owned callbacks should remain separate.
 
+### Slice 168: High-cardinality preservation-boundary correction
+
+Objective: remove call-stack depth from Slice 167's event/NPC boundary while
+preserving its exact all-or-nothing exclusion and fail-closed semantics.
+
+Owner-test finding:
+
+- schema-v47 records 1-3 were written normally for start, marker
+  `owner-origin-3`, and the teleport from `(120,620)` to dense `(122,503)`;
+- the later `owner-boundary` marker created the expected 36-source proposal and
+  attempted to fence the same 449 NPC-owned callbacks seen in Slices 162-164;
+- the server logged `StackOverflowError` in
+  `captureNestedNpcLifecycleBoundaries`, with the same stack also retaining the
+  recursively nested event-registration/timing frames from
+  `captureNestedBoundaries`;
+- the marker emitted no partial JSONL record and the server remained online.
+  Other developer commands continued to work, while later parity captures
+  retried the same oversized boundary and appeared inert; and
+- this is a boundary implementation defect, not bad owner identity, a corrupt
+  trace, a disabled observer, or a client-command problem.
+
+Required correction:
+
+- replace recursive per-event and per-NPC callback nesting with stable-order,
+  bounded iterative acquisition and reverse-order release;
+- preserve immediate refusal when an event or NPC lifecycle operation is
+  already active, and release every earlier acquisition on partial failure;
+- revalidate the exact scheduler instance, registration sequence, event
+  object, World membership, authored owner identity, active state, and owner
+  instance only while the complete iterative scope is held;
+- retain the same detached counts and typed refusal outcomes, with no durable
+  permit, runtime handle, event mutation, NPC mutation, Region authority, or
+  recovery consumption;
+- add a high-cardinality executable regression using at least the observed 449
+  event/owner boundaries so a small synthetic fixture cannot hide stack-depth
+  dependence again; and
+- make an unexpected private capture failure produce a concise operator-facing
+  refusal while retaining its server-side exception evidence, rather than
+  leaving the command with no response.
+
+Status: diagnosed from the first owner route; implementation, automated
+validation, rebuild, relaunch, and corrected owner recapture remain pending.
+The failed route is not accepted as Slice 167 owner validation.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13929,6 +13976,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 165 by fencing exact callback and World-owner references in one nested runtime operation. | Implemented and automated-validated; exact event boundaries are acquired in stable registration order, scheduler registrations are revalidated before the Store monitor is released, event owner references are correlated under the World NPC-list boundary, detached evidence grants no authority, NPC lifecycle and Region-absence quiescence remain explicit blockers, 549 focused tests pass across 164 files, and the 808/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 166 by sharing one non-blocking preservation gate across each exact NPC lifecycle. | Implemented and automated-validated; all exact-owner supporting callbacks join the registration fence, active movement/behavior/remove/respawn work refuses preservation without a lock cycle, accepted gates exclude later work through innermost reference revalidation, the scope-ready result remains transient and non-authoritative, 552 focused tests pass across 165 files, and the 809/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 167 by exposing the nested NPC owner boundary through additive private diagnostics. | Implemented and automated-validated; schema-v47 reports requirement, registration, event, World, reference, lifecycle, quiescence, and stable per-owner outcomes, both private sources use the same GameEventHandler seam, every durable authority flag remains false, 556 focused tests pass across 166 files, and the 809/488 Ant build passes; owner validation is pending |
+| 2026-07-23 | Checkpoint the first Slice 167 owner route after parity commands appeared to stop responding. | The start/origin/teleport v47 records are intact, but the dense 36-source marker overflowed the Java stack while recursively nesting 449 event fences plus 449 NPC gates; no partial marker was written, other commands and the server remained live, and Slice 168 must replace both recursive boundaries with bounded iterative acquisition plus a real-cardinality regression before owner validation resumes |
 
 ## Next Discussion
 
