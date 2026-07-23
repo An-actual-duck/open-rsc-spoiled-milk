@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -28,20 +29,20 @@ RUNE_CONFIG = {
 }
 
 EXPECTED_LEVEL_99_FULL_INVENTORY_XP = {
-    "air": 6_000,
-    "water": 6_000,
-    "earth": 6_000,
-    "fire": 6_000,
-    "life": 6_000,
-    "mind": 6_300,
-    "body": 7_290,
-    "chaos": 6_720,
-    "cosmic": 6_090,
-    "nature": 6_300,
-    "law": 16_920,
-    "death": 25_200,
-    "soul": 22_320,
-    "blood": 23_040,
+    "air": 1_199,
+    "water": 1_199,
+    "earth": 1_199,
+    "fire": 1_199,
+    "life": 1_199,
+    "mind": 1_259,
+    "body": 1_617,
+    "chaos": 1_673,
+    "cosmic": 1_726,
+    "nature": 1_786,
+    "law": 5_552,
+    "death": 9_765,
+    "soul": 10_463,
+    "blood": 13_440,
 }
 
 PRE_IMPLEMENTATION_DISPLAYED_XP = {
@@ -84,27 +85,15 @@ EXPECTED_ROUTE_REGIMES = (
     (11, "water"),
     (18, "mind"),
     (21, "water"),
-    (28, "mind"),
-    (31, "water"),
-    (35, "body"),
-    (38, "mind"),
-    (41, "water"),
-    (45, "body"),
-    (48, "nature"),
-    (51, "water"),
-    (55, "body"),
+    (25, "body"),
+    (38, "nature"),
+    (54, "death"),
     (58, "nature"),
+    (62, "soul"),
     (64, "death"),
-    (68, "nature"),
+    (70, "blood"),
     (72, "soul"),
-    (74, "death"),
-    (78, "nature"),
     (80, "blood"),
-    (82, "soul"),
-    (84, "death"),
-    (90, "blood"),
-    (92, "soul"),
-    (94, "death"),
 )
 
 
@@ -118,8 +107,11 @@ def rune_multiplier(level: int, unlock: int) -> int:
 
 
 def action_internal_xp(internal_xp: int, multiplier: int, processed_stones: int) -> int:
-    base_runes_crafted = multiplier * processed_stones
-    return internal_xp * base_runes_crafted
+    if internal_xp <= 0 or multiplier <= 0 or processed_stones <= 0:
+        return 0
+    denominator = 1 << (multiplier - 1)
+    numerator = internal_xp * processed_stones * ((1 << multiplier) - 1)
+    return (2 * numerator + denominator) // (2 * denominator)
 
 
 def load_altar_config() -> dict[str, tuple[int, int]]:
@@ -143,12 +135,14 @@ def ensure_runtime_uses_successful_base_output(runecraft: str) -> None:
 
     required_in_order = (
         "int repeatTimes = player.getCarriedItems().getInventory().countId",
+        "final int runeMultiplier = getRuneMultiplier(player, def.getRuneId());",
         "for (int loop = 0; loop < repeatTimes; ++loop)",
         "if (player.getCarriedItems().remove(stone) == -1)",
         "baseRuneCount += craftedRunes;",
         "++processedStoneCount;",
         "if (processedStoneCount > 0)",
-        "player.incExp(Skill.RUNECRAFT.id(), def.getExp() * baseRuneCount, true);",
+        "calculateDiminishingActionExperience(",
+        "player.incExp(Skill.RUNECRAFT.id(), actionExperience, true);",
         "addLawRobeBonusRunes(player, def.getRuneId(), baseRuneCount);",
         "addChaosAmuletBonusRunes(player, def.getRuneId(), baseRuneCount);",
     )
@@ -166,9 +160,34 @@ def ensure_runtime_uses_successful_base_output(runecraft: str) -> None:
         "def.getExp() * repeatTimes",
         "def.getExp() * processedStoneCount",
         "def.getExp() * successCount",
+        "def.getExp() * baseRuneCount",
     ):
         if forbidden in craft_method:
             fail(f"Enchanting XP must use successful base-rune output, found: {forbidden}")
+
+
+def ensure_runtime_uses_exact_action_rounding(runecraft: str) -> None:
+    helper_match = re.search(
+        r"static int calculateDiminishingActionExperience\(.*?\) \{(?P<body>.*?)\n\t\}",
+        runecraft,
+        re.S,
+    )
+    if not helper_match:
+        fail("Runecraft diminishing-return XP helper is missing")
+
+    helper_body = helper_match.group("body")
+    for snippet in (
+        "(long) configuredExperience * processedStoneCount",
+        "final int denominatorExponent = runeMultiplier - 1;",
+        "denominatorExponent >= doubledBaseExperience.bitLength()",
+        "BigInteger.ONE.shiftLeft(denominatorExponent)",
+        "doubledBaseExperience.multiply(denominator)",
+        ".subtract(baseActionExperience)",
+        "numerator.add(denominator.shiftRight(1)).divide(denominator)",
+        "min(BigInteger.valueOf(Integer.MAX_VALUE)).intValue()",
+    ):
+        if snippet not in helper_body:
+            fail(f"Runecraft exact action-level rounding is missing: {snippet}")
 
 
 def ensure_multiplier_and_xp_breakpoints() -> None:
@@ -189,7 +208,9 @@ def ensure_multiplier_and_xp_breakpoints() -> None:
                 )
 
             for processed_stones in (0, 1, 17, 30):
-                expected_xp = internal_xp * expected_multiplier * processed_stones
+                expected_xp = action_internal_xp(
+                    internal_xp, expected_multiplier, processed_stones
+                )
                 actual_xp = action_internal_xp(internal_xp, actual_multiplier, processed_stones)
                 if actual_xp != expected_xp:
                     fail(
@@ -217,8 +238,11 @@ def ensure_route_progression() -> None:
                 PRE_IMPLEMENTATION_ROUTE_XP_HOUR[name] / PRE_IMPLEMENTATION_DISPLAYED_XP[name]
             )
             displayed_xp_per_rune = internal_xp * 3 / 4
+            diminishing_batch_weight = 2 - (
+                1 / (2 ** (rune_multiplier(level, unlock) - 1))
+            )
             route_rates.append(
-                (stone_throughput * displayed_xp_per_rune * rune_multiplier(level, unlock), name)
+                (stone_throughput * displayed_xp_per_rune * diminishing_batch_weight, name)
             )
         winner = max(route_rates)[1]
         if winner != previous_winner:
@@ -227,6 +251,39 @@ def ensure_route_progression() -> None:
 
     if tuple(route_regimes) != EXPECTED_ROUTE_REGIMES:
         fail(f"Route-normalized method changes no longer match the accepted model: {route_regimes}")
+
+
+def ensure_geometric_batch_weighting() -> None:
+    weights = {
+        1: (1, 1),
+        2: (3, 2),
+        3: (7, 4),
+        4: (15, 8),
+    }
+    for internal_xp in (20, 94, 256):
+        for processed_stones in (1, 7, 30):
+            base_action_xp = internal_xp * processed_stones
+            for multiplier, (numerator, denominator) in weights.items():
+                expected = (
+                    2 * base_action_xp * numerator + denominator
+                ) // (2 * denominator)
+                actual = action_internal_xp(internal_xp, multiplier, processed_stones)
+                if actual != expected:
+                    fail(
+                        f"Geometric XP mismatch for internal={internal_xp}, "
+                        f"Stone={processed_stones}, multiplier={multiplier}: "
+                        f"expected {expected}, found {actual}"
+                    )
+
+            for multiplier in (16, 32, 128):
+                expected = base_action_xp * 2
+                actual = action_internal_xp(internal_xp, multiplier, processed_stones)
+                if actual != expected:
+                    fail(
+                        f"High-multiplier XP should converge to {expected}, found {actual} "
+                        f"for internal={internal_xp}, Stone={processed_stones}, "
+                        f"multiplier={multiplier}"
+                    )
 
 
 def main() -> None:
@@ -248,21 +305,27 @@ def main() -> None:
             fail(f"Runecraft implementation is missing: {finding}")
 
     ensure_runtime_uses_successful_base_output(runecraft)
+    ensure_runtime_uses_exact_action_rounding(runecraft)
     ensure_multiplier_and_xp_breakpoints()
+    ensure_geometric_batch_weighting()
     ensure_route_progression()
 
     for snippet in (
-        "Status: implemented and merged into `main`; awaiting release and live validation.",
-        "26 route-normalized optimal regimes",
-        "25 actual method",
-        "`1,035,616 XP/hour`",
-        "`18,900` displayed XP per 30 Stone before equipment",
+        "Status: implemented on the active topic branch; awaiting manager review.",
+        "14 route-normalized optimal regimes",
+        "13 actual method",
+        "`562,240 XP/hour`",
+        "`10,080` displayed XP per 30 Stone before equipment",
+        "100% + 50% + 25% + 12.5%",
         "Law-robe and Chaos-amulet bonus runes remain excluded",
     ):
         if snippet not in analysis:
             fail(f"Rune XP implementation document is missing: {snippet}")
 
-    print("PASS: implemented Enchanting XP values, breakpoints, processing, and route model validated")
+    print(
+        "PASS: diminishing-return Enchanting XP values, breakpoints, processing, "
+        "and route model validated"
+    )
 
 
 if __name__ == "__main__":

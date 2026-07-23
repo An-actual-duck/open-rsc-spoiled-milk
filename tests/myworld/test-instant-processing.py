@@ -71,8 +71,13 @@ def main() -> None:
     )
     require(
         runecraft_text,
-        "player.incExp(Skill.RUNECRAFT.id(), def.getExp() * baseRuneCount, true);",
-        "Runecrafting altar XP should cover all base runes from the full processed inventory",
+        "calculateDiminishingActionExperience(",
+        "Runecrafting altar XP should use diminishing returns for produced rune batches",
+    )
+    require(
+        runecraft_text,
+        "player.incExp(Skill.RUNECRAFT.id(), actionExperience, true);",
+        "Runecrafting altar should award the complete action XP once",
     )
     require(
         runecraft_text,
