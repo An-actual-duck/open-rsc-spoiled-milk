@@ -99,6 +99,17 @@ def main() -> int:
     require(client, "1, 7, 12, 14, 20, 26, 33, 39, 45, 51, 55, 58, 64, 70", "client level is wrong")
     require(client, "{37, 36, 825, 20}", "client Guard Dog cost item IDs are wrong")
     require(client, "{2, 2, 1, 1}", "client Guard Dog cost amounts are wrong")
+    require(client, "GUARD_DOG_SUMMON_NPC_ID = 748", "client Guard Dog NPC identity is missing")
+    examine_body = method_body(client, "private void handleMenuItemClicked")
+    for snippet in (
+        "case NPC_EXAMINE:",
+        "this.getServerNPC(indexOrX)",
+        "character.npcId == GUARD_DOG_SUMMON_NPC_ID",
+        "character.suppressAttackOption",
+        '"He\'s a good boy"',
+        "EntityHandler.getNpcDef(idOrZ).getDescription()",
+    ):
+        require(examine_body, snippet, f"Guard Dog summon examine handling is missing {snippet}")
     require(guide, 'addSummonGuide(748, "55", "Guard Dog - Support;', "skill guide entry is missing")
     require(plan, "purpose-made `guard-dog.png` icon", "Guard Dog icon is undocumented")
     if not ICON.is_file():

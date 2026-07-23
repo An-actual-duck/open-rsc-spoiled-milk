@@ -258,6 +258,7 @@ public final class mudclient implements Runnable {
 	private static final int SUMMONING_ICON_VISIBLE_ROWS = MAGIC_ICON_VISIBLE_ROWS;
 	private static final int SUMMONING_ICON_SIZE = MAGIC_ICON_SIZE;
 	private static final int SUMMONING_ICON_GAP = MAGIC_ICON_GAP;
+	private static final int GUARD_DOG_SUMMON_NPC_ID = 748;
 	private static final String[] SUMMONING_NAMES = {
 		"Broodling Spider", "Mischief Imp", "Loot Goblin", "Ironhide Bear", "Sacred Unicorn",
 		"Duskwind Bat", "Pack Rat", "Bound Battleaxe", "Mourning Unicorn",
@@ -10588,10 +10589,10 @@ public final class mudclient implements Runnable {
 											"@yel@" + EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
 									}
 
-									this.menuCommon.addCharacterItem(this.npcs[var9].npcId, MenuItemAction.NPC_EXAMINE,
-										"Examine",
+									this.menuCommon.addCharacterItem_WithID(this.npcs[var9].serverIndex,
 										"@yel@" + EntityHandler.getNpcDef(this.npcs[var9].npcId).getName()
-											+ (localPlayer.isDev() ? " @or1@(" + this.npcs[var9].npcId + ")" : ""));
+											+ (localPlayer.isDev() ? " @or1@(" + this.npcs[var9].npcId + ")" : ""),
+										MenuItemAction.NPC_EXAMINE, "Examine", this.npcs[var9].npcId);
 								} else {
 									this.menuCommon.addCharacterItem_WithID(this.npcs[var9].serverIndex,
 										"@yel@" + EntityHandler.getNpcDef(this.npcs[var9].npcId).getName(),
@@ -17417,7 +17418,13 @@ public final class mudclient implements Runnable {
 						break;
 				}
 				case NPC_EXAMINE: {
-					this.showMessage(false, null, EntityHandler.getNpcDef(indexOrX).getDescription(),
+					character = this.getServerNPC(indexOrX);
+					String examineText = character != null
+						&& character.npcId == GUARD_DOG_SUMMON_NPC_ID
+						&& character.suppressAttackOption
+						? "He's a good boy"
+						: EntityHandler.getNpcDef(idOrZ).getDescription();
+					this.showMessage(false, null, examineText,
 						MessageType.GAME, 0, null);
 					break;
 				}
