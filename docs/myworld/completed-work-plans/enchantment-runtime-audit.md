@@ -1,6 +1,6 @@
 # Enchantment Runtime Audit
 
-Status: implemented and verified on `fix/enchantment-runtime-audit`
+Status: implemented, verified, and merged into `main`
 
 Audit date: 2026-07-23
 

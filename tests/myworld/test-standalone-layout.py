@@ -234,6 +234,8 @@ def test_myworld_docs_are_consolidated() -> None:
         "completed-work-plans": [
             "altar-enchantment-and-conversion-plan.md",
             "aoe-scythe-weapon-plan.md",
+            "bank-item-pinning-plan.md",
+            "enchantment-runtime-audit.md",
             "entrana-safety-deposit-box-plan.md",
             "fishing-rework-plan.md",
             "geode-and-gathering-spirit-plan.md",

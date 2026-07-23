@@ -1,6 +1,6 @@
 # Persistent Bank Item Pinning
 
-Status: implemented and visually verified on `feat/bank-item-pinning`
+Status: implemented, visually verified, and merged into `main`
 
 ## Goal
 

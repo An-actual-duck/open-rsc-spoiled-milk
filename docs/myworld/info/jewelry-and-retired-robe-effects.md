@@ -3,7 +3,7 @@
 > Historical design record: several names, slot assignments, and charge values
 > below were superseded during implementation. The audited current catalog,
 > getters, and runtime activation checklist is
-> [`enchantment-runtime-audit.md`](../in-progress-work-plans/enchantment-runtime-audit.md).
+> [`enchantment-runtime-audit.md`](../completed-work-plans/enchantment-runtime-audit.md).
 > Use that audit and the generated item definitions as the runtime source of
 > truth.
 
