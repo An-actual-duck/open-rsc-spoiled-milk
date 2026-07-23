@@ -1,7 +1,7 @@
 # Hostile NPC Projectile Reach Audit
 
-Status: implementation complete; automated verification passed; private visual
-verification pending
+Status: implementation complete; automated and private visual verification
+passed
 
 Date: 2026-07-23
 
@@ -651,5 +651,10 @@ The following regression tests pass:
 - `tests/myworld/test-world-editor-region-collision.py`
 
 The authoritative server and plugin build passes through
-`./scripts/build-server.sh`. Private visual verification remains required
-before final handoff.
+`./scripts/build-server.sh`.
+
+Private visual verification on 2026-07-23 used the guarded localhost server at
+`127.0.0.1:43615` and its local client. After establishing the Elder Green
+Dragon as a threat, the player moved across the known lava line. The Elder
+approached the interior edge and successfully attacked over the lava, matching
+the selected policy. The user confirmed the result working before handoff.
