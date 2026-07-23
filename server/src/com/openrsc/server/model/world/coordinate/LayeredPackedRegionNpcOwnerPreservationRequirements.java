@@ -48,6 +48,8 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 	private final int preservationRequiredEventCount;
 	private final int previouslyEligibleEventCount;
 	private final int npcHardBlockerEventCount;
+	private final int relatedEventLinkCount;
+	private final int supportingEventLinkCount;
 	private final int eventLinkCount;
 	private final List<OwnerRequirement> owners;
 
@@ -59,6 +61,7 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 		final int preservationRequiredEventCount,
 		final int previouslyEligibleEventCount,
 		final int npcHardBlockerEventCount,
+		final int relatedEventLinkCount,
 		final int eventLinkCount,
 		final List<OwnerRequirement> owners) {
 		this.generation = inventory.getProposalGeneration();
@@ -78,7 +81,10 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 			preservationRequiredEventCount;
 		this.previouslyEligibleEventCount = previouslyEligibleEventCount;
 		this.npcHardBlockerEventCount = npcHardBlockerEventCount;
+		this.relatedEventLinkCount = relatedEventLinkCount;
 		this.eventLinkCount = eventLinkCount;
+		this.supportingEventLinkCount =
+			eventLinkCount - relatedEventLinkCount;
 		this.owners = Collections.unmodifiableList(
 			new ArrayList<OwnerRequirement>(owners));
 
@@ -100,9 +106,11 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 			|| npcOwnerEventCount
 				!= preservationRequiredEventCount
 					+ previouslyEligibleEventCount + npcHardBlockerEventCount
-			|| eventLinkCount
+			|| relatedEventLinkCount
 				!= preservationRequiredEventCount
 					+ previouslyEligibleEventCount
+			|| eventLinkCount < relatedEventLinkCount
+			|| supportingEventLinkCount < 0
 			|| ownerLinks != eventLinkCount
 			|| ownerPreservationRequired != preservationRequiredEventCount
 			|| ownerPreviouslyEligible != previouslyEligibleEventCount) {
@@ -148,7 +156,7 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 		int preservationRequired = 0;
 		int previouslyEligible = 0;
 		int npcHardBlockers = 0;
-		int eventLinks = 0;
+		int relatedEventLinks = 0;
 		for (EventAssessment assessment : checkedContinuity.getEvents()) {
 			EventRecord event = exactEvent(checkedInventory, assessment);
 			if (event.getAttributionKind()
@@ -178,11 +186,7 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 				throw new IllegalArgumentException(
 					"Matched NPC owner lacks exact identity evidence");
 			}
-			eventLinks = Math.addExact(eventLinks, 1);
-			if (eventLinks > maximumEventLinks) {
-				throw new IllegalArgumentException(
-					"NPC owner event links exceed their budget");
-			}
+			relatedEventLinks = Math.addExact(relatedEventLinks, 1);
 
 			OwnerKey key = new OwnerKey(identity);
 			OwnerRequirementBuilder owner = ownerBuilders.get(key);
@@ -198,11 +202,35 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 				throw new IllegalArgumentException(
 					"One authored NPC identity has conflicting definitions");
 			}
-			owner.add(event.getRegistrationSequence(), outcome);
+			owner.addRelated(event.getRegistrationSequence(), outcome);
 			preservationRequired +=
 				outcome == Outcome.OWNER_PRESERVATION_UNPROVED ? 1 : 0;
 			previouslyEligible +=
 				outcome == Outcome.OWNER_CONTINUITY_ELIGIBLE ? 1 : 0;
+		}
+
+		int eventLinks = 0;
+		for (EventRecord event : checkedInventory.getEvents()) {
+			if (event.getOwnerKind() != OwnerKind.NPC
+				|| event.getNpcOwnerIdentity() == null) {
+				continue;
+			}
+			NpcOwnerIdentity identity = event.getNpcOwnerIdentity();
+			OwnerRequirementBuilder owner =
+				ownerBuilders.get(new OwnerKey(identity));
+			if (owner == null) {
+				continue;
+			}
+			if (owner.getRuntimeNpcId() != identity.getRuntimeNpcId()) {
+				throw new IllegalArgumentException(
+					"One authored NPC identity has conflicting definitions");
+			}
+			eventLinks = Math.addExact(eventLinks, 1);
+			if (eventLinks > maximumEventLinks) {
+				throw new IllegalArgumentException(
+					"NPC owner event links exceed their budget");
+			}
+			owner.addRegistration(event.getRegistrationSequence());
 		}
 
 		if (preservationRequired
@@ -223,7 +251,7 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 		return new LayeredPackedRegionNpcOwnerPreservationRequirements(
 			checkedInventory, checkedContinuity, npcEvents, nonNpcEvents,
 			preservationRequired, previouslyEligible, npcHardBlockers,
-			eventLinks, owners);
+			relatedEventLinks, eventLinks, owners);
 	}
 
 	private static EventRecord exactEvent(
@@ -272,6 +300,10 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 		return npcHardBlockerEventCount;
 	}
 	public int getUniqueNpcOwnerCount() { return owners.size(); }
+	public int getRelatedEventLinkCount() { return relatedEventLinkCount; }
+	public int getSupportingEventLinkCount() {
+		return supportingEventLinkCount;
+	}
 	public int getEventLinkCount() { return eventLinkCount; }
 	public List<OwnerRequirement> getOwners() { return owners; }
 	public boolean isNpcRequirementSetComplete() {
@@ -352,6 +384,8 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 		private final NpcOwnerIdentity identity;
 		private final List<Long> eventRegistrationSequences =
 			new ArrayList<Long>();
+		private final Map<Long, Outcome> relatedOutcomes =
+			new LinkedHashMap<Long, Outcome>();
 		private int preservationRequiredEventCount;
 		private int previouslyEligibleEventCount;
 
@@ -363,9 +397,21 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 			return identity.getRuntimeNpcId();
 		}
 
-		private void add(
+		private void addRelated(
 			final long registrationSequence,
 			final Outcome outcome) {
+			if (relatedOutcomes.put(
+					Long.valueOf(registrationSequence), outcome) != null) {
+				throw new IllegalArgumentException(
+					"Related owner registration is duplicated");
+			}
+			preservationRequiredEventCount +=
+				outcome == Outcome.OWNER_PRESERVATION_UNPROVED ? 1 : 0;
+			previouslyEligibleEventCount +=
+				outcome == Outcome.OWNER_CONTINUITY_ELIGIBLE ? 1 : 0;
+		}
+
+		private void addRegistration(final long registrationSequence) {
 			if (!eventRegistrationSequences.isEmpty()
 				&& eventRegistrationSequences
 					.get(eventRegistrationSequences.size() - 1).longValue()
@@ -375,13 +421,15 @@ public final class LayeredPackedRegionNpcOwnerPreservationRequirements {
 			}
 			eventRegistrationSequences.add(
 				Long.valueOf(registrationSequence));
-			preservationRequiredEventCount +=
-				outcome == Outcome.OWNER_PRESERVATION_UNPROVED ? 1 : 0;
-			previouslyEligibleEventCount +=
-				outcome == Outcome.OWNER_CONTINUITY_ELIGIBLE ? 1 : 0;
 		}
 
 		private OwnerRequirement build() {
+			for (Long relatedSequence : relatedOutcomes.keySet()) {
+				if (!eventRegistrationSequences.contains(relatedSequence)) {
+					throw new IllegalArgumentException(
+						"Related owner registration is missing from its full fence");
+				}
+			}
 			return new OwnerRequirement(
 				identity, preservationRequiredEventCount,
 				previouslyEligibleEventCount, eventRegistrationSequences);

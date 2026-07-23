@@ -35,13 +35,15 @@ METHODS = r'''
                     ownerIdentity(selectedIdentity, 10)),
                 ownerEvent(1, 52L, OwnerKind.NPC,
                     ownerIdentity(selectedIdentity, 10)),
-                ownerEvent(2, 53L, OwnerKind.PLAYER, null)));
+                ownerEvent(2, 53L, OwnerKind.PLAYER, null),
+                supportingOwnerEvent(
+                    3, 54L, ownerIdentity(selectedIdentity, 10))));
         LayeredPackedRegionNpcOwnerEventContinuityAssessment continuity =
             LayeredPackedRegionNpcOwnerEventContinuityAssessment.assess(
                 inventory, clean, true, false, 3);
         LayeredPackedRegionNpcOwnerPreservationRequirements requirements =
             LayeredPackedRegionNpcOwnerPreservationRequirements.derive(
-                inventory, continuity, 1, 2);
+                inventory, continuity, 1, 3);
         check(requirements.getGeneration() == 9L
                 && requirements.getEventObservedAtTick() == 12L
                 && requirements.getCensusObservedAtTick() == 13L
@@ -56,7 +58,9 @@ METHODS = r'''
                 && requirements.getPreviouslyEligibleEventCount() == 0
                 && requirements.getNpcHardBlockerEventCount() == 0
                 && requirements.getUniqueNpcOwnerCount() == 1
-                && requirements.getEventLinkCount() == 2
+                && requirements.getRelatedEventLinkCount() == 2
+                && requirements.getSupportingEventLinkCount() == 1
+                && requirements.getEventLinkCount() == 3
                 && requirements.isNpcRequirementSetComplete()
                 && requirements.hasSeparateNonNpcBlockers(),
             "callback evidence deduplicates to one exact NPC owner");
@@ -74,7 +78,9 @@ METHODS = r'''
                 && owner.getPreviouslyEligibleEventCount() == 0
                 && owner.getFirstRegistrationSequence() == 51L
                 && owner.getEventRegistrationSequences().equals(
-                    Arrays.asList(Long.valueOf(51L), Long.valueOf(52L)))
+                    Arrays.asList(
+                        Long.valueOf(51L), Long.valueOf(52L),
+                        Long.valueOf(54L)))
                 && owner.isSameRuntimeInstanceRequired()
                 && owner.isWorldRegistrationContinuityRequired()
                 && owner.isEventOwnerReferenceContinuityRequired(),
@@ -94,10 +100,10 @@ METHODS = r'''
 
         expectIllegal(() ->
             LayeredPackedRegionNpcOwnerPreservationRequirements.derive(
-                inventory, continuity, 0, 2));
+                inventory, continuity, 0, 3));
         expectIllegal(() ->
             LayeredPackedRegionNpcOwnerPreservationRequirements.derive(
-                inventory, continuity, 1, 1));
+                inventory, continuity, 1, 2));
     }
 
     private static void incompleteNpcEvidenceRemainsIncomplete(
@@ -126,6 +132,17 @@ METHODS = r'''
                 && requirements.getSeparateNonNpcOwnerEventCount() == 1
                 && !requirements.isNpcRequirementSetComplete(),
             "one exact owner cannot hide an unresolved NPC owner");
+    }
+
+    private static EventState supportingOwnerEvent(
+        int ordinal,
+        long registrationSequence,
+        NpcOwnerIdentity ownerIdentity) {
+        return EventState.of(
+            ordinal, registrationSequence, OwnerKind.NPC, ownerIdentity,
+            AttributionKind.NON_SPATIAL_GLOBAL, true, 8L, 0,
+            Collections.emptyList(),
+            EventRestorationState.unavailable(), false);
     }
 '''
 

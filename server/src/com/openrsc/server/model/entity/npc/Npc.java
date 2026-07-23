@@ -51,6 +51,9 @@ public class Npc extends Mob {
 	private boolean shouldRespawn = true;
 	private boolean isRespawning = false;
 	private boolean executedAggroScript = false;
+	private final NpcOwnerPreservationLifecycleGate
+		layeredOwnerLifecycleGate =
+			new NpcOwnerPreservationLifecycleGate();
 	private NpcBehavior npcBehavior;
 	private ArrayList<NpcLootEvent> deathListeners = new ArrayList<NpcLootEvent>(1); // TODO: Should use a more generic class. Maybe PlayerKilledNpcListener, but that is in plugins jar.
 	private static int[] removeHandledInPlugin = {
@@ -1278,7 +1281,78 @@ public class Npc extends Mob {
 		this.playerWantsNpc = wantsNpc;
 	}
 
+	/**
+	 * Enters one short read-only preservation scope only when no NPC lifecycle
+	 * operation is already in progress. New movement, behavior, removal, and
+	 * respawn operations wait until the scope returns.
+	 *
+	 * <p>The operation must not invoke NPC lifecycle methods. This gate does not
+	 * retain the NPC, stop an event, or create authority after it returns.</p>
+	 */
+	public final boolean withinLayeredOwnerPreservationLifecycleBoundary(
+		final LayeredOwnerPreservationLifecycleOperation operation) {
+		if (operation == null) {
+			throw new NullPointerException("operation");
+		}
+		return layeredOwnerLifecycleGate.withinPreservationBoundary(
+			boundary -> operation.execute(
+				new LayeredOwnerPreservationLifecycleBoundary(
+					boundary.isPreservationGateActive(),
+					boundary.getLifecycleOperationsAtEntry())));
+	}
+
+	private void beginLayeredOwnerLifecycleOperation() {
+		layeredOwnerLifecycleGate.beginOperation();
+	}
+
+	private void endLayeredOwnerLifecycleOperation() {
+		layeredOwnerLifecycleGate.endOperation();
+	}
+
+	@FunctionalInterface
+	public interface LayeredOwnerPreservationLifecycleOperation {
+		void execute(
+			LayeredOwnerPreservationLifecycleBoundary boundary);
+	}
+
+	/** Closed facts valid only while the supplied operation is executing. */
+	public static final class LayeredOwnerPreservationLifecycleBoundary {
+		private final boolean preservationGateActive;
+		private final int lifecycleOperationsAtEntry;
+
+		private LayeredOwnerPreservationLifecycleBoundary(
+			final boolean preservationGateActive,
+			final int lifecycleOperationsAtEntry) {
+			this.preservationGateActive = preservationGateActive;
+			this.lifecycleOperationsAtEntry = lifecycleOperationsAtEntry;
+			if (!preservationGateActive || lifecycleOperationsAtEntry != 0) {
+				throw new IllegalArgumentException(
+					"NPC owner preservation lifecycle boundary is invalid");
+			}
+		}
+
+		public boolean isPreservationGateActive() {
+			return preservationGateActive;
+		}
+		public int getLifecycleOperationsAtEntry() {
+			return lifecycleOperationsAtEntry;
+		}
+		public boolean isPointInTimeOnly() { return true; }
+		public boolean isPreservationFactEstablished() { return false; }
+		public boolean isRuntimeHandleRetained() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
+	}
+
 	public void remove() {
+		beginLayeredOwnerLifecycleOperation();
+		try {
+			removeWithinLayeredOwnerLifecycle();
+		} finally {
+			endLayeredOwnerLifecycleOperation();
+		}
+	}
+
+	private void removeWithinLayeredOwnerLifecycle() {
 		setAttribute(DEATH_VISUAL_TICK_ATTRIBUTE, getWorld().getServer().getCurrentTick());
 		this.killed = true;
 		resetCombatEvent();
@@ -1306,25 +1380,30 @@ public class Npc extends Mob {
 			setRespawning(true);
 			getWorld().getServer().getGameEventHandler().add(new DelayedEvent(getWorld(), null, (long) (def.respawnTime() * respawnMult * 1000), "Respawn NPC", DuplicationStrategy.ONE_PER_MOB) {
 				public void run() {
-					n.killed = false;
-					n.setRemoved(false);
-					n.removeAttribute(DEATH_VISUAL_TICK_ATTRIBUTE);
-					n.getRegion().addEntity(n);
+					n.beginLayeredOwnerLifecycleOperation();
+					try {
+						n.killed = false;
+						n.setRemoved(false);
+						n.removeAttribute(DEATH_VISUAL_TICK_ATTRIBUTE);
+						n.getRegion().addEntity(n);
 
-					// Take 4 ticks away from the current time to get a 1 tick pause while the npc spawns,
-					// before it is allowed to attack (if aggressive).
-					teleport(loc.startX, loc.startY);
-					face(loc.startX, loc.startY - 1);
-					setCombatTimer(-getConfig().GAME_TICK * 4);
-					setRespawning(false);
-					getSkills().normalize();
-					tryResyncHitEvent();
+						// Take 4 ticks away from the current time to get a 1 tick pause while the npc spawns,
+						// before it is allowed to attack (if aggressive).
+						teleport(loc.startX, loc.startY);
+						face(loc.startX, loc.startY - 1);
+						setCombatTimer(-getConfig().GAME_TICK * 4);
+						setRespawning(false);
+						getSkills().normalize();
+						tryResyncHitEvent();
 
-					running = false;
-					mageDamagers.clear();
-					rangeDamagers.clear();
-					combatDamagers.clear();
-					summonDamagers.clear();
+						running = false;
+						mageDamagers.clear();
+						rangeDamagers.clear();
+						combatDamagers.clear();
+						summonDamagers.clear();
+					} finally {
+						n.endLayeredOwnerLifecycleOperation();
+					}
 				}
 			});
 		} else if (!shouldRespawn) {
@@ -1367,11 +1446,26 @@ public class Npc extends Mob {
 	}
 
 	public void setShouldRespawn(final boolean respawn) {
-		shouldRespawn = respawn;
+		beginLayeredOwnerLifecycleOperation();
+		try {
+			shouldRespawn = respawn;
+		} finally {
+			endLayeredOwnerLifecycleOperation();
+		}
 	}
 
 	public boolean shouldRespawn() {
 		return shouldRespawn;
+	}
+
+	@Override
+	public void setLocation(final Point point, final boolean teleported) {
+		beginLayeredOwnerLifecycleOperation();
+		try {
+			super.setLocation(point, teleported);
+		} finally {
+			endLayeredOwnerLifecycleOperation();
+		}
 	}
 
 	public void teleport(final int x, final int y) {
@@ -1387,6 +1481,15 @@ public class Npc extends Mob {
 	 * Gets the NPC to move to an adjacent tile, with a priority system.
 	 */
 	public void moveToAdjacentTile() {
+		beginLayeredOwnerLifecycleOperation();
+		try {
+			moveToAdjacentTileWithinLayeredOwnerLifecycle();
+		} finally {
+			endLayeredOwnerLifecycleOperation();
+		}
+	}
+
+	private void moveToAdjacentTileWithinLayeredOwnerLifecycle() {
 		ArrayList<Point> possiblePoints = new ArrayList<>();
 		//Walk priority seems to be positives first? This is different from the client pathfinding.
 		//TODO: More investigation on the direction an NPC would move towards in this case.
@@ -1418,8 +1521,13 @@ public class Npc extends Mob {
 	}
 
 	public void updatePosition(final boolean hasPlayers) {
-		updateBehavior(hasPlayers);
-		updateMovementOnly();
+		beginLayeredOwnerLifecycleOperation();
+		try {
+			updateBehavior(hasPlayers);
+			updateMovementOnly();
+		} finally {
+			endLayeredOwnerLifecycleOperation();
+		}
 	}
 
 	public void updateBehavior() {
@@ -1427,6 +1535,16 @@ public class Npc extends Mob {
 	}
 
 	public void updateBehavior(final boolean hasPlayers) {
+		beginLayeredOwnerLifecycleOperation();
+		try {
+			updateBehaviorWithinLayeredOwnerLifecycle(hasPlayers);
+		} finally {
+			endLayeredOwnerLifecycleOperation();
+		}
+	}
+
+	private void updateBehaviorWithinLayeredOwnerLifecycle(
+		final boolean hasPlayers) {
 		NpcInteraction interaction = getNpcInteraction();
 		Player player = getInteractingPlayer();
 		if (player != null && player.getInteractingNpc() == this) {
@@ -1461,7 +1579,12 @@ public class Npc extends Mob {
 	}
 
 	public void updateMovementOnly() {
-		super.updatePosition();
+		beginLayeredOwnerLifecycleOperation();
+		try {
+			super.updatePosition();
+		} finally {
+			endLayeredOwnerLifecycleOperation();
+		}
 	}
 
 	private boolean canWalk(World world, int x, int y) {
@@ -1583,7 +1706,12 @@ public class Npc extends Mob {
 	}
 
 	public void superRemove() {
-		super.remove();
+		beginLayeredOwnerLifecycleOperation();
+		try {
+			super.remove();
+		} finally {
+			endLayeredOwnerLifecycleOperation();
+		}
 	}
 
 	public boolean addDeathListener(final NpcLootEvent event) {

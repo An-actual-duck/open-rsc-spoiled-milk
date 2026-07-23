@@ -4,7 +4,7 @@ Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path, Slice 158's safe refusal path, and Slice 162's corrected owner
 continuity route owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, and 165 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, and 166 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -233,6 +233,12 @@ scheduler registrations, and correlates the still-fenced event-owner references
 with the World NPC list in one read-only nested operation. It returns only
 detached evidence and correctly stops at the still-unimplemented NPC lifecycle
 and Region-absence-quiescence requirements;
+automated-validated Slice 166 extends each exact owner fence to supporting
+callbacks outside the proposal-related subset and adds one per-NPC preservation
+gate shared by movement, behavior, removal, respawn, and World-removal state.
+The nested runtime operation can now prove point-in-time lifecycle exclusion and
+Region-access quiescence while every event, World, and NPC gate is active, but
+retains no durable preservation fact after returning;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13289,6 +13295,10 @@ Implemented:
   generation, packed source, source ordinal, and NPC definition ID. Multiple
   callbacks owned by the same NPC become one owner requirement with every
   exact scheduler registration sequence retained;
+- after those owners are known, every other inventory callback carrying the
+  same exact authored NPC identity is added as a supporting event link even
+  when it is not proposal-related. Related and supporting counts remain
+  distinct, and the shared event-link budget covers both;
 - preservation-unproved, previously eligible, NPC-hard-blocker, and separate
   non-NPC callback counts remain distinct. One matched owner cannot hide a
   missing, stale, ambiguous, mismatched, or drifted NPC owner;
@@ -13310,9 +13320,9 @@ Safety boundary:
 
 Automated validation status:
 
-- an executable fixture proves two callbacks deduplicate to one exact owner
-  with both stable registration links, while one player-owned callback remains
-  separate;
+- an executable fixture proves two related callbacks and one non-related
+  supporting callback deduplicate to one exact owner with all three stable
+  registration links, while one player-owned callback remains separate;
 - the same fixture proves missing NPC identity keeps the NPC requirement set
   incomplete and undersized owner/link budgets refuse;
 - source guards prove the contract has no entity, Region, event, registration,
@@ -13394,6 +13404,86 @@ this read-only seam remains dormant. The next slice must make NPC movement,
 removal, respawn, and update paths share a bounded per-owner lifecycle boundary,
 then prove absent-Region quiescence inside that same nested scope before a
 private diagnostic route is meaningful.
+
+### Slice 166: Scoped NPC lifecycle and quiescence gate
+
+Objective: close the transient NPC lifecycle portion of Slice 165's boundary
+without holding an NPC monitor across arbitrary gameplay/event code or creating
+a persistent global owner registry.
+
+Implemented:
+
+- Slice 164 requirements now first identify exact proposal-related owners, then
+  scan the complete same-tick event inventory and retain every other callback
+  carrying one of those exact authored NPC identities. Proposal-related and
+  supporting callbacks remain separately counted, while one shared bounded
+  registration list fences both;
+- each NPC owns a small lifecycle gate. Normal movement, behavior, removal,
+  respawn, teleport/location, and final Region-removal operations increment an
+  in-flight count without retaining the gate monitor while their gameplay code
+  runs;
+- preservation refuses immediately when lifecycle work is already active,
+  preventing the scheduler-event-to-NPC lock cycle that a blocking monitor
+  acquisition could create. Once accepted, new lifecycle work waits until the
+  short read-only preservation operation returns;
+- the existing event/registration and World-list nesting enters each exact NPC
+  preservation gate in stable owner order. At the innermost point it rechecks
+  every event-owner object, authored identity, active state, and unique World
+  membership while all gates remain active; and
+- only that fully revalidated inner point reports the NPC lifecycle count and
+  Region-absence quiescence as complete. A busy owner, changed registration,
+  inactive owner, reference mismatch, or World mismatch refuses without
+  waiting or publishing a partial preservation claim.
+
+Locking and compatibility:
+
+- the scheduler Store retains no coordinate, NPC, World, or `EntityList`
+  dependency. The package-local adapter composes the Store's already-tested
+  validated registration fence with the NPC and World gates;
+- no NPC gate monitor is held while behavior, event scheduling/removal, plugin
+  code, Region movement, or respawn code executes. This preserves the generic
+  scheduler fixture boundary and avoids reversing the event-to-World-to-NPC
+  order;
+- World NPC registration/removal continues to share the existing synchronized
+  `EntityList`; the inner observation holds that same list while owner gates
+  are entered and references are revalidated; and
+- the gate is reusable, refuses same-thread lifecycle reentry from inside its
+  read-only callback, and resumes waiting normal work after release.
+
+Safety boundary:
+
+- this proves quiescence only while the nested operation is active. The
+  detached result is stale after return and still reports false for a durable
+  preservation fact, retained handle, performed preservation, registry,
+  reschedule, arrival gate, and lifecycle authority;
+- no persistent absent-Region state, freeze token, pin, lease, NPC relocation,
+  source retirement, reconstruction, or recovery consumption is added;
+- player-owned callbacks remain separate and are not absorbed into the NPC
+  mechanism; and
+- no callback is invoked, stopped, reset, removed, rescheduled, or recreated by
+  the boundary, and no NPC, Region, collision, arrival, or visibility state is
+  mutated by the observation.
+
+Automated validation status:
+
+- an executable concurrency fixture proves active lifecycle work refuses
+  preservation, accepted preservation blocks later lifecycle entry until
+  release, same-thread reentry fails, and the gate remains reusable;
+- the existing requirement fixture proves one exact owner includes two related
+  callbacks plus one non-related supporting callback while the player callback
+  stays separate;
+- source guards cover movement, behavior, remove/respawn, location, and final
+  removal routes, inner correlation revalidation, quiescence publication, and
+  continued scheduler Store isolation;
+- the complete layered-map suite passes 552 tests across 165 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 809 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. The next slice should expose this
+scope-ready but non-durable result through a new additive private diagnostic
+schema so the owner can verify the real callback/owner cardinalities and every
+fail-closed reason before any recovery eligibility consumes it.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -13772,6 +13862,7 @@ private environment should validate at least:
 | 2026-07-23 | Accept the corrected Slice 162/163 private NPC owner-continuity capture. | Owner-validated; all 449 NPC-owned callbacks in the exact 36-source selection carried authored identity and uniquely matched a recognized active owner with the expected definition inside its selected source, every identity-failure class was zero, 8 player-owned hints remain separate, all NPC matches correctly remain preservation-unproved, and recovery refused all 457 callbacks with zero reconstruction, mutation, or terminal consumption |
 | 2026-07-23 | Continue with Slice 164 by deriving exact NPC owner-preservation requirements. | Implemented and automated-validated; callback evidence deduplicates by authored NPC identity, retains every exact registration link, requires same-instance/World-registration/event-reference continuity plus Region-absence quiescence, keeps NPC hard blockers and player callbacks separate, grants no preservation fact or runtime authority, 546 focused tests pass across 163 files, and the 806/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 165 by fencing exact callback and World-owner references in one nested runtime operation. | Implemented and automated-validated; exact event boundaries are acquired in stable registration order, scheduler registrations are revalidated before the Store monitor is released, event owner references are correlated under the World NPC-list boundary, detached evidence grants no authority, NPC lifecycle and Region-absence quiescence remain explicit blockers, 549 focused tests pass across 164 files, and the 808/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 166 by sharing one non-blocking preservation gate across each exact NPC lifecycle. | Implemented and automated-validated; all exact-owner supporting callbacks join the registration fence, active movement/behavior/remove/respawn work refuses preservation without a lock cycle, accepted gates exclude later work through innermost reference revalidation, the scope-ready result remains transient and non-authoritative, 552 focused tests pass across 165 files, and the 809/488 Ant build passes |
 
 ## Next Discussion
 

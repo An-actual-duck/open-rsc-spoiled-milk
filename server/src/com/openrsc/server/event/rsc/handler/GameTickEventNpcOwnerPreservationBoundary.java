@@ -121,9 +121,17 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 			synchronized (worldNpcs) {
 				capture.worldRegistrationBoundaryHeld =
 					Thread.holdsLock(worldNpcs);
+				List<CorrelatedOwner> correlatedOwners =
+					new ArrayList<CorrelatedOwner>(owners.size());
 				for (ExpectedNpcOwner owner : owners) {
-					capture.ownerStates.add(
-						captureOwnerState(owner, worldNpcs));
+					CorrelatedOwner correlated =
+						captureOwnerCorrelation(owner, worldNpcs);
+					correlatedOwners.add(correlated);
+					capture.ownerStates.add(correlated.state);
+				}
+				if (allExact(correlatedOwners)) {
+					captureNestedNpcLifecycleBoundaries(
+						0, correlatedOwners, worldNpcs, capture);
 				}
 			}
 			return;
@@ -152,7 +160,56 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		}
 	}
 
-	private static OwnerBoundaryState captureOwnerState(
+	private static boolean allExact(
+		final List<CorrelatedOwner> owners) {
+		for (CorrelatedOwner owner : owners) {
+			if (!owner.exact) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static void captureNestedNpcLifecycleBoundaries(
+		final int index,
+		final List<CorrelatedOwner> owners,
+		final EntityList<Npc> worldNpcs,
+		final NpcOwnerBoundaryCapture capture) {
+		if (index == owners.size()) {
+			List<OwnerBoundaryState> revalidated =
+				new ArrayList<OwnerBoundaryState>(owners.size());
+			for (CorrelatedOwner owner : owners) {
+				CorrelatedOwner current =
+					captureOwnerCorrelation(owner.expected, worldNpcs);
+				if (!current.exact || current.npc != owner.npc) {
+					return;
+				}
+				revalidated.add(current.state);
+			}
+			capture.ownerStates.clear();
+			capture.ownerStates.addAll(revalidated);
+			capture.regionAbsenceQuiescenceHeld = true;
+			return;
+		}
+
+		CorrelatedOwner owner = owners.get(index);
+		boolean entered = owner.npc
+			.withinLayeredOwnerPreservationLifecycleBoundary(boundary -> {
+				if (!boundary.isPreservationGateActive()
+					|| boundary.getLifecycleOperationsAtEntry() != 0) {
+					throw new IllegalStateException(
+						"NPC lifecycle gate supplied invalid evidence");
+				}
+				capture.npcLifecycleBoundaryCount++;
+				captureNestedNpcLifecycleBoundaries(
+					index + 1, owners, worldNpcs, capture);
+			});
+		if (!entered) {
+			capture.regionAbsenceQuiescenceHeld = false;
+		}
+	}
+
+	private static CorrelatedOwner captureOwnerCorrelation(
 		final ExpectedNpcOwner expected,
 		final EntityList<Npc> worldNpcs) {
 		Npc eventOwner = null;
@@ -183,11 +240,20 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 			}
 		}
 		boolean active = sameInstanceInWorld && eventOwner != null
-			&& !eventOwner.isRemoved() && !eventOwner.isRespawning();
-		return OwnerBoundaryState.observe(
+			&& !eventOwner.isRemoved() && !eventOwner.isRespawning()
+			&& !eventOwner.isUnregistering();
+		OwnerBoundaryState state = OwnerBoundaryState.observe(
 			expected.requirement, validatedLinks, ownerIdentityMatched,
 			sameInstance, worldIdentityMatches, sameInstanceInWorld,
 			active);
+		boolean exact =
+			validatedLinks
+				== expected.requirement
+					.getEventRegistrationSequences().size()
+			&& ownerIdentityMatched && sameInstance
+			&& worldIdentityMatches == 1 && sameInstanceInWorld && active;
+		return new CorrelatedOwner(
+			expected, state, exact ? eventOwner : null, exact);
 	}
 
 	private static boolean matches(
@@ -236,7 +302,9 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 				capture.eventExecutionBoundaryCount,
 				capture.eventTimingBoundaryCount,
 				capture.worldRegistrationBoundaryHeld,
-				0, false, capture.ownerStates, maximumOwners);
+				capture.npcLifecycleBoundaryCount,
+				capture.regionAbsenceQuiescenceHeld,
+				capture.ownerStates, maximumOwners);
 	}
 
 	private static final class ExpectedNpcOwner {
@@ -261,11 +329,31 @@ final class GameTickEventNpcOwnerPreservationBoundary {
 		}
 	}
 
+	private static final class CorrelatedOwner {
+		private final ExpectedNpcOwner expected;
+		private final OwnerBoundaryState state;
+		private final Npc npc;
+		private final boolean exact;
+
+		private CorrelatedOwner(
+			final ExpectedNpcOwner expected,
+			final OwnerBoundaryState state,
+			final Npc npc,
+			final boolean exact) {
+			this.expected = expected;
+			this.state = state;
+			this.npc = npc;
+			this.exact = exact;
+		}
+	}
+
 	private static final class NpcOwnerBoundaryCapture {
 		private boolean registrationSetComplete = true;
 		private int eventExecutionBoundaryCount;
 		private int eventTimingBoundaryCount;
 		private boolean worldRegistrationBoundaryHeld;
+		private int npcLifecycleBoundaryCount;
+		private boolean regionAbsenceQuiescenceHeld;
 		private final List<OwnerBoundaryState> ownerStates =
 			new ArrayList<OwnerBoundaryState>();
 	}

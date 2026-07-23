@@ -231,7 +231,7 @@ class LayeredMapsSliceOneHundredSixtyFiveTest(unittest.TestCase):
         self.assertIn("getTrackedEventRegistrationSnapshot", adapter)
         self.assertIn("synchronized (worldNpcs)", adapter)
         self.assertIn("Thread.holdsLock(worldNpcs)", adapter)
-        self.assertIn("captureOwnerState", adapter)
+        self.assertIn("captureOwnerCorrelation", adapter)
         self.assertNotIn(
             "com.openrsc.server.model.world.coordinate",
             store,
