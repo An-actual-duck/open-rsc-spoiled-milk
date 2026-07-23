@@ -1,7 +1,7 @@
 # Hostile NPC Projectile Reach Audit
 
-Status: investigation complete; no gameplay changes made; awaiting collision
-policy decisions
+Status: investigation complete; no gameplay changes made; implementation
+policy selected
 
 Date: 2026-07-23
 
@@ -411,9 +411,9 @@ if the central policy changes.
 2. **Movement and projectile opacity are conflated.** Strict hostile line of
    fire is derived from walking collision rather than a dedicated opacity
    model.
-3. **The transparency exemption is tile-wide.** It cannot safely ignore only
-   lava-owned full blocking while retaining a co-located wall or scenery
-   owner.
+3. **The transparency exemption is tile-wide.** It cannot independently make
+   lava and ordinary scenery transparent while retaining a co-located wall or
+   fence owner.
 4. **Names obscure semantics.** “Allowed,” “blocked,” and “clip allowed” are
    used for the same exemption, increasing the chance of a reversed fix.
 5. **Boss follow-ups bypass the central gate.** Fixing only
@@ -455,22 +455,24 @@ This is simple but is not recommended as a global fix.
 Separate movement blocking from projectile opacity and use an explicit policy,
 for example:
 
-| Collision source | Recommended hostile projectile policy |
+| Collision source | Selected hostile projectile policy |
 | --- | --- |
 | lava and water surface | transparent; blocks walking only |
 | cardinal/diagonal structural wall | opaque |
 | closed door/gate | opaque |
 | open/removed door | transparent |
-| solid blocking scenery | opaque |
-| intentionally low/transparent scenery | explicit per definition |
+| fence of any kind | opaque, regardless of location or visual subtype |
+| ordinary solid scenery, including rocks and trees | transparent; still blocks walking where applicable |
 | void/unloaded tile | opaque |
 
 This would let the Elder attack over lava without reopening the Heroes Guild
-fence case. It should use an enum or named projectile-path API rather than
-another ambiguous boolean. Source-specific masks or counts must preserve a
-wall/scenery blocker sharing a lava tile.
+fence case or allowing rocks to become Elder safe spots. It should use an enum
+or named projectile-path API rather than another ambiguous boolean.
+Source-specific masks or counts must preserve a wall or fence blocker sharing
+a lava tile while allowing ordinary solid scenery to remain projectile
+transparent.
 
-This is the recommended long-term direction.
+This is the selected implementation direction.
 
 ### Option D: Elder-area or boss-only exception
 
@@ -484,27 +486,18 @@ behavior.
 
 This is acceptable only as a consciously temporary compatibility choice.
 
-## Decisions Required Before Implementation
+## Selected Implementation Policy
 
-1. Should hostile ranged and magic attacks pass over both lava and water, or
-   only lava?
-2. Should low fences/railings remain hard cover for hostile NPCs as required by
-   the Heroes Guild fix?
-3. Should a legally launched projectile be committed to land, or should cover
-   and range be revalidated one tick later?
-4. Should Elder fireshot and burn require a clear line from the dragon to every
-   secondary target? If burn is legally applied, should its later ticks
-   continue through movement/cover?
-5. Should the same-floor raw elevation influence line of fire, or remain
-   visual-only?
-6. Should legacy/admin hostile projectile paths be migrated to the same API or
-   left as explicit diagnostic bypasses?
+The implementation decisions are:
 
-Recommended answers are:
-
-- water and lava block movement but not ordinary ranged/magic line of fire;
-- walls, diagonal walls, closed doors, void, solid scenery, and the Heroes
-  Guild fence remain opaque;
+- water, lava, and ordinary solid scenery block movement where applicable but
+  do not block hostile ranged/magic line of fire;
+- rocks, trees, and other ordinary scenery must not create hostile-NPC safe
+  spots;
+- walls, diagonal walls, closed doors, void, and fences of every kind remain
+  opaque;
+- fence opacity is a global semantic rule, not a Heroes Guild coordinate or
+  object-ID exception;
 - validate collision at launch and commit the ordinary hit after launch;
 - validate each Elder AOE target at AOE launch, then allow a legally applied
   burn to finish;
@@ -512,6 +505,13 @@ Recommended answers are:
   intentional height-aware LOS model;
 - route autonomous, legacy, dragonfire, and boss launch decisions through one
   explicit server API, while clearly labeling administrator bypasses.
+
+The implementation must inventory all fence forms in the definitions,
+including fence scenery, fence boundaries, and fence-like gates. It should use
+explicit semantic metadata or one centrally tested classifier rather than
+assuming that the existing Heroes Guild raw wall value represents every
+fence. An open gate or removed fence segment is transparent because its
+blocking collision is no longer present; a closed fence gate is opaque.
 
 ## Recommended Regression Coverage
 
@@ -530,11 +530,17 @@ source-string guards.
 - Cardinal wall in every crossing direction.
 - Both diagonal wall rotations and corner approaches.
 - Closed door blocks; opening/removing it permits the selected policy.
-- Solid type-1 scenery and directional type-2 scenery.
-- A low/transparent scenery definition selected for explicit policy.
+- Solid type-1 scenery such as a rock remains movement-blocking but
+  projectile-transparent.
+- A tree remains projectile-transparent.
+- Every fence family found in the definitions blocks hostile projectiles,
+  including cardinal, diagonal, scenery, boundary, and closed-gate forms.
+- Opening a fence gate removes its projectile obstruction; closing it restores
+  the obstruction.
 - Water overlay `2`, lava overlay `11`, ordinary walkable overlay, and void.
-- A lava tile sharing a wall or dynamic scenery owner, proving only the
-  intended owner is ignored.
+- A lava tile sharing a wall or fence owner still blocks the projectile.
+- A lava tile sharing an ordinary solid-scenery owner remains projectile
+  transparent.
 - Dynamic register/unregister cycles do not lose another collision owner's
   state.
 
