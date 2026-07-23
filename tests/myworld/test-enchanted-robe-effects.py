@@ -104,7 +104,7 @@ def main() -> None:
 	require(projectile_event, "protected boolean bloodSpell;", "Projectile event should track blood spells")
 	require(projectile_event, "protected NpcMagicElement magicElement = NpcMagicElement.NONE;", "Projectile event should track NPC magic element")
 	require(projectile_event, "applyRobeDamageMitigation(damage, magicElement)", "Typed projectile damage should use elemental robe resistance")
-	require(projectile_event, "applyBloodRobeSplash((Player) caster, damage);", "Blood robe should splash from blood spell projectile damage")
+	require(projectile_event, "applyBloodRobeSplash((Player) caster, damageDealt);", "Blood robe should splash from actual blood spell projectile damage")
 	require(projectile_event, "applyDeathRobeOverkillSplash((Player) caster, (Npc) opponent, damage - lastHits);", "Death robe should splash projectile overkill")
 	require_regex(projectile_event, r"if \(!bloodSpell \|\| opponent == null \|\| !opponent\.isNpc\(\)\)", "Blood splash should be blood-spell and NPC gated")
 

@@ -49,8 +49,8 @@ public class PoisonEvent extends GameTickEvent {
 			player.getCache().set("poisoned", poisonPower);
 		}
 		if (damage > 0) {
-			mob.damage(damage, HitSplat.TYPE_POISON);
-			applyLeach(damage);
+			final int actualDamage = mob.damageAndGetActualDamage(damage, HitSplat.TYPE_POISON);
+			applyLeach(actualDamage);
 		}
 	}
 

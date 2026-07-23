@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import re
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import NoReturn
 
@@ -15,7 +17,9 @@ EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java
 NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
 DROP_TABLE = ROOT / "server/src/com/openrsc/server/content/DropTable.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+MOB = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
 POISON_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java"
+CORROSIVE_AURA = ROOT / "server/src/com/openrsc/server/content/CorrosiveAura.java"
 EATING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/Eating.java"
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 COMBAT_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
@@ -71,6 +75,24 @@ def near(actual: float, expected: float, message: str) -> None:
 def strip_comments(text: str) -> str:
     text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     return "\n".join(line.split("//", 1)[0] for line in text.splitlines())
+
+
+def java_method_body(text: str, signature: str) -> str:
+    start = text.find(signature)
+    if start == -1:
+        fail(f"Missing Java method signature: {signature}")
+    opening_brace = text.find("{", start)
+    if opening_brace == -1:
+        fail(f"Missing Java method body: {signature}")
+    depth = 0
+    for index in range(opening_brace, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[opening_brace + 1:index]
+    fail(f"Unterminated Java method body: {signature}")
 
 
 def parse_item_ids() -> dict[str, int]:
@@ -404,6 +426,121 @@ def ensure_formula_source_matches_design() -> None:
     require(tier_for(3110, SPECIAL_AMULETS, LIFE) == 5, "Dragonstone life amulet should add +5 summon max damage")
 
 
+def ensure_leach_calculation_behavior() -> None:
+    sources = {
+        "com/openrsc/server/content/Leach.java": LEACH.read_text(encoding="utf-8"),
+        "com/openrsc/server/constants/Skill.java": """
+package com.openrsc.server.constants;
+public enum Skill {
+    HITS;
+    public int id() { return 0; }
+}
+""",
+        "com/openrsc/server/model/entity/player/Skills.java": """
+package com.openrsc.server.model.entity.player;
+public final class Skills {
+    private int current;
+    private final int maximum;
+    public Skills(int current, int maximum) { this.current = current; this.maximum = maximum; }
+    public int getMaxStat(int skill) { return maximum; }
+    public int getLevel(int skill) { return current; }
+    public void setLevel(int skill, int value) { current = value; }
+}
+""",
+        "com/openrsc/server/model/entity/player/UpdateFlags.java": """
+package com.openrsc.server.model.entity.player;
+import com.openrsc.server.model.entity.update.HitSplat;
+public final class UpdateFlags {
+    public void addHitSplat(HitSplat hitSplat) {}
+}
+""",
+        "com/openrsc/server/model/entity/player/Player.java": """
+package com.openrsc.server.model.entity.player;
+public final class Player {
+    private final Skills skills;
+    private final UpdateFlags flags = new UpdateFlags();
+    private boolean removed;
+    public Player(int current, int maximum) { skills = new Skills(current, maximum); }
+    public boolean isRemoved() { return removed; }
+    public void setRemoved(boolean value) { removed = value; }
+    public Skills getSkills() { return skills; }
+    public UpdateFlags getUpdateFlags() { return flags; }
+}
+""",
+        "com/openrsc/server/model/entity/update/HitSplat.java": """
+package com.openrsc.server.model.entity.update;
+import com.openrsc.server.model.entity.player.Player;
+public final class HitSplat {
+    public static final int TYPE_HEAL = 1;
+    public HitSplat(Player player, int type, int amount) {}
+}
+""",
+        "com/openrsc/server/net/rsc/ActionSender.java": """
+package com.openrsc.server.net.rsc;
+import com.openrsc.server.model.entity.player.Player;
+public final class ActionSender {
+    public static void sendStat(Player player, int skill) {}
+}
+""",
+        "LeachCalculationFixture.java": """
+import com.openrsc.server.content.Leach;
+import com.openrsc.server.model.entity.player.Player;
+
+public final class LeachCalculationFixture {
+    private static void equal(int actual, int expected, String label) {
+        if (actual != expected) {
+            throw new AssertionError(label + ": expected " + expected + ", found " + actual);
+        }
+    }
+
+    public static void main(String[] args) {
+        equal(Leach.calculateHealing(0, 0.25D, 10), 0, "zero damage");
+        equal(Leach.calculateHealing(10, 0.0D, 10), 0, "zero percent");
+        equal(Leach.calculateHealing(10, 0.25D, 0), 0, "full health");
+        equal(Leach.calculateHealing(1, 0.05D, 10), 1, "positive minimum");
+        equal(Leach.calculateHealing(19, 0.25D, 20), 4, "flooring");
+        equal(Leach.calculateHealing(20, 0.25D, 20), 5, "exact percentage");
+        equal(Leach.calculateHealing(100, 1.0D, 3), 3, "missing Hits cap");
+
+        Player player = new Player(7, 10);
+        equal(Leach.heal(player, 100, 1.0D), 3, "runtime heal cap");
+        equal(player.getSkills().getLevel(0), 10, "runtime maximum Hits");
+        player.setRemoved(true);
+        equal(Leach.heal(player, 10, 1.0D), 0, "removed player");
+    }
+}
+""",
+    }
+    with tempfile.TemporaryDirectory(prefix="leach-regression-") as temp_directory:
+        root = Path(temp_directory)
+        for relative_path, source in sources.items():
+            path = root / relative_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(source.strip() + "\n", encoding="utf-8")
+        (root / "classes").mkdir()
+        java_files = sorted(str(path) for path in root.rglob("*.java"))
+        compile_result = subprocess.run(
+            ["javac", "-d", str(root / "classes"), *java_files],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        require(
+            compile_result.returncode == 0,
+            f"Leach behavior fixture did not compile:\n{compile_result.stderr}",
+        )
+        run_result = subprocess.run(
+            ["java", "-cp", str(root / "classes"), "LeachCalculationFixture"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        require(
+            run_result.returncode == 0,
+            f"Leach behavior fixture failed:\n{run_result.stderr}",
+        )
+
+
 def ensure_runtime_paths_are_wired() -> None:
     effects = EFFECTS.read_text(encoding="utf-8")
     item_defs_custom = ITEM_DEFS_CUSTOM.read_text(encoding="utf-8")
@@ -412,7 +549,9 @@ def ensure_runtime_paths_are_wired() -> None:
     npc = NPC.read_text(encoding="utf-8")
     drop_table = DROP_TABLE.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
+    mob = MOB.read_text(encoding="utf-8")
     poison_event = POISON_EVENT.read_text(encoding="utf-8")
+    corrosive_aura = CORROSIVE_AURA.read_text(encoding="utf-8")
     leach = LEACH.read_text(encoding="utf-8")
     eating = EATING.read_text(encoding="utf-8")
     summoning = SUMMONING.read_text(encoding="utf-8")
@@ -571,17 +710,81 @@ def ensure_runtime_paths_are_wired() -> None:
             and "calculateHealing" in leach
             and "HitSplat.TYPE_HEAL" in leach,
             "Leach should be a named reusable heal-from-damage effect")
-    require("applyBloodAmuletLifesteal" in player and "Leach.heal(this, damageDealt, lifestealChance);" in player,
+    require("applyBloodAmuletLifesteal" in player and "Leach.heal(this, damageDealt, lifestealPercent);" in player,
             "Blood amulet lifesteal should use the shared Leach helper")
+    require("Math.max(1, (int) Math.floor(damageDealt * leachPercent))" in leach
+            and "Math.min(healing, missingHits)" in leach,
+            "Leach healing should round down, guarantee one for positive damage, and cap to missing Hits")
     require("syncHitsEquipmentBonuses" in player and "getBloodRingHitsBonus" in player,
             "Blood ring should synchronize max Hits bonuses")
     require("getBloodNecklaceLeachPercent" in equipment
             and "getBloodNecklaceLeachPercent(neckItem.getCatalogId())" in equipment,
             "Blood necklace should expose the Leach percentage")
+    require("damageAndGetActualDamage(final int damage, final int hitSplatType)" in mob
+            and "final int actualDamage = Math.min(Math.max(0, appliedDamage), currentHp);" in mob,
+            "Damage callers that own follow-up effects should be able to use post-mitigation, overkill-capped damage")
     require("setPoisonOwnerId" in poison_event
             and "getBloodNecklaceLeachPercent()" in poison_event
+            and "final int actualDamage = mob.damageAndGetActualDamage(damage, HitSplat.TYPE_POISON);" in poison_event
+            and "applyLeach(actualDamage);" in poison_event
             and "Leach.heal(poisonOwner, damage, leachPercent);" in poison_event,
-            "Poison ticks should Leach to the player source when equipped")
+            "Poison ticks should Leach their actual applied damage to the player source when equipped")
+    require("attacker.applyPoison(poisonPower, attacker.getCurrentPoisonPower() + poisonPower, defender);" in corrosive_aura,
+            "Corrosive Aura should attribute its poison to the defending player who owns the effect")
+    require("applyBloodAmuletLifesteal" not in poison_event
+            and "applyBloodAmuletLifesteal" not in corrosive_aura
+            and "getBloodNecklaceLeachPercent" not in corrosive_aura,
+            "Corrosive poison should use the poison-owner Leach path without also triggering direct-hit Siphoning")
+
+    combat_direct = java_method_body(
+        combat_event,
+        "private void inflictDamage(final Mob hitter, final Mob target, int damage)",
+    )
+    pvm_direct = java_method_body(
+        pvm_melee,
+        "private void inflictDamage(final Mob hitter, final Mob target, int damage)",
+    )
+    projectile_direct = java_method_body(projectile_event, "private void projectileDamage()")
+    scythe_cleave = java_method_body(
+        pvm_melee,
+        "private void inflictScytheCleaveDamage(final Player player, final Npc npc, int damage)",
+    )
+    projectile_chain = java_method_body(
+        projectile_event,
+        "private void inflictChainLightningDamage(final Player casterPlayer, final Mob chainTarget, int chainDamage)",
+    )
+    blood_robe_splash = java_method_body(
+        projectile_event,
+        "private void applyBloodRobeSplash(final Player casterPlayer, final int damageDealt)",
+    )
+    for body, label in (
+        (combat_direct, "standard melee/PvP"),
+        (pvm_direct, "PvM melee"),
+    ):
+        require("if (hitter.isPlayer())" in body
+                and "applyBloodAmuletLifesteal(damageDealt);" in body
+                and body.count("applyBloodAmuletLifesteal(") == 1,
+                f"Siphoning should activate exactly once from actual direct damage in {label}")
+    require("isPrimaryProjectileAttackType()" in projectile_direct
+            and "applyBloodAmuletLifesteal(damageDealt);" in projectile_direct
+            and "applyBloodAmuletLifesteal(damage);" not in projectile_direct
+            and projectile_direct.count("applyBloodAmuletLifesteal(") == 1,
+            "Siphoning should cover ranged and magic primary projectiles exactly once using actual damage")
+    require("applyBloodAmuletLifesteal(damageDealt);" in scythe_cleave
+            and scythe_cleave.count("applyBloodAmuletLifesteal(") == 1,
+            "Siphoning should cover each actual scythe cleave hit exactly once")
+    require("applyBloodAmuletLifesteal" not in projectile_chain
+            and "applyBloodAmuletLifesteal" not in blood_robe_splash
+            and "applyBloodAmuletLifesteal" not in summoning,
+            "Siphoning should not recurse through chain, blood-robe splash, or summon damage")
+    require(
+        (combat_event + pvm_melee + projectile_event).count("applyBloodAmuletLifesteal(") == 4,
+        "Siphoning should have only direct melee, projectile, and explicit scythe-cleave activation points",
+    )
+    require(
+        (player + poison_event).count("Leach.heal(") == 2,
+        "Shared Leach healing should have only the Siphoning and owned-poison entry points",
+    )
     require("applyDeathAmuletBurst" in player
             and "getDeathAmuletBurstChargePointsForNpc" in player
             and "setDeathAmuletBurstChargePoints(this, deathAmulet" in player
@@ -726,6 +929,7 @@ def ensure_runtime_paths_are_wired() -> None:
 
 def main() -> None:
     ensure_formula_source_matches_design()
+    ensure_leach_calculation_behavior()
     ensure_runtime_paths_are_wired()
     print("PASS: jewelry runtime effect formulas and wiring validated")
 

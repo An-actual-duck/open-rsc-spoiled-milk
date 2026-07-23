@@ -2212,11 +2212,11 @@ public final class Player extends Mob {
 		if (damageDealt <= 0) {
 			return;
 		}
-		final double lifestealChance = getCarriedItems().getEquipment().getBloodAmuletLifestealChance();
-		if (lifestealChance <= 0.0D) {
+		final double lifestealPercent = getCarriedItems().getEquipment().getBloodAmuletLifestealChance();
+		if (lifestealPercent <= 0.0D) {
 			return;
 		}
-		Leach.heal(this, damageDealt, lifestealChance);
+		Leach.heal(this, damageDealt, lifestealPercent);
 	}
 
 	public void applyDeathAmuletBurst(final Mob killed) {

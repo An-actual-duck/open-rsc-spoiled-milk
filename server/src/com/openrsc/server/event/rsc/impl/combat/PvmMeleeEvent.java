@@ -292,11 +292,13 @@ public class PvmMeleeEvent extends GameTickEvent {
 			n.addCombatDamage(player, damage);
 			Summoning.recordOwnerCombatSummonDamage(player, n, damage);
 			DivineGrace.apply(player, damage);
-			player.applyBloodAmuletLifesteal(damage);
 			if (target.getSkills().getLevel(Skill.HITS.id()) > 0 && player.applyDeathRingChargeHit(n)) {
 				onDeath(target, hitter);
 				return;
 			}
+		}
+		if (hitter.isPlayer()) {
+			((Player) hitter).applyBloodAmuletLifesteal(damageDealt);
 		}
 		if (target.isPlayer() && hitter.isPlayer()) {
 			DivineGrace.apply((Player) hitter, damageDealt);

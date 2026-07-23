@@ -1,5 +1,12 @@
 # Jewelry and Retired Robe Effects
 
+> Historical design record: several names, slot assignments, and charge values
+> below were superseded during implementation. The audited current catalog,
+> getters, and runtime activation checklist is
+> [`enchantment-runtime-audit.md`](../in-progress-work-plans/enchantment-runtime-audit.md).
+> Use that audit and the generated item definitions as the runtime source of
+> truth.
+
 This document records cloth effects retired from robes and the implemented
 altar-jewelry runtime behavior.
 
