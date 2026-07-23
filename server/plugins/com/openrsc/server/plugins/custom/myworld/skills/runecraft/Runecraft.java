@@ -10,6 +10,7 @@ import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
 import com.openrsc.server.util.rsc.DataConversions;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import static com.openrsc.server.plugins.Functions.*;
@@ -88,6 +89,7 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 		player.message("You channel the altar's power through the stone.");
 		int processedStoneCount = 0;
 		int baseRuneCount = 0;
+		final int runeMultiplier = getRuneMultiplier(player, def.getRuneId());
 		for (int loop = 0; loop < repeatTimes; ++loop) {
 			Item stone = player.getCarriedItems().getInventory().get(
 				player.getCarriedItems().getInventory().getLastIndexById(ItemId.RUNE_STONE.id(), Optional.of(false)));
@@ -98,17 +100,45 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 			if (player.getCarriedItems().remove(stone) == -1) {
 				break;
 			}
-			final int craftedRunes = getRuneMultiplier(player, def.getRuneId());
+			final int craftedRunes = runeMultiplier;
 			player.getCarriedItems().getInventory().add(new Item(def.getRuneId(), craftedRunes));
 			baseRuneCount += craftedRunes;
 			++processedStoneCount;
 		}
 
 		if (processedStoneCount > 0) {
-			player.incExp(Skill.RUNECRAFT.id(), def.getExp() * baseRuneCount, true);
+			final int actionExperience = calculateDiminishingActionExperience(
+				def.getExp(), processedStoneCount, runeMultiplier);
+			player.incExp(Skill.RUNECRAFT.id(), actionExperience, true);
 			addLawRobeBonusRunes(player, def.getRuneId(), baseRuneCount);
 			addChaosAmuletBonusRunes(player, def.getRuneId(), baseRuneCount);
 		}
+	}
+
+	private static int calculateDiminishingActionExperience(
+			final int configuredExperience,
+			final int processedStoneCount,
+			final int runeMultiplier
+	) {
+		if (configuredExperience <= 0 || processedStoneCount <= 0 || runeMultiplier <= 0) {
+			return 0;
+		}
+
+		final BigInteger baseActionExperience = BigInteger.valueOf(
+			(long) configuredExperience * processedStoneCount);
+		final BigInteger doubledBaseExperience = baseActionExperience.shiftLeft(1);
+		final int denominatorExponent = runeMultiplier - 1;
+		final BigInteger roundedExperience;
+		if (denominatorExponent >= doubledBaseExperience.bitLength()) {
+			// Remaining fractional batches total less than half an internal XP unit.
+			roundedExperience = doubledBaseExperience;
+		} else {
+			final BigInteger denominator = BigInteger.ONE.shiftLeft(denominatorExponent);
+			final BigInteger numerator = doubledBaseExperience.multiply(denominator)
+				.subtract(baseActionExperience);
+			roundedExperience = numerator.add(denominator.shiftRight(1)).divide(denominator);
+		}
+		return roundedExperience.min(BigInteger.valueOf(Integer.MAX_VALUE)).intValue();
 	}
 
 	private void addLawRobeBonusRunes(final Player player, final int runeId, final int baseRuneCount) {
