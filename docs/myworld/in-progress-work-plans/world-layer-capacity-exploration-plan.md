@@ -5,7 +5,7 @@ Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 contained path, Slice 158's safe refusal path, Slice 162's corrected owner
 continuity route, and Slices 167-168's corrected owner-preservation route
 owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, and 169 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, and 170 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -260,6 +260,11 @@ source order into the owner requirements and admits a caller only through a
 thread-confined scope created after every event, registration, World, owner,
 and quiescence check. The scope carries no runtime handles and is invalidated
 before the enclosing gates release, so it cannot become detached authority;
+automated-validated Slice 170 composes one still-disconnected source lifecycle
+with one scope-local consumer. Only exact full source absence, reconstruction,
+restoration before return, and withheld first visibility admit the consumer;
+both request and preservation evidence expire before the outer scope, and the
+detached result is historical rather than reusable authority;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13711,6 +13716,72 @@ completion result and prove that only a complete absence-and-reconstruction
 operation can establish preservation for work consumed before this scope
 expires.
 
+### Slice 170: Ephemeral preserved source lifecycle
+
+Objective: compose one exact source lifecycle and one preservation-dependent
+consumer inside Slice 169's active scope without allowing either capability or
+its preservation fact to escape.
+
+Implemented:
+
+- a package-local disconnected lifecycle copies the active scope's generation,
+  requirements tick, scheduler identity, canonical selected sources, event-link
+  count, and owner count into one thread-confined request;
+- only that request instance can create its typed completion. A completion
+  cannot cross scopes even when every detached scalar happens to match;
+- source-lifecycle refusal, partial absence, partial reconstruction, sources
+  not restored before return, and first visibility not withheld are separate
+  fail-closed outcomes. None invokes preservation-dependent work;
+- only exact full absence plus full reconstruction, verified restoration
+  before return, and withheld first visibility opens ephemeral preservation
+  evidence and invokes one consumer;
+- the evidence states preservation only for the active scope and exposes no
+  event, owner, Region, scheduler, or registration handle. It is invalidated
+  before the lifecycle method returns, and the source request is invalidated
+  on success, refusal, or exception; and
+- the detached `PRESERVED_CONSUMER_COMPLETED` result records that one already
+  completed consumer ran under the preservation boundary. It is explicitly not
+  a reusable fact for later work.
+
+Safety boundary:
+
+- no production caller reaches the lifecycle;
+- the source-lifecycle and preserved-consumer functions are fixture/caller
+  supplied. No Region loader, registry mutation, reconstruction coordinator,
+  recovery coordinator, arrival gate, visibility release, event mutation, or
+  NPC mutation is connected;
+- completion is bound by request object identity as well as exact source
+  scalars, and the outer scope is revalidated after both lifecycle and
+  preserved work; and
+- preserved evidence is thread-confined. Cross-thread access, post-return
+  access, lifecycle exceptions, consumer exceptions, and scope substitution
+  all fail closed.
+
+Automated validation status:
+
+- an executable fixture proves one complete two-source lifecycle admits one
+  consumer with exact 3-event/2-owner evidence, then rejects leaked request and
+  evidence objects;
+- the fixture independently covers typed source refusal, partial absence,
+  partial reconstruction, unrestored sources, visible incomplete state, and a
+  completion from another otherwise-identical scope;
+- lifecycle and consumer exceptions propagate only after their leaked
+  capabilities are invalidated, and preservation evidence rejects a second
+  thread;
+- structural guards prove there is no production consumer and no entity,
+  RegionManager, registration, callback, arrival, or visibility dependency;
+- the complete layered-map suite passes 567 tests across 169 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 811 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. Owner validation is not required
+because the lifecycle is still disconnected. The next slice should add a
+verification-only adapter that runs through the real Slice 169 boundary and
+uses no Region mutation: it should prove a complete same-state source cycle can
+consume scoped preservation while every normal diagnostic and gameplay route
+remains unchanged.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14094,6 +14165,7 @@ private environment should validate at least:
 | 2026-07-23 | Implement Slice 168's high-cardinality preservation-boundary correction. | Event and NPC lifecycle sets now acquire iteratively in stable order, refuse busy members without waiting, release partial sets in reverse, validate exact registrations and owner references only inside the complete scope, and report unexpected private command failures; 449-member fixtures pass under a 256 KB Java stack, the complete 559-test suite and 809/488 Ant build pass, and corrected private owner validation is pending |
 | 2026-07-23 | Accept the corrected Slice 167/168 private NPC owner-preservation boundary. | Owner-validated; the schema-v47 start/teleport/dense-marker/stop sequence validates, both dense records report `PRESERVATION_SCOPE_READY` across 36 sources, 457 callbacks, 449 exact NPC owners and links, every event/World/NPC/quiescence boundary is complete, the 8 player-owned callbacks remain separate, no stack or command failure recurs, and every durable authority or mutation flag remains false |
 | 2026-07-23 | Continue with Slice 169 by adding a source-bound NPC preservation scope. | Implemented and automated-validated; exact canonical selected sources now survive requirement derivation, a package-local caller can enter only inside the complete iterative event/registration/World/NPC/quiescence boundary, the handle-free scope is thread-confined and invalidated before gate release, ordinary diagnostics remain unchanged, 563 focused tests pass across 168 files, and the 810/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 170 by composing an ephemeral preserved source lifecycle. | Implemented and automated-validated; only one exact request-bound full absence/reconstruction/restoration cycle with first visibility withheld admits one consumer, completion cannot cross scopes, request and evidence leakage fail after return or exception, the detached success is historical rather than reusable authority, no production caller exists, 567 focused tests pass across 169 files, and the 811/488 Ant build passes |
 
 ## Next Discussion
 
