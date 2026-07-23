@@ -23,6 +23,7 @@ public class ClientLimitations {
 	public boolean supportsSystemUpdateTimer = false;
 	public boolean supportsMessageBox = false;
 	public boolean isAndroidClient = false;
+	public boolean supportsBankItemPinning = false;
 
 	ClientLimitations(int clientVersion) {
 		setKnownLimitations(clientVersion);
@@ -206,6 +207,9 @@ public class ClientLimitations {
 		}
 		if (clientVersion >= 200) {
 			maxIgnore = 100;
+		}
+		if (clientVersion >= 10047) {
+			supportsBankItemPinning = true;
 		}
 	}
 

@@ -15,6 +15,7 @@ import com.openrsc.server.database.struct.UsernameChangeType;
 import com.openrsc.server.event.custom.HolidayDropEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Shop;
+import com.openrsc.server.model.container.Bank;
 import com.openrsc.server.model.container.BankPreset;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
@@ -42,6 +43,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1990,7 +1992,12 @@ public class ActionSender {
 	 * Show the bank window
 	 */
 	public static void showBank(Player player) {
-		int itemsInBank = player.getBank().size();
+		final boolean includePins = player.isUsingCustomClient()
+			&& player.getConfig().WANT_CUSTOM_BANKS
+			&& player.getClientLimitations().supportsBankItemPinning;
+		final List<Bank.DisplaySlot> displaySlots = includePins
+			? player.getBank().getDisplaySlots() : Collections.emptyList();
+		int itemsInBank = includePins ? displaySlots.size() : player.getBank().size();
 		if (!player.isUsingCustomClient()) {
 			if ((player.getWorld().getServer().getConfig().MEMBER_WORLD && itemsInBank > 192) ||
 				(!player.getWorld().getServer().getConfig().MEMBER_WORLD && itemsInBank > 48)) {
@@ -2007,12 +2014,24 @@ public class ActionSender {
 		struct.maxBankSize = player.getWorld().getMaxBankSize();
 		struct.catalogIDs = new int[itemsInBank];
 		struct.amount = new int[itemsInBank];
-		synchronized (player.getBank().getItems()) {
-			int i = 0;
-			for (Item item : player.getBank().getItems()) {
-				struct.catalogIDs[i] = item.getSafeItemId(player);
-				struct.amount[i] = item.getAmount();
-				i++;
+		struct.includesPinMetadata = includePins;
+		struct.pinned = new boolean[itemsInBank];
+		if (includePins) {
+			for (int i = 0; i < displaySlots.size(); i++) {
+				final Bank.DisplaySlot slot = displaySlots.get(i);
+				struct.catalogIDs[i] = slot.getItem() == null
+					? slot.getCatalogId() : slot.getItem().getSafeItemId(player);
+				struct.amount[i] = slot.getAmount();
+				struct.pinned[i] = slot.isPinned();
+			}
+		} else {
+			synchronized (player.getBank().getItems()) {
+				int i = 0;
+				for (Item item : player.getBank().getItems()) {
+					struct.catalogIDs[i] = item.getSafeItemId(player);
+					struct.amount[i] = item.getAmount();
+					i++;
+				}
 			}
 		}
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_BANK_OPEN, struct, player);
@@ -2036,6 +2055,10 @@ public class ActionSender {
 		struct.maxBankSize = player.getWorld().getMaxBankSize();
 		struct.catalogIDs = new int[itemsInBank];
 		struct.amount = new int[itemsInBank];
+		struct.includesPinMetadata = player.isUsingCustomClient()
+			&& player.getConfig().WANT_CUSTOM_BANKS
+			&& player.getClientLimitations().supportsBankItemPinning;
+		struct.pinned = new boolean[itemsInBank];
 
 		int i = 0;
 		for (Item item : bank) {

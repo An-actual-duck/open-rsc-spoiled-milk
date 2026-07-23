@@ -938,13 +938,18 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 					case SWAP_NOTE:
 						os.value = packet.readByte();
 						break;
-					case BANK_SWAP:
-					case BANK_INSERT:
-					case INVENTORY_INSERT:
-					case INVENTORY_SWAP:
-						os.slot = packet.readInt();
-						os.to = packet.readInt();
-						break;
+						case BANK_SWAP:
+						case BANK_INSERT:
+						case INVENTORY_INSERT:
+						case INVENTORY_SWAP:
+							os.slot = packet.readInt();
+							os.to = packet.readInt();
+							break;
+						case BANK_ITEM_PIN:
+							os.value = packet.readByte();
+							os.slot = packet.readInt();
+							os.id = packet.readInt();
+							break;
 					case CANCEL_BATCH:
 						//nothing
 						break;

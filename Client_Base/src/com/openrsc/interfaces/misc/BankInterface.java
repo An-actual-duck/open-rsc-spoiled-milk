@@ -597,19 +597,25 @@ public class BankInterface {
 	}
 
 	public void addBank(int bankID, int itemID, int amount) {
-		bankItems.add(new BankItem(bankID, itemID, amount));
+		addBank(bankID, itemID, amount, false);
+	}
+
+	public void addBank(int bankID, int itemID, int amount, boolean pinned) {
+		bankItems.add(new BankItem(bankID, itemID, amount, pinned));
 	}
 
 	public void updateBank(int slot, int itemID, int amount) {
 		if (amount == 0) {
-			bankItems.remove(slot);
-			for (slot = 0; slot < bankItems.size(); slot++) {
-				bankItems.get(slot).bankID = slot;
+			if (slot >= 0 && slot < bankItems.size() && !bankItems.get(slot).isPinned()) {
+				bankItems.remove(slot);
+				for (slot = 0; slot < bankItems.size(); slot++) {
+					bankItems.get(slot).bankID = slot;
+				}
 			}
 			return;
 		}
 		if (bankItems.size() <= slot) {
-			bankItems.add(new BankItem(slot, itemID, amount));
+			bankItems.add(new BankItem(slot, itemID, amount, false));
 		}
 		if (bankItems.get(slot) != null) {
 			bankItems.get(slot).bankID = slot;
@@ -656,8 +662,13 @@ public class BankInterface {
 
 		int bankID;
 		Item item;
+		boolean pinned;
 
 		BankItem(int bankID, int itemID, int amount) {
+			this(bankID, itemID, amount, false);
+		}
+
+		BankItem(int bankID, int itemID, int amount, boolean pinned) {
 			this.item = new Item();
 			this.item.setItemDef(itemID);
 			this.item.setAmount(amount);
@@ -666,8 +677,11 @@ public class BankInterface {
 			this.item.setEquipped(false);
 			this.item.setNoted(false);
 			this.bankID = bankID;
+			this.pinned = pinned;
 		}
 
 		public Item getItem() { return this.item; }
+		public boolean isPinned() { return pinned; }
+		public boolean isPlaceholder() { return pinned && item.getAmount() == 0; }
 	}
 }

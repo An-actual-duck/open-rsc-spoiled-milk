@@ -58,9 +58,10 @@ public class PlayerService implements IPlayerService {
                 loadPlayerBankPresets(loaded);
                 loadPlayerSocial(loaded);
                 loadPlayerQuests(loaded);
-                //loadPlayerAchievements(loaded);
-                loadPlayerCache(loaded);
-                loadPlayerLastSpellCast(loaded);
+	                //loadPlayerAchievements(loaded);
+	                loadPlayerCache(loaded);
+					loaded.getBank().loadPinnedSlotsFromCache();
+	                loadPlayerLastSpellCast(loaded);
                 loadPlayerNpcKills(loaded);
             });
 

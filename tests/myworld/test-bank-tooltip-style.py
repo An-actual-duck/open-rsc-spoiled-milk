@@ -12,7 +12,8 @@ def main() -> None:
 
 	required_snippets = [
 		"private static final int HOVER_TOOLTIP_FONT = 0;",
-		"drawString(bankItems.get(bankItem.bankID).getItem().getItemDef().getName(), x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);",
+		'drawString((bankItem.isPinned() ? "Pinned: " : "")',
+		"x + 7, y + 15, HOVER_TOOLTIP_FONT,",
 		"drawString(mc.equippedItems[selectedEquipmentSlot].getName(), x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);",
 		"drawString(EntityHandler.getItemDef(mc.getInventoryItemID(inventorySlot), mc.getInventory()[inventorySlot].getNoted()).getName(), x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);",
 	]

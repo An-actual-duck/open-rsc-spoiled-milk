@@ -120,14 +120,14 @@ public class BankPreset {
 			if (itemHeld == null || itemHeld.getCatalogId() == ItemId.NOTHING.id()) continue;
 
 			// We don't have that catalogId in the bank.
-			if (player.getBank().countId(itemHeld.getCatalogId()) == 0
-				&& !items.contains(itemHeld.getCatalogId())) {
+				if (!items.contains(itemHeld.getCatalogId())
+					&& player.getBank().getRequiredSlots(itemHeld) > 0) {
 				slotsNeeded++;
 			}
 			items.add(itemHeld.getCatalogId());
 		}
 
-		if (slotsNeeded + player.getBank().size() > player.getWorld().getMaxBankSize()) {
+		if (slotsNeeded + player.getBank().getUsedSlotCount() > player.getWorld().getMaxBankSize()) {
 			player.message("Not enough room in your bank to deposit your inventory.");
 			return;
 		}

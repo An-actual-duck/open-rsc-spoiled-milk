@@ -685,10 +685,13 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					int maxBankSize = b.maxBankSize;
 					builder.writeShort(storedSize);
 					builder.writeShort(maxBankSize);
-					for (int i = 0; i < storedSize; i++) {
-						builder.writeShort(b.catalogIDs[i]);
-						builder.writeInt(b.amount[i]);
-					}
+						for (int i = 0; i < storedSize; i++) {
+							builder.writeShort(b.catalogIDs[i]);
+							builder.writeInt(b.amount[i]);
+							if (b.includesPinMetadata) {
+								builder.writeByte((byte) (b.pinned[i] ? 1 : 0));
+							}
+						}
 					break;
 
 				case SEND_BANK_UPDATE:

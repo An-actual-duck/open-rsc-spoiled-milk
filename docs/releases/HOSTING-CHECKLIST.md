@@ -20,7 +20,7 @@ world:
 	server_port: 43605
 ```
 
-Keep `client_version: 10046` and `enforce_custom_client_version: true` aligned
+Keep `client_version: 10047` and `enforce_custom_client_version: true` aligned
 with the released client. If the public port differs from `43605`, provide the
 same port to `scripts/package-player-release.sh`.
 

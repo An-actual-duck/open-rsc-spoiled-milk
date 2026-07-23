@@ -2739,10 +2739,14 @@ public class PacketHandler {
 		mc.setShowDialogBank(true);
 		mc.setNewBankItemCount(packetsIncoming.getShort());
 		mc.setBankItemsMax(packetsIncoming.getShort());
-		mc.getBank().resetBank();
-		for (int slot = 0; slot < mc.getNewBankItemCount(); ++slot) {
-			mc.getBank().addBank(slot, packetsIncoming.getShort(), packetsIncoming.get32());
-		}
+			mc.getBank().resetBank();
+			for (int slot = 0; slot < mc.getNewBankItemCount(); ++slot) {
+				int itemId = packetsIncoming.getShort();
+				int amount = packetsIncoming.get32();
+				boolean pinned = Config.S_WANT_CUSTOM_BANKS && Config.CLIENT_VERSION >= 10047
+					&& packetsIncoming.getUnsignedByte() == 1;
+				mc.getBank().addBank(slot, itemId, amount, pinned);
+			}
 
 		if (Config.S_WANT_CUSTOM_BANKS) {
 			mc.getBank().calculateWealth();

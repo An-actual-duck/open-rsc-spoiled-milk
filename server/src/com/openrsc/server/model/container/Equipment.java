@@ -512,28 +512,26 @@ public class Equipment {
 				}
 				break;
 			case FROM_BANK:
-				synchronized (list) {
-					synchronized (player.getBank().getItems()) {
-						// Can't unequip something if bank is full
-						if (player.getBank().full()) {
-							player.message("You need more bank space to unequip that.");
-							return false;
-						}
-						if (remove(request.item, request.item.getAmount()) == -1)
-							return false;
-						request.item.setWielded(false);
-
-						Item itemToAdd = request.item;
-						if (player.getConfig().WANT_CUSTOM_SPRITES && player.getConfig().FORM_FITTING_CHAINMAIL) {
+					synchronized (list) {
+						synchronized (player.getBank().getItems()) {
+							Item itemToAdd = request.item;
+							if (player.getConfig().WANT_CUSTOM_SPRITES && player.getConfig().FORM_FITTING_CHAINMAIL) {
 							for (int i = 0; i < chainTopIds.length; ++i) {
 								if (request.item.getCatalogId() == chainTopIds[i]) {
 									itemToAdd = new Item(chainBodyIds[i]);
 									break;
+									}
 								}
 							}
-						}
+							if (!player.getBank().canHold(itemToAdd)) {
+								player.message("You need more bank space to unequip that.");
+								return false;
+							}
+							if (remove(request.item, request.item.getAmount()) == -1)
+								return false;
+							request.item.setWielded(false);
 
-						player.getBank().add(itemToAdd, updateClient);
+							player.getBank().add(itemToAdd, updateClient);
 						if (updateClient) {
 							ActionSender.showBank(player);
 						}

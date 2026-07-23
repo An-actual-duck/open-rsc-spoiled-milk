@@ -75,7 +75,7 @@ class WorldBuilderDiscoveryTest(unittest.TestCase):
         config.write_text(
             "\n".join(
                 (
-                    "client_version: 10046",
+                    "client_version: 10047",
                     "\tmember_world: true",
                     "\tbased_map_data: 64 # fixture",
                     "\twant_myworld: true",
@@ -171,7 +171,7 @@ class WorldBuilderDiscoveryTest(unittest.TestCase):
         result = self.run_discovery(ROOT)
         self.assertEqual(0, result.returncode, result.stderr)
         manifest = json.loads(result.stdout)
-        self.assertEqual(10046, manifest["configuration"]["clientVersion"])
+        self.assertEqual(10047, manifest["configuration"]["clientVersion"])
         self.assertGreater(manifest["terrainSectorCount"], 1000)
         self.assertTrue(all(file_state["present"] for file_state in manifest["files"]))
 

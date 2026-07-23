@@ -72,7 +72,7 @@ public class BuyMarketItemTask extends MarketTask {
 				ActionSender.sendBox(playerBuyer, "@gre@[Auction House - Success] % @whi@ The item has been added to your inventory.", false);
 				updateDiscord = true;
 				playerBuyer.save();
-			} else if (!playerBuyer.getBank().full()) {
+				} else if (playerBuyer.getBank().canHold(new Item(item.getCatalogID(), amount))) {
 				playerBuyer.getBank().add(new Item(item.getCatalogID(), amount), false);
 				playerBuyer.getCarriedItems().remove(new Item(ItemId.COINS.id(), auctionPrice));
 				ActionSender.sendBox(playerBuyer, "@gre@[Auction House - Success] % @whi@ The item has been added to your bank.", false);

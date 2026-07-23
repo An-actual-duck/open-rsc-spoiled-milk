@@ -49,7 +49,7 @@ public class CancelMarketItemTask extends MarketTask {
 						owner.getCarriedItems().getInventory().add(new Item(itemIndex, amount, !def.isStackable()));
 					ActionSender.sendBox(owner, "@gre@[Auction House - Success] % @whi@ The item has been canceled and returned to your inventory.", false);
 					updateDiscord = true;
-				} else if (!owner.getBank().full()) {
+					} else if (owner.getBank().canHold(new Item(itemIndex, amount))) {
 					owner.getWorld().getServer().getDatabase().cancelAuction(item.getAuctionID());
 					owner.getBank().add(new Item(itemIndex, amount), false);
 					ActionSender.sendBox(owner, "@gre@[Auction House - Success] % @whi@ The item has been canceled and returned to your bank. % Talk with a Banker to collect your item(s).", false);
