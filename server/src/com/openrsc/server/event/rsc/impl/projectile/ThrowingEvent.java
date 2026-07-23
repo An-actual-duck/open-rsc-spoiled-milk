@@ -316,7 +316,8 @@ public class ThrowingEvent extends GameTickEvent {
 
 	private List<Mob> selectThrowingTargets(Player player, int throwingID, int attackRadius) {
 		List<Mob> targets = new ArrayList<>();
-		if (!RangeUtils.SHURIKENS.contains(throwingID) || !target.isNpc()) {
+		if (Summoning.isPlayerAreaEffectSuppressed(player)
+			|| !RangeUtils.SHURIKENS.contains(throwingID) || !target.isNpc()) {
 			targets.add(target);
 			return targets;
 		}

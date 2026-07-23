@@ -976,7 +976,9 @@ public abstract class Mob extends Entity {
 		final boolean attackerIsSummon = Summoning.isSummon(this);
 		final boolean victimIsSummon = Summoning.isSummon(victim);
 		if (victimIsSummon || !Summoning.canSummonAttack(this, victim)) {
-			if (attackerIsSummon) {
+			if (this.isNpc() && victim.isPlayer()) {
+				((Npc) this).getBehavior().disengageFrom((Player) victim);
+			} else if (attackerIsSummon) {
 				resetCombatEvent();
 				setOpponent(null);
 				setLastOpponent(null);

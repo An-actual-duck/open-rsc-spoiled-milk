@@ -2220,7 +2220,7 @@ public final class Player extends Mob {
 	}
 
 	public void applyDeathAmuletBurst(final Mob killed) {
-		if (killed == null || !killed.isNpc()) {
+		if (Summoning.isPlayerAreaEffectSuppressed(this) || killed == null || !killed.isNpc()) {
 			return;
 		}
 		final Npc killedNpc = (Npc) killed;

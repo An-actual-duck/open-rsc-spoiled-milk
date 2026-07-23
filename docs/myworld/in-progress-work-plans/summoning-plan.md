@@ -12,7 +12,7 @@ runtime.
 - Maintain a real summoning system instead of one-off scripted companions.
 - Keep `Wolf` and `Hellhound` leather set bonuses on the summon runtime.
 - Support combat, support, and charge-limited utility summons.
-- Keep the first 12-summon catalog spaced from level `1` through level `70`.
+- Keep the first 14-summon catalog spaced from level `1` through level `70`.
 
 ## Core Rules
 
@@ -38,7 +38,7 @@ runtime.
 
 ## Skill Progression
 
-The first 13 summons are ordered below and should be evenly spaced across
+The first 14 summons are ordered below and should be evenly spaced across
 levels `1-70`.
 
 | Level | Summon | Role | Cast XP |
@@ -53,6 +53,7 @@ levels `1-70`.
 | 39 | Bound Battleaxe | Combat, melee | 185 |
 | 45 | Mourning Unicorn | Support | 230 |
 | 51 | Restless Shade | Combat, ranged plus fear | 280 |
+| 55 | Guard Dog | Support | 310 |
 | 58 | Delivery Camel | Utility | 335 |
 | 64 | Astral Wraith | Combat, magic | 395 |
 | 70 | Abyssal Demon | Combat, melee or magic | 460 |
@@ -74,7 +75,9 @@ from the summon display name in lowercase with spaces converted to dashes:
 `broodling-spider.png`, `mischief-imp.png`, `loot-goblin.png`,
 `ironhide-bear.png`, `sacred-unicorn.png`, `duskwind-bat.png`, `pack-rat.png`,
 `bound-battleaxe.png`, `mourning-unicorn.png`, `restless-shade.png`,
-`delivery-camel.png`, `astral-wraith.png`, and `abyssal-demon.png`.
+`delivery-camel.png`, `astral-wraith.png`, and `abyssal-demon.png`. Guard Dog
+currently uses the client's `GD` initials fallback because no purpose-made
+`guard-dog.png` has been supplied.
 
 ## Summon Roles
 
@@ -237,6 +240,24 @@ from the summon display name in lowercase with spaces converted to dashes:
 - damage absorption: `20%`
 - trait: `Fear`; `20%` chance to prevent an enemy attack against the owner
 
+### Guard Dog
+
+- level: `55`
+- role: support
+- cast XP: `310`
+- cost: `2 Life runes`, `2 Body runes`, `1 Soul rune`, `1 bones`
+- effect: reserves one active PvM enemy for the player and safely prevents
+  additional NPCs from acquiring or retaining combat with the player
+- effect: suppresses player-originated secondary and area damage while leaving
+  the selected primary target's normal hit intact
+- multicannon: remains locked to one valid enemy while Guard Dog is active;
+  cannons never target summoned NPCs
+- visual: reuses `GUARD_DOG_SINCLAIR_MANSION` (`748`), which has the existing
+  dog sprite without the attackable/aggressive behavior of the wilderness
+  guard-dog definition
+- artwork: no dedicated summon icon currently exists, so the summon menu uses
+  its built-in `GD` initials placeholder instead of inventing replacement art
+
 ### Delivery Camel
 
 - level: `58`
@@ -305,10 +326,10 @@ The first proof implementation has already established the core summon runtime.
 
 ## Current Implementation Status
 
-- The summon tab contains the first 12-summon catalog in the planned order.
+- The summon tab contains the first 14-summon catalog in the planned order.
 - Server casts are driven by shared summon profiles instead of one-off test
   entries.
-- Resource costs are enforced for the first 12 summons.
+- Resource costs are enforced for the first 14 summons.
 - Summoning has a `5 second` charge.
 - Taking damage during the charge interrupts the summon.
 - Costs are consumed after a successful charge, not when the summon is clicked.
@@ -328,11 +349,13 @@ The first proof implementation has already established the core summon runtime.
   respectively; failed actions do not consume services.
 - `Summoning` is a persisted MyWorld skill with database columns, stat packet
   fields, and client stat array support.
-- The first 12 summons are level-gated by Summoning level.
+- The first 14 summons are level-gated by Summoning level.
 - `Mischief Imp` blocks hostile NPC aggro while active and despawns when the player
   starts attacking.
 - `Mourning Unicorn` auto-buries prayer drops, including bones, bat bones, big
   bones, dragon bones, generic ashes, and demon ash, for double prayer XP.
+- `Guard Dog` limits PvM engagement to one enemy, suppresses player area
+  attacks and procs, and restores normal targeting immediately when inactive.
 - Ranged and magic combat summons use projectile attacks with owner kill/XP
   credit preserved.
 - `Abyssal Demon` uses a mixed melee/magic attack pattern.
@@ -448,7 +471,7 @@ Remaining work after limited release:
 Implemented work:
 
 - replaced the temporary four-entry hardcoded client list with the first
-  12-summon catalog
+  14-summon catalog
 - added the persisted `Summoning` skill
 - enforce summon level requirements
 - enforce resource requirements server-side

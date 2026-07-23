@@ -1041,6 +1041,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(295, "39", "Bound Battleaxe - Combat; 1 life, 2 cosmic, iron battle axe");
 			addSummonGuide(296, "45", "Mourning Unicorn - Support; 1 life, body, cosmic, bones");
 			addSummonGuide(53, "51", "Restless Shade - Combat; 2 life, 3 cosmic, soul, ashes");
+			addSummonGuide(748, "55", "Guard Dog - Support; 2 life, 2 body, soul, bones");
 			addSummonGuide(13, "58", "Delivery Camel - Utility; 1 life, 2 body, 2 law, 2 nature");
 			addSummonGuide(298, "64", "Astral Wraith - Combat; 2 life, 4 cosmic, soul, bones");
 			addSummonGuide(184, "70", "Abyssal Demon - Combat; 3 life, blood, soul, demon ash");
@@ -1055,6 +1056,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(295, "39", "Bound Battleaxe - Hits 8 +1/10; dmg 6 +1/16");
 			addSummonGuide(296, "45", "Mourning Unicorn - Does not engage in combat");
 			addSummonGuide(53, "51", "Restless Shade - Hits 9 +1/9; dmg 4 +1/18");
+			addSummonGuide(748, "55", "Guard Dog - Does not engage in combat");
 			addSummonGuide(13, "58", "Delivery Camel - Does not engage in combat");
 			addSummonGuide(298, "64", "Astral Wraith - Hits 10 +1/8; dmg 7 +1/14");
 			addSummonGuide(184, "70", "Abyssal Demon - Hits 18 +1/7; dmg 9 +1/12");
@@ -1069,6 +1071,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(295, "39", "Relentless - 15% chance for bonus damage");
 			addSummonGuide(296, "45", "Reverent - auto-buries bones for double XP");
 			addSummonGuide(53, "51", "Fear - 20% chance to stop enemy attacks");
+			addSummonGuide(748, "55", "Watchful - one enemy; suppresses area attacks");
 			addSummonGuide(13, "58", "Beast of Burden - 2 uses; banks one stack");
 			addSummonGuide(298, "64", "Spell Echo - 15% chance for magic bonus damage");
 			addSummonGuide(184, "70", "Hellfire - 10% chance for Hell's Fire damage");
@@ -1090,7 +1093,7 @@ public final class SkillGuideInterface {
 	}
 
 	private boolean isSummonGuideSideFacingNpc(int npcId) {
-		return npcId == 8 || npcId == 0 || npcId == 296 || npcId == 241 || npcId == 295 || npcId == 13;
+		return npcId == 8 || npcId == 0 || npcId == 296 || npcId == 241 || npcId == 295 || npcId == 748 || npcId == 13;
 	}
 
 	private void populateRangedGuide() {

@@ -226,6 +226,9 @@ public class CombatEvent extends GameTickEvent {
 			return;
 		}
 		final Player player = (Player) hitter;
+		if (Summoning.isPlayerAreaEffectSuppressed(player)) {
+			return;
+		}
 		final double chainChance = player.getCarriedItems().getEquipment().getChaosNecklaceChainLightningChance();
 		if (chainChance <= 0.0D) {
 			return;
@@ -541,7 +544,8 @@ public class CombatEvent extends GameTickEvent {
 
 	private void applyDeathRobeOverkillSplash(final Player player, final Npc primaryTarget, final int overkillDamage) {
 		final double splashPercent = player.getDeathRobeOverkillSplashPercent();
-		if (overkillDamage <= 0 || splashPercent <= 0.0D) {
+		if (Summoning.isPlayerAreaEffectSuppressed(player)
+			|| overkillDamage <= 0 || splashPercent <= 0.0D) {
 			return;
 		}
 		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));

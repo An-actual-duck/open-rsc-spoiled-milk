@@ -51,6 +51,7 @@ public final class Summoning {
 	private static final String SUMMON_NEXT_ATTACK_TICK_KEY = "myworld_summon_next_attack_tick";
 	private static final String SUMMON_PRAYER_BONUS_KEY = "myworld_summon_prayer_bonus";
 	private static final String SUMMON_UTILITY_USES_REMAINING_KEY = "myworld_summon_utility_uses_remaining";
+	private static final String SUMMON_GUARD_ENEMY_KEY = "myworld_summon_guard_enemy";
 	private static final String RAT_AWAITING_ITEM_KEY = "myworld_rat_awaiting_item";
 	private static final String RAT_NPC_KEY = "myworld_rat_note_npc";
 	private static final String CAMEL_AWAITING_ITEM_KEY = "myworld_camel_awaiting_item";
@@ -70,6 +71,7 @@ public final class Summoning {
 	private static final String KIND_ANIMATED_AXE = "animated_axe";
 	private static final String KIND_BLACK_UNICORN = "black_unicorn";
 	private static final String KIND_GHOST = "ghost";
+	private static final String KIND_GUARD_DOG = "guard_dog";
 	private static final String KIND_CAMEL = "camel";
 	private static final String KIND_OTHERWORLDLY_BEING = "otherworldly_being";
 	private static final String KIND_GREATER_DEMON = "greater_demon";
@@ -178,6 +180,13 @@ public final class Summoning {
 		cost(ItemId.SOUL_RUNE.id(), 1),
 		cost(ItemId.ASHES.id(), 1)
 	);
+	private static final SummonProfile GUARD_DOG_PROFILE = supportProfile(
+		"Guard Dog", 55, 310, NpcId.GUARD_DOG_SINCLAIR_MANSION.id(), KIND_GUARD_DOG, 0,
+		cost(ItemId.LIFE_RUNE.id(), 2),
+		cost(ItemId.BODY_RUNE.id(), 2),
+		cost(ItemId.SOUL_RUNE.id(), 1),
+		cost(ItemId.BONES.id(), 1)
+	);
 	private static final SummonProfile CAMEL_PROFILE = utilityProfile(
 		"Delivery Camel", 58, 335, NpcId.CAMEL.id(), KIND_CAMEL, DELIVERY_CAMEL_UTILITY_USES,
 		cost(ItemId.LIFE_RUNE.id(), 1),
@@ -208,7 +217,7 @@ public final class Summoning {
 	private static final SummonProfile[] SUMMON_PROFILES = {
 		GIANT_SPIDER_PROFILE, IMP_PROFILE, LOOT_GOBLIN_PROFILE, BEAR_PROFILE, UNICORN_PROFILE,
 		GIANT_BAT_PROFILE, RAT_PROFILE, ANIMATED_AXE_PROFILE, BLACK_UNICORN_PROFILE,
-		GHOST_PROFILE, CAMEL_PROFILE, OTHERWORLDLY_BEING_PROFILE, GREATER_DEMON_PROFILE
+		GHOST_PROFILE, GUARD_DOG_PROFILE, CAMEL_PROFILE, OTHERWORLDLY_BEING_PROFILE, GREATER_DEMON_PROFILE
 	};
 	private static final SummonProfile[] ARMOR_SUMMON_PROFILES = {
 		SPIRIT_WOLF_PROFILE, SPIRIT_HELLHOUND_PROFILE
@@ -539,7 +548,134 @@ public final class Summoning {
 	}
 
 	public static boolean canSummonAttack(final Mob attacker, final Mob target) {
-		return !isSummon(attacker) || target == null || !target.isPlayer();
+		if (isSummon(attacker) && target != null && target.isPlayer()) {
+			return false;
+		}
+		if (attacker == null || !attacker.isNpc() || target == null || !target.isPlayer()) {
+			return true;
+		}
+		return guardDogAllowsEnemy((Player) target, (Npc) attacker);
+	}
+
+	public static boolean isPlayerAreaEffectSuppressed(final Player player) {
+		return getActiveGuardDog(player) != null;
+	}
+
+	public static Npc getGuardDogPrimaryEnemy(final Player player) {
+		final Npc guardDog = getActiveGuardDog(player);
+		if (guardDog == null) {
+			return null;
+		}
+		synchronized (guardDog) {
+			final Npc activeTarget = getOwnerActiveNpcTarget(player);
+			if (isGuardDogEnemyEligible(activeTarget)) {
+				setGuardDogPrimaryEnemy(player, guardDog, activeTarget);
+				return activeTarget;
+			}
+			final Npc claimedEnemy = guardDog.getAttribute(SUMMON_GUARD_ENEMY_KEY, null);
+			if (isNpcActivelyEngagingPlayer(claimedEnemy, player)) {
+				return claimedEnemy;
+			}
+			guardDog.removeAttribute(SUMMON_GUARD_ENEMY_KEY);
+			return null;
+		}
+	}
+
+	public static void selectGuardDogPrimaryEnemy(final Player player, final Npc enemy) {
+		final Npc guardDog = getActiveGuardDog(player);
+		if (guardDog == null || !isGuardDogEnemyEligible(enemy)) {
+			return;
+		}
+		synchronized (guardDog) {
+			setGuardDogPrimaryEnemy(player, guardDog, enemy);
+		}
+	}
+
+	private static boolean guardDogAllowsEnemy(final Player player, final Npc attacker) {
+		final Npc guardDog = getActiveGuardDog(player);
+		if (guardDog == null) {
+			return true;
+		}
+		synchronized (guardDog) {
+			final Npc activeTarget = getOwnerActiveNpcTarget(player);
+			if (isGuardDogEnemyEligible(activeTarget)) {
+				setGuardDogPrimaryEnemy(player, guardDog, activeTarget);
+				return activeTarget == attacker;
+			}
+			final Npc claimedEnemy = guardDog.getAttribute(SUMMON_GUARD_ENEMY_KEY, null);
+			if (isNpcActivelyEngagingPlayer(claimedEnemy, player)) {
+				return claimedEnemy == attacker;
+			}
+			guardDog.setAttribute(SUMMON_GUARD_ENEMY_KEY, attacker);
+			return true;
+		}
+	}
+
+	private static Npc getActiveGuardDog(final Player player) {
+		if (player == null || player.isRemoved() || !player.loggedIn()
+			|| player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return null;
+		}
+		final Npc summon = player.getAttribute(MANUAL_SUMMON_KEY, null);
+		return summon != null
+			&& !summon.isRemoved()
+			&& getSummonCurrentHits(summon) > 0
+			&& isOwnedSummon(player, summon)
+			&& KIND_GUARD_DOG.equals(summon.getAttribute(SUMMON_KIND_KEY, ""))
+			? summon
+			: null;
+	}
+
+	private static Npc getOwnerActiveNpcTarget(final Player player) {
+		final Mob target = getOwnerActiveAttackTarget(player);
+		return target != null && target.isNpc() ? (Npc) target : null;
+	}
+
+	private static boolean isGuardDogEnemyEligible(final Npc npc) {
+		return npc != null && !npc.isRemoved() && !npc.isRespawning()
+			&& !isSummon(npc) && npc.getSkills().getLevel(Skill.HITS.id()) > 0;
+	}
+
+	private static boolean isNpcActivelyEngagingPlayer(final Npc npc, final Player player) {
+		if (!isGuardDogEnemyEligible(npc)) {
+			return false;
+		}
+		final PvmMeleeEvent meleeEvent = npc.getPvmMeleeEvent();
+		return npc.getOpponent() == player
+			|| npc.getBehavior().getChaseTarget() == player
+			|| npc.isHostileToward(player)
+			|| (meleeEvent != null && meleeEvent.isRunning() && meleeEvent.getTarget() == player)
+			|| ownerIsActivelyAttacking(player, npc);
+	}
+
+	private static void setGuardDogPrimaryEnemy(final Player player, final Npc guardDog, final Npc enemy) {
+		final Npc previousEnemy = guardDog.getAttribute(SUMMON_GUARD_ENEMY_KEY, null);
+		if (previousEnemy != null && previousEnemy != enemy) {
+			previousEnemy.getBehavior().disengageFrom(player);
+		}
+		guardDog.setAttribute(SUMMON_GUARD_ENEMY_KEY, enemy);
+	}
+
+	private static void reconcileGuardDogEnemies(final Player player, final Npc guardDog) {
+		Npc primaryEnemy = getOwnerActiveNpcTarget(player);
+		if (!isGuardDogEnemyEligible(primaryEnemy)) {
+			primaryEnemy = null;
+		}
+		for (Npc npc : player.getViewArea().getNpcsInView()) {
+			if (!isNpcActivelyEngagingPlayer(npc, player)) {
+				continue;
+			}
+			if (primaryEnemy == null) {
+				primaryEnemy = npc;
+				continue;
+			}
+			if (npc != primaryEnemy) {
+				npc.getBehavior().disengageFrom(player);
+			}
+		}
+		if (primaryEnemy != null) {
+			guardDog.setAttribute(SUMMON_GUARD_ENEMY_KEY, primaryEnemy);
+		}
 	}
 
 	public static boolean canSummonUseCrowdedAssistReach(final Mob attacker, final Mob target) {
@@ -1023,6 +1159,9 @@ public final class Summoning {
 		summon.getUpdateFlags().setCombatEffect(new CombatEffect(summon, getSummonArrivalEffect(profile)));
 		owner.getWorld().registerNpc(summon);
 		owner.setAttribute(MANUAL_SUMMON_KEY, summon);
+		if (KIND_GUARD_DOG.equals(profile.kind)) {
+			reconcileGuardDogEnemies(owner, summon);
+		}
 		ActionSender.sendStats(owner);
 		ActionSender.sendEquipmentStats(owner);
 		startSummonRuntime(owner, summon, profile);
