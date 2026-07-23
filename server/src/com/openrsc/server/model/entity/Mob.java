@@ -1615,13 +1615,25 @@ public abstract class Mob extends Entity {
 	}
 
 	public void damage(final int damage, final int hitSplatType) {
+		damageAndGetActualDamage(damage, hitSplatType);
+	}
+
+	/**
+	 * Applies a direct damage request and returns the amount of Hits the request
+	 * can actually remove. This preserves the legacy damage display while giving
+	 * owned effects such as poison Leach an authoritative value after survival
+	 * effects and lethal overkill are accounted for.
+	 */
+	public int damageAndGetActualDamage(final int damage, final int hitSplatType) {
 		int appliedDamage = damage;
 		if (appliedDamage > 0 && this.isPlayer()) {
 			Player player = (Player) this;
 			player.setAttribute("last_damage_taken_at", System.currentTimeMillis());
 			appliedDamage = player.applyGoblinTenacity(appliedDamage);
 		}
-		final int newHp = skills.getLevel(Skill.HITS.id()) - appliedDamage;
+		final int currentHp = Math.max(0, skills.getLevel(Skill.HITS.id()));
+		final int actualDamage = Math.min(Math.max(0, appliedDamage), currentHp);
+		final int newHp = currentHp - appliedDamage;
 		if (newHp <= 0) {
 			if (this.isPlayer()) {
 				killedBy(combatWith);
@@ -1637,6 +1649,7 @@ public abstract class Mob extends Entity {
 		}
 		getUpdateFlags().setDamage(new Damage(this, appliedDamage));
 		getUpdateFlags().addHitSplat(new HitSplat(this, hitSplatType, appliedDamage));
+		return actualDamage;
 	}
 
 	public void startPoisonEvent() {

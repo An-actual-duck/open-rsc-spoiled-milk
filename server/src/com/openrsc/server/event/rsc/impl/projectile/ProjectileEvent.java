@@ -274,7 +274,6 @@ public class ProjectileEvent extends SingleTickEvent {
 			} else if (type == 2 || type == 5) {
 				npc.addRangeDamage(casterPlayer, dealtDamage);
 			}
-			casterPlayer.applyBloodAmuletLifesteal(dealtDamage);
 		}
 		if (chainTarget.isPlayer()) {
 			ActionSender.sendStat((Player) chainTarget, Skill.HITS.id());
@@ -428,9 +427,11 @@ public class ProjectileEvent extends SingleTickEvent {
 			}
 		}
 
-		if (damage > 0 && caster.isPlayer() && (type == 1 || type == 4)) {
-			applyBloodRobeSplash((Player) caster, damage);
-			((Player) caster).applyBloodAmuletLifesteal(damage);
+		if (damageDealt > 0 && caster.isPlayer() && (type == 1 || type == 4)) {
+			applyBloodRobeSplash((Player) caster, damageDealt);
+		}
+		if (caster.isPlayer() && isPrimaryProjectileAttackType()) {
+			((Player) caster).applyBloodAmuletLifesteal(damageDealt);
 		}
 
 		if (caster.isPlayer() && opponent.isNpc() && opponent.getSkills().getLevel(Skill.HITS.id()) > 0
