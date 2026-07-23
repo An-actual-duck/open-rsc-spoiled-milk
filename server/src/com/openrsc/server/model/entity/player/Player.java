@@ -52,6 +52,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservation
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerEventContinuityAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationBoundaryObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationRequirements;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
@@ -3605,6 +3607,17 @@ public final class Player extends Mob {
 							.getAuthoredReconstructionRecipe(),
 						maximumCandidateSources, maximumNpcInstances,
 						maximumRelevantNpcDetails, maximumEventDetails);
+			}
+
+			@Override
+			public LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
+				captureNpcOwnerPreservationBoundary(
+					final LayeredPackedRegionNpcOwnerPreservationRequirements
+						requirements,
+					final int maximumOwners) {
+				return getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionNpcOwnerPreservationBoundary(
+						requirements, maximumOwners);
 			}
 
 			@Override

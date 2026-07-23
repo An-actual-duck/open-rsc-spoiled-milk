@@ -4,7 +4,7 @@ Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path, Slice 158's safe refusal path, and Slice 162's corrected owner
 continuity route owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, and 166 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, and 167 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -239,6 +239,11 @@ gate shared by movement, behavior, removal, respawn, and World-removal state.
 The nested runtime operation can now prove point-in-time lifecycle exclusion and
 Region-access quiescence while every event, World, and NPC gate is active, but
 retains no durable preservation fact after returning;
+automated-validated Slice 167 exposes that complete nested result through
+additive private schema-v47, including proposal/owner/link cardinalities, every
+boundary count and refusal reason, per-owner reference evidence, and explicit
+point-in-time/non-authoritative flags. Both private command sources use the same
+GameEventHandler seam and owner validation is pending;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -13485,6 +13490,66 @@ scope-ready but non-durable result through a new additive private diagnostic
 schema so the owner can verify the real callback/owner cardinalities and every
 fail-closed reason before any recovery eligibility consumes it.
 
+### Slice 167: Private NPC owner preservation-boundary diagnostics
+
+Objective: expose Slice 166's real nested scope through one additive,
+AI-readable private record before any recovery or retirement policy is allowed
+to consume it.
+
+Implemented:
+
+- additive `layered-map-parity-event-v47` records retain every v46 field and add
+  nullable `packedRegionNpcOwnerPreservationBoundary`;
+- after one exact event inventory and owner-continuity census are captured, the
+  observer derives the bounded owner requirements and immediately invokes the
+  shared GameEventHandler boundary. Requirements retain the same proposal
+  generation, event observation tick, scheduler instance, owner order, and
+  event-registration identities;
+- the aggregate reports selected-source/proposal-related/NPC/non-NPC counts,
+  preservation-required/previously-eligible/hard-blocker counts, unique owners,
+  related/supporting/total links, scheduler and registration agreement, event
+  execution/timing counts, World and NPC lifecycle boundaries, quiescence,
+  exact-reference owners, typed reason, and both reference-complete and
+  scope-ready booleans;
+- stable owner-order details report authored generation/source/ordinal,
+  definition ID, required and validated links, World identity matches, and the
+  exact typed reference outcome; and
+- both Player session capture and the duplicated development-command start
+  source delegate to the same GameEventHandler method.
+
+Schema and safety:
+
+- schema-v47 permits every fail-closed runtime reason and a scope-ready result,
+  but requires point-in-time true and preservation fact, retained handle,
+  performed preservation, event reschedule, entity registry, arrival gate, and
+  lifecycle authority false;
+- schema-v46 and all earlier contracts remain unchanged beside v47;
+- deriving and observing the boundary performs no callback, event mutation,
+  owner mutation, Region loading/retirement, reconstruction, recovery
+  consumption, packet change, or visibility release; and
+- player-owned callbacks remain visibly separate. A scope-ready NPC result does
+  not make the overall proposal ready while those or any other callback family
+  remain unresolved.
+
+Automated validation status:
+
+- an isolated schema fixture accepts a scope-ready 449-owner example but
+  rejects every attempted durable authority claim;
+- structural guards prove v46 immutability, additive v47 wiring, bounded
+  requirement derivation, serialization, both production delegates, and
+  operator documentation;
+- the complete layered-map suite passes 556 tests across 166 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 809 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated; owner validation is pending. The
+meaningful private test is one fresh marker against the same dense selected
+source set used for Slices 162-164, followed by a stop record. The expected NPC
+path is `PRESERVATION_SCOPE_READY` with every required event and owner boundary
+count complete, zero identity/reference failures, and all durable authority
+flags false; the 8 player-owned callbacks should remain separate.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13863,6 +13928,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 164 by deriving exact NPC owner-preservation requirements. | Implemented and automated-validated; callback evidence deduplicates by authored NPC identity, retains every exact registration link, requires same-instance/World-registration/event-reference continuity plus Region-absence quiescence, keeps NPC hard blockers and player callbacks separate, grants no preservation fact or runtime authority, 546 focused tests pass across 163 files, and the 806/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 165 by fencing exact callback and World-owner references in one nested runtime operation. | Implemented and automated-validated; exact event boundaries are acquired in stable registration order, scheduler registrations are revalidated before the Store monitor is released, event owner references are correlated under the World NPC-list boundary, detached evidence grants no authority, NPC lifecycle and Region-absence quiescence remain explicit blockers, 549 focused tests pass across 164 files, and the 808/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 166 by sharing one non-blocking preservation gate across each exact NPC lifecycle. | Implemented and automated-validated; all exact-owner supporting callbacks join the registration fence, active movement/behavior/remove/respawn work refuses preservation without a lock cycle, accepted gates exclude later work through innermost reference revalidation, the scope-ready result remains transient and non-authoritative, 552 focused tests pass across 165 files, and the 809/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 167 by exposing the nested NPC owner boundary through additive private diagnostics. | Implemented and automated-validated; schema-v47 reports requirement, registration, event, World, reference, lifecycle, quiescence, and stable per-owner outcomes, both private sources use the same GameEventHandler seam, every durable authority flag remains false, 556 focused tests pass across 166 files, and the 809/488 Ant build passes; owner validation is pending |
 
 ## Next Discussion
 

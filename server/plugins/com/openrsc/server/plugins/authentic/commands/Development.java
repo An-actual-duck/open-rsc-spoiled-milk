@@ -39,6 +39,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicT
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerEventContinuityAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationBoundaryObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationRequirements;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
@@ -2015,6 +2017,17 @@ public final class Development implements CommandTrigger {
 							.getAuthoredReconstructionRecipe(),
 						maximumCandidateSources, maximumNpcInstances,
 						maximumRelevantNpcDetails, maximumEventDetails);
+			}
+
+			@Override
+			public LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
+				captureNpcOwnerPreservationBoundary(
+					final LayeredPackedRegionNpcOwnerPreservationRequirements
+						requirements,
+					final int maximumOwners) {
+				return player.getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionNpcOwnerPreservationBoundary(
+						requirements, maximumOwners);
 			}
 
 			@Override

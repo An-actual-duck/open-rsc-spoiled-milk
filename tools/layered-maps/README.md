@@ -184,7 +184,7 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v46.schema.json`. Each v46 record
+traces emit `schema/layered-map-parity-event-v47.schema.json`. Each v47 record
 retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
@@ -206,7 +206,12 @@ census. It reports exact, missing, stale, duplicate, unrecognized, and
 position-drifted owner cases separately. Production always reports owner
 preservation as unproved and continuity eligibility as zero; the census is
 diagnostic evidence, not permission to retain an NPC or bypass standalone
-callback recovery. The owner correlation accompanies proposal-scoped event
+callback recovery. V47 derives one exact requirement per matched authored NPC,
+includes proposal-related and supporting callback registrations, and reports
+the nested scheduler, event-timing, World-registration, owner-reference, NPC
+lifecycle, and Region-quiescence boundary result. A scope-ready result is
+explicitly point-in-time and does not establish a durable preservation fact.
+The owner correlation accompanies proposal-scoped event
 inventories; only the explicit `::layerparity recover-noop` action may populate
 the separate recovery result, while ordinary movement, snapshots, and markers
 emit null there. The recovery result reports stable preparation,
@@ -218,8 +223,9 @@ restoration-capable event: outer-fence outcome, lifecycle-version stability,
 exact Region-boundary
 target facts, target decision, and dormant contract result. These facts are
 read-only and point-in-time; all mutation, commit-token, executable-restoration,
-arrival-gate, and lifecycle-authority flags remain false. The v1-v45 schemas
+arrival-gate, and lifecycle-authority flags remain false. The v1-v46 schemas
 remain alongside it—including
+`schema/layered-map-parity-event-v46.schema.json`,
 `schema/layered-map-parity-event-v45.schema.json`,
 `schema/layered-map-parity-event-v44.schema.json`,
 `schema/layered-map-parity-event-v43.schema.json`,

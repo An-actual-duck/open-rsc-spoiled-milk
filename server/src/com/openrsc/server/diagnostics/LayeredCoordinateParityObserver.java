@@ -17,6 +17,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReco
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerEventContinuityAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationBoundaryObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationRequirements;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
@@ -56,7 +58,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v46";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v47";
+	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v46";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -107,6 +110,12 @@ public final class LayeredCoordinateParityObserver {
 		4096;
 	private static final int MAX_TRACE_NPC_OWNER_EVENT_CONTINUITY_DETAILS =
 		LayeredPackedRegionNpcOwnerEventContinuityAssessment.MAXIMUM_DETAILS;
+	private static final int MAX_TRACE_NPC_OWNER_PRESERVATION_OWNERS =
+		LayeredPackedRegionNpcOwnerPreservationRequirements
+			.MAXIMUM_OWNER_REQUIREMENTS;
+	private static final int MAX_TRACE_NPC_OWNER_PRESERVATION_EVENT_LINKS =
+		LayeredPackedRegionNpcOwnerPreservationRequirements
+			.MAXIMUM_EVENT_LINKS;
 	private static final int MAX_TRACE_TRAVERSAL_STEPS = 16;
 
 	private static final Logger LOGGER = LogManager.getLogger(LayeredCoordinateParityObserver.class);
@@ -1490,6 +1499,8 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionEventOwnership = null;
 				LayeredPackedRegionNpcOwnerEventContinuityAssessment
 					packedRegionNpcOwnerEventContinuity = null;
+				LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
+					packedRegionNpcOwnerPreservationBoundary = null;
 				LayeredPackedRegionEventTargetObservation
 					packedRegionEventTargets = null;
 				LayeredPackedRegionEventAtomicTargetRevalidation
@@ -1784,6 +1795,23 @@ public final class LayeredCoordinateParityObserver {
 								MAX_TRACE_ACTIVE_NPC_INSTANCES,
 								MAX_TRACE_ACTIVE_NPC_RELEVANT_DETAILS,
 								MAX_TRACE_NPC_OWNER_EVENT_CONTINUITY_DETAILS);
+					if (packedRegionNpcOwnerEventContinuity != null) {
+						LayeredPackedRegionNpcOwnerPreservationRequirements
+							preservationRequirements =
+								LayeredPackedRegionNpcOwnerPreservationRequirements
+									.derive(
+										packedRegionEventOwnership,
+										packedRegionNpcOwnerEventContinuity,
+										MAX_TRACE_NPC_OWNER_PRESERVATION_OWNERS,
+										MAX_TRACE_NPC_OWNER_PRESERVATION_EVENT_LINKS);
+						packedRegionNpcOwnerPreservationBoundary =
+							Objects.requireNonNull(
+								state.packedRegionEventOwnershipSource
+									.captureNpcOwnerPreservationBoundary(
+										preservationRequirements,
+										MAX_TRACE_NPC_OWNER_PRESERVATION_OWNERS),
+								"packedRegionEventOwnershipSource NPC owner preservation boundary");
+					}
 					packedRegionEventTargets =
 						state.packedRegionEventOwnershipSource.captureTargets(
 							packedRegionEventOwnership,
@@ -1835,6 +1863,7 @@ public final class LayeredCoordinateParityObserver {
 					packedRegionDynamicObjectPreservation,
 					packedRegionEventOwnership,
 					packedRegionNpcOwnerEventContinuity,
+					packedRegionNpcOwnerPreservationBoundary,
 					packedRegionEventTargets,
 					packedRegionEventAtomicTargetRevalidation,
 					packedRegionEventRecoveryNoOp);
@@ -1923,6 +1952,8 @@ public final class LayeredCoordinateParityObserver {
 		LayeredPackedRegionEventOwnershipInventory packedRegionEventOwnership,
 		LayeredPackedRegionNpcOwnerEventContinuityAssessment
 			packedRegionNpcOwnerEventContinuity,
+		LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
+			packedRegionNpcOwnerPreservationBoundary,
 		LayeredPackedRegionEventTargetObservation packedRegionEventTargets,
 		LayeredPackedRegionEventAtomicTargetRevalidation
 			packedRegionEventAtomicTargetRevalidation,
@@ -2141,6 +2172,13 @@ public final class LayeredCoordinateParityObserver {
 		} else {
 			appendPackedRegionNpcOwnerEventContinuity(
 				out, packedRegionNpcOwnerEventContinuity);
+		}
+		out.append(",\"packedRegionNpcOwnerPreservationBoundary\":");
+		if (packedRegionNpcOwnerPreservationBoundary == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionNpcOwnerPreservationBoundary(
+				out, packedRegionNpcOwnerPreservationBoundary);
 		}
 		out.append(",\"packedRegionEventTargets\":");
 		if (packedRegionEventTargets == null) {
@@ -4437,6 +4475,113 @@ public final class LayeredCoordinateParityObserver {
 		out.append("]}");
 	}
 
+	private static void appendPackedRegionNpcOwnerPreservationBoundary(
+		final StringBuilder out,
+		final LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
+			observation) {
+		out.append('{');
+		out.append("\"generation\":").append(observation.getGeneration())
+			.append(',');
+		out.append("\"requirementsObservedAtTick\":")
+			.append(observation.getRequirementsObservedAtTick()).append(',');
+		out.append("\"boundaryObservedAtTick\":")
+			.append(observation.getBoundaryObservedAtTick()).append(',');
+		field(out, "schedulerInstanceIdentity",
+			observation.getSchedulerInstanceIdentity()).append(',');
+		out.append("\"selectedSourceCount\":")
+			.append(observation.getSelectedSourceCount()).append(',');
+		out.append("\"proposalRelatedEventCount\":")
+			.append(observation.getProposalRelatedEventCount()).append(',');
+		out.append("\"relatedOwnerPositionHintEventCount\":")
+			.append(observation.getRelatedOwnerPositionHintEventCount())
+			.append(',');
+		out.append("\"npcOwnerEventCount\":")
+			.append(observation.getNpcOwnerEventCount()).append(',');
+		out.append("\"separateNonNpcOwnerEventCount\":")
+			.append(observation.getSeparateNonNpcOwnerEventCount())
+			.append(',');
+		out.append("\"preservationRequiredEventCount\":")
+			.append(observation.getPreservationRequiredEventCount())
+			.append(',');
+		out.append("\"previouslyEligibleEventCount\":")
+			.append(observation.getPreviouslyEligibleEventCount()).append(',');
+		out.append("\"npcHardBlockerEventCount\":")
+			.append(observation.getNpcHardBlockerEventCount()).append(',');
+		out.append("\"requiredOwnerCount\":")
+			.append(observation.getRequiredOwnerCount()).append(',');
+		out.append("\"relatedEventLinkCount\":")
+			.append(observation.getRelatedEventLinkCount()).append(',');
+		out.append("\"supportingEventLinkCount\":")
+			.append(observation.getSupportingEventLinkCount()).append(',');
+		out.append("\"requiredEventLinkCount\":")
+			.append(observation.getRequiredEventLinkCount()).append(',');
+		out.append("\"schedulerInstanceMatched\":")
+			.append(observation.isSchedulerInstanceMatched()).append(',');
+		out.append("\"registrationSetComplete\":")
+			.append(observation.isRegistrationSetComplete()).append(',');
+		out.append("\"eventExecutionBoundaryCount\":")
+			.append(observation.getEventExecutionBoundaryCount()).append(',');
+		out.append("\"eventTimingBoundaryCount\":")
+			.append(observation.getEventTimingBoundaryCount()).append(',');
+		out.append("\"worldRegistrationBoundaryHeld\":")
+			.append(observation.isWorldRegistrationBoundaryHeld()).append(',');
+		out.append("\"npcLifecycleBoundaryCount\":")
+			.append(observation.getNpcLifecycleBoundaryCount()).append(',');
+		out.append("\"regionAbsenceQuiescenceHeld\":")
+			.append(observation.isRegionAbsenceQuiescenceHeld()).append(',');
+		out.append("\"exactReferenceOwnerCount\":")
+			.append(observation.getExactReferenceOwnerCount()).append(',');
+		field(out, "reason", observation.getReason().name()).append(',');
+		out.append("\"referenceBoundaryComplete\":")
+			.append(observation.isReferenceBoundaryComplete()).append(',');
+		out.append("\"preservationScopeReadyAtBoundary\":")
+			.append(observation.isPreservationScopeReadyAtBoundary())
+			.append(',');
+		out.append("\"pointInTimeOnly\":")
+			.append(observation.isPointInTimeOnly()).append(',');
+		out.append("\"preservationFactEstablished\":")
+			.append(observation.isPreservationFactEstablished()).append(',');
+		out.append("\"runtimeHandleRetained\":")
+			.append(observation.isRuntimeHandleRetained()).append(',');
+		out.append("\"preservationPerformed\":")
+			.append(observation.isPreservationPerformed()).append(',');
+		out.append("\"eventReschedule\":")
+			.append(observation.isEventReschedule()).append(',');
+		out.append("\"entityRegistry\":")
+			.append(observation.isEntityRegistry()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(observation.isArrivalGate()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(observation.isLifecycleAuthority()).append(',');
+		out.append("\"owners\":[");
+		boolean first = true;
+		for (LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
+			.OwnerEvidence owner : observation.getOwners()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			out.append("\"generation\":").append(owner.getGeneration())
+				.append(',');
+			out.append("\"packedRegionX\":")
+				.append(owner.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(owner.getPackedRegionY()).append(',');
+			out.append("\"sourceOrdinal\":")
+				.append(owner.getSourceOrdinal()).append(',');
+			out.append("\"runtimeNpcId\":")
+				.append(owner.getRuntimeNpcId()).append(',');
+			out.append("\"requiredEventLinkCount\":")
+				.append(owner.getRequiredEventLinkCount()).append(',');
+			out.append("\"validatedEventLinkCount\":")
+				.append(owner.getValidatedEventLinkCount()).append(',');
+			out.append("\"worldIdentityMatchCount\":")
+				.append(owner.getWorldIdentityMatchCount()).append(',');
+			field(out, "outcome", owner.getOutcome().name());
+			out.append('}');
+		}
+		out.append("]}");
+	}
+
 	private static void appendPackedRegionEventTargets(
 		final StringBuilder out,
 		final LayeredPackedRegionEventTargetObservation observation) {
@@ -6166,6 +6311,14 @@ public final class LayeredCoordinateParityObserver {
 				final int maximumNpcInstances,
 				final int maximumRelevantNpcDetails,
 				final int maximumEventDetails) {
+			return null;
+		}
+
+		default LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
+			captureNpcOwnerPreservationBoundary(
+				final LayeredPackedRegionNpcOwnerPreservationRequirements
+					requirements,
+				final int maximumOwners) {
 			return null;
 		}
 

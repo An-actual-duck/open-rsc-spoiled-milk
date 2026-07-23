@@ -30,9 +30,18 @@ public final class
 	private final long requirementsObservedAtTick;
 	private final long boundaryObservedAtTick;
 	private final String schedulerInstanceIdentity;
+	private final int selectedSourceCount;
+	private final int proposalRelatedEventCount;
+	private final int relatedOwnerPositionHintEventCount;
+	private final int npcOwnerEventCount;
 	private final int requiredOwnerCount;
+	private final int relatedEventLinkCount;
+	private final int supportingEventLinkCount;
 	private final int requiredEventLinkCount;
 	private final int separateNonNpcOwnerEventCount;
+	private final int preservationRequiredEventCount;
+	private final int previouslyEligibleEventCount;
+	private final int npcHardBlockerEventCount;
 	private final boolean schedulerInstanceMatched;
 	private final boolean registrationSetComplete;
 	private final int eventExecutionBoundaryCount;
@@ -61,10 +70,26 @@ public final class
 		this.boundaryObservedAtTick = boundaryObservedAtTick;
 		this.schedulerInstanceIdentity =
 			requirements.getSchedulerInstanceIdentity();
+		this.selectedSourceCount = requirements.getSelectedSourceCount();
+		this.proposalRelatedEventCount =
+			requirements.getProposalRelatedEventCount();
+		this.relatedOwnerPositionHintEventCount =
+			requirements.getRelatedOwnerPositionHintEventCount();
+		this.npcOwnerEventCount = requirements.getNpcOwnerEventCount();
 		this.requiredOwnerCount = requirements.getUniqueNpcOwnerCount();
+		this.relatedEventLinkCount =
+			requirements.getRelatedEventLinkCount();
+		this.supportingEventLinkCount =
+			requirements.getSupportingEventLinkCount();
 		this.requiredEventLinkCount = requirements.getEventLinkCount();
 		this.separateNonNpcOwnerEventCount =
 			requirements.getSeparateNonNpcOwnerEventCount();
+		this.preservationRequiredEventCount =
+			requirements.getPreservationRequiredEventCount();
+		this.previouslyEligibleEventCount =
+			requirements.getPreviouslyEligibleEventCount();
+		this.npcHardBlockerEventCount =
+			requirements.getNpcHardBlockerEventCount();
 		this.schedulerInstanceMatched = schedulerInstanceMatched;
 		this.registrationSetComplete = registrationSetComplete;
 		this.eventExecutionBoundaryCount = eventExecutionBoundaryCount;
@@ -85,6 +110,9 @@ public final class
 		}
 		this.exactReferenceOwnerCount = exactOwners;
 		if (requiredOwnerCount < 0 || requiredEventLinkCount < 0
+			|| relatedEventLinkCount < 0 || supportingEventLinkCount < 0
+			|| relatedEventLinkCount + supportingEventLinkCount
+				!= requiredEventLinkCount
 			|| eventExecutionBoundaryCount < 0
 			|| eventExecutionBoundaryCount > requiredEventLinkCount
 			|| eventTimingBoundaryCount < 0
@@ -206,10 +234,31 @@ public final class
 	public String getSchedulerInstanceIdentity() {
 		return schedulerInstanceIdentity;
 	}
+	public int getSelectedSourceCount() { return selectedSourceCount; }
+	public int getProposalRelatedEventCount() {
+		return proposalRelatedEventCount;
+	}
+	public int getRelatedOwnerPositionHintEventCount() {
+		return relatedOwnerPositionHintEventCount;
+	}
+	public int getNpcOwnerEventCount() { return npcOwnerEventCount; }
 	public int getRequiredOwnerCount() { return requiredOwnerCount; }
+	public int getRelatedEventLinkCount() { return relatedEventLinkCount; }
+	public int getSupportingEventLinkCount() {
+		return supportingEventLinkCount;
+	}
 	public int getRequiredEventLinkCount() { return requiredEventLinkCount; }
 	public int getSeparateNonNpcOwnerEventCount() {
 		return separateNonNpcOwnerEventCount;
+	}
+	public int getPreservationRequiredEventCount() {
+		return preservationRequiredEventCount;
+	}
+	public int getPreviouslyEligibleEventCount() {
+		return previouslyEligibleEventCount;
+	}
+	public int getNpcHardBlockerEventCount() {
+		return npcHardBlockerEventCount;
 	}
 	public boolean isSchedulerInstanceMatched() {
 		return schedulerInstanceMatched;
