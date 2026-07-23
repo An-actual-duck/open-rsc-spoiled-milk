@@ -20,6 +20,7 @@ SPELLS = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.jav
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 PLAN = ROOT / "docs/myworld/in-progress-work-plans/summoning-plan.md"
+ICON = ROOT / "dev/myworld/assets/sprites/UI/summon/guard-dog.png"
 
 
 def fail(message: str) -> None:
@@ -99,7 +100,11 @@ def main() -> int:
     require(client, "{37, 36, 825, 20}", "client Guard Dog cost item IDs are wrong")
     require(client, "{2, 2, 1, 1}", "client Guard Dog cost amounts are wrong")
     require(guide, 'addSummonGuide(748, "55", "Guard Dog - Support;', "skill guide entry is missing")
-    require(plan, "no purpose-made\n`guard-dog.png` has been supplied", "missing icon decision is undocumented")
+    require(plan, "purpose-made `guard-dog.png` icon", "Guard Dog icon is undocumented")
+    if not ICON.is_file():
+        fail("Guard Dog summon icon is missing")
+    if ICON.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+        fail("Guard Dog summon icon must be a PNG")
 
     active_guard = method_body(summoning, "private static Npc getActiveGuardDog")
     for snippet in (

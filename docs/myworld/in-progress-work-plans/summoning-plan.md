@@ -75,9 +75,8 @@ from the summon display name in lowercase with spaces converted to dashes:
 `broodling-spider.png`, `mischief-imp.png`, `loot-goblin.png`,
 `ironhide-bear.png`, `sacred-unicorn.png`, `duskwind-bat.png`, `pack-rat.png`,
 `bound-battleaxe.png`, `mourning-unicorn.png`, `restless-shade.png`,
-`delivery-camel.png`, `astral-wraith.png`, and `abyssal-demon.png`. Guard Dog
-currently uses the client's `GD` initials fallback because no purpose-made
-`guard-dog.png` has been supplied.
+`guard-dog.png`, `delivery-camel.png`, `astral-wraith.png`, and
+`abyssal-demon.png`. Guard Dog uses its purpose-made `guard-dog.png` icon.
 
 ## Summon Roles
 
