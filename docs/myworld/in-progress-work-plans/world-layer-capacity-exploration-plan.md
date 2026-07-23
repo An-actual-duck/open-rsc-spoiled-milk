@@ -3,7 +3,7 @@
 Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
 contained path owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, and 148 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, and 149 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -155,7 +155,11 @@ automated-validated Slice 148 records the exact successful collision register
 footprint as detached per-object provenance inside the canonical transaction,
 clears it only after committed removal, preserves it through refusal/rollback,
 and closes the normal-versus-force-full-block ambiguity required by future live
-snapshot capture;
+snapshot capture; and
+automated-validated Slice 149 captures one live current object and its exact
+registered collision provenance under the canonical non-loading Region/object/
+collision boundaries, revalidates identity inside those boundaries, and leaves
+the scheduler Store, mutation, arrival, and visibility disconnected;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -12271,6 +12275,65 @@ Safety boundary:
 Status: implemented and automated-validated. No owner route is required because
 the new state is passive provenance and has no recovery consumer yet.
 
+### Slice 149: Live Region current-state capture
+
+Objective: connect Slice 144's pure snapshot assessment to one real live object
+observation while keeping scheduler capture and every recovery mutation path
+disconnected.
+
+Implemented:
+
+- `RegionManager.captureGameTickEventCurrentStateRecoverySnapshot` accepts one
+  detached callback expectation plus explicit outer execution/lifecycle
+  boundary declarations and uses only non-creating Region lookup;
+- it observes one candidate, requires authored identity and Slice 148 exact
+  registered collision provenance, then derives the complete canonical packed-
+  Region boundary set from that provenance;
+- every required Region must already exist. Inside all collision boundaries and
+  the target Region object monitor, candidate identity, provenance identity,
+  constructor, exact slot count, and authored placement are revalidated;
+- exact per-tile blocking, directional, and projectile counters are copied from
+  the committed registration provenance into `CurrentScenery`, never inferred
+  from aggregate TileValue state or a fresh definition projection;
+- spawn callbacks classify one exact authored transient and removal callbacks
+  classify one exact restoration object before invoking Slice 144 assessment;
+  and
+- the closed capture result exposes either a detached snapshot, a precise
+  pre-assessment refusal, or Slice 144's assessment reason while retaining no
+  object, Region, callback, scheduler, or boundary handle.
+
+Automated validation status:
+
+- the real RegionManager fixture captures an exact live transient constructor,
+  authored provenance, and collision contribution and does the same for a
+  future removal object;
+- missing target Region and missing collision provenance refuse without loading
+  or projection;
+- a missing outer scheduler boundary is rejected by Slice 144 while the live
+  object and collision remain unchanged;
+- source guards prove canonical collision/object boundary order, identity
+  revalidation, non-creating lookup, no definition projection, and that the
+  scheduler Store remains disconnected;
+- the complete layered-map suite passes 498 tests across 148 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 796 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Safety boundary:
+
+- this path is read-only. It does not restore current state, consume desired
+  state, invoke a callback, cancel/reschedule an event, or release visibility;
+- caller-declared scheduler/lifecycle boundaries are not yet established by a
+  real Store composition; false declarations fail closed in Slice 144;
+- identity or provenance changing between advisory lookup and the held Region
+  boundary discards capture, and missing required Regions never trigger load;
+  and
+- scheduler-fenced capture, executable batch coordination, retry, first-
+  visibility integration, retirement, and persistence remain later gates.
+
+Status: implemented and automated-validated. No owner route is required because
+the scheduler Store remains disconnected.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -13194,16 +13257,20 @@ immutable exact register-footprint copy only after successful membership and
 collision commit, clears it after successful removal, and preserves the old
 copy across any refused replacement. Store and recovery remain disconnected.
 
-The next safe slice can now define runtime capture of one future callback's
-Slice 144 current-state snapshot while the exact scheduler execution/lifecycle,
-Region object, and collision boundaries are held in the established outer-to-
-inner order. It must read the present object's exact constructor, authored
-identity, zero owner/runtime-attribute requirement, positive remaining
-countdown, and Slice 148 collision-registration provenance without retaining
-live handles. Missing or stale provenance, changed registration/lifecycle,
-missing Region, ambiguous target, or incomplete boundary must refuse and leave
-the event scheduled. Application, batch execution, loading, arrival, and
-visibility should remain disconnected from this first runtime-capture proof.
+Slice 149 now connects the Region half of live capture. It resolves no missing
+Region, revalidates one exact candidate under the canonical collision and object
+boundaries, copies Slice 148 provenance, and feeds the result into Slice 144.
+Missing/stale identity or provenance and incomplete boundaries refuse without
+mutation. The scheduler Store remains disconnected.
+
+The next safe slice should compose Slice 149 with the exact registration,
+execution, and stable lifecycle boundaries already used by Slice 137. It must
+build the callback expectation from the fenced live event scalars, require a
+strictly positive remaining countdown, call the Region capture only inside the
+stable lifecycle operation, and discard the provisional snapshot if lifecycle
+postcheck changes. It must retain the future event unchanged and remain
+disconnected from Slice 147 application, batch execution, loading, arrival, and
+visibility.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

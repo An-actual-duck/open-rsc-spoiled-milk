@@ -7,6 +7,9 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPl
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionTransactionContract;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCommitRequest;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCurrentStateRecoverySnapshot;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCurrentStateRecoverySnapshot.CallbackExpectation;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCurrentStateRecoverySnapshot.CollisionContribution;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCurrentStateRecoverySnapshot.CurrentScenery;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRequest;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
@@ -15,6 +18,7 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GameObjectCollisionRegistrationState;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -2034,6 +2038,258 @@ public class RegionManager {
 					});
 			return RestorationCommitResult.from(result);
 		}
+	}
+
+	/**
+	 * Captures one live future callback's exact current scenery under existing
+	 * Region object/collision boundaries. Missing Regions are never created.
+	 */
+	public CurrentStateRecoveryCaptureResult
+		captureGameTickEventCurrentStateRecoverySnapshot(
+			final CallbackExpectation callback,
+			final boolean eventExecutionBoundaryHeld,
+			final boolean stableLifecycleBoundaryHeld) {
+		final CallbackExpectation checked = Objects.requireNonNull(
+			callback, "callback");
+		final int regionX = Math.floorDiv(
+			checked.getX(), Constants.REGION_SIZE);
+		final int regionY = Math.floorDiv(
+			checked.getY(), Constants.REGION_SIZE);
+		synchronized (layeredRegionLifecycleLock) {
+			final Region targetRegion = peekRegionFromSectorCoordinates(
+				regionX, regionY);
+			if (targetRegion == null) {
+				return CurrentStateRecoveryCaptureResult.refused(
+					CurrentStateRecoveryCaptureReason
+						.TARGET_REGION_UNAVAILABLE);
+			}
+			final Point targetLocation = Point.location(
+				checked.getX(), checked.getY());
+			final GameObject observed = checked.getType() == 0
+				? targetRegion.getGameObject(targetLocation, null)
+				: targetRegion.getWallGameObject(
+					targetLocation, checked.getDirection());
+			if (observed == null) {
+				return CurrentStateRecoveryCaptureResult.refused(
+					CurrentStateRecoveryCaptureReason
+						.TARGET_NOT_EXACTLY_ONE);
+			}
+			if (observed.getAuthoredPlacementIdentity() == null) {
+				return CurrentStateRecoveryCaptureResult.refused(
+					CurrentStateRecoveryCaptureReason
+						.AUTHORED_IDENTITY_UNAVAILABLE);
+			}
+			final long observedGeneration =
+				observed.getAuthoredPlacementIdentity().getGeneration();
+			final int observedPackedRegionX =
+				observed.getAuthoredPlacementIdentity().getPackedRegionX();
+			final int observedPackedRegionY =
+				observed.getAuthoredPlacementIdentity().getPackedRegionY();
+			final int observedSourceOrdinal =
+				observed.getAuthoredPlacementIdentity().getSourceOrdinal();
+			final String observedConstructionKind =
+				observed.getAuthoredPlacementIdentity()
+					.getConstructionKind().name();
+			final GameObjectCollisionRegistrationState observedCollision =
+				observed.getCollisionRegistrationState();
+			if (observedCollision == null
+				|| !observedCollision.matchesConstructor(observed)) {
+				return CurrentStateRecoveryCaptureResult.refused(
+					CurrentStateRecoveryCaptureReason
+						.COLLISION_PROVENANCE_UNAVAILABLE);
+			}
+
+			List<GameTickEventRestorationCollisionTransactionContract
+				.PackedRegionCoordinate> required =
+					new ArrayList<GameTickEventRestorationCollisionTransactionContract
+						.PackedRegionCoordinate>(
+							observedCollision.getRequiredRegionCount());
+			for (GameObjectCollisionRegistrationState.PackedRegionCoordinate
+					coordinate : observedCollision.getRequiredRegions()) {
+				required.add(
+					GameTickEventRestorationCollisionTransactionContract
+						.PackedRegionCoordinate.of(
+							coordinate.getRegionX(), coordinate.getRegionY()));
+			}
+			final GameTickEventRestorationCurrentStateRecoverySnapshot.Creation[]
+				creation =
+					new GameTickEventRestorationCurrentStateRecoverySnapshot
+						.Creation[1];
+			RegionObjectCollisionMutationBoundary.Execution execution =
+				executeUnderExistingOrderedObjectCollisionBoundaries(
+					required, heldBoundaries -> {
+						synchronized (
+							targetRegion.getGameObjectTransactionMonitor()) {
+							if (!targetRegion
+									.containsGameObjectIdentityUnderTransaction(
+										observed)) {
+								return;
+							}
+							GameObjectCollisionRegistrationState currentCollision =
+								observed.getCollisionRegistrationState();
+							if (observed.getAuthoredPlacementIdentity() == null
+								|| observed.getAuthoredPlacementIdentity()
+									.getGeneration() != observedGeneration
+								|| observed.getAuthoredPlacementIdentity()
+									.getPackedRegionX() != observedPackedRegionX
+								|| observed.getAuthoredPlacementIdentity()
+									.getPackedRegionY() != observedPackedRegionY
+								|| observed.getAuthoredPlacementIdentity()
+									.getSourceOrdinal() != observedSourceOrdinal
+								|| !observed.getAuthoredPlacementIdentity()
+									.getConstructionKind().name()
+										.equals(observedConstructionKind)
+								|| currentCollision == null
+								|| currentCollision != observedCollision
+								|| !currentCollision.matchesConstructor(observed)) {
+								return;
+							}
+							Region.RestorationTargetBoundarySnapshot target =
+								targetRegion.captureRestorationTargetBoundarySnapshot(
+									Region.RestorationTargetMatchRequirement.of(
+										observed.getID(),
+										observed.getLoc().getPermId(),
+										observed.getLoc().getX(),
+										observed.getLoc().getY(),
+										observed.getDirection(), observed.getType(),
+										null, 0, observedGeneration,
+										observedPackedRegionX,
+										observedPackedRegionY,
+										observedSourceOrdinal,
+										observedConstructionKind),
+									true);
+							List<CollisionContribution> collision =
+								new ArrayList<CollisionContribution>(
+									currentCollision.getContributionTileCount());
+							for (GameObjectCollisionRegistrationState
+									.CollisionContribution contribution
+										: currentCollision.getContributions()) {
+								collision.add(CollisionContribution.ofCounts(
+									contribution.getX(), contribution.getY(),
+									contribution.getBlockingSceneryCount(),
+									contribution.getDynamicCollisionCounts(),
+									contribution.getDynamicProjectileCount()));
+							}
+							CurrentScenery current = CurrentScenery.declare(
+								checked.getKind()
+									== GameTickEventRestorationCurrentStateRecoverySnapshot
+										.CallbackKind.SCENERY_SPAWN
+									? GameTickEventRestorationCurrentStateRecoverySnapshot
+										.ObservedCurrentState
+											.EXACT_AUTHORED_TRANSIENT_PRESENT
+									: GameTickEventRestorationCurrentStateRecoverySnapshot
+										.ObservedCurrentState
+											.EXACT_RESTORATION_SCENERY_PRESENT,
+								observed.getID(), observed.getLoc().getPermId(),
+								observed.getLoc().getX(), observed.getLoc().getY(),
+								observed.getDirection(), observed.getType(),
+								observed.getOwner(),
+								observed.getRuntimeAttributeCount(),
+								observedGeneration, observedPackedRegionX,
+								observedPackedRegionY, observedSourceOrdinal,
+								GameTickEventRestorationCurrentStateRecoverySnapshot
+									.AuthoredConstructionKind.valueOf(
+										observedConstructionKind),
+								target.getSlotObjectCount(),
+								eventExecutionBoundaryHeld,
+								stableLifecycleBoundaryHeld,
+								target.isObjectBoundaryHeldDuringClassification(),
+								heldBoundaries.areAllBoundariesHeld(), true,
+								collision);
+							creation[0] =
+								GameTickEventRestorationCurrentStateRecoverySnapshot
+									.assess(checked, current);
+						}
+					});
+			if (execution.isRefused()) {
+				return CurrentStateRecoveryCaptureResult.refused(
+					CurrentStateRecoveryCaptureReason
+						.REQUIRED_REGION_UNAVAILABLE);
+			}
+			if (creation[0] == null) {
+				return CurrentStateRecoveryCaptureResult.refused(
+					CurrentStateRecoveryCaptureReason
+						.TARGET_CHANGED_DURING_CAPTURE);
+			}
+			return CurrentStateRecoveryCaptureResult.from(creation[0]);
+		}
+	}
+
+	public enum CurrentStateRecoveryCaptureReason {
+		SNAPSHOT_AVAILABLE,
+		TARGET_REGION_UNAVAILABLE,
+		TARGET_NOT_EXACTLY_ONE,
+		AUTHORED_IDENTITY_UNAVAILABLE,
+		COLLISION_PROVENANCE_UNAVAILABLE,
+		REQUIRED_REGION_UNAVAILABLE,
+		TARGET_CHANGED_DURING_CAPTURE,
+		SNAPSHOT_REFUSED
+	}
+
+	/** Closed read-only capture result with no live object or Region handle. */
+	public static final class CurrentStateRecoveryCaptureResult {
+		private final CurrentStateRecoveryCaptureReason reason;
+		private final GameTickEventRestorationCurrentStateRecoverySnapshot
+			.Creation creation;
+
+		private CurrentStateRecoveryCaptureResult(
+			final CurrentStateRecoveryCaptureReason reason,
+			final GameTickEventRestorationCurrentStateRecoverySnapshot
+				.Creation creation) {
+			this.reason = Objects.requireNonNull(reason, "reason");
+			this.creation = creation;
+			boolean snapshotAssessment =
+				reason == CurrentStateRecoveryCaptureReason.SNAPSHOT_AVAILABLE
+					|| reason
+						== CurrentStateRecoveryCaptureReason.SNAPSHOT_REFUSED;
+			if (snapshotAssessment != (creation != null)
+				|| (reason
+					== CurrentStateRecoveryCaptureReason.SNAPSHOT_AVAILABLE)
+					!= (creation != null && creation.isSnapshotAvailable())) {
+				throw new IllegalArgumentException(
+					"Current-state capture result is inconsistent");
+			}
+		}
+
+		private static CurrentStateRecoveryCaptureResult refused(
+			final CurrentStateRecoveryCaptureReason reason) {
+			return new CurrentStateRecoveryCaptureResult(reason, null);
+		}
+
+		private static CurrentStateRecoveryCaptureResult from(
+			final GameTickEventRestorationCurrentStateRecoverySnapshot
+				.Creation creation) {
+			return creation.isSnapshotAvailable()
+				? new CurrentStateRecoveryCaptureResult(
+					CurrentStateRecoveryCaptureReason.SNAPSHOT_AVAILABLE,
+					creation)
+				: new CurrentStateRecoveryCaptureResult(
+					CurrentStateRecoveryCaptureReason.SNAPSHOT_REFUSED,
+					creation);
+		}
+
+		public CurrentStateRecoveryCaptureReason getReason() { return reason; }
+		public boolean isSnapshotAvailable() {
+			return reason == CurrentStateRecoveryCaptureReason.SNAPSHOT_AVAILABLE;
+		}
+		public GameTickEventRestorationCurrentStateRecoverySnapshot getSnapshot() {
+			return creation == null ? null : creation.getSnapshot();
+		}
+		public GameTickEventRestorationCurrentStateRecoverySnapshot.Reason
+			getSnapshotReason() {
+			return creation == null ? null : creation.getReason();
+		}
+		public boolean isRuntimeObservationPerformed() { return true; }
+		public boolean isRuntimeHandleRetained() { return false; }
+		public boolean isMutationAuthorized() { return false; }
+		public boolean isMutationPerformed() { return false; }
+		public boolean isRegionLoadingPerformed() { return false; }
+		public boolean isCallbackInvoked() { return false; }
+		public boolean isEventCancellation() { return false; }
+		public boolean isEventReschedule() { return false; }
+		public boolean isArrivalGate() { return false; }
+		public boolean isVisibilityReleased() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
 	}
 
 	/**

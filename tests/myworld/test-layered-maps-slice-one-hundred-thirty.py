@@ -310,7 +310,7 @@ class LayeredMapsSliceOneHundredThirtyTest(unittest.TestCase):
         self.assertNotIn(name, HANDLER.read_text(encoding="utf-8"))
         manager = REGION_MANAGER.read_text(encoding="utf-8")
         self.assertEqual(
-            1,
+            2,
             manager.count(
                 "executeUnderExistingOrderedObjectCollisionBoundaries("
             ),
