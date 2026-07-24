@@ -15226,6 +15226,76 @@ Owner-validation attempt:
   authority are all false. The owner reported the route completed and the
   diagnostic response appeared normally.
 
+### Slice 190: Disposable authored-collision application
+
+Objective: cross the first collision-application boundary only on a disposable,
+unregistered Region union, proving that Slice 186's detached footprints still
+produce the exact legacy collision counters without touching a runtime source.
+
+Implemented:
+
+- each detached authored-object footprint can package-locally recreate the
+  short-lived pure planner result from copied constructor and definition
+  scalars. The recreated result must match every ordered contribution and
+  required packed Region before it can reach an executor;
+- one source verifier constructs only the exact required disposable Region
+  union, or one source Region for an empty authored-object source. Every
+  container begins with empty dynamic collision products and entity membership
+  and is never placed in RegionManager storage;
+- each footprint uses the existing canonical
+  `RegionCollisionFootprintMutationExecutor` and its ordered per-Region
+  boundaries. Application refusal, post-state rollback, boundary-count drift,
+  or detached-planner drift fails the complete verification;
+- final blocking-scenery, six-bit dynamic collision, and dynamic-projectile
+  counters are checked on every tile of the disposable union against the
+  accumulated detached contributions. The returned receipt retains only
+  identity, counts, the original footprint fingerprint, and one applied-state
+  fingerprint; and
+- this slice deliberately does not populate authored-object membership or
+  attach collision-registration provenance. Those must be composed under one
+  later disposable object/collision transaction before any runtime-source
+  reconstruction is considered.
+
+Safety boundary:
+
+- collision mutation occurs only on locally constructed Regions that are
+  discarded before return. No runtime Region is looked up, created through the
+  manager, registered, or returned;
+- the receipt retains no Region, boundary, TileValue, planner result, manager,
+  entity, collection, or other runtime handle;
+- NPC/item membership, scheduler state, source absence/reconstruction, runtime
+  source collision, Region/residency/visibility mutation, arrival, visibility
+  release, and lifecycle authority remain false; and
+- the verifier has no batch, diagnostic, loading, gameplay, or production
+  caller. A later slice must first bound and reduce this application before it
+  may become privately observable.
+
+Automated validation status:
+
+- the real-boundary fixture derives three authored footprints, including one
+  zero-contribution object and one cross-Region footprint, recreates their pure
+  planner results, applies all three through four exact ordered boundary
+  acquisitions across two disposable Regions, and verifies all 4,608 Region
+  tiles against the accumulated counter state;
+- receipt assertions reconcile footprint/contribution/Region counts, all three
+  collision-counter families, the original footprint fingerprint, the applied
+  collision fingerprint, and every positive verification and negative runtime
+  authority fact;
+- structural guards require local Region construction and the canonical
+  executor, prohibit runtime Region lookup/creation, World object registration,
+  collision-provenance attachment, and retained runtime handles, and keep
+  planner-result recreation package-local;
+- the Slice 182-190 focused lineage passes 36 tests, including five Slice 190
+  tests; and
+- the authoritative bundled-Ant server build compiles 830 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This disconnected single-source
+verifier does not warrant an owner route. The next slice should bound the
+disposable collision application across an exact selected-source batch, reduce
+it to count/fingerprint-only evidence, and still leave the private diagnostic
+and every runtime source disconnected.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15635,6 +15705,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 189 by exposing bounded authored-collision verification through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v52 extends only the explicit preservation no-op with aligned reload/terrain/collision source counts and fingerprints, active definition capture and footprint derivation remain separate from every false apply/mutation/authority fact, v51 stays unchanged, 31 focused Slice 182-189 tests and the 828/488 Ant build pass; one dense owner route remains pending |
 | 2026-07-24 | Checkpoint the first Slice 189 owner attempt without accepting it. | The 59-record interaction route remained visually and behaviorally normal but omitted `preserve-noop`; the three-record retry is valid schema-v52 and reached `preservation-noop`, but a stationary start at `(142,516)` produced zero candidate sources, so all preservation/collision evidence correctly remained null. A later quiet-to-dense window transition is required before retry; this is an expected gate, not a collision refusal |
 | 2026-07-24 | Accept the Slice 189 private authored-collision verification route. | Owner-validated after accounting for the existing 16-tick retirement cooldown; four contiguous v52 records validate, all 36 sources align across preflight/reload/terrain/collision identity, 4,551 replay placements and 3,979 active-definition-backed object footprints reconcile with all aggregate counts and fingerprints, disposal is exactly bounded, the diagnostic response appeared normally, and every collision apply, registration, runtime mutation, retained handle, visibility, arrival, and lifecycle-authority fact remains false |
+| 2026-07-24 | Continue with Slice 190 by applying authored collision only to disposable unregistered Regions. | Implemented and automated-validated; detached footprints recreate the exact pure planner result, the canonical ordered-boundary executor applies counters only to a locally constructed Region union, every tile and collision family is fingerprinted and reconciled, object membership/provenance and all runtime lookup/mutation/authority remain absent, the Slice 182-190 lineage passes 36 tests, and the 830/488 Ant build passes |
 
 ## Next Discussion
 
@@ -16273,6 +16344,15 @@ because the exact NPC owner is explicitly preserved across a source lifecycle.
 Unresolved, stale, duplicate, absent, or non-preserved owners must remain hard
 blockers. A later focused callback diagnostic may still be useful, but it must
 withhold proposal readiness and cannot substitute for owner/event preservation.
+
+Slices 160-189 complete that correlation and advance the inert reload path
+through exact owner preservation, source-bound preflight, authored replay,
+isolated terrain/object verification, and detached authored-collision
+derivation. Slice 190 now crosses the first collision-application boundary only
+inside a disposable unregistered Region union. The next safe gate is a bounded
+selected-source batch that reduces those disposable applications to detached
+counts and fingerprints; it must remain disconnected from private diagnostics
+until its aggregate invariants are mechanically proved.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

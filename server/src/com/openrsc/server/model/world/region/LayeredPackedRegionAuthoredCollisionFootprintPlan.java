@@ -729,6 +729,83 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 			return collisionBeyondAuthoredDependency;
 		}
 
+		/**
+		 * Recreates the pure planner result from this detached copy and proves
+		 * that no contribution or required-Region fact drifted. Package-local
+		 * isolated verifiers may consume the short-lived result; it is never
+		 * retained by this value.
+		 */
+		Result recreateVerifiedPlannerResult(
+			final int worldWidth,
+			final int worldHeight) {
+			String[] projectileAllowlist =
+				projectileClipAllowed && definitionName != null
+					? new String[]{definitionName}
+					: new String[0];
+			Definition definition = definitionAvailable
+				? (objectType == ConstructorState.SCENERY
+					? Definition.scenery(
+						collisionType, definitionWidth, definitionHeight,
+						definitionName, projectileAllowlist)
+					: Definition.boundary(
+						collisionType, definitionName,
+						projectileAllowlist))
+				: null;
+			Result recreated =
+				GameTickEventRestorationCollisionFootprintPlanner.plan(
+					Operation.REGISTER,
+					ConstructorState.of(
+						objectId, packedX, packedY, direction, objectType),
+					definition, false,
+					WorldBounds.of(worldWidth, worldHeight));
+			if (!matches(recreated)) {
+				throw new IllegalStateException(
+					"Detached authored collision footprint did not replay exactly");
+			}
+			return recreated;
+		}
+
+		private boolean matches(final Result recreated) {
+			if (!recreated.isFootprintAvailable()
+				|| recreated.getOperation() != Operation.REGISTER
+				|| recreated.isLegacySaturatingUnregister()
+				|| recreated.getContributionTileCount()
+					!= contributions.size()
+				|| recreated.getRequiredRegionCount()
+					!= requiredRegions.size()) {
+				return false;
+			}
+			for (int index = 0; index < contributions.size(); index++) {
+				Contribution expected = contributions.get(index);
+				CollisionContribution actual =
+					recreated.getContributions().get(index);
+				if (expected.getPackedX() != actual.getX()
+					|| expected.getPackedY() != actual.getY()
+					|| expected.getBlockingSceneryCount()
+						!= actual.getBlockingSceneryCount()
+					|| expected.getDynamicProjectileCount()
+						!= actual.getDynamicProjectileCount()) {
+					return false;
+				}
+				for (int bit = 0; bit < 6; bit++) {
+					if (expected.getDynamicCollisionCount(bit)
+							!= actual.getDynamicCollisionCount(bit)) {
+						return false;
+					}
+				}
+			}
+			for (int index = 0; index < requiredRegions.size(); index++) {
+				RequiredPackedRegion expected = requiredRegions.get(index);
+				PackedRegionCoordinate actual =
+					recreated.getRequiredRegions().get(index);
+				if (expected.getPackedRegionX() != actual.getRegionX()
+					|| expected.getPackedRegionY() != actual.getRegionY()) {
+					return false;
+				}
+			}
+			return true;
+		}
+
 		private void updateDigest(final MessageDigest digest) {
 			updateLong(digest, authoredGeneration);
 			updateInt(digest, sourcePackedRegionX);
