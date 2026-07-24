@@ -314,6 +314,10 @@ automated-validated Slice 179 constructs one disposable Region against that cont
 reduces its exact initial state to a detached verification receipt, and returns
 no usable container or runtime handle while entering no packed registry,
 residency mirror, visibility cache, or gameplay lookup;
+automated-validated Slice 180 defines one exact detached static-terrain input for a
+single isolated source. It retains canonical tile metadata and static terrain
+collision, subtracts rather than retains dynamic products, and preserves
+missing-sector sealed-base traversal while applying nothing;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -14444,6 +14448,72 @@ archive-derived static tile metadata and terrain collision from authored
 object replay, dynamic collision, entities, registration, and visibility, and
 must not yet mutate even the disposable Region.
 
+### Slice 180: Detached static terrain initialization input
+
+Objective: reduce one exact resident source's current tiles to the bounded
+static input needed to initialize an isolated replacement, without retaining
+dynamic products or applying the input.
+
+Implemented:
+
+- `LayeredPackedRegionTerrainInitializationPlan` binds one exact Slice 178
+  source identity to 2,304 immutable tile inputs in canonical
+  `(localX,localY)` order and refuses missing, extra, null, duplicated, or
+  reordered coverage;
+- each tile retains static traversal, diagonal/horizontal/vertical wall
+  metadata, overlay, elevation, terrain blocked state, terrain collision mask,
+  static projectile state, overlay projectile state, and terrain-wall
+  projectile count;
+- dynamic collision counters, blocking-scenery counts, and dynamic projectile
+  counts are consulted only to subtract their contributions from the observed
+  traversal/projectile result and are not retained;
+- unexplained traversal remaining after static terrain products is preserved
+  explicitly as sealed-base traversal. This keeps constructor-sealed or
+  missing-sector tiles blocked instead of incorrectly treating an all-zero
+  terrain-product record as initialized passable terrain; and
+- aggregate terrain-blocked, terrain-mask, static-projectile, and sealed-base
+  counts plus a deterministic SHA-256 fingerprint make the complete source
+  input auditable without archive or runtime handles.
+
+Safety boundary:
+
+- the plan copies primitive static values only and retains no TileValue,
+  Region, RegionManager, entity, dynamic counter array, collection, archive,
+  Sector, loader, registry, mirror, cache, event, monitor, or runtime handle;
+- it neither rereads archives nor decides whether archive state or a current
+  editor-modified terrain value should win; it records the exact resident
+  static result only;
+- authored objects, dynamic objects, Players, NPCs, ground items, scheduler
+  state, dynamic collision, registration, rollback, arrival, and visibility
+  remain separate later stages; and
+- archive reload, storage allocation, Region construction, terrain apply,
+  authored replay, dynamic collision rebuild, active-family preservation,
+  registry/mirror/cache mutation, arrival, visibility, and lifecycle authority
+  remain false.
+
+Automated validation status:
+
+- an executable fixture proves exact source identity and canonical 2,304-tile
+  coverage, static metadata/collision retention, dynamic
+  collision/scenery/projectile subtraction, missing-sector seal retention,
+  aggregate reconciliation, deterministic fingerprinting, immutability,
+  missing-count refusal, and order refusal;
+- structural guards prove the retained tile type has no entity or dynamic
+  product fields, and the plan has no archive, Sector, Region, RegionManager,
+  registry, or lifecycle path;
+- the complete layered-map suite passes 607 tests across 179 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 819 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This detached definition has no
+runtime or private diagnostic caller and does not warrant an owner route. The
+next focused slice should capture this terrain-only input from one exact
+resident Region while the Slice 173 source lifecycle boundary remains active.
+That capture must validate source identity and residency version, return only
+the detached input, and still perform no isolated-container construction or
+terrain application.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14840,6 +14910,7 @@ private environment should validate at least:
 | 2026-07-23 | Accept the Slice 177 quiet-to-dense private owner route. | Owner-validated; four contiguous v50 records validate, all lifecycle identities and 36 source records align, 33 declared sources plus three exact empty replays reconcile 4,555 manifest minus four superseded placements to 4,551 final-live placements, unresolved family totals match preflight exactly, normal interaction remains intact, and every executable or authoritative flag remains false |
 | 2026-07-23 | Continue with Slice 178 by defining one detached sealed blank-container contract. | Implemented and automated-validated; one exact reload-recipe source now projects the authoritative 48-by-48 independent tile shape, sealed blank defaults, empty entity membership, and explicit later-stage obligations without allocation, construction, handles, mutation, or authority; the coordinate-owner inventory advances coherently to 214 sources, 599 focused tests pass across 177 files, and the 816/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 179 by verifying one real isolated Region against the sealed contract. | Implemented and automated-validated; a package-local verifier outside RegionManager constructs one disposable Region, proves its manager/coordinate/boundary binding, 2,304 distinct sealed tile defaults, zero collision-product ownership, and empty entity membership, then returns only a detached receipt without touching runtime indexes; 603 focused tests pass across 178 files and the 818/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 180 by defining one detached static-terrain initialization input. | Implemented and automated-validated; exact canonical tile metadata and static terrain collision are retained for all 2,304 source tiles, dynamic collision/scenery/projectile products are subtracted rather than retained, unexplained missing-sector seal traversal remains explicit, fingerprinting and bounds are deterministic, all apply/authority facts remain false, 607 focused tests pass across 179 files, and the 819/488 Ant build passes |
 
 ## Next Discussion
 
