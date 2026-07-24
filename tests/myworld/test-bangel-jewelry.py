@@ -21,6 +21,7 @@ CRAFTING_DEFS = SERVER / "conf/server/defs/extras/ItemCraftingDef.xml"
 EQUIPMENT = SERVER / "src/com/openrsc/server/model/container/Equipment.java"
 BANK_PRESET = SERVER / "src/com/openrsc/server/model/container/BankPreset.java"
 PLAYER = SERVER / "src/com/openrsc/server/model/entity/player/Player.java"
+PLAYER_SERVICE = SERVER / "src/com/openrsc/server/service/PlayerService.java"
 EFFECTS = SERVER / "src/com/openrsc/server/content/EnchantingItemEffects.java"
 MEDALLIONS = SERVER / "src/com/openrsc/server/content/FutureMedallionCatalog.java"
 MYWORLD_IDS = (
@@ -246,6 +247,7 @@ def ensure_persistence_and_lifecycle_contract() -> None:
     equipment = EQUIPMENT.read_text(encoding="utf-8")
     preset = BANK_PRESET.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
+    player_service = PLAYER_SERVICE.read_text(encoding="utf-8")
 
     require("new Item[Equipment.SLOT_COUNT]" in preset,
             "bank presets should allocate the current server slot count")
@@ -257,6 +259,10 @@ def ensure_persistence_and_lifecycle_contract() -> None:
             "old preset holdings should migrate by current item definition")
     require("equipment[currentSlot]" in preset,
             "migrated preset items should populate their current slot")
+    require(
+        "equipment.getList()[itemDef.getWieldPosition()] = item;" in player_service,
+        "login should resolve preserved item IDs through their current wrist definition",
+    )
     require("for (int slot = 0; slot < Equipment.SLOT_COUNT; slot++)" in player,
             "player equipment validation should include wrist")
 
