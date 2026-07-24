@@ -213,6 +213,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "ogg-audio-support-plan.md",
             "prayer-devotion-equipment-plan.md",
             "project-structure-refactor-plan.md",
+            "projectile-attack-range-audit.md",
             "remaster-lighting-and-shadow-plan.md",
             "remaster-suite-roadmap.md",
             "remastered-sprite-overrides-plan.md",
