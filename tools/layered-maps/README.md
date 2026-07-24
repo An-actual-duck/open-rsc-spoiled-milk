@@ -185,7 +185,7 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v52.schema.json`. Each v52 record
+traces emit `schema/layered-map-parity-event-v53.schema.json`. Each v53 record
 retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
@@ -251,6 +251,14 @@ bounded aggregate/per-source counts and terrain, replay, definition-capture,
 collision-plan, and whole-batch SHA-256 fingerprints. It contains no tile,
 entity, definition-table, or collision-contribution payload and grants no
 source, collision, registry, arrival, visibility, or lifecycle authority.
+V53 adds nullable `sourceAuthoredCollisionApplicationVerification` evidence
+only to that explicit private preservation action. It applies the already
+verified footprints through the canonical ordered-boundary executor solely on
+disposable unregistered Region unions, verifies every resulting collision
+counter, and discards the Regions. Only bounded source/application/Region/tile
+counts and the applied-state fingerprints are serialized. Runtime collision,
+collision-registration provenance, retained handles, runtime-source mutation,
+registry, arrival, visibility, and lifecycle authority remain false.
 The owner correlation accompanies proposal-scoped event
 inventories; only the explicit `::layerparity recover-noop` action may populate
 the separate recovery result, while ordinary movement, snapshots, and markers

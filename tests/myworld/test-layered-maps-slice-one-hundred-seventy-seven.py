@@ -311,10 +311,10 @@ class LayeredMapsSliceOneHundredSeventySevenTest(unittest.TestCase):
         )
         self.assertIn("reloadRecipe[0]", boundary)
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v52"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v53"', observer
         )
         self.assertIn(
-            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v51"',
+            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v52"',
             observer,
         )
         self.assertIn(

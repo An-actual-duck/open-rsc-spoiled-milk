@@ -34,6 +34,7 @@ import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
+import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
@@ -62,8 +63,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v52";
-	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v51";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v53";
+	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v52";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4674,6 +4675,17 @@ public final class LayeredCoordinateParityObserver {
 				out, diagnostic.getSourceAuthoredCollisionVerification());
 		}
 		out.append(',');
+		out.append(
+			"\"sourceAuthoredCollisionApplicationVerification\":");
+		if (diagnostic
+				.getSourceAuthoredCollisionApplicationVerification() == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionAuthoredCollisionApplicationVerificationBatch(
+				out, diagnostic
+					.getSourceAuthoredCollisionApplicationVerification());
+		}
+		out.append(',');
 		out.append("\"preservationEstablishedForConsumedWork\":false,");
 		out.append("\"preservationPerformed\":false,");
 		out.append("\"sourceAbsencePerformed\":false,");
@@ -5158,6 +5170,199 @@ public final class LayeredCoordinateParityObserver {
 				source.getDefinitionCaptureFingerprintSha256()).append(',');
 			field(out, "collisionFootprintFingerprintSha256",
 				source.getCollisionFootprintFingerprintSha256());
+			out.append('}');
+		}
+		out.append("]}");
+	}
+
+	private static void
+		appendPackedRegionAuthoredCollisionApplicationVerificationBatch(
+			final StringBuilder out,
+			final
+				LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+					verification) {
+		out.append('{');
+		out.append("\"generation\":").append(verification.getGeneration())
+			.append(',');
+		out.append("\"requirementsObservedAtTick\":")
+			.append(verification.getRequirementsObservedAtTick()).append(',');
+		out.append("\"observedAtTick\":")
+			.append(verification.getObservedAtTick()).append(',');
+		out.append("\"residencyMirrorVersion\":")
+			.append(verification.getResidencyMirrorVersion()).append(',');
+		out.append("\"authoredGeneration\":")
+			.append(verification.getAuthoredGeneration()).append(',');
+		out.append("\"sourceCount\":")
+			.append(verification.getSourceCount()).append(',');
+		out.append("\"replayPlacementCount\":")
+			.append(verification.getReplayPlacementCount()).append(',');
+		out.append("\"authoredObjectFootprintCount\":")
+			.append(verification.getAuthoredObjectFootprintCount())
+			.append(',');
+		out.append("\"contributionTileReferenceCount\":")
+			.append(verification.getContributionTileReferenceCount())
+			.append(',');
+		out.append("\"uniqueContributionTileReferenceCount\":")
+			.append(verification.getUniqueContributionTileReferenceCount())
+			.append(',');
+		out.append("\"requiredRegionReferenceCount\":")
+			.append(verification.getRequiredRegionReferenceCount())
+			.append(',');
+		out.append("\"uniqueRequiredRegionReferenceCount\":")
+			.append(verification.getUniqueRequiredRegionReferenceCount())
+			.append(',');
+		out.append("\"preApplicationDisposableRegionConstructionCount\":")
+			.append(verification
+				.getPreApplicationDisposableRegionConstructionCount())
+			.append(',');
+		out.append("\"disposableCollisionRegionConstructionCount\":")
+			.append(verification
+				.getDisposableCollisionRegionConstructionCount())
+			.append(',');
+		out.append("\"totalDisposableRegionConstructionCount\":")
+			.append(verification.getTotalDisposableRegionConstructionCount())
+			.append(',');
+		out.append("\"disposableTerrainApplyCount\":")
+			.append(verification.getDisposableTerrainApplyCount())
+			.append(',');
+		out.append("\"disposableObjectMembershipApplyCount\":")
+			.append(verification
+				.getDisposableObjectMembershipApplyCount())
+			.append(',');
+		out.append("\"collisionApplicationCount\":")
+			.append(verification.getCollisionApplicationCount()).append(',');
+		out.append("\"heldBoundaryCount\":")
+			.append(verification.getHeldBoundaryCount()).append(',');
+		out.append("\"verifiedRegionTileCount\":")
+			.append(verification.getVerifiedRegionTileCount()).append(',');
+		out.append("\"blockingSceneryContributionCount\":")
+			.append(verification.getBlockingSceneryContributionCount())
+			.append(',');
+		out.append("\"dynamicCollisionContributionCount\":")
+			.append(verification.getDynamicCollisionContributionCount())
+			.append(',');
+		out.append("\"dynamicProjectileContributionCount\":")
+			.append(verification.getDynamicProjectileContributionCount())
+			.append(',');
+		field(out, "baselineFingerprintSha256",
+			verification.getBaselineFingerprintSha256()).append(',');
+		field(out, "fingerprintSha256",
+			verification.getFingerprintSha256()).append(',');
+		out.append("\"usableRegionContainerCount\":")
+			.append(verification.getUsableRegionContainerCount()).append(',');
+		out.append("\"pointInTimeOnly\":")
+			.append(verification.isPointInTimeOnly()).append(',');
+		out.append("\"detachedSummaryOnly\":")
+			.append(verification.isDetachedSummaryOnly()).append(',');
+		out.append("\"allSourcesVerified\":")
+			.append(verification.isAllSourcesVerified()).append(',');
+		out.append("\"runtimeDefinitionCapturePerformed\":")
+			.append(verification.isRuntimeDefinitionCapturePerformed())
+			.append(',');
+		out.append("\"collisionFootprintDerivationPerformed\":")
+			.append(verification.isCollisionFootprintDerivationPerformed())
+			.append(',');
+		out.append("\"collisionAppliedToDisposableRegions\":")
+			.append(verification.isCollisionAppliedToDisposableRegions())
+			.append(',');
+		out.append("\"collisionRegistrationAttached\":")
+			.append(verification.isCollisionRegistrationAttached())
+			.append(',');
+		out.append("\"runtimeCollisionApplied\":")
+			.append(verification.isRuntimeCollisionApplied()).append(',');
+		out.append("\"runtimeHandleRetained\":")
+			.append(verification.isRuntimeHandleRetained()).append(',');
+		out.append("\"sourceAbsencePerformed\":")
+			.append(verification.isSourceAbsencePerformed()).append(',');
+		out.append("\"sourceReconstructionPerformed\":")
+			.append(verification.isSourceReconstructionPerformed())
+			.append(',');
+		out.append("\"terrainAppliedToRuntimeSource\":")
+			.append(verification.isTerrainAppliedToRuntimeSource())
+			.append(',');
+		out.append("\"authoredObjectMembershipAppliedToRuntimeSource\":")
+			.append(verification
+				.isAuthoredObjectMembershipAppliedToRuntimeSource())
+			.append(',');
+		out.append("\"npcMembershipApplied\":")
+			.append(verification.isNpcMembershipApplied()).append(',');
+		out.append("\"groundItemMembershipApplied\":")
+			.append(verification.isGroundItemMembershipApplied()).append(',');
+		out.append("\"schedulerStateRestored\":")
+			.append(verification.isSchedulerStateRestored()).append(',');
+		out.append("\"activeFamilyPreservationPerformed\":")
+			.append(verification.isActiveFamilyPreservationPerformed())
+			.append(',');
+		out.append("\"regionRegistryMutated\":")
+			.append(verification.isRegionRegistryMutated()).append(',');
+		out.append("\"residencyMirrorMutated\":")
+			.append(verification.isResidencyMirrorMutated()).append(',');
+		out.append("\"visibilityCacheMutated\":")
+			.append(verification.isVisibilityCacheMutated()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(verification.isArrivalGate()).append(',');
+		out.append("\"visibilityReleased\":")
+			.append(verification.isVisibilityReleased()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(verification.isLifecycleAuthority()).append(',');
+		out.append("\"sources\":[");
+		boolean first = true;
+		for (
+			LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+				.SourceVerification source
+			: verification.getSources()) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			out.append('{');
+			out.append("\"sourceOrdinal\":")
+				.append(source.getSourceOrdinal()).append(',');
+			out.append("\"packedRegionX\":")
+				.append(source.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(source.getPackedRegionY()).append(',');
+			out.append("\"replayPlacementCount\":")
+				.append(source.getReplayPlacementCount()).append(',');
+			out.append("\"authoredObjectFootprintCount\":")
+				.append(source.getAuthoredObjectFootprintCount()).append(',');
+			out.append("\"contributionTileReferenceCount\":")
+				.append(source.getContributionTileReferenceCount())
+				.append(',');
+			out.append("\"uniqueContributionTileCount\":")
+				.append(source.getUniqueContributionTileCount()).append(',');
+			out.append("\"requiredRegionReferenceCount\":")
+				.append(source.getRequiredRegionReferenceCount()).append(',');
+			out.append("\"uniqueRequiredRegionCount\":")
+				.append(source.getUniqueRequiredRegionCount()).append(',');
+			out.append("\"disposableRegionConstructionCount\":")
+				.append(source.getDisposableRegionConstructionCount())
+				.append(',');
+			out.append("\"collisionApplicationCount\":")
+				.append(source.getCollisionApplicationCount()).append(',');
+			out.append("\"heldBoundaryCount\":")
+				.append(source.getHeldBoundaryCount()).append(',');
+			out.append("\"verifiedRegionTileCount\":")
+				.append(source.getVerifiedRegionTileCount()).append(',');
+			out.append("\"blockingSceneryContributionCount\":")
+				.append(source.getBlockingSceneryContributionCount())
+				.append(',');
+			out.append("\"dynamicCollisionContributionCount\":")
+				.append(source.getDynamicCollisionContributionCount())
+				.append(',');
+			out.append("\"dynamicProjectileContributionCount\":")
+				.append(source.getDynamicProjectileContributionCount())
+				.append(',');
+			field(out, "terrainFingerprintSha256",
+				source.getTerrainFingerprintSha256()).append(',');
+			field(out, "authoredReplayFingerprintSha256",
+				source.getAuthoredReplayFingerprintSha256()).append(',');
+			field(out, "definitionCaptureFingerprintSha256",
+				source.getDefinitionCaptureFingerprintSha256()).append(',');
+			field(out, "collisionFootprintFingerprintSha256",
+				source.getCollisionFootprintFingerprintSha256()).append(',');
+			field(out, "appliedCollisionFingerprintSha256",
+				source.getAppliedCollisionFingerprintSha256());
 			out.append('}');
 		}
 		out.append("]}");
@@ -6657,6 +6862,9 @@ public final class LayeredCoordinateParityObserver {
 			sourceTerrainVerification;
 		private final LayeredPackedRegionAuthoredCollisionVerificationBatch
 			sourceAuthoredCollisionVerification;
+		private final
+			LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+				sourceAuthoredCollisionApplicationVerification;
 
 		private PackedRegionNpcOwnerPreservationNoOpMetadata(
 			final String reason,
@@ -6676,7 +6884,10 @@ public final class LayeredCoordinateParityObserver {
 			final LayeredPackedRegionTerrainVerificationBatch
 				sourceTerrainVerification,
 			final LayeredPackedRegionAuthoredCollisionVerificationBatch
-				sourceAuthoredCollisionVerification) {
+				sourceAuthoredCollisionVerification,
+			final
+				LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+					sourceAuthoredCollisionApplicationVerification) {
 			this.reason = Objects.requireNonNull(reason, "reason");
 			this.generation = generation;
 			this.requirementsObservedAtTick = requirementsObservedAtTick;
@@ -6693,6 +6904,8 @@ public final class LayeredCoordinateParityObserver {
 			this.sourceTerrainVerification = sourceTerrainVerification;
 			this.sourceAuthoredCollisionVerification =
 				sourceAuthoredCollisionVerification;
+			this.sourceAuthoredCollisionApplicationVerification =
+				sourceAuthoredCollisionApplicationVerification;
 			if ((!"OWNER_SCOPE_REFUSED".equals(reason)
 					&& !"SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason))
 				|| generation < 0L || requirementsObservedAtTick < 0L
@@ -6705,13 +6918,17 @@ public final class LayeredCoordinateParityObserver {
 					&& (ownerScopeEntered || sourceAbsencePreflight != null
 						|| sourceReloadRecipe != null
 						|| sourceTerrainVerification != null
-						|| sourceAuthoredCollisionVerification != null))
+						|| sourceAuthoredCollisionVerification != null
+						|| sourceAuthoredCollisionApplicationVerification
+							!= null))
 				|| ("SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason)
 					&& (!ownerScopeEntered
 						|| sourceAbsencePreflight == null
 						|| sourceReloadRecipe == null
 						|| sourceTerrainVerification == null
-						|| sourceAuthoredCollisionVerification == null))
+						|| sourceAuthoredCollisionVerification == null
+						|| sourceAuthoredCollisionApplicationVerification
+							== null))
 				|| (sourceAbsencePreflight != null
 					&& (sourceAbsencePreflight.getGeneration() != generation
 						|| sourceAbsencePreflight
@@ -6862,7 +7079,97 @@ public final class LayeredCoordinateParityObserver {
 							.isLifecycleAuthority()
 						|| !collisionSourcesMatch(
 							sourceReloadRecipe, sourceTerrainVerification,
-							sourceAuthoredCollisionVerification)))) {
+							sourceAuthoredCollisionVerification)))
+				|| (sourceAuthoredCollisionApplicationVerification != null
+					&& (sourceAuthoredCollisionApplicationVerification
+							.getGeneration() != generation
+						|| sourceAuthoredCollisionApplicationVerification
+							.getRequirementsObservedAtTick()
+								!= requirementsObservedAtTick
+						|| sourceAuthoredCollisionApplicationVerification
+							.getSourceCount() != selectedSourceCount
+						|| sourceReloadRecipe == null
+						|| sourceAuthoredCollisionVerification == null
+						|| sourceAuthoredCollisionApplicationVerification
+							.getObservedAtTick()
+								!= sourceReloadRecipe.getObservedAtTick()
+						|| sourceAuthoredCollisionApplicationVerification
+							.getResidencyMirrorVersion()
+								!= sourceReloadRecipe
+									.getResidencyMirrorVersion()
+						|| sourceAuthoredCollisionApplicationVerification
+							.getAuthoredGeneration()
+								!= sourceReloadRecipe
+									.getAuthoredGeneration()
+						|| sourceAuthoredCollisionApplicationVerification
+							.getReplayPlacementCount()
+								!= sourceReloadRecipe
+									.getAuthoredPlacementCount()
+						|| sourceAuthoredCollisionApplicationVerification
+							.getAuthoredObjectFootprintCount()
+								!= sourceAuthoredCollisionVerification
+									.getAuthoredObjectFootprintCount()
+						|| sourceAuthoredCollisionApplicationVerification
+							.getContributionTileReferenceCount()
+								!= sourceAuthoredCollisionVerification
+									.getContributionTileReferenceCount()
+						|| sourceAuthoredCollisionApplicationVerification
+							.getRequiredRegionReferenceCount()
+								!= sourceAuthoredCollisionVerification
+									.getRequiredRegionReferenceCount()
+						|| sourceAuthoredCollisionApplicationVerification
+							.getUniqueRequiredRegionReferenceCount()
+								!= sourceAuthoredCollisionVerification
+									.getUniqueRequiredRegionReferenceCount()
+						|| !sourceAuthoredCollisionApplicationVerification
+							.getBaselineFingerprintSha256().equals(
+								sourceAuthoredCollisionVerification
+									.getFingerprintSha256())
+						|| !sourceAuthoredCollisionApplicationVerification
+							.isAllSourcesVerified()
+						|| !sourceAuthoredCollisionApplicationVerification
+							.isRuntimeDefinitionCapturePerformed()
+						|| !sourceAuthoredCollisionApplicationVerification
+							.isCollisionFootprintDerivationPerformed()
+						|| !sourceAuthoredCollisionApplicationVerification
+							.isCollisionAppliedToDisposableRegions()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isCollisionRegistrationAttached()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isRuntimeCollisionApplied()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isRuntimeHandleRetained()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isSourceAbsencePerformed()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isSourceReconstructionPerformed()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isTerrainAppliedToRuntimeSource()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isAuthoredObjectMembershipAppliedToRuntimeSource()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isNpcMembershipApplied()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isGroundItemMembershipApplied()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isSchedulerStateRestored()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isActiveFamilyPreservationPerformed()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isRegionRegistryMutated()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isResidencyMirrorMutated()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isVisibilityCacheMutated()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isArrivalGate()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isVisibilityReleased()
+						|| sourceAuthoredCollisionApplicationVerification
+							.isLifecycleAuthority()
+						|| !collisionApplicationSourcesMatch(
+							sourceAuthoredCollisionVerification,
+							sourceAuthoredCollisionApplicationVerification)))) {
 				throw new IllegalArgumentException(
 					"NPC owner preservation no-op metadata is inconsistent");
 			}
@@ -6886,7 +7193,10 @@ public final class LayeredCoordinateParityObserver {
 			final LayeredPackedRegionTerrainVerificationBatch
 				sourceTerrainVerification,
 			final LayeredPackedRegionAuthoredCollisionVerificationBatch
-				sourceAuthoredCollisionVerification) {
+				sourceAuthoredCollisionVerification,
+			final
+				LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+					sourceAuthoredCollisionApplicationVerification) {
 			return new PackedRegionNpcOwnerPreservationNoOpMetadata(
 				reason, generation, requirementsObservedAtTick,
 				selectedSourceCount, requiredEventLinkCount,
@@ -6895,7 +7205,8 @@ public final class LayeredCoordinateParityObserver {
 				reconstructedSourceCount, preservedConsumerInvoked,
 				sourceAbsencePreflight, sourceReloadRecipe,
 				sourceTerrainVerification,
-				sourceAuthoredCollisionVerification);
+				sourceAuthoredCollisionVerification,
+				sourceAuthoredCollisionApplicationVerification);
 		}
 
 		private static boolean collisionSourcesMatch(
@@ -6937,6 +7248,62 @@ public final class LayeredCoordinateParityObserver {
 			return true;
 		}
 
+		private static boolean collisionApplicationSourcesMatch(
+			final LayeredPackedRegionAuthoredCollisionVerificationBatch
+				collision,
+			final
+				LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+					application) {
+			if (collision.getSourceCount() != application.getSourceCount()) {
+				return false;
+			}
+			for (int ordinal = 0; ordinal < collision.getSourceCount();
+					ordinal++) {
+				LayeredPackedRegionAuthoredCollisionVerificationBatch
+					.SourceVerification collisionSource =
+						collision.getSources().get(ordinal);
+				LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+					.SourceVerification applicationSource =
+						application.getSources().get(ordinal);
+				if (collisionSource.getSourceOrdinal() != ordinal
+					|| applicationSource.getSourceOrdinal() != ordinal
+					|| collisionSource.getPackedRegionX()
+						!= applicationSource.getPackedRegionX()
+					|| collisionSource.getPackedRegionY()
+						!= applicationSource.getPackedRegionY()
+					|| collisionSource.getReplayPlacementCount()
+						!= applicationSource.getReplayPlacementCount()
+					|| collisionSource.getAuthoredObjectFootprintCount()
+						!= applicationSource
+							.getAuthoredObjectFootprintCount()
+					|| collisionSource.getContributionTileReferenceCount()
+						!= applicationSource
+							.getContributionTileReferenceCount()
+					|| collisionSource.getRequiredRegionReferenceCount()
+						!= applicationSource
+							.getRequiredRegionReferenceCount()
+					|| collisionSource.getUniqueRequiredRegionCount()
+						!= applicationSource.getUniqueRequiredRegionCount()
+					|| !collisionSource.getTerrainFingerprintSha256().equals(
+						applicationSource.getTerrainFingerprintSha256())
+					|| !collisionSource
+						.getAuthoredReplayFingerprintSha256().equals(
+							applicationSource
+								.getAuthoredReplayFingerprintSha256())
+					|| !collisionSource
+						.getDefinitionCaptureFingerprintSha256().equals(
+							applicationSource
+								.getDefinitionCaptureFingerprintSha256())
+					|| !collisionSource
+						.getCollisionFootprintFingerprintSha256().equals(
+							applicationSource
+								.getCollisionFootprintFingerprintSha256())) {
+					return false;
+				}
+			}
+			return true;
+		}
+
 		public String getReason() { return reason; }
 		public long getGeneration() { return generation; }
 		public long getRequirementsObservedAtTick() {
@@ -6972,6 +7339,11 @@ public final class LayeredCoordinateParityObserver {
 		public LayeredPackedRegionAuthoredCollisionVerificationBatch
 			getSourceAuthoredCollisionVerification() {
 			return sourceAuthoredCollisionVerification;
+		}
+		public
+			LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+				getSourceAuthoredCollisionApplicationVerification() {
+			return sourceAuthoredCollisionApplicationVerification;
 		}
 	}
 

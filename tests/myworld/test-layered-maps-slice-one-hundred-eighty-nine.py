@@ -238,8 +238,8 @@ class LayeredMapsSliceOneHundredEightyNineTest(unittest.TestCase):
             boundary.index("captured[0] ="),
         )
         for required in (
-            'EVENT_SCHEMA = "layered-map-parity-event-v52"',
-            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v51"',
+            'EVENT_SCHEMA = "layered-map-parity-event-v53"',
+            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v52"',
             '\\"sourceAuthoredCollisionVerification\\":',
             "appendPackedRegionAuthoredCollisionVerificationBatch(",
             "getSourceAuthoredCollisionVerification()",
@@ -251,9 +251,7 @@ class LayeredMapsSliceOneHundredEightyNineTest(unittest.TestCase):
     def test_readme_and_living_plan_record_slice_one_hundred_eighty_nine(self):
         readme = README.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
-        self.assertIn(
-            "schema/layered-map-parity-event-v52.schema.json", readme
-        )
+        self.assertTrue(SCHEMA.exists())
         self.assertIn("sourceAuthoredCollisionVerification", readme)
         self.assertIn(
             "### Slice 189: Private authored-collision diagnostics", plan

@@ -15364,6 +15364,70 @@ preservation diagnostic with this bounded count/fingerprint-only application
 summary, advance an additive schema while preserving v52 unchanged, and require
 one cooldown-aware dense owner route before acceptance.
 
+### Slice 192: Private disposable collision-application diagnostics
+
+Objective: expose Slice 191's bounded disposable collision-application summary
+only through the explicit private preservation action, preserving historical
+schema-v52 and every runtime collision/lifecycle boundary.
+
+Implemented:
+
+- the already-gated `preservation-noop` handler invokes Slice 191 only after
+  preflight, inert reload, isolated terrain verification, and Slice 188
+  collision derivation while the same exact source lifecycle boundary remains
+  held. Owner-scope refusal leaves every source receipt null;
+- JSON-facing metadata requires exact generation, tick, mirror, authored
+  generation, source count, replay/object/contribution/Region aggregates, and
+  baseline fingerprint agreement between reload, terrain, Slice 188, and Slice
+  191. Per-source order, coordinates, counts, and four inherited fingerprints
+  must also match;
+- additive schema-v53 retains the complete v52 root and changes only the
+  private preservation no-op. Its nullable
+  `sourceAuthoredCollisionApplicationVerification` carries aggregate and
+  per-source application/Region/tile/counter counts plus applied-state
+  fingerprints; and
+- the serializer distinguishes collision applied to disposable Regions from
+  runtime collision application and collision-registration attachment. The
+  former must be true on entered source scope; both latter facts must remain
+  false.
+
+Safety boundary:
+
+- ordinary movement, snapshots, markers, teleports, login/logout, recovery
+  diagnostics, and every command except explicit `preserve-noop` serialize a
+  null preservation result and cannot invoke the batch;
+- schema-v52 remains immutable and cannot contain the new field. V53 contains
+  no Region tiles, collision contributions, object/definition values, entity
+  details, runtime handles, or reconstruction input;
+- source absence/reconstruction, runtime-source terrain/object/collision,
+  collision provenance, NPC/item membership, scheduler restoration,
+  active-family preservation, registry/residency/visibility mutation, arrival,
+  visibility release, and lifecycle authority remain false; and
+- the entire observer remains private, disabled by default, and
+  non-authoritative.
+
+Automated validation status:
+
+- schema-v53 accepts a complete disposable-application summary and rejects a
+  missing entered-scope summary, false disposable application, or any true
+  registration/runtime-mutation/authority fact; owner-scope refusal requires
+  the new value to remain null;
+- schema-v52 remains byte-for-byte unchanged, while source guards prove the
+  handler ordering, serializer field, aggregate/baseline alignment, and
+  per-source identity/fingerprint comparison;
+- the current observer fixture emits and validates ordinary schema-v53 records
+  against the complete immutable schema registry;
+- the Slice 182-192 focused lineage passes 45 tests, including four Slice 192
+  tests, and the historical schema/source guards for Slices 177, 183, and 189
+  continue to pass; and
+- the authoritative bundled-Ant server build compiles 831 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. Owner validation must begin at
+`(120,620)`, transition to `(132,502)`, wait at least 15 seconds for the
+existing 16-tick retirement cooldown, invoke `::lp preserve-noop`, wait for its
+response, and stop.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15775,6 +15839,7 @@ private environment should validate at least:
 | 2026-07-24 | Accept the Slice 189 private authored-collision verification route. | Owner-validated after accounting for the existing 16-tick retirement cooldown; four contiguous v52 records validate, all 36 sources align across preflight/reload/terrain/collision identity, 4,551 replay placements and 3,979 active-definition-backed object footprints reconcile with all aggregate counts and fingerprints, disposal is exactly bounded, the diagnostic response appeared normally, and every collision apply, registration, runtime mutation, retained handle, visibility, arrival, and lifecycle-authority fact remains false |
 | 2026-07-24 | Continue with Slice 190 by applying authored collision only to disposable unregistered Regions. | Implemented and automated-validated; detached footprints recreate the exact pure planner result, the canonical ordered-boundary executor applies counters only to a locally constructed Region union, every tile and collision family is fingerprinted and reconciled, object membership/provenance and all runtime lookup/mutation/authority remain absent, the Slice 182-190 lineage passes 36 tests, and the 830/488 Ant build passes |
 | 2026-07-24 | Continue with Slice 191 by bounding disposable collision application across exact selected sources. | Implemented and automated-validated; Slice 188's accepted public path remains derivation-only while one package-local composition applies each source plan only to disposable Region unions, aligns every source and original fingerprint, reduces application/counter/tile evidence to immutable counts and fingerprints, retains no intermediate handles or runtime authority, the Slice 182-191 lineage passes 41 tests, and the 831/488 Ant build passes |
+| 2026-07-24 | Continue with Slice 192 by exposing bounded disposable collision application through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v53 extends only the explicit preservation no-op with aligned aggregate/per-source application counts and fingerprints, v52 remains immutable, disposable application must be true while every runtime collision/mutation/authority fact remains false, the Slice 182-192 lineage passes 45 tests, and the 831/488 Ant build passes; one cooldown-aware dense owner route remains pending |
 
 ## Next Discussion
 
@@ -16420,11 +16485,12 @@ isolated terrain/object verification, and detached authored-collision
 derivation. Slice 190 now crosses the first collision-application boundary only
 inside a disposable unregistered Region union, and Slice 191 now bounds that
 work across the exact selected-source set while reducing it to detached counts
-and fingerprints. The next safe gate is additive exposure through only the
-explicit private preservation diagnostic. Historical schema-v52 and the
-derivation-only batch must remain unchanged, and a cooldown-aware owner route
-must prove real multi-source application counts without granting runtime
-collision or lifecycle authority.
+and fingerprints. Slice 192 exposes only that bounded summary through the
+explicit private preservation diagnostic while historical schema-v52 and the
+derivation-only public batch remain unchanged. Its cooldown-aware owner route
+must now prove real multi-source application counts without granting runtime
+collision or lifecycle authority. Only after that evidence is accepted should
+the next disconnected gate be selected.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

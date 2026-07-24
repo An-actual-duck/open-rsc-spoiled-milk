@@ -47,6 +47,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TargetSubject;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TimeProgressionPolicy;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
+import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
@@ -550,6 +551,11 @@ public class GameEventHandler {
 			authoredCollisionVerification =
 				new
 					LayeredPackedRegionAuthoredCollisionVerificationBatch[1];
+		final
+			LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch[]
+				authoredCollisionApplicationVerification =
+					new
+						LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch[1];
 		boolean sourceBoundaryEntered =
 			getServer().getWorld().getRegionManager()
 				.withinLayeredPackedRegionSourceLifecycleBoundary(
@@ -578,6 +584,13 @@ public class GameEventHandler {
 									getServer().getWorld().getRegionManager(),
 									boundary, reloadRecipe[0],
 									LayeredPackedRegionAuthoredCollisionVerificationBatch
+										.MAXIMUM_VERIFICATION_SOURCES);
+						authoredCollisionApplicationVerification[0] =
+							LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+								.capture(
+									getServer().getWorld().getRegionManager(),
+									boundary, reloadRecipe[0],
+									LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
 										.MAXIMUM_VERIFICATION_SOURCES);
 						captured[0] =
 							GameTickEventNpcOwnerPreservationNoOpDiagnostic
@@ -608,7 +621,8 @@ public class GameEventHandler {
 			result.getReconstructedSourceCount(),
 			result.isPreservedConsumerInvoked(), absencePreflight[0],
 			reloadRecipe[0], terrainVerification[0],
-			authoredCollisionVerification[0]);
+			authoredCollisionVerification[0],
+			authoredCollisionApplicationVerification[0]);
 	}
 
 	private void requireExactPackedSourceBoundary(
