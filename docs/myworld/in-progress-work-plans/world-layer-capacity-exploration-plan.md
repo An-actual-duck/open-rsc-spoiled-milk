@@ -16397,6 +16397,9 @@ callback is candidate-related to that selection.
 
 Owner finding:
 
+- the first attempted schema-v58 route was discarded because the legacy
+  `scripts/private-server/client.*` launchers still overwrote the client cache
+  with public port `43605` even though the private server uses `43615`;
 - the first correctly targeted schema-v58 route reached the preservation
   command one tick before the 16-tick retirement cooldown and safely emitted
   no preservation evidence;
@@ -16408,6 +16411,16 @@ Owner finding:
 - the command aborted before record serialization with no scheduler entry,
   callback change, source absence, reconstruction, registry/mirror/visibility
   change, or runtime mutation.
+
+Private-route correction:
+
+- the Unix private client wrapper now delegates to the canonical
+  `scripts/run-client.sh --dev` target, which identifies the worktree, branch,
+  commit, and private endpoint before launch;
+- the Unix private server wrapper derives the client endpoint from
+  `server/myworld.conf` and explicitly refuses public port `43605`; and
+- the Windows private wrappers and tracked development cache now consistently
+  target `localhost:43615`.
 
 Implementation:
 
@@ -16877,6 +16890,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 207 by exposing bounded detachment-scheduler correlation through the explicit private preservation diagnostic. | Implemented and automated-validated; additive schema-v58 changes only the preservation no-op, aligns the existing exact event inventory, inert detachment definition, and NPC-owner requirements under one source-lifecycle boundary, serializes compact aggregate/per-source classifications without duplicating callbacks or retaining authority, preserves schema-v57, passes five focused guards, the 111-test Slice 182-207 lineage, two observer integration tests, and the 843/488 Ant build/audit; one fresh-server private owner route remains pending |
 | 2026-07-24 | Repair the schema-v58 owner route after it exposed an exact NPC owner authored outside the selected detachment sources. | Slice 208 implemented and automated-validated; the eligible route proved 12 candidates, 36 selected sources, 450 exact related NPC-owner links, and eight separate non-NPC events before the inert correlation threw on an invalid membership assumption. Exact generation/scheduler/registration/NPC identity remain mandatory, but a roaming owner's authored source may now remain outside the sources its callback currently affects; the compiled regression covers related and supporting links for such an owner, the Slice 182-208 lineage passes 114 tests plus two observer integration guards, and the 843/488 Ant build/audit passes. No runtime mutation occurred; one repaired private route remains pending |
 | 2026-07-24 | Accept the repaired Slice 207-208 private detachment-scheduler correlation route. | Owner-validated; four contiguous schema-v58 records classify all 3,881 callbacks across 36 selected sources, including 449 exact related NPC-owner fences and the valid outside-selection authored owners. The 555 retained classifications and 106 blockers reconcile exactly as eight non-NPC plus 98 unattributed callbacks, while 3,326 outside-selection hints remain non-blocking. Source references, order, and fingerprints align; every runtime mutation/authority fact is false, the route completed without a reported visual or interaction issue, and one accepted 1,196 ms late tick contains 1,186 ms of opt-in diagnostic work |
+| 2026-07-24 | Prevent the legacy private-server launchers from silently targeting the public server. | Corrected after discarding the first v58 attempt: the Unix client delegates to the guarded canonical `--dev` target, the Unix server derives its client port from `myworld.conf` and refuses public port 43605, the Windows wrappers and tracked cache use 43615, both shell wrappers pass syntax validation, and four focused launcher guards pass. The public process was not stopped or restarted |
 
 ## Next Discussion
 

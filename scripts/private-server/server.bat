@@ -40,7 +40,7 @@ if not exist "%DB_PATH%" (
 )
 
 > "%ROOT_DIR%\Client_Base\Cache\ip.txt" echo localhost
-> "%ROOT_DIR%\Client_Base\Cache\port.txt" echo 43605
+> "%ROOT_DIR%\Client_Base\Cache\port.txt" echo 43615
 
 echo Building and starting the server...
 echo.
