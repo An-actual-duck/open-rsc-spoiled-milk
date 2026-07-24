@@ -48,7 +48,7 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 		final CollisionPlanFactory collisionPlanFactory) {
 		this(
 			regionManager, boundary, reloadRecipe, maximumSources,
-			collisionPlanFactory, null, null);
+			collisionPlanFactory, null, null, null);
 	}
 
 	private LayeredPackedRegionAuthoredCollisionVerificationBatch(
@@ -62,7 +62,7 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 				disposableCollisionApplications) {
 		this(
 			regionManager, boundary, reloadRecipe, maximumSources,
-			collisionPlanFactory, disposableCollisionApplications, null);
+			collisionPlanFactory, disposableCollisionApplications, null, null);
 	}
 
 	private LayeredPackedRegionAuthoredCollisionVerificationBatch(
@@ -74,9 +74,12 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 		final List<
 			LayeredPackedRegionIsolatedAuthoredCollisionVerification>
 				disposableCollisionApplications,
-		final List<
-			LayeredPackedRegionIsolatedAuthoredSourceStateVerification>
-				combinedSourceStates) {
+			final List<
+				LayeredPackedRegionIsolatedAuthoredSourceStateVerification>
+					combinedSourceStates,
+			final List<
+				LayeredPackedRegionIsolatedTransactionalAuthoredSourceVerification>
+					transactionalSourceStates) {
 		RegionManager manager =
 			Objects.requireNonNull(regionManager, "regionManager");
 		LayeredPackedRegionSourceLifecycleBoundary checkedBoundary =
@@ -154,6 +157,13 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 			if (combinedSourceStates != null) {
 				combinedSourceStates.add(
 					LayeredPackedRegionIsolatedAuthoredSourceStateVerifier
+						.verify(
+							manager, container, terrain, replay,
+							membershipVerification, collision));
+			}
+			if (transactionalSourceStates != null) {
+				transactionalSourceStates.add(
+					LayeredPackedRegionIsolatedTransactionalAuthoredSourceVerifier
 						.verify(
 							manager, container, terrain, replay,
 							membershipVerification, collision));
@@ -268,8 +278,26 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 		LayeredPackedRegionAuthoredCollisionVerificationBatch baseline =
 			new LayeredPackedRegionAuthoredCollisionVerificationBatch(
 				regionManager, boundary, reloadRecipe, maximumSources,
-				collisionPlanFactory, null, combinedStates);
+				collisionPlanFactory, null, combinedStates, null);
 		return new CombinedStateCapture(baseline, combinedStates);
+	}
+
+	static TransactionalStateCapture captureWithTransactionalSourceStates(
+		final RegionManager regionManager,
+		final LayeredPackedRegionSourceLifecycleBoundary boundary,
+		final LayeredPackedRegionReloadRecipe reloadRecipe,
+		final int maximumSources,
+		final CollisionPlanFactory collisionPlanFactory) {
+		List<
+			LayeredPackedRegionIsolatedTransactionalAuthoredSourceVerification>
+				transactionalStates =
+					new ArrayList<
+						LayeredPackedRegionIsolatedTransactionalAuthoredSourceVerification>();
+		LayeredPackedRegionAuthoredCollisionVerificationBatch baseline =
+			new LayeredPackedRegionAuthoredCollisionVerificationBatch(
+				regionManager, boundary, reloadRecipe, maximumSources,
+				collisionPlanFactory, null, null, transactionalStates);
+		return new TransactionalStateCapture(baseline, transactionalStates);
 	}
 
 	private static String fingerprint(
@@ -460,6 +488,41 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 		List<LayeredPackedRegionIsolatedAuthoredSourceStateVerification>
 			getCombinedStates() {
 			return combinedStates;
+		}
+	}
+
+	static final class TransactionalStateCapture {
+		private final LayeredPackedRegionAuthoredCollisionVerificationBatch
+			baseline;
+		private final List<
+			LayeredPackedRegionIsolatedTransactionalAuthoredSourceVerification>
+				transactionalStates;
+
+		private TransactionalStateCapture(
+			final LayeredPackedRegionAuthoredCollisionVerificationBatch
+				baseline,
+			final List<
+				LayeredPackedRegionIsolatedTransactionalAuthoredSourceVerification>
+					transactionalStates) {
+			this.baseline = Objects.requireNonNull(baseline, "baseline");
+			if (transactionalStates.size() != baseline.getSourceCount()) {
+				throw new IllegalArgumentException(
+					"Transactional disposable source-state count is incomplete");
+			}
+			this.transactionalStates = Collections.unmodifiableList(
+				new ArrayList<
+					LayeredPackedRegionIsolatedTransactionalAuthoredSourceVerification>(
+						transactionalStates));
+		}
+
+		LayeredPackedRegionAuthoredCollisionVerificationBatch getBaseline() {
+			return baseline;
+		}
+
+		List<
+			LayeredPackedRegionIsolatedTransactionalAuthoredSourceVerification>
+				getTransactionalStates() {
+			return transactionalStates;
 		}
 	}
 

@@ -15704,6 +15704,65 @@ Status: implemented and automated-validated. This disconnected single-source
 verifier does not warrant an owner route. The next slice should bound its
 detached receipts across the exact selected-source set.
 
+### Slice 197: Bounded transactional authored source states
+
+Objective: reduce Slice 196's stronger transactional construction across the
+exact selected-source set without retaining a disposable Region, object,
+registration, collision plan, or runtime handle.
+
+Implemented:
+
+- one package-local composition reuses the accepted bounded collision batch
+  while the exact source lifecycle boundary remains held, then reconstructs
+  each selected source through Slice 196 in stable ordinal order;
+- every source receipt aligns generation, packed coordinate, replay/object
+  counts, collision contribution/Region counts, and the terrain, authored
+  replay, active-definition, and collision-footprint fingerprints with the
+  derivation-only baseline;
+- the reduction retains atomic transaction/boundary counts, disposable-only
+  cache invalidations, exact collision-registration contribution/Region
+  counts, collision-family totals, and one registration fingerprint plus the
+  applied-collision and final-state fingerprints per source; and
+- checked aggregate arithmetic reconciles every transaction and registration
+  to the baseline object footprint, contribution tile, and required-Region
+  totals before producing one deterministic detached batch fingerprint.
+
+Safety boundary:
+
+- no transactional verifier result survives the constructor; the public
+  authored-collision batch remains derivation-only and registration-free;
+- all object/collision transactions and attached registration provenance exist
+  only within disposable unregistered Region unions, and reported cache
+  invalidations are local counters rather than runtime invalidations;
+- no runtime Region lookup, source absence, reconstruction, NPC or ground-item
+  membership, scheduler restoration, registry/mirror/cache mutation, arrival,
+  visibility release, or lifecycle authority occurs; and
+- the maximum remains 128 exact selected sources, with overflow, identity
+  drift, incomplete capture, and count/fingerprint mismatch failing closed.
+
+Automated validation status:
+
+- the real source-lifecycle fixture reduces one source containing three
+  authored objects, including a cross-Region footprint, into three atomic
+  transactions, four exact boundaries, three registration records, four
+  contribution references, four Region references, two disposable Regions,
+  and 4,608 verified tiles;
+- transactional collision totals and applied/final-state fingerprints exactly
+  match Slice 194's accepted combined-state receipt, while the new registration
+  fingerprint remains present and the baseline fingerprint remains identical
+  to the derivation-only batch;
+- structural guards prove the batch retains no Region, object, registration,
+  replay, collision-plan, or transactional receipt handle and that the public
+  capture path remains unchanged; and
+- the Slice 182-197 focused lineage passes 69 tests, including five Slice 197
+  tests, while the authoritative bundled-Ant server build compiles 837 core
+  and 488 plugin sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This detached bounded reduction
+does not warrant an owner route. The next slice may expose it additively through
+the private preservation diagnostic without altering the accepted schema-v54
+or any public path.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16122,6 +16181,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 195 by exposing bounded combined authored state through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v54 changes only the explicit preservation no-op, aligns every combined source with the accepted derivation/application evidence, serializes only bounded counts and six fingerprints, requires every runtime mutation/authority fact to remain false, the Slice 182-195 lineage passes 59 tests plus two observer integration guards, and the 834/488 Ant build passes; one cooldown-aware dense owner route remains pending |
 | 2026-07-24 | Accept the Slice 195 private combined authored-state route. | Owner-validated; four contiguous schema-v54 records align all 36 sources across reload, derivation, separate application, and combined state, reconciling 4,551 replay placements, 3,979 object applications, 3,185 unique contribution tiles, 36 combined/108 total disposable Region constructions, 82,944 verified tiles, all collision-family totals, and all six per-source fingerprints; the response and subsequent interaction remained normal while every runtime mutation/authority fact remains false |
 | 2026-07-24 | Continue with Slice 196 by reconstructing one disposable source through atomic object/collision transactions. | Implemented and automated-validated; three fixture objects register through three canonical transactions/four exact boundaries, each gains exact detached collision-registration provenance, disposable cache invalidations remain local, the applied-collision and final-state fingerprints exactly match Slice 193, no handle or runtime authority survives, the Slice 182-196 lineage passes 64 tests, and the 836/488 Ant build passes |
+| 2026-07-24 | Continue with Slice 197 by bounding transactional disposable authored source states. | Implemented and automated-validated; exact selected-source order aligns every transactional receipt to the derivation-only baseline, aggregate transaction/boundary/cache-invalidation/registration counts reconcile to object, contribution, and Region totals, only counts plus seven fingerprints survive, the Slice 182-197 lineage passes 69 tests, and the 837/488 Ant build passes |
 
 ## Next Discussion
 
@@ -16788,10 +16848,12 @@ authority.
 Slice 196 now proves one stronger but still disposable construction path:
 canonical atomic object/collision transactions attach exact per-object
 collision-registration provenance while producing the identical terrain,
-membership, applied-collision, and final-state fingerprints as Slice 193. The
-next safe gate is a bounded exact-source batch that retains only counts and the
-new registration fingerprint; runtime-source comparison, absence, publication,
-and reconstruction must remain disconnected.
+membership, applied-collision, and final-state fingerprints as Slice 193.
+Slice 197 now bounds that proof across the exact selected-source set and retains
+only aligned counts plus the new registration fingerprint and inherited state
+fingerprints. The next safe gate is additive private diagnostic publication;
+runtime-source comparison, absence, and reconstruction must remain
+disconnected.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
