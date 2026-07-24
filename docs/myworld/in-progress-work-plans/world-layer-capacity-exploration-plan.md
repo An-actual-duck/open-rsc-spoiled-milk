@@ -15624,9 +15624,25 @@ Automated validation status:
 - the authoritative bundled-Ant server build compiles 834 core and 488 plugin
   sources and passes its build/classpath audit.
 
-Status: implemented and automated-validated. One cooldown-aware dense private
-owner route must confirm the diagnostic response and schema-v54 multi-source
-totals before acceptance.
+Owner validation:
+
+- four contiguous schema-v54 records cover start, quiet-to-dense teleport,
+  `preservation-noop`, and stop, with the response returned normally;
+- all 36 selected sources align across reload, authored-collision derivation,
+  separate collision application, and combined state: 4,551 replay placements,
+  3,979 object footprints/applications, 3,185 unique contribution tiles, 36
+  combined Region unions, 108 total disposable Region constructions, and
+  82,944 verified Region tiles;
+- the combined collision totals reconcile exactly to 2,989 blocking-scenery,
+  196 dynamic-collision, and 2,554 dynamic-projectile contributions, while all
+  inherited, applied-collision, and final-state fingerprints are present and
+  source-aligned; and
+- the owner reported no missing response or issue, successfully interacted
+  after the capture, and every runtime collision, mutation, retained-handle,
+  registry, mirror, cache, arrival, visibility, and lifecycle-authority fact
+  remains false.
+
+Status: owner-accepted.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -16044,6 +16060,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 193 by proving one combined disposable authored source state. | Implemented and automated-validated; static terrain, exact authored object membership, and canonical collision application now coexist in the same unregistered Region union, support Regions retain blank static definitions, the deterministic final-state fingerprint covers actual tiles and objects, no handle or runtime authority survives, the Slice 182-193 lineage passes 50 tests, and the 833/488 Ant build passes |
 | 2026-07-24 | Continue with Slice 194 by bounding combined disposable authored source states. | Implemented and automated-validated; exact selected-source order aligns each same-union receipt with all prior counts and four inherited fingerprints plus applied/final-state fingerprints, aggregate Region/terrain/membership/collision work reconciles, no intermediate or runtime handle survives, the derivation-only public path remains unchanged, the Slice 182-194 lineage passes 55 tests, and the 834/488 Ant build passes |
 | 2026-07-24 | Continue with Slice 195 by exposing bounded combined authored state through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v54 changes only the explicit preservation no-op, aligns every combined source with the accepted derivation/application evidence, serializes only bounded counts and six fingerprints, requires every runtime mutation/authority fact to remain false, the Slice 182-195 lineage passes 59 tests plus two observer integration guards, and the 834/488 Ant build passes; one cooldown-aware dense owner route remains pending |
+| 2026-07-24 | Accept the Slice 195 private combined authored-state route. | Owner-validated; four contiguous schema-v54 records align all 36 sources across reload, derivation, separate application, and combined state, reconciling 4,551 replay placements, 3,979 object applications, 3,185 unique contribution tiles, 36 combined/108 total disposable Region constructions, 82,944 verified tiles, all collision-family totals, and all six per-source fingerprints; the response and subsequent interaction remained normal while every runtime mutation/authority fact remains false |
 
 ## Next Discussion
 
@@ -16703,9 +16720,9 @@ source order and all six stage/final fingerprints, and reduces every combined
 state to detached counts/fingerprints. Slice 195 now exposes only that summary
 through the explicit private preservation diagnostic while historical
 schema-v53 and every accepted public path remain unchanged. Its automated
-schema/source validation passes; a cooldown-aware owner route must now prove
-the real multi-source combined totals without granting runtime collision or
-lifecycle authority before the slice can be accepted.
+schema/source validation and cooldown-aware owner route now prove the real
+multi-source combined totals without granting runtime collision or lifecycle
+authority.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;
