@@ -5,6 +5,28 @@ intentionally pending review.
 
 Date audited: 2026-07-24
 
+## Accepted Design Clarification
+
+The project owner clarified after the initial audit that the high Prayer XP
+curves are intentional:
+
+- +1000 Prayer XP per offering at 1000 Devotion is considered reasonable for
+  one of the game's hardest skills to train. Other high-level skills can award
+  more than 10,000 XP per action, so the offering bonus should not be judged in
+  isolation as excessive.
+- Blessing XP is also intended to scale strongly at high Devotion. Blessing is
+  meant to be a useful Prayer-training route in a skill with comparatively few
+  XP-generation methods.
+- Devotion has an opportunity cost through reward choices. Players can retain
+  high Devotion and its XP benefits or trade Devotion for rewards such as god
+  artifacts.
+
+Accordingly, this document no longer recommends flattening either XP curve.
+The large totals below remain useful pacing evidence, but they are documented
+as intended rewards rather than balance defects. Free or failed-removal XP
+paths, such as the Bonecrusher issue, remain defects because they bypass the
+required Devotion progression and item cost.
+
 ## Executive Summary
 
 The current system has three related but distinct loops:
@@ -44,7 +66,8 @@ The most important audit findings are:
   ownership or destruction of every eligible item.
 - At 1000 Devotion, each successful offering grants a flat 1000 displayed
   Prayer XP in addition to the bone or ash's normal XP. Blessing XP also
-  reaches 11 times its base value. These two curves dominate late progression.
+  reaches 11 times its base value. These are intentional high-Devotion rewards,
+  with reward-based Devotion spending supplying the opportunity cost.
 - Devotion-lowering adjustment paths refresh equipment stats but do not call
   the overflowing-prayer cleanup used by the administrator setter. An artifact
   claim or opposing-item destruction can therefore lower equipment-derived
@@ -523,7 +546,8 @@ later.
 Claiming all three artifacts for one god requires 1600 total Devotion gain:
 reach 800, spend to 400, regain 400 twice, and finish at 400 after the third
 claim. That is 16,000 plain offering units before symbol/Unicorn acceleration.
-The artifact cost is the only current renewable Devotion sink.
+Artifact claims are the only currently implemented Devotion spend, but they are
+finite: each of the three artifacts per god can be claimed only once.
 
 ### Blessing and destruction XP
 
@@ -544,12 +568,20 @@ can produce 36,000 displayed Prayer XP at the unlock threshold or 72,000 at
 1000 Devotion, before other bonuses. Destruction itself is uncapped, so
 direct-drop or previously stockpiled items can exceed that short-term rate.
 
+These figures are not, by themselves, evidence that the XP should be reduced.
+The accepted design compares Prayer's overall time-to-level and scarcity of
+training actions against other skills that can exceed 10,000 XP in a single
+high-level action. The high-Devotion offering and blessing rewards are intended
+to close that gap. Balance review should instead measure sustained Prayer XP
+per hour, the time required to reach high Devotion, and how often players elect
+to spend Devotion on rewards.
+
 ### Exploit and bypass assessment
 
 | Risk | Confidence | Impact |
 | --- | --- | --- |
 | Bonecrusher does not check removal and does not reject notes | Confirmed | Reusable noted bone/ash can generate unlimited Prayer XP and Devotion |
-| Blessing is free after threshold | Confirmed design | Enables permanent unlock and blessed-item stockpiling; no renewable sink |
+| Blessing is free after threshold | Confirmed design | Permanent unlock and stockpiling are not exploits; their balance depends on optional Devotion rewards |
 | Direct blessed drops bypass requirements and blessing limiter | Confirmed design/content | Destruction can replace offerings as progression and can burst XP |
 | Destruction is uncapped | Confirmed | Stockpiled/direct items can be converted as fast as interactions permit |
 | Host-clock changes | Confirmed arithmetic | Clock forward resets early; clock rollback extends the hour |
@@ -580,51 +612,52 @@ These are proposed decisions, not implemented values.
 6. Add server-side tests for notes, stale selections, exact quantities, all 96
    products, cap persistence, clock edges, and failed conversion accounting.
 
-### 2. Add a modest Devotion cost to normal blessings
+### 2. Preserve high-Devotion Prayer XP
 
-Use the existing destruction value as the blessing cost. This gives the system
-one consistent unit, preserves the high unlock thresholds, and avoids making a
-single item consume hundreds of Devotion.
-
-| Family | Current requirement | Current cost | Proposed cost |
-| --- | ---: | ---: | ---: |
-| Symbol | 25 | 0 | 0.5 Devotion |
-| Wool/knight item | `50 * resource cost` | 0 | `resource cost` Devotion |
-| Staff | `50 * tier` | 0 | `tier` Devotion |
-| Artifact | 800 | 400 | Keep 400 |
-
-At exact unlock, a wool set would cost 12 Devotion total, all sixteen knight
-recipes would cost 37, and a tier-10 staff would lower 500 to 490. These costs
-make repeated production matter without invalidating the unlock immediately.
-They also use the already-supported offering-unit adjustment path, so the
-symbol's half point can remain exact.
-
-### 3. Flatten the two late-game XP multipliers
-
-The present per-offering curve and 11x blessing multiplier are too steep
-relative to cheap renewable inputs.
-
-Recommended starting formulas:
+Keep the current formulas:
 
 ```text
-displayed offering bonus XP = floor(max(0, Devotion) / 10)
-blessing XP multiplier      = 1 + max(0, Devotion) / 1000
+displayed offering bonus XP = max(0, prior Devotion)
+blessing XP multiplier      = 1 + altar-god Devotion / 100
 ```
 
-| Devotion | Current offering bonus | Proposed offering bonus | Current blessing multiplier | Proposed multiplier |
-| ---: | ---: | ---: | ---: | ---: |
-| 25 | 25 | 2 | 1.25x | 1.025x |
-| 50 | 50 | 5 | 1.5x | 1.05x |
-| 200 | 200 | 20 | 3x | 1.2x |
-| 500 | 500 | 50 | 6x | 1.5x |
-| 800 | 800 | 80 | 9x | 1.8x |
-| 1000 | 1000 | 100 | 11x | 2x |
+This preserves +1000 offering XP and an 11x blessing multiplier at maximum
+Devotion. Those outcomes are accepted design targets, not emergency nerf
+candidates.
 
-This keeps every ten Devotion levels meaningful, caps the cheap-bone bonus at
-100 XP, and leaves artifact-level devotion visibly stronger without allowing
-an order-of-magnitude blessing multiplier. Keep the existing five-times
-destruction XP initially, then review it with actual drop and destruction
-telemetry rather than changing all three XP levers simultaneously.
+Balance validation should compare sustained methods rather than raw
+per-action numbers:
+
+- Prayer XP per hour before and after reaching key Devotion thresholds;
+- time and item supply required to reach those thresholds;
+- XP lost when players spend Devotion and must rebuild it;
+- frequency and value of optional Devotion rewards; and
+- comparable high-level methods in other skills, including actions worth more
+  than 10,000 XP.
+
+Do not use the confirmed Bonecrusher exploit as evidence against the intended
+curve. Fixing that exploit restores the required item consumption while
+leaving legitimate high-Devotion rewards intact.
+
+### 3. Prefer optional reward sinks over an automatic blessing tax
+
+Ordinary blessing currently uses Devotion as an unlock threshold and consumes
+none. The clarified design uses a player choice: retain Devotion for stronger
+Prayer training and equipment, or spend it on meaningful rewards such as the
+400-Devotion artifact claims.
+
+Do not add a blessing cost merely to compensate for high Prayer XP. First
+decide whether more repeatable or one-time reward choices are needed after the
+existing artifact pool is exhausted. If a mandatory blessing cost is later
+desired for item-economy reasons, the destruction value remains a coherent
+fallback unit:
+
+- symbol: 0.5 Devotion;
+- wool/knight item: mapped resource cost; and
+- staff: wood tier.
+
+That fallback is retained for comparison, not recommended for implementation
+at this stage.
 
 ### 4. Keep ten per hour, but call it hourly
 
@@ -656,8 +689,8 @@ Do not infer economy balance from guide prices alone.
 1. Correct Bonecrusher removal and all conversion-coverage/state bugs.
 2. Add focused server tests and privacy-safe counters before balance changes.
 3. Update client guide and item descriptions to match the selected policy.
-4. Introduce resource-equivalent blessing costs.
-5. Flatten offering and blessing XP in a separately reviewable balance commit.
+4. Preserve the current offering and blessing XP formulas.
+5. Review additional optional Devotion rewards after the finite artifact pool.
 6. Observe at least one normal play cycle before changing the ten-per-hour cap
    or five-times destruction XP.
 
