@@ -738,6 +738,26 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 		Result recreateVerifiedPlannerResult(
 			final int worldWidth,
 			final int worldHeight) {
+			return recreateVerifiedPlannerResult(
+				Operation.REGISTER, worldWidth, worldHeight);
+		}
+
+		/**
+		 * Recreates the exact inverse footprint for disposable detachment.
+		 * Strict arithmetic is required; legacy saturating unregister is not a
+		 * valid proof that the registered contribution was actually present.
+		 */
+		Result recreateVerifiedUnregisterPlannerResult(
+			final int worldWidth,
+			final int worldHeight) {
+			return recreateVerifiedPlannerResult(
+				Operation.UNREGISTER, worldWidth, worldHeight);
+		}
+
+		private Result recreateVerifiedPlannerResult(
+			final Operation operation,
+			final int worldWidth,
+			final int worldHeight) {
 			String[] projectileAllowlist =
 				projectileClipAllowed && definitionName != null
 					? new String[]{definitionName}
@@ -753,21 +773,23 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 				: null;
 			Result recreated =
 				GameTickEventRestorationCollisionFootprintPlanner.plan(
-					Operation.REGISTER,
+					Objects.requireNonNull(operation, "operation"),
 					ConstructorState.of(
 						objectId, packedX, packedY, direction, objectType),
 					definition, false,
 					WorldBounds.of(worldWidth, worldHeight));
-			if (!matches(recreated)) {
+			if (!matches(recreated, operation)) {
 				throw new IllegalStateException(
 					"Detached authored collision footprint did not replay exactly");
 			}
 			return recreated;
 		}
 
-		private boolean matches(final Result recreated) {
+		private boolean matches(
+			final Result recreated,
+			final Operation expectedOperation) {
 			if (!recreated.isFootprintAvailable()
-				|| recreated.getOperation() != Operation.REGISTER
+				|| recreated.getOperation() != expectedOperation
 				|| recreated.isLegacySaturatingUnregister()
 				|| recreated.getContributionTileCount()
 					!= contributions.size()

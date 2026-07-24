@@ -289,7 +289,8 @@ class LayeredMapsSliceOneHundredNinetyTest(unittest.TestCase):
         self.assertIn(
             "GameTickEventRestorationCollisionFootprintPlanner.plan(", body
         )
-        self.assertIn("if (!matches(recreated))", body)
+        self.assertIn("Operation.REGISTER, worldWidth, worldHeight", body)
+        self.assertIn("if (!matches(recreated, operation))", body)
         self.assertNotIn("new Region(", body)
         self.assertNotIn("RegionManager", body)
         self.assertNotIn("TileValue", body)
