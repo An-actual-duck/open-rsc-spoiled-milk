@@ -8,7 +8,7 @@ import com.openrsc.server.net.rsc.struct.incoming.HiscoreRequestStruct;
 
 public class HiscoreRequestHandler implements PayloadProcessor<HiscoreRequestStruct, OpcodeIn> {
 
-	private static final long REQUEST_COOLDOWN_MS = 500;
+	private static final long REQUEST_COOLDOWN_MS = 5000;
 	private static final String LAST_REQUEST_ATTRIBUTE = "last_hiscore_request";
 
 	@Override
@@ -24,7 +24,9 @@ public class HiscoreRequestHandler implements PayloadProcessor<HiscoreRequestStr
 			return;
 		}
 
-		// Light throttle so a misbehaving client cannot spam ranking queries
+		// Hiscores are read-only but still require ranked database scans. Keep
+		// them well below the general packet-rate ceiling so a modified client
+		// cannot monopolize the single login/database executor.
 		final long now = System.currentTimeMillis();
 		final long lastRequest = player.getAttribute(LAST_REQUEST_ATTRIBUTE, 0L);
 		if (now - lastRequest < REQUEST_COOLDOWN_MS) {

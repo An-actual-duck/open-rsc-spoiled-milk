@@ -2579,6 +2579,8 @@ public class MySqlGameDatabase extends JDBCDatabase {
 		try (final PreparedStatement statement = getConnection().prepareStatement(getMySqlQueries().hiscoreSkillRank[skillId])) {
 			statement.setInt(1, playerDatabaseId);
 			statement.setLong(2, experience);
+			statement.setLong(3, experience);
+			statement.setInt(4, playerDatabaseId);
 			try (final ResultSet result = statement.executeQuery()) {
 				return (result.next() ? result.getInt(1) : 0) + 1;
 			}
@@ -2600,6 +2602,8 @@ public class MySqlGameDatabase extends JDBCDatabase {
 			statement.setInt(2, totalLevel);
 			statement.setInt(3, totalLevel);
 			statement.setLong(4, totalExperience);
+			statement.setLong(5, totalExperience);
+			statement.setInt(6, playerDatabaseId);
 			try (final ResultSet result = statement.executeQuery()) {
 				return (result.next() ? result.getInt(1) : 0) + 1;
 			}

@@ -114,7 +114,8 @@ public class MySqlQueries {
 			hiscoreSkillTop[skillId] = "SELECT p.`username` AS `username`, m.`" + column + "` AS `lvl`, "
 				+ maskedExp + " AS `xp` " + hiscoreFrom + " ORDER BY `xp` DESC, p.`id` ASC LIMIT 100";
 			hiscoreSkillRank[skillId] = "SELECT COUNT(*) AS `cnt` " + hiscoreFrom
-				+ " AND p.`id` <> ? AND " + maskedExp + " > ?";
+				+ " AND p.`id` <> ? AND (" + maskedExp + " > ? OR ("
+				+ maskedExp + " = ? AND p.`id` < ?))";
 			if (HiscoreSkills.countsTowardOverall(skill)) {
 				if (!firstOverallColumn) {
 					totalLevelExpr.append(" + ");
@@ -130,7 +131,8 @@ public class MySqlQueries {
 		hiscoreOverallTop = "SELECT p.`username` AS `username`, " + totalLevelExpr + " AS `lvl`, "
 			+ totalExpExpr + " AS `xp` " + hiscoreFrom + " ORDER BY `lvl` DESC, `xp` DESC, p.`id` ASC LIMIT 100";
 		hiscoreOverallRank = "SELECT COUNT(*) AS `cnt` " + hiscoreFrom + " AND p.`id` <> ? AND ("
-			+ totalLevelExpr + " > ? OR (" + totalLevelExpr + " = ? AND " + totalExpExpr + " > ?))";
+			+ totalLevelExpr + " > ? OR (" + totalLevelExpr + " = ? AND (" + totalExpExpr + " > ? OR ("
+			+ totalExpExpr + " = ? AND p.`id` < ?))))";
 
 		copyPassword = "UPDATE `" + PREFIX + "players` SET `pass` = ?, `salt` = ? WHERE LOWER(`username`) = LOWER(?)";
 		createPlayer = "INSERT INTO `" + PREFIX + "players` (`username`, `email`, `pass`, `creation_date`, `creation_ip`, `cameraauto`) VALUES (?, ?, ?, ?, ?, 0)";

@@ -45,14 +45,6 @@ public class HiscoreLookupRequest extends LoginExecutorProcess {
 				return;
 			}
 
-			// Persist the requester's latest state right here on the login
-			// thread so the rankings read back below always include it.
-			try {
-				getServer().getPlayerService().savePlayer(getPlayer());
-			} catch (final Exception e) {
-				LOGGER.error("Hiscore pre-save failed for " + getPlayer() + ": ", e);
-			}
-
 			final HiscoreEntry[] entries;
 			final int ownRank;
 			final int ownLevel;
@@ -69,7 +61,9 @@ public class HiscoreLookupRequest extends LoginExecutorProcess {
 				ownRank = getServer().getDatabase().queryHiscoreSkillRank(getPlayer().getDatabaseID(), skillId, ownExperience);
 			}
 
-			ActionSender.sendHiscores(getPlayer(), skillId, ownRank, ownLevel, ownExperience, entries);
+			if (getPlayer().loggedIn()) {
+				ActionSender.sendHiscores(getPlayer(), skillId, ownRank, ownLevel, ownExperience, entries);
+			}
 		} catch (final Exception e) {
 			LOGGER.error("Error fetching hiscores for " + getPlayer() + ": ", e);
 		}

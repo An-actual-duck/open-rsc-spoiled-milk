@@ -47,6 +47,7 @@ python3 ./tests/myworld/test-cosmic-altar-path.py
 python3 ./tests/myworld/test-cosmic-sparkle-path.py
 python3 ./tests/myworld/test-enchanting-data.py
 python3 ./tests/myworld/test-equipment-worn-appearances.py
+python3 ./tests/myworld/test-ingame-hiscores.py
 python3 ./tests/myworld/test-jewelry-runtime-effects.py
 python3 ./tests/myworld/test-bank-filters.py
 python3 ./tests/myworld/test-bank-shortcuts.py

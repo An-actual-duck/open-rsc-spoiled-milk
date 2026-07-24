@@ -8,7 +8,7 @@ package com.openrsc.interfaces.misc;
 public class HiscoreData {
 	public static final int OVERALL_ID = 255;
 	public static final int MAX_ENTRIES = 100;
-	private static final long REQUEST_RETRY_MS = 2000;
+	private static final long REQUEST_RETRY_MS = 5000;
 
 	private boolean requested = false;
 	private boolean loaded = false;
