@@ -288,7 +288,8 @@ class LayeredMapsSliceOneHundredEightySixTest(unittest.TestCase):
             "Operation.REGISTER",
             "input.requireMatches(placement);",
             "collisionBeyondAuthoredDependency",
-            "isRuntimeDefinitionCapturePerformed() { return false; }",
+            "false, null);",
+            "isRuntimeDefinitionCapturePerformed() {",
             "isCollisionApplied() { return false; }",
             "isCollisionRegistrationAttached() { return false; }",
         ):

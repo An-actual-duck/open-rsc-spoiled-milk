@@ -14973,6 +14973,78 @@ bounded read-only server adapter and prove they match the active definition
 table, while collision application and every runtime source change remain
 disabled.
 
+### Slice 187: Active collision-definition capture
+
+Objective: replace Slice 186's fixture-supplied collision definitions with an
+exact read-only capture from the active server definition table, then retain
+that capture as explicit detached provenance on the still-inert footprint plan.
+
+Implemented:
+
+- `LayeredPackedRegionAuthoredCollisionDefinitionCapture` requires one exact
+  replay/membership pair and walks only its authored object families in stable
+  source order;
+- ordinary scenery and harvesting scenery reduce the active `GameObjectDef`
+  to constructed ID, collision type, width, height, and name. Boundaries reduce
+  the active `DoorDef` to constructed ID, door type, and name;
+- each reduced entry binds exact authored source ordinal, constructed ID, and
+  object type. Missing, wrong-family, incomplete, extra, or reordered values
+  refuse before a collision plan can exist;
+- object ID 1147 remains an explicit definition-free collisionless register
+  entry and performs no active definition lookup. Family totals, normal lookup
+  count, special count, replay fingerprint, and a deterministic definition-
+  capture fingerprint reconcile the complete ordered result;
+- RegionManager supplies the only production adapter. It obtains one active
+  `EntityHandler`, immediately reduces each matching table entry through a
+  short-lived lookup callback, and exposes a second method that composes the
+  detached capture with Slice 186 using the live projectile allowlist and
+  legacy world bounds; and
+- the resulting collision plan records `runtimeDefinitionCapturePerformed`
+  plus the exact capture fingerprint. The fixture-supplied Slice 186 path stays
+  available and explicitly reports no runtime capture, so provenance cannot be
+  confused.
+
+Safety boundary:
+
+- the capture retains collision-input scalars only. It retains no
+  `EntityHandler`, `GameObjectDef`, `DoorDef`, lookup callback, definition
+  snapshot, replay, membership receipt, RegionManager, World, Server, Region,
+  entity, tile, collection from the definition table, or other runtime handle;
+- the RegionManager adapter does not inspect or create a Region, acquire a
+  lifecycle/object/collision boundary, read a TileValue, consult residency or
+  visibility caches, or modify any server definition;
+- capture and footprint composition perform no collision application,
+  collision-provenance attachment, source mutation, registry/mirror/cache
+  mutation, rollback, arrival, visibility, or lifecycle transition; and
+- the active server definition table is stable live configuration, but the
+  returned values remain point-in-time detached evidence rather than a lease or
+  mutation permit.
+
+Automated validation status:
+
+- an executable full-source fixture uses a bounded definition lookup to return
+  exact active-style scenery and boundary scalars, verifies no lookup occurs
+  for object 1147, and proves stable authored order, family/lookup/special
+  totals, immutable capture storage, and deterministic fingerprinting;
+- the captured definitions compose into the same exact footprint semantics as
+  Slice 186 while retaining distinct runtime-capture provenance; missing and
+  wrong-family table entries refuse before planning;
+- structural guards prove the production RegionManager adapter reads only
+  `EntityHandler.getGameObjectDef`/`getDoorDef`, uses the canonical projectile
+  allowlist and world bounds, and has no Region lookup, tile access, collision
+  apply, registry/mirror/cache, or lifecycle path;
+- the Slice 182-187 focused lineage passes 23 tests, including four Slice 187
+  tests, and the repository prerequisite check passes; and
+- the authoritative bundled-Ant server build compiles 827 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. The production adapter is not
+connected to loading, gameplay, or ordinary diagnostics and does not warrant
+an owner route by itself. The next slice should batch capture and collision-
+plan summaries for the exact selected sources under the private preservation
+diagnostic, with strict cardinality/payload bounds and no contribution payloads
+or mutation authority.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15377,6 +15449,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 184 by defining one exact detached authored replay after terrain verification. | Implemented and automated-validated; stable final-live order and generation-fenced constructor scalars for scenery, boundaries, NPCs, ground items, and harvesting scenery are copied with exact dependency envelopes, family and cross-source totals plus deterministic fingerprint reconcile, empty replay remains explicit, every apply/authority fact is false, 11 focused Slice 182-184 tests and the 823/488 Ant build pass |
 | 2026-07-24 | Continue with Slice 185 by applying only authored-object membership to a terrain-initialized disposable Region. | Implemented and automated-validated; scenery, boundaries, and harvesting scenery preserve exact constructors/provenance under the ordered Region membership boundary, colliding slots refuse, NPCs/items and collision remain absent, terrain stays exact, no runtime handle or authority survives, 15 focused Slice 182-185 tests and the 825/488 Ant build pass |
 | 2026-07-24 | Continue with Slice 186 by deriving exact detached authored register-collision footprints. | Implemented and automated-validated; exact detached definition inputs feed the shared pure legacy planner, stable primitive contributions and canonical Region reach reconcile, object 1147 remains an explicit collisionless special case, collision reach beyond the authored geometry envelope is separately reported, no collision is applied, 19 focused Slice 182-186 tests and the 826/488 Ant build pass |
+| 2026-07-24 | Continue with Slice 187 by capturing exact authored collision definitions from the active server table. | Implemented and automated-validated; stable object order reduces live scenery/boundary definitions to detached scalars, object 1147 bypasses lookup explicitly, captured provenance composes with the inert collision plan, missing/wrong-family definitions refuse, no Region/tile/collision mutation occurs, 23 focused Slice 182-187 tests and the 827/488 Ant build pass |
 
 ## Next Discussion
 

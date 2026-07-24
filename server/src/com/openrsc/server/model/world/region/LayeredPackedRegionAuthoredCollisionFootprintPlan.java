@@ -62,6 +62,8 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 	private final int collisionBeyondAuthoredDependencyObjectCount;
 	private final int contributionTileReferenceCount;
 	private final int requiredRegionReferenceCount;
+	private final boolean runtimeDefinitionCapturePerformed;
+	private final String definitionCaptureFingerprintSha256;
 	private final String fingerprintSha256;
 
 	private LayeredPackedRegionAuthoredCollisionFootprintPlan(
@@ -71,7 +73,9 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 		final List<AuthoredObjectCollisionDefinition> definitionInputs,
 		final String[] projectileClipAllowedNames,
 		final int worldWidth,
-		final int worldHeight) {
+		final int worldHeight,
+		final boolean runtimeDefinitionCapturePerformed,
+		final String definitionCaptureFingerprintSha256) {
 		LayeredPackedRegionAuthoredReplayPlan replay =
 			Objects.requireNonNull(replayPlan, "replayPlan");
 		LayeredPackedRegionIsolatedAuthoredObjectVerification membership =
@@ -106,6 +110,17 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 		this.packedRegionY = replay.getPackedRegionY();
 		this.authoredReplayFingerprintSha256 =
 			replay.getFingerprintSha256();
+		if (runtimeDefinitionCapturePerformed
+				!= (definitionCaptureFingerprintSha256 != null)
+			|| definitionCaptureFingerprintSha256 != null
+				&& definitionCaptureFingerprintSha256.length() != 64) {
+			throw new IllegalArgumentException(
+				"Definition capture provenance is inconsistent");
+		}
+		this.runtimeDefinitionCapturePerformed =
+			runtimeDefinitionCapturePerformed;
+		this.definitionCaptureFingerprintSha256 =
+			definitionCaptureFingerprintSha256;
 
 		List<AuthoredObjectCollisionFootprint> planned =
 			new ArrayList<AuthoredObjectCollisionFootprint>(
@@ -199,7 +214,9 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 			beyondAuthoredDependency;
 		this.contributionTileReferenceCount = contributionReferences;
 		this.requiredRegionReferenceCount = requiredRegionReferences;
-		this.fingerprintSha256 = fingerprint(planned, required);
+		this.fingerprintSha256 = fingerprint(
+			planned, required, runtimeDefinitionCapturePerformed,
+			definitionCaptureFingerprintSha256);
 	}
 
 	public static LayeredPackedRegionAuthoredCollisionFootprintPlan define(
@@ -212,7 +229,65 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 		final int worldHeight) {
 		return new LayeredPackedRegionAuthoredCollisionFootprintPlan(
 			replayPlan, membershipVerification, definitionInputs,
-			projectileClipAllowedNames, worldWidth, worldHeight);
+			projectileClipAllowedNames, worldWidth, worldHeight,
+			false, null);
+	}
+
+	public static LayeredPackedRegionAuthoredCollisionFootprintPlan define(
+		final LayeredPackedRegionAuthoredReplayPlan replayPlan,
+		final LayeredPackedRegionIsolatedAuthoredObjectVerification
+			membershipVerification,
+		final LayeredPackedRegionAuthoredCollisionDefinitionCapture
+			definitionCapture,
+		final String[] projectileClipAllowedNames,
+		final int worldWidth,
+		final int worldHeight) {
+		LayeredPackedRegionAuthoredReplayPlan replay =
+			Objects.requireNonNull(replayPlan, "replayPlan");
+		LayeredPackedRegionIsolatedAuthoredObjectVerification membership =
+			Objects.requireNonNull(
+				membershipVerification, "membershipVerification");
+		LayeredPackedRegionAuthoredCollisionDefinitionCapture capture =
+			Objects.requireNonNull(definitionCapture, "definitionCapture");
+		if (capture.getGeneration() != replay.getGeneration()
+			|| capture.getRequirementsObservedAtTick()
+				!= replay.getRequirementsObservedAtTick()
+			|| capture.getObservedAtTick() != replay.getObservedAtTick()
+			|| capture.getResidencyMirrorVersion()
+				!= replay.getResidencyMirrorVersion()
+			|| capture.getAuthoredGeneration()
+				!= replay.getAuthoredGeneration()
+			|| capture.getSourceOrdinal()
+				!= replay.getSelectedSourceOrdinal()
+			|| capture.getPackedRegionX() != replay.getPackedRegionX()
+			|| capture.getPackedRegionY() != replay.getPackedRegionY()
+			|| capture.getDefinitionCount()
+				!= replay.getAuthoredObjectPlacementCount()
+			|| !capture.getAuthoredReplayFingerprintSha256().equals(
+				replay.getFingerprintSha256())
+			|| !capture.isReadOnlyDefinitionCapture()
+			|| !capture.isDefinitionSequenceMatched()
+			|| capture.isDefinitionLookupRetained()
+			|| capture.isDefinitionTableObjectRetained()
+			|| capture.isRegionLookupPerformed()
+			|| capture.isRegionBoundaryAcquired()
+			|| capture.isCollisionApplied()
+			|| capture.isCollisionRegistrationAttached()
+			|| capture.isRuntimeSourceMutated()
+			|| capture.isRuntimeHandleRetained()
+			|| capture.isRegionRegistryMutated()
+			|| capture.isResidencyMirrorMutated()
+			|| capture.isVisibilityCacheMutated()
+			|| capture.isArrivalGate()
+			|| capture.isVisibilityReleased()
+			|| capture.isLifecycleAuthority()) {
+			throw new IllegalArgumentException(
+				"Runtime definition capture does not match authored replay");
+		}
+		return new LayeredPackedRegionAuthoredCollisionFootprintPlan(
+			replay, membership, capture.getDefinitions(),
+			projectileClipAllowedNames, worldWidth, worldHeight,
+			true, capture.getFingerprintSha256());
 	}
 
 	private static void requireAligned(
@@ -271,7 +346,9 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 
 	private static String fingerprint(
 		final List<AuthoredObjectCollisionFootprint> footprints,
-		final List<RequiredPackedRegion> requiredRegions) {
+		final List<RequiredPackedRegion> requiredRegions,
+		final boolean runtimeDefinitionCapturePerformed,
+		final String definitionCaptureFingerprintSha256) {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-256");
 			for (AuthoredObjectCollisionFootprint footprint : footprints) {
@@ -282,6 +359,9 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 				updateInt(digest, region.getPackedRegionX());
 				updateInt(digest, region.getPackedRegionY());
 			}
+			digest.update((byte) (
+				runtimeDefinitionCapturePerformed ? 1 : 0));
+			updateString(digest, definitionCaptureFingerprintSha256);
 			StringBuilder result = new StringBuilder(64);
 			for (byte value : digest.digest()) {
 				result.append(String.format("%02x", value & 0xff));
@@ -338,6 +418,9 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 	public int getRequiredRegionReferenceCount() {
 		return requiredRegionReferenceCount;
 	}
+	public String getDefinitionCaptureFingerprintSha256() {
+		return definitionCaptureFingerprintSha256;
+	}
 	public String getFingerprintSha256() { return fingerprintSha256; }
 
 	public boolean isPointInTimeOnly() { return true; }
@@ -346,7 +429,9 @@ public final class LayeredPackedRegionAuthoredCollisionFootprintPlan {
 	public boolean isDefinitionIdentityMatched() { return true; }
 	public boolean isRegisterFootprintDerived() { return true; }
 	public boolean isForceFullBlockEnabled() { return false; }
-	public boolean isRuntimeDefinitionCapturePerformed() { return false; }
+	public boolean isRuntimeDefinitionCapturePerformed() {
+		return runtimeDefinitionCapturePerformed;
+	}
 	public boolean isRegionBoundaryAcquired() { return false; }
 	public boolean isCollisionApplied() { return false; }
 	public boolean isCollisionRegistrationAttached() { return false; }

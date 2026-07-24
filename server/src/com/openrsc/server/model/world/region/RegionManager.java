@@ -58,6 +58,9 @@ import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 import com.openrsc.server.external.GameObjectLoc;
+import com.openrsc.server.external.DoorDef;
+import com.openrsc.server.external.EntityHandler;
+import com.openrsc.server.external.GameObjectDef;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -3158,6 +3161,77 @@ public class RegionManager {
 	// originally private, set to public to access for reset event
 	public ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>> getRegions() {
 		return regions;
+	}
+
+	/**
+	 * Reads only the active server definition table and returns detached
+	 * authored collision-definition scalars in exact replay order.
+	 */
+	public LayeredPackedRegionAuthoredCollisionDefinitionCapture
+		captureLayeredPackedRegionAuthoredCollisionDefinitions(
+			final LayeredPackedRegionAuthoredReplayPlan replayPlan,
+			final LayeredPackedRegionIsolatedAuthoredObjectVerification
+				membershipVerification) {
+		if (world == null || world.getServer() == null) {
+			throw new IllegalStateException(
+				"Active server definition table is unavailable");
+		}
+		final EntityHandler entityHandler =
+			world.getServer().getEntityHandler();
+		if (entityHandler == null) {
+			throw new IllegalStateException(
+				"Active server definition table is unavailable");
+		}
+		return LayeredPackedRegionAuthoredCollisionDefinitionCapture.capture(
+			replayPlan, membershipVerification,
+			new LayeredPackedRegionAuthoredCollisionDefinitionCapture
+				.DefinitionLookup() {
+				@Override
+				public LayeredPackedRegionAuthoredCollisionDefinitionCapture
+					.DefinitionSnapshot lookupScenery(
+						final int objectId) {
+					GameObjectDef definition =
+						entityHandler.getGameObjectDef(objectId);
+					return definition == null ? null
+						: LayeredPackedRegionAuthoredCollisionDefinitionCapture
+							.DefinitionSnapshot.scenery(
+								definition.getType(),
+								definition.getWidth(),
+								definition.getHeight(),
+								definition.getName());
+				}
+
+				@Override
+				public LayeredPackedRegionAuthoredCollisionDefinitionCapture
+					.DefinitionSnapshot lookupBoundary(
+						final int objectId) {
+					DoorDef definition =
+						entityHandler.getDoorDef(objectId);
+					return definition == null ? null
+						: LayeredPackedRegionAuthoredCollisionDefinitionCapture
+							.DefinitionSnapshot.boundary(
+								definition.getDoorType(),
+								definition.getName());
+				}
+			});
+	}
+
+	/**
+	 * Composes the read-only active definition capture with the detached
+	 * collision planner. No Region or collision state is read or changed.
+	 */
+	public LayeredPackedRegionAuthoredCollisionFootprintPlan
+		defineLayeredPackedRegionAuthoredCollisionFootprints(
+			final LayeredPackedRegionAuthoredReplayPlan replayPlan,
+			final LayeredPackedRegionIsolatedAuthoredObjectVerification
+				membershipVerification) {
+		LayeredPackedRegionAuthoredCollisionDefinitionCapture capture =
+			captureLayeredPackedRegionAuthoredCollisionDefinitions(
+				replayPlan, membershipVerification);
+		return LayeredPackedRegionAuthoredCollisionFootprintPlan.define(
+			replayPlan, membershipVerification, capture,
+			Constants.objectsProjectileClipAllowed,
+			Constants.MAX_WIDTH, Constants.MAX_HEIGHT);
 	}
 
 	public World getWorld() {
