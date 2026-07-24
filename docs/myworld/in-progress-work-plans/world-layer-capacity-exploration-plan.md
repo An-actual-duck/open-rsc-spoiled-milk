@@ -15178,13 +15178,32 @@ Automated validation status:
   sources and passes its build/classpath audit.
 
 Status: implemented and automated-validated; one private owner route remains
-pending. Start in a visually dense area, invoke only
+pending. Start in a quiet area, begin capture, transition to a distant visually
+dense area to create a released-source refinement proposal, invoke
 `::lp preserve-noop`, move and interact normally after capture, then stop the
 trace. Acceptance requires schema-v52 validity; exact source alignment across
 preflight, reload, terrain, and authored collision summaries; reconciled
 aggregate/per-source counts and fingerprints; active definition capture and
 collision derivation true; every application/mutation/authority fact false;
 and no visual, interaction, movement, or collision regression.
+
+Owner-validation attempt:
+
+- the first interaction route produced 59 contiguous schema-v52 records with
+  normal Auctioneer and shop-assistant dialogue, gate operation, tanning-rack
+  interaction, movement, and stop behavior, but the preservation action was
+  accidentally omitted and therefore produced no collision evidence;
+- the immediate three-command retry correctly reached the server as start,
+  `preservation-noop`, and stop. All three records are valid v52, but the
+  stationary route at `(142,516)` reported zero refinement candidate sources;
+- with no candidate source selection, preservation burden, event ownership,
+  owner continuity, source lifecycle, and the new authored-collision batch
+  correctly remained null. This is an expected diagnostic gate rather than a
+  collision-verification refusal, and it cannot count as owner acceptance; and
+- the eventual retry must create a real released-source proposal before
+  capture: begin in a quiet area, start the trace, transition or teleport to a
+  dense area far enough to change the logical interest window, then run
+  `::lp preserve-noop` and stop. No human-timing requirement is involved.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -15593,6 +15612,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 187 by capturing exact authored collision definitions from the active server table. | Implemented and automated-validated; stable object order reduces live scenery/boundary definitions to detached scalars, object 1147 bypasses lookup explicitly, captured provenance composes with the inert collision plan, missing/wrong-family definitions refuse, no Region/tile/collision mutation occurs, 23 focused Slice 182-187 tests and the 827/488 Ant build pass |
 | 2026-07-24 | Continue with Slice 188 by reducing complete authored collision verification to a bounded source batch. | Implemented and automated-validated; each exact source independently verifies terrain and authored object membership on disposable unregistered Regions, captures active definition scalars, derives but does not apply collision, and retains only aggregate/per-source counts plus four stable fingerprints; 27 focused Slice 182-188 tests and the 828/488 Ant build pass |
 | 2026-07-24 | Continue with Slice 189 by exposing bounded authored-collision verification through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v52 extends only the explicit preservation no-op with aligned reload/terrain/collision source counts and fingerprints, active definition capture and footprint derivation remain separate from every false apply/mutation/authority fact, v51 stays unchanged, 31 focused Slice 182-189 tests and the 828/488 Ant build pass; one dense owner route remains pending |
+| 2026-07-24 | Checkpoint the first Slice 189 owner attempt without accepting it. | The 59-record interaction route remained visually and behaviorally normal but omitted `preserve-noop`; the three-record retry is valid schema-v52 and reached `preservation-noop`, but a stationary start at `(142,516)` produced zero candidate sources, so all preservation/collision evidence correctly remained null. A later quiet-to-dense window transition is required before retry; this is an expected gate, not a collision refusal |
 
 ## Next Discussion
 
