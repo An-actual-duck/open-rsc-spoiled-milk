@@ -305,6 +305,11 @@ explicit private preservation no-op. Additive schema-v50 reports bounded
 authored/source totals and per-source count records while placement definitions,
 runtime handles, executable reload, reconstruction, collision rebuild,
 mutation, arrival, visibility, and lifecycle authority remain absent;
+automated-validated Slice 178 defines the detached sealed blank-container contract for
+one exact recipe source. It fixes the 48-by-48 independent tile shape, sealed
+default traversal, empty entity membership, and later-stage requirements while
+constructing or retaining no Region, tile, manager, entity, registry, cache, or
+authority;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -14313,6 +14318,67 @@ source recipe, while keeping collision reconstruction, active-family
 preservation, registration, rollback, arrival, and visibility as separate
 unmet gates.
 
+### Slice 178: Detached sealed blank-container contract
+
+Objective: define the exact bounded initial state of one future packed Region
+container without constructing it, retaining runtime state, or granting a
+reload path.
+
+Implemented:
+
+- `LayeredPackedRegionBlankContainerPlan` binds one exact source ordinal from
+  the inert Slice 176 recipe to generation, observation, residency, authored,
+  coordinate, placement, and unresolved-family scalars;
+- the contract derives its square side from the authoritative 48-tile Region
+  constant and requires exactly 2,304 independent mutable tile slots;
+- every initial tile is specified as sealed with the current
+  `FULL_BLOCK` traversal mask, zero wall/overlay/elevation metadata, no
+  projectile allowance, and no owned collision-product state;
+- all entity collections begin empty, while observed Player, NPC, dynamic
+  object, ground-item, authored replay, and collision burdens remain explicit
+  requirements rather than being copied into the blank container; and
+- terrain initialization, exact authored replay, RegionManager binding,
+  transactional registration, rollback, arrival gating, and visibility gating
+  are explicit later stages.
+
+Safety boundary:
+
+- the plan copies scalars only and retains no reload recipe, source entry,
+  placement definition, Region, RegionManager, TileValue, entity, collection,
+  registry, mirror, cache, loader, archive, event, monitor, or runtime handle;
+- it cannot allocate tile storage or construct, bind, initialize, populate,
+  register, reveal, unload, or reconstruct a Region;
+- a sealed blank traversal default is not represented as rebuilt collision
+  ownership; collision reconstruction remains mandatory even when the
+  observed collision-product count is zero; and
+- every construction, allocation, absence, reconstruction, terrain,
+  population, collision, mutation, arrival, visibility, and lifecycle-
+  authority fact remains false.
+
+Automated validation status:
+
+- an executable fixture proves exact lifecycle/source identity, a 48-by-48
+  independent sealed tile shape, zero initial metadata/entity membership,
+  explicit content-dependent preservation requirements, unconditional terrain
+  and collision requirements, exact empty authored replay behavior, ordinal
+  refusal, and every inert safety fact;
+- structural guards bind the contract to the current Region constructor and
+  TileValue defaults while proving it contains no construction, entity,
+  registry, mirror, or cache path;
+- the coordinate-owner inventory advances deterministically from 213 to 214
+  sources and classifies the new contract under terrain-region storage;
+- the complete layered-map suite passes 599 tests across 177 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 816 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This slice has no production or
+private diagnostic caller and does not warrant an owner route. The next
+focused slice should prove that an actual isolated Region can satisfy this
+sealed contract without entering packed storage, logical residency, visibility
+caches, or gameplay lookup. That isolated constructor must remain dormant and
+must not yet replay terrain, authored placements, entities, or collision.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14707,6 +14773,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 176 by binding selected resident sources to an inert exact Region reload recipe. | Implemented and automated-validated; the real lifecycle boundary, source-absence inventory, and final-live authored generation compose exact ordered source recipes, absent manifest entries become explicit empty authored replays, all active runtime families and collision remain separate, no loader or mutation is connected, 591 focused tests pass across 175 files, and the 815/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 177 by exposing the inert exact reload recipe through private diagnostics. | Implemented and automated-validated; additive schema-v50 extends only the explicit preservation no-op with bounded source-level recipe counts, v49 remains immutable, lifecycle-entry evidence requires aligned preflight and recipe values, every executable/mutation/authority fact stays false, 595 focused tests pass across 176 files, and the 815/488 Ant build passes |
 | 2026-07-23 | Accept the Slice 177 quiet-to-dense private owner route. | Owner-validated; four contiguous v50 records validate, all lifecycle identities and 36 source records align, 33 declared sources plus three exact empty replays reconcile 4,555 manifest minus four superseded placements to 4,551 final-live placements, unresolved family totals match preflight exactly, normal interaction remains intact, and every executable or authoritative flag remains false |
+| 2026-07-23 | Continue with Slice 178 by defining one detached sealed blank-container contract. | Implemented and automated-validated; one exact reload-recipe source now projects the authoritative 48-by-48 independent tile shape, sealed blank defaults, empty entity membership, and explicit later-stage obligations without allocation, construction, handles, mutation, or authority; the coordinate-owner inventory advances coherently to 214 sources, 599 focused tests pass across 177 files, and the 816/488 Ant build passes |
 
 ## Next Discussion
 

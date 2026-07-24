@@ -223,15 +223,15 @@ class LayeredMapsSliceNineTest(unittest.TestCase):
                 )
                 report = json.loads((Path(first_dir) / report_name).read_text(encoding="utf-8"))
                 summary = report["summary"]
-                self.assertEqual(213, summary["classifiedSourceOwnerCount"])
-                self.assertEqual(213, len(report["owners"]))
+                self.assertEqual(214, summary["classifiedSourceOwnerCount"])
+                self.assertEqual(214, len(report["owners"]))
                 for count_map in (
                     summary["sourceOwnerCountByDisposition"],
                     summary["sourceOwnerCountByFamily"],
                     summary["sourceOwnerCountByRisk"],
                     summary["sourceOwnerCountByRole"],
                 ):
-                    self.assertEqual(213, sum(count_map.values()))
+                    self.assertEqual(214, sum(count_map.values()))
                 self.assertTrue(
                     all(owner["classificationStatus"] == "classified-unparsed"
                         for owner in report["owners"])
@@ -243,6 +243,13 @@ class LayeredMapsSliceNineTest(unittest.TestCase):
                     owners[
                         "server/src/com/openrsc/server/model/world/region/"
                         "RegionObjectCollisionTransactionExecutor.java"
+                    ]["primaryFamily"],
+                )
+                self.assertEqual(
+                    "terrain-region-storage",
+                    owners[
+                        "server/src/com/openrsc/server/model/world/region/"
+                        "LayeredPackedRegionBlankContainerPlan.java"
                     ]["primaryFamily"],
                 )
                 self.assertEqual(
