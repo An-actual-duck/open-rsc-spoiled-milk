@@ -403,11 +403,11 @@ def require_snippet(path: Path, snippet: str, label: str) -> None:
 def ensure_spell_redirects() -> None:
     spell_text = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
     required_snippets = [
-        "enchantBangel(player, affectedItem, spell, ItemId.SAPPHIRE_AMULET_OF_MAGIC.id());",
-        "enchantBangel(player, affectedItem, spell, ItemId.EMERALD_AMULET_OF_PROTECTION.id());",
-        "enchantBangel(player, affectedItem, spell, ItemId.RUBY_AMULET_OF_STRENGTH.id());",
-        "enchantBangel(player, affectedItem, spell, ItemId.DIAMOND_AMULET_OF_POWER.id());",
-        "enchantBangel(player, affectedItem, spell, ItemId.CHARGED_DRAGONSTONE_AMULET.id());",
+        "enchantBangle(player, affectedItem, spell, ItemId.SAPPHIRE_AMULET_OF_MAGIC.id());",
+        "enchantBangle(player, affectedItem, spell, ItemId.EMERALD_AMULET_OF_PROTECTION.id());",
+        "enchantBangle(player, affectedItem, spell, ItemId.RUBY_AMULET_OF_STRENGTH.id());",
+        "enchantBangle(player, affectedItem, spell, ItemId.DIAMOND_AMULET_OF_POWER.id());",
+        "enchantBangle(player, affectedItem, spell, ItemId.CHARGED_DRAGONSTONE_AMULET.id());",
         'player.playerServerMessage(MessageType.QUEST, "Rings are enchanted at altars now.");',
         'player.playerServerMessage(MessageType.QUEST, "Opal rings no longer have a separate enchantment path.");',
         'player.playerServerMessage(MessageType.QUEST, "Necklaces are enchanted at altars now.");',
@@ -448,10 +448,10 @@ def ensure_legacy_jewelry_inert() -> None:
         if item.get("isUntradable") != 1:
             fail(f"{name} should be retained only as untradable compatibility baggage")
 
-    charged_bangel = all_items.get(597)
-    if charged_bangel is None or charged_bangel.get("name") != "Charged Dragonstone Bangel":
-        fail("Classic enchanted ID 597 should be the charged Dragonstone Bangel")
-    if charged_bangel.get("isWearable") != 1 or charged_bangel.get("wearSlot") != 14:
+    charged_bangle = all_items.get(597)
+    if charged_bangle is None or charged_bangle.get("name") != "Charged Dragonstone Bangle":
+        fail("Classic enchanted ID 597 should be the charged Dragonstone Bangle")
+    if charged_bangle.get("isWearable") != 1 or charged_bangle.get("wearSlot") != 14:
         fail("Classic enchanted ID 597 should be active wrist equipment")
 
 
@@ -488,7 +488,7 @@ def ensure_remaining_holdovers_documented_in_code() -> None:
     )
     require_snippet(
         OBSERVATORY_PATH,
-        "give(player, MyWorldItemId.EMERALD_BANGEL, 1);",
+        "give(player, MyWorldItemId.EMERALD_BANGLE, 1);",
         "Observatory.java",
     )
 

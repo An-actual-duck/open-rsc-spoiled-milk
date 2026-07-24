@@ -580,11 +580,11 @@ def ensure_runtime_paths_are_wired() -> None:
             and "EnchantingItemEffects.getChaosAmuletYieldBonusPercent(wristItem.getCatalogId())" in equipment
             and "getChaosAmuletBonusRuneWeights()" in equipment
             and "EnchantingItemEffects.getChaosAmuletBonusRuneWeights(wristItem.getCatalogId())" in equipment,
-            "Chaos Bangel weighted-rune yield data should be exposed through equipped wrist items")
+            "Chaos Bangle weighted-rune yield data should be exposed through equipped wrist items")
     require_regex(equipment, r"getEquippedElementalPowerBonus.*?getElementalPowerBonus\(ringItem",
                   "Elemental power should come from the equipped ring")
-    require_regex(equipment, r"getEquippedElementalDefenseBonus.*?getElementalDefenseBonus\(wristItem",
-                  "Elemental defense should come from the equipped Bangel wrist slot")
+    require_regex(equipment, r"getEquippedElementalDefenseBonus.*?getElementalDefenseBonus\(neckItem",
+                  "Elemental defense should come from the equipped Necklace neck slot")
 
     require("getWealthChance(owner)" in drop_table, "Cosmic rings should feed drop-table wealth chance")
     require("allowExtraRoll && !result.receivedRareTableReward && wealthChance > 0.0D" in drop_table,
@@ -621,6 +621,8 @@ def ensure_runtime_paths_are_wired() -> None:
     require("POWER_DRAIN_PER_TICK = 3" in poison_event, "Poison base drain should remain 3 power per tick")
     require("poisonDrain += player.getCarriedItems().getEquipment().getNatureCleansingPoisonDecayBonus();" in poison_event,
             "Nature cleansing necklace should add to poison tick drain")
+    require_regex(equipment, r"getNatureCleansingPoisonDecayBonus.*?getNatureCleansingPoisonDecayBonus\(neckItem",
+                  "Nature cleansing should come from the equipped Necklace neck slot")
     require("getNatureFoodHealingBonus" in eating and "Math.ceil(totalHeal * (1.0D + foodBonus))" in eating,
             "Nature jewelry should increase food healing")
     require("getNatureFoodHealingBonus()" in equipment
@@ -642,7 +644,7 @@ def ensure_runtime_paths_are_wired() -> None:
             and "new Item(ItemId.COINS.id(), alchemyValue)" in equipment
             and "player.getCarriedItems().getInventory().canHold(coins)" in equipment
             and "remove(wristItem, 1, true);" not in equipment,
-            "Nature alchemy Bangel should auto-alch valuable monster drops without breaking")
+            "Nature alchemy Bangle should auto-alch valuable monster drops without breaking")
     require("tryAlchemyMonsterLootWithNatureAmulet(new Item(dropID, amount))" in npc
             and "tryAlchemyMonsterLootWithNatureAmulet(new Item(dropID, amount, item.getNoted()))" in npc
             and "tryAlchemyMonsterLootWithNatureAmulet(item)" in npc,
@@ -702,9 +704,9 @@ def ensure_runtime_paths_are_wired() -> None:
     require("isBodyRingXpSkill(skillId)" in equipment and "getBodyRingXpBonus(ringItem.getCatalogId())" in equipment,
             "Body rings should apply only to their mapped skills")
     require("isMindCombatAmuletXpSkill(skillId)" in equipment and "getMindCombatAmuletXpBonus(wristItem.getCatalogId())" in equipment,
-            "Mind Bangels should apply only to their mapped skills")
+            "Mind Bangles should apply only to their mapped skills")
     require("isBodyCombatAmuletXpSkill(skillId)" in equipment and "getBodyDisciplineAmuletXpBonus(wristItem.getCatalogId())" in equipment,
-            "Body Bangels should apply only to their mapped skills")
+            "Body Bangles should apply only to their mapped skills")
 
     require("public final class Leach" in leach
             and "calculateHealing" in leach

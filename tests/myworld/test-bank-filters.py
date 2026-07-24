@@ -105,7 +105,7 @@ def main() -> None:
     require(tags, "if (!gem || isJewelry(name))", "finished jewelry exclusion from crafting jewelry")
     require(tags, 'equalsAny(name, "gold nugget", "gold bar", "silver nugget", "silver bar", "wool", "ball of wool")', "crafting jewelry metal and wool materials")
     require(tags, "private static boolean isJewelryMould", "crafting jewelry mould classification")
-    require(tags, 'equalsAny(name, "ring mould", "necklace mould", "bangel mould", "holy symbol mould"', "crafting jewelry exact mould classification")
+    require(tags, 'equalsAny(name, "ring mould", "necklace mould", "bangle mould", "holy symbol mould"', "crafting jewelry exact mould classification")
     require(tags, "private static boolean isCraftingOther", "crafting other classification")
     require(tags, "if (logs)", "crafting wood log classification")
     require(tags, "tags.add(CRAFTING_WOOD);", "crafting wood tag")

@@ -89,7 +89,7 @@ def main() -> None:
         "ItemId.KNIFE.id()",
         "ItemId.RING_MOULD.id()",
         "ItemId.NECKLACE_MOULD.id()",
-        "MyWorldItemId.BANGEL_MOULD",
+        "MyWorldItemId.BANGLE_MOULD",
         "ItemId.HOLY_SYMBOL_MOULD.id()",
         "ItemId.BOLT_MOULD.id()",
         "ItemId.DART_MOULD.id()",

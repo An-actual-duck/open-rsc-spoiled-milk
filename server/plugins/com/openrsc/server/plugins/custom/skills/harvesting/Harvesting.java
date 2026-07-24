@@ -669,7 +669,7 @@ public final class Harvesting implements OpLocTrigger {
 		}
 		player.getCarriedItems().getInventory().add(seed);
 		player.playerServerMessage(MessageType.QUEST, "You find " + formatSeedName(seedName) + " among the produce.");
-		maybeDoubleRareGatheringReward(player, seed, "Your cosmic Bangel glimmers and another seed appears.");
+		maybeDoubleRareGatheringReward(player, seed, "Your cosmic Bangle glimmers and another seed appears.");
 	}
 
 	private void maybeDoubleRareGatheringReward(Player player, Item item, String message) {
@@ -728,7 +728,7 @@ public final class Harvesting implements OpLocTrigger {
 		final int bonusProduce = EnchantingItemEffects.consumeGatheringAmuletBonusItems(player,
 			Skill.HARVESTING.id(), produceId, produceCount);
 		if (bonusProduce > 0) {
-			player.playerServerMessage(MessageType.QUEST, "@gre@Your harvester's Bangel produces "
+			player.playerServerMessage(MessageType.QUEST, "@gre@Your harvester's Bangle produces "
 				+ bonusProduce + " extra produce.");
 		}
 		return bonusProduce;

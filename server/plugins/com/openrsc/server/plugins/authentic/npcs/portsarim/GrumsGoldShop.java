@@ -19,7 +19,7 @@ public final class GrumsGoldShop extends AbstractShop {
 		0), new Item(ItemId.SAPPHIRE_RING.id(), 0), new Item(ItemId.EMERALD_RING.id(), 0), new Item(ItemId.RUBY_RING.id(), 0),
 		new Item(ItemId.DIAMOND_RING.id(), 0), new Item(ItemId.GOLD_NECKLACE.id(), 0), new Item(ItemId.SAPPHIRE_NECKLACE.id(), 0),
 		new Item(ItemId.EMERALD_NECKLACE.id(), 0), new Item(ItemId.RUBY_NECKLACE.id(), 0), new Item(ItemId.DIAMOND_NECKLACE.id(), 0),
-		new Item(MyWorldItemId.GOLD_BANGEL, 0), new Item(MyWorldItemId.SAPPHIRE_BANGEL, 0));
+		new Item(MyWorldItemId.GOLD_BANGLE, 0), new Item(MyWorldItemId.SAPPHIRE_BANGLE, 0));
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {

@@ -60,7 +60,7 @@ public class Dorics implements QuestInterface, TalkNpcTrigger {
 					MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 				if (choice == 0) {
 					npcsay(player, n, "My anvils get enough work with my own use",
-						"I make Bangels, it takes a lot of work.",
+						"I make Bangles, it takes a lot of work.",
 						"If you could get me some more materials I could let you use them");
 					int choice2 = multi(player, n, false, // Do not send to client
 						"Yes I will get you materials",
@@ -90,7 +90,7 @@ public class Dorics implements QuestInterface, TalkNpcTrigger {
 						"Please enjoy your travels. And do visit my friends in their mine");
 				} else if (choice == 3) {
 					npcsay(player, n,
-						"I make Bangels. I am the best maker of them in Runescape");
+						"I make Bangles. I am the best maker of them in Runescape");
 					say(player, n, "Do you have any to sell?");
 					npcsay(player, n, "Not at the moment, sorry. Try again later");
 				} else if (choice == 4) {

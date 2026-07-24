@@ -4394,7 +4394,7 @@ public final class mudclient implements Runnable {
 				wristEquipmentSlotSpriteLoadAttempted = true;
 				File sourceFile = this.externalAssetLoader.findFirstFile(new String[] {
 					"dev/myworld/assets/sprites/UI/equipment"
-				}, "bangel-slot.png");
+				}, "bangle-slot.png");
 				wristEquipmentSlotSprite = this.externalAssetLoader.loadExternalInterfaceSprite(sourceFile, 48, 32);
 			}
 			if (wristEquipmentSlotSprite != null) {
@@ -12413,8 +12413,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getEquippedFireAmuletOffenseBonus() {
-		int bangelId = this.getEquippedItemIdInServerSlot(14);
-		return bangelId >= 1608 && bangelId <= 1612 ? bangelId - 1607 : 0;
+		int bangleId = this.getEquippedItemIdInServerSlot(14);
+		return bangleId >= 1608 && bangleId <= 1612 ? bangleId - 1607 : 0;
 	}
 
 	private int getMagicArmorPowerPenalty() {

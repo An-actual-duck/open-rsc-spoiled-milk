@@ -116,7 +116,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 
 		final int charges = getRemainingCharges(player, item);
 		if (charges <= 0) {
-			player.message("Your law Bangel is out of charges.");
+			player.message("Your law Bangle is out of charges.");
 			player.message("Recharge it at the law altar.");
 			return;
 		}
@@ -146,7 +146,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 		final Destination destination = destinations[option];
 		player.teleport(destination.x, destination.y, true);
 		setRemainingCharges(player, item, charges - 1);
-		player.message("Your law Bangel now has " + formatCharges(charges - 1) + " remaining.");
+		player.message("Your law Bangle now has " + formatCharges(charges - 1) + " remaining.");
 	}
 
 	private void showRuneAltarTeleportInterface(final Player player, final Item amulet) {
@@ -187,7 +187,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			}
 		}
 		if (amulet == null) {
-			player.message("You no longer have that Bangel.");
+			player.message("You no longer have that Bangle.");
 			return true;
 		}
 
@@ -201,14 +201,14 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 		}
 		final int charges = lawJewelry.getRemainingCharges(player, amulet);
 		if (charges <= 0) {
-			player.message("Your law Bangel is out of charges.");
+			player.message("Your law Bangle is out of charges.");
 			player.message("Recharge it at the law altar.");
 			return true;
 		}
 
 		player.teleport(destination.x, destination.y, true);
 		lawJewelry.setRemainingCharges(player, amulet, charges - 1);
-		player.message("Your law Bangel now has " + lawJewelry.formatCharges(charges - 1) + " remaining.");
+		player.message("Your law Bangle now has " + lawJewelry.formatCharges(charges - 1) + " remaining.");
 		return true;
 	}
 
@@ -314,7 +314,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			return true;
 		}
 		if (player.getCarriedItems().getInventory().countId(ItemId.LAW_RUNE.id(), Optional.of(false)) < requiredRunes) {
-			player.message("You need " + requiredRunes + " law runes to recharge this Bangel.");
+			player.message("You need " + requiredRunes + " law runes to recharge this Bangle.");
 			return false;
 		}
 		return player.getCarriedItems().remove(new Item(ItemId.LAW_RUNE.id(), requiredRunes)) != -1;

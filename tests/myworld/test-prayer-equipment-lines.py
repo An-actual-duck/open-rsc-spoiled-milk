@@ -86,7 +86,7 @@ def main():
         3175: 0,  # Symbol of Guthix now boosts devotion offerings, not prayer points
         1523: 8,  # Prayer cape
         522: 0,   # Dragonstone Amulet legacy holdover should not grant prayer
-        597: 0,   # Charged Dragonstone Bangel should not grant prayer
+        597: 0,   # Charged Dragonstone Bangle should not grant prayer
     }
 
     all_items = {item["id"]: dict(item) for item in base_items}

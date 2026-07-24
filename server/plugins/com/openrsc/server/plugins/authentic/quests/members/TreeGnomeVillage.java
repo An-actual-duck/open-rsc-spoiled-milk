@@ -59,7 +59,7 @@ public class TreeGnomeVillage implements QuestInterface, TalkNpcTrigger,
 		for (XPReward xpReward : reward.getXpRewards()) {
 			incStat(player, xpReward.getSkill().id(), xpReward.getBaseXP(), xpReward.getVarXP());
 		}
-		give(player, MyWorldItemId.EMERALD_BANGEL, 1);
+		give(player, MyWorldItemId.EMERALD_BANGLE, 1);
 	}
 
 	@Override
@@ -565,7 +565,7 @@ public class TreeGnomeVillage implements QuestInterface, TalkNpcTrigger,
 						npcsay(player,
 							n,
 							"you are modest brave traveller",
-							"please for your efforts take this Bangel",
+							"please for your efforts take this Bangle",
 							"it's made from the same sacred stone as the orbs of protection",
 							"it will help keep you safe on your journeys");
 						say(player, n, "thank you king bolren");
@@ -595,10 +595,10 @@ public class TreeGnomeVillage implements QuestInterface, TalkNpcTrigger,
 				case -1:
 					say(player, n, "hello again bolren");
 					npcsay(player, n, "well hello, it's good to see you again");
-					if (!player.getCarriedItems().hasCatalogID(MyWorldItemId.EMERALD_BANGEL, Optional.empty())) {
-						say(player, n, "i've lost my Bangel");
+					if (!player.getCarriedItems().hasCatalogID(MyWorldItemId.EMERALD_BANGLE, Optional.empty())) {
+						say(player, n, "i've lost my Bangle");
 						npcsay(player, n, "oh dear", "here take another");
-						give(player, MyWorldItemId.EMERALD_BANGEL, 1);
+						give(player, MyWorldItemId.EMERALD_BANGLE, 1);
 					} else {
 						say(player, n, "good to see you");
 					}

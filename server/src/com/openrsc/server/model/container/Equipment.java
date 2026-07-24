@@ -964,7 +964,7 @@ public class Equipment {
 			|| name.contains("ring")
 			|| name.contains("necklace")
 			|| name.contains("amulet")
-			|| name.contains("bangel");
+			|| name.contains("bangle");
 	}
 
 	private String describeItems(final ArrayList<Item> items) {
@@ -2332,8 +2332,8 @@ public class Equipment {
 	}
 
 	public int getNatureCleansingPoisonDecayBonus() {
-		Item wristItem = getEquippedWristItem();
-		return wristItem == null ? 0 : EnchantingItemEffects.getNatureCleansingPoisonDecayBonus(wristItem.getCatalogId());
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0 : EnchantingItemEffects.getNatureCleansingPoisonDecayBonus(neckItem.getCatalogId());
 	}
 
 	public int getGatheringAmuletYieldBonusPercent(final int skillId) {
@@ -2424,10 +2424,10 @@ public class Equipment {
 		charges--;
 		if (charges <= 0) {
 			EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, wristItem, 0);
-			player.message("@ora@Your Bangel of alchemy converts the loot and runs out of charges.");
+			player.message("@ora@Your Bangle of alchemy converts the loot and runs out of charges.");
 		} else {
 			EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, wristItem, charges);
-			player.message("@ora@Your Bangel of alchemy converts the loot. " + formatNatureAlchemyCharges(charges));
+			player.message("@ora@Your Bangle of alchemy converts the loot. " + formatNatureAlchemyCharges(charges));
 		}
 		return true;
 	}
@@ -2685,8 +2685,8 @@ public class Equipment {
 	}
 
 	private int getEquippedElementalDefenseBonus(final PrayerCatalog.CombatStyle combatStyle) {
-		Item wristItem = getEquippedWristItem();
-		return wristItem == null ? 0 : EnchantingItemEffects.getElementalDefenseBonus(wristItem.getCatalogId(), combatStyle);
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0 : EnchantingItemEffects.getElementalDefenseBonus(neckItem.getCatalogId(), combatStyle);
 	}
 
 	public boolean hasEquippedMeleeWeapon() {

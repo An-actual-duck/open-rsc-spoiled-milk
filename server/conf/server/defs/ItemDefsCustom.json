@@ -46215,8 +46215,8 @@
     },
     {
       "id": 3281,
-      "name": "Bangel mould",
-      "description": "Used to make gold Bangels",
+      "name": "Bangle mould",
+      "description": "Used to make gold Bangles",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -46238,7 +46238,7 @@
     },
     {
       "id": 3282,
-      "name": "Sapphire Bangel",
+      "name": "Sapphire Bangle",
       "description": "I wonder if I can get this enchanted",
       "command": "",
       "isFemaleOnly": 0,
@@ -46261,7 +46261,7 @@
     },
     {
       "id": 3283,
-      "name": "Emerald Bangel",
+      "name": "Emerald Bangle",
       "description": "I wonder if I can get this enchanted",
       "command": "",
       "isFemaleOnly": 0,
@@ -46284,7 +46284,7 @@
     },
     {
       "id": 3284,
-      "name": "Ruby Bangel",
+      "name": "Ruby Bangle",
       "description": "I wonder if I can get this enchanted",
       "command": "",
       "isFemaleOnly": 0,
@@ -46307,7 +46307,7 @@
     },
     {
       "id": 3285,
-      "name": "Diamond Bangel",
+      "name": "Diamond Bangle",
       "description": "I wonder if I can get this enchanted",
       "command": "",
       "isFemaleOnly": 0,
@@ -46330,7 +46330,7 @@
     },
     {
       "id": 3286,
-      "name": "Dragonstone Bangel",
+      "name": "Dragonstone Bangle",
       "description": "I wonder if I can get this enchanted",
       "command": "",
       "isFemaleOnly": 0,
@@ -46468,7 +46468,7 @@
     },
     {
       "id": 3292,
-      "name": "Gold Bangel",
+      "name": "Gold Bangle",
       "description": "I wonder if I can get this enchanted",
       "command": "",
       "isFemaleOnly": 0,

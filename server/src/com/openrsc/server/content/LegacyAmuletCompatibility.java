@@ -11,9 +11,9 @@ import com.openrsc.server.model.container.ItemStatus;
  *
  * <p>The legacy constants and definitions remain addressable so old database
  * rows and preset blobs can be decoded. Runtime ownership is converted to the
- * equivalent completed Bangel without replacing the item instance or its
+ * equivalent completed Bangle without replacing the item instance or its
  * status. Classic enchanted IDs are deliberately not mapped here: those IDs
- * now directly define wrist-slot Bangel products.</p>
+ * now directly define wrist-slot Bangle products.</p>
  */
 public final class LegacyAmuletCompatibility {
 	private LegacyAmuletCompatibility() {
@@ -21,28 +21,28 @@ public final class LegacyAmuletCompatibility {
 
 	public static int canonicalCatalogId(final int catalogId) {
 		if (catalogId == ItemId.AMULET_MOULD.id()) {
-			return MyWorldItemId.BANGEL_MOULD;
+			return MyWorldItemId.BANGLE_MOULD;
 		}
 		switch (ItemId.getById(catalogId)) {
 			case UNSTRUNG_GOLD_AMULET:
 			case GOLD_AMULET:
-				return MyWorldItemId.GOLD_BANGEL;
+				return MyWorldItemId.GOLD_BANGLE;
 			case UNSTRUNG_SAPPHIRE_AMULET:
 			case SAPPHIRE_AMULET:
-				return MyWorldItemId.SAPPHIRE_BANGEL;
+				return MyWorldItemId.SAPPHIRE_BANGLE;
 			case UNSTRUNG_EMERALD_AMULET:
 			case EMERALD_AMULET:
-				return MyWorldItemId.EMERALD_BANGEL;
+				return MyWorldItemId.EMERALD_BANGLE;
 			case UNSTRUNG_RUBY_AMULET:
 			case RUBY_AMULET:
-				return MyWorldItemId.RUBY_BANGEL;
+				return MyWorldItemId.RUBY_BANGLE;
 			case UNSTRUNG_DIAMOND_AMULET:
 			case DIAMOND_AMULET:
-				return MyWorldItemId.DIAMOND_BANGEL;
+				return MyWorldItemId.DIAMOND_BANGLE;
 			case DRAGONSTONE_AMULET:
 			case UNSTRUNG_DRAGONSTONE_AMULET:
 			case UNENCHANTED_DRAGONSTONE_AMULET:
-				return MyWorldItemId.DRAGONSTONE_BANGEL;
+				return MyWorldItemId.DRAGONSTONE_BANGLE;
 			default:
 				return catalogId;
 		}
