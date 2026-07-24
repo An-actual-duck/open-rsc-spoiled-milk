@@ -15177,15 +15177,10 @@ Automated validation status:
 - the authoritative bundled-Ant server build compiles 828 core and 488 plugin
   sources and passes its build/classpath audit.
 
-Status: implemented and automated-validated; one private owner route remains
-pending. Start in a quiet area, begin capture, transition to a distant visually
-dense area to create a released-source refinement proposal, invoke
-`::lp preserve-noop`, move and interact normally after capture, then stop the
-trace. Acceptance requires schema-v52 validity; exact source alignment across
-preflight, reload, terrain, and authored collision summaries; reconciled
-aggregate/per-source counts and fingerprints; active definition capture and
-collision derivation true; every application/mutation/authority fact false;
-and no visual, interaction, movement, or collision regression.
+Status: implemented, automated-validated, and owner-validated. The accepted
+private route started at `(120,620)`, transitioned to `(132,502)`, allowed the
+16-tick retirement cooldown to complete, invoked `::lp preserve-noop`, and
+stopped normally.
 
 Owner-validation attempt:
 
@@ -15200,10 +15195,36 @@ Owner-validation attempt:
   owner continuity, source lifecycle, and the new authored-collision batch
   correctly remained null. This is an expected diagnostic gate rather than a
   collision-verification refusal, and it cannot count as owner acceptance; and
-- the eventual retry must create a real released-source proposal before
-  capture: begin in a quiet area, start the trace, transition or teleport to a
-  dense area far enough to change the logical interest window, then run
-  `::lp preserve-noop` and stop. No human-timing requirement is involved.
+- the first quiet-to-dense retry invoked `preserve-noop` 14 ticks after the
+  teleport. It correctly still reported 12 cooling sources and no proposal;
+  the stop event 13 ticks later showed all 12 original sources eligible and
+  the expected 36-source authored closure. This established that the route
+  must account for the existing 16-tick retirement cooldown rather than merely
+  waiting for the client view to look complete;
+- the accepted retry waited well beyond that cooldown. Its four contiguous
+  start/teleport/preservation-noop/stop records all validate against schema-v52.
+  The private action selected 36 exact aligned sources at generation 1,
+  requirements/observation tick 10187, residency-mirror version 1842, and
+  authored generation 1;
+- preflight, reload, terrain, and collision source counts, order, ordinals,
+  packed coordinates, observation identity, and terrain fingerprints all
+  match. The collision batch reconciles 4,551 replay placements, 3,979
+  authored object footprints backed by 3,979 active definitions, 1,305
+  zero-contribution objects, 3,185 contribution-tile references, 3,979
+  required-Region references, and 33 unique required-Region references. No
+  object crossed its authored dependency envelope or lacked required
+  definition coverage;
+- disposal also reconciles exactly: 72 disposable Region constructions, 72
+  disposable terrain applications, and 36 disposable authored-object
+  membership applications. Active definition capture, collision-footprint
+  derivation, point-in-time-only reduction, detached-summary-only reduction,
+  and all-source verification are true; and
+- collision application and registration attachment remain false. Runtime
+  handles, source absence/reconstruction, runtime-source terrain, NPC/item
+  membership, scheduler restoration, active-family preservation, Region/
+  residency/visibility mutation, arrival, visibility release, and lifecycle
+  authority are all false. The owner reported the route completed and the
+  diagnostic response appeared normally.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -15613,6 +15634,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 188 by reducing complete authored collision verification to a bounded source batch. | Implemented and automated-validated; each exact source independently verifies terrain and authored object membership on disposable unregistered Regions, captures active definition scalars, derives but does not apply collision, and retains only aggregate/per-source counts plus four stable fingerprints; 27 focused Slice 182-188 tests and the 828/488 Ant build pass |
 | 2026-07-24 | Continue with Slice 189 by exposing bounded authored-collision verification through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v52 extends only the explicit preservation no-op with aligned reload/terrain/collision source counts and fingerprints, active definition capture and footprint derivation remain separate from every false apply/mutation/authority fact, v51 stays unchanged, 31 focused Slice 182-189 tests and the 828/488 Ant build pass; one dense owner route remains pending |
 | 2026-07-24 | Checkpoint the first Slice 189 owner attempt without accepting it. | The 59-record interaction route remained visually and behaviorally normal but omitted `preserve-noop`; the three-record retry is valid schema-v52 and reached `preservation-noop`, but a stationary start at `(142,516)` produced zero candidate sources, so all preservation/collision evidence correctly remained null. A later quiet-to-dense window transition is required before retry; this is an expected gate, not a collision refusal |
+| 2026-07-24 | Accept the Slice 189 private authored-collision verification route. | Owner-validated after accounting for the existing 16-tick retirement cooldown; four contiguous v52 records validate, all 36 sources align across preflight/reload/terrain/collision identity, 4,551 replay placements and 3,979 active-definition-backed object footprints reconcile with all aggregate counts and fingerprints, disposal is exactly bounded, the diagnostic response appeared normally, and every collision apply, registration, runtime mutation, retained handle, visibility, arrival, and lifecycle-authority fact remains false |
 
 ## Next Discussion
 
