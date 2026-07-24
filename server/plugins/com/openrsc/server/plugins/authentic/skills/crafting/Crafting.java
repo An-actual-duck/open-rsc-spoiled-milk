@@ -627,8 +627,9 @@ public class Crafting implements UseInvTrigger,
 
 		if (!hasRequiredMould(player, jewelryShape)) return null;
 
-		boolean gemUsed = false;
-		if (!player.getConfig().WANT_EQUIPMENT_TAB) { // TODO: this is not a very good way to detect other than Cabbage server config
+		final boolean directTierSelection = player.getConfig().WANT_EQUIPMENT_TAB;
+		boolean gemUsed = directTierSelection;
+		if (!directTierSelection) { // TODO: this is not a very good way to detect other than Cabbage server config
 			player.playerServerMessage(MessageType.QUEST,
 				"Would you like to put a gem in the " + jewelryShape.toLowerCase() + "?");
 			options = new String[]{
@@ -641,35 +642,18 @@ public class Crafting implements UseInvTrigger,
 		}
 
 		// select gem
-		options = new String[]{
-			Sapphire,
-			Emerald,
-			Ruby,
-			Diamond
-		};
-		if (player.getConfig().MEMBER_WORLD) {
-			if (player.getConfig().WANT_EQUIPMENT_TAB) { // TODO: this is not a very good way to detect Cabbage server config
-				options = new String[]{
-					Gold,
-					Sapphire,
-					Emerald,
-					Ruby,
-					Diamond,
-					Dragonstone
-				};
-			} else {
-				options = new String[]{
-					Sapphire,
-					Emerald,
-					Ruby,
-					Diamond,
-					dragonstone
-				};
+		if (directTierSelection) {
+			options = player.getConfig().MEMBER_WORLD
+				? new String[]{Gold, Sapphire, Emerald, Ruby, Diamond, Dragonstone}
+				: new String[]{Gold, Sapphire, Emerald, Ruby, Diamond};
+		} else {
+			options = player.getConfig().MEMBER_WORLD
+				? new String[]{Sapphire, Emerald, Ruby, Diamond, dragonstone}
+				: new String[]{Sapphire, Emerald, Ruby, Diamond};
 
-				// Dragonstone should be capitalized only when making a Necklace
-				if (jewelryShape.equals(Necklace)) {
-					options[4] = Dragonstone;
-				}
+			// Dragonstone should be capitalized only when making a Necklace
+			if (player.getConfig().MEMBER_WORLD && jewelryShape.equals(Necklace)) {
+				options[4] = Dragonstone;
 			}
 		}
 
@@ -677,7 +661,7 @@ public class Crafting implements UseInvTrigger,
 		if (gemUsed) {
 			player.playerServerMessage(MessageType.QUEST, "what sort of gem do you want to put in the " + jewelryShape + "?");
 			int gemMultiSelection = multi(player, options);
-			if (gemMultiSelection < 0 || gemMultiSelection > options.length)
+			if (gemMultiSelection < 0 || gemMultiSelection >= options.length)
 				return null;
 
 			gem = options[gemMultiSelection];

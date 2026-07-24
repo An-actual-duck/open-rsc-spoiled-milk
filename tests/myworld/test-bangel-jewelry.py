@@ -14,6 +14,7 @@ from typing import Any, NoReturn
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "server"
 CLIENT = ROOT / "Client_Base/src"
+CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 
 BASE_DEFS = SERVER / "conf/server/defs/ItemDefs.json"
 CUSTOM_DEFS = SERVER / "conf/server/defs/ItemDefsCustom.json"
@@ -49,12 +50,26 @@ ENCHANTING = (
 SPELL_HANDLER = (
     SERVER / "src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
 )
+ITEM_EQUIP = SERVER / "src/com/openrsc/server/net/rsc/handlers/ItemEquip.java"
+ITEM_UNEQUIP = SERVER / "src/com/openrsc/server/net/rsc/handlers/ItemUnequip.java"
+ACTION_SENDER = SERVER / "src/com/openrsc/server/net/rsc/ActionSender.java"
+CRAFTING_SHOPS = (
+    SERVER
+    / "plugins/com/openrsc/server/plugins/authentic/npcs/CraftingEquipmentShops.java"
+)
+ADMINS = (
+    SERVER / "plugins/com/openrsc/server/plugins/authentic/commands/Admins.java"
+)
+SUPERCHISEL = (
+    SERVER / "plugins/com/openrsc/server/plugins/custom/misc/Superchisel.java"
+)
 SKILL_GUIDE = CLIENT / "com/openrsc/interfaces/misc/SkillGuideInterface.java"
 
 CONFIG = CLIENT / "orsc/Config.java"
 SLOT_MAPPING = CLIENT / "orsc/EquipmentSlotMapping.java"
 PACKET_HANDLER = CLIENT / "orsc/PacketHandler.java"
 MUDCLIENT = CLIENT / "orsc/mudclient.java"
+INVENTORY_EQUIP_POLICY = CLIENT / "orsc/InventoryEquipMenuPolicy.java"
 CLIENT_ENTITIES = (
     CLIENT / "com/openrsc/client/entityhandling/EntityHandler.java"
 )
@@ -290,6 +305,114 @@ public final class BangelSlotMappingFixture {
                 "slot mapping fixture failed:\n" + run_result.stderr)
         print(run_result.stdout.strip())
 
+    equip_fixture = """
+package orsc;
+
+import com.openrsc.client.entityhandling.EntityHandler;
+import com.openrsc.client.entityhandling.defs.ItemDef;
+
+public final class ZeroVisualBangelEquipFixture {
+    private static void require(boolean value, String message) {
+        if (!value) throw new AssertionError(message);
+    }
+
+    private static void assertBangel(int itemId) {
+        ItemDef item = EntityHandler.getItemDef(itemId);
+        require(item != null, "missing client Bangel " + itemId);
+        require(item.getName().contains("Bangel"), "wrong client name for " + itemId);
+        require(item.isWieldable(), "client Bangel is not wieldable: " + itemId);
+        require(item.wearableID == 0, "client Bangel has character-model wearable ID: " + itemId);
+        require(InventoryEquipMenuPolicy.canOfferEquip(item, false), "client Bangel lacks Wear action: " + itemId);
+        require("Wear".equals(InventoryEquipMenuPolicy.actionLabel(item)), "client Bangel action is not Wear: " + itemId);
+    }
+
+    private static void assertRange(int first, int last) {
+        for (int itemId = first; itemId <= last; itemId++) {
+            assertBangel(itemId);
+        }
+    }
+
+    public static void main(String[] args) {
+        ItemDef zeroVisual = new ItemDef(
+            "Zero visual equipment", "", "", 1, -1, "", false, true, 0, 0,
+            false, false, true, 9999);
+        require(InventoryEquipMenuPolicy.canOfferEquip(zeroVisual, false),
+            "wieldable zero-visual-ID item should receive an equip action");
+        require("Wear".equals(InventoryEquipMenuPolicy.actionLabel(zeroVisual)),
+            "zero-visual-ID equipment should use Wear");
+        require(!InventoryEquipMenuPolicy.canOfferEquip(zeroVisual, true),
+            "noted equipment should not receive an equip action");
+
+        ItemDef visualButNotWieldable = new ItemDef(
+            "Visual-only item", "", "", 1, -1, "", false, false, 16, 0,
+            false, false, true, 10000);
+        require(!InventoryEquipMenuPolicy.canOfferEquip(visualButNotWieldable, false),
+            "visual wearable ID must not imply equipability");
+
+        ItemDef weapon = new ItemDef(
+            "Weapon", "", "", 1, -1, "", false, true, 16, 0,
+            false, false, true, 10001);
+        require("Wield".equals(InventoryEquipMenuPolicy.actionLabel(weapon)),
+            "weapon visual type should retain Wield wording");
+
+        EntityHandler.load(true);
+        assertBangel(3292);
+        assertRange(3282, 3286);
+        assertRange(314, 317);
+        assertBangel(597);
+        assertRange(1593, 1612);
+        assertRange(1709, 1713);
+        assertRange(1719, 1758);
+        assertRange(3106, 3110);
+        System.out.println("PASS: all 81 zero-visual-ID Bangels receive Wear actions");
+    }
+}
+"""
+    with tempfile.TemporaryDirectory(prefix="bangel-zero-visual-equip-") as raw_tmp:
+        tmp = Path(raw_tmp)
+        fixture_path = tmp / "orsc/ZeroVisualBangelEquipFixture.java"
+        fixture_path.parent.mkdir(parents=True)
+        fixture_path.write_text(equip_fixture, encoding="utf-8")
+        classes = tmp / "classes"
+        classes.mkdir()
+        compile_result = subprocess.run(
+            [
+                "javac",
+                "-cp",
+                str(CLIENT_JAR),
+                "-d",
+                str(classes),
+                str(INVENTORY_EQUIP_POLICY),
+                str(fixture_path),
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+        require(
+            compile_result.returncode == 0,
+            "zero-visual-ID equip fixture did not compile:\n"
+            + compile_result.stderr,
+        )
+        run_result = subprocess.run(
+            [
+                "java",
+                "-cp",
+                f"{classes}:{CLIENT_JAR}",
+                "orsc.ZeroVisualBangelEquipFixture",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+        require(
+            run_result.returncode == 0,
+            "zero-visual-ID equip fixture failed:\n"
+            + run_result.stdout
+            + run_result.stderr,
+        )
+        print(run_result.stdout.strip())
+
 
 def ensure_persistence_and_lifecycle_contract() -> None:
     equipment = EQUIPMENT.read_text(encoding="utf-8")
@@ -350,6 +473,119 @@ def ensure_persistence_and_lifecycle_contract() -> None:
         "legacy inventory-as-equipment worlds should resolve wrist items",
     )
 
+    fixture = """
+import com.openrsc.server.content.LegacyAmuletCompatibility;
+import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.container.ItemStatus;
+
+public final class BangelPropertyCompatibilityFixture {
+    private static void require(boolean value, String message) {
+        if (!value) throw new AssertionError(message);
+    }
+
+    private static ItemStatus status(int catalogId, int seed) {
+        ItemStatus status = new ItemStatus();
+        status.setCatalogId(catalogId);
+        status.setAmount(37 + seed);
+        status.setNoted((seed & 1) == 0);
+        status.setWielded((seed & 1) != 0);
+        status.setDurability(100 + seed);
+        return status;
+    }
+
+    public static void main(String[] args) {
+        int[] legacy = {294, 296, 301, 297, 302, 298, 303, 299, 304, 300, 305, 522, 524, 610};
+        int[] expected = {3281, 3292, 3292, 3282, 3282, 3283, 3283, 3284, 3284, 3285, 3285, 3286, 3286, 3286};
+        for (int i = 0; i < legacy.length; i++) {
+            ItemStatus value = status(legacy[i], i);
+            int amount = value.getAmount();
+            boolean noted = value.getNoted();
+            boolean wielded = value.isWielded();
+            int durability = value.getDurability();
+            require(LegacyAmuletCompatibility.canonicalize(value), "legacy ID should convert: " + legacy[i]);
+            require(value.getCatalogId() == expected[i], "wrong target for " + legacy[i]);
+            require(value.getAmount() == amount, "amount changed for " + legacy[i]);
+            require(value.getNoted() == noted, "note state changed for " + legacy[i]);
+            require(value.isWielded() == wielded, "wield state changed for " + legacy[i]);
+            require(value.getDurability() == durability, "durability changed for " + legacy[i]);
+            require(!LegacyAmuletCompatibility.canonicalize(value), "conversion should be idempotent");
+        }
+
+        int[] questExceptions = {24, 235, 744, 782, 826, 1009, 1010, 1011, 1591};
+        for (int id : questExceptions) {
+            ItemStatus value = status(id, id);
+            require(!LegacyAmuletCompatibility.canonicalize(value), "quest Amulet converted: " + id);
+            require(value.getCatalogId() == id, "quest Amulet ID changed: " + id);
+        }
+
+        int[] retainedBangelIds = {314, 315, 316, 317, 597, 1593, 1612, 1709, 1758, 3106, 3110};
+        for (int id : retainedBangelIds) {
+            ItemStatus value = status(id, id);
+            require(!LegacyAmuletCompatibility.canonicalize(value), "retained Bangel ID remapped: " + id);
+            require(value.getCatalogId() == id, "retained Bangel ID changed: " + id);
+        }
+
+        ItemStatus legacyHolding = status(297, 1);
+        ItemStatus currentHolding = status(3282, 2);
+        int totalBefore = legacyHolding.getAmount() + currentHolding.getAmount();
+        require(LegacyAmuletCompatibility.canonicalize(legacyHolding), "coexisting legacy holding did not convert");
+        require(legacyHolding != currentHolding, "distinct holdings collapsed");
+        require(legacyHolding.getCatalogId() == currentHolding.getCatalogId(), "equivalent holdings disagree");
+        require(legacyHolding.getAmount() + currentHolding.getAmount() == totalBefore, "coexisting quantity changed");
+
+        ItemStatus ownedStatus = status(300, 4);
+        Item ownedItem = new Item(987654321L, ownedStatus);
+        require(LegacyAmuletCompatibility.canonicalize(ownedItem), "owned item did not convert");
+        require(ownedItem.getItemId() == 987654321L, "ownership token changed");
+        require(ownedItem.getItemStatus() == ownedStatus, "ItemStatus instance was replaced");
+        require(ownedItem.getCatalogId() == 3285, "owned item converted to wrong tier");
+
+        System.out.println("PASS: deterministic Bangel property conversion and identity preservation");
+    }
+}
+"""
+    with tempfile.TemporaryDirectory(prefix="bangel-property-compatibility-") as raw_tmp:
+        tmp = Path(raw_tmp)
+        fixture_path = tmp / "BangelPropertyCompatibilityFixture.java"
+        fixture_path.write_text(fixture, encoding="utf-8")
+        classes = tmp / "classes"
+        classes.mkdir()
+        compile_result = subprocess.run(
+            [
+                "javac",
+                "-cp",
+                str(SERVER / "core.jar"),
+                "-d",
+                str(classes),
+                str(LEGACY_COMPATIBILITY),
+                str(fixture_path),
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+        require(
+            compile_result.returncode == 0,
+            "property compatibility fixture did not compile:\n"
+            + compile_result.stderr,
+        )
+        run_result = subprocess.run(
+            [
+                "java",
+                "-cp",
+                f"{classes}:{SERVER / 'core.jar'}",
+                "BangelPropertyCompatibilityFixture",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+        require(
+            run_result.returncode == 0,
+            "property compatibility fixture failed:\n" + run_result.stderr,
+        )
+        print(run_result.stdout.strip())
+
 
 def ensure_item_identity_and_visuals(items: dict[int, dict[str, Any]]) -> None:
     require(len(ENCHANTED_BANGELS) == 70, "expected 70 migrated enchanted IDs")
@@ -358,8 +594,8 @@ def ensure_item_identity_and_visuals(items: dict[int, dict[str, Any]]) -> None:
         require(item is not None, f"missing preserved enchanted item ID {item_id}")
         require("Bangel" in item["name"] and "Amulet" not in item["name"],
                 f"item {item_id} should be player-facing Bangel, found {item['name']!r}")
-        require(item.get("wearSlot") == 14,
-                f"migrated Bangel {item_id} should use wrist slot")
+        require(item.get("isWearable") == 1 and item.get("wearSlot") == 14,
+                f"migrated Bangel {item_id} should be wieldable in wrist slot")
         require(item.get("appearanceID") == 0 and item.get("wearableID") == 0,
                 f"migrated Bangel {item_id} should not require a worn model")
 
@@ -367,7 +603,7 @@ def ensure_item_identity_and_visuals(items: dict[int, dict[str, Any]]) -> None:
         item = items.get(item_id)
         require(item is not None and item.get("name") == expected_name,
                 f"classic enchanted ID {item_id} should now be {expected_name}")
-        require(item.get("wearSlot") == 14 and item.get("isWearable") == 1,
+        require(item.get("isWearable") == 1 and item.get("wearSlot") == 14,
                 f"classic enchanted Bangel {item_id} should equip on wrist")
         require(item.get("appearanceID") == 0 and item.get("wearableID") == 0,
                 f"classic enchanted Bangel {item_id} should not use a worn model")
@@ -414,6 +650,8 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
                 f"base {tier} Bangel should equip on wrist")
         require(item.get("basePrice") == expected_price,
                 f"base {tier} Bangel should inherit the active Amulet price")
+        require(item.get("appearanceID") == 0 and item.get("wearableID") == 0,
+                f"base {tier} Bangel should not use a character-model visual")
         require(
             definitions.get(item_id) == (expected_level, expected_xp, expected_gem),
             f"base {tier} Bangel crafting metadata drifted",
@@ -457,10 +695,73 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
             "client furnace category should recognize the Gold Bangel sentinel")
     require("case 296:" not in furnace_names and 'return "Amulets";' not in furnace_names,
             "retired Amulet furnace category should not remain visible")
+
+    output_ids = method_body(crafting, "getGoldJewelryProductionOutputIds")
+    automatic_menu = method_body(crafting, "getDesiredGoldCraftingAutoDetection")
+    authentic_menu = method_body(crafting, "getDesiredGoldCraftingAuthentic")
+    for item_name in (
+        "GOLD_BANGEL",
+        "SAPPHIRE_BANGEL",
+        "EMERALD_BANGEL",
+        "RUBY_BANGEL",
+        "DIAMOND_BANGEL",
+        "DRAGONSTONE_BANGEL",
+    ):
+        require(
+            f"MyWorldItemId.{item_name}" in output_ids,
+            f"modern production list omits {item_name}",
+        )
+        require(
+            f"MyWorldItemId.{item_name}" in automatic_menu,
+            f"automatic recipe detection omits {item_name}",
+        )
+    require(
+        "final boolean directTierSelection = player.getConfig().WANT_EQUIPMENT_TAB;"
+        in authentic_menu
+        and "boolean gemUsed = directTierSelection;" in authentic_menu,
+        "legacy direct-tier menu should expose gemmed Bangels instead of silently choosing Gold",
+    )
+    require(
+        "new String[]{Gold, Sapphire, Emerald, Ruby, Diamond, Dragonstone}"
+        in authentic_menu
+        and "new String[]{Gold, Sapphire, Emerald, Ruby, Diamond}" in authentic_menu,
+        "legacy menu should expose Gold plus every available Bangel tier",
+    )
+
+    recipe = method_body(crafting, "goldJewelryProductionRecipe")
+    require(
+        "addProductionIngredient(ingredientIds, fallbackIds, amounts, mouldId, 1);"
+        in recipe,
+        "modern Bangel recipes should display the mould requirement",
+    )
+    begin_production = method_body(crafting, "beginProductionFromInterface")
+    require(
+        "getRequiredGoldMouldId(itemId)" in begin_production
+        and "canStartGoldJewelryRecipe(player, def, mouldId)" in begin_production
+        and "batchGoldJewelry(player, goldBar, def)" in begin_production,
+        "modern batch production should validate the mould and use the shared batch path",
+    )
+    batch = method_body(crafting, "batchGoldJewelry")
+    require(
+        "ItemId.BALL_OF_WOOL" not in batch
+        and "MyWorldItemId.BANGEL_MOULD" not in batch,
+        "batch production must consume neither wool nor the reusable Bangel mould",
+    )
+    wool_stringing = method_body(crafting, "useWool")
+    require(
+        "BANGEL" not in wool_stringing and "AMULET" not in wool_stringing,
+        "wool stringing must not produce retired Amulets or Bangels",
+    )
+
     legacy_gold_menu = method_body(do_skill, "populateSkillItems")
     for retired_id in (296, 297, 298, 299, 300, 524):
         require(f"new DoSkillItem({retired_id}," not in legacy_gold_menu,
                 f"legacy Gold menu still exposes retired Amulet ID {retired_id}")
+    for bangel_id in (GOLD_BANGEL,) + BASE_BANGELS:
+        require(
+            f"new DoSkillItem({bangel_id}," in legacy_gold_menu,
+            f"legacy/retro Gold menu omits Bangel ID {bangel_id}",
+        )
     for ordinary_amulet in (
         "ItemId.SAPPHIRE_AMULET.id()",
         "ItemId.EMERALD_AMULET.id()",
@@ -470,6 +771,148 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
     ):
         require(ordinary_amulet not in method_body(effects, "isBangelBase"),
                 f"ordinary Amulet leaked into active altar inputs: {ordinary_amulet}")
+
+
+def ensure_zero_visual_equip_lifecycle_contract() -> None:
+    client = MUDCLIENT.read_text(encoding="utf-8")
+    policy = INVENTORY_EQUIP_POLICY.read_text(encoding="utf-8")
+    bank = CLIENT_BANK.read_text(encoding="utf-8")
+    item_equip = ITEM_EQUIP.read_text(encoding="utf-8")
+    item_unequip = ITEM_UNEQUIP.read_text(encoding="utf-8")
+    equipment = EQUIPMENT.read_text(encoding="utf-8")
+    player = PLAYER.read_text(encoding="utf-8")
+
+    require(
+        "InventoryEquipMenuPolicy.canOfferEquip(def, item.getNoted())" in client,
+        "inventory menu should use the real wieldable flag",
+    )
+    require(
+        "EntityHandler.getItemDef(id).wearableID != 0" not in client,
+        "inventory menu still treats a visual wearable ID as equipability",
+    )
+    require(
+        "item != null && item.isWieldable() && !noted" in policy,
+        "equip policy should accept wieldable zero-visual-ID items and reject notes",
+    )
+    require(
+        "(item.wearableID & 24) != 0 ? \"Wield\" : \"Wear\"" in policy,
+        "visual type should affect only the Wear/Wield label",
+    )
+    require(
+        "case ITEM_EQUIP_FROM_INVENTORY:" in client
+        and "newPacket(Opcodes.Out.ITEM_EQUIP_FROM_INVENTORY.getOpcode())" in client,
+        "inventory Wear action should send the equip packet",
+    )
+
+    require(
+        bank.count("getItemDef().isWieldable()") >= 6
+        and "newPacket(172)" in bank,
+        "bank equipment paths should admit zero-visual-ID wieldable items",
+    )
+    require(
+        "opcode == OpcodeIn.ITEM_EQUIP_FROM_INVENTORY" in item_equip
+        and "opcode == OpcodeIn.ITEM_EQUIP_FROM_BANK" in item_equip
+        and "!request.item.getDef(player.getWorld()).isWieldable()" in item_equip,
+        "server equip handler should accept wieldable items from inventory and bank",
+    )
+    require(
+        "equipItemFromInventory(request, updateClient)" in equipment
+        and "equipItemFromBank(request, updateClient)" in equipment,
+        "equipment container should complete both inventory and bank equip paths",
+    )
+    require(
+        "player.updateWornItems(itemDef.getWieldPosition(), itemDef.getAppearanceId(), itemDef.getWearableId(), true);"
+        in equipment,
+        "equip completion should use independent slot and visual fields",
+    )
+
+    require(
+        "MenuItemAction.ITEM_UNEQUIP_FROM_EQUIPMENT" in client
+        and "newPacket(Opcodes.Out.ITEM_UNEQUIP_FROM_EQUIPMENT.getOpcode())" in client,
+        "equipment interface should expose and send the unequip action",
+    )
+    require(
+        "opcode == OpcodeIn.ITEM_UNEQUIP_FROM_EQUIPMENT" in item_unequip
+        and "Equipment.correctIndex(request);" in item_unequip
+        and "!request.item.getDef(player.getWorld()).isWieldable()" in item_unequip,
+        "server unequip handler should map the client slot and accept zero-visual equipment",
+    )
+    correct_index = method_body(equipment, "correctIndex")
+    require(
+        "request.equipmentSlot.getIndex() + 3" in correct_index,
+        "client logical wrist slot 11 should map back to server wrist slot 14",
+    )
+
+    require(
+        "getEquippedItemIdInServerSlot(14)" in client
+        and "EquipmentSlotMapping.serverToClient(serverSlot)" in client,
+        "client equipped lookups should use slot mapping instead of wearableID",
+    )
+    require(
+        "item.wearableID == slot" not in client,
+        "client equipped lookup still treats visual wearable ID as a slot",
+    )
+    require(
+        "if (indexPosition <= 11)" in player
+        and "indexPosition == AppearanceId.SLOT_MORPHING_RING" in player,
+        "wrist slot 14 should remain outside character appearance layers",
+    )
+
+
+def ensure_acquisition_and_test_utility_contract() -> None:
+    shops = CRAFTING_SHOPS.read_text(encoding="utf-8")
+    starter = ACTION_SENDER.read_text(encoding="utf-8")
+    admins = ADMINS.read_text(encoding="utf-8")
+    superchisel = SUPERCHISEL.read_text(encoding="utf-8")
+
+    require(
+        "new Item(MyWorldItemId.BANGEL_MOULD, 2)" in shops
+        and "ItemId.AMULET_MOULD" not in shops,
+        "crafting-equipment shops should replace the retired mould with the Bangel mould",
+    )
+    require(
+        "new Item(MyWorldItemId.BANGEL_MOULD)" in starter
+        and "ItemId.AMULET_MOULD" not in starter,
+        "My World starter crafting tools should supply only the Bangel mould",
+    )
+    require(
+        admins.count("LegacyAmuletCompatibility.canonicalCatalogId(") >= 4
+        and "LegacyAmuletCompatibility.isRetiredCatalogId(i)" in admins,
+        "admin item utilities should canonicalize direct IDs and omit retired Amulet supplies",
+    )
+
+    utility = method_body(superchisel, "onUseInv")
+    require(
+        "notSuperchisel.getCatalogId() == MyWorldItemId.BANGEL_MOULD" in utility,
+        "Superchisel Bangel testing should be opened with the Bangel mould",
+    )
+    require(
+        'multi(player, "Gold", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone")'
+        in utility,
+        "Superchisel should offer all six unenchanted Bangels",
+    )
+    for token in (
+        "MyWorldItemId.GOLD_BANGEL",
+        "MyWorldItemId.SAPPHIRE_BANGEL",
+        "MyWorldItemId.EMERALD_BANGEL",
+        "MyWorldItemId.RUBY_BANGEL",
+        "MyWorldItemId.DIAMOND_BANGEL",
+        "MyWorldItemId.DRAGONSTONE_BANGEL",
+        "ItemId.UNCUT_DRAGONSTONE",
+        "ItemId.DRAGONSTONE",
+    ):
+        require(token in utility, f"Superchisel testing support omits {token}")
+    require(
+        "ItemId.AMULET_MOULD" not in utility,
+        "Superchisel must not reacquire the retired Amulet mould",
+    )
+    blocker = method_body(superchisel, "blockUseInv")
+    require(
+        "MyWorldItemId.BANGEL_MOULD" in blocker
+        and "ItemId.UNCUT_DRAGONSTONE.id()" in blocker
+        and "ItemId.BALL_OF_WOOL.id(), ItemId.SUPERCHISEL.id()" not in blocker,
+        "Superchisel routing should use the Bangel mould, not wool, and cover Dragonstone",
+    )
 
 
 def ensure_standard_spell_and_retirement_contract(
@@ -533,8 +976,19 @@ def ensure_standard_spell_and_retirement_contract(
     for retired_id in (296, 297, 298, 299, 300, 524):
         require(f"new SkillMenuItem({retired_id}," not in guide,
                 f"retired Amulet ID {retired_id} remains in the Crafting guide")
-    require('new SkillMenuItem(3292, "5", "Gold Bangel")' in guide,
-            "Crafting guide should advertise the plain Gold Bangel")
+    expected_guide_entries = (
+        (3292, 5, "Gold"),
+        (3282, 13, "Sapphire"),
+        (3283, 26, "Emerald"),
+        (3284, 44, "Ruby"),
+        (3285, 60, "Diamond"),
+        (3286, 70, "Dragonstone"),
+    )
+    for item_id, level, tier in expected_guide_entries:
+        require(
+            f'new SkillMenuItem({item_id}, "{level}", "{tier} Bangel")' in guide,
+            f"Crafting guide should advertise the level-{level} {tier} Bangel",
+        )
 
     item_ids = (
         SERVER / "src/com/openrsc/server/constants/ItemId.java"
@@ -654,6 +1108,8 @@ def main() -> None:
     ensure_persistence_and_lifecycle_contract()
     ensure_item_identity_and_visuals(items)
     ensure_bangel_crafting(items)
+    ensure_zero_visual_equip_lifecycle_contract()
+    ensure_acquisition_and_test_utility_contract()
     ensure_standard_spell_and_retirement_contract(items)
     ensure_effect_slot_contract(items)
     ensure_hidden_medallions(items)

@@ -10788,18 +10788,10 @@ public final class mudclient implements Runnable {
 								if (getInventoryItemEquippedID(var5) == 1 && !S_WANT_EQUIPMENT_TAB) {
 									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_UNEQUIP_FROM_INVENTORY, "Remove",
 										"@lre@" + EntityHandler.getItemDef(id).getName());
-								} else if (EntityHandler.getItemDef(id).wearableID != 0) {
-									if (!item.getNoted()) {
-										String equipCommand;
-										if ((24 & EntityHandler.getItemDef(id).wearableID) == 0) {
-											equipCommand = "Wear";
-										} else {
-											equipCommand = "Wield";
-										}
-
-										this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_EQUIP_FROM_INVENTORY, equipCommand,
-											"@lre@" + EntityHandler.getItemDef(id).getName());
-									}
+								} else if (InventoryEquipMenuPolicy.canOfferEquip(def, item.getNoted())) {
+									String equipCommand = InventoryEquipMenuPolicy.actionLabel(def);
+									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_EQUIP_FROM_INVENTORY, equipCommand,
+										"@lre@" + def.getName());
 								}
 
 								if (def.getCommand() != null
@@ -12310,7 +12302,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private double applyElementalRingTooltipBonus(ElementalSpellDisplayMetadata metadata, double spellMax) {
-		int ringId = this.getEquippedItemIdInSlot(13);
+		int ringId = this.getEquippedItemIdInServerSlot(13);
 		int ringTier = this.getMatchingElementalRingTier(metadata, ringId);
 		return ringTier <= 0 ? spellMax : spellMax * (1.0D + ringTier * 0.05D);
 	}
@@ -12421,8 +12413,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getEquippedFireAmuletOffenseBonus() {
-		int neckId = this.getEquippedItemIdInSlot(10);
-		return neckId >= 1608 && neckId <= 1612 ? neckId - 1607 : 0;
+		int bangelId = this.getEquippedItemIdInServerSlot(14);
+		return bangelId >= 1608 && bangelId <= 1612 ? bangelId - 1607 : 0;
 	}
 
 	private int getMagicArmorPowerPenalty() {
@@ -12446,13 +12438,13 @@ public final class mudclient implements Runnable {
 			|| lowerName.contains("chaps") || lowerName.contains("cuirass");
 	}
 
-	private int getEquippedItemIdInSlot(int slot) {
-		for (ItemDef item : this.equippedItems) {
-			if (item != null && item.wearableID == slot) {
-				return item.id;
-			}
+	private int getEquippedItemIdInServerSlot(int serverSlot) {
+		int clientSlot = EquipmentSlotMapping.serverToClient(serverSlot);
+		if (clientSlot < 0 || clientSlot >= this.equippedItems.length) {
+			return -1;
 		}
-		return -1;
+		ItemDef item = this.equippedItems[clientSlot];
+		return item == null ? -1 : item.id;
 	}
 
 	private boolean hasEquippedItem(int itemId) {
