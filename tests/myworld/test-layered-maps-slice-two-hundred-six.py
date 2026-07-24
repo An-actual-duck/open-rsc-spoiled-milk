@@ -501,8 +501,12 @@ public final class SchedulerCorrelationFixture {
                         .SourcePlan(
                             0, 4, 0,
                             Collections.singletonList(object))));
+        // A roaming NPC can be authored outside the selected detachment
+        // sources while one of its callbacks is candidate-related and another
+        // is a supporting non-spatial callback. Both links belong to the
+        // exact owner fence.
         NpcOwnerIdentity npc =
-            new NpcOwnerIdentity(9L, 4, 0, 30, 10);
+            new NpcOwnerIdentity(9L, 5, 0, 30, 10);
         EventRestorationState unavailable =
             new EventRestorationState(
                 RestorationKind.UNAVAILABLE, null, false);
@@ -558,7 +562,7 @@ public final class SchedulerCorrelationFixture {
                 Collections.singletonList(new SourceRecord(4, 0)),
                 events, 4, 1, 2);
         OwnerRequirement owner = new OwnerRequirement(
-            9L, 4, 0, 30, 10,
+            9L, 5, 0, 30, 10,
             Arrays.asList(Long.valueOf(11L), Long.valueOf(12L)));
         LayeredPackedRegionNpcOwnerPreservationRequirements requirements =
             new LayeredPackedRegionNpcOwnerPreservationRequirements(

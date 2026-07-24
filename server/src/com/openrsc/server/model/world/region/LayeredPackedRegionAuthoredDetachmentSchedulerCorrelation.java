@@ -233,8 +233,7 @@ public final class
 		}
 
 		Map<Long, OwnerRequirement> ownerByRegistration =
-			indexOwnerRequirements(
-				requirements, selectedSourceOrdinals);
+			indexOwnerRequirements(requirements);
 		List<EventCorrelation> retained =
 			new ArrayList<EventCorrelation>();
 		int npcFence = 0;
@@ -380,18 +379,14 @@ public final class
 	}
 
 	private static Map<Long, OwnerRequirement> indexOwnerRequirements(
-		final LayeredPackedRegionNpcOwnerPreservationRequirements requirements,
-		final Map<Long, Integer> selectedSourceOrdinals) {
+		final LayeredPackedRegionNpcOwnerPreservationRequirements
+			requirements) {
 		Map<Long, OwnerRequirement> indexed =
 			new LinkedHashMap<Long, OwnerRequirement>();
 		for (OwnerRequirement owner : requirements.getOwners()) {
-			if (owner.getGeneration() != requirements.getGeneration()
-				|| !selectedSourceOrdinals.containsKey(
-					Long.valueOf(sourceKey(
-						owner.getPackedRegionX(),
-						owner.getPackedRegionY())))) {
+			if (owner.getGeneration() != requirements.getGeneration()) {
 				throw new IllegalArgumentException(
-					"NPC owner requirement is outside the detachment sources");
+					"NPC owner requirement generation is not aligned");
 			}
 			for (Long registration : owner.getEventRegistrationSequences()) {
 				if (indexed.put(registration, owner) != null) {

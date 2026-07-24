@@ -16369,6 +16369,58 @@ route remains pending on a freshly launched schema-v58 server; the immediately
 preceding owner pass remained a clean schema-v57 gameplay result and is not
 misrepresented as v58 scheduler-correlation evidence.
 
+### Slice 208: Outside-selection NPC-owner correlation repair
+
+Objective: accept exact NPC-owner fences whose authored spawn source lies
+outside the selected detachment sources while a roaming runtime owner or its
+callback is candidate-related to that selection.
+
+Owner finding:
+
+- the first correctly targeted schema-v58 route reached the preservation
+  command one tick before the 16-tick retirement cooldown and safely emitted
+  no preservation evidence;
+- the repeated route reached 12 eligible retirement candidates and an exact
+  36-source preservation boundary with 450 related NPC-owner event links and
+  eight separate non-NPC events;
+- correlation then rejected one of those exact owners solely because its
+  authored source coordinate was outside the detachment selection; and
+- the command aborted before record serialization with no scheduler entry,
+  callback change, source absence, reconstruction, registry/mirror/visibility
+  change, or runtime mutation.
+
+Implementation:
+
+- owner requirements remain gated by exact generation, scheduler snapshot,
+  registration sequence, and full authored/runtime NPC identity;
+- authored source membership is no longer required because the upstream
+  continuity requirement deliberately follows a roaming NPC whose authored
+  source may be outside the regions it currently affects;
+- a related outside-source owner still increments only the selected candidate
+  source references carried by its event, while a non-candidate link remains a
+  supporting fence without being falsely attributed to a selected source; and
+- the compiled Slice 206 fixture now places its exact NPC owner outside the
+  detachment source while retaining one related and one supporting event link,
+  proving both remain one exact owner fence and all aggregate/per-source
+  arithmetic still reconciles.
+
+Safety boundary: this changes only detached classification. It does not relax
+owner identity or scheduler alignment, retain a runtime handle, enter a
+scheduler boundary, cancel/reschedule a callback, preserve an entity, detach
+or reconstruct a source, mutate runtime state, or grant lifecycle authority.
+
+Automated validation status:
+
+- the compiled Slice 206 fixture and three focused Slice 208 guards pass;
+- the Slice 182-208 lineage passes 114 tests across 27 focused files;
+- both end-to-end observer integration tests pass;
+- the authoritative bundled-Ant build compiles 843 core and 488 plugin
+  sources; and
+- the server build/classpath audit passes.
+
+Status: implemented and automated-validated. A fresh private schema-v58 route
+remains required after restarting the private server with this repair.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16801,6 +16853,7 @@ private environment should validate at least:
 | 2026-07-24 | Accept the Slice 205 private disposable authored-object detachment route. | Owner-validated; four contiguous schema-v57 records validate, all 36 sources reconcile 4,551 replay placements, 3,979 authored objects, 3,185 collision contribution references, 3,979 Region references, 36 disposable Region unions, and 82,944 verified tiles; every object registers and clears through exact forward/reverse transactions, all inherited fingerprints align, runtime/baseline anomalies and all runtime mutation/authority facts remain zero/false, and scenery/NPC interaction remained normal. One accepted 1,305 ms late tick contains 1,192 ms of opt-in diagnostic work and skips one following tick |
 | 2026-07-24 | Continue with Slice 206 by correlating the inert detachment plan with exact detached scheduler and NPC-owner evidence. | Implemented and automated-validated; every event receives a bounded classification, exact NPC-owner registration fences and fully authored scenery restorations remain distinct from candidate NPC, player-owned, exact-restoration, and unattributed blockers, supporting/outside/global callbacks reconcile without retaining runtime handles, every mutation/authority fact remains false, the Slice 182-206 lineage passes 106 tests, and the 843/488 Ant build/audit passes |
 | 2026-07-24 | Continue with Slice 207 by exposing bounded detachment-scheduler correlation through the explicit private preservation diagnostic. | Implemented and automated-validated; additive schema-v58 changes only the preservation no-op, aligns the existing exact event inventory, inert detachment definition, and NPC-owner requirements under one source-lifecycle boundary, serializes compact aggregate/per-source classifications without duplicating callbacks or retaining authority, preserves schema-v57, passes five focused guards, the 111-test Slice 182-207 lineage, two observer integration tests, and the 843/488 Ant build/audit; one fresh-server private owner route remains pending |
+| 2026-07-24 | Repair the schema-v58 owner route after it exposed an exact NPC owner authored outside the selected detachment sources. | Slice 208 implemented and automated-validated; the eligible route proved 12 candidates, 36 selected sources, 450 exact related NPC-owner links, and eight separate non-NPC events before the inert correlation threw on an invalid membership assumption. Exact generation/scheduler/registration/NPC identity remain mandatory, but a roaming owner's authored source may now remain outside the sources its callback currently affects; the compiled regression covers related and supporting links for such an owner, the Slice 182-208 lineage passes 114 tests plus two observer integration guards, and the 843/488 Ant build/audit passes. No runtime mutation occurred; one repaired private route remains pending |
 
 ## Next Discussion
 
