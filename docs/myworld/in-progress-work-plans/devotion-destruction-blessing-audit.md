@@ -1,14 +1,14 @@
 # Devotion, Destruction, and Blessing Audit
 
-Status: accepted implementation is in progress on
+Status: accepted implementation is complete on
 `feat/devotion-system-audit-implementation`.
 
 Date audited: 2026-07-24
 
 ## Implementation Status
 
-The accepted direction is now implemented on the active topic branch, with
-final regression and build validation in progress:
+The accepted direction is implemented and validated on the active topic
+branch:
 
 - The Bonecrusher correctness fix rejects noted inputs, removes the exact
   selected inventory instance, and awards nothing on failed removal.
@@ -29,6 +29,12 @@ final regression and build validation in progress:
 The detailed “Current” sections below are retained as the pre-implementation
 audit snapshot that established the defects. The accepted rules and this
 implementation-status section supersede that historical baseline.
+
+Validation completed with the authoritative Ant server core/plugin builds, the
+desktop client build, the repository lint gate, the broad offline My World
+regression suite, and focused Devotion, blessing, destruction, Prayer, and
+skill-guide checks. Startup-dependent tests could not claim port 43615 because
+another authorized worker already owned it; no running server was interrupted.
 
 ## Accepted Design Clarification
 
@@ -52,8 +58,8 @@ as intended rewards rather than balance defects. Free or failed-removal XP
 paths, such as the Bonecrusher issue, remain defects because they bypass the
 required Devotion progression and item cost.
 
-The project owner also approved the following Bonecrusher correctness fix for
-a later implementation phase:
+The project owner also approved the following Bonecrusher correctness fix,
+which is now implemented:
 
 - Reject noted bones and ash.
 - Remove the exact inventory instance selected by the player, rather than
@@ -67,9 +73,9 @@ a later implementation phase:
 ### Accepted blessing and destruction targets
 
 The project owner selected a small blessing cost and higher initial
-requirements. These are approved design targets for the implementation phase;
-the current-state tables later in this audit intentionally continue to describe
-the unchanged runtime.
+requirements. These accepted values are now implemented; the current-state
+tables later in this audit intentionally preserve the pre-implementation
+baseline for comparison.
 
 For ordinary equipment with mapped resource cost `r`:
 
@@ -738,26 +744,29 @@ to spend Devotion on rewards.
 | God switching resets cap | Ruled out | Shared keys do not contain god identity |
 | Restart resets cap | Ruled out for graceful/default saves | Window keys persist in player cache |
 
-## Recommendations for Review
+## Accepted Decisions and Follow-up Recommendations
 
-These are proposed decisions, not implemented values.
+The correctness and balance decisions in sections 1 through 4 were accepted
+and are implemented. The telemetry and direct-drop policy discussion in
+section 5 remains a future recommendation.
 
-### 1. Fix correctness and exploit paths before tuning
+### 1. Implemented correctness and exploit fixes
 
-1. Implement the approved Bonecrusher correction: reject notes, remove the
-   exact selected inventory instance, stop on failed removal, and award the
-   existing XP/Devotion only after successful removal. Do not change its valid
-   reward values or reusable lifecycle.
-2. Add the approved square-shield, spear, and scythe destruction mappings for
-   all three gods, using their existing resource values, and verify complete
-   blessing/destruction symmetry for all ordinary god equipment.
-3. Require the active Prayer book to match the blessing altar before any
+1. The Bonecrusher correction rejects notes, removes the
+   exact selected inventory instance, stops on failed removal, and awards the
+   existing XP/Devotion only after successful removal. Its valid reward values
+   and reusable lifecycle are unchanged.
+2. The square-shield, spear, and scythe destruction mappings now cover
+   all three gods using their existing resource values, completing
+   blessing/destruction symmetry for ordinary god equipment.
+3. The active Prayer book must match the blessing altar before any
    mutation, matching destruction, equipment use, and the guide.
-4. Replace the separate limiter check/record calls with one serialized,
-   bounded successful-conversion accounting operation.
-5. Report actual clamped Devotion changes and deactivate prayers that exceed
+4. One serialized, bounded successful-conversion operation replaces the
+   separate limiter check/record calls.
+5. Destruction reports actual clamped Devotion changes, and reductions
+   deactivate prayers that exceed
    the new allocation after any Devotion reduction.
-6. Add server-side tests for notes, stale selections, exact quantities, all 96
+6. Regression checks cover notes, stale selections, exact quantities, all
    ordinary products, altar-alignment failures, tier-based destruction,
    artifact exclusion, mapping symmetry, cap persistence, clock edges, and
    failed conversion accounting.
@@ -789,15 +798,14 @@ Do not use the confirmed Bonecrusher exploit as evidence against the intended
 curve. Fixing that exploit restores the required item consumption while
 leaving legitimate high-Devotion rewards intact.
 
-### 3. Add the accepted minimal blessing cost
+### 3. Accepted minimal blessing cost
 
-Ordinary blessing currently uses Devotion as an unlock threshold and consumes
-none. Change ordinary equipment blessing to consume five stored offering units
-per mapped resource, equal to `0.5` displayed Devotion per resource. This is
-half the existing `1` Devotion-per-resource destruction transfer. A successful
-conversion must be atomic: verify the requirement, remove the exact source
-item, deduct the cost, create the result, record the hourly slot, and award XP
-without allowing a partial outcome or a failed action to consume Devotion.
+Ordinary equipment blessing now consumes five stored offering units per mapped
+resource, equal to `0.5` displayed Devotion per resource. This is half the
+existing `1` Devotion-per-resource destruction transfer. A successful
+conversion is atomic: it verifies the requirement, replaces the exact source
+item, deducts the cost, records the hourly slot, and awards XP without allowing
+a failed action to consume Devotion or a limit slot.
 
 Blessed symbols require 50 Devotion but remain free to bless. Their accepted
 destruction transfer is two stored offering units (`0.2` displayed Devotion),
@@ -812,12 +820,12 @@ Preserve destruction as a symmetric transfer between gods. Do not add an
 additional destruction charge: consuming the item and lowering the item's god
 already provide its intended cost.
 
-### 4. Keep ten per hour, but call it hourly
+### 4. Ten per hour, correctly identified as hourly
 
-There is no current daily allowance to preserve. Ten shared blessings per hour
-is enough to create a full wool set in one window and intentionally slows large
-stockpiles. Keep that number for the first balance pass, document it in the
-client guide, expose remaining slots/time, and collect usage data.
+There is no daily allowance. Ten shared blessings per hour is enough to create
+a full wool set in one window and intentionally slows large stockpiles. The
+number is preserved and the client guide identifies it as hourly. Exposing
+remaining slots/time and collecting usage data remain possible future work.
 
 If a true daily rule is desired later, define an explicit UTC reset and a much
 larger allowance. Replacing the current rule with ten per UTC day would be an
