@@ -326,7 +326,7 @@ automated-validated Slice 182 applies that exact input to one newly constructed
 disposable Region outside every runtime index, verifies all static terrain
 values and absent dynamic/entity products, returns only a detached receipt, and
 discards the container;
-automated-validated Slice 183 repeats that proof for every exact selected
+owner-validated Slice 183 repeats that proof for every exact selected
 resident source only during the explicit private preservation diagnostic.
 Additive schema-v51 retains bounded counts and one terrain fingerprint per
 source, never tile payloads or handles, and still performs no runtime-source
@@ -14714,11 +14714,37 @@ Automated validation status:
   build compiles 822 core and 488 plugin sources and passes its build/classpath
   audit.
 
-Status: implemented and automated-validated, pending one private owner route.
-The owner route should run the explicit preservation no-op in a dense source
-selection, verify normal gameplay interaction afterward, and confirm
-schema-v51 reports one exact 2,304-tile fingerprinted verification per selected
-source with no authoritative or runtime-mutation flag.
+Private owner validation status:
+
+- accepted. Nine contiguous schema-v51 records cover start at `(120,620)`,
+  teleport to dense `(132,502)`, one explicit preservation no-op, five
+  subsequent movement records, and stop; all nine validate against v51;
+- preflight, reload recipe, and terrain verification align exactly on
+  generation 1, requirements/observation tick 65,372, residency-mirror version
+  1,842, authored generation 1, stable source order, and all 36 sources;
+- all 36 source receipts report exactly 2,304 verified tiles, for 82,944 total.
+  Per-source sums exactly match 18,448 terrain-blocked tiles, 8,080 terrain-mask
+  tiles, 13,619 terrain-projectile-blocked tiles, and zero unexplained sealed-
+  base tiles;
+- 34 fingerprints are unique. The only repeated digest belongs to three
+  distinct coordinates whose entire 48-by-48 terrain is uniformly blocked,
+  with zero terrain mask/projectile/sealed-base values, so identical terrain
+  correctly produces an identical digest;
+- 36 disposable Regions were constructed and received terrain, zero usable
+  containers survived, and every handle, runtime-source write, absence,
+  reconstruction, authored replay, dynamic collision rebuild, active-family
+  preservation, registry/mirror/cache mutation, arrival, visibility, and
+  lifecycle-authority fact remains false; and
+- the owner observed no visual, movement, NPC, or scenery interaction issue,
+  and no parity-capture exception or runtime error accompanied the route.
+
+Status: implemented, automated-validated, and owner-validated. The next focused
+slice should define the exact detached authored-placement replay plan for one
+terrain-verified source. It should preserve stable final-live placement order
+and typed constructors while separating NPC membership, authored scenery
+membership, ground items, collision derivation, scheduler state, registration,
+and visibility into explicit later stages. It must not yet populate even a
+disposable Region.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -15120,6 +15146,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 181 by capturing real resident terrain under the exact source boundary. | Implemented and automated-validated; the lifecycle monitor, boundary identity, mirror version, selected ordinal, non-creating lookup, and mirror registration bind a canonical immutable 2,304-tile capture that immediately reduces to the exact terrain-only definition without retaining runtime handles or applying state; 611 focused tests pass across 180 files and the 819/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 182 by applying static terrain to one disposable isolated Region. | Implemented and automated-validated; the exact captured terrain initializes and round-trips all 2,304 tiles on an unregistered local Region, static metadata/collision/projectile/sealed-base values match, dynamic products and entity memberships remain empty, only a fingerprinted detached receipt survives, 615 focused tests pass across 181 files, and the 821/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 183 by exposing bounded isolated-terrain verification through the explicit private preservation diagnostic. | Implemented and automated-validated; schema-v51 reports one count/fingerprint-only receipt per exact selected source after disposable unregistered terrain apply/verification, serializes no tile payload or handle, keeps every runtime mutation and authority false, the current observer plus Slice 177-183 lineage passes 30 focused tests, and the 822/488 Ant build passes; one dense private owner route remains pending |
+| 2026-07-24 | Accept the Slice 183 private isolated-terrain route. | Owner-validated; nine schema-v51 records remain contiguous, all 36 selected sources align across preflight/recipe/terrain identity, 82,944 verified tiles and every terrain aggregate reconcile, the sole repeated fingerprint is the correct digest for three identical fully blocked sectors, all runtime mutation/authority flags remain false, and movement plus NPC/scenery interaction remained normal |
 
 ## Next Discussion
 
