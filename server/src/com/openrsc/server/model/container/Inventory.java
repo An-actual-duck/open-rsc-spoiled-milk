@@ -16,7 +16,13 @@ import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Optional;
+import java.util.TreeMap;
 
 public class Inventory {
 	//Class members--------------------------------------------------
@@ -351,6 +357,44 @@ public class Inventory {
 
 	public void replace(Item itemToReplace, Item newItem, boolean sendInventory) {
 
+	}
+
+	/**
+	 * Replaces one exact inventory instance in place.
+	 *
+	 * This is intended for transactional conversions where removing by catalog
+	 * ID could consume a different item or fall through to equipped items. The
+	 * replacement keeps the source instance's persistent item ID and slot.
+	 */
+	public boolean replaceExact(Item itemToReplace, Item newItem, boolean sendInventory) {
+		if (itemToReplace == null || newItem == null || itemToReplace.getItemId() == Item.ITEM_ID_UNASSIGNED
+			|| newItem.getAmount() != 1 || newItem.getNoted()) {
+			return false;
+		}
+		final ItemDefinition replacementDef = newItem.getDef(player.getWorld());
+		if (replacementDef == null
+			|| (player.getConfig().RESTRICT_ITEM_ID >= 0 && player.getConfig().RESTRICT_ITEM_ID < newItem.getCatalogId())
+			|| player.getClientLimitations().maxItemId < newItem.getCatalogId()) {
+			return false;
+		}
+
+		synchronized (list) {
+			for (int index = 0; index < list.size(); index++) {
+				final Item existing = list.get(index);
+				if (existing.getItemId() != itemToReplace.getItemId()
+					|| existing.getCatalogId() != itemToReplace.getCatalogId()
+					|| existing.getNoted() != itemToReplace.getNoted()
+					|| existing.getAmount() != itemToReplace.getAmount()) {
+					continue;
+				}
+				list.set(index, newItem.copyWithItemId(existing.getItemId()));
+				if (sendInventory) {
+					ActionSender.sendInventoryUpdateItem(player, index);
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// Used in custom bank interface to swap items.

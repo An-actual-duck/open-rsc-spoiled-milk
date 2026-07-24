@@ -198,6 +198,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "chat-and-dialogue-channel-plan.md",
             "code-cleanup-and-modularization-plan.md",
             "code-health-audit-2026-07-12.md",
+            "devotion-destruction-blessing-audit.md",
             "dragon-gear-crafting-plan.md",
             "fixes-and-changes-plan.md",
             "god-relic-reward-plan.md",

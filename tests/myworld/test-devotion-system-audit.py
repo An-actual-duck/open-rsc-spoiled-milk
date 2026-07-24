@@ -9,6 +9,7 @@ PRAYER_PLUGINS = (
     ROOT
     / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/prayer"
 )
+TRANSACTION = PRAYER_PLUGINS / "PrayerBlessingTransaction.java"
 AUDIT = (
     ROOT
     / "docs/myworld/in-progress-work-plans/devotion-destruction-blessing-audit.md"
@@ -33,7 +34,7 @@ def simulate_offerings(target: int, mode: str) -> tuple[int, int, int]:
         bonus_xp += devotion
         gain = 1
 
-        if mode in {"symbol", "both"} and devotion >= 25:
+        if mode in {"symbol", "both"} and devotion >= 50:
             if not symbol_toggle:
                 gain += 1
             symbol_toggle = not symbol_toggle
@@ -67,11 +68,14 @@ def main() -> None:
         ROOT / "server/src/com/openrsc/server/content/GodArtifacts.java"
     ).read_text(encoding="utf-8")
     audit = AUDIT.read_text(encoding="utf-8")
+    transaction = TRANSACTION.read_text(encoding="utf-8")
 
     for marker in (
         "OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP",
         "MAX_DEVOTION_LEVEL = 1000",
         "MIN_DEVOTION_LEVEL = -1000",
+        "DEVOTION_REQUIREMENT_PER_RESOURCE = 100",
+        "BLESSING_OFFERING_COST_PER_RESOURCE = OFFERINGS_PER_DEVOTION_LEVEL / 2",
         "return bonusXp * 4;",
         "100.0D + devotionLevel",
     ):
@@ -92,12 +96,22 @@ def main() -> None:
         "artifact Devotion requirement/cost changed",
     )
 
-    remove_index = bones.index("RuneScript.remove(bones.getCatalogId(), 1);")
+    require("if (bones.getNoted())" in bones, "Bonecrusher no longer rejects notes")
+    require(
+        "RuneScript.remove(bones.getCatalogId(), 1);" not in bones,
+        "Bonecrusher regressed to catalog-only removal",
+    )
+    remove_index = bones.index(
+        "player.getCarriedItems().getInventory().remove(bones, true)"
+    )
     reward_index = bones.index("giveBonesExperience(player, bones, true);")
     require(
-        remove_index < reward_index
-        and "if (RuneScript.remove" not in bones,
-        "Bonecrusher removal semantics changed; refresh the audit",
+        remove_index < reward_index,
+        "Bonecrusher reward precedes exact successful removal",
+    )
+    require(
+        "player.getPrayerBook() != godLine" in transaction,
+        "ordinary blessing no longer requires altar alignment",
     )
 
     # The blessing matrix has 96 distinct results.
@@ -160,20 +174,20 @@ def main() -> None:
     for item_id in result_ids:
         require(f"({item_id})" in audit, f"audit matrix omits result item {item_id}")
 
-    for omitted_id in (432, 2161, 3123, 3229, 3230, 3231, 3232, 3233, 3234):
+    for completed_id in (432, 2161, 3123, 3229, 3230, 3231, 3232, 3233, 3234):
         require(
-            f"case {omitted_id}:" not in destroy,
-            f"destruction coverage changed for documented gap {omitted_id}",
+            f"case {completed_id}:" in destroy,
+            f"destruction coverage is missing completed item {completed_id}",
         )
 
     expected_progression = {
         (25, "plain"): (250, 250, 3_000),
         (500, "plain"): (5_000, 5_000, 1_247_500),
         (1000, "plain"): (10_000, 10_000, 4_995_000),
-        (500, "symbol"): (3_417, 5_001, 832_833),
-        (1000, "symbol"): (6_750, 10_000, 3_331_000),
-        (500, "both"): (2_542, 5_001, 624_258),
-        (1000, "both"): (5_042, 10_000, 2_498_008),
+        (500, "symbol"): (3_500, 5_000, 835_750),
+        (1000, "symbol"): (6_833, 10_000, 3_333_750),
+        (500, "both"): (2_583, 5_000, 625_775),
+        (1000, "both"): (5_083, 10_000, 2_499_525),
     }
     for key, expected in expected_progression.items():
         require(
@@ -182,11 +196,11 @@ def main() -> None:
         )
 
     for statement in (
-        "No gameplay values or runtime behavior were changed by this audit.",
+        "## Implementation Status",
         "10 successful blessings / one fixed one-hour window",
         "The matrix contains 96 ordinary blessing results",
         "God square shields, spears, and scythes",
-        "Bonecrusher does not check removal",
+        "Bonecrusher correctness fix",
     ):
         require(statement in audit, f"audit is missing required finding: {statement}")
 

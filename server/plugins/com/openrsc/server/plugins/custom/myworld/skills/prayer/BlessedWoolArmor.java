@@ -1,7 +1,6 @@
 package com.openrsc.server.plugins.custom.myworld.skills.prayer;
 
 import com.openrsc.server.constants.ItemId;
-import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.model.container.Item;
@@ -9,8 +8,6 @@ import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
-
-import static com.openrsc.server.plugins.Functions.give;
 
 public final class BlessedWoolArmor implements UseLocTrigger {
 
@@ -44,27 +41,16 @@ public final class BlessedWoolArmor implements UseLocTrigger {
 
 		final int resourceCost = getWoolResourceCost(item.getCatalogId());
 		final int devotionRequirement = Devotion.getDevotionRequirementForResourceCost(resourceCost);
-		final int currentDevotion = Devotion.getDevotionLevel(player, godLine);
-		if (devotionRequirement > 0 && currentDevotion < devotionRequirement) {
-			player.message("You need " + devotionRequirement + " devotion to " + formatGodLine(godLine) + " to bless that wool armour.");
-			player.message("Your current devotion to " + formatGodLine(godLine) + " is " + currentDevotion + ".");
-			return;
-		}
-		if (!PrayerBlessingLimit.canBless(player, godLine)) {
-			return;
-		}
-
-		if (player.getCarriedItems().remove(item) == -1) {
-			return;
-		}
-
-		PrayerBlessingLimit.recordBlessing(player);
-		give(player, productId, 1);
-		final int prayerXp = Devotion.getBlessingPrayerXp(player, godLine, getWoolCraftingXp(item.getCatalogId()));
-		if (prayerXp > 0) {
-			player.incExp(Skill.PRAYER.id(), prayerXp, true);
-		}
-		player.message("The altar blesses the wool armour.");
+		PrayerBlessingTransaction.bless(
+			player,
+			godLine,
+			item,
+			productId,
+			devotionRequirement,
+			Devotion.getBlessingOfferingCostForResourceCost(resourceCost),
+			getWoolCraftingXp(item.getCatalogId()),
+			"The altar blesses the wool armour."
+		);
 	}
 
 	private int getGodWoolProduct(final PrayerCatalog.GodLine godLine, final int itemId) {
@@ -151,8 +137,4 @@ public final class BlessedWoolArmor implements UseLocTrigger {
 		return getWoolResourceCost(itemId) * 6;
 	}
 
-	private String formatGodLine(final PrayerCatalog.GodLine godLine) {
-		final String lower = godLine.name().toLowerCase();
-		return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
-	}
 }

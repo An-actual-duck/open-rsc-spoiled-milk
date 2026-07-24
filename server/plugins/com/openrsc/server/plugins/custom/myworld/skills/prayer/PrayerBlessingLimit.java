@@ -3,6 +3,8 @@ package com.openrsc.server.plugins.custom.myworld.skills.prayer;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 
+import java.util.function.BooleanSupplier;
+
 public final class PrayerBlessingLimit {
 	private static final int BLESSINGS_PER_HOUR = 10;
 	private static final long BLESSING_WINDOW_MS = 60L * 60L * 1000L;
@@ -12,32 +14,41 @@ public final class PrayerBlessingLimit {
 	private PrayerBlessingLimit() {
 	}
 
-	public static boolean canBless(final Player player, final PrayerCatalog.GodLine godLine) {
-		final long now = System.currentTimeMillis();
-		final long windowStart = getWindowStart(player);
-		final int count = getWindowCount(player);
-		if (!isWindowActive(windowStart, now)) {
+	/**
+	 * Runs one blessing conversion and records it only when the conversion
+	 * reports success. The availability check, conversion, and bounded counter
+	 * update share the player's monitor so two callers cannot consume the final
+	 * slot concurrently.
+	 */
+	public static boolean completeSuccessfulBlessing(
+		final Player player,
+		final PrayerCatalog.GodLine godLine,
+		final BooleanSupplier conversion
+	) {
+		if (player == null || godLine == null || conversion == null) {
+			return false;
+		}
+		synchronized (player) {
+			final long now = System.currentTimeMillis();
+			final long windowStart = getWindowStart(player);
+			final int count = getWindowCount(player);
+			final boolean activeWindow = isWindowActive(windowStart, now);
+			if (activeWindow && count >= BLESSINGS_PER_HOUR) {
+				player.message("You hear a low rumbling voice...");
+				player.message(getLimitMessage(godLine));
+				return false;
+			}
+			if (!conversion.getAsBoolean()) {
+				return false;
+			}
+			if (!activeWindow) {
+				player.getCache().store(WINDOW_START_KEY, now);
+				player.getCache().set(WINDOW_COUNT_KEY, 1);
+			} else {
+				player.getCache().set(WINDOW_COUNT_KEY, Math.min(BLESSINGS_PER_HOUR, count + 1));
+			}
 			return true;
 		}
-		if (count < BLESSINGS_PER_HOUR) {
-			return true;
-		}
-
-		player.message("You hear a low rumbling voice...");
-		player.message(getLimitMessage(godLine));
-		return false;
-	}
-
-	public static void recordBlessing(final Player player) {
-		final long now = System.currentTimeMillis();
-		final long windowStart = getWindowStart(player);
-		final int count = getWindowCount(player);
-		if (!isWindowActive(windowStart, now)) {
-			player.getCache().store(WINDOW_START_KEY, now);
-			player.getCache().set(WINDOW_COUNT_KEY, 1);
-			return;
-		}
-		player.getCache().set(WINDOW_COUNT_KEY, Math.min(BLESSINGS_PER_HOUR, count + 1));
 	}
 
 	private static boolean isWindowActive(final long windowStart, final long now) {

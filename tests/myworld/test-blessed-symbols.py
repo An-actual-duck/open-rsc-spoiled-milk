@@ -89,15 +89,17 @@ def main() -> None:
         require(path.is_file(), f"missing Guthix symbol asset {path.relative_to(ROOT)}")
 
     require("class BlessedSymbols implements UseLocTrigger" in blessed, "blessed symbol altar plugin missing")
-    require("SYMBOL_DEVOTION_REQUIREMENT = 25" in blessed, "symbol blessing should require 25 devotion")
+    require("SYMBOL_DEVOTION_REQUIREMENT = 50" in blessed, "symbol blessing should require 50 devotion")
     require("ItemId.UNBLESSED_HOLY_SYMBOL.id()" in blessed and "ItemId.HOLY_SYMBOL_OF_SARADOMIN.id()" in blessed,
             "Saradomin holy symbol altar blessing missing")
     require("ItemId.UNBLESSED_UNHOLY_SYMBOL_OF_ZAMORAK.id()" in blessed and "ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id()" in blessed,
             "Zamorak unholy symbol altar blessing missing")
     require("ItemId.UNBLESSED_GUTHIX_SYMBOL.id()" in blessed and "ItemId.GUTHIX_SYMBOL.id()" in blessed,
             "Guthix symbol altar blessing missing")
-    require("Devotion.getBlessingPrayerXp(player, godLine, SYMBOL_CRAFTING_XP)" in blessed,
-            "symbol blessing should use devotion-scaled Prayer XP")
+    require("PrayerBlessingTransaction.bless(" in blessed
+            and "SYMBOL_DEVOTION_REQUIREMENT," in blessed
+            and "SYMBOL_CRAFTING_XP," in blessed,
+            "symbol blessing should use the atomic scaled-XP transaction")
 
     require("ItemId.GUTHIX_SYMBOL_MOULD.id()" in crafting, "Guthix symbol mould should be a silver mould")
     require("ItemId.HOLY_SYMBOL_MOULD.id()" in crafting_shop, "Saradomin symbol mould should be sold by crafting equipment shops")
@@ -111,11 +113,11 @@ def main() -> None:
 
     require("isZamorakBlessedSymbol" in destroy and "isSaradominBlessedSymbol" in destroy and "isGuthixBlessedSymbol" in destroy,
             "symbol destruction should recognize all god lines")
-    require("SYMBOL_DEVOTION_OFFERING_CHANGE = Devotion.OFFERINGS_PER_DEVOTION_LEVEL / 2" in destroy
+    require("SYMBOL_DEVOTION_OFFERING_CHANGE = 2" in destroy
             and "return 200;" in destroy
-            and "Devotion.addDevotionOfferings(player, worshippedGod, devotionOfferingChange)" in destroy
-            and "Devotion.removeDevotionOfferings(player, itemGod, devotionOfferingChange)" in destroy,
-            "symbol destruction should grant 0.5 devotion swing and symbol production XP")
+            and "Devotion.adjustDevotionOfferings(player, worshippedGod, devotionOfferingChange)" in destroy
+            and "Devotion.adjustDevotionOfferings(player, itemGod, -devotionOfferingChange)" in destroy,
+            "symbol destruction should transfer 0.2 devotion and preserve symbol production XP")
     require('player.message("You attempt to put it on...")' in equipment
             and 'player.message("It scalds the flesh! Metaphorically, of course.")' in equipment,
             "opposing god equipment should use the scalding equip rejection message")

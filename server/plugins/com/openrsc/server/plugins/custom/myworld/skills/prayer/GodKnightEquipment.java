@@ -1,15 +1,12 @@
 package com.openrsc.server.plugins.custom.myworld.skills.prayer;
 
 import com.openrsc.server.constants.ItemId;
-import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
-
-import static com.openrsc.server.plugins.Functions.give;
 
 public final class GodKnightEquipment implements UseLocTrigger {
 
@@ -42,42 +39,32 @@ public final class GodKnightEquipment implements UseLocTrigger {
 			return;
 		}
 
-		final int devotionRequirement = getDevotionRequirement(item.getCatalogId());
-		if (devotionRequirement > 0 && Devotion.getDevotionLevel(player, godLine) < devotionRequirement) {
-			final int currentDevotion = Devotion.getDevotionLevel(player, godLine);
-			player.message("You need " + devotionRequirement + " devotion to " + formatGodLine(godLine) + " to bless that equipment.");
-			player.message("Your current devotion to " + formatGodLine(godLine) + " is " + currentDevotion + ".");
-			return;
-		}
-		if (!PrayerBlessingLimit.canBless(player, godLine)) {
-			return;
-		}
-
-		if (player.getCarriedItems().remove(item) == -1) {
-			return;
-		}
-
-		PrayerBlessingLimit.recordBlessing(player);
-		give(player, productId, 1);
-		player.message("The altar blesses the steel equipment.");
-		if (devotionRequirement > 0) {
-			final int prayerXp = Devotion.getBlessingPrayerXp(player, godLine, getSteelSmithingXp(item.getCatalogId()));
-			if (prayerXp > 0) {
-				player.incExp(Skill.PRAYER.id(), prayerXp, true);
-			}
-		}
-	}
-
-	private int getDevotionRequirement(final int itemId) {
-		return Devotion.getDevotionRequirementForResourceCost(getSteelResourceCost(itemId));
+		final int devotionResourceCost = getSteelDevotionResourceCost(item.getCatalogId());
+		PrayerBlessingTransaction.bless(
+			player,
+			godLine,
+			item,
+			productId,
+			Devotion.getDevotionRequirementForResourceCost(devotionResourceCost),
+			Devotion.getBlessingOfferingCostForResourceCost(devotionResourceCost),
+			getSteelSmithingXp(item.getCatalogId()),
+			"The altar blesses the steel equipment."
+		);
 	}
 
 	private int getSteelSmithingXp(final int itemId) {
-		final int barCost = getSteelResourceCost(itemId);
+		final int barCost = getSteelProductionResourceCost(itemId);
 		return barCost > 0 ? barCost * 150 : 0;
 	}
 
-	private int getSteelResourceCost(final int itemId) {
+	private int getSteelDevotionResourceCost(final int itemId) {
+		if (itemId == ItemId.LARGE_STEEL_HELMET.id()) {
+			return 1;
+		}
+		return getSteelProductionResourceCost(itemId);
+	}
+
+	private int getSteelProductionResourceCost(final int itemId) {
 		switch (itemId) {
 			case 63: // STEEL_DAGGER
 			case 67: // STEEL_SHORT_SWORD
@@ -102,11 +89,6 @@ public final class GodKnightEquipment implements UseLocTrigger {
 			default:
 				return 0;
 		}
-	}
-
-	private String formatGodLine(final PrayerCatalog.GodLine godLine) {
-		final String lower = godLine.name().toLowerCase();
-		return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
 	}
 
 	private boolean isSteelKnightSource(final int itemId) {

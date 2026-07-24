@@ -64,8 +64,11 @@ def main() -> None:
             "blessed wool conversion should start from base wool armor")
     require("Devotion.getDevotionRequirementForResourceCost(resourceCost)" in plugin,
             "blessed wool conversion should use resource-cost devotion requirements")
-    require("Devotion.getBlessingPrayerXp(player, godLine, getWoolCraftingXp(item.getCatalogId()))" in plugin,
-            "blessed wool conversion should grant scaled Prayer XP")
+    require("PrayerBlessingTransaction.bless(" in plugin
+            and "getWoolCraftingXp(item.getCatalogId())" in plugin,
+            "blessed wool conversion should grant scaled Prayer XP through the atomic transaction")
+    require("Devotion.getBlessingOfferingCostForResourceCost(resourceCost)" in plugin,
+            "blessed wool conversion should spend 0.5 devotion per resource")
     require("return getWoolResourceCost(itemId) * 6;" in plugin,
             "blessed wool Prayer XP should mirror wool crafting XP")
     require("isBlessedWoolArmor(item.getCatalogId())" in equipment,
