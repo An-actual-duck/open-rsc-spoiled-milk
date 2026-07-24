@@ -612,7 +612,7 @@ def ensure_item_identity_and_visuals(items: dict[int, dict[str, Any]]) -> None:
     for snippet in (
         "addBangelJewelryDefinitions();",
         "applyBangelVisuals();",
-        '"external-png:bangel"',
+        '"external-png:bangel@19x15"',
         '"external-png:bangel-mould"',
         '"external-png:medallion"',
     ):

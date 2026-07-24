@@ -5482,7 +5482,7 @@ public class EntityHandler {
 			final int bangelId = 3282 + tier;
 			setCustomItemDefinition(bangelId, new ItemDef(
 				gems[tier] + " Bangel", "I wonder if I can get this enchanted", "",
-				bangelPrices[tier], -1, "external-png:bangel", false, true, 0, gemMasks[tier],
+				bangelPrices[tier], -1, "external-png:bangel@19x15", false, true, 0, gemMasks[tier],
 				tier == 4, false, true, bangelId));
 
 			final int medallionId = 3287 + tier;
@@ -5494,7 +5494,7 @@ public class EntityHandler {
 
 		setCustomItemDefinition(3292, new ItemDef(
 			"Gold Bangel", "I wonder if I can get this enchanted", "",
-			900, -1, "external-png:bangel", false, true, 0, 16763980,
+			900, -1, "external-png:bangel@19x15", false, true, 0, 16763980,
 			false, false, true, 3292));
 	}
 
@@ -5515,7 +5515,7 @@ public class EntityHandler {
 			}
 			setCustomItemDefinition(itemId, new ItemDef(
 				item.getName(), item.getDescription(), commandString(item), item.basePrice,
-				-1, "external-png:bangel", item.stackable, true, 0,
+				-1, "external-png:bangel@19x15", item.stackable, true, 0,
 				item.getPictureMask(), item.getBlueMask(), item.membersItem,
 				item.untradeable, item.noteable, itemId));
 		}

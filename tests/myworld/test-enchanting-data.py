@@ -374,7 +374,7 @@ def ensure_source_mappings_exist() -> None:
         'setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Lifesaving"',
         'addSoulNecklaceLine(1759, tiers, soulNecklacePrices, gemMasks);',
         "applyBangelVisuals();",
-        '"external-png:bangel"',
+        '"external-png:bangel@19x15"',
         '"items:57"',
         '"items:123"',
     ):
@@ -506,7 +506,7 @@ def ensure_client_jewelry_uses_base_visuals() -> None:
     client_text = CLIENT_ENTITY_HANDLER_PATH.read_text(encoding="utf-8")
     required_snippets = (
         "applyBangelVisuals();",
-        '"external-png:bangel"',
+        '"external-png:bangel@19x15"',
         'new ItemDef(tiers[i] + " Necklace of " + altarName,',
         '"items:57"',
         'new ItemDef(tiers[i] + " Ring of " + altarName,',
