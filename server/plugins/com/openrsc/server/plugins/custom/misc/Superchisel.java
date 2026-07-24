@@ -232,7 +232,7 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 		if (item1.getCatalogId() == ItemId.SUPERCHISEL.id()) {
 			notSuperchisel = item2;
 		}
-		if (notSuperchisel.getCatalogId() == ItemId.BALL_OF_WOOL.id()) {
+		if (notSuperchisel.getCatalogId() == MyWorldItemId.BANGEL_MOULD) {
 			int choice = multi(player, "Spawn Bangels",
 				"Spawn uncut gems",
 				"Spawn cut gems",
@@ -240,7 +240,7 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 				"Give gold bars");
 			switch (choice) {
 				case 0:
-					int whatKindOfBangel = multi(player, "Gold", "Sapphire", "Emerald", "Ruby", "Diamond");
+					int whatKindOfBangel = multi(player, "Gold", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone");
 					switch (whatKindOfBangel) {
 						case 0:
 							give(player, MyWorldItemId.GOLD_BANGEL, 1);
@@ -262,18 +262,25 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 							give(player, MyWorldItemId.DIAMOND_BANGEL, 1);
 							player.incExp(Skill.CRAFTING.id(), 100 * 4, true);
 							break;
+						case 5:
+							give(player, MyWorldItemId.DRAGONSTONE_BANGEL, 1);
+							player.incExp(Skill.CRAFTING.id(), 150 * 4, true);
+							break;
 					}
+					break;
 				case 1:
 					give(player, ItemId.UNCUT_SAPPHIRE.id(), 3);
 					give(player, ItemId.UNCUT_EMERALD.id(), 3);
 					give(player, ItemId.UNCUT_RUBY.id(), 3);
 					give(player, ItemId.UNCUT_DIAMOND.id(), 3);
+					give(player, ItemId.UNCUT_DRAGONSTONE.id(), 3);
 					break;
 				case 2:
 					give(player, ItemId.SAPPHIRE.id(), 3);
 					give(player, ItemId.EMERALD.id(), 3);
 					give(player, ItemId.RUBY.id(), 3);
 					give(player, ItemId.DIAMOND.id(), 3);
+					give(player, ItemId.DRAGONSTONE.id(), 3);
 					break;
 				case 3:
 					int toolChoice = multi(player, "Ball of Wool", "Moulds", "Chisel");
@@ -290,6 +297,7 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 							give(player, ItemId.CHISEL.id(), 1);
 							break;
 					}
+					break;
 				case 4:
 					give(player, ItemId.GOLD_BAR.id(), 10);
 					break;
@@ -314,16 +322,22 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 				give(player, ItemId.DIAMOND.id(), 1);
 				player.incExp(Skill.CRAFTING.id(), (int) (107.5 * 4), true);
 			}
+		} else if (notSuperchisel.getCatalogId() == ItemId.UNCUT_DRAGONSTONE.id()) {
+			if (player.getCarriedItems().remove(new Item(ItemId.UNCUT_DRAGONSTONE.id())) > -1) {
+				give(player, ItemId.DRAGONSTONE.id(), 1);
+				player.incExp(Skill.CRAFTING.id(), (int) (137.5 * 4), true);
+			}
 		}
 	}
 
 	@Override
 	public boolean blockUseInv(Player player, Integer invIndex, Item item1, Item item2) {
-		return compareItemsIds(item1, item2, ItemId.BALL_OF_WOOL.id(), ItemId.SUPERCHISEL.id())
+		return compareItemsIds(item1, item2, MyWorldItemId.BANGEL_MOULD, ItemId.SUPERCHISEL.id())
 			|| compareItemsIds(item1, item2, ItemId.SUPERCHISEL.id(), ItemId.UNCUT_SAPPHIRE.id())
 			|| compareItemsIds(item1, item2, ItemId.SUPERCHISEL.id(), ItemId.UNCUT_EMERALD.id())
 			|| compareItemsIds(item1, item2, ItemId.SUPERCHISEL.id(), ItemId.UNCUT_RUBY.id())
 			|| compareItemsIds(item1, item2, ItemId.SUPERCHISEL.id(), ItemId.UNCUT_DIAMOND.id())
+			|| compareItemsIds(item1, item2, ItemId.SUPERCHISEL.id(), ItemId.UNCUT_DRAGONSTONE.id())
 		;
 	}
 

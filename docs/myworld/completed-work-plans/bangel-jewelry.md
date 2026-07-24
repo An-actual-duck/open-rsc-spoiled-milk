@@ -204,3 +204,50 @@ client/server sprite/definition coverage.
 
 The existing enchanting, equipment appearance, equipment hover, Entrana, and
 jewelry runtime suites remain part of the relevant validation set.
+
+## Retirement Integration Audit
+
+The 2026-07-24 follow-up audit checked every supported crafting presentation:
+the modern production session, category-filtered furnace UI, automatic recipe
+detection, authentic dialogue menus, retro client menu, batch production, and
+the Crafting guide. All six completed base Bangels are present. Bangel recipes
+use the Bangel mould as a reusable requirement and consume no wool.
+
+The authentic dialogue path had one configuration-specific defect:
+`WANT_EQUIPMENT_TAB` skipped the gem question but left the internal selection
+flag false, causing the menu to choose only a plain Gold product. It now treats
+that configuration as direct tier selection and offers Gold through Diamond,
+plus Dragonstone on members worlds.
+
+The acquisition audit compared the former mould sources and checked current
+shops, My World starter tools, static ground-item definitions, administrator
+item utilities, and Superchisel testing support. Crafting-equipment shops and
+starter tools supply only the Bangel mould. Static definitions and direct
+administrator requests cannot reacquire retired products. Superchisel testing
+now opens from the Bangel mould instead of wool, offers all six Bangels,
+includes Dragonstone supplies, and no longer falls through into unrelated
+supply actions.
+
+The executable compatibility fixture verifies every retired ID-to-Bangel
+mapping and proves conversion preserves amount, noted state, wielded state,
+durability, the existing `ItemStatus`, and the unique item ownership token. It
+also proves conversion is idempotent, current enchanted/custom Bangel IDs stay
+stable, quest Amulets are excluded, and coexisting old/new equivalent holdings
+retain their total quantity and remain distinct ownership records.
+
+Because a server was running during this audit, no server process, database, or
+runtime files were touched. The post-shutdown integration pass should still
+exercise an isolated database fixture through login, save, logout, and reload
+with:
+
+- Legacy and current equivalents together in inventory and bank.
+- A preexisting wrist item plus a converted equipped legacy Amulet.
+- Legacy and current preset entries, including an old 14-slot preset blob.
+- Pinned legacy bank metadata and a zero-quantity pinned placeholder.
+- Active auction and collectible-return rows.
+- A full bank during equipment-collision overflow.
+
+That pass should confirm row counts, quantities, item ownership IDs, wrist
+placement, overflow handling, pin position, auction/return visibility, and the
+second reload state before removing the isolated fixture. It must not use the
+live database.
