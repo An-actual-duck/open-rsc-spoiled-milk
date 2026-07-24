@@ -300,7 +300,7 @@ the immutable final-live authored recipe. Declared authored sources and exact
 empty replays remain distinct, every active runtime family and collision
 requirement remains separate, and the detached value cannot construct, reload,
 register, or reveal a Region;
-automated-validated Slice 177 exposes that inert recipe only through the
+owner-validated Slice 177 exposes that inert recipe only through the
 explicit private preservation no-op. Additive schema-v50 reports bounded
 authored/source totals and per-source count records while placement definitions,
 runtime handles, executable reload, reconstruction, collision rebuild,
@@ -14282,11 +14282,36 @@ Automated validation status:
 - the authoritative bundled-Ant server build compiles 815 core and 488 plugin
   sources and passes its build/classpath audit.
 
-Status: implemented and automated-validated. Once checkpointed, the next
-meaningful owner route should leave one quieter area for a dense area and
-invoke `preserve-noop` while standing still after arrival. The capture should
-confirm exact source/recipe alignment, show declared versus empty authored
-coverage, and preserve normal interaction afterward.
+Private owner validation status:
+
+- accepted. The quiet-to-dense route produced four contiguous schema-v50
+  records—start at `(120,620)`, teleport to `(132,502)`, one explicit
+  preservation no-op, and stop—and all four validate against the additive
+  schema;
+- the preservation command entered the exact 36-source lifecycle selection
+  and reported `SOURCE_LIFECYCLE_UNAVAILABLE`, as designed;
+- preflight and recipe generation, requirements tick, observation tick,
+  residency-mirror version, exact source order, and source count all align;
+- the recipe contains 33 declared authored sources and three exact empty
+  authored replays, with no declared-but-empty anomaly. Its 4,555 manifest
+  placements minus four superseded placements reconcile to 4,551 final-live
+  authored placements and 4,789 affected-source references;
+- source-level unresolved counts reconcile exactly to the preflight totals:
+  one Player, 449 NPCs, zero dynamic objects, 123 ground items, and 28,936
+  collision-product tiles; and
+- `detachedDefinitionComplete=true` while executable reload, Region
+  construction, source absence/reconstruction, authored replay, collision
+  rebuild, handle retention, registry/mirror/cache mutation, arrival,
+  visibility release, and lifecycle authority all remain false. NPC and
+  scenery interaction remained normal after capture.
+
+Status: implemented, automated-validated, and owner-validated. The real route
+confirms that an exact detached recipe can be formed at the lifecycle boundary
+without accidentally gaining authority. The next focused slice should define
+the bounded blank-container construction contract that would consume one
+source recipe, while keeping collision reconstruction, active-family
+preservation, registration, rollback, arrival, and visibility as separate
+unmet gates.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -14681,6 +14706,7 @@ private environment should validate at least:
 | 2026-07-23 | Accept the Slice 175 private source-absence comparison. | Owner-validated; complementary 98-source and 36-source v49 cohorts validate in full, every source has available tile storage but lacks both collision rebuild and a Region reload path, NPC/authored-object/ground-item blockers vary with content, one active-player source remains explicit per cohort, all mutation and authority facts remain false, and normal movement, teleport, scenery, gathering, combat, and NPC interaction continue afterward |
 | 2026-07-23 | Continue with Slice 176 by binding selected resident sources to an inert exact Region reload recipe. | Implemented and automated-validated; the real lifecycle boundary, source-absence inventory, and final-live authored generation compose exact ordered source recipes, absent manifest entries become explicit empty authored replays, all active runtime families and collision remain separate, no loader or mutation is connected, 591 focused tests pass across 175 files, and the 815/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 177 by exposing the inert exact reload recipe through private diagnostics. | Implemented and automated-validated; additive schema-v50 extends only the explicit preservation no-op with bounded source-level recipe counts, v49 remains immutable, lifecycle-entry evidence requires aligned preflight and recipe values, every executable/mutation/authority fact stays false, 595 focused tests pass across 176 files, and the 815/488 Ant build passes |
+| 2026-07-23 | Accept the Slice 177 quiet-to-dense private owner route. | Owner-validated; four contiguous v50 records validate, all lifecycle identities and 36 source records align, 33 declared sources plus three exact empty replays reconcile 4,555 manifest minus four superseded placements to 4,551 final-live placements, unresolved family totals match preflight exactly, normal interaction remains intact, and every executable or authoritative flag remains false |
 
 ## Next Discussion
 
