@@ -16235,8 +16235,30 @@ Automated validation status:
 - the authoritative bundled-Ant server build compiles 842 core and 488 plugin
   sources and passes its build/classpath audit.
 
-Status: implemented and automated-validated. One cooldown-aware private owner
-route is required before this slice can be accepted.
+Owner validation:
+
+- four contiguous schema-v57 records validate with exact layered round trips
+  and the expected start, teleport, preservation-noop, and stop sequence;
+- all 36 selected sources align with the runtime and transactional baselines,
+  reconciling 4,551 replay placements, 3,979 authored objects, 3,185 collision
+  contribution references, 3,979 Region references, one disposable Region
+  union per source, and 82,944 verified Region tiles;
+- all 3,979 authored objects reconstruct and detach through exact forward and
+  reverse transactions, all 3,979 registrations are present before detachment
+  and cleared afterward, all 36 source fingerprints are distinct, and every
+  inherited terrain/replay/collision/registration/pre-state fingerprint
+  matches;
+- every runtime source/collision/cache mutation, source lifecycle, scheduler,
+  active-family, registry, mirror, visibility, arrival, and authority flag
+  remains false, with zero runtime-baseline anomaly sources; and
+- the response, visuals, collision, scenery interaction, and NPC interaction
+  remained normal. The opt-in diagnostic produced one 1,305 ms late tick with
+  1,192 ms of diagnostic work and skipped one following tick; this is accepted
+  private verification overhead, not a production-path latency claim.
+
+Status: owner-validated and accepted. This evidence proves the complete
+disposable reverse transaction against the real selected source set, but still
+does not authorize runtime detachment or source reconstruction.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -16667,6 +16689,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 203 by executing authored-object detachment only inside a disposable reconstructed source. | Implemented and automated-validated; exact runtime/baseline registration provenance gates a reverse-order strict-unregister round trip, every object and collision registration clears back to exact terrain-only state, and all handles remain confined to unregistered Regions while runtime detachment, source absence, scheduler work, and lifecycle authority remain false; the Slice 182-203 lineage passes 94 tests and the 841/488 Ant build/audit passes |
 | 2026-07-24 | Continue with Slice 204 by bounding disposable authored-object detachment across the exact selected-source set. | Implemented and automated-validated; each source independently reconstructs and detaches in an unregistered Region union, the batch reconciles both transaction passes and every Region/cache/registration/tile count, only count/fingerprint summaries survive, and runtime detachment plus every lifecycle authority remains false; the Slice 182-204 lineage passes 98 tests and the 842/488 Ant build/audit passes |
 | 2026-07-24 | Continue with Slice 205 by exposing bounded disposable authored-object detachment through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v57 is confined to the explicit preservation no-op, derives the inert plan only after an exact runtime baseline, executes both transaction passes only in disposable unregistered Region unions, retains bounded counts/fingerprints, preserves schema-v56, the Slice 182-205 lineage passes 103 tests plus two observer integration guards, and the 842/488 Ant build/audit passes; one cooldown-aware private owner route remains pending |
+| 2026-07-24 | Accept the Slice 205 private disposable authored-object detachment route. | Owner-validated; four contiguous schema-v57 records validate, all 36 sources reconcile 4,551 replay placements, 3,979 authored objects, 3,185 collision contribution references, 3,979 Region references, 36 disposable Region unions, and 82,944 verified tiles; every object registers and clears through exact forward/reverse transactions, all inherited fingerprints align, runtime/baseline anomalies and all runtime mutation/authority facts remain zero/false, and scenery/NPC interaction remained normal. One accepted 1,305 ms late tick contains 1,192 ms of opt-in diagnostic work and skips one following tick |
 
 ## Next Discussion
 
