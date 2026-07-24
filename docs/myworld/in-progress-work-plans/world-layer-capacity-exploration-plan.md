@@ -326,6 +326,12 @@ automated-validated Slice 182 applies that exact input to one newly constructed
 disposable Region outside every runtime index, verifies all static terrain
 values and absent dynamic/entity products, returns only a detached receipt, and
 discards the container;
+automated-validated Slice 183 repeats that proof for every exact selected
+resident source only during the explicit private preservation diagnostic.
+Additive schema-v51 retains bounded counts and one terrain fingerprint per
+source, never tile payloads or handles, and still performs no runtime-source
+terrain application, absence, reconstruction, registration, arrival, or
+visibility work;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -14645,6 +14651,75 @@ isolated-verification summaries through the explicit private preservation
 command using additive schema-v51. It must not serialize 2,304-tile payloads,
 construct anything on ordinary events, or change any runtime source.
 
+### Slice 183: Private isolated-terrain diagnostics
+
+Objective: exercise Slice 182 against every exact selected resident source
+through the existing explicit private preservation diagnostic, retaining only
+bounded evidence that the disposable terrain application matched.
+
+Implemented:
+
+- `LayeredPackedRegionTerrainVerificationBatch` accepts the already active
+  source lifecycle boundary and exact Slice 176 reload recipe, refuses more
+  than 128 sources, and processes sources in their stable selected order;
+- for each source it defines the sealed blank contract, captures and
+  immediately reduces the resident terrain, constructs one disposable
+  unregistered Region, applies and verifies all 2,304 static tile values, then
+  discards that Region before processing the next source;
+- only source ordinal, packed coordinate, five bounded counts, and the
+  deterministic terrain SHA-256 survive. Aggregate counts and exact disposable
+  construction/application counts make complete processing auditable without
+  serializing any tile input;
+- additive schema-v51 extends only the nullable private preservation no-op with
+  `sourceTerrainVerification`; owner-scope refusal requires null preflight,
+  recipe, and terrain evidence, while lifecycle entry requires all three; and
+- GameEventHandler captures preflight, reload recipe, and terrain verification
+  under the same real source lifecycle boundary before invoking the existing
+  nested owner no-op. Ordinary events and every other explicit action keep the
+  complete preservation result null.
+
+Safety boundary:
+
+- the batch retains no Region, RegionManager, TileValue, LayeredTileState,
+  entity, collection, registry, mirror, cache, event, monitor, or runtime
+  handle; the full 2,304-tile intermediate is never serialized or stored;
+- static terrain is applied only to disposable unregistered Regions. The
+  resident source is captured read-only and never receives terrain writes;
+- no source becomes absent or reconstructed, and authored replay, dynamic
+  collision rebuild, Player/NPC/object/item preservation, registration,
+  rollback, arrival, and visibility remain separate unimplemented gates; and
+- every runtime-source terrain application, source absence/reconstruction,
+  authored replay, dynamic collision rebuild, active-family preservation,
+  registry/mirror/cache mutation, arrival, visibility, and lifecycle-authority
+  fact remains false.
+
+Automated validation status:
+
+- the real-boundary fixture proves one selected resident source is captured,
+  reduced, applied to a disposable Region, verified, summarized, and discarded
+  with exact lifecycle identity, aggregate reconciliation, and every
+  runtime-authority bit false;
+- schema fixtures prove complete lifecycle-entry evidence, exact null
+  owner-refusal evidence, the 128-source/2,304-tile bounds, mandatory terrain
+  summary presence, fingerprint shape, and rejection of every forbidden
+  mutation or authority bit;
+- structural guards prove preflight precedes recipe, recipe precedes terrain
+  verification, and verification precedes the owner no-op under the same real
+  lifecycle boundary, while serialization contains no tile access;
+- the current observer plus Slice 177-183 lineage passes 30 focused tests
+  across eight files. A broad historical loop is not counted because older
+  slice-local tests still hard-code the already-superseded v49 observer
+  constant and were stale before this slice; and
+- the prerequisite check passes, and the authoritative bundled-Ant server
+  build compiles 822 core and 488 plugin sources and passes its build/classpath
+  audit.
+
+Status: implemented and automated-validated, pending one private owner route.
+The owner route should run the explicit preservation no-op in a dense source
+selection, verify normal gameplay interaction afterward, and confirm
+schema-v51 reports one exact 2,304-tile fingerprinted verification per selected
+source with no authoritative or runtime-mutation flag.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15044,6 +15119,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 180 by defining one detached static-terrain initialization input. | Implemented and automated-validated; exact canonical tile metadata and static terrain collision are retained for all 2,304 source tiles, dynamic collision/scenery/projectile products are subtracted rather than retained, unexplained missing-sector seal traversal remains explicit, fingerprinting and bounds are deterministic, all apply/authority facts remain false, 607 focused tests pass across 179 files, and the 819/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 181 by capturing real resident terrain under the exact source boundary. | Implemented and automated-validated; the lifecycle monitor, boundary identity, mirror version, selected ordinal, non-creating lookup, and mirror registration bind a canonical immutable 2,304-tile capture that immediately reduces to the exact terrain-only definition without retaining runtime handles or applying state; 611 focused tests pass across 180 files and the 819/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 182 by applying static terrain to one disposable isolated Region. | Implemented and automated-validated; the exact captured terrain initializes and round-trips all 2,304 tiles on an unregistered local Region, static metadata/collision/projectile/sealed-base values match, dynamic products and entity memberships remain empty, only a fingerprinted detached receipt survives, 615 focused tests pass across 181 files, and the 821/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 183 by exposing bounded isolated-terrain verification through the explicit private preservation diagnostic. | Implemented and automated-validated; schema-v51 reports one count/fingerprint-only receipt per exact selected source after disposable unregistered terrain apply/verification, serializes no tile payload or handle, keeps every runtime mutation and authority false, the current observer plus Slice 177-183 lineage passes 30 focused tests, and the 822/488 Ant build passes; one dense private owner route remains pending |
 
 ## Next Discussion
 

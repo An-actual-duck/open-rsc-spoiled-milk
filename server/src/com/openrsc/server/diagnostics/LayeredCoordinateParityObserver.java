@@ -36,6 +36,7 @@ import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
+import com.openrsc.server.model.world.region.LayeredPackedRegionTerrainVerificationBatch;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,8 +61,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v50";
-	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v49";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v51";
+	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v50";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4656,6 +4657,14 @@ public final class LayeredCoordinateParityObserver {
 				out, diagnostic.getSourceReloadRecipe());
 		}
 		out.append(',');
+		out.append("\"sourceTerrainVerification\":");
+		if (diagnostic.getSourceTerrainVerification() == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionTerrainVerificationBatch(
+				out, diagnostic.getSourceTerrainVerification());
+		}
+		out.append(',');
 		out.append("\"preservationEstablishedForConsumedWork\":false,");
 		out.append("\"preservationPerformed\":false,");
 		out.append("\"sourceAbsencePerformed\":false,");
@@ -4873,6 +4882,112 @@ public final class LayeredCoordinateParityObserver {
 				.append(source.getAuthoredPlacementCount()).append(',');
 			out.append("\"affectedSourceReferenceCount\":")
 				.append(source.getAffectedSourceReferenceCount()).append('}');
+		}
+		out.append("]}");
+	}
+
+	private static void appendPackedRegionTerrainVerificationBatch(
+		final StringBuilder out,
+		final LayeredPackedRegionTerrainVerificationBatch verification) {
+		out.append('{');
+		out.append("\"generation\":").append(verification.getGeneration())
+			.append(',');
+		out.append("\"requirementsObservedAtTick\":")
+			.append(verification.getRequirementsObservedAtTick()).append(',');
+		out.append("\"observedAtTick\":")
+			.append(verification.getObservedAtTick()).append(',');
+		out.append("\"residencyMirrorVersion\":")
+			.append(verification.getResidencyMirrorVersion()).append(',');
+		out.append("\"authoredGeneration\":")
+			.append(verification.getAuthoredGeneration()).append(',');
+		out.append("\"sourceCount\":")
+			.append(verification.getSourceCount()).append(',');
+		out.append("\"verifiedTileCount\":")
+			.append(verification.getVerifiedTileCount()).append(',');
+		out.append("\"terrainBlockedTileCount\":")
+			.append(verification.getTerrainBlockedTileCount()).append(',');
+		out.append("\"terrainCollisionMaskTileCount\":")
+			.append(verification.getTerrainCollisionMaskTileCount())
+			.append(',');
+		out.append("\"terrainProjectileBlockedTileCount\":")
+			.append(verification.getTerrainProjectileBlockedTileCount())
+			.append(',');
+		out.append("\"sealedBaseTraversalTileCount\":")
+			.append(verification.getSealedBaseTraversalTileCount())
+			.append(',');
+		out.append("\"disposableRegionConstructionCount\":")
+			.append(verification.getDisposableRegionConstructionCount())
+			.append(',');
+		out.append("\"disposableTerrainApplyCount\":")
+			.append(verification.getDisposableTerrainApplyCount())
+			.append(',');
+		out.append("\"usableRegionContainerCount\":")
+			.append(verification.getUsableRegionContainerCount()).append(',');
+		out.append("\"pointInTimeOnly\":")
+			.append(verification.isPointInTimeOnly()).append(',');
+		out.append("\"detachedSummaryOnly\":")
+			.append(verification.isDetachedSummaryOnly()).append(',');
+		out.append("\"allSourcesVerified\":")
+			.append(verification.isAllSourcesVerified()).append(',');
+		out.append("\"runtimeHandleRetained\":")
+			.append(verification.isRuntimeHandleRetained()).append(',');
+		out.append("\"sourceAbsencePerformed\":")
+			.append(verification.isSourceAbsencePerformed()).append(',');
+		out.append("\"sourceReconstructionPerformed\":")
+			.append(verification.isSourceReconstructionPerformed())
+			.append(',');
+		out.append("\"terrainAppliedToRuntimeSource\":")
+			.append(verification.isTerrainAppliedToRuntimeSource())
+			.append(',');
+		out.append("\"authoredReplayPerformed\":")
+			.append(verification.isAuthoredReplayPerformed()).append(',');
+		out.append("\"dynamicCollisionRebuildPerformed\":")
+			.append(verification.isDynamicCollisionRebuildPerformed())
+			.append(',');
+		out.append("\"activeFamilyPreservationPerformed\":")
+			.append(verification.isActiveFamilyPreservationPerformed())
+			.append(',');
+		out.append("\"regionRegistryMutated\":")
+			.append(verification.isRegionRegistryMutated()).append(',');
+		out.append("\"residencyMirrorMutated\":")
+			.append(verification.isResidencyMirrorMutated()).append(',');
+		out.append("\"visibilityCacheMutated\":")
+			.append(verification.isVisibilityCacheMutated()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(verification.isArrivalGate()).append(',');
+		out.append("\"visibilityReleased\":")
+			.append(verification.isVisibilityReleased()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(verification.isLifecycleAuthority()).append(',');
+		out.append("\"sources\":[");
+		boolean first = true;
+		for (LayeredPackedRegionTerrainVerificationBatch.SourceVerification
+			source : verification.getSources()) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			out.append('{');
+			out.append("\"sourceOrdinal\":")
+				.append(source.getSourceOrdinal()).append(',');
+			out.append("\"packedRegionX\":")
+				.append(source.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(source.getPackedRegionY()).append(',');
+			out.append("\"verifiedTileCount\":")
+				.append(source.getVerifiedTileCount()).append(',');
+			out.append("\"terrainBlockedTileCount\":")
+				.append(source.getTerrainBlockedTileCount()).append(',');
+			out.append("\"terrainCollisionMaskTileCount\":")
+				.append(source.getTerrainCollisionMaskTileCount()).append(',');
+			out.append("\"terrainProjectileBlockedTileCount\":")
+				.append(source.getTerrainProjectileBlockedTileCount())
+				.append(',');
+			out.append("\"sealedBaseTraversalTileCount\":")
+				.append(source.getSealedBaseTraversalTileCount()).append(',');
+			field(out, "terrainFingerprintSha256",
+				source.getTerrainFingerprintSha256());
+			out.append('}');
 		}
 		out.append("]}");
 	}
@@ -6367,6 +6482,8 @@ public final class LayeredCoordinateParityObserver {
 		private final LayeredPackedRegionSourceAbsencePreflight
 			sourceAbsencePreflight;
 		private final LayeredPackedRegionReloadRecipe sourceReloadRecipe;
+		private final LayeredPackedRegionTerrainVerificationBatch
+			sourceTerrainVerification;
 
 		private PackedRegionNpcOwnerPreservationNoOpMetadata(
 			final String reason,
@@ -6382,7 +6499,9 @@ public final class LayeredCoordinateParityObserver {
 			final boolean preservedConsumerInvoked,
 			final LayeredPackedRegionSourceAbsencePreflight
 				sourceAbsencePreflight,
-			final LayeredPackedRegionReloadRecipe sourceReloadRecipe) {
+			final LayeredPackedRegionReloadRecipe sourceReloadRecipe,
+			final LayeredPackedRegionTerrainVerificationBatch
+				sourceTerrainVerification) {
 			this.reason = Objects.requireNonNull(reason, "reason");
 			this.generation = generation;
 			this.requirementsObservedAtTick = requirementsObservedAtTick;
@@ -6396,6 +6515,7 @@ public final class LayeredCoordinateParityObserver {
 			this.preservedConsumerInvoked = preservedConsumerInvoked;
 			this.sourceAbsencePreflight = sourceAbsencePreflight;
 			this.sourceReloadRecipe = sourceReloadRecipe;
+			this.sourceTerrainVerification = sourceTerrainVerification;
 			if ((!"OWNER_SCOPE_REFUSED".equals(reason)
 					&& !"SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason))
 				|| generation < 0L || requirementsObservedAtTick < 0L
@@ -6406,11 +6526,13 @@ public final class LayeredCoordinateParityObserver {
 				|| ownerScopeEntered != sourceLifecycleInvoked
 				|| ("OWNER_SCOPE_REFUSED".equals(reason)
 					&& (ownerScopeEntered || sourceAbsencePreflight != null
-						|| sourceReloadRecipe != null))
+						|| sourceReloadRecipe != null
+						|| sourceTerrainVerification != null))
 				|| ("SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason)
 					&& (!ownerScopeEntered
 						|| sourceAbsencePreflight == null
-						|| sourceReloadRecipe == null))
+						|| sourceReloadRecipe == null
+						|| sourceTerrainVerification == null))
 				|| (sourceAbsencePreflight != null
 					&& (sourceAbsencePreflight.getGeneration() != generation
 						|| sourceAbsencePreflight
@@ -6454,7 +6576,49 @@ public final class LayeredCoordinateParityObserver {
 						|| sourceReloadRecipe.isResidencyMirrorMutated()
 						|| sourceReloadRecipe.isVisibilityCacheMutated()
 						|| sourceReloadRecipe.isArrivalGate()
-						|| sourceReloadRecipe.isLifecycleAuthority()))) {
+						|| sourceReloadRecipe.isLifecycleAuthority()))
+				|| (sourceTerrainVerification != null
+					&& (sourceTerrainVerification.getGeneration()
+							!= generation
+						|| sourceTerrainVerification
+							.getRequirementsObservedAtTick()
+								!= requirementsObservedAtTick
+						|| sourceTerrainVerification.getSourceCount()
+							!= selectedSourceCount
+						|| sourceReloadRecipe == null
+						|| sourceTerrainVerification.getObservedAtTick()
+							!= sourceReloadRecipe.getObservedAtTick()
+						|| sourceTerrainVerification
+							.getResidencyMirrorVersion()
+								!= sourceReloadRecipe
+									.getResidencyMirrorVersion()
+						|| sourceTerrainVerification.getAuthoredGeneration()
+							!= sourceReloadRecipe.getAuthoredGeneration()
+						|| !sourceTerrainVerification.isAllSourcesVerified()
+						|| sourceTerrainVerification
+							.isRuntimeHandleRetained()
+						|| sourceTerrainVerification
+							.isSourceAbsencePerformed()
+						|| sourceTerrainVerification
+							.isSourceReconstructionPerformed()
+						|| sourceTerrainVerification
+							.isTerrainAppliedToRuntimeSource()
+						|| sourceTerrainVerification
+							.isAuthoredReplayPerformed()
+						|| sourceTerrainVerification
+							.isDynamicCollisionRebuildPerformed()
+						|| sourceTerrainVerification
+							.isActiveFamilyPreservationPerformed()
+						|| sourceTerrainVerification
+							.isRegionRegistryMutated()
+						|| sourceTerrainVerification
+							.isResidencyMirrorMutated()
+						|| sourceTerrainVerification
+							.isVisibilityCacheMutated()
+						|| sourceTerrainVerification.isArrivalGate()
+						|| sourceTerrainVerification.isVisibilityReleased()
+						|| sourceTerrainVerification
+							.isLifecycleAuthority()))) {
 				throw new IllegalArgumentException(
 					"NPC owner preservation no-op metadata is inconsistent");
 			}
@@ -6474,14 +6638,17 @@ public final class LayeredCoordinateParityObserver {
 			final boolean preservedConsumerInvoked,
 			final LayeredPackedRegionSourceAbsencePreflight
 				sourceAbsencePreflight,
-			final LayeredPackedRegionReloadRecipe sourceReloadRecipe) {
+			final LayeredPackedRegionReloadRecipe sourceReloadRecipe,
+			final LayeredPackedRegionTerrainVerificationBatch
+				sourceTerrainVerification) {
 			return new PackedRegionNpcOwnerPreservationNoOpMetadata(
 				reason, generation, requirementsObservedAtTick,
 				selectedSourceCount, requiredEventLinkCount,
 				requiredOwnerCount, ownerScopeEntered,
 				sourceLifecycleInvoked, absentSourceCount,
 				reconstructedSourceCount, preservedConsumerInvoked,
-				sourceAbsencePreflight, sourceReloadRecipe);
+				sourceAbsencePreflight, sourceReloadRecipe,
+				sourceTerrainVerification);
 		}
 
 		public String getReason() { return reason; }
@@ -6511,6 +6678,10 @@ public final class LayeredCoordinateParityObserver {
 		}
 		public LayeredPackedRegionReloadRecipe getSourceReloadRecipe() {
 			return sourceReloadRecipe;
+		}
+		public LayeredPackedRegionTerrainVerificationBatch
+			getSourceTerrainVerification() {
+			return sourceTerrainVerification;
 		}
 	}
 

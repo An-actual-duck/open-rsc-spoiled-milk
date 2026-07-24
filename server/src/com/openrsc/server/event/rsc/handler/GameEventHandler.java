@@ -50,6 +50,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRe
 import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceLifecycleBoundary;
+import com.openrsc.server.model.world.region.LayeredPackedRegionTerrainVerificationBatch;
 import com.openrsc.server.util.NamedThreadFactory;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
@@ -541,6 +542,9 @@ public class GameEventHandler {
 			new LayeredPackedRegionSourceAbsencePreflight[1];
 		final LayeredPackedRegionReloadRecipe[] reloadRecipe =
 			new LayeredPackedRegionReloadRecipe[1];
+		final LayeredPackedRegionTerrainVerificationBatch[]
+			terrainVerification =
+				new LayeredPackedRegionTerrainVerificationBatch[1];
 		boolean sourceBoundaryEntered =
 			getServer().getWorld().getRegionManager()
 				.withinLayeredPackedRegionSourceLifecycleBoundary(
@@ -557,6 +561,12 @@ public class GameEventHandler {
 									getServer().getWorld().getWorldLoader()
 										.getWorldPopulator()
 										.getAuthoredReconstructionRecipe());
+						terrainVerification[0] =
+							LayeredPackedRegionTerrainVerificationBatch.capture(
+								getServer().getWorld().getRegionManager(),
+								boundary, reloadRecipe[0],
+								LayeredPackedRegionTerrainVerificationBatch
+									.MAXIMUM_VERIFICATION_SOURCES);
 						captured[0] =
 							GameTickEventNpcOwnerPreservationNoOpDiagnostic
 								.capture(
@@ -585,7 +595,7 @@ public class GameEventHandler {
 			result.getAbsentSourceCount(),
 			result.getReconstructedSourceCount(),
 			result.isPreservedConsumerInvoked(), absencePreflight[0],
-			reloadRecipe[0]);
+			reloadRecipe[0], terrainVerification[0]);
 	}
 
 	private void requireExactPackedSourceBoundary(

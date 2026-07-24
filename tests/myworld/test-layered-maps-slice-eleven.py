@@ -26,7 +26,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v50.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v51.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -63,6 +63,7 @@ SCHEMA_V46 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v46.sche
 SCHEMA_V47 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v47.schema.json"
 SCHEMA_V48 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v48.schema.json"
 SCHEMA_V49 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v49.schema.json"
+SCHEMA_V50 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v50.schema.json"
 
 
 POINT_STUB = r'''
@@ -116,6 +117,61 @@ public final class LogManager {
 
     public static Logger getLogger(Class<?> type) {
         return LOGGER;
+    }
+}
+'''
+
+TERRAIN_VERIFICATION_STUB = r'''
+package com.openrsc.server.model.world.region;
+
+import java.util.Collections;
+import java.util.List;
+
+public final class LayeredPackedRegionTerrainVerificationBatch {
+    public long getGeneration() { return 0L; }
+    public long getRequirementsObservedAtTick() { return 0L; }
+    public long getObservedAtTick() { return 0L; }
+    public long getResidencyMirrorVersion() { return 0L; }
+    public long getAuthoredGeneration() { return 0L; }
+    public int getSourceCount() { return 0; }
+    public long getVerifiedTileCount() { return 0L; }
+    public long getTerrainBlockedTileCount() { return 0L; }
+    public long getTerrainCollisionMaskTileCount() { return 0L; }
+    public long getTerrainProjectileBlockedTileCount() { return 0L; }
+    public long getSealedBaseTraversalTileCount() { return 0L; }
+    public int getDisposableRegionConstructionCount() { return 0; }
+    public int getDisposableTerrainApplyCount() { return 0; }
+    public int getUsableRegionContainerCount() { return 0; }
+    public boolean isPointInTimeOnly() { return true; }
+    public boolean isDetachedSummaryOnly() { return true; }
+    public boolean isAllSourcesVerified() { return true; }
+    public boolean isRuntimeHandleRetained() { return false; }
+    public boolean isSourceAbsencePerformed() { return false; }
+    public boolean isSourceReconstructionPerformed() { return false; }
+    public boolean isTerrainAppliedToRuntimeSource() { return false; }
+    public boolean isAuthoredReplayPerformed() { return false; }
+    public boolean isDynamicCollisionRebuildPerformed() { return false; }
+    public boolean isActiveFamilyPreservationPerformed() { return false; }
+    public boolean isRegionRegistryMutated() { return false; }
+    public boolean isResidencyMirrorMutated() { return false; }
+    public boolean isVisibilityCacheMutated() { return false; }
+    public boolean isArrivalGate() { return false; }
+    public boolean isVisibilityReleased() { return false; }
+    public boolean isLifecycleAuthority() { return false; }
+    public List<SourceVerification> getSources() {
+        return Collections.emptyList();
+    }
+
+    public static final class SourceVerification {
+        public int getSourceOrdinal() { return 0; }
+        public int getPackedRegionX() { return 0; }
+        public int getPackedRegionY() { return 0; }
+        public int getVerifiedTileCount() { return 2304; }
+        public int getTerrainBlockedTileCount() { return 0; }
+        public int getTerrainCollisionMaskTileCount() { return 0; }
+        public int getTerrainProjectileBlockedTileCount() { return 0; }
+        public int getSealedBaseTraversalTileCount() { return 0; }
+        public String getTerrainFingerprintSha256() { return ""; }
     }
 }
 '''
@@ -1145,6 +1201,9 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             "com/openrsc/server/model/Point.java": POINT_STUB,
             "org/apache/logging/log4j/Logger.java": LOGGER_STUB,
             "org/apache/logging/log4j/LogManager.java": LOG_MANAGER_STUB,
+            "com/openrsc/server/model/world/region/"
+            "LayeredPackedRegionTerrainVerificationBatch.java":
+                TERRAIN_VERIFICATION_STUB,
             "com/openrsc/server/diagnostics/LayeredCoordinateParityObserverFixture.java":
                 OBSERVER_FIXTURE,
         }
@@ -1216,7 +1275,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v50" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v51" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -2429,6 +2488,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v47 = json.loads(SCHEMA_V47.read_text(encoding="utf-8"))
                 v48 = json.loads(SCHEMA_V48.read_text(encoding="utf-8"))
                 v49 = json.loads(SCHEMA_V49.read_text(encoding="utf-8"))
+                v50 = json.loads(SCHEMA_V50.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -2466,6 +2526,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v47["$id"], Resource.from_contents(v47)),
                     (v48["$id"], Resource.from_contents(v48)),
                     (v49["$id"], Resource.from_contents(v49)),
+                    (v50["$id"], Resource.from_contents(v50)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

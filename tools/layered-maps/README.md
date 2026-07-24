@@ -185,7 +185,7 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v50.schema.json`. Each v50 record
+traces emit `schema/layered-map-parity-event-v51.schema.json`. Each v51 record
 retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
@@ -232,6 +232,15 @@ counts without serializing entity or archive state. The recipe is detached and
 non-executable: no Region container is created, no authored replay or collision
 rebuild runs, and all registry, mirror, cache, arrival, visibility, and
 lifecycle-authority facts remain false.
+V51 adds nullable `sourceTerrainVerification` evidence to that same explicit
+private preservation action. Under the already-held source lifecycle boundary,
+each selected resident source is reduced to static terrain, applied to one
+disposable unregistered Region, exactly verified, and discarded. The log keeps
+only bounded per-source counts and a SHA-256 terrain fingerprint—never the
+2,304 tile inputs or a Region handle. Every runtime-source terrain application,
+source absence/reconstruction, authored replay, dynamic collision rebuild,
+active-family preservation, registry, mirror, cache, arrival, visibility, and
+lifecycle-authority fact remains false.
 The owner correlation accompanies proposal-scoped event
 inventories; only the explicit `::layerparity recover-noop` action may populate
 the separate recovery result, while ordinary movement, snapshots, and markers
@@ -244,8 +253,9 @@ restoration-capable event: outer-fence outcome, lifecycle-version stability,
 exact Region-boundary
 target facts, target decision, and dormant contract result. These facts are
 read-only and point-in-time; all mutation, commit-token, executable-restoration,
-arrival-gate, and lifecycle-authority flags remain false. The v1-v49 schemas
+arrival-gate, and lifecycle-authority flags remain false. The v1-v50 schemas
 remain alongside it—including
+`schema/layered-map-parity-event-v50.schema.json`,
 `schema/layered-map-parity-event-v49.schema.json`,
 `schema/layered-map-parity-event-v48.schema.json`,
 `schema/layered-map-parity-event-v47.schema.json`,
@@ -272,7 +282,7 @@ remain alongside it—including
 `schema/layered-map-parity-event-v16.schema.json`,
 `schema/layered-map-parity-event-v15.schema.json` and
 `schema/layered-map-parity-event-v14.schema.json`—so already-captured logs keep
-explicit readable contracts. The v19-v49 schemas likewise remain immutable
+explicit readable contracts. The v19-v50 schemas likewise remain immutable
 contracts for earlier records.
 When a bounded refinement proposal is available, v30 records a
 same-order, point-in-time preservation-burden inventory. Its five explicit
