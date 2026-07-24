@@ -58,8 +58,19 @@ def main() -> None:
         "recordAutoBuryDevotionBonus(owner, amount)",
         "Black unicorn auto-offerings should record devotion for the whole stack",
     )
-    bone_priority = "if (bones != ItemId.NOTHING.id() && !Summoning.tryAutoBuryDrop(owner, bones, 1))"
-    law_banking = "owner.getCarriedItems().getEquipment().tryBankMonsterLootWithLawNecklace(new Item(bones, 1))"
+    death_necklace_bonus = (
+        "final Item boneDrop = applyDeathNecklaceGuaranteedDropBonus(owner, new Item(bones, 1));"
+    )
+    bone_priority = "if (!Summoning.tryAutoBuryDrop(owner, bones, boneAmount))"
+    law_banking = (
+        "owner.getCarriedItems().getEquipment()"
+        ".tryBankMonsterLootWithLawNecklace(new Item(bones, boneAmount))"
+    )
+    require(
+        npc,
+        death_necklace_bonus,
+        "Guaranteed bone-quantity bonuses should be resolved before summon handling",
+    )
     require(
         npc,
         bone_priority,
@@ -70,7 +81,11 @@ def main() -> None:
         law_banking,
         "Law necklace fallback should still handle non-offered bone drops",
     )
-    if npc.index(bone_priority) > npc.index(law_banking):
+    if not (
+        npc.index(death_necklace_bonus)
+        < npc.index(bone_priority)
+        < npc.index(law_banking)
+    ):
         raise SystemExit("FAIL: Black unicorn auto-offering should run before law necklace monster-loot banking")
 
     print("PASS: black unicorn summon records boosted devotion offerings without granting Prayer")

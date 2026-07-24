@@ -72,6 +72,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   metal drops, and purified rune forge relocation.
 - [god-relic-reward-plan.md](in-progress-work-plans/god-relic-reward-plan.md):
   prayer/devotion god relic rewards, relic pools, and Mage Arena separation.
+- [devotion-destruction-blessing-audit.md](in-progress-work-plans/devotion-destruction-blessing-audit.md):
+  current Devotion, altar blessing, opposing-item destruction, persistence,
+  exploit, and balance audit with a complete item matrix.
 - [herblaw-brawn-harvestable-ingredients-plan.md](in-progress-work-plans/herblaw-brawn-harvestable-ingredients-plan.md):
   implemented Brawn harvestable ingredient pass awaiting manual field testing.
 - [herblaw-side-ingredient-expansion-plan.md](in-progress-work-plans/herblaw-side-ingredient-expansion-plan.md):
