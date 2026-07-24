@@ -10,6 +10,7 @@ ENTITY_HANDLER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "exter
 
 NPC_FIELDS = {
     "id", "name", "description", "attack", "strength", "hits", "defense", "ranged",
+    "projectileRange",
     "meleeOffense", "rangedOffense", "magicOffense",
     "meleeDefense", "rangedDefense", "magicDefense", "meleeDefenseMultiplier",
     "rangedDefenseMultiplier", "magicDefenseMultiplier", "meleeDefenseDivisor",
@@ -78,6 +79,8 @@ def main() -> None:
     require(source, "ArrayList<NPCDef> stagedNpcs = new ArrayList<>(npcs);", "staged NPC catalog")
     require(source, "npcs = stagedNpcs;", "atomic NPC catalog swap")
     require(source, '"meleeOffense", "rangedOffense", "magicOffense"', "NPC power override whitelist")
+    require(source, '"projectileRange"', "NPC projectile range override whitelist")
+    require(source, 'if (npc.has("projectileRange"))', "NPC projectile range override")
     require(source, 'if (npc.has("meleeOffense")) staged.meleeOffense', "NPC melee power override")
     require(source, 'if (npc.has("rangedOffense")) staged.rangedOffense', "NPC ranged power override")
     require(source, 'if (npc.has("magicOffense")) staged.magicOffense', "NPC magic power override")
