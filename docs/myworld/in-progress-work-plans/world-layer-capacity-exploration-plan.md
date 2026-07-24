@@ -15763,6 +15763,58 @@ does not warrant an owner route. The next slice may expose it additively through
 the private preservation diagnostic without altering the accepted schema-v54
 or any public path.
 
+### Slice 198: Private transactional authored-state diagnostics
+
+Objective: expose Slice 197's bounded transactional construction proof only
+through the explicit private preservation diagnostic, preserving historical
+schema-v54 and every accepted public path.
+
+Implemented:
+
+- additive schema-v55 extends only `preservation-noop` with nullable
+  `sourceTransactionalAuthoredStateVerification`; all other event shapes
+  continue to emit null and schema-v54 remains immutable;
+- the handler captures the transactional batch only after the accepted reload,
+  terrain, collision derivation, separate collision application, and combined
+  source-state receipts, while the exact source lifecycle boundary is held;
+- metadata construction aligns generation, observation/mirror identity,
+  selected-source order, all object/contribution/Region totals, disposable
+  Region and verified-tile counts, collision-family totals, and inherited,
+  applied, and final-state fingerprints across all accepted receipts;
+- JSON retains only the bounded aggregate/per-source transaction, boundary,
+  disposable cache-invalidation, registration, Region/tile, and collision
+  counts plus seven fingerprints; no tile, object, registration, Region, or
+  collision-contribution payload is serialized; and
+- the current user-facing tool documentation describes schema-v55 while
+  preserving the prior schema files as readable immutable contracts.
+
+Safety boundary:
+
+- the explicit private `preservation-noop` capability remains disabled by
+  default and still reports `SOURCE_LIFECYCLE_UNAVAILABLE`; it performs no
+  source absence or reconstruction and invokes no preserved consumer;
+- positive schema facts apply only to atomic transactions, attached collision
+  registrations, and cache-invalidation counters inside disposable
+  unregistered Region unions;
+- runtime collision and cache invalidation, retained handles, runtime-source
+  terrain/object mutation, NPCs, ground items, scheduler restoration,
+  registry/mirror/visibility-cache mutation, arrival, visibility release, and
+  lifecycle authority are schema-constant false; and
+- missing, misordered, count-drifted, fingerprint-drifted, or authority-bearing
+  evidence fails metadata construction and schema validation.
+
+Automated validation status:
+
+- schema/source integration guards pass, including end-to-end observer JSONL
+  validation against schema-v55 and historical schema resolution;
+- the Slice 182-198 focused lineage passes 73 tests, including four Slice 198
+  schema/source tests; and
+- the authoritative bundled-Ant server build compiles 837 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated; one private cooldown-aware owner
+route remains pending.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16182,6 +16234,7 @@ private environment should validate at least:
 | 2026-07-24 | Accept the Slice 195 private combined authored-state route. | Owner-validated; four contiguous schema-v54 records align all 36 sources across reload, derivation, separate application, and combined state, reconciling 4,551 replay placements, 3,979 object applications, 3,185 unique contribution tiles, 36 combined/108 total disposable Region constructions, 82,944 verified tiles, all collision-family totals, and all six per-source fingerprints; the response and subsequent interaction remained normal while every runtime mutation/authority fact remains false |
 | 2026-07-24 | Continue with Slice 196 by reconstructing one disposable source through atomic object/collision transactions. | Implemented and automated-validated; three fixture objects register through three canonical transactions/four exact boundaries, each gains exact detached collision-registration provenance, disposable cache invalidations remain local, the applied-collision and final-state fingerprints exactly match Slice 193, no handle or runtime authority survives, the Slice 182-196 lineage passes 64 tests, and the 836/488 Ant build passes |
 | 2026-07-24 | Continue with Slice 197 by bounding transactional disposable authored source states. | Implemented and automated-validated; exact selected-source order aligns every transactional receipt to the derivation-only baseline, aggregate transaction/boundary/cache-invalidation/registration counts reconcile to object, contribution, and Region totals, only counts plus seven fingerprints survive, the Slice 182-197 lineage passes 69 tests, and the 837/488 Ant build passes |
+| 2026-07-24 | Continue with Slice 198 by exposing bounded transactional authored state through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v55 extends only the explicit preservation no-op, aligns the transactional receipt with every accepted derivation/application/state stage, serializes only bounded counts and seven fingerprints, preserves schema-v54, the Slice 182-198 lineage passes 73 tests plus observer integration guards, and the 837/488 Ant build passes; one cooldown-aware private owner route remains pending |
 
 ## Next Discussion
 
@@ -16851,8 +16904,10 @@ collision-registration provenance while producing the identical terrain,
 membership, applied-collision, and final-state fingerprints as Slice 193.
 Slice 197 now bounds that proof across the exact selected-source set and retains
 only aligned counts plus the new registration fingerprint and inherited state
-fingerprints. The next safe gate is additive private diagnostic publication;
-runtime-source comparison, absence, and reconstruction must remain
+fingerprints. Slice 198 now exposes only that detached summary through additive
+private schema-v55 while historical schema-v54 and every accepted public path
+remain unchanged. Automated validation passes and one owner route remains
+pending; runtime-source comparison, absence, and reconstruction must remain
 disconnected.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,

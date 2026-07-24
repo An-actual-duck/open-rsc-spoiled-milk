@@ -1,0 +1,421 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v55.schema.json",
+  "title": "Layered Map Parity Event v55",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency", "packedRegionActiveNpcContainment",
+    "packedRegionActiveNpcBoundaryRequirements",
+    "packedRegionRetirementRefinement",
+    "packedRegionRetirementRefinementReassessment",
+    "packedRegionPreservationBurden",
+    "packedRegionDynamicObjectPreservation", "packedRegionEventOwnership",
+    "packedRegionNpcOwnerEventContinuity",
+    "packedRegionNpcOwnerPreservationBoundary",
+    "packedRegionNpcOwnerPreservationNoOp", "packedRegionEventTargets",
+    "packedRegionEventAtomicTargetRevalidation",
+    "packedRegionEventRecoveryNoOp", "roundTripExact"
+  ],
+  "properties": {
+    "schema": { "const": "layered-map-parity-event-v55" },
+    "eventType": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/eventType" },
+    "sequence": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/sequence" },
+    "timestampEpochMillis": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/timestampEpochMillis" },
+    "player": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/player" },
+    "label": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/label" },
+    "teleported": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/teleported" },
+    "from": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/from" },
+    "to": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/to" },
+    "delta": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/delta" },
+    "interestDelta": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/interestDelta" },
+    "packedCoverage": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedCoverage" },
+    "tileSnapshot": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/tileSnapshot" },
+    "tileParity": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/tileParity" },
+    "tileNeighborhood": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/tileNeighborhood" },
+    "adjacentCollision": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/adjacentCollision" },
+    "recentTraversal": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/recentTraversal" },
+    "regionResidency": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/regionResidency" },
+    "interestOwnership": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/interestOwnership" },
+    "regionRetirement": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/regionRetirement" },
+    "regionRetirementDecisions": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/regionRetirementDecisions" },
+    "packedRegionRetirementReadiness": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionRetirementReadiness" },
+    "packedRegionRetirementSafety": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionRetirementSafety" },
+    "packedRegionAuthoredConstruction": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionAuthoredConstruction" },
+    "packedRegionAuthoredProvenance": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionAuthoredProvenance" },
+    "packedRegionAuthoredReconstruction": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionAuthoredReconstruction" },
+    "packedRegionAuthoredReconstructionCohort": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionAuthoredReconstructionCohort" },
+    "packedRegionAuthoredReconstructionCohortAttribution": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution" },
+    "packedRegionAuthoredReconstructionTopology": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionAuthoredReconstructionTopology" },
+    "packedRegionAuthoredReconstructionDependencySemantics": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics" },
+    "packedRegionActiveNpcResidency": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionActiveNpcResidency" },
+    "packedRegionActiveNpcContainment": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionActiveNpcContainment" },
+    "packedRegionActiveNpcBoundaryRequirements": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionActiveNpcBoundaryRequirements" },
+    "packedRegionRetirementRefinement": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionRetirementRefinement" },
+    "packedRegionRetirementRefinementReassessment": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionRetirementRefinementReassessment" },
+    "packedRegionPreservationBurden": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionPreservationBurden" },
+    "packedRegionDynamicObjectPreservation": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionDynamicObjectPreservation" },
+    "packedRegionEventOwnership": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionEventOwnership" },
+    "packedRegionNpcOwnerEventContinuity": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionNpcOwnerEventContinuity" },
+    "packedRegionNpcOwnerPreservationBoundary": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionNpcOwnerPreservationBoundary" },
+    "packedRegionNpcOwnerPreservationNoOp": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/npcOwnerPreservationNoOp" }
+      ]
+    },
+    "packedRegionEventTargets": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionEventTargets" },
+    "packedRegionEventAtomicTargetRevalidation": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionEventAtomicTargetRevalidation" },
+    "packedRegionEventRecoveryNoOp": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/packedRegionEventRecoveryNoOp" },
+    "roundTripExact": { "$ref": "layered-map-parity-event-v54.schema.json#/properties/roundTripExact" }
+  },
+  "$defs": {
+    "npcOwnerPreservationNoOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason", "generation", "requirementsObservedAtTick",
+        "selectedSourceCount", "requiredEventLinkCount",
+        "requiredOwnerCount", "ownerScopeEntered",
+        "sourceLifecycleInvoked", "absentSourceCount",
+        "reconstructedSourceCount", "preservedConsumerInvoked",
+        "sourceAbsencePreflight", "sourceReloadRecipe",
+        "sourceTerrainVerification",
+        "sourceAuthoredCollisionVerification",
+        "sourceAuthoredCollisionApplicationVerification",
+        "sourceAuthoredStateVerification",
+        "sourceTransactionalAuthoredStateVerification",
+        "preservationEstablishedForConsumedWork", "preservationPerformed",
+        "sourceAbsencePerformed", "sourceReconstructionPerformed",
+        "regionMutationPerformed", "runtimeHandleRetained", "arrivalGate",
+        "visibilityReleased", "lifecycleAuthority"
+      ],
+      "properties": {
+        "reason": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/reason" },
+        "generation": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/generation" },
+        "requirementsObservedAtTick": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/requirementsObservedAtTick" },
+        "selectedSourceCount": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/selectedSourceCount" },
+        "requiredEventLinkCount": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/requiredEventLinkCount" },
+        "requiredOwnerCount": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/requiredOwnerCount" },
+        "ownerScopeEntered": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/ownerScopeEntered" },
+        "sourceLifecycleInvoked": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceLifecycleInvoked" },
+        "absentSourceCount": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/absentSourceCount" },
+        "reconstructedSourceCount": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/reconstructedSourceCount" },
+        "preservedConsumerInvoked": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/preservedConsumerInvoked" },
+        "sourceAbsencePreflight": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAbsencePreflight" },
+        "sourceReloadRecipe": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceReloadRecipe" },
+        "sourceTerrainVerification": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceTerrainVerification" },
+        "sourceAuthoredCollisionVerification": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredCollisionVerification" },
+        "sourceAuthoredCollisionApplicationVerification": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredCollisionApplicationVerification" },
+        "sourceAuthoredStateVerification": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredStateVerification" },
+        "sourceTransactionalAuthoredStateVerification": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/sourceTransactionalAuthoredStateVerification" }
+          ]
+        },
+        "preservationEstablishedForConsumedWork": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/preservationEstablishedForConsumedWork" },
+        "preservationPerformed": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/preservationPerformed" },
+        "sourceAbsencePerformed": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAbsencePerformed" },
+        "sourceReconstructionPerformed": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceReconstructionPerformed" },
+        "regionMutationPerformed": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/regionMutationPerformed" },
+        "runtimeHandleRetained": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/runtimeHandleRetained" },
+        "arrivalGate": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/arrivalGate" },
+        "visibilityReleased": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/visibilityReleased" },
+        "lifecycleAuthority": { "$ref": "layered-map-parity-event-v54.schema.json#/$defs/npcOwnerPreservationNoOp/properties/lifecycleAuthority" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "reason": { "const": "OWNER_SCOPE_REFUSED" } },
+            "required": ["reason"]
+          },
+          "then": {
+            "properties": {
+              "sourceTransactionalAuthoredStateVerification": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "reason": { "const": "SOURCE_LIFECYCLE_UNAVAILABLE" }
+            },
+            "required": ["reason"]
+          },
+          "then": {
+            "properties": {
+              "sourceTransactionalAuthoredStateVerification": {
+                "$ref": "#/$defs/sourceTransactionalAuthoredStateVerification"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "sourceTransactionalAuthoredStateVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "requirementsObservedAtTick", "observedAtTick",
+        "residencyMirrorVersion", "authoredGeneration", "sourceCount",
+        "replayPlacementCount", "authoredObjectFootprintCount",
+        "contributionTileReferenceCount", "requiredRegionReferenceCount",
+        "uniqueRequiredRegionReferenceCount",
+        "preTransactionalDisposableRegionConstructionCount",
+        "transactionalDisposableRegionConstructionCount",
+        "totalDisposableRegionConstructionCount",
+        "transactionalSupportRegionCount",
+        "objectCollisionTransactionCount",
+        "objectCollisionTransactionBoundaryCount",
+        "disposableCacheInvalidationCount", "collisionRegistrationCount",
+        "collisionRegistrationContributionCount",
+        "collisionRegistrationRegionReferenceCount",
+        "transactionalVerifiedRegionTileCount",
+        "transactionalBlockingSceneryContributionCount",
+        "transactionalDynamicCollisionContributionCount",
+        "transactionalDynamicProjectileContributionCount",
+        "baselineFingerprintSha256", "fingerprintSha256",
+        "usableRegionContainerCount", "pointInTimeOnly",
+        "detachedSummaryOnly", "allSourcesVerified",
+        "runtimeDefinitionCapturePerformed",
+        "collisionFootprintDerivationPerformed",
+        "objectCollisionTransactionAppliedToDisposableRegions",
+        "collisionRegistrationAttachedToDisposableObjects",
+        "disposableCacheInvalidationOnly", "runtimeCollisionApplied",
+        "runtimeHandleRetained", "sourceAbsencePerformed",
+        "sourceReconstructionPerformed", "terrainAppliedToRuntimeSource",
+        "authoredObjectMembershipAppliedToRuntimeSource",
+        "npcMembershipApplied", "groundItemMembershipApplied",
+        "schedulerStateRestored", "activeFamilyPreservationPerformed",
+        "runtimeCacheInvalidated", "regionRegistryMutated",
+        "residencyMirrorMutated", "visibilityCacheMutated", "arrivalGate",
+        "visibilityReleased", "lifecycleAuthority", "sources"
+      ],
+      "properties": {
+        "generation": { "type": "integer", "minimum": 0 },
+        "requirementsObservedAtTick": { "type": "integer", "minimum": 0 },
+        "observedAtTick": { "type": "integer", "minimum": 0 },
+        "residencyMirrorVersion": { "type": "integer", "minimum": 0 },
+        "authoredGeneration": { "type": "integer", "minimum": 0 },
+        "sourceCount": {
+          "type": "integer", "minimum": 1, "maximum": 128
+        },
+        "replayPlacementCount": { "type": "integer", "minimum": 0 },
+        "authoredObjectFootprintCount": {
+          "type": "integer", "minimum": 0
+        },
+        "contributionTileReferenceCount": {
+          "type": "integer", "minimum": 0
+        },
+        "requiredRegionReferenceCount": {
+          "type": "integer", "minimum": 0
+        },
+        "uniqueRequiredRegionReferenceCount": {
+          "type": "integer", "minimum": 0
+        },
+        "preTransactionalDisposableRegionConstructionCount": {
+          "type": "integer", "minimum": 2, "maximum": 256
+        },
+        "transactionalDisposableRegionConstructionCount": {
+          "type": "integer", "minimum": 1
+        },
+        "totalDisposableRegionConstructionCount": {
+          "type": "integer", "minimum": 3
+        },
+        "transactionalSupportRegionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "objectCollisionTransactionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "objectCollisionTransactionBoundaryCount": {
+          "type": "integer", "minimum": 0
+        },
+        "disposableCacheInvalidationCount": {
+          "type": "integer", "minimum": 0
+        },
+        "collisionRegistrationCount": {
+          "type": "integer", "minimum": 0
+        },
+        "collisionRegistrationContributionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "collisionRegistrationRegionReferenceCount": {
+          "type": "integer", "minimum": 0
+        },
+        "transactionalVerifiedRegionTileCount": {
+          "type": "integer", "minimum": 2304
+        },
+        "transactionalBlockingSceneryContributionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "transactionalDynamicCollisionContributionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "transactionalDynamicProjectileContributionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "baselineFingerprintSha256": {
+          "type": "string", "pattern": "^[0-9a-f]{64}$"
+        },
+        "fingerprintSha256": {
+          "type": "string", "pattern": "^[0-9a-f]{64}$"
+        },
+        "usableRegionContainerCount": { "const": 0 },
+        "pointInTimeOnly": { "const": true },
+        "detachedSummaryOnly": { "const": true },
+        "allSourcesVerified": { "const": true },
+        "runtimeDefinitionCapturePerformed": { "const": true },
+        "collisionFootprintDerivationPerformed": { "const": true },
+        "objectCollisionTransactionAppliedToDisposableRegions": {
+          "const": true
+        },
+        "collisionRegistrationAttachedToDisposableObjects": {
+          "const": true
+        },
+        "disposableCacheInvalidationOnly": { "const": true },
+        "runtimeCollisionApplied": { "const": false },
+        "runtimeHandleRetained": { "const": false },
+        "sourceAbsencePerformed": { "const": false },
+        "sourceReconstructionPerformed": { "const": false },
+        "terrainAppliedToRuntimeSource": { "const": false },
+        "authoredObjectMembershipAppliedToRuntimeSource": {
+          "const": false
+        },
+        "npcMembershipApplied": { "const": false },
+        "groundItemMembershipApplied": { "const": false },
+        "schedulerStateRestored": { "const": false },
+        "activeFamilyPreservationPerformed": { "const": false },
+        "runtimeCacheInvalidated": { "const": false },
+        "regionRegistryMutated": { "const": false },
+        "residencyMirrorMutated": { "const": false },
+        "visibilityCacheMutated": { "const": false },
+        "arrivalGate": { "const": false },
+        "visibilityReleased": { "const": false },
+        "lifecycleAuthority": { "const": false },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/sourceTransactionalAuthoredStateVerificationSource"
+          }
+        }
+      }
+    },
+    "sourceTransactionalAuthoredStateVerificationSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceOrdinal", "packedRegionX", "packedRegionY",
+        "replayPlacementCount", "authoredObjectFootprintCount",
+        "contributionTileReferenceCount", "requiredRegionReferenceCount",
+        "uniqueRequiredRegionCount", "disposableRegionConstructionCount",
+        "supportRegionCount", "objectCollisionTransactionCount",
+        "objectCollisionTransactionBoundaryCount",
+        "disposableCacheInvalidationCount", "collisionRegistrationCount",
+        "collisionRegistrationContributionCount",
+        "collisionRegistrationRegionReferenceCount",
+        "verifiedRegionTileCount", "blockingSceneryContributionCount",
+        "dynamicCollisionContributionCount",
+        "dynamicProjectileContributionCount",
+        "terrainFingerprintSha256", "authoredReplayFingerprintSha256",
+        "definitionCaptureFingerprintSha256",
+        "collisionFootprintFingerprintSha256",
+        "appliedCollisionFingerprintSha256",
+        "collisionRegistrationFingerprintSha256",
+        "finalStateFingerprintSha256"
+      ],
+      "properties": {
+        "sourceOrdinal": {
+          "type": "integer", "minimum": 0, "maximum": 127
+        },
+        "packedRegionX": { "type": "integer", "minimum": 0 },
+        "packedRegionY": { "type": "integer", "minimum": 0 },
+        "replayPlacementCount": { "type": "integer", "minimum": 0 },
+        "authoredObjectFootprintCount": {
+          "type": "integer", "minimum": 0
+        },
+        "contributionTileReferenceCount": {
+          "type": "integer", "minimum": 0
+        },
+        "requiredRegionReferenceCount": {
+          "type": "integer", "minimum": 0
+        },
+        "uniqueRequiredRegionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "disposableRegionConstructionCount": {
+          "type": "integer", "minimum": 1
+        },
+        "supportRegionCount": { "type": "integer", "minimum": 0 },
+        "objectCollisionTransactionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "objectCollisionTransactionBoundaryCount": {
+          "type": "integer", "minimum": 0
+        },
+        "disposableCacheInvalidationCount": {
+          "type": "integer", "minimum": 0
+        },
+        "collisionRegistrationCount": {
+          "type": "integer", "minimum": 0
+        },
+        "collisionRegistrationContributionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "collisionRegistrationRegionReferenceCount": {
+          "type": "integer", "minimum": 0
+        },
+        "verifiedRegionTileCount": {
+          "type": "integer", "minimum": 2304
+        },
+        "blockingSceneryContributionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "dynamicCollisionContributionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "dynamicProjectileContributionCount": {
+          "type": "integer", "minimum": 0
+        },
+        "terrainFingerprintSha256": {
+          "type": "string", "pattern": "^[0-9a-f]{64}$"
+        },
+        "authoredReplayFingerprintSha256": {
+          "type": "string", "pattern": "^[0-9a-f]{64}$"
+        },
+        "definitionCaptureFingerprintSha256": {
+          "type": "string", "pattern": "^[0-9a-f]{64}$"
+        },
+        "collisionFootprintFingerprintSha256": {
+          "type": "string", "pattern": "^[0-9a-f]{64}$"
+        },
+        "appliedCollisionFingerprintSha256": {
+          "type": "string", "pattern": "^[0-9a-f]{64}$"
+        },
+        "collisionRegistrationFingerprintSha256": {
+          "type": "string", "pattern": "^[0-9a-f]{64}$"
+        },
+        "finalStateFingerprintSha256": {
+          "type": "string", "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

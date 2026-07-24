@@ -54,6 +54,7 @@ import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceLifecycleBoundary;
 import com.openrsc.server.model.world.region.LayeredPackedRegionTerrainVerificationBatch;
+import com.openrsc.server.model.world.region.LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch;
 import com.openrsc.server.util.NamedThreadFactory;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
@@ -561,6 +562,11 @@ public class GameEventHandler {
 			authoredSourceStateVerification =
 				new
 					LayeredPackedRegionAuthoredSourceStateVerificationBatch[1];
+		final
+			LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch[]
+				transactionalAuthoredSourceVerification =
+					new
+						LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch[1];
 		boolean sourceBoundaryEntered =
 			getServer().getWorld().getRegionManager()
 				.withinLayeredPackedRegionSourceLifecycleBoundary(
@@ -604,6 +610,13 @@ public class GameEventHandler {
 									boundary, reloadRecipe[0],
 									LayeredPackedRegionAuthoredSourceStateVerificationBatch
 										.MAXIMUM_VERIFICATION_SOURCES);
+						transactionalAuthoredSourceVerification[0] =
+							LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch
+								.capture(
+									getServer().getWorld().getRegionManager(),
+									boundary, reloadRecipe[0],
+									LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch
+										.MAXIMUM_VERIFICATION_SOURCES);
 						captured[0] =
 							GameTickEventNpcOwnerPreservationNoOpDiagnostic
 								.capture(
@@ -635,7 +648,8 @@ public class GameEventHandler {
 			reloadRecipe[0], terrainVerification[0],
 			authoredCollisionVerification[0],
 			authoredCollisionApplicationVerification[0],
-			authoredSourceStateVerification[0]);
+			authoredSourceStateVerification[0],
+			transactionalAuthoredSourceVerification[0]);
 	}
 
 	private void requireExactPackedSourceBoundary(
