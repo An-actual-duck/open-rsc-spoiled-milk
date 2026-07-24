@@ -86,6 +86,47 @@ The symbol's "two offerings" equivalence applies only to its Devotion transfer.
 Destroying it must not run two offering actions, grant two offerings' Prayer
 XP, or change its separately mapped destruction Prayer XP.
 
+### Accepted alignment, coverage, and tier rules
+
+Ordinary blessing must require the player's active Prayer book to match the
+altar's god. Merely using an eligible item on another god's altar must not
+bypass alignment. The check must happen before item removal, Devotion spending,
+hourly-limit accounting, product creation, or XP.
+
+Blessing and destruction coverage must be symmetric for every active ordinary
+god-aligned equipment family:
+
+- every supported ordinary source must have all three intended god-aligned
+  blessing products; and
+- every such product must have the intended opposing-altar destruction mapping.
+
+The current blessing side already produces square shields, spears, and scythes
+for all three gods. The confirmed runtime gap is their nine destruction
+mappings:
+
+| Ordinary source | Resource/tier value | Missing destruction products |
+| --- | ---: | --- |
+| Steel Square Shield (125) | 3 | Black (432), White (2161), Grey (3123) |
+| Steel Spear (1089) | 2 | Black (3229), White (3230), Grey (3231) |
+| Steel Scythe (3185) | 3 | Black (3232), White (3233), Grey (3234) |
+
+Add all nine using the same resource value as their blessing source. Retain a
+cross-check during implementation so any additional source-only or
+destruction-only equipment mapping found at that time is completed rather than
+silently omitted.
+
+Tiered blessed equipment grants a destruction transfer based on its tier.
+Blessed staves are currently the only ordinary blessed family with an explicit
+tier ladder: staff tiers 1 through 10 transfer 1 through 10 displayed Devotion,
+respectively. The same tier is the resource value used by the accepted
+blessing-requirement and blessing-cost formulas. Future tiered blessed
+equipment should declare and use its own tier rather than receiving a flat
+fallback value.
+
+God artifacts are not ordinary blessed equipment. They must remain excluded
+from destruction recognition regardless of their god alignment, equipment
+category, or any apparent tier.
+
 ## Executive Summary
 
 The current system has three related but distinct loops:
@@ -679,17 +720,19 @@ These are proposed decisions, not implemented values.
    exact selected inventory instance, stop on failed removal, and award the
    existing XP/Devotion only after successful removal. Do not change its valid
    reward values or reusable lifecycle.
-2. Add square shields, spears, and scythes to destruction with their existing
-   mapped resource values, or explicitly remove them from blessing. Inclusion
-   is the consistent choice because they already scale as god equipment.
-3. Require the active Prayer book to match the blessing altar, matching
-   destruction, equipment use, and the guide.
+2. Add the approved square-shield, spear, and scythe destruction mappings for
+   all three gods, using their existing resource values, and verify complete
+   blessing/destruction symmetry for all ordinary god equipment.
+3. Require the active Prayer book to match the blessing altar before any
+   mutation, matching destruction, equipment use, and the guide.
 4. Replace the separate limiter check/record calls with one serialized,
    bounded successful-conversion accounting operation.
 5. Report actual clamped Devotion changes and deactivate prayers that exceed
    the new allocation after any Devotion reduction.
 6. Add server-side tests for notes, stale selections, exact quantities, all 96
-   products, cap persistence, clock edges, and failed conversion accounting.
+   ordinary products, altar-alignment failures, tier-based destruction,
+   artifact exclusion, mapping symmetry, cap persistence, clock edges, and
+   failed conversion accounting.
 
 ### 2. Preserve high-Devotion Prayer XP
 
@@ -774,8 +817,10 @@ Do not infer economy balance from guide prices alone.
 4. Preserve the current offering and blessing XP formulas.
 5. Implement the accepted blessing requirements, fractional offering-unit
    costs, and symbol exception as one atomic conversion change.
-6. Review additional optional Devotion rewards after the finite artifact pool.
-7. Observe at least one normal play cycle before changing the ten-per-hour cap
+6. Enforce blessing alignment, complete all ordinary equipment mappings, and
+   retain tier-based destruction plus the artifact exclusion.
+7. Review additional optional Devotion rewards after the finite artifact pool.
+8. Observe at least one normal play cycle before changing the ten-per-hour cap
    or five-times destruction XP.
 
 This ordering separates exploit closure and client/server agreement from
