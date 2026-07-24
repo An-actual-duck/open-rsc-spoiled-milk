@@ -16029,6 +16029,59 @@ remained normal. One 1,127 ms late tick, including 995 ms of diagnostic work,
 is accepted as private opt-in overhead; the client was then closed by the owner,
 which explains the subsequent connection-reset logout.
 
+### Slice 202: Inert authored-object detachment plan
+
+Objective: define the exact reverse authored-object work that a future source
+teardown would require, without looking up, retaining, or changing a runtime
+object.
+
+Implemented:
+
+- the plan accepts only an all-source exact Slice 200 runtime/baseline
+  comparison aligned with the same inert reload recipe, generation,
+  requirements/recipe ticks, residency-mirror version, selected-source order,
+  coordinates, and object totals;
+- each selected source copies only authored identity and constructor scalars
+  for scenery, boundaries, and harvesting scenery in reverse stable
+  construction order, retaining the matching runtime and disposable
+  registration fingerprints as provenance;
+- aggregate source burdens preserve the observed Player, NPC, identity-less
+  dynamic-object, and ground-item counts rather than treating an exact authored
+  object set as permission to discard other runtime families; and
+- source and whole-plan fingerprints bind the exact baseline, source order,
+  reverse object order, authored identity, constructor values, and registration
+  fingerprints without copying a live object or collision registration.
+
+Safety boundary:
+
+- a non-final, identity-conflicted, registration-invalid, or stable-mismatched
+  runtime source refuses plan construction;
+- the result is a detached definition only. It performs no runtime lookup,
+  shared collision-tile read, collision/object detachment, source absence,
+  cache invalidation, registry/mirror/visibility mutation, or reconstruction;
+- scheduler correlation and fresh atomic runtime revalidation remain mandatory,
+  and the plan explicitly carries rollback, arrival-gate, and visibility-gate
+  requirements without satisfying them; and
+- no runtime handle, executable transaction, mutation authority, arrival gate,
+  visibility release, or lifecycle authority is created.
+
+Automated validation status:
+
+- the focused source-lifecycle fixture proves three exact authored objects are
+  reduced to one immutable source plan in descending authored ordinal while an
+  NPC and ground item remain explicit preservation burdens;
+- the same fixture proves a non-final runtime comparison cannot produce a
+  detachment plan and verifies every executable/mutation/authority fact remains
+  false; and
+- the complete Slice 182-202 lineage passes 90 tests, while the authoritative
+  bundled-Ant server build compiles 840 core and 488 plugin sources and passes
+  its build/classpath audit.
+
+Status: implemented and automated-validated. This inert definition does not
+warrant an owner route. The next gate should verify the reverse object/collision
+operations only against a disposable reconstructed source; runtime detachment
+remains unauthorized.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16454,6 +16507,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 200 by comparing stable runtime authored registrations with the disposable transactional baseline. | Implemented and automated-validated; exact stable sequences use byte-compatible canonical registration fingerprints, non-final/identity-conflict/invalid-provenance/stable-mismatch outcomes remain separate, shared live collision and scheduler correlation remain excluded, the Slice 182-200 lineage passes 82 tests, and the 839/488 Ant build/audit passes |
 | 2026-07-24 | Continue with Slice 201 by exposing runtime authored-state comparison through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v56 extends only the explicit preservation no-op, aligns the runtime observation and disposable baseline comparison under the same exact source lifecycle boundary, retains bounded counts/fingerprints only, preserves schema-v55, the Slice 182-201 lineage passes 87 tests including the observer integration fixture, and the 839/488 Ant build/audit passes; one cooldown-aware private owner route remains pending |
 | 2026-07-24 | Accept the Slice 201 private runtime authored-state route. | Owner-validated; four contiguous schema-v56 records and their round trips validate, all 36 selected sources and 3,979 expected objects are exact final-live baseline matches with 3,979 present constructor-matched registrations, 3,185 contribution references, zero runtime/baseline anomaly outcomes, and every mutation/authority flag false. The response and interaction remained normal; one accepted 1,127 ms late tick contains 995 ms of opt-in diagnostic work, and the later connection reset is explained by the owner closing the client |
+| 2026-07-24 | Continue with Slice 202 by defining authored-object detachment work from an exact runtime baseline. | Implemented and automated-validated; the inert plan copies exact authored object identities and constructors in reverse stable order, preserves active-family burdens and matching registration fingerprints, refuses every non-exact runtime outcome, and explicitly requires scheduler correlation, fresh atomic revalidation, rollback, arrival, and visibility gates while granting no runtime lookup, mutation, detachment, or lifecycle authority; the Slice 182-202 lineage passes 90 tests and the 840/488 Ant build/audit passes |
 
 ## Next Discussion
 
