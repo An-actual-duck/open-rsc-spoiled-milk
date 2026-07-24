@@ -5,6 +5,128 @@ intentionally pending review.
 
 Date audited: 2026-07-24
 
+## Accepted Design Clarification
+
+The project owner clarified after the initial audit that the high Prayer XP
+curves are intentional:
+
+- +1000 Prayer XP per offering at 1000 Devotion is considered reasonable for
+  one of the game's hardest skills to train. Other high-level skills can award
+  more than 10,000 XP per action, so the offering bonus should not be judged in
+  isolation as excessive.
+- Blessing XP is also intended to scale strongly at high Devotion. Blessing is
+  meant to be a useful Prayer-training route in a skill with comparatively few
+  XP-generation methods.
+- Devotion has an opportunity cost through reward choices. Players can retain
+  high Devotion and its XP benefits or trade Devotion for rewards such as god
+  artifacts.
+
+Accordingly, this document no longer recommends flattening either XP curve.
+The large totals below remain useful pacing evidence, but they are documented
+as intended rewards rather than balance defects. Free or failed-removal XP
+paths, such as the Bonecrusher issue, remain defects because they bypass the
+required Devotion progression and item cost.
+
+The project owner also approved the following Bonecrusher correctness fix for
+a later implementation phase:
+
+- Reject noted bones and ash.
+- Remove the exact inventory instance selected by the player, rather than
+  looking up an unnoted item with the same catalog ID.
+- Stop without rewards if that removal fails.
+- Award the existing half-base Prayer XP, full offering value, and flat
+  Devotion-derived Prayer bonus only after successful removal.
+- Preserve the Bonecrusher's reusable ownership/reclaim behavior and the
+  separate handling of quest-specific bones.
+
+### Accepted blessing and destruction targets
+
+The project owner selected a small blessing cost and higher initial
+requirements. These are approved design targets for the implementation phase;
+the current-state tables later in this audit intentionally continue to describe
+the unchanged runtime.
+
+For ordinary equipment with mapped resource cost `r`:
+
+```text
+blessing requirement = 100 * r displayed Devotion
+blessing cost        = 0.5 * r displayed Devotion
+destruction transfer = 1 * r displayed Devotion
+```
+
+The implementation should perform fractional costs in stored offering units:
+one displayed Devotion is ten offering units, so each resource costs five
+offering units to bless. This avoids floating-point state.
+
+| Mapped resources | Blessing requirement | Blessing cost | Destruction transfer |
+| ---: | ---: | ---: | ---: |
+| 1 | 100 | 0.5 | 1 |
+| 2 | 200 | 1 | 2 |
+| 3 | 300 | 1.5 | 3 |
+| 4 | 400 | 2 | 4 |
+| 5 | 500 | 2.5 | 5 |
+| 6 | 600 | 3 | 6 |
+| 7 | 700 | 3.5 | 7 |
+| 8 | 800 | 4 | 8 |
+| 9 | 900 | 4.5 | 9 |
+| 10 | 1000 | 5 | 10 |
+
+For armor, the intended mapping is headwear `1`, gloves and boots `2`, legs
+`3`, and chest `4`. Other equipment follows its authoritative mapped resource
+cost.
+
+Blessed symbols remain deliberate outliers:
+
+- requirement: 50 displayed Devotion;
+- blessing cost: free; and
+- destruction transfer: two ordinary offering units, or `0.2` displayed
+  Devotion, added to the worshipped god and removed from the symbol's god.
+
+The symbol's "two offerings" equivalence applies only to its Devotion transfer.
+Destroying it must not run two offering actions, grant two offerings' Prayer
+XP, or change its separately mapped destruction Prayer XP.
+
+### Accepted alignment, coverage, and tier rules
+
+Ordinary blessing must require the player's active Prayer book to match the
+altar's god. Merely using an eligible item on another god's altar must not
+bypass alignment. The check must happen before item removal, Devotion spending,
+hourly-limit accounting, product creation, or XP.
+
+Blessing and destruction coverage must be symmetric for every active ordinary
+god-aligned equipment family:
+
+- every supported ordinary source must have all three intended god-aligned
+  blessing products; and
+- every such product must have the intended opposing-altar destruction mapping.
+
+The current blessing side already produces square shields, spears, and scythes
+for all three gods. The confirmed runtime gap is their nine destruction
+mappings:
+
+| Ordinary source | Resource/tier value | Missing destruction products |
+| --- | ---: | --- |
+| Steel Square Shield (125) | 3 | Black (432), White (2161), Grey (3123) |
+| Steel Spear (1089) | 2 | Black (3229), White (3230), Grey (3231) |
+| Steel Scythe (3185) | 3 | Black (3232), White (3233), Grey (3234) |
+
+Add all nine using the same resource value as their blessing source. Retain a
+cross-check during implementation so any additional source-only or
+destruction-only equipment mapping found at that time is completed rather than
+silently omitted.
+
+Tiered blessed equipment grants a destruction transfer based on its tier.
+Blessed staves are currently the only ordinary blessed family with an explicit
+tier ladder: staff tiers 1 through 10 transfer 1 through 10 displayed Devotion,
+respectively. The same tier is the resource value used by the accepted
+blessing-requirement and blessing-cost formulas. Future tiered blessed
+equipment should declare and use its own tier rather than receiving a flat
+fallback value.
+
+God artifacts are not ordinary blessed equipment. They must remain excluded
+from destruction recognition regardless of their god alignment, equipment
+category, or any apparent tier.
+
 ## Executive Summary
 
 The current system has three related but distinct loops:
@@ -44,7 +166,8 @@ The most important audit findings are:
   ownership or destruction of every eligible item.
 - At 1000 Devotion, each successful offering grants a flat 1000 displayed
   Prayer XP in addition to the bone or ash's normal XP. Blessing XP also
-  reaches 11 times its base value. These two curves dominate late progression.
+  reaches 11 times its base value. These are intentional high-Devotion rewards,
+  with reward-based Devotion spending supplying the opportunity cost.
 - Devotion-lowering adjustment paths refresh equipment stats but do not call
   the overflowing-prayer cleanup used by the administrator setter. An artifact
   claim or opposing-item destruction can therefore lower equipment-derived
@@ -293,6 +416,18 @@ The two Devotion adjustments are independently clamped to `-1000..1000`.
 Destruction is not counted by the hourly blessing limiter and has no separate
 rate limit.
 
+The mapped "destruction value" is a transfer amount, not a fee charged in
+addition to destruction. Away from either cap, the operation leaves the
+player's total Devotion across the two gods unchanged: the worshipped god gains
+exactly what the item's god loses. The consumed blessed item and the reduction
+to its god's Devotion are already the costs of reallocating that allegiance.
+No additional Devotion charge to destruction is proposed.
+
+Because the gain and loss are clamped independently, an account near a cap can
+experience an asymmetric actual transfer even though the current messages
+describe the nominal mapped value. That is a calculation/reporting correctness
+issue to address separately; it is not a reason to add a destruction fee.
+
 All recognized items are non-stackable. Normal interaction therefore destroys
 one selected item and awards one mapped result. Noted items are explicitly
 excluded. A malformed database item holding an abnormal quantity in one
@@ -481,7 +616,8 @@ the exclusive or necessarily fastest Devotion source.
 
 ### Progression pacing
 
-The following deterministic examples assume:
+The following deterministic examples characterize the current, unchanged
+runtime rather than the accepted implementation targets above. They assume:
 
 - ordinary Bones for manual offerings;
 - normal My World 3x base Prayer XP;
@@ -514,6 +650,11 @@ Requirements do gate initial self-production meaningfully:
 - Tier-10 staff: 5000 plain offerings.
 - Artifact: 8000 plain offerings.
 
+Under the accepted target requirements, the symbol instead takes 500 plain
+offering actions, one-resource equipment takes 1000, four-resource equipment
+takes 4000, and a tier-10 staff takes 10,000. Symbol and equipment blessing
+costs then create the small repeatable Devotion sink described above.
+
 After the threshold is reached, however, ordinary blessings are free. A full
 five-piece wool set uses five hourly slots and no Devotion. All sixteen knight
 conversions use two hourly windows and no Devotion. A player may stockpile
@@ -523,7 +664,8 @@ later.
 Claiming all three artifacts for one god requires 1600 total Devotion gain:
 reach 800, spend to 400, regain 400 twice, and finish at 400 after the third
 claim. That is 16,000 plain offering units before symbol/Unicorn acceleration.
-The artifact cost is the only current renewable Devotion sink.
+Artifact claims are the only currently implemented Devotion spend, but they are
+finite: each of the three artifacts per god can be claimed only once.
 
 ### Blessing and destruction XP
 
@@ -544,12 +686,20 @@ can produce 36,000 displayed Prayer XP at the unlock threshold or 72,000 at
 1000 Devotion, before other bonuses. Destruction itself is uncapped, so
 direct-drop or previously stockpiled items can exceed that short-term rate.
 
+These figures are not, by themselves, evidence that the XP should be reduced.
+The accepted design compares Prayer's overall time-to-level and scarcity of
+training actions against other skills that can exceed 10,000 XP in a single
+high-level action. The high-Devotion offering and blessing rewards are intended
+to close that gap. Balance review should instead measure sustained Prayer XP
+per hour, the time required to reach high Devotion, and how often players elect
+to spend Devotion on rewards.
+
 ### Exploit and bypass assessment
 
 | Risk | Confidence | Impact |
 | --- | --- | --- |
 | Bonecrusher does not check removal and does not reject notes | Confirmed | Reusable noted bone/ash can generate unlimited Prayer XP and Devotion |
-| Blessing is free after threshold | Confirmed design | Enables permanent unlock and blessed-item stockpiling; no renewable sink |
+| Blessing is free after threshold | Confirmed design | Permanent unlock and stockpiling are not exploits; their balance depends on optional Devotion rewards |
 | Direct blessed drops bypass requirements and blessing limiter | Confirmed design/content | Destruction can replace offerings as progression and can burst XP |
 | Destruction is uncapped | Confirmed | Stockpiled/direct items can be converted as fast as interactions permit |
 | Host-clock changes | Confirmed arithmetic | Clock forward resets early; clock rollback extends the hour |
@@ -566,65 +716,73 @@ These are proposed decisions, not implemented values.
 
 ### 1. Fix correctness and exploit paths before tuning
 
-1. Make Bonecrusher removal inventory-instance-specific, reject notes, and
-   award XP/Devotion only after successful removal.
-2. Add square shields, spears, and scythes to destruction with their existing
-   mapped resource values, or explicitly remove them from blessing. Inclusion
-   is the consistent choice because they already scale as god equipment.
-3. Require the active Prayer book to match the blessing altar, matching
-   destruction, equipment use, and the guide.
+1. Implement the approved Bonecrusher correction: reject notes, remove the
+   exact selected inventory instance, stop on failed removal, and award the
+   existing XP/Devotion only after successful removal. Do not change its valid
+   reward values or reusable lifecycle.
+2. Add the approved square-shield, spear, and scythe destruction mappings for
+   all three gods, using their existing resource values, and verify complete
+   blessing/destruction symmetry for all ordinary god equipment.
+3. Require the active Prayer book to match the blessing altar before any
+   mutation, matching destruction, equipment use, and the guide.
 4. Replace the separate limiter check/record calls with one serialized,
    bounded successful-conversion accounting operation.
 5. Report actual clamped Devotion changes and deactivate prayers that exceed
    the new allocation after any Devotion reduction.
 6. Add server-side tests for notes, stale selections, exact quantities, all 96
-   products, cap persistence, clock edges, and failed conversion accounting.
+   ordinary products, altar-alignment failures, tier-based destruction,
+   artifact exclusion, mapping symmetry, cap persistence, clock edges, and
+   failed conversion accounting.
 
-### 2. Add a modest Devotion cost to normal blessings
+### 2. Preserve high-Devotion Prayer XP
 
-Use the existing destruction value as the blessing cost. This gives the system
-one consistent unit, preserves the high unlock thresholds, and avoids making a
-single item consume hundreds of Devotion.
-
-| Family | Current requirement | Current cost | Proposed cost |
-| --- | ---: | ---: | ---: |
-| Symbol | 25 | 0 | 0.5 Devotion |
-| Wool/knight item | `50 * resource cost` | 0 | `resource cost` Devotion |
-| Staff | `50 * tier` | 0 | `tier` Devotion |
-| Artifact | 800 | 400 | Keep 400 |
-
-At exact unlock, a wool set would cost 12 Devotion total, all sixteen knight
-recipes would cost 37, and a tier-10 staff would lower 500 to 490. These costs
-make repeated production matter without invalidating the unlock immediately.
-They also use the already-supported offering-unit adjustment path, so the
-symbol's half point can remain exact.
-
-### 3. Flatten the two late-game XP multipliers
-
-The present per-offering curve and 11x blessing multiplier are too steep
-relative to cheap renewable inputs.
-
-Recommended starting formulas:
+Keep the current formulas:
 
 ```text
-displayed offering bonus XP = floor(max(0, Devotion) / 10)
-blessing XP multiplier      = 1 + max(0, Devotion) / 1000
+displayed offering bonus XP = max(0, prior Devotion)
+blessing XP multiplier      = 1 + altar-god Devotion / 100
 ```
 
-| Devotion | Current offering bonus | Proposed offering bonus | Current blessing multiplier | Proposed multiplier |
-| ---: | ---: | ---: | ---: | ---: |
-| 25 | 25 | 2 | 1.25x | 1.025x |
-| 50 | 50 | 5 | 1.5x | 1.05x |
-| 200 | 200 | 20 | 3x | 1.2x |
-| 500 | 500 | 50 | 6x | 1.5x |
-| 800 | 800 | 80 | 9x | 1.8x |
-| 1000 | 1000 | 100 | 11x | 2x |
+This preserves +1000 offering XP and an 11x blessing multiplier at maximum
+Devotion. Those outcomes are accepted design targets, not emergency nerf
+candidates.
 
-This keeps every ten Devotion levels meaningful, caps the cheap-bone bonus at
-100 XP, and leaves artifact-level devotion visibly stronger without allowing
-an order-of-magnitude blessing multiplier. Keep the existing five-times
-destruction XP initially, then review it with actual drop and destruction
-telemetry rather than changing all three XP levers simultaneously.
+Balance validation should compare sustained methods rather than raw
+per-action numbers:
+
+- Prayer XP per hour before and after reaching key Devotion thresholds;
+- time and item supply required to reach those thresholds;
+- XP lost when players spend Devotion and must rebuild it;
+- frequency and value of optional Devotion rewards; and
+- comparable high-level methods in other skills, including actions worth more
+  than 10,000 XP.
+
+Do not use the confirmed Bonecrusher exploit as evidence against the intended
+curve. Fixing that exploit restores the required item consumption while
+leaving legitimate high-Devotion rewards intact.
+
+### 3. Add the accepted minimal blessing cost
+
+Ordinary blessing currently uses Devotion as an unlock threshold and consumes
+none. Change ordinary equipment blessing to consume five stored offering units
+per mapped resource, equal to `0.5` displayed Devotion per resource. This is
+half the existing `1` Devotion-per-resource destruction transfer. A successful
+conversion must be atomic: verify the requirement, remove the exact source
+item, deduct the cost, create the result, record the hourly slot, and award XP
+without allowing a partial outcome or a failed action to consume Devotion.
+
+Blessed symbols require 50 Devotion but remain free to bless. Their accepted
+destruction transfer is two stored offering units (`0.2` displayed Devotion),
+with no offering-XP equivalence.
+
+The modest blessing cost complements, rather than replaces, larger optional
+reward choices such as the 400-Devotion artifact claims. Players may still
+choose between retaining high Devotion for its XP/equipment benefits and
+spending it on rewards or blessed equipment.
+
+Preserve destruction as a symmetric transfer between gods. Do not add an
+additional destruction charge: consuming the item and lowering the item's god
+already provide its intended cost.
 
 ### 4. Keep ten per hour, but call it hourly
 
@@ -656,9 +814,13 @@ Do not infer economy balance from guide prices alone.
 1. Correct Bonecrusher removal and all conversion-coverage/state bugs.
 2. Add focused server tests and privacy-safe counters before balance changes.
 3. Update client guide and item descriptions to match the selected policy.
-4. Introduce resource-equivalent blessing costs.
-5. Flatten offering and blessing XP in a separately reviewable balance commit.
-6. Observe at least one normal play cycle before changing the ten-per-hour cap
+4. Preserve the current offering and blessing XP formulas.
+5. Implement the accepted blessing requirements, fractional offering-unit
+   costs, and symbol exception as one atomic conversion change.
+6. Enforce blessing alignment, complete all ordinary equipment mappings, and
+   retain tier-based destruction plus the artifact exclusion.
+7. Review additional optional Devotion rewards after the finite artifact pool.
+8. Observe at least one normal play cycle before changing the ten-per-hour cap
    or five-times destruction XP.
 
 This ordering separates exploit closure and client/server agreement from
