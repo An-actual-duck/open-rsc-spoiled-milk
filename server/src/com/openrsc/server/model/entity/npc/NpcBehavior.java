@@ -486,11 +486,11 @@ public class NpcBehavior {
 		}
 
 		final int distance = Math.max(Math.abs(npc.getX() - target.getX()), Math.abs(npc.getY() - target.getY()));
-		if (!profile.prefersProjectileAtDistance(distance)) {
+		if (!profile.prefersProjectileAtDistance(npc, distance)) {
 			return false;
 		}
 
-		if (!npc.withinRange(target, profile.getProjectileRange())
+		if (!npc.withinRange(target, profile.getProjectileRange(npc))
 			|| !PathValidation.checkHostileProjectilePath(npc.getWorld(), npc.getLocation(), target.getLocation())
 			|| !checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor)) {
 			return false;

@@ -19,6 +19,7 @@ import com.openrsc.server.model.*;
 import com.openrsc.server.model.Path.PathType;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.entity.npc.NpcAttackStyleProfile;
 import com.openrsc.server.model.entity.npc.NpcInteraction;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.Damage;
@@ -2210,7 +2211,8 @@ public abstract class Mob extends Entity {
 
 	public boolean canProjectileReach(final Mob mob) {
 		if (this.isNpc()) {
-			return this.withinRange(mob, DEFAULT_PROJECTILE_RADIUS);
+			Npc npc = (Npc) this;
+			return this.withinRange(mob, NpcAttackStyleProfile.forNpc(npc).getProjectileRange(npc));
 		}
 
 		Player player = (Player) this;

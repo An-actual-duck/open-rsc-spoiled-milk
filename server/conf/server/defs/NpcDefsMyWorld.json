@@ -151,6 +151,7 @@
     },
     {
       "id": 844,
+      "projectileRange": 7,
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 1.0,
       "magicDefenseMultiplier": 1.0

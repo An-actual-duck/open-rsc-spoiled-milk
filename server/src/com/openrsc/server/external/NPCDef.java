@@ -34,6 +34,7 @@ public class NPCDef extends EntityDef {
 	 */
 	public int defense;
 	public int ranged;
+	public int projectileRange;
 	public int meleeOffense;
 	public int rangedOffense;
 	public int magicOffense;
@@ -111,6 +112,7 @@ public class NPCDef extends EntityDef {
 		this.hits = builder.hits;
 			this.defense = builder.defense;
 			this.ranged = builder.ranged;
+			this.projectileRange = builder.projectileRange;
 			this.meleeOffense = builder.meleeOffense;
 			this.rangedOffense = builder.rangedOffense;
 			this.magicOffense = builder.magicOffense;
@@ -144,6 +146,7 @@ public class NPCDef extends EntityDef {
 		this.command2 = source.command2;
 		this.defense = source.defense;
 		this.ranged = source.ranged;
+		this.projectileRange = source.projectileRange;
 		this.meleeOffense = source.meleeOffense;
 		this.rangedOffense = source.rangedOffense;
 		this.magicOffense = source.magicOffense;
@@ -216,6 +219,9 @@ public class NPCDef extends EntityDef {
 	}
 	public int getRanged() {
 		return ranged;
+	}
+	public int getProjectileRange() {
+		return projectileRange;
 	}
 	public int getMeleeOffense() {
 		return meleeOffense;
@@ -318,6 +324,7 @@ public class NPCDef extends EntityDef {
 		private int hits;
 			private int defense;
 			private int ranged;
+			private int projectileRange;
 			private int meleeOffense;
 			private int rangedOffense;
 			private int magicOffense;
@@ -373,6 +380,11 @@ public class NPCDef extends EntityDef {
 
 			public NPCDef.NPCDefinitionBuilder ranged(int ranged) {
 				this.ranged = ranged;
+				return this;
+			}
+
+			public NPCDef.NPCDefinitionBuilder projectileRange(int projectileRange) {
+				this.projectileRange = projectileRange;
 				return this;
 			}
 

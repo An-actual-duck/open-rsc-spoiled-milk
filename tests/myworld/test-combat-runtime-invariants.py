@@ -116,11 +116,11 @@ def main() -> None:
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_RANGED || this == MELEE_RANGED;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_MAGIC || this == MELEE_FREQUENT_MAGIC || this == MELEE_MAGIC || this == MELEE_RARE_MAGIC;")
 
-    require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(distance)")
+    require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(npc, distance)")
     require_contains(NPC_BEHAVIOR, "else if (npc.inCombat())")
     require_contains(NPC_BEHAVIOR, "target = npc.getOpponent();")
     require_contains(NPC_BEHAVIOR, "tryProjectileAttack(now);")
-    require_contains(NPC_BEHAVIOR, "!npc.withinRange(target, profile.getProjectileRange())")
+    require_contains(NPC_BEHAVIOR, "!npc.withinRange(target, profile.getProjectileRange(npc))")
     require_contains(NPC_BEHAVIOR, "PathValidation.checkHostileProjectilePath(npc.getWorld(), npc.getLocation(), target.getLocation())")
     require_contains(NPC_BEHAVIOR, "profile.getRangedProjectileVisual(npc)")
     require_contains(NPC_BEHAVIOR, "profile.getMagicProjectileVisual(npc, magicElement)")

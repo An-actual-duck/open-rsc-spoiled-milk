@@ -49,12 +49,15 @@ public enum NpcAttackStyleProfile {
 		return this == PURE_MAGIC || this == MELEE_FREQUENT_MAGIC || this == MELEE_MAGIC || this == MELEE_RARE_MAGIC;
 	}
 
-	public int getProjectileRange() {
+	public int getProjectileRange(final Npc npc) {
+		if (npc != null && npc.getDef() != null && npc.getDef().getProjectileRange() > 0) {
+			return npc.getDef().getProjectileRange();
+		}
 		return DEFAULT_PROJECTILE_RANGE;
 	}
 
-	public boolean prefersProjectileAtDistance(final int distance) {
-		if (distance > getProjectileRange()) {
+	public boolean prefersProjectileAtDistance(final Npc npc, final int distance) {
+		if (distance > getProjectileRange(npc)) {
 			return false;
 		}
 		if (isProjectilePrimary()) {
