@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.authentic.npcs.portsarim;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -18,7 +19,7 @@ public final class GrumsGoldShop extends AbstractShop {
 		0), new Item(ItemId.SAPPHIRE_RING.id(), 0), new Item(ItemId.EMERALD_RING.id(), 0), new Item(ItemId.RUBY_RING.id(), 0),
 		new Item(ItemId.DIAMOND_RING.id(), 0), new Item(ItemId.GOLD_NECKLACE.id(), 0), new Item(ItemId.SAPPHIRE_NECKLACE.id(), 0),
 		new Item(ItemId.EMERALD_NECKLACE.id(), 0), new Item(ItemId.RUBY_NECKLACE.id(), 0), new Item(ItemId.DIAMOND_NECKLACE.id(), 0),
-		new Item(ItemId.GOLD_AMULET.id(), 0), new Item(ItemId.SAPPHIRE_AMULET.id(), 0));
+		new Item(MyWorldItemId.GOLD_BANGEL, 0), new Item(MyWorldItemId.SAPPHIRE_BANGEL, 0));
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.custom.quests;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.external.Gauntlets;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -381,7 +382,7 @@ public final class MyWorldQuestShortcuts {
 		clearTreeGnomeCache(player);
 		completeQuestWithStandardReward(player, Quest.TREE_GNOME_VILLAGE,
 			"Well done you have completed the treequest");
-		ensureUtilityItem(player, ItemId.EMERALD_AMULET.id(), 1);
+		ensureUtilityItem(player, MyWorldItemId.EMERALD_BANGEL, 1);
 	}
 
 	public static void completeBiohazardLine(final Player player, final Npc npc) {
@@ -575,7 +576,7 @@ public final class MyWorldQuestShortcuts {
 		giveOrBank(player, ItemId.MAPLE_LONGBOW.id(), 1);
 		grantRemappedSkillReward(player, Quest.OBSERVATORY_QUEST, Skill.HITS, Skill.HITS);
 		grantRemappedSkillReward(player, Quest.OBSERVATORY_QUEST, Skill.STRENGTH, Skill.MELEE);
-		giveOrBank(player, ItemId.EMERALD_AMULET.id(), 1);
+		giveOrBank(player, MyWorldItemId.EMERALD_BANGEL, 1);
 		giveOrBank(player, ItemId.UNCUT_SAPPHIRE.id(), 12);
 	}
 

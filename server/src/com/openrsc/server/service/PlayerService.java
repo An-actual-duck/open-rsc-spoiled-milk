@@ -8,6 +8,7 @@ import com.openrsc.server.database.GameDatabaseException;
 import com.openrsc.server.database.struct.*;
 import com.openrsc.server.event.rsc.impl.DesertHeatEvent;
 import com.openrsc.server.external.ItemDefinition;
+import com.openrsc.server.content.LegacyAmuletCompatibility;
 import com.openrsc.server.login.LoginRequest;
 import com.openrsc.server.model.PlayerAppearance;
 import com.openrsc.server.model.Point;
@@ -24,11 +25,14 @@ import org.apache.logging.log4j.Logger;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 public class PlayerService implements IPlayerService {
     private static final Logger LOGGER = LogManager.getLogger(PlayerService.class);
+    private static final String LEGACY_EQUIPMENT_OVERFLOW = "legacy_amulet_equipment_overflow";
     private final GameDatabase database;
     private final World world;
     private final ServerConfiguration configuration;
@@ -224,6 +228,10 @@ public class PlayerService implements IPlayerService {
 
     private void loadPlayerInventory(final Player player) throws GameDatabaseException {
         final PlayerInventory[] invItems = database.queryLoadPlayerInvItems(player.getDatabaseID());
+        for (PlayerInventory invItem : invItems) {
+            LegacyAmuletCompatibility.canonicalize(invItem.item);
+            invItem.catalogID = invItem.item.getCatalogId();
+        }
         final Inventory inv = new Inventory(player, invItems);
 
         player.getCarriedItems().setInventory(inv);
@@ -238,6 +246,7 @@ public class PlayerService implements IPlayerService {
         List<Item> items = new ArrayList<>();
         final PlayerInventory[] invItems = database.queryLoadPlayerInvItems(playerId);
         for (PlayerInventory i : invItems) {
+            LegacyAmuletCompatibility.canonicalize(i.item);
             items.add(i.item);
         }
         return items;
@@ -248,6 +257,12 @@ public class PlayerService implements IPlayerService {
             final Equipment equipment = new Equipment(player);
             synchronized (equipment.getList()) {
                 final PlayerEquipped[] equippedItems = database.queryLoadPlayerEquipped(player);
+                final Set<Long> convertedItemIds = new HashSet<>();
+                for (final PlayerEquipped equippedItem : equippedItems) {
+                    if (LegacyAmuletCompatibility.canonicalize(equippedItem.itemStatus)) {
+                        convertedItemIds.add(equippedItem.itemId);
+                    }
+                }
 
                 // check if player is morphed
                 ItemDefinition morph = null;
@@ -261,15 +276,28 @@ public class PlayerService implements IPlayerService {
                 }
 
                 // put items into slots & update appearance (if not morphed)
-                for (final PlayerEquipped equippedItem : equippedItems) {
-                    final Item item = new Item(equippedItem.itemId, equippedItem.itemStatus);
-                    final ItemDefinition itemDef = item.getDef(player.getWorld());
-                    if (item.isWieldable(player.getWorld())) {
-                        equipment.getList()[itemDef.getWieldPosition()] = item;
-                        if (morph == null) {
-                            if (itemDef.getWieldPosition() < 12) {
-                                player.updateWornItems(itemDef.getWieldPosition(), itemDef.getAppearanceId(),
-                                        itemDef.getWearableId(), true);
+                final List<Item> overflow = new ArrayList<>();
+                for (int conversionPass = 0; conversionPass < 2; conversionPass++) {
+                    for (final PlayerEquipped equippedItem : equippedItems) {
+                        final boolean converted = convertedItemIds.contains(equippedItem.itemId);
+                        if ((conversionPass == 0 && converted) || (conversionPass == 1 && !converted)) {
+                            continue;
+                        }
+                        final Item item = new Item(equippedItem.itemId, equippedItem.itemStatus);
+                        final ItemDefinition itemDef = item.getDef(player.getWorld());
+                        if (item.isWieldable(player.getWorld())) {
+                            final int slot = itemDef.getWieldPosition();
+                            if (equipment.getList()[slot] != null) {
+                                item.setWielded(false);
+                                overflow.add(item);
+                                continue;
+                            }
+                            equipment.getList()[slot] = item;
+                            if (morph == null) {
+                                if (slot < 12) {
+                                    player.updateWornItems(slot, itemDef.getAppearanceId(),
+                                            itemDef.getWearableId(), true);
+                                }
                             }
                         }
                     }
@@ -282,6 +310,9 @@ public class PlayerService implements IPlayerService {
                 }
 
                 player.getCarriedItems().setEquipment(equipment);
+                if (!overflow.isEmpty()) {
+                    player.setAttribute(LEGACY_EQUIPMENT_OVERFLOW, overflow);
+                }
             }
         } else
             player.getCarriedItems().setEquipment(new Equipment(player));
@@ -291,7 +322,13 @@ public class PlayerService implements IPlayerService {
         final PlayerBank[] bankItems = database.queryLoadPlayerBankItems(player.getDatabaseID());
         final Bank bank = new Bank(player);
         for (int i = 0; i < bankItems.length; i++) {
+            LegacyAmuletCompatibility.canonicalize(bankItems[i].itemStatus);
             bank.getItems().add(new Item(bankItems[i].itemId, bankItems[i].itemStatus));
+        }
+        final List<Item> overflow = player.getAttribute(LEGACY_EQUIPMENT_OVERFLOW, null);
+        if (overflow != null) {
+            bank.getItems().addAll(overflow);
+            player.removeAttribute(LEGACY_EQUIPMENT_OVERFLOW);
         }
         player.setBank(bank);
     }
@@ -305,6 +342,7 @@ public class PlayerService implements IPlayerService {
         final PlayerBank[] bankItems = database.queryLoadPlayerBankItems(playerId);
         List<Item> bank = new ArrayList<Item>();
         for (int i = 0; i < bankItems.length; i++) {
+            LegacyAmuletCompatibility.canonicalize(bankItems[i].itemStatus);
             bank.add(new Item(bankItems[i].itemId, bankItems[i].itemStatus));
         }
         return bank;

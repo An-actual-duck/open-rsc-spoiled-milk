@@ -2,6 +2,7 @@ package com.openrsc.server.model.container;
 
 import com.openrsc.server.constants.IronmanMode;
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.content.LegacyAmuletCompatibility;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -52,6 +53,8 @@ public class Bank {
 					LOGGER.warn("Ignoring invalid bank item pin metadata for player {}", player.getDatabaseID());
 				}
 			}
+			pinnedSlots.replaceAll((slot, catalogId) ->
+				LegacyAmuletCompatibility.canonicalCatalogId(catalogId));
 			normalizePinnedSlots();
 			persistPinnedSlots();
 		}

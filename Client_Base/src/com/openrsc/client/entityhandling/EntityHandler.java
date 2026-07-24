@@ -474,7 +474,8 @@ public class EntityHandler {
 		BANK_EQUIP_BAG(50),
 		BANK_EQUIP_HELM(51),
 		BANK_PRESET_OPTIONS(52),
-		KEPT_ON_DEATH(53);
+		KEPT_ON_DEATH(53),
+		EQUIPSLOT_WRIST(54);
 
 		private final int value;
 
@@ -546,6 +547,9 @@ public class EntityHandler {
 		GUIparts.add(new SpriteDef("bank toggle for equipment mode", -1, "GUI:41", 51));
 		GUIparts.add(new SpriteDef("bank preset options gear", -1, "GUI:42", 52));
 		GUIparts.add(new SpriteDef("items kept on death", -1, "GUI:43", 53));
+		// Existing GUI-part IDs stay fixed. The tracked Bangel slot asset replaces
+		// this ring-slot fallback at draw time.
+		GUIparts.add(new SpriteDef("equipment slot wrist", -1, "GUI:38", 54));
 	}
 
 	public enum CROWN_TYPES {
@@ -1241,7 +1245,7 @@ public class EntityHandler {
 		sprites = new int[]{18, 32, 42, -1, 53, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Renegade knight", "He isn't very friendly", "", 50, 55, 48, 53, true, sprites, 1, 2, 3, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{6, 1, 2, -1, 48, -1, 45, -1, -1, -1, -1, -1};
-		npcs.add(new NPCDef("Davon", "An amulet trader", shopOption, 35, 25, 20, 30, false, sprites, 1, 15658615, 10289152, 11312784, 145, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Davon", "A Bangel trader", shopOption, 35, 25, 20, 30, false, sprites, 1, 15658615, 10289152, 11312784, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{5, 1, 2, -1, -1, 163, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Bartender", "I could get some grog off him", "", 0, 0, 3, 0, false, sprites, 1, 8409120, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -5463,6 +5467,60 @@ public class EntityHandler {
 			260000, 8, "items:8", false, true, 322, EXALTED_RUNE_COLOR, true, false, true, 3280));
 	}
 
+	private static void addBangelJewelryDefinitions() {
+		final String[] gems = {"Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone"};
+		final int[] bangelPrices = {1800, 3000, 6000, 12000, 35000};
+		final int[] medallionPrices = {900, 1275, 2025, 3525, 17625};
+		final int[] gemMasks = {19711, 3394611, 16724736, 0, 12255487};
+
+		setCustomItemDefinition(3281, new ItemDef(
+			"Bangel mould", "Used to make gold Bangels", "", 5, -1,
+			"external-png:bangel-mould", false, false, 0, 0,
+			false, false, true, 3281));
+
+		for (int tier = 0; tier < gems.length; tier++) {
+			final int bangelId = 3282 + tier;
+			setCustomItemDefinition(bangelId, new ItemDef(
+				gems[tier] + " Bangel", "I wonder if I can get this enchanted", "",
+				bangelPrices[tier], -1, "external-png:bangel", false, true, 0, gemMasks[tier],
+				tier == 4, false, true, bangelId));
+
+			final int medallionId = 3287 + tier;
+			setCustomItemDefinition(medallionId, new ItemDef(
+				gems[tier] + " Medallion", "A hidden future silver jewelry prototype", "",
+				medallionPrices[tier], -1, "external-png:medallion", false, false, 0, gemMasks[tier],
+				tier == 4, false, true, medallionId));
+		}
+
+		setCustomItemDefinition(3292, new ItemDef(
+			"Gold Bangel", "I wonder if I can get this enchanted", "",
+			900, -1, "external-png:bangel", false, true, 0, 16763980,
+			false, false, true, 3292));
+	}
+
+	private static void applyBangelVisuals() {
+		applyBangelVisuals(314, 317);
+		applyBangelVisuals(597, 597);
+		applyBangelVisuals(1593, 1612);
+		applyBangelVisuals(1709, 1713);
+		applyBangelVisuals(1719, 1758);
+		applyBangelVisuals(3106, 3110);
+	}
+
+	private static void applyBangelVisuals(final int firstId, final int lastId) {
+		for (int itemId = firstId; itemId <= lastId; itemId++) {
+			ItemDef item = findItem(itemId, false);
+			if (item == null) {
+				continue;
+			}
+			setCustomItemDefinition(itemId, new ItemDef(
+				item.getName(), item.getDescription(), commandString(item), item.basePrice,
+				-1, "external-png:bangel", item.stackable, true, 0,
+				item.getPictureMask(), item.getBlueMask(), item.membersItem,
+				item.untradeable, item.noteable, itemId));
+		}
+	}
+
 	private static void addWoolAccessoryDefinitions() {
 		setCustomItemDefinition(2794, new ItemDef("Wool Gloves", "Simple gloves stitched from wool", "", 12, 17, "items:17",
 			false, true, 256, 0xFFFFFF, false, false, true, 2794));
@@ -5650,6 +5708,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3259, new ItemDef("Red flower", "A red flower used as a potion ingredient", "", 24, -1, "external-png:red-flower@15x18", false, false, 0, 0, false, false, true, 3259));
 		setCustomItemDefinition(3260, new ItemDef("Blue flower", "A blue flower used as a potion ingredient", "", 40, -1, "external-png:blue-flower@15x18", false, false, 0, 0, false, false, true, 3260));
 		addExaltedRuneDefinitions();
+		addBangelJewelryDefinitions();
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -5731,7 +5790,7 @@ public class EntityHandler {
 		int step, int[] prices, int[] pictureMasks, String command) {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of " + altarName,
+				new ItemDef(tiers[i] + " Bangel of " + altarName,
 					String.format(descriptionFormat, step * (i + 1)),
 					command,
 					prices[i],
@@ -5752,7 +5811,7 @@ public class EntityHandler {
 		int[] bonuses, int[] prices, int[] pictureMasks, String command) {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of " + altarName,
+				new ItemDef(tiers[i] + " Bangel of " + altarName,
 					String.format(descriptionFormat, bonuses[i]),
 					command,
 					prices[i],
@@ -5780,7 +5839,7 @@ public class EntityHandler {
 		};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of Chaos Weaving",
+				new ItemDef(tiers[i] + " Bangel of Chaos Weaving",
 					"Boosts chaos rune yield by " + yieldBonuses[i] + "%; bonus mind/chaos/death/blood: "
 						+ weights[i][0] + "/" + weights[i][1] + "/" + weights[i][2] + "/" + weights[i][3] + ".",
 					"",
@@ -5803,7 +5862,7 @@ public class EntityHandler {
 		final int[] bonuses = {10, 20, 30, 50, 100};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " " + amuletName + " Amulet",
+				new ItemDef(tiers[i] + " " + amuletName + " Bangel",
 					String.format(descriptionFormat, bonuses[i]),
 					"",
 					prices[i],
@@ -5824,7 +5883,7 @@ public class EntityHandler {
 		final int[] charges = {100, 200, 300, 500, 1000};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of Alchemy",
+				new ItemDef(tiers[i] + " Bangel of Alchemy",
 					"Auto-alchs 1000+ gp monster drops. " + charges[i] + " charges.",
 					"Check",
 					prices[i],
@@ -6105,7 +6164,7 @@ public class EntityHandler {
 	private static void addLawAmuletLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of Teleportation",
+				new ItemDef(tiers[i] + " Bangel of Teleportation",
 					"Stores 3 guild teleports.",
 					"Teleport,Check",
 					prices[i],
@@ -6147,7 +6206,7 @@ public class EntityHandler {
 		for (int i = 0; i < tiers.length; i++) {
 			int amount = (i + 1) * 10;
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of Bounty",
+				new ItemDef(tiers[i] + " Bangel of Bounty",
 					"Has a " + amount + "% chance to double rare gathering rewards.",
 					"",
 					prices[i],
@@ -6169,7 +6228,7 @@ public class EntityHandler {
 		final int[] maxDamage = {3, 6, 9, 14, 20};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of Ruin",
+				new ItemDef(tiers[i] + " Bangel of Ruin",
 					"At 100 death charge, bursts for " + minDamage[i] + "-" + maxDamage[i] + " damage within 2 tiles.",
 					"",
 					prices[i],
@@ -6191,7 +6250,7 @@ public class EntityHandler {
 		final int[] maxHeal = {2, 3, 4, 6, 10};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of Renewal",
+				new ItemDef(tiers[i] + " Bangel of Renewal",
 					"At 200 soul charge, heals " + minHeal[i] + "-" + maxHeal[i] + " Hits within 2 tiles.",
 					"",
 					prices[i],
@@ -6272,7 +6331,7 @@ public class EntityHandler {
 	private static void addLifeAmuletLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of Command",
+				new ItemDef(tiers[i] + " Bangel of Command",
 					"Raises combat summon max damage by +" + (i + 1) + ".",
 					"",
 					prices[i],
@@ -9592,6 +9651,7 @@ public class EntityHandler {
 			applyMyWorldNpcDefinitionOverrides();
 			loadItemDefinitions();
 			MyWorldItemOverrides.apply(items);
+			applyBangelVisuals();
 		loadTextureDefinitions();
 		loadAnimationDefinitions();
 		loadSpellDefinitions();

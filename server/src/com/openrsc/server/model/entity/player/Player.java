@@ -2224,7 +2224,7 @@ public final class Player extends Mob {
 			return;
 		}
 		final Npc killedNpc = (Npc) killed;
-		final Item deathAmulet = getCarriedItems().getEquipment().getEquippedNeckItem();
+		final Item deathAmulet = getCarriedItems().getEquipment().getEquippedWristItem();
 		if (deathAmulet == null || !EnchantingItemEffects.isDeathAmulet(deathAmulet.getCatalogId())) {
 			return;
 		}
@@ -2309,7 +2309,7 @@ public final class Player extends Mob {
 		if (killed == null) {
 			return;
 		}
-		final Item soulAmulet = getCarriedItems().getEquipment().getEquippedNeckItem();
+		final Item soulAmulet = getCarriedItems().getEquipment().getEquippedWristItem();
 		if (soulAmulet == null || !EnchantingItemEffects.isSoulAmulet(soulAmulet.getCatalogId())) {
 			return;
 		}

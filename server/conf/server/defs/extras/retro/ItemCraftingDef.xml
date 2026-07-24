@@ -19,10 +19,10 @@
 		</ItemCraftingDef>
 	</entry>
 	<entry>
-		<int>296</int>
-		<ItemCraftingDef><!-- Amulet -->
+		<int>3292</int>
+		<ItemCraftingDef><!-- Gold Bangel -->
 			<requiredLvl>13</requiredLvl>
-			<itemID>296</itemID>
+			<itemID>3292</itemID>
 			<exp>120</exp>
 			<gemID>-1</gemID>
 		</ItemCraftingDef>
@@ -47,10 +47,10 @@
 		</ItemCraftingDef>
 	</entry>
 	<entry>
-		<int>297</int>
-		<ItemCraftingDef><!-- Amulet -->
+		<int>3282</int>
+		<ItemCraftingDef><!-- Sapphire Bangel -->
 			<requiredLvl>13</requiredLvl>
-			<itemID>297</itemID>
+			<itemID>3282</itemID>
 			<exp>260</exp>
 			<gemID>164</gemID>
 		</ItemCraftingDef>
@@ -75,10 +75,10 @@
 		</ItemCraftingDef>
 	</entry>
 	<entry>
-		<int>298</int>
-		<ItemCraftingDef><!-- Amulet -->
+		<int>3283</int>
+		<ItemCraftingDef><!-- Emerald Bangel -->
 			<requiredLvl>30</requiredLvl>
-			<itemID>298</itemID>
+			<itemID>3283</itemID>
 			<exp>280</exp>
 			<gemID>163</gemID>
 		</ItemCraftingDef>
@@ -103,10 +103,10 @@
 		</ItemCraftingDef>
 	</entry>
 	<entry>
-		<int>299</int>
-		<ItemCraftingDef><!-- Amulet -->
+		<int>3284</int>
+		<ItemCraftingDef><!-- Ruby Bangel -->
 			<requiredLvl>50</requiredLvl>
-			<itemID>299</itemID>
+			<itemID>3284</itemID>
 			<exp>340</exp>
 			<gemID>162</gemID>
 		</ItemCraftingDef>
@@ -131,10 +131,10 @@
 		</ItemCraftingDef>
 	</entry>
 	<entry>
-		<int>300</int>
-		<ItemCraftingDef><!-- Amulet -->
+		<int>3285</int>
+		<ItemCraftingDef><!-- Diamond Bangel -->
 			<requiredLvl>70</requiredLvl>
-			<itemID>300</itemID>
+			<itemID>3285</itemID>
 			<exp>400</exp>
 			<gemID>161</gemID>
 		</ItemCraftingDef>
@@ -159,10 +159,10 @@
 		</ItemCraftingDef>
 	</entry>
 	<entry>
-		<int>524</int>
-		<ItemCraftingDef><!-- Amulet -->
+		<int>3286</int>
+		<ItemCraftingDef><!-- Dragonstone Bangel -->
 			<requiredLvl>80</requiredLvl>
-			<itemID>524</itemID>
+			<itemID>3286</itemID>
 			<exp>600</exp>
 			<gemID>523</gemID>
 		</ItemCraftingDef>
@@ -184,15 +184,6 @@
 			<requiredLvl>-1</requiredLvl>
 			<itemID>-1</itemID>
 			<exp>100</exp>
-			<gemID>894</gemID>
-		</ItemCraftingDef>
-	</entry>
-	<entry>
-		<int>-1</int>
-		<ItemCraftingDef>--><!-- Amulet --><!--
-			<requiredLvl>-1</requiredLvl>
-			<itemID>-1</itemID>
-			<exp>120</exp>
 			<gemID>894</gemID>
 		</ItemCraftingDef>
 	</entry>

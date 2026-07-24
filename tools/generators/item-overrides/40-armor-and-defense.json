@@ -3038,7 +3038,13 @@
       "meleeDefense": 1,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Protection",
+      "description": "It improves my defense",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 734,

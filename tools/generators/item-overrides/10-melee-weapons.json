@@ -1033,7 +1033,13 @@
     {
       "id": 316,
       "meleeOffense": 2,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Strength",
+      "description": "It improves my damage",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1029,

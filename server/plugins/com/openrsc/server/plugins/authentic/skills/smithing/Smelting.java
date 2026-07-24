@@ -42,7 +42,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	public static final int FURNACE_CATEGORY_BARS = ItemId.BRONZE_BAR.id();
 	public static final int FURNACE_CATEGORY_RINGS = ItemId.GOLD_RING.id();
 	public static final int FURNACE_CATEGORY_NECKLACES = ItemId.GOLD_NECKLACE.id();
-	public static final int FURNACE_CATEGORY_AMULETS = ItemId.UNSTRUNG_GOLD_AMULET.id();
+	public static final int FURNACE_CATEGORY_BANGELS = MyWorldItemId.GOLD_BANGEL;
 	public static final int FURNACE_CATEGORY_HOLY_SYMBOLS = ItemId.UNSTRUNG_HOLY_SYMBOL_OF_SARADOMIN.id();
 	public static final int FURNACE_CATEGORY_UNHOLY_SYMBOLS = ItemId.UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK.id();
 	public static final int FURNACE_CATEGORY_GUTHIX_SYMBOLS = ItemId.UNSTRUNG_GUTHIX_SYMBOL.id();
@@ -261,7 +261,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_BARS, true, -1));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_RINGS, has(player, ItemId.RING_MOULD.id()), ItemId.RING_MOULD.id()));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_NECKLACES, has(player, ItemId.NECKLACE_MOULD.id()), ItemId.NECKLACE_MOULD.id()));
-		recipes.add(categoryRecipe(FURNACE_CATEGORY_AMULETS, has(player, ItemId.AMULET_MOULD.id()), ItemId.AMULET_MOULD.id()));
+		recipes.add(categoryRecipe(FURNACE_CATEGORY_BANGELS, has(player, MyWorldItemId.BANGEL_MOULD), MyWorldItemId.BANGEL_MOULD));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_HOLY_SYMBOLS, has(player, ItemId.HOLY_SYMBOL_MOULD.id()), ItemId.HOLY_SYMBOL_MOULD.id()));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_UNHOLY_SYMBOLS, has(player, ItemId.UNHOLY_SYMBOL_MOULD.id()), ItemId.UNHOLY_SYMBOL_MOULD.id()));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_GUTHIX_SYMBOLS, has(player, ItemId.GUTHIX_SYMBOL_MOULD.id()), ItemId.GUTHIX_SYMBOL_MOULD.id()));

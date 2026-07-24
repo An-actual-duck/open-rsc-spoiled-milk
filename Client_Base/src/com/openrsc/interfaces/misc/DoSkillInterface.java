@@ -379,7 +379,7 @@ public final class DoSkillInterface {
 			} else if (isFurnaceMaterialPicker()) {
 				drawStringRightAligned("Choose this metal", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isTeleportDestinationPicker()) {
-				drawStringRightAligned("Consumes 1 amulet charge", selectedDetailRightX, footerY + 20, 1, textColour);
+				drawStringRightAligned("Consumes 1 Bangel charge", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else {
 				String inputName = inputItemId >= 0 ? EntityHandler.getItemDef(inputItemId).getName() : "materials";
 				String costText = inputItemId >= 0
@@ -500,8 +500,8 @@ public final class DoSkillInterface {
 				return "Rings";
 			case 288:
 				return "Necklaces";
-			case 296:
-				return "Amulets";
+			case 3292:
+				return "Bangels";
 			case 44:
 				return "Holy symbols";
 			case 1027:
@@ -812,22 +812,22 @@ public final class DoSkillInterface {
 			skillDoing = "Crafting";
 			doSkillItems.add(new DoSkillItem(283, "5", ""));
 			doSkillItems.add(new DoSkillItem(288, "6", ""));
-			doSkillItems.add(new DoSkillItem(296, "8", ""));
+			doSkillItems.add(new DoSkillItem(3292, "13", ""));
 			doSkillItems.add(new DoSkillItem(284, "8", ""));
 			doSkillItems.add(new DoSkillItem(289, "10", ""));
-			doSkillItems.add(new DoSkillItem(297, "13", ""));
+			doSkillItems.add(new DoSkillItem(3282, "13", ""));
 			doSkillItems.add(new DoSkillItem(285, "18", ""));
 			doSkillItems.add(new DoSkillItem(290, "24", ""));
-			doSkillItems.add(new DoSkillItem(298, "30", ""));
+			doSkillItems.add(new DoSkillItem(3283, "30", ""));
 			doSkillItems.add(new DoSkillItem(286, "30", ""));
 			doSkillItems.add(new DoSkillItem(291, "40", ""));
 			doSkillItems.add(new DoSkillItem(287, "42", ""));
-			doSkillItems.add(new DoSkillItem(299, "50", ""));
+			doSkillItems.add(new DoSkillItem(3284, "50", ""));
 			doSkillItems.add(new DoSkillItem(543, "55", ""));
 			doSkillItems.add(new DoSkillItem(292, "56", ""));
-			doSkillItems.add(new DoSkillItem(300, "70", ""));
+			doSkillItems.add(new DoSkillItem(3285, "70", ""));
 			doSkillItems.add(new DoSkillItem(544, "72", ""));
-			doSkillItems.add(new DoSkillItem(524, "80", ""));
+			doSkillItems.add(new DoSkillItem(3286, "80", ""));
 		} else if (skillToDo.equals("Cut opal")) {
 			title = "Choose an amount to cut";
 			skillDoing = "Crafting";

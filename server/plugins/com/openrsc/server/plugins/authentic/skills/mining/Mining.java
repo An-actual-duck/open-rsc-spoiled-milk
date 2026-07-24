@@ -585,11 +585,11 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		Item gem = new Item(getGemRockGem(), 1);
 		if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(gem) > 0) {
 			player.playerServerMessage(MessageType.QUEST, minedGemString(gem.getCatalogId()));
-			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
+			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic Bangel glimmers and another gem appears.");
 		} else if (!player.getCarriedItems().getInventory().full()) {
 			player.getCarriedItems().getInventory().add(gem);
 			player.playerServerMessage(MessageType.QUEST, minedGemString(gem.getCatalogId()));
-			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
+			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic Bangel glimmers and another gem appears.");
 		} else {
 			player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), player.getX(), player.getY(), 1, player));
 			player.playerServerMessage(MessageType.QUEST, "You mine a gem, but have no room to keep it, so it falls to the ground");
@@ -669,7 +669,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		final int bonusOre = EnchantingItemEffects.consumeGatheringAmuletBonusItems(player,
 			Skill.MINING.id(), oreId, oreCount);
 		if (bonusOre > 0) {
-			player.playerServerMessage(MessageType.QUEST, "@gre@Your miner's amulet produces "
+			player.playerServerMessage(MessageType.QUEST, "@gre@Your miner's Bangel produces "
 				+ bonusOre + " extra ore" + (bonusOre == 1 ? "." : "s."));
 		}
 		return bonusOre;
@@ -689,11 +689,11 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		String geodeName = geode.getDef(player.getWorld()).getName().toLowerCase();
 		if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(geode) > 0) {
 			player.playerServerMessage(MessageType.QUEST, "You find a " + geodeName + ".");
-			maybeDoubleRareGatheringReward(player, geode, rock, "Your cosmic amulet glimmers and another geode appears.");
+			maybeDoubleRareGatheringReward(player, geode, rock, "Your cosmic Bangel glimmers and another geode appears.");
 		} else if (!player.getCarriedItems().getInventory().full()) {
 			player.getCarriedItems().getInventory().add(geode);
 			player.playerServerMessage(MessageType.QUEST, "You find a " + geodeName + ".");
-			maybeDoubleRareGatheringReward(player, geode, rock, "Your cosmic amulet glimmers and another geode appears.");
+			maybeDoubleRareGatheringReward(player, geode, rock, "Your cosmic Bangel glimmers and another geode appears.");
 		} else {
 			player.getWorld().registerItem(new GroundItem(player.getWorld(), geode.getCatalogId(), player.getX(), player.getY(), 1, player));
 			player.playerServerMessage(MessageType.QUEST, "You find a geode, but have no room to keep it, so it falls to the ground");

@@ -24,8 +24,8 @@ FIXTURE = r"""
 package orsc;
 
 public final class EquipmentSlotHoverTargetFixture {
-    private static final int[] SLOT_X = {98, 98, 98, 153, 43, 43, 98, 98, 43, 153, 153};
-    private static final int[] SLOT_Y = {5, 85, 125, 85, 85, 165, 165, 45, 45, 45, 165};
+    private static final int[] SLOT_X = {98, 98, 98, 153, 43, 43, 98, 98, 43, 153, 153, 43};
+    private static final int[] SLOT_Y = {5, 85, 125, 85, 85, 165, 165, 45, 45, 45, 165, 125};
 
     private static void require(boolean condition, String message) {
         if (!condition) throw new AssertionError(message);
@@ -52,7 +52,7 @@ public final class EquipmentSlotHoverTargetFixture {
         require(slotAt(firstLeft, firstTop + 32) == -1, "bottom edge is exclusive");
         require(slotAt(1010, 210) == -1, "kept-on-death button area does not overlap equipment slots");
         require(slotAt(1100, 430) == -1, "equipment stat area is silent");
-        require(EquipmentSlotHoverTarget.findSlot(null, SLOT_Y, 11, 0, 0, 0, 0) == -1,
+        require(EquipmentSlotHoverTarget.findSlot(null, SLOT_Y, SLOT_X.length, 0, 0, 0, 0) == -1,
             "null coordinates are silent");
         require(EquipmentSlotHoverTarget.findSlot(SLOT_X, SLOT_Y, 0, 0, 0, 0, 0) == -1,
             "empty slot mapping is silent");

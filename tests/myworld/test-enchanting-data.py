@@ -8,6 +8,9 @@ from typing import Any, NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsCustom.json"
+ITEM_OVERRIDES_PATH = (
+    ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsMyWorld.json"
+)
 EFFECTS_PATH = (
     ROOT
     / "server"
@@ -81,7 +84,16 @@ def load_items() -> dict[int, dict[str, Any]]:
         fail(f"Missing file: {ITEMS_PATH}")
     data = json.loads(ITEMS_PATH.read_text(encoding="utf-8"))
     entries = data["items"] if isinstance(data, dict) else data
-    return {entry["id"]: entry for entry in entries}
+    items = {entry["id"]: dict(entry) for entry in entries}
+    override_data = json.loads(ITEM_OVERRIDES_PATH.read_text(encoding="utf-8"))
+    overrides = (
+        override_data["items"] if isinstance(override_data, dict) else override_data
+    )
+    for override in overrides:
+        item_id = override["id"]
+        if item_id in items:
+            items[item_id].update(override)
+    return items
 
 
 def expect_item(
@@ -107,7 +119,7 @@ def expect_description(
         )
 
 
-def ensure_amulet_lines(items: dict[int, dict[str, Any]]) -> None:
+def ensure_bangel_lines(items: dict[int, dict[str, Any]]) -> None:
     lines = {
         "Teleportation": range(1709, 1714),
         "Chaos Weaving": range(1719, 1724),
@@ -123,9 +135,9 @@ def ensure_amulet_lines(items: dict[int, dict[str, Any]]) -> None:
     tiers = ["Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone"]
     for effect_name, ids in lines.items():
         for tier_name, item_id in zip(tiers, ids):
-            entry = expect_item(items, item_id, f"{tier_name} Amulet of {effect_name}")
-            if entry["wearSlot"] != 10:
-                fail(f"{entry['name']} should use neck slot")
+            entry = expect_item(items, item_id, f"{tier_name} Bangel of {effect_name}")
+            if entry["wearSlot"] != 14:
+                fail(f"{entry['name']} should use wrist slot")
             if effect_name == "Teleportation":
                 commands = entry["command"].split(",")
                 if "Teleport" not in commands:
@@ -137,16 +149,16 @@ def ensure_amulet_lines(items: dict[int, dict[str, Any]]) -> None:
             if effect_name == "Alchemy" and entry["command"] != "Check":
                 fail(f"{entry['name']} should expose Check for charge display")
     gatherer_lines = {
-        "Woodcutter's Amulet": range(1593, 1598),
-        "Angler's Amulet": range(1598, 1603),
-        "Harvester's Amulet": range(1603, 1608),
-        "Miner's Amulet": range(1608, 1613),
+        "Woodcutter's Bangel": range(1593, 1598),
+        "Angler's Bangel": range(1598, 1603),
+        "Harvester's Bangel": range(1603, 1608),
+        "Miner's Bangel": range(1608, 1613),
     }
     for amulet_name, ids in gatherer_lines.items():
         for tier_name, item_id in zip(tiers, ids):
             entry = expect_item(items, item_id, f"{tier_name} {amulet_name}")
-            if entry["wearSlot"] != 10:
-                fail(f"{entry['name']} should use neck slot")
+            if entry["wearSlot"] != 14:
+                fail(f"{entry['name']} should use wrist slot")
 
 
 def ensure_necklace_lines(items: dict[int, dict[str, Any]]) -> None:
@@ -361,7 +373,8 @@ def ensure_source_mappings_exist() -> None:
         'setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment"',
         'setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Lifesaving"',
         'addSoulNecklaceLine(1759, tiers, soulNecklacePrices, gemMasks);',
-        '"items:125"',
+        "applyBangelVisuals();",
+        '"external-png:bangel"',
         '"items:57"',
         '"items:123"',
     ):
@@ -384,12 +397,7 @@ def ensure_source_mappings_exist() -> None:
     if "|| skillId == Skill.FLETCHING.id()" in effects_text:
         fail("Artifice should no longer boost retired Fletching XP")
 
-    hidden_crown_options = """\t\t\toptions = new String[]{
-\t\t\t\tring,
-\t\t\t\tNecklace,
-\t\t\t\tamulet
-\t\t\t};"""
-    if hidden_crown_options not in crafting_text:
+    if "JewelryCategory.CROWNS" in crafting_text:
         fail("Crafting.java should hide crown production from the gold jewelry menu")
 
 
@@ -497,8 +505,8 @@ def ensure_client_jewelry_coverage() -> None:
 def ensure_client_jewelry_uses_base_visuals() -> None:
     client_text = CLIENT_ENTITY_HANDLER_PATH.read_text(encoding="utf-8")
     required_snippets = (
-        'new ItemDef(tiers[i] + " Amulet of " + altarName,',
-        '"items:125"',
+        "applyBangelVisuals();",
+        '"external-png:bangel"',
         'new ItemDef(tiers[i] + " Necklace of " + altarName,',
         '"items:57"',
         'new ItemDef(tiers[i] + " Ring of " + altarName,',
@@ -686,7 +694,7 @@ def ensure_all_enchanted_jewelry_has_effect_examine(items: dict[int, dict[str, A
         if entry is None:
             continue
         name = entry.get("name", "")
-        if not any(kind in name for kind in ("Ring", "Necklace", "Amulet")):
+        if not any(kind in name for kind in ("Ring", "Necklace", "Bangel")):
             continue
         description = entry.get("description", "")
         if description in vague_descriptions or not description.startswith(effect_words):
@@ -738,7 +746,7 @@ def ensure_enchanted_wool_robes_have_effect_examine(items: dict[int, dict[str, A
 
 def main() -> None:
     items = load_items()
-    ensure_amulet_lines(items)
+    ensure_bangel_lines(items)
     ensure_necklace_lines(items)
     ensure_ring_lines(items)
     expect_item(items, 2072, "Beginner's Air Wizard Hat")
@@ -761,7 +769,7 @@ def main() -> None:
     ensure_client_jewelry_coverage()
     ensure_client_jewelry_uses_base_visuals()
     print("PASS: enchanting jewelry data validated")
-    print("Amulet lines validated: 14")
+    print("Bangel lines validated: 14")
     print("Necklace lines validated: 14")
     print("Elemental ring lines validated: 4")
 

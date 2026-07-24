@@ -2202,16 +2202,8 @@ public class PacketHandler {
 	}
 
 	private void updateEquipmentSlot() {
-		int slot = packetsIncoming.getByte();
+		int slot = EquipmentSlotMapping.serverToClient(packetsIncoming.getByte());
 		int id = packetsIncoming.getShort();
-		if (slot == 5)
-			slot = 0;
-		else if (slot == 6)
-			slot = 1;
-		else if (slot == 7)
-			slot = 2;
-		else if (slot > 7)
-			slot -= 3;
 		int amount = 1;
 		if (id == 0xFFFF) {
 			mc.equippedItems[slot] = null;
@@ -2241,16 +2233,8 @@ public class PacketHandler {
 		}
 
 		for (int i = 0; i < equipCount; i++) {
-			equipslot = packetsIncoming.getByte();
+			equipslot = EquipmentSlotMapping.serverToClient(packetsIncoming.getByte());
 			itemID = packetsIncoming.getShort();
-			if (equipslot == 5)
-				equipslot = 0;
-			else if (equipslot == 6)
-				equipslot = 1;
-			else if (equipslot == 7)
-				equipslot = 2;
-			else if (equipslot > 7)
-				equipslot -= 3;
 			mc.equippedItems[equipslot] = EntityHandler.getItemDef(itemID);
 			if (mc.equippedItems[equipslot].isStackable())
 				mc.equippedItemAmount[equipslot] = packetsIncoming.get32();
@@ -3548,15 +3532,7 @@ public class PacketHandler {
 					amount = packetsIncoming.get32();
 				else
 					amount = 1;
-				int equipslot = i;
-				if (equipslot == 5)
-					equipslot = 0;
-				else if (equipslot == 6)
-					equipslot = 1;
-				else if (equipslot == 7)
-					equipslot = 2;
-				else if (equipslot > 7)
-					equipslot -= 3;
+				int equipslot = EquipmentSlotMapping.serverToClient(i);
 				equipmentItems[equipslot] = new Item();
 				equipmentItems[equipslot].setItemDef(itemID);
 				equipmentItems[equipslot].setAmount(amount);

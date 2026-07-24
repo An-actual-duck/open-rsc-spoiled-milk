@@ -45,7 +45,7 @@ def main() -> None:
         "STANDARD_GEODE(3178)",
         "LARGE_GEODE(3179)",
         "HUGE_GEODE(3180)",
-        "public static final int maxCustom = 3281;",
+        "public static final int maxCustom = 3293;",
     ):
         require(item_id, snippet, "ItemId.java")
 
@@ -100,7 +100,7 @@ def main() -> None:
         "int largeWeight = 9 + (progress * 21 / 98);",
         "int standardWeight = 20 + (progress * 5 / 98);",
         "int smallWeight = 100 - standardWeight - largeWeight - hugeWeight;",
-        "Your cosmic amulet glimmers and another geode appears.",
+        "Your cosmic Bangel glimmers and another geode appears.",
         "Formulae.gatheringSideRewardChanceForFocus(getMiningFocus(player), MYWORLD_GEODE_REWARD_BASE_CHANCE)",
     ):
         require(mining, snippet, "Mining geode reward")

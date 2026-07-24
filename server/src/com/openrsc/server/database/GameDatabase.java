@@ -2,6 +2,7 @@ package com.openrsc.server.database;
 
 import com.openrsc.server.Server;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.LegacyAmuletCompatibility;
 import com.openrsc.server.content.achievement.Achievement;
 import com.openrsc.server.content.achievement.AchievementReward;
 import com.openrsc.server.content.achievement.AchievementTask;
@@ -636,7 +637,7 @@ public abstract class GameDatabase {
 		final ExpiredAuction[] expiredAuctions = new ExpiredAuction[1];
 
 		final ExpiredAuction expiredAuction = new ExpiredAuction();
-		expiredAuction.item_id = itemIndex;
+		expiredAuction.item_id = LegacyAmuletCompatibility.canonicalCatalogId(itemIndex);
 		expiredAuction.item_amount = amount;
 		expiredAuction.time = System.currentTimeMillis() / 1000;
 		expiredAuction.playerID = playerID;
@@ -651,7 +652,7 @@ public abstract class GameDatabase {
 		for (ExpiredAuction collectible : expiredAuctions) {
 			CollectibleItem item = new CollectibleItem();
 			item.claim_id = collectible.claim_id;
-			item.item_id = collectible.item_id;
+			item.item_id = LegacyAmuletCompatibility.canonicalCatalogId(collectible.item_id);
 			item.item_amount = collectible.item_amount;
 			item.playerID = collectible.playerID;
 			item.explanation = collectible.explanation;
@@ -666,7 +667,7 @@ public abstract class GameDatabase {
 
 	public void newAuction(final MarketItem item) throws GameDatabaseException {
 		final AuctionItem auctionItem = new AuctionItem();
-		auctionItem.itemID = item.getCatalogID();
+		auctionItem.itemID = LegacyAmuletCompatibility.canonicalCatalogId(item.getCatalogID());
 		auctionItem.amount = item.getAmount();
 		auctionItem.amount_left = item.getAmountLeft();
 		auctionItem.price = item.getPrice();
@@ -694,7 +695,8 @@ public abstract class GameDatabase {
 		MarketItem retVal = null;
 		AuctionItem auctionItem = queryAuctionItem(auctionId);
 		if (auctionItem != null) {
-			retVal = new MarketItem(auctionItem.auctionID, auctionItem.itemID, auctionItem.amount,
+			retVal = new MarketItem(auctionItem.auctionID,
+				LegacyAmuletCompatibility.canonicalCatalogId(auctionItem.itemID), auctionItem.amount,
 				auctionItem.amount_left, auctionItem.price, auctionItem.seller, auctionItem.seller_username,
 				auctionItem.buyer_info, auctionItem.time);
 		}
@@ -706,7 +708,8 @@ public abstract class GameDatabase {
 
 		final AuctionItem auctionItems[] = queryAuctionItems();
 		for (AuctionItem item : auctionItems) {
-			MarketItem marketItem = new MarketItem(item.auctionID, item.itemID, item.amount, item.amount_left,
+			MarketItem marketItem = new MarketItem(item.auctionID,
+				LegacyAmuletCompatibility.canonicalCatalogId(item.itemID), item.amount, item.amount_left,
 				item.price, item.seller,item.seller_username,item.buyer_info,item.time);
 			marketItems.add(marketItem);
 		}

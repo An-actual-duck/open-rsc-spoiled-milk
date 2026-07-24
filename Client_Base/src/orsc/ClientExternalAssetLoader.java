@@ -274,6 +274,30 @@ final class ClientExternalAssetLoader {
 		}
 	}
 
+	Sprite loadExternalInterfaceSprite(File sourceFile, int targetWidth, int targetHeight) {
+		if (!assetFileExists(sourceFile)) {
+			return null;
+		}
+		try {
+			BufferedImage source = readAssetImage(sourceFile);
+			if (source == null) {
+				return null;
+			}
+			BufferedImage scaled = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D graphics = createNearestNeighborGraphics(scaled);
+			graphics.drawImage(source, 0, 0, targetWidth, targetHeight, null);
+			graphics.dispose();
+			int[] pixels = new int[targetWidth * targetHeight];
+			scaled.getRGB(0, 0, targetWidth, targetHeight, pixels, 0, targetWidth);
+			normalizePixels(pixels, 64);
+			return createSprite(pixels, targetWidth, targetHeight);
+		} catch (IOException failure) {
+			System.out.println("Failed to load external interface sprite " + sourceFile.getPath()
+				+ ": " + failure.getMessage());
+			return null;
+		}
+	}
+
 	Frame loadExternalEquipmentFrame(File sourceFile, int offsetX, int offsetY) {
 		try {
 			BufferedImage source = readAssetImage(sourceFile);

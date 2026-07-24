@@ -6,6 +6,13 @@
 > [`enchantment-runtime-audit.md`](../completed-work-plans/enchantment-runtime-audit.md).
 > Use that audit and the generated item definitions as the runtime source of
 > truth.
+>
+> The active altar-enchanted Amulet families were subsequently renamed to
+> **Bangels** and moved to the wrist slot. Their preserved IDs, crafting path,
+> slot translation, and intentionally retained internal compatibility names
+> are documented in
+> [`bangel-jewelry.md`](../completed-work-plans/bangel-jewelry.md). References
+> to active Amulets below describe the historical pre-Bangel model.
 
 This document records cloth effects retired from robes and the implemented
 altar-jewelry runtime behavior.

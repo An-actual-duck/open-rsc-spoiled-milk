@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.authentic.quests.members;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -58,7 +59,7 @@ public class TreeGnomeVillage implements QuestInterface, TalkNpcTrigger,
 		for (XPReward xpReward : reward.getXpRewards()) {
 			incStat(player, xpReward.getSkill().id(), xpReward.getBaseXP(), xpReward.getVarXP());
 		}
-		give(player, ItemId.EMERALD_AMULET.id(), 1);
+		give(player, MyWorldItemId.EMERALD_BANGEL, 1);
 	}
 
 	@Override
@@ -564,7 +565,7 @@ public class TreeGnomeVillage implements QuestInterface, TalkNpcTrigger,
 						npcsay(player,
 							n,
 							"you are modest brave traveller",
-							"please for your efforts take this amulet",
+							"please for your efforts take this Bangel",
 							"it's made from the same sacred stone as the orbs of protection",
 							"it will help keep you safe on your journeys");
 						say(player, n, "thank you king bolren");
@@ -594,10 +595,10 @@ public class TreeGnomeVillage implements QuestInterface, TalkNpcTrigger,
 				case -1:
 					say(player, n, "hello again bolren");
 					npcsay(player, n, "well hello, it's good to see you again");
-					if (!player.getCarriedItems().hasCatalogID(ItemId.EMERALD_AMULET.id(), Optional.empty())) {
-						say(player, n, "i've lost my amulet");
+					if (!player.getCarriedItems().hasCatalogID(MyWorldItemId.EMERALD_BANGEL, Optional.empty())) {
+						say(player, n, "i've lost my Bangel");
 						npcsay(player, n, "oh dear", "here take another");
-						give(player, ItemId.EMERALD_AMULET.id(), 1);
+						give(player, MyWorldItemId.EMERALD_BANGEL, 1);
 					} else {
 						say(player, n, "good to see you");
 					}

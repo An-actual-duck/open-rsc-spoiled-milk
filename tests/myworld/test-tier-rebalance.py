@@ -19,22 +19,22 @@ SMELTING_DEFS = ROOT / "server/conf/server/defs/extras/ItemSmeltingDef.xml"
 STANDARD_JEWELRY_LEVELS = {
     283: 1,   # gold ring
     288: 3,   # gold necklace
-    296: 5,   # gold amulet
+    3292: 5,  # gold Bangel
     284: 8,   # sapphire ring
     289: 10,  # sapphire necklace
-    297: 13,  # sapphire amulet
+    3282: 13, # sapphire Bangel
     285: 18,  # emerald ring
     290: 22,  # emerald necklace
-    298: 26,  # emerald amulet
+    3283: 26, # emerald Bangel
     286: 32,  # ruby ring
     291: 38,  # ruby necklace
-    299: 44,  # ruby amulet
+    3284: 44, # ruby Bangel
     287: 48,  # diamond ring
     292: 54,  # diamond necklace
-    300: 60,  # diamond amulet
+    3285: 60, # diamond Bangel
     543: 58,  # dragonstone ring
     544: 64,  # dragonstone necklace
-    524: 70,  # dragonstone amulet
+    3286: 70, # dragonstone Bangel
 }
 
 STANDARD_GEM_CUTTING_LEVELS = {

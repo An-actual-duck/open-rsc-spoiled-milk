@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.authentic.commands;
 
 import com.openrsc.server.constants.*;
+import com.openrsc.server.content.LegacyAmuletCompatibility;
 import com.openrsc.server.database.GameDatabaseException;
 import com.openrsc.server.database.impl.mysql.queries.logging.ChatLog;
 import com.openrsc.server.database.impl.mysql.queries.logging.StaffLog;
@@ -160,7 +161,7 @@ public final class Admins implements CommandTrigger {
 		} else if (command.equalsIgnoreCase("bankitem") || command.equalsIgnoreCase("bitem") || command.equalsIgnoreCase("addbank")) {
 			spawnItemBank(player, command, args);
 		} else if (command.equalsIgnoreCase("telejewelry") || command.equalsIgnoreCase("lawamulets")) {
-			spawnLawAmulets(player, args);
+			spawnLawBangels(player, args);
 		} else if (command.equalsIgnoreCase("npctrace")) {
 			toggleNpcTrace(player, command, args);
 		} else if (command.equalsIgnoreCase("walktrace")) {
@@ -661,6 +662,7 @@ public final class Admins implements CommandTrigger {
 			player.message(badSyntaxPrefix + command.toUpperCase() + " [id] (respawn_time) (amount) (x) (y)");
 			return;
 		}
+		id = LegacyAmuletCompatibility.canonicalCatalogId(id);
 
 		int respawnTime;
 		if (args.length >= 3) {
@@ -987,6 +989,7 @@ public final class Admins implements CommandTrigger {
 			}
 		}
 
+		id = LegacyAmuletCompatibility.canonicalCatalogId(id);
 		if (player.getWorld().getServer().getEntityHandler().getItemDef(id) == null) {
 			throw new Exception("Invalid item id");
 		}
@@ -1100,19 +1103,9 @@ public final class Admins implements CommandTrigger {
 
 		int id;
 		try {
-			id = Integer.parseInt(args[0]);
-		} catch (NumberFormatException ex) {
-			ItemId item = ItemId.getByName(args[0]);
-			if (item == ItemId.NOTHING) {
-				player.message(badSyntaxPrefix + command.toUpperCase() + " [id or ItemId name] (amount) (player)");
-				return;
-			} else {
-				id = item.id();
-			}
-		}
-
-		if (player.getWorld().getServer().getEntityHandler().getItemDef(id) == null) {
-			player.message(messagePrefix + "Invalid item id");
+			id = getItemId(player, args[0]);
+		} catch (Exception ex) {
+			player.message(badSyntaxPrefix + command.toUpperCase() + " [id or ItemId name] (amount) (player)");
 			return;
 		}
 
@@ -1150,24 +1143,27 @@ public final class Admins implements CommandTrigger {
 
 	private void spawnItemBankFill(Player player) {
 		for (int i = 0; i < (player.getWorld().getServer().getConfig().WANT_CUSTOM_BANKS ? ItemId.maxCustom : 192); i++) {
+			if (LegacyAmuletCompatibility.isRetiredCatalogId(i)) {
+				continue;
+			}
 			player.getBank().add(new Item(i, 50), false);
 		}
 		player.message("Added bank items.");
 	}
 
-	private void spawnLawAmulets(Player player, String[] args) {
+	private void spawnLawBangels(Player player, String[] args) {
 		final Player targetPlayer = args.length > 0 ? player.getWorld().getPlayer(DataConversions.usernameToHash(args[0])) : player;
 		if (targetPlayer == null) {
 			player.message(messagePrefix + "Invalid name or player is not online");
 			return;
 		}
 
-		final int[] lawAmulets = {1709, 1710, 1711, 1712, 1713};
-		for (final int itemId : lawAmulets) {
+		final int[] lawBangels = {1709, 1710, 1711, 1712, 1713};
+		for (final int itemId : lawBangels) {
 			targetPlayer.getBank().add(new Item(itemId, 1));
 		}
 
-		player.message(messagePrefix + "Added the full law amulet line to the bank of " + targetPlayer.getUsername());
+		player.message(messagePrefix + "Added the full law Bangel line to the bank of " + targetPlayer.getUsername());
 		if (player.getUsernameHash() != targetPlayer.getUsernameHash() && !player.isInvisibleTo(targetPlayer)) {
 			targetPlayer.message(messagePrefix + "A staff member has added teleport jewelry to your bank");
 		}
@@ -1331,7 +1327,7 @@ public final class Admins implements CommandTrigger {
 						new Item(ItemId.LARGE_RUNE_HELMET.id()),
 						(player.isMale() || !supportsPlateTops) ? new Item(ItemId.ADAMANTITE_PLATE_MAIL_BODY.id()) : new Item(ItemId.ADAMANTITE_PLATE_MAIL_TOP.id()),
 						new Item(ItemId.ADAMANTITE_PLATE_MAIL_LEGS.id()),
-						supportsEnchantedAmulets ? new Item(ItemId.DIAMOND_AMULET.id()) : new Item(ItemId.AMULET_OF_ACCURACY.id()),
+						supportsEnchantedAmulets ? new Item(ItemId.DIAMOND_AMULET_OF_POWER.id()) : new Item(ItemId.AMULET_OF_ACCURACY.id()),
 						new Item(ItemId.BLUE_CAPE.id()),
 						new Item(ItemId.RUNE_BATTLE_AXE.id()),
 						new Item(ItemId.ADAMANTITE_KITE_SHIELD.id())
@@ -2066,6 +2062,7 @@ public final class Admins implements CommandTrigger {
 				idToAdd = item.id();
 			}
 		}
+		idToAdd = LegacyAmuletCompatibility.canonicalCatalogId(idToAdd);
 
 		boolean success = false;
 		int removedItemId = -1;
@@ -2136,7 +2133,7 @@ public final class Admins implements CommandTrigger {
 		}
 
 		try {
-			int id = Integer.parseInt(args[0]);
+			int id = LegacyAmuletCompatibility.canonicalCatalogId(Integer.parseInt(args[0]));
 			int amount = Integer.parseInt(args[1]);
 			ItemDefinition itemDef = player.getWorld().getServer().getEntityHandler().getItemDef(id);
 			if (itemDef != null) {

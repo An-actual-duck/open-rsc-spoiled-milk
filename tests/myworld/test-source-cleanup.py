@@ -32,6 +32,7 @@ DRAGONSTONE_PATH = (
 )
 ITEM_DEFS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefs.json"
 ITEM_DEFS_CUSTOM_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsCustom.json"
+ITEM_DEFS_MYWORLD_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsMyWorld.json"
 CRAFTING_PATH = (
     ROOT
     / "server"
@@ -402,12 +403,14 @@ def require_snippet(path: Path, snippet: str, label: str) -> None:
 def ensure_spell_redirects() -> None:
     spell_text = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
     required_snippets = [
-        'player.playerServerMessage(MessageType.QUEST, "Amulets are enchanted at elemental altars now.");',
+        "enchantBangel(player, affectedItem, spell, ItemId.SAPPHIRE_AMULET_OF_MAGIC.id());",
+        "enchantBangel(player, affectedItem, spell, ItemId.EMERALD_AMULET_OF_PROTECTION.id());",
+        "enchantBangel(player, affectedItem, spell, ItemId.RUBY_AMULET_OF_STRENGTH.id());",
+        "enchantBangel(player, affectedItem, spell, ItemId.DIAMOND_AMULET_OF_POWER.id());",
+        "enchantBangel(player, affectedItem, spell, ItemId.CHARGED_DRAGONSTONE_AMULET.id());",
         'player.playerServerMessage(MessageType.QUEST, "Rings are enchanted at altars now.");',
         'player.playerServerMessage(MessageType.QUEST, "Opal rings no longer have a separate enchantment path.");',
-        'player.playerServerMessage(MessageType.QUEST, "Dragonstone amulets are enchanted at altars now.");',
         'player.playerServerMessage(MessageType.QUEST, "Necklaces are enchanted at altars now.");',
-        'player.playerServerMessage(MessageType.QUEST, "Dragonstone jewelry is enchanted at altars now.");',
     ]
     for snippet in required_snippets:
         if snippet not in spell_text:
@@ -422,12 +425,16 @@ def ensure_dragonstone_redirects() -> None:
 def ensure_legacy_jewelry_inert() -> None:
     base_items = json.loads(ITEM_DEFS_PATH.read_text(encoding="utf-8"))["item"]
     custom_items = json.loads(ITEM_DEFS_CUSTOM_PATH.read_text(encoding="utf-8"))["items"]
+    myworld_items = json.loads(ITEM_DEFS_MYWORLD_PATH.read_text(encoding="utf-8"))["items"]
     all_items = {item["id"]: item for item in base_items}
-    all_items.update({item["id"]: item for item in custom_items})
+    for item in custom_items + myworld_items:
+        if item["id"] in all_items:
+            all_items[item["id"]].update(item)
+        else:
+            all_items[item["id"]] = item
 
     retired_items = {
         522: "Dragonstone Amulet",
-        597: "Charged Dragonstone Amulet",
         1320: "Dwarven ring",
     }
     for item_id, name in retired_items.items():
@@ -441,17 +448,18 @@ def ensure_legacy_jewelry_inert() -> None:
         if item.get("isUntradable") != 1:
             fail(f"{name} should be retained only as untradable compatibility baggage")
 
+    charged_bangel = all_items.get(597)
+    if charged_bangel is None or charged_bangel.get("name") != "Charged Dragonstone Bangel":
+        fail("Classic enchanted ID 597 should be the charged Dragonstone Bangel")
+    if charged_bangel.get("isWearable") != 1 or charged_bangel.get("wearSlot") != 14:
+        fail("Classic enchanted ID 597 should be active wrist equipment")
+
 
 def ensure_crowns_hidden_from_crafting() -> None:
     crafting_text = CRAFTING_PATH.read_text(encoding="utf-8")
     crafting_def_text = CRAFTING_DEF_PATH.read_text(encoding="utf-8")
     retro_crafting_def_text = RETRO_CRAFTING_DEF_PATH.read_text(encoding="utf-8")
-    hidden_crown_options = """\t\t\toptions = new String[]{
-\t\t\t\tring,
-\t\t\t\tNecklace,
-\t\t\t\tamulet
-\t\t\t};"""
-    if hidden_crown_options not in crafting_text:
+    if "JewelryCategory.CROWNS" in crafting_text:
         fail("Crafting.java should hide crown production from the gold jewelry menu")
     for item_id in ("1503", "1504", "1505", "1506", "1507", "1508"):
         snippet = f"<itemID>{item_id}</itemID>"
@@ -480,7 +488,7 @@ def ensure_remaining_holdovers_documented_in_code() -> None:
     )
     require_snippet(
         OBSERVATORY_PATH,
-        "give(player, ItemId.EMERALD_AMULET.id(), 1);",
+        "give(player, MyWorldItemId.EMERALD_BANGEL, 1);",
         "Observatory.java",
     )
 

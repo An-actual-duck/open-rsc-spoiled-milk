@@ -1024,7 +1024,13 @@
     {
       "id": 314,
       "magicOffense": 2,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Magic",
+      "description": "It improves my magic",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 317,
@@ -1033,7 +1039,13 @@
       "meleeDefense": 1,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Power",
+      "description": "A powerful Bangel",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 852,
