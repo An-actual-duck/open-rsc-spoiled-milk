@@ -86,7 +86,7 @@ def main() -> int:
 		require(mask in client_defs, f"Client placeholder mask missing for {name}")
 		require(f'new SkillMenuItem({item_id_value}, "80", "{name}")' in skill_guide, f"Magic guide missing {name}")
 
-	require("public static final int maxCustom = 3281;" in item_id, "ItemId.maxCustom should include combination staves")
+	require("public static final int maxCustom = 3292;" in item_id, "ItemId.maxCustom should include combination staves")
 
 	for snippet in (
 		"STAFF_OF_ELEMENTS_RUNES",

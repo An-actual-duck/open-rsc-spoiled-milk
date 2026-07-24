@@ -38,7 +38,7 @@ def main():
         "public static boolean isLawAltarAllowedItem(final int itemId)",
         "return isLawAltarEnchantingInput(itemId) || isLawAltarProduct(itemId);",
         "public static boolean isLawAltarEnchantingInput(final int itemId)",
-        "isAmuletBase(itemId)",
+        "isBangelBase(itemId)",
         "isNecklaceBase(itemId)",
         "isRingBase(itemId)",
         "isBaseStaff(itemId)",

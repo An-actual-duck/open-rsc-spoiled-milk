@@ -11839,83 +11839,203 @@
     },
     {
       "id": 1593,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Woodcutter's Bangel",
+      "description": "Boosts woodcutting log yield by 10%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1594,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Woodcutter's Bangel",
+      "description": "Boosts woodcutting log yield by 20%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1595,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Woodcutter's Bangel",
+      "description": "Boosts woodcutting log yield by 30%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1596,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Woodcutter's Bangel",
+      "description": "Boosts woodcutting log yield by 50%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1597,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Woodcutter's Bangel",
+      "description": "Boosts woodcutting log yield by 100%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1598,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Angler's Bangel",
+      "description": "Boosts fishing catch yield by 10%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1599,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Angler's Bangel",
+      "description": "Boosts fishing catch yield by 20%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1600,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Angler's Bangel",
+      "description": "Boosts fishing catch yield by 30%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1601,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Angler's Bangel",
+      "description": "Boosts fishing catch yield by 50%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1602,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Angler's Bangel",
+      "description": "Boosts fishing catch yield by 100%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1603,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Harvester's Bangel",
+      "description": "Boosts harvesting produce yield by 10%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1604,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Harvester's Bangel",
+      "description": "Boosts harvesting produce yield by 20%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1605,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Harvester's Bangel",
+      "description": "Boosts harvesting produce yield by 30%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1606,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Harvester's Bangel",
+      "description": "Boosts harvesting produce yield by 50%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1607,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Harvester's Bangel",
+      "description": "Boosts harvesting produce yield by 100%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1608,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Miner's Bangel",
+      "description": "Boosts mining ore yield by 10%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1609,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Miner's Bangel",
+      "description": "Boosts mining ore yield by 20%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1610,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Miner's Bangel",
+      "description": "Boosts mining ore yield by 30%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1611,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Miner's Bangel",
+      "description": "Boosts mining ore yield by 50%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1612,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Miner's Bangel",
+      "description": "Boosts mining ore yield by 100%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1613,
@@ -12303,23 +12423,53 @@
     },
     {
       "id": 1709,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Teleportation",
+      "description": "Stores 3 guild teleports.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1710,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Teleportation",
+      "description": "Stores 3 guild teleports.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1711,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Teleportation",
+      "description": "Stores 3 guild teleports.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1712,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Teleportation",
+      "description": "Stores 3 guild teleports.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1713,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Bangel of Teleportation",
+      "description": "Stores 3 guild teleports.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1714,
@@ -12343,163 +12493,403 @@
     },
     {
       "id": 1719,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Chaos Weaving",
+      "description": "Boosts chaos rune yield by 20%; bonus mind/chaos/death/blood: 50/25/20/5.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1720,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Chaos Weaving",
+      "description": "Boosts chaos rune yield by 35%; bonus mind/chaos/death/blood: 42/27/23/8.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1721,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Chaos Weaving",
+      "description": "Boosts chaos rune yield by 50%; bonus mind/chaos/death/blood: 35/28/25/12.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1722,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Chaos Weaving",
+      "description": "Boosts chaos rune yield by 70%; bonus mind/chaos/death/blood: 27/29/28/16.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1723,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Bangel of Chaos Weaving",
+      "description": "Boosts chaos rune yield by 100%; bonus mind/chaos/death/blood: 20/30/30/20.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1724,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Ruin",
+      "description": "At 100 death charge, bursts for 1-3 damage within 2 tiles.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1725,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Ruin",
+      "description": "At 100 death charge, bursts for 3-6 damage within 2 tiles.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1726,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Ruin",
+      "description": "At 100 death charge, bursts for 6-9 damage within 2 tiles.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1727,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Ruin",
+      "description": "At 100 death charge, bursts for 9-14 damage within 2 tiles.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1728,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Bangel of Ruin",
+      "description": "At 100 death charge, bursts for 10-20 damage within 2 tiles.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1729,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Siphoning",
+      "description": "Steals 5% of damage dealt as healing.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1730,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Siphoning",
+      "description": "Steals 10% of damage dealt as healing.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1731,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Siphoning",
+      "description": "Steals 15% of damage dealt as healing.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1732,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Siphoning",
+      "description": "Steals 20% of damage dealt as healing.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1733,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Bangel of Siphoning",
+      "description": "Steals 25% of damage dealt as healing.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1734,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Attunement",
+      "description": "Boosts magic, summoning, and prayer XP by 5%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1735,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Attunement",
+      "description": "Boosts magic, summoning, and prayer XP by 10%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1736,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Attunement",
+      "description": "Boosts magic, summoning, and prayer XP by 15%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1737,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Attunement",
+      "description": "Boosts magic, summoning, and prayer XP by 25%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1738,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Bangel of Attunement",
+      "description": "Boosts magic, summoning, and prayer XP by 50%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1739,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Prowess",
+      "description": "Boosts agility, thieving, and ranged XP by 5%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1740,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Prowess",
+      "description": "Boosts agility, thieving, and ranged XP by 10%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1741,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Prowess",
+      "description": "Boosts agility, thieving, and ranged XP by 15%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1742,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Prowess",
+      "description": "Boosts agility, thieving, and ranged XP by 25%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1743,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Bangel of Prowess",
+      "description": "Boosts agility, thieving, and ranged XP by 50%.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1744,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Alchemy",
+      "description": "Auto-alchs 1000+ gp monster drops. 100 charges.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1745,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Alchemy",
+      "description": "Auto-alchs 1000+ gp monster drops. 200 charges.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1746,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Alchemy",
+      "description": "Auto-alchs 1000+ gp monster drops. 300 charges.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1747,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Alchemy",
+      "description": "Auto-alchs 1000+ gp monster drops. 500 charges.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1748,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Bangel of Alchemy",
+      "description": "Auto-alchs 1000+ gp monster drops. 1000 charges.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1749,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Bounty",
+      "description": "Has a 10% chance to double rare gathering rewards.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1750,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Bounty",
+      "description": "Has a 20% chance to double rare gathering rewards.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1751,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Bounty",
+      "description": "Has a 30% chance to double rare gathering rewards.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1752,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Bounty",
+      "description": "Has a 40% chance to double rare gathering rewards.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1753,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Bangel of Bounty",
+      "description": "Has a 50% chance to double rare gathering rewards.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1754,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Renewal",
+      "description": "At 200 soul charge, heals 1-2 Hits within 2 tiles.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1755,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Renewal",
+      "description": "At 200 soul charge, heals 1-3 Hits within 2 tiles.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1756,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Renewal",
+      "description": "At 200 soul charge, heals 2-4 Hits within 2 tiles.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1757,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Renewal",
+      "description": "At 200 soul charge, heals 3-6 Hits within 2 tiles.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1758,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Bangel of Renewal",
+      "description": "At 200 soul charge, heals 5-10 Hits within 2 tiles.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 1759,
@@ -12675,23 +13065,53 @@
     },
     {
       "id": 3106,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "name": "Sapphire Bangel of Command",
+      "description": "Raises combat summon max damage by +1.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 3107,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "name": "Emerald Bangel of Command",
+      "description": "Raises combat summon max damage by +2.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 3108,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "name": "Ruby Bangel of Command",
+      "description": "Raises combat summon max damage by +3.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 3109,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "name": "Diamond Bangel of Command",
+      "description": "Raises combat summon max damage by +4.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 3110,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Dragonstone Bangel of Command",
+      "description": "Raises combat summon max damage by +5.",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 3111,

@@ -27,7 +27,7 @@ public final class CustomBankInterface extends BankInterface {
 	private static final int FILTER_PANEL_GAP = 4;
 	private static final int FILTER_ROW_HEIGHT = 13;
 	private static final int INTERFACE_OPTION_BANK_ITEM_PIN = 23;
-	private int[] equipmentViewOrder = new int[]{0, 1, 2, 7, 4, 3, 8, 9, 5, 6, 10};
+	private int[] equipmentViewOrder = new int[]{0, 1, 2, 7, 4, 3, 8, 9, 5, 6, 10, 11};
 	private final int presetCount = 2;
 	public Preset[] presets = new Preset[presetCount];
 	public int selectedInventorySlot = -1;
@@ -580,7 +580,7 @@ public final class CustomBankInterface extends BankInterface {
 			}
 			for (int i = 0; i < Config.S_PLAYER_SLOT_COUNT; i++) {
 				if (mc.equippedItems[this.equipmentViewOrder[i]] == null) {
-					todraw = mc.spriteSelect(EntityHandler.GUIparts.get(EntityHandler.GUIPARTS.EQUIPSLOT_HELM.id() + this.equipmentViewOrder[i]));
+					todraw = mc.getEquipmentSlotSprite(this.equipmentViewOrder[i]);
 					mc.getSurface().drawSpriteClipping(todraw,
 						xOffset,
 						yOffset,
@@ -1691,7 +1691,7 @@ public final class CustomBankInterface extends BankInterface {
 			Item item = presets[selectedPresetSlot].equipment[i];
 			equipDef = item.getItemDef();
 			if (equipDef == null) {
-				todraw = mc.spriteSelect(EntityHandler.GUIparts.get(EntityHandler.GUIPARTS.EQUIPSLOT_HELM.id() + i));
+				todraw = mc.getEquipmentSlotSprite(i);
 				mc.getSurface().drawSpriteClipping(todraw
 					, x + mc.equipIconXLocations[i]
 					, y + 21 + mc.equipIconYLocations[i],

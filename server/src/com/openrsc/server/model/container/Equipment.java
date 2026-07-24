@@ -28,7 +28,7 @@ import java.util.Optional;
 public class Equipment {
 
 	private static final Logger LOGGER = LogManager.getLogger();
-	public static final int SLOT_COUNT = 14;
+	public static final int SLOT_COUNT = 15;
 	private static final int ARMOR_POWER_PENALTY_PER_MAJOR_SLOT = 8;
 	private static final int GOD_MACE_PRAYER_REQUIREMENT = 80;
 	private final Item[] list = new Item[SLOT_COUNT];
@@ -331,6 +331,12 @@ public class Equipment {
 	public Item getRingItem() {
 		synchronized (list) {
 			return list[EquipmentSlot.SLOT_RING.getIndex()];
+		}
+	}
+
+	public Item getWristItem() {
+		synchronized (list) {
+			return list[EquipmentSlot.SLOT_WRIST.getIndex()];
 		}
 	}
 
@@ -2049,13 +2055,13 @@ public class Equipment {
 	}
 
 	public int getChaosAmuletYieldBonusPercent() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getChaosAmuletYieldBonusPercent(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getChaosAmuletYieldBonusPercent(wristItem.getCatalogId());
 	}
 
 	public int[] getChaosAmuletBonusRuneWeights() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? new int[0] : EnchantingItemEffects.getChaosAmuletBonusRuneWeights(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? new int[0] : EnchantingItemEffects.getChaosAmuletBonusRuneWeights(wristItem.getCatalogId());
 	}
 
 	public double getChaosRecoilChance() {
@@ -2068,13 +2074,13 @@ public class Equipment {
 	}
 
 	public double getDeathAmuletDamagePerKillBonus() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getDeathAmuletDamagePerKillBonus(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0.0D : EnchantingItemEffects.getDeathAmuletDamagePerKillBonus(wristItem.getCatalogId());
 	}
 
 	public double getBloodAmuletLifestealChance() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getBloodAmuletLifestealChance(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0.0D : EnchantingItemEffects.getBloodAmuletLifestealChance(wristItem.getCatalogId());
 	}
 
 	public double getBloodNecklaceLeachPercent() {
@@ -2100,18 +2106,18 @@ public class Equipment {
 	}
 
 	public int getDeathAmuletBurstRadius() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getDeathAmuletBurstRadius(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getDeathAmuletBurstRadius(wristItem.getCatalogId());
 	}
 
 	public int getDeathAmuletBurstMinDamage() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getDeathAmuletBurstMinDamage(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getDeathAmuletBurstMinDamage(wristItem.getCatalogId());
 	}
 
 	public int getDeathAmuletBurstMaxDamage() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getDeathAmuletBurstMaxDamage(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getDeathAmuletBurstMaxDamage(wristItem.getCatalogId());
 	}
 
 	public int getLifeNecklaceSummonHealthPercent() {
@@ -2125,8 +2131,8 @@ public class Equipment {
 	}
 
 	public int getLifeAmuletSummonMaxDamageBonus() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getLifeAmuletSummonMaxDamageBonus(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getLifeAmuletSummonMaxDamageBonus(wristItem.getCatalogId());
 	}
 
 	public int getBloodRingHitsBonus() {
@@ -2263,14 +2269,14 @@ public class Equipment {
 	public double getMindJewelryXpBonus(final int skillId) {
 		Item neckItem = getEquippedNeckItem();
 		Item ringItem = getEquippedRingItem();
+		Item wristItem = getEquippedWristItem();
 		double bonus = 0.0D;
+		if (wristItem != null && EnchantingItemEffects.isMindCombatAmuletXpSkill(skillId)) {
+			bonus += EnchantingItemEffects.getMindCombatAmuletXpBonus(wristItem.getCatalogId());
+		}
 		if (neckItem != null) {
-			final int neckId = neckItem.getCatalogId();
-			if (EnchantingItemEffects.isMindCombatAmuletXpSkill(skillId)) {
-				bonus += EnchantingItemEffects.getMindCombatAmuletXpBonus(neckId);
-			}
 			if (EnchantingItemEffects.isMindNecklaceXpSkill(skillId)) {
-				bonus += EnchantingItemEffects.getMindNecklaceXpBonus(neckId);
+				bonus += EnchantingItemEffects.getMindNecklaceXpBonus(neckItem.getCatalogId());
 			}
 		}
 		if (ringItem != null && EnchantingItemEffects.isMindRingXpSkill(skillId)) {
@@ -2282,14 +2288,14 @@ public class Equipment {
 	public double getBodyJewelryXpBonus(final int skillId) {
 		Item neckItem = getEquippedNeckItem();
 		Item ringItem = getEquippedRingItem();
+		Item wristItem = getEquippedWristItem();
 		double bonus = 0.0D;
+		if (wristItem != null && EnchantingItemEffects.isBodyCombatAmuletXpSkill(skillId)) {
+			bonus += EnchantingItemEffects.getBodyDisciplineAmuletXpBonus(wristItem.getCatalogId());
+		}
 		if (neckItem != null) {
-			final int neckId = neckItem.getCatalogId();
-			if (EnchantingItemEffects.isBodyCombatAmuletXpSkill(skillId)) {
-				bonus += EnchantingItemEffects.getBodyDisciplineAmuletXpBonus(neckId);
-			}
 			if (EnchantingItemEffects.isBodyNecklaceXpSkill(skillId)) {
-				bonus += EnchantingItemEffects.getBodyNecklaceXpBonus(neckId);
+				bonus += EnchantingItemEffects.getBodyNecklaceXpBonus(neckItem.getCatalogId());
 			}
 		}
 		if (ringItem != null && EnchantingItemEffects.isBodyRingXpSkill(skillId)) {
@@ -2299,23 +2305,23 @@ public class Equipment {
 	}
 
 	public double getMindAmuletPotionDurationBonus() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getMindAmuletPotionDurationBonus(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0.0D : EnchantingItemEffects.getMindAmuletPotionDurationBonus(wristItem.getCatalogId());
 	}
 
 	public double getBodyAmuletRegenSpeedBonus() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getBodyAmuletRegenSpeedBonus(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0.0D : EnchantingItemEffects.getBodyAmuletRegenSpeedBonus(wristItem.getCatalogId());
 	}
 
 	public double getMindCombatAmuletXpBonus() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getMindCombatAmuletXpBonus(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0.0D : EnchantingItemEffects.getMindCombatAmuletXpBonus(wristItem.getCatalogId());
 	}
 
 	public double getBodyDisciplineAmuletXpBonus() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getBodyDisciplineAmuletXpBonus(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0.0D : EnchantingItemEffects.getBodyDisciplineAmuletXpBonus(wristItem.getCatalogId());
 	}
 
 	public double getNatureFoodHealingBonus() {
@@ -2324,23 +2330,23 @@ public class Equipment {
 	}
 
 	public int getNatureCleansingPoisonDecayBonus() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getNatureCleansingPoisonDecayBonus(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getNatureCleansingPoisonDecayBonus(wristItem.getCatalogId());
 	}
 
 	public int getGatheringAmuletYieldBonusPercent(final int skillId) {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getGatheringAmuletYieldBonusPercent(neckItem.getCatalogId(), skillId);
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getGatheringAmuletYieldBonusPercent(wristItem.getCatalogId(), skillId);
 	}
 
 	public double getCosmicAmuletExtraResourceChance() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getCosmicAmuletExtraResourceChance(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0.0D : EnchantingItemEffects.getCosmicAmuletExtraResourceChance(wristItem.getCatalogId());
 	}
 
 	public double getCosmicAmuletRareGatheringDoubleChance() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getCosmicAmuletRareGatheringDoubleChance(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0.0D : EnchantingItemEffects.getCosmicAmuletRareGatheringDoubleChance(wristItem.getCatalogId());
 	}
 
 	public double getCosmicNecklaceStandardDropChance() {
@@ -2389,11 +2395,11 @@ public class Equipment {
 		if (item == null || item.getAmount() <= 0 || item.getCatalogId() == ItemId.COINS.id()) {
 			return false;
 		}
-		final Item neckItem = getEquippedNeckItem();
-		if (neckItem == null || !EnchantingItemEffects.isNatureAmulet(neckItem.getCatalogId())) {
+		final Item wristItem = getEquippedWristItem();
+		if (wristItem == null || !EnchantingItemEffects.isNatureAmulet(wristItem.getCatalogId())) {
 			return false;
 		}
-		int charges = EnchantingItemEffects.getNatureAlchemyAmuletCharges(player, neckItem);
+		int charges = EnchantingItemEffects.getNatureAlchemyAmuletCharges(player, wristItem);
 		if (charges <= 0) {
 			return false;
 		}
@@ -2415,11 +2421,11 @@ public class Equipment {
 
 		charges--;
 		if (charges <= 0) {
-			EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, neckItem, 0);
-			player.message("@ora@Your amulet of alchemy converts the loot and runs out of charges.");
+			EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, wristItem, 0);
+			player.message("@ora@Your Bangel of alchemy converts the loot and runs out of charges.");
 		} else {
-			EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, neckItem, charges);
-			player.message("@ora@Your amulet of alchemy converts the loot. " + formatNatureAlchemyCharges(charges));
+			EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, wristItem, charges);
+			player.message("@ora@Your Bangel of alchemy converts the loot. " + formatNatureAlchemyCharges(charges));
 		}
 		return true;
 	}
@@ -2488,13 +2494,13 @@ public class Equipment {
 	}
 
 	public double getCosmicAmuletGemChanceMultiplier() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 1.0D : EnchantingItemEffects.getCosmicAmuletGemChanceMultiplier(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 1.0D : EnchantingItemEffects.getCosmicAmuletGemChanceMultiplier(wristItem.getCatalogId());
 	}
 
 	public double getCosmicAmuletHerbQualityChance() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getCosmicAmuletHerbQualityChance(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0.0D : EnchantingItemEffects.getCosmicAmuletHerbQualityChance(wristItem.getCatalogId());
 	}
 
 	public double getWoolRobeRunePreservationChance(final int runeId) {
@@ -2525,18 +2531,18 @@ public class Equipment {
 	}
 
 	public int getSoulAmuletBurstRadius() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getSoulAmuletBurstRadius(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getSoulAmuletBurstRadius(wristItem.getCatalogId());
 	}
 
 	public int getSoulAmuletBurstMinHeal() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getSoulAmuletBurstMinHeal(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getSoulAmuletBurstMinHeal(wristItem.getCatalogId());
 	}
 
 	public int getSoulAmuletBurstMaxHeal() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getSoulAmuletBurstMaxHeal(neckItem.getCatalogId());
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getSoulAmuletBurstMaxHeal(wristItem.getCatalogId());
 	}
 
 	public int getMeleeDefense() {
@@ -2677,8 +2683,8 @@ public class Equipment {
 	}
 
 	private int getEquippedElementalDefenseBonus(final PrayerCatalog.CombatStyle combatStyle) {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getElementalDefenseBonus(neckItem.getCatalogId(), combatStyle);
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0 : EnchantingItemEffects.getElementalDefenseBonus(wristItem.getCatalogId(), combatStyle);
 	}
 
 	public boolean hasEquippedMeleeWeapon() {
@@ -2819,6 +2825,23 @@ public class Equipment {
 		synchronized (player.getCarriedItems().getInventory().getItems()) {
 			for (Item item : player.getCarriedItems().getInventory().getItems()) {
 				if (item.isWielded() && item.getDef(player.getWorld()).getWieldPosition() == EquipmentSlot.SLOT_RING.getIndex()) {
+					return item;
+				}
+			}
+		}
+		return null;
+	}
+
+	public Item getEquippedWristItem() {
+		if (player.getConfig().WANT_EQUIPMENT_TAB) {
+			synchronized (list) {
+				return list[EquipmentSlot.SLOT_WRIST.getIndex()];
+			}
+		}
+		synchronized (player.getCarriedItems().getInventory().getItems()) {
+			for (Item item : player.getCarriedItems().getInventory().getItems()) {
+				if (item.isWielded()
+					&& item.getDef(player.getWorld()).getWieldPosition() == EquipmentSlot.SLOT_WRIST.getIndex()) {
 					return item;
 				}
 			}
@@ -3283,7 +3306,8 @@ public class Equipment {
 		SLOT_NECK(10),
 		SLOT_CAPE(11),
 		SLOT_AMMO(12),
-		SLOT_RING(13);
+		SLOT_RING(13),
+		SLOT_WRIST(14);
 		int index;
 
 		EquipmentSlot(int index) {

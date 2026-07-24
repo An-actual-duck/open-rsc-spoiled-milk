@@ -2,6 +2,7 @@ package com.openrsc.server.content;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
@@ -73,12 +74,12 @@ public final class EnchantingItemEffects {
 		LIFE_ALTAR
 	};
 
-	private static final int[] BASE_AMULETS = {
-		ItemId.SAPPHIRE_AMULET.id(),
-		ItemId.EMERALD_AMULET.id(),
-		ItemId.RUBY_AMULET.id(),
-		ItemId.DIAMOND_AMULET.id(),
-		ItemId.UNENCHANTED_DRAGONSTONE_AMULET.id()
+	private static final int[] BASE_BANGELS = {
+		MyWorldItemId.SAPPHIRE_BANGEL,
+		MyWorldItemId.EMERALD_BANGEL,
+		MyWorldItemId.RUBY_BANGEL,
+		MyWorldItemId.DIAMOND_BANGEL,
+		MyWorldItemId.DRAGONSTONE_BANGEL
 	};
 	private static final int[] BASE_STAFFS = {
 		ItemId.STAFF.id(),
@@ -490,7 +491,7 @@ public final class EnchantingItemEffects {
 	public static final int MAX_ENCHANTED_WOOL_ROBE_TIER = 10;
 
 	public static boolean isElementalAmuletBase(final int itemId) {
-		return isAmuletBase(itemId);
+		return isBangelBase(itemId);
 	}
 
 	public static boolean isBaseStaff(final int itemId) {
@@ -513,13 +514,25 @@ public final class EnchantingItemEffects {
 		return containsInLines(STANDARD_STAFF_LINES, itemId);
 	}
 
-	public static boolean isAmuletBase(final int itemId) {
-		for (int baseId : BASE_AMULETS) {
+	public static boolean isBangelBase(final int itemId) {
+		for (int baseId : BASE_BANGELS) {
 			if (baseId == itemId) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Compatibility name retained for plugins/tests that predate the Bangel
+	 * identity. It now recognizes Bangel inputs; ordinary Amulets are excluded.
+	 */
+	public static boolean isAmuletBase(final int itemId) {
+		return isBangelBase(itemId);
+	}
+
+	public static boolean isFutureMedallionBase(final int itemId) {
+		return FutureMedallionCatalog.contains(itemId);
 	}
 
 	public static boolean isElementalAmulet(final int itemId) {
@@ -625,7 +638,7 @@ public final class EnchantingItemEffects {
 	}
 
 	public static boolean isLawAltarEnchantingInput(final int itemId) {
-		return isAmuletBase(itemId)
+		return isBangelBase(itemId)
 			|| isNecklaceBase(itemId)
 			|| isRingBase(itemId)
 			|| isBaseStaff(itemId)
@@ -642,6 +655,10 @@ public final class EnchantingItemEffects {
 		final int[] productLine = getAmuletProductLine(altarId);
 		final int tierIndex = getTierIndexForBaseAmulet(baseAmuletId);
 		return getTieredProduct(productLine, tierIndex);
+	}
+
+	public static int getBangelProduct(final int altarId, final int baseBangelId) {
+		return getAmuletProduct(altarId, baseBangelId);
 	}
 
 	public static int getElementalAmuletProduct(final int altarId, final int baseAmuletId) {
@@ -1070,6 +1087,10 @@ public final class EnchantingItemEffects {
 	public static int getTierForBaseAmulet(final int baseAmuletId) {
 		int tierIndex = getTierIndexForBaseAmulet(baseAmuletId);
 		return tierIndex == -1 ? -1 : tierIndex + 1;
+	}
+
+	public static int getTierForBaseBangel(final int baseBangelId) {
+		return getTierForBaseAmulet(baseBangelId);
 	}
 
 	public static int getTierForBaseNecklace(final int baseNecklaceId) {
@@ -1641,8 +1662,8 @@ public final class EnchantingItemEffects {
 	}
 
 	private static int getTierIndexForBaseAmulet(final int baseAmuletId) {
-		for (int i = 0; i < BASE_AMULETS.length; i++) {
-			if (BASE_AMULETS[i] == baseAmuletId) {
+		for (int i = 0; i < BASE_BANGELS.length; i++) {
+			if (BASE_BANGELS[i] == baseAmuletId) {
 				return i;
 			}
 		}

@@ -502,6 +502,8 @@ public final class DoSkillInterface {
 				return "Necklaces";
 			case 296:
 				return "Amulets";
+			case 3282:
+				return "Bangels";
 			case 44:
 				return "Holy symbols";
 			case 1027:

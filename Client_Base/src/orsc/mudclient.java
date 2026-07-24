@@ -396,8 +396,8 @@ public final class mudclient implements Runnable {
 		this.programArgs = progArgs;
 	}
 	public final int[] bankItemOnTab = new int[500];
-	public final int[] equipIconXLocations = new int[]{98, 98, 98, 153, 43, 43, 98, 98, 43, 153, 153};
-	public final int[] equipIconYLocations = new int[]{5, 85, 125, 85, 85, 165, 165, 45, 45, 45, 165};
+	public final int[] equipIconXLocations = new int[]{98, 98, 98, 153, 43, 43, 98, 98, 43, 153, 153, 43};
+	public final int[] equipIconYLocations = new int[]{5, 85, 125, 85, 85, 165, 165, 45, 45, 45, 165, 125};
 	public final String[] equipmentStatNames = new String[]{"Rng. Def", "Mag. Def", "Mel. Def", "Mel. Pow",
 		"Prayer", "Rng. Pow", "Mag. Pow"};
 	public final int[] playerStatEquipment = new int[7];
@@ -1096,6 +1096,8 @@ public final class mudclient implements Runnable {
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
 	private final Sprite[] summoningIconSprites = new Sprite[SUMMONING_NAMES.length];
 	private final ClientExternalAssetLoader externalAssetLoader = new ClientExternalAssetLoader();
+	private Sprite wristEquipmentSlotSprite;
+	private boolean wristEquipmentSlotSpriteLoadAttempted;
 	private Sprite autoAttackHudSprite;
 	private boolean autoAttackHudSpriteLoaded;
 	private static final int MAX_QUEUED_PROJECTILE_EFFECTS = 64;
@@ -4384,6 +4386,23 @@ public final class mudclient implements Runnable {
 
 	public Sprite spriteSelect(SpriteDef sprite) {
 		return getSurface().spriteSelect(sprite);
+	}
+
+	public Sprite getEquipmentSlotSprite(final int clientSlot) {
+		if (clientSlot == S_PLAYER_SLOT_COUNT - 1) {
+			if (!wristEquipmentSlotSpriteLoadAttempted) {
+				wristEquipmentSlotSpriteLoadAttempted = true;
+				File sourceFile = this.externalAssetLoader.findFirstFile(new String[] {
+					"dev/myworld/assets/sprites/ui/equipment"
+				}, "bangel-slot.png");
+				wristEquipmentSlotSprite = this.externalAssetLoader.loadExternalInterfaceSprite(sourceFile, 48, 32);
+			}
+			if (wristEquipmentSlotSprite != null) {
+				return wristEquipmentSlotSprite;
+			}
+			return spriteSelect(GUIPARTS.EQUIPSLOT_WRIST.getDef());
+		}
+		return spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.EQUIPSLOT_HELM.id() + clientSlot));
 	}
 
 	private void drawCharacterOverlay() {
@@ -10841,7 +10860,7 @@ public final class mudclient implements Runnable {
 
 				for (int i = 0; i < S_PLAYER_SLOT_COUNT; i++) {
 					if (this.equippedItems[i] == null) {
-						todraw = spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.EQUIPSLOT_HELM.id() + i));
+						todraw = getEquipmentSlotSprite(i);
 						this.getSurface().drawSpriteClipping(todraw
 							, xOffset + equipIconXLocations[i]
 							, yOffset + equipIconYLocations[i],

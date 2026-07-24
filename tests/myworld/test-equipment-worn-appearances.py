@@ -11,6 +11,7 @@ from typing import Any, NoReturn
 ROOT = Path(__file__).resolve().parents[2]
 BASE_ITEMS_PATH = ROOT / "server/conf/server/defs/ItemDefs.json"
 CUSTOM_ITEMS_PATH = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
+MYWORLD_ITEMS_PATH = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 APPEARANCE_IDS_PATH = (
     ROOT / "server/src/com/openrsc/server/constants/AppearanceId.java"
 )
@@ -19,9 +20,9 @@ PLAYER_PATH = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.j
 
 TIERS = ("Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone")
 JEWELRY_FAMILIES = {
-    "Amulet of Teleportation": range(1709, 1714),
+    "Bangel of Teleportation": range(1709, 1714),
     "Necklace of Preservation": range(1759, 1764),
-    "Amulet of Command": range(3106, 3111),
+    "Bangel of Command": range(3106, 3111),
 }
 POISONED_KNIFE_PAIRS = {
     2200: 1996,
@@ -93,15 +94,22 @@ def ensure_jewelry_appearances(
     for family, item_ids in JEWELRY_FAMILIES.items():
         for tier, item_id in zip(TIERS, item_ids):
             item = require_item(custom_items, item_id, f"{tier} {family}")
-            if item.get("appearanceID") != 81:
+            is_bangel = "Bangel" in family
+            expected_appearance = 0 if is_bangel else 81
+            expected_slot = 14 if is_bangel else 10
+            expected_wearable = 0 if is_bangel else 1024
+            if item.get("appearanceID") != expected_appearance:
                 fail(
-                    f"{item['name']} ({item_id}) should use jewelry appearance 81, "
-                    f"found {item.get('appearanceID')}"
+                    f"{item['name']} ({item_id}) should use appearance "
+                    f"{expected_appearance}, found {item.get('appearanceID')}"
                 )
-            if item.get("wearSlot") != 10 or item.get("wearableID") != 1024:
+            if (
+                item.get("wearSlot") != expected_slot
+                or item.get("wearableID") != expected_wearable
+            ):
                 fail(
-                    f"{item['name']} ({item_id}) should remain in the neck slot "
-                    "with wearable ID 1024"
+                    f"{item['name']} ({item_id}) should use equipment slot "
+                    f"{expected_slot} and wearable ID {expected_wearable}"
                 )
 
     neck_name = re.compile(r"\b(?:amulet|necklace|pendant|symbol)\b", re.IGNORECASE)
@@ -156,6 +164,9 @@ def ensure_direct_worn_appearance_path() -> None:
 def main() -> None:
     base_items = load_items(BASE_ITEMS_PATH)
     custom_items = load_items(CUSTOM_ITEMS_PATH)
+    for item_id, override in load_items(MYWORLD_ITEMS_PATH).items():
+        if item_id in custom_items:
+            custom_items[item_id].update(override)
     appearances = load_appearance_categories()
 
     ensure_jewelry_appearances(custom_items, appearances)

@@ -17,11 +17,11 @@ FALLBACKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/ClientDefi
 
 EXPECTED: dict[str, tuple[int, str]] = {
     "npcs": (845, "e7c568cc81969df8b35d0fb94a74d5a5c13ed662efd85ff83672d9a6879e3f69"),
-    "items": (3281, "f5334afd49cc3ae989d2abcb31186d03f255c9f71bded380ce80b03109cd497b"),
+    "items": (3292, "90550fe832b9fba027a6453d70e1a5c2e4b2254a4790a9843a8294496638a77b"),
     "textures": (55, "f2641fe74967a839ad0c6121e5e67d4016cb05666aaf3e4774ed989ea3c8d951"),
     "animations": (1060, "2315c562283f5b0dc21d7af97d9a5920f857c1ca36ce2bd59532e2d26c18fd6d"),
     "projectiles": (41, "c79c74303e8ce5c5c345640227a0023ccbc63285f0a652f404794c35c1d5385f"),
-    "guiParts": (54, "8f5529457a095c16de11c5097e8038fedce3b93dac5f853fd55796c21f960de0"),
+    "guiParts": (55, "fa64061ea784a19baf69fa49c11262e8a0294cb25858b45a1e1751a6ffbde408"),
     "crowns": (5, "cdfe0e9ccf0037bfbb4183f36795e2a2ca2603e8eeee2bcedcb97f8b8d11e774"),
     "spells": (46, "89b6173c83cced0c332c75566ea24e09adfe9ccef3f1ebcb3416d17cdc418fcb"),
     "prayers-saradomin": (16, "4c360a83e3f8e19ed83516852c7127c98d3dfd28f774f67ef90b701946491520"),
@@ -201,7 +201,7 @@ public final class ClientDefinitionRegistryFixture {
 		}
 		for (String line : lines) {
 			if (!line.startsWith("CLIENT_ITEM_DEF_FALLBACK requestedId=")
-				|| !line.contains(" reason=out-of-range itemCount=3281")) {
+				|| !line.contains(" reason=out-of-range itemCount=3292")) {
 				throw new AssertionError("Malformed fallback diagnostic: " + line);
 			}
 		}

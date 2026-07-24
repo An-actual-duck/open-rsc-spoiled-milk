@@ -352,6 +352,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 		final int slot = def.getWieldPosition();
 		if (slot == Equipment.EquipmentSlot.SLOT_NECK.getIndex()
 			|| slot == Equipment.EquipmentSlot.SLOT_RING.getIndex()
+			|| slot == Equipment.EquipmentSlot.SLOT_WRIST.getIndex()
 			|| slot == Equipment.EquipmentSlot.SLOT_CAPE.getIndex()) {
 			return true;
 		}

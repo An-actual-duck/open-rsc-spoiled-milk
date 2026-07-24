@@ -167,4 +167,50 @@
 			<gemID>523</gemID>
 		</ItemCraftingDef>
 	</entry>
+	<!-- BANGELS: complete at the furnace; no unstrung or wool stage. -->
+	<entry>
+		<int>3282</int>
+		<ItemCraftingDef>
+			<requiredLvl>13</requiredLvl>
+			<itemID>3282</itemID>
+			<exp>260</exp>
+			<gemID>164</gemID>
+		</ItemCraftingDef>
+	</entry>
+	<entry>
+		<int>3283</int>
+		<ItemCraftingDef>
+			<requiredLvl>26</requiredLvl>
+			<itemID>3283</itemID>
+			<exp>280</exp>
+			<gemID>163</gemID>
+		</ItemCraftingDef>
+	</entry>
+	<entry>
+		<int>3284</int>
+		<ItemCraftingDef>
+			<requiredLvl>44</requiredLvl>
+			<itemID>3284</itemID>
+			<exp>340</exp>
+			<gemID>162</gemID>
+		</ItemCraftingDef>
+	</entry>
+	<entry>
+		<int>3285</int>
+		<ItemCraftingDef>
+			<requiredLvl>60</requiredLvl>
+			<itemID>3285</itemID>
+			<exp>400</exp>
+			<gemID>161</gemID>
+		</ItemCraftingDef>
+	</entry>
+	<entry>
+		<int>3286</int>
+		<ItemCraftingDef>
+			<requiredLvl>70</requiredLvl>
+			<itemID>3286</itemID>
+			<exp>600</exp>
+			<gemID>523</gemID>
+		</ItemCraftingDef>
+	</entry>
 </map>

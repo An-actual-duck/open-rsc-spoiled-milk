@@ -53,10 +53,16 @@ public class BankPreset {
 		ByteBuffer blobData = ByteBuffer.wrap(inventoryItems);
 		byte[] itemID = new byte[2];
 		for (int i = 0; i < Inventory.MAX_SIZE; i++) {
+			if (!blobData.hasRemaining()) {
+				break;
+			}
 			itemID[0] = blobData.get();
 			if (itemID[0] == -1) {
 				inventory[i].getItemStatus().setCatalogId(ItemId.NOTHING.id());
 				continue;
+			}
+			if (blobData.remaining() < 2) {
+				break;
 			}
 			itemID[1] = blobData.get();
 			int itemIDreal = (((int) itemID[0] << 8) & 0xFF00) | (int) itemID[1] & 0xFF;
@@ -67,7 +73,7 @@ public class BankPreset {
 			inventory[i].getItemStatus().setCatalogId(itemIDreal);
 			boolean noted = blobData.get() == 1;
 			inventory[i].getItemStatus().setNoted(noted);
-			if (item.isStackable() || noted)
+			if ((item.isStackable() || noted) && blobData.remaining() >= Integer.BYTES)
 				inventory[i].getItemStatus().setAmount(blobData.getInt());
 			else
 				inventory[i].getItemStatus().setAmount(1);
@@ -75,10 +81,16 @@ public class BankPreset {
 
 		blobData = ByteBuffer.wrap(equipmentItems);
 		for (int i = 0; i < Equipment.SLOT_COUNT; i++) {
+			if (!blobData.hasRemaining()) {
+				break;
+			}
 			itemID[0] = blobData.get();
 			if (itemID[0] == -1) {
 				equipment[i].getItemStatus().setCatalogId(ItemId.NOTHING.id());
 				continue;
+			}
+			if (!blobData.hasRemaining()) {
+				break;
 			}
 			itemID[1] = blobData.get();
 			int itemIDreal = (((int) itemID[0] << 8) & 0xFF00) | (int) itemID[1] & 0xFF;
@@ -86,11 +98,15 @@ public class BankPreset {
 			if (item == null)
 				continue;
 
-			equipment[i].getItemStatus().setCatalogId(itemIDreal);
-			if (item.isStackable())
-				equipment[i].getItemStatus().setAmount(blobData.getInt());
+			int currentSlot = item.getWieldPosition();
+			if (currentSlot < 0 || currentSlot >= Equipment.SLOT_COUNT) {
+				currentSlot = i;
+			}
+			equipment[currentSlot].getItemStatus().setCatalogId(itemIDreal);
+			if (item.isStackable() && blobData.remaining() >= Integer.BYTES)
+				equipment[currentSlot].getItemStatus().setAmount(blobData.getInt());
 			else
-				equipment[i].getItemStatus().setAmount(1);
+				equipment[currentSlot].getItemStatus().setAmount(1);
 		}
 	}
 

@@ -398,8 +398,9 @@ public final class EntranaRestrictions {
 			// for custom items, we will follow some general rules
 			ItemDefinition def = item.getDef(player.getWorld());
 			if (def.isWieldable()) {
-				// allow anything in neck and cape slot
+				// allow non-model accessory slots and capes
 				if (def.getWieldPosition() == Equipment.EquipmentSlot.SLOT_NECK.getIndex()
+					|| def.getWieldPosition() == Equipment.EquipmentSlot.SLOT_WRIST.getIndex()
 					|| def.getWieldPosition() == Equipment.EquipmentSlot.SLOT_CAPE.getIndex()) return false;
 				// don't allow anything with a ranged level requirement
 				if (def.getRequiredSkillIndex() == Skill.RANGED.id()) return true;

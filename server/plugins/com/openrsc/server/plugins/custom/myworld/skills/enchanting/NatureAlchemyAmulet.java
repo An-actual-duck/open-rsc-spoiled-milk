@@ -48,13 +48,13 @@ public final class NatureAlchemyAmulet implements OpInvTrigger, UseLocTrigger {
 			return;
 		}
 		if (EnchantingItemEffects.getNatureAlchemyAmuletCharges(player, item) >= maxCharges) {
-			player.message("That amulet is already fully charged.");
+			player.message("That Bangel is already fully charged.");
 			return;
 		}
 
 		final int requiredRunes = getRechargeRuneCost(maxCharges);
 		if (player.getCarriedItems().getInventory().countId(ItemId.NATURE_RUNE.id(), Optional.of(false)) < requiredRunes) {
-			player.message("You need " + requiredRunes + " nature runes to recharge this amulet.");
+			player.message("You need " + requiredRunes + " nature runes to recharge this Bangel.");
 			return;
 		}
 		if (player.getCarriedItems().remove(new Item(ItemId.NATURE_RUNE.id(), requiredRunes)) == -1) {
@@ -62,7 +62,7 @@ public final class NatureAlchemyAmulet implements OpInvTrigger, UseLocTrigger {
 		}
 
 		EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, item, maxCharges);
-		mes("You hold the amulet against the altar.");
+		mes("You hold the Bangel against the altar.");
 		delay();
 		mes("Nature energy flows back into it.");
 		delay();

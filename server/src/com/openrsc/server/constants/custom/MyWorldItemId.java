@@ -21,6 +21,17 @@ public final class MyWorldItemId {
 	public static final int EXALTED_RUNE_PALADIN_SHIELD = 3278;
 	public static final int EXALTED_RUNE_PLATE_MAIL_LEGS = 3279;
 	public static final int EXALTED_RUNE_PLATE_MAIL_BODY = 3280;
+	public static final int BANGEL_MOULD = 3281;
+	public static final int SAPPHIRE_BANGEL = 3282;
+	public static final int EMERALD_BANGEL = 3283;
+	public static final int RUBY_BANGEL = 3284;
+	public static final int DIAMOND_BANGEL = 3285;
+	public static final int DRAGONSTONE_BANGEL = 3286;
+	public static final int SAPPHIRE_MEDALLION = 3287;
+	public static final int EMERALD_MEDALLION = 3288;
+	public static final int RUBY_MEDALLION = 3289;
+	public static final int DIAMOND_MEDALLION = 3290;
+	public static final int DRAGONSTONE_MEDALLION = 3291;
 
 	private MyWorldItemId() {
 	}

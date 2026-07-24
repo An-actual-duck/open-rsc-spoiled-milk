@@ -577,14 +577,14 @@ def ensure_runtime_paths_are_wired() -> None:
     require_regex(equipment, r"getChaosRecoilDamageDivisor\(\)\s*\{\s*return 4;\s*\}",
                   "Chaos recoil should reflect 25% damage on successful procs")
     require("getChaosAmuletYieldBonusPercent()" in equipment
-            and "EnchantingItemEffects.getChaosAmuletYieldBonusPercent(neckItem.getCatalogId())" in equipment
+            and "EnchantingItemEffects.getChaosAmuletYieldBonusPercent(wristItem.getCatalogId())" in equipment
             and "getChaosAmuletBonusRuneWeights()" in equipment
-            and "EnchantingItemEffects.getChaosAmuletBonusRuneWeights(neckItem.getCatalogId())" in equipment,
-            "Chaos amulet weighted-rune yield data should be exposed through equipped neck items")
+            and "EnchantingItemEffects.getChaosAmuletBonusRuneWeights(wristItem.getCatalogId())" in equipment,
+            "Chaos Bangel weighted-rune yield data should be exposed through equipped wrist items")
     require_regex(equipment, r"getEquippedElementalPowerBonus.*?getElementalPowerBonus\(ringItem",
                   "Elemental power should come from the equipped ring")
-    require_regex(equipment, r"getEquippedElementalDefenseBonus.*?getElementalDefenseBonus\(neckItem",
-                  "Elemental defense should come from the equipped necklace slot")
+    require_regex(equipment, r"getEquippedElementalDefenseBonus.*?getElementalDefenseBonus\(wristItem",
+                  "Elemental defense should come from the equipped Bangel wrist slot")
 
     require("getWealthChance(owner)" in drop_table, "Cosmic rings should feed drop-table wealth chance")
     require("allowExtraRoll && !result.receivedRareTableReward && wealthChance > 0.0D" in drop_table,
@@ -635,14 +635,14 @@ def ensure_runtime_paths_are_wired() -> None:
             and "NATURE_ALCHEMY_CHARGES_CACHE_PREFIX" in effects,
             "Nature alchemy amulet charges should be account-backed")
     require("tryAlchemyMonsterLootWithNatureAmulet" in equipment
-            and "EnchantingItemEffects.getNatureAlchemyAmuletCharges(player, neckItem)" in equipment
-            and "EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, neckItem, charges)" in equipment
+            and "EnchantingItemEffects.getNatureAlchemyAmuletCharges(player, wristItem)" in equipment
+            and "EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, wristItem, charges)" in equipment
             and "getHighAlchemyValue(itemDef, item.getAmount())" in equipment
             and "alchemyValue < 1000" in equipment
             and "new Item(ItemId.COINS.id(), alchemyValue)" in equipment
             and "player.getCarriedItems().getInventory().canHold(coins)" in equipment
-            and "remove(neckItem, 1, true);" not in equipment,
-            "Nature alchemy amulet should auto-alch valuable monster drops without breaking")
+            and "remove(wristItem, 1, true);" not in equipment,
+            "Nature alchemy Bangel should auto-alch valuable monster drops without breaking")
     require("tryAlchemyMonsterLootWithNatureAmulet(new Item(dropID, amount))" in npc
             and "tryAlchemyMonsterLootWithNatureAmulet(new Item(dropID, amount, item.getNoted()))" in npc
             and "tryAlchemyMonsterLootWithNatureAmulet(item)" in npc,
@@ -693,18 +693,18 @@ def ensure_runtime_paths_are_wired() -> None:
 
     require("getMindJewelryXpBonus(skill)" in player and "getBodyJewelryXpBonus(skill)" in player,
             "Mind and body jewelry XP bonuses should apply through the unified skill-aware path")
-    require("isMindNecklaceXpSkill(skillId)" in equipment and "getMindNecklaceXpBonus(neckId)" in equipment,
+    require("isMindNecklaceXpSkill(skillId)" in equipment and "getMindNecklaceXpBonus(neckItem.getCatalogId())" in equipment,
             "Mind necklaces should apply only to their mapped skills")
     require("isMindRingXpSkill(skillId)" in equipment and "getMindRingXpBonus(ringItem.getCatalogId())" in equipment,
             "Mind rings should apply only to their mapped skills")
-    require("isBodyNecklaceXpSkill(skillId)" in equipment and "getBodyNecklaceXpBonus(neckId)" in equipment,
+    require("isBodyNecklaceXpSkill(skillId)" in equipment and "getBodyNecklaceXpBonus(neckItem.getCatalogId())" in equipment,
             "Body necklaces should apply only to their mapped skills")
     require("isBodyRingXpSkill(skillId)" in equipment and "getBodyRingXpBonus(ringItem.getCatalogId())" in equipment,
             "Body rings should apply only to their mapped skills")
-    require("isMindCombatAmuletXpSkill(skillId)" in equipment and "getMindCombatAmuletXpBonus(neckId)" in equipment,
-            "Mind amulets should apply only to their mapped skills")
-    require("isBodyCombatAmuletXpSkill(skillId)" in equipment and "getBodyDisciplineAmuletXpBonus(neckId)" in equipment,
-            "Body amulets should apply only to their mapped skills")
+    require("isMindCombatAmuletXpSkill(skillId)" in equipment and "getMindCombatAmuletXpBonus(wristItem.getCatalogId())" in equipment,
+            "Mind Bangels should apply only to their mapped skills")
+    require("isBodyCombatAmuletXpSkill(skillId)" in equipment and "getBodyDisciplineAmuletXpBonus(wristItem.getCatalogId())" in equipment,
+            "Body Bangels should apply only to their mapped skills")
 
     require("public final class Leach" in leach
             and "calculateHealing" in leach

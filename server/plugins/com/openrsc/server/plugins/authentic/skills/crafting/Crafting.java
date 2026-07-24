@@ -6,6 +6,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.production.ProductionRecipe;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
@@ -66,6 +67,7 @@ public class Crafting implements UseInvTrigger,
 	private static final String ring = "ring";
 	private static final String Necklace = "Necklace";
 	private static final String amulet = "amulet";
+	private static final String Bangel = "Bangel";
 	private static final String Gold = "Gold";
 	private static final String Sapphire = "Sapphire";
 	private static final String Emerald = "Emerald";
@@ -78,13 +80,15 @@ public class Crafting implements UseInvTrigger,
 		ALL,
 		RINGS,
 		NECKLACES,
-		AMULETS
+		AMULETS,
+		BANGELS
 	}
 
 	private static final Map<String, Mould> goldMoulds = new ImmutableMap.Builder<String, Mould>()
 		.put(ring, new Mould("ring", ItemId.RING_MOULD.id(), "You need a ring mould to make a gold ring"))
 		.put(Necklace, new Mould("Necklace", ItemId.NECKLACE_MOULD.id(), "You need a necklace mould to make a gold necklace"))
 		.put(amulet, new Mould("amulet", ItemId.AMULET_MOULD.id(), "You need an amulet mould to make a gold amulet"))
+		.put(Bangel, new Mould("Bangel", MyWorldItemId.BANGEL_MOULD, "You need a Bangel mould to make a gold Bangel"))
 		.build();
 
 	private static final class HideArmorRecipe {
@@ -435,7 +439,8 @@ public class Crafting implements UseInvTrigger,
 		if (player.getConfig().WANT_BETTER_JEWELRY_CRAFTING) {
 			if (!player.getCarriedItems().hasCatalogID(ItemId.AMULET_MOULD.id()) &&
 				!player.getCarriedItems().hasCatalogID(ItemId.NECKLACE_MOULD.id()) &&
-				!player.getCarriedItems().hasCatalogID(ItemId.RING_MOULD.id())) {
+				!player.getCarriedItems().hasCatalogID(ItemId.RING_MOULD.id()) &&
+				!player.getCarriedItems().hasCatalogID(MyWorldItemId.BANGEL_MOULD)) {
 				player.message("You need a mould to craft jewelry");
 				return;
 			}
@@ -513,6 +518,28 @@ public class Crafting implements UseInvTrigger,
 	private ItemCraftingDef getDesiredGoldCraftingAutoDetection(Item item, Player player) {
 		ArrayList<String> options = new ArrayList<>();
 		ArrayList<Integer> itemIds = new ArrayList<>();
+		if (player.getCarriedItems().hasCatalogID(MyWorldItemId.BANGEL_MOULD)) {
+			if (player.getConfig().MEMBER_WORLD && player.getCarriedItems().hasCatalogID(ItemId.DRAGONSTONE.id())) {
+				options.add("Dragonstone Bangel");
+				itemIds.add(MyWorldItemId.DRAGONSTONE_BANGEL);
+			}
+			if (player.getCarriedItems().hasCatalogID(ItemId.DIAMOND.id())) {
+				options.add("Diamond Bangel");
+				itemIds.add(MyWorldItemId.DIAMOND_BANGEL);
+			}
+			if (player.getCarriedItems().hasCatalogID(ItemId.RUBY.id())) {
+				options.add("Ruby Bangel");
+				itemIds.add(MyWorldItemId.RUBY_BANGEL);
+			}
+			if (player.getCarriedItems().hasCatalogID(ItemId.EMERALD.id())) {
+				options.add("Emerald Bangel");
+				itemIds.add(MyWorldItemId.EMERALD_BANGEL);
+			}
+			if (player.getCarriedItems().hasCatalogID(ItemId.SAPPHIRE.id())) {
+				options.add("Sapphire Bangel");
+				itemIds.add(MyWorldItemId.SAPPHIRE_BANGEL);
+			}
+		}
 		if (player.getCarriedItems().hasCatalogID(ItemId.AMULET_MOULD.id())) {
 			if (player.getCarriedItems().hasCatalogID(ItemId.DRAGONSTONE.id())) {
 				options.add("Dragonstone amulet");
@@ -607,13 +634,15 @@ public class Crafting implements UseInvTrigger,
 			options = new String[]{
 				ring,
 				Necklace,
-				amulet
+				amulet,
+				Bangel
 			};
 		} else {
 			options = new String[]{
 				ring,
 				Necklace,
-				amulet
+				amulet,
+				Bangel
 			};
 		}
 
@@ -757,6 +786,30 @@ public class Crafting implements UseInvTrigger,
 					case dragonstone:
 						craftingProductItemId = ItemId.UNSTRUNG_DRAGONSTONE_AMULET.id();
 						break;
+				}
+				break;
+			}
+			case Bangel: {
+				switch (gem) {
+					case Sapphire:
+						craftingProductItemId = MyWorldItemId.SAPPHIRE_BANGEL;
+						break;
+					case Emerald:
+						craftingProductItemId = MyWorldItemId.EMERALD_BANGEL;
+						break;
+					case Ruby:
+						craftingProductItemId = MyWorldItemId.RUBY_BANGEL;
+						break;
+					case Diamond:
+						craftingProductItemId = MyWorldItemId.DIAMOND_BANGEL;
+						break;
+					case Dragonstone:
+					case dragonstone:
+						craftingProductItemId = MyWorldItemId.DRAGONSTONE_BANGEL;
+						break;
+					default:
+						player.message("Bangels require a gem.");
+						return null;
 				}
 				break;
 			}
@@ -2024,6 +2077,8 @@ public class Crafting implements UseInvTrigger,
 			session = createGoldJewelryProductionSession(player, JewelryCategory.NECKLACES);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_AMULETS) {
 			session = createGoldJewelryProductionSession(player, JewelryCategory.AMULETS);
+		} else if (categoryId == Smelting.FURNACE_CATEGORY_BANGELS) {
+			session = createGoldJewelryProductionSession(player, JewelryCategory.BANGELS);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_HOLY_SYMBOLS) {
 			session = createSilverJewelryProductionSession(player, 0);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_UNHOLY_SYMBOLS) {
@@ -2221,6 +2276,12 @@ public class Crafting implements UseInvTrigger,
 					|| outputId == ItemId.UNSTRUNG_RUBY_AMULET.id()
 					|| outputId == ItemId.UNSTRUNG_DIAMOND_AMULET.id()
 					|| outputId == ItemId.UNSTRUNG_DRAGONSTONE_AMULET.id();
+			case BANGELS:
+				return outputId == MyWorldItemId.SAPPHIRE_BANGEL
+					|| outputId == MyWorldItemId.EMERALD_BANGEL
+					|| outputId == MyWorldItemId.RUBY_BANGEL
+					|| outputId == MyWorldItemId.DIAMOND_BANGEL
+					|| outputId == MyWorldItemId.DRAGONSTONE_BANGEL;
 			case ALL:
 			default:
 				return true;
@@ -2770,6 +2831,14 @@ public class Crafting implements UseInvTrigger,
 			ids.add(ItemId.UNSTRUNG_DRAGONSTONE_AMULET.id());
 		}
 
+		ids.add(MyWorldItemId.SAPPHIRE_BANGEL);
+		ids.add(MyWorldItemId.EMERALD_BANGEL);
+		ids.add(MyWorldItemId.RUBY_BANGEL);
+		ids.add(MyWorldItemId.DIAMOND_BANGEL);
+		if (player.getConfig().MEMBER_WORLD) {
+			ids.add(MyWorldItemId.DRAGONSTONE_BANGEL);
+		}
+
 		int[] output = new int[ids.size()];
 		for (int i = 0; i < ids.size(); i++) {
 			output[i] = ids.get(i);
@@ -2786,6 +2855,10 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private int getRequiredGoldMouldId(int itemId) {
+		if (itemId >= MyWorldItemId.SAPPHIRE_BANGEL
+			&& itemId <= MyWorldItemId.DRAGONSTONE_BANGEL) {
+			return MyWorldItemId.BANGEL_MOULD;
+		}
 		switch (ItemId.getById(itemId)) {
 			case GOLD_RING:
 			case SAPPHIRE_RING:

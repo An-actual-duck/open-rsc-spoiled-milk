@@ -474,7 +474,8 @@ public class EntityHandler {
 		BANK_EQUIP_BAG(50),
 		BANK_EQUIP_HELM(51),
 		BANK_PRESET_OPTIONS(52),
-		KEPT_ON_DEATH(53);
+		KEPT_ON_DEATH(53),
+		EQUIPSLOT_WRIST(54);
 
 		private final int value;
 
@@ -546,6 +547,9 @@ public class EntityHandler {
 		GUIparts.add(new SpriteDef("bank toggle for equipment mode", -1, "GUI:41", 51));
 		GUIparts.add(new SpriteDef("bank preset options gear", -1, "GUI:42", 52));
 		GUIparts.add(new SpriteDef("items kept on death", -1, "GUI:43", 53));
+		// Existing GUI-part IDs stay fixed. The tracked Bangel slot asset replaces
+		// this ring-slot fallback at draw time.
+		GUIparts.add(new SpriteDef("equipment slot wrist", -1, "GUI:38", 54));
 	}
 
 	public enum CROWN_TYPES {
@@ -5463,6 +5467,53 @@ public class EntityHandler {
 			260000, 8, "items:8", false, true, 322, EXALTED_RUNE_COLOR, true, false, true, 3280));
 	}
 
+	private static void addBangelJewelryDefinitions() {
+		final String[] gems = {"Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone"};
+		final int[] bangelPrices = {1800, 3000, 6000, 12000, 35000};
+		final int[] medallionPrices = {900, 1275, 2025, 3525, 17625};
+		final int[] gemMasks = {19711, 3394611, 16724736, 0, 12255487};
+
+		setCustomItemDefinition(3281, new ItemDef(
+			"Bangel mould", "Used to make gold Bangels", "", 5, -1,
+			"external-png:bangel-mould", false, false, 0, 0,
+			false, false, true, 3281));
+
+		for (int tier = 0; tier < gems.length; tier++) {
+			final int bangelId = 3282 + tier;
+			setCustomItemDefinition(bangelId, new ItemDef(
+				gems[tier] + " Bangel", "I wonder if I can get this enchanted", "",
+				bangelPrices[tier], -1, "external-png:bangel", false, true, 0, gemMasks[tier],
+				tier == 4, false, true, bangelId));
+
+			final int medallionId = 3287 + tier;
+			setCustomItemDefinition(medallionId, new ItemDef(
+				gems[tier] + " Medallion", "A hidden future silver jewelry prototype", "",
+				medallionPrices[tier], -1, "external-png:medallion", false, false, 0, gemMasks[tier],
+				tier == 4, false, true, medallionId));
+		}
+	}
+
+	private static void applyBangelVisuals() {
+		applyBangelVisuals(1593, 1612);
+		applyBangelVisuals(1709, 1713);
+		applyBangelVisuals(1719, 1758);
+		applyBangelVisuals(3106, 3110);
+	}
+
+	private static void applyBangelVisuals(final int firstId, final int lastId) {
+		for (int itemId = firstId; itemId <= lastId; itemId++) {
+			ItemDef item = findItem(itemId, false);
+			if (item == null) {
+				continue;
+			}
+			setCustomItemDefinition(itemId, new ItemDef(
+				item.getName(), item.getDescription(), commandString(item), item.basePrice,
+				-1, "external-png:bangel", item.stackable, true, 0,
+				item.getPictureMask(), item.getBlueMask(), item.membersItem,
+				item.untradeable, item.noteable, itemId));
+		}
+	}
+
 	private static void addWoolAccessoryDefinitions() {
 		setCustomItemDefinition(2794, new ItemDef("Wool Gloves", "Simple gloves stitched from wool", "", 12, 17, "items:17",
 			false, true, 256, 0xFFFFFF, false, false, true, 2794));
@@ -5650,6 +5701,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3259, new ItemDef("Red flower", "A red flower used as a potion ingredient", "", 24, -1, "external-png:red-flower@15x18", false, false, 0, 0, false, false, true, 3259));
 		setCustomItemDefinition(3260, new ItemDef("Blue flower", "A blue flower used as a potion ingredient", "", 40, -1, "external-png:blue-flower@15x18", false, false, 0, 0, false, false, true, 3260));
 		addExaltedRuneDefinitions();
+		addBangelJewelryDefinitions();
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -9592,6 +9644,7 @@ public class EntityHandler {
 			applyMyWorldNpcDefinitionOverrides();
 			loadItemDefinitions();
 			MyWorldItemOverrides.apply(items);
+			applyBangelVisuals();
 		loadTextureDefinitions();
 		loadAnimationDefinitions();
 		loadSpellDefinitions();
