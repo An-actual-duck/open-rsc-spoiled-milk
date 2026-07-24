@@ -115,6 +115,7 @@ python3 ./tests/myworld/test-melee-weapon-requirements.py
 python3 ./tests/myworld/test-combat-interaction.py
 python3 ./tests/myworld/test-npc-attack-styles.py
 python3 ./tests/myworld/test-combat-runtime-invariants.py
+python3 ./tests/myworld/test-projectile-attack-range-audit.py
 python3 ./tests/myworld/test-combat-exceptions.py
 python3 ./tests/myworld/test-combat-scenarios.py
 python3 ./tests/myworld/test-iban-staff-no-charges.py
