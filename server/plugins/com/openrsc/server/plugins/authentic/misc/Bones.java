@@ -7,7 +7,6 @@ import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.plugins.RuneScript;
 import com.openrsc.server.plugins.triggers.OpInvTrigger;
 import com.openrsc.server.plugins.triggers.UseInvTrigger;
 import com.openrsc.server.util.rsc.MessageType;
@@ -164,8 +163,15 @@ public class Bones implements OpInvTrigger, UseInvTrigger {
 			bones = item1;
 		}
 
+		if (bones.getNoted()) {
+			player.message(isAsh(bones) ? "You can't crush noted ash" : "You can't crush noted bones");
+			return;
+		}
+		if (bones.getAmount() != 1 || player.getCarriedItems().getInventory().remove(bones, true) == -1) {
+			return;
+		}
+
 		mes("You place the bones into the bonecrusher");
-		RuneScript.remove(bones.getCatalogId(), 1);
 		delay(3);
 		mes("The gods are angered by your sacrilege");
 		giveBonesExperience(player, bones, true);

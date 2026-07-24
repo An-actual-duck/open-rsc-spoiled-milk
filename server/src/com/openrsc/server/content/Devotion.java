@@ -18,7 +18,8 @@ public final class Devotion {
 	public static final int COMBAT_GROWTH_START_LEVEL = 250;
 	private static final int MAX_OFFERINGS = MAX_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL;
 	private static final int MIN_OFFERINGS = MIN_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL;
-	private static final int DEVOTION_REQUIREMENT_PER_RESOURCE = 50;
+	private static final int DEVOTION_REQUIREMENT_PER_RESOURCE = 100;
+	private static final int BLESSING_OFFERING_COST_PER_RESOURCE = OFFERINGS_PER_DEVOTION_LEVEL / 2;
 	private static final int PRAYER_BONUS_GROWTH_MAX = 10;
 
 	private Devotion() {
@@ -135,24 +136,42 @@ public final class Devotion {
 		}
 		final String cacheKey = getOfferingCacheKey(godLine);
 		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
-		player.getCache().set(cacheKey, clampOfferings((long) previousOfferings + ((long) devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL)));
+		final int newOfferings = clampOfferings((long) previousOfferings + ((long) devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL));
+		player.getCache().set(cacheKey, newOfferings);
 		ActionSender.sendDevotion(player);
 		ActionSender.sendEquipmentStats(player);
+		if (newOfferings < previousOfferings) {
+			player.getPrayers().deactivateOverflowingPrayers();
+		}
 	}
 
-	public static void adjustDevotionOfferings(final Player player, final PrayerCatalog.GodLine godLine, final int offerings) {
+	/**
+	 * Adjusts stored offering units and returns the signed change that survived
+	 * clamping. One displayed Devotion level is {@link #OFFERINGS_PER_DEVOTION_LEVEL}
+	 * offering units.
+	 */
+	public static int adjustDevotionOfferings(final Player player, final PrayerCatalog.GodLine godLine, final int offerings) {
 		if (player == null || godLine == null || offerings == 0 || !player.getConfig().WANT_MYWORLD) {
-			return;
+			return 0;
 		}
 		final String cacheKey = getOfferingCacheKey(godLine);
 		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
-		player.getCache().set(cacheKey, clampOfferings((long) previousOfferings + offerings));
+		final int newOfferings = clampOfferings((long) previousOfferings + offerings);
+		player.getCache().set(cacheKey, newOfferings);
 		ActionSender.sendDevotion(player);
 		ActionSender.sendEquipmentStats(player);
+		if (newOfferings < previousOfferings) {
+			player.getPrayers().deactivateOverflowingPrayers();
+		}
+		return newOfferings - previousOfferings;
 	}
 
 	public static int getDevotionRequirementForResourceCost(final int resourceCost) {
 		return resourceCost > 0 ? clampPositiveInt((long) resourceCost * DEVOTION_REQUIREMENT_PER_RESOURCE) : 0;
+	}
+
+	public static int getBlessingOfferingCostForResourceCost(final int resourceCost) {
+		return resourceCost > 0 ? clampPositiveInt((long) resourceCost * BLESSING_OFFERING_COST_PER_RESOURCE) : 0;
 	}
 
 	public static int getBlessingPrayerXp(final Player player, final PrayerCatalog.GodLine godLine, final int basePrayerXp) {

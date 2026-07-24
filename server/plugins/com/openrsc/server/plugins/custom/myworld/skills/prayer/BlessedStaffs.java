@@ -10,8 +10,6 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
 
-import static com.openrsc.server.plugins.Functions.give;
-
 public final class BlessedStaffs implements UseLocTrigger {
 
 	@Override
@@ -47,32 +45,16 @@ public final class BlessedStaffs implements UseLocTrigger {
 
 		final int resourceCost = getStaffResourceCost(item.getCatalogId());
 		final int devotionRequirement = Devotion.getDevotionRequirementForResourceCost(resourceCost);
-		final int currentDevotion = Devotion.getDevotionLevel(player, godLine);
-		if (devotionRequirement > 0 && currentDevotion < devotionRequirement) {
-			player.message("You need " + devotionRequirement + " devotion to " + formatGodLine(godLine) + " to bless this staff.");
-			player.message("Your current devotion to " + formatGodLine(godLine) + " is " + currentDevotion + ".");
-			return;
-		}
-		if (!PrayerBlessingLimit.canBless(player, godLine)) {
-			return;
-		}
-
-		if (player.getCarriedItems().remove(item) == -1) {
-			return;
-		}
-
-		PrayerBlessingLimit.recordBlessing(player);
-		give(player, productId, 1);
-		final int prayerXp = Devotion.getBlessingPrayerXp(player, godLine, getStaffCraftingXp(item.getCatalogId()));
-		if (prayerXp > 0) {
-			player.incExp(Skill.PRAYER.id(), prayerXp, true);
-		}
-		player.message("You bless the staff at the altar.");
-	}
-
-	private String formatGodLine(final PrayerCatalog.GodLine godLine) {
-		final String lower = godLine.name().toLowerCase();
-		return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
+		PrayerBlessingTransaction.bless(
+			player,
+			godLine,
+			item,
+			productId,
+			devotionRequirement,
+			Devotion.getBlessingOfferingCostForResourceCost(resourceCost),
+			getStaffCraftingXp(item.getCatalogId()),
+			"You bless the staff at the altar."
+		);
 	}
 
 	private int getStaffResourceCost(final int itemId) {

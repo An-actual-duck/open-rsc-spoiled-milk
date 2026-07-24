@@ -1,18 +1,14 @@
 package com.openrsc.server.plugins.custom.myworld.skills.prayer;
 
 import com.openrsc.server.constants.ItemId;
-import com.openrsc.server.constants.Skill;
-import com.openrsc.server.content.Devotion;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
 
-import static com.openrsc.server.plugins.Functions.give;
-
 public final class BlessedSymbols implements UseLocTrigger {
-	private static final int SYMBOL_DEVOTION_REQUIREMENT = 25;
+	private static final int SYMBOL_DEVOTION_REQUIREMENT = 50;
 	private static final int SYMBOL_CRAFTING_XP = 200;
 
 	@Override
@@ -41,27 +37,16 @@ public final class BlessedSymbols implements UseLocTrigger {
 			return;
 		}
 
-		final int currentDevotion = Devotion.getDevotionLevel(player, godLine);
-		if (currentDevotion < SYMBOL_DEVOTION_REQUIREMENT) {
-			player.message("You need " + SYMBOL_DEVOTION_REQUIREMENT + " devotion to " + formatGodLine(godLine) + " to bless this symbol.");
-			player.message("Your current devotion to " + formatGodLine(godLine) + " is " + currentDevotion + ".");
-			return;
-		}
-		if (!PrayerBlessingLimit.canBless(player, godLine)) {
-			return;
-		}
-
-		if (player.getCarriedItems().remove(item) == -1) {
-			return;
-		}
-
-		PrayerBlessingLimit.recordBlessing(player);
-		give(player, productId, 1);
-		final int prayerXp = Devotion.getBlessingPrayerXp(player, godLine, SYMBOL_CRAFTING_XP);
-		if (prayerXp > 0) {
-			player.incExp(Skill.PRAYER.id(), prayerXp, true);
-		}
-		player.message("The altar blesses the symbol.");
+		PrayerBlessingTransaction.bless(
+			player,
+			godLine,
+			item,
+			productId,
+			SYMBOL_DEVOTION_REQUIREMENT,
+			0,
+			SYMBOL_CRAFTING_XP,
+			"The altar blesses the symbol."
+		);
 	}
 
 	private boolean isUnblessedSymbol(final int itemId) {
@@ -87,4 +72,5 @@ public final class BlessedSymbols implements UseLocTrigger {
 		final String lower = godLine.name().toLowerCase();
 		return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
 	}
+
 }

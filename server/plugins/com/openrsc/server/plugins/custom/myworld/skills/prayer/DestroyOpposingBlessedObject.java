@@ -12,7 +12,7 @@ import com.openrsc.server.plugins.triggers.UseLocTrigger;
 public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 	private static final int DEVOTION_CHANGE_PER_RESOURCE = 1;
 	private static final int DEVOTION_OFFERINGS_PER_RESOURCE = Devotion.OFFERINGS_PER_DEVOTION_LEVEL * DEVOTION_CHANGE_PER_RESOURCE;
-	private static final int SYMBOL_DEVOTION_OFFERING_CHANGE = Devotion.OFFERINGS_PER_DEVOTION_LEVEL / 2;
+	private static final int SYMBOL_DEVOTION_OFFERING_CHANGE = 2;
 	private static final int PRAYER_XP_MULTIPLIER = 5;
 
 	@Override
@@ -45,25 +45,28 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 			return;
 		}
 
-		final int resourceCost = getBlessedObjectResourceCost(item.getCatalogId());
+		final int resourceCost = getBlessedObjectDevotionResourceCost(item.getCatalogId());
 		final int productionXp = getBlessedObjectProductionXp(item.getCatalogId());
 		if (resourceCost <= 0 || productionXp <= 0) {
 			player.message("The altar does not recognise that blessed object.");
 			return;
 		}
 
-		if (player.getCarriedItems().remove(item) == -1) {
-			return;
+		final int devotionOfferingChange = getBlessedObjectDevotionOfferingChange(item.getCatalogId());
+		final int actualGain;
+		final int actualLoss;
+		synchronized (player) {
+			if (player.getCarriedItems().getInventory().remove(item, true) == -1) {
+				return;
+			}
+			actualGain = Devotion.adjustDevotionOfferings(player, worshippedGod, devotionOfferingChange);
+			actualLoss = -Devotion.adjustDevotionOfferings(player, itemGod, -devotionOfferingChange);
 		}
 
-		final int devotionOfferingChange = getBlessedObjectDevotionOfferingChange(item.getCatalogId());
-		final String devotionChangeLabel = formatDevotionOfferingChange(devotionOfferingChange);
-		Devotion.addDevotionOfferings(player, worshippedGod, devotionOfferingChange);
-		Devotion.removeDevotionOfferings(player, itemGod, devotionOfferingChange);
 		player.incExp(Skill.PRAYER.id(), productionXp * PRAYER_XP_MULTIPLIER, true);
 		player.message("The altar destroys the opposing blessed object.");
-		player.message("You gain " + devotionChangeLabel + " devotion to " + formatGodLine(worshippedGod) + ".");
-		player.message("You lose " + devotionChangeLabel + " devotion to " + formatGodLine(itemGod) + ".");
+		player.message("You gain " + formatDevotionOfferingChange(actualGain) + " devotion to " + formatGodLine(worshippedGod) + ".");
+		player.message("You lose " + formatDevotionOfferingChange(actualLoss) + " devotion to " + formatGodLine(itemGod) + ".");
 	}
 
 	private PrayerCatalog.GodLine getBlessedObjectGodLine(final int itemId) {
@@ -79,7 +82,7 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 		return null;
 	}
 
-	private int getBlessedObjectResourceCost(final int itemId) {
+	private int getBlessedObjectDevotionResourceCost(final int itemId) {
 		final int staffTier = getBlessedStaffTier(itemId);
 		if (staffTier > 0) {
 			return staffTier;
@@ -100,20 +103,23 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 			case 3137: // ZAMORAK_WOOL_HAT
 			case 3142: // SARADOMIN_WOOL_HAT
 			case 3147: // GUTHIX_WOOL_HAT
+			case 230: // LARGE_BLACK_HELMET
+			case 2158: // LARGE_WHITE_HELMET
+			case 3120: // LARGE_GREY_HELMET
 				return 1;
 			case 425: // BLACK_LONG_SWORD
 			case 427: // BLACK_SCIMITAR
-			case 230: // LARGE_BLACK_HELMET
+			case 3229: // BLACK_SPEAR
 			case 3131: // BLACK_GAUNTLETS
 			case 3132: // BLACK_GREAVES
 			case 2153: // WHITE_LONG_SWORD
 			case 2155: // WHITE_SCIMITAR
-			case 2158: // LARGE_WHITE_HELMET
+			case 3230: // WHITE_SPEAR
 			case 3133: // WHITE_GAUNTLETS
 			case 3134: // WHITE_GREAVES
 			case 3115: // GREY_LONG_SWORD
 			case 3117: // GREY_SCIMITAR
-			case 3120: // LARGE_GREY_HELMET
+			case 3231: // GREY_SPEAR
 			case 3135: // GREY_GAUNTLETS
 			case 3136: // GREY_GREAVES
 			case 3140: // ZAMORAK_WOOL_GLOVES
@@ -125,15 +131,21 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 				return 2;
 			case 426: // BLACK_2_HANDED_SWORD
 			case 429: // BLACK_BATTLE_AXE
+			case 432: // BLACK_SQUARE_SHIELD
 			case 433: // BLACK_KITE_SHIELD
+			case 3232: // BLACK_SCYTHE
 			case 248: // BLACK_PLATE_MAIL_LEGS
 			case 2154: // WHITE_2_HANDED_SWORD
 			case 2156: // WHITE_BATTLE_AXE
+			case 2161: // WHITE_SQUARE_SHIELD
 			case 2162: // WHITE_KITE_SHIELD
+			case 3233: // WHITE_SCYTHE
 			case 2164: // WHITE_PLATE_MAIL_LEGS
 			case 3116: // GREY_2_HANDED_SWORD
 			case 3118: // GREY_BATTLE_AXE
+			case 3123: // GREY_SQUARE_SHIELD
 			case 3124: // GREY_KITE_SHIELD
+			case 3234: // GREY_SCYTHE
 			case 3126: // GREY_PLATE_MAIL_LEGS
 			case 3139: // ZAMORAK_WOOL_ROBE_BOTTOM
 			case 3144: // SARADOMIN_WOOL_ROBE_BOTTOM
@@ -157,19 +169,28 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 			return getStaffProductionXp(staffTier);
 		}
 		if (isBlessedWool(itemId)) {
-			return getBlessedObjectResourceCost(itemId) * 6;
+			return getBlessedObjectDevotionResourceCost(itemId) * 6;
 		}
 		if (isBlessedSymbol(itemId)) {
 			return 200;
 		}
-		return getBlessedObjectResourceCost(itemId) * 150;
+		return getBlessedObjectProductionResourceCost(itemId) * 150;
+	}
+
+	private int getBlessedObjectProductionResourceCost(final int itemId) {
+		if (itemId == ItemId.LARGE_BLACK_HELMET.id()
+			|| itemId == ItemId.LARGE_WHITE_HELMET.id()
+			|| itemId == ItemId.LARGE_GREY_HELMET.id()) {
+			return 2;
+		}
+		return getBlessedObjectDevotionResourceCost(itemId);
 	}
 
 	private int getBlessedObjectDevotionOfferingChange(final int itemId) {
 		if (isBlessedSymbol(itemId)) {
 			return SYMBOL_DEVOTION_OFFERING_CHANGE;
 		}
-		return getBlessedObjectResourceCost(itemId) * DEVOTION_OFFERINGS_PER_RESOURCE;
+		return getBlessedObjectDevotionResourceCost(itemId) * DEVOTION_OFFERINGS_PER_RESOURCE;
 	}
 
 	private String formatDevotionOfferingChange(final int offerings) {
@@ -228,10 +249,13 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 			case 427: // BLACK_SCIMITAR
 			case 429: // BLACK_BATTLE_AXE
 			case 430: // BLACK_MACE
+			case 432: // BLACK_SQUARE_SHIELD
 			case 230: // LARGE_BLACK_HELMET
 			case 433: // BLACK_KITE_SHIELD
 			case 196: // BLACK_PLATE_MAIL_BODY
 			case 248: // BLACK_PLATE_MAIL_LEGS
+			case 3229: // BLACK_SPEAR
+			case 3232: // BLACK_SCYTHE
 			case 3131: // BLACK_GAUNTLETS
 			case 3132: // BLACK_GREAVES
 				return true;
@@ -250,9 +274,12 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 			case 2156: // WHITE_BATTLE_AXE
 			case 2157: // WHITE_MACE
 			case 2158: // LARGE_WHITE_HELMET
+			case 2161: // WHITE_SQUARE_SHIELD
 			case 2162: // WHITE_KITE_SHIELD
 			case 2163: // WHITE_PLATE_MAIL_BODY
 			case 2164: // WHITE_PLATE_MAIL_LEGS
+			case 3230: // WHITE_SPEAR
+			case 3233: // WHITE_SCYTHE
 			case 3133: // WHITE_GAUNTLETS
 			case 3134: // WHITE_GREAVES
 				return true;
@@ -271,9 +298,12 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 			case 3118: // GREY_BATTLE_AXE
 			case 3119: // GREY_MACE
 			case 3120: // LARGE_GREY_HELMET
+			case 3123: // GREY_SQUARE_SHIELD
 			case 3124: // GREY_KITE_SHIELD
 			case 3125: // GREY_PLATE_MAIL_BODY
 			case 3126: // GREY_PLATE_MAIL_LEGS
+			case 3231: // GREY_SPEAR
+			case 3234: // GREY_SCYTHE
 			case 3135: // GREY_GAUNTLETS
 			case 3136: // GREY_GREAVES
 				return true;
