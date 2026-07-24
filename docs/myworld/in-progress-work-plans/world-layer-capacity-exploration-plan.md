@@ -15045,6 +15045,77 @@ plan summaries for the exact selected sources under the private preservation
 diagnostic, with strict cardinality/payload bounds and no contribution payloads
 or mutation authority.
 
+### Slice 188: Bounded authored-collision verification batch
+
+Objective: run the complete inert terrain, authored-object-membership,
+active-definition, and collision-footprint sequence for each exact selected
+source, then retain only bounded count/fingerprint evidence suitable for a
+later private diagnostic.
+
+Implemented:
+
+- `LayeredPackedRegionAuthoredCollisionVerificationBatch` requires one exact
+  still-held source lifecycle boundary and matching inert reload recipe. The
+  source set must be non-empty, must preserve exact boundary order and
+  generation/mirror identity, and is refusal-bounded to at most 128 sources;
+- each selected source is processed and discarded independently. The batch
+  captures resident canonical tiles, reduces static terrain, verifies it on
+  one disposable unregistered Region, defines the exact final-live authored
+  replay, verifies only authored scenery/boundary/harvesting membership on a
+  second disposable unregistered Region, captures active collision-definition
+  scalars, and derives the exact register footprint without application;
+- the public path can obtain collision plans only through RegionManager's
+  Slice 187 active-definition adapter. A package-local injected factory exists
+  solely for the executable boundary fixture and cannot replace the production
+  path;
+- each source retains packed coordinates; replay/object/definition/special/
+  zero-contribution/cross-source/beyond-authored-dependency counts; collision
+  tile and required-Region reference counts; and terrain, replay, definition-
+  capture, and collision-plan SHA-256 identities; and
+- batch aggregates use checked arithmetic, preserve exact source order, and
+  add one deterministic batch fingerprint over the source coordinates and all
+  four per-source fingerprints.
+
+Safety boundary:
+
+- the two disposable Regions per source and every terrain definition, terrain
+  receipt, replay, constructed object, membership receipt, active definition
+  capture, and detailed collision footprint are discarded before the next
+  source. Only the count/fingerprint-only `SourceVerification` values survive;
+- NPC and ground-item constructors remain recorded in replay totals but are
+  never instantiated. Scheduler state, active-family preservation, source
+  absence, source reconstruction, and a usable Region container remain absent;
+- collision derivation is point-in-time evidence only. No collision counter is
+  applied, no registration provenance is attached, and no runtime source,
+  registry, residency mirror, visibility cache, arrival gate, or lifecycle
+  state is changed; and
+- the batch has no loading, gameplay, packet, or ordinary-diagnostic caller.
+  Its public method becomes reachable only when the explicit private
+  preservation diagnostic is extended in a later slice.
+
+Automated validation status:
+
+- an executable real-boundary fixture runs the complete one-source sequence,
+  supplies active-style detached definitions through the package-local test
+  seam, and proves all aggregate counts, per-source identities, four SHA-256
+  products, disposal counts, immutable storage, and every disabled mutation/
+  authority fact;
+- the fixture also proves an invalid zero source budget refuses before the
+  collision factory can run;
+- structural guards require the public path to use RegionManager's active
+  definition capture, prohibit retained Region/manager/tile/entity/intermediate
+  handles and every registration or collision-application seam;
+- the Slice 182-188 focused lineage passes 27 tests, including four Slice 188
+  tests, and the repository prerequisite check passes; and
+- the authoritative bundled-Ant server build compiles 828 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This batch still has no runtime
+caller and does not warrant an owner route by itself. The next slice should
+extend only the explicit private preservation diagnostic with the bounded
+aggregate and per-source count/fingerprint summary, advance the additive
+schema, preserve schema-v51 unchanged, and prepare one meaningful owner route.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15450,6 +15521,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 185 by applying only authored-object membership to a terrain-initialized disposable Region. | Implemented and automated-validated; scenery, boundaries, and harvesting scenery preserve exact constructors/provenance under the ordered Region membership boundary, colliding slots refuse, NPCs/items and collision remain absent, terrain stays exact, no runtime handle or authority survives, 15 focused Slice 182-185 tests and the 825/488 Ant build pass |
 | 2026-07-24 | Continue with Slice 186 by deriving exact detached authored register-collision footprints. | Implemented and automated-validated; exact detached definition inputs feed the shared pure legacy planner, stable primitive contributions and canonical Region reach reconcile, object 1147 remains an explicit collisionless special case, collision reach beyond the authored geometry envelope is separately reported, no collision is applied, 19 focused Slice 182-186 tests and the 826/488 Ant build pass |
 | 2026-07-24 | Continue with Slice 187 by capturing exact authored collision definitions from the active server table. | Implemented and automated-validated; stable object order reduces live scenery/boundary definitions to detached scalars, object 1147 bypasses lookup explicitly, captured provenance composes with the inert collision plan, missing/wrong-family definitions refuse, no Region/tile/collision mutation occurs, 23 focused Slice 182-187 tests and the 827/488 Ant build pass |
+| 2026-07-24 | Continue with Slice 188 by reducing complete authored collision verification to a bounded source batch. | Implemented and automated-validated; each exact source independently verifies terrain and authored object membership on disposable unregistered Regions, captures active definition scalars, derives but does not apply collision, and retains only aggregate/per-source counts plus four stable fingerprints; 27 focused Slice 182-188 tests and the 828/488 Ant build pass |
 
 ## Next Discussion
 
