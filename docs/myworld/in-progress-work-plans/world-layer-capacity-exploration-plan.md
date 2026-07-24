@@ -15296,6 +15296,74 @@ disposable collision application across an exact selected-source batch, reduce
 it to count/fingerprint-only evidence, and still leave the private diagnostic
 and every runtime source disconnected.
 
+### Slice 191: Bounded disposable collision application
+
+Objective: reduce Slice 190's exact disposable collision applications across
+the selected-source boundary to bounded count/fingerprint-only evidence without
+changing Slice 188's accepted derivation-only path.
+
+Implemented:
+
+- Slice 188's source loop now has one package-local composite entry that may
+  invoke Slice 190 immediately before each collision plan is discarded. Its
+  existing public capture remains derivation-only, retains
+  `collisionApplied=false`, and does not enter the disposable application path;
+- the composite entry carries only Slice 188's historical detached batch and
+  one detached Slice 190 receipt per exact source. It rejects missing or extra
+  receipts before exposing the package-local composition;
+- the new batch is bounded by the same exact 128-source maximum and validates
+  generation, requirements/observation ticks, residency-mirror version,
+  authored generation, ordinal, coordinates, footprint counts, Region counts,
+  and the original collision fingerprint for every source;
+- aggregates distinguish the two pre-application disposable Regions per
+  source from the exact disposable collision Region unions. Terrain applies,
+  object-membership applies, collision applications, held boundaries, verified
+  tiles, all three collision-counter families, and original/applied
+  fingerprints remain separately visible; and
+- only immutable per-source counts and five fingerprints survive. No
+  collision plan, planner result, disposable Region, TileValue, boundary,
+  manager, entity, or application receipt is retained.
+
+Safety boundary:
+
+- collision is applied only to Slice 190's disposable unregistered Regions.
+  Runtime collision application, collision-registration provenance,
+  runtime-source terrain/object membership, source absence/reconstruction,
+  active-family restoration, and usable Region return remain false;
+- no Region registry, residency mirror, visibility cache, arrival gate,
+  visibility-release state, scheduler state, or lifecycle authority is
+  changed;
+- the accepted Slice 188 public and schema-v52 diagnostic path remain
+  derivation-only and do not invoke Slice 190 or this new batch; and
+- this batch has no diagnostic, loading, gameplay, packet, or production
+  caller. Private exposure requires another additive schema and owner route.
+
+Automated validation status:
+
+- the real source-lifecycle fixture executes both the accepted derivation-only
+  batch and the disposable-application batch against the same deterministic
+  source. Their identity, baseline fingerprint, three authored footprints,
+  four contribution references, four required-Region references, and two
+  unique required Regions match exactly;
+- application evidence separately reconciles two pre-application Regions, two
+  collision Regions, three footprint applications, four boundary acquisitions,
+  4,608 verified tiles, all collision-counter totals, and the applied-state
+  fingerprint. Immutable per-source storage and every false runtime-authority
+  fact are asserted;
+- structural guards prove the active-definition public path, exact source
+  bound, detached storage, absence of runtime/disposable handles, and continued
+  derivation-only behavior of Slice 188's public capture;
+- the Slice 182-191 focused lineage passes 41 tests, including five Slice 191
+  tests; and
+- the authoritative bundled-Ant server build compiles 831 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This disconnected batch does not
+warrant an owner route. The next slice should extend only the explicit private
+preservation diagnostic with this bounded count/fingerprint-only application
+summary, advance an additive schema while preserving v52 unchanged, and require
+one cooldown-aware dense owner route before acceptance.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15706,6 +15774,7 @@ private environment should validate at least:
 | 2026-07-24 | Checkpoint the first Slice 189 owner attempt without accepting it. | The 59-record interaction route remained visually and behaviorally normal but omitted `preserve-noop`; the three-record retry is valid schema-v52 and reached `preservation-noop`, but a stationary start at `(142,516)` produced zero candidate sources, so all preservation/collision evidence correctly remained null. A later quiet-to-dense window transition is required before retry; this is an expected gate, not a collision refusal |
 | 2026-07-24 | Accept the Slice 189 private authored-collision verification route. | Owner-validated after accounting for the existing 16-tick retirement cooldown; four contiguous v52 records validate, all 36 sources align across preflight/reload/terrain/collision identity, 4,551 replay placements and 3,979 active-definition-backed object footprints reconcile with all aggregate counts and fingerprints, disposal is exactly bounded, the diagnostic response appeared normally, and every collision apply, registration, runtime mutation, retained handle, visibility, arrival, and lifecycle-authority fact remains false |
 | 2026-07-24 | Continue with Slice 190 by applying authored collision only to disposable unregistered Regions. | Implemented and automated-validated; detached footprints recreate the exact pure planner result, the canonical ordered-boundary executor applies counters only to a locally constructed Region union, every tile and collision family is fingerprinted and reconciled, object membership/provenance and all runtime lookup/mutation/authority remain absent, the Slice 182-190 lineage passes 36 tests, and the 830/488 Ant build passes |
+| 2026-07-24 | Continue with Slice 191 by bounding disposable collision application across exact selected sources. | Implemented and automated-validated; Slice 188's accepted public path remains derivation-only while one package-local composition applies each source plan only to disposable Region unions, aligns every source and original fingerprint, reduces application/counter/tile evidence to immutable counts and fingerprints, retains no intermediate handles or runtime authority, the Slice 182-191 lineage passes 41 tests, and the 831/488 Ant build passes |
 
 ## Next Discussion
 
@@ -16349,10 +16418,13 @@ Slices 160-189 complete that correlation and advance the inert reload path
 through exact owner preservation, source-bound preflight, authored replay,
 isolated terrain/object verification, and detached authored-collision
 derivation. Slice 190 now crosses the first collision-application boundary only
-inside a disposable unregistered Region union. The next safe gate is a bounded
-selected-source batch that reduces those disposable applications to detached
-counts and fingerprints; it must remain disconnected from private diagnostics
-until its aggregate invariants are mechanically proved.
+inside a disposable unregistered Region union, and Slice 191 now bounds that
+work across the exact selected-source set while reducing it to detached counts
+and fingerprints. The next safe gate is additive exposure through only the
+explicit private preservation diagnostic. Historical schema-v52 and the
+derivation-only batch must remain unchanged, and a cooldown-aware owner route
+must prove real multi-source application counts without granting runtime
+collision or lifecycle authority.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

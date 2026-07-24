@@ -46,6 +46,20 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 		final LayeredPackedRegionReloadRecipe reloadRecipe,
 		final int maximumSources,
 		final CollisionPlanFactory collisionPlanFactory) {
+		this(
+			regionManager, boundary, reloadRecipe, maximumSources,
+			collisionPlanFactory, null);
+	}
+
+	private LayeredPackedRegionAuthoredCollisionVerificationBatch(
+		final RegionManager regionManager,
+		final LayeredPackedRegionSourceLifecycleBoundary boundary,
+		final LayeredPackedRegionReloadRecipe reloadRecipe,
+		final int maximumSources,
+		final CollisionPlanFactory collisionPlanFactory,
+		final List<
+			LayeredPackedRegionIsolatedAuthoredCollisionVerification>
+				disposableCollisionApplications) {
 		RegionManager manager =
 			Objects.requireNonNull(regionManager, "regionManager");
 		LayeredPackedRegionSourceLifecycleBoundary checkedBoundary =
@@ -115,6 +129,11 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 						manager, container, terrain, replay);
 			LayeredPackedRegionAuthoredCollisionFootprintPlan collision =
 				factory.define(replay, membershipVerification);
+			if (disposableCollisionApplications != null) {
+				disposableCollisionApplications.add(
+					LayeredPackedRegionIsolatedAuthoredCollisionVerifier
+						.verify(manager, collision));
+			}
 			SourceVerification source = new SourceVerification(
 				ordinal, terrainVerification, replay,
 				membershipVerification, collision);
@@ -193,6 +212,23 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 		return new LayeredPackedRegionAuthoredCollisionVerificationBatch(
 			regionManager, boundary, reloadRecipe, maximumSources,
 			collisionPlanFactory);
+	}
+
+	static ApplicationCapture captureWithDisposableCollisionApplications(
+		final RegionManager regionManager,
+		final LayeredPackedRegionSourceLifecycleBoundary boundary,
+		final LayeredPackedRegionReloadRecipe reloadRecipe,
+		final int maximumSources,
+		final CollisionPlanFactory collisionPlanFactory) {
+		List<LayeredPackedRegionIsolatedAuthoredCollisionVerification>
+			applications =
+				new ArrayList<
+					LayeredPackedRegionIsolatedAuthoredCollisionVerification>();
+		LayeredPackedRegionAuthoredCollisionVerificationBatch baseline =
+			new LayeredPackedRegionAuthoredCollisionVerificationBatch(
+				regionManager, boundary, reloadRecipe, maximumSources,
+				collisionPlanFactory, applications);
+		return new ApplicationCapture(baseline, applications);
 	}
 
 	private static String fingerprint(
@@ -316,6 +352,40 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 		LayeredPackedRegionAuthoredCollisionFootprintPlan define(
 			LayeredPackedRegionAuthoredReplayPlan replay,
 			LayeredPackedRegionIsolatedAuthoredObjectVerification membership);
+	}
+
+	static final class ApplicationCapture {
+		private final LayeredPackedRegionAuthoredCollisionVerificationBatch
+			baseline;
+		private final List<
+			LayeredPackedRegionIsolatedAuthoredCollisionVerification>
+				applications;
+
+		private ApplicationCapture(
+			final LayeredPackedRegionAuthoredCollisionVerificationBatch
+				baseline,
+			final List<
+				LayeredPackedRegionIsolatedAuthoredCollisionVerification>
+					applications) {
+			this.baseline = Objects.requireNonNull(baseline, "baseline");
+			if (applications.size() != baseline.getSourceCount()) {
+				throw new IllegalArgumentException(
+					"Disposable collision application count is incomplete");
+			}
+			this.applications = Collections.unmodifiableList(
+				new ArrayList<
+					LayeredPackedRegionIsolatedAuthoredCollisionVerification>(
+						applications));
+		}
+
+		LayeredPackedRegionAuthoredCollisionVerificationBatch getBaseline() {
+			return baseline;
+		}
+
+		List<LayeredPackedRegionIsolatedAuthoredCollisionVerification>
+			getApplications() {
+			return applications;
+		}
 	}
 
 	/** Count/fingerprint-only receipt for one exact selected source. */
