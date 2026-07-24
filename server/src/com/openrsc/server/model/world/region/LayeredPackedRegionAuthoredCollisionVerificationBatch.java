@@ -48,7 +48,7 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 		final CollisionPlanFactory collisionPlanFactory) {
 		this(
 			regionManager, boundary, reloadRecipe, maximumSources,
-			collisionPlanFactory, null);
+			collisionPlanFactory, null, null);
 	}
 
 	private LayeredPackedRegionAuthoredCollisionVerificationBatch(
@@ -60,6 +60,23 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 		final List<
 			LayeredPackedRegionIsolatedAuthoredCollisionVerification>
 				disposableCollisionApplications) {
+		this(
+			regionManager, boundary, reloadRecipe, maximumSources,
+			collisionPlanFactory, disposableCollisionApplications, null);
+	}
+
+	private LayeredPackedRegionAuthoredCollisionVerificationBatch(
+		final RegionManager regionManager,
+		final LayeredPackedRegionSourceLifecycleBoundary boundary,
+		final LayeredPackedRegionReloadRecipe reloadRecipe,
+		final int maximumSources,
+		final CollisionPlanFactory collisionPlanFactory,
+		final List<
+			LayeredPackedRegionIsolatedAuthoredCollisionVerification>
+				disposableCollisionApplications,
+		final List<
+			LayeredPackedRegionIsolatedAuthoredSourceStateVerification>
+				combinedSourceStates) {
 		RegionManager manager =
 			Objects.requireNonNull(regionManager, "regionManager");
 		LayeredPackedRegionSourceLifecycleBoundary checkedBoundary =
@@ -133,6 +150,13 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 				disposableCollisionApplications.add(
 					LayeredPackedRegionIsolatedAuthoredCollisionVerifier
 						.verify(manager, collision));
+			}
+			if (combinedSourceStates != null) {
+				combinedSourceStates.add(
+					LayeredPackedRegionIsolatedAuthoredSourceStateVerifier
+						.verify(
+							manager, container, terrain, replay,
+							membershipVerification, collision));
 			}
 			SourceVerification source = new SourceVerification(
 				ordinal, terrainVerification, replay,
@@ -229,6 +253,23 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 				regionManager, boundary, reloadRecipe, maximumSources,
 				collisionPlanFactory, applications);
 		return new ApplicationCapture(baseline, applications);
+	}
+
+	static CombinedStateCapture captureWithCombinedSourceStates(
+		final RegionManager regionManager,
+		final LayeredPackedRegionSourceLifecycleBoundary boundary,
+		final LayeredPackedRegionReloadRecipe reloadRecipe,
+		final int maximumSources,
+		final CollisionPlanFactory collisionPlanFactory) {
+		List<LayeredPackedRegionIsolatedAuthoredSourceStateVerification>
+			combinedStates =
+				new ArrayList<
+					LayeredPackedRegionIsolatedAuthoredSourceStateVerification>();
+		LayeredPackedRegionAuthoredCollisionVerificationBatch baseline =
+			new LayeredPackedRegionAuthoredCollisionVerificationBatch(
+				regionManager, boundary, reloadRecipe, maximumSources,
+				collisionPlanFactory, null, combinedStates);
+		return new CombinedStateCapture(baseline, combinedStates);
 	}
 
 	private static String fingerprint(
@@ -385,6 +426,40 @@ public final class LayeredPackedRegionAuthoredCollisionVerificationBatch {
 		List<LayeredPackedRegionIsolatedAuthoredCollisionVerification>
 			getApplications() {
 			return applications;
+		}
+	}
+
+	static final class CombinedStateCapture {
+		private final LayeredPackedRegionAuthoredCollisionVerificationBatch
+			baseline;
+		private final List<
+			LayeredPackedRegionIsolatedAuthoredSourceStateVerification>
+				combinedStates;
+
+		private CombinedStateCapture(
+			final LayeredPackedRegionAuthoredCollisionVerificationBatch
+				baseline,
+			final List<
+				LayeredPackedRegionIsolatedAuthoredSourceStateVerification>
+					combinedStates) {
+			this.baseline = Objects.requireNonNull(baseline, "baseline");
+			if (combinedStates.size() != baseline.getSourceCount()) {
+				throw new IllegalArgumentException(
+					"Combined disposable source-state count is incomplete");
+			}
+			this.combinedStates = Collections.unmodifiableList(
+				new ArrayList<
+					LayeredPackedRegionIsolatedAuthoredSourceStateVerification>(
+						combinedStates));
+		}
+
+		LayeredPackedRegionAuthoredCollisionVerificationBatch getBaseline() {
+			return baseline;
+		}
+
+		List<LayeredPackedRegionIsolatedAuthoredSourceStateVerification>
+			getCombinedStates() {
+			return combinedStates;
 		}
 	}
 
