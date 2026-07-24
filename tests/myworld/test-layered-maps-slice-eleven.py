@@ -26,7 +26,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v56.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v57.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -69,6 +69,7 @@ SCHEMA_V52 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v52.sche
 SCHEMA_V53 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v53.schema.json"
 SCHEMA_V54 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v54.schema.json"
 SCHEMA_V55 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v55.schema.json"
+SCHEMA_V56 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v56.schema.json"
 
 
 POINT_STUB = r'''
@@ -739,6 +740,94 @@ public final class
         public String getBaselineRegistrationFingerprintSha256() { return ""; }
         public boolean isRegistrationFingerprintMatched() { return true; }
         public Outcome getOutcome() { return Outcome.EXACT_BASELINE_MATCH; }
+    }
+}
+'''
+
+AUTHORED_OBJECT_DETACHMENT_VERIFICATION_STUB = r'''
+package com.openrsc.server.model.world.region;
+
+import java.util.Collections;
+import java.util.List;
+
+public final class
+        LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch {
+    public long getGeneration() { return 0L; }
+    public long getRequirementsObservedAtTick() { return 0L; }
+    public long getObservedAtTick() { return 0L; }
+    public long getRuntimeObservedAtTick() { return 0L; }
+    public long getResidencyMirrorVersion() { return 0L; }
+    public long getAuthoredGeneration() { return 0L; }
+    public int getSourceCount() { return 0; }
+    public long getReplayPlacementCount() { return 0L; }
+    public long getAuthoredObjectCount() { return 0L; }
+    public long getDisposableRegionConstructionCount() { return 0L; }
+    public long getSupportRegionCount() { return 0L; }
+    public long getReconstructionTransactionCount() { return 0L; }
+    public long getReconstructionBoundaryCount() { return 0L; }
+    public long getReconstructionCacheInvalidationCount() { return 0L; }
+    public long getDetachmentTransactionCount() { return 0L; }
+    public long getDetachmentBoundaryCount() { return 0L; }
+    public long getDetachmentCacheInvalidationCount() { return 0L; }
+    public long getCollisionRegistrationCount() { return 0L; }
+    public long getCollisionRegistrationClearedCount() { return 0L; }
+    public long getCollisionContributionReferenceCount() { return 0L; }
+    public long getCollisionRegionReferenceCount() { return 0L; }
+    public long getVerifiedRegionTileCount() { return 0L; }
+    public String getDetachmentPlanFingerprintSha256() { return ""; }
+    public String getFingerprintSha256() { return ""; }
+    public boolean areAllSourcesVerified() { return true; }
+    public boolean isPointInTimeOnly() { return true; }
+    public boolean isDetachedSummaryOnly() { return true; }
+    public boolean isDisposableReconstructionPerformed() { return true; }
+    public boolean isDisposableDetachmentPerformed() { return true; }
+    public boolean isRuntimeHandleRetained() { return false; }
+    public boolean isRuntimeSourceMutated() { return false; }
+    public boolean isRuntimeCollisionMutated() { return false; }
+    public boolean isRuntimeCacheInvalidated() { return false; }
+    public boolean isSourceAbsencePerformed() { return false; }
+    public boolean isSourceReconstructionPerformed() { return false; }
+    public boolean isSchedulerCorrelationPerformed() { return false; }
+    public boolean isActiveFamilyPreservationPerformed() { return false; }
+    public boolean isRegionRegistryMutated() { return false; }
+    public boolean isResidencyMirrorMutated() { return false; }
+    public boolean isVisibilityCacheMutated() { return false; }
+    public boolean isArrivalGate() { return false; }
+    public boolean isVisibilityReleased() { return false; }
+    public boolean isLifecycleAuthority() { return false; }
+    public List<SourceVerification> getSources() {
+        return Collections.emptyList();
+    }
+
+    public static final class SourceVerification {
+        public int getSourceOrdinal() { return 0; }
+        public int getPackedRegionX() { return 0; }
+        public int getPackedRegionY() { return 0; }
+        public int getReplayPlacementCount() { return 0; }
+        public int getAuthoredObjectCount() { return 0; }
+        public int getDisposableRegionConstructionCount() { return 0; }
+        public int getSupportRegionCount() { return 0; }
+        public int getReconstructionTransactionCount() { return 0; }
+        public int getReconstructionBoundaryCount() { return 0; }
+        public int getReconstructionCacheInvalidationCount() { return 0; }
+        public int getDetachmentTransactionCount() { return 0; }
+        public int getDetachmentBoundaryCount() { return 0; }
+        public int getDetachmentCacheInvalidationCount() { return 0; }
+        public int getCollisionRegistrationCount() { return 0; }
+        public int getCollisionRegistrationClearedCount() { return 0; }
+        public int getCollisionContributionReferenceCount() { return 0; }
+        public int getCollisionRegionReferenceCount() { return 0; }
+        public int getVerifiedRegionTileCount() { return 0; }
+        public String getTerrainFingerprintSha256() { return ""; }
+        public String getAuthoredReplayFingerprintSha256() { return ""; }
+        public String getCollisionFootprintFingerprintSha256() { return ""; }
+        public String getDetachmentPlanFingerprintSha256() { return ""; }
+        public String getPreDetachmentRegistrationFingerprintSha256() {
+            return "";
+        }
+        public String getPreDetachmentStateFingerprintSha256() { return ""; }
+        public String getPostDetachmentStateFingerprintSha256() { return ""; }
+        public String getFingerprintSha256() { return ""; }
     }
 }
 '''
@@ -1789,6 +1878,9 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             "com/openrsc/server/model/world/region/"
             "LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison.java":
                 RUNTIME_AUTHORED_OBJECT_BASELINE_COMPARISON_STUB,
+            "com/openrsc/server/model/world/region/"
+            "LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch.java":
+                AUTHORED_OBJECT_DETACHMENT_VERIFICATION_STUB,
             "com/openrsc/server/diagnostics/LayeredCoordinateParityObserverFixture.java":
                 OBSERVER_FIXTURE,
         }
@@ -1860,7 +1952,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v56" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v57" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -3079,6 +3171,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v53 = json.loads(SCHEMA_V53.read_text(encoding="utf-8"))
                 v54 = json.loads(SCHEMA_V54.read_text(encoding="utf-8"))
                 v55 = json.loads(SCHEMA_V55.read_text(encoding="utf-8"))
+                v56 = json.loads(SCHEMA_V56.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -3122,6 +3215,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v53["$id"], Resource.from_contents(v53)),
                     (v54["$id"], Resource.from_contents(v54)),
                     (v55["$id"], Resource.from_contents(v55)),
+                    (v56["$id"], Resource.from_contents(v56)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

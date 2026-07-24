@@ -16188,6 +16188,56 @@ Status: implemented and automated-validated. Additive private exposure is the
 next meaningful owner route because it can prove the complete selected-source
 set against real definitions and terrain without performing runtime detachment.
 
+### Slice 205: Private disposable detachment diagnostics
+
+Objective: expose Slice 204's bounded disposable reconstruction/detachment
+summary through the existing explicit private preservation command without
+granting runtime teardown authority.
+
+Implemented:
+
+- additive `layered-map-parity-event-v57` changes only the nullable
+  `packedRegionNpcOwnerPreservationNoOp` evidence and preserves schema-v56 as
+  the immutable prior contract;
+- after the runtime authored-object census exactly matches the disposable
+  transactional baseline, the same held source lifecycle boundary derives the
+  inert reverse-order plan and captures the bounded Slice 204 batch;
+- metadata reconciles generation, recipe/runtime observation ticks, mirror and
+  authored generations, source order, authored objects, collision
+  contributions/Region references, verified tiles, and inherited terrain,
+  replay, and collision-plan fingerprints; and
+- JSON retains only aggregate/per-source transaction, boundary, Region,
+  registration, tile counts and stage fingerprints, including the exact
+  pre-registration, pre-state, and terrain-only post-detachment states.
+
+Safety boundary:
+
+- only `::layerparity preserve-noop` or `::lp preserve-noop` can populate the
+  new field; an owner-scope refusal requires all lifecycle evidence to remain
+  null;
+- reconstruction and reverse-order detachment occur exclusively in disposable
+  unregistered Region unions, and no Region, object, collision-registration,
+  tile, plan, transaction, or other runtime handle survives capture;
+- runtime source/collision/cache mutation, source absence/reconstruction,
+  scheduler correlation, active-family preservation, registry/mirror/
+  visibility mutation, arrival, and lifecycle authority must all remain
+  false; and
+- the evidence remains an opt-in private diagnostic, not a teardown permit,
+  source lifecycle action, recovery proof, or visibility gate.
+
+Automated validation status:
+
+- the focused schema/source guard validates exact and null evidence forms,
+  source/aggregate baseline reconciliation, handler ordering, serializer
+  coverage, schema history, and documentation;
+- the complete Slice 182-205 lineage passes 103 tests and the end-to-end
+  observer integration fixture passes two tests; and
+- the authoritative bundled-Ant server build compiles 842 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. One cooldown-aware private owner
+route is required before this slice can be accepted.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16616,6 +16666,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 202 by defining authored-object detachment work from an exact runtime baseline. | Implemented and automated-validated; the inert plan copies exact authored object identities and constructors in reverse stable order, preserves active-family burdens and matching registration fingerprints, refuses every non-exact runtime outcome, and explicitly requires scheduler correlation, fresh atomic revalidation, rollback, arrival, and visibility gates while granting no runtime lookup, mutation, detachment, or lifecycle authority; the Slice 182-202 lineage passes 90 tests and the 840/488 Ant build/audit passes |
 | 2026-07-24 | Continue with Slice 203 by executing authored-object detachment only inside a disposable reconstructed source. | Implemented and automated-validated; exact runtime/baseline registration provenance gates a reverse-order strict-unregister round trip, every object and collision registration clears back to exact terrain-only state, and all handles remain confined to unregistered Regions while runtime detachment, source absence, scheduler work, and lifecycle authority remain false; the Slice 182-203 lineage passes 94 tests and the 841/488 Ant build/audit passes |
 | 2026-07-24 | Continue with Slice 204 by bounding disposable authored-object detachment across the exact selected-source set. | Implemented and automated-validated; each source independently reconstructs and detaches in an unregistered Region union, the batch reconciles both transaction passes and every Region/cache/registration/tile count, only count/fingerprint summaries survive, and runtime detachment plus every lifecycle authority remains false; the Slice 182-204 lineage passes 98 tests and the 842/488 Ant build/audit passes |
+| 2026-07-24 | Continue with Slice 205 by exposing bounded disposable authored-object detachment through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v57 is confined to the explicit preservation no-op, derives the inert plan only after an exact runtime baseline, executes both transaction passes only in disposable unregistered Region unions, retains bounded counts/fingerprints, preserves schema-v56, the Slice 182-205 lineage passes 103 tests plus two observer integration guards, and the 842/488 Ant build/audit passes; one cooldown-aware private owner route remains pending |
 
 ## Next Discussion
 

@@ -49,6 +49,8 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionVerificationBatch;
+import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredObjectDetachmentPlan;
+import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredSourceStateVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
@@ -577,6 +579,14 @@ public class GameEventHandler {
 				runtimeAuthoredObjectBaselineComparison =
 					new
 						LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison[1];
+		final LayeredPackedRegionAuthoredObjectDetachmentPlan[]
+			authoredObjectDetachmentPlan =
+				new LayeredPackedRegionAuthoredObjectDetachmentPlan[1];
+		final
+			LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch[]
+				authoredObjectDetachmentVerification =
+					new
+						LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch[1];
 		boolean sourceBoundaryEntered =
 			getServer().getWorld().getRegionManager()
 				.withinLayeredPackedRegionSourceLifecycleBoundary(
@@ -638,6 +648,19 @@ public class GameEventHandler {
 								.compare(
 									runtimeAuthoredObjectObservation[0],
 									transactionalAuthoredSourceVerification[0]);
+						authoredObjectDetachmentPlan[0] =
+							LayeredPackedRegionAuthoredObjectDetachmentPlan
+								.define(
+									reloadRecipe[0],
+									runtimeAuthoredObjectBaselineComparison[0]);
+						authoredObjectDetachmentVerification[0] =
+							LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch
+								.capture(
+									getServer().getWorld().getRegionManager(),
+									boundary, reloadRecipe[0],
+									authoredObjectDetachmentPlan[0],
+									LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch
+										.MAXIMUM_VERIFICATION_SOURCES);
 						captured[0] =
 							GameTickEventNpcOwnerPreservationNoOpDiagnostic
 								.capture(
@@ -672,7 +695,8 @@ public class GameEventHandler {
 			authoredSourceStateVerification[0],
 			transactionalAuthoredSourceVerification[0],
 			runtimeAuthoredObjectObservation[0],
-			runtimeAuthoredObjectBaselineComparison[0]);
+			runtimeAuthoredObjectBaselineComparison[0],
+			authoredObjectDetachmentVerification[0]);
 	}
 
 	private void requireExactPackedSourceBoundary(
