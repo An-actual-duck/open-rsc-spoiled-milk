@@ -15444,6 +15444,70 @@ Owner validation status:
 
 Status: implemented, automated-validated, and owner-validated.
 
+### Slice 193: Combined disposable authored source state
+
+Objective: prove static terrain, authored scenery membership, and exact
+authored collision coexist inside the same disposable unregistered Region
+union before considering any runtime source lifecycle.
+
+Implemented:
+
+- one package-local verifier constructs a fresh union containing the exact
+  source Region and every collision-support Region. All containers must satisfy
+  the sealed blank contract before any work;
+- the accepted static terrain initialization is applied to the source Region,
+  exact authored scenery/boundary/harvesting membership is inserted through
+  the existing ordered membership boundary, and the accepted collision
+  footprints are then applied to that same union through the canonical ordered
+  collision executor;
+- terrain is compared before and after collision, authored membership is
+  compared before and after collision, support Regions must retain blank static
+  terrain, and all player/NPC/dynamic-object/item family counts must remain
+  empty. Collision contributions may reach support Regions without converting
+  those Regions into authored terrain or entity sources; and
+- the final detached receipt retains only identity, aggregate counts, the four
+  accepted stage fingerprints, and a deterministic fingerprint over the actual
+  combined tile/object state. No Region, entity, tile, boundary, planner,
+  manager, collection, or runtime handle survives.
+
+Safety boundary:
+
+- the new verifier is package-local and has no diagnostic, loading, gameplay,
+  packet, persistence, arrival, or production caller;
+- all Regions are constructed locally and are never registered, returned,
+  cached, looked up through runtime storage, or granted source identity;
+- authored collision is applied directly to the disposable union without
+  attaching collision-registration state to its objects. NPC/item membership,
+  scheduler restoration, active-family preservation, source absence or
+  reconstruction, registry/residency/visibility mutation, arrival, visibility
+  release, and lifecycle authority remain false; and
+- the established standalone terrain, object-membership, collision-derivation,
+  and collision-application receipts remain detached and retain their prior
+  semantics.
+
+Automated validation status:
+
+- the real isolated-source fixture applies 2,304 terrain tiles, three authored
+  objects, and three collision footprints spanning two disposable Regions.
+  Terrain and exact membership remain matched after four ordered collision
+  boundary acquisitions, while the support Region retains its blank static
+  definition;
+- the same combined state reconciles 4,608 verified Region tiles and all
+  blocking/dynamic/projectile counters with the independently accepted Slice
+  190 receipt. Repeating the entire construction yields the same final-state
+  fingerprint;
+- source guards prove that the verifier reuses the canonical terrain,
+  membership, and collision seams, performs no runtime Region lookup or
+  registration, and returns a receipt without runtime handles. The standalone
+  Slice 190 path continues to require empty entity membership;
+- the Slice 182-193 focused lineage passes 50 tests, including five Slice 193
+  tests; and
+- the authoritative bundled-Ant server build compiles 833 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This disconnected proof does not
+warrant an owner route.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15857,6 +15921,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 191 by bounding disposable collision application across exact selected sources. | Implemented and automated-validated; Slice 188's accepted public path remains derivation-only while one package-local composition applies each source plan only to disposable Region unions, aligns every source and original fingerprint, reduces application/counter/tile evidence to immutable counts and fingerprints, retains no intermediate handles or runtime authority, the Slice 182-191 lineage passes 41 tests, and the 831/488 Ant build passes |
 | 2026-07-24 | Continue with Slice 192 by exposing bounded disposable collision application through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v53 extends only the explicit preservation no-op with aligned aggregate/per-source application counts and fingerprints, v52 remains immutable, disposable application must be true while every runtime collision/mutation/authority fact remains false, the Slice 182-192 lineage passes 45 tests, and the 831/488 Ant build passes; one cooldown-aware dense owner route remains pending |
 | 2026-07-24 | Accept the Slice 192 private disposable collision-application route. | Owner-validated; four contiguous schema-v53 records align all 36 sources, 4,551 replay placements, 3,979 object-footprint applications, 108 disposable Regions, 82,944 verified Region tiles, and every inherited/application fingerprint and counter aggregate; the response, visuals, interaction, and connection remained normal, while runtime collision, registration, mutation, retained handles, visibility, arrival, and lifecycle-authority facts all remain false |
+| 2026-07-24 | Continue with Slice 193 by proving one combined disposable authored source state. | Implemented and automated-validated; static terrain, exact authored object membership, and canonical collision application now coexist in the same unregistered Region union, support Regions retain blank static definitions, the deterministic final-state fingerprint covers actual tiles and objects, no handle or runtime authority survives, the Slice 182-193 lineage passes 50 tests, and the 833/488 Ant build passes |
 
 ## Next Discussion
 
@@ -16508,16 +16573,15 @@ derivation-only public batch remain unchanged. Its cooldown-aware owner route
 now proves real multi-source application counts without granting runtime
 collision or lifecycle authority.
 
-The next safe disconnected gate should prove one complete disposable authored
-source state rather than approach runtime lifecycle: initialize terrain, apply
-authored object membership, and apply the already-derived collision footprints
-to the same unregistered Region union, then verify their coexistence and reduce
-the result to detached counts/fingerprints. The accepted evidence currently
-proves those stages independently, including collision on a separately
-constructed disposable union; it does not yet prove their combined final state
-inside one disposable container. Runtime registry insertion, source
-replacement, NPC/item membership, scheduler restoration, arrival, visibility,
-and lifecycle authority must remain disconnected.
+Slice 193 now proves one complete disposable authored source state: terrain,
+exact object membership, and collision coexist in the same unregistered Region
+union while collision-support Regions retain blank static definitions. The next
+safe disconnected gate should bound that proof across the exact selected-source
+set, preserve stable source order and the accepted stage fingerprints, and
+reduce every combined state to counts/fingerprints before any private
+diagnostic exposure. Runtime registry insertion, source replacement, NPC/item
+membership, scheduler restoration, arrival, visibility, and lifecycle
+authority must remain disconnected.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

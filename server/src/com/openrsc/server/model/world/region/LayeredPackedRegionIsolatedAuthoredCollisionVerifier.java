@@ -39,6 +39,51 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 			Objects.requireNonNull(collisionPlan, "collisionPlan");
 		final Map<Long, Region> disposable = constructDisposableRegions(
 			manager, collision);
+		Application application = applyToDisposableRegions(
+			disposable, collision);
+		boolean entityMembershipRemainedEmpty =
+			verifyEntityMembershipEmpty(disposable);
+		return
+			LayeredPackedRegionIsolatedAuthoredCollisionVerification
+				.verified(
+					collision, disposable.size(),
+					application.getCollisionApplicationCount(),
+					application.getHeldBoundaryCount(),
+					application.getVerifiedRegionTileCount(),
+					application.getUniqueContributionTileCount(),
+					application.getBlockingSceneryContributionCount(),
+					application.getDynamicCollisionContributionCount(),
+					application.getDynamicProjectileContributionCount(),
+					application.getAppliedCollisionFingerprintSha256(),
+					application
+						.isBlankDynamicProductsMatchedBeforeApply(),
+					application.isAllPlannerResultsRecreatedExactly(),
+					application.isAllCollisionApplicationsSucceeded(),
+					application.isAllAppliedTilesMatched(),
+					entityMembershipRemainedEmpty);
+	}
+
+	static Application applyToDisposableRegions(
+		final Map<Long, Region> disposableRegions,
+		final LayeredPackedRegionAuthoredCollisionFootprintPlan collisionPlan) {
+		final Map<Long, Region> disposable =
+			Objects.requireNonNull(disposableRegions, "disposableRegions");
+		final LayeredPackedRegionAuthoredCollisionFootprintPlan collision =
+			Objects.requireNonNull(collisionPlan, "collisionPlan");
+		if (disposable.isEmpty()
+			|| !disposable.containsKey(regionKey(
+				collision.getPackedRegionX(), collision.getPackedRegionY()))) {
+			throw new IllegalArgumentException(
+				"Disposable collision Region union lacks its source");
+		}
+		for (RequiredPackedRegion required : collision.getRequiredRegions()) {
+			if (!disposable.containsKey(regionKey(
+					required.getPackedRegionX(),
+					required.getPackedRegionY()))) {
+				throw new IllegalArgumentException(
+					"Disposable collision Region union lacks required reach");
+			}
+		}
 		boolean blankDynamicProductsMatchedBeforeApply =
 			verifyBlankDynamicProducts(disposable);
 		if (!blankDynamicProductsMatchedBeforeApply) {
@@ -94,26 +139,18 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 				heldBoundaryCount, applied.getBoundaryCount());
 		}
 
-		Verification verification = verifyApplied(
-			disposable, expected);
-		boolean entityMembershipRemainedEmpty =
-			verifyEntityMembershipEmpty(disposable);
-		return
-			LayeredPackedRegionIsolatedAuthoredCollisionVerification
-				.verified(
-					collision, disposable.size(),
-					collisionApplicationCount, heldBoundaryCount,
-					verification.verifiedRegionTileCount,
-					expected.size(),
-					verification.blockingSceneryContributionCount,
-					verification.dynamicCollisionContributionCount,
-					verification.dynamicProjectileContributionCount,
-					verification.fingerprintSha256,
-					blankDynamicProductsMatchedBeforeApply,
-					allPlannerResultsRecreatedExactly,
-					allCollisionApplicationsSucceeded,
-					verification.allTilesMatched,
-					entityMembershipRemainedEmpty);
+		Verification verification = verifyApplied(disposable, expected);
+		return new Application(
+			collisionApplicationCount, heldBoundaryCount,
+			verification.verifiedRegionTileCount, expected.size(),
+			verification.blockingSceneryContributionCount,
+			verification.dynamicCollisionContributionCount,
+			verification.dynamicProjectileContributionCount,
+			verification.fingerprintSha256,
+			blankDynamicProductsMatchedBeforeApply,
+			allPlannerResultsRecreatedExactly,
+			allCollisionApplicationsSucceeded,
+			verification.allTilesMatched);
 	}
 
 	private static Map<Long, Region> constructDisposableRegions(
@@ -169,7 +206,7 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 				}
 			}
 		}
-		return verifyEntityMembershipEmpty(disposable);
+		return true;
 	}
 
 	private static List<RegionObjectCollisionMutationBoundary> boundaries(
@@ -429,6 +466,90 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 				dynamicProjectileContributionCount;
 			this.fingerprintSha256 = fingerprintSha256;
 			this.allTilesMatched = allTilesMatched;
+		}
+	}
+
+	static final class Application {
+		private final int collisionApplicationCount;
+		private final int heldBoundaryCount;
+		private final int verifiedRegionTileCount;
+		private final int uniqueContributionTileCount;
+		private final long blockingSceneryContributionCount;
+		private final long dynamicCollisionContributionCount;
+		private final long dynamicProjectileContributionCount;
+		private final String appliedCollisionFingerprintSha256;
+		private final boolean blankDynamicProductsMatchedBeforeApply;
+		private final boolean allPlannerResultsRecreatedExactly;
+		private final boolean allCollisionApplicationsSucceeded;
+		private final boolean allAppliedTilesMatched;
+
+		private Application(
+			final int collisionApplicationCount,
+			final int heldBoundaryCount,
+			final int verifiedRegionTileCount,
+			final int uniqueContributionTileCount,
+			final long blockingSceneryContributionCount,
+			final long dynamicCollisionContributionCount,
+			final long dynamicProjectileContributionCount,
+			final String appliedCollisionFingerprintSha256,
+			final boolean blankDynamicProductsMatchedBeforeApply,
+			final boolean allPlannerResultsRecreatedExactly,
+			final boolean allCollisionApplicationsSucceeded,
+			final boolean allAppliedTilesMatched) {
+			this.collisionApplicationCount = collisionApplicationCount;
+			this.heldBoundaryCount = heldBoundaryCount;
+			this.verifiedRegionTileCount = verifiedRegionTileCount;
+			this.uniqueContributionTileCount = uniqueContributionTileCount;
+			this.blockingSceneryContributionCount =
+				blockingSceneryContributionCount;
+			this.dynamicCollisionContributionCount =
+				dynamicCollisionContributionCount;
+			this.dynamicProjectileContributionCount =
+				dynamicProjectileContributionCount;
+			this.appliedCollisionFingerprintSha256 =
+				appliedCollisionFingerprintSha256;
+			this.blankDynamicProductsMatchedBeforeApply =
+				blankDynamicProductsMatchedBeforeApply;
+			this.allPlannerResultsRecreatedExactly =
+				allPlannerResultsRecreatedExactly;
+			this.allCollisionApplicationsSucceeded =
+				allCollisionApplicationsSucceeded;
+			this.allAppliedTilesMatched = allAppliedTilesMatched;
+		}
+
+		int getCollisionApplicationCount() {
+			return collisionApplicationCount;
+		}
+		int getHeldBoundaryCount() { return heldBoundaryCount; }
+		int getVerifiedRegionTileCount() {
+			return verifiedRegionTileCount;
+		}
+		int getUniqueContributionTileCount() {
+			return uniqueContributionTileCount;
+		}
+		long getBlockingSceneryContributionCount() {
+			return blockingSceneryContributionCount;
+		}
+		long getDynamicCollisionContributionCount() {
+			return dynamicCollisionContributionCount;
+		}
+		long getDynamicProjectileContributionCount() {
+			return dynamicProjectileContributionCount;
+		}
+		String getAppliedCollisionFingerprintSha256() {
+			return appliedCollisionFingerprintSha256;
+		}
+		boolean isBlankDynamicProductsMatchedBeforeApply() {
+			return blankDynamicProductsMatchedBeforeApply;
+		}
+		boolean isAllPlannerResultsRecreatedExactly() {
+			return allPlannerResultsRecreatedExactly;
+		}
+		boolean isAllCollisionApplicationsSucceeded() {
+			return allCollisionApplicationsSucceeded;
+		}
+		boolean isAllAppliedTilesMatched() {
+			return allAppliedTilesMatched;
 		}
 	}
 }

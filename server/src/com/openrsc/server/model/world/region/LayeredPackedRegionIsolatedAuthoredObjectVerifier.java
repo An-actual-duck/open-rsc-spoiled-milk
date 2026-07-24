@@ -189,7 +189,7 @@ final class LayeredPackedRegionIsolatedAuthoredObjectVerifier {
 			container.getInitialGroundItemCount());
 	}
 
-	private static void applyTerrainTile(
+	static void applyTerrainTile(
 		final TileValue tile,
 		final LayeredPackedRegionTerrainInitializationPlan.TerrainTileInput
 			input) {
@@ -233,7 +233,7 @@ final class LayeredPackedRegionIsolatedAuthoredObjectVerifier {
 		}
 	}
 
-	private static boolean matchesTerrain(
+	static boolean matchesTerrain(
 		final TileValue tile,
 		final LayeredPackedRegionTerrainInitializationPlan.TerrainTileInput
 			input) {
@@ -257,7 +257,7 @@ final class LayeredPackedRegionIsolatedAuthoredObjectVerifier {
 				== input.getTerrainWallProjectileCount();
 	}
 
-	private static boolean hasNoDynamicProducts(final TileValue tile) {
+	static boolean hasNoDynamicProducts(final TileValue tile) {
 		if (tile.getBlockingSceneryCount() != 0
 			|| tile.getDynamicProjectileCount() != 0) {
 			return false;
@@ -270,13 +270,13 @@ final class LayeredPackedRegionIsolatedAuthoredObjectVerifier {
 		return true;
 	}
 
-	private static boolean isObjectFamily(final ConstructionKind kind) {
+	static boolean isObjectFamily(final ConstructionKind kind) {
 		return kind == ConstructionKind.SCENERY
 			|| kind == ConstructionKind.BOUNDARY
 			|| kind == ConstructionKind.HARVESTING_SCENERY;
 	}
 
-	private static GameObject construct(
+	static GameObject construct(
 		final AuthoredReplayPlacement placement) {
 		GameObjectLoc location = new GameObjectLoc(
 			placement.getConstructedEntityId(),
@@ -303,7 +303,7 @@ final class LayeredPackedRegionIsolatedAuthoredObjectVerifier {
 		return object;
 	}
 
-	private static int addMembership(
+	static int addMembership(
 		final Region isolated,
 		final GameObject object) {
 		final Point point = object.getLoc().getLocation();
@@ -358,7 +358,7 @@ final class LayeredPackedRegionIsolatedAuthoredObjectVerifier {
 		return execution.getDeclaredBoundaryCount();
 	}
 
-	private static boolean verifyExactMembership(
+	static boolean verifyExactMembership(
 		final Region isolated,
 		final LayeredPackedRegionAuthoredReplayPlan replay) {
 		int verified = 0;
