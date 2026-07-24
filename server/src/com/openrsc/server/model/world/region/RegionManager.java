@@ -785,6 +785,64 @@ public class RegionManager {
 	}
 
 	/**
+	 * Captures a bounded authored-object census from the exact resident source
+	 * set while its lifecycle boundary remains active. Shared live collision
+	 * tiles are deliberately not inspected.
+	 */
+	public LayeredPackedRegionRuntimeAuthoredObjectObservation
+		captureLayeredPackedRegionRuntimeAuthoredObjects(
+			final LayeredPackedRegionSourceLifecycleBoundary boundary,
+			final LayeredPackedRegionReloadRecipe reloadRecipe,
+			final int maximumObjectInstances) {
+		LayeredPackedRegionSourceLifecycleBoundary checkedBoundary =
+			Objects.requireNonNull(boundary, "boundary");
+		LayeredPackedRegionReloadRecipe checkedRecipe =
+			Objects.requireNonNull(reloadRecipe, "reloadRecipe");
+		if (!Thread.holdsLock(layeredRegionLifecycleLock)
+			|| !checkedBoundary.isRegionLifecycleBoundaryHeld()
+			|| checkedBoundary.getGeneration()
+				!= checkedRecipe.getGeneration()
+			|| checkedBoundary.getRequirementsObservedAtTick()
+				!= checkedRecipe.getRequirementsObservedAtTick()
+			|| checkedBoundary.getResidencyMirrorVersion()
+				!= checkedRecipe.getResidencyMirrorVersion()
+			|| checkedBoundary.getSelectedSourceCount()
+				!= checkedRecipe.getSourceCount()
+			|| checkedBoundary.getResidencyMirrorVersion()
+				!= layeredRegionResidencyMirror.getVersion()) {
+			throw new IllegalStateException(
+				"Runtime authored-object observation lacks its lifecycle boundary");
+		}
+		List<LayeredPackedRegionRuntimeAuthoredObjectObservation.SourceCapture>
+			captures = new ArrayList<
+				LayeredPackedRegionRuntimeAuthoredObjectObservation
+					.SourceCapture>(checkedBoundary.getSelectedSourceCount());
+		for (int index = 0;
+			index < checkedBoundary.getSelectedSourceCount(); index++) {
+			LayeredPackedRegionSourceLifecycleBoundary.PackedSource source =
+				checkedBoundary.getSelectedSources().get(index);
+			LayeredPackedRegionReloadRecipe.SourceRecipe sourceRecipe =
+				checkedRecipe.getSources().get(index);
+			Region region = peekRegionFromSectorCoordinates(
+				source.getPackedRegionX(), source.getPackedRegionY());
+			if (region == null
+				|| source.getPackedRegionX()
+					!= sourceRecipe.getPackedRegionX()
+				|| source.getPackedRegionY()
+					!= sourceRecipe.getPackedRegionY()
+				|| !layeredRegionResidencyMirror.isPackedRegionRegistered(
+					source.getPackedRegionX(), source.getPackedRegionY())) {
+				throw new IllegalStateException(
+					"Runtime authored-object source changed inside its boundary");
+			}
+			captures.add(region.captureRuntimeAuthoredObjectSource());
+		}
+		return LayeredPackedRegionRuntimeAuthoredObjectObservation.observe(
+			checkedRecipe, getWorld().getServer().getCurrentTick(),
+			captures, maximumObjectInstances);
+	}
+
+	/**
 	 * Copies one exact resident source's canonical tile states while its
 	 * lifecycle boundary remains active.
 	 *

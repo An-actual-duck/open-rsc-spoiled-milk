@@ -415,6 +415,29 @@ public class Region {
 		}
 	}
 
+	/**
+	 * Copies current object constructor, authored identity, and immutable
+	 * collision-registration state while the Region object monitor is held.
+	 */
+	LayeredPackedRegionRuntimeAuthoredObjectObservation.SourceCapture
+		captureRuntimeAuthoredObjectSource() {
+		List<LayeredPackedRegionRuntimeAuthoredObjectObservation.ObjectSnapshot>
+			snapshots = new ArrayList<
+				LayeredPackedRegionRuntimeAuthoredObjectObservation
+					.ObjectSnapshot>();
+		synchronized (objects) {
+			for (GameObject object : objects.values()) {
+				snapshots.add(
+					LayeredPackedRegionRuntimeAuthoredObjectObservation
+						.ObjectSnapshot.capture(object));
+			}
+			return LayeredPackedRegionRuntimeAuthoredObjectObservation
+				.SourceCapture.capture(
+					regionX, regionY, snapshots,
+					Thread.holdsLock(objects));
+		}
+	}
+
 	/** Immutable Region-local counts; never an entity or tile handle. */
 	static final class RetirementContentsSnapshot {
 		private final boolean tileStorageAvailable;

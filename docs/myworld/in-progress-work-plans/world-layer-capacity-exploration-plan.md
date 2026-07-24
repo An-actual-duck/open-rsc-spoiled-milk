@@ -15842,6 +15842,70 @@ Owner validation:
 
 Status: owner-accepted.
 
+### Slice 199: Runtime authored-object observation
+
+Objective: compare the exact resident selected-source object census with the
+final-live authored reload recipe without treating legitimate gameplay
+transients or overlapping collision products as source corruption.
+
+Implemented:
+
+- each resident selected source copies current object constructor state,
+  authored identity, and immutable per-object collision-registration
+  provenance while the real Region object monitor and outer source lifecycle
+  boundary are held;
+- the bounded reduction distinguishes exact final-live authored instances,
+  recognized authored transient replacements, missing expected identities,
+  duplicate identities, stale/non-object/unknown authored identities, and
+  identity-less dynamic objects;
+- current collision registrations are classified separately as present and
+  constructor-matched, missing, or constructor-mismatched, with only detached
+  contribution/Region counts and deterministic per-source fingerprints
+  retained by the final observation; and
+- selected-source order, generation, requirements/recipe observation ticks,
+  residency-mirror identity, source coordinates, and checked count arithmetic
+  are preserved from the reload recipe.
+
+Safety boundary:
+
+- final-live mismatch is descriptive rather than a teardown blocker: a
+  harvesting callback may legitimately leave an exact identity absent or
+  represented by an authored transient until scheduler correlation explains
+  the state;
+- identity-less dynamic objects remain an explicit preservation family and are
+  not silently assigned authored ownership;
+- the observation does not compare shared live collision tile counters,
+  because overlapping authored, transient, and dynamic objects make aggregate
+  tile products non-attributable to one object or source;
+- temporary constructor/registration copies are discarded by the reduction;
+  the result retains no GameObject, Region, tile, registration, collection,
+  monitor, registry, cache, event, callback, or lifecycle handle; and
+- no source absence, reconstruction, runtime mutation, cache invalidation,
+  registry/mirror/visibility mutation, arrival gate, visibility release, or
+  lifecycle authority is introduced.
+
+Automated validation status:
+
+- the focused fixture proves an exact three-object final-live census, then a
+  mixed census containing an authored transient, duplicate identity, missing
+  expected identity, identity-less dynamic object, stale identity, non-object
+  identity, unknown identity, missing registration, and constructor-mismatched
+  registration without conflating those categories;
+- the real Region capture seam proves the object monitor is held while an empty
+  source is reduced to three missing expected identities, and structural guards
+  prove the RegionManager uses only non-creating source lookup inside the
+  existing lifecycle boundary; and
+- the Slice 182-199 focused lineage passes 78 tests, including five Slice 199
+  fixture/structure tests, while the authoritative bundled-Ant server build
+  compiles 838 core and 488 plugin sources and passes its build/classpath
+  audit.
+
+Status: implemented and automated-validated. This disconnected census does not
+by itself warrant an owner route. The next slice should compare only stable
+exact final-live registrations with Slice 197's disposable baseline, while
+retaining transient/missing states for later scheduler correlation rather than
+declaring them corrupt.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16263,6 +16327,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 197 by bounding transactional disposable authored source states. | Implemented and automated-validated; exact selected-source order aligns every transactional receipt to the derivation-only baseline, aggregate transaction/boundary/cache-invalidation/registration counts reconcile to object, contribution, and Region totals, only counts plus seven fingerprints survive, the Slice 182-197 lineage passes 69 tests, and the 837/488 Ant build passes |
 | 2026-07-24 | Continue with Slice 198 by exposing bounded transactional authored state through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v55 extends only the explicit preservation no-op, aligns the transactional receipt with every accepted derivation/application/state stage, serializes only bounded counts and seven fingerprints, preserves schema-v54, the Slice 182-198 lineage passes 73 tests plus observer integration guards, and the 837/488 Ant build passes; one cooldown-aware private owner route remains pending |
 | 2026-07-24 | Accept the Slice 198 private transactional authored-state route. | Owner-validated; four contiguous schema-v55 records align all 36 sources across five accepted stages, reconcile 4,551 replay placements, 3,979 atomic transactions/registrations/boundaries, 3,185 contribution references, 36 transactional Region unions, 82,944 verified tiles, all collision-family totals, and all seven fingerprints; every runtime mutation/authority fact remains false, with one accepted 951 ms late-tick warning recorded as opt-in diagnostic overhead |
+| 2026-07-24 | Continue with Slice 199 by observing resident authored-object state under exact source and Region object boundaries. | Implemented and automated-validated; exact final-live instances, authored transients, missing/duplicate/stale/non-object/unknown identities, identity-less dynamics, and missing/mismatched constructor registrations remain separate, shared live collision tiles are deliberately excluded, only count/fingerprint summaries survive, the Slice 182-199 lineage passes 78 tests, and the 838/488 Ant build/audit passes |
 
 ## Next Discussion
 
