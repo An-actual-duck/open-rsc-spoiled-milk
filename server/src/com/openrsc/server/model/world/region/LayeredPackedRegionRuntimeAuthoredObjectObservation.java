@@ -918,10 +918,14 @@ public final class LayeredPackedRegionRuntimeAuthoredObjectObservation {
 		updateInt(digest, ordered.size());
 		for (ObjectSnapshot object : ordered) {
 			RegistrationSnapshot registration = object.getRegistration();
-			updateBoolean(digest, registration != null);
-			if (registration != null) {
-				registration.updateFingerprint(digest);
+			if (registration == null) {
+				// A valid complete sequence never contains this sentinel, so
+				// exact final-live sequences remain byte-compatible with the
+				// disposable transactional registration fingerprint.
+				updateInt(digest, -1);
+				continue;
 			}
+			registration.updateFingerprint(digest);
 		}
 		return hex(digest.digest());
 	}
@@ -976,12 +980,6 @@ public final class LayeredPackedRegionRuntimeAuthoredObjectObservation {
 		final MessageDigest digest,
 		final int value) {
 		digest.update(ByteBuffer.allocate(4).putInt(value).array());
-	}
-
-	private static void updateBoolean(
-		final MessageDigest digest,
-		final boolean value) {
-		digest.update((byte) (value ? 1 : 0));
 	}
 
 	private static void updateString(

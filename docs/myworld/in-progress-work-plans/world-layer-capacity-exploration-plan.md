@@ -15906,6 +15906,66 @@ exact final-live registrations with Slice 197's disposable baseline, while
 retaining transient/missing states for later scheduler correlation rather than
 declaring them corrupt.
 
+### Slice 200: Runtime authored registration baseline comparison
+
+Objective: compare only complete stable runtime authored registration sequences
+with Slice 197's disposable transactional baseline, preserving non-final
+authored state as a separate unresolved category.
+
+Implemented:
+
+- Slice 199's per-source registration fingerprint now uses the exact canonical
+  object-order and primitive encoding used by the disposable transactional
+  verifier whenever every recognized registration is present; an impossible
+  negative sentinel keeps incomplete sequences deterministic without allowing
+  them to equal a complete baseline;
+- a count/fingerprint-only comparison aligns generation, requirements and
+  recipe observation ticks, runtime observation tick, residency-mirror version,
+  exact selected-source order, source coordinates, expected object counts, and
+  transactional registration totals before comparing fingerprints;
+- each source closes to exactly one outcome:
+  `EXACT_BASELINE_MATCH`, `NON_FINAL_AUTHORED_STATE`, `IDENTITY_CONFLICT`,
+  `REGISTRATION_PROVENANCE_INVALID`, or `STABLE_BASELINE_MISMATCH`; and
+- identity-less dynamic objects remain reported but do not invalidate an
+  otherwise exact authored registration baseline, because their separate
+  preservation burden is already explicit.
+
+Safety boundary:
+
+- registration equality is attempted only after the final-live authored set is
+  complete, unique, recognized, constructor-exact, and registration-complete;
+- recognized authored transients and missing expected identities resolve to
+  `NON_FINAL_AUTHORED_STATE` before fingerprint equality, so a harvesting or
+  restoration window is not mislabeled as collision corruption;
+- duplicate/unrecognized identity and missing/constructor-mismatched
+  registration provenance take precedence over stable comparison, while a
+  complete stable sequence with different counts or fingerprint resolves to
+  `STABLE_BASELINE_MISMATCH`;
+- no shared live collision tile is read or compared, and scheduler correlation
+  remains explicitly unperformed; and
+- both parents and the result are detached summaries. No runtime object,
+  registration, Region, tile, event, callback, registry, cache, arrival,
+  visibility, mutation, reconstruction, teardown, or lifecycle authority is
+  retained or introduced.
+
+Automated validation status:
+
+- the source-lifecycle fixture recreates all three exact runtime registration
+  receipts from the accepted collision plan and proves their four contribution
+  and four required-Region references produce the same registration fingerprint
+  as the disposable transactional baseline;
+- the same fixture separately proves stable fingerprint mismatch, mixed
+  identity conflict, and an all-missing non-final state without conflating
+  identity-less dynamic presence with authored corruption; and
+- the Slice 182-200 focused lineage passes 82 tests, including four Slice 200
+  fixture/structure tests, while the authoritative bundled-Ant server build
+  compiles 839 core and 488 plugin sources and passes its build/classpath
+  audit.
+
+Status: implemented and automated-validated. This detached comparison does not
+yet warrant an owner route. Additive private exposure should be the next
+meaningful manual checkpoint, with its runtime overhead measured separately.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16328,6 +16388,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 198 by exposing bounded transactional authored state through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v55 extends only the explicit preservation no-op, aligns the transactional receipt with every accepted derivation/application/state stage, serializes only bounded counts and seven fingerprints, preserves schema-v54, the Slice 182-198 lineage passes 73 tests plus observer integration guards, and the 837/488 Ant build passes; one cooldown-aware private owner route remains pending |
 | 2026-07-24 | Accept the Slice 198 private transactional authored-state route. | Owner-validated; four contiguous schema-v55 records align all 36 sources across five accepted stages, reconcile 4,551 replay placements, 3,979 atomic transactions/registrations/boundaries, 3,185 contribution references, 36 transactional Region unions, 82,944 verified tiles, all collision-family totals, and all seven fingerprints; every runtime mutation/authority fact remains false, with one accepted 951 ms late-tick warning recorded as opt-in diagnostic overhead |
 | 2026-07-24 | Continue with Slice 199 by observing resident authored-object state under exact source and Region object boundaries. | Implemented and automated-validated; exact final-live instances, authored transients, missing/duplicate/stale/non-object/unknown identities, identity-less dynamics, and missing/mismatched constructor registrations remain separate, shared live collision tiles are deliberately excluded, only count/fingerprint summaries survive, the Slice 182-199 lineage passes 78 tests, and the 838/488 Ant build/audit passes |
+| 2026-07-24 | Continue with Slice 200 by comparing stable runtime authored registrations with the disposable transactional baseline. | Implemented and automated-validated; exact stable sequences use byte-compatible canonical registration fingerprints, non-final/identity-conflict/invalid-provenance/stable-mismatch outcomes remain separate, shared live collision and scheduler correlation remain excluded, the Slice 182-200 lineage passes 82 tests, and the 839/488 Ant build/audit passes |
 
 ## Next Discussion
 
