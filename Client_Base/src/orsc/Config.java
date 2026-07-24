@@ -157,6 +157,7 @@ public class Config {
 	public static boolean S_DISABLE_MINIMAP_ROTATION = true;
 	public static boolean S_ALLOW_BEARDED_LADIES = false;
 	public static boolean S_PRIDE_MONTH = false;
+	public static boolean S_WANT_HISCORES = false;
 
 	public static void set(String key, Object value) {
 		prop.setProperty(key, value.toString());

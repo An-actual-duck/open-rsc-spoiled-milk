@@ -110,6 +110,7 @@ public class Opcodes {
 		ON_BLACK_HOLE(86),
 		NPC_DEFINITION_REQUEST(89),
 		WORLD_EDITOR_REQUEST(152),
+		HISCORE_REQUEST(154),
 		;
 
 		private int opcode;

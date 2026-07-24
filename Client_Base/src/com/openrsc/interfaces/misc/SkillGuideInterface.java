@@ -16,12 +16,14 @@ import java.util.ArrayList;
 public final class SkillGuideInterface {
 	public int curTab = 0;
 	public int skillGuideScroll;
+	public int hiscoreScroll;
 	public Panel skillGuide;
 	int width = 430;
 	int height = 320;
 	int autoHeight = 0;
 	// Different y values used for larger skill guides with more tabs
 	boolean largeSkillGuide = false;
+	private boolean hiscoresMode = false;
 	private ArrayList<SkillMenuEntry> skillMenuEntries;
 	private boolean visible = false;
 	private mudclient mc;
@@ -39,6 +41,7 @@ public final class SkillGuideInterface {
 		skillMenuEntries = new ArrayList<SkillMenuEntry>();
 
 		skillGuideScroll = skillGuide.addScrollingList2(x + 4, y + 79, width - 5, height - 77, 100, 7, true);
+		hiscoreScroll = skillGuide.addScrollingList2(x + 4, y + 97, width - 5, height - 99, HiscoreData.MAX_ENTRIES + 8, 7, true);
 	}
 
 	public void reposition() {
@@ -46,6 +49,7 @@ public final class SkillGuideInterface {
 		y = (mc.getGameHeight() - height) / 2;
 
 		skillGuide.reposition(skillGuideScroll, x + 4, y + 81, width - 5, height - 82);
+		skillGuide.reposition(hiscoreScroll, x + 4, y + 97, width - 5, height - 99);
 	}
 
 	public void onRender(GraphicsController graphics) {
@@ -59,12 +63,18 @@ public final class SkillGuideInterface {
 
 		skillGuide.handleMouse(mc.getMouseX(), mc.getMouseY(), mc.getMouseButtonDown(), mc.getLastMouseDown());
 
+		boolean hiscoresView = isHiscoresView();
+
 		// Draws the background
 		mc.getSurface().drawBoxAlpha(x, y, width, autoHeight - y, panelColour, 160);
 		mc.getSurface().drawBoxBorder(x, width, y, autoHeight - y, bordColour);
 
 		// Draws the title
-		if (mc.skillGuideChosenTabs.size() <= 4) {
+		if (hiscoresView) {
+			largeSkillGuide = false;
+			String title = isOverallHiscores() ? "Overall Hiscores" : mc.getSkillGuideChosen() + " Hiscores";
+			drawStringCentered(title, x, y + 28, 5, textColour);
+		} else if (mc.skillGuideChosenTabs.size() <= 4) {
 			largeSkillGuide = false;
 			drawStringCentered(mc.getSkillGuideChosen(), x, y + 28, 5, textColour);
 		} else {
@@ -76,40 +86,159 @@ public final class SkillGuideInterface {
 			@Override
 			void handle() {
 				skillGuide.resetScrollIndex(skillGuideScroll);
+				skillGuide.resetScrollIndex(hiscoreScroll);
 				curTab = 0;
+				hiscoresMode = false;
+				mc.getHiscoreData().clear();
 				setVisible(false);
 			}
 		});
 
-		int tabDrawX = 0;
-		int tabDrawY = 0;
-		if (largeSkillGuide) {
-			tabDrawX = 220 - (45 * 4);
-			tabDrawY = 27;
-		} else {
-			tabDrawX = 220 - (45 * mc.skillGuideChosenTabs.size());
-			tabDrawY = 45;
+		// Toggle between the guide and the hiscores for the chosen skill
+		if (Config.S_WANT_HISCORES && !isOverallHiscores() && mc.getHiscoreGuideSkillId() >= 0) {
+			this.drawButton(x + 6, y + 6, 84, 22, hiscoresView ? "Guide" : "Hiscores", 1, false, new ButtonHandler() {
+				@Override
+				void handle() {
+					setHiscoresMode(!hiscoresMode);
+				}
+			});
 		}
-		int tabDrawXDiff = 75;
-		int tabDrawYDiff = 20;
 
-		// Draws the tab pickers
-		for (int i = 0; i < mc.skillGuideChosenTabs.size(); i++) {
-			// Starts new row of tabs
-			if (i == 4) {
-				tabDrawY += 25;
-				tabDrawX = 220 - (45 * (mc.skillGuideChosenTabs.size() - i));
+		if (!hiscoresView) {
+			int tabDrawX = 0;
+			int tabDrawY = 0;
+			if (largeSkillGuide) {
+				tabDrawX = 220 - (45 * 4);
+				tabDrawY = 27;
+			} else {
+				tabDrawX = 220 - (45 * mc.skillGuideChosenTabs.size());
+				tabDrawY = 45;
 			}
-			this.drawTab(x + tabDrawX, y + tabDrawY, tabDrawXDiff, tabDrawYDiff, mc.skillGuideChosenTabs.get(i), 1);
-			tabDrawX += tabDrawXDiff + 10;
+			int tabDrawXDiff = 75;
+			int tabDrawYDiff = 20;
+
+			// Draws the tab pickers
+			for (int i = 0; i < mc.skillGuideChosenTabs.size(); i++) {
+				// Starts new row of tabs
+				if (i == 4) {
+					tabDrawY += 25;
+					tabDrawX = 220 - (45 * (mc.skillGuideChosenTabs.size() - i));
+				}
+				this.drawTab(x + tabDrawX, y + tabDrawY, tabDrawXDiff, tabDrawYDiff, mc.skillGuideChosenTabs.get(i), 1);
+				tabDrawX += tabDrawXDiff + 10;
+			}
 		}
 
 		mc.getSurface().drawLineHoriz(x + 1, y + 81, width - 2, 0);
 		mc.getSurface().drawBoxAlpha(x + 1, y + 82, width - 2, 16, 0x6580B7, 192);
 
-		drawGuideHeaders(x, y);
+		if (hiscoresView) {
+			drawHiscoreHeaders(x, y);
+			drawHiscoreList(x, y);
+		} else {
+			drawGuideHeaders(x, y);
+			drawSkillItems();
+		}
+	}
 
-		drawSkillItems();
+	public boolean isHiscoresView() {
+		return hiscoresMode || isOverallHiscores();
+	}
+
+	private boolean isOverallHiscores() {
+		return "Overall".equalsIgnoreCase(mc.getSkillGuideChosen());
+	}
+
+	public void setHiscoresMode(boolean on) {
+		hiscoresMode = on;
+		skillGuide.resetScrollIndex(skillGuideScroll);
+		skillGuide.resetScrollIndex(hiscoreScroll);
+		skillGuide.clearList(hiscoreScroll);
+		mc.getHiscoreData().clear();
+	}
+
+	public int activeScrollControl() {
+		return isHiscoresView() ? hiscoreScroll : skillGuideScroll;
+	}
+
+	private void drawHiscoreHeaders(int x, int y) {
+		boolean overall = isOverallHiscores();
+		mc.getSurface().drawString("Rank", x + 5, y + 94, 0xffffff, 2);
+		mc.getSurface().drawString("Name", x + 60, y + 94, 0xffffff, 2);
+		mc.getSurface().drawString(overall ? "Total level" : "Level", x + 205, y + 94, 0xffffff, 2);
+		mc.getSurface().drawString(overall ? "Total exp" : "Experience", x + 300, y + 94, 0xffffff, 2);
+	}
+
+	private void drawHiscoreList(int x, int y) {
+		HiscoreData data = mc.getHiscoreData();
+		int skillId = mc.getHiscoreGuideSkillId();
+		if (skillId >= 0 && data.shouldRequest()) {
+			data.markRequested(skillId);
+			mc.sendHiscoreRequest(skillId);
+		}
+
+		// Keep the guide list empty so its scrollbar never draws in this mode
+		skillGuide.clearList(skillGuideScroll);
+
+		// Own rank strip, pinned under the column headers
+		mc.getSurface().drawBoxAlpha(x + 1, y + 98, width - 2, 16, 0x6580B7, 128);
+		if (data.isLoaded()) {
+			String ownText = "Your rank: #" + formatNumber(data.getOwnRank())
+				+ "      " + (isOverallHiscores() ? "Total level: " : "Level: ") + formatNumber(data.getOwnLevel())
+				+ "      Exp: " + formatNumber(data.getOwnExp());
+			drawString(ownText, x + 5, y + 110, 2, 0xFFFF00);
+		} else {
+			drawString("Fetching hiscores from the server...", x + 5, y + 110, 2, 0xFFFF00);
+		}
+
+		int count = data.isLoaded() ? Math.min(data.getCount(), HiscoreData.MAX_ENTRIES) : 0;
+
+		// Rows are 34px (vs the guide's 37px) so the extra own-rank strip
+		// still leaves the panel bottom within the 320px interface height.
+		// count + 1 scrollbar entries make the clamp stop exactly at the
+		// last full window of 6 rows (region height 221 / font-7 height 29 = 7).
+		skillGuide.clearList(hiscoreScroll);
+		for (int i = 0; i <= count; i++) {
+			skillGuide.setListEntry(hiscoreScroll, i, "", 0, (String) null, (String) null);
+		}
+
+		int listStartPoint = skillGuide.getScrollPosition(hiscoreScroll);
+		int listEndPoint = listStartPoint + 5;
+		int allY = y + 98 + 16;
+
+		if (!data.isLoaded()) {
+			mc.getSurface().drawBoxAlpha(x, allY, width, 34, 0x45454545, 90);
+			drawString("Loading...", x + 10, allY + 23, 2, textColour);
+			allY += 34;
+		} else if (count == 0) {
+			mc.getSurface().drawBoxAlpha(x, allY, width, 34, 0x45454545, 90);
+			drawString("No players are ranked yet.", x + 10, allY + 23, 2, textColour);
+			allY += 34;
+		} else {
+			for (int i = 0; i < count; i++) {
+				if (i < listStartPoint || i > listEndPoint)
+					continue;
+
+				mc.getSurface().drawBoxAlpha(x, allY, width, 34, 0x45454545, 90);
+				int rowColour = (i == data.getOwnListIndex()) ? 0x00FF00 : textColour;
+				drawString((i + 1) + ".", x + 10, allY + 23, 2, rowColour);
+				drawString(data.getName(i), x + 60, allY + 23, 2, rowColour);
+				drawString(formatNumber(data.getLevel(i)), x + 205, allY + 23, 2, rowColour);
+				drawString(formatNumber(data.getExp(i)), x + 300, allY + 23, 2, rowColour);
+				if (i != count - 1 && i != listEndPoint) {
+					mc.getSurface().drawBoxBorder(x, width, allY, 35, 0);
+				}
+
+				allY += 34;
+			}
+		}
+		autoHeight = allY;
+
+		skillGuide.drawPanel();
+	}
+
+	private String formatNumber(long value) {
+		return String.format("%,d", value);
 	}
 
 	private void drawGuideHeaders(int x, int y) {
@@ -134,6 +263,9 @@ public final class SkillGuideInterface {
 
 		// Gets all items in the list for what skill was chosen
 		populateSkillItems();
+
+		// Keep the hiscore list empty so its scrollbar never draws in this mode
+		skillGuide.clearList(hiscoreScroll);
 
 		// Sets up scroll
 		skillGuide.clearList(skillGuideScroll);

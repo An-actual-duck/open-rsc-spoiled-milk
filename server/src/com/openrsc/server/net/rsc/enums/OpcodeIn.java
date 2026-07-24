@@ -98,6 +98,7 @@ public enum OpcodeIn {
 	ON_BLACK_HOLE, // custom
 	NPC_DEFINITION_REQUEST, // custom
 	WORLD_EDITOR_REQUEST, // custom, versioned editor envelope
+	HISCORE_REQUEST, // custom
 
 	LOGIN,
 	RELOGIN, // retro rsc

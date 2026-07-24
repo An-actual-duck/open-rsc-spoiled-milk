@@ -92,6 +92,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_FRIEND_UPDATE, 149);
 		put(OpcodeOut.SEND_BANK_PRESET, 150); // custom
 		put(OpcodeOut.SEND_WORLD_EDITOR, 151); // custom, versioned editor envelope
+		put(OpcodeOut.SEND_HISCORES, 155); // custom
 		put(OpcodeOut.SEND_EQUIPMENT_STATS, 153);
 		put(OpcodeOut.SEND_STATS, 156);
 		put(OpcodeOut.SEND_STAT, 159);
@@ -971,6 +972,21 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeString(ol.name[i]);
 						builder.writeInt(ol.icon[i]);
 						builder.writeString(ol.location[i]);
+					}
+					break;
+
+				case SEND_HISCORES:
+					HiscoresStruct hs = (HiscoresStruct) payload;
+					builder.writeByte((byte) hs.skillId);
+					builder.writeInt(hs.ownRank);
+					builder.writeShort(hs.ownLevel);
+					builder.writeLong(hs.ownExperience);
+					builder.writeByte((byte) hs.ownListIndex);
+					builder.writeShort(hs.count);
+					for (int i = 0; i < hs.count; i++) {
+						builder.writeString(hs.names[i]);
+						builder.writeShort(hs.levels[i]);
+						builder.writeLong(hs.experiences[i]);
 					}
 					break;
 

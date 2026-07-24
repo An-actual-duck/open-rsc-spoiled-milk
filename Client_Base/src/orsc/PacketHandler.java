@@ -5,6 +5,7 @@ import com.openrsc.client.entityhandling.defs.SpriteDef;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.entityhandling.instances.Item;
 import com.openrsc.client.model.Sprite;
+import com.openrsc.interfaces.misc.HiscoreData;
 import orsc.buffers.RSBufferUtils;
 import orsc.buffers.RSBuffer_Bits;
 import orsc.enumerations.MessageType;
@@ -178,6 +179,7 @@ public class PacketHandler {
 		put(148, "SET_OPENPK_POINTS");
 		put(150, "UPDATE_PRESET");
 		put(151, "WORLD_EDITOR");
+		put(155, "SEND_HISCORES");
 		put(250, "UPDATE_UNLOCKED_APPEARANCES");
 		put(254, "UPDATE_EQUIPMENT");
 		put(255, "UPDATE_EQUIPMENT_SLOT");
@@ -347,6 +349,9 @@ public class PacketHandler {
 
 			else if (opcode == 152) updateActivePotionEffects();
 
+				// Hiscores
+			else if (opcode == 155) loadHiscores();
+
 				// Set Server Configs
 			else if (opcode == 19) setServerConfiguration();
 
@@ -355,6 +360,35 @@ public class PacketHandler {
 		} catch (RuntimeException var11) {
 			throw GenUtil.makeThrowable(var11, "client.LD(" + "dummy" + ',' + length + ',' + opcode + ')');
 		}
+	}
+
+	private void loadHiscores() {
+		int skillId = packetsIncoming.getUnsignedByte();
+		int ownRank = packetsIncoming.get32();
+		int ownLevel = packetsIncoming.getShort();
+		long ownExp = packetsIncoming.getLong(0) / 4L;
+		int ownListIndex = packetsIncoming.getUnsignedByte();
+		int count = packetsIncoming.getShort();
+		if (count > HiscoreData.MAX_ENTRIES) {
+			count = HiscoreData.MAX_ENTRIES;
+		}
+		String[] names = new String[count];
+		int[] levels = new int[count];
+		long[] exps = new long[count];
+		for (int i = 0; i < count; i++) {
+			names[i] = packetsIncoming.readString();
+			levels[i] = packetsIncoming.getShort();
+			exps[i] = packetsIncoming.getLong(0) / 4L;
+		}
+
+		HiscoreData data = mc.getHiscoreData();
+		// Discard stale or unsolicited data - only keep it while the hiscores view is open
+		if (!data.isRequested() || data.getSkillId() != skillId
+			|| mc.skillGuideInterface == null || !mc.skillGuideInterface.isVisible()) {
+			return;
+		}
+		data.setOwnStats(ownRank, ownLevel, ownExp, ownListIndex == 255 ? -1 : ownListIndex);
+		data.setRows(names, levels, exps, count);
 	}
 
 	private void updateWorldEditor() {
@@ -1137,6 +1171,7 @@ public class PacketHandler {
 		int wantCustomUI, wantGlobalFriend, characterCreationMode, skillingExpRate, wantHarvesting, hideLoginBox;
 		int globalFriendChat, wantRightClickTrade, featuresSleep, wantExtendedCatsBehavior, wantCertAsNotes, wantOpenPkPoints, openPkPointsToGpRatio, wantOpenPkPresets;
 		int disableMinimapRotation, allowBeardedLadies, prideMonth, groundItemNames, wantNatureRuneProtection;
+		int wantHiscores;
 
 		String logoSpriteID;
 
@@ -1231,6 +1266,7 @@ public class PacketHandler {
 			MiscFunctions.RSA_MODULUS = new BigInteger(this.getClientStream().readString()); // 88
 			groundItemNames = this.getClientStream().getUnsignedByte(); // 89
 			wantNatureRuneProtection = this.getClientStream().getUnsignedByte(); // 90
+			wantHiscores = this.getClientStream().getUnsignedByte(); // 91
 		} else {
 			serverName = packetsIncoming.readString(); // 1
 			serverNameWelcome = packetsIncoming.readString(); // 2
@@ -1322,6 +1358,7 @@ public class PacketHandler {
 			MiscFunctions.RSA_MODULUS = new BigInteger(packetsIncoming.readString()); // 88
 			groundItemNames = packetsIncoming.getUnsignedByte(); // 89
 			wantNatureRuneProtection = packetsIncoming.getUnsignedByte(); // 90
+			wantHiscores = packetsIncoming.getUnsignedByte(); // 91
 		}
 
 		if (Config.DEBUG) {
@@ -1512,6 +1549,7 @@ public class PacketHandler {
 		props.setProperty("S_PRIDE_MONTH", prideMonth == 1 ? "true" : "false"); // 86
 		props.setProperty("S_GROUND_ITEM_NAMES", groundItemNames == 1 ? "true" : "false"); // 89
 		props.setProperty("S_WANT_NATURE_RUNE_PROTECTION", wantNatureRuneProtection == 1 ? "true" : "false"); // 90
+		props.setProperty("S_WANT_HISCORES", wantHiscores == 1 ? "true" : "false"); // 91
 		Config.updateServerConfiguration(props);
 
 		mc.authenticSettings = !(

@@ -2569,6 +2569,64 @@ public class MySqlGameDatabase extends JDBCDatabase {
 		return data;
 	}
 
+	@Override
+	public HiscoreEntry[] queryHiscoreSkillTop(final int skillId) throws GameDatabaseException {
+		return fetchHiscoreEntries(getMySqlQueries().hiscoreSkillTop[skillId]);
+	}
+
+	@Override
+	public int queryHiscoreSkillRank(final int playerDatabaseId, final int skillId, final long experience) throws GameDatabaseException {
+		try (final PreparedStatement statement = getConnection().prepareStatement(getMySqlQueries().hiscoreSkillRank[skillId])) {
+			statement.setInt(1, playerDatabaseId);
+			statement.setLong(2, experience);
+			try (final ResultSet result = statement.executeQuery()) {
+				return (result.next() ? result.getInt(1) : 0) + 1;
+			}
+		} catch (final SQLException ex) {
+			// Convert SQLException to a general usage exception
+			throw new GameDatabaseException(MySqlGameDatabase.class, ex.getMessage());
+		}
+	}
+
+	@Override
+	public HiscoreEntry[] queryHiscoreOverallTop() throws GameDatabaseException {
+		return fetchHiscoreEntries(getMySqlQueries().hiscoreOverallTop);
+	}
+
+	@Override
+	public int queryHiscoreOverallRank(final int playerDatabaseId, final int totalLevel, final long totalExperience) throws GameDatabaseException {
+		try (final PreparedStatement statement = getConnection().prepareStatement(getMySqlQueries().hiscoreOverallRank)) {
+			statement.setInt(1, playerDatabaseId);
+			statement.setInt(2, totalLevel);
+			statement.setInt(3, totalLevel);
+			statement.setLong(4, totalExperience);
+			try (final ResultSet result = statement.executeQuery()) {
+				return (result.next() ? result.getInt(1) : 0) + 1;
+			}
+		} catch (final SQLException ex) {
+			// Convert SQLException to a general usage exception
+			throw new GameDatabaseException(MySqlGameDatabase.class, ex.getMessage());
+		}
+	}
+
+	private HiscoreEntry[] fetchHiscoreEntries(final String query) throws GameDatabaseException {
+		final ArrayList<HiscoreEntry> list = new ArrayList<>();
+		try (final PreparedStatement statement = getConnection().prepareStatement(query);
+			 final ResultSet result = statement.executeQuery()) {
+			while (result.next()) {
+				final HiscoreEntry entry = new HiscoreEntry();
+				entry.username = result.getString("username");
+				entry.level = result.getInt("lvl");
+				entry.experience = result.getLong("xp");
+				list.add(entry);
+			}
+		} catch (final SQLException ex) {
+			// Convert SQLException to a general usage exception
+			throw new GameDatabaseException(MySqlGameDatabase.class, ex.getMessage());
+		}
+		return list.toArray(new HiscoreEntry[0]);
+	}
+
 	private PreparedStatement statementFromString(final String query, final String... longA) throws SQLException {
 		final PreparedStatement prepared = getConnection().prepareStatement(query);
 

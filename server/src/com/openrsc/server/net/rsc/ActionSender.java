@@ -11,6 +11,7 @@ import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyManager;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.production.ProductionSession;
+import com.openrsc.server.database.struct.HiscoreEntry;
 import com.openrsc.server.database.struct.UsernameChangeType;
 import com.openrsc.server.event.custom.HolidayDropEvent;
 import com.openrsc.server.model.Point;
@@ -967,6 +968,7 @@ public class ActionSender {
 		configs.add(Crypto.getPublicModulus().toString()); // 88
 		configs.add((byte) (server.getConfig().GROUND_ITEM_NAMES ? 1 : 0)); // 89
 		configs.add((byte) (server.getConfig().WANT_NATURE_RUNE_PROTECTION ? 1 : 0)); // 90
+		configs.add((byte) (server.getConfig().WANT_HISCORES ? 1 : 0)); // 91
 
 		struct.configs = configs;
 		struct.setOpcode(OpcodeOut.SEND_SERVER_CONFIGS);
@@ -2516,6 +2518,35 @@ public class ActionSender {
 
 			tryFinalizeAndSendPacket(OpcodeOut.SEND_ONLINE_LIST, struct, player);
         }
+	}
+
+	public static void sendHiscores(Player player, int skillId, int ownRank, int ownLevel, long ownExperience, HiscoreEntry[] entries) {
+		if (!player.isUsingCustomClient()) {
+			return;
+		}
+
+		HiscoresStruct struct = new HiscoresStruct();
+		struct.skillId = skillId;
+		struct.ownRank = ownRank;
+		struct.ownLevel = ownLevel;
+		struct.ownExperience = ownExperience;
+		struct.ownListIndex = 255;
+		int count = Math.min(entries.length, 100);
+		struct.count = count;
+		struct.names = new String[count];
+		struct.levels = new int[count];
+		struct.experiences = new long[count];
+		for (int i = 0; i < count; i++) {
+			struct.names[i] = entries[i].username;
+			struct.levels[i] = entries[i].level;
+			struct.experiences[i] = entries[i].experience;
+			if (struct.ownListIndex == 255 && entries[i].username != null
+				&& entries[i].username.equalsIgnoreCase(player.getUsername())) {
+				struct.ownListIndex = i;
+			}
+		}
+
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_HISCORES, struct, player);
 	}
 
 	public static void showFishingTrawlerInterface(Player player) {

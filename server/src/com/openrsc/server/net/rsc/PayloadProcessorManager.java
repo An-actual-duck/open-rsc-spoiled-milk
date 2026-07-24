@@ -198,6 +198,7 @@ public class PayloadProcessorManager {
 
 		bind(OpcodeIn.KNOWN_PLAYERS, KnownPlayersHandler.class);
 		bind(OpcodeIn.WORLD_EDITOR_REQUEST, WorldEditorHandler.class);
+		bind(OpcodeIn.HISCORE_REQUEST, HiscoreRequestHandler.class);
 	}
 
 	private static void bind(OpcodeIn opcode, Class<?> clazz) {
@@ -249,6 +250,7 @@ public class PayloadProcessorManager {
 
 	private static void checkIfShouldCancelMenu(Player player, OpcodeIn opcode) {
 		// most player actions other than choosing a dialogue choice must cancel the menu handler and set them non-busy
+		// HISCORE_REQUEST is exempt: the client fires it automatically while the hiscores view is open
 		if (!OpcodeIn.QUESTION_DIALOG_ANSWER.equals(opcode)
 			&& !OpcodeIn.HEARTBEAT.equals(opcode)
 			&& !OpcodeIn.KNOWN_PLAYERS.equals(opcode)
@@ -256,7 +258,8 @@ public class PayloadProcessorManager {
 			&& !OpcodeIn.SOCIAL_SEND_PRIVATE_MESSAGE.equals(opcode)
 			&& !OpcodeIn.COMBAT_STYLE_CHANGED.equals(opcode)
 			&& !OpcodeIn.GAME_SETTINGS_CHANGED.equals(opcode)
-			&& !OpcodeIn.PRIVACY_SETTINGS_CHANGED.equals(opcode)) {
+			&& !OpcodeIn.PRIVACY_SETTINGS_CHANGED.equals(opcode)
+			&& !OpcodeIn.HISCORE_REQUEST.equals(opcode)) {
 
 			player.cancelMenuHandler();
 		}

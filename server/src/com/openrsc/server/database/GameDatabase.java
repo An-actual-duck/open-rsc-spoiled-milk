@@ -155,6 +155,14 @@ public abstract class GameDatabase {
 
 	public abstract PlayerExperienceCapped[] queryLoadPlayerExperienceCapped(final int playerId) throws GameDatabaseException;
 
+	public abstract HiscoreEntry[] queryHiscoreSkillTop(final int skillId) throws GameDatabaseException;
+
+	public abstract int queryHiscoreSkillRank(final int playerDatabaseId, final int skillId, final long experience) throws GameDatabaseException;
+
+	public abstract HiscoreEntry[] queryHiscoreOverallTop() throws GameDatabaseException;
+
+	public abstract int queryHiscoreOverallRank(final int playerDatabaseId, final int totalLevel, final long totalExperience) throws GameDatabaseException;
+
 	public abstract String queryPreviousPassword(int playerId) throws GameDatabaseException;
 
 	public abstract LinkedList<Achievement> queryLoadAchievements() throws GameDatabaseException;

@@ -1,5 +1,6 @@
 package com.openrsc.server.model;
 
+import com.openrsc.server.constants.HiscoreSkills;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.RangersGuildPoints;
 import com.openrsc.server.database.GameDatabaseException;
@@ -115,6 +116,39 @@ public class Skills {
 				continue;
 			}
 			total += getMaxStat(i);
+		}
+		return total;
+	}
+
+	/**
+	 * Total level as displayed on the hiscores / stats tab "Skill total",
+	 * which excludes the retired Defense/Strength/Fletching slots as well
+	 * as the hidden auto-maxed Firemaking slot.
+	 */
+	public int getHiscoreTotalLevel() {
+		int total = 0;
+		for (int i = 0; i < maxStats.length; i++) {
+			SkillDef skill = getWorld().getServer().getConstants().getSkills().getSkill(i);
+			if (!HiscoreSkills.countsTowardOverall(skill)) {
+				continue;
+			}
+			total += getMaxStat(i);
+		}
+		return total;
+	}
+
+	/**
+	 * Summed raw (x4 fixed point) experience over the same skills that count
+	 * toward {@link #getHiscoreTotalLevel()}; each skill masked to unsigned.
+	 */
+	public long getHiscoreTotalExperience() {
+		long total = 0;
+		for (int i = 0; i < exps.length; i++) {
+			SkillDef skill = getWorld().getServer().getConstants().getSkills().getSkill(i);
+			if (!HiscoreSkills.countsTowardOverall(skill)) {
+				continue;
+			}
+			total += getExperience(i) & 0xffffffffL;
 		}
 		return total;
 	}
