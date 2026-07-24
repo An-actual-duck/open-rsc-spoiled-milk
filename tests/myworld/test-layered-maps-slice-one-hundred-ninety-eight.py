@@ -321,8 +321,8 @@ class LayeredMapsSliceOneHundredNinetyEightTest(unittest.TestCase):
             boundary.index("captured[0] ="),
         )
         for required in (
-            'EVENT_SCHEMA = "layered-map-parity-event-v55"',
-            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v54"',
+            'EVENT_SCHEMA = "layered-map-parity-event-v56"',
+            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v55"',
             '\\"sourceTransactionalAuthoredStateVerification\\":',
             (
                 "appendPackedRegionTransactionalAuthoredSource"
@@ -339,7 +339,7 @@ class LayeredMapsSliceOneHundredNinetyEightTest(unittest.TestCase):
         readme = README.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
         self.assertIn(
-            "schema/layered-map-parity-event-v55.schema.json", readme
+            "schema/layered-map-parity-event-v56.schema.json", readme
         )
         self.assertIn(
             "sourceTransactionalAuthoredStateVerification", readme

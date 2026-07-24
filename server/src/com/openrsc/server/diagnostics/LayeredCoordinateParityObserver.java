@@ -41,6 +41,8 @@ import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
 import com.openrsc.server.model.world.region.LayeredPackedRegionTerrainVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch;
+import com.openrsc.server.model.world.region.LayeredPackedRegionRuntimeAuthoredObjectObservation;
+import com.openrsc.server.model.world.region.LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,8 +67,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v55";
-	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v54";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v56";
+	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v55";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4706,6 +4708,24 @@ public final class LayeredCoordinateParityObserver {
 					.getSourceTransactionalAuthoredStateVerification());
 		}
 		out.append(',');
+		out.append("\"sourceRuntimeAuthoredObjectObservation\":");
+		if (diagnostic.getSourceRuntimeAuthoredObjectObservation() == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionRuntimeAuthoredObjectObservation(
+				out, diagnostic.getSourceRuntimeAuthoredObjectObservation());
+		}
+		out.append(',');
+		out.append("\"sourceRuntimeAuthoredObjectBaselineComparison\":");
+		if (diagnostic
+				.getSourceRuntimeAuthoredObjectBaselineComparison() == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionRuntimeAuthoredObjectBaselineComparison(
+				out, diagnostic
+					.getSourceRuntimeAuthoredObjectBaselineComparison());
+		}
+		out.append(',');
 		out.append("\"preservationEstablishedForConsumedWork\":false,");
 		out.append("\"preservationPerformed\":false,");
 		out.append("\"sourceAbsencePerformed\":false,");
@@ -5849,6 +5869,332 @@ public final class LayeredCoordinateParityObserver {
 				source.getCollisionRegistrationFingerprintSha256()).append(',');
 			field(out, "finalStateFingerprintSha256",
 				source.getFinalStateFingerprintSha256());
+			out.append('}');
+		}
+		out.append("]}");
+	}
+
+	private static void appendPackedRegionRuntimeAuthoredObjectObservation(
+		final StringBuilder out,
+		final LayeredPackedRegionRuntimeAuthoredObjectObservation
+			observation) {
+		out.append('{');
+		out.append("\"generation\":").append(observation.getGeneration())
+			.append(',');
+		out.append("\"requirementsObservedAtTick\":")
+			.append(observation.getRequirementsObservedAtTick()).append(',');
+		out.append("\"recipeObservedAtTick\":")
+			.append(observation.getRecipeObservedAtTick()).append(',');
+		out.append("\"runtimeObservedAtTick\":")
+			.append(observation.getRuntimeObservedAtTick()).append(',');
+		out.append("\"residencyMirrorVersion\":")
+			.append(observation.getResidencyMirrorVersion()).append(',');
+		out.append("\"sourceCount\":").append(observation.getSourceCount())
+			.append(',');
+		out.append("\"expectedAuthoredObjectCount\":")
+			.append(observation.getExpectedAuthoredObjectCount()).append(',');
+		out.append("\"observedObjectCount\":")
+			.append(observation.getObservedObjectCount()).append(',');
+		out.append("\"identitylessDynamicObjectCount\":")
+			.append(observation.getIdentitylessDynamicObjectCount())
+			.append(',');
+		out.append("\"authoredIdentityObjectCount\":")
+			.append(observation.getAuthoredIdentityObjectCount()).append(',');
+		out.append("\"recognizedAuthoredInstanceCount\":")
+			.append(observation.getRecognizedAuthoredInstanceCount())
+			.append(',');
+		out.append("\"unrecognizedAuthoredInstanceCount\":")
+			.append(observation.getUnrecognizedAuthoredInstanceCount())
+			.append(',');
+		out.append("\"uniqueRecognizedIdentityCount\":")
+			.append(observation.getUniqueRecognizedIdentityCount())
+			.append(',');
+		out.append("\"duplicateRecognizedIdentityInstanceCount\":")
+			.append(observation
+				.getDuplicateRecognizedIdentityInstanceCount()).append(',');
+		out.append("\"missingExpectedIdentityCount\":")
+			.append(observation.getMissingExpectedIdentityCount())
+			.append(',');
+		out.append("\"exactFinalLiveInstanceCount\":")
+			.append(observation.getExactFinalLiveInstanceCount()).append(',');
+		out.append("\"authoredTransientInstanceCount\":")
+			.append(observation.getAuthoredTransientInstanceCount())
+			.append(',');
+		out.append("\"collisionRegistrationPresentCount\":")
+			.append(observation.getCollisionRegistrationPresentCount())
+			.append(',');
+		out.append("\"collisionRegistrationMissingCount\":")
+			.append(observation.getCollisionRegistrationMissingCount())
+			.append(',');
+		out.append("\"collisionRegistrationConstructorMismatchCount\":")
+			.append(observation
+				.getCollisionRegistrationConstructorMismatchCount())
+			.append(',');
+		out.append("\"collisionRegistrationContributionCount\":")
+			.append(observation.getCollisionRegistrationContributionCount())
+			.append(',');
+		out.append("\"collisionRegistrationRegionReferenceCount\":")
+			.append(observation
+				.getCollisionRegistrationRegionReferenceCount()).append(',');
+		field(out, "fingerprintSha256",
+			observation.getFingerprintSha256()).append(',');
+		out.append("\"allObjectBoundariesHeldDuringCapture\":")
+			.append(observation.areAllObjectBoundariesHeldDuringCapture())
+			.append(',');
+		out.append("\"pointInTimeOnly\":")
+			.append(observation.isPointInTimeOnly()).append(',');
+		out.append("\"detachedSummaryOnly\":")
+			.append(observation.isDetachedSummaryOnly()).append(',');
+		out.append("\"sharedCollisionTileComparisonPerformed\":")
+			.append(observation
+				.isSharedCollisionTileComparisonPerformed()).append(',');
+		out.append("\"runtimeHandleRetained\":")
+			.append(observation.isRuntimeHandleRetained()).append(',');
+		out.append("\"sourceAbsencePerformed\":")
+			.append(observation.isSourceAbsencePerformed()).append(',');
+		out.append("\"sourceReconstructionPerformed\":")
+			.append(observation.isSourceReconstructionPerformed()).append(',');
+		out.append("\"runtimeMutationAuthorized\":")
+			.append(observation.isRuntimeMutationAuthorized()).append(',');
+		out.append("\"runtimeMutationPerformed\":")
+			.append(observation.isRuntimeMutationPerformed()).append(',');
+		out.append("\"runtimeCacheInvalidated\":")
+			.append(observation.isRuntimeCacheInvalidated()).append(',');
+		out.append("\"regionRegistryMutated\":")
+			.append(observation.isRegionRegistryMutated()).append(',');
+		out.append("\"residencyMirrorMutated\":")
+			.append(observation.isResidencyMirrorMutated()).append(',');
+		out.append("\"visibilityCacheMutated\":")
+			.append(observation.isVisibilityCacheMutated()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(observation.isArrivalGate()).append(',');
+		out.append("\"visibilityReleased\":")
+			.append(observation.isVisibilityReleased()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(observation.isLifecycleAuthority()).append(',');
+		out.append("\"sources\":[");
+		boolean first = true;
+		for (LayeredPackedRegionRuntimeAuthoredObjectObservation
+				.SourceObservation source : observation.getSources()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			out.append("\"sourceOrdinal\":")
+				.append(source.getSourceOrdinal()).append(',');
+			out.append("\"packedRegionX\":")
+				.append(source.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(source.getPackedRegionY()).append(',');
+			out.append("\"expectedAuthoredObjectCount\":")
+				.append(source.getExpectedAuthoredObjectCount()).append(',');
+			out.append("\"observedObjectCount\":")
+				.append(source.getObservedObjectCount()).append(',');
+			out.append("\"identitylessDynamicObjectCount\":")
+				.append(source.getIdentitylessDynamicObjectCount())
+				.append(',');
+			out.append("\"authoredIdentityObjectCount\":")
+				.append(source.getAuthoredIdentityObjectCount()).append(',');
+			out.append("\"recognizedAuthoredInstanceCount\":")
+				.append(source.getRecognizedAuthoredInstanceCount())
+				.append(',');
+			out.append("\"unrecognizedAuthoredInstanceCount\":")
+				.append(source.getUnrecognizedAuthoredInstanceCount())
+				.append(',');
+			out.append("\"staleGenerationInstanceCount\":")
+				.append(source.getStaleGenerationInstanceCount()).append(',');
+			out.append("\"nonObjectIdentityInstanceCount\":")
+				.append(source.getNonObjectIdentityInstanceCount()).append(',');
+			out.append("\"unknownRecipeIdentityInstanceCount\":")
+				.append(source.getUnknownRecipeIdentityInstanceCount())
+				.append(',');
+			out.append("\"uniqueRecognizedIdentityCount\":")
+				.append(source.getUniqueRecognizedIdentityCount()).append(',');
+			out.append("\"duplicateRecognizedIdentityInstanceCount\":")
+				.append(source
+					.getDuplicateRecognizedIdentityInstanceCount())
+				.append(',');
+			out.append("\"missingExpectedIdentityCount\":")
+				.append(source.getMissingExpectedIdentityCount()).append(',');
+			out.append("\"exactFinalLiveInstanceCount\":")
+				.append(source.getExactFinalLiveInstanceCount()).append(',');
+			out.append("\"authoredTransientInstanceCount\":")
+				.append(source.getAuthoredTransientInstanceCount())
+				.append(',');
+			out.append("\"collisionRegistrationPresentCount\":")
+				.append(source.getCollisionRegistrationPresentCount())
+				.append(',');
+			out.append("\"collisionRegistrationMissingCount\":")
+				.append(source.getCollisionRegistrationMissingCount())
+				.append(',');
+			out.append("\"collisionRegistrationConstructorMismatchCount\":")
+				.append(source
+					.getCollisionRegistrationConstructorMismatchCount())
+				.append(',');
+			out.append("\"collisionRegistrationContributionCount\":")
+				.append(source.getCollisionRegistrationContributionCount())
+				.append(',');
+			out.append("\"collisionRegistrationRegionReferenceCount\":")
+				.append(source
+					.getCollisionRegistrationRegionReferenceCount())
+				.append(',');
+			field(out, "collisionRegistrationFingerprintSha256",
+				source.getCollisionRegistrationFingerprintSha256())
+				.append(',');
+			field(out, "fingerprintSha256",
+				source.getFingerprintSha256()).append(',');
+			out.append("\"finalLiveAuthoredSetPresent\":")
+				.append(source.isFinalLiveAuthoredSetPresent()).append(',');
+			out.append("\"recognizedRegistrationsConstructorMatched\":")
+				.append(source
+					.areRecognizedRegistrationsConstructorMatched())
+				.append(',');
+			out.append("\"objectBoundaryHeldDuringCapture\":")
+				.append(source.isObjectBoundaryHeldDuringCapture());
+			out.append('}');
+		}
+		out.append("]}");
+	}
+
+	private static void
+		appendPackedRegionRuntimeAuthoredObjectBaselineComparison(
+			final StringBuilder out,
+			final
+				LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison
+					comparison) {
+		out.append('{');
+		out.append("\"generation\":").append(comparison.getGeneration())
+			.append(',');
+		out.append("\"requirementsObservedAtTick\":")
+			.append(comparison.getRequirementsObservedAtTick()).append(',');
+		out.append("\"recipeObservedAtTick\":")
+			.append(comparison.getRecipeObservedAtTick()).append(',');
+		out.append("\"runtimeObservedAtTick\":")
+			.append(comparison.getRuntimeObservedAtTick()).append(',');
+		out.append("\"residencyMirrorVersion\":")
+			.append(comparison.getResidencyMirrorVersion()).append(',');
+		out.append("\"sourceCount\":").append(comparison.getSourceCount())
+			.append(',');
+		out.append("\"exactBaselineMatchSourceCount\":")
+			.append(comparison.getExactBaselineMatchSourceCount())
+			.append(',');
+		out.append("\"nonFinalAuthoredStateSourceCount\":")
+			.append(comparison.getNonFinalAuthoredStateSourceCount())
+			.append(',');
+		out.append("\"identityConflictSourceCount\":")
+			.append(comparison.getIdentityConflictSourceCount()).append(',');
+		out.append("\"registrationProvenanceInvalidSourceCount\":")
+			.append(comparison
+				.getRegistrationProvenanceInvalidSourceCount()).append(',');
+		out.append("\"stableBaselineMismatchSourceCount\":")
+			.append(comparison.getStableBaselineMismatchSourceCount())
+			.append(',');
+		out.append("\"expectedAuthoredObjectCount\":")
+			.append(comparison.getExpectedAuthoredObjectCount()).append(',');
+		out.append("\"identitylessDynamicObjectCount\":")
+			.append(comparison.getIdentitylessDynamicObjectCount())
+			.append(',');
+		field(out, "runtimeObservationFingerprintSha256",
+			comparison.getRuntimeObservationFingerprintSha256()).append(',');
+		field(out, "transactionalBaselineFingerprintSha256",
+			comparison.getTransactionalBaselineFingerprintSha256())
+			.append(',');
+		field(out, "fingerprintSha256",
+			comparison.getFingerprintSha256()).append(',');
+		out.append("\"allSourcesExactBaselineMatches\":")
+			.append(comparison.areAllSourcesExactBaselineMatches())
+			.append(',');
+		out.append("\"pointInTimeOnly\":")
+			.append(comparison.isPointInTimeOnly()).append(',');
+		out.append("\"detachedSummaryOnly\":")
+			.append(comparison.isDetachedSummaryOnly()).append(',');
+		out.append("\"sharedCollisionTileComparisonPerformed\":")
+			.append(comparison
+				.isSharedCollisionTileComparisonPerformed()).append(',');
+		out.append("\"runtimeHandleRetained\":")
+			.append(comparison.isRuntimeHandleRetained()).append(',');
+		out.append("\"sourceAbsencePerformed\":")
+			.append(comparison.isSourceAbsencePerformed()).append(',');
+		out.append("\"sourceReconstructionPerformed\":")
+			.append(comparison.isSourceReconstructionPerformed()).append(',');
+		out.append("\"runtimeMutationAuthorized\":")
+			.append(comparison.isRuntimeMutationAuthorized()).append(',');
+		out.append("\"runtimeMutationPerformed\":")
+			.append(comparison.isRuntimeMutationPerformed()).append(',');
+		out.append("\"runtimeCacheInvalidated\":")
+			.append(comparison.isRuntimeCacheInvalidated()).append(',');
+		out.append("\"regionRegistryMutated\":")
+			.append(comparison.isRegionRegistryMutated()).append(',');
+		out.append("\"residencyMirrorMutated\":")
+			.append(comparison.isResidencyMirrorMutated()).append(',');
+		out.append("\"visibilityCacheMutated\":")
+			.append(comparison.isVisibilityCacheMutated()).append(',');
+		out.append("\"schedulerCorrelationPerformed\":")
+			.append(comparison.isSchedulerCorrelationPerformed()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(comparison.isArrivalGate()).append(',');
+		out.append("\"visibilityReleased\":")
+			.append(comparison.isVisibilityReleased()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(comparison.isLifecycleAuthority()).append(',');
+		out.append("\"sources\":[");
+		boolean first = true;
+		for (LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison
+				.SourceComparison source : comparison.getSources()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			out.append("\"sourceOrdinal\":")
+				.append(source.getSourceOrdinal()).append(',');
+			out.append("\"packedRegionX\":")
+				.append(source.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(source.getPackedRegionY()).append(',');
+			out.append("\"expectedAuthoredObjectCount\":")
+				.append(source.getExpectedAuthoredObjectCount()).append(',');
+			out.append("\"identitylessDynamicObjectCount\":")
+				.append(source.getIdentitylessDynamicObjectCount())
+				.append(',');
+			out.append("\"exactFinalLiveInstanceCount\":")
+				.append(source.getExactFinalLiveInstanceCount()).append(',');
+			out.append("\"authoredTransientInstanceCount\":")
+				.append(source.getAuthoredTransientInstanceCount())
+				.append(',');
+			out.append("\"missingExpectedIdentityCount\":")
+				.append(source.getMissingExpectedIdentityCount()).append(',');
+			out.append("\"duplicateRecognizedIdentityInstanceCount\":")
+				.append(source
+					.getDuplicateRecognizedIdentityInstanceCount())
+				.append(',');
+			out.append("\"unrecognizedAuthoredInstanceCount\":")
+				.append(source.getUnrecognizedAuthoredInstanceCount())
+				.append(',');
+			out.append("\"collisionRegistrationPresentCount\":")
+				.append(source.getCollisionRegistrationPresentCount())
+				.append(',');
+			out.append("\"collisionRegistrationMissingCount\":")
+				.append(source.getCollisionRegistrationMissingCount())
+				.append(',');
+			out.append("\"collisionRegistrationConstructorMismatchCount\":")
+				.append(source
+					.getCollisionRegistrationConstructorMismatchCount())
+				.append(',');
+			out.append("\"collisionRegistrationContributionCount\":")
+				.append(source.getCollisionRegistrationContributionCount())
+				.append(',');
+			out.append("\"collisionRegistrationRegionReferenceCount\":")
+				.append(source
+					.getCollisionRegistrationRegionReferenceCount())
+				.append(',');
+			field(out, "runtimeRegistrationFingerprintSha256",
+				source.getRuntimeRegistrationFingerprintSha256())
+				.append(',');
+			field(out, "baselineRegistrationFingerprintSha256",
+				source.getBaselineRegistrationFingerprintSha256())
+				.append(',');
+			out.append("\"registrationFingerprintMatched\":")
+				.append(source.isRegistrationFingerprintMatched())
+				.append(',');
+			field(out, "outcome", source.getOutcome().name());
 			out.append('}');
 		}
 		out.append("]}");
@@ -7356,6 +7702,11 @@ public final class LayeredCoordinateParityObserver {
 		private final
 			LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch
 				sourceTransactionalAuthoredStateVerification;
+		private final LayeredPackedRegionRuntimeAuthoredObjectObservation
+			sourceRuntimeAuthoredObjectObservation;
+		private final
+			LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison
+				sourceRuntimeAuthoredObjectBaselineComparison;
 
 		private PackedRegionNpcOwnerPreservationNoOpMetadata(
 			final String reason,
@@ -7383,7 +7734,12 @@ public final class LayeredCoordinateParityObserver {
 				sourceAuthoredStateVerification,
 			final
 				LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch
-					sourceTransactionalAuthoredStateVerification) {
+					sourceTransactionalAuthoredStateVerification,
+			final LayeredPackedRegionRuntimeAuthoredObjectObservation
+				sourceRuntimeAuthoredObjectObservation,
+			final
+				LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison
+					sourceRuntimeAuthoredObjectBaselineComparison) {
 			this.reason = Objects.requireNonNull(reason, "reason");
 			this.generation = generation;
 			this.requirementsObservedAtTick = requirementsObservedAtTick;
@@ -7406,6 +7762,10 @@ public final class LayeredCoordinateParityObserver {
 				sourceAuthoredStateVerification;
 			this.sourceTransactionalAuthoredStateVerification =
 				sourceTransactionalAuthoredStateVerification;
+			this.sourceRuntimeAuthoredObjectObservation =
+				sourceRuntimeAuthoredObjectObservation;
+			this.sourceRuntimeAuthoredObjectBaselineComparison =
+				sourceRuntimeAuthoredObjectBaselineComparison;
 			if ((!"OWNER_SCOPE_REFUSED".equals(reason)
 					&& !"SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason))
 				|| generation < 0L || requirementsObservedAtTick < 0L
@@ -7423,6 +7783,9 @@ public final class LayeredCoordinateParityObserver {
 							!= null
 						|| sourceAuthoredStateVerification != null
 						|| sourceTransactionalAuthoredStateVerification
+							!= null
+						|| sourceRuntimeAuthoredObjectObservation != null
+						|| sourceRuntimeAuthoredObjectBaselineComparison
 							!= null))
 				|| ("SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason)
 					&& (!ownerScopeEntered
@@ -7434,6 +7797,9 @@ public final class LayeredCoordinateParityObserver {
 							== null
 						|| sourceAuthoredStateVerification == null
 						|| sourceTransactionalAuthoredStateVerification
+							== null
+						|| sourceRuntimeAuthoredObjectObservation == null
+						|| sourceRuntimeAuthoredObjectBaselineComparison
 							== null))
 				|| (sourceAbsencePreflight != null
 					&& (sourceAbsencePreflight.getGeneration() != generation
@@ -7944,7 +8310,125 @@ public final class LayeredCoordinateParityObserver {
 							sourceAuthoredCollisionVerification,
 							sourceAuthoredCollisionApplicationVerification,
 							sourceAuthoredStateVerification,
-							sourceTransactionalAuthoredStateVerification)))) {
+							sourceTransactionalAuthoredStateVerification)))
+				|| (sourceRuntimeAuthoredObjectObservation != null
+					&& (sourceRuntimeAuthoredObjectObservation
+							.getGeneration() != generation
+						|| sourceRuntimeAuthoredObjectObservation
+							.getRequirementsObservedAtTick()
+								!= requirementsObservedAtTick
+						|| sourceRuntimeAuthoredObjectObservation
+							.getSourceCount() != selectedSourceCount
+						|| sourceReloadRecipe == null
+						|| sourceTransactionalAuthoredStateVerification
+							== null
+						|| sourceRuntimeAuthoredObjectObservation
+							.getRecipeObservedAtTick()
+								!= sourceReloadRecipe.getObservedAtTick()
+						|| sourceRuntimeAuthoredObjectObservation
+							.getResidencyMirrorVersion()
+								!= sourceReloadRecipe
+									.getResidencyMirrorVersion()
+						|| sourceRuntimeAuthoredObjectObservation
+							.getExpectedAuthoredObjectCount()
+								!= sourceTransactionalAuthoredStateVerification
+									.getAuthoredObjectFootprintCount()
+						|| !sourceRuntimeAuthoredObjectObservation
+							.areAllObjectBoundariesHeldDuringCapture()
+						|| !sourceRuntimeAuthoredObjectObservation
+							.isPointInTimeOnly()
+						|| !sourceRuntimeAuthoredObjectObservation
+							.isDetachedSummaryOnly()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isSharedCollisionTileComparisonPerformed()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isRuntimeHandleRetained()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isSourceAbsencePerformed()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isSourceReconstructionPerformed()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isRuntimeMutationAuthorized()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isRuntimeMutationPerformed()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isRuntimeCacheInvalidated()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isRegionRegistryMutated()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isResidencyMirrorMutated()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isVisibilityCacheMutated()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isArrivalGate()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isVisibilityReleased()
+						|| sourceRuntimeAuthoredObjectObservation
+							.isLifecycleAuthority()))
+				|| (sourceRuntimeAuthoredObjectBaselineComparison != null
+					&& (sourceRuntimeAuthoredObjectObservation == null
+						|| sourceTransactionalAuthoredStateVerification
+							== null
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.getGeneration() != generation
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.getRequirementsObservedAtTick()
+								!= requirementsObservedAtTick
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.getSourceCount() != selectedSourceCount
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.getRecipeObservedAtTick()
+								!= sourceRuntimeAuthoredObjectObservation
+									.getRecipeObservedAtTick()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.getRuntimeObservedAtTick()
+								!= sourceRuntimeAuthoredObjectObservation
+									.getRuntimeObservedAtTick()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.getResidencyMirrorVersion()
+								!= sourceRuntimeAuthoredObjectObservation
+									.getResidencyMirrorVersion()
+						|| !sourceRuntimeAuthoredObjectBaselineComparison
+							.getRuntimeObservationFingerprintSha256().equals(
+								sourceRuntimeAuthoredObjectObservation
+									.getFingerprintSha256())
+						|| !sourceRuntimeAuthoredObjectBaselineComparison
+							.getTransactionalBaselineFingerprintSha256()
+								.equals(
+									sourceTransactionalAuthoredStateVerification
+										.getFingerprintSha256())
+						|| !sourceRuntimeAuthoredObjectBaselineComparison
+							.isPointInTimeOnly()
+						|| !sourceRuntimeAuthoredObjectBaselineComparison
+							.isDetachedSummaryOnly()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isSharedCollisionTileComparisonPerformed()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isRuntimeHandleRetained()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isSourceAbsencePerformed()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isSourceReconstructionPerformed()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isRuntimeMutationAuthorized()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isRuntimeMutationPerformed()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isRuntimeCacheInvalidated()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isRegionRegistryMutated()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isResidencyMirrorMutated()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isVisibilityCacheMutated()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isSchedulerCorrelationPerformed()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isArrivalGate()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isVisibilityReleased()
+						|| sourceRuntimeAuthoredObjectBaselineComparison
+							.isLifecycleAuthority()))) {
 				throw new IllegalArgumentException(
 					"NPC owner preservation no-op metadata is inconsistent");
 			}
@@ -7976,7 +8460,12 @@ public final class LayeredCoordinateParityObserver {
 				sourceAuthoredStateVerification,
 			final
 				LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch
-					sourceTransactionalAuthoredStateVerification) {
+					sourceTransactionalAuthoredStateVerification,
+			final LayeredPackedRegionRuntimeAuthoredObjectObservation
+				sourceRuntimeAuthoredObjectObservation,
+			final
+				LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison
+					sourceRuntimeAuthoredObjectBaselineComparison) {
 			return new PackedRegionNpcOwnerPreservationNoOpMetadata(
 				reason, generation, requirementsObservedAtTick,
 				selectedSourceCount, requiredEventLinkCount,
@@ -7988,7 +8477,9 @@ public final class LayeredCoordinateParityObserver {
 				sourceAuthoredCollisionVerification,
 				sourceAuthoredCollisionApplicationVerification,
 				sourceAuthoredStateVerification,
-				sourceTransactionalAuthoredStateVerification);
+				sourceTransactionalAuthoredStateVerification,
+				sourceRuntimeAuthoredObjectObservation,
+				sourceRuntimeAuthoredObjectBaselineComparison);
 		}
 
 		private static boolean collisionSourcesMatch(
@@ -8334,6 +8825,15 @@ public final class LayeredCoordinateParityObserver {
 			LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch
 				getSourceTransactionalAuthoredStateVerification() {
 			return sourceTransactionalAuthoredStateVerification;
+		}
+		public LayeredPackedRegionRuntimeAuthoredObjectObservation
+			getSourceRuntimeAuthoredObjectObservation() {
+			return sourceRuntimeAuthoredObjectObservation;
+		}
+		public
+			LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison
+				getSourceRuntimeAuthoredObjectBaselineComparison() {
+			return sourceRuntimeAuthoredObjectBaselineComparison;
 		}
 	}
 

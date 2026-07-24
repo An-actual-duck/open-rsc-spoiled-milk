@@ -55,6 +55,8 @@ import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePre
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceLifecycleBoundary;
 import com.openrsc.server.model.world.region.LayeredPackedRegionTerrainVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch;
+import com.openrsc.server.model.world.region.LayeredPackedRegionRuntimeAuthoredObjectObservation;
+import com.openrsc.server.model.world.region.LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison;
 import com.openrsc.server.util.NamedThreadFactory;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
@@ -567,6 +569,14 @@ public class GameEventHandler {
 				transactionalAuthoredSourceVerification =
 					new
 						LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch[1];
+		final LayeredPackedRegionRuntimeAuthoredObjectObservation[]
+			runtimeAuthoredObjectObservation =
+				new LayeredPackedRegionRuntimeAuthoredObjectObservation[1];
+		final
+			LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison[]
+				runtimeAuthoredObjectBaselineComparison =
+					new
+						LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison[1];
 		boolean sourceBoundaryEntered =
 			getServer().getWorld().getRegionManager()
 				.withinLayeredPackedRegionSourceLifecycleBoundary(
@@ -617,6 +627,17 @@ public class GameEventHandler {
 									boundary, reloadRecipe[0],
 									LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch
 										.MAXIMUM_VERIFICATION_SOURCES);
+						runtimeAuthoredObjectObservation[0] =
+							getServer().getWorld().getRegionManager()
+								.captureLayeredPackedRegionRuntimeAuthoredObjects(
+									boundary, reloadRecipe[0],
+									LayeredPackedRegionRuntimeAuthoredObjectObservation
+										.MAXIMUM_OBJECT_INSTANCES);
+						runtimeAuthoredObjectBaselineComparison[0] =
+							LayeredPackedRegionRuntimeAuthoredObjectBaselineComparison
+								.compare(
+									runtimeAuthoredObjectObservation[0],
+									transactionalAuthoredSourceVerification[0]);
 						captured[0] =
 							GameTickEventNpcOwnerPreservationNoOpDiagnostic
 								.capture(
@@ -649,7 +670,9 @@ public class GameEventHandler {
 			authoredCollisionVerification[0],
 			authoredCollisionApplicationVerification[0],
 			authoredSourceStateVerification[0],
-			transactionalAuthoredSourceVerification[0]);
+			transactionalAuthoredSourceVerification[0],
+			runtimeAuthoredObjectObservation[0],
+			runtimeAuthoredObjectBaselineComparison[0]);
 	}
 
 	private void requireExactPackedSourceBoundary(

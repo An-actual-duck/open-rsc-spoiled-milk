@@ -15966,6 +15966,61 @@ Status: implemented and automated-validated. This detached comparison does not
 yet warrant an owner route. Additive private exposure should be the next
 meaningful manual checkpoint, with its runtime overhead measured separately.
 
+### Slice 201: Private runtime authored-state diagnostics
+
+Objective: expose Slices 199-200 only through the explicit private preservation
+diagnostic, preserving historical schema-v55 and every accepted public path.
+
+Implemented:
+
+- additive schema-v56 extends only `preservation-noop` with nullable
+  `sourceRuntimeAuthoredObjectObservation` and
+  `sourceRuntimeAuthoredObjectBaselineComparison`; ordinary events continue to
+  emit null preservation evidence and schema-v55 remains immutable;
+- after the accepted disposable transactional baseline completes, the handler
+  scans the exact resident source set once under the still-held lifecycle
+  boundary, reduces each Region under its object monitor, and immediately
+  compares the detached runtime summary with the disposable baseline;
+- metadata construction aligns generation, requirements/recipe/runtime ticks,
+  residency-mirror version, exact selected-source order, expected authored
+  object totals, runtime and baseline fingerprints, and every non-authoritative
+  safety fact before accepting the new evidence; and
+- JSON publishes bounded aggregate/per-source identity, constructor,
+  registration, contribution/Region, outcome, and fingerprint facts without
+  serializing an object, registration contribution, Region, tile, or runtime
+  handle.
+
+Safety boundary:
+
+- only the explicit private `preservation-noop` path runs the source scan; the
+  capability remains disabled by default and still returns
+  `SOURCE_LIFECYCLE_UNAVAILABLE` without removing or reconstructing a source;
+- runtime observation is read-only. Shared live collision tiles are not read,
+  compared, or attributed, and scheduler correlation remains unperformed;
+- non-final authored state is diagnostic evidence, not corruption proof or
+  permission to rebuild; and
+- every runtime mutation/cache, registry/mirror/visibility mutation, retained
+  handle, source absence/reconstruction, preserved consumer, arrival gate,
+  visibility release, and lifecycle-authority fact remains schema-constant
+  false.
+
+Automated validation status:
+
+- schema-v56 validates exact-match evidence and the owner-scope-refused null
+  form against the complete historical schema registry while proving schema-v55
+  did not acquire either field;
+- source guards prove runtime observation follows the disposable transactional
+  baseline, comparison follows observation, both precede the existing owner
+  no-op result, and metadata/serialization preserve the two parent
+  fingerprints and all safety flags; and
+- the complete Slice 182-201 lineage, end-to-end observer fixture, and
+  authoritative build/audit totals will be recorded after focused validation.
+
+Status: implementation in validation. This is the next meaningful owner route:
+capture one quiet stable preservation no-op, inspect exact/non-final/conflict
+outcomes across all selected sources, record any diagnostic late-tick overhead,
+and confirm ordinary interaction remains normal.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
