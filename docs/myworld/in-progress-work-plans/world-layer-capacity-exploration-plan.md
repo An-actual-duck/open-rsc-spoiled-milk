@@ -14821,6 +14821,72 @@ next slice should define an isolated authored-object membership application
 boundary while continuing to leave NPCs, ground items, collision, dynamic
 state, registration, and visibility disabled.
 
+### Slice 185: Isolated authored-object membership
+
+Objective: prove the three authored object families can populate one real,
+terrain-initialized disposable Region with exact constructor and provenance
+identity while every other replay stage remains disabled.
+
+Implemented:
+
+- a package-local verifier requires one aligned blank-container contract,
+  terrain definition, and inert authored replay, then constructs a fresh
+  unregistered Region and replays all 2,304 static terrain tiles before
+  creating any object;
+- only scenery, boundary, and harvesting-scenery definitions construct
+  `GameObjectLoc`/`GameObject` values. Exact permanent ID, direction, type,
+  owner, packed coordinate, authored generation/source/ordinal, and
+  construction family survive;
+- each object enters only its anchor Region's membership under the existing
+  ordered Region mutation boundary and object monitor. A colliding scenery
+  slot refuses rather than replacing or duplicating an authored member;
+- NPC and ground-item definitions remain explicitly counted but skipped.
+  Player, NPC, dynamic-object, and ground-item membership must remain zero;
+- every planned object is compared back to one exact detached slot snapshot,
+  total membership must equal the authored-object count, and the complete
+  terrain definition is rechecked after membership; and
+- the detached receipt retains source identity, terrain and replay
+  fingerprints, family/skip totals, object-construction count, and boundary-
+  acquisition count only.
+
+Safety boundary:
+
+- collision registration remains absent: no object receives collision
+  provenance and every tile must retain zero blocking-scenery, dynamic
+  collision, and dynamic-projectile products before and after membership;
+- the verifier never resolves a Region through RegionManager, publishes its
+  local Region, mutates the resident source, or touches the registry, residency
+  mirror, visibility caches, lifecycle monitor, arrival, or packets;
+- constructed objects use no World and are retained only by the disposable
+  Region until verification returns. The receipt retains no Region, manager,
+  entity, tile, collection, boundary, monitor, or other runtime handle; and
+- NPC membership, ground-item membership, collision derivation, scheduler
+  restoration, source absence/reconstruction, transactional registration,
+  rollback, arrival, visibility, and lifecycle authority remain separate.
+
+Automated validation status:
+
+- an executable full-source fixture builds all five authored families,
+  initializes exact terrain on an unregistered Region, applies only the three
+  object families, and proves exact constructors, provenance, family totals,
+  skipped-family totals, membership, terrain preservation, and detached safety
+  facts;
+- the fixture also supplies two authored scenery entries in the same collision
+  slot and proves the second refuses under the ordered membership boundary;
+- structural guards prohibit runtime lookup/registration, collision mutation,
+  collision-provenance attachment, visibility/lifecycle paths, and retained
+  entity or Region handles;
+- the Slice 182-185 focused lineage passes 15 tests, including four Slice 185
+  tests, and the repository prerequisite check passes; and
+- the authoritative bundled-Ant server build compiles 825 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This isolated disposable replay
+has no production or private diagnostic caller and does not warrant an owner
+route. The next slice should define exact collision-footprint derivation for
+these populated authored objects without yet applying collision state,
+registering the Region, replaying NPCs/items, or releasing visibility.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15223,6 +15289,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 183 by exposing bounded isolated-terrain verification through the explicit private preservation diagnostic. | Implemented and automated-validated; schema-v51 reports one count/fingerprint-only receipt per exact selected source after disposable unregistered terrain apply/verification, serializes no tile payload or handle, keeps every runtime mutation and authority false, the current observer plus Slice 177-183 lineage passes 30 focused tests, and the 822/488 Ant build passes; one dense private owner route remains pending |
 | 2026-07-24 | Accept the Slice 183 private isolated-terrain route. | Owner-validated; nine schema-v51 records remain contiguous, all 36 selected sources align across preflight/recipe/terrain identity, 82,944 verified tiles and every terrain aggregate reconcile, the sole repeated fingerprint is the correct digest for three identical fully blocked sectors, all runtime mutation/authority flags remain false, and movement plus NPC/scenery interaction remained normal |
 | 2026-07-24 | Continue with Slice 184 by defining one exact detached authored replay after terrain verification. | Implemented and automated-validated; stable final-live order and generation-fenced constructor scalars for scenery, boundaries, NPCs, ground items, and harvesting scenery are copied with exact dependency envelopes, family and cross-source totals plus deterministic fingerprint reconcile, empty replay remains explicit, every apply/authority fact is false, 11 focused Slice 182-184 tests and the 823/488 Ant build pass |
+| 2026-07-24 | Continue with Slice 185 by applying only authored-object membership to a terrain-initialized disposable Region. | Implemented and automated-validated; scenery, boundaries, and harvesting scenery preserve exact constructors/provenance under the ordered Region membership boundary, colliding slots refuse, NPCs/items and collision remain absent, terrain stays exact, no runtime handle or authority survives, 15 focused Slice 182-185 tests and the 825/488 Ant build pass |
 
 ## Next Discussion
 
