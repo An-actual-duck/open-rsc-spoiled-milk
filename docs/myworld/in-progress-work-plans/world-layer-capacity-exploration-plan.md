@@ -322,6 +322,10 @@ automated-validated Slice 181 captures one source's canonical immutable tile val
 only while the exact Slice 173 lifecycle boundary and residency version remain
 active, then immediately reduces them to the detached Slice 180 terrain-only
 input without construction or application;
+automated-validated Slice 182 applies that exact input to one newly constructed
+disposable Region outside every runtime index, verifies all static terrain
+values and absent dynamic/entity products, returns only a detached receipt, and
+discards the container;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -14580,6 +14584,67 @@ terrain plan entirely outside runtime indexes, then compare every resulting
 tile to the plan before discarding it. Authored replay, dynamic collision,
 entities, registration, absence, and visibility must remain disabled.
 
+### Slice 182: Isolated static-terrain application
+
+Objective: prove one exact Slice 180 terrain plan can initialize a real
+disposable Region and reproduce every static tile value without publishing the
+container or rebuilding dynamic state.
+
+Implemented:
+
+- a package-local verifier outside RegionManager requires exact
+  blank-container/terrain identity, constructs one disposable Region directly,
+  and first proves all Slice 178 sealed blank invariants;
+- it applies all 2,304 terrain inputs to the disposable Region using the
+  current TileValue terrain APIs, preserving metadata, terrain masks,
+  terrain-blocked state, static projectile state, and sealed-base traversal;
+- terrain-wall projectile counters use a small explicit per-tile bound, so
+  malformed detached input cannot create an unbounded replay loop;
+- every resulting tile is compared back to the plan, all blocking-scenery,
+  dynamic collision, and dynamic-projectile products must remain zero, and all
+  Player, NPC, object, and ground-item memberships must remain empty; and
+- `LayeredPackedRegionIsolatedTerrainVerification` retains only exact source
+  identity, aggregate counts, fingerprint, and closed success/safety facts.
+
+Safety boundary:
+
+- the verifier is package-local, has no caller outside its executable fixture,
+  and cannot access RegionManager's packed registry, residency mirror,
+  visibility caches, ownership ledgers, lifecycle lock, or gameplay lookup;
+- static terrain application occurs only on a disposable unregistered Region,
+  and no usable Region, TileValue, collection, manager, or mutation handle is
+  returned or retained;
+- the currently resident source is neither read nor changed during apply; its
+  prior immutable capture supplies all input; and
+- executable reload, usable-container return, source absence/reconstruction,
+  authored replay, dynamic collision rebuild, active-family preservation,
+  registry/mirror/cache mutation, arrival, visibility, and lifecycle authority
+  remain false.
+
+Automated validation status:
+
+- an executable full-source fixture creates one real resident source, captures
+  and terrain-reduces it under the lifecycle boundary, constructs a distinct
+  disposable Region, applies all 2,304 terrain values, and verifies exact
+  source identity, aggregate counts, fingerprint, static values, dynamic
+  absence, and empty membership;
+- structural guards prove the verifier can construct and mutate only its local
+  Region and has no packed lookup, registry, mirror, visibility-cache,
+  ownership-ledger, lifecycle-lock, arrival, or packet path;
+- receipt guards prove no Region, RegionManager, TileValue, collection, or
+  runtime handle can escape and every lifecycle-authority fact stays false;
+- the complete layered-map suite passes 615 tests across 181 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 821 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This isolated application has no
+private diagnostic or production caller and does not warrant an owner route.
+The next focused slice should expose bounded per-source terrain-definition and
+isolated-verification summaries through the explicit private preservation
+command using additive schema-v51. It must not serialize 2,304-tile payloads,
+construct anything on ordinary events, or change any runtime source.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14978,6 +15043,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 179 by verifying one real isolated Region against the sealed contract. | Implemented and automated-validated; a package-local verifier outside RegionManager constructs one disposable Region, proves its manager/coordinate/boundary binding, 2,304 distinct sealed tile defaults, zero collision-product ownership, and empty entity membership, then returns only a detached receipt without touching runtime indexes; 603 focused tests pass across 178 files and the 818/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 180 by defining one detached static-terrain initialization input. | Implemented and automated-validated; exact canonical tile metadata and static terrain collision are retained for all 2,304 source tiles, dynamic collision/scenery/projectile products are subtracted rather than retained, unexplained missing-sector seal traversal remains explicit, fingerprinting and bounds are deterministic, all apply/authority facts remain false, 607 focused tests pass across 179 files, and the 819/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 181 by capturing real resident terrain under the exact source boundary. | Implemented and automated-validated; the lifecycle monitor, boundary identity, mirror version, selected ordinal, non-creating lookup, and mirror registration bind a canonical immutable 2,304-tile capture that immediately reduces to the exact terrain-only definition without retaining runtime handles or applying state; 611 focused tests pass across 180 files and the 819/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 182 by applying static terrain to one disposable isolated Region. | Implemented and automated-validated; the exact captured terrain initializes and round-trips all 2,304 tiles on an unregistered local Region, static metadata/collision/projectile/sealed-base values match, dynamic products and entity memberships remain empty, only a fingerprinted detached receipt survives, 615 focused tests pass across 181 files, and the 821/488 Ant build passes |
 
 ## Next Discussion
 
