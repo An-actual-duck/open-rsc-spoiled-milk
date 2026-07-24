@@ -251,3 +251,32 @@ That pass should confirm row counts, quantities, item ownership IDs, wrist
 placement, overflow handling, pin position, auction/return visibility, and the
 second reload state before removing the isolated fixture. It must not use the
 live database.
+
+### Zero-Visual Equipment Follow-Up
+
+The inventory context menu formerly required `wearableID != 0` before adding
+an equip action. That field describes a character-model visual/type; it is not
+the authoritative equipability flag. Bangels intentionally have no worn model,
+so the check hid their otherwise valid Wear action.
+
+Inventory equipability now uses `ItemDef.isWieldable()`. The visual wearable ID
+is consulted only to retain the established Wear-versus-Wield wording. Bank
+equipment interactions and both server equip entry points already used the
+authoritative wieldable flag.
+
+The same audit found a client tooltip calculation that searched equipped items
+by `wearableID` as though it were an equipment slot. It now translates the
+server slot through `EquipmentSlotMapping` and reads the corresponding client
+equipment entry. Elemental Rings use server slot 13, and Bangels use server
+slot 14/client slot 11.
+
+Every base, classic-enchanted, and altar-enchanted Bangel is wieldable while
+retaining `appearanceID = 0`, `wearableID = 0`, and server wrist slot 14. The
+server appearance path draws only body slots 0–11 and handles slot 13
+separately for morphing rings, so wrist slot 14 creates no character-model
+layer. The deterministic client fixture loads all 81 Bangel definitions and
+proves each receives a Wear action despite having a zero visual ID.
+
+Other remaining client uses of `wearableID` were retained because they classify
+weapon/armour visual types for wording, filters, or armour penalties; none of
+them grants or denies equipability.

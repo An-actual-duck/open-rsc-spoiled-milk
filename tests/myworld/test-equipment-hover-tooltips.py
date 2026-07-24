@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+EQUIP_POLICY = ROOT / "Client_Base/src/orsc/InventoryEquipMenuPolicy.java"
 HIT_TARGET = ROOT / "Client_Base/src/orsc/EquipmentSlotHoverTarget.java"
 INPUT_BRIDGE = ROOT / "PC_Client/src/orsc/OpenGLInputBridge.java"
 
@@ -75,6 +75,7 @@ public final class EquipmentSlotHoverTargetFixture {
 
 def main() -> None:
     client = CLIENT.read_text(encoding="utf-8")
+    equip_policy = EQUIP_POLICY.read_text(encoding="utf-8")
     input_bridge = INPUT_BRIDGE.read_text(encoding="utf-8")
 
     require(client, "int hoveredEquipmentSlot = EquipmentSlotHoverTarget.findSlot(",
@@ -97,8 +98,12 @@ def main() -> None:
             "existing equipment context-menu label")
     require(client, "MenuItemAction.ITEM_EQUIP_FROM_INVENTORY, equipCommand",
             "inventory Equip action remains inventory-only")
-    require(client, 'equipCommand = "Wear";', "inventory Wear tooltip")
-    require(client, 'equipCommand = "Wield";', "inventory Wield tooltip")
+    require(client, "InventoryEquipMenuPolicy.canOfferEquip(def, item.getNoted())",
+            "inventory equipability uses the item flag")
+    require(client, "InventoryEquipMenuPolicy.actionLabel(def)",
+            "inventory Wear/Wield tooltip")
+    require(equip_policy, '!= 0 ? "Wield" : "Wear"',
+            "visual type controls only Wear/Wield wording")
 
     require(input_bridge, "int x = delegate.mapMouseX(cursorX[0]);", "OpenGL logical X mapping")
     require(input_bridge, "int y = delegate.mapMouseY(cursorY[0]);", "OpenGL logical Y mapping")
