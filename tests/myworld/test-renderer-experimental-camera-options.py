@@ -175,8 +175,8 @@ def main() -> None:
     )
     require(
         applet,
-        "mudclient.adjustCameraZoomSetting(dir * distanceY);",
-        "drag zoom uses extended bounds helper",
+        "mudclient.adjustCameraPitch(-deltaY);",
+        "middle-drag camera tilt uses the shared pitch limiter",
     )
     require(
         applet,

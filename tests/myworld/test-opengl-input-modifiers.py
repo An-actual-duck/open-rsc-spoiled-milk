@@ -45,11 +45,8 @@ def main() -> None:
         "boolean mayBeScrollable = mudclient.isMouseOverOpenUiTabPanel(mouseX, mouseY);",
         "mouse wheel zoom only yields to an open tab under the cursor",
     )
-    require(
-        applet,
-        "|| mudclient.isMouseOverOpenUiTabPanel(mudclient.mouseLastProcessedX, mudclient.mouseLastProcessedY);",
-        "drag zoom only yields to an open tab under the drag path",
-    )
+    require(applet, "middleMouseOrbit.update(", "desktop middle-orbit drag gate")
+    require(applet, "mudclient.adjustCameraPitch(-deltaY);", "desktop middle-drag pitch")
 
     require(
         lwjgl_bindings,
