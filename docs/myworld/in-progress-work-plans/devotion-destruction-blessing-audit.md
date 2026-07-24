@@ -27,6 +27,18 @@ as intended rewards rather than balance defects. Free or failed-removal XP
 paths, such as the Bonecrusher issue, remain defects because they bypass the
 required Devotion progression and item cost.
 
+The project owner also approved the following Bonecrusher correctness fix for
+a later implementation phase:
+
+- Reject noted bones and ash.
+- Remove the exact inventory instance selected by the player, rather than
+  looking up an unnoted item with the same catalog ID.
+- Stop without rewards if that removal fails.
+- Award the existing half-base Prayer XP, full offering value, and flat
+  Devotion-derived Prayer bonus only after successful removal.
+- Preserve the Bonecrusher's reusable ownership/reclaim behavior and the
+  separate handling of quest-specific bones.
+
 ## Executive Summary
 
 The current system has three related but distinct loops:
@@ -316,6 +328,18 @@ The two Devotion adjustments are independently clamped to `-1000..1000`.
 Destruction is not counted by the hourly blessing limiter and has no separate
 rate limit.
 
+The mapped "destruction value" is a transfer amount, not a fee charged in
+addition to destruction. Away from either cap, the operation leaves the
+player's total Devotion across the two gods unchanged: the worshipped god gains
+exactly what the item's god loses. The consumed blessed item and the reduction
+to its god's Devotion are already the costs of reallocating that allegiance.
+No additional Devotion charge to destruction is proposed.
+
+Because the gain and loss are clamped independently, an account near a cap can
+experience an asymmetric actual transfer even though the current messages
+describe the nominal mapped value. That is a calculation/reporting correctness
+issue to address separately; it is not a reason to add a destruction fee.
+
 All recognized items are non-stackable. Normal interaction therefore destroys
 one selected item and awards one mapped result. Noted items are explicitly
 excluded. A malformed database item holding an abnormal quantity in one
@@ -598,8 +622,10 @@ These are proposed decisions, not implemented values.
 
 ### 1. Fix correctness and exploit paths before tuning
 
-1. Make Bonecrusher removal inventory-instance-specific, reject notes, and
-   award XP/Devotion only after successful removal.
+1. Implement the approved Bonecrusher correction: reject notes, remove the
+   exact selected inventory instance, stop on failed removal, and award the
+   existing XP/Devotion only after successful removal. Do not change its valid
+   reward values or reusable lifecycle.
 2. Add square shields, spears, and scythes to destruction with their existing
    mapped resource values, or explicitly remove them from blessing. Inclusion
    is the consistent choice because they already scale as god equipment.
@@ -648,16 +674,17 @@ Prayer training and equipment, or spend it on meaningful rewards such as the
 
 Do not add a blessing cost merely to compensate for high Prayer XP. First
 decide whether more repeatable or one-time reward choices are needed after the
-existing artifact pool is exhausted. If a mandatory blessing cost is later
-desired for item-economy reasons, the destruction value remains a coherent
-fallback unit:
+existing artifact pool is exhausted.
 
-- symbol: 0.5 Devotion;
-- wool/knight item: mapped resource cost; and
-- staff: wood tier.
+An earlier draft suggested using each product's destruction-transfer value as
+a possible mandatory **blessing** cost. It never proposed charging extra
+Devotion when destroying an item. That blessing-only alternative is retained
+here solely to explain the prior terminology and is not recommended under the
+accepted reward-choice design.
 
-That fallback is retained for comparison, not recommended for implementation
-at this stage.
+Preserve destruction as a symmetric transfer between gods. Do not add an
+additional destruction charge: consuming the item and lowering the item's god
+already provide its intended cost.
 
 ### 4. Keep ten per hour, but call it hourly
 
