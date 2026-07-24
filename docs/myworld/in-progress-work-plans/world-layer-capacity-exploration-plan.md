@@ -14119,11 +14119,41 @@ Automated validation status:
 - the authoritative bundled-Ant server build compiles 814 core and 488 plugin
   sources and passes its build/classpath audit.
 
-Status: implemented and automated-validated. Once checkpointed, the next
-meaningful private owner route should capture one dense and one quieter
-selection with `preserve-noop`, then verify normal movement and interaction
-afterward. The comparison should identify which blockers are universal
-architectural gaps and which are content-dependent.
+Status: implemented, automated-validated, and owner-validated. Two private
+schema-v49 routes produced complementary real selections:
+
+- the dense-area movement and departure route produced an expanded 98-source
+  candidate cohort containing 1 player, 1,596 NPCs, 12,389 authored objects,
+  zero dynamic objects, 369 ground items, and 66,418 collision-product tiles;
+- the quieter-area departure route produced a 36-source candidate cohort
+  containing 1 player, 449 NPCs, 3,979 authored objects, zero dynamic objects,
+  123 ground items, and 28,932 collision-product tiles;
+- all 98 and all 36 sources had tile storage available, while every source was
+  blocked by both unavailable collision rebuild and unavailable Region reload
+  path;
+- the content-dependent blockers scaled independently: NPC preservation
+  affected 89/98 versus 31/36 sources, authored reload affected 95/98 versus
+  33/36, and ground-item preservation affected 56/98 versus 20/36;
+- one active-player source remained explicit in each selection, and no source
+  reported a dynamic-object preservation blocker; and
+- all 50 records in the first route and all five records in the reverse route
+  validate against v49. Every source-absence, reconstruction, retained-handle,
+  registry, mirror, cache, arrival, visibility, mutation, and lifecycle-
+  authority fact remains false, while NPC, scenery, gathering, combat,
+  dialogue, movement, and teleport behavior remained normal.
+
+The initial `preserve-noop` immediately after capture start correctly carried a
+null preflight because no preceding transition had selected retirement
+candidates. Future comparison routes must leave the area to be inventoried
+before invoking `preserve-noop`; no timing-sensitive input is required.
+
+The comparison identifies collision reconstruction and an exact Region reload
+path as universal architectural gaps, while NPC, authored-object, ground-item,
+and active-player requirements remain content-dependent. The next focused
+slice should define one detached exact Region reload recipe for already
+resident source state without loading, absence, reconstruction, or registry
+authority. Collision rebuild must remain a separate mandatory gate rather than
+being inferred from that recipe.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -14515,6 +14545,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 173 by replacing assumed Region quiescence with a real packed-source lifecycle boundary. | Implemented and automated-validated; RegionManager checks the exact unique selected sources against packed storage and its residency mirror under the lifecycle monitor, exposes only an ephemeral detached source/mirror-version boundary, invalidates it before release, and gates both owner-capture paths through it; no source mutation or schema change occurs, 579 focused tests pass across 172 files, and the 813/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 174 by inventorying exact source-absence blockers inside the real lifecycle boundary. | Implemented and automated-validated; the detached preflight separates Region-local players, NPC membership, authored/dynamic objects, ground items, collision products, tile storage, and reload-path blockers in exact source order while retaining no runtime handles and performing no source mutation; 583 focused tests pass across 173 files, and the 814/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 175 by exposing the exact source-absence preflight through private diagnostics. | Implemented and automated-validated; additive schema-v49 extends only the explicit preservation no-op with detached aggregate, blocker-summary, and per-source evidence captured inside the real source boundary, while every mutation and authority field remains false; 587 focused tests pass across 174 files, and the 814/488 Ant build passes |
+| 2026-07-23 | Accept the Slice 175 private source-absence comparison. | Owner-validated; complementary 98-source and 36-source v49 cohorts validate in full, every source has available tile storage but lacks both collision rebuild and a Region reload path, NPC/authored-object/ground-item blockers vary with content, one active-player source remains explicit per cohort, all mutation and authority facts remain false, and normal movement, teleport, scenery, gathering, combat, and NPC interaction continue afterward |
 
 ## Next Discussion
 
