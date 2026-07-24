@@ -1225,10 +1225,15 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	}
 
 	public class MouseHandler implements MouseListener, MouseMotionListener, MouseWheelListener {
+		private final DesktopMiddleMouseOrbit middleMouseOrbit = new DesktopMiddleMouseOrbit();
+
 		@Override
 		public final void mouseClicked(MouseEvent var1) {
 			try {
 				updateControlShiftState(var1);
+				if (var1.getButton() == MouseEvent.BUTTON2) {
+					var1.consume();
+				}
 			} catch (RuntimeException var3) {
 				throw GenUtil.makeThrowable(var3, "e.mouseClicked(" + (var1 != null ? "{...}" : "null") + ')');
 			}
@@ -1237,14 +1242,20 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		@Override
 		public final synchronized void mousePressed(MouseEvent var1) {
 			try {
-				if (var1.getButton() == MouseEvent.BUTTON2) {
-					mudclient.mouseLastProcessedX = mudclient.mouseX;
-					mudclient.mouseLastProcessedY = mudclient.mouseY;
+				updateControlShiftState(var1);
+				int clientMouseX = getClientMouseX(var1);
+				int clientMouseY = getClientMouseY(var1);
+				if (middleMouseOrbit.begin(var1.getButton(), clientMouseX, clientMouseY)) {
+					mudclient.mouseX = clientMouseX;
+					mudclient.mouseY = clientMouseY;
+					mudclient.mouseLastProcessedX = clientMouseX;
+					mudclient.mouseLastProcessedY = clientMouseY;
+					mudclient.currentMouseButtonDown = 0;
+					var1.consume();
 					return;
 				}
-				updateControlShiftState(var1);
-				mudclient.mouseX = var1.getX() - mudclient.screenOffsetX;
-				mudclient.mouseY = var1.getY() - mudclient.screenOffsetY;
+				mudclient.mouseX = clientMouseX;
+				mudclient.mouseY = clientMouseY;
 
 				if (!SwingUtilities.isRightMouseButton(var1)) mudclient.currentMouseButtonDown = 1;
 				else mudclient.currentMouseButtonDown = 2;
@@ -1260,14 +1271,23 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		@Override
 		public final synchronized void mouseReleased(MouseEvent var1) {
 			try {
-				if (var1.getButton() == MouseEvent.BUTTON2) {
+				if (var1 == null) {
+					middleMouseOrbit.cancel();
 					mudclient.mouseLastProcessedX = 0;
 					mudclient.mouseLastProcessedY = 0;
+					mudclient.currentMouseButtonDown = 0;
 					return;
 				}
 				updateControlShiftState(var1);
-				mudclient.mouseX = var1.getX() - mudclient.screenOffsetX;
-				mudclient.mouseY = var1.getY() - mudclient.screenOffsetY;
+				mudclient.mouseX = getClientMouseX(var1);
+				mudclient.mouseY = getClientMouseY(var1);
+				if (middleMouseOrbit.end(var1.getButton())) {
+					mudclient.mouseLastProcessedX = 0;
+					mudclient.mouseLastProcessedY = 0;
+					mudclient.currentMouseButtonDown = 0;
+					var1.consume();
+					return;
+				}
 				mudclient.currentMouseButtonDown = 0;
 			} catch (RuntimeException var3) {
 				throw GenUtil.makeThrowable(var3, "e.mouseReleased(" + (var1 != null ? "{...}" : "null") + ')');
@@ -1287,6 +1307,9 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		public final void mouseExited(MouseEvent var1) {
 			try {
 				updateControlShiftState(var1);
+				if (middleMouseOrbit.isActive()) {
+					mudclient.currentMouseButtonDown = 0;
+				}
 			} catch (RuntimeException var3) {
 				throw GenUtil.makeThrowable(var3, "e.mouseExited(" + (var1 != null ? "{...}" : "null") + ')');
 			}
@@ -1296,67 +1319,49 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		public final synchronized void mouseDragged(MouseEvent var1) {
 			try {
 				updateControlShiftState(var1);
-				mudclient.mouseX = var1.getX() - mudclient.screenOffsetX;
-				mudclient.mouseY = var1.getY() - mudclient.screenOffsetY;
+				mudclient.mouseX = getClientMouseX(var1);
+				mudclient.mouseY = getClientMouseY(var1);
 
-				if (mudclient.mouseLastProcessedX != 0 && mudclient.mouseLastProcessedY != 0) {
-					int distanceX = (mudclient.mouseX - mudclient.mouseLastProcessedX)/2;
-					int distanceY = (mudclient.mouseY - mudclient.mouseLastProcessedY)/2;
-					boolean touchedMessagePanelArea = mudclient.getGameHeight() - Math.max(mudclient.mouseY, mudclient.mouseLastProcessedY) <= 66;
-
-					boolean scrollableMessagePanel = mudclient.hasScroll(mudclient.messageTabSelected) && touchedMessagePanelArea;
-					boolean mayBeScrollable = mudclient.isMouseOverOpenUiTabPanel(mudclient.mouseX, mudclient.mouseY)
-						|| mudclient.isMouseOverOpenUiTabPanel(mudclient.mouseLastProcessedX, mudclient.mouseLastProcessedY);
-					boolean zoomable = (!scrollableMessagePanel && !mayBeScrollable) || osConfig.C_SWIPE_TO_SCROLL_MODE == 0;
-
-					if (!mudclient.isInFirstPersonView() && zoomable && (S_ZOOM_VIEW_TOGGLE || mudclient.getLocalPlayer().isStaff()) && !var1.isControlDown()) {
-						if (osConfig.C_SWIPE_TO_ZOOM_MODE != 0) {
-							int dir = osConfig.C_SWIPE_TO_ZOOM_MODE == 2 ? -1 : 1;
-							mudclient.adjustCameraZoomSetting(dir * distanceY);
-						}
-					} else if (mudclient.isInFirstPersonView() && mudclient.cameraAllowPitchModification) {
-						mudclient.adjustCameraPitch(-distanceY * 2);
-					}
-					if (osConfig.C_SWIPE_TO_ROTATE_MODE != 0) {
-						// camera set to auto does not like manual like rotation
-						if (!mudclient.getOptionCameraModeAuto()) {
-							int dir = osConfig.C_SWIPE_TO_ROTATE_MODE == 2 ? -1 : 1;
-							float clientDist = distanceX / (getWidth() / (float) mudclient.getGameWidth());
-							mudclient.cameraRotation = (255 & mudclient.cameraRotation + (int) (dir * clientDist));
-						} else {
-							// swipe to left gives negative distanceX, to left negative
-							int dir = osConfig.C_SWIPE_TO_ROTATE_MODE == 2 ? -1 : 1;
-							boolean toLeft = dir * distanceX < 0;
-							if (toLeft) {
-								mudclient.keyLeft = true;
-							} else {
-								mudclient.keyRight = true;
-							}
-						}
-					}
-					if (!zoomable) {
-						if (osConfig.C_SWIPE_TO_SCROLL_MODE != 0) {
-							int dir = osConfig.C_SWIPE_TO_SCROLL_MODE == 2 ? -1 : 1;
-							mudclient.runScroll(dir * distanceY);
-						}
-					}
-
-					// To make the mouse move:
-					//mudclient.mouseLastProcessedX = mudclient.mouseX;
-					//mudclient.mouseLastProcessedY = mudclient.mouseY;
-
-					// Move the mouse back to the last processed position.
-					try {
-						Robot robot = new Robot();
-						//robot.mouseMove((int)getLocationOnScreen().getX() + mudclient.mouseLastProcessedX, (int)getLocationOnScreen().getY() + mudclient.mouseLastProcessedY);
-						robot.mouseMove((int) MouseInfo.getPointerInfo().getLocation().getX() - distanceX, (int) MouseInfo.getPointerInfo().getLocation().getY() - distanceY);
-					} catch (AWTException ignored) {
-					}
+				if (middleMouseOrbit.update(mudclient.mouseX, mudclient.mouseY)) {
+					applyMiddleMouseOrbit(middleMouseOrbit.getDeltaX(), middleMouseOrbit.getDeltaY());
+					mudclient.mouseLastProcessedX = mudclient.mouseX;
+					mudclient.mouseLastProcessedY = mudclient.mouseY;
+					mudclient.currentMouseButtonDown = 0;
+					var1.consume();
+					return;
 				}
 				if (SwingUtilities.isRightMouseButton(var1)) mudclient.currentMouseButtonDown = 2;
 				else mudclient.currentMouseButtonDown = 1;
 			} catch (RuntimeException var3) {
 				throw GenUtil.makeThrowable(var3, "e.mouseDragged(" + (var1 != null ? "{...}" : "null") + ')');
+			}
+		}
+
+		private void applyMiddleMouseOrbit(int deltaX, int deltaY) {
+			if (deltaY != 0) {
+				// Pitch limits and the third-person tilt option are owned by mudclient.
+				mudclient.adjustCameraPitch(-deltaY);
+			}
+
+			int horizontalDistance = deltaX / 2;
+			if (horizontalDistance == 0) {
+				return;
+			}
+
+			// "Unset" retains normal desktop orbit; only mode 2 inverts yaw.
+			int direction = osConfig.C_SWIPE_TO_ROTATE_MODE == 2 ? -1 : 1;
+			if (!mudclient.getOptionCameraModeAuto()) {
+				float viewportScale = getWidth() / (float) mudclient.getGameWidth();
+				if (viewportScale <= 0.0F) {
+					viewportScale = 1.0F;
+				}
+				float clientDistance = horizontalDistance / viewportScale;
+				mudclient.cameraRotation = 255 & mudclient.cameraRotation
+					+ (int) (direction * clientDistance);
+			} else if (direction * horizontalDistance < 0) {
+				mudclient.keyLeft = true;
+			} else {
+				mudclient.keyRight = true;
 			}
 		}
 
