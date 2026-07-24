@@ -12,6 +12,7 @@ SERVER = ROOT / "server"
 REGION_SRC = SERVER / "src/com/openrsc/server/model/world/region"
 ENTITY_SRC = SERVER / "src/com/openrsc/server/model/entity"
 REGION_MANAGER = REGION_SRC / "RegionManager.java"
+RELOAD_RECIPE = REGION_SRC / "LayeredPackedRegionReloadRecipe.java"
 TRANSACTION = REGION_SRC / "RegionObjectCollisionTransactionExecutor.java"
 CURRENT = SERVER / (
     "src/com/openrsc/server/event/rsc/"
@@ -177,7 +178,8 @@ class LayeredMapsSliceOneHundredFortyEightTest(unittest.TestCase):
                 "-encoding", "UTF-8", "-cp", classpath,
                 "-d", str(cls.classes),
                 str(CURRENT), str(COLLISION_STATE), str(GAME_OBJECT),
-                str(TRANSACTION), str(REGION_MANAGER), str(fixture),
+                str(TRANSACTION), str(RELOAD_RECIPE), str(REGION_MANAGER),
+                str(fixture),
             ],
             cwd=ROOT,
             text=True,

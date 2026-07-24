@@ -14155,6 +14155,72 @@ resident source state without loading, absence, reconstruction, or registry
 authority. Collision rebuild must remain a separate mandatory gate rather than
 being inferred from that recipe.
 
+### Slice 176: Detached exact Region reload recipe
+
+Objective: bind one real resident packed-source lifecycle observation to the
+existing immutable final-live authored definitions, producing exact inert
+reload inputs without constructing or reloading a Region.
+
+Implemented:
+
+- `LayeredPackedRegionReloadRecipe` aligns proposal generation, requirements
+  tick, observation tick, residency-mirror version, source order, and authored
+  generation across the Slice 173 boundary, Slice 174 preflight, and the
+  startup-authored reconstruction recipe;
+- each exact selected source retains its observed tile-storage presence and
+  unresolved player, NPC, dynamic-object, ground-item, and collision-product
+  counts alongside an immutable copy of its final-live authored placement
+  definitions and dependency reach;
+- a selected source with no authored manifest entry is represented as an exact
+  empty authored replay rather than an unavailable recipe;
+- aggregate authored source, final-live placement, original manifest,
+  supersession, dependency-reference, and unresolved runtime-family counts
+  reconcile across the selected source list; and
+- RegionManager can compose the recipe only while the original
+  `layeredRegionLifecycleLock` boundary remains active, the residency mirror
+  has not changed, every selected Region still exists, and authored generation
+  matches.
+
+Safety boundary:
+
+- the recipe reuses only the existing immutable detached authored placement
+  values; it retains no Region, tile, entity, collection, registry, archive,
+  scheduler, event, monitor, loader, or cache handle;
+- it is explicitly non-executable and performs no Region construction, source
+  absence, source reconstruction, authored replay, collision rebuild, registry
+  or mirror mutation, cache invalidation, arrival, or visibility release;
+- active players, NPC membership, dynamic objects, ground items, collision
+  products, scheduler state, and visibility remain separate mandatory
+  lifecycle obligations;
+- collision rebuild remains separate and cannot be inferred from the authored
+  recipe or current collision-product count; and
+- the capture has no production or private diagnostic caller and does not
+  change the Slice 175 preflight or schema-v49.
+
+Automated validation status:
+
+- an executable fixture proves lifecycle identity, exact selected-source order,
+  authored-generation alignment, declared and exact-empty authored sources,
+  final-live placement retention, immutable survival after boundary
+  invalidation, aggregate reconciliation, mismatch refusal, and every inert
+  safety flag;
+- structural guards prove RegionManager requires the real lifecycle monitor,
+  unchanged residency mirror, existing selected Regions, and exact authored
+  generation while using no creating lookup or registry/cache mutation;
+- the complete layered-map suite passes 591 tests across 175 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 815 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. A later executable reload path
+must still provide a bounded blank-container constructor, exact collision
+reconstruction, active-family preservation, transactional registration,
+rollback, and visibility gating; this slice grants none of those capabilities.
+The next focused slice should expose this detached recipe only through the
+explicit private preservation no-op using an additive schema, allowing real
+dense and quiet candidate recipes to be inspected before any constructor or
+reload operation is designed.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14546,6 +14612,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 174 by inventorying exact source-absence blockers inside the real lifecycle boundary. | Implemented and automated-validated; the detached preflight separates Region-local players, NPC membership, authored/dynamic objects, ground items, collision products, tile storage, and reload-path blockers in exact source order while retaining no runtime handles and performing no source mutation; 583 focused tests pass across 173 files, and the 814/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 175 by exposing the exact source-absence preflight through private diagnostics. | Implemented and automated-validated; additive schema-v49 extends only the explicit preservation no-op with detached aggregate, blocker-summary, and per-source evidence captured inside the real source boundary, while every mutation and authority field remains false; 587 focused tests pass across 174 files, and the 814/488 Ant build passes |
 | 2026-07-23 | Accept the Slice 175 private source-absence comparison. | Owner-validated; complementary 98-source and 36-source v49 cohorts validate in full, every source has available tile storage but lacks both collision rebuild and a Region reload path, NPC/authored-object/ground-item blockers vary with content, one active-player source remains explicit per cohort, all mutation and authority facts remain false, and normal movement, teleport, scenery, gathering, combat, and NPC interaction continue afterward |
+| 2026-07-23 | Continue with Slice 176 by binding selected resident sources to an inert exact Region reload recipe. | Implemented and automated-validated; the real lifecycle boundary, source-absence inventory, and final-live authored generation compose exact ordered source recipes, absent manifest entries become explicit empty authored replays, all active runtime families and collision remain separate, no loader or mutation is connected, 591 focused tests pass across 175 files, and the 815/488 Ant build passes |
 
 ## Next Discussion
 

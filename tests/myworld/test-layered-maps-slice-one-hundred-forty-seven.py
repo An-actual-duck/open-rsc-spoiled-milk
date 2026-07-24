@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "server"
 REGION_SRC = SERVER / "src/com/openrsc/server/model/world/region"
 REGION_MANAGER = REGION_SRC / "RegionManager.java"
+RELOAD_RECIPE = REGION_SRC / "LayeredPackedRegionReloadRecipe.java"
 TRANSACTION = REGION_SRC / "RegionObjectCollisionTransactionExecutor.java"
 CURRENT = SERVER / (
     "src/com/openrsc/server/event/rsc/"
@@ -270,7 +271,8 @@ class LayeredMapsSliceOneHundredFortySevenTest(unittest.TestCase):
                 "javac", "-Xlint:all", "-source", "8", "-target", "8",
                 "-encoding", "UTF-8", "-cp", classpath,
                 "-d", str(cls.classes),
-                str(CURRENT), str(TRANSACTION), str(REGION_MANAGER),
+                str(CURRENT), str(TRANSACTION), str(RELOAD_RECIPE),
+                str(REGION_MANAGER),
                 str(fixture),
             ],
             cwd=ROOT,

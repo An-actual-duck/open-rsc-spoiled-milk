@@ -734,6 +734,53 @@ public class RegionManager {
 			Thread.holdsLock(layeredRegionLifecycleLock));
 	}
 
+	/**
+	 * Binds one already captured absence inventory to the immutable authored
+	 * reconstruction definitions while the same source lifecycle boundary
+	 * remains active.
+	 *
+	 * <p>The returned recipe is detached and inert. This method neither loads a
+	 * missing source nor creates, removes, unloads, reconstructs, or registers a
+	 * Region.</p>
+	 */
+	public LayeredPackedRegionReloadRecipe
+		captureLayeredPackedRegionReloadRecipe(
+			final LayeredPackedRegionSourceLifecycleBoundary boundary,
+			final LayeredPackedRegionSourceAbsencePreflight preflight,
+			final LayeredPackedRegionAuthoredReconstructionRecipe
+				authoredRecipe) {
+		LayeredPackedRegionSourceLifecycleBoundary checkedBoundary =
+			Objects.requireNonNull(boundary, "boundary");
+		LayeredPackedRegionSourceAbsencePreflight checkedPreflight =
+			Objects.requireNonNull(preflight, "preflight");
+		LayeredPackedRegionAuthoredReconstructionRecipe checkedRecipe =
+			Objects.requireNonNull(authoredRecipe, "authoredRecipe");
+		if (!Thread.holdsLock(layeredRegionLifecycleLock)
+			|| !checkedBoundary.isRegionLifecycleBoundaryHeld()
+			|| checkedBoundary.getResidencyMirrorVersion()
+				!= layeredRegionResidencyMirror.getVersion()
+			|| checkedBoundary.getGeneration()
+				!= checkedRecipe.getGeneration()) {
+			throw new IllegalStateException(
+				"Packed-source reload recipe lacks its lifecycle boundary");
+		}
+		for (LayeredPackedRegionSourceLifecycleBoundary.PackedSource source
+			: checkedBoundary.getSelectedSources()) {
+			if (peekRegionFromSectorCoordinates(
+					source.getPackedRegionX(),
+					source.getPackedRegionY()) == null
+				|| !layeredRegionResidencyMirror.isPackedRegionRegistered(
+					source.getPackedRegionX(),
+					source.getPackedRegionY())) {
+				throw new IllegalStateException(
+					"Packed source changed before reload recipe capture");
+			}
+		}
+		return LayeredPackedRegionReloadRecipe.compose(
+			checkedBoundary, checkedPreflight, checkedRecipe,
+			Thread.holdsLock(layeredRegionLifecycleLock));
+	}
+
 	/** Opens one dormant owner and atomically assigns its first logical window. */
 	public LayeredRegionInterestOwnershipLedger.OpenedOwner
 		openLayeredRegionInterestOwner(final WorldRegionWindow currentWindow) {
