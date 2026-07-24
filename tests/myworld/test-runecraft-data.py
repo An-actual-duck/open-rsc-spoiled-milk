@@ -173,10 +173,10 @@ def ensure_chaos_amulet_bonus_uses_fractional_carryover() -> None:
         "ItemId.BLOOD_RUNE.id()",
         "rollChaosAmuletBonusRuneIndex(weights)",
         "DataConversions.random(1, totalWeight)",
-        "Your chaos amulet weaves ",
+        "Your chaos Bangel weaves ",
     ):
         if snippet not in text:
-            fail(f"Chaos amulet weighted-rune bonus missing fixed-point carryover snippet: {snippet}")
+            fail(f"Chaos Bangel weighted-rune bonus missing fixed-point carryover snippet: {snippet}")
 
 
 def ensure_stone_and_talismans_are_retired() -> None:
