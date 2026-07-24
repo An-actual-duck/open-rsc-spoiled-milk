@@ -100,7 +100,7 @@ def main() -> None:
         "int largeWeight = 9 + (progress * 21 / 98);",
         "int standardWeight = 20 + (progress * 5 / 98);",
         "int smallWeight = 100 - standardWeight - largeWeight - hugeWeight;",
-        "Your cosmic Bangel glimmers and another geode appears.",
+        "Your cosmic Bangle glimmers and another geode appears.",
         "Formulae.gatheringSideRewardChanceForFocus(getMiningFocus(player), MYWORLD_GEODE_REWARD_BASE_CHANCE)",
     ):
         require(mining, snippet, "Mining geode reward")

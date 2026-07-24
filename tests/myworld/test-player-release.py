@@ -609,7 +609,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
     if included_forbidden:
         fail(f"client jar still contains removed CraftPix art: {included_forbidden[:5]}")
     allowed_item_asset_names = {
-        "myworld-assets/sprites/items/inventory-ground/bangel.png",
+        "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "myworld-assets/sprites/items/inventory-ground/bolt.png",
         "myworld-assets/sprites/items/inventory-ground/dragon-hatchet.png",
         "myworld-assets/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png",
@@ -643,7 +643,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         "myworld-assets/sprites/items/inventory-ground/unstrung-symbol-of-guthix.png",
         "myworld-assets/sprites/items/inventory-ground/zombie-eye.png",
         "myworld-assets/sprites/items/inventory-ground/tools/arrowhead-mould.png",
-        "myworld-assets/sprites/items/inventory-ground/tools/bangel-mould.png",
+        "myworld-assets/sprites/items/inventory-ground/tools/bangle-mould.png",
         "myworld-assets/sprites/items/inventory-ground/tools/bolt-mould.png",
         "myworld-assets/sprites/items/inventory-ground/tools/dart-mould.png",
         "myworld-assets/sprites/items/inventory-ground/tools/shuriken-mould.png",
@@ -669,7 +669,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         if removed_path.exists():
             fail(f"removed CraftPix source path still exists: {removed_path.relative_to(ROOT)}")
     allowed_item_sprite_paths = {
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/bangel.png",
+        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/bolt.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/dragon-hatchet.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png",
@@ -703,7 +703,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/unstrung-symbol-of-guthix.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/zombie-eye.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/arrowhead-mould.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/bangel-mould.png",
+        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/bangle-mould.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/bolt-mould.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/dart-mould.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/shuriken-mould.png",

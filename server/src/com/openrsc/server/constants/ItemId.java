@@ -306,7 +306,7 @@ public enum ItemId {
 	DIAMOND_NECKLACE(292),
 	RING_MOULD(293),
 	// Decode-only IDs for the retired standard craftable Amulet family.
-	// Runtime acquisition must use Bangels; LegacyAmuletCompatibility converts holdings.
+	// Runtime acquisition must use Bangles; LegacyAmuletCompatibility converts holdings.
 	AMULET_MOULD(294),
 	NECKLACE_MOULD(295),
 	UNSTRUNG_GOLD_AMULET(296),
@@ -327,7 +327,7 @@ public enum ItemId {
 	ADAMANTITE_PLATE_MAIL_TOP(311),
 	IRON_PLATE_MAIL_TOP(312),
 	BLACK_PLATE_MAIL_TOP(313),
-	// Compatibility constant names retain historic wording; these IDs now define Bangels.
+	// Compatibility constant names retain historic wording; these IDs now define Bangles.
 	SAPPHIRE_AMULET_OF_MAGIC(314),
 	EMERALD_AMULET_OF_PROTECTION(315),
 	RUBY_AMULET_OF_STRENGTH(316),
@@ -612,7 +612,7 @@ public enum ItemId {
 	DRAGON_AXE(594),
 	JAIL_KEYS(595),
 	DUSTY_KEY(596),
-	// Compatibility constant name; this ID now defines the Charged Dragonstone Bangel.
+	// Compatibility constant name; this ID now defines the Charged Dragonstone Bangle.
 	CHARGED_DRAGONSTONE_AMULET(597),
 	GROG(598),
 	UNLIT_CANDLE(599),

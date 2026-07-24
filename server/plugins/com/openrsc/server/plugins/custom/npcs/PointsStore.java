@@ -20,7 +20,7 @@ import static com.openrsc.server.plugins.Functions.*;
 public final class PointsStore extends AbstractShop {
 
 	private final Item[] openPkShopItems = new Item[] {
-		new Item(ItemId.KLANKS_GAUNTLETS.id(), 1000), new Item(ItemId.LOBSTER.id(), 50000), new Item(ItemId.SHARK.id(), 50000), new Item(MyWorldItemId.RUBY_BANGEL, 1000), new Item(MyWorldItemId.DIAMOND_BANGEL, 1000), new Item(ItemId.ANTI_DRAGON_BREATH_SHIELD.id(), 500),
+		new Item(ItemId.KLANKS_GAUNTLETS.id(), 1000), new Item(ItemId.LOBSTER.id(), 50000), new Item(ItemId.SHARK.id(), 50000), new Item(MyWorldItemId.RUBY_BANGLE, 1000), new Item(MyWorldItemId.DIAMOND_BANGLE, 1000), new Item(ItemId.ANTI_DRAGON_BREATH_SHIELD.id(), 500),
 	};
 
 	private Shop[] shops = null;

@@ -1851,7 +1851,7 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.IRON_ORE_CERTIFICATE.id(), 20, 2);
 		currentNpcDrops.addItemDrop(ItemId.YEW_LOGS_CERTIFICATE.id(), 20, 10);
 		currentNpcDrops.addItemDrop(ItemId.ADAMANTITE_BAR.id(), 1, 3);
-		currentNpcDrops.addItemDrop(MyWorldItemId.RUBY_BANGEL, 1, 7);
+		currentNpcDrops.addItemDrop(MyWorldItemId.RUBY_BANGLE, 1, 7);
 		this.npcDrops.put(NpcId.KING_BLACK_DRAGON.id(), currentNpcDrops);
 
 		DropTable jogreTwoBoneTable = new DropTable("Jogre Two Bones (523)");

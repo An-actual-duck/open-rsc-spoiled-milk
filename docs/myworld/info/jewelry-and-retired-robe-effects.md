@@ -8,11 +8,11 @@
 > truth.
 >
 > The active altar-enchanted Amulet families were subsequently renamed to
-> **Bangels** and moved to the wrist slot. Their preserved IDs, crafting path,
+> **Bangles** and moved to the wrist slot. Their preserved IDs, crafting path,
 > slot translation, and intentionally retained internal compatibility names
 > are documented in
-> [`bangel-jewelry.md`](../completed-work-plans/bangel-jewelry.md). References
-> to active Amulets below describe the historical pre-Bangel model.
+> [`bangle-jewelry.md`](../completed-work-plans/bangle-jewelry.md). References
+> to active Amulets below describe the historical pre-Bangle model.
 
 This document records cloth effects retired from robes and the implemented
 altar-jewelry runtime behavior.

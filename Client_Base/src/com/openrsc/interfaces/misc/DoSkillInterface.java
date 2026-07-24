@@ -379,7 +379,7 @@ public final class DoSkillInterface {
 			} else if (isFurnaceMaterialPicker()) {
 				drawStringRightAligned("Choose this metal", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isTeleportDestinationPicker()) {
-				drawStringRightAligned("Consumes 1 Bangel charge", selectedDetailRightX, footerY + 20, 1, textColour);
+				drawStringRightAligned("Consumes 1 Bangle charge", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else {
 				String inputName = inputItemId >= 0 ? EntityHandler.getItemDef(inputItemId).getName() : "materials";
 				String costText = inputItemId >= 0
@@ -501,7 +501,7 @@ public final class DoSkillInterface {
 			case 288:
 				return "Necklaces";
 			case 3292:
-				return "Bangels";
+				return "Bangles";
 			case 44:
 				return "Holy symbols";
 			case 1027:

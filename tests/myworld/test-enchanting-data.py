@@ -119,7 +119,7 @@ def expect_description(
         )
 
 
-def ensure_bangel_lines(items: dict[int, dict[str, Any]]) -> None:
+def ensure_bangle_lines(items: dict[int, dict[str, Any]]) -> None:
     lines = {
         "Teleportation": range(1709, 1714),
         "Chaos Weaving": range(1719, 1724),
@@ -135,7 +135,7 @@ def ensure_bangel_lines(items: dict[int, dict[str, Any]]) -> None:
     tiers = ["Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone"]
     for effect_name, ids in lines.items():
         for tier_name, item_id in zip(tiers, ids):
-            entry = expect_item(items, item_id, f"{tier_name} Bangel of {effect_name}")
+            entry = expect_item(items, item_id, f"{tier_name} Bangle of {effect_name}")
             if entry["wearSlot"] != 14:
                 fail(f"{entry['name']} should use wrist slot")
             if effect_name == "Teleportation":
@@ -149,10 +149,10 @@ def ensure_bangel_lines(items: dict[int, dict[str, Any]]) -> None:
             if effect_name == "Alchemy" and entry["command"] != "Check":
                 fail(f"{entry['name']} should expose Check for charge display")
     gatherer_lines = {
-        "Woodcutter's Bangel": range(1593, 1598),
-        "Angler's Bangel": range(1598, 1603),
-        "Harvester's Bangel": range(1603, 1608),
-        "Miner's Bangel": range(1608, 1613),
+        "Woodcutter's Bangle": range(1593, 1598),
+        "Angler's Bangle": range(1598, 1603),
+        "Harvester's Bangle": range(1603, 1608),
+        "Miner's Bangle": range(1608, 1613),
     }
     for amulet_name, ids in gatherer_lines.items():
         for tier_name, item_id in zip(tiers, ids):
@@ -373,8 +373,8 @@ def ensure_source_mappings_exist() -> None:
         'setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment"',
         'setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Lifesaving"',
         'addSoulNecklaceLine(1759, tiers, soulNecklacePrices, gemMasks);',
-        "applyBangelVisuals();",
-        '"external-png:bangel@19x15"',
+        "applyBangleVisuals();",
+        '"external-png:bangle@19x15"',
         '"items:57"',
         '"items:123"',
     ):
@@ -505,8 +505,8 @@ def ensure_client_jewelry_coverage() -> None:
 def ensure_client_jewelry_uses_base_visuals() -> None:
     client_text = CLIENT_ENTITY_HANDLER_PATH.read_text(encoding="utf-8")
     required_snippets = (
-        "applyBangelVisuals();",
-        '"external-png:bangel@19x15"',
+        "applyBangleVisuals();",
+        '"external-png:bangle@19x15"',
         'new ItemDef(tiers[i] + " Necklace of " + altarName,',
         '"items:57"',
         'new ItemDef(tiers[i] + " Ring of " + altarName,',
@@ -694,7 +694,7 @@ def ensure_all_enchanted_jewelry_has_effect_examine(items: dict[int, dict[str, A
         if entry is None:
             continue
         name = entry.get("name", "")
-        if not any(kind in name for kind in ("Ring", "Necklace", "Bangel")):
+        if not any(kind in name for kind in ("Ring", "Necklace", "Bangle")):
             continue
         description = entry.get("description", "")
         if description in vague_descriptions or not description.startswith(effect_words):
@@ -746,7 +746,7 @@ def ensure_enchanted_wool_robes_have_effect_examine(items: dict[int, dict[str, A
 
 def main() -> None:
     items = load_items()
-    ensure_bangel_lines(items)
+    ensure_bangle_lines(items)
     ensure_necklace_lines(items)
     ensure_ring_lines(items)
     expect_item(items, 2072, "Beginner's Air Wizard Hat")
@@ -769,7 +769,7 @@ def main() -> None:
     ensure_client_jewelry_coverage()
     ensure_client_jewelry_uses_base_visuals()
     print("PASS: enchanting jewelry data validated")
-    print("Bangel lines validated: 14")
+    print("Bangle lines validated: 14")
     print("Necklace lines validated: 14")
     print("Elemental ring lines validated: 4")
 

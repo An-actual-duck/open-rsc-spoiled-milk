@@ -1,8 +1,8 @@
-# Bangel Wrist Jewelry
+# Bangle Wrist Jewelry
 
 ## Status
 
-Implemented on `feat/bangel-wrist-jewelry`. This document records the slot,
+Implemented on `feat/bangle-wrist-jewelry`. This document records the slot,
 identity, persistence, crafting, effect, and future-family contracts that must
 remain stable when the branch is integrated.
 
@@ -12,9 +12,9 @@ Spoiled Milk now has three simultaneously usable altar-jewelry families:
 
 - Rings remain in the ring slot.
 - Necklaces remain in the neck slot.
-- Bangels use the new wrist slot.
+- Bangles use the new wrist slot.
 
-The player-facing spelling is **Bangel**. The older `Amulet` names that remain
+The player-facing spelling is **Bangle**. The older `Amulet` names that remain
 in method names, product-array names, and two cache keys are compatibility
 ownership labels, not current item names.
 
@@ -22,7 +22,7 @@ The standard craftable Amulet family is retired completely. The Amulet mould,
 unstrung Amulets, ordinary strung Amulets, and their ordinary enchanted
 products no longer appear in production, stringing, shops, drops, rewards,
 starter supplies, static spawns, guides, bank classifications, or admin spawn
-utilities. Both normal enchantment spells and My World altars now use Bangels.
+utilities. Both normal enchantment spells and My World altars now use Bangles.
 
 Uniquely named quest artifacts remain Amulets because quests genuinely own
 their identity and lifecycle. The retained exceptions are Ghostspeak, Accuracy,
@@ -66,9 +66,9 @@ Every formerly active altar-enchanted Amulet product retains its item ID:
 - `1719`–`1758`: Chaos through Soul families
 - `3106`–`3110`: Command
 
-All 70 active definitions are now named Bangels, use server slot 14, and use
-the supplied Bangel inventory sprite. They have appearance and wearable IDs of
-zero because Bangels do not draw a character-model layer.
+All 70 active definitions are now named Bangles, use server slot 14, and use
+the supplied Bangle inventory sprite. They have appearance and wearable IDs of
+zero because Bangles do not draw a character-model layer.
 
 Keeping those IDs preserves inventories, banks, trades, presets, and
 item-ID-keyed charges. The following legacy names deliberately remain:
@@ -78,41 +78,41 @@ item-ID-keyed charges. The following legacy names deliberately remain:
 - Internal `*Amulet*` effect/getter/product-line names
 
 Renaming those persistence ownership keys would strand existing charge state.
-New player-facing text uses Bangel.
+New player-facing text uses Bangle.
 
 The five classic enchantment outputs also retain their IDs and stats while
-becoming wrist-slot Bangels:
+becoming wrist-slot Bangles:
 
 | Compatibility ID | Current product |
 | ---: | --- |
-| 314 | Sapphire Bangel of Magic |
-| 315 | Emerald Bangel of Protection |
-| 316 | Ruby Bangel of Strength |
-| 317 | Diamond Bangel of Power |
-| 597 | Charged Dragonstone Bangel |
+| 314 | Sapphire Bangle of Magic |
+| 315 | Emerald Bangle of Protection |
+| 316 | Ruby Bangle of Strength |
+| 317 | Diamond Bangle of Power |
+| 597 | Charged Dragonstone Bangle |
 
 The `ItemId` enum constants for these five products retain `*AMULET*` in their
 names because changing serialized/cache-facing ID ownership names offers no
-player benefit. Their definitions and all player-facing text say Bangel.
+player benefit. Their definitions and all player-facing text say Bangle.
 
-## Base Bangel Crafting
+## Base Bangle Crafting
 
-The Bangel mould is item `3281`. Base Bangels are completed directly at a
+The Bangle mould is item `3281`. Base Bangles are completed directly at a
 furnace from one gold bar, the matching gem, and the mould. There is no
 unstrung product, ball-of-wool requirement, or stringing stage.
 
 | Item | ID | Crafting level | Internal XP | Gem ID | Active base price | Enchanting tier |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Gold Bangel | 3292 | 5 | 120 | none | 900 | none |
-| Sapphire Bangel | 3282 | 13 | 260 | 164 | 1,800 | 1 |
-| Emerald Bangel | 3283 | 26 | 280 | 163 | 3,000 | 2 |
-| Ruby Bangel | 3284 | 44 | 340 | 162 | 6,000 | 3 |
-| Diamond Bangel | 3285 | 60 | 400 | 161 | 12,000 | 4 |
-| Dragonstone Bangel | 3286 | 70 | 600 | 523 | 35,000 | 5 |
+| Gold Bangle | 3292 | 5 | 120 | none | 900 | none |
+| Sapphire Bangle | 3282 | 13 | 260 | 164 | 1,800 | 1 |
+| Emerald Bangle | 3283 | 26 | 280 | 163 | 3,000 | 2 |
+| Ruby Bangle | 3284 | 44 | 340 | 162 | 6,000 | 3 |
+| Diamond Bangle | 3285 | 60 | 400 | 161 | 12,000 | 4 |
+| Dragonstone Bangle | 3286 | 70 | 600 | 523 | 35,000 | 5 |
 
 Levels, XP, gem requirements, active prices, and enchanting tiers match the
 retired complete-Amulet recipes. Dragonstone remains members-only. The plain
-Gold Bangel carries the former plain Gold Amulet recipe and is intentionally
+Gold Bangle carries the former plain Gold Amulet recipe and is intentionally
 not an enchantment input.
 
 ## Legacy Property Conversion
@@ -122,13 +122,13 @@ Legacy definition IDs remain decodable but are not obtainable. On load,
 
 | Legacy property | Canonical property |
 | --- | --- |
-| Amulet mould `294` | Bangel mould `3281` |
-| Gold unstrung/strung `296`, `301` | Gold Bangel `3292` |
-| Sapphire unstrung/strung `297`, `302` | Sapphire Bangel `3282` |
-| Emerald unstrung/strung `298`, `303` | Emerald Bangel `3283` |
-| Ruby unstrung/strung `299`, `304` | Ruby Bangel `3284` |
-| Diamond unstrung/strung `300`, `305` | Diamond Bangel `3285` |
-| Dragonstone forms `522`, `524`, `610` | Dragonstone Bangel `3286` |
+| Amulet mould `294` | Bangle mould `3281` |
+| Gold unstrung/strung `296`, `301` | Gold Bangle `3292` |
+| Sapphire unstrung/strung `297`, `302` | Sapphire Bangle `3282` |
+| Emerald unstrung/strung `298`, `303` | Emerald Bangle `3283` |
+| Ruby unstrung/strung `299`, `304` | Ruby Bangle `3284` |
+| Diamond unstrung/strung `300`, `305` | Diamond Bangle `3285` |
+| Dragonstone forms `522`, `524`, `610` | Dragonstone Bangle `3286` |
 
 Conversion mutates the existing `ItemStatus` catalog ID, preserving its unique
 ownership token, amount, note state, and durability. It covers inventory,
@@ -156,7 +156,7 @@ slot, including:
 - Blood Siphoning
 - Soul charged Renewal
 - Life summon damage
-- Gathering Bangel yield effects
+- Gathering Bangle yield effects
 
 The combined Mind and Body jewelry calculations independently read wrist,
 neck, and ring, allowing all three same-altar effects to contribute at once.
@@ -184,9 +184,9 @@ metadata alone must not open any production path.
 
 The project owner supplied and created these graphics:
 
-- `bangel.png`
-- `bengal-mould.png`, tracked as `bangel-mould.png`
-- `bengal-slot.png`, tracked as `bangel-slot.png`
+- `bangle.png`
+- `bengal-mould.png`, tracked as `bangle-mould.png`
+- `bengal-slot.png`, tracked as `bangle-slot.png`
 - `Medallion.png`, tracked as `medallion.png`
 
 The source files remain untouched. Normalized copies live under
@@ -194,12 +194,12 @@ The source files remain untouched. Normalized copies live under
 
 ## Regression Contract
 
-`tests/myworld/test-bangel-jewelry.py` covers slot counts/translation, packet
+`tests/myworld/test-bangle-jewelry.py` covers slot counts/translation, packet
 paths, equipment UI and bank/preset views, all property-conversion containers,
 wrist collision preservation, retained altar/classic IDs, all six crafting
 recipes and lack of wool, standard-spell and altar inputs, retired acquisition
 guardrails, explicit quest exceptions, all former Amulet effect getters,
-simultaneous Ring/Necklace/Bangel slots, hidden Medallion gates, and
+simultaneous Ring/Necklace/Bangle slots, hidden Medallion gates, and
 client/server sprite/definition coverage.
 
 The existing enchanting, equipment appearance, equipment hover, Entrana, and
@@ -210,8 +210,8 @@ jewelry runtime suites remain part of the relevant validation set.
 The 2026-07-24 follow-up audit checked every supported crafting presentation:
 the modern production session, category-filtered furnace UI, automatic recipe
 detection, authentic dialogue menus, retro client menu, batch production, and
-the Crafting guide. All six completed base Bangels are present. Bangel recipes
-use the Bangel mould as a reusable requirement and consume no wool.
+the Crafting guide. All six completed base Bangles are present. Bangle recipes
+use the Bangle mould as a reusable requirement and consume no wool.
 
 The authentic dialogue path had one configuration-specific defect:
 `WANT_EQUIPMENT_TAB` skipped the gem question but left the internal selection
@@ -222,16 +222,16 @@ plus Dragonstone on members worlds.
 The acquisition audit compared the former mould sources and checked current
 shops, My World starter tools, static ground-item definitions, administrator
 item utilities, and Superchisel testing support. Crafting-equipment shops and
-starter tools supply only the Bangel mould. Static definitions and direct
+starter tools supply only the Bangle mould. Static definitions and direct
 administrator requests cannot reacquire retired products. Superchisel testing
-now opens from the Bangel mould instead of wool, offers all six Bangels,
+now opens from the Bangle mould instead of wool, offers all six Bangles,
 includes Dragonstone supplies, and no longer falls through into unrelated
 supply actions.
 
-The executable compatibility fixture verifies every retired ID-to-Bangel
+The executable compatibility fixture verifies every retired ID-to-Bangle
 mapping and proves conversion preserves amount, noted state, wielded state,
 durability, the existing `ItemStatus`, and the unique item ownership token. It
-also proves conversion is idempotent, current enchanted/custom Bangel IDs stay
+also proves conversion is idempotent, current enchanted/custom Bangle IDs stay
 stable, quest Amulets are excluded, and coexisting old/new equivalent holdings
 retain their total quantity and remain distinct ownership records.
 
@@ -256,7 +256,7 @@ live database.
 
 The inventory context menu formerly required `wearableID != 0` before adding
 an equip action. That field describes a character-model visual/type; it is not
-the authoritative equipability flag. Bangels intentionally have no worn model,
+the authoritative equipability flag. Bangles intentionally have no worn model,
 so the check hid their otherwise valid Wear action.
 
 Inventory equipability now uses `ItemDef.isWieldable()`. The visual wearable ID
@@ -267,14 +267,14 @@ authoritative wieldable flag.
 The same audit found a client tooltip calculation that searched equipped items
 by `wearableID` as though it were an equipment slot. It now translates the
 server slot through `EquipmentSlotMapping` and reads the corresponding client
-equipment entry. Elemental Rings use server slot 13, and Bangels use server
+equipment entry. Elemental Rings use server slot 13, and Bangles use server
 slot 14/client slot 11.
 
-Every base, classic-enchanted, and altar-enchanted Bangel is wieldable while
+Every base, classic-enchanted, and altar-enchanted Bangle is wieldable while
 retaining `appearanceID = 0`, `wearableID = 0`, and server wrist slot 14. The
 server appearance path draws only body slots 0–11 and handles slot 13
 separately for morphing rings, so wrist slot 14 creates no character-model
-layer. The deterministic client fixture loads all 81 Bangel definitions and
+layer. The deterministic client fixture loads all 81 Bangle definitions and
 proves each receives a Wear action despite having a zero visual ID.
 
 Other remaining client uses of `wearableID` were retained because they classify

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the Bangel wrist-slot, crafting, compatibility, and future-family contract."""
+"""Validate the Bangle wrist-slot, crafting, compatibility, and future-family contract."""
 
 import json
 import re
@@ -82,17 +82,17 @@ CLIENT_BANK_TAGS = (
 DO_SKILL = CLIENT / "com/openrsc/interfaces/misc/DoSkillInterface.java"
 
 ASSETS = {
-    "bangel": (
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/bangel.png",
+    "bangle": (
+        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
         (19, 15),
     ),
     "mould": (
         ROOT
-        / "dev/myworld/assets/sprites/items/inventory-ground/tools/bangel-mould.png",
+        / "dev/myworld/assets/sprites/items/inventory-ground/tools/bangle-mould.png",
         (27, 26),
     ),
     "slot": (
-        ROOT / "dev/myworld/assets/sprites/UI/equipment/bangel-slot.png",
+        ROOT / "dev/myworld/assets/sprites/UI/equipment/bangle-slot.png",
         (49, 34),
     ),
     "medallion": (
@@ -102,21 +102,31 @@ ASSETS = {
 }
 
 TIERS = ("Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone")
-BASE_BANGELS = (3282, 3283, 3284, 3285, 3286)
-GOLD_BANGEL = 3292
+BASE_BANGLES = (3282, 3283, 3284, 3285, 3286)
+GOLD_BANGLE = 3292
 MEDALLION_IDS = (3287, 3288, 3289, 3290, 3291)
-ENCHANTED_BANGELS = (
+ENCHANTED_BANGLES = (
     tuple(range(1593, 1613))
     + tuple(range(1709, 1714))
     + tuple(range(1719, 1759))
     + tuple(range(3106, 3111))
 )
-STANDARD_ENCHANTED_BANGELS = {
-    314: "Sapphire Bangel of Magic",
-    315: "Emerald Bangel of Protection",
-    316: "Ruby Bangel of Strength",
-    317: "Diamond Bangel of Power",
-    597: "Charged Dragonstone Bangel",
+ENCHANTED_NECKLACES = (
+    tuple(range(1613, 1673))
+    + tuple(range(1759, 1764))
+    + tuple(range(3101, 3106))
+)
+ENCHANTED_RINGS = (
+    tuple(range(1673, 1709))
+    + tuple(range(1714, 1719))
+    + tuple(range(3076, 3101))
+)
+STANDARD_ENCHANTED_BANGLES = {
+    314: "Sapphire Bangle of Magic",
+    315: "Emerald Bangle of Protection",
+    316: "Ruby Bangle of Strength",
+    317: "Diamond Bangle of Power",
+    597: "Charged Dragonstone Bangle",
 }
 
 RETIRED_AMULET_IDS = (
@@ -139,7 +149,7 @@ RETIRED_AMULET_TOKENS = (
     "ItemId.UNENCHANTED_DRAGONSTONE_AMULET.id()",
 )
 
-EXPECTED_BANGEL_RECIPES = {
+EXPECTED_BANGLE_RECIPES = {
     3292: (5, 120, -1, 900),
     3282: (13, 260, 164, 1800),
     3283: (26, 280, 163, 3000),
@@ -247,7 +257,7 @@ def ensure_slot_contract() -> None:
         "MenuItemAction.ITEM_UNEQUIP_FROM_EQUIPMENT",
         "bufferBits.putByte(j);",
         "getEquipmentSlotSprite(i)",
-        '"bangel-slot.png"',
+        '"bangle-slot.png"',
     ):
         require(snippet in client, f"equipment UI missing wrist-safe behavior: {snippet}")
 
@@ -263,7 +273,7 @@ def ensure_slot_contract() -> None:
 
     fixture = """
 package orsc;
-public final class BangelSlotMappingFixture {
+public final class BangleSlotMappingFixture {
     private static void require(boolean value, String message) {
         if (!value) throw new AssertionError(message);
     }
@@ -280,9 +290,9 @@ public final class BangelSlotMappingFixture {
     }
 }
 """
-    with tempfile.TemporaryDirectory(prefix="bangel-slot-mapping-") as raw_tmp:
+    with tempfile.TemporaryDirectory(prefix="bangle-slot-mapping-") as raw_tmp:
         tmp = Path(raw_tmp)
-        fixture_path = tmp / "orsc/BangelSlotMappingFixture.java"
+        fixture_path = tmp / "orsc/BangleSlotMappingFixture.java"
         fixture_path.parent.mkdir(parents=True)
         fixture_path.write_text(fixture, encoding="utf-8")
         classes = tmp / "classes"
@@ -296,7 +306,7 @@ public final class BangelSlotMappingFixture {
         require(compile_result.returncode == 0,
                 "slot mapping fixture did not compile:\n" + compile_result.stderr)
         run_result = subprocess.run(
-            ["java", "-cp", str(classes), "orsc.BangelSlotMappingFixture"],
+            ["java", "-cp", str(classes), "orsc.BangleSlotMappingFixture"],
             cwd=ROOT,
             text=True,
             capture_output=True,
@@ -311,24 +321,24 @@ package orsc;
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 
-public final class ZeroVisualBangelEquipFixture {
+public final class ZeroVisualBangleEquipFixture {
     private static void require(boolean value, String message) {
         if (!value) throw new AssertionError(message);
     }
 
-    private static void assertBangel(int itemId) {
+    private static void assertBangle(int itemId) {
         ItemDef item = EntityHandler.getItemDef(itemId);
-        require(item != null, "missing client Bangel " + itemId);
-        require(item.getName().contains("Bangel"), "wrong client name for " + itemId);
-        require(item.isWieldable(), "client Bangel is not wieldable: " + itemId);
-        require(item.wearableID == 0, "client Bangel has character-model wearable ID: " + itemId);
-        require(InventoryEquipMenuPolicy.canOfferEquip(item, false), "client Bangel lacks Wear action: " + itemId);
-        require("Wear".equals(InventoryEquipMenuPolicy.actionLabel(item)), "client Bangel action is not Wear: " + itemId);
+        require(item != null, "missing client Bangle " + itemId);
+        require(item.getName().contains("Bangle"), "wrong client name for " + itemId);
+        require(item.isWieldable(), "client Bangle is not wieldable: " + itemId);
+        require(item.wearableID == 0, "client Bangle has character-model wearable ID: " + itemId);
+        require(InventoryEquipMenuPolicy.canOfferEquip(item, false), "client Bangle lacks Wear action: " + itemId);
+        require("Wear".equals(InventoryEquipMenuPolicy.actionLabel(item)), "client Bangle action is not Wear: " + itemId);
     }
 
     private static void assertRange(int first, int last) {
         for (int itemId = first; itemId <= last; itemId++) {
-            assertBangel(itemId);
+            assertBangle(itemId);
         }
     }
 
@@ -356,21 +366,21 @@ public final class ZeroVisualBangelEquipFixture {
             "weapon visual type should retain Wield wording");
 
         EntityHandler.load(true);
-        assertBangel(3292);
+        assertBangle(3292);
         assertRange(3282, 3286);
         assertRange(314, 317);
-        assertBangel(597);
+        assertBangle(597);
         assertRange(1593, 1612);
         assertRange(1709, 1713);
         assertRange(1719, 1758);
         assertRange(3106, 3110);
-        System.out.println("PASS: all 81 zero-visual-ID Bangels receive Wear actions");
+        System.out.println("PASS: all 81 zero-visual-ID Bangles receive Wear actions");
     }
 }
 """
-    with tempfile.TemporaryDirectory(prefix="bangel-zero-visual-equip-") as raw_tmp:
+    with tempfile.TemporaryDirectory(prefix="bangle-zero-visual-equip-") as raw_tmp:
         tmp = Path(raw_tmp)
-        fixture_path = tmp / "orsc/ZeroVisualBangelEquipFixture.java"
+        fixture_path = tmp / "orsc/ZeroVisualBangleEquipFixture.java"
         fixture_path.parent.mkdir(parents=True)
         fixture_path.write_text(equip_fixture, encoding="utf-8")
         classes = tmp / "classes"
@@ -399,7 +409,7 @@ public final class ZeroVisualBangelEquipFixture {
                 "java",
                 "-cp",
                 f"{classes}:{CLIENT_JAR}",
-                "orsc.ZeroVisualBangelEquipFixture",
+                "orsc.ZeroVisualBangleEquipFixture",
             ],
             cwd=ROOT,
             text=True,
@@ -452,17 +462,17 @@ def ensure_persistence_and_lifecycle_contract() -> None:
             "player equipment validation should include wrist")
 
     expected_mapping = {
-        "AMULET_MOULD": "BANGEL_MOULD",
-        "GOLD_AMULET": "GOLD_BANGEL",
-        "SAPPHIRE_AMULET": "SAPPHIRE_BANGEL",
-        "EMERALD_AMULET": "EMERALD_BANGEL",
-        "RUBY_AMULET": "RUBY_BANGEL",
-        "DIAMOND_AMULET": "DIAMOND_BANGEL",
-        "DRAGONSTONE_AMULET": "DRAGONSTONE_BANGEL",
+        "AMULET_MOULD": "BANGLE_MOULD",
+        "GOLD_AMULET": "GOLD_BANGLE",
+        "SAPPHIRE_AMULET": "SAPPHIRE_BANGLE",
+        "EMERALD_AMULET": "EMERALD_BANGLE",
+        "RUBY_AMULET": "RUBY_BANGLE",
+        "DIAMOND_AMULET": "DIAMOND_BANGLE",
+        "DRAGONSTONE_AMULET": "DRAGONSTONE_BANGLE",
     }
-    for legacy_name, bangel_name in expected_mapping.items():
-        require(legacy_name in compatibility and bangel_name in compatibility,
-                f"missing compatibility conversion from {legacy_name} to {bangel_name}")
+    for legacy_name, bangle_name in expected_mapping.items():
+        require(legacy_name in compatibility and bangle_name in compatibility,
+                f"missing compatibility conversion from {legacy_name} to {bangle_name}")
     require("status.setCatalogId(canonicalId);" in compatibility,
             "conversion must preserve the existing ItemStatus ownership token")
 
@@ -478,7 +488,7 @@ import com.openrsc.server.content.LegacyAmuletCompatibility;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.ItemStatus;
 
-public final class BangelPropertyCompatibilityFixture {
+public final class BanglePropertyCompatibilityFixture {
     private static void require(boolean value, String message) {
         if (!value) throw new AssertionError(message);
     }
@@ -518,11 +528,11 @@ public final class BangelPropertyCompatibilityFixture {
             require(value.getCatalogId() == id, "quest Amulet ID changed: " + id);
         }
 
-        int[] retainedBangelIds = {314, 315, 316, 317, 597, 1593, 1612, 1709, 1758, 3106, 3110};
-        for (int id : retainedBangelIds) {
+        int[] retainedBangleIds = {314, 315, 316, 317, 597, 1593, 1612, 1709, 1758, 3106, 3110};
+        for (int id : retainedBangleIds) {
             ItemStatus value = status(id, id);
-            require(!LegacyAmuletCompatibility.canonicalize(value), "retained Bangel ID remapped: " + id);
-            require(value.getCatalogId() == id, "retained Bangel ID changed: " + id);
+            require(!LegacyAmuletCompatibility.canonicalize(value), "retained Bangle ID remapped: " + id);
+            require(value.getCatalogId() == id, "retained Bangle ID changed: " + id);
         }
 
         ItemStatus legacyHolding = status(297, 1);
@@ -540,13 +550,13 @@ public final class BangelPropertyCompatibilityFixture {
         require(ownedItem.getItemStatus() == ownedStatus, "ItemStatus instance was replaced");
         require(ownedItem.getCatalogId() == 3285, "owned item converted to wrong tier");
 
-        System.out.println("PASS: deterministic Bangel property conversion and identity preservation");
+        System.out.println("PASS: deterministic Bangle property conversion and identity preservation");
     }
 }
 """
-    with tempfile.TemporaryDirectory(prefix="bangel-property-compatibility-") as raw_tmp:
+    with tempfile.TemporaryDirectory(prefix="bangle-property-compatibility-") as raw_tmp:
         tmp = Path(raw_tmp)
-        fixture_path = tmp / "BangelPropertyCompatibilityFixture.java"
+        fixture_path = tmp / "BanglePropertyCompatibilityFixture.java"
         fixture_path.write_text(fixture, encoding="utf-8")
         classes = tmp / "classes"
         classes.mkdir()
@@ -574,7 +584,7 @@ public final class BangelPropertyCompatibilityFixture {
                 "java",
                 "-cp",
                 f"{classes}:{SERVER / 'core.jar'}",
-                "BangelPropertyCompatibilityFixture",
+                "BanglePropertyCompatibilityFixture",
             ],
             cwd=ROOT,
             text=True,
@@ -588,32 +598,32 @@ public final class BangelPropertyCompatibilityFixture {
 
 
 def ensure_item_identity_and_visuals(items: dict[int, dict[str, Any]]) -> None:
-    require(len(ENCHANTED_BANGELS) == 70, "expected 70 migrated enchanted IDs")
-    for item_id in ENCHANTED_BANGELS:
+    require(len(ENCHANTED_BANGLES) == 70, "expected 70 migrated enchanted IDs")
+    for item_id in ENCHANTED_BANGLES:
         item = items.get(item_id)
         require(item is not None, f"missing preserved enchanted item ID {item_id}")
-        require("Bangel" in item["name"] and "Amulet" not in item["name"],
-                f"item {item_id} should be player-facing Bangel, found {item['name']!r}")
+        require("Bangle" in item["name"] and "Amulet" not in item["name"],
+                f"item {item_id} should be player-facing Bangle, found {item['name']!r}")
         require(item.get("isWearable") == 1 and item.get("wearSlot") == 14,
-                f"migrated Bangel {item_id} should be wieldable in wrist slot")
+                f"migrated Bangle {item_id} should be wieldable in wrist slot")
         require(item.get("appearanceID") == 0 and item.get("wearableID") == 0,
-                f"migrated Bangel {item_id} should not require a worn model")
+                f"migrated Bangle {item_id} should not require a worn model")
 
-    for item_id, expected_name in STANDARD_ENCHANTED_BANGELS.items():
+    for item_id, expected_name in STANDARD_ENCHANTED_BANGLES.items():
         item = items.get(item_id)
         require(item is not None and item.get("name") == expected_name,
                 f"classic enchanted ID {item_id} should now be {expected_name}")
         require(item.get("isWearable") == 1 and item.get("wearSlot") == 14,
-                f"classic enchanted Bangel {item_id} should equip on wrist")
+                f"classic enchanted Bangle {item_id} should equip on wrist")
         require(item.get("appearanceID") == 0 and item.get("wearableID") == 0,
-                f"classic enchanted Bangel {item_id} should not use a worn model")
+                f"classic enchanted Bangle {item_id} should not use a worn model")
 
     client = CLIENT_ENTITIES.read_text(encoding="utf-8")
     for snippet in (
-        "addBangelJewelryDefinitions();",
-        "applyBangelVisuals();",
-        '"external-png:bangel@19x15"',
-        '"external-png:bangel-mould"',
+        "addBangleJewelryDefinitions();",
+        "applyBangleVisuals();",
+        '"external-png:bangle@19x15"',
+        '"external-png:bangle-mould"',
         '"external-png:medallion"',
     ):
         require(snippet in client, f"client definition coverage missing: {snippet}")
@@ -624,7 +634,7 @@ def ensure_item_identity_and_visuals(items: dict[int, dict[str, Any]]) -> None:
                 f"{name} asset dimensions changed from supplied source")
 
 
-def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
+def ensure_bangle_crafting(items: dict[int, dict[str, Any]]) -> None:
     root = ET.parse(CRAFTING_DEFS).getroot()
     definitions: dict[int, tuple[int, int, int]] = {}
     for entry in root.findall("entry"):
@@ -638,23 +648,23 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
             int(definition.findtext("gemID", "-1")),
         )
 
-    craftable_bangels = (("Gold", GOLD_BANGEL),) + tuple(zip(TIERS, BASE_BANGELS))
-    for tier, item_id in craftable_bangels:
+    craftable_bangles = (("Gold", GOLD_BANGLE),) + tuple(zip(TIERS, BASE_BANGLES))
+    for tier, item_id in craftable_bangles:
         expected_level, expected_xp, expected_gem, expected_price = (
-            EXPECTED_BANGEL_RECIPES[item_id]
+            EXPECTED_BANGLE_RECIPES[item_id]
         )
         item = items.get(item_id)
-        require(item is not None and item["name"] == f"{tier} Bangel",
-                f"missing base {tier} Bangel")
+        require(item is not None and item["name"] == f"{tier} Bangle",
+                f"missing base {tier} Bangle")
         require(item.get("wearSlot") == 14 and item.get("isWearable") == 1,
-                f"base {tier} Bangel should equip on wrist")
+                f"base {tier} Bangle should equip on wrist")
         require(item.get("basePrice") == expected_price,
-                f"base {tier} Bangel should inherit the active Amulet price")
+                f"base {tier} Bangle should inherit the active Amulet price")
         require(item.get("appearanceID") == 0 and item.get("wearableID") == 0,
-                f"base {tier} Bangel should not use a character-model visual")
+                f"base {tier} Bangle should not use a character-model visual")
         require(
             definitions.get(item_id) == (expected_level, expected_xp, expected_gem),
-            f"base {tier} Bangel crafting metadata drifted",
+            f"base {tier} Bangle crafting metadata drifted",
         )
 
     crafting = CRAFTING.read_text(encoding="utf-8")
@@ -666,33 +676,33 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
     do_skill = DO_SKILL.read_text(encoding="utf-8")
 
     for snippet in (
-        "BANGEL_MOULD = 3281",
-        "GOLD_BANGEL = 3292",
-        "SAPPHIRE_BANGEL = 3282",
-        "DRAGONSTONE_BANGEL = 3286",
+        "BANGLE_MOULD = 3281",
+        "GOLD_BANGLE = 3292",
+        "SAPPHIRE_BANGLE = 3282",
+        "DRAGONSTONE_BANGLE = 3286",
     ):
         require(snippet in ids, f"missing custom ID constant: {snippet}")
-    require("MyWorldItemId.BANGEL_MOULD" in crafting,
-            "Bangel production should require the Bangel mould")
-    require("JewelryCategory.BANGELS" in crafting,
-            "modern furnace UI should expose the Bangel family")
-    require("MyWorldItemId.GOLD_BANGEL" in smelting,
-            "furnace categories should include Bangels")
+    require("MyWorldItemId.BANGLE_MOULD" in crafting,
+            "Bangle production should require the Bangle mould")
+    require("JewelryCategory.BANGLES" in crafting,
+            "modern furnace UI should expose the Bangle family")
+    require("MyWorldItemId.GOLD_BANGLE" in smelting,
+            "furnace categories should include Bangles")
     require("ItemId.BALL_OF_WOOL" not in method_body(crafting, "getRequiredGoldMouldId"),
-            "Bangel mould selection must not introduce wool")
-    require("isBangelBase(item.getCatalogId())" in enchanting,
-            "altars should accept base Bangels")
+            "Bangle mould selection must not introduce wool")
+    require("isBangleBase(item.getCatalogId())" in enchanting,
+            "altars should accept base Bangles")
     require("isAmuletBase(item.getCatalogId())" not in enchanting,
             "ordinary base Amulets should not remain altar inputs")
-    require("MyWorldItemId.SAPPHIRE_BANGEL" in effects,
-            "base Bangels should own the active altar tier ladder")
-    require('"dragonstone necklace", "sapphire bangel", "emerald bangel"' in bank_tags,
-            "base Bangels should replace ordinary Amulets in the Enchanting bank filter")
+    require("MyWorldItemId.SAPPHIRE_BANGLE" in effects,
+            "base Bangles should own the active altar tier ladder")
+    require('"dragonstone necklace", "sapphire bangle", "emerald bangle"' in bank_tags,
+            "base Bangles should replace ordinary Amulets in the Enchanting bank filter")
     require('"amulet mould"' not in method_body(bank_tags, "isJewelryMould"),
             "retired Amulet mould should not remain a bank crafting classification")
     furnace_names = method_body(do_skill, "furnaceCategoryName")
-    require("case 3292:" in furnace_names and 'return "Bangels";' in furnace_names,
-            "client furnace category should recognize the Gold Bangel sentinel")
+    require("case 3292:" in furnace_names and 'return "Bangles";' in furnace_names,
+            "client furnace category should recognize the Gold Bangle sentinel")
     require("case 296:" not in furnace_names and 'return "Amulets";' not in furnace_names,
             "retired Amulet furnace category should not remain visible")
 
@@ -700,12 +710,12 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
     automatic_menu = method_body(crafting, "getDesiredGoldCraftingAutoDetection")
     authentic_menu = method_body(crafting, "getDesiredGoldCraftingAuthentic")
     for item_name in (
-        "GOLD_BANGEL",
-        "SAPPHIRE_BANGEL",
-        "EMERALD_BANGEL",
-        "RUBY_BANGEL",
-        "DIAMOND_BANGEL",
-        "DRAGONSTONE_BANGEL",
+        "GOLD_BANGLE",
+        "SAPPHIRE_BANGLE",
+        "EMERALD_BANGLE",
+        "RUBY_BANGLE",
+        "DIAMOND_BANGLE",
+        "DRAGONSTONE_BANGLE",
     ):
         require(
             f"MyWorldItemId.{item_name}" in output_ids,
@@ -719,20 +729,20 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
         "final boolean directTierSelection = player.getConfig().WANT_EQUIPMENT_TAB;"
         in authentic_menu
         and "boolean gemUsed = directTierSelection;" in authentic_menu,
-        "legacy direct-tier menu should expose gemmed Bangels instead of silently choosing Gold",
+        "legacy direct-tier menu should expose gemmed Bangles instead of silently choosing Gold",
     )
     require(
         "new String[]{Gold, Sapphire, Emerald, Ruby, Diamond, Dragonstone}"
         in authentic_menu
         and "new String[]{Gold, Sapphire, Emerald, Ruby, Diamond}" in authentic_menu,
-        "legacy menu should expose Gold plus every available Bangel tier",
+        "legacy menu should expose Gold plus every available Bangle tier",
     )
 
     recipe = method_body(crafting, "goldJewelryProductionRecipe")
     require(
         "addProductionIngredient(ingredientIds, fallbackIds, amounts, mouldId, 1);"
         in recipe,
-        "modern Bangel recipes should display the mould requirement",
+        "modern Bangle recipes should display the mould requirement",
     )
     begin_production = method_body(crafting, "beginProductionFromInterface")
     require(
@@ -744,23 +754,23 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
     batch = method_body(crafting, "batchGoldJewelry")
     require(
         "ItemId.BALL_OF_WOOL" not in batch
-        and "MyWorldItemId.BANGEL_MOULD" not in batch,
-        "batch production must consume neither wool nor the reusable Bangel mould",
+        and "MyWorldItemId.BANGLE_MOULD" not in batch,
+        "batch production must consume neither wool nor the reusable Bangle mould",
     )
     wool_stringing = method_body(crafting, "useWool")
     require(
-        "BANGEL" not in wool_stringing and "AMULET" not in wool_stringing,
-        "wool stringing must not produce retired Amulets or Bangels",
+        "BANGLE" not in wool_stringing and "AMULET" not in wool_stringing,
+        "wool stringing must not produce retired Amulets or Bangles",
     )
 
     legacy_gold_menu = method_body(do_skill, "populateSkillItems")
     for retired_id in (296, 297, 298, 299, 300, 524):
         require(f"new DoSkillItem({retired_id}," not in legacy_gold_menu,
                 f"legacy Gold menu still exposes retired Amulet ID {retired_id}")
-    for bangel_id in (GOLD_BANGEL,) + BASE_BANGELS:
+    for bangle_id in (GOLD_BANGLE,) + BASE_BANGLES:
         require(
-            f"new DoSkillItem({bangel_id}," in legacy_gold_menu,
-            f"legacy/retro Gold menu omits Bangel ID {bangel_id}",
+            f"new DoSkillItem({bangle_id}," in legacy_gold_menu,
+            f"legacy/retro Gold menu omits Bangle ID {bangle_id}",
         )
     for ordinary_amulet in (
         "ItemId.SAPPHIRE_AMULET.id()",
@@ -769,7 +779,7 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
         "ItemId.DIAMOND_AMULET.id()",
         "ItemId.UNENCHANTED_DRAGONSTONE_AMULET.id()",
     ):
-        require(ordinary_amulet not in method_body(effects, "isBangelBase"),
+        require(ordinary_amulet not in method_body(effects, "isBangleBase"),
                 f"ordinary Amulet leaked into active altar inputs: {ordinary_amulet}")
 
 
@@ -866,14 +876,14 @@ def ensure_acquisition_and_test_utility_contract() -> None:
     superchisel = SUPERCHISEL.read_text(encoding="utf-8")
 
     require(
-        "new Item(MyWorldItemId.BANGEL_MOULD, 2)" in shops
+        "new Item(MyWorldItemId.BANGLE_MOULD, 2)" in shops
         and "ItemId.AMULET_MOULD" not in shops,
-        "crafting-equipment shops should replace the retired mould with the Bangel mould",
+        "crafting-equipment shops should replace the retired mould with the Bangle mould",
     )
     require(
-        "new Item(MyWorldItemId.BANGEL_MOULD)" in starter
+        "new Item(MyWorldItemId.BANGLE_MOULD)" in starter
         and "ItemId.AMULET_MOULD" not in starter,
-        "My World starter crafting tools should supply only the Bangel mould",
+        "My World starter crafting tools should supply only the Bangle mould",
     )
     require(
         admins.count("LegacyAmuletCompatibility.canonicalCatalogId(") >= 4
@@ -883,21 +893,21 @@ def ensure_acquisition_and_test_utility_contract() -> None:
 
     utility = method_body(superchisel, "onUseInv")
     require(
-        "notSuperchisel.getCatalogId() == MyWorldItemId.BANGEL_MOULD" in utility,
-        "Superchisel Bangel testing should be opened with the Bangel mould",
+        "notSuperchisel.getCatalogId() == MyWorldItemId.BANGLE_MOULD" in utility,
+        "Superchisel Bangle testing should be opened with the Bangle mould",
     )
     require(
         'multi(player, "Gold", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone")'
         in utility,
-        "Superchisel should offer all six unenchanted Bangels",
+        "Superchisel should offer all six unenchanted Bangles",
     )
     for token in (
-        "MyWorldItemId.GOLD_BANGEL",
-        "MyWorldItemId.SAPPHIRE_BANGEL",
-        "MyWorldItemId.EMERALD_BANGEL",
-        "MyWorldItemId.RUBY_BANGEL",
-        "MyWorldItemId.DIAMOND_BANGEL",
-        "MyWorldItemId.DRAGONSTONE_BANGEL",
+        "MyWorldItemId.GOLD_BANGLE",
+        "MyWorldItemId.SAPPHIRE_BANGLE",
+        "MyWorldItemId.EMERALD_BANGLE",
+        "MyWorldItemId.RUBY_BANGLE",
+        "MyWorldItemId.DIAMOND_BANGLE",
+        "MyWorldItemId.DRAGONSTONE_BANGLE",
         "ItemId.UNCUT_DRAGONSTONE",
         "ItemId.DRAGONSTONE",
     ):
@@ -908,10 +918,10 @@ def ensure_acquisition_and_test_utility_contract() -> None:
     )
     blocker = method_body(superchisel, "blockUseInv")
     require(
-        "MyWorldItemId.BANGEL_MOULD" in blocker
+        "MyWorldItemId.BANGLE_MOULD" in blocker
         and "ItemId.UNCUT_DRAGONSTONE.id()" in blocker
         and "ItemId.BALL_OF_WOOL.id(), ItemId.SUPERCHISEL.id()" not in blocker,
-        "Superchisel routing should use the Bangel mould, not wool, and cover Dragonstone",
+        "Superchisel routing should use the Bangle mould, not wool, and cover Dragonstone",
     )
 
 
@@ -920,20 +930,20 @@ def ensure_standard_spell_and_retirement_contract(
 ) -> None:
     spells = SPELL_HANDLER.read_text(encoding="utf-8")
     spell_pairs = (
-        ("SAPPHIRE_BANGEL", "SAPPHIRE_AMULET_OF_MAGIC"),
-        ("EMERALD_BANGEL", "EMERALD_AMULET_OF_PROTECTION"),
-        ("RUBY_BANGEL", "RUBY_AMULET_OF_STRENGTH"),
-        ("DIAMOND_BANGEL", "DIAMOND_AMULET_OF_POWER"),
-        ("DRAGONSTONE_BANGEL", "CHARGED_DRAGONSTONE_AMULET"),
+        ("SAPPHIRE_BANGLE", "SAPPHIRE_AMULET_OF_MAGIC"),
+        ("EMERALD_BANGLE", "EMERALD_AMULET_OF_PROTECTION"),
+        ("RUBY_BANGLE", "RUBY_AMULET_OF_STRENGTH"),
+        ("DIAMOND_BANGLE", "DIAMOND_AMULET_OF_POWER"),
+        ("DRAGONSTONE_BANGLE", "CHARGED_DRAGONSTONE_AMULET"),
     )
     for input_name, compatibility_output_name in spell_pairs:
         require(
             f"MyWorldItemId.{input_name}" in spells
             and f"ItemId.{compatibility_output_name}.id()" in spells,
-            f"standard enchantment spell missing {input_name} Bangel conversion",
+            f"standard enchantment spell missing {input_name} Bangle conversion",
         )
-    require("private void enchantBangel(" in spells,
-            "standard enchantment spells should share the successful Bangel path")
+    require("private void enchantBangle(" in spells,
+            "standard enchantment spells should share the successful Bangle path")
 
     for crafting_path in (CRAFTING_DEFS, RETRO_CRAFTING_DEFS):
         crafting_source = crafting_path.read_text(encoding="utf-8")
@@ -946,9 +956,9 @@ def ensure_standard_spell_and_retirement_contract(
         for retired_id in RETIRED_AMULET_IDS:
             require(retired_id not in crafting_ids,
                     f"retired Amulet ID {retired_id} remains craftable in {crafting_path.name}")
-        for bangel_id in (GOLD_BANGEL,) + BASE_BANGELS:
-            require(bangel_id in crafting_ids,
-                    f"Bangel ID {bangel_id} missing from {crafting_path.name}")
+        for bangle_id in (GOLD_BANGLE,) + BASE_BANGLES:
+            require(bangle_id in crafting_ids,
+                    f"Bangle ID {bangle_id} missing from {crafting_path.name}")
 
     allowed_legacy_sources = {
         Path("src/com/openrsc/server/constants/ItemId.java"),
@@ -986,8 +996,8 @@ def ensure_standard_spell_and_retirement_contract(
     )
     for item_id, level, tier in expected_guide_entries:
         require(
-            f'new SkillMenuItem({item_id}, "{level}", "{tier} Bangel")' in guide,
-            f"Crafting guide should advertise the level-{level} {tier} Bangel",
+            f'new SkillMenuItem({item_id}, "{level}", "{tier} Bangle")' in guide,
+            f"Crafting guide should advertise the level-{level} {tier} Bangle",
         )
 
     item_ids = (
@@ -1007,10 +1017,10 @@ def ensure_standard_spell_and_retirement_contract(
                 f"quest-specific Amulet exception was removed: {quest_exception}")
 
     for retired_id in RETIRED_AMULET_IDS:
-        require(retired_id not in STANDARD_ENCHANTED_BANGELS,
+        require(retired_id not in STANDARD_ENCHANTED_BANGLES,
                 f"retired base ID {retired_id} must not masquerade as a real item")
-    require(items[GOLD_BANGEL]["name"] == "Gold Bangel",
-            "plain Gold Bangel definition is missing")
+    require(items[GOLD_BANGLE]["name"] == "Gold Bangle",
+            "plain Gold Bangle definition is missing")
 
 
 def ensure_effect_slot_contract(items: dict[int, dict[str, Any]]) -> None:
@@ -1030,7 +1040,6 @@ def ensure_effect_slot_contract(items: dict[int, dict[str, Any]]) -> None:
         "getBodyAmuletRegenSpeedBonus",
         "getMindCombatAmuletXpBonus",
         "getBodyDisciplineAmuletXpBonus",
-        "getNatureCleansingPoisonDecayBonus",
         "getGatheringAmuletYieldBonusPercent",
         "getCosmicAmuletExtraResourceChance",
         "getCosmicAmuletRareGatheringDoubleChance",
@@ -1039,7 +1048,6 @@ def ensure_effect_slot_contract(items: dict[int, dict[str, Any]]) -> None:
         "getSoulAmuletBurstRadius",
         "getSoulAmuletBurstMinHeal",
         "getSoulAmuletBurstMaxHeal",
-        "getEquippedElementalDefenseBonus",
     )
     for getter in wrist_effect_getters:
         body = method_body(equipment, getter)
@@ -1047,6 +1055,41 @@ def ensure_effect_slot_contract(items: dict[int, dict[str, Any]]) -> None:
                 f"{getter} should read the wrist slot")
         require("getEquippedNeckItem()" not in body,
                 f"{getter} still reads the neck slot")
+
+    neck_effect_getters = (
+        "getChaosNecklaceChainLightningChance",
+        "getBloodNecklaceLeachPercent",
+        "rollDeathNecklaceGuaranteedDropBonus",
+        "getLifeNecklaceSummonHealthPercent",
+        "getNatureCleansingPoisonDecayBonus",
+        "getCosmicNecklaceStandardDropChance",
+        "tryBankMonsterLootWithLawNecklace",
+        "getSoulNecklaceExtraKeptItems",
+        "getEquippedElementalDefenseBonus",
+    )
+    for getter in neck_effect_getters:
+        body = method_body(equipment, getter)
+        require("getEquippedNeckItem()" in body,
+                f"{getter} should read the neck slot")
+        require("getEquippedWristItem()" not in body,
+                f"{getter} incorrectly reads the wrist slot")
+
+    ring_effect_getters = (
+        "getChaosRecoilChance",
+        "getLifeRingSupportDurationPercent",
+        "getBloodRingHitsBonus",
+        "getNatureFoodHealingBonus",
+        "bankSkillingDropWithLawRing",
+        "getEquippedElementalPowerBonus",
+    )
+    for getter in ring_effect_getters:
+        body = method_body(equipment, getter)
+        require("getEquippedRingItem()" in body,
+                f"{getter} should read the ring slot")
+        require("getEquippedNeckItem()" not in body,
+                f"{getter} incorrectly reads the neck slot")
+        require("getEquippedWristItem()" not in body,
+                f"{getter} incorrectly reads the wrist slot")
 
     for combined in ("getMindJewelryXpBonus", "getBodyJewelryXpBonus"):
         body = method_body(equipment, combined)
@@ -1056,17 +1099,22 @@ def ensure_effect_slot_contract(items: dict[int, dict[str, Any]]) -> None:
             "getEquippedRingItem()",
         ):
             require(accessor in body,
-                    f"{combined} should combine Bangel, Necklace, and Ring")
+                    f"{combined} should combine Bangle, Necklace, and Ring")
 
     require("getEquippedWristItem();" in method_body(player, "applyDeathAmuletBurst"),
-            "death Bangel burst should resolve from wrist")
+            "death Bangle burst should resolve from wrist")
     require("getEquippedWristItem();" in method_body(player, "applySoulAmuletBurst"),
-            "soul Bangel burst should resolve from wrist")
+            "soul Bangle burst should resolve from wrist")
 
-    # Representative same-tier items prove the three families occupy independent slots.
-    require(items[3076]["wearSlot"] == 13, "Ring should remain in ring slot")
-    require(items[1618]["wearSlot"] == 10, "Necklace should remain in neck slot")
-    require(items[1739]["wearSlot"] == 14, "Bangel should occupy wrist slot")
+    for item_id in (*ENCHANTED_BANGLES, *STANDARD_ENCHANTED_BANGLES):
+        require(items[item_id]["wearSlot"] == 14,
+                f"Bangle {item_id} should occupy the wrist slot")
+    for item_id in ENCHANTED_NECKLACES:
+        require(items[item_id]["wearSlot"] == 10,
+                f"Necklace {item_id} should remain in the neck slot")
+    for item_id in ENCHANTED_RINGS:
+        require(items[item_id]["wearSlot"] == 13,
+                f"Ring {item_id} should remain in the ring slot")
 
 
 def ensure_hidden_medallions(items: dict[int, dict[str, Any]]) -> None:
@@ -1107,13 +1155,13 @@ def main() -> None:
     ensure_slot_contract()
     ensure_persistence_and_lifecycle_contract()
     ensure_item_identity_and_visuals(items)
-    ensure_bangel_crafting(items)
+    ensure_bangle_crafting(items)
     ensure_zero_visual_equip_lifecycle_contract()
     ensure_acquisition_and_test_utility_contract()
     ensure_standard_spell_and_retirement_contract(items)
     ensure_effect_slot_contract(items)
     ensure_hidden_medallions(items)
-    print("PASS: Bangel wrist jewelry, compatibility, crafting, and hidden Medallion gates validated")
+    print("PASS: Bangle wrist jewelry, compatibility, crafting, and hidden Medallion gates validated")
 
 
 if __name__ == "__main__":

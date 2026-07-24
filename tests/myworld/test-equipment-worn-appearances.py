@@ -20,9 +20,9 @@ PLAYER_PATH = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.j
 
 TIERS = ("Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone")
 JEWELRY_FAMILIES = {
-    "Bangel of Teleportation": range(1709, 1714),
+    "Bangle of Teleportation": range(1709, 1714),
     "Necklace of Preservation": range(1759, 1764),
-    "Bangel of Command": range(3106, 3111),
+    "Bangle of Command": range(3106, 3111),
 }
 POISONED_KNIFE_PAIRS = {
     2200: 1996,
@@ -94,10 +94,10 @@ def ensure_jewelry_appearances(
     for family, item_ids in JEWELRY_FAMILIES.items():
         for tier, item_id in zip(TIERS, item_ids):
             item = require_item(custom_items, item_id, f"{tier} {family}")
-            is_bangel = "Bangel" in family
-            expected_appearance = 0 if is_bangel else 81
-            expected_slot = 14 if is_bangel else 10
-            expected_wearable = 0 if is_bangel else 1024
+            is_bangle = "Bangle" in family
+            expected_appearance = 0 if is_bangle else 81
+            expected_slot = 14 if is_bangle else 10
+            expected_wearable = 0 if is_bangle else 1024
             if item.get("appearanceID") != expected_appearance:
                 fail(
                     f"{item['name']} ({item_id}) should use appearance "

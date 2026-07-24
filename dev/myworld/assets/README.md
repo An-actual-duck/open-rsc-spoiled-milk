@@ -30,7 +30,7 @@ kept for asset work but are not packaged into the client.
 - Pimen supplied the included added animation assets and has confirmed
   distribution with source code available.
 - The project author created additional original sprites, including the fishing
-  rod equipment sprites and the Bangel/Medallion item and wrist-slot graphics.
+  rod equipment sprites and the Bangle/Medallion item and wrist-slot graphics.
 - Held shears equipment sprites are planned author-created work and are not yet
   part of the current asset set.
 - Prayer UI power, protection, enchanting XP, smithing XP, and crafting XP icons

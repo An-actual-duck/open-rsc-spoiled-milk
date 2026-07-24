@@ -66,7 +66,7 @@ public class Crafting implements UseInvTrigger,
 
 	private static final String ring = "ring";
 	private static final String Necklace = "Necklace";
-	private static final String Bangel = "Bangel";
+	private static final String Bangle = "Bangle";
 	private static final String Gold = "Gold";
 	private static final String Sapphire = "Sapphire";
 	private static final String Emerald = "Emerald";
@@ -79,13 +79,13 @@ public class Crafting implements UseInvTrigger,
 		ALL,
 		RINGS,
 		NECKLACES,
-		BANGELS
+		BANGLES
 	}
 
 	private static final Map<String, Mould> goldMoulds = new ImmutableMap.Builder<String, Mould>()
 		.put(ring, new Mould("ring", ItemId.RING_MOULD.id(), "You need a ring mould to make a gold ring"))
 		.put(Necklace, new Mould("Necklace", ItemId.NECKLACE_MOULD.id(), "You need a necklace mould to make a gold necklace"))
-		.put(Bangel, new Mould("Bangel", MyWorldItemId.BANGEL_MOULD, "You need a Bangel mould to make a gold Bangel"))
+		.put(Bangle, new Mould("Bangle", MyWorldItemId.BANGLE_MOULD, "You need a Bangle mould to make a gold Bangle"))
 		.build();
 
 	private static final class HideArmorRecipe {
@@ -436,7 +436,7 @@ public class Crafting implements UseInvTrigger,
 		if (player.getConfig().WANT_BETTER_JEWELRY_CRAFTING) {
 			if (!player.getCarriedItems().hasCatalogID(ItemId.NECKLACE_MOULD.id()) &&
 				!player.getCarriedItems().hasCatalogID(ItemId.RING_MOULD.id()) &&
-				!player.getCarriedItems().hasCatalogID(MyWorldItemId.BANGEL_MOULD)) {
+				!player.getCarriedItems().hasCatalogID(MyWorldItemId.BANGLE_MOULD)) {
 				player.message("You need a mould to craft jewelry");
 				return;
 			}
@@ -514,29 +514,29 @@ public class Crafting implements UseInvTrigger,
 	private ItemCraftingDef getDesiredGoldCraftingAutoDetection(Item item, Player player) {
 		ArrayList<String> options = new ArrayList<>();
 		ArrayList<Integer> itemIds = new ArrayList<>();
-		if (player.getCarriedItems().hasCatalogID(MyWorldItemId.BANGEL_MOULD)) {
+		if (player.getCarriedItems().hasCatalogID(MyWorldItemId.BANGLE_MOULD)) {
 			if (player.getConfig().MEMBER_WORLD && player.getCarriedItems().hasCatalogID(ItemId.DRAGONSTONE.id())) {
-				options.add("Dragonstone Bangel");
-				itemIds.add(MyWorldItemId.DRAGONSTONE_BANGEL);
+				options.add("Dragonstone Bangle");
+				itemIds.add(MyWorldItemId.DRAGONSTONE_BANGLE);
 			}
 			if (player.getCarriedItems().hasCatalogID(ItemId.DIAMOND.id())) {
-				options.add("Diamond Bangel");
-				itemIds.add(MyWorldItemId.DIAMOND_BANGEL);
+				options.add("Diamond Bangle");
+				itemIds.add(MyWorldItemId.DIAMOND_BANGLE);
 			}
 			if (player.getCarriedItems().hasCatalogID(ItemId.RUBY.id())) {
-				options.add("Ruby Bangel");
-				itemIds.add(MyWorldItemId.RUBY_BANGEL);
+				options.add("Ruby Bangle");
+				itemIds.add(MyWorldItemId.RUBY_BANGLE);
 			}
 			if (player.getCarriedItems().hasCatalogID(ItemId.EMERALD.id())) {
-				options.add("Emerald Bangel");
-				itemIds.add(MyWorldItemId.EMERALD_BANGEL);
+				options.add("Emerald Bangle");
+				itemIds.add(MyWorldItemId.EMERALD_BANGLE);
 			}
 			if (player.getCarriedItems().hasCatalogID(ItemId.SAPPHIRE.id())) {
-				options.add("Sapphire Bangel");
-				itemIds.add(MyWorldItemId.SAPPHIRE_BANGEL);
+				options.add("Sapphire Bangle");
+				itemIds.add(MyWorldItemId.SAPPHIRE_BANGLE);
 			}
-			options.add("Gold Bangel");
-			itemIds.add(MyWorldItemId.GOLD_BANGEL);
+			options.add("Gold Bangle");
+			itemIds.add(MyWorldItemId.GOLD_BANGLE);
 		}
 		if (player.getCarriedItems().hasCatalogID(ItemId.NECKLACE_MOULD.id())) {
 			if (player.getCarriedItems().hasCatalogID(ItemId.DRAGONSTONE.id())) {
@@ -608,13 +608,13 @@ public class Crafting implements UseInvTrigger,
 			options = new String[]{
 				ring,
 				Necklace,
-				Bangel
+				Bangle
 			};
 		} else {
 			options = new String[]{
 				ring,
 				Necklace,
-				Bangel
+				Bangle
 			};
 		}
 
@@ -721,26 +721,26 @@ public class Crafting implements UseInvTrigger,
 				}
 				break;
 			}
-			case Bangel: {
+			case Bangle: {
 				switch (gem) {
 					case Gold:
-						craftingProductItemId = MyWorldItemId.GOLD_BANGEL;
+						craftingProductItemId = MyWorldItemId.GOLD_BANGLE;
 						break;
 					case Sapphire:
-						craftingProductItemId = MyWorldItemId.SAPPHIRE_BANGEL;
+						craftingProductItemId = MyWorldItemId.SAPPHIRE_BANGLE;
 						break;
 					case Emerald:
-						craftingProductItemId = MyWorldItemId.EMERALD_BANGEL;
+						craftingProductItemId = MyWorldItemId.EMERALD_BANGLE;
 						break;
 					case Ruby:
-						craftingProductItemId = MyWorldItemId.RUBY_BANGEL;
+						craftingProductItemId = MyWorldItemId.RUBY_BANGLE;
 						break;
 					case Diamond:
-						craftingProductItemId = MyWorldItemId.DIAMOND_BANGEL;
+						craftingProductItemId = MyWorldItemId.DIAMOND_BANGLE;
 						break;
 					case Dragonstone:
 					case dragonstone:
-						craftingProductItemId = MyWorldItemId.DRAGONSTONE_BANGEL;
+						craftingProductItemId = MyWorldItemId.DRAGONSTONE_BANGLE;
 						break;
 					default:
 						return null;
@@ -825,7 +825,7 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private void tellPlayerSuccessfullyProducedCraftingProduct(Player player, ItemCraftingDef def) {
-		if (isBaseBangel(def.getItemID())) {
+		if (isBaseBangle(def.getItemID())) {
 			player.playerServerMessage(MessageType.QUEST,
 				"You make a " + player.getWorld().getServer().getEntityHandler()
 					.getItemDef(def.getItemID()).getName().toLowerCase());
@@ -875,9 +875,9 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private void tellPlayerNoGem(Player player, ItemCraftingDef def) {
-		if (isBaseBangel(def.getItemID())) {
+		if (isBaseBangle(def.getItemID())) {
 			player.playerServerMessage(MessageType.QUEST,
-				"You do not have the gem needed to make that Bangel");
+				"You do not have the gem needed to make that Bangle");
 			return;
 		}
 		switch (ItemId.getById(def.getItemID())) {
@@ -1987,8 +1987,8 @@ public class Crafting implements UseInvTrigger,
 			session = createGoldJewelryProductionSession(player, JewelryCategory.RINGS);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_NECKLACES) {
 			session = createGoldJewelryProductionSession(player, JewelryCategory.NECKLACES);
-		} else if (categoryId == Smelting.FURNACE_CATEGORY_BANGELS) {
-			session = createGoldJewelryProductionSession(player, JewelryCategory.BANGELS);
+		} else if (categoryId == Smelting.FURNACE_CATEGORY_BANGLES) {
+			session = createGoldJewelryProductionSession(player, JewelryCategory.BANGLES);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_HOLY_SYMBOLS) {
 			session = createSilverJewelryProductionSession(player, 0);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_UNHOLY_SYMBOLS) {
@@ -2179,8 +2179,8 @@ public class Crafting implements UseInvTrigger,
 					|| outputId == ItemId.RUBY_NECKLACE.id()
 					|| outputId == ItemId.DIAMOND_NECKLACE.id()
 					|| outputId == ItemId.DRAGONSTONE_NECKLACE.id();
-			case BANGELS:
-				return isBaseBangel(outputId);
+			case BANGLES:
+				return isBaseBangle(outputId);
 			case ALL:
 			default:
 				return true;
@@ -2721,13 +2721,13 @@ public class Crafting implements UseInvTrigger,
 			ids.add(ItemId.DRAGONSTONE_NECKLACE.id());
 		}
 
-		ids.add(MyWorldItemId.GOLD_BANGEL);
-		ids.add(MyWorldItemId.SAPPHIRE_BANGEL);
-		ids.add(MyWorldItemId.EMERALD_BANGEL);
-		ids.add(MyWorldItemId.RUBY_BANGEL);
-		ids.add(MyWorldItemId.DIAMOND_BANGEL);
+		ids.add(MyWorldItemId.GOLD_BANGLE);
+		ids.add(MyWorldItemId.SAPPHIRE_BANGLE);
+		ids.add(MyWorldItemId.EMERALD_BANGLE);
+		ids.add(MyWorldItemId.RUBY_BANGLE);
+		ids.add(MyWorldItemId.DIAMOND_BANGLE);
 		if (player.getConfig().MEMBER_WORLD) {
-			ids.add(MyWorldItemId.DRAGONSTONE_BANGEL);
+			ids.add(MyWorldItemId.DRAGONSTONE_BANGLE);
 		}
 
 		int[] output = new int[ids.size()];
@@ -2746,8 +2746,8 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private int getRequiredGoldMouldId(int itemId) {
-		if (isBaseBangel(itemId)) {
-			return MyWorldItemId.BANGEL_MOULD;
+		if (isBaseBangle(itemId)) {
+			return MyWorldItemId.BANGLE_MOULD;
 		}
 		switch (ItemId.getById(itemId)) {
 			case GOLD_RING:
@@ -2769,10 +2769,10 @@ public class Crafting implements UseInvTrigger,
 		}
 	}
 
-	private boolean isBaseBangel(int itemId) {
-		return itemId == MyWorldItemId.GOLD_BANGEL
-			|| (itemId >= MyWorldItemId.SAPPHIRE_BANGEL
-				&& itemId <= MyWorldItemId.DRAGONSTONE_BANGEL);
+	private boolean isBaseBangle(int itemId) {
+		return itemId == MyWorldItemId.GOLD_BANGLE
+			|| (itemId >= MyWorldItemId.SAPPHIRE_BANGLE
+				&& itemId <= MyWorldItemId.DRAGONSTONE_BANGLE);
 	}
 
 	private int getSilverJewelryProductionType(Player player, int itemId) {

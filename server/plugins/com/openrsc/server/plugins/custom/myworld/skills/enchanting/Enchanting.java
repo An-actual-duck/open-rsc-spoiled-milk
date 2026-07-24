@@ -16,7 +16,7 @@ public final class Enchanting implements UseLocTrigger {
 	public boolean blockUseLoc(final Player player, final GameObject obj, final Item item) {
 		return item != null
 			&& !item.getNoted()
-			&& (EnchantingItemEffects.isBangelBase(item.getCatalogId())
+			&& (EnchantingItemEffects.isBangleBase(item.getCatalogId())
 				|| EnchantingItemEffects.isNecklaceBase(item.getCatalogId())
 				|| EnchantingItemEffects.isRingBase(item.getCatalogId())
 				|| EnchantingItemEffects.isBaseWoolRobePiece(item.getCatalogId())
@@ -32,7 +32,7 @@ public final class Enchanting implements UseLocTrigger {
 			return;
 		}
 
-		final boolean bangel = EnchantingItemEffects.isBangelBase(item.getCatalogId());
+		final boolean bangle = EnchantingItemEffects.isBangleBase(item.getCatalogId());
 		final boolean necklace = EnchantingItemEffects.isNecklaceBase(item.getCatalogId());
 		final boolean ring = EnchantingItemEffects.isRingBase(item.getCatalogId());
 		final boolean robe = EnchantingItemEffects.isBaseWoolRobePiece(item.getCatalogId());
@@ -43,13 +43,13 @@ public final class Enchanting implements UseLocTrigger {
 			return;
 		}
 
-		final int productId = bangel
-			? EnchantingItemEffects.getBangelProduct(altarId, item.getCatalogId())
+		final int productId = bangle
+			? EnchantingItemEffects.getBangleProduct(altarId, item.getCatalogId())
 			: necklace ? EnchantingItemEffects.getNecklaceProduct(altarId, item.getCatalogId())
 			: ring ? EnchantingItemEffects.getRingProduct(altarId, item.getCatalogId())
 			: staff ? EnchantingItemEffects.getStaffProduct(altarId, item.getCatalogId()) : -1;
-		final int tier = bangel
-			? EnchantingItemEffects.getTierForBaseBangel(item.getCatalogId())
+		final int tier = bangle
+			? EnchantingItemEffects.getTierForBaseBangle(item.getCatalogId())
 			: necklace ? EnchantingItemEffects.getTierForBaseNecklace(item.getCatalogId())
 			: ring ? EnchantingItemEffects.getTierForBaseRing(item.getCatalogId())
 			: staff ? EnchantingItemEffects.getTierForBaseStaff(item.getCatalogId()) : -1;

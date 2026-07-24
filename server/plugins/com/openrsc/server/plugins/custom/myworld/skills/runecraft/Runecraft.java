@@ -209,7 +209,7 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 				player.getCarriedItems().getInventory().add(new Item(CHAOS_AMULET_BONUS_RUNES[i], bonusCounts[i]));
 			}
 		}
-		player.message("@gre@Your chaos Bangel weaves " + bonusRunes + " bonus rune" + (bonusRunes == 1 ? "." : "s."));
+		player.message("@gre@Your chaos Bangle weaves " + bonusRunes + " bonus rune" + (bonusRunes == 1 ? "." : "s."));
 	}
 
 	private int rollChaosAmuletBonusRuneIndex(final int[] weights) {

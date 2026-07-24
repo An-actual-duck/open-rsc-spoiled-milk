@@ -688,8 +688,8 @@ public class Observatory implements QuestInterface, TalkNpcTrigger,
 			giveOptionalReward(player, n, Skill.STRENGTH);
 		} else if (selectedNumber == 11) {
 			npcsay(player, n, "Cancer the crab",
-				"The armoured crab gives you an emerald Bangel");
-			give(player, MyWorldItemId.EMERALD_BANGEL, 1);
+				"The armoured crab gives you an emerald Bangle");
+			give(player, MyWorldItemId.EMERALD_BANGLE, 1);
 		}
 		// all constellations give uncut sapphire
 		give(player, ItemId.UNCUT_SAPPHIRE.id(), 1);

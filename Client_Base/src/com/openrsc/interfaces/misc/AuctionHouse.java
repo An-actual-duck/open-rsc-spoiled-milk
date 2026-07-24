@@ -674,7 +674,7 @@ public final class AuctionHouse {
 				nameFilter = new String[]{"-rune", "arrow", "bolt", "rune stone"};
 			} else if (selectedFilter == 5) {  // Jewelry
 				nameFilter = new String[]{"uncut", "sapphire", "emerald", "ruby", "diamond", "dragonstone", "crown"};
-				exactNameFilter = new String[]{"opal", "jade", "amulet of accuracy", "gold bangel", "brass necklace",
+				exactNameFilter = new String[]{"opal", "jade", "amulet of accuracy", "gold bangle", "brass necklace",
 					"gold necklace", "symbol of saradomin", "unblessed symbol of saradomin",
 					"symbol of zamorak", "unblessed symbol of zamorak", "symbol of guthix",
 					"unblessed symbol of guthix", "ring of wealth",

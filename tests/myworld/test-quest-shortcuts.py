@@ -61,7 +61,7 @@ def main() -> None:
     require(helper, "Quest.MURDER_MYSTERY", "murder mystery reward hook")
     require(helper, "ItemId.COINS.id(), 2000", "murder mystery coins")
     require(helper, "Quest.TREE_GNOME_VILLAGE", "tree gnome village reward hook")
-    require(helper, "MyWorldItemId.EMERALD_BANGEL", "tree gnome village utility item")
+    require(helper, "MyWorldItemId.EMERALD_BANGLE", "tree gnome village utility item")
     require(helper, "Quest.BIOHAZARD", "biohazard reward hook")
     require(helper, "Quest.UNDERGROUND_PASS", "underground pass line reward hook")
     require(helper, "ItemId.KING_LATHAS_AMULET.id()", "biohazard utility item")
@@ -162,7 +162,7 @@ def main() -> None:
         "completeImpCatcher": ["ensureUtilityItem(player, ItemId.AMULET_OF_ACCURACY.id(), 1);"],
         "completeMonksFriend": ["giveOrBank(player, ItemId.LAW_RUNE.id(), 8);"],
         "completeMurderMystery": ["giveOrBank(player, ItemId.COINS.id(), 2000);"],
-        "completeTreeGnomeVillage": ["ensureUtilityItem(player, MyWorldItemId.EMERALD_BANGEL, 1);"],
+        "completeTreeGnomeVillage": ["ensureUtilityItem(player, MyWorldItemId.EMERALD_BANGLE, 1);"],
         "completeUndergroundPassReward": [
             "ensureUtilityItem(player, ItemId.STAFF_OF_IBAN.id(), 1);",
             "giveOrBank(player, ItemId.DEATH_RUNE.id(), 15);",

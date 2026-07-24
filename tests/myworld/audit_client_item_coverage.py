@@ -83,7 +83,7 @@ def parse_itemdef_ids(source: str) -> set[int]:
     if "addScytheLineDefinitions();" in source:
         ids.update(range(3181, 3191))
 
-    if "addBangelJewelryDefinitions();" in source:
+    if "addBangleJewelryDefinitions();" in source:
         ids.update(range(3281, 3293))
 
     ranged_helpers = [

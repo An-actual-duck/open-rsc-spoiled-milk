@@ -232,38 +232,38 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 		if (item1.getCatalogId() == ItemId.SUPERCHISEL.id()) {
 			notSuperchisel = item2;
 		}
-		if (notSuperchisel.getCatalogId() == MyWorldItemId.BANGEL_MOULD) {
-			int choice = multi(player, "Spawn Bangels",
+		if (notSuperchisel.getCatalogId() == MyWorldItemId.BANGLE_MOULD) {
+			int choice = multi(player, "Spawn Bangles",
 				"Spawn uncut gems",
 				"Spawn cut gems",
 				"Give crafting tools",
 				"Give gold bars");
 			switch (choice) {
 				case 0:
-					int whatKindOfBangel = multi(player, "Gold", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone");
-					switch (whatKindOfBangel) {
+					int whatKindOfBangle = multi(player, "Gold", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone");
+					switch (whatKindOfBangle) {
 						case 0:
-							give(player, MyWorldItemId.GOLD_BANGEL, 1);
+							give(player, MyWorldItemId.GOLD_BANGLE, 1);
 							player.incExp(Skill.CRAFTING.id(), 30 * 4, true);
 							break;
 						case 1:
-							give(player, MyWorldItemId.SAPPHIRE_BANGEL, 1);
+							give(player, MyWorldItemId.SAPPHIRE_BANGLE, 1);
 							player.incExp(Skill.CRAFTING.id(), 65 * 4, true);
 							break;
 						case 2:
-							give(player, MyWorldItemId.EMERALD_BANGEL, 1);
+							give(player, MyWorldItemId.EMERALD_BANGLE, 1);
 							player.incExp(Skill.CRAFTING.id(), 70 * 4, true);
 							break;
 						case 3:
-							give(player, MyWorldItemId.RUBY_BANGEL, 1);
+							give(player, MyWorldItemId.RUBY_BANGLE, 1);
 							player.incExp(Skill.CRAFTING.id(), 85 * 4, true);
 							break;
 						case 4:
-							give(player, MyWorldItemId.DIAMOND_BANGEL, 1);
+							give(player, MyWorldItemId.DIAMOND_BANGLE, 1);
 							player.incExp(Skill.CRAFTING.id(), 100 * 4, true);
 							break;
 						case 5:
-							give(player, MyWorldItemId.DRAGONSTONE_BANGEL, 1);
+							give(player, MyWorldItemId.DRAGONSTONE_BANGLE, 1);
 							player.incExp(Skill.CRAFTING.id(), 150 * 4, true);
 							break;
 					}
@@ -291,7 +291,7 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 						case 1:
 							give(player, ItemId.RING_MOULD.id(), 1);
 							give(player, ItemId.NECKLACE_MOULD.id(), 1);
-							give(player, MyWorldItemId.BANGEL_MOULD, 1);
+							give(player, MyWorldItemId.BANGLE_MOULD, 1);
 							break;
 						case 2:
 							give(player, ItemId.CHISEL.id(), 1);
@@ -332,7 +332,7 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 
 	@Override
 	public boolean blockUseInv(Player player, Integer invIndex, Item item1, Item item2) {
-		return compareItemsIds(item1, item2, MyWorldItemId.BANGEL_MOULD, ItemId.SUPERCHISEL.id())
+		return compareItemsIds(item1, item2, MyWorldItemId.BANGLE_MOULD, ItemId.SUPERCHISEL.id())
 			|| compareItemsIds(item1, item2, ItemId.SUPERCHISEL.id(), ItemId.UNCUT_SAPPHIRE.id())
 			|| compareItemsIds(item1, item2, ItemId.SUPERCHISEL.id(), ItemId.UNCUT_EMERALD.id())
 			|| compareItemsIds(item1, item2, ItemId.SUPERCHISEL.id(), ItemId.UNCUT_RUBY.id())

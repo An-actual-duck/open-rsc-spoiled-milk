@@ -161,7 +161,7 @@ public final class Admins implements CommandTrigger {
 		} else if (command.equalsIgnoreCase("bankitem") || command.equalsIgnoreCase("bitem") || command.equalsIgnoreCase("addbank")) {
 			spawnItemBank(player, command, args);
 		} else if (command.equalsIgnoreCase("telejewelry") || command.equalsIgnoreCase("lawamulets")) {
-			spawnLawBangels(player, args);
+			spawnLawBangles(player, args);
 		} else if (command.equalsIgnoreCase("npctrace")) {
 			toggleNpcTrace(player, command, args);
 		} else if (command.equalsIgnoreCase("walktrace")) {
@@ -1151,19 +1151,19 @@ public final class Admins implements CommandTrigger {
 		player.message("Added bank items.");
 	}
 
-	private void spawnLawBangels(Player player, String[] args) {
+	private void spawnLawBangles(Player player, String[] args) {
 		final Player targetPlayer = args.length > 0 ? player.getWorld().getPlayer(DataConversions.usernameToHash(args[0])) : player;
 		if (targetPlayer == null) {
 			player.message(messagePrefix + "Invalid name or player is not online");
 			return;
 		}
 
-		final int[] lawBangels = {1709, 1710, 1711, 1712, 1713};
-		for (final int itemId : lawBangels) {
+		final int[] lawBangles = {1709, 1710, 1711, 1712, 1713};
+		for (final int itemId : lawBangles) {
 			targetPlayer.getBank().add(new Item(itemId, 1));
 		}
 
-		player.message(messagePrefix + "Added the full law Bangel line to the bank of " + targetPlayer.getUsername());
+		player.message(messagePrefix + "Added the full law Bangle line to the bank of " + targetPlayer.getUsername());
 		if (player.getUsernameHash() != targetPlayer.getUsernameHash() && !player.isInvisibleTo(targetPlayer)) {
 			targetPlayer.message(messagePrefix + "A staff member has added teleport jewelry to your bank");
 		}

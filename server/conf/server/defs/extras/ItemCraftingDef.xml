@@ -113,7 +113,7 @@
 			<gemID>523</gemID>
 		</ItemCraftingDef>
 	</entry>
-	<!-- BANGELS: complete at the furnace; no unstrung or wool stage. -->
+	<!-- BANGLES: complete at the furnace; no unstrung or wool stage. -->
 	<entry>
 		<int>3292</int>
 		<ItemCraftingDef>

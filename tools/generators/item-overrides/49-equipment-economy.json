@@ -1,5 +1,5 @@
 {
-  "description": "Generated equipment-economy and Bangel identity overrides. Existing enchanted item IDs retain their market values while moving to wrist-slot Bangels.",
+  "description": "Generated equipment-economy and Bangle identity overrides. Existing enchanted item IDs retain their market values while moving to wrist-slot Bangles.",
   "items": [
     {
       "id": 35,
@@ -1515,62 +1515,62 @@
     },
     {
       "id": 294,
-      "description": "A retired legacy Amulet mould converted to a Bangel mould on login."
+      "description": "A retired legacy Amulet mould converted to a Bangle mould on login."
     },
     {
       "id": 296,
       "basePrice": 900,
-      "description": "A retired legacy Amulet converted to a Gold Bangel on login."
+      "description": "A retired legacy Amulet converted to a Gold Bangle on login."
     },
     {
       "id": 297,
       "basePrice": 1800,
-      "description": "A retired legacy Amulet converted to a Sapphire Bangel on login."
+      "description": "A retired legacy Amulet converted to a Sapphire Bangle on login."
     },
     {
       "id": 298,
       "basePrice": 3000,
-      "description": "A retired legacy Amulet converted to an Emerald Bangel on login."
+      "description": "A retired legacy Amulet converted to an Emerald Bangle on login."
     },
     {
       "id": 299,
       "basePrice": 6000,
-      "description": "A retired legacy Amulet converted to a Ruby Bangel on login."
+      "description": "A retired legacy Amulet converted to a Ruby Bangle on login."
     },
     {
       "id": 300,
       "basePrice": 12000,
-      "description": "A retired legacy Amulet converted to a Diamond Bangel on login."
+      "description": "A retired legacy Amulet converted to a Diamond Bangle on login."
     },
     {
       "id": 301,
       "basePrice": 900,
-      "description": "A retired legacy Amulet converted to a Gold Bangel on login."
+      "description": "A retired legacy Amulet converted to a Gold Bangle on login."
     },
     {
       "id": 302,
       "basePrice": 1800,
-      "description": "A retired legacy Amulet converted to a Sapphire Bangel on login."
+      "description": "A retired legacy Amulet converted to a Sapphire Bangle on login."
     },
     {
       "id": 303,
       "basePrice": 3000,
-      "description": "A retired legacy Amulet converted to an Emerald Bangel on login."
+      "description": "A retired legacy Amulet converted to an Emerald Bangle on login."
     },
     {
       "id": 304,
       "basePrice": 6000,
-      "description": "A retired legacy Amulet converted to a Ruby Bangel on login."
+      "description": "A retired legacy Amulet converted to a Ruby Bangle on login."
     },
     {
       "id": 305,
       "basePrice": 12000,
-      "description": "A retired legacy Amulet converted to a Diamond Bangel on login."
+      "description": "A retired legacy Amulet converted to a Diamond Bangle on login."
     },
     {
       "id": 522,
       "basePrice": 35000,
-      "description": "A retired legacy Amulet converted to a Dragonstone Bangel on login."
+      "description": "A retired legacy Amulet converted to a Dragonstone Bangle on login."
     },
     {
       "id": 523,
@@ -1579,7 +1579,7 @@
     {
       "id": 524,
       "basePrice": 35000,
-      "description": "A retired legacy Amulet converted to a Dragonstone Bangel on login."
+      "description": "A retired legacy Amulet converted to a Dragonstone Bangle on login."
     },
     {
       "id": 532,
@@ -1600,8 +1600,8 @@
     {
       "id": 597,
       "basePrice": 35000,
-      "name": "Charged Dragonstone Bangel",
-      "description": "A very powerful Bangel",
+      "name": "Charged Dragonstone Bangle",
+      "description": "A very powerful Bangle",
       "isWearable": 1,
       "appearanceID": 0,
       "wearableID": 0,
@@ -1610,7 +1610,7 @@
     {
       "id": 610,
       "basePrice": 35000,
-      "description": "A retired legacy Amulet converted to a Dragonstone Bangel on login."
+      "description": "A retired legacy Amulet converted to a Dragonstone Bangle on login."
     },
     {
       "id": 669,
@@ -1695,7 +1695,7 @@
     {
       "id": 1593,
       "basePrice": 1800,
-      "name": "Sapphire Woodcutter's Bangel",
+      "name": "Sapphire Woodcutter's Bangle",
       "description": "Boosts woodcutting log yield by 10%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1705,7 +1705,7 @@
     {
       "id": 1594,
       "basePrice": 3000,
-      "name": "Emerald Woodcutter's Bangel",
+      "name": "Emerald Woodcutter's Bangle",
       "description": "Boosts woodcutting log yield by 20%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1715,7 +1715,7 @@
     {
       "id": 1595,
       "basePrice": 6000,
-      "name": "Ruby Woodcutter's Bangel",
+      "name": "Ruby Woodcutter's Bangle",
       "description": "Boosts woodcutting log yield by 30%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1725,7 +1725,7 @@
     {
       "id": 1596,
       "basePrice": 12000,
-      "name": "Diamond Woodcutter's Bangel",
+      "name": "Diamond Woodcutter's Bangle",
       "description": "Boosts woodcutting log yield by 50%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1735,7 +1735,7 @@
     {
       "id": 1597,
       "basePrice": 35000,
-      "name": "Dragonstone Woodcutter's Bangel",
+      "name": "Dragonstone Woodcutter's Bangle",
       "description": "Boosts woodcutting log yield by 100%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1745,7 +1745,7 @@
     {
       "id": 1598,
       "basePrice": 1800,
-      "name": "Sapphire Angler's Bangel",
+      "name": "Sapphire Angler's Bangle",
       "description": "Boosts fishing catch yield by 10%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1755,7 +1755,7 @@
     {
       "id": 1599,
       "basePrice": 3000,
-      "name": "Emerald Angler's Bangel",
+      "name": "Emerald Angler's Bangle",
       "description": "Boosts fishing catch yield by 20%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1765,7 +1765,7 @@
     {
       "id": 1600,
       "basePrice": 6000,
-      "name": "Ruby Angler's Bangel",
+      "name": "Ruby Angler's Bangle",
       "description": "Boosts fishing catch yield by 30%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1775,7 +1775,7 @@
     {
       "id": 1601,
       "basePrice": 12000,
-      "name": "Diamond Angler's Bangel",
+      "name": "Diamond Angler's Bangle",
       "description": "Boosts fishing catch yield by 50%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1785,7 +1785,7 @@
     {
       "id": 1602,
       "basePrice": 35000,
-      "name": "Dragonstone Angler's Bangel",
+      "name": "Dragonstone Angler's Bangle",
       "description": "Boosts fishing catch yield by 100%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1795,7 +1795,7 @@
     {
       "id": 1603,
       "basePrice": 1800,
-      "name": "Sapphire Harvester's Bangel",
+      "name": "Sapphire Harvester's Bangle",
       "description": "Boosts harvesting produce yield by 10%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1805,7 +1805,7 @@
     {
       "id": 1604,
       "basePrice": 3000,
-      "name": "Emerald Harvester's Bangel",
+      "name": "Emerald Harvester's Bangle",
       "description": "Boosts harvesting produce yield by 20%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1815,7 +1815,7 @@
     {
       "id": 1605,
       "basePrice": 6000,
-      "name": "Ruby Harvester's Bangel",
+      "name": "Ruby Harvester's Bangle",
       "description": "Boosts harvesting produce yield by 30%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1825,7 +1825,7 @@
     {
       "id": 1606,
       "basePrice": 12000,
-      "name": "Diamond Harvester's Bangel",
+      "name": "Diamond Harvester's Bangle",
       "description": "Boosts harvesting produce yield by 50%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1835,7 +1835,7 @@
     {
       "id": 1607,
       "basePrice": 35000,
-      "name": "Dragonstone Harvester's Bangel",
+      "name": "Dragonstone Harvester's Bangle",
       "description": "Boosts harvesting produce yield by 100%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1845,7 +1845,7 @@
     {
       "id": 1608,
       "basePrice": 1800,
-      "name": "Sapphire Miner's Bangel",
+      "name": "Sapphire Miner's Bangle",
       "description": "Boosts mining ore yield by 10%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1855,7 +1855,7 @@
     {
       "id": 1609,
       "basePrice": 3000,
-      "name": "Emerald Miner's Bangel",
+      "name": "Emerald Miner's Bangle",
       "description": "Boosts mining ore yield by 20%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1865,7 +1865,7 @@
     {
       "id": 1610,
       "basePrice": 6000,
-      "name": "Ruby Miner's Bangel",
+      "name": "Ruby Miner's Bangle",
       "description": "Boosts mining ore yield by 30%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1875,7 +1875,7 @@
     {
       "id": 1611,
       "basePrice": 12000,
-      "name": "Diamond Miner's Bangel",
+      "name": "Diamond Miner's Bangle",
       "description": "Boosts mining ore yield by 50%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -1885,7 +1885,7 @@
     {
       "id": 1612,
       "basePrice": 35000,
-      "name": "Dragonstone Miner's Bangel",
+      "name": "Dragonstone Miner's Bangle",
       "description": "Boosts mining ore yield by 100%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2279,7 +2279,7 @@
     {
       "id": 1709,
       "basePrice": 1800,
-      "name": "Sapphire Bangel of Teleportation",
+      "name": "Sapphire Bangle of Teleportation",
       "description": "Stores 3 guild teleports.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2289,7 +2289,7 @@
     {
       "id": 1710,
       "basePrice": 3000,
-      "name": "Emerald Bangel of Teleportation",
+      "name": "Emerald Bangle of Teleportation",
       "description": "Stores 3 guild teleports.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2299,7 +2299,7 @@
     {
       "id": 1711,
       "basePrice": 6000,
-      "name": "Ruby Bangel of Teleportation",
+      "name": "Ruby Bangle of Teleportation",
       "description": "Stores 3 guild teleports.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2309,7 +2309,7 @@
     {
       "id": 1712,
       "basePrice": 12000,
-      "name": "Diamond Bangel of Teleportation",
+      "name": "Diamond Bangle of Teleportation",
       "description": "Stores 3 guild teleports.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2319,7 +2319,7 @@
     {
       "id": 1713,
       "basePrice": 35000,
-      "name": "Dragonstone Bangel of Teleportation",
+      "name": "Dragonstone Bangle of Teleportation",
       "description": "Stores 3 guild teleports.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2349,7 +2349,7 @@
     {
       "id": 1719,
       "basePrice": 1800,
-      "name": "Sapphire Bangel of Chaos Weaving",
+      "name": "Sapphire Bangle of Chaos Weaving",
       "description": "Boosts chaos rune yield by 20%; bonus mind/chaos/death/blood: 50/25/20/5.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2359,7 +2359,7 @@
     {
       "id": 1720,
       "basePrice": 3000,
-      "name": "Emerald Bangel of Chaos Weaving",
+      "name": "Emerald Bangle of Chaos Weaving",
       "description": "Boosts chaos rune yield by 35%; bonus mind/chaos/death/blood: 42/27/23/8.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2369,7 +2369,7 @@
     {
       "id": 1721,
       "basePrice": 6000,
-      "name": "Ruby Bangel of Chaos Weaving",
+      "name": "Ruby Bangle of Chaos Weaving",
       "description": "Boosts chaos rune yield by 50%; bonus mind/chaos/death/blood: 35/28/25/12.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2379,7 +2379,7 @@
     {
       "id": 1722,
       "basePrice": 12000,
-      "name": "Diamond Bangel of Chaos Weaving",
+      "name": "Diamond Bangle of Chaos Weaving",
       "description": "Boosts chaos rune yield by 70%; bonus mind/chaos/death/blood: 27/29/28/16.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2389,7 +2389,7 @@
     {
       "id": 1723,
       "basePrice": 35000,
-      "name": "Dragonstone Bangel of Chaos Weaving",
+      "name": "Dragonstone Bangle of Chaos Weaving",
       "description": "Boosts chaos rune yield by 100%; bonus mind/chaos/death/blood: 20/30/30/20.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2399,7 +2399,7 @@
     {
       "id": 1724,
       "basePrice": 1800,
-      "name": "Sapphire Bangel of Ruin",
+      "name": "Sapphire Bangle of Ruin",
       "description": "At 100 death charge, bursts for 1-3 damage within 2 tiles.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2409,7 +2409,7 @@
     {
       "id": 1725,
       "basePrice": 3000,
-      "name": "Emerald Bangel of Ruin",
+      "name": "Emerald Bangle of Ruin",
       "description": "At 100 death charge, bursts for 3-6 damage within 2 tiles.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2419,7 +2419,7 @@
     {
       "id": 1726,
       "basePrice": 6000,
-      "name": "Ruby Bangel of Ruin",
+      "name": "Ruby Bangle of Ruin",
       "description": "At 100 death charge, bursts for 6-9 damage within 2 tiles.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2429,7 +2429,7 @@
     {
       "id": 1727,
       "basePrice": 12000,
-      "name": "Diamond Bangel of Ruin",
+      "name": "Diamond Bangle of Ruin",
       "description": "At 100 death charge, bursts for 9-14 damage within 2 tiles.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2439,7 +2439,7 @@
     {
       "id": 1728,
       "basePrice": 35000,
-      "name": "Dragonstone Bangel of Ruin",
+      "name": "Dragonstone Bangle of Ruin",
       "description": "At 100 death charge, bursts for 10-20 damage within 2 tiles.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2449,7 +2449,7 @@
     {
       "id": 1729,
       "basePrice": 1800,
-      "name": "Sapphire Bangel of Siphoning",
+      "name": "Sapphire Bangle of Siphoning",
       "description": "Steals 5% of damage dealt as healing.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2459,7 +2459,7 @@
     {
       "id": 1730,
       "basePrice": 3000,
-      "name": "Emerald Bangel of Siphoning",
+      "name": "Emerald Bangle of Siphoning",
       "description": "Steals 10% of damage dealt as healing.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2469,7 +2469,7 @@
     {
       "id": 1731,
       "basePrice": 6000,
-      "name": "Ruby Bangel of Siphoning",
+      "name": "Ruby Bangle of Siphoning",
       "description": "Steals 15% of damage dealt as healing.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2479,7 +2479,7 @@
     {
       "id": 1732,
       "basePrice": 12000,
-      "name": "Diamond Bangel of Siphoning",
+      "name": "Diamond Bangle of Siphoning",
       "description": "Steals 20% of damage dealt as healing.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2489,7 +2489,7 @@
     {
       "id": 1733,
       "basePrice": 35000,
-      "name": "Dragonstone Bangel of Siphoning",
+      "name": "Dragonstone Bangle of Siphoning",
       "description": "Steals 25% of damage dealt as healing.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2499,7 +2499,7 @@
     {
       "id": 1734,
       "basePrice": 1800,
-      "name": "Sapphire Bangel of Attunement",
+      "name": "Sapphire Bangle of Attunement",
       "description": "Boosts magic, summoning, and prayer XP by 5%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2509,7 +2509,7 @@
     {
       "id": 1735,
       "basePrice": 3000,
-      "name": "Emerald Bangel of Attunement",
+      "name": "Emerald Bangle of Attunement",
       "description": "Boosts magic, summoning, and prayer XP by 10%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2519,7 +2519,7 @@
     {
       "id": 1736,
       "basePrice": 6000,
-      "name": "Ruby Bangel of Attunement",
+      "name": "Ruby Bangle of Attunement",
       "description": "Boosts magic, summoning, and prayer XP by 15%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2529,7 +2529,7 @@
     {
       "id": 1737,
       "basePrice": 12000,
-      "name": "Diamond Bangel of Attunement",
+      "name": "Diamond Bangle of Attunement",
       "description": "Boosts magic, summoning, and prayer XP by 25%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2539,7 +2539,7 @@
     {
       "id": 1738,
       "basePrice": 35000,
-      "name": "Dragonstone Bangel of Attunement",
+      "name": "Dragonstone Bangle of Attunement",
       "description": "Boosts magic, summoning, and prayer XP by 50%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2549,7 +2549,7 @@
     {
       "id": 1739,
       "basePrice": 1800,
-      "name": "Sapphire Bangel of Prowess",
+      "name": "Sapphire Bangle of Prowess",
       "description": "Boosts agility, thieving, and ranged XP by 5%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2559,7 +2559,7 @@
     {
       "id": 1740,
       "basePrice": 3000,
-      "name": "Emerald Bangel of Prowess",
+      "name": "Emerald Bangle of Prowess",
       "description": "Boosts agility, thieving, and ranged XP by 10%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2569,7 +2569,7 @@
     {
       "id": 1741,
       "basePrice": 6000,
-      "name": "Ruby Bangel of Prowess",
+      "name": "Ruby Bangle of Prowess",
       "description": "Boosts agility, thieving, and ranged XP by 15%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2579,7 +2579,7 @@
     {
       "id": 1742,
       "basePrice": 12000,
-      "name": "Diamond Bangel of Prowess",
+      "name": "Diamond Bangle of Prowess",
       "description": "Boosts agility, thieving, and ranged XP by 25%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2589,7 +2589,7 @@
     {
       "id": 1743,
       "basePrice": 35000,
-      "name": "Dragonstone Bangel of Prowess",
+      "name": "Dragonstone Bangle of Prowess",
       "description": "Boosts agility, thieving, and ranged XP by 50%.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2599,7 +2599,7 @@
     {
       "id": 1744,
       "basePrice": 1800,
-      "name": "Sapphire Bangel of Alchemy",
+      "name": "Sapphire Bangle of Alchemy",
       "description": "Auto-alchs 1000+ gp monster drops. 100 charges.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2609,7 +2609,7 @@
     {
       "id": 1745,
       "basePrice": 3000,
-      "name": "Emerald Bangel of Alchemy",
+      "name": "Emerald Bangle of Alchemy",
       "description": "Auto-alchs 1000+ gp monster drops. 200 charges.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2619,7 +2619,7 @@
     {
       "id": 1746,
       "basePrice": 6000,
-      "name": "Ruby Bangel of Alchemy",
+      "name": "Ruby Bangle of Alchemy",
       "description": "Auto-alchs 1000+ gp monster drops. 300 charges.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2629,7 +2629,7 @@
     {
       "id": 1747,
       "basePrice": 12000,
-      "name": "Diamond Bangel of Alchemy",
+      "name": "Diamond Bangle of Alchemy",
       "description": "Auto-alchs 1000+ gp monster drops. 500 charges.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2639,7 +2639,7 @@
     {
       "id": 1748,
       "basePrice": 35000,
-      "name": "Dragonstone Bangel of Alchemy",
+      "name": "Dragonstone Bangle of Alchemy",
       "description": "Auto-alchs 1000+ gp monster drops. 1000 charges.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2649,7 +2649,7 @@
     {
       "id": 1749,
       "basePrice": 1800,
-      "name": "Sapphire Bangel of Bounty",
+      "name": "Sapphire Bangle of Bounty",
       "description": "Has a 10% chance to double rare gathering rewards.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2659,7 +2659,7 @@
     {
       "id": 1750,
       "basePrice": 3000,
-      "name": "Emerald Bangel of Bounty",
+      "name": "Emerald Bangle of Bounty",
       "description": "Has a 20% chance to double rare gathering rewards.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2669,7 +2669,7 @@
     {
       "id": 1751,
       "basePrice": 6000,
-      "name": "Ruby Bangel of Bounty",
+      "name": "Ruby Bangle of Bounty",
       "description": "Has a 30% chance to double rare gathering rewards.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2679,7 +2679,7 @@
     {
       "id": 1752,
       "basePrice": 12000,
-      "name": "Diamond Bangel of Bounty",
+      "name": "Diamond Bangle of Bounty",
       "description": "Has a 40% chance to double rare gathering rewards.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2689,7 +2689,7 @@
     {
       "id": 1753,
       "basePrice": 35000,
-      "name": "Dragonstone Bangel of Bounty",
+      "name": "Dragonstone Bangle of Bounty",
       "description": "Has a 50% chance to double rare gathering rewards.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2699,7 +2699,7 @@
     {
       "id": 1754,
       "basePrice": 1800,
-      "name": "Sapphire Bangel of Renewal",
+      "name": "Sapphire Bangle of Renewal",
       "description": "At 200 soul charge, heals 1-2 Hits within 2 tiles.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2709,7 +2709,7 @@
     {
       "id": 1755,
       "basePrice": 3000,
-      "name": "Emerald Bangel of Renewal",
+      "name": "Emerald Bangle of Renewal",
       "description": "At 200 soul charge, heals 1-3 Hits within 2 tiles.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2719,7 +2719,7 @@
     {
       "id": 1756,
       "basePrice": 6000,
-      "name": "Ruby Bangel of Renewal",
+      "name": "Ruby Bangle of Renewal",
       "description": "At 200 soul charge, heals 2-4 Hits within 2 tiles.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2729,7 +2729,7 @@
     {
       "id": 1757,
       "basePrice": 12000,
-      "name": "Diamond Bangel of Renewal",
+      "name": "Diamond Bangle of Renewal",
       "description": "At 200 soul charge, heals 3-6 Hits within 2 tiles.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2739,7 +2739,7 @@
     {
       "id": 1758,
       "basePrice": 35000,
-      "name": "Dragonstone Bangel of Renewal",
+      "name": "Dragonstone Bangle of Renewal",
       "description": "At 200 soul charge, heals 5-10 Hits within 2 tiles.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2921,7 +2921,7 @@
     {
       "id": 3106,
       "basePrice": 1800,
-      "name": "Sapphire Bangel of Command",
+      "name": "Sapphire Bangle of Command",
       "description": "Raises combat summon max damage by +1.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2931,7 +2931,7 @@
     {
       "id": 3107,
       "basePrice": 3000,
-      "name": "Emerald Bangel of Command",
+      "name": "Emerald Bangle of Command",
       "description": "Raises combat summon max damage by +2.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2941,7 +2941,7 @@
     {
       "id": 3108,
       "basePrice": 6000,
-      "name": "Ruby Bangel of Command",
+      "name": "Ruby Bangle of Command",
       "description": "Raises combat summon max damage by +3.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2951,7 +2951,7 @@
     {
       "id": 3109,
       "basePrice": 12000,
-      "name": "Diamond Bangel of Command",
+      "name": "Diamond Bangle of Command",
       "description": "Raises combat summon max damage by +4.",
       "isWearable": 1,
       "appearanceID": 0,
@@ -2961,7 +2961,7 @@
     {
       "id": 3110,
       "basePrice": 35000,
-      "name": "Dragonstone Bangel of Command",
+      "name": "Dragonstone Bangle of Command",
       "description": "Raises combat summon max damage by +5.",
       "isWearable": 1,
       "appearanceID": 0,

@@ -382,7 +382,7 @@ public final class MyWorldQuestShortcuts {
 		clearTreeGnomeCache(player);
 		completeQuestWithStandardReward(player, Quest.TREE_GNOME_VILLAGE,
 			"Well done you have completed the treequest");
-		ensureUtilityItem(player, MyWorldItemId.EMERALD_BANGEL, 1);
+		ensureUtilityItem(player, MyWorldItemId.EMERALD_BANGLE, 1);
 	}
 
 	public static void completeBiohazardLine(final Player player, final Npc npc) {
@@ -576,7 +576,7 @@ public final class MyWorldQuestShortcuts {
 		giveOrBank(player, ItemId.MAPLE_LONGBOW.id(), 1);
 		grantRemappedSkillReward(player, Quest.OBSERVATORY_QUEST, Skill.HITS, Skill.HITS);
 		grantRemappedSkillReward(player, Quest.OBSERVATORY_QUEST, Skill.STRENGTH, Skill.MELEE);
-		giveOrBank(player, MyWorldItemId.EMERALD_BANGEL, 1);
+		giveOrBank(player, MyWorldItemId.EMERALD_BANGLE, 1);
 		giveOrBank(player, ItemId.UNCUT_SAPPHIRE.id(), 12);
 	}
 

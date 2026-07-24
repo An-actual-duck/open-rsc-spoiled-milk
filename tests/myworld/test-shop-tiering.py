@@ -652,7 +652,7 @@ def main() -> None:
     ensure_contains(CRAFTING_EQUIPMENT_PATH, (
         "ItemId.RING_MOULD.id()",
         "ItemId.NECKLACE_MOULD.id()",
-        "MyWorldItemId.BANGEL_MOULD",
+        "MyWorldItemId.BANGLE_MOULD",
         "ItemId.HOLY_SYMBOL_MOULD.id()",
         "ItemId.UNHOLY_SYMBOL_MOULD.id()",
         "ItemId.GUTHIX_SYMBOL_MOULD.id()",
