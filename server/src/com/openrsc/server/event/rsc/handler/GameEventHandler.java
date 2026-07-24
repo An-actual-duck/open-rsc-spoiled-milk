@@ -49,6 +49,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionVerificationBatch;
+import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredSourceStateVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceLifecycleBoundary;
@@ -556,6 +557,10 @@ public class GameEventHandler {
 				authoredCollisionApplicationVerification =
 					new
 						LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch[1];
+		final LayeredPackedRegionAuthoredSourceStateVerificationBatch[]
+			authoredSourceStateVerification =
+				new
+					LayeredPackedRegionAuthoredSourceStateVerificationBatch[1];
 		boolean sourceBoundaryEntered =
 			getServer().getWorld().getRegionManager()
 				.withinLayeredPackedRegionSourceLifecycleBoundary(
@@ -592,6 +597,13 @@ public class GameEventHandler {
 									boundary, reloadRecipe[0],
 									LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
 										.MAXIMUM_VERIFICATION_SOURCES);
+						authoredSourceStateVerification[0] =
+							LayeredPackedRegionAuthoredSourceStateVerificationBatch
+								.capture(
+									getServer().getWorld().getRegionManager(),
+									boundary, reloadRecipe[0],
+									LayeredPackedRegionAuthoredSourceStateVerificationBatch
+										.MAXIMUM_VERIFICATION_SOURCES);
 						captured[0] =
 							GameTickEventNpcOwnerPreservationNoOpDiagnostic
 								.capture(
@@ -622,7 +634,8 @@ public class GameEventHandler {
 			result.isPreservedConsumerInvoked(), absencePreflight[0],
 			reloadRecipe[0], terrainVerification[0],
 			authoredCollisionVerification[0],
-			authoredCollisionApplicationVerification[0]);
+			authoredCollisionApplicationVerification[0],
+			authoredSourceStateVerification[0]);
 	}
 
 	private void requireExactPackedSourceBoundary(

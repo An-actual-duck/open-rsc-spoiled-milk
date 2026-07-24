@@ -26,6 +26,7 @@ public final class LayeredPackedRegionAuthoredSourceStateVerificationBatch {
 	private final long replayPlacementCount;
 	private final long authoredObjectFootprintCount;
 	private final long contributionTileReferenceCount;
+	private final long uniqueContributionTileReferenceCount;
 	private final long requiredRegionReferenceCount;
 	private final long uniqueRequiredRegionReferenceCount;
 	private final long combinedDisposableRegionConstructionCount;
@@ -80,6 +81,7 @@ public final class LayeredPackedRegionAuthoredSourceStateVerificationBatch {
 		long placements = 0L;
 		long objectFootprints = 0L;
 		long contributionReferences = 0L;
+		long uniqueContributionReferences = 0L;
 		long requiredRegionReferences = 0L;
 		long uniqueRequiredRegions = 0L;
 		long combinedRegions = 0L;
@@ -106,6 +108,9 @@ public final class LayeredPackedRegionAuthoredSourceStateVerificationBatch {
 			contributionReferences = Math.addExact(
 				contributionReferences,
 				(long) source.getContributionTileReferenceCount());
+			uniqueContributionReferences = Math.addExact(
+				uniqueContributionReferences,
+				(long) source.getUniqueContributionTileCount());
 			requiredRegionReferences = Math.addExact(
 				requiredRegionReferences,
 				(long) source.getRequiredRegionReferenceCount());
@@ -160,6 +165,8 @@ public final class LayeredPackedRegionAuthoredSourceStateVerificationBatch {
 		this.replayPlacementCount = placements;
 		this.authoredObjectFootprintCount = objectFootprints;
 		this.contributionTileReferenceCount = contributionReferences;
+		this.uniqueContributionTileReferenceCount =
+			uniqueContributionReferences;
 		this.requiredRegionReferenceCount = requiredRegionReferences;
 		this.uniqueRequiredRegionReferenceCount = uniqueRequiredRegions;
 		this.combinedDisposableRegionConstructionCount = combinedRegions;
@@ -277,6 +284,9 @@ public final class LayeredPackedRegionAuthoredSourceStateVerificationBatch {
 	public long getContributionTileReferenceCount() {
 		return contributionTileReferenceCount;
 	}
+	public long getUniqueContributionTileReferenceCount() {
+		return uniqueContributionTileReferenceCount;
+	}
 	public long getRequiredRegionReferenceCount() {
 		return requiredRegionReferenceCount;
 	}
@@ -384,6 +394,7 @@ public final class LayeredPackedRegionAuthoredSourceStateVerificationBatch {
 		private final int replayPlacementCount;
 		private final int authoredObjectFootprintCount;
 		private final int contributionTileReferenceCount;
+		private final int uniqueContributionTileCount;
 		private final int requiredRegionReferenceCount;
 		private final int uniqueRequiredRegionCount;
 		private final int disposableRegionConstructionCount;
@@ -461,6 +472,8 @@ public final class LayeredPackedRegionAuthoredSourceStateVerificationBatch {
 				source.getAuthoredObjectFootprintCount();
 			this.contributionTileReferenceCount =
 				source.getContributionTileReferenceCount();
+			this.uniqueContributionTileCount =
+				state.getUniqueContributionTileCount();
 			this.requiredRegionReferenceCount =
 				source.getRequiredRegionReferenceCount();
 			this.uniqueRequiredRegionCount =
@@ -509,6 +522,9 @@ public final class LayeredPackedRegionAuthoredSourceStateVerificationBatch {
 		}
 		public int getContributionTileReferenceCount() {
 			return contributionTileReferenceCount;
+		}
+		public int getUniqueContributionTileCount() {
+			return uniqueContributionTileCount;
 		}
 		public int getRequiredRegionReferenceCount() {
 			return requiredRegionReferenceCount;

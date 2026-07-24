@@ -36,6 +36,7 @@ import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionVerificationBatch;
+import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredSourceStateVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
 import com.openrsc.server.model.world.region.LayeredPackedRegionTerrainVerificationBatch;
@@ -63,8 +64,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v53";
-	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v52";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v54";
+	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v53";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4686,6 +4687,14 @@ public final class LayeredCoordinateParityObserver {
 					.getSourceAuthoredCollisionApplicationVerification());
 		}
 		out.append(',');
+		out.append("\"sourceAuthoredStateVerification\":");
+		if (diagnostic.getSourceAuthoredStateVerification() == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionAuthoredSourceStateVerificationBatch(
+				out, diagnostic.getSourceAuthoredStateVerification());
+		}
+		out.append(',');
 		out.append("\"preservationEstablishedForConsumedWork\":false,");
 		out.append("\"preservationPerformed\":false,");
 		out.append("\"sourceAbsencePerformed\":false,");
@@ -5363,6 +5372,238 @@ public final class LayeredCoordinateParityObserver {
 				source.getCollisionFootprintFingerprintSha256()).append(',');
 			field(out, "appliedCollisionFingerprintSha256",
 				source.getAppliedCollisionFingerprintSha256());
+			out.append('}');
+		}
+		out.append("]}");
+	}
+
+	private static void appendPackedRegionAuthoredSourceStateVerificationBatch(
+		final StringBuilder out,
+		final LayeredPackedRegionAuthoredSourceStateVerificationBatch
+			verification) {
+		out.append('{');
+		out.append("\"generation\":").append(verification.getGeneration())
+			.append(',');
+		out.append("\"requirementsObservedAtTick\":")
+			.append(verification.getRequirementsObservedAtTick()).append(',');
+		out.append("\"observedAtTick\":")
+			.append(verification.getObservedAtTick()).append(',');
+		out.append("\"residencyMirrorVersion\":")
+			.append(verification.getResidencyMirrorVersion()).append(',');
+		out.append("\"authoredGeneration\":")
+			.append(verification.getAuthoredGeneration()).append(',');
+		out.append("\"sourceCount\":")
+			.append(verification.getSourceCount()).append(',');
+		out.append("\"replayPlacementCount\":")
+			.append(verification.getReplayPlacementCount()).append(',');
+		out.append("\"authoredObjectFootprintCount\":")
+			.append(verification.getAuthoredObjectFootprintCount())
+			.append(',');
+		out.append("\"contributionTileReferenceCount\":")
+			.append(verification.getContributionTileReferenceCount())
+			.append(',');
+		out.append("\"uniqueContributionTileReferenceCount\":")
+			.append(verification.getUniqueContributionTileReferenceCount())
+			.append(',');
+		out.append("\"requiredRegionReferenceCount\":")
+			.append(verification.getRequiredRegionReferenceCount())
+			.append(',');
+		out.append("\"uniqueRequiredRegionReferenceCount\":")
+			.append(verification.getUniqueRequiredRegionReferenceCount())
+			.append(',');
+		out.append("\"preCombinedDisposableRegionConstructionCount\":")
+			.append(verification
+				.getPreCombinedDisposableRegionConstructionCount())
+			.append(',');
+		out.append("\"combinedDisposableRegionConstructionCount\":")
+			.append(verification
+				.getCombinedDisposableRegionConstructionCount())
+			.append(',');
+		out.append("\"totalDisposableRegionConstructionCount\":")
+			.append(verification.getTotalDisposableRegionConstructionCount())
+			.append(',');
+		out.append("\"combinedSupportRegionCount\":")
+			.append(verification.getCombinedSupportRegionCount())
+			.append(',');
+		out.append("\"preCombinedTerrainApplyCount\":")
+			.append(verification.getPreCombinedTerrainApplyCount())
+			.append(',');
+		out.append("\"combinedTerrainApplyCount\":")
+			.append(verification.getCombinedTerrainApplyCount()).append(',');
+		out.append("\"totalTerrainApplyCount\":")
+			.append(verification.getTotalTerrainApplyCount()).append(',');
+		out.append("\"preCombinedObjectMembershipApplyCount\":")
+			.append(verification
+				.getPreCombinedObjectMembershipApplyCount())
+			.append(',');
+		out.append("\"combinedObjectMembershipApplicationCount\":")
+			.append(verification
+				.getCombinedObjectMembershipApplicationCount())
+			.append(',');
+		out.append("\"combinedObjectMembershipBoundaryCount\":")
+			.append(verification
+				.getCombinedObjectMembershipBoundaryCount())
+			.append(',');
+		out.append("\"combinedCollisionApplicationCount\":")
+			.append(verification.getCombinedCollisionApplicationCount())
+			.append(',');
+		out.append("\"combinedCollisionBoundaryCount\":")
+			.append(verification.getCombinedCollisionBoundaryCount())
+			.append(',');
+		out.append("\"combinedVerifiedRegionTileCount\":")
+			.append(verification.getCombinedVerifiedRegionTileCount())
+			.append(',');
+		out.append("\"combinedBlockingSceneryContributionCount\":")
+			.append(verification
+				.getCombinedBlockingSceneryContributionCount())
+			.append(',');
+		out.append("\"combinedDynamicCollisionContributionCount\":")
+			.append(verification
+				.getCombinedDynamicCollisionContributionCount())
+			.append(',');
+		out.append("\"combinedDynamicProjectileContributionCount\":")
+			.append(verification
+				.getCombinedDynamicProjectileContributionCount())
+			.append(',');
+		field(out, "baselineFingerprintSha256",
+			verification.getBaselineFingerprintSha256()).append(',');
+		field(out, "fingerprintSha256",
+			verification.getFingerprintSha256()).append(',');
+		out.append("\"usableRegionContainerCount\":")
+			.append(verification.getUsableRegionContainerCount()).append(',');
+		out.append("\"pointInTimeOnly\":")
+			.append(verification.isPointInTimeOnly()).append(',');
+		out.append("\"detachedSummaryOnly\":")
+			.append(verification.isDetachedSummaryOnly()).append(',');
+		out.append("\"allSourcesVerified\":")
+			.append(verification.isAllSourcesVerified()).append(',');
+		out.append("\"runtimeDefinitionCapturePerformed\":")
+			.append(verification.isRuntimeDefinitionCapturePerformed())
+			.append(',');
+		out.append("\"collisionFootprintDerivationPerformed\":")
+			.append(verification.isCollisionFootprintDerivationPerformed())
+			.append(',');
+		out.append("\"terrainAppliedToCombinedDisposableSourceRegions\":")
+			.append(verification
+				.isTerrainAppliedToCombinedDisposableSourceRegions())
+			.append(',');
+		out.append(
+			"\"authoredObjectMembershipAppliedToCombinedDisposableSourceRegions\":")
+			.append(verification
+				.isAuthoredObjectMembershipAppliedToCombinedDisposableSourceRegions())
+			.append(',');
+		out.append("\"collisionAppliedToSameDisposableRegionUnions\":")
+			.append(verification
+				.isCollisionAppliedToSameDisposableRegionUnions())
+			.append(',');
+		out.append("\"collisionRegistrationAttached\":")
+			.append(verification.isCollisionRegistrationAttached())
+			.append(',');
+		out.append("\"runtimeCollisionApplied\":")
+			.append(verification.isRuntimeCollisionApplied()).append(',');
+		out.append("\"runtimeHandleRetained\":")
+			.append(verification.isRuntimeHandleRetained()).append(',');
+		out.append("\"sourceAbsencePerformed\":")
+			.append(verification.isSourceAbsencePerformed()).append(',');
+		out.append("\"sourceReconstructionPerformed\":")
+			.append(verification.isSourceReconstructionPerformed())
+			.append(',');
+		out.append("\"terrainAppliedToRuntimeSource\":")
+			.append(verification.isTerrainAppliedToRuntimeSource())
+			.append(',');
+		out.append("\"authoredObjectMembershipAppliedToRuntimeSource\":")
+			.append(verification
+				.isAuthoredObjectMembershipAppliedToRuntimeSource())
+			.append(',');
+		out.append("\"npcMembershipApplied\":")
+			.append(verification.isNpcMembershipApplied()).append(',');
+		out.append("\"groundItemMembershipApplied\":")
+			.append(verification.isGroundItemMembershipApplied()).append(',');
+		out.append("\"schedulerStateRestored\":")
+			.append(verification.isSchedulerStateRestored()).append(',');
+		out.append("\"activeFamilyPreservationPerformed\":")
+			.append(verification.isActiveFamilyPreservationPerformed())
+			.append(',');
+		out.append("\"regionRegistryMutated\":")
+			.append(verification.isRegionRegistryMutated()).append(',');
+		out.append("\"residencyMirrorMutated\":")
+			.append(verification.isResidencyMirrorMutated()).append(',');
+		out.append("\"visibilityCacheMutated\":")
+			.append(verification.isVisibilityCacheMutated()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(verification.isArrivalGate()).append(',');
+		out.append("\"visibilityReleased\":")
+			.append(verification.isVisibilityReleased()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(verification.isLifecycleAuthority()).append(',');
+		out.append("\"sources\":[");
+		boolean first = true;
+		for (
+			LayeredPackedRegionAuthoredSourceStateVerificationBatch
+				.SourceVerification source
+			: verification.getSources()) {
+			if (!first) {
+				out.append(',');
+			}
+			first = false;
+			out.append('{');
+			out.append("\"sourceOrdinal\":")
+				.append(source.getSourceOrdinal()).append(',');
+			out.append("\"packedRegionX\":")
+				.append(source.getPackedRegionX()).append(',');
+			out.append("\"packedRegionY\":")
+				.append(source.getPackedRegionY()).append(',');
+			out.append("\"replayPlacementCount\":")
+				.append(source.getReplayPlacementCount()).append(',');
+			out.append("\"authoredObjectFootprintCount\":")
+				.append(source.getAuthoredObjectFootprintCount()).append(',');
+			out.append("\"contributionTileReferenceCount\":")
+				.append(source.getContributionTileReferenceCount())
+				.append(',');
+			out.append("\"uniqueContributionTileCount\":")
+				.append(source.getUniqueContributionTileCount()).append(',');
+			out.append("\"requiredRegionReferenceCount\":")
+				.append(source.getRequiredRegionReferenceCount()).append(',');
+			out.append("\"uniqueRequiredRegionCount\":")
+				.append(source.getUniqueRequiredRegionCount()).append(',');
+			out.append("\"disposableRegionConstructionCount\":")
+				.append(source.getDisposableRegionConstructionCount())
+				.append(',');
+			out.append("\"supportRegionCount\":")
+				.append(source.getSupportRegionCount()).append(',');
+			out.append("\"objectMembershipApplicationCount\":")
+				.append(source.getObjectMembershipApplicationCount())
+				.append(',');
+			out.append("\"objectMembershipBoundaryCount\":")
+				.append(source.getObjectMembershipBoundaryCount())
+				.append(',');
+			out.append("\"collisionApplicationCount\":")
+				.append(source.getCollisionApplicationCount()).append(',');
+			out.append("\"collisionBoundaryCount\":")
+				.append(source.getCollisionBoundaryCount()).append(',');
+			out.append("\"verifiedRegionTileCount\":")
+				.append(source.getVerifiedRegionTileCount()).append(',');
+			out.append("\"blockingSceneryContributionCount\":")
+				.append(source.getBlockingSceneryContributionCount())
+				.append(',');
+			out.append("\"dynamicCollisionContributionCount\":")
+				.append(source.getDynamicCollisionContributionCount())
+				.append(',');
+			out.append("\"dynamicProjectileContributionCount\":")
+				.append(source.getDynamicProjectileContributionCount())
+				.append(',');
+			field(out, "terrainFingerprintSha256",
+				source.getTerrainFingerprintSha256()).append(',');
+			field(out, "authoredReplayFingerprintSha256",
+				source.getAuthoredReplayFingerprintSha256()).append(',');
+			field(out, "definitionCaptureFingerprintSha256",
+				source.getDefinitionCaptureFingerprintSha256()).append(',');
+			field(out, "collisionFootprintFingerprintSha256",
+				source.getCollisionFootprintFingerprintSha256()).append(',');
+			field(out, "appliedCollisionFingerprintSha256",
+				source.getAppliedCollisionFingerprintSha256()).append(',');
+			field(out, "finalStateFingerprintSha256",
+				source.getFinalStateFingerprintSha256());
 			out.append('}');
 		}
 		out.append("]}");
@@ -6865,6 +7106,8 @@ public final class LayeredCoordinateParityObserver {
 		private final
 			LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
 				sourceAuthoredCollisionApplicationVerification;
+		private final LayeredPackedRegionAuthoredSourceStateVerificationBatch
+			sourceAuthoredStateVerification;
 
 		private PackedRegionNpcOwnerPreservationNoOpMetadata(
 			final String reason,
@@ -6887,7 +7130,9 @@ public final class LayeredCoordinateParityObserver {
 				sourceAuthoredCollisionVerification,
 			final
 				LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
-					sourceAuthoredCollisionApplicationVerification) {
+					sourceAuthoredCollisionApplicationVerification,
+			final LayeredPackedRegionAuthoredSourceStateVerificationBatch
+				sourceAuthoredStateVerification) {
 			this.reason = Objects.requireNonNull(reason, "reason");
 			this.generation = generation;
 			this.requirementsObservedAtTick = requirementsObservedAtTick;
@@ -6906,6 +7151,8 @@ public final class LayeredCoordinateParityObserver {
 				sourceAuthoredCollisionVerification;
 			this.sourceAuthoredCollisionApplicationVerification =
 				sourceAuthoredCollisionApplicationVerification;
+			this.sourceAuthoredStateVerification =
+				sourceAuthoredStateVerification;
 			if ((!"OWNER_SCOPE_REFUSED".equals(reason)
 					&& !"SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason))
 				|| generation < 0L || requirementsObservedAtTick < 0L
@@ -6920,7 +7167,8 @@ public final class LayeredCoordinateParityObserver {
 						|| sourceTerrainVerification != null
 						|| sourceAuthoredCollisionVerification != null
 						|| sourceAuthoredCollisionApplicationVerification
-							!= null))
+							!= null
+						|| sourceAuthoredStateVerification != null))
 				|| ("SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason)
 					&& (!ownerScopeEntered
 						|| sourceAbsencePreflight == null
@@ -6928,7 +7176,8 @@ public final class LayeredCoordinateParityObserver {
 						|| sourceTerrainVerification == null
 						|| sourceAuthoredCollisionVerification == null
 						|| sourceAuthoredCollisionApplicationVerification
-							== null))
+							== null
+						|| sourceAuthoredStateVerification == null))
 				|| (sourceAbsencePreflight != null
 					&& (sourceAbsencePreflight.getGeneration() != generation
 						|| sourceAbsencePreflight
@@ -7169,7 +7418,134 @@ public final class LayeredCoordinateParityObserver {
 							.isLifecycleAuthority()
 						|| !collisionApplicationSourcesMatch(
 							sourceAuthoredCollisionVerification,
-							sourceAuthoredCollisionApplicationVerification)))) {
+							sourceAuthoredCollisionApplicationVerification)))
+				|| (sourceAuthoredStateVerification != null
+					&& (sourceAuthoredStateVerification.getGeneration()
+							!= generation
+						|| sourceAuthoredStateVerification
+							.getRequirementsObservedAtTick()
+								!= requirementsObservedAtTick
+						|| sourceAuthoredStateVerification.getSourceCount()
+							!= selectedSourceCount
+						|| sourceReloadRecipe == null
+						|| sourceAuthoredCollisionVerification == null
+						|| sourceAuthoredCollisionApplicationVerification
+							== null
+						|| sourceAuthoredStateVerification.getObservedAtTick()
+							!= sourceReloadRecipe.getObservedAtTick()
+						|| sourceAuthoredStateVerification
+							.getResidencyMirrorVersion()
+								!= sourceReloadRecipe
+									.getResidencyMirrorVersion()
+						|| sourceAuthoredStateVerification
+							.getAuthoredGeneration()
+								!= sourceReloadRecipe
+									.getAuthoredGeneration()
+						|| sourceAuthoredStateVerification
+							.getReplayPlacementCount()
+								!= sourceReloadRecipe
+									.getAuthoredPlacementCount()
+						|| sourceAuthoredStateVerification
+							.getAuthoredObjectFootprintCount()
+								!= sourceAuthoredCollisionVerification
+									.getAuthoredObjectFootprintCount()
+						|| sourceAuthoredStateVerification
+							.getContributionTileReferenceCount()
+								!= sourceAuthoredCollisionVerification
+									.getContributionTileReferenceCount()
+						|| sourceAuthoredStateVerification
+							.getUniqueContributionTileReferenceCount()
+								!= sourceAuthoredCollisionApplicationVerification
+									.getUniqueContributionTileReferenceCount()
+						|| sourceAuthoredStateVerification
+							.getRequiredRegionReferenceCount()
+								!= sourceAuthoredCollisionVerification
+									.getRequiredRegionReferenceCount()
+						|| sourceAuthoredStateVerification
+							.getUniqueRequiredRegionReferenceCount()
+								!= sourceAuthoredCollisionVerification
+									.getUniqueRequiredRegionReferenceCount()
+						|| !sourceAuthoredStateVerification
+							.getBaselineFingerprintSha256().equals(
+								sourceAuthoredCollisionVerification
+									.getFingerprintSha256())
+						|| sourceAuthoredStateVerification
+							.getCombinedDisposableRegionConstructionCount()
+								!= sourceAuthoredCollisionApplicationVerification
+									.getDisposableCollisionRegionConstructionCount()
+						|| sourceAuthoredStateVerification
+							.getCombinedCollisionApplicationCount()
+								!= sourceAuthoredCollisionApplicationVerification
+									.getCollisionApplicationCount()
+						|| sourceAuthoredStateVerification
+							.getCombinedCollisionBoundaryCount()
+								!= sourceAuthoredCollisionApplicationVerification
+									.getHeldBoundaryCount()
+						|| sourceAuthoredStateVerification
+							.getCombinedVerifiedRegionTileCount()
+								!= sourceAuthoredCollisionApplicationVerification
+									.getVerifiedRegionTileCount()
+						|| sourceAuthoredStateVerification
+							.getCombinedBlockingSceneryContributionCount()
+								!= sourceAuthoredCollisionApplicationVerification
+									.getBlockingSceneryContributionCount()
+						|| sourceAuthoredStateVerification
+							.getCombinedDynamicCollisionContributionCount()
+								!= sourceAuthoredCollisionApplicationVerification
+									.getDynamicCollisionContributionCount()
+						|| sourceAuthoredStateVerification
+							.getCombinedDynamicProjectileContributionCount()
+								!= sourceAuthoredCollisionApplicationVerification
+									.getDynamicProjectileContributionCount()
+						|| !sourceAuthoredStateVerification
+							.isAllSourcesVerified()
+						|| !sourceAuthoredStateVerification
+							.isRuntimeDefinitionCapturePerformed()
+						|| !sourceAuthoredStateVerification
+							.isCollisionFootprintDerivationPerformed()
+						|| !sourceAuthoredStateVerification
+							.isTerrainAppliedToCombinedDisposableSourceRegions()
+						|| !sourceAuthoredStateVerification
+							.isAuthoredObjectMembershipAppliedToCombinedDisposableSourceRegions()
+						|| !sourceAuthoredStateVerification
+							.isCollisionAppliedToSameDisposableRegionUnions()
+						|| sourceAuthoredStateVerification
+							.isCollisionRegistrationAttached()
+						|| sourceAuthoredStateVerification
+							.isRuntimeCollisionApplied()
+						|| sourceAuthoredStateVerification
+							.isRuntimeHandleRetained()
+						|| sourceAuthoredStateVerification
+							.isSourceAbsencePerformed()
+						|| sourceAuthoredStateVerification
+							.isSourceReconstructionPerformed()
+						|| sourceAuthoredStateVerification
+							.isTerrainAppliedToRuntimeSource()
+						|| sourceAuthoredStateVerification
+							.isAuthoredObjectMembershipAppliedToRuntimeSource()
+						|| sourceAuthoredStateVerification
+							.isNpcMembershipApplied()
+						|| sourceAuthoredStateVerification
+							.isGroundItemMembershipApplied()
+						|| sourceAuthoredStateVerification
+							.isSchedulerStateRestored()
+						|| sourceAuthoredStateVerification
+							.isActiveFamilyPreservationPerformed()
+						|| sourceAuthoredStateVerification
+							.isRegionRegistryMutated()
+						|| sourceAuthoredStateVerification
+							.isResidencyMirrorMutated()
+						|| sourceAuthoredStateVerification
+							.isVisibilityCacheMutated()
+						|| sourceAuthoredStateVerification.isArrivalGate()
+						|| sourceAuthoredStateVerification
+							.isVisibilityReleased()
+						|| sourceAuthoredStateVerification
+							.isLifecycleAuthority()
+						|| !authoredStateSourcesMatch(
+							sourceAuthoredCollisionVerification,
+							sourceAuthoredCollisionApplicationVerification,
+							sourceAuthoredStateVerification)))) {
 				throw new IllegalArgumentException(
 					"NPC owner preservation no-op metadata is inconsistent");
 			}
@@ -7196,7 +7572,9 @@ public final class LayeredCoordinateParityObserver {
 				sourceAuthoredCollisionVerification,
 			final
 				LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
-					sourceAuthoredCollisionApplicationVerification) {
+					sourceAuthoredCollisionApplicationVerification,
+			final LayeredPackedRegionAuthoredSourceStateVerificationBatch
+				sourceAuthoredStateVerification) {
 			return new PackedRegionNpcOwnerPreservationNoOpMetadata(
 				reason, generation, requirementsObservedAtTick,
 				selectedSourceCount, requiredEventLinkCount,
@@ -7206,7 +7584,8 @@ public final class LayeredCoordinateParityObserver {
 				sourceAbsencePreflight, sourceReloadRecipe,
 				sourceTerrainVerification,
 				sourceAuthoredCollisionVerification,
-				sourceAuthoredCollisionApplicationVerification);
+				sourceAuthoredCollisionApplicationVerification,
+				sourceAuthoredStateVerification);
 		}
 
 		private static boolean collisionSourcesMatch(
@@ -7304,6 +7683,94 @@ public final class LayeredCoordinateParityObserver {
 			return true;
 		}
 
+		private static boolean authoredStateSourcesMatch(
+			final LayeredPackedRegionAuthoredCollisionVerificationBatch
+				collision,
+			final
+				LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+					application,
+			final LayeredPackedRegionAuthoredSourceStateVerificationBatch
+				state) {
+			if (collision.getSourceCount() != application.getSourceCount()
+				|| collision.getSourceCount() != state.getSourceCount()) {
+				return false;
+			}
+			for (int ordinal = 0; ordinal < collision.getSourceCount();
+					ordinal++) {
+				LayeredPackedRegionAuthoredCollisionVerificationBatch
+					.SourceVerification collisionSource =
+						collision.getSources().get(ordinal);
+				LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
+					.SourceVerification applicationSource =
+						application.getSources().get(ordinal);
+				LayeredPackedRegionAuthoredSourceStateVerificationBatch
+					.SourceVerification stateSource =
+						state.getSources().get(ordinal);
+				if (collisionSource.getSourceOrdinal() != ordinal
+					|| applicationSource.getSourceOrdinal() != ordinal
+					|| stateSource.getSourceOrdinal() != ordinal
+					|| collisionSource.getPackedRegionX()
+						!= stateSource.getPackedRegionX()
+					|| collisionSource.getPackedRegionY()
+						!= stateSource.getPackedRegionY()
+					|| collisionSource.getReplayPlacementCount()
+						!= stateSource.getReplayPlacementCount()
+					|| collisionSource.getAuthoredObjectFootprintCount()
+						!= stateSource.getAuthoredObjectFootprintCount()
+					|| collisionSource.getContributionTileReferenceCount()
+						!= stateSource.getContributionTileReferenceCount()
+					|| applicationSource.getUniqueContributionTileCount()
+						!= stateSource.getUniqueContributionTileCount()
+					|| collisionSource.getRequiredRegionReferenceCount()
+						!= stateSource.getRequiredRegionReferenceCount()
+					|| collisionSource.getUniqueRequiredRegionCount()
+						!= stateSource.getUniqueRequiredRegionCount()
+					|| applicationSource
+						.getDisposableRegionConstructionCount()
+							!= stateSource
+								.getDisposableRegionConstructionCount()
+					|| applicationSource.getCollisionApplicationCount()
+						!= stateSource.getCollisionApplicationCount()
+					|| applicationSource.getHeldBoundaryCount()
+						!= stateSource.getCollisionBoundaryCount()
+					|| applicationSource.getVerifiedRegionTileCount()
+						!= stateSource.getVerifiedRegionTileCount()
+					|| applicationSource
+						.getBlockingSceneryContributionCount()
+							!= stateSource
+								.getBlockingSceneryContributionCount()
+					|| applicationSource
+						.getDynamicCollisionContributionCount()
+							!= stateSource
+								.getDynamicCollisionContributionCount()
+					|| applicationSource
+						.getDynamicProjectileContributionCount()
+							!= stateSource
+								.getDynamicProjectileContributionCount()
+					|| !collisionSource.getTerrainFingerprintSha256().equals(
+						stateSource.getTerrainFingerprintSha256())
+					|| !collisionSource
+						.getAuthoredReplayFingerprintSha256().equals(
+							stateSource
+								.getAuthoredReplayFingerprintSha256())
+					|| !collisionSource
+						.getDefinitionCaptureFingerprintSha256().equals(
+							stateSource
+								.getDefinitionCaptureFingerprintSha256())
+					|| !collisionSource
+						.getCollisionFootprintFingerprintSha256().equals(
+							stateSource
+								.getCollisionFootprintFingerprintSha256())
+					|| !applicationSource
+						.getAppliedCollisionFingerprintSha256().equals(
+							stateSource
+								.getAppliedCollisionFingerprintSha256())) {
+					return false;
+				}
+			}
+			return true;
+		}
+
 		public String getReason() { return reason; }
 		public long getGeneration() { return generation; }
 		public long getRequirementsObservedAtTick() {
@@ -7344,6 +7811,10 @@ public final class LayeredCoordinateParityObserver {
 			LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch
 				getSourceAuthoredCollisionApplicationVerification() {
 			return sourceAuthoredCollisionApplicationVerification;
+		}
+		public LayeredPackedRegionAuthoredSourceStateVerificationBatch
+			getSourceAuthoredStateVerification() {
+			return sourceAuthoredStateVerification;
 		}
 	}
 
