@@ -16137,6 +16137,57 @@ warrant an owner route and does not authorize runtime detachment. The next safe
 slice should bound the proof across the complete selected-source set and reduce
 it to counts/fingerprints before considering private exposure.
 
+### Slice 204: Bounded disposable detachment batch
+
+Objective: apply Slice 203 independently to every source in the exact selected
+set, then retain only one bounded source-ordered count/fingerprint summary.
+
+Implemented:
+
+- the batch requires the active source lifecycle boundary, inert reload recipe,
+  and Slice 202 detachment plan to share generation, observation ticks,
+  residency-mirror version, authored generation, source count, and exact source
+  order;
+- each source independently reconstructs its disposable terrain/object/
+  collision state, proves its registration sequence matches the runtime
+  baseline, detaches in reverse order, verifies terrain-only state, and
+  discards every intermediate handle before the next source;
+- per-source receipts retain aligned terrain, replay, collision, detachment,
+  registration, pre-state, post-state, and summary fingerprints plus bounded
+  transaction/Region/cache/registration/tile counts; and
+- aggregate arithmetic reconciles authored object count with both transaction
+  passes, disposable invalidations, created and cleared registrations, and both
+  ordered Region-boundary totals.
+
+Safety boundary:
+
+- source overflow, source-order drift, stale generation/mirror evidence, or any
+  non-exact detachment plan refuses the entire batch;
+- disposable reconstruction and detachment are real only inside unregistered
+  Region unions; no usable container or intermediate Region, object,
+  registration, tile, collision plan, or transaction handle survives;
+- runtime source/collision/cache mutation, source absence/reconstruction,
+  scheduler correlation, active-family preservation, registry/mirror/
+  visibility mutation, arrival, and lifecycle authority remain false; and
+- the batch is verification evidence only, not a teardown permit or an
+  executable source-lifecycle stage.
+
+Automated validation status:
+
+- the focused one-source fixture reconciles five replay placements, three
+  authored objects, two disposable Regions, four collision contribution and
+  four Region references, three forward and three reverse transactions, and
+  4,608 verified tiles;
+- invalid source budget refuses before the collision-plan factory can run and
+  the final batch/source collections are immutable; and
+- the complete Slice 182-204 lineage passes 98 tests, while the authoritative
+  bundled-Ant server build compiles 842 core and 488 plugin sources and passes
+  its build/classpath audit.
+
+Status: implemented and automated-validated. Additive private exposure is the
+next meaningful owner route because it can prove the complete selected-source
+set against real definitions and terrain without performing runtime detachment.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16564,6 +16615,7 @@ private environment should validate at least:
 | 2026-07-24 | Accept the Slice 201 private runtime authored-state route. | Owner-validated; four contiguous schema-v56 records and their round trips validate, all 36 selected sources and 3,979 expected objects are exact final-live baseline matches with 3,979 present constructor-matched registrations, 3,185 contribution references, zero runtime/baseline anomaly outcomes, and every mutation/authority flag false. The response and interaction remained normal; one accepted 1,127 ms late tick contains 995 ms of opt-in diagnostic work, and the later connection reset is explained by the owner closing the client |
 | 2026-07-24 | Continue with Slice 202 by defining authored-object detachment work from an exact runtime baseline. | Implemented and automated-validated; the inert plan copies exact authored object identities and constructors in reverse stable order, preserves active-family burdens and matching registration fingerprints, refuses every non-exact runtime outcome, and explicitly requires scheduler correlation, fresh atomic revalidation, rollback, arrival, and visibility gates while granting no runtime lookup, mutation, detachment, or lifecycle authority; the Slice 182-202 lineage passes 90 tests and the 840/488 Ant build/audit passes |
 | 2026-07-24 | Continue with Slice 203 by executing authored-object detachment only inside a disposable reconstructed source. | Implemented and automated-validated; exact runtime/baseline registration provenance gates a reverse-order strict-unregister round trip, every object and collision registration clears back to exact terrain-only state, and all handles remain confined to unregistered Regions while runtime detachment, source absence, scheduler work, and lifecycle authority remain false; the Slice 182-203 lineage passes 94 tests and the 841/488 Ant build/audit passes |
+| 2026-07-24 | Continue with Slice 204 by bounding disposable authored-object detachment across the exact selected-source set. | Implemented and automated-validated; each source independently reconstructs and detaches in an unregistered Region union, the batch reconciles both transaction passes and every Region/cache/registration/tile count, only count/fingerprint summaries survive, and runtime detachment plus every lifecycle authority remains false; the Slice 182-204 lineage passes 98 tests and the 842/488 Ant build/audit passes |
 
 ## Next Discussion
 
