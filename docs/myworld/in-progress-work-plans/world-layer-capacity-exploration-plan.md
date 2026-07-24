@@ -15116,6 +15116,76 @@ extend only the explicit private preservation diagnostic with the bounded
 aggregate and per-source count/fingerprint summary, advance the additive
 schema, preserve schema-v51 unchanged, and prepare one meaningful owner route.
 
+### Slice 189: Private authored-collision diagnostics
+
+Objective: expose Slice 188's bounded authored-collision verification only
+through the explicit private preservation action, preserving prior schemas and
+every non-authoritative runtime boundary.
+
+Implemented:
+
+- the `preservation-noop` GameEventHandler path now invokes Slice 188 after the
+  exact source absence preflight, inert reload recipe, and Slice 183 terrain
+  verification while the same real source lifecycle boundary remains held;
+- the JSON-facing preservation metadata requires the collision batch whenever
+  the owner/source scope is entered and requires null collision evidence when
+  owner scope refuses. Generation, requirements tick, observation tick,
+  residency-mirror version, authored generation, source count, and total
+  replay placements must match the same reload recipe;
+- exact source order, ordinal, packed coordinates, authored-placement count,
+  and terrain fingerprint must also match both the reload and terrain receipts
+  before metadata can be serialized;
+- additive schema-v52 retains every v51 root field and changes only the private
+  preservation no-op definition. Its nullable
+  `sourceAuthoredCollisionVerification` carries the bounded Slice 188
+  aggregate and per-source count/fingerprint-only values; and
+- the observer writes active-definition and collision-derivation completion
+  separately from collision application, registration attachment, source
+  reconstruction, or lifecycle authority. Schema-v51 remains unchanged for
+  historical captures.
+
+Safety boundary:
+
+- ordinary movement, markers, snapshots, teleports, login/logout, and every
+  action except explicit `::layerparity preserve-noop` continue to serialize a
+  null preservation result and never invoke the collision batch;
+- the payload contains no terrain tiles, object constructors, entity details,
+  active definition values, collision contribution tiles, required-Region
+  lists, Region handles, or other detailed intermediate. Four per-source
+  fingerprints plus one batch fingerprint make identity AI-readable without
+  turning the log into reconstruction input;
+- both the existing terrain batch and the new authored-collision batch are
+  independently bounded to 128 exact sources. Failure is fail-closed and emits
+  no partial verification record; and
+- no collision is applied, no collision registration is attached, NPC/item
+  membership and scheduler state remain absent, and all Region registry,
+  residency mirror, visibility cache, arrival, visibility-release, and
+  lifecycle-authority facts remain false.
+
+Automated validation status:
+
+- an isolated schema-v52 fixture accepts the complete bounded success record
+  and owner-scope refusal, requires collision evidence on the entered source
+  route, and rejects every forbidden mutation/authority flag;
+- schema-v51 is loaded unchanged and is proved not to contain the new field;
+  v52 retains the same root property set and extends only the private no-op;
+- structural guards prove handler ordering inside the source boundary,
+  metadata alignment across reload/terrain/collision source identity, additive
+  schema constants, and bounded serializer coverage;
+- the Slice 182-189 focused lineage passes 31 tests, including four Slice 189
+  tests, and the repository prerequisite check passes; and
+- the authoritative bundled-Ant server build compiles 828 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated; one private owner route remains
+pending. Start in a visually dense area, invoke only
+`::lp preserve-noop`, move and interact normally after capture, then stop the
+trace. Acceptance requires schema-v52 validity; exact source alignment across
+preflight, reload, terrain, and authored collision summaries; reconciled
+aggregate/per-source counts and fingerprints; active definition capture and
+collision derivation true; every application/mutation/authority fact false;
+and no visual, interaction, movement, or collision regression.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15522,6 +15592,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 186 by deriving exact detached authored register-collision footprints. | Implemented and automated-validated; exact detached definition inputs feed the shared pure legacy planner, stable primitive contributions and canonical Region reach reconcile, object 1147 remains an explicit collisionless special case, collision reach beyond the authored geometry envelope is separately reported, no collision is applied, 19 focused Slice 182-186 tests and the 826/488 Ant build pass |
 | 2026-07-24 | Continue with Slice 187 by capturing exact authored collision definitions from the active server table. | Implemented and automated-validated; stable object order reduces live scenery/boundary definitions to detached scalars, object 1147 bypasses lookup explicitly, captured provenance composes with the inert collision plan, missing/wrong-family definitions refuse, no Region/tile/collision mutation occurs, 23 focused Slice 182-187 tests and the 827/488 Ant build pass |
 | 2026-07-24 | Continue with Slice 188 by reducing complete authored collision verification to a bounded source batch. | Implemented and automated-validated; each exact source independently verifies terrain and authored object membership on disposable unregistered Regions, captures active definition scalars, derives but does not apply collision, and retains only aggregate/per-source counts plus four stable fingerprints; 27 focused Slice 182-188 tests and the 828/488 Ant build pass |
+| 2026-07-24 | Continue with Slice 189 by exposing bounded authored-collision verification through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v52 extends only the explicit preservation no-op with aligned reload/terrain/collision source counts and fingerprints, active definition capture and footprint derivation remain separate from every false apply/mutation/authority fact, v51 stays unchanged, 31 focused Slice 182-189 tests and the 828/488 Ant build pass; one dense owner route remains pending |
 
 ## Next Discussion
 
