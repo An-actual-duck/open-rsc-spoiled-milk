@@ -128,7 +128,8 @@ final class LayeredPackedRegionIsolatedAuthoredSourceStateVerifier {
 		}
 
 		String finalStateFingerprint = fingerprintFinalState(
-			disposable, source, terrain, replay, collision, application);
+			disposable, source, terrain, replay, collision,
+			application.getAppliedCollisionFingerprintSha256());
 		return
 			LayeredPackedRegionIsolatedAuthoredSourceStateVerification
 				.verified(
@@ -147,7 +148,7 @@ final class LayeredPackedRegionIsolatedAuthoredSourceStateVerifier {
 					entityFamiliesMatchedAfterCollision);
 	}
 
-	private static void requireAligned(
+	static void requireAligned(
 		final LayeredPackedRegionBlankContainerPlan container,
 		final LayeredPackedRegionTerrainInitializationPlan terrain,
 		final LayeredPackedRegionAuthoredReplayPlan replay,
@@ -210,7 +211,7 @@ final class LayeredPackedRegionIsolatedAuthoredSourceStateVerifier {
 		}
 	}
 
-	private static Map<Long, Region> constructDisposableUnion(
+	static Map<Long, Region> constructDisposableUnion(
 		final RegionManager manager,
 		final LayeredPackedRegionAuthoredCollisionFootprintPlan collision) {
 		Map<Long, Region> disposable = new LinkedHashMap<Long, Region>();
@@ -248,7 +249,7 @@ final class LayeredPackedRegionIsolatedAuthoredSourceStateVerifier {
 		disposable.put(key, region);
 	}
 
-	private static boolean verifyBlankUnion(
+	static boolean verifyBlankUnion(
 		final Map<Long, Region> disposable,
 		final RegionManager manager,
 		final LayeredPackedRegionBlankContainerPlan container) {
@@ -291,7 +292,7 @@ final class LayeredPackedRegionIsolatedAuthoredSourceStateVerifier {
 			container.getInitialGroundItemCount());
 	}
 
-	private static boolean verifySourceTerrain(
+	static boolean verifySourceTerrain(
 		final Region source,
 		final LayeredPackedRegionTerrainInitializationPlan terrain,
 		final boolean requireNoDynamicProducts) {
@@ -333,7 +334,7 @@ final class LayeredPackedRegionIsolatedAuthoredSourceStateVerifier {
 				== input.getTerrainWallProjectileCount();
 	}
 
-	private static boolean verifySupportStatic(
+	static boolean verifySupportStatic(
 		final Map<Long, Region> disposable,
 		final Region source,
 		final LayeredPackedRegionBlankContainerPlan container) {
@@ -373,7 +374,7 @@ final class LayeredPackedRegionIsolatedAuthoredSourceStateVerifier {
 			&& tile.getTerrainWallProjectileCount() == 0;
 	}
 
-	private static boolean verifyEntityFamilies(
+	static boolean verifyEntityFamilies(
 		final Map<Long, Region> disposable,
 		final Region source,
 		final int expectedObjectCount) {
@@ -392,20 +393,18 @@ final class LayeredPackedRegionIsolatedAuthoredSourceStateVerifier {
 		return true;
 	}
 
-	private static String fingerprintFinalState(
+	static String fingerprintFinalState(
 		final Map<Long, Region> disposable,
 		final Region source,
 		final LayeredPackedRegionTerrainInitializationPlan terrain,
 		final LayeredPackedRegionAuthoredReplayPlan replay,
 		final LayeredPackedRegionAuthoredCollisionFootprintPlan collision,
-		final LayeredPackedRegionIsolatedAuthoredCollisionVerifier.Application
-			application) {
+		final String appliedCollisionFingerprintSha256) {
 		MessageDigest digest = sha256();
 		updateString(digest, terrain.getFingerprintSha256());
 		updateString(digest, replay.getFingerprintSha256());
 		updateString(digest, collision.getFingerprintSha256());
-		updateString(
-			digest, application.getAppliedCollisionFingerprintSha256());
+		updateString(digest, appliedCollisionFingerprintSha256);
 		updateInt(digest, disposable.size());
 		for (Region region : disposable.values()) {
 			updateInt(digest, region.getRegionX());
@@ -475,7 +474,7 @@ final class LayeredPackedRegionIsolatedAuthoredSourceStateVerifier {
 		return hex(digest.digest());
 	}
 
-	private static long regionKey(final int x, final int y) {
+	static long regionKey(final int x, final int y) {
 		return ((long) x << 32) ^ (y & 0xffffffffL);
 	}
 

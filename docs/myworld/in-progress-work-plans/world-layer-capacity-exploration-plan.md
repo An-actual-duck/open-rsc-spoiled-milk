@@ -15644,6 +15644,66 @@ Owner validation:
 
 Status: owner-accepted.
 
+### Slice 196: Disposable transactional authored source
+
+Objective: prove one complete authored source can reach the same disposable
+terrain/object/collision state through the canonical atomic object/collision
+transaction while each disposable object receives exact collision-registration
+provenance.
+
+Implemented:
+
+- one disconnected verifier constructs the same exact disposable unregistered
+  source/support Region union and applies only the accepted static terrain;
+- every final-live authored scenery placement is paired with its stable
+  detached register footprint, reconstructed as an inert GameObject, and
+  registered through `RegionObjectCollisionTransactionExecutor`;
+- each transaction holds the exact canonical collision Region boundaries,
+  composes membership and collision, attaches the existing immutable
+  `GameObjectCollisionRegistrationState`, and invokes only a disposable local
+  cache-invalidation counter;
+- every attached registration is compared with the authored constructor and
+  every ordered collision contribution/required Region, then reduced to counts
+  and a deterministic registration fingerprint; and
+- the final terrain, membership, collision counters, applied-collision
+  fingerprint, and final-state fingerprint must match the non-transactional
+  Slice 193 result exactly.
+
+Safety boundary:
+
+- every mutation occurs only within freshly constructed, unregistered Regions
+  that are discarded before return; no runtime Region lookup, registration,
+  source absence, reconstruction, or cache invalidation occurs;
+- transaction mutation authority exists only inside each disposable boundary
+  call and no request, Region, object, registration, tile, boundary, planner
+  result, manager, cache callback, or collection survives in the receipt;
+- NPCs, ground items, scheduler restoration, active-family preservation,
+  registry, residency mirror, visibility cache, arrival, visibility release,
+  and lifecycle authority remain absent; and
+- the accepted Slice 193/194/195 paths remain unchanged and continue to report
+  collision-registration attachment as false.
+
+Automated validation status:
+
+- the real source-lifecycle fixture registers three authored objects, including
+  one cross-Region collision footprint, through three atomic transactions and
+  four exact boundaries. Three provenance records retain four contribution
+  tiles and four required-Region references;
+- repeated transactional reconstruction produces one stable registration
+  fingerprint, while applied-collision and complete final-state fingerprints
+  exactly match the accepted non-transactional Slice 193 path;
+- structural guards require the canonical transaction, exact provenance
+  comparison, disposable post-state verification, and no runtime Region
+  lookup/registration or retained handles;
+- the Slice 182-196 focused lineage passes 64 tests, including five Slice 196
+  tests; and
+- the authoritative bundled-Ant server build compiles 836 core and
+  488 plugin sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This disconnected single-source
+verifier does not warrant an owner route. The next slice should bound its
+detached receipts across the exact selected-source set.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16061,6 +16121,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 194 by bounding combined disposable authored source states. | Implemented and automated-validated; exact selected-source order aligns each same-union receipt with all prior counts and four inherited fingerprints plus applied/final-state fingerprints, aggregate Region/terrain/membership/collision work reconciles, no intermediate or runtime handle survives, the derivation-only public path remains unchanged, the Slice 182-194 lineage passes 55 tests, and the 834/488 Ant build passes |
 | 2026-07-24 | Continue with Slice 195 by exposing bounded combined authored state through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v54 changes only the explicit preservation no-op, aligns every combined source with the accepted derivation/application evidence, serializes only bounded counts and six fingerprints, requires every runtime mutation/authority fact to remain false, the Slice 182-195 lineage passes 59 tests plus two observer integration guards, and the 834/488 Ant build passes; one cooldown-aware dense owner route remains pending |
 | 2026-07-24 | Accept the Slice 195 private combined authored-state route. | Owner-validated; four contiguous schema-v54 records align all 36 sources across reload, derivation, separate application, and combined state, reconciling 4,551 replay placements, 3,979 object applications, 3,185 unique contribution tiles, 36 combined/108 total disposable Region constructions, 82,944 verified tiles, all collision-family totals, and all six per-source fingerprints; the response and subsequent interaction remained normal while every runtime mutation/authority fact remains false |
+| 2026-07-24 | Continue with Slice 196 by reconstructing one disposable source through atomic object/collision transactions. | Implemented and automated-validated; three fixture objects register through three canonical transactions/four exact boundaries, each gains exact detached collision-registration provenance, disposable cache invalidations remain local, the applied-collision and final-state fingerprints exactly match Slice 193, no handle or runtime authority survives, the Slice 182-196 lineage passes 64 tests, and the 836/488 Ant build passes |
 
 ## Next Discussion
 
@@ -16723,6 +16784,14 @@ schema-v53 and every accepted public path remain unchanged. Its automated
 schema/source validation and cooldown-aware owner route now prove the real
 multi-source combined totals without granting runtime collision or lifecycle
 authority.
+
+Slice 196 now proves one stronger but still disposable construction path:
+canonical atomic object/collision transactions attach exact per-object
+collision-registration provenance while producing the identical terrain,
+membership, applied-collision, and final-state fingerprints as Slice 193. The
+next safe gate is a bounded exact-source batch that retains only counts and the
+new registration fingerprint; runtime-source comparison, absence, publication,
+and reconstruction must remain disconnected.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
 or become a registry or arrival gate. Active census evidence is explanatory;

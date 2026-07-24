@@ -139,7 +139,8 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 				heldBoundaryCount, applied.getBoundaryCount());
 		}
 
-		Verification verification = verifyApplied(disposable, expected);
+		PostStateVerification verification =
+			verifyApplied(disposable, expected);
 		return new Application(
 			collisionApplicationCount, heldBoundaryCount,
 			verification.verifiedRegionTileCount, expected.size(),
@@ -209,7 +210,7 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 		return true;
 	}
 
-	private static List<RegionObjectCollisionMutationBoundary> boundaries(
+	static List<RegionObjectCollisionMutationBoundary> boundaries(
 		final Map<Long, Region> disposable,
 		final AuthoredObjectCollisionFootprint footprint) {
 		List<RegionObjectCollisionMutationBoundary> boundaries =
@@ -229,7 +230,7 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 		return boundaries;
 	}
 
-	private static TileValue mutableTile(
+	static TileValue mutableTile(
 		final Map<Long, Region> disposable,
 		final int x,
 		final int y) {
@@ -267,7 +268,22 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 		}
 	}
 
-	private static Verification verifyApplied(
+	static PostStateVerification verifyAppliedState(
+		final Map<Long, Region> disposableRegions,
+		final LayeredPackedRegionAuthoredCollisionFootprintPlan collisionPlan) {
+		Map<Long, Region> disposable =
+			Objects.requireNonNull(disposableRegions, "disposableRegions");
+		LayeredPackedRegionAuthoredCollisionFootprintPlan collision =
+			Objects.requireNonNull(collisionPlan, "collisionPlan");
+		Map<Long, ExpectedTile> expected = new TreeMap<Long, ExpectedTile>();
+		for (AuthoredObjectCollisionFootprint footprint
+				: collision.getFootprints()) {
+			addExpected(expected, footprint);
+		}
+		return verifyApplied(disposable, expected);
+	}
+
+	private static PostStateVerification verifyApplied(
 		final Map<Long, Region> disposable,
 		final Map<Long, ExpectedTile> expected) {
 		MessageDigest digest = sha256();
@@ -329,7 +345,7 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 			throw new IllegalStateException(
 				"Disposable authored collision post-state did not match");
 		}
-		return new Verification(
+		return new PostStateVerification(
 			verifiedTiles, blocking, dynamic, projectile,
 			hex(digest.digest()), true);
 	}
@@ -442,7 +458,7 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 		}
 	}
 
-	private static final class Verification {
+	static final class PostStateVerification {
 		private final int verifiedRegionTileCount;
 		private final long blockingSceneryContributionCount;
 		private final long dynamicCollisionContributionCount;
@@ -450,7 +466,7 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 		private final String fingerprintSha256;
 		private final boolean allTilesMatched;
 
-		private Verification(
+		private PostStateVerification(
 			final int verifiedRegionTileCount,
 			final long blockingSceneryContributionCount,
 			final long dynamicCollisionContributionCount,
@@ -467,6 +483,21 @@ final class LayeredPackedRegionIsolatedAuthoredCollisionVerifier {
 			this.fingerprintSha256 = fingerprintSha256;
 			this.allTilesMatched = allTilesMatched;
 		}
+
+		int getVerifiedRegionTileCount() {
+			return verifiedRegionTileCount;
+		}
+		long getBlockingSceneryContributionCount() {
+			return blockingSceneryContributionCount;
+		}
+		long getDynamicCollisionContributionCount() {
+			return dynamicCollisionContributionCount;
+		}
+		long getDynamicProjectileContributionCount() {
+			return dynamicProjectileContributionCount;
+		}
+		String getFingerprintSha256() { return fingerprintSha256; }
+		boolean areAllTilesMatched() { return allTilesMatched; }
 	}
 
 	static final class Application {
