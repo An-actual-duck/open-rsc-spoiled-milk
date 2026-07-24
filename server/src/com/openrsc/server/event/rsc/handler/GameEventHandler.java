@@ -47,6 +47,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TargetSubject;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.TimeProgressionPolicy;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
+import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceLifecycleBoundary;
 import com.openrsc.server.util.NamedThreadFactory;
@@ -538,6 +539,8 @@ public class GameEventHandler {
 				new GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result[1];
 		final LayeredPackedRegionSourceAbsencePreflight[] absencePreflight =
 			new LayeredPackedRegionSourceAbsencePreflight[1];
+		final LayeredPackedRegionReloadRecipe[] reloadRecipe =
+			new LayeredPackedRegionReloadRecipe[1];
 		boolean sourceBoundaryEntered =
 			getServer().getWorld().getRegionManager()
 				.withinLayeredPackedRegionSourceLifecycleBoundary(
@@ -547,6 +550,13 @@ public class GameEventHandler {
 							getServer().getWorld().getRegionManager()
 								.captureLayeredPackedRegionSourceAbsencePreflight(
 									boundary);
+						reloadRecipe[0] =
+							getServer().getWorld().getRegionManager()
+								.captureLayeredPackedRegionReloadRecipe(
+									boundary, absencePreflight[0],
+									getServer().getWorld().getWorldLoader()
+										.getWorldPopulator()
+										.getAuthoredReconstructionRecipe());
 						captured[0] =
 							GameTickEventNpcOwnerPreservationNoOpDiagnostic
 								.capture(
@@ -574,7 +584,8 @@ public class GameEventHandler {
 			result.isSourceLifecycleInvoked(),
 			result.getAbsentSourceCount(),
 			result.getReconstructedSourceCount(),
-			result.isPreservedConsumerInvoked(), absencePreflight[0]);
+			result.isPreservedConsumerInvoked(), absencePreflight[0],
+			reloadRecipe[0]);
 	}
 
 	private void requireExactPackedSourceBoundary(

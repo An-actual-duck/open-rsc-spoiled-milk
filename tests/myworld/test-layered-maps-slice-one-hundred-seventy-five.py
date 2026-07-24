@@ -255,7 +255,8 @@ class LayeredMapsSliceOneHundredSeventyFiveTest(unittest.TestCase):
         )
         self.assertIn("absencePreflight[0]", boundary)
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v49"', observer
+            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v49"',
+            observer,
         )
         self.assertIn(
             "appendPackedRegionSourceAbsencePreflight(", observer

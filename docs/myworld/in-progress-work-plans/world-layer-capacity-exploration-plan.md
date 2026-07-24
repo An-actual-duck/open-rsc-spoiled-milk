@@ -5,7 +5,7 @@ Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
 contained path, Slice 158's safe refusal path, Slice 162's corrected owner
 continuity route, and Slices 167-168's corrected owner-preservation route
 owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, and 175 automated-validated on the active
+76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, and 177 automated-validated on the active
 refinement branch
 
 Branch: `docs/layered-map-rebuild-refinement`
@@ -295,6 +295,16 @@ private preservation no-op. Additive schema-v49 keeps ordinary events null and
 reports exact aggregate, blocker-summary, and per-source records when the real
 boundary is entered, while every absence, reconstruction, mutation, arrival,
 visibility, and authority fact remains false;
+automated-validated Slice 176 binds that same exact lifecycle observation to
+the immutable final-live authored recipe. Declared authored sources and exact
+empty replays remain distinct, every active runtime family and collision
+requirement remains separate, and the detached value cannot construct, reload,
+register, or reveal a Region;
+automated-validated Slice 177 exposes that inert recipe only through the
+explicit private preservation no-op. Additive schema-v50 reports bounded
+authored/source totals and per-source count records while placement definitions,
+runtime handles, executable reload, reconstruction, collision rebuild,
+mutation, arrival, visibility, and lifecycle authority remain absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -14221,6 +14231,63 @@ explicit private preservation no-op using an additive schema, allowing real
 dense and quiet candidate recipes to be inspected before any constructor or
 reload operation is designed.
 
+### Slice 177: Private exact reload-recipe diagnostics
+
+Objective: expose Slice 176's detached exact source recipe through the existing
+explicit private preservation no-op without connecting an executable Region
+loader or expanding the capture route.
+
+Implemented:
+
+- additive schema-v50 (`layered-map-parity-event-v50`) retains every v49 field
+  and extends only `packedRegionNpcOwnerPreservationNoOp` with a nullable
+  `sourceReloadRecipe`;
+- GameEventHandler captures the Slice 174 absence preflight and then composes
+  the Slice 176 recipe under the same real Slice 173 Region lifecycle boundary,
+  before entering the nested event/World/NPC preservation no-op;
+- lifecycle-entry results require both values to align on generation,
+  requirements tick, observation tick, residency-mirror version, and exact
+  source count, while an owner-scope refusal carries null values for both;
+- compact JSON reports declared and exact-empty authored sources, final-live,
+  manifest, supersession, and dependency-reference totals, unresolved runtime-
+  family totals, and one bounded count-only record per source; and
+- the existing `::layerparity preserve-noop` / `::lp preserve-noop` action
+  remains the only population route. Ordinary events and other explicit
+  actions retain null no-op evidence.
+
+Safety boundary:
+
+- schema-v49 remains immutable for accepted captures;
+- no placement definitions, entity state, tile payloads, archive data, runtime
+  handles, credentials, or player identity text are serialized;
+- every executable-reload, Region-construction, source-absence,
+  reconstruction, authored-replay, collision-rebuild, registry, mirror, cache,
+  arrival, visibility, mutation, and lifecycle-authority field is fixed at
+  false;
+- the diagnostic remains disabled by default and private/local only; and
+- no source is removed, unloaded, created, reconstructed, or re-registered.
+
+Automated validation status:
+
+- schema fixtures validate the complete lifecycle-entry shape, exact null
+  owner-refusal shape, mandatory recipe presence, declared-empty invariants,
+  and rejection of every executable or authoritative bit;
+- structural guards prove preflight capture precedes recipe composition under
+  the real source boundary, both precede the owner no-op, aligned values reach
+  metadata, and deterministic bounded serialization omits placement payloads;
+- v49 remains independently validated and immutable while the historical
+  observer fixture and schema registry advance to v50;
+- the complete layered-map suite passes 595 tests across 176 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 815 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. Once checkpointed, the next
+meaningful owner route should leave one quieter area for a dense area and
+invoke `preserve-noop` while standing still after arrival. The capture should
+confirm exact source/recipe alignment, show declared versus empty authored
+coverage, and preserve normal interaction afterward.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14613,6 +14680,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 175 by exposing the exact source-absence preflight through private diagnostics. | Implemented and automated-validated; additive schema-v49 extends only the explicit preservation no-op with detached aggregate, blocker-summary, and per-source evidence captured inside the real source boundary, while every mutation and authority field remains false; 587 focused tests pass across 174 files, and the 814/488 Ant build passes |
 | 2026-07-23 | Accept the Slice 175 private source-absence comparison. | Owner-validated; complementary 98-source and 36-source v49 cohorts validate in full, every source has available tile storage but lacks both collision rebuild and a Region reload path, NPC/authored-object/ground-item blockers vary with content, one active-player source remains explicit per cohort, all mutation and authority facts remain false, and normal movement, teleport, scenery, gathering, combat, and NPC interaction continue afterward |
 | 2026-07-23 | Continue with Slice 176 by binding selected resident sources to an inert exact Region reload recipe. | Implemented and automated-validated; the real lifecycle boundary, source-absence inventory, and final-live authored generation compose exact ordered source recipes, absent manifest entries become explicit empty authored replays, all active runtime families and collision remain separate, no loader or mutation is connected, 591 focused tests pass across 175 files, and the 815/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 177 by exposing the inert exact reload recipe through private diagnostics. | Implemented and automated-validated; additive schema-v50 extends only the explicit preservation no-op with bounded source-level recipe counts, v49 remains immutable, lifecycle-entry evidence requires aligned preflight and recipe values, every executable/mutation/authority fact stays false, 595 focused tests pass across 176 files, and the 815/488 Ant build passes |
 
 ## Next Discussion
 
