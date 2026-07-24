@@ -94,6 +94,7 @@ public final class RendererSettingsPanelFixture {
 			openGL,
 			"@yel@Test",
 			true,
+			"@gre@With tilt",
 			ScaledWindow.ScalingAlgorithm.INTEGER_SCALING,
 			2.0f,
 			Arrays.asList(1.0f, 2.0f, 3.0f),
@@ -123,7 +124,7 @@ public final class RendererSettingsPanelFixture {
 	private static void assertOpenGLRows() {
 		List<RendererSettingsPanel.Row> rows = RendererSettingsPanel.rows(state(true, true, true));
 		int[] expectedActions = {
-			-1000, 59, 72, 56, 63, 61, 62, 64, 60,
+			-1000, 59, 72, 73, 56, 63, 61, 62, 64, 60,
 			-1000, 66, -1000, 67, -1000, 68, -1000, 69,
 			-1000, 70, -1000, 71, -1000, 26, 42
 		};
@@ -131,6 +132,7 @@ public final class RendererSettingsPanelFixture {
 			"@yel@Graphics",
 			"@whi@Preset - @yel@Test",
 			"@whi@Sprites: @cya@Enhanced",
+			"@whi@Middle mouse - @gre@With tilt",
 			"@whi@Aspect Ratio - @gre@4:3",
 			"@whi@Borderless - @gre@On",
 			"@whi@Lighting - @yel@Directional",
@@ -166,16 +168,17 @@ public final class RendererSettingsPanelFixture {
 		}
 
 		List<RendererSettingsPanel.Row> disabled = RendererSettingsPanel.rows(state(true, false, false));
-		assertEquals(22, disabled.size(), "visibility-disabled OpenGL row count");
-		assertEquals("@yel@Visibility", disabled.get(21).label, "visibility section remains");
+		assertEquals(23, disabled.size(), "visibility-disabled OpenGL row count");
+		assertEquals("@yel@Visibility", disabled.get(22).label, "visibility section remains");
 	}
 
 	private static void assertSoftwareRowsAndScroll() {
 		List<RendererSettingsPanel.Row> rows = RendererSettingsPanel.rows(state(false, true, true));
-		int[] expectedActions = {-1000, 72, 49, 46, -1000, 26, 42};
+		int[] expectedActions = {-1000, 72, 73, 49, 46, -1000, 26, 42};
 		String[] expectedLabels = {
 			"@yel@Graphics",
 			"@whi@Sprites: @cya@Enhanced",
+			"@whi@Middle mouse - @gre@With tilt",
 			"@whi@Scaling - ",
 			"@whi@Scaling type - @gre@@gre@Integer",
 			"@yel@Visibility",
@@ -192,7 +195,7 @@ public final class RendererSettingsPanelFixture {
 		PANEL.draw(visible, state(false, true, true), input(0, 0, 0, 0), 800, (short) 184, 803, 66);
 		assertEquals(3, countScalingDraws(visible.drawn), "visible scaling controls");
 		FakeView scrolled = new FakeView();
-		scrolled.scroll = 3;
+		scrolled.scroll = 4;
 		PANEL.draw(scrolled, state(false, true, true), input(0, 0, 0, 0), 800, (short) 184, 803, 66);
 		assertEquals(0, countScalingDraws(scrolled.drawn), "scrolled scaling controls");
 	}
@@ -208,7 +211,7 @@ public final class RendererSettingsPanelFixture {
 	}
 
 	private static void assertStableActionDispatch() {
-		int[] ids = {56, 59, 60, 61, 62, 63, 64, 72, 26, 42};
+		int[] ids = {56, 59, 60, 61, 62, 63, 64, 72, 73, 26, 42};
 		RendererSettingsPanel.Action[] expected = {
 			RendererSettingsPanel.Action.RENDER_SURFACE,
 			RendererSettingsPanel.Action.RENDERER_PROFILE,
@@ -218,6 +221,7 @@ public final class RendererSettingsPanelFixture {
 			RendererSettingsPanel.Action.WINDOW_MODE,
 			RendererSettingsPanel.Action.TERRAIN_VARIATION,
 			RendererSettingsPanel.Action.REMASTERED_SPRITES,
+			RendererSettingsPanel.Action.MIDDLE_MOUSE,
 			RendererSettingsPanel.Action.HIDE_ROOFS,
 			RendererSettingsPanel.Action.HIDE_UNDERGROUND_FLICKER
 		};
@@ -267,17 +271,17 @@ public final class RendererSettingsPanelFixture {
 		plus.selected = 49;
 		FakeActions plusActions = new FakeActions();
 		assertTrue(PANEL.handleSelectedAction(
-			plus, state(false, true, true), input(965, 114, 1, 0), 100, 66, plusActions),
+			plus, state(false, true, true), input(965, 129, 1, 0), 100, 66, plusActions),
 			"software plus handled");
 		assertEquals(RendererSettingsPanel.Action.SCALE_UP, plusActions.performed.get(0),
 			"software plus action");
 
 		FakeView hiddenPlus = new FakeView();
 		hiddenPlus.selected = 49;
-		hiddenPlus.scroll = 3;
+		hiddenPlus.scroll = 4;
 		FakeActions hiddenPlusActions = new FakeActions();
 		assertTrue(PANEL.handleSelectedAction(
-			hiddenPlus, state(false, true, true), input(965, 114, 1, 0), 100, 66,
+			hiddenPlus, state(false, true, true), input(965, 129, 1, 0), 100, 66,
 			hiddenPlusActions), "scrolled software row remains non-actionable");
 		assertEquals(0, hiddenPlusActions.performed.size(), "scrolled software click ignored");
 	}

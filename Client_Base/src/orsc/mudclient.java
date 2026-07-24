@@ -13666,6 +13666,9 @@ public final class mudclient implements Runnable {
 			case REMASTERED_SPRITES:
 				this.toggleRemasteredSprites();
 				break;
+			case MIDDLE_MOUSE:
+				this.cycleDesktopMiddleMouseMode();
+				break;
 			case HIDE_ROOFS:
 				this.toggleRoofVisibilitySetting();
 				break;
@@ -13673,6 +13676,13 @@ public final class mudclient implements Runnable {
 				this.toggleUndergroundFlickerSetting();
 				break;
 		}
+	}
+
+	private void cycleDesktopMiddleMouseMode() {
+		DesktopMiddleMouseSettings.cycleMode();
+		Properties properties = loadClientSettings();
+		DesktopMiddleMouseSettings.saveToClientSettings(properties);
+		saveClientSettings(properties);
 	}
 
 	private void toggleRoofVisibilitySetting() {

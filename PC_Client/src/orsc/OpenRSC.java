@@ -70,6 +70,7 @@ public class OpenRSC extends ORSCApplet {
 				RendererTerrainVariationSettings.loadFromClientSettings(props);
 				RendererToneSettings.loadFromClientSettings(props);
 				RendererExperimentalSettings.loadFromClientSettings(props);
+				DesktopMiddleMouseSettings.loadFromClientSettings(props);
 				LegacySoftwareScalingSettings.loadFromClientSettings(props);
 			} catch (Exception e) {
 				System.out.println("Something went wrong loading client settings");

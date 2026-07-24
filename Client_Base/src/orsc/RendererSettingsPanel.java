@@ -27,11 +27,12 @@ final class RendererSettingsPanel {
 	static final int GAMMA_SLIDER = 70;
 	static final int SATURATION_SLIDER = 71;
 	static final int REMASTERED_SPRITES = 72;
+	static final int MIDDLE_MOUSE = 73;
 
 	private static final int SCALE_MINUS_X_OFFSET = 96;
 	private static final int SCALE_LABEL_X_OFFSET = 73;
 	private static final int SCALE_PLUS_X_OFFSET = 45;
-	private static final int LEGACY_SCALING_ROW_INDEX = 2;
+	private static final int LEGACY_SCALING_ROW_INDEX = 3;
 
 	private static final int ACTION_SCALING_ROW = 49;
 	private static final int ACTION_SCALING_TYPE = 46;
@@ -57,6 +58,7 @@ final class RendererSettingsPanel {
 		WINDOW_MODE,
 		TERRAIN_VARIATION,
 		REMASTERED_SPRITES,
+		MIDDLE_MOUSE,
 		HIDE_ROOFS,
 		HIDE_UNDERGROUND_FLICKER
 	}
@@ -154,6 +156,7 @@ final class RendererSettingsPanel {
 		final boolean openGLPrimary;
 		final String rendererProfileLabel;
 		final boolean remasteredSprites;
+		final String middleMouseLabel;
 		final ScalingAlgorithm scalingType;
 		final float renderingScalar;
 		final List<Float> scalingOptions;
@@ -175,6 +178,7 @@ final class RendererSettingsPanel {
 		final boolean undergroundFlickerHidden;
 
 		State(boolean openGLPrimary, String rendererProfileLabel, boolean remasteredSprites,
+			  String middleMouseLabel,
 			  ScalingAlgorithm scalingType, float renderingScalar, List<Float> scalingOptions,
 			  String aspectLabel, boolean borderless, String lightingLabel, String geometryLabel,
 			  String terrainVariationLabel, String fogLabel, int terrainReliefLevel,
@@ -184,6 +188,7 @@ final class RendererSettingsPanel {
 			this.openGLPrimary = openGLPrimary;
 			this.rendererProfileLabel = rendererProfileLabel;
 			this.remasteredSprites = remasteredSprites;
+			this.middleMouseLabel = middleMouseLabel;
 			this.scalingType = scalingType;
 			this.renderingScalar = renderingScalar;
 			this.scalingOptions = scalingOptions;
@@ -214,6 +219,7 @@ final class RendererSettingsPanel {
 				openGLPrimary,
 				RendererProfileSettings.getMode().label,
 				RemasteredSpriteSettings.isEnabled(),
+				DesktopMiddleMouseSettings.getMode().label,
 				scalingType,
 				renderingScalar,
 				scalingOptions,
@@ -320,6 +326,7 @@ final class RendererSettingsPanel {
 		}
 		addRow(rows, "@whi@Sprites: "
 			+ (state.remasteredSprites ? "@cya@Enhanced" : "@gre@Classic"), REMASTERED_SPRITES);
+		addRow(rows, "@whi@Middle mouse - " + state.middleMouseLabel, MIDDLE_MOUSE);
 
 		if (!state.openGLPrimary) {
 			addRow(rows, "@whi@Scaling - ", ACTION_SCALING_ROW);
@@ -387,6 +394,9 @@ final class RendererSettingsPanel {
 		}
 		if (selectedAction == REMASTERED_SPRITES) {
 			return Action.REMASTERED_SPRITES;
+		}
+		if (selectedAction == MIDDLE_MOUSE) {
+			return Action.MIDDLE_MOUSE;
 		}
 		if (selectedAction == ACTION_HIDE_ROOFS && state.roofToggleAvailable) {
 			return Action.HIDE_ROOFS;
