@@ -182,7 +182,7 @@ def main() -> None:
     require_contains(NPC, "return getDef().getRanged();")
     require_contains(NPC, "return NpcAttackStyleProfile.forNpc(this).getMagicOffense(this);")
 
-    require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(distance)")
+    require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(npc, distance)")
     require_contains(NPC_BEHAVIOR, "else if (npc.inCombat())")
     require_contains(NPC_BEHAVIOR, "target = npc.getOpponent();")
     require_contains(NPC_BEHAVIOR, "tryProjectileAttack(now);")

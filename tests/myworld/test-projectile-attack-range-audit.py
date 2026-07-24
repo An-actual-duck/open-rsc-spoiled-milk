@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Characterize projectile attack-distance behavior without changing balance.
+"""Validate projectile attack-distance behavior and the Elder range override.
 
-This test intentionally pins the current server contract. It gives the
-projectile-range audit deterministic boundary coverage while the proposed NPC
-range policy remains pending review.
+This test pins the current server contract, including default NPC behavior and
+the approved definition-backed Elder Green Dragon exception.
 """
 
 import json
@@ -21,6 +20,8 @@ PROJECTILE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projecti
 LEGACY_NPC_RANGE = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEventNpc.java"
 NPC_PROFILE = ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcAttackStyleProfile.java"
 NPC_BEHAVIOR = ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java"
+NPC_DEF = ROOT / "server/src/com/openrsc/server/external/NPCDef.java"
+ENTITY_HANDLER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.java"
 ENTITY = ROOT / "server/src/com/openrsc/server/model/entity/Entity.java"
 ELDER_SPECIALS = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java"
 CANNON = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/FireCannonEvent.java"
@@ -28,6 +29,7 @@ HOSTILE_PATH = ROOT / "server/src/com/openrsc/server/model/PathValidation.java"
 MYWORLD_CONF = ROOT / "server/myworld.conf"
 MYWORLD_HOST_CONF = ROOT / "server/myworld-host.conf"
 MYWORLD_NPC_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldNpcLocs.json"
+MYWORLD_NPC_DEFS = ROOT / "server/conf/server/defs/NpcDefsMyWorld.json"
 
 
 def fail(message: str) -> None:
@@ -103,10 +105,20 @@ def find_elder_location() -> dict:
     return {}
 
 
+def find_elder_override() -> dict:
+    data = json.loads(read(MYWORLD_NPC_DEFS))
+    for definition in data["npcs"]:
+        if int(definition["id"]) == 844:
+            return definition
+    fail("NpcDefsMyWorld.json has no Elder Green Dragon (844)")
+    return {}
+
+
 def main() -> None:
     range_utils = read(RANGE_UTILS)
     npc_profile = read(NPC_PROFILE)
     npc_behavior = read(NPC_BEHAVIOR)
+    entity_handler = read(ENTITY_HANDLER)
     projectile_event = read(PROJECTILE_EVENT)
     entity = read(ENTITY)
     elder_specials = read(ELDER_SPECIALS)
@@ -118,7 +130,8 @@ def main() -> None:
     dart = int_constant(range_utils, "THROWING_DART_RANGE") + bonus
     spell = config_int(MYWORLD_CONF, "spell_range_distance") + bonus
     hosted_spell = config_int(MYWORLD_HOST_CONF, "spell_range_distance") + bonus
-    npc = int_constant(npc_profile, "DEFAULT_PROJECTILE_RANGE")
+    npc_default = int_constant(npc_profile, "DEFAULT_PROJECTILE_RANGE")
+    elder_projectile = int(find_elder_override().get("projectileRange", 0))
     elder_aoe = int_constant(elder_specials, "AOE_RADIUS")
     cannon = int_constant(read(CANNON), "MAX_DISTANCE")
 
@@ -129,7 +142,8 @@ def main() -> None:
         "throwing dart": (dart, 6),
         "manual/autocast spell": (spell, 6),
         "hosted spell": (hosted_spell, 6),
-        "modern NPC projectile": (npc, 5),
+        "default modern NPC projectile": (npc_default, 5),
+        "Elder normal projectile": (elder_projectile, 7),
         "Elder projectile AOE": (elder_aoe, 6),
         "multicannon targeting": (cannon, 8),
     }
@@ -155,12 +169,31 @@ def main() -> None:
     require(read(MAGIC_EVENT), "player.withinRange(target, spellRange)", "magic per-tick range check")
     require(read(MAGIC_EVENT), "PathValidation.checkPath(", "magic launch collision check")
 
-    require(npc_profile, "return DEFAULT_PROJECTILE_RANGE;", "shared modern NPC projectile range")
+    require(read(NPC_DEF), "public int projectileRange;", "NPC projectile range field")
+    require(read(NPC_DEF), "public int getProjectileRange()", "NPC projectile range getter")
+    require(
+        entity_handler,
+        'npc.has("projectileRange")',
+        "optional NPC projectile range definition loading",
+    )
+    if entity_handler.count("readProjectileRange(npc,") != 3:
+        fail("base, patch, and My World NPC definition paths must share projectile-range validation")
+    require(
+        entity_handler,
+        "projectileRange must be between 1 and 15",
+        "NPC projectile range loader bounds",
+    )
+    require(
+        npc_profile,
+        "npc.getDef().getProjectileRange() > 0",
+        "positive NPC range override selection",
+    )
+    require(npc_profile, "return DEFAULT_PROJECTILE_RANGE;", "default modern NPC projectile range")
     require(npc_profile, "if (isDragon(npc))", "dragon profile selection")
     require(npc_profile, "return MELEE_MAGIC;", "dragon melee/magic profile")
     require(npc_behavior, "Math.max(Math.abs(npc.getX() - target.getX())", "NPC Chebyshev distance")
-    require(npc_behavior, "profile.prefersProjectileAtDistance(distance)", "NPC distance preference gate")
-    require(npc_behavior, "npc.withinRange(target, profile.getProjectileRange())", "NPC firing-range gate")
+    require(npc_behavior, "profile.prefersProjectileAtDistance(npc, distance)", "NPC distance preference gate")
+    require(npc_behavior, "npc.withinRange(target, profile.getProjectileRange(npc))", "NPC firing-range gate")
     require(
         npc_behavior,
         "PathValidation.checkHostileProjectilePath(npc.getWorld(), npc.getLocation(), target.getLocation())",

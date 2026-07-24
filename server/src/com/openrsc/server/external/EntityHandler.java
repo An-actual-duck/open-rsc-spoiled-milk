@@ -42,6 +42,7 @@ public final class EntityHandler {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private static final Set<String> MYWORLD_NPC_OVERRIDE_FIELDS = new HashSet<>(Arrays.asList(
 		"id", "name", "description", "attack", "strength", "hits", "defense", "ranged",
+		"projectileRange",
 		"meleeOffense", "rangedOffense", "magicOffense",
 		"meleeDefense", "rangedDefense", "magicDefense",
 		"meleeDefenseMultiplier", "rangedDefenseMultiplier", "magicDefenseMultiplier",
@@ -343,6 +344,7 @@ public final class EntityHandler {
 					def.hits = npc.getInt("hits");
 					def.defense = npc.getInt("defense");
 					def.ranged = npc.getBoolean("ranged") ? 1 : 0;
+					def.projectileRange = readProjectileRange(npc, "Npc definition " + i);
 					def.meleeOffense = npc.has("meleeOffense") ? npc.getInt("meleeOffense") : 0;
 					def.rangedOffense = npc.has("rangedOffense") ? npc.getInt("rangedOffense") : 0;
 					def.magicOffense = npc.has("magicOffense") ? npc.getInt("magicOffense") : 0;
@@ -399,6 +401,7 @@ public final class EntityHandler {
 						.hits((int)ifZeroReserve(npc.getInt("hits")))
 						.defense((int)ifZeroReserve(npc.getInt("defense")))
 						.ranged(npc.getBoolean("ranged") ? 1 : 0)
+						.projectileRange(readProjectileRange(npc, "Npc patch definition " + npc.getInt("id")))
 						.meleeOffense(npc.has("meleeOffense") ? (int)ifZeroReserve(npc.getInt("meleeOffense")) : 0)
 						.rangedOffense(npc.has("rangedOffense") ? (int)ifZeroReserve(npc.getInt("rangedOffense")) : 0)
 						.magicOffense(npc.has("magicOffense") ? (int)ifZeroReserve(npc.getInt("magicOffense")) : 0)
@@ -473,6 +476,9 @@ public final class EntityHandler {
 				if (npc.has("hits")) staged.hits = (int) ifZeroReserve(npc.getInt("hits"));
 				if (npc.has("defense")) staged.defense = (int) ifZeroReserve(npc.getInt("defense"));
 				if (npc.has("ranged")) staged.ranged = npc.getBoolean("ranged") ? 1 : 0;
+				if (npc.has("projectileRange")) {
+					staged.projectileRange = readProjectileRange(npc, "Npc override " + npcId);
+				}
 				if (npc.has("meleeOffense")) staged.meleeOffense = (int) ifZeroReserve(npc.getInt("meleeOffense"));
 				if (npc.has("rangedOffense")) staged.rangedOffense = (int) ifZeroReserve(npc.getInt("rangedOffense"));
 				if (npc.has("magicOffense")) staged.magicOffense = (int) ifZeroReserve(npc.getInt("magicOffense"));
@@ -624,6 +630,17 @@ public final class EntityHandler {
 
 	private long ifZeroReserve(long value) {
 		return value == 0 ? ZERO_RESERVED : value;
+	}
+
+	private int readProjectileRange(JSONObject npc, String source) {
+		if (!npc.has("projectileRange")) {
+			return 0;
+		}
+		int projectileRange = npc.getInt("projectileRange");
+		if (projectileRange < 1 || projectileRange > 15) {
+			throw new IllegalArgumentException(source + " projectileRange must be between 1 and 15");
+		}
+		return projectileRange;
 	}
 
 	private void patchItems() {

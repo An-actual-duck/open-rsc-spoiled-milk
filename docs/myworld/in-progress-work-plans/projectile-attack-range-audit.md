@@ -1,38 +1,42 @@
 # Player and Hostile NPC Projectile-Range Audit
 
-Status: investigation complete; gameplay implementation pending manager/user
-review
+Status: Elder priority implementation complete; broader range diversification
+and tactical retreat remain planned work
 
 Date: 2026-07-23
 
-Branch: `docs/projectile-attack-range-audit`
+Audit branch: `docs/projectile-attack-range-audit`
 
-Baseline: `8b92f31dde17150325e4fd04ce6c6b4319ed887b`
+Implementation branch: `fix/elder-dragon-projectile-range`
+
+Audit baseline: `8b92f31dde17150325e4fd04ce6c6b4319ed887b`
+
+Implementation baseline: `f937186888e51c859e518222629b751c82cb071a`
 
 ## Scope and conclusion
 
 This audit traces projectile distance independently from the already selected
-hostile-projectile collision policy. It does not change a range, aggression
-rule, definition, or combat event.
+hostile-projectile collision policy. Its first approved implementation adds a
+reusable NPC-definition range override and changes only the Elder Green
+Dragon's normal projectile radius.
 
-The priority Elder Green Dragon report is a real range mismatch:
+The original Elder Green Dragon report was a real range mismatch:
 
-- every modern NPC ranged/magic profile has a fixed maximum radius of `5`;
+- modern NPC ranged/magic profiles default to radius `5`;
 - player longbows have radius `7`;
 - player shortbows, crossbows, darts, and combat spells have radius `6`;
-- the Elder Green Dragon is a modern `MELEE_MAGIC` NPC and has no range
-  override, so its normal fire projectile stops at radius `5`.
+- the Elder Green Dragon is a modern `MELEE_MAGIC` NPC and previously inherited
+  radius `5`.
 
-The result is deterministic. At center-tile distance `6`, a player can attack
-with a spell, shortbow, crossbow, or dart while the Elder can only pursue. At
-distance `7`, a longbow can do the same. The recently implemented collision
-policy correctly allows the Elder to shoot over lava, but it cannot make an
-attack whose distance gate fails.
+The approved correction authors `projectileRange: 7` for Elder ID `844`.
+Ordinary NPCs without an override remain at `5`; Elder normal ranged/magic
+attacks now reach the longest ordinary player weapon. The recently implemented
+collision policy remains an independent launch requirement.
 
-There is no data or code marker that identifies an NPC as intentionally
-outrangeable. The current system therefore cannot express the desired policy
-of leaving selected enemies at range `5` while giving major threats equivalent
-reach.
+The new optional field also provides the data marker the audit found missing:
+future enemies can explicitly receive different ranges without changing their
+attack-style profile. Selecting those ranges, and diversifying player weapons
+and spells, remains a separate balance phase.
 
 ## Authoritative distance formula
 
@@ -138,9 +142,9 @@ NpcAttackStyleProfile.forNpc
   -> ProjectileEvent
 ```
 
-`NpcAttackStyleProfile.DEFAULT_PROJECTILE_RANGE` is `5`, and every enum profile
-returns it. Ranged and magic share the same range, pursuit, timer, and collision
-gate.
+`NpcAttackStyleProfile.DEFAULT_PROJECTILE_RANGE` is `5`. An NPC's positive
+definition-backed `projectileRange` overrides that default. Ranged and magic
+still share the same selected range, pursuit, timer, and collision gate.
 
 | Profile | Behavior at distance 1 | Behavior at distance 2–5 | Beyond 5 |
 | --- | --- | --- | --- |
@@ -163,7 +167,7 @@ Definitions are merged from `NpcDefs.json`, `NpcDefsCustom.json`, and
 
 | NPC | ID | Combat level | Profile | Normal projectile radius | Player advantage |
 | --- | ---: | ---: | --- | ---: | --- |
-| Elder Green Dragon | 844 | 275 | `MELEE_MAGIC` | **5** | +1 most projectiles, +2 longbow |
+| Elder Green Dragon | 844 | 275 | `MELEE_MAGIC` | **7** | none |
 | King Black Dragon | 477 | 245 | `MELEE_MAGIC` | **5** | +1/+2, subject to separate legacy breath response |
 | Balrog | 809 | 217 | `MELEE_MAGIC` | **5** | +1/+2 |
 | Black Dragon | 291 | 200 | `MELEE_MAGIC` | **5** | +1/+2 |
@@ -192,7 +196,7 @@ not exhaustive of every duplicate definition.
 - authored movement bounds: `(249,3416)` through `(277,3444)`
 - profile: `MELEE_MAGIC`
 - normal projectile: magic/fire
-- normal projectile radius: `5`
+- normal projectile radius: `7` (definition override; formerly `5`)
 - natural aggression radius under My World config: `1`
 - normal target/leash envelope: authored bounds expanded by four, inclusive:
   `(245,3412)` through `(281,3448)`
@@ -209,8 +213,8 @@ is:
 | Offset from Elder | Player action | Elder normal response |
 | --- | --- | --- |
 | `(5,0)` or `(5,5)` | all projectile families can launch | normal magic can launch if timer/path allow |
-| `(6,0)` or `(6,6)` | shortbow, crossbow, dart, spell, longbow can launch | no normal launch; pursues |
-| `(7,0)` or `(7,7)` | longbow can launch | no normal launch; pursues |
+| `(6,0)` or `(6,6)` | shortbow, crossbow, dart, spell, longbow can launch | normal magic can launch if timer/path allow |
+| `(7,0)` or `(7,7)` | longbow can launch | normal magic can launch if timer/path allow |
 | `(8,0)` or `(8,8)` | no ordinary player family can launch | no normal launch; pursues if target retained |
 
 Because range is square, the diagonal visual gap is substantially longer than
@@ -229,12 +233,16 @@ The next `NpcBehavior` tick:
 
 1. retains the player if inside the expanded spawn bounds and otherwise valid;
 2. tries the normal projectile;
-3. at distance `6` or `7`, fails the profile range gate;
-4. attempts to walk toward the player.
+3. at distance `6` or `7`, passes the Elder's definition-backed range gate;
+4. launches if collision and its combat timer also permit.
 
-Lava or ordinary blocking scenery can stop that walk while remaining
-transparent to hostile projectiles. At distance `6` or `7`, however, no
-projectile exists because range fails first. This is the reported safe attack.
+At distance `6` or `7`, the Elder no longer needs to walk before launching.
+Beyond `7`, it still pursues if the target is retained; lava or ordinary solid
+scenery can stop that pursuit while remaining transparent to hostile
+projectiles. The old range-only safe attack at distance `6` or `7` is therefore
+removed for the Elder. Authored movement bounds can still prevent an NPC from
+closing a larger gap, which is the separate tactical-retreat problem planned
+below.
 
 ### Elder special ranges
 
@@ -244,9 +252,9 @@ projectile exists because range fails first. This is the reported safe attack.
 - melee sweep radius `2`.
 
 Fireshot/burn are rolled only after an ordinary Elder projectile has already
-hit a surviving primary target. They do not let the Elder initiate its normal
-attack at distance `6`. If the Elder legally hits someone else at radius `5`,
-the resulting AOE can select another clear-line player at radius `6`.
+hit a surviving primary target. The Elder's normal attack can now initiate
+through radius `7`; the resulting AOE still independently selects clear-line
+players only through radius `6`.
 
 At AOE launch, every player must pass radius `6` and the hostile-projectile
 collision policy. Fireshot waits one tick and rechecks state/radius `6`, but
@@ -262,7 +270,7 @@ These are distinct from firing distance:
 | Natural acquisition | NPC-specific hardcode or configured `aggro_range`; state/level/bounds checks; no projectile LOS requirement | 1 |
 | Prior-threat acquisition | damage contributor inside authored bounds +4, then `canAggro` | expanded bounds |
 | Immediate ranged/magic retaliation | delayed player impact can set chasing directly | no natural-radius gate |
-| Maximum normal firing | attack profile | 5 |
+| Maximum normal firing | positive NPC definition override, else attack-profile default | 7 |
 | Pursuit | after failed projectile gate, direct `walkToEntity` under current config | target inside bounds +4 |
 | Melee engagement | predicted next step within 1 and adjacent collision passes | 1 |
 | Leash/target reset | target outside authored bounds +4 causes roaming | `(245,3412)`–`(281,3448)` inclusive |
@@ -314,8 +322,8 @@ start.
 ### Autonomous modern combat
 
 `NpcBehavior.tryProjectileAttack` is the active general NPC ranged/magic path.
-It uses radius `5`, the semantic hostile collision API, and the delayed
-`ProjectileEvent`.
+It uses the optional NPC definition override or default radius `5`, the
+semantic hostile collision API, and the delayed `ProjectileEvent`.
 
 ### `RangeEventNpc`
 
@@ -335,9 +343,8 @@ There are three distinct behaviors:
 | `RangeUtils.applyDragonFireBreath` on first bow/thrown attack | authentic Dragon and KBD IDs only | direct response with no independent distance/collision check; inherits the player's legal radius of 5–7 |
 | `SpellHandler` magic retaliation | authentic Dragon and KBD IDs only | inherits player spell radius 6 and additionally checks hostile collision |
 
-The latter two do not include Elder ID `844`. The first is an adjacent melee
-script and cannot compensate for a failed normal projectile at radius `6` or
-`7`.
+The latter two do not include Elder ID `844`. The first remains an adjacent
+melee script and is independent of the Elder's normal radius-7 projectile.
 
 The `RangeUtils` direct breath response is a policy inconsistency: a Dragon or
 KBD can apply that one-time response at a longbow's radius `7`, even though its
@@ -372,19 +379,23 @@ AND hostile projectile path clear
 AND attack timer ready
 ```
 
-This explains the changed Elder report cleanly. The original cross-lava
-failure was collision. After the collision fix, a player within five can be
-hit over lava. A player at six or seven remains safe because no normal Elder
-projectile can be created.
+This separates the two Elder reports cleanly. The original cross-lava failure
+was collision. After the collision fix, lava no longer blocks launch. The
+definition-backed range change now also permits a normal Elder projectile at
+six or seven, provided the semantic collision path and attack timer pass.
 
 ## Boundary characterization results
 
-`tests/myworld/test-projectile-attack-range-audit.py` pins, without modifying
-runtime values:
+`tests/myworld/test-projectile-attack-range-audit.py` now guards both the
+original characterization and the approved Elder implementation:
 
 - all player family calculations and both My World spell configs;
 - cardinal and diagonal boundaries for radii 5, 6, 7, 8, and 15;
-- modern NPC shared radius `5` and dragon profile selection;
+- modern NPC default radius `5`, the definition-backed selection path, and
+  dragon profile selection;
+- generated Elder ID `844` override `projectileRange: 7`;
+- NPC-definition loading/copying and generator validation for the optional
+  range;
 - recurring player range/path checks;
 - modern and legacy hostile launch collision call sites;
 - Elder AOE radius `6` and its delayed range-only recheck;
@@ -398,12 +409,11 @@ drift.
 
 ## Intentional versus unintended safe spots
 
-### Confirmed unintended/high-confidence
+### Resolved unintended/high-confidence
 
 - **Elder Green Dragon (844):** the task explicitly identifies it as a major
-  threat that should likely have longer/equivalent reach. Its radius `5` comes
-  only from the global default, not an authored decision. This is a
-  high-confidence unintended mismatch.
+  threat that needs equivalent reach. It now has an authored radius of `7`
+  rather than implicitly inheriting the default `5`.
 
 ### Strong review candidates
 
@@ -423,17 +433,18 @@ It is not possible to produce an authoritative intentional/unintentional list
 from current data. Treating every profiled enemy as range `7` would erase the
 selected-enemy exception the task explicitly wants.
 
-## Recommended policy
+## Selected policy
 
 ### Data policy
 
-Add an optional server-authored NPC projectile range with a default of `5`.
+An optional server-authored NPC projectile range now exists with a default of
+`5`.
 `NpcAttackStyleProfile` should select attack style; it should not be the only
 owner of every NPC's distance. A definition-backed override makes intent
 reviewable and permits characterization of every major threat without
 hardcoding arena coordinates.
 
-Recommended conceptual resolution:
+Implemented resolution:
 
 ```text
 npc definition override, if present
@@ -446,9 +457,9 @@ leash as a side effect of increasing one boss's firing reach.
 
 ### Elder Green Dragon values
 
-Recommended initial implementation:
+Implemented initial values:
 
-| Elder parameter | Current | Recommended | Reason |
+| Elder parameter | Previous | Current | Reason |
 | --- | ---: | ---: | --- |
 | Normal ranged/magic projectile radius | 5 | **7** | equals the longest ordinary player weapon and removes both +1 and +2 safe bands |
 | Natural acquisition radius | 1 | **1 (unchanged)** | not required for retaliation; altering proactive boss aggression is a separate design choice |
@@ -462,7 +473,8 @@ longbows safe at `7`. Radius `7` is the consistent equivalent-reach value.
 
 ### Broader rollout
 
-1. Implement the optional per-NPC range owner and Elder override `7`.
+1. **Complete:** implement the optional per-NPC range owner and Elder override
+   `7`.
 2. Add runtime integration tests at cardinal and diagonal distances 5/6/7/8,
    including collision and movement.
 3. Review KBD, Balrog, Black Dragon, Black Demons, Red Dragon, Chronozon, and
@@ -472,9 +484,143 @@ longbows safe at `7`. Radius `7` is the consistent equivalent-reach value.
 5. Separately review the first-hit Dragon/KBD breath inconsistency and the weak
    non-A* leash reset; neither is needed for the Elder range fix.
 
-## Implementation regression plan
+## Planned phase 2: diverse projectile ranges
 
-When values are authorized, add server-level tests for:
+The new NPC definition field is only the first data foundation. A deliberate
+range pass should make distance part of encounter and equipment identity
+without turning it into another global constant.
+
+### NPC design
+
+- Review major threats individually and explicitly author their intended
+  projectile range. The current candidates are listed above, but no additional
+  values are approved by this implementation.
+- Keep `5` as the compatibility default. An explicit `5` can later communicate
+  intentional outrangeability for important encounters.
+- Keep normal projectile range separate from natural acquisition, pursuit,
+  leash, AOE radius, and special-attack reach. A longer attack should not
+  silently make an NPC notice players sooner or roam farther.
+- Preserve the field's range of `1` through `15`. Fifteen is the current
+  delayed-projectile delivery limit; authoring a larger firing radius would
+  create projectiles that the delivery stage can reject.
+- Characterize pure ranged, pure magic, hybrid, dragon-breath, legacy event,
+  and scripted boss paths before assigning a value. A definition range governs
+  the modern normal attack and generic NPC reach query; it does not silently
+  rewrite a scripted special's own radius.
+
+### Player design
+
+Player range should eventually be data-driven at the correct level:
+
+- bows, crossbows, and thrown weapons should receive weapon/family metadata
+  with the current family calculation as a compatibility fallback;
+- ammunition should not own distance unless a particular ammunition type is
+  intentionally designed to change it;
+- combat spells should receive an optional per-spell casting range in their
+  authoritative definition, with the configured radius as the fallback;
+- special attacks and procs should explicitly say whether they inherit the
+  primary attack, perform a new caster-to-target check, or use an AOE/hop
+  radius.
+
+The server must remain authoritative, but the client interaction/path
+prediction must consume equivalent data so it does not propose attacks the
+server rejects. The implementation should name and test these separately:
+
+1. acquisition/click eligibility;
+2. approach radius;
+3. maximum firing radius;
+4. secondary AOE or chain radius;
+5. delayed impact limit;
+6. NPC pursuit and leash.
+
+Required coverage includes every weapon and spell family, manual versus
+autocast magic, equipment swaps between attack ticks, cardinal and diagonal
+boundaries, PvM and PvP, target movement, collision policy, secondary effects,
+and client/server data agreement.
+
+## Planned phase 3: radius-constrained tactical retreat
+
+The desired behavior is not a general flee mechanic. It specifically addresses
+an NPC that is being attacked by a player, wants to pursue that player, but
+cannot close into its attack radius because its authored movement envelope
+prevents the required pursuit step. Instead of standing at the boundary and
+letting the player attack indefinitely, the NPC should move away from the
+player inside its legal area. The player must then move closer to maintain the
+attack.
+
+### Missing architecture
+
+Today `NpcBehavior.handleAggro` calls `npc.walkToEntity(...)`. Path construction
+can stop at collision, while `WalkingQueue.processNextMovement` separately
+rejects a queued NPC destination outside its authored `NPCLoc` bounds and
+resets the path. Neither layer returns a structured failure reason to
+`NpcBehavior`.
+
+Retreat must therefore begin with an explicit pursuit result such as:
+
+```text
+PursuitOutcome:
+  MOVING
+  ALREADY_IN_ATTACK_RANGE
+  BLOCKED_BY_AUTHORED_BOUNDS
+  BLOCKED_BY_COLLISION
+  NO_ROUTE
+  INVALID_TARGET
+```
+
+The behavior must trigger only for `BLOCKED_BY_AUTHORED_BOUNDS`. Inferring it
+from an empty or finished walking queue would misclassify walls, closed doors,
+fences, void, lava, ordinary scenery, transient occupancy, disabled movement,
+or a genuinely unreachable route.
+
+### Proposed behavior
+
+1. Require a valid current player threat and recent player-originated attack;
+   natural roaming with no attacker must never cause tactical retreat.
+2. Try normal projectile/melee selection and pursuit first.
+3. When pursuit reports only an authored-bounds failure, choose a collision-
+   legal tile inside the NPC's hard movement envelope that increases Chebyshev
+   distance from the attacking player.
+4. Walk normally to the best deterministic candidate; never teleport, leave
+   authored bounds, heal, cure, or reset combat/threat ownership.
+5. Add a short cooldown and directional hysteresis so an NPC cannot oscillate
+   or rebuild retreat paths every tick.
+6. Cancel the retreat immediately when the target becomes attackable, threat
+   ends, the target dies/logs out, or the NPC dies, despawns, or is reset.
+7. If no legal retreat tile exists, remain in place rather than crossing
+   collision or bounds.
+
+For multiple attackers, the current/preferred threat should be selected
+deterministically; retreat should not bounce between players each tick. Guard
+Dog targeting restrictions and other combat ownership rules must continue to
+win. The first implementation should cover modern NPC behavior and explicitly
+leave legacy/scripted encounters unchanged until reviewed.
+
+### Retreat regression and visual plan
+
+- boundary-restricted NPC under player fire retreats inward/away;
+- the player must follow closer and the NPC resumes its normal attack once in
+  range;
+- no retreat occurs without a recent hostile player action;
+- walls, doors, fences, void, lava, scenery, occupancy, and general no-route
+  failures do not masquerade as authored-bounds failures;
+- cardinal, diagonal, corner, one-tile-bound, and no-valid-candidate cases;
+- default-range and explicit-range NPCs, including Elder radius `7`;
+- pure ranged/magic, hybrid, and melee NPCs;
+- multiple players, threat changes, and Guard Dog restrictions;
+- no oscillation, path churn, or abnormal world-tick load;
+- death, logout, despawn, reset, and target-leash cleanup;
+- current direct walking and optional improved/A* pathfinding configurations.
+
+This is a behavior change with significant encounter implications. It should
+receive deterministic movement tests, a private-server multi-player matrix,
+and extended visual observation before any broad activation.
+
+## Implementation regression coverage
+
+Current source-backed tests cover the definition/generator contract, default
+and Elder range selection, exact distance predicates, and all guarded call
+sites. A future deterministic full-world combat harness should add:
 
 - Elder fires at cardinal and diagonal radius `7`, not `8`;
 - ordinary default-range NPC still fires at `5`, not `6`;
@@ -505,7 +651,10 @@ When values are authorized, add server-level tests for:
 | Initial player attack positioning | `server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java` |
 | Square mob range formula | `server/src/com/openrsc/server/model/entity/Entity.java` |
 | NPC attack-style/range default | `server/src/com/openrsc/server/model/entity/npc/NpcAttackStyleProfile.java` |
+| Optional NPC projectile range field/loading | `server/src/com/openrsc/server/external/NPCDef.java`, `EntityHandler.java` |
+| Generated Elder range source | `tools/generators/npc-overrides/00-strength-overrides-and-bosses.json` |
 | NPC acquisition/pursuit/firing/leash | `server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java` |
+| NPC authored-bound movement enforcement | `server/src/com/openrsc/server/model/WalkingQueue.java` |
 | NPC prior-threat selection | `server/src/com/openrsc/server/model/entity/npc/Npc.java` |
 | Delayed projectile delivery | `server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java` |
 | Legacy NPC ranged event | `server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEventNpc.java` |

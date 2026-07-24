@@ -146,6 +146,7 @@ def test_npc_generator(generator: dict[str, object]) -> None:
                     {
                         "id": 201,
                         "strength": 12,
+                        "projectileRange": 6,
                         "meleeDefenseMultiplier": 0.5,
                         "rangedDefenseMultiplier": 0.5,
                         "magicDefenseMultiplier": 1.0,
@@ -193,6 +194,25 @@ def test_npc_generator(generator: dict[str, object]) -> None:
         result = run_manifest_generator(generator, source_dir, target_path)
         expect_failure(result, "npc generator unknown key guard", "unknown fields")
         (source_dir / "20-unknown-field.json").unlink()
+
+        write_json(
+            source_dir / "20-invalid-projectile-range.json",
+            {
+                "npcs": [
+                    {
+                        "id": 202,
+                        "projectileRange": 16,
+                    }
+                ]
+            },
+        )
+        result = run_manifest_generator(generator, source_dir, target_path)
+        expect_failure(
+            result,
+            "npc generator projectile range guard",
+            "projectileRange must be an integer from 1 through 15",
+        )
+        (source_dir / "20-invalid-projectile-range.json").unlink()
 
         target_path.write_text('{"npcs":[]}\n', encoding="utf-8")
         result = run_manifest_generator(generator, source_dir, target_path, check=True)

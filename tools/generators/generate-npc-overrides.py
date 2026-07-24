@@ -29,6 +29,7 @@ ALLOWED_NPC_FIELDS = {
     "topColour",
     "bottomColour",
     "skinColour",
+    "projectileRange",
     "meleeDefenseMultiplier",
     "rangedDefenseMultiplier",
     "magicDefenseMultiplier",
@@ -88,6 +89,13 @@ def validate_npc_entry(entry: object, source_path: Path) -> dict[str, Any]:
             continue
         if not isinstance(value, (int, float)):
             fail(f"{source_path.name} entry {npc_id} field {field} must be numeric")
+        if field == "projectileRange" and (
+            not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 15
+        ):
+            fail(
+                f"{source_path.name} entry {npc_id} field projectileRange "
+                "must be an integer from 1 through 15"
+            )
 
     return typed_entry
 

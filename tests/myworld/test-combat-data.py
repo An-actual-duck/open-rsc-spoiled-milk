@@ -334,6 +334,7 @@ def main() -> None:
         "meleeDefense",
         "rangedDefense",
         "magicDefense",
+        "projectileRange",
         "meleeDefenseMultiplier",
         "rangedDefenseMultiplier",
         "magicDefenseMultiplier",
@@ -835,6 +836,7 @@ def main() -> None:
     require_exact(npcs_by_id, 202, "meleeDefenseMultiplier", 1.0, "Dragon style-identity multipliers")
     require_exact(npcs_by_id, 202, "rangedDefenseMultiplier", 0.75, "Dragon style-identity multipliers")
     require_exact(npcs_by_id, 202, "magicDefenseMultiplier", 1.0, "Dragon style-identity multipliers")
+    require_exact(npcs_by_id, 844, "projectileRange", 7, "Elder Green Dragon projectile reach")
     require_exact(npcs_by_id, 789, "magicDefenseMultiplier", 1.0, "Battle mage style-identity multipliers")
 
     print("PASS: combat override data validated")
