@@ -781,6 +781,53 @@ public class RegionManager {
 			Thread.holdsLock(layeredRegionLifecycleLock));
 	}
 
+	/**
+	 * Copies one exact resident source's canonical tile states while its
+	 * lifecycle boundary remains active.
+	 *
+	 * <p>The immutable result contains no Region or TileValue handles. It is a
+	 * transient full-fidelity input whose dynamic products must be removed by a
+	 * terrain-only plan before any future initialization stage.</p>
+	 */
+	public List<LayeredTileState>
+		captureLayeredPackedRegionTerrainTileStates(
+			final LayeredPackedRegionSourceLifecycleBoundary boundary,
+			final int sourceOrdinal) {
+		LayeredPackedRegionSourceLifecycleBoundary checked =
+			Objects.requireNonNull(boundary, "boundary");
+		if (!Thread.holdsLock(layeredRegionLifecycleLock)
+			|| !checked.isRegionLifecycleBoundaryHeld()
+			|| checked.getResidencyMirrorVersion()
+				!= layeredRegionResidencyMirror.getVersion()
+			|| sourceOrdinal < 0
+			|| sourceOrdinal >= checked.getSelectedSourceCount()) {
+			throw new IllegalStateException(
+				"Terrain tile capture lacks its exact lifecycle boundary");
+		}
+		LayeredPackedRegionSourceLifecycleBoundary.PackedSource source =
+			checked.getSelectedSources().get(sourceOrdinal);
+		Region region = peekRegionFromSectorCoordinates(
+			source.getPackedRegionX(), source.getPackedRegionY());
+		if (region == null
+			|| !layeredRegionResidencyMirror.isPackedRegionRegistered(
+				source.getPackedRegionX(), source.getPackedRegionY())) {
+			throw new IllegalStateException(
+				"Packed source changed before terrain tile capture");
+		}
+		List<LayeredTileState> states =
+			new ArrayList<LayeredTileState>(
+				Constants.REGION_SIZE * Constants.REGION_SIZE);
+		for (int localX = 0;
+			localX < Constants.REGION_SIZE; localX++) {
+			for (int localY = 0;
+				localY < Constants.REGION_SIZE; localY++) {
+				states.add(LayeredTileState.fromLegacy(
+					region.getTileValue(localX, localY)));
+			}
+		}
+		return Collections.unmodifiableList(states);
+	}
+
 	/** Opens one dormant owner and atomically assigns its first logical window. */
 	public LayeredRegionInterestOwnershipLedger.OpenedOwner
 		openLayeredRegionInterestOwner(final WorldRegionWindow currentWindow) {

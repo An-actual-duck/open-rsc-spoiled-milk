@@ -107,6 +107,50 @@ public final class LayeredPackedRegionTerrainInitializationPlan {
 			containerPlan, tileInputs);
 	}
 
+	static LayeredPackedRegionTerrainInitializationPlan
+		defineFromResidentTileStates(
+			final LayeredPackedRegionBlankContainerPlan containerPlan,
+			final LayeredPackedRegionSourceLifecycleBoundary boundary,
+			final List<LayeredTileState> residentTileStates) {
+		LayeredPackedRegionBlankContainerPlan checked =
+			Objects.requireNonNull(containerPlan, "containerPlan");
+		LayeredPackedRegionSourceLifecycleBoundary checkedBoundary =
+			Objects.requireNonNull(boundary, "boundary");
+		List<LayeredTileState> states =
+			Objects.requireNonNull(
+				residentTileStates, "residentTileStates");
+		if (!checkedBoundary.isRegionLifecycleBoundaryHeld()
+			|| checkedBoundary.getGeneration() != checked.getGeneration()
+			|| checkedBoundary.getRequirementsObservedAtTick()
+				!= checked.getRequirementsObservedAtTick()
+			|| checkedBoundary.getResidencyMirrorVersion()
+				!= checked.getResidencyMirrorVersion()
+			|| checked.getSourceOrdinal() < 0
+			|| checked.getSourceOrdinal()
+				>= checkedBoundary.getSelectedSourceCount()
+			|| checkedBoundary.getSelectedSources()
+				.get(checked.getSourceOrdinal()).getPackedRegionX()
+					!= checked.getPackedRegionX()
+			|| checkedBoundary.getSelectedSources()
+				.get(checked.getSourceOrdinal()).getPackedRegionY()
+					!= checked.getPackedRegionY()
+			|| states.size() != checked.getContainerTileSlotCount()) {
+			throw new IllegalArgumentException(
+				"Resident terrain states do not match the active source");
+		}
+		List<TerrainTileInput> inputs =
+			new ArrayList<TerrainTileInput>(states.size());
+		for (int ordinal = 0; ordinal < states.size(); ordinal++) {
+			inputs.add(TerrainTileInput.fromLayeredState(
+				ordinal / checked.getContainerSideTileCount(),
+				ordinal % checked.getContainerSideTileCount(),
+				Objects.requireNonNull(
+					states.get(ordinal),
+					"residentTileStates[" + ordinal + "]")));
+		}
+		return define(checked, inputs);
+	}
+
 	public long getGeneration() { return generation; }
 	public long getRequirementsObservedAtTick() {
 		return requirementsObservedAtTick;
@@ -193,30 +237,42 @@ public final class LayeredPackedRegionTerrainInitializationPlan {
 		private TerrainTileInput(
 			final int localX,
 			final int localY,
-			final TileValue observed) {
+			final int observedTraversalMask,
+			final short diagonalWallValue,
+			final byte horizontalWallValue,
+			final byte overlay,
+			final byte verticalWallValue,
+			final byte elevation,
+			final boolean originalProjectileAllowed,
+			final boolean terrainBlocked,
+			final int blockingSceneryCount,
+			final int terrainCollisionMask,
+			final int[] dynamicCollisionCounts,
+			final boolean terrainOverlayProjectileBlocked,
+			final int terrainWallProjectileCount) {
 			if (localX < 0 || localY < 0) {
 				throw new IllegalArgumentException(
 					"Terrain tile local coordinates must not be negative");
 			}
-			TileValue tile = Objects.requireNonNull(observed, "observed");
 			this.localX = localX;
 			this.localY = localY;
-			this.diagonalWallValue = tile.diagWallVal;
-			this.horizontalWallValue = tile.horizontalWallVal;
-			this.overlay = tile.overlay;
-			this.verticalWallValue = tile.verticalWallVal;
-			this.elevation = tile.elevation;
-			this.terrainBlocked = tile.isTerrainBlocked();
-			this.terrainCollisionMask = tile.getTerrainCollisionMask();
+			this.diagonalWallValue = diagonalWallValue;
+			this.horizontalWallValue = horizontalWallValue;
+			this.overlay = overlay;
+			this.verticalWallValue = verticalWallValue;
+			this.elevation = elevation;
+			this.terrainBlocked = terrainBlocked;
+			this.terrainCollisionMask = terrainCollisionMask;
 			this.terrainOverlayProjectileBlocked =
-				tile.isTerrainOverlayProjectileBlocked();
+				terrainOverlayProjectileBlocked;
 			this.terrainWallProjectileCount =
-				tile.getTerrainWallProjectileCount();
+				terrainWallProjectileCount;
 			this.staticProjectileBlocked =
-				tile.originalProjectileAllowed;
+				originalProjectileAllowed;
 
-			int staticMask = tile.traversalMask & 0xff;
-			int[] dynamicCounts = tile.getDynamicCollisionCounts();
+			int staticMask = observedTraversalMask & 0xff;
+			int[] dynamicCounts = Objects.requireNonNull(
+				dynamicCollisionCounts, "dynamicCollisionCounts");
 			for (int bit = 0; bit < dynamicCounts.length; bit++) {
 				int flag = 1 << bit;
 				if (dynamicCounts[bit] > 0
@@ -224,7 +280,7 @@ public final class LayeredPackedRegionTerrainInitializationPlan {
 					staticMask &= ~flag;
 				}
 			}
-			if (tile.getBlockingSceneryCount() > 0
+			if (blockingSceneryCount > 0
 				&& !terrainBlocked
 				&& (terrainCollisionMask
 					& CollisionFlag.FULL_BLOCK_C) == 0) {
@@ -241,7 +297,35 @@ public final class LayeredPackedRegionTerrainInitializationPlan {
 			final int localX,
 			final int localY,
 			final TileValue observed) {
-			return new TerrainTileInput(localX, localY, observed);
+			TileValue tile = Objects.requireNonNull(observed, "observed");
+			return new TerrainTileInput(
+				localX, localY, tile.traversalMask, tile.diagWallVal,
+				tile.horizontalWallVal, tile.overlay, tile.verticalWallVal,
+				tile.elevation, tile.originalProjectileAllowed,
+				tile.isTerrainBlocked(), tile.getBlockingSceneryCount(),
+				tile.getTerrainCollisionMask(),
+				tile.getDynamicCollisionCounts(),
+				tile.isTerrainOverlayProjectileBlocked(),
+				tile.getTerrainWallProjectileCount());
+		}
+
+		static TerrainTileInput fromLayeredState(
+			final int localX,
+			final int localY,
+			final LayeredTileState observed) {
+			LayeredTileState tile =
+				Objects.requireNonNull(observed, "observed");
+			return new TerrainTileInput(
+				localX, localY, tile.getTraversalMask(),
+				tile.getDiagonalWallValue(),
+				tile.getHorizontalWallValue(), tile.getOverlay(),
+				tile.getVerticalWallValue(), tile.getElevation(),
+				tile.isOriginalProjectileAllowed(),
+				tile.isTerrainBlocked(), tile.getBlockingSceneryCount(),
+				tile.getTerrainCollisionMask(),
+				tile.getDynamicCollisionCounts(),
+				tile.isTerrainOverlayProjectileBlocked(),
+				tile.getTerrainWallProjectileCount());
 		}
 
 		public int getLocalX() { return localX; }

@@ -12,6 +12,7 @@ TERRAIN_PLAN = REGION / (
     "LayeredPackedRegionTerrainInitializationPlan.java"
 )
 TILE_VALUE = REGION / "TileValue.java"
+LAYERED_TILE_STATE = REGION / "LayeredTileState.java"
 PLAN = ROOT / (
     "docs/myworld/in-progress-work-plans/"
     "world-layer-capacity-exploration-plan.md"
@@ -222,7 +223,7 @@ class LayeredMapsSliceOneHundredEightyTest(unittest.TestCase):
                 str(SLICE_178["PREFLIGHT"]),
                 str(SLICE_178["RELOAD_RECIPE"]),
                 str(SLICE_178["CONTAINER_PLAN"]), str(TILE_VALUE),
-                str(TERRAIN_PLAN), str(fixture),
+                str(LAYERED_TILE_STATE), str(TERRAIN_PLAN), str(fixture),
             ],
             cwd=ROOT,
             check=True,

@@ -318,6 +318,10 @@ automated-validated Slice 180 defines one exact detached static-terrain input fo
 single isolated source. It retains canonical tile metadata and static terrain
 collision, subtracts rather than retains dynamic products, and preserves
 missing-sector sealed-base traversal while applying nothing;
+automated-validated Slice 181 captures one source's canonical immutable tile values
+only while the exact Slice 173 lifecycle boundary and residency version remain
+active, then immediately reduces them to the detached Slice 180 terrain-only
+input without construction or application;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -14514,6 +14518,68 @@ That capture must validate source identity and residency version, return only
 the detached input, and still perform no isolated-container construction or
 terrain application.
 
+### Slice 181: Lifecycle-bound resident terrain capture
+
+Objective: copy one exact resident source's tiles under its real lifecycle
+boundary and immediately reduce them to the detached Slice 180 static-terrain
+input.
+
+Implemented:
+
+- RegionManager accepts one active Slice 173 boundary plus one exact selected
+  source ordinal and refuses capture unless the lifecycle monitor is held, the
+  boundary remains active, its residency-mirror version is current, and the
+  source is both present in packed storage and registered in the mirror;
+- the source's 2,304 tiles are copied as immutable `LayeredTileState` values in
+  canonical `(localX,localY)` order. Region, TileValue, tile-array, and
+  collection handles do not escape;
+- Slice 180 accepts that transient full-fidelity list, validates exact count
+  and null freedom, immediately subtracts dynamic collision, blocking-scenery,
+  and dynamic-projectile products, and retains only its immutable
+  terrain-initialization input; and
+- the capture uses only non-creating packed lookup and does not alter the
+  original source or create an isolated replacement.
+
+Safety boundary:
+
+- the full-fidelity intermediate is detached and immutable but intentionally
+  transient; it is not serialized, cached, stored in observer state, or
+  retained by the terrain plan;
+- exact source identity comes from the active boundary and cannot be supplied
+  as an arbitrary coordinate;
+- no Region or TileValue handle, dynamic counter array, entity, archive,
+  loader, registry, mirror, cache, event, or monitor escapes the capture; and
+- Region construction, source absence/reconstruction, terrain application,
+  authored replay, dynamic collision rebuild, active-family preservation,
+  registry/mirror/cache mutation, arrival, visibility, and lifecycle authority
+  remain absent.
+
+Automated validation status:
+
+- an executable full-source fixture creates and registers one real packed
+  Region, enters the real source lifecycle boundary, captures all 2,304
+  immutable tile states, and proves immediate reduction preserves static
+  terrain and missing-sector seal while excluding dynamic
+  collision/scenery/projectile products;
+- the fixture proves the full-fidelity intermediate remains immutable after
+  boundary release, while the terrain definition retains no LayeredTileState,
+  TileValue, or Region handle;
+- structural guards require the lifecycle monitor, active boundary, exact
+  mirror version, selected source ordinal, non-creating lookup, and mirror
+  registration while forbidding construction, registration, removal, and
+  cache invalidation;
+- the complete layered-map suite passes 611 tests across 180 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 819 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This capture has no private
+diagnostic or production caller and does not warrant an owner route. The next
+focused slice should construct one disposable Region and apply one exact
+terrain plan entirely outside runtime indexes, then compare every resulting
+tile to the plan before discarding it. Authored replay, dynamic collision,
+entities, registration, absence, and visibility must remain disabled.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14911,6 +14977,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 178 by defining one detached sealed blank-container contract. | Implemented and automated-validated; one exact reload-recipe source now projects the authoritative 48-by-48 independent tile shape, sealed blank defaults, empty entity membership, and explicit later-stage obligations without allocation, construction, handles, mutation, or authority; the coordinate-owner inventory advances coherently to 214 sources, 599 focused tests pass across 177 files, and the 816/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 179 by verifying one real isolated Region against the sealed contract. | Implemented and automated-validated; a package-local verifier outside RegionManager constructs one disposable Region, proves its manager/coordinate/boundary binding, 2,304 distinct sealed tile defaults, zero collision-product ownership, and empty entity membership, then returns only a detached receipt without touching runtime indexes; 603 focused tests pass across 178 files and the 818/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 180 by defining one detached static-terrain initialization input. | Implemented and automated-validated; exact canonical tile metadata and static terrain collision are retained for all 2,304 source tiles, dynamic collision/scenery/projectile products are subtracted rather than retained, unexplained missing-sector seal traversal remains explicit, fingerprinting and bounds are deterministic, all apply/authority facts remain false, 607 focused tests pass across 179 files, and the 819/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 181 by capturing real resident terrain under the exact source boundary. | Implemented and automated-validated; the lifecycle monitor, boundary identity, mirror version, selected ordinal, non-creating lookup, and mirror registration bind a canonical immutable 2,304-tile capture that immediately reduces to the exact terrain-only definition without retaining runtime handles or applying state; 611 focused tests pass across 180 files and the 819/488 Ant build passes |
 
 ## Next Discussion
 
