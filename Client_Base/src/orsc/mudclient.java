@@ -4393,7 +4393,7 @@ public final class mudclient implements Runnable {
 			if (!wristEquipmentSlotSpriteLoadAttempted) {
 				wristEquipmentSlotSpriteLoadAttempted = true;
 				File sourceFile = this.externalAssetLoader.findFirstFile(new String[] {
-					"dev/myworld/assets/sprites/ui/equipment"
+					"dev/myworld/assets/sprites/UI/equipment"
 				}, "bangel-slot.png");
 				wristEquipmentSlotSprite = this.externalAssetLoader.loadExternalInterfaceSprite(sourceFile, 48, 32);
 			}

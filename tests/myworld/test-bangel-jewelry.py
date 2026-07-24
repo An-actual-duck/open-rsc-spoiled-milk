@@ -92,7 +92,7 @@ ASSETS = {
         (27, 26),
     ),
     "slot": (
-        ROOT / "dev/myworld/assets/sprites/ui/equipment/bangel-slot.png",
+        ROOT / "dev/myworld/assets/sprites/UI/equipment/bangel-slot.png",
         (49, 34),
     ),
     "medallion": (
