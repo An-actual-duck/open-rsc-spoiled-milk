@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -95,6 +96,232 @@ public class Region {
 			for (int j = 0; j < Constants.REGION_SIZE; j++) {
 				tiles[i][j] = new TileValue();
 			}
+		}
+	}
+
+	/**
+	 * Verifies this Region's just-constructed state against one detached sealed
+	 * blank-container contract.
+	 *
+	 * <p>The caller must not publish or retain this Region. Only the detached
+	 * verification receipt escapes.</p>
+	 */
+	BlankContainerVerificationSnapshot verifyLayeredBlankContainer(
+		final BlankContainerExpectation expectation) {
+		BlankContainerExpectation checked =
+			Objects.requireNonNull(expectation, "expectation");
+		boolean managerMatched =
+			regionManager == checked.regionManager;
+		boolean coordinatesMatched =
+			regionX == checked.packedRegionX
+				&& regionY == checked.packedRegionY;
+		boolean boundaryCoordinatesMatched =
+			objectCollisionMutationBoundary.getRegionX() == regionX
+				&& objectCollisionMutationBoundary.getRegionY() == regionY;
+
+		TileValue[][] expanded = tiles;
+		boolean expandedStorageMatched =
+			tile == null
+				&& expanded != null
+				&& expanded.length == checked.containerSideTileCount;
+		IdentityHashMap<TileValue, Boolean> identities =
+			new IdentityHashMap<TileValue, Boolean>();
+		boolean sealedDefaultsMatched = expandedStorageMatched;
+		int visitedTileCount = 0;
+		if (expandedStorageMatched) {
+			for (int x = 0; x < expanded.length; x++) {
+				if (expanded[x] == null
+					|| expanded[x].length
+						!= checked.containerSideTileCount) {
+					expandedStorageMatched = false;
+					sealedDefaultsMatched = false;
+					break;
+				}
+				for (int y = 0; y < expanded[x].length; y++) {
+					TileValue value = expanded[x][y];
+					if (value == null) {
+						sealedDefaultsMatched = false;
+						continue;
+					}
+					visitedTileCount++;
+					identities.put(value, Boolean.TRUE);
+					boolean dynamicCollisionEmpty = true;
+					for (int count : value.getDynamicCollisionCounts()) {
+						dynamicCollisionEmpty &= count == 0;
+					}
+					sealedDefaultsMatched &=
+						value.traversalMask
+							== checked.initialTraversalMask
+						&& value.diagWallVal
+							== checked.initialDiagonalWallValue
+						&& value.horizontalWallVal
+							== checked.initialHorizontalWallValue
+						&& value.overlay == checked.initialOverlayValue
+						&& value.verticalWallVal
+							== checked.initialVerticalWallValue
+						&& value.elevation
+							== checked.initialElevationValue
+						&& value.projectileAllowed
+							== checked.initialProjectileAllowed
+						&& value.originalProjectileAllowed
+							== checked.initialOriginalProjectileAllowed
+						&& !value.isTerrainBlocked()
+						&& value.getBlockingSceneryCount() == 0
+						&& value.getTerrainCollisionMask() == 0
+						&& dynamicCollisionEmpty
+						&& !value.isTerrainOverlayProjectileBlocked()
+						&& value.getTerrainWallProjectileCount() == 0
+						&& value.getDynamicProjectileCount() == 0
+						&& !value.hasCollisionProductState();
+				}
+			}
+		}
+		boolean independentMutableTilesMatched =
+			expandedStorageMatched
+				&& visitedTileCount == checked.containerTileSlotCount
+				&& identities.size() == checked.containerTileSlotCount;
+
+		boolean emptyEntityMembershipMatched;
+		synchronized (players) {
+			synchronized (npcs) {
+				synchronized (objects) {
+					synchronized (items) {
+						emptyEntityMembershipMatched =
+							players.size() == checked.initialPlayerCount
+								&& npcs.size()
+									== checked.initialNpcCount
+								&& objects.size()
+									== checked.initialObjectCount
+								&& items.size()
+									== checked.initialGroundItemCount;
+					}
+				}
+			}
+		}
+		return new BlankContainerVerificationSnapshot(
+			managerMatched, coordinatesMatched,
+			boundaryCoordinatesMatched, expandedStorageMatched,
+			independentMutableTilesMatched, sealedDefaultsMatched,
+			emptyEntityMembershipMatched);
+	}
+
+	/** Primitive-only expectation used while a disposable Region is local. */
+	static final class BlankContainerExpectation {
+		private final RegionManager regionManager;
+		private final int packedRegionX;
+		private final int packedRegionY;
+		private final int containerSideTileCount;
+		private final int containerTileSlotCount;
+		private final int initialTraversalMask;
+		private final int initialDiagonalWallValue;
+		private final int initialHorizontalWallValue;
+		private final int initialOverlayValue;
+		private final int initialVerticalWallValue;
+		private final int initialElevationValue;
+		private final boolean initialProjectileAllowed;
+		private final boolean initialOriginalProjectileAllowed;
+		private final int initialPlayerCount;
+		private final int initialNpcCount;
+		private final int initialObjectCount;
+		private final int initialGroundItemCount;
+
+		BlankContainerExpectation(
+			final RegionManager regionManager,
+			final int packedRegionX,
+			final int packedRegionY,
+			final int containerSideTileCount,
+			final int containerTileSlotCount,
+			final int initialTraversalMask,
+			final int initialDiagonalWallValue,
+			final int initialHorizontalWallValue,
+			final int initialOverlayValue,
+			final int initialVerticalWallValue,
+			final int initialElevationValue,
+			final boolean initialProjectileAllowed,
+			final boolean initialOriginalProjectileAllowed,
+			final int initialPlayerCount,
+			final int initialNpcCount,
+			final int initialObjectCount,
+			final int initialGroundItemCount) {
+			this.regionManager = Objects.requireNonNull(
+				regionManager, "regionManager");
+			if (containerSideTileCount <= 0
+				|| containerTileSlotCount
+					!= Math.multiplyExact(
+						containerSideTileCount, containerSideTileCount)
+				|| initialPlayerCount < 0 || initialNpcCount < 0
+				|| initialObjectCount < 0 || initialGroundItemCount < 0) {
+				throw new IllegalArgumentException(
+					"Blank-container expectation is invalid");
+			}
+			this.packedRegionX = packedRegionX;
+			this.packedRegionY = packedRegionY;
+			this.containerSideTileCount = containerSideTileCount;
+			this.containerTileSlotCount = containerTileSlotCount;
+			this.initialTraversalMask = initialTraversalMask;
+			this.initialDiagonalWallValue = initialDiagonalWallValue;
+			this.initialHorizontalWallValue = initialHorizontalWallValue;
+			this.initialOverlayValue = initialOverlayValue;
+			this.initialVerticalWallValue = initialVerticalWallValue;
+			this.initialElevationValue = initialElevationValue;
+			this.initialProjectileAllowed = initialProjectileAllowed;
+			this.initialOriginalProjectileAllowed =
+				initialOriginalProjectileAllowed;
+			this.initialPlayerCount = initialPlayerCount;
+			this.initialNpcCount = initialNpcCount;
+			this.initialObjectCount = initialObjectCount;
+			this.initialGroundItemCount = initialGroundItemCount;
+		}
+	}
+
+	/** Closed verification facts; never a Region, TileValue, or collection. */
+	static final class BlankContainerVerificationSnapshot {
+		private final boolean regionManagerMatched;
+		private final boolean sourceCoordinatesMatched;
+		private final boolean collisionBoundaryCoordinatesMatched;
+		private final boolean expandedTileStorageMatched;
+		private final boolean independentMutableTilesMatched;
+		private final boolean sealedTileDefaultsMatched;
+		private final boolean emptyEntityMembershipMatched;
+
+		private BlankContainerVerificationSnapshot(
+			final boolean regionManagerMatched,
+			final boolean sourceCoordinatesMatched,
+			final boolean collisionBoundaryCoordinatesMatched,
+			final boolean expandedTileStorageMatched,
+			final boolean independentMutableTilesMatched,
+			final boolean sealedTileDefaultsMatched,
+			final boolean emptyEntityMembershipMatched) {
+			this.regionManagerMatched = regionManagerMatched;
+			this.sourceCoordinatesMatched = sourceCoordinatesMatched;
+			this.collisionBoundaryCoordinatesMatched =
+				collisionBoundaryCoordinatesMatched;
+			this.expandedTileStorageMatched = expandedTileStorageMatched;
+			this.independentMutableTilesMatched =
+				independentMutableTilesMatched;
+			this.sealedTileDefaultsMatched = sealedTileDefaultsMatched;
+			this.emptyEntityMembershipMatched =
+				emptyEntityMembershipMatched;
+		}
+
+		boolean isRegionManagerMatched() { return regionManagerMatched; }
+		boolean isSourceCoordinatesMatched() {
+			return sourceCoordinatesMatched;
+		}
+		boolean isCollisionBoundaryCoordinatesMatched() {
+			return collisionBoundaryCoordinatesMatched;
+		}
+		boolean isExpandedTileStorageMatched() {
+			return expandedTileStorageMatched;
+		}
+		boolean isIndependentMutableTilesMatched() {
+			return independentMutableTilesMatched;
+		}
+		boolean isSealedTileDefaultsMatched() {
+			return sealedTileDefaultsMatched;
+		}
+		boolean isEmptyEntityMembershipMatched() {
+			return emptyEntityMembershipMatched;
 		}
 	}
 

@@ -310,6 +310,10 @@ one exact recipe source. It fixes the 48-by-48 independent tile shape, sealed
 default traversal, empty entity membership, and later-stage requirements while
 constructing or retaining no Region, tile, manager, entity, registry, cache, or
 authority;
+automated-validated Slice 179 constructs one disposable Region against that contract,
+reduces its exact initial state to a detached verification receipt, and returns
+no usable container or runtime handle while entering no packed registry,
+residency mirror, visibility cache, or gameplay lookup;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -14379,6 +14383,67 @@ sealed contract without entering packed storage, logical residency, visibility
 caches, or gameplay lookup. That isolated constructor must remain dormant and
 must not yet replay terrain, authored placements, entities, or collision.
 
+### Slice 179: Isolated blank Region verification
+
+Objective: construct one real Region against the sealed Slice 178 contract,
+verify its exact initial state, and discard it without exposing or publishing
+the runtime container.
+
+Implemented:
+
+- a package-local verifier outside RegionManager constructs a Region directly
+  from the contract's exact packed coordinates and immediately reduces it to a
+  detached receipt. Its separation prevents access to packed storage,
+  residency, visibility caches, ownership ledgers, and gameplay lookup;
+- Region verifies its manager binding, source coordinates, collision-boundary
+  coordinates, expanded 48-by-48 tile storage, 2,304 distinct mutable tile
+  values, sealed defaults, zero collision-product ownership, and empty Player,
+  NPC, object, and ground-item membership;
+- `LayeredPackedRegionBlankContainerVerification` retains only contract
+  identity scalars and closed verification facts; the disposable Region and
+  its manager, tiles, collections, and collision boundary never escape; and
+- the seam uses the real Region constructor but performs no packed lookup,
+  logical-residency lookup, lifecycle-lock acquisition, cache access, terrain
+  initialization, population, collision rebuild, or registration.
+
+Safety boundary:
+
+- this creates only a disposable verification Region; it returns no usable
+  container and has no production, private-command, observer, loader, or
+  lifecycle caller;
+- no source becomes absent and the current registered Region, residency
+  mirror, visibility caches, ownership ledgers, gameplay lookup, and packets
+  remain untouched;
+- no terrain, authored placement, Player, NPC, dynamic object, ground item,
+  collision, scheduler, arrival, or visibility state is copied into the
+  disposable container; and
+- executable reload, usable-container return, retained handles, absence,
+  reconstruction, initialization, replay, preservation, collision rebuild,
+  registry/mirror/cache mutation, arrival, visibility, and lifecycle authority
+  remain false.
+
+Automated validation status:
+
+- an executable full-source fixture derives a real preservation requirement,
+  lifecycle boundary, absence preflight, reload recipe, and blank-container
+  plan, then proves the production Region constructor satisfies all sealed
+  storage and empty-membership invariants;
+- structural guards prove the package-local verifier cannot access
+  RegionManager's packed registry, residency mirror, visibility caches,
+  ownership ledger, lifecycle lock, or lookup methods, and prove Region returns
+  only closed booleans to the detached receipt;
+- the complete layered-map suite passes 603 tests across 178 focused files;
+  and
+- the authoritative bundled-Ant server build compiles 818 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This verification-only slice does
+not warrant an owner route. The next focused slice should define the exact
+detached terrain-initialization input for one isolated source. It must separate
+archive-derived static tile metadata and terrain collision from authored
+object replay, dynamic collision, entities, registration, and visibility, and
+must not yet mutate even the disposable Region.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -14774,6 +14839,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 177 by exposing the inert exact reload recipe through private diagnostics. | Implemented and automated-validated; additive schema-v50 extends only the explicit preservation no-op with bounded source-level recipe counts, v49 remains immutable, lifecycle-entry evidence requires aligned preflight and recipe values, every executable/mutation/authority fact stays false, 595 focused tests pass across 176 files, and the 815/488 Ant build passes |
 | 2026-07-23 | Accept the Slice 177 quiet-to-dense private owner route. | Owner-validated; four contiguous v50 records validate, all lifecycle identities and 36 source records align, 33 declared sources plus three exact empty replays reconcile 4,555 manifest minus four superseded placements to 4,551 final-live placements, unresolved family totals match preflight exactly, normal interaction remains intact, and every executable or authoritative flag remains false |
 | 2026-07-23 | Continue with Slice 178 by defining one detached sealed blank-container contract. | Implemented and automated-validated; one exact reload-recipe source now projects the authoritative 48-by-48 independent tile shape, sealed blank defaults, empty entity membership, and explicit later-stage obligations without allocation, construction, handles, mutation, or authority; the coordinate-owner inventory advances coherently to 214 sources, 599 focused tests pass across 177 files, and the 816/488 Ant build passes |
+| 2026-07-23 | Continue with Slice 179 by verifying one real isolated Region against the sealed contract. | Implemented and automated-validated; a package-local verifier outside RegionManager constructs one disposable Region, proves its manager/coordinate/boundary binding, 2,304 distinct sealed tile defaults, zero collision-product ownership, and empty entity membership, then returns only a detached receipt without touching runtime indexes; 603 focused tests pass across 178 files and the 818/488 Ant build passes |
 
 ## Next Discussion
 
