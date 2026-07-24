@@ -135,15 +135,19 @@ def main() -> None:
     forbid(mouse_exit, "middleMouseOrbit.cancel()", "premature orbit cancellation on cursor exit")
 
     require(mouse_drag, "middleMouseOrbit.update(", "middle orbit drag gate")
-    require(mouse_drag, "mudclient.adjustCameraPitch(-deltaY);", "vertical drag pitch")
+    require(mouse_drag, "applyMiddleMouseVerticalDrag(deltaY);", "vertical drag mode dispatch")
+    require(mouse_drag, "mudclient.adjustCameraPitch(-deltaY);", "With tilt vertical drag")
+    require(
+        mouse_drag,
+        "mudclient.adjustCameraZoomSetting(direction * verticalDistance);",
+        "Classic vertical drag zoom",
+    )
     require(mouse_drag, "osConfig.C_SWIPE_TO_ROTATE_MODE == 2 ? -1 : 1", "horizontal inversion setting")
     require(mouse_drag, "mudclient.cameraRotation = 255 & mudclient.cameraRotation", "manual horizontal yaw")
     require(mouse_drag, "mudclient.keyLeft = true;", "automatic-camera left yaw")
     require(mouse_drag, "mudclient.keyRight = true;", "automatic-camera right yaw")
     require(mouse_drag, "mudclient.currentMouseButtonDown = 0;", "middle drag gameplay-button suppression")
     require(mouse_drag, "var1.consume();", "middle drag event consumption")
-    forbid(mouse_drag, "adjustCameraZoomSetting", "middle-drag zoom")
-    forbid(mouse_drag, "C_SWIPE_TO_ZOOM_MODE", "zoom-direction reuse for pitch")
     forbid(mouse_drag, "runScroll(", "middle drag UI scrolling")
 
     require(mouse_wheel, "mudclient.adjustCameraZoomSetting(zoomAmount);", "wheel zoom")
@@ -171,7 +175,7 @@ def main() -> None:
     require(android_input, "osConfig.C_SWIPE_TO_ROTATE_MODE", "unchanged Android swipe rotation")
 
     run_orbit_state_harness()
-    print("PASS: desktop middle mouse provides isolated yaw/pitch orbit with wheel-only zoom")
+    print("PASS: desktop middle mouse provides isolated yaw plus configurable tilt/zoom")
 
 
 if __name__ == "__main__":

@@ -105,6 +105,7 @@ python3 ./tests/myworld/test-client-movement-timing-diagnostics.py
 python3 ./tests/myworld/test-server-sync-modernization.py
 python3 ./tests/myworld/test-client-region-load-performance.py
 python3 ./tests/myworld/test-desktop-middle-mouse-camera-orbit.py
+python3 ./tests/myworld/test-desktop-middle-mouse-mode-option.py
 ./tests/myworld/test-renderer-guardrails.sh
 python3 ./tests/myworld/test-path-queue-regressions.py
 python3 ./tests/myworld/test-packet-shape-guards.py

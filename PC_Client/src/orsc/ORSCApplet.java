@@ -1339,8 +1339,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 		private void applyMiddleMouseOrbit(int deltaX, int deltaY) {
 			if (deltaY != 0) {
-				// Pitch limits and the third-person tilt option are owned by mudclient.
-				mudclient.adjustCameraPitch(-deltaY);
+				applyMiddleMouseVerticalDrag(deltaY);
 			}
 
 			int horizontalDistance = deltaX / 2;
@@ -1363,6 +1362,22 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			} else {
 				mudclient.keyRight = true;
 			}
+		}
+
+		private void applyMiddleMouseVerticalDrag(int deltaY) {
+			if (mudclient.isInFirstPersonView() || DesktopMiddleMouseSettings.usesTilt()) {
+				// Pitch limits and the third-person tilt option are owned by mudclient.
+				mudclient.adjustCameraPitch(-deltaY);
+				return;
+			}
+
+			int verticalDistance = deltaY / 2;
+			if (verticalDistance == 0
+				|| !(S_ZOOM_VIEW_TOGGLE || mudclient.getLocalPlayer().isStaff())) {
+				return;
+			}
+			int direction = osConfig.C_SWIPE_TO_ZOOM_MODE == 2 ? -1 : 1;
+			mudclient.adjustCameraZoomSetting(direction * verticalDistance);
 		}
 
 		@Override
