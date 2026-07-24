@@ -15812,8 +15812,35 @@ Automated validation status:
 - the authoritative bundled-Ant server build compiles 837 core and 488 plugin
   sources and passes its build/classpath audit.
 
-Status: implemented and automated-validated; one private cooldown-aware owner
-route remains pending.
+Status before owner validation: implemented and automated-validated.
+
+Owner validation:
+
+- four contiguous schema-v55 records cover start, quiet-to-dense teleport,
+  `preservation-noop`, and stop, and all four validate against the complete
+  retained schema chain;
+- all 36 selected sources align across reload, collision derivation, separate
+  collision application, combined state, and transactional state: 4,551 replay
+  placements become 3,979 atomic object/collision transactions and collision
+  registrations under 3,979 exact boundaries;
+- the registrations retain 3,185 collision-contribution references and 3,979
+  required-Region references, while 36 disposable Region unions verify 82,944
+  tiles and reproduce exactly 2,989 blocking-scenery, 196 dynamic-collision,
+  and 2,554 dynamic-projectile contributions;
+- every inherited, applied-collision, registration, and final-state
+  fingerprint is present, source-ordered, and aligned with the accepted
+  derivation/application/combined receipts;
+- the command completed and the owner completed the route without reporting an
+  issue; every runtime collision/cache/source/registry/mirror/visibility,
+  retained-handle, arrival, visibility-release, and lifecycle-authority fact
+  remains false; and
+- the deliberately heavy private diagnostic produced one isolated 951 ms
+  late-tick warning while calculating the receipt. This is accepted as
+  opt-in diagnostic overhead, not production-path performance, but any later
+  private diagnostic extension should avoid duplicating more complete source
+  passes without an explicit budget.
+
+Status: owner-accepted.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -16235,6 +16262,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 196 by reconstructing one disposable source through atomic object/collision transactions. | Implemented and automated-validated; three fixture objects register through three canonical transactions/four exact boundaries, each gains exact detached collision-registration provenance, disposable cache invalidations remain local, the applied-collision and final-state fingerprints exactly match Slice 193, no handle or runtime authority survives, the Slice 182-196 lineage passes 64 tests, and the 836/488 Ant build passes |
 | 2026-07-24 | Continue with Slice 197 by bounding transactional disposable authored source states. | Implemented and automated-validated; exact selected-source order aligns every transactional receipt to the derivation-only baseline, aggregate transaction/boundary/cache-invalidation/registration counts reconcile to object, contribution, and Region totals, only counts plus seven fingerprints survive, the Slice 182-197 lineage passes 69 tests, and the 837/488 Ant build passes |
 | 2026-07-24 | Continue with Slice 198 by exposing bounded transactional authored state through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v55 extends only the explicit preservation no-op, aligns the transactional receipt with every accepted derivation/application/state stage, serializes only bounded counts and seven fingerprints, preserves schema-v54, the Slice 182-198 lineage passes 73 tests plus observer integration guards, and the 837/488 Ant build passes; one cooldown-aware private owner route remains pending |
+| 2026-07-24 | Accept the Slice 198 private transactional authored-state route. | Owner-validated; four contiguous schema-v55 records align all 36 sources across five accepted stages, reconcile 4,551 replay placements, 3,979 atomic transactions/registrations/boundaries, 3,185 contribution references, 36 transactional Region unions, 82,944 verified tiles, all collision-family totals, and all seven fingerprints; every runtime mutation/authority fact remains false, with one accepted 951 ms late-tick warning recorded as opt-in diagnostic overhead |
 
 ## Next Discussion
 
@@ -16907,7 +16935,7 @@ only aligned counts plus the new registration fingerprint and inherited state
 fingerprints. Slice 198 now exposes only that detached summary through additive
 private schema-v55 while historical schema-v54 and every accepted public path
 remain unchanged. Automated validation passes and one owner route remains
-pending; runtime-source comparison, absence, and reconstruction must remain
+accepted; runtime-source comparison, absence, and reconstruction must remain
 disconnected.
 
 The diagnostic must not shrink an envelope, permit retirement, retain an NPC,
