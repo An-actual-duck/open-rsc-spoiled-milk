@@ -78,6 +78,7 @@ python3 ./tests/myworld/test-production-behavior.py
 python3 ./tests/myworld/test-production-flow.py
 python3 ./tests/myworld/test-prayer-rework.py
 python3 ./tests/myworld/test-prayer-ui.py
+python3 ./tests/myworld/test-devotion-blessing-implementation.py
 python3 ./tests/myworld/test-spellbook-text-layouts.py
 python3 ./tests/myworld/test-client-elemental-spell-display-metadata.py
 python3 ./tests/myworld/test-client-auxiliary-types.py

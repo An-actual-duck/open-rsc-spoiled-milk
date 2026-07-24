@@ -2,7 +2,6 @@ package com.openrsc.server.plugins.authentic.misc;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
-import com.openrsc.server.constants.Skills;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.model.container.Item;
@@ -13,7 +12,13 @@ import com.openrsc.server.util.rsc.MessageType;
 
 import java.util.Optional;
 
-import static com.openrsc.server.plugins.Functions.*;
+import static com.openrsc.server.plugins.Functions.config;
+import static com.openrsc.server.plugins.Functions.delay;
+import static com.openrsc.server.plugins.Functions.ifinterrupted;
+import static com.openrsc.server.plugins.Functions.isbatchcomplete;
+import static com.openrsc.server.plugins.Functions.mes;
+import static com.openrsc.server.plugins.Functions.startbatch;
+import static com.openrsc.server.plugins.Functions.updatebatch;
 
 public class Bones implements OpInvTrigger, UseInvTrigger {
 

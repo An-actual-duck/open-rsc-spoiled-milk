@@ -32,10 +32,14 @@ def main() -> None:
     require("MIN_DEVOTION_LEVEL = -1000" in devotion, "devotion should go down to -1000")
     require("MIN_OFFERINGS = MIN_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL" in devotion,
             "negative devotion should use the same offering scale")
-    require("DEVOTION_REQUIREMENT_PER_RESOURCE = 50" in devotion,
-            "blessing devotion requirements should be resource cost * 50")
+    require("DEVOTION_REQUIREMENT_PER_RESOURCE = 100" in devotion,
+            "blessing devotion requirements should be resource cost * 100")
+    require("BLESSING_OFFERING_COST_PER_RESOURCE = OFFERINGS_PER_DEVOTION_LEVEL / 2" in devotion,
+            "blessing cost should be five offering units per resource")
     require("getDevotionRequirementForResourceCost" in devotion,
             "devotion resource-cost requirement helper should exist")
+    require("getBlessingOfferingCostForResourceCost" in devotion,
+            "devotion fractional blessing-cost helper should exist")
     require("getBlessingPrayerXp" in devotion and "100.0D + devotionLevel" in devotion,
             "blessing Prayer XP should scale by 1% per devotion")
     require("clampOfferings((long) previousOfferings + offeringGain + blackUnicornOfferingGain)" in devotion,
@@ -46,6 +50,10 @@ def main() -> None:
             "offering adjustments should not overflow before clamping")
     require("clampPositiveInt((long) resourceCost * DEVOTION_REQUIREMENT_PER_RESOURCE)" in devotion,
             "resource-cost devotion requirements should not overflow before clamping")
+    require("clampPositiveInt((long) resourceCost * BLESSING_OFFERING_COST_PER_RESOURCE)" in devotion,
+            "resource-cost blessing costs should not overflow before clamping")
+    require("player.getPrayers().deactivateOverflowingPrayers();" in devotion,
+            "Devotion reductions should deactivate prayers above the new capacity")
     require("scaledXp >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) Math.ceil(scaledXp)" in devotion,
             "blessing Prayer XP should saturate instead of overflowing")
     require("getDevotionLevelFromOfferings(previousOfferings)" in devotion,

@@ -135,7 +135,9 @@ public final class Devotion {
 			return;
 		}
 		final String cacheKey = getOfferingCacheKey(godLine);
-		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
+		final int previousOfferings = player.getCache().hasKey(cacheKey)
+			? clampOfferings(player.getCache().getInt(cacheKey))
+			: 0;
 		final int newOfferings = clampOfferings((long) previousOfferings + ((long) devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL));
 		player.getCache().set(cacheKey, newOfferings);
 		ActionSender.sendDevotion(player);
@@ -155,7 +157,9 @@ public final class Devotion {
 			return 0;
 		}
 		final String cacheKey = getOfferingCacheKey(godLine);
-		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
+		final int previousOfferings = player.getCache().hasKey(cacheKey)
+			? clampOfferings(player.getCache().getInt(cacheKey))
+			: 0;
 		final int newOfferings = clampOfferings((long) previousOfferings + offerings);
 		player.getCache().set(cacheKey, newOfferings);
 		ActionSender.sendDevotion(player);

@@ -130,14 +130,17 @@ def main() -> None:
     ):
         require(retired_product not in equipment, f"Retired god knight product should not be altar-made: {retired_product}")
 
-    require("Devotion.getDevotionLevel(player, godLine) < devotionRequirement" in equipment,
-            "steel armour conversion should be gated by devotion")
-    require("Devotion.getDevotionRequirementForResourceCost(getSteelResourceCost(itemId))" in equipment,
-            "steel armour conversion should use resource cost * 50 devotion")
-    require("Devotion.getBlessingPrayerXp(player, godLine, getSteelSmithingXp(item.getCatalogId()))" in equipment,
-            "steel armour conversion Prayer XP should scale with devotion")
-    require("player.incExp(Skill.PRAYER.id(), prayerXp, true)" in equipment,
-            "steel armour conversion should grant Prayer XP")
+    require("PrayerBlessingTransaction.bless(" in equipment,
+            "steel armour conversion should use the shared atomic blessing path")
+    require("Devotion.getDevotionRequirementForResourceCost(devotionResourceCost)" in equipment,
+            "steel armour conversion should use resource cost * 100 devotion")
+    require("Devotion.getBlessingOfferingCostForResourceCost(devotionResourceCost)" in equipment,
+            "steel armour conversion should spend 0.5 devotion per resource")
+    require("getSteelSmithingXp(item.getCatalogId())" in equipment,
+            "steel armour conversion Prayer XP should retain production XP scaling")
+    require("itemId == ItemId.LARGE_STEEL_HELMET.id()" in equipment
+            and "getSteelProductionResourceCost(itemId)" in equipment,
+            "large steel helmets should count as one Devotion resource without changing production XP")
     require("Devotion.addDevotionLevels(player, godLine, 1)" not in equipment,
             "steel armour conversion should not add devotion")
 

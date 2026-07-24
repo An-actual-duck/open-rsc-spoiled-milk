@@ -1,9 +1,34 @@
 # Devotion, Destruction, and Blessing Audit
 
-Status: investigation and balance review complete; gameplay changes are
-intentionally pending review.
+Status: accepted implementation is in progress on
+`feat/devotion-system-audit-implementation`.
 
 Date audited: 2026-07-24
+
+## Implementation Status
+
+The accepted direction is now implemented on the active topic branch, with
+final regression and build validation in progress:
+
+- The Bonecrusher correctness fix rejects noted inputs, removes the exact
+  selected inventory instance, and awards nothing on failed removal.
+- Ordinary blessings use exact in-slot conversion, require worship/altar
+  alignment, and atomically record only successful conversions against the
+  ten-per-hour limit.
+- Equipment requires 100 Devotion per mapped resource and costs five stored
+  offering units (`0.5` displayed Devotion) per resource to bless.
+- Symbols require 50 Devotion, remain free to bless, and transfer two stored
+  offering units (`0.2` displayed Devotion) when destroyed.
+- All nine square-shield, spear, and scythe destruction mappings are present.
+- Destruction reports the actual independently clamped gain and loss.
+- Every Devotion reduction now cleans up prayers that exceed the resulting
+  allocation.
+- Existing offering XP, blessing XP, destruction XP, hourly-limit, and artifact
+  formulas remain unchanged.
+
+The detailed “Current” sections below are retained as the pre-implementation
+audit snapshot that established the defects. The accepted rules and this
+implementation-status section supersede that historical baseline.
 
 ## Accepted Design Clarification
 
@@ -173,7 +198,9 @@ The most important audit findings are:
   claim or opposing-item destruction can therefore lower equipment-derived
   Prayer capacity without immediately deactivating excess prayers.
 
-No gameplay values or runtime behavior were changed by this audit.
+At the time this baseline was recorded, the audit itself had not changed
+gameplay values or runtime behavior. The implementation-status section above
+now records the subsequently approved changes.
 
 ## Authoritative Runtime Map
 
@@ -277,8 +304,9 @@ to award +1000 displayed Prayer XP each.
 
 ### Spending and removal
 
-Normal symbol, staff, wool, and steel blessings spend no Devotion. The only
-implemented whole-level spend is the artifact claim:
+In the pre-implementation baseline, normal symbol, staff, wool, and steel
+blessings spent no Devotion. The only implemented whole-level spend was the
+artifact claim:
 
 ```text
 artifact requirement = 800 Devotion

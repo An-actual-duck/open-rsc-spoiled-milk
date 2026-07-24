@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PRAYER_PLUGIN_DIR = ROOT / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/prayer"
 LIMITER = PRAYER_PLUGIN_DIR / "PrayerBlessingLimit.java"
+TRANSACTION = PRAYER_PLUGIN_DIR / "PrayerBlessingTransaction.java"
 BLESSING_PLUGINS = [
     PRAYER_PLUGIN_DIR / "BlessedStaffs.java",
     PRAYER_PLUGIN_DIR / "BlessedWoolArmor.java",
@@ -25,6 +26,7 @@ def require(condition: bool, message: str) -> None:
 
 def main() -> None:
     limiter = LIMITER.read_text(encoding="utf-8")
+    transaction = TRANSACTION.read_text(encoding="utf-8")
     require("BLESSINGS_PER_HOUR = 10" in limiter, "prayer blessing cap should be 10 per hour")
     require("60L * 60L * 1000L" in limiter, "prayer blessing window should be one hour")
     require('"You hear a low rumbling voice..."' in limiter, "limit should send the rumbling voice intro")
@@ -33,24 +35,34 @@ def main() -> None:
     require('"Leave. Me. ALONE!"' in limiter, "Zamorak limit message missing")
     require("myworld_prayer_blessing_window_start" in limiter, "limit should persist the window start in player cache")
     require("myworld_prayer_blessing_window_count" in limiter, "limit should persist the blessing count in player cache")
-    require("count < BLESSINGS_PER_HOUR" in limiter, "limit should allow only counts below the cap")
+    require("count >= BLESSINGS_PER_HOUR" in limiter, "limit should reject counts at the cap")
     require("Math.min(BLESSINGS_PER_HOUR, count + 1)" in limiter, "recording should not exceed the cap")
+    require("completeSuccessfulBlessing" in limiter, "limit should expose one atomic successful-conversion operation")
+    require("synchronized (player)" in limiter, "limit check and record should share the player monitor")
+    require("BooleanSupplier conversion" in limiter, "limit should execute the conversion within its critical section")
+    conversion_index = limiter.index("conversion.getAsBoolean()")
+    counter_index = limiter.index("Math.min(BLESSINGS_PER_HOUR, count + 1)")
+    require(conversion_index < counter_index, "failed conversions must not increment the hourly count")
+
+    require("synchronized (player)" in transaction, "ordinary blessing transaction should be serialized per player")
+    require("player.getPrayerBook() != godLine" in transaction, "blessing should require altar/worship alignment")
+    require("replaceExact(source, new Item(productId), true)" in transaction,
+            "blessing should replace only the exact selected inventory instance")
+    require("Devotion.adjustDevotionOfferings(player, godLine, -devotionOfferingCost)" in transaction,
+            "successful equipment blessings should spend fractional offering units")
+    require("PrayerBlessingLimit.completeSuccessfulBlessing(" in transaction,
+            "conversion and hourly accounting should use one atomic limiter operation")
 
     for plugin_path in BLESSING_PLUGINS:
         plugin = plugin_path.read_text(encoding="utf-8")
         require(
-            "PrayerBlessingLimit.canBless(player, godLine)" in plugin,
-            f"{plugin_path.name} should check the hourly blessing limit",
+            "PrayerBlessingTransaction.bless(" in plugin,
+            f"{plugin_path.name} should use the shared atomic blessing path",
         )
-        require(
-            "PrayerBlessingLimit.recordBlessing(player)" in plugin,
-            f"{plugin_path.name} should record successful blessings",
-        )
-        can_bless_index = plugin.index("PrayerBlessingLimit.canBless(player, godLine)")
-        remove_index = plugin.index("player.getCarriedItems().remove(item)")
-        record_index = plugin.index("PrayerBlessingLimit.recordBlessing(player)")
-        require(can_bless_index < remove_index, f"{plugin_path.name} should check the limit before consuming the item")
-        require(remove_index < record_index, f"{plugin_path.name} should record only after item removal succeeds")
+        require("PrayerBlessingLimit.canBless" not in plugin,
+                f"{plugin_path.name} should not split the hourly availability check")
+        require("PrayerBlessingLimit.recordBlessing" not in plugin,
+                f"{plugin_path.name} should not record outside the transaction")
 
     destroy = DESTROY_PLUGIN.read_text(encoding="utf-8")
     require("PrayerBlessingLimit" not in destroy, "destroying opposing blessed objects should not spend blessing slots")

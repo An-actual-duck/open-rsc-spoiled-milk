@@ -182,8 +182,11 @@ def main():
             "Blessed staff altar interaction should support all three gods")
     require("Devotion.getDevotionRequirementForResourceCost(resourceCost)" in blessing,
             "Blessed staff altar interaction should be devotion-gated")
-    require("Devotion.getBlessingPrayerXp(player, godLine, getStaffCraftingXp(item.getCatalogId()))" in blessing,
-            "Blessed staff altar interaction should grant scaled Prayer XP")
+    require("PrayerBlessingTransaction.bless(" in blessing
+            and "getStaffCraftingXp(item.getCatalogId())" in blessing,
+            "Blessed staff altar interaction should grant scaled Prayer XP atomically")
+    require("Devotion.getBlessingOfferingCostForResourceCost(resourceCost)" in blessing,
+            "Blessed staff altar interaction should spend 0.5 devotion per tier")
     require("awardGodCape(" not in mage_arena,
             "Mage Arena should no longer award god capes")
     require("god capes should no longer be Mage Arena rewards" in god_relic_plan,
