@@ -332,6 +332,11 @@ Additive schema-v51 retains bounded counts and one terrain fingerprint per
 source, never tile payloads or handles, and still performs no runtime-source
 terrain application, absence, reconstruction, registration, arrival, or
 visibility work;
+automated-validated Slice 184 binds one exact terrain-verified source to a
+detached authored replay definition. Stable final-live placement order,
+constructor families, dependency envelopes, counts, and a deterministic
+fingerprint survive, while entity construction, Region membership, collision,
+scheduler state, registration, and visibility remain absent;
 Packed Region lookup, eager loading, release, eviction, pathing, packets, and
 persistence remain unchanged
 
@@ -14746,6 +14751,76 @@ membership, ground items, collision derivation, scheduler state, registration,
 and visibility into explicit later stages. It must not yet populate even a
 disposable Region.
 
+### Slice 184: Detached authored replay definition
+
+Objective: bind one exact terrain-verified source to the complete final-live
+authored constructor sequence it would later replay, without constructing or
+registering any entity.
+
+Implemented:
+
+- `LayeredPackedRegionAuthoredReplayPlan` requires one inert Slice 176 reload
+  recipe plus the exact matching Slice 182 terrain-verification receipt and
+  refuses any generation, tick, residency-mirror, authored-generation, selected
+  ordinal, or packed-coordinate mismatch;
+- final-live definitions retain stable authored construction order. Original
+  source ordinals may remain non-contiguous after supersession but must remain
+  strictly increasing, so duplicate-looking authored entries stay distinct;
+- every placement copies its generation-fenced source identity, typed
+  construction family, exact primitive constructor fields, dependency kind,
+  tile envelope, packed-source envelope, cross-source fact, and affected-source
+  count without retaining manifest, recipe, dependency, or identity objects;
+- scenery, boundary, NPC spawn, ground-item spawn, and harvesting-scenery
+  constructor shapes are independently validated. Anchor/source ownership,
+  object type, NPC roaming bounds, item inputs, dependency family, envelope
+  arithmetic, and cross-source classification must agree before the plan can
+  exist;
+- family totals, authored-object totals, cross-source totals, affected-source
+  references, manifest/supersession counts, declared-versus-exact-empty state,
+  and a deterministic SHA-256 fingerprint reconcile the complete replay; and
+- an exact empty replay remains a complete first-class result rather than a
+  missing definition.
+
+Safety boundary:
+
+- the plan retains primitives, enums, immutable owner text, and its own
+  immutable placement list only; it retains no ReconstructionPlacement,
+  AuthoredPlacement, PlacementDependency, Region, RegionManager, TileValue,
+  entity, archive, registry, mirror, cache, scheduler, event, monitor, or other
+  runtime handle;
+- terrain verification is a prerequisite identity proof, not a Region handle
+  or permission to reuse the disposable terrain container;
+- authored scenery membership, NPC membership, ground-item membership,
+  collision derivation, scheduler restoration, transactional registration,
+  rollback, arrival, and visibility remain separate later stages; and
+- executable replay, usable-container return, source absence/reconstruction,
+  runtime-handle retention, registry/mirror/cache mutation, arrival, visibility,
+  and lifecycle authority remain false.
+
+Automated validation status:
+
+- an executable fixture builds all five authored families in one exact source,
+  including cross-source scenery footprint and NPC roaming envelopes, then
+  proves terrain-verification identity, stable order, exact primitive
+  constructors, dependency arithmetic, family/aggregate reconciliation,
+  deterministic fingerprinting, immutable placement storage, and every inert
+  safety fact;
+- the same fixture proves an undeclared source produces a complete exact-empty
+  replay and mismatched or out-of-range selected source ordinals refuse;
+- structural guards prove the retained plan has no source recipe/manifest/
+  dependency field, entity type, Region construction, RegionManager lookup,
+  registration, or apply path;
+- the Slice 182-184 focused lineage passes 11 tests, including three Slice 184
+  tests, and the repository prerequisite check passes; and
+- the authoritative bundled-Ant server build compiles 823 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This definition has no production
+or private diagnostic caller and does not warrant an owner route by itself. The
+next slice should define an isolated authored-object membership application
+boundary while continuing to leave NPCs, ground items, collision, dynamic
+state, registration, and visibility disabled.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15147,6 +15222,7 @@ private environment should validate at least:
 | 2026-07-23 | Continue with Slice 182 by applying static terrain to one disposable isolated Region. | Implemented and automated-validated; the exact captured terrain initializes and round-trips all 2,304 tiles on an unregistered local Region, static metadata/collision/projectile/sealed-base values match, dynamic products and entity memberships remain empty, only a fingerprinted detached receipt survives, 615 focused tests pass across 181 files, and the 821/488 Ant build passes |
 | 2026-07-23 | Continue with Slice 183 by exposing bounded isolated-terrain verification through the explicit private preservation diagnostic. | Implemented and automated-validated; schema-v51 reports one count/fingerprint-only receipt per exact selected source after disposable unregistered terrain apply/verification, serializes no tile payload or handle, keeps every runtime mutation and authority false, the current observer plus Slice 177-183 lineage passes 30 focused tests, and the 822/488 Ant build passes; one dense private owner route remains pending |
 | 2026-07-24 | Accept the Slice 183 private isolated-terrain route. | Owner-validated; nine schema-v51 records remain contiguous, all 36 selected sources align across preflight/recipe/terrain identity, 82,944 verified tiles and every terrain aggregate reconcile, the sole repeated fingerprint is the correct digest for three identical fully blocked sectors, all runtime mutation/authority flags remain false, and movement plus NPC/scenery interaction remained normal |
+| 2026-07-24 | Continue with Slice 184 by defining one exact detached authored replay after terrain verification. | Implemented and automated-validated; stable final-live order and generation-fenced constructor scalars for scenery, boundaries, NPCs, ground items, and harvesting scenery are copied with exact dependency envelopes, family and cross-source totals plus deterministic fingerprint reconcile, empty replay remains explicit, every apply/authority fact is false, 11 focused Slice 182-184 tests and the 823/488 Ant build pass |
 
 ## Next Discussion
 
