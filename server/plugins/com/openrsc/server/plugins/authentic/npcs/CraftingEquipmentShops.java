@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.authentic.npcs;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
@@ -107,7 +108,7 @@ public final class CraftingEquipmentShops extends AbstractShop {
 				new Item(ItemId.BROWN_APRON.id(), 3),
 				new Item(ItemId.RING_MOULD.id(), 4),
 				new Item(ItemId.NECKLACE_MOULD.id(), 2),
-				new Item(ItemId.AMULET_MOULD.id(), 2),
+				new Item(MyWorldItemId.BANGEL_MOULD, 2),
 				new Item(ItemId.UNHOLY_SYMBOL_MOULD.id(), 3),
 				new Item(ItemId.GUTHIX_SYMBOL_MOULD.id(), 3),
 				new Item(ItemId.BOLT_MOULD.id(), 2),

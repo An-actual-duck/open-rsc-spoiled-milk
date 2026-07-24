@@ -162,10 +162,6 @@ enum BankItemTag {
 			|| containsAny(description, "blessed by")) {
 			return false;
 		}
-		if (equalsAny(name, "sapphire amulet", "emerald amulet", "ruby amulet", "diamond amulet",
-			"unenchanted dragonstone amulet", "dragonstone amulet")) {
-			return false;
-		}
 		return rune
 			|| containsAny(name, "unenchant", "unenchanted")
 			|| isEnchantableBaseJewelry(name)
@@ -226,7 +222,7 @@ enum BankItemTag {
 	}
 
 	private static boolean isJewelryMould(String name) {
-		return equalsAny(name, "ring mould", "amulet mould", "necklace mould", "bangel mould", "holy symbol mould",
+		return equalsAny(name, "ring mould", "necklace mould", "bangel mould", "holy symbol mould",
 			"unholy symbol mould", "tiara mould");
 	}
 

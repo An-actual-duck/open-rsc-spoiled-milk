@@ -18,8 +18,17 @@ The player-facing spelling is **Bangel**. The older `Amulet` names that remain
 in method names, product-array names, and two cache keys are compatibility
 ownership labels, not current item names.
 
-Authentic and quest Amulets remain intact. Ordinary Amulets are no longer
-accepted as inputs by the My World altars.
+The standard craftable Amulet family is retired completely. The Amulet mould,
+unstrung Amulets, ordinary strung Amulets, and their ordinary enchanted
+products no longer appear in production, stringing, shops, drops, rewards,
+starter supplies, static spawns, guides, bank classifications, or admin spawn
+utilities. Both normal enchantment spells and My World altars now use Bangels.
+
+Uniquely named quest artifacts remain Amulets because quests genuinely own
+their identity and lifecycle. The retained exceptions are Ghostspeak, Accuracy,
+Gnome Emerald Protection, Glarial's, King Lathas's, Othainian, Doomion,
+Holthion, and Zombite Amulets. These exceptions are not members of the retired
+craftable family.
 
 ## Slot and Protocol Contract
 
@@ -41,8 +50,8 @@ equipment validation use those counts.
 
 Old bank-preset blobs may end after the former 14 server slots. Decoding is
 bounded, and loaded equipment is placed according to its current item
-definition. This moves an old preset's preserved enchanted-Amulet ID from neck
-to wrist without rewriting or losing the item.
+definition. This moves a preserved enchanted-item ID from neck to wrist without
+rewriting or losing the item.
 
 Equipped-item database rows persist item identity rather than an authoritative
 slot number, so login resolves retained IDs through their current wrist-slot
@@ -71,6 +80,21 @@ item-ID-keyed charges. The following legacy names deliberately remain:
 Renaming those persistence ownership keys would strand existing charge state.
 New player-facing text uses Bangel.
 
+The five classic enchantment outputs also retain their IDs and stats while
+becoming wrist-slot Bangels:
+
+| Compatibility ID | Current product |
+| ---: | --- |
+| 314 | Sapphire Bangel of Magic |
+| 315 | Emerald Bangel of Protection |
+| 316 | Ruby Bangel of Strength |
+| 317 | Diamond Bangel of Power |
+| 597 | Charged Dragonstone Bangel |
+
+The `ItemId` enum constants for these five products retain `*AMULET*` in their
+names because changing serialized/cache-facing ID ownership names offers no
+player benefit. Their definitions and all player-facing text say Bangel.
+
 ## Base Bangel Crafting
 
 The Bangel mould is item `3281`. Base Bangels are completed directly at a
@@ -79,6 +103,7 @@ unstrung product, ball-of-wool requirement, or stringing stage.
 
 | Item | ID | Crafting level | Internal XP | Gem ID | Active base price | Enchanting tier |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gold Bangel | 3292 | 5 | 120 | none | 900 | none |
 | Sapphire Bangel | 3282 | 13 | 260 | 164 | 1,800 | 1 |
 | Emerald Bangel | 3283 | 26 | 280 | 163 | 3,000 | 2 |
 | Ruby Bangel | 3284 | 44 | 340 | 162 | 6,000 | 3 |
@@ -86,7 +111,35 @@ unstrung product, ball-of-wool requirement, or stringing stage.
 | Dragonstone Bangel | 3286 | 70 | 600 | 523 | 35,000 | 5 |
 
 Levels, XP, gem requirements, active prices, and enchanting tiers match the
-corresponding complete Amulets. Dragonstone remains members-only.
+retired complete-Amulet recipes. Dragonstone remains members-only. The plain
+Gold Bangel carries the former plain Gold Amulet recipe and is intentionally
+not an enchantment input.
+
+## Legacy Property Conversion
+
+Legacy definition IDs remain decodable but are not obtainable. On load,
+`LegacyAmuletCompatibility` converts existing property as follows:
+
+| Legacy property | Canonical property |
+| --- | --- |
+| Amulet mould `294` | Bangel mould `3281` |
+| Gold unstrung/strung `296`, `301` | Gold Bangel `3292` |
+| Sapphire unstrung/strung `297`, `302` | Sapphire Bangel `3282` |
+| Emerald unstrung/strung `298`, `303` | Emerald Bangel `3283` |
+| Ruby unstrung/strung `299`, `304` | Ruby Bangel `3284` |
+| Diamond unstrung/strung `300`, `305` | Diamond Bangel `3285` |
+| Dragonstone forms `522`, `524`, `610` | Dragonstone Bangel `3286` |
+
+Conversion mutates the existing `ItemStatus` catalog ID, preserving its unique
+ownership token, amount, note state, and durability. It covers inventory,
+equipment, bank, bank presets, pinned bank slots, auction listings, and
+collectible auction returns. If an equipped legacy Amulet converts into an
+already occupied wrist slot, the existing wrist item remains equipped and the
+converted item is safely moved to the bank.
+
+The old `ItemId` constants, base item definitions, historic patch definitions,
+and database migration records remain as decode-only compatibility data. They
+must not be reused as acquisition IDs.
 
 ## Effect Ownership
 
@@ -142,9 +195,11 @@ The source files remain untouched. Normalized copies live under
 ## Regression Contract
 
 `tests/myworld/test-bangel-jewelry.py` covers slot counts/translation, packet
-paths, equipment UI and bank/preset views, legacy preset compatibility,
-preserved IDs, crafting metadata and lack of wool, all former Amulet effect
-getters, simultaneous Ring/Necklace/Bangel slots, hidden Medallion gates, and
+paths, equipment UI and bank/preset views, all property-conversion containers,
+wrist collision preservation, retained altar/classic IDs, all six crafting
+recipes and lack of wool, standard-spell and altar inputs, retired acquisition
+guardrails, explicit quest exceptions, all former Amulet effect getters,
+simultaneous Ring/Necklace/Bangel slots, hidden Medallion gates, and
 client/server sprite/definition coverage.
 
 The existing enchanting, equipment appearance, equipment hover, Entrana, and

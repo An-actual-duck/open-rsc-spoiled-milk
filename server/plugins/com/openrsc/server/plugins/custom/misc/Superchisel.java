@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.custom.misc;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -232,33 +233,33 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 			notSuperchisel = item2;
 		}
 		if (notSuperchisel.getCatalogId() == ItemId.BALL_OF_WOOL.id()) {
-			int choice = multi(player, "Make stringed amulet",
+			int choice = multi(player, "Spawn Bangels",
 				"Spawn uncut gems",
 				"Spawn cut gems",
 				"Give crafting tools",
 				"Give gold bars");
 			switch (choice) {
 				case 0:
-					int whatKindOfAmulet = multi(player, "Gold", "Sapphire", "Emerald", "Ruby", "Diamond");
-					switch (whatKindOfAmulet) {
+					int whatKindOfBangel = multi(player, "Gold", "Sapphire", "Emerald", "Ruby", "Diamond");
+					switch (whatKindOfBangel) {
 						case 0:
-							give(player, ItemId.GOLD_AMULET.id(), 1);
+							give(player, MyWorldItemId.GOLD_BANGEL, 1);
 							player.incExp(Skill.CRAFTING.id(), 30 * 4, true);
 							break;
 						case 1:
-							give(player, ItemId.SAPPHIRE_AMULET.id(), 1);
+							give(player, MyWorldItemId.SAPPHIRE_BANGEL, 1);
 							player.incExp(Skill.CRAFTING.id(), 65 * 4, true);
 							break;
 						case 2:
-							give(player, ItemId.EMERALD_AMULET.id(), 1);
+							give(player, MyWorldItemId.EMERALD_BANGEL, 1);
 							player.incExp(Skill.CRAFTING.id(), 70 * 4, true);
 							break;
 						case 3:
-							give(player, ItemId.RUBY_AMULET.id(), 1);
+							give(player, MyWorldItemId.RUBY_BANGEL, 1);
 							player.incExp(Skill.CRAFTING.id(), 85 * 4, true);
 							break;
 						case 4:
-							give(player, ItemId.DIAMOND_AMULET.id(), 1);
+							give(player, MyWorldItemId.DIAMOND_BANGEL, 1);
 							player.incExp(Skill.CRAFTING.id(), 100 * 4, true);
 							break;
 					}
@@ -283,7 +284,7 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 						case 1:
 							give(player, ItemId.RING_MOULD.id(), 1);
 							give(player, ItemId.NECKLACE_MOULD.id(), 1);
-							give(player, ItemId.AMULET_MOULD.id(), 1);
+							give(player, MyWorldItemId.BANGEL_MOULD, 1);
 							break;
 						case 2:
 							give(player, ItemId.CHISEL.id(), 1);

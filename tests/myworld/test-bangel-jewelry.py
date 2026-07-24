@@ -15,14 +15,21 @@ ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "server"
 CLIENT = ROOT / "Client_Base/src"
 
+BASE_DEFS = SERVER / "conf/server/defs/ItemDefs.json"
 CUSTOM_DEFS = SERVER / "conf/server/defs/ItemDefsCustom.json"
 MYWORLD_DEFS = SERVER / "conf/server/defs/ItemDefsMyWorld.json"
 CRAFTING_DEFS = SERVER / "conf/server/defs/extras/ItemCraftingDef.xml"
+RETRO_CRAFTING_DEFS = SERVER / "conf/server/defs/extras/retro/ItemCraftingDef.xml"
 EQUIPMENT = SERVER / "src/com/openrsc/server/model/container/Equipment.java"
 BANK_PRESET = SERVER / "src/com/openrsc/server/model/container/BankPreset.java"
+BANK = SERVER / "src/com/openrsc/server/model/container/Bank.java"
 PLAYER = SERVER / "src/com/openrsc/server/model/entity/player/Player.java"
 PLAYER_SERVICE = SERVER / "src/com/openrsc/server/service/PlayerService.java"
+GAME_DATABASE = SERVER / "src/com/openrsc/server/database/GameDatabase.java"
 EFFECTS = SERVER / "src/com/openrsc/server/content/EnchantingItemEffects.java"
+LEGACY_COMPATIBILITY = (
+    SERVER / "src/com/openrsc/server/content/LegacyAmuletCompatibility.java"
+)
 MEDALLIONS = SERVER / "src/com/openrsc/server/content/FutureMedallionCatalog.java"
 MYWORLD_IDS = (
     SERVER / "src/com/openrsc/server/constants/custom/MyWorldItemId.java"
@@ -39,6 +46,10 @@ ENCHANTING = (
     SERVER
     / "plugins/com/openrsc/server/plugins/custom/myworld/skills/enchanting/Enchanting.java"
 )
+SPELL_HANDLER = (
+    SERVER / "src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
+)
+SKILL_GUIDE = CLIENT / "com/openrsc/interfaces/misc/SkillGuideInterface.java"
 
 CONFIG = CLIENT / "orsc/Config.java"
 SLOT_MAPPING = CLIENT / "orsc/EquipmentSlotMapping.java"
@@ -53,6 +64,7 @@ CLIENT_BANK = (
 CLIENT_BANK_TAGS = (
     CLIENT / "com/openrsc/interfaces/misc/BankItemTag.java"
 )
+DO_SKILL = CLIENT / "com/openrsc/interfaces/misc/DoSkillInterface.java"
 
 ASSETS = {
     "bangel": (
@@ -76,6 +88,7 @@ ASSETS = {
 
 TIERS = ("Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone")
 BASE_BANGELS = (3282, 3283, 3284, 3285, 3286)
+GOLD_BANGEL = 3292
 MEDALLION_IDS = (3287, 3288, 3289, 3290, 3291)
 ENCHANTED_BANGELS = (
     tuple(range(1593, 1613))
@@ -83,8 +96,36 @@ ENCHANTED_BANGELS = (
     + tuple(range(1719, 1759))
     + tuple(range(3106, 3111))
 )
+STANDARD_ENCHANTED_BANGELS = {
+    314: "Sapphire Bangel of Magic",
+    315: "Emerald Bangel of Protection",
+    316: "Ruby Bangel of Strength",
+    317: "Diamond Bangel of Power",
+    597: "Charged Dragonstone Bangel",
+}
+
+RETIRED_AMULET_IDS = (
+    294, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 522, 524, 610
+)
+RETIRED_AMULET_TOKENS = (
+    "ItemId.AMULET_MOULD.id()",
+    "ItemId.UNSTRUNG_GOLD_AMULET.id()",
+    "ItemId.UNSTRUNG_SAPPHIRE_AMULET.id()",
+    "ItemId.UNSTRUNG_EMERALD_AMULET.id()",
+    "ItemId.UNSTRUNG_RUBY_AMULET.id()",
+    "ItemId.UNSTRUNG_DIAMOND_AMULET.id()",
+    "ItemId.GOLD_AMULET.id()",
+    "ItemId.SAPPHIRE_AMULET.id()",
+    "ItemId.EMERALD_AMULET.id()",
+    "ItemId.RUBY_AMULET.id()",
+    "ItemId.DIAMOND_AMULET.id()",
+    "ItemId.DRAGONSTONE_AMULET.id()",
+    "ItemId.UNSTRUNG_DRAGONSTONE_AMULET.id()",
+    "ItemId.UNENCHANTED_DRAGONSTONE_AMULET.id()",
+)
 
 EXPECTED_BANGEL_RECIPES = {
+    3292: (5, 120, -1, 900),
     3282: (13, 260, 164, 1800),
     3283: (26, 280, 163, 3000),
     3284: (44, 340, 162, 6000),
@@ -104,15 +145,22 @@ def require(condition: bool, message: str) -> None:
 
 def load_items(path: Path) -> dict[int, dict[str, Any]]:
     data = json.loads(path.read_text(encoding="utf-8"))
-    entries = data["items"] if isinstance(data, dict) else data
+    entries = (
+        data.get("items", data.get("item", []))
+        if isinstance(data, dict)
+        else data
+    )
     return {int(entry["id"]): dict(entry) for entry in entries}
 
 
 def load_active_custom_items() -> dict[int, dict[str, Any]]:
-    items = load_items(CUSTOM_DEFS)
-    for item_id, override in load_items(MYWORLD_DEFS).items():
-        if item_id in items:
-            items[item_id].update(override)
+    items = load_items(BASE_DEFS)
+    for source in (CUSTOM_DEFS, MYWORLD_DEFS):
+        for item_id, override in load_items(source).items():
+            if item_id in items:
+                items[item_id].update(override)
+            else:
+                items[item_id] = override
     return items
 
 
@@ -246,8 +294,11 @@ public final class BangelSlotMappingFixture {
 def ensure_persistence_and_lifecycle_contract() -> None:
     equipment = EQUIPMENT.read_text(encoding="utf-8")
     preset = BANK_PRESET.read_text(encoding="utf-8")
+    bank = BANK.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
     player_service = PLAYER_SERVICE.read_text(encoding="utf-8")
+    database = GAME_DATABASE.read_text(encoding="utf-8")
+    compatibility = LEGACY_COMPATIBILITY.read_text(encoding="utf-8")
 
     require("new Item[Equipment.SLOT_COUNT]" in preset,
             "bank presets should allocate the current server slot count")
@@ -259,12 +310,38 @@ def ensure_persistence_and_lifecycle_contract() -> None:
             "old preset holdings should migrate by current item definition")
     require("equipment[currentSlot]" in preset,
             "migrated preset items should populate their current slot")
-    require(
-        "equipment.getList()[itemDef.getWieldPosition()] = item;" in player_service,
-        "login should resolve preserved item IDs through their current wrist definition",
-    )
+    require("LegacyAmuletCompatibility.canonicalize(invItem.item);" in player_service,
+            "inventory holdings should canonicalize on login")
+    require("LegacyAmuletCompatibility.canonicalize(equippedItem.itemStatus)" in player_service,
+            "equipped holdings should canonicalize on login")
+    require("LegacyAmuletCompatibility.canonicalize(bankItems[i].itemStatus);" in player_service,
+            "bank holdings should canonicalize on login")
+    require("convertedItemIds.contains(equippedItem.itemId)" in player_service
+            and "overflow.add(item);" in player_service,
+            "wrist collisions should preserve converted legacy equipment in the bank")
+    require(preset.count("LegacyAmuletCompatibility.canonicalCatalogId(") == 2,
+            "bank presets should canonicalize retired Amulet IDs")
+    require("LegacyAmuletCompatibility.canonicalCatalogId(catalogId)" in bank,
+            "bank pin metadata should canonicalize retired Amulet IDs")
+    require(database.count("LegacyAmuletCompatibility.canonicalCatalogId(") >= 5,
+            "auction listings and collectible property should canonicalize retired Amulets")
     require("for (int slot = 0; slot < Equipment.SLOT_COUNT; slot++)" in player,
             "player equipment validation should include wrist")
+
+    expected_mapping = {
+        "AMULET_MOULD": "BANGEL_MOULD",
+        "GOLD_AMULET": "GOLD_BANGEL",
+        "SAPPHIRE_AMULET": "SAPPHIRE_BANGEL",
+        "EMERALD_AMULET": "EMERALD_BANGEL",
+        "RUBY_AMULET": "RUBY_BANGEL",
+        "DIAMOND_AMULET": "DIAMOND_BANGEL",
+        "DRAGONSTONE_AMULET": "DRAGONSTONE_BANGEL",
+    }
+    for legacy_name, bangel_name in expected_mapping.items():
+        require(legacy_name in compatibility and bangel_name in compatibility,
+                f"missing compatibility conversion from {legacy_name} to {bangel_name}")
+    require("status.setCatalogId(canonicalId);" in compatibility,
+            "conversion must preserve the existing ItemStatus ownership token")
 
     require("public Item getEquippedWristItem()" in equipment,
             "equipment should expose the active wrist item")
@@ -285,6 +362,15 @@ def ensure_item_identity_and_visuals(items: dict[int, dict[str, Any]]) -> None:
                 f"migrated Bangel {item_id} should use wrist slot")
         require(item.get("appearanceID") == 0 and item.get("wearableID") == 0,
                 f"migrated Bangel {item_id} should not require a worn model")
+
+    for item_id, expected_name in STANDARD_ENCHANTED_BANGELS.items():
+        item = items.get(item_id)
+        require(item is not None and item.get("name") == expected_name,
+                f"classic enchanted ID {item_id} should now be {expected_name}")
+        require(item.get("wearSlot") == 14 and item.get("isWearable") == 1,
+                f"classic enchanted Bangel {item_id} should equip on wrist")
+        require(item.get("appearanceID") == 0 and item.get("wearableID") == 0,
+                f"classic enchanted Bangel {item_id} should not use a worn model")
 
     client = CLIENT_ENTITIES.read_text(encoding="utf-8")
     for snippet in (
@@ -316,7 +402,8 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
             int(definition.findtext("gemID", "-1")),
         )
 
-    for tier, item_id in zip(TIERS, BASE_BANGELS):
+    craftable_bangels = (("Gold", GOLD_BANGEL),) + tuple(zip(TIERS, BASE_BANGELS))
+    for tier, item_id in craftable_bangels:
         expected_level, expected_xp, expected_gem, expected_price = (
             EXPECTED_BANGEL_RECIPES[item_id]
         )
@@ -338,9 +425,11 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
     enchanting = ENCHANTING.read_text(encoding="utf-8")
     ids = MYWORLD_IDS.read_text(encoding="utf-8")
     bank_tags = CLIENT_BANK_TAGS.read_text(encoding="utf-8")
+    do_skill = DO_SKILL.read_text(encoding="utf-8")
 
     for snippet in (
         "BANGEL_MOULD = 3281",
+        "GOLD_BANGEL = 3292",
         "SAPPHIRE_BANGEL = 3282",
         "DRAGONSTONE_BANGEL = 3286",
     ):
@@ -349,7 +438,7 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
             "Bangel production should require the Bangel mould")
     require("JewelryCategory.BANGELS" in crafting,
             "modern furnace UI should expose the Bangel family")
-    require("MyWorldItemId.SAPPHIRE_BANGEL" in smelting,
+    require("MyWorldItemId.GOLD_BANGEL" in smelting,
             "furnace categories should include Bangels")
     require("ItemId.BALL_OF_WOOL" not in method_body(crafting, "getRequiredGoldMouldId"),
             "Bangel mould selection must not introduce wool")
@@ -359,14 +448,19 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
             "ordinary base Amulets should not remain altar inputs")
     require("MyWorldItemId.SAPPHIRE_BANGEL" in effects,
             "base Bangels should own the active altar tier ladder")
-    require(
-        'equalsAny(name, "sapphire amulet", "emerald amulet", "ruby amulet", "diamond amulet",'
-        in bank_tags
-        and '"unenchanted dragonstone amulet", "dragonstone amulet")' in bank_tags,
-        "ordinary Amulets should be excluded from the Enchanting bank filter",
-    )
     require('"dragonstone necklace", "sapphire bangel", "emerald bangel"' in bank_tags,
             "base Bangels should replace ordinary Amulets in the Enchanting bank filter")
+    require('"amulet mould"' not in method_body(bank_tags, "isJewelryMould"),
+            "retired Amulet mould should not remain a bank crafting classification")
+    furnace_names = method_body(do_skill, "furnaceCategoryName")
+    require("case 3292:" in furnace_names and 'return "Bangels";' in furnace_names,
+            "client furnace category should recognize the Gold Bangel sentinel")
+    require("case 296:" not in furnace_names and 'return "Amulets";' not in furnace_names,
+            "retired Amulet furnace category should not remain visible")
+    legacy_gold_menu = method_body(do_skill, "populateSkillItems")
+    for retired_id in (296, 297, 298, 299, 300, 524):
+        require(f"new DoSkillItem({retired_id}," not in legacy_gold_menu,
+                f"legacy Gold menu still exposes retired Amulet ID {retired_id}")
     for ordinary_amulet in (
         "ItemId.SAPPHIRE_AMULET.id()",
         "ItemId.EMERALD_AMULET.id()",
@@ -376,6 +470,93 @@ def ensure_bangel_crafting(items: dict[int, dict[str, Any]]) -> None:
     ):
         require(ordinary_amulet not in method_body(effects, "isBangelBase"),
                 f"ordinary Amulet leaked into active altar inputs: {ordinary_amulet}")
+
+
+def ensure_standard_spell_and_retirement_contract(
+    items: dict[int, dict[str, Any]],
+) -> None:
+    spells = SPELL_HANDLER.read_text(encoding="utf-8")
+    spell_pairs = (
+        ("SAPPHIRE_BANGEL", "SAPPHIRE_AMULET_OF_MAGIC"),
+        ("EMERALD_BANGEL", "EMERALD_AMULET_OF_PROTECTION"),
+        ("RUBY_BANGEL", "RUBY_AMULET_OF_STRENGTH"),
+        ("DIAMOND_BANGEL", "DIAMOND_AMULET_OF_POWER"),
+        ("DRAGONSTONE_BANGEL", "CHARGED_DRAGONSTONE_AMULET"),
+    )
+    for input_name, compatibility_output_name in spell_pairs:
+        require(
+            f"MyWorldItemId.{input_name}" in spells
+            and f"ItemId.{compatibility_output_name}.id()" in spells,
+            f"standard enchantment spell missing {input_name} Bangel conversion",
+        )
+    require("private void enchantBangel(" in spells,
+            "standard enchantment spells should share the successful Bangel path")
+
+    for crafting_path in (CRAFTING_DEFS, RETRO_CRAFTING_DEFS):
+        crafting_source = crafting_path.read_text(encoding="utf-8")
+        require("<!-- Amulet -->" not in crafting_source,
+                f"retired Amulet recipe family remains scaffolded in {crafting_path.name}")
+        crafting_ids = {
+            int(definition.findtext("itemID", "-1"))
+            for definition in ET.parse(crafting_path).getroot().iter("ItemCraftingDef")
+        }
+        for retired_id in RETIRED_AMULET_IDS:
+            require(retired_id not in crafting_ids,
+                    f"retired Amulet ID {retired_id} remains craftable in {crafting_path.name}")
+        for bangel_id in (GOLD_BANGEL,) + BASE_BANGELS:
+            require(bangel_id in crafting_ids,
+                    f"Bangel ID {bangel_id} missing from {crafting_path.name}")
+
+    allowed_legacy_sources = {
+        Path("src/com/openrsc/server/constants/ItemId.java"),
+        Path("src/com/openrsc/server/content/LegacyAmuletCompatibility.java"),
+        Path("src/com/openrsc/server/external/EntityHandler.java"),
+    }
+    for path in SERVER.rglob("*.java"):
+        relative = path.relative_to(SERVER)
+        if relative in allowed_legacy_sources:
+            continue
+        source = path.read_text(encoding="utf-8")
+        for token in RETIRED_AMULET_TOKENS:
+            require(token not in source,
+                    f"retired acquisition token {token} remains in {relative}")
+
+    for path in (SERVER / "conf/server/defs/locs").glob("GroundItems*.json"):
+        source = path.read_text(encoding="utf-8")
+        for retired_id in RETIRED_AMULET_IDS:
+            require(
+                re.search(rf'"id"\s*:\s*{retired_id}(?:\s*[,}}])', source) is None,
+                f"retired Amulet ID {retired_id} remains a static spawn in {path.name}",
+            )
+
+    guide = SKILL_GUIDE.read_text(encoding="utf-8")
+    for retired_id in (296, 297, 298, 299, 300, 524):
+        require(f"new SkillMenuItem({retired_id}," not in guide,
+                f"retired Amulet ID {retired_id} remains in the Crafting guide")
+    require('new SkillMenuItem(3292, "5", "Gold Bangel")' in guide,
+            "Crafting guide should advertise the plain Gold Bangel")
+
+    item_ids = (
+        SERVER / "src/com/openrsc/server/constants/ItemId.java"
+    ).read_text(encoding="utf-8")
+    for quest_exception in (
+        "AMULET_OF_GHOSTSPEAK(24)",
+        "AMULET_OF_ACCURACY(235)",
+        "GNOME_EMERALD_AMULET_OF_PROTECTION(744)",
+        "GLARIALS_AMULET(782)",
+        "KING_LATHAS_AMULET(826)",
+        "AMULET_OF_OTHAINIAN(1009)",
+        "AMULET_OF_DOOMION(1010)",
+        "AMULET_OF_HOLTHION(1011)",
+    ):
+        require(quest_exception in item_ids,
+                f"quest-specific Amulet exception was removed: {quest_exception}")
+
+    for retired_id in RETIRED_AMULET_IDS:
+        require(retired_id not in STANDARD_ENCHANTED_BANGELS,
+                f"retired base ID {retired_id} must not masquerade as a real item")
+    require(items[GOLD_BANGEL]["name"] == "Gold Bangel",
+            "plain Gold Bangel definition is missing")
 
 
 def ensure_effect_slot_contract(items: dict[int, dict[str, Any]]) -> None:
@@ -473,6 +654,7 @@ def main() -> None:
     ensure_persistence_and_lifecycle_contract()
     ensure_item_identity_and_visuals(items)
     ensure_bangel_crafting(items)
+    ensure_standard_spell_and_retirement_contract(items)
     ensure_effect_slot_contract(items)
     ensure_hidden_medallions(items)
     print("PASS: Bangel wrist jewelry, compatibility, crafting, and hidden Medallion gates validated")

@@ -1514,48 +1514,63 @@
       "basePrice": 13000
     },
     {
+      "id": 294,
+      "description": "A retired legacy Amulet mould converted to a Bangel mould on login."
+    },
+    {
       "id": 296,
-      "basePrice": 900
+      "basePrice": 900,
+      "description": "A retired legacy Amulet converted to a Gold Bangel on login."
     },
     {
       "id": 297,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "description": "A retired legacy Amulet converted to a Sapphire Bangel on login."
     },
     {
       "id": 298,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "description": "A retired legacy Amulet converted to an Emerald Bangel on login."
     },
     {
       "id": 299,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "description": "A retired legacy Amulet converted to a Ruby Bangel on login."
     },
     {
       "id": 300,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "description": "A retired legacy Amulet converted to a Diamond Bangel on login."
     },
     {
       "id": 301,
-      "basePrice": 900
+      "basePrice": 900,
+      "description": "A retired legacy Amulet converted to a Gold Bangel on login."
     },
     {
       "id": 302,
-      "basePrice": 1800
+      "basePrice": 1800,
+      "description": "A retired legacy Amulet converted to a Sapphire Bangel on login."
     },
     {
       "id": 303,
-      "basePrice": 3000
+      "basePrice": 3000,
+      "description": "A retired legacy Amulet converted to an Emerald Bangel on login."
     },
     {
       "id": 304,
-      "basePrice": 6000
+      "basePrice": 6000,
+      "description": "A retired legacy Amulet converted to a Ruby Bangel on login."
     },
     {
       "id": 305,
-      "basePrice": 12000
+      "basePrice": 12000,
+      "description": "A retired legacy Amulet converted to a Diamond Bangel on login."
     },
     {
       "id": 522,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "description": "A retired legacy Amulet converted to a Dragonstone Bangel on login."
     },
     {
       "id": 523,
@@ -1563,7 +1578,8 @@
     },
     {
       "id": 524,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "description": "A retired legacy Amulet converted to a Dragonstone Bangel on login."
     },
     {
       "id": 532,
@@ -1583,11 +1599,18 @@
     },
     {
       "id": 597,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "name": "Charged Dragonstone Bangel",
+      "description": "A very powerful Bangel",
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14
     },
     {
       "id": 610,
-      "basePrice": 35000
+      "basePrice": 35000,
+      "description": "A retired legacy Amulet converted to a Dragonstone Bangel on login."
     },
     {
       "id": 669,

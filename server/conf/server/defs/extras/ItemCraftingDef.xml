@@ -18,15 +18,6 @@
 			<gemID>-1</gemID>
 		</ItemCraftingDef>
 	</entry>
-	<entry>
-		<int>296</int>
-		<ItemCraftingDef><!-- Amulet -->
-			<requiredLvl>5</requiredLvl>
-			<itemID>296</itemID>
-			<exp>120</exp>
-			<gemID>-1</gemID>
-		</ItemCraftingDef>
-	</entry>
 	<!-- SAPPHIRE -->
 	<entry>
 		<int>284</int>
@@ -43,15 +34,6 @@
 			<requiredLvl>10</requiredLvl>
 			<itemID>289</itemID>
 			<exp>220</exp>
-			<gemID>164</gemID>
-		</ItemCraftingDef>
-	</entry>
-	<entry>
-		<int>297</int>
-		<ItemCraftingDef><!-- Amulet -->
-			<requiredLvl>13</requiredLvl>
-			<itemID>297</itemID>
-			<exp>260</exp>
 			<gemID>164</gemID>
 		</ItemCraftingDef>
 	</entry>
@@ -74,15 +56,6 @@
 			<gemID>163</gemID>
 		</ItemCraftingDef>
 	</entry>
-	<entry>
-		<int>298</int>
-		<ItemCraftingDef><!-- Amulet -->
-			<requiredLvl>26</requiredLvl>
-			<itemID>298</itemID>
-			<exp>280</exp>
-			<gemID>163</gemID>
-		</ItemCraftingDef>
-	</entry>
 	<!-- RUBY -->
 	<entry>
 		<int>286</int>
@@ -99,15 +72,6 @@
 			<requiredLvl>38</requiredLvl>
 			<itemID>291</itemID>
 			<exp>300</exp>
-			<gemID>162</gemID>
-		</ItemCraftingDef>
-	</entry>
-	<entry>
-		<int>299</int>
-		<ItemCraftingDef><!-- Amulet -->
-			<requiredLvl>44</requiredLvl>
-			<itemID>299</itemID>
-			<exp>340</exp>
 			<gemID>162</gemID>
 		</ItemCraftingDef>
 	</entry>
@@ -130,15 +94,6 @@
 			<gemID>161</gemID>
 		</ItemCraftingDef>
 	</entry>
-	<entry>
-		<int>300</int>
-		<ItemCraftingDef><!-- Amulet -->
-			<requiredLvl>60</requiredLvl>
-			<itemID>300</itemID>
-			<exp>400</exp>
-			<gemID>161</gemID>
-		</ItemCraftingDef>
-	</entry>
 	<!-- DRAGONSTONE -->
 	<entry>
 		<int>543</int>
@@ -158,16 +113,16 @@
 			<gemID>523</gemID>
 		</ItemCraftingDef>
 	</entry>
+	<!-- BANGELS: complete at the furnace; no unstrung or wool stage. -->
 	<entry>
-		<int>524</int>
-		<ItemCraftingDef><!-- Amulet -->
-			<requiredLvl>70</requiredLvl>
-			<itemID>524</itemID>
-			<exp>600</exp>
-			<gemID>523</gemID>
+		<int>3292</int>
+		<ItemCraftingDef>
+			<requiredLvl>5</requiredLvl>
+			<itemID>3292</itemID>
+			<exp>120</exp>
+			<gemID>-1</gemID>
 		</ItemCraftingDef>
 	</entry>
-	<!-- BANGELS: complete at the furnace; no unstrung or wool stage. -->
 	<entry>
 		<int>3282</int>
 		<ItemCraftingDef>

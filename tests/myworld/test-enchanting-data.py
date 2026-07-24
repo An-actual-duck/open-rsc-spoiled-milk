@@ -397,13 +397,7 @@ def ensure_source_mappings_exist() -> None:
     if "|| skillId == Skill.FLETCHING.id()" in effects_text:
         fail("Artifice should no longer boost retired Fletching XP")
 
-    hidden_crown_options = """\t\t\toptions = new String[]{
-\t\t\t\tring,
-\t\t\t\tNecklace,
-\t\t\t\tamulet,
-\t\t\t\tBangel
-\t\t\t};"""
-    if hidden_crown_options not in crafting_text:
+    if "JewelryCategory.CROWNS" in crafting_text:
         fail("Crafting.java should hide crown production from the gold jewelry menu")
 
 

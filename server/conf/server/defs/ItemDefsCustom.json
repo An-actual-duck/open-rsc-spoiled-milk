@@ -46465,6 +46465,29 @@
       "prayerBonus": 0,
       "basePrice": 17625,
       "isNoteable": 1
+    },
+    {
+      "id": 3292,
+      "name": "Gold Bangel",
+      "description": "I wonder if I can get this enchanted",
+      "command": "",
+      "isFemaleOnly": 0,
+      "isMembersOnly": 0,
+      "isStackable": 0,
+      "isUntradable": 0,
+      "isWearable": 1,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": 14,
+      "requiredLevel": 1,
+      "requiredSkillID": 1,
+      "armourBonus": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "magicBonus": 0,
+      "prayerBonus": 0,
+      "basePrice": 900,
+      "isNoteable": 1
     }
   ]
 }

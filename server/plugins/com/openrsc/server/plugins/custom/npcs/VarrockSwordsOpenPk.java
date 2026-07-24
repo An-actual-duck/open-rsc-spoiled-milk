@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.custom.npcs;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -25,7 +26,7 @@ public final class VarrockSwordsOpenPk extends AbstractShop {
 		new Item(ItemId.BLACK_BATTLE_AXE.id(), 100),
 		new Item(ItemId.MITHRIL_BATTLE_AXE.id(), 100),
 		new Item(ItemId.ADAMANTITE_BATTLE_AXE.id(), 100),
-		new Item(ItemId.RUBY_AMULET.id(), 100));
+		new Item(MyWorldItemId.RUBY_BANGEL, 100));
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {

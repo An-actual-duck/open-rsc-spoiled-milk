@@ -456,7 +456,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		Item item = new Item(reward.itemId, 1);
 		inventory.add(item);
 		player.playerServerMessage(MessageType.QUEST, "You find " + formatFishingSpecialRewardName(player, item) + ".");
-		maybeDoubleRareGatheringReward(player, item, "Your cosmic amulet glimmers and another find appears.");
+		maybeDoubleRareGatheringReward(player, item, "Your cosmic Bangel glimmers and another find appears.");
 		return true;
 	}
 
@@ -585,7 +585,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		final int bonusFish = EnchantingItemEffects.consumeGatheringAmuletBonusItems(player,
 			Skill.FISHING.id(), fishId, fishCount);
 		if (bonusFish > 0) {
-			player.playerServerMessage(MessageType.QUEST, "@gre@Your angler's amulet produces "
+			player.playerServerMessage(MessageType.QUEST, "@gre@Your angler's Bangel produces "
 				+ bonusFish + " extra catch" + (bonusFish == 1 ? "." : "es."));
 		}
 		return bonusFish;

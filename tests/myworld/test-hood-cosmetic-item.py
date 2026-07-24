@@ -30,7 +30,7 @@ def main() -> None:
     mudclient = CLIENT_MUDCLIENT.read_text(encoding="utf-8")
 
     require("HOOD(3191)" in item_id_text, "ItemId should define Hood")
-    require("public static final int maxCustom = 3292;" in item_id_text, "maxCustom should include Demon pitchfork")
+    require("public static final int maxCustom = 3293;" in item_id_text, "maxCustom should include Demon pitchfork")
 
     hood = next((entry for entry in custom_items if entry["id"] == 3191), None)
     require(hood is not None, "ItemDefsCustom should define Hood")

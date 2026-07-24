@@ -1,6 +1,7 @@
 package com.openrsc.server.model.container;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.content.LegacyAmuletCompatibility;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.states.Action;
@@ -65,7 +66,8 @@ public class BankPreset {
 				break;
 			}
 			itemID[1] = blobData.get();
-			int itemIDreal = (((int) itemID[0] << 8) & 0xFF00) | (int) itemID[1] & 0xFF;
+			int itemIDreal = LegacyAmuletCompatibility.canonicalCatalogId(
+				(((int) itemID[0] << 8) & 0xFF00) | (int) itemID[1] & 0xFF);
 			ItemDefinition item = player.getWorld().getServer().getEntityHandler().getItemDef(itemIDreal);
 			if (item == null)
 				continue;
@@ -93,7 +95,8 @@ public class BankPreset {
 				break;
 			}
 			itemID[1] = blobData.get();
-			int itemIDreal = (((int) itemID[0] << 8) & 0xFF00) | (int) itemID[1] & 0xFF;
+			int itemIDreal = LegacyAmuletCompatibility.canonicalCatalogId(
+				(((int) itemID[0] << 8) & 0xFF00) | (int) itemID[1] & 0xFF);
 			ItemDefinition item = player.getWorld().getServer().getEntityHandler().getItemDef(itemIDreal);
 			if (item == null)
 				continue;

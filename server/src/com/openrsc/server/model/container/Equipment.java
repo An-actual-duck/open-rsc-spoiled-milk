@@ -960,9 +960,11 @@ public class Equipment {
 		final String name = def.getName().toLowerCase();
 		return slot == EquipmentSlot.SLOT_RING.getIndex()
 			|| slot == EquipmentSlot.SLOT_NECK.getIndex()
+			|| slot == EquipmentSlot.SLOT_WRIST.getIndex()
 			|| name.contains("ring")
 			|| name.contains("necklace")
-			|| name.contains("amulet");
+			|| name.contains("amulet")
+			|| name.contains("bangel");
 	}
 
 	private String describeItems(final ArrayList<Item> items) {

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.custom.npcs;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
@@ -19,7 +20,7 @@ import static com.openrsc.server.plugins.Functions.*;
 public final class PointsStore extends AbstractShop {
 
 	private final Item[] openPkShopItems = new Item[] {
-		new Item(ItemId.KLANKS_GAUNTLETS.id(), 1000), new Item(ItemId.LOBSTER.id(), 50000), new Item(ItemId.SHARK.id(), 50000), new Item(ItemId.RUBY_AMULET.id(), 1000), new Item(ItemId.DIAMOND_AMULET.id(), 1000), new Item(ItemId.ANTI_DRAGON_BREATH_SHIELD.id(), 500),
+		new Item(ItemId.KLANKS_GAUNTLETS.id(), 1000), new Item(ItemId.LOBSTER.id(), 50000), new Item(ItemId.SHARK.id(), 50000), new Item(MyWorldItemId.RUBY_BANGEL, 1000), new Item(MyWorldItemId.DIAMOND_BANGEL, 1000), new Item(ItemId.ANTI_DRAGON_BREATH_SHIELD.id(), 500),
 	};
 
 	private Shop[] shops = null;

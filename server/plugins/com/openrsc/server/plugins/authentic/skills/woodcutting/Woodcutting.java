@@ -266,7 +266,7 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 		final int bonusLogs = EnchantingItemEffects.consumeGatheringAmuletBonusItems(player,
 			Skill.WOODCUTTING.id(), logId, logCount);
 		if (bonusLogs > 0) {
-			player.playerServerMessage(MessageType.QUEST, "@gre@Your woodcutter's amulet produces "
+			player.playerServerMessage(MessageType.QUEST, "@gre@Your woodcutter's Bangel produces "
 				+ bonusLogs + " extra log" + (bonusLogs == 1 ? "." : "s."));
 		}
 		return bonusLogs;
@@ -361,7 +361,7 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 		}
 		player.getCarriedItems().getInventory().add(seed);
 		player.playerServerMessage(MessageType.QUEST, "You find " + formatSeedName(seedName) + " among the branches.");
-		maybeDoubleRareGatheringReward(player, seed, "Your cosmic amulet glimmers and another seed appears.");
+		maybeDoubleRareGatheringReward(player, seed, "Your cosmic Bangel glimmers and another seed appears.");
 		return true;
 	}
 

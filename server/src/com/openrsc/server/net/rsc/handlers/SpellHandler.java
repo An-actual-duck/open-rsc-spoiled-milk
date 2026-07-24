@@ -8,6 +8,7 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.SpellDamages;
 import com.openrsc.server.constants.Spells;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.content.Summoning;
@@ -958,7 +959,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private void handleItemCast(Player player, SpellDef spell, Spells spellEnum, Item affectedItem) {
 		switch (spellEnum) {
 
-			// Enchant lvl-1 Sapphire amulet
+			// Enchant lvl-1 Sapphire Bangel
 			case ENCHANT_LVL1_AMULET:
 				enchantTierOneJewelry(player, affectedItem, spell);
 				break;
@@ -974,7 +975,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				lowLevelAlchemy(player, affectedItem, spell);
 				break;
 
-			// Enchant lvl-2 emerald amulet
+			// Enchant lvl-2 Emerald Bangel
 			case ENCHANT_LVL2_AMULET:
 				enchantTierTwoJewelry(player, affectedItem, spell);
 				break;
@@ -984,7 +985,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				superheatItem(player, affectedItem, spell);
 				break;
 
-			// Enchant lvl-3 ruby amulet
+			// Enchant lvl-3 Ruby Bangel
 			case ENCHANT_LVL3_AMULET:
 				enchantTierThreeJewelry(player, affectedItem, spell);
 				break;
@@ -994,12 +995,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				highLevelAlchemy(player, affectedItem, spell);
 				break;
 
-			// Enchant lvl-4 diamond amulet
+			// Enchant lvl-4 Diamond Bangel
 			case ENCHANT_LVL4_AMULET:
 				enchantTierFourJewelry(player, affectedItem, spell);
 				break;
 
-			// Enchant lvl-5 dragonstone amulet
+			// Enchant lvl-5 Dragonstone Bangel
 			case ENCHANT_LVL5_AMULET:
 				enchantTierFiveJewelry(player, affectedItem, spell);
 				break;
@@ -1012,19 +1013,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private void enchantTierOneJewelry(Player player, Item affectedItem, SpellDef spell) {
-		if (affectedItem.getCatalogId() == ItemId.SAPPHIRE_AMULET.id()) {
-			player.playerServerMessage(MessageType.QUEST, "Amulets are enchanted at elemental altars now.");
-			return;
-		}
-		if (affectedItem.getCatalogId() == ItemId.SAPPHIRE_RING.id()) {
+		if (affectedItem.getCatalogId() == MyWorldItemId.SAPPHIRE_BANGEL) {
+			enchantBangel(player, affectedItem, spell, ItemId.SAPPHIRE_AMULET_OF_MAGIC.id());
+		} else if (affectedItem.getCatalogId() == ItemId.SAPPHIRE_RING.id()) {
 			player.playerServerMessage(MessageType.QUEST, "Rings are enchanted at altars now.");
-			return;
-		}
-		if (affectedItem.getCatalogId() == ItemId.OPAL_RING.id()) {
+		} else if (affectedItem.getCatalogId() == ItemId.OPAL_RING.id()) {
 			player.playerServerMessage(MessageType.QUEST, "Opal rings no longer have a separate enchantment path.");
-			return;
+		} else {
+			player.playerServerMessage(MessageType.QUEST, "This spell can only be used on an unenchanted Sapphire Bangel.");
 		}
-		player.playerServerMessage(MessageType.QUEST, "This spell can only be used on unenchanted sapphire jewelry.");
 	}
 
 	private void buffTalisman(Player player, Item item, SpellDef spell) {
@@ -1032,55 +1029,56 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private void enchantTierTwoJewelry(Player player, Item affectedItem, SpellDef spell) {
-		if (affectedItem.getCatalogId() == ItemId.EMERALD_AMULET.id()) {
-			player.playerServerMessage(MessageType.QUEST, "Amulets are enchanted at elemental altars now.");
-			return;
-		}
-		if (affectedItem.getCatalogId() == ItemId.EMERALD_RING.id()) {
+		if (affectedItem.getCatalogId() == MyWorldItemId.EMERALD_BANGEL) {
+			enchantBangel(player, affectedItem, spell, ItemId.EMERALD_AMULET_OF_PROTECTION.id());
+		} else if (affectedItem.getCatalogId() == ItemId.EMERALD_RING.id()) {
 			player.playerServerMessage(MessageType.QUEST, "Rings are enchanted at altars now.");
-			return;
+		} else {
+			player.playerServerMessage(MessageType.QUEST, "This spell can only be used on an unenchanted Emerald Bangel.");
 		}
-		player.playerServerMessage(MessageType.QUEST, "This spell can only be used on unenchanted emerald jewelry.");
 	}
 
 	private void enchantTierThreeJewelry(Player player, Item affectedItem, SpellDef spell) {
-		if (affectedItem.getCatalogId() == ItemId.RUBY_AMULET.id()) {
-			player.playerServerMessage(MessageType.QUEST, "Amulets are enchanted at elemental altars now.");
-			return;
-		}
-		if (affectedItem.getCatalogId() == ItemId.RUBY_RING.id()) {
+		if (affectedItem.getCatalogId() == MyWorldItemId.RUBY_BANGEL) {
+			enchantBangel(player, affectedItem, spell, ItemId.RUBY_AMULET_OF_STRENGTH.id());
+		} else if (affectedItem.getCatalogId() == ItemId.RUBY_RING.id()) {
 			player.playerServerMessage(MessageType.QUEST, "Rings are enchanted at altars now.");
-			return;
+		} else {
+			player.playerServerMessage(MessageType.QUEST, "This spell can only be used on an unenchanted Ruby Bangel.");
 		}
-		player.playerServerMessage(MessageType.QUEST, "This spell can only be used on unenchanted ruby jewelry.");
 	}
 
 	private void enchantTierFourJewelry(Player player, Item affectedItem, SpellDef spell) {
-		if (affectedItem.getCatalogId() == ItemId.DIAMOND_AMULET.id()) {
-			player.playerServerMessage(MessageType.QUEST, "Amulets are enchanted at elemental altars now.");
-			return;
-		}
-		if (affectedItem.getCatalogId() == ItemId.DIAMOND_RING.id()) {
+		if (affectedItem.getCatalogId() == MyWorldItemId.DIAMOND_BANGEL) {
+			enchantBangel(player, affectedItem, spell, ItemId.DIAMOND_AMULET_OF_POWER.id());
+		} else if (affectedItem.getCatalogId() == ItemId.DIAMOND_RING.id()) {
 			player.playerServerMessage(MessageType.QUEST, "Rings are enchanted at altars now.");
-			return;
+		} else {
+			player.playerServerMessage(MessageType.QUEST, "This spell can only be used on an unenchanted Diamond Bangel.");
 		}
-		player.playerServerMessage(MessageType.QUEST, "This spell can only be used on unenchanted diamond jewelry.");
 	}
 
 	private void enchantTierFiveJewelry(Player player, Item affectedItem, SpellDef spell) {
-		if (affectedItem.getCatalogId() == ItemId.UNENCHANTED_DRAGONSTONE_AMULET.id()) {
-			player.playerServerMessage(MessageType.QUEST, "Dragonstone amulets are enchanted at altars now.");
-			return;
-		}
-		if (affectedItem.getCatalogId() == ItemId.DRAGONSTONE_RING.id()) {
+		if (affectedItem.getCatalogId() == MyWorldItemId.DRAGONSTONE_BANGEL) {
+			enchantBangel(player, affectedItem, spell, ItemId.CHARGED_DRAGONSTONE_AMULET.id());
+		} else if (affectedItem.getCatalogId() == ItemId.DRAGONSTONE_RING.id()) {
 			player.playerServerMessage(MessageType.QUEST, "Rings are enchanted at altars now.");
-			return;
-		}
-		if (affectedItem.getCatalogId() == ItemId.DRAGONSTONE_NECKLACE.id()) {
+		} else if (affectedItem.getCatalogId() == ItemId.DRAGONSTONE_NECKLACE.id()) {
 			player.playerServerMessage(MessageType.QUEST, "Necklaces are enchanted at altars now.");
+		} else {
+			player.playerServerMessage(MessageType.QUEST, "This spell can only be used on an unenchanted Dragonstone Bangel.");
+		}
+	}
+
+	private void enchantBangel(Player player, Item affectedItem, SpellDef spell, int outputId) {
+		if (!checkAndRemoveRunes(player, spell)) {
 			return;
 		}
-		player.playerServerMessage(MessageType.QUEST, "Dragonstone jewelry is enchanted at altars now.");
+		if (player.getCarriedItems().remove(affectedItem) == -1) {
+			return;
+		}
+		player.getCarriedItems().getInventory().add(new Item(outputId));
+		finalizeSpell(player, spell, "You enchant the Bangel");
 	}
 
 	private void lowLevelAlchemy(Player player, Item affectedItem, SpellDef spell) {

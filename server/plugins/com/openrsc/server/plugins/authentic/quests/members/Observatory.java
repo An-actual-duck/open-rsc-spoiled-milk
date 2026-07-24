@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.authentic.quests.members;
 
 import com.openrsc.server.constants.*;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -687,8 +688,8 @@ public class Observatory implements QuestInterface, TalkNpcTrigger,
 			giveOptionalReward(player, n, Skill.STRENGTH);
 		} else if (selectedNumber == 11) {
 			npcsay(player, n, "Cancer the crab",
-				"The armoured crab gives you an emerald amulet");
-			give(player, ItemId.EMERALD_AMULET.id(), 1);
+				"The armoured crab gives you an emerald Bangel");
+			give(player, MyWorldItemId.EMERALD_BANGEL, 1);
 		}
 		// all constellations give uncut sapphire
 		give(player, ItemId.UNCUT_SAPPHIRE.id(), 1);

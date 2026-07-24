@@ -1367,11 +1367,11 @@ public final class SkillGuideInterface {
 	}
 
 	private void addJewelryTierGuide() {
-		skillMenuEntries.add(new SkillMenuItem(284, "8", "Sapphire rings, necklaces, and amulets"));
-		skillMenuEntries.add(new SkillMenuItem(285, "18", "Emerald rings, necklaces, and amulets"));
-		skillMenuEntries.add(new SkillMenuItem(286, "32", "Ruby rings, necklaces, and amulets"));
-		skillMenuEntries.add(new SkillMenuItem(287, "48", "Diamond rings, necklaces, and amulets"));
-		skillMenuEntries.add(new SkillMenuItem(543, "58", "Dragonstone rings, necklaces, and amulets"));
+		skillMenuEntries.add(new SkillMenuItem(284, "8", "Sapphire rings, necklaces, and Bangels"));
+		skillMenuEntries.add(new SkillMenuItem(285, "18", "Emerald rings, necklaces, and Bangels"));
+		skillMenuEntries.add(new SkillMenuItem(286, "32", "Ruby rings, necklaces, and Bangels"));
+		skillMenuEntries.add(new SkillMenuItem(287, "48", "Diamond rings, necklaces, and Bangels"));
+		skillMenuEntries.add(new SkillMenuItem(543, "58", "Dragonstone rings, necklaces, and Bangels"));
 	}
 
 	private void populatePrayerGuide() {
@@ -1535,25 +1535,25 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(523, "58", "Dragonstone"));
 			skillMenuEntries.add(new SkillMenuItem(283, "1", "Gold Ring"));
 			skillMenuEntries.add(new SkillMenuItem(288, "3", "Gold Necklace"));
-			skillMenuEntries.add(new SkillMenuItem(296, "5", "Gold Amulet"));
+			skillMenuEntries.add(new SkillMenuItem(3292, "5", "Gold Bangel"));
 			skillMenuEntries.add(new SkillMenuItem(284, "8", "Sapphire Ring"));
 			skillMenuEntries.add(new SkillMenuItem(289, "10", "Sapphire Necklace"));
-			skillMenuEntries.add(new SkillMenuItem(297, "13", "Sapphire Amulet"));
+			skillMenuEntries.add(new SkillMenuItem(3282, "13", "Sapphire Bangel"));
 			skillMenuEntries.add(new SkillMenuItem(44, "16", "Symbol of Saradomin"));
 			skillMenuEntries.add(new SkillMenuItem(1027, "16", "Symbol of Zamorak"));
 			skillMenuEntries.add(new SkillMenuItem(3173, "16", "Symbol of Guthix"));
 			skillMenuEntries.add(new SkillMenuItem(285, "18", "Emerald Ring"));
 			skillMenuEntries.add(new SkillMenuItem(290, "22", "Emerald Necklace"));
-			skillMenuEntries.add(new SkillMenuItem(298, "26", "Emerald Amulet"));
+			skillMenuEntries.add(new SkillMenuItem(3283, "26", "Emerald Bangel"));
 			skillMenuEntries.add(new SkillMenuItem(286, "32", "Ruby Ring"));
 			skillMenuEntries.add(new SkillMenuItem(291, "38", "Ruby Necklace"));
-			skillMenuEntries.add(new SkillMenuItem(299, "44", "Ruby Amulet"));
+			skillMenuEntries.add(new SkillMenuItem(3284, "44", "Ruby Bangel"));
 			skillMenuEntries.add(new SkillMenuItem(287, "48", "Diamond Ring"));
 			skillMenuEntries.add(new SkillMenuItem(292, "54", "Diamond Necklace"));
 			skillMenuEntries.add(new SkillMenuItem(543, "58", "Dragonstone Ring"));
-			skillMenuEntries.add(new SkillMenuItem(300, "60", "Diamond Amulet"));
+			skillMenuEntries.add(new SkillMenuItem(3285, "60", "Diamond Bangel"));
 			skillMenuEntries.add(new SkillMenuItem(544, "64", "Dragonstone Necklace"));
-			skillMenuEntries.add(new SkillMenuItem(524, "70", "Dragonstone Amulet"));
+			skillMenuEntries.add(new SkillMenuItem(3286, "70", "Dragonstone Bangel"));
 		} else if (curTab == 4) {
 			skillMenuEntries.add(new SkillMenuItem(637, "1", "Headless arrows - arrow shafts and feathers"));
 			addAmmoMouldGuide("Tin", 1, 190, 2004, 2039, 2043, 1996, 3208);

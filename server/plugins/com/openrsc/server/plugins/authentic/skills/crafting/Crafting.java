@@ -66,7 +66,6 @@ public class Crafting implements UseInvTrigger,
 
 	private static final String ring = "ring";
 	private static final String Necklace = "Necklace";
-	private static final String amulet = "amulet";
 	private static final String Bangel = "Bangel";
 	private static final String Gold = "Gold";
 	private static final String Sapphire = "Sapphire";
@@ -80,14 +79,12 @@ public class Crafting implements UseInvTrigger,
 		ALL,
 		RINGS,
 		NECKLACES,
-		AMULETS,
 		BANGELS
 	}
 
 	private static final Map<String, Mould> goldMoulds = new ImmutableMap.Builder<String, Mould>()
 		.put(ring, new Mould("ring", ItemId.RING_MOULD.id(), "You need a ring mould to make a gold ring"))
 		.put(Necklace, new Mould("Necklace", ItemId.NECKLACE_MOULD.id(), "You need a necklace mould to make a gold necklace"))
-		.put(amulet, new Mould("amulet", ItemId.AMULET_MOULD.id(), "You need an amulet mould to make a gold amulet"))
 		.put(Bangel, new Mould("Bangel", MyWorldItemId.BANGEL_MOULD, "You need a Bangel mould to make a gold Bangel"))
 		.build();
 
@@ -437,8 +434,7 @@ public class Crafting implements UseInvTrigger,
 			}
 		}
 		if (player.getConfig().WANT_BETTER_JEWELRY_CRAFTING) {
-			if (!player.getCarriedItems().hasCatalogID(ItemId.AMULET_MOULD.id()) &&
-				!player.getCarriedItems().hasCatalogID(ItemId.NECKLACE_MOULD.id()) &&
+			if (!player.getCarriedItems().hasCatalogID(ItemId.NECKLACE_MOULD.id()) &&
 				!player.getCarriedItems().hasCatalogID(ItemId.RING_MOULD.id()) &&
 				!player.getCarriedItems().hasCatalogID(MyWorldItemId.BANGEL_MOULD)) {
 				player.message("You need a mould to craft jewelry");
@@ -539,30 +535,8 @@ public class Crafting implements UseInvTrigger,
 				options.add("Sapphire Bangel");
 				itemIds.add(MyWorldItemId.SAPPHIRE_BANGEL);
 			}
-		}
-		if (player.getCarriedItems().hasCatalogID(ItemId.AMULET_MOULD.id())) {
-			if (player.getCarriedItems().hasCatalogID(ItemId.DRAGONSTONE.id())) {
-				options.add("Dragonstone amulet");
-				itemIds.add(ItemId.UNSTRUNG_DRAGONSTONE_AMULET.id());
-			}
-			if (player.getCarriedItems().hasCatalogID(ItemId.DIAMOND.id())) {
-				options.add("Diamond amulet");
-				itemIds.add(ItemId.UNSTRUNG_DIAMOND_AMULET.id());
-			}
-			if (player.getCarriedItems().hasCatalogID(ItemId.RUBY.id())) {
-				options.add("Ruby amulet");
-				itemIds.add(ItemId.UNSTRUNG_RUBY_AMULET.id());
-			}
-			if (player.getCarriedItems().hasCatalogID(ItemId.EMERALD.id())) {
-				options.add("Emerald amulet");
-				itemIds.add(ItemId.UNSTRUNG_EMERALD_AMULET.id());
-			}
-			if (player.getCarriedItems().hasCatalogID(ItemId.SAPPHIRE.id())) {
-				options.add("Sapphire amulet");
-				itemIds.add(ItemId.UNSTRUNG_SAPPHIRE_AMULET.id());
-			}
-			options.add("Gold amulet");
-			itemIds.add(ItemId.UNSTRUNG_GOLD_AMULET.id());
+			options.add("Gold Bangel");
+			itemIds.add(MyWorldItemId.GOLD_BANGEL);
 		}
 		if (player.getCarriedItems().hasCatalogID(ItemId.NECKLACE_MOULD.id())) {
 			if (player.getCarriedItems().hasCatalogID(ItemId.DRAGONSTONE.id())) {
@@ -634,14 +608,12 @@ public class Crafting implements UseInvTrigger,
 			options = new String[]{
 				ring,
 				Necklace,
-				amulet,
 				Bangel
 			};
 		} else {
 			options = new String[]{
 				ring,
 				Necklace,
-				amulet,
 				Bangel
 			};
 		}
@@ -765,32 +737,11 @@ public class Crafting implements UseInvTrigger,
 				}
 				break;
 			}
-			case amulet: {
-				switch (gem) {
-					case Gold:
-						craftingProductItemId = ItemId.UNSTRUNG_GOLD_AMULET.id();
-						break;
-					case Sapphire:
-						craftingProductItemId = ItemId.UNSTRUNG_SAPPHIRE_AMULET.id();
-						break;
-					case Emerald:
-						craftingProductItemId = ItemId.UNSTRUNG_EMERALD_AMULET.id();
-						break;
-					case Ruby:
-						craftingProductItemId = ItemId.UNSTRUNG_RUBY_AMULET.id();
-						break;
-					case Diamond:
-						craftingProductItemId = ItemId.UNSTRUNG_DIAMOND_AMULET.id();
-						break;
-					case Dragonstone:
-					case dragonstone:
-						craftingProductItemId = ItemId.UNSTRUNG_DRAGONSTONE_AMULET.id();
-						break;
-				}
-				break;
-			}
 			case Bangel: {
 				switch (gem) {
+					case Gold:
+						craftingProductItemId = MyWorldItemId.GOLD_BANGEL;
+						break;
 					case Sapphire:
 						craftingProductItemId = MyWorldItemId.SAPPHIRE_BANGEL;
 						break;
@@ -808,7 +759,6 @@ public class Crafting implements UseInvTrigger,
 						craftingProductItemId = MyWorldItemId.DRAGONSTONE_BANGEL;
 						break;
 					default:
-						player.message("Bangels require a gem.");
 						return null;
 				}
 				break;
@@ -891,6 +841,12 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private void tellPlayerSuccessfullyProducedCraftingProduct(Player player, ItemCraftingDef def) {
+		if (isBaseBangel(def.getItemID())) {
+			player.playerServerMessage(MessageType.QUEST,
+				"You make a " + player.getWorld().getServer().getEntityHandler()
+					.getItemDef(def.getItemID()).getName().toLowerCase());
+			return;
+		}
 		switch (ItemId.getById(def.getItemID())) {
 			case GOLD_RING:
 				player.playerServerMessage(MessageType.QUEST, "You make a gold ring");
@@ -898,17 +854,11 @@ public class Crafting implements UseInvTrigger,
 			case GOLD_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You make a gold necklace");
 				return;
-			case UNSTRUNG_GOLD_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You make a gold amulet");
-				return;
 			case SAPPHIRE_RING:
 				player.playerServerMessage(MessageType.QUEST, "You make a Sapphire ring");
 				return;
 			case SAPPHIRE_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You make a Sapphire necklace");
-				return;
-			case UNSTRUNG_SAPPHIRE_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You make a Sapphire amulet");
 				return;
 			case EMERALD_RING:
 				player.playerServerMessage(MessageType.QUEST, "You make an Emerald ring");
@@ -916,17 +866,11 @@ public class Crafting implements UseInvTrigger,
 			case EMERALD_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You make an Emerald necklace");
 				return;
-			case UNSTRUNG_EMERALD_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You make an Emerald amulet");
-				return;
 			case RUBY_RING:
 				player.playerServerMessage(MessageType.QUEST, "You make a ruby ring");
 				return;
 			case RUBY_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You make a ruby necklace");
-				return;
-			case UNSTRUNG_RUBY_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You make a ruby amulet");
 				return;
 			case DIAMOND_RING:
 				player.playerServerMessage(MessageType.QUEST, "You make a diamond ring");
@@ -934,17 +878,11 @@ public class Crafting implements UseInvTrigger,
 			case DIAMOND_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You make a diamond necklace");
 				return;
-			case UNSTRUNG_DIAMOND_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You make a diamond amulet");
-				return;
 			case DRAGONSTONE_RING:
 				player.playerServerMessage(MessageType.QUEST, "You make a dragonstone ring");
 				return;
 			case DRAGONSTONE_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You make a dragonstone necklace");
-				return;
-			case UNSTRUNG_DRAGONSTONE_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You make a dragonstone amulet");
 				return;
 			default:
 				player.playerServerMessage(MessageType.QUEST, "Programmer has not defined a message for successfully crafting this product.");
@@ -953,6 +891,11 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private void tellPlayerNoGem(Player player, ItemCraftingDef def) {
+		if (isBaseBangel(def.getItemID())) {
+			player.playerServerMessage(MessageType.QUEST,
+				"You do not have the gem needed to make that Bangel");
+			return;
+		}
 		switch (ItemId.getById(def.getItemID())) {
 			case SAPPHIRE_RING:
 				player.playerServerMessage(MessageType.QUEST, "You do not have a cut sapphire to make a sapphire ring");
@@ -960,17 +903,11 @@ public class Crafting implements UseInvTrigger,
 			case SAPPHIRE_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You do not have a cut sapphire to make a sapphire necklace");
 				return;
-			case UNSTRUNG_SAPPHIRE_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You do not have a cut sapphire to make a sapphire amulet");
-				return;
 			case EMERALD_RING:
 				player.playerServerMessage(MessageType.QUEST, "You do not have a cut Emerald to make a Emerald ring");
 				return;
 			case EMERALD_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You do not have a cut Emerald to make a Emerald necklace");
-				return;
-			case UNSTRUNG_EMERALD_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You do not have a cut Emerald to make a Emerald amulet");
 				return;
 			case RUBY_RING:
 				player.playerServerMessage(MessageType.QUEST, "You do not have a cut ruby to make a ruby ring");
@@ -978,26 +915,17 @@ public class Crafting implements UseInvTrigger,
 			case RUBY_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You do not have a cut ruby to make a ruby necklace");
 				return;
-			case UNSTRUNG_RUBY_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You do not have a cut ruby to make a ruby amulet");
-				return;
 			case DIAMOND_RING:
 				player.playerServerMessage(MessageType.QUEST, "You do not have a cut diamond to make a diamond ring");
 				return;
 			case DIAMOND_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You do not have a cut diamond to make a diamond necklace");
 				return;
-			case UNSTRUNG_DIAMOND_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You do not have a cut diamond to make a diamond amulet");
-				return;
 			case DRAGONSTONE_RING:
 				player.playerServerMessage(MessageType.QUEST, "You do not have a cut dragonstone to make a dragonstone ring");
 				return;
 			case DRAGONSTONE_NECKLACE:
 				player.playerServerMessage(MessageType.QUEST, "You do not have a cut dragonstone to make a dragonstone necklace");
-				return;
-			case UNSTRUNG_DRAGONSTONE_AMULET:
-				player.playerServerMessage(MessageType.QUEST, "You do not have a dragonstone to make a dragonstone amulet");
 				return;
 			default:
 				player.playerServerMessage(MessageType.QUEST, "Programmer has not defined a message for failing to have the required gem.");
@@ -2075,8 +2003,6 @@ public class Crafting implements UseInvTrigger,
 			session = createGoldJewelryProductionSession(player, JewelryCategory.RINGS);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_NECKLACES) {
 			session = createGoldJewelryProductionSession(player, JewelryCategory.NECKLACES);
-		} else if (categoryId == Smelting.FURNACE_CATEGORY_AMULETS) {
-			session = createGoldJewelryProductionSession(player, JewelryCategory.AMULETS);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_BANGELS) {
 			session = createGoldJewelryProductionSession(player, JewelryCategory.BANGELS);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_HOLY_SYMBOLS) {
@@ -2269,19 +2195,8 @@ public class Crafting implements UseInvTrigger,
 					|| outputId == ItemId.RUBY_NECKLACE.id()
 					|| outputId == ItemId.DIAMOND_NECKLACE.id()
 					|| outputId == ItemId.DRAGONSTONE_NECKLACE.id();
-			case AMULETS:
-				return outputId == ItemId.UNSTRUNG_GOLD_AMULET.id()
-					|| outputId == ItemId.UNSTRUNG_SAPPHIRE_AMULET.id()
-					|| outputId == ItemId.UNSTRUNG_EMERALD_AMULET.id()
-					|| outputId == ItemId.UNSTRUNG_RUBY_AMULET.id()
-					|| outputId == ItemId.UNSTRUNG_DIAMOND_AMULET.id()
-					|| outputId == ItemId.UNSTRUNG_DRAGONSTONE_AMULET.id();
 			case BANGELS:
-				return outputId == MyWorldItemId.SAPPHIRE_BANGEL
-					|| outputId == MyWorldItemId.EMERALD_BANGEL
-					|| outputId == MyWorldItemId.RUBY_BANGEL
-					|| outputId == MyWorldItemId.DIAMOND_BANGEL
-					|| outputId == MyWorldItemId.DRAGONSTONE_BANGEL;
+				return isBaseBangel(outputId);
 			case ALL:
 			default:
 				return true;
@@ -2822,15 +2737,7 @@ public class Crafting implements UseInvTrigger,
 			ids.add(ItemId.DRAGONSTONE_NECKLACE.id());
 		}
 
-		ids.add(ItemId.UNSTRUNG_GOLD_AMULET.id());
-		ids.add(ItemId.UNSTRUNG_SAPPHIRE_AMULET.id());
-		ids.add(ItemId.UNSTRUNG_EMERALD_AMULET.id());
-		ids.add(ItemId.UNSTRUNG_RUBY_AMULET.id());
-		ids.add(ItemId.UNSTRUNG_DIAMOND_AMULET.id());
-		if (player.getConfig().MEMBER_WORLD) {
-			ids.add(ItemId.UNSTRUNG_DRAGONSTONE_AMULET.id());
-		}
-
+		ids.add(MyWorldItemId.GOLD_BANGEL);
 		ids.add(MyWorldItemId.SAPPHIRE_BANGEL);
 		ids.add(MyWorldItemId.EMERALD_BANGEL);
 		ids.add(MyWorldItemId.RUBY_BANGEL);
@@ -2855,8 +2762,7 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private int getRequiredGoldMouldId(int itemId) {
-		if (itemId >= MyWorldItemId.SAPPHIRE_BANGEL
-			&& itemId <= MyWorldItemId.DRAGONSTONE_BANGEL) {
+		if (isBaseBangel(itemId)) {
 			return MyWorldItemId.BANGEL_MOULD;
 		}
 		switch (ItemId.getById(itemId)) {
@@ -2874,16 +2780,15 @@ public class Crafting implements UseInvTrigger,
 			case DIAMOND_NECKLACE:
 			case DRAGONSTONE_NECKLACE:
 				return ItemId.NECKLACE_MOULD.id();
-			case UNSTRUNG_GOLD_AMULET:
-			case UNSTRUNG_SAPPHIRE_AMULET:
-			case UNSTRUNG_EMERALD_AMULET:
-			case UNSTRUNG_RUBY_AMULET:
-			case UNSTRUNG_DIAMOND_AMULET:
-			case UNSTRUNG_DRAGONSTONE_AMULET:
-				return ItemId.AMULET_MOULD.id();
 			default:
 				return -1;
 		}
+	}
+
+	private boolean isBaseBangel(int itemId) {
+		return itemId == MyWorldItemId.GOLD_BANGEL
+			|| (itemId >= MyWorldItemId.SAPPHIRE_BANGEL
+				&& itemId <= MyWorldItemId.DRAGONSTONE_BANGEL);
 	}
 
 	private int getSilverJewelryProductionType(Player player, int itemId) {
@@ -3166,33 +3071,15 @@ public class Crafting implements UseInvTrigger,
 			case UNSTRUNG_GUTHIX_SYMBOL:
 				newID = ItemId.UNBLESSED_GUTHIX_SYMBOL.id();
 				break;
-			case UNSTRUNG_GOLD_AMULET:
-				newID = ItemId.GOLD_AMULET.id();
-				break;
-			case UNSTRUNG_SAPPHIRE_AMULET:
-				newID = ItemId.SAPPHIRE_AMULET.id();
-				break;
-			case UNSTRUNG_EMERALD_AMULET:
-				newID = ItemId.EMERALD_AMULET.id();
-				break;
-			case UNSTRUNG_RUBY_AMULET:
-				newID = ItemId.RUBY_AMULET.id();
-				break;
-			case UNSTRUNG_DIAMOND_AMULET:
-				newID = ItemId.DIAMOND_AMULET.id();
-				break;
-			case UNSTRUNG_DRAGONSTONE_AMULET:
-				newID = ItemId.UNENCHANTED_DRAGONSTONE_AMULET.id();
-				break;
 			default:
 				return;
 		}
 		int woolAmount = player.getCarriedItems().getInventory().countId(woolBall.getCatalogId(), Optional.of(false));
-		int amuletAmount = player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false));
+		int symbolAmount = player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false));
 
 		int repeat = 1;
 		if (player.getConfig().BATCH_PROGRESSION) {
-			repeat = Math.min(woolAmount, amuletAmount);
+			repeat = Math.min(woolAmount, symbolAmount);
 		}
 
 		startbatch(repeat);

@@ -2,6 +2,7 @@ package com.openrsc.server.net.rsc;
 
 import com.openrsc.server.Server;
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.clan.Clan;
 import com.openrsc.server.content.clan.ClanManager;
 import com.openrsc.server.content.clan.ClanPlayer;
@@ -2287,7 +2288,7 @@ public class ActionSender {
 			new Item(ItemId.THREAD.id(), 100),
 			new Item(ItemId.RING_MOULD.id()),
 			new Item(ItemId.NECKLACE_MOULD.id()),
-			new Item(ItemId.AMULET_MOULD.id()),
+			new Item(MyWorldItemId.BANGEL_MOULD),
 			new Item(ItemId.HOLY_SYMBOL_MOULD.id()),
 			new Item(ItemId.CAKE_TIN.id()),
 			new Item(ItemId.PIE_DISH.id()),
