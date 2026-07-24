@@ -14887,6 +14887,92 @@ route. The next slice should define exact collision-footprint derivation for
 these populated authored objects without yet applying collision state,
 registering the Region, replaying NPCs/items, or releasing visibility.
 
+### Slice 186: Detached authored collision footprints
+
+Objective: derive every authored object's exact legacy register-collision
+contribution and complete packed-Region reach after isolated membership
+verification, without reading runtime definitions or applying collision.
+
+Implemented:
+
+- `LayeredPackedRegionAuthoredCollisionFootprintPlan` requires one exact
+  Slice 184 replay and its matching Slice 185 membership receipt. Replay
+  identity, fingerprint, object cardinality, terrain/membership completion,
+  and every still-disabled runtime-authority fact must agree;
+- caller-supplied detached definition scalars match the authored-object
+  sequence exactly by stable source ordinal, constructed ID, and scenery/
+  boundary type. Missing, extra, reordered, or mismatched definitions refuse;
+- the existing pure legacy collision planner derives a non-forced register
+  footprint from constructor scalars, definition collision type, dimensions,
+  name/projectile policy, and explicit legacy world bounds;
+- object ID 1147 keeps its definition-free collisionless register behavior as
+  an explicit typed input. Ordinary scenery and boundaries require complete
+  definition values;
+- each result copies exact per-tile blocking-scenery, six directional
+  collision-counter, and projectile-counter contributions plus its canonical
+  required packed Regions. Per-object, reference-total, unique-Region, empty-
+  contribution, cross-source, definition-backed, and special-object counts
+  reconcile in stable authored order; and
+- deterministic fingerprinting covers constructor identity, definition
+  semantics, contribution counts, canonical per-object reach, cross-source
+  classification, and the batch required-Region union.
+
+Collision-reach finding:
+
+- the earlier authored dependency envelope records the object's membership/
+  geometry boundary, while collision reach can include neighboring directional
+  wall or projectile tiles outside that envelope;
+- the collision plan therefore does not silently widen or reject the authored
+  dependency. It records `collisionBeyondAuthoredDependency` per object and an
+  aggregate count while preserving the independently complete collision
+  Region union for a later transaction; and
+- the executable boundary fixture proves this distinction: the directional
+  boundary remains within its anchor source but reaches one tile beyond its
+  authored dependency envelope, while two-tile scenery crosses a packed-source
+  boundary already covered by its authored geometry.
+
+Safety boundary:
+
+- definition values are detached caller inputs; no `EntityHandler`,
+  `GameObjectDef`, `DoorDef`, World, RegionManager, Region, entity, TileValue,
+  registry, mirror, cache, lifecycle monitor, or packet path is read or
+  retained;
+- the plan copies primitives, enums, immutable text, cloned counter arrays,
+  immutable contribution lists, and immutable Region-coordinate lists only.
+  It retains no replay, membership receipt, planner result/definition,
+  collision snapshot, or runtime handle;
+- every footprint is a non-forced `REGISTER` definition. No Region boundary is
+  acquired, no tile counter changes, no collision registration provenance is
+  attached, and the disposable membership Region is not recovered; and
+- runtime definition capture, collision application, rollback, NPC/item
+  replay, scheduler restoration, source reconstruction, registration, arrival,
+  visibility, and lifecycle authority remain separate.
+
+Automated validation status:
+
+- an executable full-source fixture carries exact Slice 185 membership into
+  three authored collision families: two-tile projectile-blocking scenery, a
+  directional projectile-blocking boundary, and harvesting scenery using the
+  special object-1147 collisionless register path;
+- it proves exact contributions, stable order, cross-source and
+  beyond-authored-dependency classification, canonical Region union, reference
+  totals, immutable lists/arrays, deterministic fingerprints, and refusal of
+  missing/reordered definitions or out-of-world effects;
+- structural guards prohibit runtime definition lookup, Region/entity/tile
+  access, boundary acquisition, collision mutation, collision-provenance
+  attachment, runtime-handle retention, and lifecycle authority;
+- the Slice 182-186 focused lineage passes 19 tests, including four Slice 186
+  tests, and the repository prerequisite check passes; and
+- the authoritative bundled-Ant server build compiles 826 core and 488 plugin
+  sources and passes its build/classpath audit.
+
+Status: implemented and automated-validated. This detached footprint plan has
+no production or private diagnostic caller and does not warrant an owner route.
+The next slice should capture the required object-definition inputs through a
+bounded read-only server adapter and prove they match the active definition
+table, while collision application and every runtime source change remain
+disabled.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -15290,6 +15376,7 @@ private environment should validate at least:
 | 2026-07-24 | Accept the Slice 183 private isolated-terrain route. | Owner-validated; nine schema-v51 records remain contiguous, all 36 selected sources align across preflight/recipe/terrain identity, 82,944 verified tiles and every terrain aggregate reconcile, the sole repeated fingerprint is the correct digest for three identical fully blocked sectors, all runtime mutation/authority flags remain false, and movement plus NPC/scenery interaction remained normal |
 | 2026-07-24 | Continue with Slice 184 by defining one exact detached authored replay after terrain verification. | Implemented and automated-validated; stable final-live order and generation-fenced constructor scalars for scenery, boundaries, NPCs, ground items, and harvesting scenery are copied with exact dependency envelopes, family and cross-source totals plus deterministic fingerprint reconcile, empty replay remains explicit, every apply/authority fact is false, 11 focused Slice 182-184 tests and the 823/488 Ant build pass |
 | 2026-07-24 | Continue with Slice 185 by applying only authored-object membership to a terrain-initialized disposable Region. | Implemented and automated-validated; scenery, boundaries, and harvesting scenery preserve exact constructors/provenance under the ordered Region membership boundary, colliding slots refuse, NPCs/items and collision remain absent, terrain stays exact, no runtime handle or authority survives, 15 focused Slice 182-185 tests and the 825/488 Ant build pass |
+| 2026-07-24 | Continue with Slice 186 by deriving exact detached authored register-collision footprints. | Implemented and automated-validated; exact detached definition inputs feed the shared pure legacy planner, stable primitive contributions and canonical Region reach reconcile, object 1147 remains an explicit collisionless special case, collision reach beyond the authored geometry envelope is separately reported, no collision is applied, 19 focused Slice 182-186 tests and the 826/488 Ant build pass |
 
 ## Next Discussion
 
