@@ -16316,6 +16316,59 @@ Status: implemented and automated-validated. The accepted schema-v57 capture
 can now be reduced through this boundary to quantify the remaining scheduler
 blockers before any runtime detachment is considered.
 
+### Slice 207: Private detachment-scheduler diagnostics
+
+Objective: expose Slice 206's bounded detached scheduler correlation through
+the explicit private preservation diagnostic, without duplicating the existing
+event inventory or granting runtime lifecycle authority.
+
+Implemented:
+
+- additive `layered-map-parity-event-v58` extends only
+  `packedRegionNpcOwnerPreservationNoOp` with nullable
+  `sourceAuthoredDetachmentSchedulerCorrelation` evidence and preserves
+  schema-v57 as the immutable prior contract;
+- the already-captured event inventory is passed into the same exact
+  source-lifecycle boundary as the inert detachment definition and NPC-owner
+  requirements, so generation, scheduler identity, observation tick, source
+  order, and detachment fingerprint must all align;
+- JSON reports aggregate callback classifications, blocker counts, one compact
+  source-ordered count summary per selected source, and stable fingerprints;
+  the detailed callback identities remain solely in
+  `packedRegionEventOwnership`; and
+- owner-scope refusal requires null correlation evidence, while the expected
+  `SOURCE_LIFECYCLE_UNAVAILABLE` diagnostic requires a complete bounded
+  classification result.
+
+Safety boundary:
+
+- the new evidence is populated only by `::layerparity preserve-noop` or
+  `::lp preserve-noop`; ordinary traces and every owner-scope refusal retain an
+  explicit null;
+- scheduler correlation being performed does not mean its blocker set is
+  empty, and neither outcome authorizes runtime detachment;
+- no callback, scheduler, entity, Region, object, registration, target, or
+  lifecycle handle is serialized or retained; and
+- scheduler entry, event cancellation/rescheduling, preservation, source
+  absence/reconstruction, runtime mutation, registry/mirror/visibility
+  changes, arrival, and lifecycle authority remain false.
+
+Automated validation status:
+
+- the schema-v58 guard passes five focused contract, refusal, runtime-wiring,
+  arithmetic, and documentation tests;
+- the Slice 182-207 lineage passes 111 tests across 26 focused files;
+- the end-to-end observer fixture passes both JSONL/schema and opt-in
+  development-wiring integration tests;
+- the authoritative bundled-Ant build compiles 843 core and 488 plugin
+  sources; and
+- the server build/classpath audit passes.
+
+Status: implemented and automated-validated. One cooldown-aware private owner
+route remains pending on a freshly launched schema-v58 server; the immediately
+preceding owner pass remained a clean schema-v57 gameplay result and is not
+misrepresented as v58 scheduler-correlation evidence.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16747,6 +16800,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 205 by exposing bounded disposable authored-object detachment through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v57 is confined to the explicit preservation no-op, derives the inert plan only after an exact runtime baseline, executes both transaction passes only in disposable unregistered Region unions, retains bounded counts/fingerprints, preserves schema-v56, the Slice 182-205 lineage passes 103 tests plus two observer integration guards, and the 842/488 Ant build/audit passes; one cooldown-aware private owner route remains pending |
 | 2026-07-24 | Accept the Slice 205 private disposable authored-object detachment route. | Owner-validated; four contiguous schema-v57 records validate, all 36 sources reconcile 4,551 replay placements, 3,979 authored objects, 3,185 collision contribution references, 3,979 Region references, 36 disposable Region unions, and 82,944 verified tiles; every object registers and clears through exact forward/reverse transactions, all inherited fingerprints align, runtime/baseline anomalies and all runtime mutation/authority facts remain zero/false, and scenery/NPC interaction remained normal. One accepted 1,305 ms late tick contains 1,192 ms of opt-in diagnostic work and skips one following tick |
 | 2026-07-24 | Continue with Slice 206 by correlating the inert detachment plan with exact detached scheduler and NPC-owner evidence. | Implemented and automated-validated; every event receives a bounded classification, exact NPC-owner registration fences and fully authored scenery restorations remain distinct from candidate NPC, player-owned, exact-restoration, and unattributed blockers, supporting/outside/global callbacks reconcile without retaining runtime handles, every mutation/authority fact remains false, the Slice 182-206 lineage passes 106 tests, and the 843/488 Ant build/audit passes |
+| 2026-07-24 | Continue with Slice 207 by exposing bounded detachment-scheduler correlation through the explicit private preservation diagnostic. | Implemented and automated-validated; additive schema-v58 changes only the preservation no-op, aligns the existing exact event inventory, inert detachment definition, and NPC-owner requirements under one source-lifecycle boundary, serializes compact aggregate/per-source classifications without duplicating callbacks or retaining authority, preserves schema-v57, passes five focused guards, the 111-test Slice 182-207 lineage, two observer integration tests, and the 843/488 Ant build/audit; one fresh-server private owner route remains pending |
 
 ## Next Discussion
 

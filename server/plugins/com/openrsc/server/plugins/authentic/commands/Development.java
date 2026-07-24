@@ -2059,12 +2059,13 @@ public final class Development implements CommandTrigger {
 			@Override
 			public PackedRegionNpcOwnerPreservationNoOpMetadata
 				captureNpcOwnerPreservationNoOp(
+					final LayeredPackedRegionEventOwnershipInventory inventory,
 					final LayeredPackedRegionNpcOwnerPreservationRequirements
 						requirements,
 					final int maximumOwners) {
 				return player.getWorld().getServer().getGameEventHandler()
 					.captureLayeredPackedRegionNpcOwnerPreservationNoOpDiagnostic(
-						requirements, maximumOwners);
+						inventory, requirements, maximumOwners);
 			}
 
 			@Override

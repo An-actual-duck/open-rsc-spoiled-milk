@@ -49,6 +49,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionApplicationVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredCollisionVerificationBatch;
+import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredObjectDetachmentPlan;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredSourceStateVerificationBatch;
@@ -538,9 +539,12 @@ public class GameEventHandler {
 	 */
 	public PackedRegionNpcOwnerPreservationNoOpMetadata
 		captureLayeredPackedRegionNpcOwnerPreservationNoOpDiagnostic(
+			final LayeredPackedRegionEventOwnershipInventory inventory,
 			final LayeredPackedRegionNpcOwnerPreservationRequirements
 				requirements,
 			final int maximumOwners) {
+		LayeredPackedRegionEventOwnershipInventory checkedInventory =
+			Objects.requireNonNull(inventory, "inventory");
 		LayeredPackedRegionNpcOwnerPreservationRequirements checked =
 			Objects.requireNonNull(requirements, "requirements");
 		final GameTickEventNpcOwnerPreservationNoOpDiagnostic.Result[]
@@ -587,6 +591,11 @@ public class GameEventHandler {
 				authoredObjectDetachmentVerification =
 					new
 						LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch[1];
+		final
+			LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation[]
+				authoredDetachmentSchedulerCorrelation =
+					new
+						LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation[1];
 		boolean sourceBoundaryEntered =
 			getServer().getWorld().getRegionManager()
 				.withinLayeredPackedRegionSourceLifecycleBoundary(
@@ -661,6 +670,13 @@ public class GameEventHandler {
 									authoredObjectDetachmentPlan[0],
 									LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch
 										.MAXIMUM_VERIFICATION_SOURCES);
+						authoredDetachmentSchedulerCorrelation[0] =
+							LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation
+								.correlate(
+									authoredObjectDetachmentPlan[0],
+									checkedInventory, checked,
+									LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation
+										.MAXIMUM_RETAINED_EVENTS);
 						captured[0] =
 							GameTickEventNpcOwnerPreservationNoOpDiagnostic
 								.capture(
@@ -696,7 +712,8 @@ public class GameEventHandler {
 			transactionalAuthoredSourceVerification[0],
 			runtimeAuthoredObjectObservation[0],
 			runtimeAuthoredObjectBaselineComparison[0],
-			authoredObjectDetachmentVerification[0]);
+			authoredObjectDetachmentVerification[0],
+			authoredDetachmentSchedulerCorrelation[0]);
 	}
 
 	private void requireExactPackedSourceBoundary(

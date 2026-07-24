@@ -26,7 +26,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v57.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v58.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -70,6 +70,7 @@ SCHEMA_V53 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v53.sche
 SCHEMA_V54 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v54.schema.json"
 SCHEMA_V55 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v55.schema.json"
 SCHEMA_V56 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v56.schema.json"
+SCHEMA_V57 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v57.schema.json"
 
 
 POINT_STUB = r'''
@@ -828,6 +829,76 @@ public final class
         public String getPreDetachmentStateFingerprintSha256() { return ""; }
         public String getPostDetachmentStateFingerprintSha256() { return ""; }
         public String getFingerprintSha256() { return ""; }
+    }
+}
+'''
+
+AUTHORED_DETACHMENT_SCHEDULER_CORRELATION_STUB = r'''
+package com.openrsc.server.model.world.region;
+
+import java.util.Collections;
+import java.util.List;
+
+public final class
+        LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation {
+    public long getGeneration() { return 0L; }
+    public long getEventObservedAtTick() { return 0L; }
+    public long getDetachmentRuntimeObservedAtTick() { return 0L; }
+    public String getSchedulerInstanceIdentity() { return ""; }
+    public String getDetachmentPlanFingerprintSha256() { return ""; }
+    public String getFingerprintSha256() { return ""; }
+    public int getSourceCount() { return 0; }
+    public int getEventCount() { return 0; }
+    public int getRetainedEventCount() { return 0; }
+    public int getNpcOwnerFenceEventCount() { return 0; }
+    public int getRelatedNpcOwnerFenceEventCount() { return 0; }
+    public int getSupportingNpcOwnerFenceEventCount() { return 0; }
+    public int getExactAuthoredRestorationEventCount() { return 0; }
+    public int getCandidateNpcOwnerUncorrelatedEventCount() { return 0; }
+    public int getCandidateNonNpcOwnerEventCount() { return 0; }
+    public int getCandidateExactRestorationIncompleteEventCount() { return 0; }
+    public int getUnattributedEventCount() { return 0; }
+    public int getOutsideSelectionOwnerHintEventCount() { return 0; }
+    public int getOutsideSelectionExactSpatialEventCount() { return 0; }
+    public int getNonSpatialGlobalEventCount() { return 0; }
+    public int getBlockerEventCount() { return 0; }
+    public boolean areAllSchedulerEventsClassified() { return true; }
+    public boolean isDetachedSchedulerCorrelationComplete() { return true; }
+    public boolean isSchedulerCorrelationPerformed() { return true; }
+    public boolean isPointInTimeOnly() { return true; }
+    public boolean isDetachedSummaryOnly() { return true; }
+    public boolean isRuntimeDetachmentReady() { return false; }
+    public boolean isSchedulerBoundaryEntered() { return false; }
+    public boolean isSchedulerIdentityRetained() { return false; }
+    public boolean isCallbackRetained() { return false; }
+    public boolean isRuntimeHandleRetained() { return false; }
+    public boolean isEventCancellation() { return false; }
+    public boolean isEventReschedule() { return false; }
+    public boolean isPreservationPerformed() { return false; }
+    public boolean isSourceAbsencePerformed() { return false; }
+    public boolean isSourceReconstructionPerformed() { return false; }
+    public boolean isRuntimeMutationAuthorized() { return false; }
+    public boolean isRuntimeMutationPerformed() { return false; }
+    public boolean isRegionRegistryMutated() { return false; }
+    public boolean isResidencyMirrorMutated() { return false; }
+    public boolean isVisibilityCacheMutated() { return false; }
+    public boolean isArrivalGate() { return false; }
+    public boolean isVisibilityReleased() { return false; }
+    public boolean isLifecycleAuthority() { return false; }
+    public List<SourceCorrelation> getSources() {
+        return Collections.emptyList();
+    }
+
+    public static final class SourceCorrelation {
+        public int getSelectedSourceOrdinal() { return 0; }
+        public int getPackedRegionX() { return 0; }
+        public int getPackedRegionY() { return 0; }
+        public int getNpcOwnerFenceEventCount() { return 0; }
+        public int getExactAuthoredRestorationEventCount() { return 0; }
+        public int getNpcOwnerUncorrelatedEventCount() { return 0; }
+        public int getNonNpcOwnerEventCount() { return 0; }
+        public int getExactRestorationIncompleteEventCount() { return 0; }
+        public int getBlockerEventReferenceCount() { return 0; }
     }
 }
 '''
@@ -1881,6 +1952,9 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             "com/openrsc/server/model/world/region/"
             "LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch.java":
                 AUTHORED_OBJECT_DETACHMENT_VERIFICATION_STUB,
+            "com/openrsc/server/model/world/region/"
+            "LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation.java":
+                AUTHORED_DETACHMENT_SCHEDULER_CORRELATION_STUB,
             "com/openrsc/server/diagnostics/LayeredCoordinateParityObserverFixture.java":
                 OBSERVER_FIXTURE,
         }
@@ -1952,7 +2026,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v57" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v58" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -3172,6 +3246,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v54 = json.loads(SCHEMA_V54.read_text(encoding="utf-8"))
                 v55 = json.loads(SCHEMA_V55.read_text(encoding="utf-8"))
                 v56 = json.loads(SCHEMA_V56.read_text(encoding="utf-8"))
+                v57 = json.loads(SCHEMA_V57.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -3216,6 +3291,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v54["$id"], Resource.from_contents(v54)),
                     (v55["$id"], Resource.from_contents(v55)),
                     (v56["$id"], Resource.from_contents(v56)),
+                    (v57["$id"], Resource.from_contents(v57)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

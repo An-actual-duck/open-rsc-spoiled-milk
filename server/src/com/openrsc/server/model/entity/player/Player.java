@@ -3624,12 +3624,13 @@ public final class Player extends Mob {
 			@Override
 			public PackedRegionNpcOwnerPreservationNoOpMetadata
 				captureNpcOwnerPreservationNoOp(
+					final LayeredPackedRegionEventOwnershipInventory inventory,
 					final LayeredPackedRegionNpcOwnerPreservationRequirements
 						requirements,
 					final int maximumOwners) {
 				return getWorld().getServer().getGameEventHandler()
 					.captureLayeredPackedRegionNpcOwnerPreservationNoOpDiagnostic(
-						requirements, maximumOwners);
+						inventory, requirements, maximumOwners);
 			}
 
 			@Override
