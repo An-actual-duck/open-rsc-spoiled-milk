@@ -16456,6 +16456,51 @@ schema-v58 route accepts all 449 exact related NPC-owner links, including
 owners authored outside the selected sources, without weakening identity
 checks or crossing the inert diagnostic boundary.
 
+### Slice 209: Detached scheduler event-type identity
+
+Objective: give the remaining scheduler blockers a stable diagnostic type and
+family identity before deciding whether any currently unattributed callback is
+actually global, spatial, or preservation-dependent.
+
+Implemented:
+
+- each runtime scheduler entry is reduced under the existing snapshot boundary
+  to its binary runtime type name, logical family type name, direct supertype
+  name, and anonymous/local/synthetic flags;
+- anonymous, local, and synthetic implementations use their enclosing class as
+  the logical family when available, preserving useful origin information
+  without pretending anonymous ordinals are a long-term public API;
+- detached names are non-empty, control-character-free, whitespace-stable, and
+  bounded to 512 characters; and
+- legacy pure fixtures retain an explicit uncaptured `unknown` identity while
+  the sole runtime capture seam supplies a complete identity for every
+  scheduler entry.
+
+Safety boundary:
+
+- only immutable strings and booleans cross into the coordinate inventory; no
+  `Class`, class loader, event, callback, owner, scheduler, or runtime handle is
+  retained;
+- type identity does not change spatial attribution. In particular, an
+  `UNATTRIBUTED` callback remains a blocker until its implementation is audited
+  and explicitly declares valid affinity; and
+- no event is cancelled, rescheduled, recreated, or run, and no preservation,
+  source lifecycle, registry, visibility, arrival, or lifecycle authority is
+  granted.
+
+Automated validation status:
+
+- three focused identity guards and the original three-test event-inventory
+  fixture pass;
+- the Slice 182-209 lineage passes 117 tests across 28 focused files;
+- the authoritative bundled-Ant build compiles 843 core and 488 plugin
+  sources; and
+- the server build/classpath audit passes.
+
+Status: implemented and automated-validated. This identity remains
+intentionally internal until a bounded blocker-family reduction is defined; no
+schema change or owner route is requested by this slice alone.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16891,6 +16936,7 @@ private environment should validate at least:
 | 2026-07-24 | Repair the schema-v58 owner route after it exposed an exact NPC owner authored outside the selected detachment sources. | Slice 208 implemented and automated-validated; the eligible route proved 12 candidates, 36 selected sources, 450 exact related NPC-owner links, and eight separate non-NPC events before the inert correlation threw on an invalid membership assumption. Exact generation/scheduler/registration/NPC identity remain mandatory, but a roaming owner's authored source may now remain outside the sources its callback currently affects; the compiled regression covers related and supporting links for such an owner, the Slice 182-208 lineage passes 114 tests plus two observer integration guards, and the 843/488 Ant build/audit passes. No runtime mutation occurred; one repaired private route remains pending |
 | 2026-07-24 | Accept the repaired Slice 207-208 private detachment-scheduler correlation route. | Owner-validated; four contiguous schema-v58 records classify all 3,881 callbacks across 36 selected sources, including 449 exact related NPC-owner fences and the valid outside-selection authored owners. The 555 retained classifications and 106 blockers reconcile exactly as eight non-NPC plus 98 unattributed callbacks, while 3,326 outside-selection hints remain non-blocking. Source references, order, and fingerprints align; every runtime mutation/authority fact is false, the route completed without a reported visual or interaction issue, and one accepted 1,196 ms late tick contains 1,186 ms of opt-in diagnostic work |
 | 2026-07-24 | Prevent the legacy private-server launchers from silently targeting the public server. | Corrected after discarding the first v58 attempt: the Unix client delegates to the guarded canonical `--dev` target, the Unix server derives its client port from `myworld.conf` and refuses public port 43605, the Windows wrappers and tracked cache use 43615, both shell wrappers pass syntax validation, and four focused launcher guards pass. The public process was not stopped or restarted |
+| 2026-07-24 | Continue with Slice 209 by attaching detached implementation/family identity to each scheduler snapshot entry. | Implemented and automated-validated; bounded runtime, logical-family, and direct-supertype names plus anonymous/local/synthetic flags cross the existing snapshot boundary as primitives, legacy fixtures remain explicitly unknown, no `Class` or runtime handle survives, attribution and authority remain unchanged, the Slice 182-209 lineage passes 117 tests, and the 843/488 Ant build/audit passes. Identity remains internal pending a bounded blocker-family reduction |
 
 ## Next Discussion
 

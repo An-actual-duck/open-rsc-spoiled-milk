@@ -23,9 +23,10 @@ import java.util.regex.Pattern;
  *
  * <p>This value accepts detached primitive inputs only. It neither reads nor
  * retains a live event, Mob, Region, scheduler, callback, UUID, descriptor, or
- * implementation class. It cannot stop, remove, reschedule, recreate, or run
- * an event and grants no preservation, reload, teardown, or lifecycle
- * authority.</p>
+ * implementation {@code Class} handle. A detached implementation/family name
+ * may be retained as diagnostic identity. It cannot stop, remove, reschedule,
+ * recreate, or run an event and grants no preservation, reload, teardown, or
+ * lifecycle authority.</p>
  */
 public final class LayeredPackedRegionEventOwnershipInventory {
 	public static final int MAXIMUM_EVENTS = 65536;
@@ -566,6 +567,98 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		NPC_SPAWN,
 		GROUND_ITEM_SPAWN,
 		HARVESTING_SCENERY
+	}
+
+	/**
+	 * Detached implementation identity for one scheduled callback.
+	 *
+	 * <p>Names are copied while the scheduler snapshot boundary is held. No
+	 * {@code Class}, class loader, event, callback, owner, scheduler, or runtime
+	 * handle survives in this value.</p>
+	 */
+	public static final class EventTypeIdentity {
+		public static final int MAXIMUM_TYPE_NAME_LENGTH = 512;
+		private static final EventTypeIdentity UNSPECIFIED =
+			new EventTypeIdentity(
+				"unknown", "unknown", "unknown",
+				false, false, false, false);
+
+		private final String runtimeTypeName;
+		private final String familyTypeName;
+		private final String directSupertypeName;
+		private final boolean anonymousType;
+		private final boolean localType;
+		private final boolean syntheticType;
+		private final boolean captured;
+
+		private EventTypeIdentity(
+			final String runtimeTypeName,
+			final String familyTypeName,
+			final String directSupertypeName,
+			final boolean anonymousType,
+			final boolean localType,
+			final boolean syntheticType,
+			final boolean captured) {
+			this.runtimeTypeName = checkedTypeName(
+				runtimeTypeName, "runtimeTypeName");
+			this.familyTypeName = checkedTypeName(
+				familyTypeName, "familyTypeName");
+			this.directSupertypeName = checkedTypeName(
+				directSupertypeName, "directSupertypeName");
+			this.anonymousType = anonymousType;
+			this.localType = localType;
+			this.syntheticType = syntheticType;
+			this.captured = captured;
+		}
+
+		public static EventTypeIdentity of(
+			final String runtimeTypeName,
+			final String familyTypeName,
+			final String directSupertypeName,
+			final boolean anonymousType,
+			final boolean localType,
+			final boolean syntheticType) {
+			return new EventTypeIdentity(
+				runtimeTypeName, familyTypeName, directSupertypeName,
+				anonymousType, localType, syntheticType, true);
+		}
+
+		private static EventTypeIdentity unspecified() {
+			return UNSPECIFIED;
+		}
+
+		private static String checkedTypeName(
+			final String value,
+			final String label) {
+			String checked = Objects.requireNonNull(value, label);
+			if (checked.isEmpty()
+				|| checked.length() > MAXIMUM_TYPE_NAME_LENGTH
+				|| !checked.equals(checked.trim())) {
+				throw new IllegalArgumentException(
+					"Event type identity name is invalid");
+			}
+			for (int index = 0; index < checked.length(); index++) {
+				if (Character.isISOControl(checked.charAt(index))) {
+					throw new IllegalArgumentException(
+						"Event type identity contains control characters");
+				}
+			}
+			return checked;
+		}
+
+		public String getRuntimeTypeName() { return runtimeTypeName; }
+		public String getFamilyTypeName() { return familyTypeName; }
+		public String getDirectSupertypeName() { return directSupertypeName; }
+		public boolean isAnonymousType() { return anonymousType; }
+		public boolean isLocalType() { return localType; }
+		public boolean isSyntheticType() { return syntheticType; }
+		public boolean isCaptured() { return captured; }
+
+		public boolean isDetachedValue() { return true; }
+		public boolean isClassHandle() { return false; }
+		public boolean isCallbackHandle() { return false; }
+		public boolean isSchedulerHandle() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
 	}
 
 	/**
@@ -1143,6 +1236,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 	public static final class EventState {
 		private final int snapshotOrdinal;
 		private final long registrationSequence;
+		private final EventTypeIdentity eventTypeIdentity;
 		private final OwnerKind ownerKind;
 		private final NpcOwnerIdentity npcOwnerIdentity;
 		private final AttributionKind attributionKind;
@@ -1156,6 +1250,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		private EventState(
 			final int snapshotOrdinal,
 			final long registrationSequence,
+			final EventTypeIdentity eventTypeIdentity,
 			final OwnerKind ownerKind,
 			final NpcOwnerIdentity npcOwnerIdentity,
 			final AttributionKind attributionKind,
@@ -1172,6 +1267,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			}
 			this.snapshotOrdinal = snapshotOrdinal;
 			this.registrationSequence = registrationSequence;
+			this.eventTypeIdentity = Objects.requireNonNull(
+				eventTypeIdentity, "eventTypeIdentity");
 			this.ownerKind = Objects.requireNonNull(ownerKind, "ownerKind");
 			if (npcOwnerIdentity != null && ownerKind != OwnerKind.NPC) {
 				throw new IllegalArgumentException(
@@ -1263,7 +1360,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final int timesRan,
 			final List<SpatialReference> spatialReferences) {
 			return new EventState(
-				snapshotOrdinal, registrationSequence, ownerKind, null,
+				snapshotOrdinal, registrationSequence,
+				EventTypeIdentity.unspecified(), ownerKind, null,
 				attributionKind,
 				running,
 				ticksBeforeRun, timesRan, spatialReferences,
@@ -1281,7 +1379,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final List<SpatialReference> spatialReferences,
 			final EventRestorationState restorationState) {
 			return new EventState(
-				snapshotOrdinal, registrationSequence, ownerKind, null,
+				snapshotOrdinal, registrationSequence,
+				EventTypeIdentity.unspecified(), ownerKind, null,
 				attributionKind,
 				running,
 				ticksBeforeRun, timesRan, spatialReferences,
@@ -1300,7 +1399,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final EventRestorationState restorationState,
 			final boolean atomicTimingCaptured) {
 			return new EventState(
-				snapshotOrdinal, registrationSequence, ownerKind, null,
+				snapshotOrdinal, registrationSequence,
+				EventTypeIdentity.unspecified(), ownerKind, null,
 				attributionKind,
 				running, ticksBeforeRun, timesRan, spatialReferences,
 				restorationState, atomicTimingCaptured);
@@ -1319,14 +1419,38 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final EventRestorationState restorationState,
 			final boolean atomicTimingCaptured) {
 			return new EventState(
-				snapshotOrdinal, registrationSequence, ownerKind,
+				snapshotOrdinal, registrationSequence,
+				EventTypeIdentity.unspecified(), ownerKind,
 				npcOwnerIdentity, attributionKind, running, ticksBeforeRun,
 				timesRan, spatialReferences, restorationState,
 				atomicTimingCaptured);
 		}
 
+		public static EventState of(
+			final int snapshotOrdinal,
+			final long registrationSequence,
+			final EventTypeIdentity eventTypeIdentity,
+			final OwnerKind ownerKind,
+			final NpcOwnerIdentity npcOwnerIdentity,
+			final AttributionKind attributionKind,
+			final boolean running,
+			final long ticksBeforeRun,
+			final int timesRan,
+			final List<SpatialReference> spatialReferences,
+			final EventRestorationState restorationState,
+			final boolean atomicTimingCaptured) {
+			return new EventState(
+				snapshotOrdinal, registrationSequence, eventTypeIdentity,
+				ownerKind, npcOwnerIdentity, attributionKind, running,
+				ticksBeforeRun, timesRan, spatialReferences,
+				restorationState, atomicTimingCaptured);
+		}
+
 		public int getSnapshotOrdinal() { return snapshotOrdinal; }
 		public long getRegistrationSequence() { return registrationSequence; }
+		public EventTypeIdentity getEventTypeIdentity() {
+			return eventTypeIdentity;
+		}
 		public OwnerKind getOwnerKind() { return ownerKind; }
 		public NpcOwnerIdentity getNpcOwnerIdentity() {
 			return npcOwnerIdentity;
@@ -1364,6 +1488,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		public int getSnapshotOrdinal() { return state.getSnapshotOrdinal(); }
 		public long getRegistrationSequence() {
 			return state.getRegistrationSequence();
+		}
+		public EventTypeIdentity getEventTypeIdentity() {
+			return state.getEventTypeIdentity();
 		}
 		public OwnerKind getOwnerKind() { return state.getOwnerKind(); }
 		public NpcOwnerIdentity getNpcOwnerIdentity() {

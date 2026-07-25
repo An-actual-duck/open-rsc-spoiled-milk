@@ -31,6 +31,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.DesiredState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventState;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventTypeIdentity;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.ExecutionSemantics;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.GenerationBindingRequirement;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.IdempotencyPolicy;
@@ -867,12 +868,35 @@ public class GameEventHandler {
 					identity.getConstructionKind().name(), npcOwner.getID());
 			}
 		}
+		EventTypeIdentity eventTypeIdentity =
+			detachEventTypeIdentity(event);
 		return EventState.of(
-			ordinal, registrationSequence, ownerKind, npcOwnerIdentity,
+			ordinal, registrationSequence, eventTypeIdentity,
+			ownerKind, npcOwnerIdentity,
 			attribution,
 			timing.isRunning(), timing.getTicksBeforeRun(),
 			timing.getTimesRan(), references, restorationState,
 			restorationState.isExecutionSemanticsCaptured());
+	}
+
+	private EventTypeIdentity detachEventTypeIdentity(
+		final GameTickEvent event) {
+		Class<?> runtimeType = event.getClass();
+		Class<?> enclosingType = runtimeType.getEnclosingClass();
+		Class<?> directSupertype = runtimeType.getSuperclass();
+		boolean anonymous = runtimeType.isAnonymousClass();
+		boolean local = runtimeType.isLocalClass();
+		boolean synthetic = runtimeType.isSynthetic();
+		String familyTypeName =
+			(anonymous || local || synthetic) && enclosingType != null
+				? enclosingType.getName()
+				: runtimeType.getName();
+		return EventTypeIdentity.of(
+			runtimeType.getName(), familyTypeName,
+			directSupertype == null
+				? GameTickEvent.class.getName()
+				: directSupertype.getName(),
+			anonymous, local, synthetic);
 	}
 
 	private EventRestorationState detachEventRestorationState(
