@@ -6,6 +6,7 @@ import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.plugins.triggers.OpInvTrigger;
 import com.openrsc.server.plugins.triggers.UseInvTrigger;
 import com.openrsc.server.util.rsc.MessageType;
@@ -130,32 +131,31 @@ public class Bones implements OpInvTrigger, UseInvTrigger {
 
 
 	private void prayerCape(final Player player, final Item bone) {
-		final int currentPrayerLevel = player.getSkills().getLevel(Skill.PRAYER.id());
-		final int maxPrayerLevel = player.getSkills().getMaxStat(Skill.PRAYER.id());
-		if (currentPrayerLevel >= maxPrayerLevel) return;
+		final int currentHits = player.getSkills().getLevel(Skill.HITS.id());
+		final int maxHits = player.getSkills().getMaxStat(Skill.HITS.id());
+		if (currentHits >= maxHits) return;
 
-		int pointsToRestore = 0;
+		int pointsToHeal = 0;
 		switch (ItemId.getById(bone.getCatalogId())) {
 			case BONES:
 			case BAT_BONES:
-				pointsToRestore = 1;
+				pointsToHeal = 1;
 				break;
 			case BIG_BONES:
 			case DEMON_ASH:
-				pointsToRestore = 2;
+				pointsToHeal = 2;
 				break;
 			case DRAGON_BONES:
-				pointsToRestore = 4;
+				pointsToHeal = 4;
 				break;
 		}
 
-		if (pointsToRestore > 0) {
-			mes("@yel@Your Worship cape activates, restoring " + pointsToRestore + " prayer points!");
-			int newPrayer = currentPrayerLevel + pointsToRestore;
-			if (newPrayer > maxPrayerLevel) {
-				newPrayer = maxPrayerLevel;
-			}
-			player.getSkills().setLevel(Skill.PRAYER.id(), newPrayer, true);
+		final int healed = Math.min(pointsToHeal, maxHits - currentHits);
+		if (healed > 0) {
+			final String unit = healed == 1 ? " hitpoint" : " hitpoints";
+			mes("@yel@Your Worship cape activates, restoring " + healed + unit + "!");
+			player.getSkills().setLevel(Skill.HITS.id(), currentHits + healed, true);
+			player.getUpdateFlags().addHitSplat(new HitSplat(player, HitSplat.TYPE_HEAL, healed));
 		}
 	}
 
