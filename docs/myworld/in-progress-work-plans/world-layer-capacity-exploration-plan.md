@@ -17345,6 +17345,7 @@ private environment should validate at least:
 | 2026-07-25 | Accept Phase 5 Authority Milestone C on the private three-gate server. | Owner-validated exact server/client agreement through ordinary surface movement and interaction, an upper-floor teleport and NPC interaction, real surface/underground ladder transitions in both directions, same-level teleport, clean logout, and reconnect. Scope sequences advanced only when level changed and restarted at 1 on reconnect; the delayed drop/pickup expiry completed without another membership exception, and no visual, collision, interaction, context, receipt, or reconnect fault appeared |
 | 2026-07-25 | Approve Phase 5 Authority Milestone D as one coarse private fixture body. | Approved for implementation: add a fourth default-off gate; an explicit bounded `synthetic-deep-fixture-v1` compatibility projection; protocol-v2 projection identity; one generated level `-2` owner route with isolated NPC/item membership; checked terrain/collision reuse; exact persistence and rollback recovery; and no production archive, placement, or live-world mutation |
 | 2026-07-25 | Implement Phase 5 Authority Milestone D behind its fourth private gate. | The named bounded projection now carries authoritative global level `-2` through Entity/Player location, logical membership, checked plane-0 terrain/collision reuse, persistence, and scene-context protocol v2. `::deepfixture` supplies a runtime-clear-checked owner route with process-local marked NPC/item fixtures and reconnect-safe exit. The 14-test D/C/B/A lineage, prerequisite-refusal startup, 850/488 Ant server build, and 259-source client build pass; no production terrain or placement file changed, and owner acceptance remains pending |
+| 2026-07-25 | Accept Milestone D runtime movement, interaction, deep reconnect, explicit exit, and death recovery. | After correcting the generated room, client offsets, persistence snapshot, action adjacency, follow-stop adjacency, and NPC roam envelope, the owner confirmed the bounded level `-2` route works visually and interactively. Runtime evidence proves exact deep reconnect, a roaming NPC, successful NPC/item interaction, explicit surface exit, and death from `(452,602,L-2)` recovering to Lumbridge `(120,648,L0)`. Only the required post-death surface reconnect remains before full Milestone D acceptance |
 | 2026-07-25 | Correct the first Milestone D owner route after stopping at step 6. | Owner evidence proved that the borrowed compatibility rectangle was water: click teleport could collect the deep item, ordinary walking and Man interaction failed, and logout/reconnect returned to the prior surface save. Logs established a second exact cause: the legacy-only save snapshot decoded the `(450,600)` receipt as level 0, rejected the authoritative level `-2` mirror, and rolled back every deep autosave. Replace terrain borrowing with a bounded runtime-only flat overlay-0 room, suppress borrowed upper-plane geometry, resolve deep path/collision through that room, and capture named-projection persistence from the authoritative layered location plus its checked receipt. Production archives, placements, surface terrain, live data, and the public server remain untouched; corrected owner acceptance is pending |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
@@ -18034,6 +18035,16 @@ runtime, and combat-interaction guards pass, as does the authoritative
 item interaction, exact deep reconnect, and explicit exit path are now
 accepted; death/recovery remains the outstanding owner route before the
 milestone can be closed.
+
+Death/recovery is now owner-accepted. The owner ran `::kill devduck` while
+inside the fixture and confirmed return to level 0. Server evidence records
+the command while the Player was at deep `(452,602)`, followed by successful
+`::levelloc` and `::layerloc` commands plus ordinary timed processing at
+Lumbridge `(120,648)`. This proves the explicit recovery boundary exits the
+named level `-2` projection rather than retaining an ambiguous same-X/Y
+receipt. The acceptance route still requires one clean logout and reconnect
+from this recovered surface state; only that persistence check remains before
+Milestone D can be marked fully accepted.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
