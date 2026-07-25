@@ -22,6 +22,12 @@ including one bounded synthetic level `-2` room. The next gap is no longer
 proof that a deep identity can exist; it is replacing that compatibility room
 with native data-driven layered terrain and placements.
 
+Milestone E runtime checkpoints 3 and 4 now put package-owned terrain on both
+server and client behind a fifth private gate, with protocol-v3 page identity
+and gate-off rollback. Private owner validation is the current boundary. The
+bounded compatibility receipt and process-local test placements still exist;
+their replacement is not yet complete.
+
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
 and simple modder content workflow. The earlier general one-way converter work
@@ -173,6 +179,56 @@ instead of `synthetic-deep-fixture-v1`, while retaining an immediate gate-off
 rollback to the existing accepted world. Client presentation must receive
 matching native sector data/readiness rather than a hidden plane-0 alias before
 owner testing is requested.
+
+### Authority Milestone E runtime checkpoints 3 and 4
+
+Implemented on 2026-07-25 and awaiting private owner validation:
+
+- a fifth, default-off
+  `want_layered_native_terrain_package` gate accepts its package path through
+  config, environment, or JVM property without changing any public or ordinary
+  private-server default;
+- startup requires the four accepted authority gates, loads and verifies the
+  package once, and refuses a missing path, changed package, absent level `-2`
+  fixture coverage, or terrain that the current bounded collision cut cannot
+  represent safely;
+- gated `RegionManager.getTile(WorldLocation)` now derives the accepted deep
+  room's overlay, walls, diagonal, and elevation from the native package.
+  Gate-off lookup still takes the unchanged synthetic implementation, providing
+  an immediate rollback boundary;
+- scene-context protocol v3 identifies
+  `native-layered-package-v1` and carries package ID/version, manifest hash,
+  declared `24 x 24` presentation size, signed level and 48-tile storage-page
+  identity, payload encoding/hash, and the complete uniform terrain scalars;
+- the client validates that envelope atomically before accepting its logical
+  receipt. Page identity participates in scene scope, so a storage-page
+  crossing sends a new context before movement is applied;
+- native client terrain is built from a fresh authoritative page. The bounded
+  room receives package terrain and the rest of the current window receives
+  explicit void terrain; no level-0 archive tile is used as the visual source;
+- the existing synthetic protocol-v2/client route remains unchanged whenever
+  the fifth gate is off;
+- client regression crosses X `479 -> 480` between adjacent level `-2`
+  package pages, refuses movement outside the current page before a new
+  context, then accepts the refreshed page; and
+- the same client protocol/state test accepts declared level `-37` on the
+  native projection with no level enumeration or protocol change.
+
+The focused A-through-E lineage now passes 23 tests. The authoritative server
+build compiles 853 core plus 488 plugin sources, and the client build compiles
+260 sources. This checkpoint is native terrain authority, package identity,
+and page-readiness only. The room's process-local NPC/item fixtures remain
+Milestone D test scaffolding; package-owned placements, general non-uniform
+terrain/collision construction, 24-tile incremental presentation delivery,
+and removal of the bounded compatibility receipt remain later Milestone E
+cuts.
+
+The next action is a private fifth-gate owner route. It should confirm native
+protocol-v3 diagnostics, no leaked surface scenery/terrain, normal bounded-room
+movement and interaction, logout/reconnect at depth, explicit exit, and death
+recovery. If accepted, continue with a full-fidelity non-uniform sector
+encoding and package-owned placement source before claiming Milestone E
+complete.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -17249,6 +17305,7 @@ private environment should validate at least:
 | 2026-07-25 | Select Authority Milestone E as the next implementation body: native package-owned layered terrain/collision/placements, smaller presentation chunks over retained 48-tile storage pages, and a real level `-2` private route. | Selected after full Milestone D acceptance |
 | 2026-07-25 | Complete Milestone E foundation checkpoint 1: freeze the deterministic 12-file Preservation map-source manifest and implement strict native package/uniform-sector validation with data-declared `-3` and `-37` depth proofs. | Implemented and automated-validated; no server/client/runtime terrain authority changed |
 | 2026-07-25 | Complete Milestone E foundation checkpoint 2: add the server's strict detached native package/sector source, adjacent level `-2` page lookup, same-X/Y isolation, arbitrary level `-37` proof, and full detached sector byte-fidelity check. | Implemented and automated-validated; 3 focused tests and authoritative 853/488 build pass, with zero `World`/Region/client authority |
+| 2026-07-25 | Complete Milestone E runtime checkpoints 3 and 4: add the fifth default-off native-package server gate and rollback, then protocol-v3 package/page identity with a fresh client-native terrain window and explicit void outside the bounded room. | Implemented and automated-validated; 23 focused A-E tests and authoritative server/client builds pass, private owner validation pending |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

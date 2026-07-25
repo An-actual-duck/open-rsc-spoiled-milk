@@ -9,6 +9,9 @@ import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
+import com.openrsc.server.io.NativeLayeredTerrainSector;
+import com.openrsc.server.io.NativeLayeredTerrainTile;
+import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.PlayerAppearance;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.PrivateMessage;
@@ -26,6 +29,7 @@ import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
 import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldMapSectorId;
 import com.openrsc.server.model.world.region.VisibilitySnapshot;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
@@ -72,6 +76,7 @@ public final class GameStateUpdater {
 	private static final int LAYERED_SCENE_BASELINE_PROTOCOL_VERSION = 6;
 	private static final int LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 1;
 	private static final int SYNTHETIC_DEEP_SCENE_CONTEXT_PROTOCOL_VERSION = 2;
+	private static final int NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 3;
 	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
 	private static final int SCENE_BASELINE_PAGE_BURST_LIMIT = 4;
 	private static final int SCENE_BASELINE_FIXED_PAYLOAD_BYTES = 48;
@@ -199,9 +204,12 @@ public final class GameStateUpdater {
 		final Point expectedLegacy =
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
 				location, allowSyntheticDeep);
-		final String projectionId =
-			LayeredCompatibilityPointAdapter.projectionId(
-				location, allowSyntheticDeep);
+		final NativeLayeredSceneTerrain nativeTerrain =
+			nativeLayeredSceneTerrain(location);
+		final String projectionId = nativeTerrain == null
+			? LayeredCompatibilityPointAdapter.projectionId(
+				location, allowSyntheticDeep)
+			: NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID;
 		if (expectedLegacy.getX() != player.getX()
 			|| expectedLegacy.getY() != player.getY()) {
 			throw new IllegalStateException(
@@ -209,7 +217,10 @@ public final class GameStateUpdater {
 		}
 
 		final LayeredProtocolSceneScope nextScope =
-			LayeredProtocolSceneScope.from(location, projectionId);
+			LayeredProtocolSceneScope.from(
+				location,
+				projectionId,
+				nativeTerrain == null ? "" : nativeTerrain.scopeIdentity());
 		final LayeredProtocolSceneScope previousScope =
 			player.getAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, null);
 		if (nextScope.equals(previousScope)) {
@@ -221,7 +232,9 @@ public final class GameStateUpdater {
 		final int sequence = Math.addExact(previousSequence.intValue(), 1);
 		final LayeredSceneContextStruct context = new LayeredSceneContextStruct();
 		context.protocolVersion =
-			LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_FIXTURE_ID
+			nativeTerrain != null
+				? NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION
+				: LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_FIXTURE_ID
 					.equals(projectionId)
 				? SYNTHETIC_DEEP_SCENE_CONTEXT_PROTOCOL_VERSION
 				: LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION;
@@ -234,11 +247,40 @@ public final class GameStateUpdater {
 		context.logicalLevel = location.getCoordinate().getLevel();
 		context.legacyX = expectedLegacy.getX();
 		context.legacyY = expectedLegacy.getY();
+		if (nativeTerrain != null) {
+			nativeTerrain.populate(context);
+		}
 		tryFinalizeAndSendPacket(
 			OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, context, player);
 		player.setAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, nextScope);
 		player.setAttribute(LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, sequence);
 		return true;
+	}
+
+	private NativeLayeredSceneTerrain nativeLayeredSceneTerrain(
+		final WorldLocation location) {
+		if (!getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE) {
+			return null;
+		}
+		if (!LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location)) {
+			throw new IllegalStateException(
+				"The private native terrain gate currently requires the accepted "
+					+ "synthetic deep compatibility boundary");
+		}
+		final NativeLayeredWorldPackage terrainPackage =
+			getServer().getWorld().getRegionManager()
+				.getNativeLayeredWorldPackage();
+		if (terrainPackage == null) {
+			throw new IllegalStateException(
+				"Native layered terrain gate has no loaded package");
+		}
+		final WorldMapSectorId sectorId = WorldMapSectorId.from(location);
+		final NativeLayeredTerrainSector sector = terrainPackage
+			.findSector(sectorId)
+			.orElseThrow(() -> new IllegalStateException(
+				"Native layered scene has no terrain page at " + sectorId));
+		return new NativeLayeredSceneTerrain(
+			terrainPackage, sector, location);
 	}
 
 	private int requireLayeredSceneContextSequence(final Player player) {
@@ -919,27 +961,84 @@ public final class GameStateUpdater {
 		}
 	}
 
+	private static final class NativeLayeredSceneTerrain {
+		private final NativeLayeredWorldPackage terrainPackage;
+		private final NativeLayeredTerrainSector sector;
+		private final NativeLayeredTerrainTile tile;
+
+		private NativeLayeredSceneTerrain(
+			final NativeLayeredWorldPackage terrainPackage,
+			final NativeLayeredTerrainSector sector,
+			final WorldLocation location) {
+			this.terrainPackage = Objects.requireNonNull(
+				terrainPackage, "terrainPackage");
+			this.sector = Objects.requireNonNull(sector, "sector");
+			this.tile = sector.getTile(
+				location.getCoordinate().getLocalX(),
+				location.getCoordinate().getLocalY());
+		}
+
+		private String scopeIdentity() {
+			final WorldMapSectorId identity = sector.getIdentity();
+			return terrainPackage.getPackageId()
+				+ "@" + terrainPackage.getPackageVersion()
+				+ ":" + terrainPackage.getManifestSha256()
+				+ ":" + identity.getWorldSpace().getValue()
+				+ ":" + identity.getLevel()
+				+ ":" + identity.getSectorX()
+				+ "," + identity.getSectorY()
+				+ ":" + sector.getSourceSha256()
+				+ ":chunk-" + terrainPackage.getPresentationChunkSize();
+		}
+
+		private void populate(final LayeredSceneContextStruct context) {
+			final WorldMapSectorId identity = sector.getIdentity();
+			context.nativePackageId = terrainPackage.getPackageId();
+			context.nativePackageVersion = terrainPackage.getPackageVersion();
+			context.nativeManifestSha256 =
+				terrainPackage.getManifestSha256();
+			context.nativePresentationChunkSize =
+				terrainPackage.getPresentationChunkSize();
+			context.nativeSectorX = identity.getSectorX();
+			context.nativeSectorY = identity.getSectorY();
+			context.nativeEncoding = sector.getSourceEncoding();
+			context.nativePayloadSha256 = sector.getSourceSha256();
+			context.nativeElevation = tile.getElevation();
+			context.nativeTexture = tile.getTexture();
+			context.nativeOverlay = tile.getOverlay();
+			context.nativeRoof = tile.getRoof();
+			context.nativeVerticalWall = tile.getVerticalWall();
+			context.nativeHorizontalWall = tile.getHorizontalWall();
+			context.nativeDiagonalWall = tile.getDiagonalWall();
+		}
+	}
+
 	private static final class LayeredProtocolSceneScope {
 		private final String worldSpace;
 		private final int level;
 		private final String projectionId;
+		private final String nativeTerrainScopeIdentity;
 
 		private LayeredProtocolSceneScope(
 			final String worldSpace,
 			final int level,
-			final String projectionId) {
+			final String projectionId,
+			final String nativeTerrainScopeIdentity) {
 			this.worldSpace = worldSpace;
 			this.level = level;
 			this.projectionId = projectionId;
+			this.nativeTerrainScopeIdentity = nativeTerrainScopeIdentity;
 		}
 
 		private static LayeredProtocolSceneScope from(
 			final WorldLocation location,
-			final String projectionId) {
+			final String projectionId,
+			final String nativeTerrainScopeIdentity) {
 			return new LayeredProtocolSceneScope(
 				location.getWorldSpace().getValue(),
 				location.getCoordinate().getLevel(),
-				projectionId);
+				projectionId,
+				nativeTerrainScopeIdentity);
 		}
 
 		@Override
@@ -954,13 +1053,16 @@ public final class GameStateUpdater {
 				(LayeredProtocolSceneScope) other;
 			return level == scope.level
 				&& worldSpace.equals(scope.worldSpace)
-				&& projectionId.equals(scope.projectionId);
+				&& projectionId.equals(scope.projectionId)
+				&& nativeTerrainScopeIdentity.equals(
+					scope.nativeTerrainScopeIdentity);
 		}
 
 		@Override
 		public int hashCode() {
 			int result = 31 * worldSpace.hashCode() + level;
-			return 31 * result + projectionId.hashCode();
+			result = 31 * result + projectionId.hashCode();
+			return 31 * result + nativeTerrainScopeIdentity.hashCode();
 		}
 	}
 

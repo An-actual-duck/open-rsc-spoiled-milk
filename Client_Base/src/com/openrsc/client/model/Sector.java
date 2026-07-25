@@ -35,6 +35,11 @@ public class Sector {
 		}
 	}
 
+	/** Creates an empty page that is authoritative rather than archive-missing. */
+	public static Sector blankLoaded() {
+		return new Sector(true);
+	}
+
 	/**
 	 * Create a new Sector from raw data packed into the given ByteBuffer
 	 */

@@ -384,8 +384,30 @@ public class PacketHandler {
 		int logicalLevel = packetsIncoming.get32();
 		int legacyX = packetsIncoming.getShort();
 		int legacyY = packetsIncoming.getShort();
-		LayeredSceneContextState.ApplyResult result =
-			layeredSceneContextState.accept(
+		NativeLayeredTerrainSnapshot nativeTerrain = null;
+		if (protocolVersion
+				== LayeredSceneContextState.NATIVE_LAYERED_PROTOCOL_VERSION) {
+			nativeTerrain = new NativeLayeredTerrainSnapshot(
+				packetsIncoming.readString(),
+				packetsIncoming.readString(),
+				packetsIncoming.readString(),
+				packetsIncoming.getUnsignedByte(),
+				worldSpace,
+				logicalLevel,
+				packetsIncoming.get32(),
+				packetsIncoming.get32(),
+				packetsIncoming.readString(),
+				packetsIncoming.readString(),
+				packetsIncoming.getUnsignedByte(),
+				packetsIncoming.getUnsignedByte(),
+				packetsIncoming.getUnsignedByte(),
+				packetsIncoming.getUnsignedByte(),
+				packetsIncoming.getUnsignedByte(),
+				packetsIncoming.getUnsignedByte(),
+				packetsIncoming.get32());
+		}
+		LayeredSceneContextState.ApplyResult result = nativeTerrain == null
+			? layeredSceneContextState.accept(
 				protocolVersion,
 				sequence,
 				serverTick,
@@ -395,7 +417,19 @@ public class PacketHandler {
 				logicalY,
 				logicalLevel,
 				legacyX,
-				legacyY);
+				legacyY)
+			: layeredSceneContextState.acceptNative(
+				protocolVersion,
+				sequence,
+				serverTick,
+				worldSpace,
+				projectionId,
+				logicalX,
+				logicalY,
+				logicalLevel,
+				legacyX,
+				legacyY,
+				nativeTerrain);
 		if (result.isScopeChanged()) {
 			sceneBaselineState.resetForScopeChange(
 				layeredSceneContextState.scopeIdentity());
@@ -405,7 +439,8 @@ public class PacketHandler {
 		mc.applyLayeredSceneScope(
 			result.getLegacyPlane(),
 			result.isScopeChanged(),
-			result.isSyntheticDeepFixture());
+			result.isSyntheticDeepFixture(),
+			result.getNativeTerrainSnapshot());
 		String summary = layeredSceneContextState.summary();
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);

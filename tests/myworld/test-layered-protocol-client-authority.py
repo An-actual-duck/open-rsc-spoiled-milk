@@ -9,8 +9,18 @@ ROOT = Path(__file__).resolve().parents[2]
 CLIENT_STATE = (
     ROOT / "Client_Base/src/orsc/LayeredSceneContextState.java"
 )
+NATIVE_TERRAIN = (
+    ROOT / "Client_Base/src/orsc/NativeLayeredTerrainSnapshot.java"
+)
+CLIENT_TILE = (
+    ROOT / "Client_Base/src/com/openrsc/client/model/Tile.java"
+)
 CLIENT_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+CLIENT_WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
+CLIENT_SECTOR = (
+    ROOT / "Client_Base/src/com/openrsc/client/model/Sector.java"
+)
 SCENE_BASELINE_STATE = ROOT / "Client_Base/src/orsc/SceneBaselineState.java"
 MOVEMENT_STAGE = ROOT / "Client_Base/src/orsc/MovementSnapshotStage.java"
 CONFIGURATION = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
@@ -27,6 +37,11 @@ CUSTOM_GENERATOR = (
     ROOT
     / "server/src/com/openrsc/server/net/rsc/generators/impl/"
     "PayloadCustomGenerator.java"
+)
+CONTEXT_STRUCT = (
+    ROOT
+    / "server/src/com/openrsc/server/net/rsc/struct/outgoing/"
+    "LayeredSceneContextStruct.java"
 )
 PLAN = (
     ROOT
@@ -106,6 +121,38 @@ public final class LayeredProtocolClientAuthorityFixture {
         check(state.summary().contains("contexts/positions/scopes 5/7/3"),
             "deep acceptance counters");
 
+        NativeLayeredTerrainSnapshot nativeLeft = nativeTerrain(-2, 9, 12, 0);
+        check(nativeLeft.getPresentationChunkSize() == 24,
+            "presentation size independent from storage page");
+        check(nativeLeft.createUniformTile().groundOverlay == 0,
+            "native tile decode");
+        LayeredSceneContextState.ApplyResult nativeDeep = state.acceptNative(
+            3, 6, 108, "global", "native-layered-package-v1",
+            450, 600, -2, 450, 600, nativeLeft);
+        check(nativeDeep.isScopeChanged(), "native transition");
+        check(nativeDeep.getLegacyPlane() == 0, "native compatibility plane");
+        check(!nativeDeep.isSyntheticDeepFixture(), "native is not synthetic");
+        check(nativeDeep.getNativeTerrainSnapshot().equals(nativeLeft),
+            "native terrain result");
+        state.acceptLegacyPlayerPosition(450, 600);
+        state.acceptLegacyPlayerPosition(479, 600);
+        expectIllegal(() -> state.acceptLegacyPlayerPosition(480, 600));
+
+        NativeLayeredTerrainSnapshot nativeRight = nativeTerrain(-2, 10, 12, 4);
+        LayeredSceneContextState.ApplyResult adjacent = state.acceptNative(
+            3, 7, 109, "global", "native-layered-package-v1",
+            480, 600, -2, 480, 600, nativeRight);
+        check(adjacent.isScopeChanged(), "native page transition");
+        state.acceptLegacyPlayerPosition(480, 600);
+
+        NativeLayeredTerrainSnapshot expanded = nativeTerrain(-37, 9, 12, 8);
+        LayeredSceneContextState.ApplyResult arbitraryDepth = state.acceptNative(
+            3, 8, 110, "global", "native-layered-package-v1",
+            450, 600, -37, 450, 600, expanded);
+        check(arbitraryDepth.isScopeChanged(), "arbitrary signed level transition");
+        check(arbitraryDepth.getLegacyPlane() == 0, "arbitrary compatibility plane");
+        state.acceptLegacyPlayerPosition(450, 600);
+
         state.reset();
         check(!state.hasContext(), "logout reset");
         state.accept(1, 1, 200, "global", 120, 648, 0, 120, 648);
@@ -120,6 +167,37 @@ public final class LayeredProtocolClientAuthorityFixture {
         check(state.matchesSequence(1)
             && state.summary().contains("450,600,L-2"),
             "deep reconnect sequence restart");
+
+        state.reset();
+        state.acceptNative(
+            3, 1, 202, "global", "native-layered-package-v1",
+            450, 600, -2, 450, 600, nativeLeft);
+        state.acceptLegacyPlayerPosition(450, 600);
+        check(state.matchesSequence(1)
+            && state.summary().contains("native terrain"),
+            "native reconnect sequence restart");
+    }
+
+    private static NativeLayeredTerrainSnapshot nativeTerrain(
+            int level, int sectorX, int sectorY, int elevation) {
+        return new NativeLayeredTerrainSnapshot(
+            "rsc-remastered.native-loader-lab",
+            "0.1.0",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            24,
+            "global",
+            level,
+            sectorX,
+            sectorY,
+            "uniform-layered-sector-v1",
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            elevation,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0);
     }
 
     private static void expectIllegal(Runnable operation) {
@@ -173,6 +251,8 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
                 "UTF-8",
                 "-d",
                 str(cls.classes),
+                str(CLIENT_TILE),
+                str(NATIVE_TERRAIN),
                 str(CLIENT_STATE),
                 str(fixture),
             ],
@@ -207,8 +287,11 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         generator = CUSTOM_GENERATOR.read_text(encoding="utf-8")
         handler = CLIENT_HANDLER.read_text(encoding="utf-8")
         client = CLIENT.read_text(encoding="utf-8")
+        client_world = CLIENT_WORLD.read_text(encoding="utf-8")
+        client_sector = CLIENT_SECTOR.read_text(encoding="utf-8")
         baseline = SCENE_BASELINE_STATE.read_text(encoding="utf-8")
         movement_stage = MOVEMENT_STAGE.read_text(encoding="utf-8")
+        context_struct = CONTEXT_STRUCT.read_text(encoding="utf-8")
 
         self.assertIn("WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY", configuration)
         self.assertIn(
@@ -228,6 +311,20 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         self.assertIn("LayeredSceneContextStruct.class", validator)
         self.assertIn("SEND_LAYERED_SCENE_CONTEXT, 152", generator)
         self.assertIn("updateLayeredSceneContext(length)", handler)
+        self.assertIn(
+            "NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 3", updater
+        )
+        self.assertIn("nativeLayeredSceneTerrain(location)", updater)
+        self.assertIn("protocolVersion >= 3", generator)
+        self.assertIn("NativeLayeredTerrainSnapshot", handler)
+        self.assertIn("nativeManifestSha256", context_struct)
+        self.assertIn("nativePresentationChunkSize", context_struct)
+        self.assertIn("nativeLayeredVoidSector", client_world)
+        self.assertIn("applyNativeLayeredFixtureTerrain", client_world)
+        self.assertIn(
+            "nativeLayeredTerrainSnapshot.scopeIdentity()", client_world
+        )
+        self.assertIn("public static Sector blankLoaded()", client_sector)
         self.assertIn("acceptLegacyPlayerPosition", handler)
         self.assertIn("resetLayeredSceneIdentityCaches", client)
         self.assertIn("resetForScopeChange", baseline)

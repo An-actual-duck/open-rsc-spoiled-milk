@@ -18,4 +18,19 @@ public final class LayeredSceneContextStruct extends AbstractStruct<OpcodeOut> {
 	public int logicalLevel;
 	public int legacyX;
 	public int legacyY;
+	public String nativePackageId;
+	public String nativePackageVersion;
+	public String nativeManifestSha256;
+	public int nativePresentationChunkSize;
+	public int nativeSectorX;
+	public int nativeSectorY;
+	public String nativeEncoding;
+	public String nativePayloadSha256;
+	public int nativeElevation;
+	public int nativeTexture;
+	public int nativeOverlay;
+	public int nativeRoof;
+	public int nativeVerticalWall;
+	public int nativeHorizontalWall;
+	public int nativeDiagonalWall;
 }

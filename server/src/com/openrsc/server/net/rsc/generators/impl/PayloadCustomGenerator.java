@@ -160,6 +160,24 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					builder.writeInt(context.logicalLevel);
 					builder.writeShort(context.legacyX);
 					builder.writeShort(context.legacyY);
+					if (context.protocolVersion >= 3) {
+						builder.writeString(context.nativePackageId);
+						builder.writeString(context.nativePackageVersion);
+						builder.writeString(context.nativeManifestSha256);
+						builder.writeByte(
+							(byte) context.nativePresentationChunkSize);
+						builder.writeInt(context.nativeSectorX);
+						builder.writeInt(context.nativeSectorY);
+						builder.writeString(context.nativeEncoding);
+						builder.writeString(context.nativePayloadSha256);
+						builder.writeByte((byte) context.nativeElevation);
+						builder.writeByte((byte) context.nativeTexture);
+						builder.writeByte((byte) context.nativeOverlay);
+						builder.writeByte((byte) context.nativeRoof);
+						builder.writeByte((byte) context.nativeVerticalWall);
+						builder.writeByte((byte) context.nativeHorizontalWall);
+						builder.writeInt(context.nativeDiagonalWall);
+					}
 					break;
 
 				case SEND_WORLD_EDITOR:

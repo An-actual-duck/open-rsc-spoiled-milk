@@ -36,6 +36,8 @@ public final class NativeLayeredWorldPackage {
 	public static final String PACKAGE_TYPE = "layered-world";
 	public static final String COORDINATE_MODEL = "signed-layered-v1";
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
+	public static final String RUNTIME_PROJECTION_ID =
+		"native-layered-package-v1";
 
 	private static final long MAX_JSON_BYTES = 16L * 1024L * 1024L;
 	private static final int MAX_WORLD_SPACES = 128;

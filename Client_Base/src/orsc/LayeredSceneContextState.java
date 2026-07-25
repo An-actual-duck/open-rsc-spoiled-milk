@@ -11,12 +11,16 @@ import java.util.regex.Pattern;
 final class LayeredSceneContextState {
 	static final int PROTOCOL_VERSION = 1;
 	static final int SYNTHETIC_DEEP_PROTOCOL_VERSION = 2;
+	static final int NATIVE_LAYERED_PROTOCOL_VERSION =
+		NativeLayeredTerrainSnapshot.PROTOCOL_VERSION;
 	static final int LEVEL_STRIDE = 944;
 	static final int LEGACY_PLANE_COUNT = 4;
 	static final int MAX_LEGACY_X = Short.MAX_VALUE;
 	static final String LEGACY_PROJECTION = "legacy-packed-y-v1";
 	static final String SYNTHETIC_DEEP_PROJECTION =
 		"synthetic-deep-fixture-v1";
+	static final String NATIVE_LAYERED_PROJECTION =
+		NativeLayeredTerrainSnapshot.PROJECTION_ID;
 	static final int SYNTHETIC_DEEP_LEVEL = -2;
 	static final int SYNTHETIC_DEEP_MIN_X = 440;
 	static final int SYNTHETIC_DEEP_MAX_X = 460;
@@ -38,6 +42,7 @@ final class LayeredSceneContextState {
 	private int logicalLevel;
 	private int legacyX;
 	private int legacyY;
+	private NativeLayeredTerrainSnapshot nativeTerrainSnapshot;
 	private boolean awaitingInitialReceipt;
 	private int acceptedContexts;
 	private int acceptedPlayerPositions;
@@ -77,9 +82,63 @@ final class LayeredSceneContextState {
 		int incomingLogicalLevel,
 		int incomingLegacyX,
 		int incomingLegacyY) {
+		return acceptWithTerrain(
+			incomingProtocolVersion,
+			incomingSequence,
+			incomingServerTick,
+			incomingWorldSpace,
+			incomingProjectionId,
+			incomingLogicalX,
+			incomingLogicalY,
+			incomingLogicalLevel,
+			incomingLegacyX,
+			incomingLegacyY,
+			null);
+	}
+
+	ApplyResult acceptNative(
+		int incomingProtocolVersion,
+		int incomingSequence,
+		int incomingServerTick,
+		String incomingWorldSpace,
+		String incomingProjectionId,
+		int incomingLogicalX,
+		int incomingLogicalY,
+		int incomingLogicalLevel,
+		int incomingLegacyX,
+		int incomingLegacyY,
+		NativeLayeredTerrainSnapshot incomingTerrainSnapshot) {
+		return acceptWithTerrain(
+			incomingProtocolVersion,
+			incomingSequence,
+			incomingServerTick,
+			incomingWorldSpace,
+			incomingProjectionId,
+			incomingLogicalX,
+			incomingLogicalY,
+			incomingLogicalLevel,
+			incomingLegacyX,
+			incomingLegacyY,
+			incomingTerrainSnapshot);
+	}
+
+	private ApplyResult acceptWithTerrain(
+		int incomingProtocolVersion,
+		int incomingSequence,
+		int incomingServerTick,
+		String incomingWorldSpace,
+		String incomingProjectionId,
+		int incomingLogicalX,
+		int incomingLogicalY,
+		int incomingLogicalLevel,
+		int incomingLegacyX,
+		int incomingLegacyY,
+		NativeLayeredTerrainSnapshot incomingTerrainSnapshot) {
 		if (incomingProtocolVersion != PROTOCOL_VERSION
 			&& incomingProtocolVersion
-				!= SYNTHETIC_DEEP_PROTOCOL_VERSION) {
+				!= SYNTHETIC_DEEP_PROTOCOL_VERSION
+			&& incomingProtocolVersion
+				!= NATIVE_LAYERED_PROTOCOL_VERSION) {
 			throw new IllegalArgumentException(
 				"Unsupported layered scene-context protocol: "
 					+ incomingProtocolVersion);
@@ -103,10 +162,28 @@ final class LayeredSceneContextState {
 			|| (incomingProtocolVersion
 						== SYNTHETIC_DEEP_PROTOCOL_VERSION
 					&& !SYNTHETIC_DEEP_PROJECTION.equals(
+						incomingProjectionId))
+			|| (incomingProtocolVersion
+						== NATIVE_LAYERED_PROTOCOL_VERSION
+					&& !NATIVE_LAYERED_PROJECTION.equals(
 						incomingProjectionId))) {
 			throw new IllegalArgumentException(
 				"Invalid layered scene-context projection: "
 					+ incomingProjectionId);
+		}
+		if (incomingProtocolVersion == NATIVE_LAYERED_PROTOCOL_VERSION) {
+			if (incomingTerrainSnapshot == null
+				|| !incomingTerrainSnapshot.covers(
+					incomingWorldSpace,
+					incomingLogicalLevel,
+					incomingLogicalX,
+					incomingLogicalY)) {
+				throw new IllegalArgumentException(
+					"Native layered scene-context has no terrain for its receipt");
+			}
+		} else if (incomingTerrainSnapshot != null) {
+			throw new IllegalArgumentException(
+				"Legacy layered scene-context cannot carry native terrain");
 		}
 		requireLegacyReceipt(
 			incomingWorldSpace,
@@ -115,12 +192,15 @@ final class LayeredSceneContextState {
 			incomingLogicalY,
 			incomingLogicalLevel,
 			incomingLegacyX,
-			incomingLegacyY);
+			incomingLegacyY,
+			incomingTerrainSnapshot);
 
 		boolean scopeChanged = established
 			&& (!worldSpace.equals(incomingWorldSpace)
 				|| logicalLevel != incomingLogicalLevel
-				|| !projectionId.equals(incomingProjectionId));
+				|| !projectionId.equals(incomingProjectionId)
+				|| !sameNativeTerrain(
+					nativeTerrainSnapshot, incomingTerrainSnapshot));
 		protocolVersion = incomingProtocolVersion;
 		sequence = incomingSequence;
 		serverTick = incomingServerTick;
@@ -131,6 +211,7 @@ final class LayeredSceneContextState {
 		logicalLevel = incomingLogicalLevel;
 		legacyX = incomingLegacyX;
 		legacyY = incomingLegacyY;
+		nativeTerrainSnapshot = incomingTerrainSnapshot;
 		awaitingInitialReceipt = true;
 		established = true;
 		acceptedContexts++;
@@ -140,7 +221,8 @@ final class LayeredSceneContextState {
 		return new ApplyResult(
 			scopeChanged,
 			compatibilityPlane(logicalLevel, projectionId),
-			SYNTHETIC_DEEP_PROJECTION.equals(projectionId));
+			SYNTHETIC_DEEP_PROJECTION.equals(projectionId),
+			nativeTerrainSnapshot);
 	}
 
 	void acceptLegacyPlayerPosition(int packedX, int packedY) {
@@ -152,7 +234,12 @@ final class LayeredSceneContextState {
 		}
 		DecodedLegacyPosition decoded =
 			decodeCompatibilityPosition(
-				packedX, packedY, logicalLevel, projectionId);
+				packedX,
+				packedY,
+				logicalLevel,
+				projectionId,
+				worldSpace,
+				nativeTerrainSnapshot);
 		if (decoded.level != logicalLevel) {
 			throw new IllegalStateException(
 				"Legacy Player position changed layered level without context: "
@@ -198,6 +285,12 @@ final class LayeredSceneContextState {
 		if (LEGACY_PROJECTION.equals(projectionId)) {
 			return worldSpace + ":" + logicalLevel + ":" + sequence;
 		}
+		if (nativeTerrainSnapshot != null) {
+			return worldSpace + ":" + logicalLevel + ":"
+				+ projectionId + ":"
+				+ nativeTerrainSnapshot.scopeIdentity()
+				+ ":" + sequence;
+		}
 		return worldSpace + ":" + logicalLevel + ":"
 			+ projectionId + ":" + sequence;
 	}
@@ -212,8 +305,16 @@ final class LayeredSceneContextState {
 			+ " seq " + sequence
 			+ " tick " + serverTick
 			+ " legacy " + legacyX + "," + legacyY
+			+ (nativeTerrainSnapshot == null
+				? "" : " " + nativeTerrainSnapshot.summary())
 			+ " contexts/positions/scopes "
 			+ acceptedContexts + "/" + acceptedPlayerPositions + "/" + scopeChanges;
+	}
+
+	private static boolean sameNativeTerrain(
+		NativeLayeredTerrainSnapshot left,
+		NativeLayeredTerrainSnapshot right) {
+		return left == null ? right == null : left.equals(right);
 	}
 
 	void reset() {
@@ -228,6 +329,7 @@ final class LayeredSceneContextState {
 		logicalLevel = 0;
 		legacyX = 0;
 		legacyY = 0;
+		nativeTerrainSnapshot = null;
 		awaitingInitialReceipt = false;
 		acceptedContexts = 0;
 		acceptedPlayerPositions = 0;
@@ -248,11 +350,23 @@ final class LayeredSceneContextState {
 		int logicalY,
 		int logicalLevel,
 		int legacyX,
-		int legacyY) {
+		int legacyY,
+		NativeLayeredTerrainSnapshot nativeTerrainSnapshot) {
 		if (!GLOBAL_WORLD_SPACE.equals(worldSpace)) {
 			throw new IllegalArgumentException(
 				"Legacy scene packets cannot represent world space: "
 					+ worldSpace);
+		}
+		if (NATIVE_LAYERED_PROJECTION.equals(projectionId)) {
+			if (nativeTerrainSnapshot == null
+				|| !nativeTerrainSnapshot.covers(
+					worldSpace, logicalLevel, logicalX, logicalY)
+				|| legacyX != logicalX
+				|| legacyY != logicalY) {
+				throw new IllegalArgumentException(
+					"Native layered scene-context receipt mismatch");
+			}
+			return;
 		}
 		if (SYNTHETIC_DEEP_PROJECTION.equals(projectionId)) {
 			if (logicalLevel != SYNTHETIC_DEEP_LEVEL
@@ -293,7 +407,19 @@ final class LayeredSceneContextState {
 		int packedX,
 		int packedY,
 		int expectedLevel,
-		String projectionId) {
+		String projectionId,
+		String worldSpace,
+		NativeLayeredTerrainSnapshot nativeTerrainSnapshot) {
+		if (NATIVE_LAYERED_PROJECTION.equals(projectionId)) {
+			if (nativeTerrainSnapshot == null
+				|| !nativeTerrainSnapshot.covers(
+					worldSpace, expectedLevel, packedX, packedY)) {
+				throw new IllegalArgumentException(
+					"Native layered movement left its terrain page");
+			}
+			return new DecodedLegacyPosition(
+				packedX, packedY, expectedLevel);
+		}
 		if (SYNTHETIC_DEEP_PROJECTION.equals(projectionId)) {
 			if (expectedLevel != SYNTHETIC_DEEP_LEVEL
 				|| packedX < SYNTHETIC_DEEP_MIN_X
@@ -312,6 +438,9 @@ final class LayeredSceneContextState {
 	private static int compatibilityPlane(
 		int level,
 		String projectionId) {
+		if (NATIVE_LAYERED_PROJECTION.equals(projectionId)) {
+			return 0;
+		}
 		if (SYNTHETIC_DEEP_PROJECTION.equals(projectionId)) {
 			if (level != SYNTHETIC_DEEP_LEVEL) {
 				throw new IllegalArgumentException(
@@ -375,14 +504,17 @@ final class LayeredSceneContextState {
 		private final boolean scopeChanged;
 		private final int legacyPlane;
 		private final boolean syntheticDeepFixture;
+		private final NativeLayeredTerrainSnapshot nativeTerrainSnapshot;
 
 		private ApplyResult(
 			boolean scopeChanged,
 			int legacyPlane,
-			boolean syntheticDeepFixture) {
+			boolean syntheticDeepFixture,
+			NativeLayeredTerrainSnapshot nativeTerrainSnapshot) {
 			this.scopeChanged = scopeChanged;
 			this.legacyPlane = legacyPlane;
 			this.syntheticDeepFixture = syntheticDeepFixture;
+			this.nativeTerrainSnapshot = nativeTerrainSnapshot;
 		}
 
 		boolean isScopeChanged() {
@@ -395,6 +527,10 @@ final class LayeredSceneContextState {
 
 		boolean isSyntheticDeepFixture() {
 			return syntheticDeepFixture;
+		}
+
+		NativeLayeredTerrainSnapshot getNativeTerrainSnapshot() {
+			return nativeTerrainSnapshot;
 		}
 	}
 

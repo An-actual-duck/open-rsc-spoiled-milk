@@ -5,6 +5,7 @@ import com.openrsc.client.model.Sector;
 import com.openrsc.client.model.Tile;
 import com.openrsc.data.DataConversions;
 import orsc.Config;
+import orsc.NativeLayeredTerrainSnapshot;
 import orsc.RenderTelemetry;
 import orsc.graphics.two.GraphicsController;
 import orsc.util.FastMath;
@@ -83,6 +84,7 @@ public final class World {
 	private volatile boolean syntheticDeepFixtureTerrain;
 	private volatile int syntheticDeepFixtureOffsetX;
 	private volatile int syntheticDeepFixtureOffsetZ;
+	private volatile NativeLayeredTerrainSnapshot nativeLayeredTerrainSnapshot;
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
 		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
 			@Override
@@ -219,11 +221,24 @@ public final class World {
 		final boolean enabled,
 		final int worldOffsetX,
 		final int worldOffsetZ) {
-		if (syntheticDeepFixtureTerrain != enabled
-			|| enabled
+		setLayeredTerrainScope(enabled, null, worldOffsetX, worldOffsetZ);
+	}
+
+	public void setLayeredTerrainScope(
+		final boolean syntheticDeepFixture,
+		final NativeLayeredTerrainSnapshot nativeTerrainSnapshot,
+		final int worldOffsetX,
+		final int worldOffsetZ) {
+		final boolean layeredTerrain =
+			syntheticDeepFixture || nativeTerrainSnapshot != null;
+		if (syntheticDeepFixtureTerrain != layeredTerrain
+			|| !Objects.equals(
+				nativeLayeredTerrainSnapshot, nativeTerrainSnapshot)
+			|| layeredTerrain
 				&& (syntheticDeepFixtureOffsetX != worldOffsetX
 					|| syntheticDeepFixtureOffsetZ != worldOffsetZ)) {
-			syntheticDeepFixtureTerrain = enabled;
+			syntheticDeepFixtureTerrain = layeredTerrain;
+			nativeLayeredTerrainSnapshot = nativeTerrainSnapshot;
 			syntheticDeepFixtureOffsetX = worldOffsetX;
 			syntheticDeepFixtureOffsetZ = worldOffsetZ;
 			worldEditorTerrainRevision++;
@@ -2729,15 +2744,89 @@ public final class World {
 		for (int y = 0; y < ACTIVE_SECTION_GRID; y++) {
 			for (int x = 0; x < ACTIVE_SECTION_GRID; x++) {
 				int sectorX=originX+x,sectorY=originY+y;
-				window[y * ACTIVE_SECTION_GRID + x] = loadSectorTemplate(height,sectorX,sectorY).copy();
-				applyWorldEditorTerrainPatches(window[y * ACTIVE_SECTION_GRID + x],height,sectorX,sectorY);
+				if (height == 0 && nativeLayeredTerrainSnapshot != null) {
+					window[y * ACTIVE_SECTION_GRID + x] =
+						nativeLayeredVoidSector();
+				} else {
+					window[y * ACTIVE_SECTION_GRID + x] =
+						loadSectorTemplate(height,sectorX,sectorY).copy();
+					applyWorldEditorTerrainPatches(
+						window[y * ACTIVE_SECTION_GRID + x],
+						height,
+						sectorX,
+						sectorY);
+				}
 			}
 		}
-		if (height == 0 && syntheticDeepFixtureTerrain) {
+		if (height == 0 && nativeLayeredTerrainSnapshot != null) {
+			applyNativeLayeredFixtureTerrain(window, sectionX, sectionY);
+		} else if (height == 0 && syntheticDeepFixtureTerrain) {
 			applySyntheticDeepFixtureTerrain(window, sectionX, sectionY);
 		}
 		applyBridgeDecorations(window);
 		return new CpuSectionWindow(window, true);
+	}
+
+	private static Sector nativeLayeredVoidSector() {
+		Sector sector = Sector.blankLoaded();
+		for (int localX = 0; localX < SECTION_SIZE; localX++) {
+			for (int localZ = 0; localZ < SECTION_SIZE; localZ++) {
+				Tile tile = sector.getTile(localX, localZ);
+				tile.groundOverlay = (byte) 250;
+				tile.editorPaintedOverlay = true;
+			}
+		}
+		return sector;
+	}
+
+	private void applyNativeLayeredFixtureTerrain(
+		Sector[] window,
+		int sectionX,
+		int sectionY) {
+		NativeLayeredTerrainSnapshot snapshot =
+			nativeLayeredTerrainSnapshot;
+		if (snapshot == null) {
+			throw new IllegalStateException(
+				"Native layered terrain scope lost its packet snapshot");
+		}
+		int originX =
+			(sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
+		int originZ =
+			(sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
+		int roomMinX = Math.addExact(
+			SYNTHETIC_DEEP_MIN_X, syntheticDeepFixtureOffsetX);
+		int roomMaxX = Math.addExact(
+			SYNTHETIC_DEEP_MAX_X, syntheticDeepFixtureOffsetX);
+		int roomMinZ = Math.addExact(
+			SYNTHETIC_DEEP_MIN_Z, syntheticDeepFixtureOffsetZ);
+		int roomMaxZ = Math.addExact(
+			SYNTHETIC_DEEP_MAX_Z, syntheticDeepFixtureOffsetZ);
+		for (int worldX = roomMinX; worldX <= roomMaxX; worldX++) {
+			for (int worldZ = roomMinZ; worldZ <= roomMaxZ; worldZ++) {
+				int logicalX = Math.subtractExact(
+					worldX, syntheticDeepFixtureOffsetX);
+				int logicalZ = Math.subtractExact(
+					worldZ, syntheticDeepFixtureOffsetZ);
+				if (!snapshot.covers(
+						"global",
+						snapshot.getLevel(),
+						logicalX,
+						logicalZ)) {
+					throw new IllegalStateException(
+						"Native layered packet page does not cover the deep fixture");
+				}
+				int localX = worldX - originX;
+				int localZ = worldZ - originZ;
+				Sector sector = sectorForLocalTile(
+					window, localX, localZ);
+				if (sector != null) {
+					sector.setTile(
+						tileInSector(localX),
+						tileInSector(localZ),
+						snapshot.createUniformTile());
+				}
+			}
+		}
 	}
 
 	private void applySyntheticDeepFixtureTerrain(
@@ -2855,8 +2944,11 @@ public final class World {
 	private String sectionWindowKey(int height, int sectionX, int sectionY) {
 		return sectorFilename(height, sectionX, sectionY)
 			+ "-editor-" + worldEditorTerrainRevision
-			+ (syntheticDeepFixtureTerrain
-				? "-synthetic-deep-room-v1" : "-legacy-terrain")
+			+ (nativeLayeredTerrainSnapshot != null
+				? "-native-" + nativeLayeredTerrainSnapshot.scopeIdentity()
+				: syntheticDeepFixtureTerrain
+					? "-synthetic-deep-room-v1"
+					: "-legacy-terrain")
 			+ "-window";
 	}
 
