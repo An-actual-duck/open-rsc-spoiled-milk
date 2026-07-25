@@ -16498,8 +16498,55 @@ Automated validation status:
 - the server build/classpath audit passes.
 
 Status: implemented and automated-validated. This identity remains
-intentionally internal until a bounded blocker-family reduction is defined; no
-schema change or owner route is requested by this slice alone.
+intentionally internal until a bounded blocker-family reduction is defined. It
+makes no schema change and requests no owner route by itself.
+
+### Slice 210: Bounded scheduler-blocker family reduction
+
+Objective: reduce the exact retained blocker set to first-observation-ordered
+technical families that an AI or maintainer can audit without scanning or
+retaining runtime callbacks.
+
+Implemented:
+
+- one immutable reduction aligns generation, observation tick, scheduler
+  identity, event count, snapshot ordinal, registration sequence, owner kind,
+  and candidate-source references between the accepted scheduler correlation
+  and event inventory;
+- the family key preserves blocker outcome, detached runtime/family/direct
+  supertype names, anonymous/local/synthetic flags, owner kind, attribution
+  kind, and restoration kind;
+- each family reports event/running/candidate-related/source-reference counts,
+  first/last snapshot and registration boundaries, timing and run-count ranges,
+  and one deterministic fingerprint;
+- the aggregate separately reconciles uncorrelated NPC, non-NPC,
+  incomplete-restoration, and unattributed blocker totals; and
+- incomplete retained blocker details, uncaptured type identities, identity
+  drift, arithmetic drift, or a family-budget overflow refuse rather than
+  yielding a partial result.
+
+Safety boundary:
+
+- family names and counts do not change an event's attribution or blocker
+  outcome; `UNATTRIBUTED` remains blocking pending an explicit implementation
+  audit;
+- no event, callback, owner, scheduler, `Class`, class loader, entity, Region,
+  registry, lifecycle boundary, or runtime handle is retained; and
+- cancellation, rescheduling, preservation, source absence/reconstruction,
+  runtime mutation, arrival, visibility release, and lifecycle authority remain
+  false.
+
+Automated validation status:
+
+- three focused family-reduction guards pass;
+- the Slice 182-210 lineage passes 120 tests across 29 focused files;
+- the authoritative bundled-Ant build compiles 844 core and 488 plugin
+  sources; and
+- the server build/classpath audit passes.
+
+Status: implemented and automated-validated. The reduction remains internal
+until it is exposed through an additive private schema and validated against
+the accepted 106-blocker route.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -16937,6 +16984,7 @@ private environment should validate at least:
 | 2026-07-24 | Accept the repaired Slice 207-208 private detachment-scheduler correlation route. | Owner-validated; four contiguous schema-v58 records classify all 3,881 callbacks across 36 selected sources, including 449 exact related NPC-owner fences and the valid outside-selection authored owners. The 555 retained classifications and 106 blockers reconcile exactly as eight non-NPC plus 98 unattributed callbacks, while 3,326 outside-selection hints remain non-blocking. Source references, order, and fingerprints align; every runtime mutation/authority fact is false, the route completed without a reported visual or interaction issue, and one accepted 1,196 ms late tick contains 1,186 ms of opt-in diagnostic work |
 | 2026-07-24 | Prevent the legacy private-server launchers from silently targeting the public server. | Corrected after discarding the first v58 attempt: the Unix client delegates to the guarded canonical `--dev` target, the Unix server derives its client port from `myworld.conf` and refuses public port 43605, the Windows wrappers and tracked cache use 43615, both shell wrappers pass syntax validation, and four focused launcher guards pass. The public process was not stopped or restarted |
 | 2026-07-24 | Continue with Slice 209 by attaching detached implementation/family identity to each scheduler snapshot entry. | Implemented and automated-validated; bounded runtime, logical-family, and direct-supertype names plus anonymous/local/synthetic flags cross the existing snapshot boundary as primitives, legacy fixtures remain explicitly unknown, no `Class` or runtime handle survives, attribution and authority remain unchanged, the Slice 182-209 lineage passes 117 tests, and the 843/488 Ant build/audit passes. Identity remains internal pending a bounded blocker-family reduction |
+| 2026-07-24 | Continue with Slice 210 by reducing the exact scheduler blockers to stable technical families. | Implemented and automated-validated; generation, scheduler, ordinal, registration, attribution, restoration, owner, and detached implementation identity must align before reduction; exact first-observation-ordered families retain bounded counts, timing/run ranges, and one deterministic fingerprint without callbacks or handles; incomplete blocker details, uncaptured types, arithmetic drift, and family-budget overflow refuse; attribution and authority remain unchanged; the Slice 182-210 lineage passes 120 tests, and the 844/488 Ant build/audit passes. The summary remains internal pending additive private-schema exposure |
 
 ## Next Discussion
 
