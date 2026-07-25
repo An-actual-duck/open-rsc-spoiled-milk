@@ -267,8 +267,16 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         self.assertIn(
             "setSyntheticDeepFixtureTerrain", client
         )
+        self.assertIn("this.worldOffsetX", client)
+        self.assertIn("this.worldOffsetZ", client)
         self.assertIn(
             "applySyntheticDeepFixtureTerrain", client_world
+        )
+        self.assertIn(
+            "syntheticDeepFixtureOffsetX", client_world
+        )
+        self.assertIn(
+            "syntheticDeepFixtureOffsetZ", client_world
         )
         self.assertIn(
             "tile.groundOverlay = 0", client_world

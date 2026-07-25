@@ -22953,7 +22953,10 @@ public final class mudclient implements Runnable {
 		if (scopeChanged) {
 			resetLayeredSceneIdentityCaches();
 		}
-		this.world.setSyntheticDeepFixtureTerrain(syntheticDeepFixture);
+		this.world.setSyntheticDeepFixtureTerrain(
+			syntheticDeepFixture,
+			this.worldOffsetX,
+			this.worldOffsetZ);
 		this.requestedPlane = legacyPlane;
 	}
 

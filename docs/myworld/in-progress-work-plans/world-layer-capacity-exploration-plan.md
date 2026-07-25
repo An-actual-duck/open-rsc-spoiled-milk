@@ -17979,6 +17979,18 @@ authoritative 850-core, 488-plugin, and 259-client-source builds. A fresh
 four-gate private owner route must still prove walking, Man interaction, item
 pickup, exact deep logout/reconnect, explicit exit, and death recovery.
 
+The first corrected owner retry confirmed exact level `-2` persistence:
+logout/reconnect remained in the named fixture and `::deepfixture status`
+reported the correct logical state, while explicit exit returned to the
+recorded surface. Terrain nevertheless remained water and client pathfinding
+still prevented walking or interaction. The remaining cause is client
+coordinate-domain translation, not server authority: the runtime patch used
+logical X/Y directly even though `World.loadSections` operates after adding
+the current client world X/Z offsets. The room projection must add those
+offsets before selecting loaded archive tiles; its cache revision must also
+change if an enabled projection receives different offsets. This retry remains
+rejected pending the offset-aware client rebuild.
+
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
 envelopes and all 14 support-only coordinates: their size is not evidence that

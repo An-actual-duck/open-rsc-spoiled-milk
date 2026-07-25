@@ -81,6 +81,8 @@ public final class World {
 		new HashMap<String, Map<Integer, TerrainPatch>>();
 	private volatile long worldEditorTerrainRevision = 0L;
 	private volatile boolean syntheticDeepFixtureTerrain;
+	private volatile int syntheticDeepFixtureOffsetX;
+	private volatile int syntheticDeepFixtureOffsetZ;
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
 		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
 			@Override
@@ -213,9 +215,17 @@ public final class World {
 		}
 	}
 
-	public void setSyntheticDeepFixtureTerrain(final boolean enabled) {
-		if (syntheticDeepFixtureTerrain != enabled) {
+	public void setSyntheticDeepFixtureTerrain(
+		final boolean enabled,
+		final int worldOffsetX,
+		final int worldOffsetZ) {
+		if (syntheticDeepFixtureTerrain != enabled
+			|| enabled
+				&& (syntheticDeepFixtureOffsetX != worldOffsetX
+					|| syntheticDeepFixtureOffsetZ != worldOffsetZ)) {
 			syntheticDeepFixtureTerrain = enabled;
+			syntheticDeepFixtureOffsetX = worldOffsetX;
+			syntheticDeepFixtureOffsetZ = worldOffsetZ;
 			worldEditorTerrainRevision++;
 		}
 	}
@@ -2730,7 +2740,7 @@ public final class World {
 		return new CpuSectionWindow(window, true);
 	}
 
-	private static void applySyntheticDeepFixtureTerrain(
+	private void applySyntheticDeepFixtureTerrain(
 		Sector[] window,
 		int sectionX,
 		int sectionY) {
@@ -2738,11 +2748,27 @@ public final class World {
 			(sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
 		int originZ =
 			(sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
-		for (int worldX = SYNTHETIC_DEEP_MIN_X;
-			worldX <= SYNTHETIC_DEEP_MAX_X;
+		int roomMinX =
+			Math.addExact(
+				SYNTHETIC_DEEP_MIN_X,
+				syntheticDeepFixtureOffsetX);
+		int roomMaxX =
+			Math.addExact(
+				SYNTHETIC_DEEP_MAX_X,
+				syntheticDeepFixtureOffsetX);
+		int roomMinZ =
+			Math.addExact(
+				SYNTHETIC_DEEP_MIN_Z,
+				syntheticDeepFixtureOffsetZ);
+		int roomMaxZ =
+			Math.addExact(
+				SYNTHETIC_DEEP_MAX_Z,
+				syntheticDeepFixtureOffsetZ);
+		for (int worldX = roomMinX;
+			worldX <= roomMaxX;
 			worldX++) {
-			for (int worldZ = SYNTHETIC_DEEP_MIN_Z;
-				worldZ <= SYNTHETIC_DEEP_MAX_Z;
+			for (int worldZ = roomMinZ;
+				worldZ <= roomMaxZ;
 				worldZ++) {
 				int localX = worldX - originX;
 				int localZ = worldZ - originZ;
@@ -2760,16 +2786,16 @@ public final class World {
 					tile);
 			}
 		}
-		for (int worldX = SYNTHETIC_DEEP_MIN_X - 1;
-			worldX <= SYNTHETIC_DEEP_MAX_X + 1;
+		for (int worldX = roomMinX - 1;
+			worldX <= roomMaxX + 1;
 			worldX++) {
-			for (int worldZ = SYNTHETIC_DEEP_MIN_Z - 1;
-				worldZ <= SYNTHETIC_DEEP_MAX_Z + 1;
+			for (int worldZ = roomMinZ - 1;
+				worldZ <= roomMaxZ + 1;
 				worldZ++) {
-				if (worldX >= SYNTHETIC_DEEP_MIN_X
-					&& worldX <= SYNTHETIC_DEEP_MAX_X
-					&& worldZ >= SYNTHETIC_DEEP_MIN_Z
-					&& worldZ <= SYNTHETIC_DEEP_MAX_Z) {
+				if (worldX >= roomMinX
+					&& worldX <= roomMaxX
+					&& worldZ >= roomMinZ
+					&& worldZ <= roomMaxZ) {
 					continue;
 				}
 				int localX = worldX - originX;
