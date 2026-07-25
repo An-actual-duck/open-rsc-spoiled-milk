@@ -854,8 +854,10 @@ also passes across both presentation boundaries with correct `4/9 -> 6/9 ->
 4/9` readiness, stable visuals/interactions, exact depth reconnect, and exit.
 Hash-addressed package-owned NPC/item placements now pass strict decode,
 world-load, layered item-respawn registry, and matched private-startup
-validation. Owner acceptance of that placement route, package-owned
-scenery/boundaries, and removal of the bounded compatibility receipt remain.
+validation. Their owner route also passes normal Man roam/dialogue, repeated
+five-coin collection across package-owned respawn, exact depth reconnect,
+duplicate-free population, and exit. Package-owned scenery/boundaries and
+removal of the bounded compatibility receipt remain.
 
 ### Phase 6: Layered World Builder generation
 
@@ -1325,7 +1327,7 @@ The RSC Remastered product roadmap is complete when:
 | 2026-07-25 | Accept the first native-terrain cut of Phase 5 Authority Milestone E. | Fifth-gate server/package terrain and protocol-v3 client page identity are owner-validated at native page `(9,12)`, chunk `24`, including visuals, movement, coin/Man interaction, exact depth reconnect, exit, and surface death recovery. Full-fidelity terrain, package placements, incremental delivery, and compatibility-boundary removal remain |
 | 2026-07-25 | Add the full-fidelity Milestone E terrain storage/decode format. | `rle-layered-sector-v1` now preserves arbitrary per-tile sequences and all seven terrain fields in explicit x-major/y-minor order. Tool/server strict validation, malformed-payload refusal, five distinct fixture bands, detached byte fidelity, and mixed encoding dispatch pass; client chunk delivery remains separately gated |
 | 2026-07-25 | Add and accept matched full-fidelity 24-tile presentation delivery for Milestone E. | Protocol v4 atomically carries a radius-one window of nine complete-terrain/explicit-void chunks, uses actual per-tile RLE-derived values, stays within the two-byte custom frame at full population, rejects malformed wire data, and refreshes same-package readiness without a full scene-scope reset. Automated and owner routes pass both boundary axes, interaction, exact reconnect, and exit |
-| 2026-07-25 | Add package-owned NPC/item placements for Milestone E. | Package `0.3.0` strictly decodes stable-ID, world-space/level-qualified NPC and respawning item data; world load owns registration, the native developer command cannot create them, equal X/Y on different levels remain distinct, stale lifecycle timers refuse, and matched private startup passes. Owner acceptance remains |
+| 2026-07-25 | Add and accept package-owned NPC/item placements for Milestone E. | Package `0.3.0` strictly decodes stable-ID, world-space/level-qualified NPC and respawning item data; world load owns registration, the native developer command cannot create them, equal X/Y on different levels remain distinct, stale lifecycle timers refuse, and matched private startup passes. Owner evidence proves normal Man roam/dialogue, two five-coin collections across respawn, exact depth reconnect, no duplicates, and normal exit |
 | 2026-07-18 | Complete the fifteenth Layered Maps foundation checkpoint: immutable level-qualified visibility windows and read-only manager projection while packed lookup, caches, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the sixteenth Layered Maps foundation checkpoint: a checked Player visibility-window shadow and versioned private diagnostic evidence while packed lookup, caches, and client behavior remain authoritative. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the seventeenth Layered Maps foundation checkpoint: deterministic, allocation-budgeted logical interest-window deltas while packed lookup, caches, packets, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |

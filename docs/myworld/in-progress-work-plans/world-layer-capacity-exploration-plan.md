@@ -28,9 +28,9 @@ and gate-off rollback. That first native runtime cut is owner-accepted. The
 bounded compatibility receipt still exists; full-fidelity server/package
 terrain and protocol-v4 24-tile client readiness are owner-accepted.
 Package-owned NPC/item placements now pass strict format, server decode,
-world-load, respawn-registry, and private-startup validation. Their focused
-owner route and removal of the bounded compatibility receipt remain the current
-implementation boundary.
+world-load, respawn-registry, private-startup validation, and the focused owner
+route. Package-owned scenery/boundaries and removal of the bounded compatibility
+receipt remain the current implementation boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -395,12 +395,24 @@ Implemented and automated/private-startup validated on 2026-07-25:
 The package/tool, detached server, layered placement-registry, protocol-v4,
 and authoritative server-build checks pass. A matched private server reaches
 online state on `localhost:43615` with the new package and existing copied
-development database. Owner acceptance should prove the entities are present
-without command construction, the item disappears and returns after its
-five-second respawn, Man roaming/dialogue remains correct, reconnect does not
-duplicate either spawn, and exit remains normal. Package-owned scenery and
-boundaries plus removal of the bounded compatibility receipt remain later
-Milestone E cuts.
+development database.
+
+The focused owner route is accepted:
+
+- startup independently populated exactly one package NPC and one package
+  ground-item placement before login;
+- status identified package `0.3.0` with one declared/live NPC and item;
+- the roaming Man moved and dialogued normally;
+- the same five-coin placement was collected at `(448,600,L-2)` twice,
+  fourteen seconds apart, proving that removal and the five-second
+  package-owned respawn both completed;
+- logout saved `(448,600,L-2)` and reconnect restored that exact signed
+  location without duplicating the Man or coins; and
+- terrain, movement, interactions, reconnect, and explicit exit all looked and
+  behaved normally, with no route-time runtime error.
+
+Package-owned scenery and boundaries plus removal of the bounded compatibility
+receipt remain later Milestone E cuts.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -17482,7 +17494,7 @@ private environment should validate at least:
 | 2026-07-25 | Accept the corrected Milestone E native-terrain owner route and split its oversized status output. | Owner-confirmed visuals/collision/interactions; logs prove native page `(9,12)`, chunk `24`, coin/Man interaction, exact depth reconnect, exit, and surface death recovery. Full-fidelity terrain, package placements, and incremental presentation remain |
 | 2026-07-25 | Complete Milestone E format checkpoint 5 with `rle-layered-sector-v1`. | Tool/server strict decode preserves arbitrary per-tile sequences and all seven terrain fields, rejects malformed expansion, and proves mixed encodings plus detached fidelity in package `0.2.0` |
 | 2026-07-25 | Complete and accept Milestone E runtime checkpoint 6 with matched protocol-v4 radius-one 24-tile readiness. | Automated wire tests and owner evidence prove visible full-fidelity terrain, both chunk-boundary axes, `4/9 -> 6/9 -> 4/9` readiness, stable same-package scene scope, interaction, exact depth reconnect, and exit |
-| 2026-07-25 | Complete Milestone E placement checkpoint 7 with package-owned NPC/item world population. | Package `0.3.0`, strict tool/server decode, layered spawn identity, generation-safe item respawn, command-independent world registration, fail-closed definition validation, focused tests, authoritative build, and matched private startup pass; owner acceptance remains |
+| 2026-07-25 | Complete and accept Milestone E placement checkpoint 7 with package-owned NPC/item world population. | Package `0.3.0`, strict tool/server decode, layered spawn identity, generation-safe item respawn, command-independent world registration, fail-closed definition validation, focused tests, authoritative build, and matched private startup pass. Owner evidence proves normal Man roam/dialogue, two collections of the same five-coin spawn across its five-second respawn, exact level `-2` reconnect, no duplicates, and normal exit |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
