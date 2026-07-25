@@ -639,6 +639,15 @@ typed persistence fields at final location `(120,648,0)` with a matching
 legacy receipt; the pre-migration backup remained byte-identical and no public
 data was used.
 
+Authority Milestone B was approved on 2026-07-25. It separates logical runtime
+spatial identity from legacy packed terrain storage: every entity receives a
+checked `WorldLocation`, a `WorldRegionKey` index owns membership, and
+visibility/proximity/cache identity become world-space and level aware behind a
+second default-off private gate. Existing packed Regions remain the checked
+terrain/collision compatibility backend because the 944-tile level stride does
+not align with 48-tile Region rows. Protocol/client and native layered terrain
+remain later gates.
+
 Planning estimates at this checkpoint are approximately `40-45%` for Phase 5
 and `20-25%` for the complete Layered Maps product across Phases 5-7. No
 creator-testable conversion/export workflow exists yet; Phase 6 and Phase 7
@@ -1099,6 +1108,7 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Complete the fourteenth Layered Maps foundation checkpoint: checked legacy Player persistence snapshots on load, save, and offline-location updates while retaining the exact packed X/Y schema. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-24 | Approve coarse Phase 5 Authority Milestone A: private-gated authoritative Player `WorldLocation`, derived legacy Point compatibility, additive cache-backed persistence receipts, and unchanged-world session parity. | Approved and implemented in the layered-world plan |
 | 2026-07-25 | Accept coarse Phase 5 Authority Milestone A on the private copied-data server. | Owner-validated through bootstrap, surface/underground and upper-floor travel, interaction, death/respawn, logout, and reconnect; layered/legacy coordinates and the exact nine-field persistence record remained aligned, the pre-migration backup remained byte-identical, and public data was untouched |
+| 2026-07-25 | Approve coarse Phase 5 Authority Milestone B: universal Entity `WorldLocation`, logical spatial membership, level-aware visibility/proximity/cache identity, and checked packed terrain/collision projection. | Approved and in implementation in the layered-world plan; default-off private gate, unchanged archives/protocol/client, and one meaningful owner route |
 | 2026-07-18 | Complete the fifteenth Layered Maps foundation checkpoint: immutable level-qualified visibility windows and read-only manager projection while packed lookup, caches, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the sixteenth Layered Maps foundation checkpoint: a checked Player visibility-window shadow and versioned private diagnostic evidence while packed lookup, caches, and client behavior remain authoritative. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the seventeenth Layered Maps foundation checkpoint: deterministic, allocation-budgeted logical interest-window deltas while packed lookup, caches, packets, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |

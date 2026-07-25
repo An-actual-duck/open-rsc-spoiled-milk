@@ -17464,6 +17464,121 @@ authority and the first synthetic level `-2` world remain later gates. The
 historical retirement findings below remain retained reference material for
 the later incremental-streaming milestone.
 
+## Phase 5 Authority Milestone B: Spatial Runtime Identity
+
+Approved for implementation on 2026-07-25. This milestone makes the accepted
+signed location contract authoritative for runtime entity membership and
+same-space proximity without claiming that legacy terrain archives or the
+client protocol have already migrated.
+
+### Architectural boundary
+
+The current `Region` class combines two concerns that cannot safely cross the
+layer boundary at the same moment:
+
+- a packed 48-by-48 terrain/collision container addressed by legacy X/Y; and
+- a Point-keyed membership/proximity container for players, NPCs, objects, and
+  ground items.
+
+Because the 944-tile legacy level stride is not divisible by 48, a logical
+48-by-48 `WorldRegionKey` can span two packed Region rows. Milestone B must not
+rename one packed Region as a logical Region or silently choose one fragment.
+Instead:
+
+- `WorldLocation` is the authoritative location identity for every runtime
+  entity while the new private gate is enabled;
+- a world-space/level-qualified spatial index owns entity membership by
+  `WorldRegionKey`;
+- visibility, proximity, interaction candidate lookup, and their cache keys
+  consume that index;
+- the existing packed Region membership remains a derived compatibility view
+  and is checked against the authoritative index during this milestone; and
+- packed Region tile grids remain the terrain/collision backend through the
+  checked `legacy-packed-y-v1` adapter. Logical tile access must explicitly
+  project through `LegacyLogicalTileAddress`; it may not use logical Y as
+  packed Y.
+
+This is a deliberate separation of runtime spatial identity from terrain
+storage. Replacing the packed tile containers with natively layered terrain is
+a later source/archive milestone and will reuse the already-proven fragment
+assembly.
+
+### Gate and rollback contract
+
+- `OPENRSC_LAYERED_SPATIAL_RUNTIME_AUTHORITY=true` enables Milestone B only on
+  a private server and is disabled by default.
+- The spatial gate requires
+  `OPENRSC_LAYERED_PLAYER_LOCATION_AUTHORITY=true`; startup refuses the invalid
+  spatial-authority-with-legacy-Player combination.
+- Disabling the spatial gate returns entity membership, visibility, and cache
+  lookup to the existing packed Region implementation without changing player
+  persistence or map data.
+- No terrain archive, placement source, protocol packet, client cache,
+  database schema, or public/live configuration changes in this milestone.
+- Existing legacy Point APIs remain compatibility inputs. When enabled they
+  normalize to `WorldLocation` before membership, range, visibility, pathing,
+  or collision decisions.
+
+### Runtime migration order
+
+1. Add a universal checked Entity location boundary and logical spatial
+   membership index for Player, NPC, GameObject, and GroundItem.
+2. Make initial registration, movement, replacement, removal, logout, and
+   respawn update logical and packed membership as one fail-fast operation.
+3. Route local-player/NPC/object/item discovery and visibility snapshots
+   through same-world-space, same-level logical windows.
+4. Replace level-blind packed-long visibility/cache identities with immutable
+   world-space/level-qualified keys under the gate.
+5. Make entity range checks reject different world spaces or levels before
+   comparing X/Y.
+6. Add layered path/collision entry points that require one world space and
+   level, then use the checked legacy terrain projection. Existing packed
+   callers normalize through those entry points while the gate is active.
+7. Keep packet coordinates as derived legacy projections and prove unchanged
+   behavior on all currently representable levels.
+
+### Refusal and consistency rules
+
+- An entity cannot occupy two logical region keys or be indexed at a location
+  different from its authoritative `WorldLocation`.
+- Removing or moving an entity whose indexed membership is missing or stale
+  refuses rather than guessing.
+- Visibility and interaction candidates must share world space and level with
+  the observer even when their numeric X/Y match.
+- A logical path or collision query across world spaces or levels refuses.
+- A tile without a supported legacy projection refuses during this milestone;
+  level `-2` remains gated until terrain/protocol support arrives.
+- GameObject membership and the existing ordered collision transaction must
+  commit consistently before the logical index is published.
+
+### Acceptance gate
+
+Automated acceptance must cover:
+
+- distinct entities at identical X/Y on levels `0`, `1`, and `-1` never sharing
+  membership, visibility, proximity, or cache identity;
+- movement across logical 48-tile boundaries and the legacy packed-fragment
+  boundary near the 944 stride;
+- Player, NPC, object, and item registration/removal plus GameObject
+  replacement;
+- same-level collision/path parity and cross-level refusal;
+- default-off behavior and invalid gate-combination refusal; and
+- the authoritative bundled-Ant server build.
+
+Private owner acceptance should be one concise route rather than another
+diagnostic-schema series: surface crowd/object interaction, a real upper-floor
+transition and interaction, an underground transition and interaction,
+teleport, death/respawn, and reconnect. A short `::layerloc` extension should
+report the spatial gate and authoritative logical membership key. Visuals,
+collision, pathing, scenery/NPC/item visibility, interaction, and reconnect
+must remain normal. A second client is useful only for proving that two
+same-level players remain mutually visible; no timed command choreography is
+required.
+
+Status: approved and in implementation. Protocol/client authority, native
+layered terrain storage, level `-2`, true instances, streaming, Builder,
+conversion, and export remain separately gated.
+
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
 envelopes and all 14 support-only coordinates: their size is not evidence that
