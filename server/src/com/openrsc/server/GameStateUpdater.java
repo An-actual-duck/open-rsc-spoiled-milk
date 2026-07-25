@@ -22,6 +22,8 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.entity.update.*;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.VisibilitySnapshot;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
@@ -252,31 +254,43 @@ public final class GameStateUpdater {
 		if (summary == null || !summary.hasSentCompleteStaticBaseline()) {
 			return false;
 		}
-		final long scanKey = staticSceneScanKey(player, packetVisibility);
-		if (scanKey == 0L) {
+		final Object scanKey = staticSceneScanKey(player, packetVisibility);
+		if (scanKey == null) {
 			return false;
 		}
-		final Long previousScanKey = player.getAttribute(STATIC_SCENE_SCAN_KEY_ATTRIBUTE);
-		return previousScanKey != null && previousScanKey.longValue() == scanKey;
+		final Object previousScanKey =
+			player.getAttribute(STATIC_SCENE_SCAN_KEY_ATTRIBUTE);
+		return scanKey.equals(previousScanKey);
 	}
 
 	private void storeStaticSceneScanKey(final Player player, final VisibilitySnapshot packetVisibility) {
-		final long scanKey = staticSceneScanKey(player, packetVisibility);
-		if (scanKey != 0L) {
+		final Object scanKey = staticSceneScanKey(player, packetVisibility);
+		if (scanKey != null) {
 			player.setAttribute(STATIC_SCENE_SCAN_KEY_ATTRIBUTE, scanKey);
 		}
 	}
 
-	private long staticSceneScanKey(final Player player, final VisibilitySnapshot packetVisibility) {
+	private Object staticSceneScanKey(
+		final Player player,
+		final VisibilitySnapshot packetVisibility) {
 		if (packetVisibility.getObjectSnapshotVersion() <= 0L) {
-			return 0L;
+			return null;
+		}
+		LayeredSpatialWindowKey layeredKey =
+			packetVisibility.getLayeredObjectSnapshotKey();
+		if (layeredKey != null) {
+			return new LayeredStaticSceneScanKey(
+				layeredKey,
+				packetVisibility.getObjectSnapshotVersion(),
+				player.getWorldLocation(),
+				getServer().getConfig().OBJECT_VIEW_DISTANCE);
 		}
 		long hash = packetVisibility.getObjectSnapshotKey();
 		hash = hash * 31 + packetVisibility.getObjectSnapshotVersion();
 		hash = hash * 31 + player.getX();
 		hash = hash * 31 + player.getY();
 		hash = hash * 31 + getServer().getConfig().OBJECT_VIEW_DISTANCE;
-		return hash == 0L ? 1L : hash;
+		return Long.valueOf(hash == 0L ? 1L : hash);
 	}
 
 	private void sendSceneBaselineIfEnabled(
@@ -734,6 +748,7 @@ public final class GameStateUpdater {
 	private static final class CachedVisibilitySnapshot {
 		private final int x;
 		private final int y;
+		private final WorldLocation worldLocation;
 		private final long tick;
 		private final VisibilitySnapshotMode mode;
 		private final VisibilitySnapshot snapshot;
@@ -745,6 +760,7 @@ public final class GameStateUpdater {
 			final VisibilitySnapshot snapshot) {
 			this.x = player.getX();
 			this.y = player.getY();
+			this.worldLocation = player.getWorldLocation();
 			this.tick = tick;
 			this.mode = mode;
 			this.snapshot = snapshot;
@@ -754,7 +770,53 @@ public final class GameStateUpdater {
 			return this.tick == tick
 				&& this.mode == mode
 				&& this.x == player.getX()
-				&& this.y == player.getY();
+				&& this.y == player.getY()
+				&& this.worldLocation.equals(player.getWorldLocation());
+		}
+	}
+
+	private static final class LayeredStaticSceneScanKey {
+		private final LayeredSpatialWindowKey windowKey;
+		private final long version;
+		private final WorldLocation playerLocation;
+		private final int objectViewDistance;
+
+		private LayeredStaticSceneScanKey(
+			final LayeredSpatialWindowKey windowKey,
+			final long version,
+			final WorldLocation playerLocation,
+			final int objectViewDistance) {
+			this.windowKey = Objects.requireNonNull(windowKey, "windowKey");
+			this.version = version;
+			this.playerLocation = Objects.requireNonNull(
+				playerLocation, "playerLocation");
+			this.objectViewDistance = objectViewDistance;
+		}
+
+		@Override
+		public boolean equals(final Object other) {
+			if (this == other) {
+				return true;
+			}
+			if (!(other instanceof LayeredStaticSceneScanKey)) {
+				return false;
+			}
+			LayeredStaticSceneScanKey key =
+				(LayeredStaticSceneScanKey) other;
+			return version == key.version
+				&& objectViewDistance == key.objectViewDistance
+				&& windowKey.equals(key.windowKey)
+				&& playerLocation.equals(key.playerLocation);
+		}
+
+		@Override
+		public int hashCode() {
+			int result = windowKey.hashCode();
+			result = 31 * result
+				+ (int) (version ^ (version >>> 32));
+			result = 31 * result + playerLocation.hashCode();
+			result = 31 * result + objectViewDistance;
+			return result;
 		}
 	}
 

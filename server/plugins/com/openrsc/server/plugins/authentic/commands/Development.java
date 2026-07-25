@@ -1398,6 +1398,9 @@ public final class Development implements CommandTrigger {
 		}
 		WorldLocation location = player.getLayeredLocation();
 		WorldCoordinate coordinate = location.getCoordinate();
+		WorldRegionKey regionKey = player.getLayeredRegionKey();
+		boolean spatialAuthority =
+			player.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
 		player.message(
 			messagePrefix
 				+ "Layered location authority="
@@ -1406,6 +1409,15 @@ public final class Development implements CommandTrigger {
 				+ " x=" + coordinate.getX()
 				+ " y=" + coordinate.getY()
 				+ " level=" + coordinate.getLevel()
+				+ " spatialAuthority="
+				+ (spatialAuthority ? "enabled" : "disabled")
+				+ " region=(" + regionKey.getRegionX() + ","
+				+ regionKey.getRegionY() + ",L" + regionKey.getLevel() + ")"
+				+ (spatialAuthority
+					? " indexedEntities="
+						+ player.getWorld().getRegionManager()
+							.getLayeredSpatialMembershipCount()
+					: "")
 				+ " legacy=(" + player.getX() + "," + player.getY() + ")"
 				+ " persistenceOrigin=" + player.getLayeredLocationPersistenceOrigin());
 	}

@@ -8,6 +8,8 @@ import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.Region;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.CollisionFlag;
@@ -44,6 +46,37 @@ public class PathValidation {
 	 * barriers such as fences still block the path
 	 */
 	public static boolean checkPath(World world, Point src, Point dest, boolean ignoreProjectileAllowed) {
+		if (world.getServer().getConfig()
+				.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			return checkPath(
+				world,
+				LegacyPackedPointAdapter.fromLegacyPoint(src),
+				LegacyPackedPointAdapter.fromLegacyPoint(dest),
+				ignoreProjectileAllowed);
+		}
+		return checkLegacyPath(world, src, dest, ignoreProjectileAllowed);
+	}
+
+	public static boolean checkPath(
+		final World world,
+		final WorldLocation src,
+		final WorldLocation dest,
+		final boolean ignoreProjectileAllowed) {
+		if (!sameSpatialDomain(src, dest)) {
+			return false;
+		}
+		return checkLegacyPath(
+			world,
+			LegacyPackedPointAdapter.toLegacyPoint(src),
+			LegacyPackedPointAdapter.toLegacyPoint(dest),
+			ignoreProjectileAllowed);
+	}
+
+	private static boolean checkLegacyPath(
+		final World world,
+		final Point src,
+		final Point dest,
+		final boolean ignoreProjectileAllowed) {
 		final Deque<Point> path = new ArrayDeque<>();
 
 		final Point curPoint = new Point(src.getX(), src.getY());
@@ -136,6 +169,15 @@ public class PathValidation {
 	}
 
 	public static boolean checkAdjacentDistance(World world, int startX, int startY, int destX, int destY, boolean ignoreProjectileAllowed, boolean wantDiagCheck) {
+		if (world.getServer().getConfig()
+				.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+			&& !sameSpatialDomain(
+				LegacyPackedPointAdapter.fromLegacyPoint(
+					Point.location(startX, startY)),
+				LegacyPackedPointAdapter.fromLegacyPoint(
+					Point.location(destX, destY)))) {
+			return false;
+		}
 		int[] coords = {startX, startY};
 		boolean myXBlocked = false, myYBlocked = false, newXBlocked = false, newYBlocked = false;
 		if (startX > destX) {
@@ -539,6 +581,18 @@ public class PathValidation {
 	}
 
 	public static boolean checkAdjacent(Mob mob, int startX, int startY, int destX, int destY) {
+		if (mob.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			WorldLocation owner = mob.getWorldLocation();
+			WorldLocation start = LegacyPackedPointAdapter.fromLegacyPoint(
+				Point.location(startX, startY));
+			WorldLocation destination =
+				LegacyPackedPointAdapter.fromLegacyPoint(
+					Point.location(destX, destY));
+			if (!sameSpatialDomain(owner, start)
+				|| !sameSpatialDomain(owner, destination)) {
+				return false;
+			}
+		}
 		int[] coords = {startX, startY};
 		boolean myXBlocked = false, myYBlocked = false, newXBlocked = false, newYBlocked = false;
 
@@ -729,6 +783,14 @@ public class PathValidation {
 			return player != null;
 		}
 		return false;
+	}
+
+	private static boolean sameSpatialDomain(
+		final WorldLocation first,
+		final WorldLocation second) {
+		return first.getWorldSpace().equals(second.getWorldSpace())
+			&& first.getCoordinate().getLevel()
+				== second.getCoordinate().getLevel();
 	}
 
 }

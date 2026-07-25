@@ -4,6 +4,7 @@ import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,6 +20,7 @@ public final class VisibilitySnapshot {
 	private final int objectRegionCount;
 	private final long objectSnapshotKey;
 	private final long objectSnapshotVersion;
+	private final LayeredSpatialWindowKey layeredObjectSnapshotKey;
 
 	public VisibilitySnapshot(
 		final Collection<Player> players,
@@ -28,7 +30,7 @@ public final class VisibilitySnapshot {
 		final int mobRegionCount,
 		final int objectRegionCount) {
 		this(players, npcs, gameObjects, splitGameObjects(gameObjects, 0), splitGameObjects(gameObjects, 1),
-			groundItems, mobRegionCount, objectRegionCount, 0L, 0L);
+			groundItems, mobRegionCount, objectRegionCount, 0L, null, 0L);
 	}
 
 	public VisibilitySnapshot(
@@ -40,7 +42,8 @@ public final class VisibilitySnapshot {
 		final Collection<GroundItem> groundItems,
 		final int mobRegionCount,
 		final int objectRegionCount) {
-		this(players, npcs, gameObjects, sceneryObjects, wallObjects, groundItems, mobRegionCount, objectRegionCount, 0L, 0L);
+		this(players, npcs, gameObjects, sceneryObjects, wallObjects, groundItems,
+			mobRegionCount, objectRegionCount, 0L, null, 0L);
 	}
 
 	public VisibilitySnapshot(
@@ -54,6 +57,39 @@ public final class VisibilitySnapshot {
 		final int objectRegionCount,
 		final long objectSnapshotKey,
 		final long objectSnapshotVersion) {
+		this(players, npcs, gameObjects, sceneryObjects, wallObjects,
+			groundItems, mobRegionCount, objectRegionCount, objectSnapshotKey,
+			null, objectSnapshotVersion);
+	}
+
+	public VisibilitySnapshot(
+		final Collection<Player> players,
+		final Collection<Npc> npcs,
+		final Collection<GameObject> gameObjects,
+		final Collection<GameObject> sceneryObjects,
+		final Collection<GameObject> wallObjects,
+		final Collection<GroundItem> groundItems,
+		final int mobRegionCount,
+		final int objectRegionCount,
+		final LayeredSpatialWindowKey layeredObjectSnapshotKey,
+		final long objectSnapshotVersion) {
+		this(players, npcs, gameObjects, sceneryObjects, wallObjects,
+			groundItems, mobRegionCount, objectRegionCount, 0L,
+			layeredObjectSnapshotKey, objectSnapshotVersion);
+	}
+
+	private VisibilitySnapshot(
+		final Collection<Player> players,
+		final Collection<Npc> npcs,
+		final Collection<GameObject> gameObjects,
+		final Collection<GameObject> sceneryObjects,
+		final Collection<GameObject> wallObjects,
+		final Collection<GroundItem> groundItems,
+		final int mobRegionCount,
+		final int objectRegionCount,
+		final long objectSnapshotKey,
+		final LayeredSpatialWindowKey layeredObjectSnapshotKey,
+		final long objectSnapshotVersion) {
 		this.players = players;
 		this.npcs = npcs;
 		this.gameObjects = gameObjects;
@@ -63,6 +99,7 @@ public final class VisibilitySnapshot {
 		this.mobRegionCount = mobRegionCount;
 		this.objectRegionCount = objectRegionCount;
 		this.objectSnapshotKey = objectSnapshotKey;
+		this.layeredObjectSnapshotKey = layeredObjectSnapshotKey;
 		this.objectSnapshotVersion = objectSnapshotVersion;
 	}
 
@@ -117,7 +154,12 @@ public final class VisibilitySnapshot {
 	}
 
 	public long getObjectSnapshotKey() {
-		return objectSnapshotKey;
+		return layeredObjectSnapshotKey == null
+			? objectSnapshotKey : layeredObjectSnapshotKey.hashCode();
+	}
+
+	public LayeredSpatialWindowKey getLayeredObjectSnapshotKey() {
+		return layeredObjectSnapshotKey;
 	}
 
 	public long getObjectSnapshotVersion() {

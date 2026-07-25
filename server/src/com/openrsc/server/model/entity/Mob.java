@@ -432,7 +432,7 @@ public abstract class Mob extends Entity {
 	}
 
 	public boolean withinRange(final Entity e) {
-		if (e != null) {
+		if (e != null && sharesSpatialDomain(e)) {
 			return getLocation().withinRange(e.getLocation(), (getWorld().getServer().getConfig().VIEW_DISTANCE * 8) - 1);
 		}
 		return false;
@@ -442,7 +442,7 @@ public abstract class Mob extends Entity {
 	// determines if we will display something to a player or not, we potentially need to restrict distance further.
 	// This check can go before withinRange(Entity e) to shortcircuit & not have to check twice (unless View_distance is 1)
 	public boolean withinAuthenticRangeAdditionally(final Player playerToUpdate) {
-		if (playerToUpdate != null) {
+		if (playerToUpdate != null && sharesSpatialDomain(playerToUpdate)) {
 			if (playerToUpdate.isUsingCustomClient() || getWorld().getServer().getConfig().VIEW_DISTANCE <= 2)
 				return true; // don't need additional restraint in these cases
 
@@ -452,21 +452,21 @@ public abstract class Mob extends Entity {
 	}
 
 	public boolean withinGridRange(final Entity e) {
-		if (e != null) {
+		if (e != null && sharesSpatialDomain(e)) {
 			return getLocation().withinGridRange(e.getLocation(), getWorld().getServer().getConfig().VIEW_DISTANCE);
 		}
 		return false;
 	}
 
 	public boolean withinObjectGridRange(final Entity e) {
-		if (e != null) {
+		if (e != null && sharesSpatialDomain(e)) {
 			return getLocation().withinGridRange(e.getLocation(), getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE);
 		}
 		return false;
 	}
 
 	public boolean within4GridRange(final Entity e) {
-		if (e != null) {
+		if (e != null && sharesSpatialDomain(e)) {
 			return getLocation().withinGridRange(e.getLocation(), 4);
 		}
 		return false;

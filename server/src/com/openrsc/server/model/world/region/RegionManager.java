@@ -19,6 +19,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GameObjectCollisionRegistrationState;
+import com.openrsc.server.model.entity.GameObjectType;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -53,6 +54,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcRes
 import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
+import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
@@ -100,11 +102,20 @@ public class RegionManager {
 		layeredRegionRetirementEligibilityLedger;
 	private final LayeredRegionRetirementDecisionArbiter
 		layeredRegionRetirementDecisionArbiter;
+	private final LayeredSpatialEntityIndex layeredSpatialEntityIndex;
 
 	private final World world;
 
 	public RegionManager(final World world) {
 		this.world = world;
+		if (world.getServer().getConfig()
+				.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+			&& !world.getServer().getConfig()
+				.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			throw new IllegalStateException(
+				"Layered spatial runtime authority requires "
+					+ "layered Player location authority");
+		}
 		this.regions = new ConcurrentHashMap<>();
 		this.visibleRegionWindowCache = new ConcurrentHashMap<>();
 		this.visibleObjectWindowCache = new ConcurrentHashMap<>();
@@ -121,6 +132,7 @@ public class RegionManager {
 				LAYERED_REGION_RETIREMENT_COOLDOWN_TICKS);
 		this.layeredRegionRetirementDecisionArbiter =
 			new LayeredRegionRetirementDecisionArbiter();
+		this.layeredSpatialEntityIndex = new LayeredSpatialEntityIndex();
 	}
 
 	public void load() {
@@ -139,6 +151,7 @@ public class RegionManager {
 			layeredRegionResidencyMirror.clear();
 			layeredRegionInterestOwnershipLedger.clear();
 			layeredRegionRetirementEligibilityLedger.clear();
+			layeredSpatialEntityIndex.clear();
 		}
 		visibleRegionWindowCache.clear();
 		visibleObjectWindowCache.clear();
@@ -154,6 +167,9 @@ public class RegionManager {
 	 * @return The collection of local players.
 	 */
 	public Collection<Player> getLocalPlayers(final Entity entity) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return getLayeredLocalPlayers(entity);
+		}
 		final LinkedHashSet<Player> localPlayers = new LinkedHashSet<Player>();
 		for (final Region region : getVisibleRegionWindow(entity.getLocation())) {
 			for (final Player player : region.getPlayers()) {
@@ -166,6 +182,9 @@ public class RegionManager {
 	}
 
 	public boolean hasLocalPlayers(final Entity entity) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return !getLayeredLocalPlayers(entity).isEmpty();
+		}
 		for (final Region region : getVisibleRegionWindow(entity.getLocation())) {
 			for (final Player player : region.getPlayers()) {
 				if (player.withinRange(entity)) {
@@ -183,6 +202,9 @@ public class RegionManager {
 	 * @return The collection of local NPCs.
 	 */
 	public Collection<Npc> getLocalNpcs(final Entity entity) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return getLayeredLocalNpcs(entity);
+		}
 		final LinkedHashSet<Npc> localNpcs = new LinkedHashSet<>();
 		for (final Region region : getVisibleRegionWindow(entity.getLocation())) {
 			for (final Npc npc : region.getNpcs()) {
@@ -195,6 +217,9 @@ public class RegionManager {
 	}
 
 	public Collection<GameObject> getLocalObjects(final Mob entity) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return getLayeredLocalObjects(entity);
+		}
 		LinkedHashSet<GameObject> localObjects = new LinkedHashSet<GameObject>();
 		for (final Iterator<Region> region = getVisibleRegionWindow(entity.getLocation(), getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE).iterator(); region.hasNext(); ) {
 			Collection<GameObject> objects = region.next().getGameObjects();
@@ -217,6 +242,9 @@ public class RegionManager {
 	}
 
 	public Collection<GroundItem> getLocalGroundItems(final Mob entity) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return getLayeredLocalGroundItems(entity);
+		}
 		final LinkedHashSet<GroundItem> localItems = new LinkedHashSet<GroundItem>();
 		for (final Region region : getVisibleRegionWindow(entity.getLocation(), getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE)) {
 			for (final GroundItem o : region.getGroundItems()) {
@@ -229,6 +257,9 @@ public class RegionManager {
 	}
 
 	public VisibilitySnapshot buildVisibilitySnapshot(final Mob entity) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return buildLayeredVisibilitySnapshot(entity);
+		}
 		final LinkedHashSet<Player> localPlayers = new LinkedHashSet<>();
 		final LinkedHashSet<Npc> localNpcs = new LinkedHashSet<>();
 		final LinkedHashSet<GroundItem> localItems = new LinkedHashSet<>();
@@ -268,6 +299,279 @@ public class RegionManager {
 			objectRegions.size(),
 			visibleObjects.cacheKey,
 			visibleObjects.version);
+	}
+
+	public boolean isLayeredSpatialRuntimeAuthorityEnabled() {
+		return getWorld().getServer().getConfig()
+			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
+	}
+
+	/**
+	 * Synchronizes one Entity's authoritative logical membership after its
+	 * compatibility Region membership has accepted the same movement.
+	 */
+	public void synchronizeLayeredSpatialMembership(
+		final Entity entity,
+		final WorldLocation expectedPrevious,
+		final WorldLocation target) {
+		if (!isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return;
+		}
+		layeredSpatialEntityIndex.synchronize(
+			Objects.requireNonNull(entity, "entity"),
+			expectedPrevious,
+			Objects.requireNonNull(target, "target"));
+	}
+
+	public void removeLayeredSpatialMembership(
+		final Entity entity,
+		final WorldLocation expectedLocation) {
+		if (!isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return;
+		}
+		layeredSpatialEntityIndex.remove(
+			Objects.requireNonNull(entity, "entity"),
+			Objects.requireNonNull(expectedLocation, "expectedLocation"));
+	}
+
+	public WorldRegionKey requireLayeredSpatialMembership(
+		final Entity entity) {
+		Entity checked = Objects.requireNonNull(entity, "entity");
+		if (!isLayeredSpatialRuntimeAuthorityEnabled()) {
+			throw new IllegalStateException(
+				"Layered spatial runtime authority is disabled");
+		}
+		WorldLocation location = checked.getWorldLocation();
+		layeredSpatialEntityIndex.requireMembership(checked, location);
+		return WorldRegionKey.from(location);
+	}
+
+	public int getLayeredSpatialMembershipCount() {
+		return layeredSpatialEntityIndex.getMembershipCount();
+	}
+
+	private Collection<Player> getLayeredLocalPlayers(final Entity observer) {
+		LinkedHashSet<Player> players = new LinkedHashSet<Player>();
+		for (Entity candidate : layeredSpatialSnapshot(
+			observer, getWorld().getServer().getConfig().VIEW_DISTANCE)
+				.getEntities()) {
+			if (candidate instanceof Player
+				&& ((Player) candidate).withinRange(observer)) {
+				players.add((Player) candidate);
+			}
+		}
+		return players;
+	}
+
+	private Collection<Npc> getLayeredLocalNpcs(final Entity observer) {
+		LinkedHashSet<Npc> npcs = new LinkedHashSet<Npc>();
+		for (Entity candidate : layeredSpatialSnapshot(
+			observer, getWorld().getServer().getConfig().VIEW_DISTANCE)
+				.getEntities()) {
+			if (candidate instanceof Npc
+				&& ((Npc) candidate).withinRange(observer)) {
+				npcs.add((Npc) candidate);
+			}
+		}
+		return npcs;
+	}
+
+	private Collection<GameObject> getLayeredLocalObjects(final Mob observer) {
+		LinkedHashSet<GameObject> objects = new LinkedHashSet<GameObject>();
+		int distance = getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE;
+		for (Entity candidate : layeredSpatialSnapshot(observer, distance)
+				.getEntities()) {
+			if (candidate instanceof GameObject
+				&& candidate.sharesSpatialDomain(observer)
+				&& candidate.getLocation().withinGridRange(
+					observer.getLocation(), distance)) {
+				objects.add((GameObject) candidate);
+			}
+		}
+		return objects;
+	}
+
+	private Collection<GroundItem> getLayeredLocalGroundItems(
+		final Mob observer) {
+		LinkedHashSet<GroundItem> items = new LinkedHashSet<GroundItem>();
+		int distance = getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE;
+		for (Entity candidate : layeredSpatialSnapshot(observer, distance)
+				.getEntities()) {
+			if (candidate instanceof GroundItem
+				&& candidate.sharesSpatialDomain(observer)
+				&& candidate.getLocation().withinGridRange(
+					observer.getLocation(), distance)) {
+				items.add((GroundItem) candidate);
+			}
+		}
+		return items;
+	}
+
+	private VisibilitySnapshot buildLayeredVisibilitySnapshot(
+		final Mob observer) {
+		int mobDistance = getWorld().getServer().getConfig().VIEW_DISTANCE;
+		int objectDistance =
+			getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE;
+		LayeredSpatialEntityIndex.Snapshot mobSnapshot =
+			layeredSpatialSnapshot(observer, mobDistance);
+		LayeredSpatialEntityIndex.Snapshot objectSnapshot =
+			layeredSpatialSnapshot(observer, objectDistance);
+		LinkedHashSet<Player> players = new LinkedHashSet<Player>();
+		LinkedHashSet<Npc> npcs = new LinkedHashSet<Npc>();
+		LinkedHashSet<GameObject> objects = new LinkedHashSet<GameObject>();
+		ArrayList<GameObject> scenery = new ArrayList<GameObject>();
+		ArrayList<GameObject> walls = new ArrayList<GameObject>();
+		LinkedHashSet<GroundItem> items = new LinkedHashSet<GroundItem>();
+
+		for (Entity candidate : mobSnapshot.getEntities()) {
+			if (candidate instanceof Player
+				&& ((Player) candidate).withinRange(observer)) {
+				players.add((Player) candidate);
+			} else if (candidate instanceof Npc
+				&& ((Npc) candidate).withinRange(observer)) {
+				npcs.add((Npc) candidate);
+			}
+		}
+		for (Entity candidate : objectSnapshot.getEntities()) {
+			if (!candidate.sharesSpatialDomain(observer)
+				|| !candidate.getLocation().withinGridRange(
+					observer.getLocation(), objectDistance)) {
+				continue;
+			}
+			if (candidate instanceof GameObject) {
+				GameObject object = (GameObject) candidate;
+				if (objects.add(object)) {
+					if (object.getType() == 0) {
+						scenery.add(object);
+					} else if (object.getType() == 1) {
+						walls.add(object);
+					}
+				}
+			} else if (candidate instanceof GroundItem) {
+				items.add((GroundItem) candidate);
+			}
+		}
+
+		LayeredSpatialWindowKey key = LayeredSpatialWindowKey.around(
+			observer.getWorldLocation(),
+			Math.multiplyExact(objectDistance, 8));
+		return new VisibilitySnapshot(
+			players, npcs, objects, scenery, walls, items,
+			Math.toIntExact(mobSnapshot.getWindow().getRegionCount()),
+			Math.toIntExact(objectSnapshot.getWindow().getRegionCount()),
+			key, objectSnapshot.getObjectVersion());
+	}
+
+	private LayeredSpatialEntityIndex.Snapshot layeredSpatialSnapshot(
+		final Entity observer,
+		final int gridDistance) {
+		Entity checked = Objects.requireNonNull(observer, "observer");
+		WorldLocation location = checked.getWorldLocation();
+		layeredSpatialEntityIndex.requireMembership(checked, location);
+		return layeredSpatialEntityIndex.snapshot(
+			getLayeredVisibleRegionWindow(location, gridDistance));
+	}
+
+	GameObject findLayeredGameObject(
+		final Point legacyLocation,
+		final Entity observer,
+		final GameObjectType type,
+		final Integer direction) {
+		WorldLocation target = layeredInteractionTarget(
+			legacyLocation, observer);
+		if (target == null) {
+			return null;
+		}
+		for (Entity candidate : layeredSpatialEntityIndex.snapshot(
+			WorldRegionWindow.around(target, 0)).getEntities()) {
+			if (candidate instanceof GameObject
+				&& target.equals(candidate.getWorldLocation())) {
+				GameObject object = (GameObject) candidate;
+				if ((type == null || object.getGameObjectType() == type)
+					&& (direction == null
+						|| object.getDirection() == direction.intValue())
+					&& !object.isInvisibleTo(observer)) {
+					return object;
+				}
+			}
+		}
+		return null;
+	}
+
+	Npc findLayeredNpc(
+		final Point legacyLocation,
+		final Entity observer) {
+		WorldLocation target = layeredInteractionTarget(
+			legacyLocation, observer);
+		if (target == null) {
+			return null;
+		}
+		for (Entity candidate : layeredSpatialEntityIndex.snapshot(
+			WorldRegionWindow.around(target, 0)).getEntities()) {
+			if (candidate instanceof Npc
+				&& target.equals(candidate.getWorldLocation())
+				&& !candidate.isInvisibleTo(observer)) {
+				return (Npc) candidate;
+			}
+		}
+		return null;
+	}
+
+	Player findLayeredPlayer(
+		final Point legacyLocation,
+		final Entity observer,
+		final boolean includeSelf) {
+		WorldLocation target = layeredInteractionTarget(
+			legacyLocation, observer);
+		if (target == null) {
+			return null;
+		}
+		for (Entity candidate : layeredSpatialEntityIndex.snapshot(
+			WorldRegionWindow.around(target, 0)).getEntities()) {
+			if (candidate instanceof Player
+				&& target.equals(candidate.getWorldLocation())
+				&& !candidate.isInvisibleTo(observer)
+				&& (!includeSelf || candidate == observer)) {
+				return (Player) candidate;
+			}
+		}
+		return null;
+	}
+
+	GroundItem findLayeredGroundItem(
+		final int id,
+		final Point legacyLocation,
+		final Entity observer) {
+		WorldLocation target = layeredInteractionTarget(
+			legacyLocation, observer);
+		if (target == null) {
+			return null;
+		}
+		for (Entity candidate : layeredSpatialEntityIndex.snapshot(
+			WorldRegionWindow.around(target, 0)).getEntities()) {
+			if (candidate instanceof GroundItem
+				&& candidate.getID() == id
+				&& target.equals(candidate.getWorldLocation())
+				&& !candidate.isInvisibleTo(observer)) {
+				return (GroundItem) candidate;
+			}
+		}
+		return null;
+	}
+
+	private WorldLocation layeredInteractionTarget(
+		final Point legacyLocation,
+		final Entity observer) {
+		Entity checkedObserver = Objects.requireNonNull(observer, "observer");
+		WorldLocation observerLocation = checkedObserver.getWorldLocation();
+		layeredSpatialEntityIndex.requireMembership(
+			checkedObserver, observerLocation);
+		WorldLocation target = LegacyPackedPointAdapter.fromLegacyPoint(
+			Objects.requireNonNull(legacyLocation, "legacyLocation"));
+		return observerLocation.getWorldSpace().equals(target.getWorldSpace())
+				&& observerLocation.getCoordinate().getLevel()
+					== target.getCoordinate().getLevel()
+			? target : null;
 	}
 
 	public void invalidateVisibleObjectWindowCache() {
@@ -2131,6 +2435,16 @@ public class RegionManager {
 					"Object membership/collision transaction refused: "
 						+ result.getReason());
 			}
+			if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+				if (oldObject != null) {
+					layeredSpatialEntityIndex.remove(
+						oldObject, oldObject.getWorldLocation());
+				}
+				if (newObject != null) {
+					layeredSpatialEntityIndex.synchronize(
+						newObject, null, newObject.getWorldLocation());
+				}
+			}
 		}
 	}
 
@@ -3075,6 +3389,39 @@ public class RegionManager {
 
 	public TileValue getTile(final Point point) {
 		return getTile(point.getX(), point.getY());
+	}
+
+	/**
+	 * Resolves one logical tile through its exact legacy fragment while packed
+	 * terrain remains the compatibility backend.
+	 */
+	public TileValue getTile(final WorldLocation location) {
+		Point packed = requireLegacyTerrainProjection(location);
+		return getTile(packed);
+	}
+
+	public TileValue getMutableTile(final WorldLocation location) {
+		Point packed = requireLegacyTerrainProjection(location);
+		return getMutableTile(packed.getX(), packed.getY());
+	}
+
+	private Point requireLegacyTerrainProjection(
+		final WorldLocation location) {
+		WorldLocation checked = Objects.requireNonNull(location, "location");
+		WorldRegionKey key = WorldRegionKey.from(checked);
+		LegacyLogicalTileAddress address = LegacyLogicalTileAddress.resolve(
+			key,
+			Math.floorMod(
+				checked.getCoordinate().getX(), WorldRegionKey.REGION_SIZE),
+			Math.floorMod(
+				checked.getCoordinate().getY(), WorldRegionKey.REGION_SIZE));
+		if (!address.isLegacyRepresentable()
+			|| !checked.equals(address.getLogicalLocation())) {
+			throw new IllegalArgumentException(
+				"Logical tile has no exact legacy terrain projection: "
+					+ checked);
+		}
+		return address.getLegacyPoint();
 	}
 
 	/**

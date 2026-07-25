@@ -970,6 +970,11 @@ public class Region {
 	}
 
 	private GameObject getGameObject(Point location, Entity observer, GameObjectType type, Integer direction) {
+		if (observer != null
+			&& regionManager.isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return regionManager.findLayeredGameObject(
+				location, observer, type, direction);
+		}
 		synchronized (objects) {
 			return objects.get(location)
 				.stream()
@@ -1042,6 +1047,10 @@ public class Region {
 	}
 
 	public Npc getNpc(Point location, Entity observer) {
+		if (observer != null
+			&& regionManager.isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return regionManager.findLayeredNpc(location, observer);
+		}
 		return npcs.get(location)
 			.stream()
 			.filter(npc -> observer == null || !npc.isInvisibleTo(observer))
@@ -1050,6 +1059,11 @@ public class Region {
 	}
 
 	public Player getPlayer(int x, int y, Entity observer, boolean includeSelf) {
+		if (observer != null
+			&& regionManager.isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return regionManager.findLayeredPlayer(
+				Point.location(x, y), observer, includeSelf);
+		}
 		return players.get(new Point(x, y))
 			.stream()
 			.filter(player -> observer == null || !player.isInvisibleTo(observer))
@@ -1063,6 +1077,11 @@ public class Region {
 	}
 
 	public GroundItem getItem(final int id, final Point location, final Entity observer) {
+		if (observer != null
+			&& regionManager.isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return regionManager.findLayeredGroundItem(
+				id, location, observer);
+		}
 		return items.get(location)
 				.stream()
 				.filter(item -> id == item.getID())

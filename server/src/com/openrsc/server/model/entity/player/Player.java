@@ -3258,9 +3258,19 @@ public final class Player extends Mob {
 				throw new IllegalStateException(
 					"Layered Player authority differs from its compatibility mirror");
 			}
+			if (!authoritative.equals(getWorldLocation())) {
+				throw new IllegalStateException(
+					"Layered Player authority differs from Entity spatial authority");
+			}
 			return authoritative;
 		}
-		return layeredLocationMirror.requireCurrent(getLocation());
+		WorldLocation mirrored =
+			layeredLocationMirror.requireCurrent(getLocation());
+		if (!mirrored.equals(getWorldLocation())) {
+			throw new IllegalStateException(
+				"Layered Player mirror differs from Entity spatial location");
+		}
+		return mirrored;
 	}
 
 	public boolean isLayeredLocationAuthorityEnabled() {
@@ -3275,7 +3285,18 @@ public final class Player extends Mob {
 	}
 
 	public WorldRegionKey getLayeredRegionKey() {
-		return layeredRegionMembershipMirror.requireCurrent(getLayeredLocation());
+		WorldRegionKey mirrored =
+			layeredRegionMembershipMirror.requireCurrent(getLayeredLocation());
+		if (getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			WorldRegionKey authoritative = getWorld().getRegionManager()
+				.requireLayeredSpatialMembership(this);
+			if (!authoritative.equals(mirrored)) {
+				throw new IllegalStateException(
+					"Player spatial membership differs from compatibility mirror");
+			}
+			return authoritative;
+		}
+		return mirrored;
 	}
 
 	public WorldRegionWindow getLayeredVisibilityWindow() {

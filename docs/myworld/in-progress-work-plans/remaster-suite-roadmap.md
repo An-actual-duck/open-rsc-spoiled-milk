@@ -648,6 +648,13 @@ terrain/collision compatibility backend because the 944-tile level stride does
 not align with 48-tile Region rows. Protocol/client and native layered terrain
 remain later gates.
 
+The first Milestone B implementation checkpoint compiles 848 core and 488
+plugin sources and completes a private both-gates-enabled population of 28,732
+objects, 3,775 NPCs, and 882 ground items. Logical membership, level-aware
+visibility/interaction/proximity, typed scene identity, checked packed-terrain
+projection, and NPC respawn re-registration are implemented; meaningful owner
+runtime acceptance remains pending.
+
 Planning estimates at this checkpoint are approximately `40-45%` for Phase 5
 and `20-25%` for the complete Layered Maps product across Phases 5-7. No
 creator-testable conversion/export workflow exists yet; Phase 6 and Phase 7

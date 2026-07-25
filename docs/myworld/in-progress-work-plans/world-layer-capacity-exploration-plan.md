@@ -17575,7 +17575,27 @@ must remain normal. A second client is useful only for proving that two
 same-level players remain mutually visible; no timed command choreography is
 required.
 
-Status: approved and in implementation. Protocol/client authority, native
+Implementation checkpoint:
+
+- all Entity types now maintain a checked `WorldLocation` alongside the legacy
+  Point projection;
+- `LayeredSpatialEntityIndex` owns world-space/level-qualified membership and
+  exact `WorldRegionKey` window snapshots;
+- local visibility, interaction candidate lookup, proximity, and static-scene
+  identity use the logical index under the private gate;
+- pathing rejects cross-space/level requests and logical tile access projects
+  through `LegacyLogicalTileAddress` to the packed terrain backend;
+- NPC respawn rejoins both logical and compatibility membership before moving;
+- moving mobs do not invalidate the GameObject scene version, while object
+  registration/replacement/removal does;
+- the focused authority fixture proves level isolation, exact movement/removal
+  invariants, 48/944 boundary behavior, and level-qualified window identity;
+- the authoritative Ant build compiles 848 core and 488 plugin sources; and
+- a private both-gates-enabled startup populated 28,732 objects, 3,775 NPCs,
+  and 882 ground items without a membership/collision refusal.
+
+Status: implementation foundation and private startup validation complete;
+meaningful owner runtime acceptance pending. Protocol/client authority, native
 layered terrain storage, level `-2`, true instances, streaming, Builder,
 conversion, and export remain separately gated.
 

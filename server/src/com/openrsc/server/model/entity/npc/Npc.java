@@ -1453,7 +1453,9 @@ public class Npc extends Mob {
 						n.killed = false;
 						n.setRemoved(false);
 						n.removeAttribute(DEATH_VISUAL_TICK_ATTRIBUTE);
-						n.getRegion().addEntity(n);
+						// Rejoin both authoritative logical membership and the
+						// packed compatibility Region before moving home.
+						n.updateRegion();
 
 						// Take 4 ticks away from the current time to get a 1 tick pause while the npc spawns,
 						// before it is allowed to attack (if aggressive).
