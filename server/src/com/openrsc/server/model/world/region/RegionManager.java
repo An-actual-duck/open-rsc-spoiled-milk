@@ -64,6 +64,8 @@ import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
+import com.openrsc.server.model.world.coordinate.NativeLayeredGameObjectIdentity;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionInterestDelta;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
@@ -240,10 +242,11 @@ public class RegionManager {
 			|| loaded.getNpcPlacementCount() != 1
 			|| loaded.getGroundItemPlacementCount() != 1
 			|| loaded.getSceneryPlacementCount() != 1
-			|| loaded.getBoundaryPlacementCount() != 1) {
+			|| loaded.getBoundaryPlacementCount() != 2) {
 			throw new IllegalStateException(
 				"The first native layered placement route requires exactly "
-					+ "one placement set, NPC, ground item, scenery, and boundary");
+					+ "one placement set, NPC, ground item, scenery, and "
+					+ "two boundaries");
 		}
 		for (int x = LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_X;
 			x <= LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_X;
@@ -3674,7 +3677,7 @@ public class RegionManager {
 						"Native layered scenery definition is unavailable: "
 							+ placement.getSceneryId());
 				}
-				registerNativeLayeredGameObject(
+				populateNativeLayeredGameObject(
 					placement.getPlacementId(),
 					placement.getLocation(),
 					placement.getSceneryId(),
@@ -3691,7 +3694,7 @@ public class RegionManager {
 						"Native layered boundary definition is unavailable: "
 							+ placement.getBoundaryId());
 				}
-				registerNativeLayeredGameObject(
+				populateNativeLayeredGameObject(
 					placement.getPlacementId(),
 					placement.getLocation(),
 					placement.getBoundaryId(),
@@ -3713,7 +3716,7 @@ public class RegionManager {
 			boundaryCount);
 	}
 
-	private void registerNativeLayeredGameObject(
+	private void populateNativeLayeredGameObject(
 		final String placementId,
 		final WorldLocation location,
 		final int objectId,
@@ -3744,31 +3747,271 @@ public class RegionManager {
 				.GameTickEventRestorationTransientRollbackSnapshot
 				.CollisionContribution contribution
 					: footprint.getContributions()) {
-			WorldLocation collisionLocation = new WorldLocation(
-				location.getWorldSpace(),
-				new com.openrsc.server.model.world.coordinate.WorldCoordinate(
-					contribution.getX(),
-					contribution.getY(),
-					location.getCoordinate().getLevel()));
-			if (!nativeLayeredWorldPackage.findTile(
-					collisionLocation).isPresent()) {
-				throw new IllegalStateException(
-					"Native layered object collision leaves package terrain for "
-						+ placementId + ": " + collisionLocation);
-			}
+			requireNativeLayeredCollisionTerrain(
+				location, placementId, contribution);
 		}
 		object.setInitialWorldLocation(location);
 		markNativeLayeredPlacement(object, placementId, kind);
-		nativeLayeredGameObjects.register(
+		if (nativeLayeredGameObjects.register(
+			nativeLayeredGameObjects.getGeneration(),
 			placementId,
 			location,
 			type.getId(),
 			direction,
 			object,
-			footprint);
+			footprint) == null) {
+			throw new IllegalStateException(
+				"Native layered object population generation became stale");
+		}
 		object.attachNativeLayeredCollisionRegistrationState(
 			GameObjectCollisionRegistrationState.capture(object, footprint));
 		layeredSpatialEntityIndex.synchronize(object, null, location);
+	}
+
+	private void requireNativeLayeredCollisionTerrain(
+		final WorldLocation origin,
+		final String placementId,
+		final com.openrsc.server.event.rsc
+			.GameTickEventRestorationTransientRollbackSnapshot
+			.CollisionContribution contribution) {
+		WorldLocation collisionLocation = new WorldLocation(
+			origin.getWorldSpace(),
+			new WorldCoordinate(
+				contribution.getX(),
+				contribution.getY(),
+				origin.getCoordinate().getLevel()));
+		if (!nativeLayeredWorldPackage.findTile(
+				collisionLocation).isPresent()) {
+			throw new IllegalStateException(
+				"Native layered object collision leaves package terrain for "
+					+ placementId + ": " + collisionLocation);
+		}
+	}
+
+	public boolean hasNativeLayeredGameObjectIdentity(
+		final GameObject object) {
+		return object != null
+			&& object.getLoc().getNativeLayeredGameObjectIdentity() != null;
+	}
+
+	public boolean prepareNativeLayeredGameObject(
+		final GameObject object) {
+		GameObject checked = Objects.requireNonNull(object, "object");
+		NativeLayeredGameObjectIdentity identity =
+			checked.getLoc().getNativeLayeredGameObjectIdentity();
+		if (identity == null) {
+			throw new IllegalArgumentException(
+				"GameObject has no native layered identity");
+		}
+		if (nativeLayeredWorldPackage == null
+			|| !nativeLayeredWorldPackage.getPackageId().equals(
+				identity.getPackageId())) {
+			throw new IllegalStateException(
+				"Native layered object package identity differs");
+		}
+		if (identity.getGeneration()
+			!= nativeLayeredGameObjects.getGeneration()) {
+			return false;
+		}
+		if ((NATIVE_LAYERED_SCENERY_KIND.equals(identity.getKind())
+				&& checked.getType() != GameObjectType.SCENERY.getId())
+			|| (NATIVE_LAYERED_BOUNDARY_KIND.equals(identity.getKind())
+				&& checked.getType() != GameObjectType.BOUNDARY.getId())) {
+			throw new IllegalStateException(
+				"Native layered object kind differs from its runtime type");
+		}
+		if (checked.getLoc().getX()
+				!= identity.getLocation().getCoordinate().getX()
+			|| checked.getLoc().getY()
+				!= identity.getLocation().getCoordinate().getY()) {
+			throw new IllegalStateException(
+				"Native layered object coordinates differ from its identity");
+		}
+		if (checked.getLocation() == null) {
+			checked.setInitialWorldLocation(identity.getLocation());
+		} else if (!identity.getLocation().equals(
+				checked.getWorldLocation())) {
+			throw new IllegalStateException(
+				"Native layered object location differs from its identity");
+		}
+		setNativeLayeredPlacementAttributes(
+			checked, identity.getPlacementId(), identity.getKind());
+		return true;
+	}
+
+	public GameObject findNativeLayeredGameObject(
+		final GameObject object) {
+		NativeLayeredGameObjectIdentity identity = Objects.requireNonNull(
+			object, "object").getLoc().getNativeLayeredGameObjectIdentity();
+		return identity == null ? null
+			: nativeLayeredGameObjects.find(identity.getPlacementId());
+	}
+
+	public void inheritNativeLayeredGameObjectIdentity(
+		final GameObject source,
+		final GameObject replacement) {
+		GameObject checkedSource = Objects.requireNonNull(source, "source");
+		GameObject checkedReplacement = Objects.requireNonNull(
+			replacement, "replacement");
+		NativeLayeredGameObjectIdentity identity =
+			checkedSource.getLoc().getNativeLayeredGameObjectIdentity();
+		if (identity == null || !isNativeLayeredGameObject(checkedSource)) {
+			throw new IllegalStateException(
+				"Native layered replacement source identity is unavailable");
+		}
+		checkedReplacement.getLoc().assignNativeLayeredGameObjectIdentity(
+			identity);
+		if (!prepareNativeLayeredGameObject(checkedReplacement)) {
+			throw new IllegalStateException(
+				"Native layered replacement generation became stale");
+		}
+	}
+
+	public boolean isNativeLayeredGameObject(
+		final GameObject object) {
+		if (!hasNativeLayeredGameObjectIdentity(object)) {
+			return false;
+		}
+		NativeLayeredGameObjectIdentity identity =
+			object.getLoc().getNativeLayeredGameObjectIdentity();
+		return identity.getGeneration()
+				== nativeLayeredGameObjects.getGeneration()
+			&& isNativeLayeredPlacement(object, identity.getKind());
+	}
+
+	public void applyNativeLayeredGameObjectTransaction(
+		final GameObject oldObject,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			oldUnregisterFootprint,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			oldRollbackRegisterFootprint,
+		final GameObject newObject,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			newRegisterFootprint) {
+		if (oldObject == null && newObject == null) {
+			throw new IllegalArgumentException(
+				"Native layered object transaction is empty");
+		}
+		NativeLayeredGameObjectIdentity identity = oldObject != null
+			? oldObject.getLoc().getNativeLayeredGameObjectIdentity()
+			: newObject.getLoc().getNativeLayeredGameObjectIdentity();
+		if (identity == null
+			|| (oldObject != null && !isNativeLayeredGameObject(oldObject))
+			|| (newObject != null
+				&& !identity.equals(newObject.getLoc()
+					.getNativeLayeredGameObjectIdentity()))) {
+			throw new IllegalStateException(
+				"Native layered object transaction identity differs");
+		}
+		if (oldObject != null) {
+			if (oldUnregisterFootprint == null
+				|| oldUnregisterFootprint.getOperation()
+					!= Operation.UNREGISTER
+				|| oldRollbackRegisterFootprint == null
+				|| oldRollbackRegisterFootprint.getOperation()
+					!= Operation.REGISTER) {
+				throw new IllegalArgumentException(
+					"Native layered removal footprints are invalid");
+			}
+			if (oldObject.getRegion() != null
+				|| oldObject.getLocation() == null
+				|| oldObject.isRemoved()) {
+				throw new IllegalStateException(
+					"Native layered removal source state is invalid");
+			}
+			layeredSpatialEntityIndex.requireMembership(
+				oldObject, identity.getLocation());
+		}
+		GameObjectCollisionRegistrationState newCollision = null;
+		if (newObject != null) {
+			if (newRegisterFootprint == null
+				|| newRegisterFootprint.getOperation()
+					!= Operation.REGISTER) {
+				throw new IllegalArgumentException(
+					"Native layered registration footprint is invalid");
+			}
+			if (newObject.getRegion() != null
+				|| newObject.getLocation() == null
+				|| newObject.isRemoved()
+				|| newObject.getCollisionRegistrationState() != null) {
+				throw new IllegalStateException(
+					"Native layered registration target state is invalid");
+			}
+			for (com.openrsc.server.event.rsc
+					.GameTickEventRestorationTransientRollbackSnapshot
+					.CollisionContribution contribution
+						: newRegisterFootprint.getContributions()) {
+				requireNativeLayeredCollisionTerrain(
+					identity.getLocation(),
+					identity.getPlacementId(),
+					contribution);
+			}
+			newCollision = GameObjectCollisionRegistrationState.capture(
+				newObject, newRegisterFootprint);
+		}
+
+		long generation = identity.getGeneration();
+		if (oldObject == null) {
+			if (nativeLayeredGameObjects.register(
+					generation, identity.getPlacementId(),
+					identity.getLocation(), newObject.getType(),
+					newObject.getDirection(), newObject,
+					newRegisterFootprint) == null) {
+				return;
+			}
+			try {
+				layeredSpatialEntityIndex.synchronize(
+					newObject, null, identity.getLocation());
+			} catch (RuntimeException failure) {
+				nativeLayeredGameObjects.unregister(
+					generation, identity.getPlacementId(), newObject);
+				throw failure;
+			}
+		} else if (newObject == null) {
+			if (nativeLayeredGameObjects.unregister(
+					generation, identity.getPlacementId(),
+					oldObject) == null) {
+				return;
+			}
+			try {
+				layeredSpatialEntityIndex.remove(
+					oldObject, identity.getLocation());
+			} catch (RuntimeException failure) {
+				nativeLayeredGameObjects.register(
+					generation, identity.getPlacementId(),
+					identity.getLocation(), oldObject.getType(),
+					oldObject.getDirection(), oldObject,
+					oldRollbackRegisterFootprint);
+				throw failure;
+			}
+		} else {
+			if (nativeLayeredGameObjects.replace(
+					generation, identity.getPlacementId(), oldObject,
+					identity.getLocation(), newObject.getType(),
+					newObject.getDirection(), newObject,
+					newRegisterFootprint) == null) {
+				return;
+			}
+			try {
+				layeredSpatialEntityIndex.replace(
+					oldObject, newObject, identity.getLocation());
+			} catch (RuntimeException failure) {
+				nativeLayeredGameObjects.replace(
+					generation, identity.getPlacementId(), newObject,
+					identity.getLocation(), oldObject.getType(),
+					oldObject.getDirection(), oldObject,
+					oldRollbackRegisterFootprint);
+				throw failure;
+			}
+		}
+		if (oldObject != null) {
+			oldObject.removeNativeLayeredTransactionState();
+			oldObject.clearOrderedCollisionRegistrationState();
+		}
+		if (newObject != null) {
+			newObject.attachNativeLayeredCollisionRegistrationState(
+				newCollision);
+		}
 	}
 
 	public int getNativeLayeredSceneryCount() {
@@ -3801,6 +4044,23 @@ public class RegionManager {
 	}
 
 	public void markNativeLayeredPlacement(
+		final Entity entity,
+		final String placementId,
+		final String kind) {
+		if (entity instanceof GameObject) {
+			GameObject object = (GameObject) entity;
+			object.getLoc().assignNativeLayeredGameObjectIdentity(
+				new NativeLayeredGameObjectIdentity(
+					nativeLayeredWorldPackage.getPackageId(),
+					nativeLayeredGameObjects.getGeneration(),
+					placementId,
+					kind,
+					object.getWorldLocation()));
+		}
+		setNativeLayeredPlacementAttributes(entity, placementId, kind);
+	}
+
+	private void setNativeLayeredPlacementAttributes(
 		final Entity entity,
 		final String placementId,
 		final String kind) {

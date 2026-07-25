@@ -8,15 +8,18 @@ import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
- * Level-qualified package-object identity and collision overlay.
+ * Generation-fenced, level-qualified package-object identity and collision
+ * overlay.
  *
- * <p>This registry never mutates a packed Region. It retains exact object
- * identity and canonical legacy collision contributions, then composes those
- * contributions onto a newly decoded native terrain tile.</p>
+ * <p>This registry never mutates a packed Region. Registration, replacement,
+ * and removal stage every affected collision tile before committing identity,
+ * slot, and collision state together.</p>
  */
 public final class NativeLayeredGameObjectRegistry<T> {
 	private final Object lock = new Object();
@@ -26,8 +29,16 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		new HashMap<Slot, Entry<T>>();
 	private final Map<WorldLocation, CollisionAggregate> collision =
 		new HashMap<WorldLocation, CollisionAggregate>();
+	private long generation = 1L;
+
+	public long getGeneration() {
+		synchronized (lock) {
+			return generation;
+		}
+	}
 
 	public T register(
+		final long expectedGeneration,
 		final String placementId,
 		final WorldLocation location,
 		final int type,
@@ -35,43 +46,95 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		final T instance,
 		final GameTickEventRestorationCollisionFootprintPlanner.Result
 			footprint) {
-		String checkedId = Objects.requireNonNull(
-			placementId, "placementId");
-		WorldLocation checkedLocation = Objects.requireNonNull(
-			location, "location");
-		T checkedInstance = Objects.requireNonNull(instance, "instance");
-		GameTickEventRestorationCollisionFootprintPlanner.Result
-			checkedFootprint = Objects.requireNonNull(
-				footprint, "footprint");
-		if (checkedId.isEmpty() || (type != 0 && type != 1)
-			|| direction < 0 || direction > 7
-			|| !checkedFootprint.isFootprintAvailable()
-			|| checkedFootprint.getOperation() != Operation.REGISTER
-			|| checkedFootprint.isLegacySaturatingUnregister()) {
-			throw new IllegalArgumentException(
-				"Native layered object registration is invalid");
-		}
-		Slot slot = new Slot(checkedLocation, type, direction);
+		Entry<T> proposed = entry(
+			placementId, location, type, direction, instance, footprint);
 		synchronized (lock) {
-			if (placements.containsKey(checkedId)) {
+			if (expectedGeneration != generation) {
+				return null;
+			}
+			if (placements.containsKey(proposed.placementId)) {
 				throw new IllegalStateException(
 					"Native layered placement ID is already active: "
-						+ checkedId);
+						+ proposed.placementId);
 			}
-			if (slots.containsKey(slot)) {
+			if (slots.containsKey(proposed.slot)) {
 				throw new IllegalStateException(
 					"Native layered object slot is already occupied: "
-						+ checkedLocation);
+						+ proposed.location);
 			}
-			Map<WorldLocation, CollisionAggregate> projected =
-				projectCollision(checkedLocation, checkedFootprint);
-			Entry<T> entry = new Entry<T>(
-				checkedId, checkedLocation, type, direction,
-				checkedInstance, checkedFootprint.getContributionTileCount());
-			placements.put(checkedId, entry);
-			slots.put(slot, entry);
-			collision.putAll(projected);
-			return checkedInstance;
+			Map<WorldLocation, CollisionAggregate> staged =
+				stageCollision(null, proposed);
+			placements.put(proposed.placementId, proposed);
+			slots.put(proposed.slot, proposed);
+			commitCollision(staged);
+			return proposed.instance;
+		}
+	}
+
+	public T replace(
+		final long expectedGeneration,
+		final String placementId,
+		final T expectedInstance,
+		final WorldLocation location,
+		final int type,
+		final int direction,
+		final T replacement,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			footprint) {
+		Entry<T> proposed = entry(
+			placementId, location, type, direction, replacement, footprint);
+		T checkedExpected = Objects.requireNonNull(
+			expectedInstance, "expectedInstance");
+		synchronized (lock) {
+			if (expectedGeneration != generation) {
+				return null;
+			}
+			Entry<T> current = placements.get(proposed.placementId);
+			if (current == null || current.instance != checkedExpected) {
+				throw new IllegalStateException(
+					"Native layered replacement source is not current: "
+						+ proposed.placementId);
+			}
+			Entry<T> occupant = slots.get(proposed.slot);
+			if (occupant != null && occupant != current) {
+				throw new IllegalStateException(
+					"Native layered replacement slot is occupied: "
+						+ proposed.location);
+			}
+			Map<WorldLocation, CollisionAggregate> staged =
+				stageCollision(current, proposed);
+			placements.put(proposed.placementId, proposed);
+			slots.remove(current.slot);
+			slots.put(proposed.slot, proposed);
+			commitCollision(staged);
+			return proposed.instance;
+		}
+	}
+
+	public T unregister(
+		final long expectedGeneration,
+		final String placementId,
+		final T expectedInstance) {
+		String checkedId = Objects.requireNonNull(
+			placementId, "placementId");
+		T checkedExpected = Objects.requireNonNull(
+			expectedInstance, "expectedInstance");
+		synchronized (lock) {
+			if (expectedGeneration != generation) {
+				return null;
+			}
+			Entry<T> current = placements.get(checkedId);
+			if (current == null || current.instance != checkedExpected) {
+				throw new IllegalStateException(
+					"Native layered removal source is not current: "
+						+ checkedId);
+			}
+			Map<WorldLocation, CollisionAggregate> staged =
+				stageCollision(current, null);
+			placements.remove(checkedId);
+			slots.remove(current.slot);
+			commitCollision(staged);
+			return current.instance;
 		}
 	}
 
@@ -130,42 +193,135 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			placements.clear();
 			slots.clear();
 			collision.clear();
+			generation = Math.addExact(generation, 1L);
 		}
 	}
 
-	private Map<WorldLocation, CollisionAggregate> projectCollision(
-		final WorldLocation origin,
+	private Entry<T> entry(
+		final String placementId,
+		final WorldLocation location,
+		final int type,
+		final int direction,
+		final T instance,
 		final GameTickEventRestorationCollisionFootprintPlanner.Result
 			footprint) {
-		Map<WorldLocation, CollisionAggregate> projected =
-			new HashMap<WorldLocation, CollisionAggregate>(collision);
+		String checkedId = Objects.requireNonNull(
+			placementId, "placementId");
+		WorldLocation checkedLocation = Objects.requireNonNull(
+			location, "location");
+		T checkedInstance = Objects.requireNonNull(instance, "instance");
+		GameTickEventRestorationCollisionFootprintPlanner.Result
+			checkedFootprint = Objects.requireNonNull(
+				footprint, "footprint");
+		if (checkedId.isEmpty() || (type != 0 && type != 1)
+			|| direction < 0 || direction > 7
+			|| !checkedFootprint.isFootprintAvailable()
+			|| checkedFootprint.getOperation() != Operation.REGISTER
+			|| checkedFootprint.isLegacySaturatingUnregister()) {
+			throw new IllegalArgumentException(
+				"Native layered object registration is invalid");
+		}
+		return new Entry<T>(
+			checkedId, checkedLocation, type, direction,
+			checkedInstance, checkedFootprint);
+	}
+
+	private Map<WorldLocation, CollisionAggregate> stageCollision(
+		final Entry<T> removed,
+		final Entry<T> added) {
+		Set<WorldLocation> touched = new LinkedHashSet<WorldLocation>();
+		if (removed != null) {
+			collectCollisionLocations(
+				removed.location, removed.footprint, touched);
+		}
+		if (added != null) {
+			collectCollisionLocations(
+				added.location, added.footprint, touched);
+		}
+		Map<WorldLocation, CollisionAggregate> staged =
+			new HashMap<WorldLocation, CollisionAggregate>();
+		for (WorldLocation location : touched) {
+			CollisionAggregate aggregate = collision.get(location);
+			staged.put(
+				location,
+				aggregate == null
+					? new CollisionAggregate() : aggregate.copy());
+		}
+		if (removed != null) {
+			mutateCollision(
+				removed.location, removed.footprint, staged, false);
+		}
+		if (added != null) {
+			mutateCollision(
+				added.location, added.footprint, staged, true);
+		}
+		return staged;
+	}
+
+	private static void collectCollisionLocations(
+		final WorldLocation origin,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			footprint,
+		final Set<WorldLocation> locations) {
 		for (CollisionContribution contribution
 			: footprint.getContributions()) {
-			WorldLocation location = new WorldLocation(
-				origin.getWorldSpace(),
-				new WorldCoordinate(
-					contribution.getX(),
-					contribution.getY(),
-					origin.getCoordinate().getLevel()));
-			CollisionAggregate aggregate = projected.get(location);
-			if (aggregate == null) {
-				aggregate = new CollisionAggregate();
-			} else {
-				aggregate = aggregate.copy();
-			}
-			aggregate.add(contribution);
-			projected.put(location, aggregate);
+			locations.add(collisionLocation(origin, contribution));
 		}
-		return projected;
+	}
+
+	private static void mutateCollision(
+		final WorldLocation origin,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result
+			footprint,
+		final Map<WorldLocation, CollisionAggregate> staged,
+		final boolean add) {
+		for (CollisionContribution contribution
+			: footprint.getContributions()) {
+			WorldLocation location = collisionLocation(origin, contribution);
+			CollisionAggregate aggregate = staged.get(location);
+			if (aggregate == null) {
+				throw new IllegalStateException(
+					"Native layered collision staging is incomplete");
+			}
+			if (add) {
+				aggregate.add(contribution);
+			} else {
+				aggregate.remove(contribution);
+			}
+		}
+	}
+
+	private static WorldLocation collisionLocation(
+		final WorldLocation origin,
+		final CollisionContribution contribution) {
+		return new WorldLocation(
+			origin.getWorldSpace(),
+			new WorldCoordinate(
+				contribution.getX(),
+				contribution.getY(),
+				origin.getCoordinate().getLevel()));
+	}
+
+	private void commitCollision(
+		final Map<WorldLocation, CollisionAggregate> staged) {
+		for (Map.Entry<WorldLocation, CollisionAggregate> value
+			: staged.entrySet()) {
+			if (value.getValue().isEmpty()) {
+				collision.remove(value.getKey());
+			} else {
+				collision.put(value.getKey(), value.getValue());
+			}
+		}
 	}
 
 	private static final class Entry<T> {
 		private final String placementId;
 		private final WorldLocation location;
 		private final int type;
-		private final int direction;
 		private final T instance;
-		private final int collisionTileCount;
+		private final Slot slot;
+		private final GameTickEventRestorationCollisionFootprintPlanner.Result
+			footprint;
 
 		private Entry(
 			final String placementId,
@@ -173,13 +329,14 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			final int type,
 			final int direction,
 			final T instance,
-			final int collisionTileCount) {
+			final GameTickEventRestorationCollisionFootprintPlanner.Result
+				footprint) {
 			this.placementId = placementId;
 			this.location = location;
 			this.type = type;
-			this.direction = direction;
 			this.instance = instance;
-			this.collisionTileCount = collisionTileCount;
+			this.slot = new Slot(location, type, direction);
+			this.footprint = footprint;
 		}
 	}
 
@@ -247,6 +404,41 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			dynamicProjectileCount = Math.addExact(
 				dynamicProjectileCount,
 				contribution.getDynamicProjectileCount());
+		}
+
+		private void remove(final CollisionContribution contribution) {
+			blockingSceneryCount = subtract(
+				blockingSceneryCount,
+				contribution.getBlockingSceneryCount());
+			for (int bit = 0; bit < dynamicCollisionCounts.length; bit++) {
+				dynamicCollisionCounts[bit] = subtract(
+					dynamicCollisionCounts[bit],
+					contribution.getDynamicCollisionCount(bit));
+			}
+			dynamicProjectileCount = subtract(
+				dynamicProjectileCount,
+				contribution.getDynamicProjectileCount());
+		}
+
+		private static int subtract(final int current, final int removed) {
+			int result = Math.subtractExact(current, removed);
+			if (result < 0) {
+				throw new IllegalStateException(
+					"Native layered collision contribution underflow");
+			}
+			return result;
+		}
+
+		private boolean isEmpty() {
+			if (blockingSceneryCount != 0 || dynamicProjectileCount != 0) {
+				return false;
+			}
+			for (int count : dynamicCollisionCounts) {
+				if (count != 0) {
+					return false;
+				}
+			}
+			return true;
 		}
 
 		private void apply(final TileValue tile) {

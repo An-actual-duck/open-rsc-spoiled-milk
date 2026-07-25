@@ -116,7 +116,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assertEqual(1, report["npcPlacementCount"])
             self.assertEqual(1, report["groundItemPlacementCount"])
             self.assertEqual(1, report["sceneryPlacementCount"])
-            self.assertEqual(1, report["boundaryPlacementCount"])
+            self.assertEqual(2, report["boundaryPlacementCount"])
             self.assertEqual({0, -2, -3}, {level["level"] for level in report["levels"]})
 
     def test_level_is_data_not_a_fixed_minus_two_or_minus_three_enumeration(self):

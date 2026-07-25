@@ -32,8 +32,12 @@ world-load, respawn-registry, private-startup validation, and the focused owner
 route. Static package-owned scenery/boundaries now pass strict format,
 independent server decode, world-load registration, level-qualified
 visibility/collision isolation, private startup, automated validation, and the
-focused owner route. Dynamic object lifecycle authority and removal of the
-bounded compatibility receipt remain the current implementation boundary.
+focused owner route. The first dynamic package-object cut now provides
+generation-fenced replacement/removal identity, level-qualified
+visibility/collision transactions, and an ordinary Door/Doorframe fixture;
+automated validation passes and focused owner acceptance remains. Broader
+harvesting/restoration coverage and removal of the bounded compatibility
+receipt remain the current implementation boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -477,6 +481,50 @@ The focused owner route is accepted:
   and
 - explicit exit restored `(120,648,L0)`. Neither the client nor server
   recorded a route-time exception.
+
+### Authority Milestone E placement checkpoint 9
+
+Implemented and automated/private-build validated on 2026-07-25; focused owner
+acceptance remains pending:
+
+- package `0.5.0` adds one ordinary closed Door at
+  `global (452,604,L-2)` beside the accepted static fixture. It uses the
+  existing generic Door/Doorframe actions, so the owner route exercises the
+  same plugin replacement path as normal world content instead of a
+  diagnostic-only mutation;
+- every package-owned scenery or boundary receives an immutable
+  package/generation/placement/kind/location identity on its original
+  `GameObjectLoc`. Replacement objects inherit that identity, while delayed
+  restoration reconstructed from the original location record retains it.
+  Conflicting reassignment is refused and callbacks from an unloaded
+  generation become no-ops;
+- native registration, replacement, and removal are now explicit
+  level-qualified transactions. The object registry stages all old/new
+  collision deltas before changing the stable placement ID or slot; the
+  layered spatial index can replace one exact instance with another while
+  advancing visibility version once. Neither path enters or mutates a packed
+  `Region`;
+- runtime transactions verify package, generation, kind/type, coordinates,
+  current instance, spatial membership, entity state, exact collision
+  footprints, and package terrain before commit. If spatial publication fails,
+  registry identity and collision are restored before the error escapes;
+- the shared `changeloc` helper now expresses its temporary-object operation
+  as an explicit replacement. This preserves the ordinary packed behavior and
+  lets native objects use the same plugin API without a packed-region lookup;
+  and
+- executable registry coverage proves closed-boundary collision removal on
+  replacement, reciprocal-edge removal, stable placement identity, exact
+  removal, same-generation restoration, collision restoration, conflicting
+  identity refusal, and stale-generation callback refusal.
+
+The strict package check passes with fingerprint
+`af65de093cc4afd7c59ab17862785bcdec6611ad586cfca47e18bd1194653934`;
+the complete 30-test A-through-E authority lineage passes; and the
+authoritative 864-core/488-plugin server plus 262-source client builds pass.
+Public and ordinary private defaults remain unchanged. Owner acceptance must
+confirm the Door appears, opens to a Doorframe, releases its exact edge,
+closes back into the same placement, restores collision, remains
+duplicate-free, and does not regress nearby entities or reconnect.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately

@@ -79,6 +79,46 @@ public final class LayeredSpatialEntityIndex {
 		}
 	}
 
+	public void replace(
+		final Entity expected,
+		final Entity replacement,
+		final WorldLocation expectedLocation) {
+		Entity checkedExpected = Objects.requireNonNull(expected, "expected");
+		Entity checkedReplacement = Objects.requireNonNull(
+			replacement, "replacement");
+		WorldLocation checkedLocation = Objects.requireNonNull(
+			expectedLocation, "expectedLocation");
+		if (checkedExpected == checkedReplacement) {
+			throw new IllegalArgumentException(
+				"Layered entity replacement must use distinct instances");
+		}
+		synchronized (lock) {
+			if (!checkedLocation.equals(memberships.get(checkedExpected))
+				|| memberships.containsKey(checkedReplacement)) {
+				throw new IllegalStateException(
+					"Layered entity replacement membership differs");
+			}
+			WorldRegionKey key = WorldRegionKey.from(checkedLocation);
+			LinkedHashSet<Entity> members = regions.get(key);
+			if (members == null || !members.remove(checkedExpected)) {
+				throw new IllegalStateException(
+					"Layered entity replacement source is absent");
+			}
+			if (!members.add(checkedReplacement)) {
+				members.add(checkedExpected);
+				throw new IllegalStateException(
+					"Layered entity replacement target is already present");
+			}
+			memberships.remove(checkedExpected);
+			memberships.put(checkedReplacement, checkedLocation);
+			version++;
+			if (checkedExpected instanceof GameObject
+				|| checkedReplacement instanceof GameObject) {
+				objectVersion++;
+			}
+		}
+	}
+
 	public void requireMembership(
 		final Entity entity,
 		final WorldLocation expectedLocation) {

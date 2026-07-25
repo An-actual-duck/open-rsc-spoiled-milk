@@ -55,7 +55,7 @@ public final class NativeLayeredServerSourceFixture {
         NativeLayeredWorldPackage world =
             NativeLayeredWorldPackage.load(Paths.get(args[0]));
         check("rsc-remastered.native-loader-lab".equals(world.getPackageId()), "package ID");
-        check("0.4.0".equals(world.getPackageVersion()), "package version");
+        check("0.5.0".equals(world.getPackageVersion()), "package version");
         check(world.getPresentationChunkSize() == 24, "presentation chunk");
         check(world.getWorldSpaceCount() == 1, "world-space count");
         check(world.getLevelCount() == 3, "level count");
@@ -66,7 +66,7 @@ public final class NativeLayeredServerSourceFixture {
             "ground-item placement count");
         check(world.getSceneryPlacementCount() == 1,
             "scenery placement count");
-        check(world.getBoundaryPlacementCount() == 1,
+        check(world.getBoundaryPlacementCount() == 2,
             "boundary placement count");
         NativeLayeredPlacementSet placements =
             world.getPlacementSets().get("deep-fixture-entities");
@@ -111,6 +111,16 @@ public final class NativeLayeredServerSourceFixture {
                 && boundary.getLocation().getCoordinate().getY() == 604
                 && boundary.getLocation().getCoordinate().getLevel() == -2,
             "boundary layered location");
+        NativeLayeredBoundaryPlacement door =
+            placements.getBoundaries().get(1);
+        check("deep-fixture-door".equals(door.getPlacementId()),
+            "door placement ID");
+        check(door.getBoundaryId() == 2 && door.getDirection() == 0,
+            "door placement values");
+        check(door.getLocation().getCoordinate().getX() == 452
+                && door.getLocation().getCoordinate().getY() == 604
+                && door.getLocation().getCoordinate().getLevel() == -2,
+            "door layered location");
         check(world.declaresLevel(WorldSpaceId.GLOBAL, 0), "surface declaration");
         check(world.declaresLevel(WorldSpaceId.GLOBAL, -2), "deep declaration");
         check(world.declaresLevel(WorldSpaceId.GLOBAL, -3), "expanded declaration");
@@ -242,7 +252,7 @@ public final class NativeLayeredChunkWireFixture {
         context.legacyX = 450;
         context.legacyY = 600;
         context.nativePackageId = "rsc-remastered.native-loader-lab";
-        context.nativePackageVersion = "0.4.0";
+        context.nativePackageVersion = "0.5.0";
         context.nativeManifestSha256 =
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         context.nativePresentationChunkSize = 24;

@@ -16,6 +16,7 @@ OBJECT_REGISTRY = (
     SERVER
     / "src/com/openrsc/server/model/world/NativeLayeredGameObjectRegistry.java"
 )
+GAME_OBJECT_LOC = SERVER / "src/com/openrsc/server/external/GameObjectLoc.java"
 WORLD = SERVER / "src/com/openrsc/server/model/world/World.java"
 GROUND_ITEM = SERVER / "src/com/openrsc/server/model/entity/GroundItem.java"
 REGION_MANAGER = (
@@ -26,6 +27,7 @@ DEVELOPMENT = (
     SERVER
     / "plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 )
+FUNCTIONS = SERVER / "src/com/openrsc/server/plugins/Functions.java"
 
 
 HARNESS = r"""
@@ -39,6 +41,8 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPl
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldSpaceId;
+import com.openrsc.server.model.world.coordinate.NativeLayeredGameObjectIdentity;
+import com.openrsc.server.model.world.coordinate.NativeLayeredGameObjectIdentitySlot;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.CollisionFlag;
 
@@ -76,6 +80,7 @@ public final class NativeLayeredPlacementRegistryFixture {
 
         NativeLayeredGameObjectRegistry<Object> objects =
             new NativeLayeredGameObjectRegistry<Object>();
+        long objectGeneration = objects.getGeneration();
         WorldLocation tableLocation = new WorldLocation(
             WorldSpaceId.GLOBAL, new WorldCoordinate(446, 604, -2));
         GameTickEventRestorationCollisionFootprintPlanner.Result table =
@@ -87,7 +92,8 @@ public final class NativeLayeredPlacementRegistryFixture {
                 WorldBounds.of(1000, 1000));
         Object tableObject = new Object();
         check(objects.register(
-                "deep-table", tableLocation, 0, 0, tableObject, table)
+                objectGeneration, "deep-table", tableLocation,
+                0, 0, tableObject, table)
                 == tableObject,
             "register layered scenery");
         TileValue deepTableTile = emptyTile();
@@ -111,8 +117,10 @@ public final class NativeLayeredPlacementRegistryFixture {
                 Definition.boundary(1, "Fence", new String[0]),
                 false,
                 WorldBounds.of(1000, 1000));
+        Object fenceObject = new Object();
         objects.register(
-            "deep-fence", fenceLocation, 1, 0, new Object(), fence);
+            objectGeneration, "deep-fence", fenceLocation,
+            1, 0, fenceObject, fence);
         TileValue fenceNorth = emptyTile();
         objects.applyCollision(fenceLocation, fenceNorth);
         check((fenceNorth.traversalMask & CollisionFlag.WALL_NORTH) != 0,
@@ -129,13 +137,79 @@ public final class NativeLayeredPlacementRegistryFixture {
             "typed package object counts");
         check(objects.getCollisionTileCount() == 3,
             "combined collision tile count");
+
+        GameTickEventRestorationCollisionFootprintPlanner.Result doorframe =
+            GameTickEventRestorationCollisionFootprintPlanner.plan(
+                Operation.REGISTER,
+                ConstructorState.of(1, 448, 604, 0, 1),
+                Definition.boundary(0, "Doorframe", new String[0]),
+                false,
+                WorldBounds.of(1000, 1000));
+        Object openDoorframe = new Object();
+        check(objects.replace(
+                objectGeneration, "deep-fence", fenceObject,
+                fenceLocation, 1, 0, openDoorframe, doorframe)
+                == openDoorframe,
+            "replace package boundary");
+        check(objects.find("deep-fence") == openDoorframe
+                && objects.size() == 2,
+            "replacement retains placement identity");
+        TileValue openedNorth = emptyTile();
+        objects.applyCollision(fenceLocation, openedNorth);
+        check((openedNorth.traversalMask & CollisionFlag.WALL_NORTH) == 0,
+            "replacement removes closed boundary collision");
+        TileValue openedSouth = emptyTile();
+        objects.applyCollision(
+            new WorldLocation(
+                WorldSpaceId.GLOBAL, new WorldCoordinate(448, 603, -2)),
+            openedSouth);
+        check((openedSouth.traversalMask & CollisionFlag.WALL_SOUTH) == 0,
+            "replacement removes reciprocal boundary collision");
+        check(objects.getCollisionTileCount() == 1,
+            "replacement commits exact collision delta");
+
+        check(objects.unregister(
+                objectGeneration, "deep-fence", openDoorframe)
+                == openDoorframe,
+            "remove package boundary");
+        check(objects.find("deep-fence") == null && objects.size() == 1,
+            "removal releases placement identity");
+        check(objects.register(
+                objectGeneration, "deep-fence", fenceLocation,
+                1, 0, fenceObject, fence) == fenceObject,
+            "same-generation delayed restoration");
+        check(objects.getCollisionTileCount() == 3,
+            "restoration reinstates exact collision");
+
         expectIllegal(() -> objects.register(
-            "deep-table", tableLocation, 0, 0, new Object(), table));
+            objectGeneration, "deep-table", tableLocation,
+            0, 0, new Object(), table));
         expectIllegal(() -> objects.register(
-            "other-table", tableLocation, 0, 4, new Object(), table));
+            objectGeneration, "other-table", tableLocation,
+            0, 4, new Object(), table));
+
+        NativeLayeredGameObjectIdentity identity =
+            new NativeLayeredGameObjectIdentity(
+                "test.package", objectGeneration, "deep-fence",
+                "boundary", fenceLocation);
+        NativeLayeredGameObjectIdentitySlot identitySlot =
+            new NativeLayeredGameObjectIdentitySlot();
+        identitySlot.assign(identity);
+        identitySlot.assign(identity);
+        check(identitySlot.get() == identity,
+            "native placement identity assignment is idempotent");
+        expectIllegalState(() -> identitySlot.assign(
+            new NativeLayeredGameObjectIdentity(
+                "test.package", objectGeneration, "other-fence",
+                "boundary", fenceLocation)));
+
         objects.reset();
         check(objects.size() == 0 && objects.getCollisionTileCount() == 0,
             "object registry reset");
+        check(objects.register(
+                objectGeneration, "stale-table", tableLocation,
+                0, 0, new Object(), table) == null,
+            "stale delayed object callback refused");
     }
 
     private static TileValue emptyTile() {
@@ -148,6 +222,15 @@ public final class NativeLayeredPlacementRegistryFixture {
         try {
             operation.run();
             throw new AssertionError("Expected registration refusal");
+        } catch (IllegalStateException expected) {
+            // Expected.
+        }
+    }
+
+    private static void expectIllegalState(Runnable operation) {
+        try {
+            operation.run();
+            throw new AssertionError("Expected identity refusal");
         } catch (IllegalStateException expected) {
             // Expected.
         }
@@ -216,6 +299,8 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
         world = WORLD.read_text(encoding="utf-8")
         item = GROUND_ITEM.read_text(encoding="utf-8")
         manager = REGION_MANAGER.read_text(encoding="utf-8")
+        loc = GAME_OBJECT_LOC.read_text(encoding="utf-8")
+        functions = FUNCTIONS.read_text(encoding="utf-8")
         self.assertIn(
             "getRegionManager().populateNativeLayeredPlacements()", world
         )
@@ -235,10 +320,20 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
         self.assertIn("placement.getStart()", manager)
         self.assertIn("NativeLayeredSceneryPlacement", manager)
         self.assertIn("NativeLayeredBoundaryPlacement", manager)
-        self.assertIn("registerNativeLayeredGameObject(", manager)
+        self.assertIn("populateNativeLayeredGameObject(", manager)
         self.assertIn(
             "nativeLayeredGameObjects.applyCollision(location, tile)",
             manager,
+        )
+        self.assertIn("applyNativeLayeredGameObjectTransaction(", manager)
+        self.assertIn("nativeLayeredGameObjects.replace(", manager)
+        self.assertIn("nativeLayeredGameObjects.unregister(", manager)
+        self.assertIn("NativeLayeredGameObjectIdentity", loc)
+        self.assertIn(
+            "o.getWorld().replaceGameObject(o, newObject);", functions
+        )
+        self.assertIn(
+            "obj.getWorld().replaceGameObject(obj, replaceObj);", functions
         )
         self.assertNotIn(
             "applyObjectMembershipAndCollisionTransaction(\n"

@@ -92,6 +92,15 @@ public class GameObject extends Entity {
 		attachCollisionRegistrationState(state);
 	}
 
+	/** Marks a native layered object removed without touching a packed Region. */
+	public void removeNativeLayeredTransactionState() {
+		if (getRegion() != null || getLocation() == null || isRemoved()) {
+			throw new IllegalStateException(
+				"Native layered GameObject is not ready for removal");
+		}
+		setRemoved(true);
+	}
+
 	private void attachCollisionRegistrationState(
 		final GameObjectCollisionRegistrationState state) {
 		GameObjectCollisionRegistrationState checked =

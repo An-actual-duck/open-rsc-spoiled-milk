@@ -571,6 +571,19 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	private void registerGameObject(
 		final GameObject o,
 		final boolean forceFullBlock) {
+		if (getRegionManager().hasNativeLayeredGameObjectIdentity(o)) {
+			if (!getRegionManager().prepareNativeLayeredGameObject(o)) {
+				return;
+			}
+			GameObject current =
+				getRegionManager().findNativeLayeredGameObject(o);
+			if (current == o) {
+				throw new IllegalStateException(
+					"Native layered GameObject instance is already active");
+			}
+			applyGameObjectTransaction(current, o, forceFullBlock);
+			return;
+		}
 		Point objectCoordinates = Point.location(o.getLoc().getX(), o.getLoc().getY());
 		final GameObject collidingObject = o.getType() == 0
 			? getRegionManager().getRegion(objectCoordinates)
@@ -644,6 +657,15 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		GameTickEventRestorationCollisionFootprintPlanner.Result newRegister =
 			newObject == null ? null : planGameObjectCollision(
 				newObject, Operation.REGISTER, forceFullBlock);
+		if ((oldObject != null
+				&& getRegionManager().isNativeLayeredGameObject(oldObject))
+			|| (newObject != null
+				&& getRegionManager().isNativeLayeredGameObject(newObject))) {
+			getRegionManager().applyNativeLayeredGameObjectTransaction(
+				oldObject, oldUnregister, oldRollbackRegister,
+				newObject, newRegister);
+			return;
+		}
 		getRegionManager().applyObjectMembershipAndCollisionTransaction(
 			oldObject, oldUnregister, oldRollbackRegister,
 			newObject, newRegister);
@@ -826,6 +848,10 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	}
 
 	public void replaceGameObject(final GameObject old, final GameObject _new) {
+		if (getRegionManager().isNativeLayeredGameObject(old)) {
+			getRegionManager().inheritNativeLayeredGameObjectIdentity(
+				old, _new);
+		}
 		LayeredAuthoredPlacementIdentity authoredIdentity =
 			old.getAuthoredPlacementIdentity();
 		if (authoredIdentity != null) {

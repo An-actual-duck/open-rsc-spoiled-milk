@@ -591,7 +591,7 @@ public class Functions {
 	public static void changeloc(GameObject obj, int delay, int replaceID) {
 		// Object to replace old
 		final GameObject replaceObj = new GameObject(obj.getWorld(), obj.getLocation(), replaceID, obj.getID(), obj.getDirection(), obj.getType());
-		addloc(replaceObj);
+		obj.getWorld().replaceGameObject(obj, replaceObj);
 		addloc(obj.getWorld(), obj.getLoc(), delay);
 	}
 
