@@ -164,8 +164,21 @@ class LayeredMapsSliceEightyNineTest(unittest.TestCase):
         start = handler.index(
             "captureLayeredPackedRegionEventOwnershipInventory("
         )
-        end = handler.index("public boolean hasEvent", start)
-        boundary = handler[start:end]
+        capture_end = handler.index(
+            "/**\n\t * Runs the explicit private verification-only recovery",
+            start,
+        )
+        detach_start = handler.index(
+            "private EventState detachEventState(", capture_end
+        )
+        detach_end = handler.index(
+            "private EventTypeIdentity detachEventTypeIdentity(",
+            detach_start,
+        )
+        boundary = (
+            handler[start:capture_end]
+            + handler[detach_start:detach_end]
+        )
         self.assertIn("getTrackedEventAtomicTimingSnapshot(", boundary)
         self.assertIn("timingSnapshot.getRegistrations()", boundary)
         self.assertIn("OWNER_POSITION_HINT", boundary)
