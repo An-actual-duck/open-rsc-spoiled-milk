@@ -15,6 +15,8 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidationRe
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision
 	.TargetOperation;
+import com.openrsc.server.io.NativeLayeredTerrainTile;
+import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
@@ -65,6 +67,8 @@ import com.openrsc.server.external.DoorDef;
 import com.openrsc.server.external.EntityHandler;
 import com.openrsc.server.external.GameObjectDef;
 
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -104,6 +108,7 @@ public class RegionManager {
 	private final LayeredRegionRetirementDecisionArbiter
 		layeredRegionRetirementDecisionArbiter;
 	private final LayeredSpatialEntityIndex layeredSpatialEntityIndex;
+	private final NativeLayeredWorldPackage nativeLayeredWorldPackage;
 
 	private final World world;
 
@@ -139,6 +144,16 @@ public class RegionManager {
 				"Layered synthetic deep fixture requires layered Player "
 					+ "location, spatial runtime, and protocol/client authority");
 		}
+		if (world.getServer().getConfig()
+				.WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			&& !world.getServer().getConfig()
+				.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE) {
+			throw new IllegalStateException(
+				"Layered native terrain package requires the accepted synthetic "
+					+ "deep compatibility boundary during this private milestone");
+		}
+		this.nativeLayeredWorldPackage =
+			loadNativeLayeredWorldPackage(world);
 		this.regions = new ConcurrentHashMap<>();
 		this.visibleRegionWindowCache = new ConcurrentHashMap<>();
 		this.visibleObjectWindowCache = new ConcurrentHashMap<>();
@@ -156,6 +171,62 @@ public class RegionManager {
 		this.layeredRegionRetirementDecisionArbiter =
 			new LayeredRegionRetirementDecisionArbiter();
 		this.layeredSpatialEntityIndex = new LayeredSpatialEntityIndex();
+	}
+
+	private static NativeLayeredWorldPackage loadNativeLayeredWorldPackage(
+		final World world) {
+		if (!world.getServer().getConfig()
+				.WANT_LAYERED_NATIVE_TERRAIN_PACKAGE) {
+			return null;
+		}
+		final String configuredPath = world.getServer().getConfig()
+			.LAYERED_NATIVE_TERRAIN_PACKAGE_PATH;
+		if (configuredPath == null || configuredPath.trim().isEmpty()) {
+			throw new IllegalStateException(
+				"Layered native terrain package path is required when its gate is enabled");
+		}
+		try {
+			NativeLayeredWorldPackage loaded =
+				NativeLayeredWorldPackage.load(Paths.get(configuredPath.trim()));
+			validateNativeDeepFixturePackage(loaded);
+			return loaded;
+		} catch (IOException failure) {
+			throw new IllegalStateException(
+				"Could not load the private native layered terrain package: "
+					+ failure.getMessage(),
+				failure);
+		}
+	}
+
+	private static void validateNativeDeepFixturePackage(
+		final NativeLayeredWorldPackage loaded) {
+		if (!loaded.declaresLevel(
+				com.openrsc.server.model.world.coordinate.WorldSpaceId.GLOBAL,
+				LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_LEVEL)) {
+			throw new IllegalStateException(
+				"Native layered terrain package does not declare level -2");
+		}
+		for (int x = LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_X;
+			x <= LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_X;
+			x++) {
+			for (int y = LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_Y;
+				y <= LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_Y;
+				y++) {
+				WorldLocation location = LayeredCompatibilityPointAdapter.deepLocation(x, y);
+				NativeLayeredTerrainTile tile = loaded.findTile(location)
+					.orElseThrow(() -> new IllegalStateException(
+						"Native layered terrain package has no fixture tile at "
+							+ location));
+				if (tile.getOverlay() != 0
+					|| tile.getVerticalWall() != 0
+					|| tile.getHorizontalWall() != 0
+					|| tile.getDiagonalWall() != 0) {
+					throw new IllegalStateException(
+						"The first native deep runtime fixture requires passable "
+							+ "wall-free overlay-0 terrain at " + location);
+				}
+			}
+		}
 	}
 
 	public void load() {
@@ -3435,6 +3506,9 @@ public class RegionManager {
 				location,
 				getWorld().getServer().getConfig()
 					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+			if (nativeLayeredWorldPackage != null) {
+				return nativeDeepFixtureTile(location);
+			}
 			return syntheticDeepFixtureTile();
 		}
 		Point packed = requireLegacyTerrainProjection(location);
@@ -3459,6 +3533,26 @@ public class RegionManager {
 		tile.overlay = 0;
 		tile.initializeTerrainCollision();
 		return tile;
+	}
+
+	private TileValue nativeDeepFixtureTile(final WorldLocation location) {
+		NativeLayeredTerrainTile source = nativeLayeredWorldPackage
+			.findTile(location)
+			.orElseThrow(() -> new IllegalStateException(
+				"Native layered terrain disappeared after startup validation: "
+					+ location));
+		TileValue tile = new TileValue();
+		tile.overlay = (byte) source.getOverlay();
+		tile.diagWallVal = (short) source.getDiagonalWall();
+		tile.horizontalWallVal = (byte) source.getHorizontalWall();
+		tile.verticalWallVal = (byte) source.getVerticalWall();
+		tile.elevation = (byte) source.getElevation();
+		tile.initializeTerrainCollision();
+		return tile;
+	}
+
+	public NativeLayeredWorldPackage getNativeLayeredWorldPackage() {
+		return nativeLayeredWorldPackage;
 	}
 
 	private Point requireLegacyTerrainProjection(

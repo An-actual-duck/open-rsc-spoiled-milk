@@ -93,6 +93,8 @@ public class ServerConfiguration {
 	public boolean WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
 	public boolean WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
 	public boolean WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
+	public boolean WANT_LAYERED_NATIVE_TERRAIN_PACKAGE;
+	public String LAYERED_NATIVE_TERRAIN_PACKAGE_PATH;
 	public int MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS;
 	public int MOVEMENT_STUTTER_POLL_OUTLIER_MS;
 	public int MOVEMENT_STUTTER_TICK_OUTLIER_MS;
@@ -536,6 +538,16 @@ public class ServerConfiguration {
 			"OPENRSC_LAYERED_SYNTHETIC_DEEP_FIXTURE",
 			"want_layered_synthetic_deep_fixture",
 			false);
+		WANT_LAYERED_NATIVE_TERRAIN_PACKAGE = readBoolSystemEnvConfig(
+			"openrsc.layeredNativeTerrainPackage",
+			"OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE",
+			"want_layered_native_terrain_package",
+			false);
+		LAYERED_NATIVE_TERRAIN_PACKAGE_PATH = readStringSystemEnvConfig(
+			"openrsc.layeredNativeTerrainPackagePath",
+			"OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH",
+			"layered_native_terrain_package_path",
+			"");
 		MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS = Math.max(5, readIntSystemEnvConfig(
 			"openrsc.movementStutterDiagnosticSummarySeconds",
 			"OPENRSC_MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS",
@@ -1022,6 +1034,18 @@ public class ServerConfiguration {
 			return Boolean.parseBoolean(systemValue.trim());
 		}
 		return readBoolEnvFirst(envKey, configKey, defaultValue);
+	}
+
+	private String readStringSystemEnvConfig(
+		String systemKey,
+		String envKey,
+		String configKey,
+		String defaultValue) {
+		String systemValue = System.getProperty(systemKey);
+		if (systemValue != null && !systemValue.trim().isEmpty()) {
+			return systemValue.trim();
+		}
+		return readStringEnvFirst(envKey, configKey, defaultValue);
 	}
 
 	private int readIntSystemEnvConfig(String systemKey, String envKey, String configKey, int defaultValue) {

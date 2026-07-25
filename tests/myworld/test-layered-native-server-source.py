@@ -12,6 +12,11 @@ SERVER = ROOT / "server"
 CORE_JAR = SERVER / "core.jar"
 PACKAGE = ROOT / "tools/layered-maps/fixtures/native-package-v1"
 SOURCE = SERVER / "src/com/openrsc/server/io/NativeLayeredWorldPackage.java"
+CONFIGURATION = SERVER / "src/com/openrsc/server/ServerConfiguration.java"
+REGION_MANAGER = (
+    SERVER
+    / "src/com/openrsc/server/model/world/region/RegionManager.java"
+)
 
 
 HARNESS = r"""
@@ -192,6 +197,37 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
         for token in forbidden:
             with self.subTest(token=token):
                 self.assertNotIn(token, source)
+
+    def test_private_runtime_gate_is_explicit_fail_closed_and_reversible(self):
+        configuration = CONFIGURATION.read_text(encoding="utf-8")
+        region_manager = REGION_MANAGER.read_text(encoding="utf-8")
+        self.assertIn("WANT_LAYERED_NATIVE_TERRAIN_PACKAGE", configuration)
+        self.assertIn(
+            "OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE", configuration
+        )
+        self.assertIn(
+            '"want_layered_native_terrain_package",\n\t\t\tfalse',
+            configuration,
+        )
+        self.assertIn(
+            "LAYERED_NATIVE_TERRAIN_PACKAGE_PATH", configuration
+        )
+        self.assertIn(
+            "NativeLayeredWorldPackage.load", region_manager
+        )
+        self.assertIn(
+            "validateNativeDeepFixturePackage(loaded)", region_manager
+        )
+        self.assertIn(
+            "NativeLayeredTerrainTile source = nativeLayeredWorldPackage",
+            region_manager,
+        )
+        self.assertIn(
+            "return nativeDeepFixtureTile(location)", region_manager
+        )
+        self.assertIn(
+            "return syntheticDeepFixtureTile()", region_manager
+        )
 
 
 if __name__ == "__main__":
