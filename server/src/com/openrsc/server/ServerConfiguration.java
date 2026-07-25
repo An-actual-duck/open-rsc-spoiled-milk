@@ -89,6 +89,7 @@ public class ServerConfiguration {
 	public boolean WANT_SYNC_MOVEMENT_SNAPSHOT;
 	public boolean WANT_MOVEMENT_STUTTER_DIAGNOSTICS;
 	public boolean WANT_LAYERED_MAP_PARITY_OBSERVER;
+	public boolean WANT_LAYERED_PLAYER_LOCATION_AUTHORITY;
 	public int MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS;
 	public int MOVEMENT_STUTTER_POLL_OUTLIER_MS;
 	public int MOVEMENT_STUTTER_TICK_OUTLIER_MS;
@@ -511,6 +512,11 @@ public class ServerConfiguration {
 			"openrsc.layeredMapParityObserver",
 			"OPENRSC_LAYERED_MAP_PARITY_OBSERVER",
 			"want_layered_map_parity_observer",
+			false);
+		WANT_LAYERED_PLAYER_LOCATION_AUTHORITY = readBoolSystemEnvConfig(
+			"openrsc.layeredPlayerLocationAuthority",
+			"OPENRSC_LAYERED_PLAYER_LOCATION_AUTHORITY",
+			"want_layered_player_location_authority",
 			false);
 		MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS = Math.max(5, readIntSystemEnvConfig(
 			"openrsc.movementStutterDiagnosticSummarySeconds",

@@ -41,6 +41,9 @@ import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationAuthority;
+import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationPersistence;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
@@ -219,8 +222,14 @@ public final class Player extends Mob {
 	 * Multiple threads access this and it never changes.
 	 */
 	private final AtomicReference<CarriedItems> carriedItems = new AtomicReference<>();
-	/** Checked read-only mirror; the inherited packed Point remains authoritative. */
+	/** Checked packed projection mirror retained across both authority modes. */
 	private final LayeredLocationMirror layeredLocationMirror = new LayeredLocationMirror();
+	/**
+	 * Private-gated layered authority. The inherited Point is its compatibility
+	 * projection while the gate is enabled.
+	 */
+	private final LayeredPlayerLocationAuthority layeredLocationAuthority =
+		new LayeredPlayerLocationAuthority();
 	/** Shadow membership only; the inherited packed Region remains authoritative. */
 	private final LayeredRegionMembershipMirror layeredRegionMembershipMirror =
 		new LayeredRegionMembershipMirror();
@@ -3221,12 +3230,48 @@ public final class Player extends Mob {
 
 	@Override
 	public void setInitialLocation(final Point point) {
+		if (getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			setInitialLayeredLocation(
+				LegacyPackedPointAdapter.fromLegacyPoint(point));
+			return;
+		}
 		synchronizeLayeredMirrors(point);
 		super.setInitialLocation(point);
 	}
 
+	public void setInitialLayeredLocation(final WorldLocation location) {
+		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			throw new IllegalStateException(
+				"Layered Player location authority is disabled");
+		}
+		Point projection = layeredLocationAuthority.initialize(location);
+		synchronizeLayeredMirrors(projection);
+		super.setInitialLocation(projection);
+	}
+
 	public WorldLocation getLayeredLocation() {
+		if (getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			WorldLocation authoritative =
+				layeredLocationAuthority.requireCurrent(getLocation());
+			WorldLocation mirrored = layeredLocationMirror.requireCurrent(getLocation());
+			if (!authoritative.equals(mirrored)) {
+				throw new IllegalStateException(
+					"Layered Player authority differs from its compatibility mirror");
+			}
+			return authoritative;
+		}
 		return layeredLocationMirror.requireCurrent(getLocation());
+	}
+
+	public boolean isLayeredLocationAuthorityEnabled() {
+		return getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY;
+	}
+
+	public String getLayeredLocationPersistenceOrigin() {
+		if (!getCache().hasKey(LayeredPlayerLocationPersistence.KEY_ORIGIN)) {
+			return "none";
+		}
+		return getCache().getString(LayeredPlayerLocationPersistence.KEY_ORIGIN);
 	}
 
 	public WorldRegionKey getLayeredRegionKey() {
@@ -4660,6 +4705,29 @@ public final class Player extends Mob {
 
 	@Override
 	public void setLocation(final Point point, final boolean teleported) {
+		if (getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			setLayeredLocation(
+				LegacyPackedPointAdapter.fromLegacyPoint(point), teleported);
+			return;
+		}
+		setLocationCompatibility(point, null, teleported);
+	}
+
+	public void setLayeredLocation(
+		final WorldLocation location,
+		final boolean teleported) {
+		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			throw new IllegalStateException(
+				"Layered Player location authority is disabled");
+		}
+		Point projection = LegacyPackedPointAdapter.toLegacyPoint(location);
+		setLocationCompatibility(projection, location, teleported);
+	}
+
+	private void setLocationCompatibility(
+		final Point point,
+		final WorldLocation layeredTarget,
+		final boolean teleported) {
 		Point previousLocation = getLocation();
 		boolean reloadLocalObjects = teleported || !getLocation().isWithin1Tile(point);
 		if (teleported || getSkullType() == 2 || getSkullType() == 0) {
@@ -4676,6 +4744,9 @@ public final class Player extends Mob {
 		LayeredRegionInterestOwnershipLedger.Change ownershipChange =
 			synchronizeLayeredMirrors(point);
 		super.setLocation(point, teleported);
+		if (layeredTarget != null) {
+			layeredLocationAuthority.move(layeredTarget);
+		}
 		getLayeredVisibilityWindow();
 		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
 			LayeredCoordinateParityObserver.onLocationChanged(

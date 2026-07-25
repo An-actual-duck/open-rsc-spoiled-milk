@@ -17336,17 +17336,109 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 214 by exposing plugin execution context through the private blocker-family diagnostic. | Implemented and automated-validated; additive schema-v60 preserves the complete v59 event and adds only execution-context completeness plus context kind/name/walk binding to exact blocker families. Schema invariants keep ordinary and plugin contexts explicit, no task/script/action/callback/owner/runtime handle is retained, and every plugin tick remains a hard blocker with no scheduling, attribution, mutation, or lifecycle authority change; the 137-test Slice 182-214 lineage, both observer integrations, and 844/488 Ant build/audit pass |
 | 2026-07-24 | Record the technically valid Slice 214 capture without overlooking the invalid operator instruction. | Four contiguous schema-v60 records and exact round trips validate despite two refused `::lp 132 502` attempts, which emitted no records but were an instruction-quality failure. All 3,881 callbacks reconcile, and the remaining seven one-event families are exactly the seven non-walk-bound `onCommand` plugin wrappers created by `::lp preserve-noop` itself; six were stopped and only `Development.onCommand` was running. This is diagnostic self-observation, not an unexplained world dependency; all authority remains false and one 1,226 ms late tick contains 1,214 ms of opt-in diagnostic work. Owner acceptance is withheld during recalibration |
 | 2026-07-24 | Freeze the proof-only retirement/schema stream and return Phase 5 to coordinate-authority sequencing. | Recalibrated after 214 slices and 60 private schemas: the pre-authority reconstruction/preservation research is complete enough to reuse later, but packed Y remains runtime authority and no creator-testable layered conversion exists. Stop at schema-v60; next propose one coarse, owner-testable private milestone for authoritative `WorldLocation` plus copied-database persistence/session parity, then migrate Region/entity identity and client/protocol before resuming incremental streaming |
+| 2026-07-24 | Approve Phase 5 Authority Milestone A as one coarse implementation body. | Approved for implementation: make Player session location authoritative as `WorldLocation` behind a disabled-by-default private gate, retain derived packed `Point` compatibility, add additive versioned persistence fields and legacy receipts through the existing transactional Player cache, prove unchanged-world session parity, and avoid resuming schema-per-observation work |
+
+## Phase 5 Authority Milestone A: Player Session and Persistence
+
+This is the first authority-changing milestone after the 2026-07-24
+recalibration. It is intentionally one coherent capability gate rather than a
+new numbered diagnostic-slice chain.
+
+### Authority contract
+
+- `WorldLocation(worldSpace,x,y,level)` owns Player location while
+  `OPENRSC_LAYERED_PLAYER_LOCATION_AUTHORITY=true`.
+- The gate is disabled by default. Existing servers therefore retain the
+  accepted packed-Point behavior until an explicit private/copy validation
+  enables it.
+- Existing movement and login callers may continue to propose packed `Point`
+  values during this milestone. The Player boundary normalizes each proposal
+  into `WorldLocation` and derives the inherited `Point` compatibility view
+  through `legacy-packed-y-v1`.
+- Direct layered initial-placement and movement methods share the same checked
+  projection. Unsupported locations, including level `-2` during this
+  compatibility-limited milestone, refuse before producing a legacy Point.
+- The existing layered mirror, Region membership shadow, visibility shadow,
+  interest owner, Region storage, collision, pathing, packets, and client
+  remain compatibility consumers. Their authority migration is the next
+  coarse milestone, not hidden inside this one.
+- Every read of the Player's layered location checks that the derived legacy
+  Point and the pre-existing layered mirror agree with the authority value.
+
+### Persistence and rollback boundary
+
+The first persistence cutover uses nine additive, typed keys in the existing
+transactional Player cache rather than altering the preservation-critical
+`players` table:
+
+- format, world-space, signed X, signed Y, and signed level;
+- compatibility-adapter ID and the exact derived packed X/Y receipt; and
+- a migration-origin receipt.
+
+The unchanged player X/Y columns are retained as the rollback-compatible
+legacy representation during this gate. Restore behavior is fail-safe:
+
+- no layered record bootstraps from the legacy columns and records
+  `legacy-bootstrap-v1`;
+- a complete layered record with an exact receipt restores the layered value;
+- a complete record whose receipt differs from current legacy X/Y defers to
+  those current values and records `legacy-rebase-v1`, preserving an offline
+  legacy location update; and
+- a partial, ill-typed, unsupported, or internally divergent record refuses
+  rather than being silently filled in or overwritten.
+
+The cache and legacy player-row save remain inside the existing database
+transaction. Disabling the gate leaves any additive cache fields untouched
+and returns Player authority to the prior packed path. No public/live database
+may be used for migration validation.
+
+### Test and acceptance gates
+
+Automated acceptance requires:
+
+- surface, upper-floor, and underground normalization plus exact legacy
+  projections;
+- direct and legacy movement through one authority object;
+- missing-record bootstrap, exact reconnect, offline legacy rebase, and
+  malformed/partial-record refusal;
+- a save-time assertion that layered authority and legacy X/Y agree;
+- default-off configuration plus system-property/environment/config opt-in;
+- authoritative bundled-Ant compilation and the existing layered regression
+  suite; and
+- copied SQLite inspection proving the nine-field record and receipt survive
+  save/reconnect without touching the public server.
+
+Private owner acceptance will use one concise `::layerloc` status command
+rather than extending the frozen JSON schema. The meaningful route is login,
+ordinary walking, teleport, one upper-floor transition, one underground
+transition, logout/reconnect at the changed location, death/respawn, and a
+second reconnect. Visuals, interaction, collision, inventory/stats, and the
+reported layered/legacy coordinates must remain normal and aligned.
+
+Automated validation status:
+
+- the focused authority fixture passes bootstrap, movement, direct layered
+  projection, unsupported-level refusal, exact reconnect, offline legacy
+  rebase, malformed/partial refusal, and divergent-write atomicity;
+- Player login/data/convenience-command guards and the updated Slice 11, 12,
+  and 14 compatibility guards pass;
+- the authoritative bundled-Ant build compiles 846 core and 488 plugin
+  sources and passes the build/classpath audit; and
+- private copied-database and owner session acceptance remain pending.
+
+Status: implementation and automated foundation complete; private runtime
+acceptance pending. Runtime/public promotion, Region/entity identity migration,
+protocol/client authority, level `-2`, streaming, Builder, conversion, and
+export remain separately gated.
 
 ## Next Discussion
 
-The active next discussion is no longer another retirement diagnostic. It is
-the coarse Phase 5 authority milestone proposed by the 2026-07-24
-recalibration: authoritative Player `WorldLocation`, copied-database
-persistence/migration receipts, and unchanged-world session parity under a
-private feature gate. Its scope, rollback boundary, compatibility adapter, and
-owner test route must be approved before implementation. The historical
-retirement findings below remain retained reference material for the later
-incremental-streaming milestone.
+The coarse Phase 5 Authority Milestone A is approved and in implementation.
+The next architecture discussion occurs only after its private session and
+persistence parity is accepted: migrate Region, entity, collision, pathing,
+visibility, proximity, and cache identity as one separately approved authority
+body. The historical retirement findings below remain retained reference
+material for the later incremental-streaming milestone.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those

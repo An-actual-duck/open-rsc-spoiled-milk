@@ -622,6 +622,14 @@ Incremental streaming/source retirement resumes only after those gates. Private
 diagnostic schema v60 is the stopping point for the proof-only chain unless an
 authority milestone exposes a new concrete failure.
 
+Authority Milestone A was approved on 2026-07-24 as one coarse implementation
+body. Its Player boundary is disabled by default, derives legacy packed
+`Point` only through the named adapter, and stores additive versioned
+world-space/X/Y/level fields plus exact packed receipts in the existing
+transactional Player cache. This is the rollback-safe unchanged-world bridge;
+it does not claim Region/entity, protocol/client, extra-level, streaming, or
+Builder authority.
+
 Planning estimates at this checkpoint are approximately `40-45%` for Phase 5
 and `20-25%` for the complete Layered Maps product across Phases 5-7. No
 creator-testable conversion/export workflow exists yet; Phase 6 and Phase 7
@@ -1080,6 +1088,7 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Complete the twelfth Layered Maps foundation checkpoint: a checked read-only layered Player mirror synchronized from packed initial placement, movement, and session transitions, with no gameplay consumer or write-back. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the thirteenth Layered Maps foundation checkpoint: checked world-space/level-qualified Player region membership synchronized from the accepted location mirror without replacing packed RegionManager storage. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the fourteenth Layered Maps foundation checkpoint: checked legacy Player persistence snapshots on load, save, and offline-location updates while retaining the exact packed X/Y schema. | Implemented and owner-validated in the layered-world plan |
+| 2026-07-24 | Approve coarse Phase 5 Authority Milestone A: private-gated authoritative Player `WorldLocation`, derived legacy Point compatibility, additive cache-backed persistence receipts, and unchanged-world session parity. | Approved and in implementation in the layered-world plan |
 | 2026-07-18 | Complete the fifteenth Layered Maps foundation checkpoint: immutable level-qualified visibility windows and read-only manager projection while packed lookup, caches, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the sixteenth Layered Maps foundation checkpoint: a checked Player visibility-window shadow and versioned private diagnostic evidence while packed lookup, caches, and client behavior remain authoritative. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the seventeenth Layered Maps foundation checkpoint: deterministic, allocation-budgeted logical interest-window deltas while packed lookup, caches, packets, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |

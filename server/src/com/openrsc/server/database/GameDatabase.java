@@ -785,6 +785,9 @@ public abstract class GameDatabase {
 		final PlayerData playerData = new PlayerData();
 		final LegacyPlayerLocationPersistenceSnapshot locationSnapshot =
 			LegacyPlayerLocationPersistenceSnapshot.capture(player.getLocation());
+		if (getServer().getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			locationSnapshot.requireLayeredLocation(player.getLayeredLocation());
+		}
 
 		playerData.combatLevel = player.getCombatLevel();
 		playerData.totalLevel = player.getSkills().getTotalLevel();

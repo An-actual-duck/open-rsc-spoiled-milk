@@ -52,6 +52,7 @@ import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 import com.openrsc.server.model.world.region.LayeredAdjacentStepCollisionComparison;
@@ -155,6 +156,10 @@ public final class Development implements CommandTrigger {
 		}
 		else if (command.equalsIgnoreCase("coords")) {
 			currentCoordinates(player, args);
+		}
+		else if (command.equalsIgnoreCase("layerloc")
+			|| command.equalsIgnoreCase("layerlocation")) {
+			layeredLocationStatus(player, command, args);
 		}
 		else if (command.equalsIgnoreCase("lp")
 			|| command.equalsIgnoreCase("layerparity")
@@ -1381,6 +1386,28 @@ public final class Development implements CommandTrigger {
 			player.message(messagePrefix + targetPlayer.getStaffName() + " is at: " + targetPlayer.getLocation());
 		else
 			player.message(messagePrefix + "Invalid name or player is not online");
+	}
+
+	private void layeredLocationStatus(
+		final Player player,
+		final String command,
+		final String[] args) {
+		if (args.length != 0) {
+			player.message(badSyntaxPrefix + command.toUpperCase());
+			return;
+		}
+		WorldLocation location = player.getLayeredLocation();
+		WorldCoordinate coordinate = location.getCoordinate();
+		player.message(
+			messagePrefix
+				+ "Layered location authority="
+				+ (player.isLayeredLocationAuthorityEnabled() ? "enabled" : "disabled")
+				+ " space=" + location.getWorldSpace().getValue()
+				+ " x=" + coordinate.getX()
+				+ " y=" + coordinate.getY()
+				+ " level=" + coordinate.getLevel()
+				+ " legacy=(" + player.getX() + "," + player.getY() + ")"
+				+ " persistenceOrigin=" + player.getLayeredLocationPersistenceOrigin());
 	}
 
 	private void layeredCoordinateParity(Player player, String command, String[] args) {

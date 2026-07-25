@@ -187,7 +187,11 @@ class LayeredMapsSliceTwelveTest(unittest.TestCase):
         self.assertIn("public WorldLocation getLayeredLocation()", player)
         self.assertIn("layeredLocationMirror.requireCurrent(getLocation())", player)
         self.assertIn("getLayeredVisibilityWindow();\n\t\tif (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER)", player)
-        self.assertNotIn("LegacyPackedPointAdapter.toLegacyPoint", player)
+        self.assertIn("WANT_LAYERED_PLAYER_LOCATION_AUTHORITY", player)
+        self.assertIn(
+            "layeredLocationAuthority.requireCurrent(getLocation())",
+            player,
+        )
         self.assertNotIn("setLocation(getLayeredLocation", player)
         self.assertIn("player.getLayeredVisibilityWindow();", command)
         self.assertIn("Layered player mirror mismatch", command)

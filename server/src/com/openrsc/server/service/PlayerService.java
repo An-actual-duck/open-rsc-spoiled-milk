@@ -19,6 +19,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LegacyPlayerLocationPersistenceSnapshot;
+import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationPersistence;
 import com.openrsc.server.util.languages.PreferredLanguage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,6 +62,7 @@ public class PlayerService implements IPlayerService {
                 loadPlayerQuests(loaded);
                 //loadPlayerAchievements(loaded);
                 loadPlayerCache(loaded);
+                restorePlayerLayeredLocation(loaded);
                 loadPlayerLastSpellCast(loaded);
                 loadPlayerNpcKills(loaded);
             });
@@ -161,6 +163,27 @@ public class PlayerService implements IPlayerService {
             }
         }
     }
+
+	private void restorePlayerLayeredLocation(final Player player) {
+		if (!configuration.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			return;
+		}
+		LayeredPlayerLocationPersistence.RestoreResult restored =
+			LayeredPlayerLocationPersistence.restore(
+				player.getCache().getCacheMap(), player.getLocation());
+		player.setInitialLayeredLocation(restored.getLocation());
+		LayeredPlayerLocationPersistence.write(
+			player.getCache().getCacheMap(),
+			player.getLayeredLocation(),
+			player.getLocation(),
+			restored.getOrigin());
+		LOGGER.info(
+			"layered-player-location restore playerId={} origin={} rewriteRequired={} location={}",
+			player.getDatabaseID(),
+			restored.getOrigin(),
+			restored.isRewriteRequired(),
+			player.getLayeredLocation());
+	}
 
     private void loadPlayerData(final Player player) throws GameDatabaseException {
         final PlayerData playerData = database.queryLoadPlayerData(player);
@@ -434,6 +457,17 @@ public class PlayerService implements IPlayerService {
 
     @Override
     public void savePlayerCache(final Player player) throws GameDatabaseException {
+		if (configuration.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			String origin = player.getCache().hasKey(
+				LayeredPlayerLocationPersistence.KEY_ORIGIN)
+				? player.getLayeredLocationPersistenceOrigin()
+				: LayeredPlayerLocationPersistence.LEGACY_BOOTSTRAP;
+			LayeredPlayerLocationPersistence.write(
+				player.getCache().getCacheMap(),
+				player.getLayeredLocation(),
+				player.getLocation(),
+				origin);
+		}
         if (player.getConfig().WANT_OPENPK_POINTS) {
             player.getCache().store("openpk_points", player.getOpenPkPoints());
         }
