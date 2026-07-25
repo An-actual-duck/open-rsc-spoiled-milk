@@ -17343,6 +17343,7 @@ private environment should validate at least:
 | 2026-07-25 | Implement Phase 5 Authority Milestone C behind its private gate. | Custom opcode 152 establishes checked client scope identity, unchanged absolute packets advance X/Y within it, scene-baseline v6 and movement-snapshot v2 bind to its sequence, scope changes clear level-sensitive client caches, the 10-test C/A/B lineage passes, and the authoritative 849/488 server plus 259-source client builds pass; private owner acceptance remains pending |
 | 2026-07-25 | Correct the deferred temporary-ground-item expiry fault exposed after Milestone B acceptance. | The accepted drop/pickup route removed the item correctly, but its previously scheduled expiry later attempted to remove the same entity again; the legacy Region tolerated that duplicate while strict layered membership refused it. Both temporary-item expiry callbacks now skip an already removed entity, while direct duplicate logical-index removal remains a tested refusal |
 | 2026-07-25 | Accept Phase 5 Authority Milestone C on the private three-gate server. | Owner-validated exact server/client agreement through ordinary surface movement and interaction, an upper-floor teleport and NPC interaction, real surface/underground ladder transitions in both directions, same-level teleport, clean logout, and reconnect. Scope sequences advanced only when level changed and restarted at 1 on reconnect; the delayed drop/pickup expiry completed without another membership exception, and no visual, collision, interaction, context, receipt, or reconnect fault appeared |
+| 2026-07-25 | Approve Phase 5 Authority Milestone D as one coarse private fixture body. | Approved for implementation: add a fourth default-off gate; an explicit bounded `synthetic-deep-fixture-v1` compatibility projection; protocol-v2 projection identity; one generated level `-2` owner route with isolated NPC/item membership; checked terrain/collision reuse; exact persistence and rollback recovery; and no production archive, placement, or live-world mutation |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -17807,6 +17808,128 @@ private three-gate startup, and meaningful owner runtime acceptance complete.
 Native layered terrain, the first synthetic level `-2` fixture, outgoing
 logical action coordinates, true instances, streaming, Builder, conversion,
 and export remain separately gated.
+
+## Phase 5 Authority Milestone D: Synthetic Deep-Level Compatibility Boundary
+
+Approved for implementation on 2026-07-25. This milestone proves that the
+accepted signed authority chain can carry one real level `-2` session before
+native layered terrain archives exist. It is a bounded compatibility fixture,
+not the deep-underground map implementation.
+
+### Explicit projection contract
+
+The current compatibility backend has four packed planes and cannot encode
+level `-2`. Milestone D therefore introduces one separately named projection:
+
+- ID: `synthetic-deep-fixture-v1`;
+- logical space: `global`, level `-2`;
+- logical and compatibility X/Y remain identical;
+- bounded logical/template rectangle: X `440..460`, Y `590..610`;
+- owner entry tile: `(450,600,L-2)`; and
+- compatibility terrain plane: legacy plane 0 at the same X/Y.
+
+The selected surface rectangle contains no authored scenery or boundaries in
+the active placement sources. Fixture entry must nevertheless inspect live
+plane-0 object membership and refuse if the rectangle is no longer clear, so
+an added or dynamic surface object cannot create invisible deep collision.
+Terrain height, overlay, and base collision are read through the existing
+packed plane-0 template; they are not copied, edited, exported, or claimed as
+deep-world content.
+
+This is not a silent level alias. Every layered-to-packed operation must carry
+the projection ID and the fourth capability gate. Level `-2` outside the exact
+rectangle, any other projection ID, any non-global space, a missing gate, or a
+receipt disagreement refuses. Ordinary levels continue to use
+`legacy-packed-y-v1` byte-for-byte.
+
+### Authority and movement boundary
+
+- `OPENRSC_LAYERED_SYNTHETIC_DEEP_FIXTURE=true` enables the fixture and is
+  disabled by default.
+- The fixture gate requires Milestones A, B, and C. Startup refuses every
+  partial combination.
+- `WorldLocation(global,x,y,-2)` remains authoritative. The plane-0 Point is
+  only its named compatibility receipt.
+- Point-based walking while already in the fixture resolves inside the current
+  level `-2` scope. An ordinary walking step cannot escape the rectangle or
+  reinterpret itself as surface level 0.
+- Explicit teleports, fixture exit, death/respawn, and disabled-gate recovery
+  may cross back to a normal representable location through a checked
+  transition.
+- Logical visibility, interaction lookup, proximity, and server-index identity
+  remain level-qualified. Plane-0 players, NPCs, items, and objects at the same
+  X/Y remain invisible and non-interactable from level `-2`.
+- Collision/path queries use the explicit template projection only after their
+  source and destination are proven to share the fixture scope.
+
+### Generated runtime fixture
+
+The developer command `::deepfixture` owns the private route:
+
+- `enter` records the current layered return location, checks that the template
+  rectangle has no live surface object/boundary membership, establishes the
+  level `-2` location, and ensures one marked test NPC plus one marked ground
+  item exist in level `-2`;
+- `status` reports logical location, projection ID, compatibility receipt,
+  bounds, and fixture entity counts; and
+- `exit` returns to the recorded layered location, or the normal Lumbridge
+  recovery location if the private return record is absent or invalid.
+
+Generated entities use ordinary NPC/ground-item lifecycle and packets after
+their explicit logical placement. They are process-local, deduplicated,
+marked as fixture content, and never added to JSON/XML placements, landscape
+archives, conversion inputs, or export outputs. This milestone does not create
+deep scenery, quests, ladders, resource nodes, or permanent content.
+
+### Protocol and persistence
+
+Layered scene-context protocol v2 adds the projection ID. The client accepts
+`legacy-packed-y-v1` for currently representable levels and accepts
+`synthetic-deep-fixture-v1` only for the exact gated level `-2` rectangle. The
+compatibility plane returned to the existing loader is explicitly plane 0, but
+client cache scope identity includes world space, signed level, projection,
+and sequence. Absolute movement packets advance X/Y inside that checked
+projection and cannot change projection or level.
+
+Persistence retains the existing nine typed fields. The adapter field records
+the actual projection ID:
+
+- with the fixture gate enabled, a complete synthetic receipt restores exact
+  level `-2` authority and reconnects into the fixture;
+- with the gate disabled, the same copied-database record safely rebases to its
+  valid plane-0 compatibility receipt, marks a distinct recovery origin, and
+  rewrites as ordinary legacy projection on the next transactional save;
+- malformed, partial, out-of-bounds, or mismatched synthetic records refuse
+  without rewriting; and
+- existing `legacy-packed-y-v1` records and default-off behavior remain
+  unchanged.
+
+### Acceptance gate
+
+Automated acceptance must prove:
+
+- projection ID, bounds, receipt, gate, world-space, and level refusals;
+- surface and level `-2` entities at identical X/Y remain isolated;
+- in-bounds walking and collision work while walking escape refuses;
+- server interaction lookup resolves only the deep NPC/item;
+- protocol v1 remains unchanged with D off, while protocol v2 accepts the
+  explicit deep projection and rejects stale/mismatched context;
+- exact deep save/reconnect, explicit exit, death/recovery, and disabled-gate
+  persistence rebase;
+- startup refusal unless A+B+C+D are enabled together;
+- no production terrain or placement file changes; and
+- authoritative server/client builds.
+
+Private owner acceptance should enter with `::deepfixture enter`, compare
+`::layerloc`, `::cloc`, and `::deepfixture status`, walk and test visible
+terrain collision, talk to the generated NPC, take the generated item, log out
+and reconnect still at level `-2`, exit to the recorded surface location,
+re-enter, then die and verify normal surface respawn. A final reconnect must
+remain on surface. The public server, live data, and production archives remain
+untouched.
+
+Status: approved for implementation; code, automated validation, private
+startup, and owner acceptance pending.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
