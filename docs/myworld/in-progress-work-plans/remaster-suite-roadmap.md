@@ -1,28 +1,38 @@
-# Remaster Suite Roadmap
+# RSC Remastered Product Roadmap
 
 Status: owner-approved product roadmap; implementation is not yet authorized by
 this document alone
 
 Started: 2026-07-17
 
+Public product direction refined: 2026-07-25
+
 ## Purpose
 
 Spoiled Milk has produced substantial client, renderer, server, map, editor,
 diagnostic, and workflow improvements that are useful beyond Spoiled Milk's
-custom game. The long-term product should therefore be more than one modified
-server. It should provide a reusable **Remaster Suite** whose technical
-capabilities can be installed together or selected independently.
+custom game. The public end product is now **RSC Remastered**: one definitive,
+end-user-friendly remaster of the selected vanilla RuneScape Classic baseline,
+with the improved renderer, server, explicit layered world, editor integration,
+modder asset workflow, and universal launcher delivered as one coherent
+project.
 
-The Suite must support at least these outcomes:
+The internal Suite architecture remains useful for ownership, testing, and
+versioned capability boundaries. It is no longer the primary public product or
+a requirement that every capability become a separately marketed download.
+RSC Remastered must support at least these outcomes:
 
-- a technically remastered game using otherwise vanilla content;
-- a renderer-only installation where that is compatible;
-- a server-foundation installation without Spoiled Milk gameplay content;
-- layered maps authored by the new World Builder and run by a compatible
-  client/server;
-- third-party content that declares and uses selected Remaster capabilities;
-- the complete Spoiled Milk game as one optional content distribution built on
-  the same foundation.
+- a complete remastered game whose definitive content baseline is vanilla RSC;
+- a universal launcher that owns isolated installations and matching
+  client/server profiles;
+- named import adapters for supported external distributions such as Cabbage,
+  with fingerprinted conversion into a separate launcher profile;
+- a drag-and-drop `content/` workflow for modder assets such as wall and floor
+  textures, with automatic editor discovery and stable identities;
+- layered maps authored and expanded without packed-Y or a fixed `-2` depth
+  ceiling; and
+- optional third-party or Spoiled Milk content that does not redefine the
+  vanilla RSC Remastered baseline.
 
 This is a start-to-finish product and architecture roadmap. It defines ordering,
 boundaries, dependencies, and completion gates. Detailed implementation remains
@@ -30,31 +40,42 @@ owned by focused module plans and short-lived topic branches.
 
 ## North-Star Product
 
-The final product is a family of versioned capabilities and packages, not a
-second monolithic fork.
+The final public product is an integrated RSC Remastered installation. Its
+internals remain versioned and modular so the launcher, editor, imports, and
+content packs can reason about compatibility without turning the repository
+back into an opaque monolith.
 
 ```text
-                          Remaster Suite
-                                |
-       +------------------------+------------------------+
-       |             |              |          |         |
-    Renderer       Server       Layered Maps  Builder  Content
-       |             |              |          |         |
-       +-------------+--------------+----------+---------+
-                                |
-                    tested end-user distributions
-                                |
-          vanilla remaster / custom world / Spoiled Milk
+                         RSC Remastered
+                               |
+                     Universal Launcher
+                               |
+            +------------------+------------------+
+            |                                     |
+     definitive vanilla                   imported profiles
+     remastered profile               Cabbage / supported forks
+            |
+   Renderer + Server + Layered World + Builder integration
+            |
+      version-local content/ packs and modder assets
 ```
 
-The downloadable Suite may present convenient bundles, but its internal
-packages must retain explicit ownership and dependency metadata. A user should
-not have to install Spoiled Milk content to receive technical improvements.
+The launcher may expose tools and optional profiles, but the default download
+must give a new player a clear **Install/Play RSC Remastered** path. A user
+should not need to understand internal modules or install Spoiled Milk content
+to receive the technical remaster.
 
 ## Terminology
 
-- **Remaster Suite:** the complete product family and its supported bundle
-  combinations.
+- **RSC Remastered:** the public, definitive vanilla-content remaster and its
+  integrated launcher/tooling project.
+- **Remaster internals:** the module and capability boundaries retained inside
+  RSC Remastered for ownership, compatibility, testing, and optional reuse.
+- **Universal Launcher:** the profile manager that installs, imports,
+  validates, updates, and launches matched game distributions in isolation.
+- **Installation profile:** one self-contained launcher entry with exact
+  client, server, map, definitions, content, settings, save/database policy,
+  capabilities, and fingerprints.
 - **Primary module:** one of the five owner-selected product areas: Renderer,
   Server, Layered Maps, World Builder, or Content.
 - **Capability:** a stable, versioned technical contract exposed by a module,
@@ -74,6 +95,9 @@ not have to install Spoiled Milk content to receive technical improvements.
 - **Legacy map:** the current packed-Y/four-plane map and tooling format.
 - **Layered map:** a map using explicit signed `(x,y,level)` coordinates and the
   new layered capability contract.
+- **Vanilla remaster baseline:** authentic vanilla terrain, placements,
+  definitions, and gameplay content running on remastered technical
+  foundations; technical improvements do not make it non-vanilla content.
 
 Calling something a module does not promise that it can be safely hot-loaded or
 removed while a game is running. Some modules are source/build capabilities or
@@ -117,6 +141,16 @@ install-time bundles because they alter core runtime identity.
 14. **Current module roadmaps remain active.** Productization does not imply
     that Renderer, Server, Layered Maps, World Builder, or Content are finished
     technically or creatively.
+15. **Profiles are isolated.** Importing Cabbage or another supported
+    distribution creates a new launcher-owned profile. It never overwrites the
+    RSC Remastered profile, another import, or an existing save/database.
+16. **Drag-and-drop does not mean unstable IDs.** Content directories may be
+    easy to populate, but discovery order, filename sorting, or directory order
+    must never silently renumber an asset already used by a map.
+17. **Remote catalogs are explicit and safe.** A launcher catalog may advertise
+    community distributions only with provenance, permission, immutable
+    version metadata, hashes, and an HTTPS source. Import never grants a
+    downloaded archive permission to execute arbitrary installer code.
 
 ## Primary Module Boundaries
 
@@ -181,9 +215,14 @@ too fundamental to be only a data plugin:
    - distinguish complete worlds, world modules, and focused map patches.
 
 Canonical levels begin with surface `0`, upper floors `+1`, `+2`, and onward,
-underground `-1`, and deep underground `-2`. Ordinary vertical anchors preserve
-X/Y by default. Local walkable arrival offsets are explicit, while long-distance
-transport, magical, quest, and instance-like edges are classified separately.
+underground `-1`, deep underground `-2`, then continue to `-3`, `-4`, or any
+later configured signed level. `-2` is the first validation target and a useful
+semantic category, never an engine or format minimum. Adding a level consists
+of adding level metadata, terrain sectors, placements, and transitions within
+configured safety limits; it must not require a new coordinate codec or engine
+constant. Ordinary vertical anchors preserve X/Y by default. Local walkable
+arrival offsets are explicit, while long-distance transport, magical, quest,
+and instance-like edges are classified separately.
 
 `WorldCoordinate(x,y,level)` remains purely geographic. The layered runtime
 places it inside a separate world-space/location identity whose initial value is
@@ -214,14 +253,16 @@ Streaming is implemented as the separately gated milestone immediately after
 coordinate/behavior parity and before map realignment or conversion export
 depends on it.
 
-The end-user Layered Maps distribution also composes these artifacts with a
-one-way converter, compatible World Builder, target adapter, and private test
-harness. It must be usable to upgrade compatible RuneScape Classic-derived
-worlds rather than being a prebuilt Spoiled Milk map alone. The converter first
-emits a parity-preserving normalized project, then analyzes transition graphs
-and terrain components to propose geographic alignment and deeper levels. The
-source stays unchanged, ambiguous ownership requires review, and reverse export
-to the packed format is not promised.
+The immediate Layered Maps deliverable is now the concrete RSC Remastered
+vanilla conversion, not a polished general-purpose end-user map converter.
+Conversion remains deterministic build tooling because the definitive map must
+be reproducible: it first emits a parity-preserving normalized vanilla project,
+then analyzes transition graphs and terrain components to perform reviewed
+geographic alignment and deeper-level placement. Source artifacts stay
+unchanged, every move receives a receipt, ambiguous ownership requires review,
+and reverse export to packed-Y is not promised. General source adaptation
+belongs to named launcher import profiles later; it does not block completing
+the vanilla map.
 
 The layered schema and converter are topology-neutral. Long-distance ladders,
 same-level transport, unconventional transition objects, and disconnected
@@ -229,22 +270,13 @@ networks remain valid creator choices. Classification and reports describe
 their behavior without treating geographic convention as a content rule;
 validation enforces representability and integrity rather than aesthetics.
 
-The initial distribution targets map authors and server maintainers. It is a
-tool folder extracted into a target repository root, followed by an explicit
-preflight and conversion command; it is not presented as an in-game player
-setting. Merely extracting the folder must not alter world data or runtime
-source. Conversion emits deterministic human- and machine-readable reports of
-all transformations, retained misalignments, accepted exceptions, unsupported
-owners, and other topology oddities.
-
-Its review UI may be a focused Builder-derived conversion workbench rather than
-a duplicate of the full standalone World Builder. The workbench owns staged
-inspection, corrective edits, convenient world navigation, reports, and a
-private dev client/server launcher. Conversion may produce provisional output
-for every area automatically because the target remains untouched. Only a
-separate, explicitly confirmed final export script may modify target files,
-after diff review, fingerprint verification, backup creation, and warning
-acknowledgement.
+The conversion workspace remains isolated and reviewable, but it is an
+RSC Remastered development facility rather than a promised drop-in converter
+product. A focused Builder-derived workbench owns staged inspection, corrective
+edits, navigation, reports, and a private dev client/server launcher.
+Provisional conversion may be automatic because source and definitive target
+remain separate. Promotion into the RSC Remastered map requires an explicit
+reviewed transaction with fingerprints, diff, backup, receipt, and rollback.
 
 A map depends on Renderer only when it truly requires renderer-specific assets
 or behavior. Layered coordinates themselves depend on the layered-world engine
@@ -297,6 +329,68 @@ The first Content package may contain all Spoiled Milk content as one tested
 bundle. Finer quest, skill, visual, or world packs may be considered only after
 the primary separation is stable.
 
+## Universal Launcher and Modder Content
+
+The Universal Launcher is the public shell around the remastered internals. It
+must make the default path simple while preserving exact profile boundaries:
+
+- install, update, repair, and launch the definitive RSC Remastered profile;
+- create an isolated profile by selecting a supported distribution archive,
+  such as a fingerprinted Cabbage ZIP;
+- identify the source with a named adapter before conversion and refuse an
+  unknown or ambiguous layout without mutating anything;
+- stage extraction outside every installed profile, reject archive traversal
+  and unsafe links, inventory files, and show the conversion/compatibility
+  report before committing;
+- install matching client, server, map, definitions, capabilities, and
+  profile-local settings as one atomic profile version;
+- preserve profile-local save/database policy and never copy credentials or
+  player data unless a separately described migration is explicitly selected;
+- retain receipts, source hashes, installed hashes, backups, repair data, and
+  rollback for every profile version; and
+- optionally consume a curated community catalog whose entries carry owner,
+  license/provenance, version, source URL, hashes, adapter, capabilities, and
+  support status. Direct hosting or mirroring requires explicit redistribution
+  permission.
+
+Each installation profile owns an automatically scanned `content/` root. The
+first supported drag-and-drop asset surface is:
+
+```text
+content/
+  walls/
+  floors/
+  packs/
+    <namespace>/
+      manifest.json
+      walls/
+      floors/
+```
+
+Files placed directly in `walls/` or `floors/` belong to a profile-local
+`local` namespace for the simplest modder workflow. Pack directories provide
+portable namespaced assets and declared dependencies. The scanner must:
+
+- accept documented image formats and validate dimensions, color model, size,
+  and resource budgets before registration;
+- create or retain a stable content index/sidecar identity on first successful
+  discovery, never deriving persistent map IDs from directory iteration order;
+- detect duplicate namespaces, identity collisions, removed files, changed
+  hashes, and incompatible renderer/map capabilities with actionable errors;
+- expose newly registered wall/floor materials to World Builder without a
+  source edit or client rebuild;
+- make missing assets visible in the editor and runtime through an explicit
+  placeholder/report rather than silently substituting another numeric ID;
+- support refresh while editing where safe, while requiring a clean profile
+  restart for runtime state that cannot be hot-reloaded truthfully; and
+- keep executable scripts, plugins, definitions, and gameplay logic outside
+  the implicit image-only drag-and-drop trust boundary.
+
+Later asset families may add sprites, models, roofs, objects, audio, or UI
+materials through versioned registries. They must reuse the same namespace,
+identity, budget, compatibility, and editor-discovery rules rather than
+expanding the initial folder scan informally.
+
 ## Required Dependency Direction
 
 | Consumer | May depend on | Must not require |
@@ -307,7 +401,8 @@ the primary separation is stable.
 | Layered map package | layered-world capability, declared definitions, optional renderer assets | unrelated content or an undeclared source tree |
 | World Builder | map schemas, adapters, capability metadata, definitions | a running target or hidden Spoiled Milk release coupling |
 | Content | any explicitly declared foundation capability and target profile | undeclared patches or accidental repository layout |
-| Suite bundle | a tested version matrix of selected packages | unsupported arbitrary combinations |
+| Universal Launcher | manifests, target adapters, profile transactions, supported catalogs | unknown-layout patching, arbitrary installer execution, cross-profile mutation |
+| Launcher profile | a tested version matrix of selected packages | unsupported arbitrary combinations |
 
 Cross-module communication should use narrow value types, schemas, service
 interfaces, or generated contracts. Direct imports into another module's
@@ -315,34 +410,41 @@ internal implementation are migration debt and should be tracked as such.
 
 ## Supported End-State Distributions
 
-The roadmap is complete only when the packaging system can truthfully produce
-and test these shapes:
+The roadmap is complete only when the launcher and packaging system can
+truthfully produce and test these shapes:
 
-1. **Renderer-only development package**
+1. **RSC Remastered default profile**
+   - Installs and launches the definitive vanilla-content remaster without
+     requiring the user to understand internal packages.
+   - Includes the matched renderer, server, layered vanilla world, tools,
+     profile manifest, and supported runtime.
+2. **Imported distribution profile**
+   - Imports a fingerprinted supported archive into a separate installation.
+   - Records its source adapter, conversion report, exact installed versions,
+     limitations, repair data, and rollback receipt.
+3. **World Builder and content-author profile**
+   - Opens the selected installation's layered world and auto-discovered
+     `content/` assets without editing another profile.
+   - Launches a private matched test environment for review.
+4. **Renderer-only development package**
    - Installs or builds the renderer against an explicitly supported client
      target profile.
    - Includes required shared client contracts but no server or custom content.
-2. **Server-foundation package**
+5. **Server-foundation development package**
    - Runs an explicitly supported vanilla content profile.
    - Contains no Spoiled Milk quests, balance, custom map additions, or custom
      definitions unless the user selects them.
-3. **Vanilla Remaster bundle**
-   - Combines compatible Renderer and Server packages with a vanilla target
-     profile and supported vanilla world/content data.
-4. **Layered-world development bundle**
+6. **Layered-world development bundle**
    - Combines layered client/server capability, a layered map package, and a
      compatible Builder without requiring Spoiled Milk Content.
-5. **World Builder standalone package**
+7. **World Builder standalone package**
    - Runs independently and selects an explicit legacy or layered adapter.
-6. **Third-party content bundle**
+8. **Third-party content bundle**
    - Adds a separately authored map or content package whose declared
      capabilities and definitions are satisfied.
-7. **Spoiled Milk bundle**
+9. **Spoiled Milk optional profile**
    - Combines the tested foundation versions with the optional Spoiled Milk
      Content package.
-8. **Complete Remaster Suite bundle**
-   - Provides the supported foundation and tools as a convenience install,
-     while still showing which modules and content selections are present.
 
 "Any server/client" means any explicitly supported target profile or a target
 that implements the published contracts. It does not mean silently modifying an
