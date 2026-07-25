@@ -17,6 +17,10 @@ REGION_MANAGER = (
     SERVER
     / "src/com/openrsc/server/model/world/region/RegionManager.java"
 )
+DEVELOPMENT = (
+    SERVER
+    / "plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
+)
 
 
 HARNESS = r"""
@@ -201,6 +205,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
     def test_private_runtime_gate_is_explicit_fail_closed_and_reversible(self):
         configuration = CONFIGURATION.read_text(encoding="utf-8")
         region_manager = REGION_MANAGER.read_text(encoding="utf-8")
+        development = DEVELOPMENT.read_text(encoding="utf-8")
         self.assertIn("WANT_LAYERED_NATIVE_TERRAIN_PACKAGE", configuration)
         self.assertIn(
             "OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE", configuration
@@ -227,6 +232,15 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
         )
         self.assertIn(
             "return syntheticDeepFixtureTile()", region_manager
+        )
+        self.assertIn(
+            "Native layered deep fixture ", development
+        )
+        self.assertIn(
+            "NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID", development
+        )
+        self.assertIn(
+            "nativePackage.getPresentationChunkSize()", development
         )
 
 

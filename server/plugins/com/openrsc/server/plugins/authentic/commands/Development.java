@@ -14,6 +14,7 @@ import com.openrsc.server.content.worldedit.WorldEditorAccessService;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionEventRecoveryNoOpMetadata;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionNpcOwnerPreservationNoOpMetadata;
+import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
@@ -1638,6 +1639,12 @@ public final class Development implements CommandTrigger {
 				location, true);
 		boolean inside =
 			LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location);
+		NativeLayeredWorldPackage nativePackage =
+			player.getWorld().getRegionManager()
+				.getNativeLayeredWorldPackage();
+		boolean nativeTerrain = inside
+			&& player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			&& nativePackage != null;
 		int npcCount = 0;
 		for (Npc npc : player.getWorld().getNpcs()) {
 			if (!npc.isRemoved()
@@ -1658,11 +1665,24 @@ public final class Development implements CommandTrigger {
 			}
 		}
 		player.message(messagePrefix
-			+ "Synthetic deep fixture "
+			+ (nativeTerrain ? "Native layered deep fixture "
+				: "Synthetic deep fixture ")
 			+ (inside ? "ACTIVE" : "inactive")
 			+ "; projection="
-			+ LayeredCompatibilityPointAdapter.projectionId(
-				location, true)
+			+ (nativeTerrain
+				? NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID
+				: LayeredCompatibilityPointAdapter.projectionId(
+					location, true))
+			+ (nativeTerrain
+				? "; package=" + nativePackage.getPackageId()
+					+ "@" + nativePackage.getPackageVersion()
+					+ "; manifest="
+					+ nativePackage.getManifestSha256().substring(0, 12)
+					+ "; page=(" + coordinate.getSectorX()
+					+ "," + coordinate.getSectorY() + ")"
+					+ "; chunk="
+					+ nativePackage.getPresentationChunkSize()
+				: "")
 			+ "; logical=" + location.getWorldSpace().getValue()
 			+ "(" + coordinate.getX() + "," + coordinate.getY()
 			+ ",L" + coordinate.getLevel() + ")"
