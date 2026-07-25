@@ -27,6 +27,7 @@ import com.openrsc.server.model.entity.update.UpdateFlags;
 import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.model.states.HostileState;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.DropObjTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
@@ -758,6 +759,24 @@ public abstract class Mob extends Entity {
 		setLastMoved();
 		setWarnedToMove(false);
 		super.setLocation(point);
+	}
+
+	public void setWorldLocation(
+		final WorldLocation location,
+		final boolean teleported) {
+		Point projection =
+			com.openrsc.server.model.world.coordinate
+				.LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+					location,
+					getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+		if (!teleported && getLocation().isWithin1Tile(projection)) {
+			setHasMoved(true);
+		} else {
+			setTeleporting(true);
+		}
+		setLastMoved();
+		setWarnedToMove(false);
+		super.setWorldLocation(location);
 	}
 
 	public void updatePosition() {

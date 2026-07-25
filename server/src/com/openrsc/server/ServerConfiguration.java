@@ -92,6 +92,7 @@ public class ServerConfiguration {
 	public boolean WANT_LAYERED_PLAYER_LOCATION_AUTHORITY;
 	public boolean WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
 	public boolean WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
+	public boolean WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
 	public int MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS;
 	public int MOVEMENT_STUTTER_POLL_OUTLIER_MS;
 	public int MOVEMENT_STUTTER_TICK_OUTLIER_MS;
@@ -529,6 +530,11 @@ public class ServerConfiguration {
 			"openrsc.layeredProtocolClientAuthority",
 			"OPENRSC_LAYERED_PROTOCOL_CLIENT_AUTHORITY",
 			"want_layered_protocol_client_authority",
+			false);
+		WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE = readBoolSystemEnvConfig(
+			"openrsc.layeredSyntheticDeepFixture",
+			"OPENRSC_LAYERED_SYNTHETIC_DEEP_FIXTURE",
+			"want_layered_synthetic_deep_fixture",
 			false);
 		MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS = Math.max(5, readIntSystemEnvConfig(
 			"openrsc.movementStutterDiagnosticSummarySeconds",

@@ -152,6 +152,9 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					builder.writeInt(context.sequence);
 					builder.writeInt(context.serverTick);
 					builder.writeString(context.worldSpace);
+					if (context.protocolVersion >= 2) {
+						builder.writeString(context.projectionId);
+					}
 					builder.writeInt(context.logicalX);
 					builder.writeInt(context.logicalY);
 					builder.writeInt(context.logicalLevel);

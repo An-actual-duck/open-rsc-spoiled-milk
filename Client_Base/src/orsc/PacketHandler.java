@@ -376,6 +376,9 @@ public class PacketHandler {
 		int sequence = packetsIncoming.get32();
 		int serverTick = packetsIncoming.get32();
 		String worldSpace = packetsIncoming.readString();
+		String projectionId = protocolVersion >= 2
+			? packetsIncoming.readString()
+			: LayeredSceneContextState.LEGACY_PROJECTION;
 		int logicalX = packetsIncoming.get32();
 		int logicalY = packetsIncoming.get32();
 		int logicalLevel = packetsIncoming.get32();
@@ -387,6 +390,7 @@ public class PacketHandler {
 				sequence,
 				serverTick,
 				worldSpace,
+				projectionId,
 				logicalX,
 				logicalY,
 				logicalLevel,

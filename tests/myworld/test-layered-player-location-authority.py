@@ -84,6 +84,19 @@ public final class LayeredPlayerLocationAuthorityFixture {
         check(authority.requireCurrent(underground).getCoordinate().getLevel() == -1,
             "unsupported projection preserves authority");
 
+        LayeredPlayerLocationAuthority deepAuthority =
+            new LayeredPlayerLocationAuthority();
+        deepAuthority.initializeFromLegacy(Point.location(450, 600));
+        WorldLocation deepLocation =
+            LayeredCompatibilityPointAdapter.syntheticDeepEntry();
+        Point deepProjection = deepAuthority.move(deepLocation, true);
+        check(deepProjection.getX() == 450 && deepProjection.getY() == 600,
+            "deep compatibility projection");
+        check(deepAuthority.requireCurrent(deepProjection, true).equals(
+            deepLocation), "deep authority");
+        expectIllegal(() -> deepAuthority.requireCurrent(
+            deepProjection, false));
+
         Map<String, Object> cache = new HashMap<String, Object>();
         LayeredPlayerLocationPersistence.RestoreResult bootstrap =
             LayeredPlayerLocationPersistence.restore(
@@ -135,6 +148,35 @@ public final class LayeredPlayerLocationAuthorityFixture {
             Point.location(121, 620),
             LayeredPlayerLocationPersistence.LEGACY_BOOTSTRAP));
         check(divergent.isEmpty(), "divergent write is atomic");
+
+        Map<String, Object> deepCache = new HashMap<String, Object>();
+        LayeredPlayerLocationPersistence.write(
+            deepCache,
+            deepLocation,
+            deepProjection,
+            LayeredPlayerLocationPersistence.LEGACY_BOOTSTRAP,
+            true);
+        check(LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_FIXTURE_ID
+            .equals(deepCache.get(
+                LayeredPlayerLocationPersistence.KEY_ADAPTER)),
+            "deep adapter persistence");
+        LayeredPlayerLocationPersistence.RestoreResult deepExact =
+            LayeredPlayerLocationPersistence.restore(
+                deepCache, deepProjection, true);
+        check(!deepExact.isRewriteRequired()
+            && deepExact.getLocation().equals(deepLocation),
+            "deep exact restore");
+        LayeredPlayerLocationPersistence.RestoreResult deepDisabled =
+            LayeredPlayerLocationPersistence.restore(
+                deepCache, deepProjection, false);
+        check(deepDisabled.isRewriteRequired(),
+            "disabled deep requires safe rewrite");
+        check(LayeredPlayerLocationPersistence.SYNTHETIC_DISABLED_REBASE
+            .equals(deepDisabled.getOrigin()),
+            "disabled deep safe-rebase origin");
+        check(deepDisabled.getLocation().equals(
+            WorldLocation.global(new WorldCoordinate(450, 600, 0))),
+            "disabled deep safely rebases to compatibility receipt");
 
         LayeredPlayerLocationAuthority reconnect =
             new LayeredPlayerLocationAuthority();
@@ -200,6 +242,7 @@ class LayeredPlayerLocationAuthorityTest(unittest.TestCase):
             COORDINATES / "WorldSpaceId.java",
             COORDINATES / "WorldLocation.java",
             COORDINATES / "LegacyPackedPointAdapter.java",
+            COORDINATES / "LayeredCompatibilityPointAdapter.java",
             COORDINATES / "LayeredPlayerLocationAuthority.java",
             COORDINATES / "LayeredPlayerLocationPersistence.java",
             fixture,
@@ -257,13 +300,17 @@ class LayeredPlayerLocationAuthorityTest(unittest.TestCase):
         )
         self.assertIn("public void setInitialLayeredLocation", player)
         self.assertIn("public void setLayeredLocation", player)
-        self.assertIn("layeredLocationAuthority.requireCurrent(getLocation())", player)
+        self.assertIn("layeredLocationAuthority.requireCurrent(", player)
+        self.assertIn("WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", player)
         self.assertIn("restorePlayerLayeredLocation(loaded);", player_service)
         self.assertLess(
             player_service.index("loadPlayerCache(loaded);"),
             player_service.index("restorePlayerLayeredLocation(loaded);"),
         )
         self.assertIn("LayeredPlayerLocationPersistence.write(", player_service)
+        self.assertIn(
+            "WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", player_service
+        )
         self.assertIn(
             "locationSnapshot.requireLayeredLocation(player.getLayeredLocation())",
             database,

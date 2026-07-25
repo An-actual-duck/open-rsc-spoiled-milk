@@ -17344,6 +17344,7 @@ private environment should validate at least:
 | 2026-07-25 | Correct the deferred temporary-ground-item expiry fault exposed after Milestone B acceptance. | The accepted drop/pickup route removed the item correctly, but its previously scheduled expiry later attempted to remove the same entity again; the legacy Region tolerated that duplicate while strict layered membership refused it. Both temporary-item expiry callbacks now skip an already removed entity, while direct duplicate logical-index removal remains a tested refusal |
 | 2026-07-25 | Accept Phase 5 Authority Milestone C on the private three-gate server. | Owner-validated exact server/client agreement through ordinary surface movement and interaction, an upper-floor teleport and NPC interaction, real surface/underground ladder transitions in both directions, same-level teleport, clean logout, and reconnect. Scope sequences advanced only when level changed and restarted at 1 on reconnect; the delayed drop/pickup expiry completed without another membership exception, and no visual, collision, interaction, context, receipt, or reconnect fault appeared |
 | 2026-07-25 | Approve Phase 5 Authority Milestone D as one coarse private fixture body. | Approved for implementation: add a fourth default-off gate; an explicit bounded `synthetic-deep-fixture-v1` compatibility projection; protocol-v2 projection identity; one generated level `-2` owner route with isolated NPC/item membership; checked terrain/collision reuse; exact persistence and rollback recovery; and no production archive, placement, or live-world mutation |
+| 2026-07-25 | Implement Phase 5 Authority Milestone D behind its fourth private gate. | The named bounded projection now carries authoritative global level `-2` through Entity/Player location, logical membership, checked plane-0 terrain/collision reuse, persistence, and scene-context protocol v2. `::deepfixture` supplies a runtime-clear-checked owner route with process-local marked NPC/item fixtures and reconnect-safe exit. The 14-test D/C/B/A lineage, prerequisite-refusal startup, 850/488 Ant server build, and 259-source client build pass; no production terrain or placement file changed, and owner acceptance remains pending |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -17883,13 +17884,14 @@ deep scenery, quests, ladders, resource nodes, or permanent content.
 
 ### Protocol and persistence
 
-Layered scene-context protocol v2 adds the projection ID. The client accepts
-`legacy-packed-y-v1` for currently representable levels and accepts
-`synthetic-deep-fixture-v1` only for the exact gated level `-2` rectangle. The
-compatibility plane returned to the existing loader is explicitly plane 0, but
-client cache scope identity includes world space, signed level, projection,
-and sequence. Absolute movement packets advance X/Y inside that checked
-projection and cannot change projection or level.
+Layered scene-context protocol v2 adds the projection ID. Ordinary representable
+locations continue to use the exact protocol-v1 `legacy-packed-y-v1` layout;
+protocol v2 is accepted only with `synthetic-deep-fixture-v1` for the exact
+gated level `-2` rectangle. The compatibility plane returned to the existing
+loader is explicitly plane 0, but client cache scope identity includes world
+space, signed level, projection, and sequence. Absolute movement packets
+advance X/Y inside that checked projection and cannot change projection or
+level.
 
 Persistence retains the existing nine typed fields. The adapter field records
 the actual projection ID:
@@ -17928,8 +17930,37 @@ re-enter, then die and verify normal surface respawn. A final reconnect must
 remain on surface. The public server, live data, and production archives remain
 untouched.
 
-Status: approved for implementation; code, automated validation, private
-startup, and owner acceptance pending.
+Implementation checkpoint:
+
+- `OPENRSC_LAYERED_SYNTHETIC_DEEP_FIXTURE=true` is a fourth default-off gate,
+  and startup refuses it unless Milestones A, B, and C are all enabled;
+- `LayeredCompatibilityPointAdapter` keeps ordinary legacy projection
+  byte-for-byte while admitting only global level `-2` coordinates inside
+  X `440..460`, Y `590..610` through the named synthetic projection;
+- Entity, Player, mirror, membership, interaction lookup, collision, path,
+  persistence, and protocol consumers retain the signed logical location while
+  treating plane-0 X/Y as a checked compatibility receipt;
+- ordinary movement cannot walk out of the fixture, while explicit teleports,
+  exit, death/respawn, and disabled-gate persistence recovery can cross the
+  boundary;
+- scene-context v1 remains the sole ordinary wire form, while v2 requires the
+  explicit synthetic projection and binds client cache scope to its identity;
+- `::deepfixture enter|status|exit` verifies the live template rectangle,
+  records a typed return location, generates only marked process-local
+  NPC/item fixtures, reports logical/receipt state, and safely falls back to
+  Lumbridge if its return record is absent or invalid;
+- the focused D/C/B/A lineage passes 14 compiled tests covering projection,
+  bounds, receipts, level isolation, persistence, reconnect, scope exit,
+  protocol refusal, and all runtime seams;
+- fourth-gate-only startup refuses as designed;
+- the authoritative Ant builds compile 850 core, 488 plugin, and 259 client
+  sources; and
+- no terrain archive, structured placement source, live world, or public
+  server state was modified.
+
+Status: implementation, automated validation, prerequisite-refusal startup,
+and authoritative builds complete. Four-gate private startup and meaningful
+owner acceptance remain pending.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those

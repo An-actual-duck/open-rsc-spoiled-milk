@@ -101,24 +101,31 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
         Entity surface = new Entity();
         Entity upper = new Entity();
         Entity underground = new Entity();
+        Entity deep = new Entity();
         WorldLocation surfaceLocation = location(100, 400, 0);
         WorldLocation upperLocation = location(100, 400, 1);
         WorldLocation undergroundLocation = location(100, 400, -1);
+        WorldLocation deepLocation = location(100, 400, -2);
 
         index.synchronize(surface, null, surfaceLocation);
         long objectVersionBefore = snapshot(
             index, surfaceLocation).getObjectVersion();
         index.synchronize(upper, null, upperLocation);
         index.synchronize(underground, null, undergroundLocation);
+        index.synchronize(deep, null, deepLocation);
         check(snapshot(index, surfaceLocation).getObjectVersion()
             == objectVersionBefore, "mob movement leaves object version stable");
-        check(index.getMembershipCount() == 3, "membership count");
+        check(index.getMembershipCount() == 4, "membership count");
         check(snapshot(index, surfaceLocation).getEntities().size() == 1,
             "surface isolation");
         check(snapshot(index, upperLocation).getEntities().size() == 1,
             "upper isolation");
         check(snapshot(index, undergroundLocation).getEntities().size() == 1,
             "underground isolation");
+        check(snapshot(index, deepLocation).getEntities().size() == 1,
+            "deep isolation at identical x/y");
+        check(snapshot(index, deepLocation).getEntities().get(0) == deep,
+            "deep identity at identical x/y");
         check(snapshot(index, surfaceLocation).getEntities().get(0) == surface,
             "surface identity");
 
@@ -150,7 +157,7 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
         index.remove(object, boundaryTarget);
 
         index.remove(surface, boundaryTarget);
-        check(index.getMembershipCount() == 2, "removal count");
+        check(index.getMembershipCount() == 3, "removal count");
         expectState(() -> index.remove(surface, boundaryTarget));
         index.clear();
         check(index.getMembershipCount() == 0, "clear");

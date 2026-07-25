@@ -10,9 +10,18 @@ import java.util.regex.Pattern;
  */
 final class LayeredSceneContextState {
 	static final int PROTOCOL_VERSION = 1;
+	static final int SYNTHETIC_DEEP_PROTOCOL_VERSION = 2;
 	static final int LEVEL_STRIDE = 944;
 	static final int LEGACY_PLANE_COUNT = 4;
 	static final int MAX_LEGACY_X = Short.MAX_VALUE;
+	static final String LEGACY_PROJECTION = "legacy-packed-y-v1";
+	static final String SYNTHETIC_DEEP_PROJECTION =
+		"synthetic-deep-fixture-v1";
+	static final int SYNTHETIC_DEEP_LEVEL = -2;
+	static final int SYNTHETIC_DEEP_MIN_X = 440;
+	static final int SYNTHETIC_DEEP_MAX_X = 460;
+	static final int SYNTHETIC_DEEP_MIN_Y = 590;
+	static final int SYNTHETIC_DEEP_MAX_Y = 610;
 
 	private static final Pattern VALID_WORLD_SPACE =
 		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
@@ -23,6 +32,7 @@ final class LayeredSceneContextState {
 	private int sequence;
 	private int serverTick;
 	private String worldSpace = "";
+	private String projectionId = "";
 	private int logicalX;
 	private int logicalY;
 	private int logicalLevel;
@@ -43,7 +53,33 @@ final class LayeredSceneContextState {
 		int incomingLogicalLevel,
 		int incomingLegacyX,
 		int incomingLegacyY) {
-		if (incomingProtocolVersion != PROTOCOL_VERSION) {
+		return accept(
+			incomingProtocolVersion,
+			incomingSequence,
+			incomingServerTick,
+			incomingWorldSpace,
+			LEGACY_PROJECTION,
+			incomingLogicalX,
+			incomingLogicalY,
+			incomingLogicalLevel,
+			incomingLegacyX,
+			incomingLegacyY);
+	}
+
+	ApplyResult accept(
+		int incomingProtocolVersion,
+		int incomingSequence,
+		int incomingServerTick,
+		String incomingWorldSpace,
+		String incomingProjectionId,
+		int incomingLogicalX,
+		int incomingLogicalY,
+		int incomingLogicalLevel,
+		int incomingLegacyX,
+		int incomingLegacyY) {
+		if (incomingProtocolVersion != PROTOCOL_VERSION
+			&& incomingProtocolVersion
+				!= SYNTHETIC_DEEP_PROTOCOL_VERSION) {
 			throw new IllegalArgumentException(
 				"Unsupported layered scene-context protocol: "
 					+ incomingProtocolVersion);
@@ -60,8 +96,21 @@ final class LayeredSceneContextState {
 				"Invalid layered scene-context world space: "
 					+ incomingWorldSpace);
 		}
+		if (incomingProjectionId == null
+			|| incomingProjectionId.length() == 0
+			|| (incomingProtocolVersion == PROTOCOL_VERSION
+				&& !LEGACY_PROJECTION.equals(incomingProjectionId))
+			|| (incomingProtocolVersion
+						== SYNTHETIC_DEEP_PROTOCOL_VERSION
+					&& !SYNTHETIC_DEEP_PROJECTION.equals(
+						incomingProjectionId))) {
+			throw new IllegalArgumentException(
+				"Invalid layered scene-context projection: "
+					+ incomingProjectionId);
+		}
 		requireLegacyReceipt(
 			incomingWorldSpace,
+			incomingProjectionId,
 			incomingLogicalX,
 			incomingLogicalY,
 			incomingLogicalLevel,
@@ -70,11 +119,13 @@ final class LayeredSceneContextState {
 
 		boolean scopeChanged = established
 			&& (!worldSpace.equals(incomingWorldSpace)
-				|| logicalLevel != incomingLogicalLevel);
+				|| logicalLevel != incomingLogicalLevel
+				|| !projectionId.equals(incomingProjectionId));
 		protocolVersion = incomingProtocolVersion;
 		sequence = incomingSequence;
 		serverTick = incomingServerTick;
 		worldSpace = incomingWorldSpace;
+		projectionId = incomingProjectionId;
 		logicalX = incomingLogicalX;
 		logicalY = incomingLogicalY;
 		logicalLevel = incomingLogicalLevel;
@@ -86,7 +137,9 @@ final class LayeredSceneContextState {
 		if (scopeChanged) {
 			scopeChanges++;
 		}
-		return new ApplyResult(scopeChanged, legacyPlaneForLevel(logicalLevel));
+		return new ApplyResult(
+			scopeChanged,
+			compatibilityPlane(logicalLevel, projectionId));
 	}
 
 	void acceptLegacyPlayerPosition(int packedX, int packedY) {
@@ -96,7 +149,9 @@ final class LayeredSceneContextState {
 				"Legacy Player position cannot represent world space: "
 					+ worldSpace);
 		}
-		DecodedLegacyPosition decoded = decodeLegacy(packedX, packedY);
+		DecodedLegacyPosition decoded =
+			decodeCompatibilityPosition(
+				packedX, packedY, logicalLevel, projectionId);
 		if (decoded.level != logicalLevel) {
 			throw new IllegalStateException(
 				"Legacy Player position changed layered level without context: "
@@ -139,7 +194,11 @@ final class LayeredSceneContextState {
 		if (!established) {
 			return "none";
 		}
-		return worldSpace + ":" + logicalLevel + ":" + sequence;
+		if (LEGACY_PROJECTION.equals(projectionId)) {
+			return worldSpace + ":" + logicalLevel + ":" + sequence;
+		}
+		return worldSpace + ":" + logicalLevel + ":"
+			+ projectionId + ":" + sequence;
 	}
 
 	String summary() {
@@ -148,6 +207,7 @@ final class LayeredSceneContextState {
 		}
 		return "layer client " + worldSpace
 			+ " " + logicalX + "," + logicalY + ",L" + logicalLevel
+			+ " via " + projectionId
 			+ " seq " + sequence
 			+ " tick " + serverTick
 			+ " legacy " + legacyX + "," + legacyY
@@ -161,6 +221,7 @@ final class LayeredSceneContextState {
 		sequence = 0;
 		serverTick = 0;
 		worldSpace = "";
+		projectionId = "";
 		logicalX = 0;
 		logicalY = 0;
 		logicalLevel = 0;
@@ -181,6 +242,7 @@ final class LayeredSceneContextState {
 
 	private static void requireLegacyReceipt(
 		String worldSpace,
+		String projectionId,
 		int logicalX,
 		int logicalY,
 		int logicalLevel,
@@ -190,6 +252,24 @@ final class LayeredSceneContextState {
 			throw new IllegalArgumentException(
 				"Legacy scene packets cannot represent world space: "
 					+ worldSpace);
+		}
+		if (SYNTHETIC_DEEP_PROJECTION.equals(projectionId)) {
+			if (logicalLevel != SYNTHETIC_DEEP_LEVEL
+				|| logicalX < SYNTHETIC_DEEP_MIN_X
+				|| logicalX > SYNTHETIC_DEEP_MAX_X
+				|| logicalY < SYNTHETIC_DEEP_MIN_Y
+				|| logicalY > SYNTHETIC_DEEP_MAX_Y
+				|| legacyX != logicalX
+				|| legacyY != logicalY) {
+				throw new IllegalArgumentException(
+					"Synthetic deep scene-context receipt mismatch");
+			}
+			return;
+		}
+		if (!LEGACY_PROJECTION.equals(projectionId)) {
+			throw new IllegalArgumentException(
+				"Unsupported layered scene-context projection: "
+					+ projectionId);
 		}
 		if (logicalX < 0 || logicalX > MAX_LEGACY_X) {
 			throw new IllegalArgumentException(
@@ -206,6 +286,39 @@ final class LayeredSceneContextState {
 			throw new IllegalArgumentException(
 				"Layered scene-context legacy receipt mismatch");
 		}
+	}
+
+	private static DecodedLegacyPosition decodeCompatibilityPosition(
+		int packedX,
+		int packedY,
+		int expectedLevel,
+		String projectionId) {
+		if (SYNTHETIC_DEEP_PROJECTION.equals(projectionId)) {
+			if (expectedLevel != SYNTHETIC_DEEP_LEVEL
+				|| packedX < SYNTHETIC_DEEP_MIN_X
+				|| packedX > SYNTHETIC_DEEP_MAX_X
+				|| packedY < SYNTHETIC_DEEP_MIN_Y
+				|| packedY > SYNTHETIC_DEEP_MAX_Y) {
+				throw new IllegalArgumentException(
+					"Synthetic deep movement left its compatibility bounds");
+			}
+			return new DecodedLegacyPosition(
+				packedX, packedY, SYNTHETIC_DEEP_LEVEL);
+		}
+		return decodeLegacy(packedX, packedY);
+	}
+
+	private static int compatibilityPlane(
+		int level,
+		String projectionId) {
+		if (SYNTHETIC_DEEP_PROJECTION.equals(projectionId)) {
+			if (level != SYNTHETIC_DEEP_LEVEL) {
+				throw new IllegalArgumentException(
+					"Synthetic deep projection requires level -2");
+			}
+			return 0;
+		}
+		return legacyPlaneForLevel(level);
 	}
 
 	private static DecodedLegacyPosition decodeLegacy(int packedX, int packedY) {

@@ -8,6 +8,7 @@ import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.Region;
@@ -67,8 +68,14 @@ public class PathValidation {
 		}
 		return checkLegacyPath(
 			world,
-			LegacyPackedPointAdapter.toLegacyPoint(src),
-			LegacyPackedPointAdapter.toLegacyPoint(dest),
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				src,
+				world.getServer().getConfig()
+					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE),
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				dest,
+				world.getServer().getConfig()
+					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE),
 			ignoreProjectileAllowed);
 	}
 
@@ -583,11 +590,26 @@ public class PathValidation {
 	public static boolean checkAdjacent(Mob mob, int startX, int startY, int destX, int destY) {
 		if (mob.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
 			WorldLocation owner = mob.getWorldLocation();
-			WorldLocation start = LegacyPackedPointAdapter.fromLegacyPoint(
-				Point.location(startX, startY));
-			WorldLocation destination =
-				LegacyPackedPointAdapter.fromLegacyPoint(
-					Point.location(destX, destY));
+			WorldLocation start;
+			WorldLocation destination;
+			try {
+				start =
+					LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+						Point.location(startX, startY),
+						owner,
+						mob.getConfig()
+							.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+						false);
+				destination =
+					LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+						Point.location(destX, destY),
+						owner,
+						mob.getConfig()
+							.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+						false);
+			} catch (IllegalArgumentException outsideScope) {
+				return false;
+			}
 			if (!sameSpatialDomain(owner, start)
 				|| !sameSpatialDomain(owner, destination)) {
 				return false;

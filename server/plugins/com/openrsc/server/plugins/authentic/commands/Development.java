@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.authentic.commands;
 
 import com.openrsc.server.constants.AppearanceId;
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.NpcDrops;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
@@ -21,11 +22,13 @@ import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
@@ -55,6 +58,7 @@ import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
+import com.openrsc.server.model.world.coordinate.WorldSpaceId;
 import com.openrsc.server.model.world.region.LayeredAdjacentStepCollisionComparison;
 import com.openrsc.server.model.world.region.LayeredRegionTileSnapshot;
 import com.openrsc.server.model.world.region.LayeredTileNeighborhoodParityComparison;
@@ -92,6 +96,18 @@ public final class Development implements CommandTrigger {
 		new LinkedHashMap<String, WorldNpcEditFiles.Edit>();
 	private static final HashMap<String, Integer> LAST_SCENERY_PLACEMENT_IDS =
 		new HashMap<String, Integer>();
+	private static final String SYNTHETIC_DEEP_NPC_ATTRIBUTE =
+		"layered-synthetic-deep-fixture-npc";
+	private static final String SYNTHETIC_DEEP_ITEM_ATTRIBUTE =
+		"layered-synthetic-deep-fixture-item";
+	private static final String SYNTHETIC_DEEP_RETURN_SPACE_CACHE =
+		"layered_synthetic_deep_return_space";
+	private static final String SYNTHETIC_DEEP_RETURN_X_CACHE =
+		"layered_synthetic_deep_return_x";
+	private static final String SYNTHETIC_DEEP_RETURN_Y_CACHE =
+		"layered_synthetic_deep_return_y";
+	private static final String SYNTHETIC_DEEP_RETURN_LEVEL_CACHE =
+		"layered_synthetic_deep_return_level";
 
 	public static String messagePrefix = null;
 	public static String badSyntaxPrefix = null;
@@ -160,6 +176,9 @@ public final class Development implements CommandTrigger {
 		else if (command.equalsIgnoreCase("layerloc")
 			|| command.equalsIgnoreCase("layerlocation")) {
 			layeredLocationStatus(player, command, args);
+		}
+		else if (command.equalsIgnoreCase("deepfixture")) {
+			syntheticDeepFixture(player, command, args);
 		}
 		else if (command.equalsIgnoreCase("lp")
 			|| command.equalsIgnoreCase("layerparity")
@@ -1401,6 +1420,11 @@ public final class Development implements CommandTrigger {
 		WorldRegionKey regionKey = player.getLayeredRegionKey();
 		boolean spatialAuthority =
 			player.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
+		boolean syntheticDeep =
+			player.getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
+		String projectionId =
+			LayeredCompatibilityPointAdapter.projectionId(
+				location, syntheticDeep);
 		player.message(
 			messagePrefix
 				+ "Layered location authority="
@@ -1415,6 +1439,9 @@ public final class Development implements CommandTrigger {
 				+ (player.getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
 					? "enabled"
 					: "disabled")
+				+ " projection=" + projectionId
+				+ " syntheticDeep="
+				+ (syntheticDeep ? "enabled" : "disabled")
 				+ " region=(" + regionKey.getRegionX() + ","
 				+ regionKey.getRegionY() + ",L" + regionKey.getLevel() + ")"
 				+ (spatialAuthority
@@ -1424,6 +1451,255 @@ public final class Development implements CommandTrigger {
 					: "")
 				+ " legacy=(" + player.getX() + "," + player.getY() + ")"
 				+ " persistenceOrigin=" + player.getLayeredLocationPersistenceOrigin());
+	}
+
+	private void syntheticDeepFixture(
+		final Player player,
+		final String command,
+		final String[] args) {
+		if (!player.getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE) {
+			player.message(messagePrefix
+				+ "Synthetic deep fixture is disabled on this server."
+				+ " Enable it only on an isolated private/local route.");
+			return;
+		}
+		if (!player.getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+			|| !player.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+			|| !player.getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY) {
+			player.message(messagePrefix
+				+ "Synthetic deep fixture requires layered model, spatial,"
+				+ " and protocol authority.");
+			return;
+		}
+
+		String action = args.length == 0
+			? "status" : args[0].toLowerCase();
+		if (args.length > 1
+			|| (!"enter".equals(action)
+				&& !"status".equals(action)
+				&& !"exit".equals(action))) {
+			player.message(badSyntaxPrefix
+				+ command.toUpperCase() + " [enter|status|exit]");
+			return;
+		}
+
+		try {
+			if ("enter".equals(action)) {
+				enterSyntheticDeepFixture(player);
+			} else if ("exit".equals(action)) {
+				exitSyntheticDeepFixture(player);
+			} else {
+				showSyntheticDeepFixtureStatus(player);
+			}
+		} catch (IllegalArgumentException failure) {
+			player.message(messagePrefix
+				+ "Synthetic deep fixture refused: "
+				+ failure.getMessage());
+		} catch (RuntimeException failure) {
+			LOGGER.error(
+				"Unexpected synthetic deep fixture failure for action {}",
+				action, failure);
+			player.message(messagePrefix
+				+ "Synthetic deep fixture failed; see the private server log.");
+		}
+	}
+
+	private void enterSyntheticDeepFixture(final Player player) {
+		WorldLocation current = player.getLayeredLocation();
+		if (!LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(current)) {
+			requireSyntheticDeepSurfaceRectangleClear(player);
+			player.getCache().store(
+				SYNTHETIC_DEEP_RETURN_SPACE_CACHE,
+				current.getWorldSpace().getValue());
+			player.getCache().set(
+				SYNTHETIC_DEEP_RETURN_X_CACHE,
+				current.getCoordinate().getX());
+			player.getCache().set(
+				SYNTHETIC_DEEP_RETURN_Y_CACHE,
+				current.getCoordinate().getY());
+			player.getCache().set(
+				SYNTHETIC_DEEP_RETURN_LEVEL_CACHE,
+				current.getCoordinate().getLevel());
+			player.setLayeredLocation(
+				LayeredCompatibilityPointAdapter.syntheticDeepEntry(), true);
+			player.resetPath();
+			ActionSender.sendWorldInfo(player);
+		}
+		ensureSyntheticDeepFixtureEntities(player);
+		showSyntheticDeepFixtureStatus(player);
+		player.message(messagePrefix
+			+ "Synthetic deep fixture entered. Use ::deepfixture exit"
+			+ " to return.");
+	}
+
+	private void exitSyntheticDeepFixture(final Player player) {
+		if (!LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(
+			player.getLayeredLocation())) {
+			player.message(messagePrefix
+				+ "You are not inside the synthetic deep fixture.");
+			return;
+		}
+		WorldLocation destination = syntheticDeepReturnLocation(player);
+		LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+			destination, true);
+		player.setLayeredLocation(destination, true);
+		player.resetPath();
+		ActionSender.sendWorldInfo(player);
+		player.getCache().remove(
+			SYNTHETIC_DEEP_RETURN_SPACE_CACHE,
+			SYNTHETIC_DEEP_RETURN_X_CACHE,
+			SYNTHETIC_DEEP_RETURN_Y_CACHE,
+			SYNTHETIC_DEEP_RETURN_LEVEL_CACHE);
+		player.message(messagePrefix
+			+ "Exited synthetic deep fixture to "
+			+ destination.getWorldSpace().getValue()
+			+ " (" + destination.getCoordinate().getX()
+			+ "," + destination.getCoordinate().getY()
+			+ ",L" + destination.getCoordinate().getLevel() + ").");
+	}
+
+	private WorldLocation syntheticDeepReturnLocation(final Player player) {
+		try {
+			if (player.getCache().hasKey(SYNTHETIC_DEEP_RETURN_SPACE_CACHE)
+				&& player.getCache().hasKey(SYNTHETIC_DEEP_RETURN_X_CACHE)
+				&& player.getCache().hasKey(SYNTHETIC_DEEP_RETURN_Y_CACHE)
+				&& player.getCache().hasKey(
+					SYNTHETIC_DEEP_RETURN_LEVEL_CACHE)) {
+				WorldLocation candidate = new WorldLocation(
+					new WorldSpaceId(player.getCache().getString(
+						SYNTHETIC_DEEP_RETURN_SPACE_CACHE)),
+					new WorldCoordinate(
+						player.getCache().getInt(
+							SYNTHETIC_DEEP_RETURN_X_CACHE),
+						player.getCache().getInt(
+							SYNTHETIC_DEEP_RETURN_Y_CACHE),
+						player.getCache().getInt(
+							SYNTHETIC_DEEP_RETURN_LEVEL_CACHE)));
+				LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+					candidate, false);
+				return candidate;
+			}
+		} catch (RuntimeException invalidReturnRecord) {
+			LOGGER.warn(
+				"Ignoring invalid synthetic deep fixture return record"
+					+ " for playerId={}",
+				player.getDatabaseID(), invalidReturnRecord);
+		}
+		return WorldLocation.global(new WorldCoordinate(120, 648, 0));
+	}
+
+	private void requireSyntheticDeepSurfaceRectangleClear(
+		final Player player) {
+		RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		for (GameObject object : regionManager.getRegion(
+			LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_ENTRY_X,
+			LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_ENTRY_Y)
+			.getGameObjects()) {
+			if (LayeredCompatibilityPointAdapter
+				.containsSyntheticDeepCoordinate(
+					object.getX(), object.getY())
+				&& object.getWorldLocation().getCoordinate().getLevel() == 0) {
+				throw new IllegalArgumentException(
+					"borrowed plane-0 rectangle contains live scenery at "
+						+ object.getX() + "," + object.getY());
+			}
+		}
+	}
+
+	private void ensureSyntheticDeepFixtureEntities(final Player player) {
+		boolean npcFound = false;
+		for (Npc npc : player.getWorld().getNpcs()) {
+			if (!npc.isRemoved()
+				&& npc.getAttribute(
+					SYNTHETIC_DEEP_NPC_ATTRIBUTE, false)) {
+				npcFound = true;
+				break;
+			}
+		}
+		if (!npcFound) {
+			Npc npc = new Npc(
+				player.getWorld(), NpcId.MAN.id(), 452, 600, 0);
+			npc.setAttribute(SYNTHETIC_DEEP_NPC_ATTRIBUTE, true);
+			npc.setWorldLocation(
+				LayeredCompatibilityPointAdapter.deepLocation(452, 600),
+				true);
+			player.getWorld().registerNpc(npc);
+		}
+
+		boolean itemFound = false;
+		for (GroundItem item : player.getWorld().getRegionManager()
+			.getLocalGroundItems(player)) {
+			if (!item.isRemoved()
+				&& item.getAttribute(
+					SYNTHETIC_DEEP_ITEM_ATTRIBUTE, false)) {
+				itemFound = true;
+				break;
+			}
+		}
+		if (!itemFound) {
+			GroundItem item = new GroundItem(
+				player.getWorld(), ItemId.COINS.id(), 448, 600, 5, player);
+			item.setAttribute(SYNTHETIC_DEEP_ITEM_ATTRIBUTE, true);
+			item.setWorldLocation(
+				LayeredCompatibilityPointAdapter.deepLocation(448, 600));
+			player.getWorld().registerItem(
+				item, player.getConfig().GAME_TICK * 2000);
+		}
+	}
+
+	private void showSyntheticDeepFixtureStatus(final Player player) {
+		WorldLocation location = player.getLayeredLocation();
+		WorldCoordinate coordinate = location.getCoordinate();
+		Point receipt =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				location, true);
+		boolean inside =
+			LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location);
+		int npcCount = 0;
+		for (Npc npc : player.getWorld().getNpcs()) {
+			if (!npc.isRemoved()
+				&& npc.getAttribute(
+					SYNTHETIC_DEEP_NPC_ATTRIBUTE, false)) {
+				npcCount++;
+			}
+		}
+		int itemCount = 0;
+		if (inside) {
+			for (GroundItem item : player.getWorld().getRegionManager()
+				.getLocalGroundItems(player)) {
+				if (!item.isRemoved()
+					&& item.getAttribute(
+						SYNTHETIC_DEEP_ITEM_ATTRIBUTE, false)) {
+					itemCount++;
+				}
+			}
+		}
+		player.message(messagePrefix
+			+ "Synthetic deep fixture "
+			+ (inside ? "ACTIVE" : "inactive")
+			+ "; projection="
+			+ LayeredCompatibilityPointAdapter.projectionId(
+				location, true)
+			+ "; logical=" + location.getWorldSpace().getValue()
+			+ "(" + coordinate.getX() + "," + coordinate.getY()
+			+ ",L" + coordinate.getLevel() + ")"
+			+ "; receipt=(" + receipt.getX() + "," + receipt.getY()
+			+ ",P"
+			+ LayeredCompatibilityPointAdapter.compatibilityPlane(
+				location, true)
+			+ ")"
+			+ "; bounds=("
+			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_X
+			+ ".."
+			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_X
+			+ ","
+			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_Y
+			+ ".."
+			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_Y
+			+ ",L"
+			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_LEVEL
+			+ "); npc=" + npcCount + "; item=" + itemCount + ".");
 	}
 
 	private void layeredCoordinateParity(Player player, String command, String[] args) {

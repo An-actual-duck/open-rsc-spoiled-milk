@@ -5,6 +5,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
 import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentitySlot;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.Region;
@@ -178,7 +179,9 @@ public abstract class Entity {
 			throw new IllegalStateException(
 				"Entity world location has not been initialized");
 		}
-		Point expected = LegacyPackedPointAdapter.toLegacyPoint(layered);
+		Point expected = LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+			layered,
+			getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
 		if (expected.getX() != legacy.getX()
 			|| expected.getY() != legacy.getY()) {
 			throw new IllegalStateException(
@@ -212,9 +215,13 @@ public abstract class Entity {
 	}
 
 	public void setLocation(final Point point) {
+		WorldLocation current = worldLocation.get();
 		setWorldLocationInternal(
-			LegacyPackedPointAdapter.fromLegacyPoint(
-				Objects.requireNonNull(point, "point")));
+			LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+				Objects.requireNonNull(point, "point"),
+				current,
+				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				false));
 	}
 
 	public final void setWorldLocation(final WorldLocation newLocation) {
@@ -227,7 +234,10 @@ public abstract class Entity {
 	}
 
 	private void setWorldLocationInternal(final WorldLocation newLocation) {
-		Point projection = LegacyPackedPointAdapter.toLegacyPoint(newLocation);
+		Point projection =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				newLocation,
+				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
 		Point oldLocation = location.getAndSet(projection);
 		WorldLocation oldWorldLocation = worldLocation.getAndSet(newLocation);
 		updateRegion(oldLocation, oldWorldLocation);
@@ -251,7 +261,9 @@ public abstract class Entity {
 
 	private void setInitialWorldLocationInternal(
 		final WorldLocation newLocation) {
-		location.set(LegacyPackedPointAdapter.toLegacyPoint(newLocation));
+		location.set(LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+			newLocation,
+			getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE));
 		worldLocation.set(newLocation);
 	}
 

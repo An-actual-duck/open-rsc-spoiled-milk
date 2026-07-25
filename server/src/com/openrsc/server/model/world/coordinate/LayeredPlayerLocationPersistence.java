@@ -18,6 +18,8 @@ public final class LayeredPlayerLocationPersistence {
 	public static final String FORMAT = "signed-xyz-player-v1";
 	public static final String LEGACY_BOOTSTRAP = "legacy-bootstrap-v1";
 	public static final String LEGACY_REBASE = "legacy-rebase-v1";
+	public static final String SYNTHETIC_DISABLED_REBASE =
+		"synthetic-deep-disabled-rebase-v1";
 
 	public static final String KEY_FORMAT = "layerloc_format";
 	public static final String KEY_SPACE = "layerloc_space";
@@ -47,6 +49,13 @@ public final class LayeredPlayerLocationPersistence {
 	public static RestoreResult restore(
 		final Map<String, Object> cache,
 		final Point legacyPoint) {
+		return restore(cache, legacyPoint, false);
+	}
+
+	public static RestoreResult restore(
+		final Map<String, Object> cache,
+		final Point legacyPoint,
+		final boolean allowSyntheticDeepFixture) {
 		Objects.requireNonNull(cache, "cache");
 		Objects.requireNonNull(legacyPoint, "legacyPoint");
 
@@ -68,7 +77,7 @@ public final class LayeredPlayerLocationPersistence {
 		}
 
 		requireString(cache, KEY_FORMAT, FORMAT);
-		requireString(cache, KEY_ADAPTER, LegacyPackedPointAdapter.ID);
+		String adapter = requireString(cache, KEY_ADAPTER);
 		String space = requireString(cache, KEY_SPACE);
 		String origin = requireString(cache, KEY_ORIGIN);
 		WorldLocation persisted = new WorldLocation(
@@ -77,7 +86,20 @@ public final class LayeredPlayerLocationPersistence {
 				requireInteger(cache, KEY_X),
 				requireInteger(cache, KEY_Y),
 				requireInteger(cache, KEY_LEVEL)));
-		Point persistedProjection = LegacyPackedPointAdapter.toLegacyPoint(persisted);
+		Point persistedProjection =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				persisted,
+				LayeredCompatibilityPointAdapter
+					.SYNTHETIC_DEEP_FIXTURE_ID.equals(adapter));
+		String expectedAdapter =
+			LayeredCompatibilityPointAdapter.projectionId(
+				persisted,
+				LayeredCompatibilityPointAdapter
+					.SYNTHETIC_DEEP_FIXTURE_ID.equals(adapter));
+		if (!expectedAdapter.equals(adapter)) {
+			throw new IllegalStateException(
+				"Layered Player location adapter does not match its location");
+		}
 		int receiptX = requireInteger(cache, KEY_PACKED_X);
 		int receiptY = requireInteger(cache, KEY_PACKED_Y);
 		if (persistedProjection.getX() != receiptX
@@ -91,6 +113,14 @@ public final class LayeredPlayerLocationPersistence {
 				LEGACY_REBASE,
 				true);
 		}
+		if (LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_FIXTURE_ID
+				.equals(adapter)
+			&& !allowSyntheticDeepFixture) {
+			return new RestoreResult(
+				LegacyPackedPointAdapter.fromLegacyPoint(legacyPoint),
+				SYNTHETIC_DISABLED_REBASE,
+				true);
+		}
 		return new RestoreResult(persisted, origin, false);
 	}
 
@@ -99,12 +129,25 @@ public final class LayeredPlayerLocationPersistence {
 		final WorldLocation location,
 		final Point derivedLegacyPoint,
 		final String origin) {
+		write(cache, location, derivedLegacyPoint, origin, false);
+	}
+
+	public static void write(
+		final Map<String, Object> cache,
+		final WorldLocation location,
+		final Point derivedLegacyPoint,
+		final String origin,
+		final boolean allowSyntheticDeepFixture) {
 		Objects.requireNonNull(cache, "cache");
 		Objects.requireNonNull(location, "location");
 		Objects.requireNonNull(derivedLegacyPoint, "derivedLegacyPoint");
 		Objects.requireNonNull(origin, "origin");
 
-		Point projection = LegacyPackedPointAdapter.toLegacyPoint(location);
+		Point projection =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				location, allowSyntheticDeepFixture);
+		String adapter = LayeredCompatibilityPointAdapter.projectionId(
+			location, allowSyntheticDeepFixture);
 		if (projection.getX() != derivedLegacyPoint.getX()
 			|| projection.getY() != derivedLegacyPoint.getY()) {
 			throw new IllegalStateException(
@@ -116,7 +159,7 @@ public final class LayeredPlayerLocationPersistence {
 		cache.put(KEY_X, coordinate.getX());
 		cache.put(KEY_Y, coordinate.getY());
 		cache.put(KEY_LEVEL, coordinate.getLevel());
-		cache.put(KEY_ADAPTER, LegacyPackedPointAdapter.ID);
+		cache.put(KEY_ADAPTER, adapter);
 		cache.put(KEY_PACKED_X, projection.getX());
 		cache.put(KEY_PACKED_Y, projection.getY());
 		cache.put(KEY_ORIGIN, origin);

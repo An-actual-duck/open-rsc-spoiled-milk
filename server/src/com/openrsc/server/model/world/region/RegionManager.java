@@ -31,6 +31,7 @@ import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionCoverage;
 import com.openrsc.server.model.world.coordinate.LegacyPackedRegionPartition;
 import com.openrsc.server.model.world.coordinate.LegacyPackedVisibilityCoverageComparison;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
 import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
@@ -125,6 +126,18 @@ public class RegionManager {
 			throw new IllegalStateException(
 				"Layered protocol/client authority requires layered Player "
 					+ "location and spatial runtime authority");
+		}
+		if (world.getServer().getConfig()
+				.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE
+			&& (!world.getServer().getConfig()
+					.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+				|| !world.getServer().getConfig()
+					.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+				|| !world.getServer().getConfig()
+					.WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY)) {
+			throw new IllegalStateException(
+				"Layered synthetic deep fixture requires layered Player "
+					+ "location, spatial runtime, and protocol/client authority");
 		}
 		this.regions = new ConcurrentHashMap<>();
 		this.visibleRegionWindowCache = new ConcurrentHashMap<>();
@@ -576,8 +589,19 @@ public class RegionManager {
 		WorldLocation observerLocation = checkedObserver.getWorldLocation();
 		layeredSpatialEntityIndex.requireMembership(
 			checkedObserver, observerLocation);
-		WorldLocation target = LegacyPackedPointAdapter.fromLegacyPoint(
-			Objects.requireNonNull(legacyLocation, "legacyLocation"));
+		WorldLocation target;
+		try {
+			target =
+				LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+					Objects.requireNonNull(
+						legacyLocation, "legacyLocation"),
+					observerLocation,
+					getWorld().getServer().getConfig()
+						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+					false);
+		} catch (IllegalArgumentException outsideScope) {
+			return null;
+		}
 		return observerLocation.getWorldSpace().equals(target.getWorldSpace())
 				&& observerLocation.getCoordinate().getLevel()
 					== target.getCoordinate().getLevel()
@@ -3418,6 +3442,12 @@ public class RegionManager {
 	private Point requireLegacyTerrainProjection(
 		final WorldLocation location) {
 		WorldLocation checked = Objects.requireNonNull(location, "location");
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(checked)) {
+			return LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				checked,
+				getWorld().getServer().getConfig()
+					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+		}
 		WorldRegionKey key = WorldRegionKey.from(checked);
 		LegacyLogicalTileAddress address = LegacyLogicalTileAddress.resolve(
 			key,

@@ -89,11 +89,35 @@ public final class LayeredProtocolClientAuthorityFixture {
             1, 5, 106, "Bad Space", 101, 401, -1, 101, 3233));
         check(state.matchesSequence(4), "refusals preserve context");
 
+        LayeredSceneContextState.ApplyResult deep = state.accept(
+            2, 5, 107, "global", "synthetic-deep-fixture-v1",
+            450, 600, -2, 450, 600);
+        check(deep.isScopeChanged(), "deep transition");
+        check(deep.getLegacyPlane() == 0, "deep compatibility plane");
+        check("global:-2:synthetic-deep-fixture-v1:5".equals(
+            state.scopeIdentity()), "deep scope identity");
+        state.acceptLegacyPlayerPosition(450, 600);
+        state.acceptLegacyPlayerPosition(451, 600);
+        check(state.summary().contains("451,600,L-2"),
+            "deep movement");
+        expectIllegal(() -> state.acceptLegacyPlayerPosition(461, 600));
+        check(state.summary().contains("contexts/positions/scopes 5/7/3"),
+            "deep acceptance counters");
+
         state.reset();
         check(!state.hasContext(), "logout reset");
         state.accept(1, 1, 200, "global", 120, 648, 0, 120, 648);
         state.acceptLegacyPlayerPosition(120, 648);
         check(state.matchesSequence(1), "reconnect sequence restart");
+
+        state.reset();
+        state.accept(
+            2, 1, 201, "global", "synthetic-deep-fixture-v1",
+            450, 600, -2, 450, 600);
+        state.acceptLegacyPlayerPosition(450, 600);
+        check(state.matchesSequence(1)
+            && state.summary().contains("450,600,L-2"),
+            "deep reconnect sequence restart");
     }
 
     private static void expectIllegal(Runnable operation) {
@@ -207,7 +231,7 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         self.assertIn("resetForScopeChange", baseline)
         self.assertIn("void reset()", movement_stage)
 
-    def test_plan_preserves_compatibility_and_defers_level_minus_two(self):
+    def test_plan_preserves_ordinary_wire_compatibility_and_defines_deep_v2(self):
         plan = PLAN.read_text(encoding="utf-8")
         self.assertIn(
             "Phase 5 Authority Milestone C: Protocol and Client Location Identity",
@@ -217,9 +241,10 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
             "existing opcode layouts for", plan
         )
         self.assertIn(
-            "The first synthetic level `-2` fixture follows this milestone",
+            "synthetic-deep-fixture-v1",
             plan,
         )
+        self.assertIn("protocol v2", plan)
 
 
 if __name__ == "__main__":

@@ -6,10 +6,10 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Checked read-only layered mirror of an authoritative legacy packed point.
+ * Checked layered mirror of an authoritative compatibility point.
  *
- * <p>The mirror can only be synchronized from a packed {@link Point}. It does
- * not expose a layered-to-packed mutation path.</p>
+ * <p>Legacy callers retain the one-argument path. A named non-legacy
+ * projection must supply its exact layered location and capability.</p>
  */
 public final class LayeredLocationMirror {
 	private final AtomicReference<State> state = new AtomicReference<State>();
@@ -17,17 +17,38 @@ public final class LayeredLocationMirror {
 	public WorldLocation synchronize(Point authoritativePoint) {
 		Objects.requireNonNull(authoritativePoint, "authoritativePoint");
 		WorldLocation projected = LegacyPackedPointAdapter.fromLegacyPoint(authoritativePoint);
-		Point reconstructed = LegacyPackedPointAdapter.toLegacyPoint(projected);
-		if (reconstructed.getX() != authoritativePoint.getX()
-			|| reconstructed.getY() != authoritativePoint.getY()) {
+		return synchronize(authoritativePoint, projected, false);
+	}
+
+	public WorldLocation synchronize(
+		final Point compatibilityPoint,
+		final WorldLocation projectedLocation,
+		final boolean allowSyntheticDeepFixture) {
+		Objects.requireNonNull(compatibilityPoint, "compatibilityPoint");
+		WorldLocation projected = Objects.requireNonNull(
+			projectedLocation, "projectedLocation");
+		Point reconstructed =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				projected, allowSyntheticDeepFixture);
+		if (reconstructed.getX() != compatibilityPoint.getX()
+			|| reconstructed.getY() != compatibilityPoint.getY()) {
 			throw new IllegalArgumentException(
-				"Authoritative packed point does not round-trip through the layered mirror");
+				"Compatibility point does not round-trip through the layered mirror");
 		}
-		state.set(new State(authoritativePoint.getX(), authoritativePoint.getY(), projected));
+		state.set(new State(
+			compatibilityPoint.getX(),
+			compatibilityPoint.getY(),
+			projected));
 		return projected;
 	}
 
 	public WorldLocation requireCurrent(Point authoritativePoint) {
+		return requireCurrent(authoritativePoint, false);
+	}
+
+	public WorldLocation requireCurrent(
+		final Point authoritativePoint,
+		final boolean allowSyntheticDeepFixture) {
 		Objects.requireNonNull(authoritativePoint, "authoritativePoint");
 		State current = state.get();
 		if (current == null) {
@@ -38,8 +59,11 @@ public final class LayeredLocationMirror {
 			throw new IllegalStateException(
 				"Layered location mirror does not match the authoritative packed point");
 		}
-		WorldLocation projected = LegacyPackedPointAdapter.fromLegacyPoint(authoritativePoint);
-		if (!current.location.equals(projected)) {
+		Point reconstructed =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				current.location, allowSyntheticDeepFixture);
+		if (reconstructed.getX() != authoritativePoint.getX()
+			|| reconstructed.getY() != authoritativePoint.getY()) {
 			throw new IllegalStateException(
 				"Layered location mirror projection does not match the authoritative packed point");
 		}

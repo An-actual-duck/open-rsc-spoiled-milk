@@ -25,9 +25,17 @@ public final class LayeredPlayerLocationAuthority {
 	}
 
 	public Point initialize(final WorldLocation proposedLocation) {
+		return initialize(proposedLocation, false);
+	}
+
+	public Point initialize(
+		final WorldLocation proposedLocation,
+		final boolean allowSyntheticDeepFixture) {
 		WorldLocation checked = Objects.requireNonNull(
 			proposedLocation, "proposedLocation");
-		Point projection = LegacyPackedPointAdapter.toLegacyPoint(checked);
+		Point projection =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				checked, allowSyntheticDeepFixture);
 		location.set(checked);
 		return projection;
 	}
@@ -38,14 +46,28 @@ public final class LayeredPlayerLocationAuthority {
 	}
 
 	public Point move(final WorldLocation proposedLocation) {
+		return move(proposedLocation, false);
+	}
+
+	public Point move(
+		final WorldLocation proposedLocation,
+		final boolean allowSyntheticDeepFixture) {
 		requireInitialized();
-		return initialize(proposedLocation);
+		return initialize(proposedLocation, allowSyntheticDeepFixture);
 	}
 
 	public WorldLocation requireCurrent(final Point derivedLegacyPoint) {
+		return requireCurrent(derivedLegacyPoint, false);
+	}
+
+	public WorldLocation requireCurrent(
+		final Point derivedLegacyPoint,
+		final boolean allowSyntheticDeepFixture) {
 		Objects.requireNonNull(derivedLegacyPoint, "derivedLegacyPoint");
 		WorldLocation current = requireInitialized();
-		Point expected = LegacyPackedPointAdapter.toLegacyPoint(current);
+		Point expected =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				current, allowSyntheticDeepFixture);
 		if (expected.getX() != derivedLegacyPoint.getX()
 			|| expected.getY() != derivedLegacyPoint.getY()) {
 			throw new IllegalStateException(

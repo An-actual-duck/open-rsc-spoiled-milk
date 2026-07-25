@@ -23,6 +23,7 @@ import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.entity.update.*;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.VisibilitySnapshot;
@@ -70,6 +71,7 @@ public final class GameStateUpdater {
 	private static final int SCENE_BASELINE_PROTOCOL_VERSION = 5;
 	private static final int LAYERED_SCENE_BASELINE_PROTOCOL_VERSION = 6;
 	private static final int LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 1;
+	private static final int SYNTHETIC_DEEP_SCENE_CONTEXT_PROTOCOL_VERSION = 2;
 	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
 	private static final int SCENE_BASELINE_PAGE_BURST_LIMIT = 4;
 	private static final int SCENE_BASELINE_FIXED_PAYLOAD_BYTES = 48;
@@ -192,7 +194,14 @@ public final class GameStateUpdater {
 		}
 
 		final WorldLocation location = player.getWorldLocation();
-		final Point expectedLegacy = LegacyPackedPointAdapter.toLegacyPoint(location);
+		final boolean allowSyntheticDeep =
+			getServer().getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
+		final Point expectedLegacy =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				location, allowSyntheticDeep);
+		final String projectionId =
+			LayeredCompatibilityPointAdapter.projectionId(
+				location, allowSyntheticDeep);
 		if (expectedLegacy.getX() != player.getX()
 			|| expectedLegacy.getY() != player.getY()) {
 			throw new IllegalStateException(
@@ -200,7 +209,7 @@ public final class GameStateUpdater {
 		}
 
 		final LayeredProtocolSceneScope nextScope =
-			LayeredProtocolSceneScope.from(location);
+			LayeredProtocolSceneScope.from(location, projectionId);
 		final LayeredProtocolSceneScope previousScope =
 			player.getAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, null);
 		if (nextScope.equals(previousScope)) {
@@ -211,10 +220,15 @@ public final class GameStateUpdater {
 			LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, Integer.valueOf(0));
 		final int sequence = Math.addExact(previousSequence.intValue(), 1);
 		final LayeredSceneContextStruct context = new LayeredSceneContextStruct();
-		context.protocolVersion = LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION;
+		context.protocolVersion =
+			LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_FIXTURE_ID
+					.equals(projectionId)
+				? SYNTHETIC_DEEP_SCENE_CONTEXT_PROTOCOL_VERSION
+				: LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION;
 		context.sequence = sequence;
 		context.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
 		context.worldSpace = location.getWorldSpace().getValue();
+		context.projectionId = projectionId;
 		context.logicalX = location.getCoordinate().getX();
 		context.logicalY = location.getCoordinate().getY();
 		context.logicalLevel = location.getCoordinate().getLevel();
@@ -908,16 +922,24 @@ public final class GameStateUpdater {
 	private static final class LayeredProtocolSceneScope {
 		private final String worldSpace;
 		private final int level;
+		private final String projectionId;
 
-		private LayeredProtocolSceneScope(final String worldSpace, final int level) {
+		private LayeredProtocolSceneScope(
+			final String worldSpace,
+			final int level,
+			final String projectionId) {
 			this.worldSpace = worldSpace;
 			this.level = level;
+			this.projectionId = projectionId;
 		}
 
-		private static LayeredProtocolSceneScope from(final WorldLocation location) {
+		private static LayeredProtocolSceneScope from(
+			final WorldLocation location,
+			final String projectionId) {
 			return new LayeredProtocolSceneScope(
 				location.getWorldSpace().getValue(),
-				location.getCoordinate().getLevel());
+				location.getCoordinate().getLevel(),
+				projectionId);
 		}
 
 		@Override
@@ -930,12 +952,15 @@ public final class GameStateUpdater {
 			}
 			final LayeredProtocolSceneScope scope =
 				(LayeredProtocolSceneScope) other;
-			return level == scope.level && worldSpace.equals(scope.worldSpace);
+			return level == scope.level
+				&& worldSpace.equals(scope.worldSpace)
+				&& projectionId.equals(scope.projectionId);
 		}
 
 		@Override
 		public int hashCode() {
-			return 31 * worldSpace.hashCode() + level;
+			int result = 31 * worldSpace.hashCode() + level;
+			return 31 * result + projectionId.hashCode();
 		}
 	}
 

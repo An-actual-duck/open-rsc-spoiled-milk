@@ -12,6 +12,7 @@ public final class LayeredSceneContextStruct extends AbstractStruct<OpcodeOut> {
 	public int sequence;
 	public int serverTick;
 	public String worldSpace;
+	public String projectionId;
 	public int logicalX;
 	public int logicalY;
 	public int logicalLevel;

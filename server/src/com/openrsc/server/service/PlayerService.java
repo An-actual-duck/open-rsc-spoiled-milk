@@ -170,13 +170,16 @@ public class PlayerService implements IPlayerService {
 		}
 		LayeredPlayerLocationPersistence.RestoreResult restored =
 			LayeredPlayerLocationPersistence.restore(
-				player.getCache().getCacheMap(), player.getLocation());
+				player.getCache().getCacheMap(),
+				player.getLocation(),
+				configuration.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
 		player.setInitialLayeredLocation(restored.getLocation());
 		LayeredPlayerLocationPersistence.write(
 			player.getCache().getCacheMap(),
 			player.getLayeredLocation(),
 			player.getLocation(),
-			restored.getOrigin());
+			restored.getOrigin(),
+			configuration.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
 		LOGGER.info(
 			"layered-player-location restore playerId={} origin={} rewriteRequired={} location={}",
 			player.getDatabaseID(),
@@ -466,7 +469,8 @@ public class PlayerService implements IPlayerService {
 				player.getCache().getCacheMap(),
 				player.getLayeredLocation(),
 				player.getLocation(),
-				origin);
+				origin,
+				configuration.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
 		}
         if (player.getConfig().WANT_OPENPK_POINTS) {
             player.getCache().store("openpk_points", player.getOpenPkPoints());
