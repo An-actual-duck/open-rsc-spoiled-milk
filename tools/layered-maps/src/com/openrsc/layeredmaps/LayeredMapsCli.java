@@ -24,7 +24,10 @@ public final class LayeredMapsCli {
 			usage();
 			return args.length == 0 ? 2 : 0;
 		}
-		if (!"preflight".equals(args[0]) && !"normalize".equals(args[0])) {
+		if (!"preflight".equals(args[0])
+			&& !"normalize".equals(args[0])
+			&& !"baseline".equals(args[0])
+			&& !"package-check".equals(args[0])) {
 			System.err.println("[layered-maps] Unknown command: " + args[0]);
 			usage();
 			return 2;
@@ -34,19 +37,27 @@ public final class LayeredMapsCli {
 			Map<String, String> options = options(args);
 			Path root = requiredPath(options, "--root");
 			Path workspace = requiredPath(options, "--workspace");
+			if (!"package-check".equals(args[0]) && options.containsKey("--package")) {
+				throw new IllegalArgumentException(
+					"--package is valid only with package-check.");
+			}
 			validateWorkspace(root, workspace);
 
 			if ("preflight".equals(args[0])) {
 				runPreflight(root, workspace);
-			} else {
+			} else if ("normalize".equals(args[0])) {
 				runNormalization(root, workspace);
+			} else if ("baseline".equals(args[0])) {
+				runBaseline(root, workspace);
+			} else {
+				runPackageCheck(requiredPath(options, "--package"), workspace);
 			}
 			return 0;
 		} catch (IllegalArgumentException failure) {
 			System.err.println("[layered-maps] " + failure.getMessage());
 			return 2;
 		} catch (PreflightException failure) {
-			System.err.println("[layered-maps] Preflight refused: " + failure.getMessage());
+			System.err.println("[layered-maps] Operation refused: " + failure.getMessage());
 			return 3;
 		} catch (IOException failure) {
 			System.err.println("[layered-maps] Could not write isolated reports: " + failure.getMessage());
@@ -114,6 +125,42 @@ public final class LayeredMapsCli {
 			+ occurrencesMarkdownPath.toAbsolutePath().normalize());
 	}
 
+	private static void runBaseline(Path root, Path workspace)
+		throws PreflightException, IOException {
+		PreservationBaselineInventory.Baseline baseline =
+			new PreservationBaselineInventory().inspect(root);
+		Files.createDirectories(workspace);
+		Path jsonPath = workspace.resolve("preservation-baseline.json");
+		Path markdownPath = workspace.resolve("preservation-baseline.md");
+		writeAtomically(jsonPath, baseline.toJson());
+		writeAtomically(markdownPath, baseline.toMarkdown());
+
+		System.out.println("RSC Remastered Preservation baseline complete");
+		System.out.println("baselineId=" + PreservationBaselineInventory.BASELINE_ID);
+		System.out.println("sourceSetFingerprint=" + baseline.sourceSetFingerprint);
+		System.out.println("sourceFiles=" + baseline.files.size());
+		System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
+		System.out.println("markdown=" + markdownPath.toAbsolutePath().normalize());
+	}
+
+	private static void runPackageCheck(Path packageRoot, Path workspace)
+		throws PreflightException, IOException {
+		LayeredWorldPackageManifest manifest =
+			LayeredWorldPackageManifest.load(packageRoot);
+		Files.createDirectories(workspace);
+		Path jsonPath = workspace.resolve("package-validation.json");
+		writeAtomically(jsonPath, manifest.toValidationJson());
+
+		System.out.println("Layered world package validation complete");
+		System.out.println("packageId=" + manifest.getPackageId());
+		System.out.println("packageVersion=" + manifest.getPackageVersion());
+		System.out.println("packageFingerprint=" + manifest.getPackageFingerprint());
+		System.out.println("worldSpaces=" + manifest.getWorldSpaces().size());
+		System.out.println("levels=" + manifest.getLevels().size());
+		System.out.println("terrainSectors=" + manifest.getTerrainSectors().size());
+		System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
+	}
+
 	private static Map<String, String> options(String[] args) {
 		Map<String, String> result = new HashMap<String, String>();
 		for (int index = 1; index < args.length; index += 2) {
@@ -127,7 +174,9 @@ public final class LayeredMapsCli {
 			}
 		}
 		for (String name : result.keySet()) {
-			if (!"--root".equals(name) && !"--workspace".equals(name)) {
+			if (!"--root".equals(name)
+				&& !"--workspace".equals(name)
+				&& !"--package".equals(name)) {
 				throw new IllegalArgumentException("Unknown option: " + name);
 			}
 		}
@@ -171,6 +220,8 @@ public final class LayeredMapsCli {
 	}
 
 	private static void usage() {
-		System.err.println("Usage: layered-maps <preflight|normalize> --root PATH --workspace PATH");
+		System.err.println(
+			"Usage: layered-maps <preflight|normalize|baseline|package-check>"
+				+ " --root PATH --workspace PATH [--package PATH]");
 	}
 }

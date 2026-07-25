@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rsc-remastered.invalid/schema/preservation-baseline-v1.schema.json",
+  "title": "RSC Remastered Preservation Map Baseline v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "manifestType",
+    "baselineId",
+    "sourceCoordinateModel",
+    "configuration",
+    "files",
+    "sourceSetFingerprintSha256"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "manifestType": {"const": "rsc-remastered-vanilla-map-baseline"},
+    "baselineId": {"const": "rsc-remastered-preservation-r64-v1"},
+    "sourceCoordinateModel": {"const": "legacy-packed-y-v1"},
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "selectors"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "selectors": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "locationData",
+            "basedMapData",
+            "memberWorld",
+            "customLandscape",
+            "wantMyWorld",
+            "wantMyWorldSource"
+          ],
+          "properties": {
+            "locationData": {"const": 1},
+            "basedMapData": {"const": 64},
+            "memberWorld": {"const": true},
+            "customLandscape": {"const": false},
+            "wantMyWorld": {"const": false},
+            "wantMyWorldSource": {"enum": ["explicit", "default"]}
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 12,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "path", "size", "sha256"],
+        "properties": {
+          "role": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          },
+          "path": {"type": "string", "minLength": 1},
+          "size": {"type": "integer", "minimum": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "recordCount": {"type": "integer", "minimum": 0},
+          "archiveEntryCount": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "sourceSetFingerprintSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

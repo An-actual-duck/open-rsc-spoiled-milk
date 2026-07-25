@@ -9,12 +9,58 @@ capability. It currently provides:
 - the checked `legacy-terrain-sector-name-v1` archive-name codec;
 - a read-only preflight for the first supported repository adapter; and
 - lossless, non-relocating normalization of recognized terrain, placements,
-  and transition data into a layered inventory; and
+  and transition data into a layered inventory;
 - deterministic lexical classification of unresolved Java coordinate owners
-  into migration families without parsing or rewriting them.
+  into migration families without parsing or rewriting them;
+- a deterministic Preservation revision-64 baseline manifest; and
+- the strict `layered-world-package-v1` descriptor for data-declared world
+  spaces, arbitrary signed levels, hash-addressed terrain sectors, and
+  presentation chunks smaller than the 48-tile storage page.
 
 It does **not** convert maps, change runtime coordinates, edit archives, modify
-player data, launch a server, or export into a game.
+player data, launch a server, export into a game, or yet make the runtime load
+the native package.
+
+## RSC Remastered Preservation baseline
+
+From the repository root:
+
+```bash
+./tools/layered-maps/layered-maps.sh baseline
+```
+
+The read-only command verifies the Preservation selectors, revision-64 server
+JAG/MEM inputs, byte-identical server/client authentic ORSC terrain, base
+boundary/scenery/NPC/item placement sets, and copied Preservation seed. It
+writes deterministic JSON and Markdown only under
+`tools/layered-maps/workspace/baseline/`.
+
+The accepted frozen result is checked in at
+`baselines/rsc-remastered-preservation-r64-v1.json`. Regeneration must match it
+byte-for-byte before direct vanilla conversion begins. This baseline is a
+coordinated source set; neither the ORSC nor the SQLite seed alone is the
+vanilla map.
+
+## Native package check
+
+`layered-world-package-v1` declares terrain with explicit
+`(worldSpace,level,sectorX,sectorY)` identity:
+
+```bash
+./tools/layered-maps/layered-maps.sh package-check \
+  --package tools/layered-maps/fixtures/native-package-v1
+```
+
+Validation is strict and read-only. It rejects undeclared levels, duplicate
+sector identities, unsafe or reused paths, symlinks, changed payload hashes,
+unknown fields, and presentation chunk sizes that do not divide the 48-tile
+storage page. The fixture deliberately declares levels `0`, `-2`, and `-3`;
+the latter proves `-2` is not a format or loader ceiling. Its 24-tile
+presentation chunks are independent from 48-tile storage ownership.
+
+The compact `uniform-layered-sector-v1` payload is a laboratory encoding for
+the next private native-loader route. A full-fidelity converted-vanilla sector
+encoding remains a separately parity-tested step.
 
 ## Preflight
 

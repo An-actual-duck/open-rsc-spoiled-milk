@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "packageType": "layered-world",
+  "packageId": "rsc-remastered.native-loader-lab",
+  "packageVersion": "0.1.0",
+  "coordinateModel": "signed-layered-v1",
+  "storage": {
+    "sectorSize": 48,
+    "presentationChunkSize": 24
+  },
+  "worldSpaces": [
+    {
+      "id": "global",
+      "kind": "static"
+    }
+  ],
+  "levels": [
+    {
+      "worldSpace": "global",
+      "level": 0,
+      "name": "Surface",
+      "role": "surface"
+    },
+    {
+      "worldSpace": "global",
+      "level": -2,
+      "name": "Native deep-loader fixture",
+      "role": "deep-underground"
+    },
+    {
+      "worldSpace": "global",
+      "level": -3,
+      "name": "Expandable-depth proof",
+      "role": "expansion-proof"
+    }
+  ],
+  "terrainSectors": [
+    {
+      "worldSpace": "global",
+      "level": -2,
+      "sectorX": 9,
+      "sectorY": 12,
+      "encoding": "uniform-layered-sector-v1",
+      "path": "terrain/deep-l2-x9-y12.json",
+      "sha256": "458ad7f6bbf2191c40416be67331fef26f53c1c921f6abc592758218bd9f22a9"
+    },
+    {
+      "worldSpace": "global",
+      "level": -3,
+      "sectorX": 9,
+      "sectorY": 12,
+      "encoding": "uniform-layered-sector-v1",
+      "path": "terrain/expansion-l3-x9-y12.json",
+      "sha256": "8554cdce2a8c3b56e5e9e138b6db4aaf9335868b2f38de971b6516c8f1611216"
+    }
+  ]
+}

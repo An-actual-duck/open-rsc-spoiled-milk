@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rsc-remastered.invalid/schema/uniform-layered-sector-v1.schema.json",
+  "title": "Uniform Layered Terrain Sector Fixture v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "encoding", "size", "tile"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "encoding": {"const": "uniform-layered-sector-v1"},
+    "size": {"const": 48},
+    "tile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "elevation",
+        "texture",
+        "overlay",
+        "roof",
+        "verticalWall",
+        "horizontalWall",
+        "diagonalWall"
+      ],
+      "properties": {
+        "elevation": {"type": "integer", "minimum": 0, "maximum": 255},
+        "texture": {"type": "integer", "minimum": 0, "maximum": 255},
+        "overlay": {"type": "integer", "minimum": 0, "maximum": 255},
+        "roof": {"type": "integer", "minimum": 0, "maximum": 255},
+        "verticalWall": {"type": "integer", "minimum": 0, "maximum": 255},
+        "horizontalWall": {"type": "integer", "minimum": 0, "maximum": 255},
+        "diagonalWall": {"type": "integer", "minimum": 0, "maximum": 4294967295}
+      }
+    }
+  }
+}

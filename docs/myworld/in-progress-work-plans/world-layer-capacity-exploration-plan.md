@@ -100,6 +100,45 @@ status together.
 6. Add the layered Builder review/content workflow and promote the reviewed
    vanilla output into the definitive RSC Remastered profile.
 
+### Authority Milestone E foundation checkpoint 1
+
+Implemented on 2026-07-25 as the first native-loader format cut:
+
+- `./tools/layered-maps/layered-maps.sh baseline` now performs a read-only,
+  deterministic inspection of the 12-file Preservation revision-64 map source
+  set, verifies its exact selectors, validates all 1,764 authentic ORSC sector
+  payloads in both matching copies, counts all four base placement families,
+  and emits one source-set fingerprint;
+- the accepted generated result is frozen at
+  `tools/layered-maps/baselines/rsc-remastered-preservation-r64-v1.json` with
+  source-set SHA-256
+  `ffbf27806fbe8fb3287b1d9543b355deebf0e22a329aec13885a16c7399fb86a`;
+- `layered-world-package-v1` now defines strict world-space, signed-level,
+  storage, presentation-chunk, and hash-addressed terrain-sector ownership;
+- the Java 8 package reader rejects unknown fields, undeclared levels,
+  duplicate identities, unsafe/reused paths, symlinks, changed payloads, and
+  presentation chunk sizes that do not divide the retained 48-tile storage
+  page;
+- the package reader has no floor enumeration. The checked fixture declares
+  levels `0`, `-2`, and `-3`, and regression coverage substitutes `-37`
+  without changing Java source;
+- `uniform-layered-sector-v1` provides one complete, semantically validated
+  48-tile laboratory page without borrowing a packed legacy plane; and
+- the fixture's `24 x 24` presentation subdivision is declared independently
+  from its `48 x 48` storage identity.
+
+Focused validation passes five new native-package/baseline tests and the five
+original Slice 1 coordinate/preflight tests. This checkpoint changes no server
+terrain authority, client loading, archives, placements, database, or public
+runtime. The frozen manifest is the map-source baseline only; the broader
+definition and redistribution inventory remains a product Phase 0 deliverable.
+
+The next Milestone E cut is a server-side read-only native package source and
+detached sector decoder keyed by `WorldMapSectorId`. It must prove lookup and
+tile fidelity for adjacent package sectors at arbitrary declared levels before
+any live `World`/`Region` registration or client presentation authority is
+enabled.
+
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
 expose, and validate the next restoration prerequisite: known authored
@@ -17173,6 +17212,7 @@ private environment should validate at least:
 | 2026-07-25 | Remove a polished generic standalone converter from the critical path. Complete the exact vanilla conversion with deterministic internal tooling first; later external distributions use named launcher import adapters. | Confirmed; refines the 2026-07-18 conversion-product decision without discarding its safety contracts |
 | 2026-07-25 | Make signed layers data-expandable beyond `-2`; loader/package/editor/runtime logic keys arbitrary declared signed levels and must not enumerate a maximum depth in source. | Confirmed |
 | 2026-07-25 | Select Authority Milestone E as the next implementation body: native package-owned layered terrain/collision/placements, smaller presentation chunks over retained 48-tile storage pages, and a real level `-2` private route. | Selected after full Milestone D acceptance |
+| 2026-07-25 | Complete Milestone E foundation checkpoint 1: freeze the deterministic 12-file Preservation map-source manifest and implement strict native package/uniform-sector validation with data-declared `-3` and `-37` depth proofs. | Implemented and automated-validated; no server/client/runtime terrain authority changed |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

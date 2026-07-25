@@ -472,7 +472,11 @@ distributable modules:
   `maps64`/`land64` JAG and MEM pairs, matching server/client authentic ORSC
   archive, and the base boundary, scenery, NPC, and ground-item placement
   files. This is a baseline set rather than one interchangeable map file and
-  must be frozen by fingerprint before conversion.
+  its 12-file map-source subset is now frozen by the layered tool at source-set
+  fingerprint
+  `ffbf27806fbe8fb3287b1d9543b355deebf0e22a329aec13885a16c7399fb86a`.
+  Definition and redistribution inventory still must join it before product
+  promotion.
 - AI-1's layered-world study selected signed levels, geographic anchors,
   intentional legacy-format divergence, capability-oriented manifests, and a
   one-way conversion strategy.
@@ -530,7 +534,9 @@ Work:
 - Generate one checked-in machine-readable provenance manifest containing
   paths, sizes, hashes, archive member inventories, placement counts,
   configuration selectors, definition fingerprints, and redistribution
-  status. Do not treat matching terrain alone as a complete vanilla baseline.
+  status. The initial map-source manifest is implemented; extend it rather
+  than replacing or silently broadening its fingerprint. Do not treat matching
+  terrain alone as a complete vanilla baseline.
 - Inventory source, definitions, maps, assets, scripts, configuration, database
   fields, generated data, and runtime artifacts.
 - Classify each owned component as foundation, vanilla target profile, Spoiled

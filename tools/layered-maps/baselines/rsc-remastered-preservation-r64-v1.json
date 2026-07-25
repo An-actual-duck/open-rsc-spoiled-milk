@@ -1,0 +1,98 @@
+{
+  "baselineId": "rsc-remastered-preservation-r64-v1",
+  "configuration": {
+    "path": "legacy/docs/inherited-openrsc/server-configs/preservation.conf",
+    "selectors": {
+      "basedMapData": 64,
+      "customLandscape": false,
+      "locationData": 1,
+      "memberWorld": true,
+      "wantMyWorld": false,
+      "wantMyWorldSource": "default"
+    }
+  },
+  "files": [
+    {
+      "path": "legacy/docs/inherited-openrsc/server-configs/preservation.conf",
+      "role": "preservation-configuration",
+      "sha256": "6e703860191e676acc8e904021316b25ea30abf0f847d9e7137801ca11bffa73",
+      "size": 22385
+    },
+    {
+      "path": "legacy/docs/inherited-openrsc/sqlite-seeds/preservation.db",
+      "role": "preservation-sqlite-seed",
+      "sha256": "886947e24f08ba3afc9223b89f725ddd65a7083f6417891b0929f56b54313efb",
+      "size": 315392
+    },
+    {
+      "path": "server/conf/server/data/maps/maps64.jag",
+      "role": "server-map-free",
+      "sha256": "7e85a47c95ba690187ad10d8218f9b4e327b54c27e6f3da18229b061de35a2d1",
+      "size": 37613
+    },
+    {
+      "path": "server/conf/server/data/maps/maps64.mem",
+      "role": "server-map-members",
+      "sha256": "6a43ffc81a5d95fe392a27fed347eea1c27ac87d11c5670b9e3f0dfe4a8fc7f7",
+      "size": 60002
+    },
+    {
+      "path": "server/conf/server/data/maps/land64.jag",
+      "role": "server-land-free",
+      "sha256": "6f0720a29d40f5dfcd477049d014b41422742d2e3a9900144287f835cc99813b",
+      "size": 142219
+    },
+    {
+      "path": "server/conf/server/data/maps/land64.mem",
+      "role": "server-land-members",
+      "sha256": "c38cfcb1e8dddb17afd3ec9d0e8f0cdb076df2caf40a648bf6dd8ea400a55df0",
+      "size": 155110
+    },
+    {
+      "archiveEntryCount": 1764,
+      "path": "server/conf/server/data/Authentic_Landscape.orsc",
+      "role": "server-authentic-terrain",
+      "sha256": "48ed0e1634b870888f96c0bc3e31cbaf152570b913140fdfd3596897a3eb29fa",
+      "size": 945225
+    },
+    {
+      "archiveEntryCount": 1764,
+      "path": "Client_Base/Cache/video/Authentic_Landscape.orsc",
+      "role": "client-authentic-terrain",
+      "sha256": "48ed0e1634b870888f96c0bc3e31cbaf152570b913140fdfd3596897a3eb29fa",
+      "size": 945225
+    },
+    {
+      "path": "server/conf/server/defs/locs/BoundaryLocs.json",
+      "recordCount": 966,
+      "role": "base-boundaries",
+      "sha256": "4f7ff99d5489d4f8df419531edef7480804d44078d1af9b61776671c1b742be8",
+      "size": 80139
+    },
+    {
+      "path": "server/conf/server/defs/locs/SceneryLocs.json",
+      "recordCount": 26770,
+      "role": "base-scenery",
+      "sha256": "a31cc016c6960b59f18ee815c5a44d9e5401d018a3dc837462ea19e47865e66e",
+      "size": 2232032
+    },
+    {
+      "path": "server/conf/server/defs/locs/NpcLocs.json",
+      "recordCount": 3612,
+      "role": "base-npcs",
+      "sha256": "76341de559f1804ccd1965cae8b6eceeb2305e11ddcb603b25fbef57a66f9c6b",
+      "size": 517810
+    },
+    {
+      "path": "server/conf/server/defs/locs/GroundItems.json",
+      "recordCount": 1016,
+      "role": "base-ground-items",
+      "sha256": "dbbef438eccb381dd1f1e03431734fab43a3238936e19a2d7ed5ec9ded5e2862",
+      "size": 92293
+    }
+  ],
+  "manifestType": "rsc-remastered-vanilla-map-baseline",
+  "schemaVersion": 1,
+  "sourceCoordinateModel": "legacy-packed-y-v1",
+  "sourceSetFingerprintSha256": "ffbf27806fbe8fb3287b1d9543b355deebf0e22a329aec13885a16c7399fb86a"
+}
