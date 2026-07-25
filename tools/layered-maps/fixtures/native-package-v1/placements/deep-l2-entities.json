@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "encoding": "layered-entity-placements-v1",
+  "worldSpace": "global",
+  "level": -2,
+  "npcs": [
+    {
+      "placementId": "deep-fixture-man",
+      "npcId": 11,
+      "start": {
+        "x": 452,
+        "y": 600
+      },
+      "roamRadius": 2
+    }
+  ],
+  "groundItems": [
+    {
+      "placementId": "deep-fixture-coins",
+      "itemId": 10,
+      "position": {
+        "x": 448,
+        "y": 600
+      },
+      "amount": 5,
+      "respawnSeconds": 5
+    }
+  ]
+}

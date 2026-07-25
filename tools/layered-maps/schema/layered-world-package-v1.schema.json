@@ -13,7 +13,8 @@
     "storage",
     "worldSpaces",
     "levels",
-    "terrainSectors"
+    "terrainSectors",
+    "placementSets"
   ],
   "properties": {
     "schemaVersion": {"const": 1},
@@ -121,6 +122,40 @@
               "rle-layered-sector-v1"
             ]
           },
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "placementSets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "worldSpace",
+          "level",
+          "encoding",
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          },
+          "worldSpace": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          },
+          "level": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "encoding": {"const": "layered-entity-placements-v1"},
           "path": {"type": "string", "minLength": 1},
           "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
         }

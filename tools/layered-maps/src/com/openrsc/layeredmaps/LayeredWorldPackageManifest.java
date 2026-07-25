@@ -34,6 +34,7 @@ public final class LayeredWorldPackageManifest {
 	private final List<WorldSpace> worldSpaces;
 	private final List<Level> levels;
 	private final List<TerrainSector> terrainSectors;
+	private final List<PlacementSet> placementSets;
 	private final String packageFingerprint;
 
 	private LayeredWorldPackageManifest(
@@ -43,6 +44,7 @@ public final class LayeredWorldPackageManifest {
 		List<WorldSpace> worldSpaces,
 		List<Level> levels,
 		List<TerrainSector> terrainSectors,
+		List<PlacementSet> placementSets,
 		String packageFingerprint) {
 		this.packageId = packageId;
 		this.packageVersion = packageVersion;
@@ -52,6 +54,8 @@ public final class LayeredWorldPackageManifest {
 		this.levels = Collections.unmodifiableList(new ArrayList<Level>(levels));
 		this.terrainSectors = Collections.unmodifiableList(
 			new ArrayList<TerrainSector>(terrainSectors));
+		this.placementSets = Collections.unmodifiableList(
+			new ArrayList<PlacementSet>(placementSets));
 		this.packageFingerprint = packageFingerprint;
 	}
 
@@ -62,7 +66,8 @@ public final class LayeredWorldPackageManifest {
 		Map<String, Object> document = JsonDocuments.readObject(manifestPath);
 		exactKeys(document, "package manifest",
 			"schemaVersion", "packageType", "packageId", "packageVersion",
-			"coordinateModel", "storage", "worldSpaces", "levels", "terrainSectors");
+			"coordinateModel", "storage", "worldSpaces", "levels",
+			"terrainSectors", "placementSets");
 		requireInt(document, "schemaVersion", SCHEMA_VERSION);
 		requireString(document, "packageType", PACKAGE_TYPE);
 		requireString(document, "coordinateModel", COORDINATE_MODEL);
@@ -102,12 +107,22 @@ public final class LayeredWorldPackageManifest {
 			}
 		}
 
+		Set<String> payloadPaths = new HashSet<String>();
 		List<TerrainSector> terrainSectors = readTerrainSectors(
-			packageRoot, array(document, "terrainSectors"), levelKeys);
+			packageRoot,
+			array(document, "terrainSectors"),
+			levelKeys,
+			payloadPaths);
 		if (terrainSectors.isEmpty()) {
 			throw new PreflightException(
 				"A layered world package must declare at least one terrain sector.");
 		}
+		List<PlacementSet> placementSets = readPlacementSets(
+			packageRoot,
+			array(document, "placementSets"),
+			levelKeys,
+			payloadPaths,
+			terrainSectors);
 
 		String packageFingerprint = Hashes.sha256(JsonDocuments.canonical(document));
 		return new LayeredWorldPackageManifest(
@@ -117,6 +132,7 @@ public final class LayeredWorldPackageManifest {
 			worldSpaces,
 			levels,
 			terrainSectors,
+			placementSets,
 			packageFingerprint);
 	}
 
@@ -171,10 +187,10 @@ public final class LayeredWorldPackageManifest {
 	private static List<TerrainSector> readTerrainSectors(
 		Path packageRoot,
 		List<Object> values,
-		Set<LevelKey> levelKeys) throws IOException, PreflightException {
+		Set<LevelKey> levelKeys,
+		Set<String> paths) throws IOException, PreflightException {
 		List<TerrainSector> result = new ArrayList<TerrainSector>();
 		Set<WorldMapSectorId> identities = new HashSet<WorldMapSectorId>();
-		Set<String> paths = new HashSet<String>();
 		for (int index = 0; index < values.size(); index++) {
 			Map<String, Object> value =
 				object(values.get(index), "terrainSectors[" + index + "]");
@@ -225,6 +241,148 @@ public final class LayeredWorldPackageManifest {
 		return result;
 	}
 
+	private static List<PlacementSet> readPlacementSets(
+		Path packageRoot,
+		List<Object> values,
+		Set<LevelKey> levelKeys,
+		Set<String> paths,
+		List<TerrainSector> terrainSectors)
+		throws IOException, PreflightException {
+		if (values.isEmpty()) {
+			throw new PreflightException("placementSets must not be empty.");
+		}
+		Set<String> setIds = new HashSet<String>();
+		Set<String> placementIds = new HashSet<String>();
+		Set<WorldMapSectorId> terrainIdentities =
+			new HashSet<WorldMapSectorId>();
+		for (TerrainSector terrain : terrainSectors) {
+			terrainIdentities.add(terrain.identity);
+		}
+		List<PlacementSet> result = new ArrayList<PlacementSet>();
+		for (int index = 0; index < values.size(); index++) {
+			Map<String, Object> value =
+				object(values.get(index), "placementSets[" + index + "]");
+			exactKeys(
+				value,
+				"placementSets[" + index + "]",
+				"id",
+				"worldSpace",
+				"level",
+				"encoding",
+				"path",
+				"sha256");
+			String id = matchedString(value, "id", ID);
+			if (!setIds.add(id)) {
+				throw new PreflightException(
+					"Duplicate placement-set ID: " + id + ".");
+			}
+			String worldSpace = matchedString(value, "worldSpace", ID);
+			int level = integer(value, "level");
+			LevelKey levelKey = new LevelKey(
+				new WorldSpaceId(worldSpace), level);
+			if (!levelKeys.contains(levelKey)) {
+				throw new PreflightException(
+					"placementSets[" + index
+						+ "] references an undeclared level: "
+						+ worldSpace + " " + level + ".");
+			}
+			String encoding = matchedString(value, "encoding", ID);
+			if (!LayeredEntityPlacements.ENCODING.equals(encoding)) {
+				throw new PreflightException(
+					"Placement payload encoding is unsupported by this loader: "
+						+ encoding + ".");
+			}
+			String relativePath = safeRelativePath(string(value, "path"));
+			if (!paths.add(relativePath)) {
+				throw new PreflightException(
+					"Package payload path is reused: " + relativePath + ".");
+			}
+			String expectedHash = matchedString(value, "sha256", SHA256);
+			Path payload = requiredFile(packageRoot, relativePath);
+			if (!expectedHash.equals(Hashes.sha256(payload))) {
+				throw new PreflightException(
+					"Placement payload hash differs from manifest: "
+						+ relativePath + ".");
+			}
+			LayeredEntityPlacements placements =
+				LayeredEntityPlacements.load(payload);
+			if (!worldSpace.equals(placements.getWorldSpace())
+				|| level != placements.getLevel()) {
+				throw new PreflightException(
+					"Placement payload identity differs from its manifest record: "
+						+ relativePath + ".");
+			}
+			for (LayeredEntityPlacements.NpcPlacement npc
+				: placements.getNpcs()) {
+				requireUniquePlacementId(
+					npc.getPlacementId(), placementIds);
+				for (int deltaX = -npc.getRoamRadius();
+					deltaX <= npc.getRoamRadius();
+					deltaX++) {
+					for (int deltaY = -npc.getRoamRadius();
+						deltaY <= npc.getRoamRadius();
+						deltaY++) {
+						requirePlacementTerrain(
+							levelKey,
+							Math.addExact(npc.getX(), deltaX),
+							Math.addExact(npc.getY(), deltaY),
+							npc.getPlacementId(),
+							terrainIdentities);
+					}
+				}
+			}
+			for (LayeredEntityPlacements.GroundItemPlacement item
+				: placements.getGroundItems()) {
+				requireUniquePlacementId(
+					item.getPlacementId(), placementIds);
+				requirePlacementTerrain(
+					levelKey,
+					item.getX(),
+					item.getY(),
+					item.getPlacementId(),
+					terrainIdentities);
+			}
+			result.add(new PlacementSet(
+				id,
+				levelKey.worldSpace,
+				level,
+				encoding,
+				relativePath,
+				expectedHash,
+				Files.size(payload),
+				placements.getNpcs().size(),
+				placements.getGroundItems().size()));
+		}
+		return result;
+	}
+
+	private static void requireUniquePlacementId(
+		String placementId, Set<String> placementIds)
+		throws PreflightException {
+		if (!placementIds.add(placementId)) {
+			throw new PreflightException(
+				"Duplicate package placement ID: " + placementId + ".");
+		}
+	}
+
+	private static void requirePlacementTerrain(
+		LevelKey level,
+		int x,
+		int y,
+		String placementId,
+		Set<WorldMapSectorId> terrainIdentities) throws PreflightException {
+		WorldMapSectorId terrain = new WorldMapSectorId(
+			level.worldSpace,
+			level.level,
+			Math.floorDiv(x, STORAGE_SECTOR_SIZE),
+			Math.floorDiv(y, STORAGE_SECTOR_SIZE));
+		if (!terrainIdentities.contains(terrain)) {
+			throw new PreflightException(
+				"Placement has no package terrain at "
+					+ placementId + ": " + x + "," + y + ".");
+		}
+	}
+
 	public String toValidationJson() {
 		Map<String, Object> document = new LinkedHashMap<String, Object>();
 		document.put("schemaVersion", Long.valueOf(1));
@@ -237,6 +395,17 @@ public final class LayeredWorldPackageManifest {
 		document.put("worldSpaceCount", Long.valueOf(worldSpaces.size()));
 		document.put("levelCount", Long.valueOf(levels.size()));
 		document.put("terrainSectorCount", Long.valueOf(terrainSectors.size()));
+		document.put("placementSetCount", Long.valueOf(placementSets.size()));
+		int npcCount = 0;
+		int groundItemCount = 0;
+		for (PlacementSet set : placementSets) {
+			npcCount = Math.addExact(npcCount, set.npcCount);
+			groundItemCount = Math.addExact(
+				groundItemCount, set.groundItemCount);
+		}
+		document.put("npcPlacementCount", Long.valueOf(npcCount));
+		document.put(
+			"groundItemPlacementCount", Long.valueOf(groundItemCount));
 		document.put("packageFingerprintSha256", packageFingerprint);
 		List<Object> levelDocuments = new ArrayList<Object>();
 		for (Level level : levels) {
@@ -273,6 +442,10 @@ public final class LayeredWorldPackageManifest {
 
 	public List<TerrainSector> getTerrainSectors() {
 		return terrainSectors;
+	}
+
+	public List<PlacementSet> getPlacementSets() {
+		return placementSets;
 	}
 
 	public String getPackageFingerprint() {
@@ -503,6 +676,49 @@ public final class LayeredWorldPackageManifest {
 		public long getSize() {
 			return size;
 		}
+	}
+
+	public static final class PlacementSet {
+		private final String id;
+		private final WorldSpaceId worldSpace;
+		private final int level;
+		private final String encoding;
+		private final String path;
+		private final String sha256;
+		private final long size;
+		private final int npcCount;
+		private final int groundItemCount;
+
+		PlacementSet(
+			String id,
+			WorldSpaceId worldSpace,
+			int level,
+			String encoding,
+			String path,
+			String sha256,
+			long size,
+			int npcCount,
+			int groundItemCount) {
+			this.id = id;
+			this.worldSpace = worldSpace;
+			this.level = level;
+			this.encoding = encoding;
+			this.path = path;
+			this.sha256 = sha256;
+			this.size = size;
+			this.npcCount = npcCount;
+			this.groundItemCount = groundItemCount;
+		}
+
+		public String getId() { return id; }
+		public WorldSpaceId getWorldSpace() { return worldSpace; }
+		public int getLevel() { return level; }
+		public String getEncoding() { return encoding; }
+		public String getPath() { return path; }
+		public String getSha256() { return sha256; }
+		public long getSize() { return size; }
+		public int getNpcCount() { return npcCount; }
+		public int getGroundItemCount() { return groundItemCount; }
 	}
 
 	private static final class LevelKey {

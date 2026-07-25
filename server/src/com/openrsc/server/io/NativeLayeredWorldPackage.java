@@ -38,6 +38,8 @@ public final class NativeLayeredWorldPackage {
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
 	public static final String RLE_ENCODING = "rle-layered-sector-v1";
 	public static final String RLE_TILE_ORDER = "x-major-y-minor";
+	public static final String ENTITY_PLACEMENT_ENCODING =
+		"layered-entity-placements-v1";
 	public static final String RUNTIME_PROJECTION_ID =
 		"native-layered-package-v1";
 
@@ -45,6 +47,10 @@ public final class NativeLayeredWorldPackage {
 	private static final int MAX_WORLD_SPACES = 128;
 	private static final int MAX_LEVELS = 4096;
 	private static final int MAX_TERRAIN_SECTORS = 65536;
+	private static final int MAX_PLACEMENT_SETS = 4096;
+	private static final int MAX_PLACEMENTS_PER_SET = 65536;
+	private static final int MAX_NPC_ROAM_RADIUS = 64;
+	private static final int MAX_GROUND_ITEM_RESPAWN_SECONDS = 86400;
 	private static final Pattern ID =
 		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
 	private static final Pattern VERSION =
@@ -58,6 +64,7 @@ public final class NativeLayeredWorldPackage {
 	private final Map<String, String> worldSpaceKinds;
 	private final Set<LevelKey> levels;
 	private final Map<WorldMapSectorId, NativeLayeredTerrainSector> terrainSectors;
+	private final Map<String, NativeLayeredPlacementSet> placementSets;
 	private final String manifestSha256;
 
 	private NativeLayeredWorldPackage(
@@ -68,6 +75,7 @@ public final class NativeLayeredWorldPackage {
 		Map<String, String> worldSpaceKinds,
 		Set<LevelKey> levels,
 		Map<WorldMapSectorId, NativeLayeredTerrainSector> terrainSectors,
+		Map<String, NativeLayeredPlacementSet> placementSets,
 		String manifestSha256) {
 		this.packageRoot = packageRoot;
 		this.packageId = packageId;
@@ -79,6 +87,8 @@ public final class NativeLayeredWorldPackage {
 		this.terrainSectors = Collections.unmodifiableMap(
 			new LinkedHashMap<WorldMapSectorId, NativeLayeredTerrainSector>(
 				terrainSectors));
+		this.placementSets = Collections.unmodifiableMap(
+			new LinkedHashMap<String, NativeLayeredPlacementSet>(placementSets));
 		this.manifestSha256 = manifestSha256;
 	}
 
@@ -98,7 +108,8 @@ public final class NativeLayeredWorldPackage {
 				"storage",
 				"worldSpaces",
 				"levels",
-				"terrainSectors");
+				"terrainSectors",
+				"placementSets");
 			requireInt(manifest, "schemaVersion", SCHEMA_VERSION);
 			requireString(manifest, "packageType", PACKAGE_TYPE);
 			requireString(manifest, "coordinateModel", COORDINATE_MODEL);
@@ -119,8 +130,20 @@ public final class NativeLayeredWorldPackage {
 			Map<String, String> worldSpaces =
 				readWorldSpaces(array(manifest, "worldSpaces"));
 			Set<LevelKey> levels = readLevels(array(manifest, "levels"), worldSpaces);
+			Set<String> payloadPaths = new HashSet<String>();
 			Map<WorldMapSectorId, NativeLayeredTerrainSector> sectors =
-				readTerrainSectors(root, array(manifest, "terrainSectors"), levels);
+				readTerrainSectors(
+					root,
+					array(manifest, "terrainSectors"),
+					levels,
+					payloadPaths);
+			Map<String, NativeLayeredPlacementSet> placements =
+				readPlacementSets(
+					root,
+					array(manifest, "placementSets"),
+					levels,
+					payloadPaths,
+					sectors);
 
 			return new NativeLayeredWorldPackage(
 				root,
@@ -130,6 +153,7 @@ public final class NativeLayeredWorldPackage {
 				worldSpaces,
 				levels,
 				sectors,
+				placements,
 				sha256(manifestPath));
 		} catch (JSONException failure) {
 			throw new IOException(
@@ -203,7 +227,11 @@ public final class NativeLayeredWorldPackage {
 	}
 
 	private static Map<WorldMapSectorId, NativeLayeredTerrainSector>
-		readTerrainSectors(Path root, JSONArray values, Set<LevelKey> levels)
+		readTerrainSectors(
+			Path root,
+			JSONArray values,
+			Set<LevelKey> levels,
+			Set<String> paths)
 			throws IOException {
 		if (values.length() < 1 || values.length() > MAX_TERRAIN_SECTORS) {
 			throw new IOException(
@@ -211,7 +239,6 @@ public final class NativeLayeredWorldPackage {
 		}
 		Map<WorldMapSectorId, NativeLayeredTerrainSector> result =
 			new LinkedHashMap<WorldMapSectorId, NativeLayeredTerrainSector>();
-		Set<String> paths = new HashSet<String>();
 		for (int index = 0; index < values.length(); index++) {
 			JSONObject value = object(values, index, "terrainSectors");
 			exactKeys(
@@ -276,6 +303,256 @@ public final class NativeLayeredWorldPackage {
 			result.put(identity, sector);
 		}
 		return result;
+	}
+
+	private static Map<String, NativeLayeredPlacementSet> readPlacementSets(
+		Path root,
+		JSONArray values,
+		Set<LevelKey> levels,
+		Set<String> paths,
+		Map<WorldMapSectorId, NativeLayeredTerrainSector> terrainSectors)
+		throws IOException {
+		if (values.length() < 1 || values.length() > MAX_PLACEMENT_SETS) {
+			throw new IOException(
+				"placementSets count must be 1.." + MAX_PLACEMENT_SETS);
+		}
+		Map<String, NativeLayeredPlacementSet> result =
+			new LinkedHashMap<String, NativeLayeredPlacementSet>();
+		Set<String> placementIds = new HashSet<String>();
+		for (int index = 0; index < values.length(); index++) {
+			JSONObject value = object(values, index, "placementSets");
+			exactKeys(
+				value,
+				"placementSets[" + index + "]",
+				"id",
+				"worldSpace",
+				"level",
+				"encoding",
+				"path",
+				"sha256");
+			String id = matchedString(value, "id", ID);
+			if (result.containsKey(id)) {
+				throw new IOException("Duplicate placement-set ID: " + id);
+			}
+			WorldSpaceId worldSpace =
+				new WorldSpaceId(matchedString(value, "worldSpace", ID));
+			int level = signedInt(value, "level");
+			if (!levels.contains(new LevelKey(worldSpace, level))) {
+				throw new IOException(
+					"placementSets[" + index
+						+ "] references an undeclared level: "
+						+ worldSpace + " " + level);
+			}
+			String encoding = matchedString(value, "encoding", ID);
+			if (!ENTITY_PLACEMENT_ENCODING.equals(encoding)) {
+				throw new IOException(
+					"Placement payload encoding is unsupported by this loader: "
+						+ encoding);
+			}
+			String relativePath = safeRelativePath(string(value, "path"));
+			if (!paths.add(relativePath)) {
+				throw new IOException(
+					"Package payload path is reused: " + relativePath);
+			}
+			String expectedSha256 = matchedString(value, "sha256", SHA256);
+			Path payloadPath = requiredFile(root, relativePath);
+			if (!expectedSha256.equals(sha256(payloadPath))) {
+				throw new IOException(
+					"Placement payload hash differs from manifest: " + relativePath);
+			}
+			NativeLayeredPlacementSet set = readPlacementSet(
+				payloadPath,
+				id,
+				worldSpace,
+				level,
+				encoding,
+				relativePath,
+				expectedSha256,
+				placementIds);
+			validatePlacementTerrainCoverage(set, terrainSectors);
+			result.put(id, set);
+		}
+		return result;
+	}
+
+	private static NativeLayeredPlacementSet readPlacementSet(
+		Path path,
+		String id,
+		WorldSpaceId worldSpace,
+		int level,
+		String encoding,
+		String relativePath,
+		String sha256,
+		Set<String> placementIds) throws IOException {
+		JSONObject document = readObject(path);
+		exactKeys(
+			document,
+			"entity placement set",
+			"schemaVersion",
+			"encoding",
+			"worldSpace",
+			"level",
+			"npcs",
+			"groundItems");
+		requireInt(document, "schemaVersion", 1);
+		requireString(document, "encoding", ENTITY_PLACEMENT_ENCODING);
+		requireString(document, "worldSpace", worldSpace.getValue());
+		requireInt(document, "level", level);
+		JSONArray npcValues = array(document, "npcs");
+		JSONArray itemValues = array(document, "groundItems");
+		if (npcValues.length() + itemValues.length() < 1
+			|| npcValues.length() > MAX_PLACEMENTS_PER_SET
+			|| itemValues.length() > MAX_PLACEMENTS_PER_SET
+			|| npcValues.length() + itemValues.length()
+				> MAX_PLACEMENTS_PER_SET) {
+			throw new IOException(
+				"Entity placement set count must be 1.."
+					+ MAX_PLACEMENTS_PER_SET);
+		}
+		java.util.List<NativeLayeredNpcPlacement> npcs =
+			new java.util.ArrayList<NativeLayeredNpcPlacement>();
+		for (int index = 0; index < npcValues.length(); index++) {
+			JSONObject value = object(npcValues, index, "npcs");
+			exactKeys(
+				value,
+				"npcs[" + index + "]",
+				"placementId",
+				"npcId",
+				"start",
+				"roamRadius");
+			String placementId = uniquePlacementId(
+				value, index, "npcs", placementIds);
+			int npcId = nonNegativeInt(value, "npcId");
+			int roamRadius = nonNegativeInt(value, "roamRadius");
+			if (roamRadius > MAX_NPC_ROAM_RADIUS) {
+				throw new IOException(
+					"npcs[" + index + "].roamRadius must be 0.."
+						+ MAX_NPC_ROAM_RADIUS);
+			}
+			npcs.add(new NativeLayeredNpcPlacement(
+				placementId,
+				npcId,
+				readLocation(
+					object(value, "start"),
+					"npcs[" + index + "].start",
+					worldSpace,
+					level),
+				roamRadius));
+		}
+		java.util.List<NativeLayeredGroundItemPlacement> groundItems =
+			new java.util.ArrayList<NativeLayeredGroundItemPlacement>();
+		for (int index = 0; index < itemValues.length(); index++) {
+			JSONObject value = object(itemValues, index, "groundItems");
+			exactKeys(
+				value,
+				"groundItems[" + index + "]",
+				"placementId",
+				"itemId",
+				"position",
+				"amount",
+				"respawnSeconds");
+			String placementId = uniquePlacementId(
+				value, index, "groundItems", placementIds);
+			int itemId = nonNegativeInt(value, "itemId");
+			int amount = positiveInt(value, "amount");
+			int respawnSeconds = positiveInt(value, "respawnSeconds");
+			if (respawnSeconds > MAX_GROUND_ITEM_RESPAWN_SECONDS) {
+				throw new IOException(
+					"groundItems[" + index + "].respawnSeconds must be 1.."
+						+ MAX_GROUND_ITEM_RESPAWN_SECONDS);
+			}
+			groundItems.add(new NativeLayeredGroundItemPlacement(
+				placementId,
+				itemId,
+				readLocation(
+					object(value, "position"),
+					"groundItems[" + index + "].position",
+					worldSpace,
+					level),
+				amount,
+				respawnSeconds));
+		}
+		return new NativeLayeredPlacementSet(
+			id,
+			worldSpace,
+			level,
+			encoding,
+			relativePath,
+			sha256,
+			npcs,
+			groundItems);
+	}
+
+	private static String uniquePlacementId(
+		JSONObject value,
+		int index,
+		String label,
+		Set<String> placementIds) throws IOException {
+		String placementId = matchedString(value, "placementId", ID);
+		if (!placementIds.add(placementId)) {
+			throw new IOException(
+				"Duplicate package placement ID at "
+					+ label + "[" + index + "]: " + placementId);
+		}
+		return placementId;
+	}
+
+	private static WorldLocation readLocation(
+		JSONObject value,
+		String label,
+		WorldSpaceId worldSpace,
+		int level) throws IOException {
+		exactKeys(value, label, "x", "y");
+		return new WorldLocation(
+			worldSpace,
+			new WorldCoordinate(
+				signedInt(value, "x"),
+				signedInt(value, "y"),
+				level));
+	}
+
+	private static void validatePlacementTerrainCoverage(
+		NativeLayeredPlacementSet set,
+		Map<WorldMapSectorId, NativeLayeredTerrainSector> terrainSectors)
+		throws IOException {
+		for (NativeLayeredNpcPlacement npc : set.getNpcs()) {
+			WorldCoordinate start = npc.getStart().getCoordinate();
+			for (int deltaX = -npc.getRoamRadius();
+				deltaX <= npc.getRoamRadius();
+				deltaX++) {
+				for (int deltaY = -npc.getRoamRadius();
+					deltaY <= npc.getRoamRadius();
+					deltaY++) {
+					requirePlacementTerrain(
+						new WorldLocation(
+							npc.getStart().getWorldSpace(),
+							new WorldCoordinate(
+								Math.addExact(start.getX(), deltaX),
+								Math.addExact(start.getY(), deltaY),
+								start.getLevel())),
+						npc.getPlacementId(),
+						terrainSectors);
+				}
+			}
+		}
+		for (NativeLayeredGroundItemPlacement item : set.getGroundItems()) {
+			requirePlacementTerrain(
+				item.getLocation(), item.getPlacementId(), terrainSectors);
+		}
+	}
+
+	private static void requirePlacementTerrain(
+		WorldLocation location,
+		String placementId,
+		Map<WorldMapSectorId, NativeLayeredTerrainSector> terrainSectors)
+		throws IOException {
+		NativeLayeredTerrainSector sector =
+			terrainSectors.get(WorldMapSectorId.from(location));
+		if (sector == null) {
+			throw new IOException(
+				"Placement has no package terrain at "
+					+ placementId + ": " + location);
+		}
 	}
 
 	private static NativeLayeredTerrainTile readUniformTile(Path path)
@@ -453,12 +730,36 @@ public final class NativeLayeredWorldPackage {
 		return terrainSectors.size();
 	}
 
+	public int getPlacementSetCount() {
+		return placementSets.size();
+	}
+
+	public int getNpcPlacementCount() {
+		int count = 0;
+		for (NativeLayeredPlacementSet set : placementSets.values()) {
+			count = Math.addExact(count, set.getNpcs().size());
+		}
+		return count;
+	}
+
+	public int getGroundItemPlacementCount() {
+		int count = 0;
+		for (NativeLayeredPlacementSet set : placementSets.values()) {
+			count = Math.addExact(count, set.getGroundItems().size());
+		}
+		return count;
+	}
+
 	public String getManifestSha256() {
 		return manifestSha256;
 	}
 
 	public Map<WorldMapSectorId, NativeLayeredTerrainSector> getTerrainSectors() {
 		return terrainSectors;
+	}
+
+	public Map<String, NativeLayeredPlacementSet> getPlacementSets() {
+		return placementSets;
 	}
 
 	private static JSONObject readObject(Path path) throws IOException {
@@ -585,6 +886,24 @@ public final class NativeLayeredWorldPackage {
 		int result = signedInt(value, key);
 		if (result < 0 || result > 255) {
 			throw new IOException(key + " must be an unsigned byte");
+		}
+		return result;
+	}
+
+	private static int nonNegativeInt(JSONObject value, String key)
+		throws IOException {
+		int result = signedInt(value, key);
+		if (result < 0) {
+			throw new IOException(key + " must be non-negative");
+		}
+		return result;
+	}
+
+	private static int positiveInt(JSONObject value, String key)
+		throws IOException {
+		int result = signedInt(value, key);
+		if (result <= 0) {
+			throw new IOException(key + " must be positive");
 		}
 		return result;
 	}

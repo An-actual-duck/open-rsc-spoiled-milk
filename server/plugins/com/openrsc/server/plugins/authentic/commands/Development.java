@@ -1590,6 +1590,16 @@ public final class Development implements CommandTrigger {
 	}
 
 	private void ensureSyntheticDeepFixtureEntities(final Player player) {
+		RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		if (player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			&& regionManager.getNativeLayeredWorldPackage() != null) {
+			if (!regionManager.areNativeLayeredPlacementsPopulated()) {
+				throw new IllegalStateException(
+					"Native layered package placements are not populated");
+			}
+			return;
+		}
 		boolean npcFound = false;
 		for (Npc npc : player.getWorld().getNpcs()) {
 			if (!npc.isRemoved()
@@ -1665,10 +1675,15 @@ public final class Development implements CommandTrigger {
 			}
 		}
 		int npcCount = 0;
+		RegionManager regionManager =
+			player.getWorld().getRegionManager();
 		for (Npc npc : player.getWorld().getNpcs()) {
 			if (!npc.isRemoved()
-				&& npc.getAttribute(
-					SYNTHETIC_DEEP_NPC_ATTRIBUTE, false)) {
+				&& (nativeTerrain
+					? regionManager.isNativeLayeredPlacement(
+						npc, RegionManager.NATIVE_LAYERED_NPC_KIND)
+					: npc.getAttribute(
+						SYNTHETIC_DEEP_NPC_ATTRIBUTE, false))) {
 				npcCount++;
 			}
 		}
@@ -1677,8 +1692,12 @@ public final class Development implements CommandTrigger {
 			for (GroundItem item : player.getWorld().getRegionManager()
 				.getLocalGroundItems(player)) {
 				if (!item.isRemoved()
-					&& item.getAttribute(
-						SYNTHETIC_DEEP_ITEM_ATTRIBUTE, false)) {
+					&& (nativeTerrain
+						? regionManager.isNativeLayeredPlacement(
+							item,
+							RegionManager.NATIVE_LAYERED_GROUND_ITEM_KIND)
+						: item.getAttribute(
+							SYNTHETIC_DEEP_ITEM_ATTRIBUTE, false))) {
 					itemCount++;
 				}
 			}
@@ -1706,6 +1725,9 @@ public final class Development implements CommandTrigger {
 				+ "Projection=" + projection
 				+ "; package=" + nativePackage.getPackageId()
 				+ "@" + nativePackage.getPackageVersion()
+				+ "; placements="
+				+ nativePackage.getNpcPlacementCount() + "npc/"
+				+ nativePackage.getGroundItemPlacementCount() + "item"
 				+ "; manifest="
 				+ nativePackage.getManifestSha256().substring(0, 12));
 		}

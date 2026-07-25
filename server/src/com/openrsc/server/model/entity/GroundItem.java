@@ -5,8 +5,10 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.external.ItemLoc;
+import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.AuthoredLayeredGroundItemRegistry;
 import com.openrsc.server.model.world.World;
 
 public class GroundItem extends Entity {
@@ -24,6 +26,7 @@ public class GroundItem extends Entity {
 	 * Location definition of the item
 	 */
 	private ItemLoc loc = null;
+	private NativeLayeredGroundItemPlacement nativeLayeredPlacement = null;
 
 	/**
 	 * Contains the player that the item belongs to, if any
@@ -83,6 +86,19 @@ public class GroundItem extends Entity {
 		trySetLocation(Point.location(loc.x, loc.y));
 	}
 
+	public GroundItem(
+		final World world,
+		final NativeLayeredGroundItemPlacement placement) {
+		super(world, EntityType.GROUND_ITEM);
+		nativeLayeredPlacement = placement;
+		setID(placement.getItemId());
+		setNoted(false);
+		setAmount(placement.getAmount());
+		spawnedTime = System.currentTimeMillis();
+		setInitialWorldLocation(placement.getLocation());
+		updateRegion();
+	}
+
 	public void trySetLocation(Point point) {
 		if (getWorld().getServer().getConfig().RESTRICT_ITEM_ID <= ItemId.NOTHING.id()
 			|| this.getID() <= getWorld().getServer().getConfig().RESTRICT_ITEM_ID) {
@@ -114,6 +130,10 @@ public class GroundItem extends Entity {
 			final long authoredGeneration = !isRemoved() && loc != null
 				? getWorld().removeAuthoredGroundItem(this)
 				: -1L;
+			final long layeredGeneration =
+				!isRemoved() && nativeLayeredPlacement != null
+					? getWorld().removeNativeLayeredGroundItem(this)
+					: AuthoredLayeredGroundItemRegistry.NO_GENERATION;
 			if (authoredGeneration >= 0 && loc.getRespawnTime() > 0) {
 				getWorld().getServer().getGameEventHandler().add(new DelayedEvent(getWorld(), null, loc.getRespawnTime() * 1000, "Respawn Ground Item") {
 					public void run() {
@@ -121,6 +141,20 @@ public class GroundItem extends Entity {
 						stop();
 					}
 				});
+			}
+			if (layeredGeneration >= 0) {
+				getWorld().getServer().getGameEventHandler().add(
+					new DelayedEvent(
+						getWorld(),
+						null,
+						(long) nativeLayeredPlacement.getRespawnSeconds() * 1000L,
+						"Respawn Native Layered Ground Item") {
+						public void run() {
+							getWorld().registerNativeLayeredGroundItem(
+								nativeLayeredPlacement, layeredGeneration);
+							stop();
+						}
+					});
 			}
 			super.remove();
 		}
@@ -161,6 +195,10 @@ public class GroundItem extends Entity {
 
 	public ItemLoc getLoc() {
 		return loc;
+	}
+
+	public NativeLayeredGroundItemPlacement getNativeLayeredPlacement() {
+		return nativeLayeredPlacement;
 	}
 
 	public long getOwnerUsernameHash() {

@@ -158,6 +158,7 @@ public final class LayeredMapsCli {
 		System.out.println("worldSpaces=" + manifest.getWorldSpaces().size());
 		System.out.println("levels=" + manifest.getLevels().size());
 		System.out.println("terrainSectors=" + manifest.getTerrainSectors().size());
+		System.out.println("placementSets=" + manifest.getPlacementSets().size());
 		System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
 	}
 

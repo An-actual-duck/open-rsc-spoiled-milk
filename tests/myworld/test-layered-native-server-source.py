@@ -38,6 +38,9 @@ import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredTerrainChunk;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
+import com.openrsc.server.io.NativeLayeredPlacementSet;
+import com.openrsc.server.io.NativeLayeredNpcPlacement;
+import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
 import com.openrsc.server.io.Sector;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
@@ -50,11 +53,38 @@ public final class NativeLayeredServerSourceFixture {
         NativeLayeredWorldPackage world =
             NativeLayeredWorldPackage.load(Paths.get(args[0]));
         check("rsc-remastered.native-loader-lab".equals(world.getPackageId()), "package ID");
-        check("0.2.0".equals(world.getPackageVersion()), "package version");
+        check("0.3.0".equals(world.getPackageVersion()), "package version");
         check(world.getPresentationChunkSize() == 24, "presentation chunk");
         check(world.getWorldSpaceCount() == 1, "world-space count");
         check(world.getLevelCount() == 3, "level count");
         check(world.getTerrainSectorCount() == 3, "sector count");
+        check(world.getPlacementSetCount() == 1, "placement-set count");
+        check(world.getNpcPlacementCount() == 1, "NPC placement count");
+        check(world.getGroundItemPlacementCount() == 1,
+            "ground-item placement count");
+        NativeLayeredPlacementSet placements =
+            world.getPlacementSets().get("deep-fixture-entities");
+        check(placements != null, "placement set");
+        NativeLayeredNpcPlacement npc = placements.getNpcs().get(0);
+        check("deep-fixture-man".equals(npc.getPlacementId()),
+            "NPC placement ID");
+        check(npc.getNpcId() == 11 && npc.getRoamRadius() == 2,
+            "NPC placement values");
+        check(npc.getStart().getCoordinate().getX() == 452
+                && npc.getStart().getCoordinate().getY() == 600
+                && npc.getStart().getCoordinate().getLevel() == -2,
+            "NPC layered start");
+        NativeLayeredGroundItemPlacement item =
+            placements.getGroundItems().get(0);
+        check("deep-fixture-coins".equals(item.getPlacementId()),
+            "item placement ID");
+        check(item.getItemId() == 10 && item.getAmount() == 5
+                && item.getRespawnSeconds() == 5,
+            "item placement values");
+        check(item.getLocation().getCoordinate().getX() == 448
+                && item.getLocation().getCoordinate().getY() == 600
+                && item.getLocation().getCoordinate().getLevel() == -2,
+            "item layered location");
         check(world.declaresLevel(WorldSpaceId.GLOBAL, 0), "surface declaration");
         check(world.declaresLevel(WorldSpaceId.GLOBAL, -2), "deep declaration");
         check(world.declaresLevel(WorldSpaceId.GLOBAL, -3), "expanded declaration");
@@ -186,7 +216,7 @@ public final class NativeLayeredChunkWireFixture {
         context.legacyX = 450;
         context.legacyY = 600;
         context.nativePackageId = "rsc-remastered.native-loader-lab";
-        context.nativePackageVersion = "0.2.0";
+        context.nativePackageVersion = "0.3.0";
         context.nativeManifestSha256 =
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         context.nativePresentationChunkSize = 24;
@@ -478,6 +508,35 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
 
             self.assertNotEqual(0, result.returncode)
             self.assertIn("exactly 2304", result.stderr)
+
+    def test_server_loader_refuses_invalid_placement_after_hash_check(self):
+        with tempfile.TemporaryDirectory(
+            prefix="native-server-placement-refusal-"
+        ) as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            relative_path = "placements/deep-l2-entities.json"
+            payload_path = package / relative_path
+            payload = json.loads(payload_path.read_text(encoding="utf-8"))
+            payload["groundItems"][0]["respawnSeconds"] = 0
+            payload_path.write_text(
+                json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+            )
+            manifest_path = package / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for placement_set in manifest["placementSets"]:
+                if placement_set["path"] == relative_path:
+                    placement_set["sha256"] = hashlib.sha256(
+                        payload_path.read_bytes()
+                    ).hexdigest()
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+            )
+
+            result = self.run_fixture(package)
+
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("must be positive", result.stderr)
 
     def test_source_is_detached_from_runtime_world_and_region_authority(self):
         source = SOURCE.read_text(encoding="utf-8")

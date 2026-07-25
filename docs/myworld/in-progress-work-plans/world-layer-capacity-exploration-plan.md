@@ -25,11 +25,12 @@ with native data-driven layered terrain and placements.
 Milestone E runtime checkpoints 3 and 4 now put package-owned terrain on both
 server and client behind a fifth private gate, with protocol-v3 page identity
 and gate-off rollback. That first native runtime cut is owner-accepted. The
-bounded compatibility receipt and process-local test placements still exist;
-full-fidelity server/package terrain and protocol-v4 24-tile client readiness
-are now automated-validated. Owner validation of that chunked route,
-package-owned placements, and removal of the bounded compatibility receipt
-remain the current implementation boundary.
+bounded compatibility receipt still exists; full-fidelity server/package
+terrain and protocol-v4 24-tile client readiness are owner-accepted.
+Package-owned NPC/item placements now pass strict format, server decode,
+world-load, respawn-registry, and private-startup validation. Their focused
+owner route and removal of the bounded compatibility receipt remain the current
+implementation boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -320,12 +321,26 @@ one-ready/eight-void window and a fully populated nine-chunk window round-trip;
 the latter is asserted below the 65,533-byte payload ceiling. The
 server/client builds and focused authority lineage pass.
 
-This checkpoint is ready for a meaningful private owner route, not yet owner
-accepted. That route should enter at `(450,600,L-2)`, verify the visible
-non-uniform bands, cross X `456` and Y `600` in both directions, confirm status
-centers/readiness, interact with the Man and coins, reconnect at depth, and
-exit. Package-owned placements remain the next implementation slice after
-acceptance; Milestone E is not complete.
+The meaningful private owner route is accepted:
+
+- the short status line visibly reported page `(9,12)`, center `(18,25)`,
+  readiness `4/9`, and chunk size `24`;
+- client diagnostics recorded center changes
+  `(18,25) -> (18,24) -> (19,24) -> (18,24) -> (18,25) -> (19,25) ->
+  (18,25)` while crossing both X `456` and Y `600`. Readiness changed
+  `4/9 -> 6/9 -> 4/9` with the X boundary, while the scene-scope reset count
+  stayed at one throughout the same-package route;
+- the owner confirmed the visible non-uniform terrain and every crossing
+  looked normal, with no seam, disappearance, collision, or interaction
+  issue;
+- the server recorded normal Man dialogue at `(452,601)` and collection of
+  five coins at `(448,600)`;
+- logout saved `(448,600,L-2)`, reconnect restored it exactly with a fresh
+  protocol-v4 sequence and the same page, chunk, package, and manifest; and
+- explicit exit returned to `(120,648,L0)` and the legacy scene path.
+
+Package-owned placements remain the next implementation slice; Milestone E is
+not complete.
 
 The first login attempt exposed and rejected one selector defect before any
 deep-room acceptance: with the fifth gate enabled,
@@ -338,6 +353,54 @@ coverage pairs the executable client surface-context case with an explicit
 server-selector guard, and the authoritative server build passes. No account
 or database repair was required; the failed logins saved the unchanged surface
 location.
+
+### Authority Milestone E placement checkpoint 7
+
+Implemented and automated/private-startup validated on 2026-07-25:
+
+- package `0.3.0` adds hash-addressed
+  `layered-entity-placements-v1`. Its first placement set owns the radius-2
+  Man at `global (452,600,L-2)` and five respawning coins at
+  `global (448,600,L-2)`;
+- every placement has a stable package-wide ID, and the payload repeats its
+  world-space/level identity. The standalone tool and independent server
+  decoder reject duplicate IDs, changed or reused payloads, unknown fields,
+  manifest/payload identity disagreement, invalid IDs/amounts/radii/timers,
+  undeclared levels, and any NPC roaming tile or item position without
+  package-owned terrain;
+- placement decoding remains detached from `World`. Runtime registration is a
+  separate fail-closed world-population step after definitions and ordinary
+  content have loaded. The initial private start correctly refused an
+  attempted definition-table check during `RegionManager` construction,
+  establishing that package structure exists before definitions; definition
+  validation now occurs immediately before entity construction at the
+  authoritative initialization phase;
+- native `::deepfixture enter` no longer constructs the Man or coins. It only
+  verifies that world-load population completed before moving the Player. The
+  older command-local generated entities remain available solely on the
+  fifth-gate-off Milestone D rollback route;
+- the package-owned NPC receives its exact layered start before entering the
+  global NPC list and retains its existing level-aware roam/respawn behavior;
+- a separate layered authored-item registry keys complete `WorldLocation`, so
+  equal X/Y on surface and level `-2` are different spawns. It deduplicates
+  active instances, uses reference identity as its release token, and rejects
+  delayed respawns from a stale world generation after unload/reset;
+- the five-coin fixture uses a five-second package-owned respawn. Respawn
+  reconstructs the item from the same immutable placement and restores its
+  package/placement markers; and
+- status now reports package-declared NPC/item counts alongside version and
+  manifest, while live `npc`/`item` counts are derived from package placement
+  markers rather than synthetic-command markers.
+
+The package/tool, detached server, layered placement-registry, protocol-v4,
+and authoritative server-build checks pass. A matched private server reaches
+online state on `localhost:43615` with the new package and existing copied
+development database. Owner acceptance should prove the entities are present
+without command construction, the item disappears and returns after its
+five-second respawn, Man roaming/dialogue remains correct, reconnect does not
+duplicate either spawn, and exit remains normal. Package-owned scenery and
+boundaries plus removal of the bounded compatibility receipt remain later
+Milestone E cuts.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -17418,7 +17481,8 @@ private environment should validate at least:
 | 2026-07-25 | Correct the rejected first Milestone E owner login: the fifth-gate selector must return the unchanged ordinary scene path outside native deep scope rather than treating level 0 as an error. | Root-caused from the first scene-update stack trace; narrow selector fix, regression guard, authoritative server build, and corrected owner retest pass |
 | 2026-07-25 | Accept the corrected Milestone E native-terrain owner route and split its oversized status output. | Owner-confirmed visuals/collision/interactions; logs prove native page `(9,12)`, chunk `24`, coin/Man interaction, exact depth reconnect, exit, and surface death recovery. Full-fidelity terrain, package placements, and incremental presentation remain |
 | 2026-07-25 | Complete Milestone E format checkpoint 5 with `rle-layered-sector-v1`. | Tool/server strict decode preserves arbitrary per-tile sequences and all seven terrain fields, rejects malformed expansion, and proves mixed encodings plus detached fidelity in package `0.2.0` |
-| 2026-07-25 | Complete Milestone E runtime checkpoint 6 with matched protocol-v4 radius-one 24-tile readiness. | Implemented and automated-validated; generated server wire round-trips through the client decoder for explicit void and all-ready windows, same-package shifts avoid full scope resets, and private owner acceptance remains |
+| 2026-07-25 | Complete and accept Milestone E runtime checkpoint 6 with matched protocol-v4 radius-one 24-tile readiness. | Automated wire tests and owner evidence prove visible full-fidelity terrain, both chunk-boundary axes, `4/9 -> 6/9 -> 4/9` readiness, stable same-package scene scope, interaction, exact depth reconnect, and exit |
+| 2026-07-25 | Complete Milestone E placement checkpoint 7 with package-owned NPC/item world population. | Package `0.3.0`, strict tool/server decode, layered spawn identity, generation-safe item respawn, command-independent world registration, fail-closed definition validation, focused tests, authoritative build, and matched private startup pass; owner acceptance remains |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

@@ -849,9 +849,13 @@ depth logout/reconnect, exit, and surface death recovery pass. This does not
 yet close Phase 5 or Milestone E. Full-fidelity non-uniform RLE storage,
 detached server decode, and matched protocol-v4 radius-one delivery of explicit
 24-tile terrain/void chunks now pass automated validation. Same-package chunk
-window shifts no longer trigger full world-scope cache resets. Owner acceptance
-of that route, package-owned placements, and removal of the bounded
-compatibility receipt remain.
+window shifts no longer trigger full world-scope cache resets. The owner route
+also passes across both presentation boundaries with correct `4/9 -> 6/9 ->
+4/9` readiness, stable visuals/interactions, exact depth reconnect, and exit.
+Hash-addressed package-owned NPC/item placements now pass strict decode,
+world-load, layered item-respawn registry, and matched private-startup
+validation. Owner acceptance of that placement route, package-owned
+scenery/boundaries, and removal of the bounded compatibility receipt remain.
 
 ### Phase 6: Layered World Builder generation
 
@@ -1320,7 +1324,8 @@ The RSC Remastered product roadmap is complete when:
 | 2026-07-25 | Fully accept Phase 5 Authority Milestone D. | A clean post-death logout saved successfully, reconnect restored exact `global (120,648,L0)` authority with no fallback or rewrite, and `::layerloc` confirmed the recovered surface state. Together with the accepted room, movement, isolation, NPC/item interaction, deep reconnect, explicit exit, and death recovery routes, this closes the bounded synthetic level `-2` compatibility milestone. The broader layered-map workstream remains active |
 | 2026-07-25 | Accept the first native-terrain cut of Phase 5 Authority Milestone E. | Fifth-gate server/package terrain and protocol-v3 client page identity are owner-validated at native page `(9,12)`, chunk `24`, including visuals, movement, coin/Man interaction, exact depth reconnect, exit, and surface death recovery. Full-fidelity terrain, package placements, incremental delivery, and compatibility-boundary removal remain |
 | 2026-07-25 | Add the full-fidelity Milestone E terrain storage/decode format. | `rle-layered-sector-v1` now preserves arbitrary per-tile sequences and all seven terrain fields in explicit x-major/y-minor order. Tool/server strict validation, malformed-payload refusal, five distinct fixture bands, detached byte fidelity, and mixed encoding dispatch pass; client chunk delivery remains separately gated |
-| 2026-07-25 | Add matched full-fidelity 24-tile presentation delivery for Milestone E. | Protocol v4 atomically carries a radius-one window of nine complete-terrain/explicit-void chunks, uses actual per-tile RLE-derived values, stays within the two-byte custom frame at full population, rejects malformed wire data, and refreshes same-package readiness without a full scene-scope reset. Automated server-generator-to-client-decoder coverage and builds pass; private owner acceptance remains |
+| 2026-07-25 | Add and accept matched full-fidelity 24-tile presentation delivery for Milestone E. | Protocol v4 atomically carries a radius-one window of nine complete-terrain/explicit-void chunks, uses actual per-tile RLE-derived values, stays within the two-byte custom frame at full population, rejects malformed wire data, and refreshes same-package readiness without a full scene-scope reset. Automated and owner routes pass both boundary axes, interaction, exact reconnect, and exit |
+| 2026-07-25 | Add package-owned NPC/item placements for Milestone E. | Package `0.3.0` strictly decodes stable-ID, world-space/level-qualified NPC and respawning item data; world load owns registration, the native developer command cannot create them, equal X/Y on different levels remain distinct, stale lifecycle timers refuse, and matched private startup passes. Owner acceptance remains |
 | 2026-07-18 | Complete the fifteenth Layered Maps foundation checkpoint: immutable level-qualified visibility windows and read-only manager projection while packed lookup, caches, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the sixteenth Layered Maps foundation checkpoint: a checked Player visibility-window shadow and versioned private diagnostic evidence while packed lookup, caches, and client behavior remain authoritative. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the seventeenth Layered Maps foundation checkpoint: deterministic, allocation-budgeted logical interest-window deltas while packed lookup, caches, packets, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |

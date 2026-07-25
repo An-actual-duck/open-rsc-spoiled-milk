@@ -32,6 +32,7 @@ import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.external.NPCLoc;
+import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
 import com.openrsc.server.io.WorldLoader;
 import com.openrsc.server.model.GlobalMessage;
 import com.openrsc.server.model.PathValidation;
@@ -128,6 +129,8 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	private final HashMap<Point, Integer> sceneryLocs;
 	private final ConcurrentMap<TrawlerBoat, FishingTrawler> fishingTrawler;
 	private final AuthoredGroundItemRegistry<GroundItem> authoredGroundItems;
+	private final AuthoredLayeredGroundItemRegistry<GroundItem>
+		nativeLayeredGroundItems;
 
 	private final ConcurrentMap<Player, Boolean> playerUnderAttackMap;
 	private final ConcurrentMap<Npc, Boolean> npcUnderAttackMap;
@@ -152,6 +155,8 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		this.npcUnderAttackMap = new ConcurrentHashMap<>();
 		this.fishingTrawler = new ConcurrentHashMap<>();
 		this.authoredGroundItems = new AuthoredGroundItemRegistry<>();
+		this.nativeLayeredGroundItems =
+			new AuthoredLayeredGroundItemRegistry<GroundItem>();
 		this.snapshots = new LinkedList<>();
 		this.worldLoader = new WorldLoader(this);
 		this.regionManager = new RegionManager(this);
@@ -478,6 +483,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			}
 			getRegionManager().load();
 			getWorldLoader().getWorldPopulator().populateWorld();
+			getRegionManager().populateNativeLayeredPlacements();
 			getNpcDrops().load();
 
 			if (PathValidation.DEBUG) {
@@ -492,6 +498,10 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			}
 		} catch (final Exception e) {
 			LOGGER.error("Error in World load()", e);
+			if (getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE) {
+				throw new IllegalStateException(
+					"Native layered world load failed closed", e);
+			}
 		}
 	}
 
@@ -531,6 +541,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		}
 		getRegionManager().unload();
 		authoredGroundItems.reset();
+		nativeLayeredGroundItems.reset();
 		getNpcDrops().unload();
 		npcs.clear();
 		sceneryLocs.clear();
@@ -673,6 +684,49 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			return AuthoredGroundItemRegistry.NO_GENERATION;
 		}
 		return authoredGroundItems.remove(loc.getX(), loc.getY(), item);
+	}
+
+	public GroundItem registerNativeLayeredGroundItem(
+		final NativeLayeredGroundItemPlacement placement) {
+		return registerNativeLayeredGroundItem(placement, null);
+	}
+
+	public GroundItem registerNativeLayeredGroundItem(
+		final NativeLayeredGroundItemPlacement placement,
+		final Long expectedGeneration) {
+		if (getServer().getConfig().RESTRICT_ITEM_ID > ItemId.NOTHING.id()
+			&& placement.getItemId()
+				> getServer().getConfig().RESTRICT_ITEM_ID) {
+			return null;
+		}
+		final GroundItem item;
+		if (expectedGeneration == null) {
+			item = nativeLayeredGroundItems.register(
+				placement.getLocation(),
+				() -> new GroundItem(this, placement));
+		} else {
+			item = nativeLayeredGroundItems.registerForGeneration(
+				placement.getLocation(),
+				expectedGeneration,
+				() -> new GroundItem(this, placement));
+		}
+		if (item != null) {
+			getRegionManager().markNativeLayeredPlacement(
+				item,
+				placement.getPlacementId(),
+				RegionManager.NATIVE_LAYERED_GROUND_ITEM_KIND);
+		}
+		return item;
+	}
+
+	public long removeNativeLayeredGroundItem(final GroundItem item) {
+		NativeLayeredGroundItemPlacement placement =
+			item.getNativeLayeredPlacement();
+		if (placement == null) {
+			return AuthoredLayeredGroundItemRegistry.NO_GENERATION;
+		}
+		return nativeLayeredGroundItems.remove(
+			placement.getLocation(), item);
 	}
 
 	public void registerItem(final GroundItem i, final int delayTime) {

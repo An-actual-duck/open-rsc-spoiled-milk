@@ -12,11 +12,11 @@ A package declares native terrain by explicit world space, signed level, and
 logical sector coordinates. It does not encode level through Y offsets, archive
 plane numbers, directory ordering, or a fixed list of floors.
 
-The package root contains `manifest.json`. Every terrain payload is a contained
-regular file with an exact SHA-256 in that manifest. Validation rejects unknown
-fields, unsafe paths, symlinks, duplicate sector identities, duplicate payload
-paths, undeclared world spaces or levels, and changed payloads before runtime
-loading.
+The package root contains `manifest.json`. Every terrain or placement payload
+is a contained regular file with an exact SHA-256 in that manifest. Validation
+rejects unknown fields, unsafe paths, symlinks, duplicate identities, reused
+payload paths, undeclared world spaces or levels, and changed payloads before
+runtime loading.
 
 ## Level expansion
 
@@ -71,6 +71,34 @@ may use 2,304 one-tile runs, so compression never limits fidelity. The loader
 rejects underfill, overfill, zero/negative counts, extra fields, invalid scalar
 ranges, or a different tile order.
 
-Placements and transitions will be separate, versioned, hash-addressed package
-indexes. They are intentionally not improvised into this first terrain
-descriptor before their runtime ownership cut is implemented.
+## Entity-placement payloads
+
+Each `placementSets` record declares:
+
+- a stable set `id`;
+- `worldSpace` and signed `level`;
+- versioned `encoding`;
+- a normalized relative payload `path`; and
+- exact payload `sha256`.
+
+`layered-entity-placements-v1` owns NPC and ground-item spawns. Every placement
+has a package-wide stable `placementId`; IDs cannot be reused across sets or
+entity kinds. NPCs carry an ID, exact layered start, and bounded roam radius.
+Ground items carry an ID, exact layered position, positive amount, and bounded
+positive respawn time. The payload repeats its world space and level so a
+manifest/payload disagreement refuses rather than reinterpreting coordinates.
+
+Every NPC roaming tile and ground-item position must resolve to terrain owned
+by the same package. The standalone tool and server source validate the same
+identity, range, terrain-coverage, path, and hash boundaries independently.
+
+The first private runtime registers these entities during world population.
+The developer entry command only changes the Player's location and verifies
+that package population already happened; it does not construct native
+entities. Ground-item spawn identity includes complete `WorldLocation`, so the
+same X/Y on different signed levels remains distinct. Respawn callbacks carry
+a world-lifecycle generation and cannot repopulate after unload/reset.
+
+Package-owned scenery/boundary placements and transitions remain separate
+future versioned indexes because their layered collision/transition ownership
+must be implemented explicitly rather than inferred from the entity format.

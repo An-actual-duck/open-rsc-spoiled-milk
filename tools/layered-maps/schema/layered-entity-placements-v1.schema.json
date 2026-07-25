@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rsc-remastered.invalid/schema/layered-entity-placements-v1.schema.json",
+  "title": "Native Layered Entity Placements v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "encoding",
+    "worldSpace",
+    "level",
+    "npcs",
+    "groundItems"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "encoding": {"const": "layered-entity-placements-v1"},
+    "worldSpace": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "level": {
+      "type": "integer",
+      "minimum": -2147483648,
+      "maximum": 2147483647
+    },
+    "npcs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["placementId", "npcId", "start", "roamRadius"],
+        "properties": {
+          "placementId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          },
+          "npcId": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+          "start": {"$ref": "#/$defs/position"},
+          "roamRadius": {"type": "integer", "minimum": 0, "maximum": 64}
+        }
+      }
+    },
+    "groundItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "placementId",
+          "itemId",
+          "position",
+          "amount",
+          "respawnSeconds"
+        ],
+        "properties": {
+          "placementId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          },
+          "itemId": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+          "position": {"$ref": "#/$defs/position"},
+          "amount": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+          "respawnSeconds": {"type": "integer", "minimum": 1, "maximum": 86400}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        },
+        "y": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "anyOf": [
+        {"properties": {"npcs": {"minItems": 1}}},
+        {"properties": {"groundItems": {"minItems": 1}}}
+      ]
+    }
+  ]
+}

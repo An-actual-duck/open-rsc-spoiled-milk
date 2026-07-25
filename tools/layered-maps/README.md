@@ -14,8 +14,8 @@ capability. It currently provides:
   into migration families without parsing or rewriting them;
 - a deterministic Preservation revision-64 baseline manifest; and
 - the strict `layered-world-package-v1` descriptor for data-declared world
-  spaces, arbitrary signed levels, hash-addressed terrain sectors, and
-  presentation chunks smaller than the 48-tile storage page.
+  spaces, arbitrary signed levels, hash-addressed terrain and entity-placement
+  payloads, and presentation chunks smaller than the 48-tile storage page.
 
 It does **not** convert maps, edit archives, modify player data, launch a
 server, or export into a game. A separately gated private runtime can now load
@@ -58,6 +58,15 @@ storage page. The fixture deliberately declares levels `0`, `-2`, and `-3`;
 the latter proves `-2` is not a format or loader ceiling. Its 24-tile
 presentation chunks are independent from 48-tile storage ownership.
 
+The hash-addressed `layered-entity-placements-v1` payload gives every NPC and
+ground-item spawn a stable package-wide placement ID and an explicit
+world-space/level-qualified position. NPC roaming coverage and item positions
+must be backed by terrain from the same package. The first fixture owns one
+radius-2 Man and one five-coin spawn with a five-second respawn. Duplicate IDs,
+unknown fields, invalid amounts/timers, identity disagreement, missing terrain,
+changed hashes, and unsafe/reused paths are refused independently by both the
+tool and server loaders.
+
 The compact `uniform-layered-sector-v1` payload remains a laboratory encoding.
 The definitive `rle-layered-sector-v1` payload expands positive runs in
 `x-major-y-minor` order to exactly 2,304 independent tile values. It retains
@@ -80,8 +89,12 @@ window of nine explicit 24-tile chunk slots. Available slots carry all 576
 fixed-width terrain tiles; unavailable slots are explicit void. The client
 accepts the complete window atomically, retains protocol-v3 uniform-page
 decoding for rollback evidence, and does not turn a same-package chunk shift
-into a full world-scope reset. General `World` registration and package
-placements remain later milestones.
+into a full world-scope reset. The private server now registers the package
+NPC and item once during world population rather than creating them from the
+developer command. The layered item registry keys full `WorldLocation`,
+deduplicates the active spawn, and rejects stale respawn timers after a world
+lifecycle reset. Package-owned scenery/boundaries, general world loading, and
+removal of the bounded compatibility receipt remain later milestones.
 
 ## Preflight
 

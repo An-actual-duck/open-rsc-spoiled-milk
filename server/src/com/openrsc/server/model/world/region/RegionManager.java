@@ -16,6 +16,9 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision
 	.TargetOperation;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
+import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
+import com.openrsc.server.io.NativeLayeredNpcPlacement;
+import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.Entity;
@@ -82,8 +85,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class RegionManager {
+	private static final Logger LOGGER =
+		LogManager.getLogger(RegionManager.class);
 	public static final int MAX_LAYERED_REGIONS_PER_INTEREST_OWNER = 4096;
 	public static final int MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN =
 		MAX_LAYERED_REGIONS_PER_INTEREST_OWNER
@@ -91,6 +98,14 @@ public class RegionManager {
 				.MAX_PACKED_SOURCES_PER_LOGICAL_REGION;
 	public static final boolean LAYERED_PACKED_REGION_RELOAD_SUPPORTED = false;
 	public static final long LAYERED_REGION_RETIREMENT_COOLDOWN_TICKS = 16L;
+	public static final String NATIVE_LAYERED_PLACEMENT_ID_ATTRIBUTE =
+		"native-layered-package-placement-id";
+	public static final String NATIVE_LAYERED_PLACEMENT_KIND_ATTRIBUTE =
+		"native-layered-package-placement-kind";
+	public static final String NATIVE_LAYERED_PLACEMENT_PACKAGE_ATTRIBUTE =
+		"native-layered-package-placement-package";
+	public static final String NATIVE_LAYERED_NPC_KIND = "npc";
+	public static final String NATIVE_LAYERED_GROUND_ITEM_KIND = "ground-item";
 
 	private final ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>> regions;
 	private final ConcurrentHashMap<Long, List<Region>> visibleRegionWindowCache;
@@ -109,6 +124,7 @@ public class RegionManager {
 		layeredRegionRetirementDecisionArbiter;
 	private final LayeredSpatialEntityIndex layeredSpatialEntityIndex;
 	private final NativeLayeredWorldPackage nativeLayeredWorldPackage;
+	private boolean nativeLayeredPlacementsPopulated;
 
 	private final World world;
 
@@ -171,6 +187,7 @@ public class RegionManager {
 		this.layeredRegionRetirementDecisionArbiter =
 			new LayeredRegionRetirementDecisionArbiter();
 		this.layeredSpatialEntityIndex = new LayeredSpatialEntityIndex();
+		this.nativeLayeredPlacementsPopulated = false;
 	}
 
 	private static NativeLayeredWorldPackage loadNativeLayeredWorldPackage(
@@ -210,6 +227,13 @@ public class RegionManager {
 			throw new IllegalStateException(
 				"Native layered terrain package does not declare level -2");
 		}
+		if (loaded.getPlacementSetCount() != 1
+			|| loaded.getNpcPlacementCount() != 1
+			|| loaded.getGroundItemPlacementCount() != 1) {
+			throw new IllegalStateException(
+				"The first native layered placement route requires exactly "
+					+ "one placement set, NPC, and ground item");
+		}
 		for (int x = LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_X;
 			x <= LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_X;
 			x++) {
@@ -231,6 +255,21 @@ public class RegionManager {
 				}
 			}
 		}
+		for (NativeLayeredPlacementSet set
+			: loaded.getPlacementSets().values()) {
+			for (NativeLayeredNpcPlacement npc : set.getNpcs()) {
+				requireNativeDeepFixtureLocation(npc.getStart());
+			}
+			for (NativeLayeredGroundItemPlacement item
+				: set.getGroundItems()) {
+				requireNativeDeepFixtureLocation(item.getLocation());
+			}
+		}
+	}
+
+	private static void requireNativeDeepFixtureLocation(
+		final WorldLocation location) {
+		LayeredCompatibilityPointAdapter.toCompatibilityPoint(location, true);
 	}
 
 	public void load() {
@@ -250,6 +289,7 @@ public class RegionManager {
 			layeredRegionInterestOwnershipLedger.clear();
 			layeredRegionRetirementEligibilityLedger.clear();
 			layeredSpatialEntityIndex.clear();
+			nativeLayeredPlacementsPopulated = false;
 		}
 		visibleRegionWindowCache.clear();
 		visibleObjectWindowCache.clear();
@@ -3557,6 +3597,97 @@ public class RegionManager {
 
 	public NativeLayeredWorldPackage getNativeLayeredWorldPackage() {
 		return nativeLayeredWorldPackage;
+	}
+
+	public void populateNativeLayeredPlacements() {
+		if (nativeLayeredWorldPackage == null) {
+			return;
+		}
+		if (nativeLayeredPlacementsPopulated) {
+			throw new IllegalStateException(
+				"Native layered placements were already populated");
+		}
+		int npcCount = 0;
+		int groundItemCount = 0;
+		for (NativeLayeredPlacementSet set
+			: nativeLayeredWorldPackage.getPlacementSets().values()) {
+			for (NativeLayeredNpcPlacement placement : set.getNpcs()) {
+				if (world.getServer().getEntityHandler()
+						.getNpcDef(placement.getNpcId()) == null) {
+					throw new IllegalStateException(
+						"Native layered NPC definition is unavailable: "
+							+ placement.getNpcId());
+				}
+				WorldLocation location = placement.getStart();
+				Npc npc = new Npc(
+					world,
+					placement.getNpcId(),
+					location.getCoordinate().getX(),
+					location.getCoordinate().getY(),
+					placement.getRoamRadius());
+				markNativeLayeredPlacement(
+					npc, placement.getPlacementId(), NATIVE_LAYERED_NPC_KIND);
+				npc.setWorldLocation(location, true);
+				world.registerNpc(npc);
+				npcCount++;
+			}
+			for (NativeLayeredGroundItemPlacement placement
+				: set.getGroundItems()) {
+				if (world.getServer().getEntityHandler()
+						.getItemDef(placement.getItemId()) == null) {
+					throw new IllegalStateException(
+						"Native layered item definition is unavailable: "
+							+ placement.getItemId());
+				}
+				GroundItem item =
+					world.registerNativeLayeredGroundItem(placement);
+				if (item == null) {
+					throw new IllegalStateException(
+						"Native layered ground item was refused: "
+							+ placement.getPlacementId());
+				}
+				markNativeLayeredPlacement(
+					item,
+					placement.getPlacementId(),
+					NATIVE_LAYERED_GROUND_ITEM_KIND);
+				groundItemCount++;
+			}
+		}
+		nativeLayeredPlacementsPopulated = true;
+		LOGGER.info(
+			"Populated native layered package {}@{} with {} NPC and {} "
+				+ "ground-item placements",
+			nativeLayeredWorldPackage.getPackageId(),
+			nativeLayeredWorldPackage.getPackageVersion(),
+			npcCount,
+			groundItemCount);
+	}
+
+	public boolean areNativeLayeredPlacementsPopulated() {
+		return nativeLayeredPlacementsPopulated;
+	}
+
+	public boolean isNativeLayeredPlacement(
+		final Entity entity, final String kind) {
+		return entity != null
+			&& nativeLayeredWorldPackage != null
+			&& kind.equals(entity.getAttribute(
+				NATIVE_LAYERED_PLACEMENT_KIND_ATTRIBUTE, ""))
+			&& nativeLayeredWorldPackage.getPackageId().equals(
+				entity.getAttribute(
+					NATIVE_LAYERED_PLACEMENT_PACKAGE_ATTRIBUTE, ""));
+	}
+
+	public void markNativeLayeredPlacement(
+		final Entity entity,
+		final String placementId,
+		final String kind) {
+		entity.setAttribute(
+			NATIVE_LAYERED_PLACEMENT_ID_ATTRIBUTE, placementId);
+		entity.setAttribute(NATIVE_LAYERED_PLACEMENT_KIND_ATTRIBUTE, kind);
+		entity.setAttribute(
+			NATIVE_LAYERED_PLACEMENT_PACKAGE_ATTRIBUTE,
+			nativeLayeredWorldPackage.getPackageId());
 	}
 
 	private Point requireLegacyTerrainProjection(

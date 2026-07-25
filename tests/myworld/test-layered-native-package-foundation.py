@@ -112,6 +112,9 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assertEqual(48, report["storageSectorSize"])
             self.assertEqual(24, report["presentationChunkSize"])
             self.assertEqual(3, report["terrainSectorCount"])
+            self.assertEqual(1, report["placementSetCount"])
+            self.assertEqual(1, report["npcPlacementCount"])
+            self.assertEqual(1, report["groundItemPlacementCount"])
             self.assertEqual({0, -2, -3}, {level["level"] for level in report["levels"]})
 
     def test_level_is_data_not_a_fixed_minus_two_or_minus_three_enumeration(self):
@@ -148,6 +151,26 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             ("invalid RLE tile", self.invalid_rle_tile, "unsigned byte"),
             ("underfilled RLE sector", self.underfill_rle_sector, "exactly 2304"),
             ("overfilled RLE sector", self.overfill_rle_sector, "remaining sector"),
+            (
+                "changed placement payload",
+                self.change_placement_payload,
+                "Placement payload hash differs",
+            ),
+            (
+                "duplicate placement ID",
+                self.duplicate_placement_id,
+                "Duplicate placement ID",
+            ),
+            (
+                "placement without terrain",
+                self.move_placement_outside_terrain,
+                "has no package terrain",
+            ),
+            (
+                "invalid placement respawn",
+                self.invalid_placement_respawn,
+                "must be positive",
+            ),
         )
         for label, mutate, expected in cases:
             with self.subTest(label=label), tempfile.TemporaryDirectory(
@@ -185,6 +208,12 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 encoding="utf-8"
             )
         )
+        placement_schema = json.loads(
+            (
+                TOOL_ROOT
+                / "schema/layered-entity-placements-v1.schema.json"
+            ).read_text(encoding="utf-8")
+        )
         self.assertEqual(
             "rsc-remastered-preservation-r64-v1",
             baseline_schema["properties"]["baselineId"]["const"],
@@ -210,6 +239,16 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
         self.assertEqual(
             "x-major-y-minor",
             rle_schema["properties"]["tileOrder"]["const"],
+        )
+        self.assertEqual(
+            "layered-entity-placements-v1",
+            placement_schema["properties"]["encoding"]["const"],
+        )
+        self.assertEqual(
+            "layered-entity-placements-v1",
+            package_schema["properties"]["placementSets"]["items"][
+                "properties"
+            ]["encoding"]["const"],
         )
         self.assertEqual(
             {
@@ -293,14 +332,56 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
         )
 
     @staticmethod
+    def change_placement_payload(package):
+        path = package / "placements/deep-l2-entities.json"
+        path.write_text(
+            path.read_text(encoding="utf-8") + "\n", encoding="utf-8"
+        )
+
+    @staticmethod
+    def duplicate_placement_id(package):
+        path = package / "placements/deep-l2-entities.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["groundItems"][0]["placementId"] = payload["npcs"][0][
+            "placementId"
+        ]
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "placements/deep-l2-entities.json"
+        )
+
+    @staticmethod
+    def move_placement_outside_terrain(package):
+        path = package / "placements/deep-l2-entities.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["groundItems"][0]["position"]["x"] = 10000
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "placements/deep-l2-entities.json"
+        )
+
+    @staticmethod
+    def invalid_placement_respawn(package):
+        path = package / "placements/deep-l2-entities.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["groundItems"][0]["respawnSeconds"] = 0
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "placements/deep-l2-entities.json"
+        )
+
+    @staticmethod
     def update_payload_hash(package, relative_path):
         payload_path = package / relative_path
         payload_hash = hashlib.sha256(payload_path.read_bytes()).hexdigest()
         manifest_path = package / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        for sector in manifest["terrainSectors"]:
-            if sector["path"] == relative_path:
-                sector["sha256"] = payload_hash
+        for record in [
+            *manifest["terrainSectors"],
+            *manifest["placementSets"],
+        ]:
+            if record["path"] == relative_path:
+                record["sha256"] = payload_hash
         manifest_path.write_text(
             json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
         )

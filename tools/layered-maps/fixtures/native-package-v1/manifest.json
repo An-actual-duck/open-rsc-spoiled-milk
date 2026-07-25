@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "packageType": "layered-world",
   "packageId": "rsc-remastered.native-loader-lab",
-  "packageVersion": "0.2.0",
+  "packageVersion": "0.3.0",
   "coordinateModel": "signed-layered-v1",
   "storage": {
     "sectorSize": 48,
@@ -61,6 +61,16 @@
       "encoding": "uniform-layered-sector-v1",
       "path": "terrain/expansion-l3-x9-y12.json",
       "sha256": "8554cdce2a8c3b56e5e9e138b6db4aaf9335868b2f38de971b6516c8f1611216"
+    }
+  ],
+  "placementSets": [
+    {
+      "id": "deep-fixture-entities",
+      "worldSpace": "global",
+      "level": -2,
+      "encoding": "layered-entity-placements-v1",
+      "path": "placements/deep-l2-entities.json",
+      "sha256": "03cc460b7062e2a6bbfb1addc8c9ee791ee31c848b546378d1b1c8dcc62ec4be"
     }
   ]
 }
