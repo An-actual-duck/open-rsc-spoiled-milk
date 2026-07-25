@@ -2888,7 +2888,7 @@ public class PacketHandler {
 
 		// Update the discord status
 		final String[] skillNames = {"Melee", "Defense", "Strength", "Hits",
-			"Ranged", "Prayer", "Magic", "Cooking", "Woodcutting", "Fletching",
+			"Ranged", "Worship", "Magic", "Cooking", "Woodcutting", "Fletching",
 			"Fishing", "Retired", "Crafting", "Smithing", "Mining", "Herblaw",
 			"Agility", "Thieving", "Enchanting", "Harvest", "Summoning"};
 		if (skill == 0 || skill == 1 || skill == 2 || skill == 3) {

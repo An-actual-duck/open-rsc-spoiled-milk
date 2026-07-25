@@ -376,7 +376,7 @@ public class Skills {
 				} else if (skill == Skill.HITS.id()) {
 					skillName = "hitpoints";
 				} else {
-					skillName = getWorld().getServer().getConstants().getSkills().getSkill(skill).getLongName().toLowerCase();
+					skillName = getWorld().getServer().getConstants().getSkills().getSkill(skill).getDisplayName().toLowerCase();
 				}
 				if (!((Player) getMob()).getConfig().WANT_OPENPK_POINTS) {
 					if (newLevel >= getWorld().getServer().getConfig().PLAYER_LEVEL_LIMIT - (getWorld().getServer().getConfig().SKILLING_EXP_RATE > 1.0 && !player.isOneXp() ? 9 : 19)

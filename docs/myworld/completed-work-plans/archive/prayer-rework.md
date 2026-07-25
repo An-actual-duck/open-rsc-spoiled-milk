@@ -7,7 +7,7 @@ This document pins the accepted prayer direction before runtime conversion.
 - Prayer changes from a drain-over-time pool to an allocation pool.
 - Activating a prayer reserves its point cost while the prayer is active.
 - Turning a prayer off refunds its reserved points.
-- There are no prayer level thresholds; point availability is the gate.
+- There are no Worship level thresholds; point availability is the gate.
 - Equipment adds prayer allocation points while worn instead of slowing drain.
 - If worn equipment changes and the player drops below the active allocation
   requirement, prayers deactivate from the highest tier downward until the

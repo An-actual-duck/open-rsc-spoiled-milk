@@ -39,7 +39,7 @@ public final class BlessedStaffs implements UseLocTrigger {
 		final int requiredPrayerLevel = EnchantingItemEffects.getTemporaryEnchantingRequirementForTier(
 			EnchantingItemEffects.getTierForBaseStaff(item.getCatalogId()));
 		if (requiredPrayerLevel == -1 || player.getSkills().getLevel(Skill.PRAYER.id()) < requiredPrayerLevel) {
-			player.message("You need a Prayer level of " + requiredPrayerLevel + " to bless this staff.");
+			player.message("You need a Worship level of " + requiredPrayerLevel + " to bless this staff.");
 			return;
 		}
 

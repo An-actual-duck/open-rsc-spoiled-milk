@@ -129,7 +129,7 @@ public class StatRestorationEvent extends GameTickEvent {
 					it.remove();
 					if (getOwner().isPlayer()) {
 						Player player = (Player) getOwner();
-						player.message("Your " + getOwner().getWorld().getServer().getConstants().getSkills().getSkillName(stat).toLowerCase()
+						player.message("Your " + getOwner().getWorld().getServer().getConstants().getSkills().getSkillDisplayName(stat).toLowerCase()
 							+ " ability has returned to normal.");
 					}
 				}

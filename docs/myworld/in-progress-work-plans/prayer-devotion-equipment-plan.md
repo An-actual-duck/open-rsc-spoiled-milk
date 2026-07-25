@@ -10,7 +10,7 @@ It supersedes older god-knight conversion rules where they conflict.
 - Keep blessing costs predictable by deriving requirements from production
   resource cost.
 - Keep existing offerings as the primary devotion source.
-- Let blessings grant Prayer XP without inflating devotion directly.
+- Let blessings grant Worship XP without inflating devotion directly.
 
 ## God Lines
 
@@ -26,7 +26,7 @@ worshipping the matching god.
 - Maximum devotion is `1000` per god.
 - Offering XP keeps its current devotion bonus behavior.
 - Blessing an item grants no devotion.
-- Blessing Prayer XP is increased by `1%` per current devotion with the god
+- Blessing Worship XP is increased by `1%` per current devotion with the god
   performing the blessing.
 - Devotion is clamped from `0` to `1000`.
 
@@ -54,16 +54,16 @@ conflict.
 
 ## Blessing XP
 
-Blessing any supported item grants Prayer XP equal to the production XP of the
+Blessing any supported item grants Worship XP equal to the production XP of the
 base item being blessed.
 
 Examples:
 
-- blessing a steel plate body grants Prayer XP equal to the Smithing XP for
+- blessing a steel plate body grants Worship XP equal to the Smithing XP for
   making a steel plate body
-- blessing a wool robe top grants Prayer XP equal to the Crafting XP for making
+- blessing a wool robe top grants Worship XP equal to the Crafting XP for making
   a wool robe top
-- blessing a wood staff grants Prayer XP equal to the Crafting/Woodcraft XP for
+- blessing a wood staff grants Worship XP equal to the Crafting/Woodcraft XP for
   making that staff
 
 If an item has no clear production equivalent, implementation should add an
@@ -160,7 +160,7 @@ Naming convention:
 Apply the same naming pattern across all wood tiers.
 
 Blessed staves require devotion using the same resource-cost rule and grant
-Prayer XP equal to their staff production XP equivalent.
+Worship XP equal to their staff production XP equivalent.
 
 ## God Relic Devotion Rewards
 
@@ -173,7 +173,7 @@ from god staves alone into the full god relic reward system.
 Reward rule:
 
 - The player must be worshipping/aligned with the matching god.
-- The player must have Prayer level `80`.
+- The player must have Worship level `80`.
 - The player must have at least `800` devotion with that god.
 - The player prays at the matching god altar.
 - The altar opens god dialogue where the player can request a holy relic.
@@ -257,7 +257,7 @@ New altar mechanic:
 - Player uses a blessed item from an opposing god on the altar of the god they
   currently worship.
 - The blessed object is destroyed.
-- Player gains Prayer XP equal to `5x` the production-equivalent XP for the
+- Player gains Worship XP equal to `5x` the production-equivalent XP for the
   destroyed object.
 - Player gains `1` devotion per equivalent resource cost with the currently
   worshipped god.
@@ -274,7 +274,7 @@ Example:
 - The sword is destroyed.
 - Saradomin devotion increases.
 - Zamorak devotion decreases.
-- Player gains Prayer XP.
+- Player gains Worship XP.
 
 These values are intentionally explicit starter tuning and can be adjusted
 after testing.
@@ -304,7 +304,7 @@ Add or update tests for:
 
 - devotion cap and clamping
 - devotion requirement equals `resource cost * 50`
-- blessing grants Prayer XP and no devotion
+- blessing grants Worship XP and no devotion
 - blessing XP scales by `1%` per devotion
 - staves require devotion and exist for all three gods
 - wool hat/top/bottom/gloves/boots blessing coverage

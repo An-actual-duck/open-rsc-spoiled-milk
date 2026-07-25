@@ -81,7 +81,7 @@ Skill buff rule:
 | Secondary ingredient | Potion family | Affected skills |
 | --- | --- | --- |
 | 10 Fish oil | Deftness | Ranged, Pickpocketing, Crafting, Agility, Fishing |
-| Eye of newt | Insight | Magic, Enchanting, Summoning, Cooking, Prayer |
+| Eye of newt | Insight | Magic, Enchanting, Summoning, Cooking, Worship |
 | Limpwurt root | Brawn | Melee, Mining, Smithing, Woodcutting, Hits |
 
 Example:
@@ -117,7 +117,7 @@ Excluded combat skills:
 - Melee
 - Magic
 - Ranged
-- Prayer
+- Worship
 - Hits
 - Summoning
 
@@ -138,7 +138,7 @@ Excluded combat skills:
 - Melee
 - Magic
 - Ranged
-- Prayer
+- Worship
 - Hits
 - Summoning
 
@@ -159,7 +159,7 @@ Affected combat skills:
 - Melee
 - Magic
 - Ranged
-- Prayer
+- Worship
 - Hits
 - Summoning
 
@@ -180,7 +180,7 @@ Affected combat skills:
 - Melee
 - Magic
 - Ranged
-- Prayer
+- Worship
 - Hits
 - Summoning
 
@@ -252,7 +252,7 @@ Grouped skills:
 - Enchanting
 - Summoning
 - Cooking
-- Prayer
+- Worship
 
 Intent:
 

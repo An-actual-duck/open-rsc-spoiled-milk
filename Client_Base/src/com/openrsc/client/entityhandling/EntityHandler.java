@@ -4145,7 +4145,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Combustion cape", "A cape warm with stored sunlight", "Combust", 99000, -1, "items:484", false, true, 2048, 0, false, false, false, 1520));
 		addItemDefinition(new ItemDef("Herblaw cape", "The cape worn by master herblawists", "", 99000, -1, "items:487", false, true, 2048, 0, false, false, false, 1521));
 		addItemDefinition(new ItemDef("Hits cape", "The cape worn by the most sturdy", "", 99000, -1, "items:488", false, true, 2048, 0, false, false, false, 1522));
-		addItemDefinition(new ItemDef("Prayer cape", "The cape worn by the most pious", "", 99000, -1, "items:491", false, true, 2048, 0, false, false, false, 1523));
+		addItemDefinition(new ItemDef("Worship cape", "The cape worn by the most pious", "", 99000, -1, "items:491", false, true, 2048, 0, false, false, false, 1523));
 		addItemDefinition(new ItemDef("Ranged cape", "The cape worn by the best archers", "", 99000, -1, "items:493", false, true, 2048, 0, false, false, false, 1524));
 		addItemDefinition(new ItemDef("Woodcutting cape", "The cape worn by the best loggers", "", 99000, -1, "items:497", false, true, 2048, 0, false, false, false, 1525));
 		addItemDefinition(new ItemDef("Harvesting cape", "The cape worn by agronomists", "", 99000, -1, "items:549", false, true, 2048, 0, false, false, false, 1526));
@@ -5720,7 +5720,7 @@ public class EntityHandler {
 		addChaosWeavingAmuletLine(1719, tiers, amuletPrices, gemMasks);
 		addDeathAmuletLine(1724, tiers, amuletPrices, gemMasks);
 		addAmuletLine(1729, tiers, "Siphoning", "Steals %d%% of damage dealt as healing.", 5, amuletPrices, gemMasks, "");
-		addExplicitAmuletLine(1734, tiers, "Attunement", "Boosts magic, summoning, and prayer XP by %d%%.",
+		addExplicitAmuletLine(1734, tiers, "Attunement", "Boosts magic, summoning, and Worship XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, amuletPrices, gemMasks, "");
 		addExplicitAmuletLine(1739, tiers, "Prowess", "Boosts agility, thieving, and ranged XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, amuletPrices, gemMasks, "");

@@ -38,15 +38,15 @@ another authorized worker already owned it; no running server was interrupted.
 
 ## Accepted Design Clarification
 
-The project owner clarified after the initial audit that the high Prayer XP
+The project owner clarified after the initial audit that the high Worship XP
 curves are intentional:
 
-- +1000 Prayer XP per offering at 1000 Devotion is considered reasonable for
+- +1000 Worship XP per offering at 1000 Devotion is considered reasonable for
   one of the game's hardest skills to train. Other high-level skills can award
   more than 10,000 XP per action, so the offering bonus should not be judged in
   isolation as excessive.
 - Blessing XP is also intended to scale strongly at high Devotion. Blessing is
-  meant to be a useful Prayer-training route in a skill with comparatively few
+  meant to be a useful Worship-training route in a skill with comparatively few
   XP-generation methods.
 - Devotion has an opportunity cost through reward choices. Players can retain
   high Devotion and its XP benefits or trade Devotion for rewards such as god
@@ -65,7 +65,7 @@ which is now implemented:
 - Remove the exact inventory instance selected by the player, rather than
   looking up an unnoted item with the same catalog ID.
 - Stop without rewards if that removal fails.
-- Award the existing half-base Prayer XP, full offering value, and flat
+- Award the existing half-base Worship XP, full offering value, and flat
   Devotion-derived Prayer bonus only after successful removal.
 - Preserve the Bonecrusher's reusable ownership/reclaim behavior and the
   separate handling of quest-specific bones.
@@ -114,8 +114,8 @@ Blessed symbols remain deliberate outliers:
   Devotion, added to the worshipped god and removed from the symbol's god.
 
 The symbol's "two offerings" equivalence applies only to its Devotion transfer.
-Destroying it must not run two offering actions, grant two offerings' Prayer
-XP, or change its separately mapped destruction Prayer XP.
+Destroying it must not run two offering actions, grant two offerings' Worship
+XP, or change its separately mapped destruction Worship XP.
 
 ### Accepted alignment, coverage, and tier rules
 
@@ -170,10 +170,10 @@ The current system has three related but distinct loops:
    blessings per rolling one-hour fixed window.
 3. Destroying an opposing blessed item transfers Devotion from the item's god
    to the currently worshipped god and grants five times the item's mapped
-   production Prayer XP. Destruction is not rate-limited.
+   production Worship XP. Destruction is not rate-limited.
 
 God artifact claims are a separate altar reward layered onto this system. They
-require 800 Devotion and 80 Prayer, consume 400 Devotion, and are not part of
+require 800 Devotion and 80 Worship, consume 400 Devotion, and are not part of
 the ten-per-hour blessing limit.
 
 The most important audit findings are:
@@ -184,7 +184,7 @@ The most important audit findings are:
   blessing consumes zero Devotion.
 - A Bonecrusher action does not verify that its attempted removal succeeded.
   In particular, a noted bone is not rejected, the removal searches for an
-  unnoted item, and the unchanged noted item can be reused for free Prayer XP
+  unnoted item, and the unchanged noted item can be reused for free Worship XP
   and Devotion.
 - God square shields, spears, and scythes can be created by the blessing
   handler, but the destruction handler does not recognize any of their nine
@@ -196,7 +196,7 @@ The most important audit findings are:
   NPC-drop paths. The blessing requirement therefore gates self-conversion, not
   ownership or destruction of every eligible item.
 - At 1000 Devotion, each successful offering grants a flat 1000 displayed
-  Prayer XP in addition to the bone or ash's normal XP. Blessing XP also
+  Worship XP in addition to the bone or ash's normal XP. Blessing XP also
   reaches 11 times its base value. These are intentional high-Devotion rewards,
   with reward-based Devotion spending supplying the opportunity cost.
 - Devotion-lowering adjustment paths refresh equipment stats but do not call
@@ -283,16 +283,16 @@ unequips mismatched god gear.
 
 The Black Unicorn path differs from manual burial in two additional ways:
 
-- it also accepts ordinary Ashes, while the manual switch has no Prayer or
+- it also accepts ordinary Ashes, while the manual switch has no Worship XP or
   Devotion award for ordinary Ashes; and
-- it grants twice the normal mapped base Prayer XP before the normal 3x My
+- it grants twice the normal mapped base Worship XP before the normal 3x My
   World rate.
 
-### Prayer XP from offerings
+### Worship XP from offerings
 
 The successful offering first reads the completed Devotion level that existed
 before the new offering. It then awards a flat bonus of that many displayed
-Prayer XP:
+Worship XP:
 
 ```text
 offering bonus XP = max(0, prior Devotion)
@@ -300,13 +300,13 @@ offering bonus XP = max(0, prior Devotion)
 
 The code converts the displayed value to internal quarter-XP units and writes
 it directly to the skill. It deliberately bypasses the normal 3x/1x XP-rate
-multiplier, jewelry, Prayer-skilling, potion, wilderness, and party modifiers.
+multiplier, jewelry, Worship-skilling, potion, wilderness, and party modifiers.
 It still respects frozen XP and maximum fatigue. The base bone/ash XP is a
 separate normal `incExp` award and does receive the configured XP rate and
 ordinary modifiers.
 
 At the positive cap, further offerings no longer increase Devotion but continue
-to award +1000 displayed Prayer XP each.
+to award +1000 displayed Worship XP each.
 
 ### Spending and removal
 
@@ -332,7 +332,7 @@ change smaller or zero.
 
 The custom server sends only the active Prayer book's displayed Devotion as a
 signed short in packet 145. The desktop client shows `Devotion: <level>` in the
-Prayer skill hover panel. It does not show:
+Worship skill hover panel. It does not show:
 
 - the other two gods' balances;
 - partial offering units;
@@ -350,11 +350,11 @@ For all four normal families, the successful path is:
 1. Use an unnoted inventory item on a recognized Saradomin, Zamorak, or Guthix
    altar.
 2. Resolve the product from the altar's god and the input item.
-3. Check the family-specific Prayer and Devotion requirements.
+3. Check the family-specific Worship and Devotion requirements.
 4. Check the shared hourly limit.
 5. Remove the selected item.
 6. Record one blessing in the hourly limit.
-7. Give one product and award Devotion-scaled Prayer XP.
+7. Give one product and award Devotion-scaled Worship XP.
 
 Cancellation is not relevant because these conversions have no confirmation
 menu. Invalid, noted, stale, unrecognized, under-level, under-Devotion, and
@@ -373,7 +373,7 @@ Blessing does not verify that the active Prayer book matches the altar. A
 player with sufficient stored Zamorak Devotion can bless at a Zamorak altar
 while currently worshipping Saradomin.
 
-### Blessing Prayer XP
+### Blessing Worship XP
 
 The normal blessing formula, in internal quarter-XP units before the player's
 normal XP multiplier, is:
@@ -389,12 +389,12 @@ is the internal result multiplied by `3/4`, before other configured bonuses.
 | Family | Base production XP, internal | Additional level gate |
 | --- | --- | --- |
 | Symbol | 200 | None |
-| Blessed staff tiers 1-10 | 12, 20, 28, 37, 46, 57, 68, 80, 92, 120 | Prayer 1, 8, 15, 22, 30, 38, 46, 54, 62, 70 |
+| Blessed staff tiers 1-10 | 12, 20, 28, 37, 46, 57, 68, 80, 92, 120 | Worship 1, 8, 15, 22, 30, 38, 46, 54, 62, 70 |
 | Wool armor | `6 * resource cost` | None |
 | God knight equipment | `150 * resource cost` | None |
 
-XP is awarded only after selected-item removal succeeds. Blessing Prayer XP
-does receive normal XP rates and equipment, Prayer-skilling, potion,
+XP is awarded only after selected-item removal succeeds. Blessing Worship XP
+does receive normal XP rates and equipment, Worship-skilling, potion,
 wilderness, and party modifiers.
 
 ## Hourly Blessing Limit
@@ -443,7 +443,7 @@ god. On successful exact-item removal:
 ```text
 worshipped god += destruction value
 item god       -= destruction value
-Prayer XP       = mapped production XP * 5
+Worship XP       = mapped production XP * 5
 ```
 
 The two Devotion adjustments are independently clamped to `-1000..1000`.
@@ -482,7 +482,7 @@ below are silent non-matches.
 | Staff tiers 1-10 | 1..10 | 60, 100, 140, 185, 230, 285, 340, 400, 460, 600 | 45, 75, 105, 138.75, 172.5, 213.75, 255, 300, 345, 450 |
 
 The destruction XP award uses normal `incExp`, so the usual XP-rate and
-equipment, Prayer-skilling, potion, wilderness, and party modifiers apply.
+equipment, Worship-skilling, potion, wilderness, and party modifiers apply.
 
 ## Complete Normal Blessing and Destruction Matrix
 
@@ -509,7 +509,7 @@ value. Blessed staves use fixed tiered stats and Prayer bonus; unlike knight
 and wool gear, their combat and Prayer stats do not currently grow with
 Devotion.
 
-| Tier | Input | Prayer | Devotion requirement | Cost | Destruction value | Zamorak result | Saradomin result | Guthix result |
+| Tier | Input | Worship | Devotion requirement | Cost | Destruction value | Zamorak result | Saradomin result | Guthix result |
 | ---: | --- | ---: | ---: | ---: | ---: | --- | --- | --- |
 | 1 | staff (100) | 1 | 50 | 0 | 1 | Staff blessed by Zamorak (2228) | Staff blessed by Saradomin (3152) | Staff blessed by Guthix (3162) |
 | 2 | Pine Staff (2131) | 8 | 100 | 0 | 2 | Pine staff blessed by Zamorak (2229) | Pine staff blessed by Saradomin (3153) | Pine staff blessed by Guthix (3163) |
@@ -570,27 +570,27 @@ missing results.
 ## God Artifact Claim Matrix
 
 Artifacts are not ordinary blessings and cannot be destroyed by the
-opposing-blessed-item handler. A player must have Prayer 80, worship the
+opposing-blessed-item handler. A player must have Worship 80, worship the
 matching god, possess at least 800 Devotion, and pray at that god's altar a
 second time. Accepting gives one random unclaimed artifact and consumes 400
 Devotion only after the item was successfully placed in inventory.
 
 | God | Possible result | Item ID | Devotion requirement | Devotion cost | Result/effect |
 | --- | --- | ---: | ---: | ---: | --- |
-| Saradomin | Saradomin Cape | 1214 | 800 | 400 | Aligned +10 Prayer cape and god-prayer support |
-| Saradomin | Staff of Saradomin | 1218 | 800 | 400 | Aligned Prayer-80 god staff and Saradomin-spell support |
-| Saradomin | Saradomin mace | 3252 | 800 | 400 | Aligned tier-11 mace; also requires Prayer 80 to equip |
-| Zamorak | Zamorak Cape | 1213 | 800 | 400 | Aligned +10 Prayer cape and god-prayer support |
-| Zamorak | Staff of Zamorak | 1216 | 800 | 400 | Aligned Prayer-80 god staff and Zamorak-spell support |
-| Zamorak | Zamorak mace | 3253 | 800 | 400 | Aligned tier-11 mace; also requires Prayer 80 to equip |
-| Guthix | Guthix Cape | 1215 | 800 | 400 | Aligned +10 Prayer cape and god-prayer support |
-| Guthix | Staff of Guthix | 1217 | 800 | 400 | Aligned Prayer-80 god staff and Guthix-spell support |
-| Guthix | Guthix mace | 3254 | 800 | 400 | Aligned tier-11 mace; also requires Prayer 80 to equip |
+| Saradomin | Saradomin Cape | 1214 | 800 | 400 | Aligned +10 prayer-bonus cape and god-prayer support |
+| Saradomin | Staff of Saradomin | 1218 | 800 | 400 | Aligned Worship-80 god staff and Saradomin-spell support |
+| Saradomin | Saradomin mace | 3252 | 800 | 400 | Aligned tier-11 mace; also requires Worship 80 to equip |
+| Zamorak | Zamorak Cape | 1213 | 800 | 400 | Aligned +10 prayer-bonus cape and god-prayer support |
+| Zamorak | Staff of Zamorak | 1216 | 800 | 400 | Aligned Worship-80 god staff and Zamorak-spell support |
+| Zamorak | Zamorak mace | 3253 | 800 | 400 | Aligned tier-11 mace; also requires Worship 80 to equip |
+| Guthix | Guthix Cape | 1215 | 800 | 400 | Aligned +10 prayer-bonus cape and god-prayer support |
+| Guthix | Staff of Guthix | 1217 | 800 | 400 | Aligned Worship-80 god staff and Guthix-spell support |
+| Guthix | Guthix mace | 3254 | 800 | 400 | Aligned tier-11 mace; also requires Worship 80 to equip |
 
 Claim state is persistent per god and item ID under
 `god_artifact_claimed_<god>_<itemId>`. Each of the three results can be
 received only once. Cancellation, insufficient inventory space, failed
-inventory insertion, wrong worship, low Prayer, low Devotion, and an exhausted
+inventory insertion, wrong worship, low Worship, low Devotion, and an exhausted
 pool consume nothing. Artifact claims do not use the hourly blessing limit.
 
 The broader planning document mentions future paladin-shield and crossbow
@@ -654,8 +654,8 @@ The following deterministic examples characterize the current, unchanged
 runtime rather than the accepted implementation targets above. They assume:
 
 - ordinary Bones for manual offerings;
-- normal My World 3x base Prayer XP;
-- no jewelry, Prayer-skilling, potion, wilderness, party, or double-XP bonus;
+- normal My World 3x base Worship XP;
+- no jewelry, Worship-skilling, potion, wilderness, party, or double-XP bonus;
 - the symbol is equipped as soon as 25 Devotion is reached; and
 - "Unicorn + symbol" uses Black Unicorn auto-sanctified bone drops from the
   start, then adds the symbol at 25.
@@ -672,8 +672,8 @@ The XP total includes both base Bones XP and the current flat Devotion bonus.
 
 The matching symbol and Unicorn correctly reduce action count, but they also
 reduce cumulative Devotion-bonus XP because the player crosses more offering
-units per action. The current curve awards millions of Prayer XP before the
-cap even with acceleration. Once capped, cheap Bones still award +1000 Prayer
+units per action. The current curve awards millions of Worship XP before the
+cap even with acceleration. Once capped, cheap Bones still award +1000 Worship
 XP each indefinitely.
 
 Requirements do gate initial self-production meaningfully:
@@ -716,15 +716,15 @@ Representative normal-3x displayed XP, before additional bonuses:
 | Tier-10 staff | 540 | 990 | 450 | 990 / 1440 |
 
 At the hourly blessing cap, ten four-resource knight bless-and-destroy cycles
-can produce 36,000 displayed Prayer XP at the unlock threshold or 72,000 at
+can produce 36,000 displayed Worship XP at the unlock threshold or 72,000 at
 1000 Devotion, before other bonuses. Destruction itself is uncapped, so
 direct-drop or previously stockpiled items can exceed that short-term rate.
 
 These figures are not, by themselves, evidence that the XP should be reduced.
-The accepted design compares Prayer's overall time-to-level and scarcity of
+The accepted design compares Worship's overall time-to-level and scarcity of
 training actions against other skills that can exceed 10,000 XP in a single
 high-level action. The high-Devotion offering and blessing rewards are intended
-to close that gap. Balance review should instead measure sustained Prayer XP
+to close that gap. Balance review should instead measure sustained Worship XP
 per hour, the time required to reach high Devotion, and how often players elect
 to spend Devotion on rewards.
 
@@ -732,7 +732,7 @@ to spend Devotion on rewards.
 
 | Risk | Confidence | Impact |
 | --- | --- | --- |
-| Bonecrusher does not check removal and does not reject notes | Confirmed | Reusable noted bone/ash can generate unlimited Prayer XP and Devotion |
+| Bonecrusher does not check removal and does not reject notes | Confirmed | Reusable noted bone/ash can generate unlimited Worship XP and Devotion |
 | Blessing is free after threshold | Confirmed design | Permanent unlock and stockpiling are not exploits; their balance depends on optional Devotion rewards |
 | Direct blessed drops bypass requirements and blessing limiter | Confirmed design/content | Destruction can replace offerings as progression and can burst XP |
 | Destruction is uncapped | Confirmed | Stockpiled/direct items can be converted as fast as interactions permit |
@@ -771,7 +771,7 @@ section 5 remains a future recommendation.
    artifact exclusion, mapping symmetry, cap persistence, clock edges, and
    failed conversion accounting.
 
-### 2. Preserve high-Devotion Prayer XP
+### 2. Preserve high-Devotion Worship XP
 
 Keep the current formulas:
 
@@ -787,7 +787,7 @@ candidates.
 Balance validation should compare sustained methods rather than raw
 per-action numbers:
 
-- Prayer XP per hour before and after reaching key Devotion thresholds;
+- Worship XP per hour before and after reaching key Devotion thresholds;
 - time and item supply required to reach those thresholds;
 - XP lost when players spend Devotion and must rebuild it;
 - frequency and value of optional Devotion rewards; and

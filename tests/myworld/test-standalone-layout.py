@@ -279,6 +279,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "server-failure-handling-b05.md",
             "static-analysis.md",
             "testing-quick-reference.md",
+            "worship-skill-compatibility.md",
         ],
     }
     for category, expected_docs in expected_by_category.items():

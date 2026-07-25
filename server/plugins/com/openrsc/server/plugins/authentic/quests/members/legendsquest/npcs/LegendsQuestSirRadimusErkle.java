@@ -149,7 +149,7 @@ public class LegendsQuestSirRadimusErkle implements QuestInterface, TalkNpcTrigg
 				case RadimusInGuild.SKILL_MENU_TWO:
 					int menu_two = multi(player,
 						"* Hits * ",
-						"* Prayer * ",
+						"* Worship * ",
 						"* Magic *",
 						"--- Go to Skill Menu 3  ----");
 					if (menu_two == 0) {

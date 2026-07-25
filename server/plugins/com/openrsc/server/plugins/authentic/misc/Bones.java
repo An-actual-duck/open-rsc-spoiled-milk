@@ -150,7 +150,7 @@ public class Bones implements OpInvTrigger, UseInvTrigger {
 		}
 
 		if (pointsToRestore > 0) {
-			mes("@yel@Your prayer cape activates, restoring " + pointsToRestore + " prayer points!");
+			mes("@yel@Your Worship cape activates, restoring " + pointsToRestore + " prayer points!");
 			int newPrayer = currentPrayerLevel + pointsToRestore;
 			if (newPrayer > maxPrayerLevel) {
 				newPrayer = maxPrayerLevel;

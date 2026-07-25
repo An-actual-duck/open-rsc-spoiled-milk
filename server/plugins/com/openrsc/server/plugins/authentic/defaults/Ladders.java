@@ -200,7 +200,7 @@ public class Ladders {
 						} else {
 							npcsay(player, abbot, "No I feel you are not devout enough");
 							delay(2);
-							player.message("You need a prayer level of 31");
+							player.message("You need a Worship level of 31");
 						}
 					} else if (op == 1) {
 						say(player, abbot, "Oh Sorry");

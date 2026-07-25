@@ -301,7 +301,7 @@ Counts:
 - Poisoned Steel Spear (1137)
 - Poisoned Steel Throwing Dart (1124)
 - Poisoned Steel throwing knife (1130)
-- Prayer cape (1523)
+- Worship cape (1523)
 - Protective trousers (761)
 - Quest cape (1528)
 - Ring of Bunny (1486)

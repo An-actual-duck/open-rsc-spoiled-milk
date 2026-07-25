@@ -31,7 +31,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 		CRAFTING_GUILD("Crafting Guild", 347, 599),
 		MINING_GUILD("Mining Guild", 250, 537),
 		RANGERS_GUILD("Rangers Guild", 496, 462),
-		PRAYER_GUILD("Prayer Guild", 256, 471),
+		PRAYER_GUILD("Worship Guild", 256, 471),
 		FISHING_GUILD("Fishing Guild", 586, 525),
 		COOKING_GUILD("Cooking Guild", 179, 489),
 		HEROES_GUILD("Heroes' Guild", 372, 443),

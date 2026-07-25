@@ -57,7 +57,7 @@ public final class PointInterface {
 
 	// Arrays to drive rendering
 	private static final int[] SKILL_IDS = {ATTACK, DEFENSE, STRENGTH, RANGED, PRAYER, MAGIC};
-	private static final String[] SKILL_LABELS = {"Attack", "Defense", "Strength", "Ranged", "Prayer", "Magic"};
+	private static final String[] SKILL_LABELS = {"Attack", "Defense", "Strength", "Ranged", "Worship", "Magic"};
 	private static final int[] OPTION_INC = {INCREASE_ATTACK, INCREASE_DEFENSE, INCREASE_STRENGTH, INCREASE_RANGED, INCREASE_PRAYER, INCREASE_MAGIC};
 	private static final int[] OPTION_DEC = {REDUCE_ATTACK, REDUCE_DEFENSE, REDUCE_STRENGTH, REDUCE_RANGED, REDUCE_PRAYER, REDUCE_MAGIC};
 

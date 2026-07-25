@@ -127,7 +127,7 @@ several preservation effects into one item. The main balancing levers are:
 
 - acquisition difficulty
 - required Magic level
-- required Enchanting, Crafting, Prayer, or quest completion
+- required Enchanting, Crafting, Worship, or quest completion
 - material cost
 - whether tradeability is allowed
 - combat stats
@@ -288,7 +288,7 @@ Reward rule:
 - God staves are part of the broader god relic pool.
 - The full reward rules live in
   [`god-relic-reward-plan.md`](god-relic-reward-plan.md).
-- Current relic reward gate: Prayer `80`, aligned devotion `800`, matching god
+- Current relic reward gate: Worship `80`, aligned devotion `800`, matching god
   altar prayer, and a `400` devotion cost on successful relic award.
 
 God-staff relic mappings:

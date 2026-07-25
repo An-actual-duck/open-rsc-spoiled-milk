@@ -137,7 +137,7 @@ def main() -> None:
     require("Devotion.getBlessingOfferingCostForResourceCost(devotionResourceCost)" in equipment,
             "steel armour conversion should spend 0.5 devotion per resource")
     require("getSteelSmithingXp(item.getCatalogId())" in equipment,
-            "steel armour conversion Prayer XP should retain production XP scaling")
+            "steel armour conversion Worship XP should retain production XP scaling")
     require("itemId == ItemId.LARGE_STEEL_HELMET.id()" in equipment
             and "getSteelProductionResourceCost(itemId)" in equipment,
             "large steel helmets should count as one Devotion resource without changing production XP")

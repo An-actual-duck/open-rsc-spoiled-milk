@@ -33,7 +33,7 @@ def main() -> None:
     }
 
     require("public static final int maxCustom = 3293;" in item_id, "ItemId.maxCustom should include god maces")
-    require("GOD_MACE_PRAYER_REQUIREMENT = 80" in equipment, "God maces should require 80 Prayer")
+    require("GOD_MACE_PRAYER_REQUIREMENT = 80" in equipment, "God maces should require 80 Worship")
     require("GOD_MACE_DEVOTION_REQUIREMENT" not in equipment, "God maces should not require current devotion to wield")
     require("Devotion.getDevotionLevel(player, godLine)" not in equipment, "God mace devotion is an acquisition gate, not a wield gate")
 

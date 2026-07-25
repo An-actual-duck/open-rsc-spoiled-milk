@@ -163,7 +163,7 @@ Ring/necklace:
 Amulet:
 
 - Discipline XP bonus.
-- Applies to Hits, Agility, Prayer, and Thieving XP.
+- Applies to Hits, Agility, Worship, and Thieving XP.
 - `+5%` XP per tier.
 
 ### Cosmic

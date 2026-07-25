@@ -178,7 +178,7 @@ the short version.
 - Enchanting is a large new system built around rune altars and jewelry. It adds
   more than 1,000 item variations by letting every piece of jewelry be enchanted
   at every rune altar, among other things.
-- Prayer is split into three devotions. Devotion is its own mechanic, can be
+- Worship is split into three devotions. Devotion is its own mechanic, can be
   built per god, and each god has its own set of prayers.
 - Herblaw has new potions for the updated mechanics.
 - Gathering skills have new rare drop tables.

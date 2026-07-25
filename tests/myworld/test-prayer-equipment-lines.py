@@ -84,7 +84,7 @@ def main():
         385: 0,   # Symbol of Saradomin now boosts devotion offerings, not prayer points
         1029: 0,  # Symbol of Zamorak now boosts devotion offerings, not prayer points
         3175: 0,  # Symbol of Guthix now boosts devotion offerings, not prayer points
-        1523: 8,  # Prayer cape
+        1523: 8,  # Worship cape
         522: 0,   # Dragonstone Amulet legacy holdover should not grant prayer
         597: 0,   # Charged Dragonstone Bangle should not grant prayer
     }
