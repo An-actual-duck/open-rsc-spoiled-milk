@@ -29,8 +29,12 @@ bounded compatibility receipt still exists; full-fidelity server/package
 terrain and protocol-v4 24-tile client readiness are owner-accepted.
 Package-owned NPC/item placements now pass strict format, server decode,
 world-load, respawn-registry, private-startup validation, and the focused owner
-route. Package-owned scenery/boundaries and removal of the bounded compatibility
-receipt remain the current implementation boundary.
+route. Static package-owned scenery/boundaries now pass strict format,
+independent server decode, world-load registration, level-qualified
+visibility/collision isolation, private startup, and automated validation.
+Their focused owner route remains pending. Dynamic object lifecycle authority
+and removal of the bounded compatibility receipt remain the current
+implementation boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -413,6 +417,56 @@ The focused owner route is accepted:
 
 Package-owned scenery and boundaries plus removal of the bounded compatibility
 receipt remain later Milestone E cuts.
+
+### Authority Milestone E placement checkpoint 8
+
+Implemented and automated/private-startup validated on 2026-07-25; focused
+owner acceptance remains pending:
+
+- package `0.4.0` introduces `layered-world-placements-v2`, adding explicit
+  `scenery` and `boundaries` collections beside the existing NPC and
+  ground-item collections. The fixture owns one Table at
+  `global (446,604,L-2)` and one north/south Fence edge at
+  `global (448,604,L-2)`;
+- both the standalone tool and independent server reader retain exact
+  `layered-entity-placements-v1` support. Version 2 enforces one global
+  placement-ID namespace across all four families, unique scenery and
+  boundary slots, directions `0..7`, manifest/payload encoding agreement,
+  hash identity, and package-terrain coverage;
+- object-definition checks remain at the authoritative world-population phase,
+  after definitions exist. The private startup independently populated exactly
+  one NPC, ground item, scenery object, and boundary and reached online state
+  on `localhost:43615`;
+- package objects receive their complete `WorldLocation`, package marker, and
+  canonical legacy collision footprint without entering a packed `Region`.
+  They are registered in the accepted level-aware spatial index for
+  visibility/lookup;
+- a separate native object registry keys stable placement IDs and complete
+  level-qualified slots. It accumulates the canonical blocking-scenery,
+  directional, and projectile contributions by `WorldLocation`, then composes
+  them onto each newly decoded native terrain tile. Equal X/Y on level `0`
+  remains unaffected;
+- registration fails before publication if an ID/slot is duplicated, a
+  footprint is unavailable, or any collision contribution leaves
+  package-owned terrain. World unload clears identity and collision state; and
+- the fixture deliberately uses non-mutating Table/Fence actions. This
+  checkpoint proves static visibility, lookup, and collision authority only.
+  Dynamic doors, harvesting replacements, object removal/respawn, and their
+  plugin/event lifecycle require a later Milestone E cut before general
+  converted content can use them.
+
+Validation passes the strict package check with fingerprint
+`632ccfb16e1aec6810e86fff2656aab6398a6bd7eae8445e892629e655d91f53`,
+all 16 focused format/server/object tests, the complete 30-test
+A-through-E authority lineage, the authoritative 862-core/488-plugin server
+build, and the 262-source client build. Public and ordinary private defaults
+remain unchanged.
+
+The focused owner route must still confirm that the Table and Fence are
+visible and examinable, the Table tile and exact Fence edge block movement
+while adjacent routes remain passable, NPC/item behavior remains unchanged,
+logout/reconnect neither loses nor duplicates objects, and explicit exit
+returns to the legacy surface.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately

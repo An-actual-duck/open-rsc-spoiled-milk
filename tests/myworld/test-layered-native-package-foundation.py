@@ -115,6 +115,8 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assertEqual(1, report["placementSetCount"])
             self.assertEqual(1, report["npcPlacementCount"])
             self.assertEqual(1, report["groundItemPlacementCount"])
+            self.assertEqual(1, report["sceneryPlacementCount"])
+            self.assertEqual(1, report["boundaryPlacementCount"])
             self.assertEqual({0, -2, -3}, {level["level"] for level in report["levels"]})
 
     def test_level_is_data_not_a_fixed_minus_two_or_minus_three_enumeration(self):
@@ -171,6 +173,16 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 self.invalid_placement_respawn,
                 "must be positive",
             ),
+            (
+                "invalid boundary direction",
+                self.invalid_boundary_direction,
+                "must be 0..7",
+            ),
+            (
+                "duplicate scenery slot",
+                self.duplicate_scenery_slot,
+                "Duplicate scenery slot",
+            ),
         )
         for label, mutate, expected in cases:
             with self.subTest(label=label), tempfile.TemporaryDirectory(
@@ -186,6 +198,50 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 self.assertEqual(3, result.returncode, result.stderr)
                 self.assertIn(expected, result.stderr)
                 self.assertFalse(workspace.exists())
+
+    def test_v1_entity_only_placement_payload_remains_supported(self):
+        with tempfile.TemporaryDirectory(
+            prefix="native-package-placement-v1-"
+        ) as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            path = package / "placements/deep-l2-entities.json"
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["schemaVersion"] = 1
+            payload["encoding"] = "layered-entity-placements-v1"
+            payload.pop("scenery")
+            payload.pop("boundaries")
+            path.write_text(
+                json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+            )
+            manifest_path = package / "manifest.json"
+            manifest = json.loads(
+                manifest_path.read_text(encoding="utf-8")
+            )
+            manifest["packageVersion"] = "0.3.0"
+            manifest["placementSets"][0]["encoding"] = (
+                "layered-entity-placements-v1"
+            )
+            manifest["placementSets"][0]["sha256"] = hashlib.sha256(
+                path.read_bytes()
+            ).hexdigest()
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+            )
+            workspace = Path(temp) / "report"
+
+            result = self.run_command("package-check", workspace, package)
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            report = json.loads(
+                (workspace / "package-validation.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(1, report["npcPlacementCount"])
+            self.assertEqual(1, report["groundItemPlacementCount"])
+            self.assertEqual(0, report["sceneryPlacementCount"])
+            self.assertEqual(0, report["boundaryPlacementCount"])
 
     def test_new_schemas_are_valid_and_keep_level_signed(self):
         baseline_schema = json.loads(
@@ -212,6 +268,12 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             (
                 TOOL_ROOT
                 / "schema/layered-entity-placements-v1.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        world_placement_schema = json.loads(
+            (
+                TOOL_ROOT
+                / "schema/layered-world-placements-v2.schema.json"
             ).read_text(encoding="utf-8")
         )
         self.assertEqual(
@@ -245,10 +307,19 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             placement_schema["properties"]["encoding"]["const"],
         )
         self.assertEqual(
-            "layered-entity-placements-v1",
+            "layered-world-placements-v2",
+            world_placement_schema["properties"]["encoding"]["const"],
+        )
+        self.assertEqual(
+            {
+                "layered-entity-placements-v1",
+                "layered-world-placements-v2",
+            },
+            set(
             package_schema["properties"]["placementSets"]["items"][
                 "properties"
-            ]["encoding"]["const"],
+            ]["encoding"]["enum"]
+            ),
         )
         self.assertEqual(
             {
@@ -365,6 +436,29 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
         path = package / "placements/deep-l2-entities.json"
         payload = json.loads(path.read_text(encoding="utf-8"))
         payload["groundItems"][0]["respawnSeconds"] = 0
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "placements/deep-l2-entities.json"
+        )
+
+    @staticmethod
+    def invalid_boundary_direction(package):
+        path = package / "placements/deep-l2-entities.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["boundaries"][0]["direction"] = 8
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "placements/deep-l2-entities.json"
+        )
+
+    @staticmethod
+    def duplicate_scenery_slot(package):
+        path = package / "placements/deep-l2-entities.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        duplicate = dict(payload["scenery"][0])
+        duplicate["placementId"] = "deep-fixture-table-duplicate"
+        duplicate["position"] = dict(duplicate["position"])
+        payload["scenery"].append(duplicate)
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         LayeredNativePackageFoundationTest.update_payload_hash(
             package, "placements/deep-l2-entities.json"

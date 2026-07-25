@@ -155,7 +155,12 @@
             "minimum": -2147483648,
             "maximum": 2147483647
           },
-          "encoding": {"const": "layered-entity-placements-v1"},
+          "encoding": {
+            "enum": [
+              "layered-entity-placements-v1",
+              "layered-world-placements-v2"
+            ]
+          },
           "path": {"type": "string", "minLength": 1},
           "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
         }

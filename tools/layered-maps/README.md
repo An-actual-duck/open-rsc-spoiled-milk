@@ -58,14 +58,16 @@ storage page. The fixture deliberately declares levels `0`, `-2`, and `-3`;
 the latter proves `-2` is not a format or loader ceiling. Its 24-tile
 presentation chunks are independent from 48-tile storage ownership.
 
-The hash-addressed `layered-entity-placements-v1` payload gives every NPC and
-ground-item spawn a stable package-wide placement ID and an explicit
-world-space/level-qualified position. NPC roaming coverage and item positions
-must be backed by terrain from the same package. The first fixture owns one
-radius-2 Man and one five-coin spawn with a five-second respawn. Duplicate IDs,
-unknown fields, invalid amounts/timers, identity disagreement, missing terrain,
-changed hashes, and unsafe/reused paths are refused independently by both the
-tool and server loaders.
+The hash-addressed `layered-world-placements-v2` payload gives every NPC,
+ground-item, scenery, and boundary placement a stable package-wide placement
+ID and an explicit world-space/level-qualified position. NPC roaming coverage,
+item positions, and object anchors must be backed by terrain from the same
+package. The first fixture owns one radius-2 Man, one five-coin spawn with a
+five-second respawn, one Table, and one Fence. Duplicate IDs or object slots,
+unknown fields, invalid amounts/timers/directions, identity disagreement,
+missing terrain, changed hashes, and unsafe/reused paths are refused
+independently by both the tool and server loaders. The earlier
+`layered-entity-placements-v1` NPC/item payload remains readable.
 
 The compact `uniform-layered-sector-v1` payload remains a laboratory encoding.
 The definitive `rle-layered-sector-v1` payload expands positive runs in
@@ -90,11 +92,16 @@ fixed-width terrain tiles; unavailable slots are explicit void. The client
 accepts the complete window atomically, retains protocol-v3 uniform-page
 decoding for rollback evidence, and does not turn a same-package chunk shift
 into a full world-scope reset. The private server now registers the package
-NPC and item once during world population rather than creating them from the
-developer command. The layered item registry keys full `WorldLocation`,
-deduplicates the active spawn, and rejects stale respawn timers after a world
-lifecycle reset. Package-owned scenery/boundaries, general world loading, and
-removal of the bounded compatibility receipt remain later milestones.
+NPC, item, Table, and Fence once during world population rather than creating
+them from the developer command. The layered item registry keys full
+`WorldLocation`, deduplicates the active spawn, and rejects stale respawn
+timers after a world lifecycle reset. Package objects enter the level-aware
+spatial index without occupying a packed `Region`; their collision is derived
+through the canonical object-footprint planner and composed onto freshly
+decoded native terrain by full `WorldLocation`. This first object cut is
+intentionally static: dynamic door/object replacement, harvesting, removal,
+and respawn lifecycle authority remain later work, along with general world
+loading and removal of the bounded compatibility receipt.
 
 ## Preflight
 

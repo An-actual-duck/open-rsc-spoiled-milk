@@ -79,6 +79,21 @@ public class GameObject extends Entity {
 	/** Records the exact footprint only after its ordered registration succeeds. */
 	public void attachOrderedCollisionRegistrationState(
 		final GameObjectCollisionRegistrationState state) {
+		attachCollisionRegistrationState(state);
+	}
+
+	/** Records exact collision provenance for native layered registration. */
+	public void attachNativeLayeredCollisionRegistrationState(
+		final GameObjectCollisionRegistrationState state) {
+		if (getRegion() != null) {
+			throw new IllegalStateException(
+				"Native layered GameObject must not occupy a packed Region");
+		}
+		attachCollisionRegistrationState(state);
+	}
+
+	private void attachCollisionRegistrationState(
+		final GameObjectCollisionRegistrationState state) {
 		GameObjectCollisionRegistrationState checked =
 			java.util.Objects.requireNonNull(state, "state");
 		if (!checked.matchesConstructor(this)) {

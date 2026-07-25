@@ -16,6 +16,8 @@ public final class NativeLayeredPlacementSet {
 	private final String sourceSha256;
 	private final List<NativeLayeredNpcPlacement> npcs;
 	private final List<NativeLayeredGroundItemPlacement> groundItems;
+	private final List<NativeLayeredSceneryPlacement> scenery;
+	private final List<NativeLayeredBoundaryPlacement> boundaries;
 
 	NativeLayeredPlacementSet(
 		final String id,
@@ -25,7 +27,9 @@ public final class NativeLayeredPlacementSet {
 		final String sourcePath,
 		final String sourceSha256,
 		final List<NativeLayeredNpcPlacement> npcs,
-		final List<NativeLayeredGroundItemPlacement> groundItems) {
+		final List<NativeLayeredGroundItemPlacement> groundItems,
+		final List<NativeLayeredSceneryPlacement> scenery,
+		final List<NativeLayeredBoundaryPlacement> boundaries) {
 		this.id = Objects.requireNonNull(id, "id");
 		this.worldSpace = Objects.requireNonNull(worldSpace, "worldSpace");
 		this.level = level;
@@ -38,6 +42,10 @@ public final class NativeLayeredPlacementSet {
 			new ArrayList<NativeLayeredNpcPlacement>(npcs));
 		this.groundItems = Collections.unmodifiableList(
 			new ArrayList<NativeLayeredGroundItemPlacement>(groundItems));
+		this.scenery = Collections.unmodifiableList(
+			new ArrayList<NativeLayeredSceneryPlacement>(scenery));
+		this.boundaries = Collections.unmodifiableList(
+			new ArrayList<NativeLayeredBoundaryPlacement>(boundaries));
 	}
 
 	public String getId() {
@@ -70,5 +78,13 @@ public final class NativeLayeredPlacementSet {
 
 	public List<NativeLayeredGroundItemPlacement> getGroundItems() {
 		return groundItems;
+	}
+
+	public List<NativeLayeredSceneryPlacement> getScenery() {
+		return scenery;
+	}
+
+	public List<NativeLayeredBoundaryPlacement> getBoundaries() {
+		return boundaries;
 	}
 }

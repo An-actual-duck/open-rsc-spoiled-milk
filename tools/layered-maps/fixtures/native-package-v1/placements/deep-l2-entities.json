@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "encoding": "layered-entity-placements-v1",
+  "schemaVersion": 2,
+  "encoding": "layered-world-placements-v2",
   "worldSpace": "global",
   "level": -2,
   "npcs": [
@@ -24,6 +24,28 @@
       },
       "amount": 5,
       "respawnSeconds": 5
+    }
+  ],
+  "scenery": [
+    {
+      "placementId": "deep-fixture-table",
+      "sceneryId": 3,
+      "position": {
+        "x": 446,
+        "y": 604
+      },
+      "direction": 0
+    }
+  ],
+  "boundaries": [
+    {
+      "placementId": "deep-fixture-fence",
+      "boundaryId": 4,
+      "position": {
+        "x": 448,
+        "y": 604
+      },
+      "direction": 0
     }
   ]
 }

@@ -1702,6 +1702,24 @@ public final class Development implements CommandTrigger {
 				}
 			}
 		}
+		int sceneryCount = 0;
+		int boundaryCount = 0;
+		if (inside && nativeTerrain) {
+			for (GameObject object : regionManager.getLocalObjects(player)) {
+				if (object.isRemoved()) {
+					continue;
+				}
+				if (regionManager.isNativeLayeredPlacement(
+						object,
+						RegionManager.NATIVE_LAYERED_SCENERY_KIND)) {
+					sceneryCount++;
+				} else if (regionManager.isNativeLayeredPlacement(
+						object,
+						RegionManager.NATIVE_LAYERED_BOUNDARY_KIND)) {
+					boundaryCount++;
+				}
+			}
+		}
 		String projection = nativeTerrain
 			? NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID
 			: LayeredCompatibilityPointAdapter.projectionId(
@@ -1726,8 +1744,10 @@ public final class Development implements CommandTrigger {
 				+ "; package=" + nativePackage.getPackageId()
 				+ "@" + nativePackage.getPackageVersion()
 				+ "; placements="
-				+ nativePackage.getNpcPlacementCount() + "npc/"
-				+ nativePackage.getGroundItemPlacementCount() + "item"
+				+ nativePackage.getNpcPlacementCount() + "n/"
+				+ nativePackage.getGroundItemPlacementCount() + "i/"
+				+ nativePackage.getSceneryPlacementCount() + "s/"
+				+ nativePackage.getBoundaryPlacementCount() + "b"
 				+ "; manifest="
 				+ nativePackage.getManifestSha256().substring(0, 12));
 		}
@@ -1750,7 +1770,13 @@ public final class Development implements CommandTrigger {
 			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_Y
 			+ ",L"
 			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_LEVEL
-			+ "); npc=" + npcCount + "; item=" + itemCount + ".");
+			+ "); live=" + npcCount + "n/" + itemCount + "i/"
+			+ sceneryCount + "s/" + boundaryCount + "b"
+			+ "; collision="
+			+ (nativeTerrain
+				? regionManager.getNativeLayeredObjectCollisionTileCount()
+				: 0)
+			+ ".");
 	}
 
 	private void layeredCoordinateParity(Player player, String command, String[] args) {

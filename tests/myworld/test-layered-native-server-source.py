@@ -41,6 +41,8 @@ import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredNpcPlacement;
 import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
+import com.openrsc.server.io.NativeLayeredSceneryPlacement;
+import com.openrsc.server.io.NativeLayeredBoundaryPlacement;
 import com.openrsc.server.io.Sector;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
@@ -53,7 +55,7 @@ public final class NativeLayeredServerSourceFixture {
         NativeLayeredWorldPackage world =
             NativeLayeredWorldPackage.load(Paths.get(args[0]));
         check("rsc-remastered.native-loader-lab".equals(world.getPackageId()), "package ID");
-        check("0.3.0".equals(world.getPackageVersion()), "package version");
+        check("0.4.0".equals(world.getPackageVersion()), "package version");
         check(world.getPresentationChunkSize() == 24, "presentation chunk");
         check(world.getWorldSpaceCount() == 1, "world-space count");
         check(world.getLevelCount() == 3, "level count");
@@ -62,6 +64,10 @@ public final class NativeLayeredServerSourceFixture {
         check(world.getNpcPlacementCount() == 1, "NPC placement count");
         check(world.getGroundItemPlacementCount() == 1,
             "ground-item placement count");
+        check(world.getSceneryPlacementCount() == 1,
+            "scenery placement count");
+        check(world.getBoundaryPlacementCount() == 1,
+            "boundary placement count");
         NativeLayeredPlacementSet placements =
             world.getPlacementSets().get("deep-fixture-entities");
         check(placements != null, "placement set");
@@ -85,6 +91,26 @@ public final class NativeLayeredServerSourceFixture {
                 && item.getLocation().getCoordinate().getY() == 600
                 && item.getLocation().getCoordinate().getLevel() == -2,
             "item layered location");
+        NativeLayeredSceneryPlacement scenery =
+            placements.getScenery().get(0);
+        check("deep-fixture-table".equals(scenery.getPlacementId()),
+            "scenery placement ID");
+        check(scenery.getSceneryId() == 3 && scenery.getDirection() == 0,
+            "scenery placement values");
+        check(scenery.getLocation().getCoordinate().getX() == 446
+                && scenery.getLocation().getCoordinate().getY() == 604
+                && scenery.getLocation().getCoordinate().getLevel() == -2,
+            "scenery layered location");
+        NativeLayeredBoundaryPlacement boundary =
+            placements.getBoundaries().get(0);
+        check("deep-fixture-fence".equals(boundary.getPlacementId()),
+            "boundary placement ID");
+        check(boundary.getBoundaryId() == 4 && boundary.getDirection() == 0,
+            "boundary placement values");
+        check(boundary.getLocation().getCoordinate().getX() == 448
+                && boundary.getLocation().getCoordinate().getY() == 604
+                && boundary.getLocation().getCoordinate().getLevel() == -2,
+            "boundary layered location");
         check(world.declaresLevel(WorldSpaceId.GLOBAL, 0), "surface declaration");
         check(world.declaresLevel(WorldSpaceId.GLOBAL, -2), "deep declaration");
         check(world.declaresLevel(WorldSpaceId.GLOBAL, -3), "expanded declaration");
@@ -216,7 +242,7 @@ public final class NativeLayeredChunkWireFixture {
         context.legacyX = 450;
         context.legacyY = 600;
         context.nativePackageId = "rsc-remastered.native-loader-lab";
-        context.nativePackageVersion = "0.3.0";
+        context.nativePackageVersion = "0.4.0";
         context.nativeManifestSha256 =
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         context.nativePresentationChunkSize = 24;

@@ -12,6 +12,10 @@ REGISTRY = (
     SERVER
     / "src/com/openrsc/server/model/world/AuthoredLayeredGroundItemRegistry.java"
 )
+OBJECT_REGISTRY = (
+    SERVER
+    / "src/com/openrsc/server/model/world/NativeLayeredGameObjectRegistry.java"
+)
 WORLD = SERVER / "src/com/openrsc/server/model/world/World.java"
 GROUND_ITEM = SERVER / "src/com/openrsc/server/model/entity/GroundItem.java"
 REGION_MANAGER = (
@@ -26,9 +30,17 @@ DEVELOPMENT = (
 
 HARNESS = r"""
 import com.openrsc.server.model.world.AuthoredLayeredGroundItemRegistry;
+import com.openrsc.server.model.world.NativeLayeredGameObjectRegistry;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.ConstructorState;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Definition;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Operation;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.WorldBounds;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldSpaceId;
+import com.openrsc.server.model.world.region.TileValue;
+import com.openrsc.server.util.rsc.CollisionFlag;
 
 public final class NativeLayeredPlacementRegistryFixture {
     public static void main(String[] args) {
@@ -61,6 +73,84 @@ public final class NativeLayeredPlacementRegistryFixture {
         check(registry.registerForGeneration(deep, generation, Object::new)
                 == null,
             "stale timer refused");
+
+        NativeLayeredGameObjectRegistry<Object> objects =
+            new NativeLayeredGameObjectRegistry<Object>();
+        WorldLocation tableLocation = new WorldLocation(
+            WorldSpaceId.GLOBAL, new WorldCoordinate(446, 604, -2));
+        GameTickEventRestorationCollisionFootprintPlanner.Result table =
+            GameTickEventRestorationCollisionFootprintPlanner.plan(
+                Operation.REGISTER,
+                ConstructorState.of(3, 446, 604, 0, 0),
+                Definition.scenery(1, 1, 1, "Table", new String[0]),
+                false,
+                WorldBounds.of(1000, 1000));
+        Object tableObject = new Object();
+        check(objects.register(
+                "deep-table", tableLocation, 0, 0, tableObject, table)
+                == tableObject,
+            "register layered scenery");
+        TileValue deepTableTile = emptyTile();
+        objects.applyCollision(tableLocation, deepTableTile);
+        check((deepTableTile.traversalMask & CollisionFlag.FULL_BLOCK_C) != 0,
+            "deep scenery collision composed");
+        TileValue surfaceTableTile = emptyTile();
+        objects.applyCollision(
+            new WorldLocation(
+                WorldSpaceId.GLOBAL, new WorldCoordinate(446, 604, 0)),
+            surfaceTableTile);
+        check((surfaceTableTile.traversalMask & CollisionFlag.FULL_BLOCK) == 0,
+            "same XY surface collision remains isolated");
+
+        WorldLocation fenceLocation = new WorldLocation(
+            WorldSpaceId.GLOBAL, new WorldCoordinate(448, 604, -2));
+        GameTickEventRestorationCollisionFootprintPlanner.Result fence =
+            GameTickEventRestorationCollisionFootprintPlanner.plan(
+                Operation.REGISTER,
+                ConstructorState.of(4, 448, 604, 0, 1),
+                Definition.boundary(1, "Fence", new String[0]),
+                false,
+                WorldBounds.of(1000, 1000));
+        objects.register(
+            "deep-fence", fenceLocation, 1, 0, new Object(), fence);
+        TileValue fenceNorth = emptyTile();
+        objects.applyCollision(fenceLocation, fenceNorth);
+        check((fenceNorth.traversalMask & CollisionFlag.WALL_NORTH) != 0,
+            "boundary north collision composed");
+        TileValue fenceSouth = emptyTile();
+        objects.applyCollision(
+            new WorldLocation(
+                WorldSpaceId.GLOBAL, new WorldCoordinate(448, 603, -2)),
+            fenceSouth);
+        check((fenceSouth.traversalMask & CollisionFlag.WALL_SOUTH) != 0,
+            "boundary reciprocal collision composed");
+        check(objects.size() == 2 && objects.countType(0) == 1
+                && objects.countType(1) == 1,
+            "typed package object counts");
+        check(objects.getCollisionTileCount() == 3,
+            "combined collision tile count");
+        expectIllegal(() -> objects.register(
+            "deep-table", tableLocation, 0, 0, new Object(), table));
+        expectIllegal(() -> objects.register(
+            "other-table", tableLocation, 0, 4, new Object(), table));
+        objects.reset();
+        check(objects.size() == 0 && objects.getCollisionTileCount() == 0,
+            "object registry reset");
+    }
+
+    private static TileValue emptyTile() {
+        TileValue tile = new TileValue();
+        tile.initializeTerrainCollision();
+        return tile;
+    }
+
+    private static void expectIllegal(Runnable operation) {
+        try {
+            operation.run();
+            throw new AssertionError("Expected registration refusal");
+        } catch (IllegalStateException expected) {
+            // Expected.
+        }
     }
 
     private static void check(boolean condition, String label) {
@@ -143,6 +233,18 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
         self.assertIn("populateNativeLayeredPlacements()", manager)
         self.assertIn("new Npc(", manager)
         self.assertIn("placement.getStart()", manager)
+        self.assertIn("NativeLayeredSceneryPlacement", manager)
+        self.assertIn("NativeLayeredBoundaryPlacement", manager)
+        self.assertIn("registerNativeLayeredGameObject(", manager)
+        self.assertIn(
+            "nativeLayeredGameObjects.applyCollision(location, tile)",
+            manager,
+        )
+        self.assertNotIn(
+            "applyObjectMembershipAndCollisionTransaction(\n"
+            "\t\t\tnull",
+            manager,
+        )
 
     def test_native_command_requires_world_population_instead_of_spawning(self):
         development = DEVELOPMENT.read_text(encoding="utf-8")

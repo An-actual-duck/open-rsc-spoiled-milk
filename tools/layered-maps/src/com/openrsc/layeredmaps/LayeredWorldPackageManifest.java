@@ -287,7 +287,8 @@ public final class LayeredWorldPackageManifest {
 						+ worldSpace + " " + level + ".");
 			}
 			String encoding = matchedString(value, "encoding", ID);
-			if (!LayeredEntityPlacements.ENCODING.equals(encoding)) {
+			if (!LayeredEntityPlacements.ENCODING_V1.equals(encoding)
+				&& !LayeredEntityPlacements.ENCODING_V2.equals(encoding)) {
 				throw new PreflightException(
 					"Placement payload encoding is unsupported by this loader: "
 						+ encoding + ".");
@@ -310,6 +311,11 @@ public final class LayeredWorldPackageManifest {
 				|| level != placements.getLevel()) {
 				throw new PreflightException(
 					"Placement payload identity differs from its manifest record: "
+						+ relativePath + ".");
+			}
+			if (!encoding.equals(placements.getEncoding())) {
+				throw new PreflightException(
+					"Placement payload encoding differs from its manifest record: "
 						+ relativePath + ".");
 			}
 			for (LayeredEntityPlacements.NpcPlacement npc
@@ -342,6 +348,28 @@ public final class LayeredWorldPackageManifest {
 					item.getPlacementId(),
 					terrainIdentities);
 			}
+			for (LayeredEntityPlacements.SceneryPlacement scenery
+				: placements.getScenery()) {
+				requireUniquePlacementId(
+					scenery.getPlacementId(), placementIds);
+				requirePlacementTerrain(
+					levelKey,
+					scenery.getX(),
+					scenery.getY(),
+					scenery.getPlacementId(),
+					terrainIdentities);
+			}
+			for (LayeredEntityPlacements.BoundaryPlacement boundary
+				: placements.getBoundaries()) {
+				requireUniquePlacementId(
+					boundary.getPlacementId(), placementIds);
+				requirePlacementTerrain(
+					levelKey,
+					boundary.getX(),
+					boundary.getY(),
+					boundary.getPlacementId(),
+					terrainIdentities);
+			}
 			result.add(new PlacementSet(
 				id,
 				levelKey.worldSpace,
@@ -351,7 +379,9 @@ public final class LayeredWorldPackageManifest {
 				expectedHash,
 				Files.size(payload),
 				placements.getNpcs().size(),
-				placements.getGroundItems().size()));
+				placements.getGroundItems().size(),
+				placements.getScenery().size(),
+				placements.getBoundaries().size()));
 		}
 		return result;
 	}
@@ -398,14 +428,22 @@ public final class LayeredWorldPackageManifest {
 		document.put("placementSetCount", Long.valueOf(placementSets.size()));
 		int npcCount = 0;
 		int groundItemCount = 0;
+		int sceneryCount = 0;
+		int boundaryCount = 0;
 		for (PlacementSet set : placementSets) {
 			npcCount = Math.addExact(npcCount, set.npcCount);
 			groundItemCount = Math.addExact(
 				groundItemCount, set.groundItemCount);
+			sceneryCount = Math.addExact(
+				sceneryCount, set.sceneryCount);
+			boundaryCount = Math.addExact(
+				boundaryCount, set.boundaryCount);
 		}
 		document.put("npcPlacementCount", Long.valueOf(npcCount));
 		document.put(
 			"groundItemPlacementCount", Long.valueOf(groundItemCount));
+		document.put("sceneryPlacementCount", Long.valueOf(sceneryCount));
+		document.put("boundaryPlacementCount", Long.valueOf(boundaryCount));
 		document.put("packageFingerprintSha256", packageFingerprint);
 		List<Object> levelDocuments = new ArrayList<Object>();
 		for (Level level : levels) {
@@ -688,6 +726,8 @@ public final class LayeredWorldPackageManifest {
 		private final long size;
 		private final int npcCount;
 		private final int groundItemCount;
+		private final int sceneryCount;
+		private final int boundaryCount;
 
 		PlacementSet(
 			String id,
@@ -698,7 +738,9 @@ public final class LayeredWorldPackageManifest {
 			String sha256,
 			long size,
 			int npcCount,
-			int groundItemCount) {
+			int groundItemCount,
+			int sceneryCount,
+			int boundaryCount) {
 			this.id = id;
 			this.worldSpace = worldSpace;
 			this.level = level;
@@ -708,6 +750,8 @@ public final class LayeredWorldPackageManifest {
 			this.size = size;
 			this.npcCount = npcCount;
 			this.groundItemCount = groundItemCount;
+			this.sceneryCount = sceneryCount;
+			this.boundaryCount = boundaryCount;
 		}
 
 		public String getId() { return id; }
@@ -719,6 +763,8 @@ public final class LayeredWorldPackageManifest {
 		public long getSize() { return size; }
 		public int getNpcCount() { return npcCount; }
 		public int getGroundItemCount() { return groundItemCount; }
+		public int getSceneryCount() { return sceneryCount; }
+		public int getBoundaryCount() { return boundaryCount; }
 	}
 
 	private static final class LevelKey {

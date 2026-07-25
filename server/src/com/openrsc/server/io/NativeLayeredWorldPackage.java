@@ -38,8 +38,12 @@ public final class NativeLayeredWorldPackage {
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
 	public static final String RLE_ENCODING = "rle-layered-sector-v1";
 	public static final String RLE_TILE_ORDER = "x-major-y-minor";
-	public static final String ENTITY_PLACEMENT_ENCODING =
+	public static final String ENTITY_PLACEMENT_ENCODING_V1 =
 		"layered-entity-placements-v1";
+	public static final String WORLD_PLACEMENT_ENCODING_V2 =
+		"layered-world-placements-v2";
+	public static final String ENTITY_PLACEMENT_ENCODING =
+		WORLD_PLACEMENT_ENCODING_V2;
 	public static final String RUNTIME_PROJECTION_ID =
 		"native-layered-package-v1";
 
@@ -344,7 +348,8 @@ public final class NativeLayeredWorldPackage {
 						+ worldSpace + " " + level);
 			}
 			String encoding = matchedString(value, "encoding", ID);
-			if (!ENTITY_PLACEMENT_ENCODING.equals(encoding)) {
+			if (!ENTITY_PLACEMENT_ENCODING_V1.equals(encoding)
+				&& !WORLD_PLACEMENT_ENCODING_V2.equals(encoding)) {
 				throw new IOException(
 					"Placement payload encoding is unsupported by this loader: "
 						+ encoding);
@@ -385,28 +390,65 @@ public final class NativeLayeredWorldPackage {
 		String sha256,
 		Set<String> placementIds) throws IOException {
 		JSONObject document = readObject(path);
-		exactKeys(
-			document,
-			"entity placement set",
-			"schemaVersion",
-			"encoding",
-			"worldSpace",
-			"level",
-			"npcs",
-			"groundItems");
-		requireInt(document, "schemaVersion", 1);
-		requireString(document, "encoding", ENTITY_PLACEMENT_ENCODING);
+		int schemaVersion = signedInt(document, "schemaVersion");
+		String payloadEncoding = string(document, "encoding");
+		boolean version1 =
+			schemaVersion == 1
+				&& ENTITY_PLACEMENT_ENCODING_V1.equals(payloadEncoding);
+		boolean version2 =
+			schemaVersion == 2
+				&& WORLD_PLACEMENT_ENCODING_V2.equals(payloadEncoding);
+		if (!version1 && !version2) {
+			throw new IOException(
+				"Placement schemaVersion/encoding pair is unsupported");
+		}
+		if (!encoding.equals(payloadEncoding)) {
+			throw new IOException(
+				"Placement payload encoding differs from its manifest record: "
+					+ relativePath);
+		}
+		if (version1) {
+			exactKeys(
+				document,
+				"entity placement set",
+				"schemaVersion",
+				"encoding",
+				"worldSpace",
+				"level",
+				"npcs",
+				"groundItems");
+		} else {
+			exactKeys(
+				document,
+				"world placement set",
+				"schemaVersion",
+				"encoding",
+				"worldSpace",
+				"level",
+				"npcs",
+				"groundItems",
+				"scenery",
+				"boundaries");
+		}
 		requireString(document, "worldSpace", worldSpace.getValue());
 		requireInt(document, "level", level);
 		JSONArray npcValues = array(document, "npcs");
 		JSONArray itemValues = array(document, "groundItems");
-		if (npcValues.length() + itemValues.length() < 1
+		JSONArray sceneryValues = version2
+			? array(document, "scenery") : new JSONArray();
+		JSONArray boundaryValues = version2
+			? array(document, "boundaries") : new JSONArray();
+		int placementCount = Math.addExact(
+			Math.addExact(npcValues.length(), itemValues.length()),
+			Math.addExact(sceneryValues.length(), boundaryValues.length()));
+		if (placementCount < 1
 			|| npcValues.length() > MAX_PLACEMENTS_PER_SET
 			|| itemValues.length() > MAX_PLACEMENTS_PER_SET
-			|| npcValues.length() + itemValues.length()
-				> MAX_PLACEMENTS_PER_SET) {
+			|| sceneryValues.length() > MAX_PLACEMENTS_PER_SET
+			|| boundaryValues.length() > MAX_PLACEMENTS_PER_SET
+			|| placementCount > MAX_PLACEMENTS_PER_SET) {
 			throw new IOException(
-				"Entity placement set count must be 1.."
+				"World placement set count must be 1.."
 					+ MAX_PLACEMENTS_PER_SET);
 		}
 		java.util.List<NativeLayeredNpcPlacement> npcs =
@@ -472,6 +514,68 @@ public final class NativeLayeredWorldPackage {
 				amount,
 				respawnSeconds));
 		}
+		java.util.List<NativeLayeredSceneryPlacement> scenery =
+			new java.util.ArrayList<NativeLayeredSceneryPlacement>();
+		Set<String> scenerySlots = new HashSet<String>();
+		for (int index = 0; index < sceneryValues.length(); index++) {
+			JSONObject value = object(sceneryValues, index, "scenery");
+			exactKeys(
+				value,
+				"scenery[" + index + "]",
+				"placementId",
+				"sceneryId",
+				"position",
+				"direction");
+			String placementId = uniquePlacementId(
+				value, index, "scenery", placementIds);
+			WorldLocation location = readLocation(
+				object(value, "position"),
+				"scenery[" + index + "].position",
+				worldSpace,
+				level);
+			int direction = direction(value, "direction");
+			String slot = location.toString();
+			if (!scenerySlots.add(slot)) {
+				throw new IOException(
+					"Duplicate scenery slot at " + slot);
+			}
+			scenery.add(new NativeLayeredSceneryPlacement(
+				placementId,
+				nonNegativeInt(value, "sceneryId"),
+				location,
+				direction));
+		}
+		java.util.List<NativeLayeredBoundaryPlacement> boundaries =
+			new java.util.ArrayList<NativeLayeredBoundaryPlacement>();
+		Set<String> boundarySlots = new HashSet<String>();
+		for (int index = 0; index < boundaryValues.length(); index++) {
+			JSONObject value = object(boundaryValues, index, "boundaries");
+			exactKeys(
+				value,
+				"boundaries[" + index + "]",
+				"placementId",
+				"boundaryId",
+				"position",
+				"direction");
+			String placementId = uniquePlacementId(
+				value, index, "boundaries", placementIds);
+			WorldLocation location = readLocation(
+				object(value, "position"),
+				"boundaries[" + index + "].position",
+				worldSpace,
+				level);
+			int direction = direction(value, "direction");
+			String slot = location.toString() + ":" + direction;
+			if (!boundarySlots.add(slot)) {
+				throw new IOException(
+					"Duplicate boundary slot at " + slot);
+			}
+			boundaries.add(new NativeLayeredBoundaryPlacement(
+				placementId,
+				nonNegativeInt(value, "boundaryId"),
+				location,
+				direction));
+		}
 		return new NativeLayeredPlacementSet(
 			id,
 			worldSpace,
@@ -480,7 +584,9 @@ public final class NativeLayeredWorldPackage {
 			relativePath,
 			sha256,
 			npcs,
-			groundItems);
+			groundItems,
+			scenery,
+			boundaries);
 	}
 
 	private static String uniquePlacementId(
@@ -538,6 +644,18 @@ public final class NativeLayeredWorldPackage {
 		for (NativeLayeredGroundItemPlacement item : set.getGroundItems()) {
 			requirePlacementTerrain(
 				item.getLocation(), item.getPlacementId(), terrainSectors);
+		}
+		for (NativeLayeredSceneryPlacement scenery : set.getScenery()) {
+			requirePlacementTerrain(
+				scenery.getLocation(),
+				scenery.getPlacementId(),
+				terrainSectors);
+		}
+		for (NativeLayeredBoundaryPlacement boundary : set.getBoundaries()) {
+			requirePlacementTerrain(
+				boundary.getLocation(),
+				boundary.getPlacementId(),
+				terrainSectors);
 		}
 	}
 
@@ -750,6 +868,22 @@ public final class NativeLayeredWorldPackage {
 		return count;
 	}
 
+	public int getSceneryPlacementCount() {
+		int count = 0;
+		for (NativeLayeredPlacementSet set : placementSets.values()) {
+			count = Math.addExact(count, set.getScenery().size());
+		}
+		return count;
+	}
+
+	public int getBoundaryPlacementCount() {
+		int count = 0;
+		for (NativeLayeredPlacementSet set : placementSets.values()) {
+			count = Math.addExact(count, set.getBoundaries().size());
+		}
+		return count;
+	}
+
 	public String getManifestSha256() {
 		return manifestSha256;
 	}
@@ -904,6 +1038,15 @@ public final class NativeLayeredWorldPackage {
 		int result = signedInt(value, key);
 		if (result <= 0) {
 			throw new IOException(key + " must be positive");
+		}
+		return result;
+	}
+
+	private static int direction(JSONObject value, String key)
+		throws IOException {
+		int result = signedInt(value, key);
+		if (result < 0 || result > 7) {
+			throw new IOException(key + " must be 0..7");
 		}
 		return result;
 	}

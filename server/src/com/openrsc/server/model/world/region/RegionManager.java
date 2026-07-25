@@ -18,6 +18,8 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision
 import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
 import com.openrsc.server.io.NativeLayeredNpcPlacement;
+import com.openrsc.server.io.NativeLayeredSceneryPlacement;
+import com.openrsc.server.io.NativeLayeredBoundaryPlacement;
 import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.Point;
@@ -30,6 +32,7 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.NativeLayeredGameObjectRegistry;
 import com.openrsc.server.model.world.coordinate.LegacyLogicalRegionAssembly;
 import com.openrsc.server.model.world.coordinate.LegacyLogicalTileAddress;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
@@ -106,6 +109,8 @@ public class RegionManager {
 		"native-layered-package-placement-package";
 	public static final String NATIVE_LAYERED_NPC_KIND = "npc";
 	public static final String NATIVE_LAYERED_GROUND_ITEM_KIND = "ground-item";
+	public static final String NATIVE_LAYERED_SCENERY_KIND = "scenery";
+	public static final String NATIVE_LAYERED_BOUNDARY_KIND = "boundary";
 
 	private final ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>> regions;
 	private final ConcurrentHashMap<Long, List<Region>> visibleRegionWindowCache;
@@ -123,6 +128,8 @@ public class RegionManager {
 	private final LayeredRegionRetirementDecisionArbiter
 		layeredRegionRetirementDecisionArbiter;
 	private final LayeredSpatialEntityIndex layeredSpatialEntityIndex;
+	private final NativeLayeredGameObjectRegistry<GameObject>
+		nativeLayeredGameObjects;
 	private final NativeLayeredWorldPackage nativeLayeredWorldPackage;
 	private boolean nativeLayeredPlacementsPopulated;
 
@@ -187,6 +194,8 @@ public class RegionManager {
 		this.layeredRegionRetirementDecisionArbiter =
 			new LayeredRegionRetirementDecisionArbiter();
 		this.layeredSpatialEntityIndex = new LayeredSpatialEntityIndex();
+		this.nativeLayeredGameObjects =
+			new NativeLayeredGameObjectRegistry<GameObject>();
 		this.nativeLayeredPlacementsPopulated = false;
 	}
 
@@ -229,10 +238,12 @@ public class RegionManager {
 		}
 		if (loaded.getPlacementSetCount() != 1
 			|| loaded.getNpcPlacementCount() != 1
-			|| loaded.getGroundItemPlacementCount() != 1) {
+			|| loaded.getGroundItemPlacementCount() != 1
+			|| loaded.getSceneryPlacementCount() != 1
+			|| loaded.getBoundaryPlacementCount() != 1) {
 			throw new IllegalStateException(
 				"The first native layered placement route requires exactly "
-					+ "one placement set, NPC, and ground item");
+					+ "one placement set, NPC, ground item, scenery, and boundary");
 		}
 		for (int x = LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_X;
 			x <= LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_X;
@@ -289,6 +300,7 @@ public class RegionManager {
 			layeredRegionInterestOwnershipLedger.clear();
 			layeredRegionRetirementEligibilityLedger.clear();
 			layeredSpatialEntityIndex.clear();
+			nativeLayeredGameObjects.reset();
 			nativeLayeredPlacementsPopulated = false;
 		}
 		visibleRegionWindowCache.clear();
@@ -3592,7 +3604,7 @@ public class RegionManager {
 		tile.verticalWallVal = (byte) source.getVerticalWall();
 		tile.elevation = (byte) source.getElevation();
 		tile.initializeTerrainCollision();
-		return tile;
+		return nativeLayeredGameObjects.applyCollision(location, tile);
 	}
 
 	public NativeLayeredWorldPackage getNativeLayeredWorldPackage() {
@@ -3609,6 +3621,8 @@ public class RegionManager {
 		}
 		int npcCount = 0;
 		int groundItemCount = 0;
+		int sceneryCount = 0;
+		int boundaryCount = 0;
 		for (NativeLayeredPlacementSet set
 			: nativeLayeredWorldPackage.getPlacementSets().values()) {
 			for (NativeLayeredNpcPlacement placement : set.getNpcs()) {
@@ -3652,15 +3666,123 @@ public class RegionManager {
 					NATIVE_LAYERED_GROUND_ITEM_KIND);
 				groundItemCount++;
 			}
+			for (NativeLayeredSceneryPlacement placement
+				: set.getScenery()) {
+				if (world.getServer().getEntityHandler()
+						.getGameObjectDef(placement.getSceneryId()) == null) {
+					throw new IllegalStateException(
+						"Native layered scenery definition is unavailable: "
+							+ placement.getSceneryId());
+				}
+				registerNativeLayeredGameObject(
+					placement.getPlacementId(),
+					placement.getLocation(),
+					placement.getSceneryId(),
+					placement.getDirection(),
+					GameObjectType.SCENERY,
+					NATIVE_LAYERED_SCENERY_KIND);
+				sceneryCount++;
+			}
+			for (NativeLayeredBoundaryPlacement placement
+				: set.getBoundaries()) {
+				if (world.getServer().getEntityHandler()
+						.getDoorDef(placement.getBoundaryId()) == null) {
+					throw new IllegalStateException(
+						"Native layered boundary definition is unavailable: "
+							+ placement.getBoundaryId());
+				}
+				registerNativeLayeredGameObject(
+					placement.getPlacementId(),
+					placement.getLocation(),
+					placement.getBoundaryId(),
+					placement.getDirection(),
+					GameObjectType.BOUNDARY,
+					NATIVE_LAYERED_BOUNDARY_KIND);
+				boundaryCount++;
+			}
 		}
 		nativeLayeredPlacementsPopulated = true;
 		LOGGER.info(
-			"Populated native layered package {}@{} with {} NPC and {} "
-				+ "ground-item placements",
+			"Populated native layered package {}@{} with {} NPC, {} "
+				+ "ground-item, {} scenery, and {} boundary placements",
 			nativeLayeredWorldPackage.getPackageId(),
 			nativeLayeredWorldPackage.getPackageVersion(),
 			npcCount,
-			groundItemCount);
+			groundItemCount,
+			sceneryCount,
+			boundaryCount);
+	}
+
+	private void registerNativeLayeredGameObject(
+		final String placementId,
+		final WorldLocation location,
+		final int objectId,
+		final int direction,
+		final GameObjectType type,
+		final String kind) {
+		if (!isLayeredSpatialRuntimeAuthorityEnabled()) {
+			throw new IllegalStateException(
+				"Native layered objects require layered spatial authority");
+		}
+		GameObject object = new GameObject(
+			world,
+			new GameObjectLoc(
+				objectId,
+				location.getCoordinate().getX(),
+				location.getCoordinate().getY(),
+				direction,
+				type.getId()));
+		GameTickEventRestorationCollisionFootprintPlanner.Result footprint =
+			world.projectGameObjectCollisionFootprint(
+				object, Operation.REGISTER, false);
+		if (!footprint.isFootprintAvailable()) {
+			throw new IllegalStateException(
+				"Native layered object collision footprint is unavailable for "
+					+ placementId + ": " + footprint.getReason());
+		}
+		for (com.openrsc.server.event.rsc
+				.GameTickEventRestorationTransientRollbackSnapshot
+				.CollisionContribution contribution
+					: footprint.getContributions()) {
+			WorldLocation collisionLocation = new WorldLocation(
+				location.getWorldSpace(),
+				new com.openrsc.server.model.world.coordinate.WorldCoordinate(
+					contribution.getX(),
+					contribution.getY(),
+					location.getCoordinate().getLevel()));
+			if (!nativeLayeredWorldPackage.findTile(
+					collisionLocation).isPresent()) {
+				throw new IllegalStateException(
+					"Native layered object collision leaves package terrain for "
+						+ placementId + ": " + collisionLocation);
+			}
+		}
+		object.setInitialWorldLocation(location);
+		markNativeLayeredPlacement(object, placementId, kind);
+		nativeLayeredGameObjects.register(
+			placementId,
+			location,
+			type.getId(),
+			direction,
+			object,
+			footprint);
+		object.attachNativeLayeredCollisionRegistrationState(
+			GameObjectCollisionRegistrationState.capture(object, footprint));
+		layeredSpatialEntityIndex.synchronize(object, null, location);
+	}
+
+	public int getNativeLayeredSceneryCount() {
+		return nativeLayeredGameObjects.countType(
+			GameObjectType.SCENERY.getId());
+	}
+
+	public int getNativeLayeredBoundaryCount() {
+		return nativeLayeredGameObjects.countType(
+			GameObjectType.BOUNDARY.getId());
+	}
+
+	public int getNativeLayeredObjectCollisionTileCount() {
+		return nativeLayeredGameObjects.getCollisionTileCount();
 	}
 
 	public boolean areNativeLayeredPlacementsPopulated() {
