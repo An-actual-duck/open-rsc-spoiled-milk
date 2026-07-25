@@ -111,7 +111,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assertEqual("rsc-remastered.native-loader-lab", report["packageId"])
             self.assertEqual(48, report["storageSectorSize"])
             self.assertEqual(24, report["presentationChunkSize"])
-            self.assertEqual(2, report["terrainSectorCount"])
+            self.assertEqual(3, report["terrainSectorCount"])
             self.assertEqual({0, -2, -3}, {level["level"] for level in report["levels"]})
 
     def test_level_is_data_not_a_fixed_minus_two_or_minus_three_enumeration(self):

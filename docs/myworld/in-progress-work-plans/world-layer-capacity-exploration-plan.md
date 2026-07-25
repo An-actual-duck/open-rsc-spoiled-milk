@@ -139,6 +139,41 @@ tile fidelity for adjacent package sectors at arbitrary declared levels before
 any live `World`/`Region` registration or client presentation authority is
 enabled.
 
+### Authority Milestone E foundation checkpoint 2
+
+Implemented on 2026-07-25:
+
+- the server now has a strict read-only `NativeLayeredWorldPackage` source
+  using the already-authoritative server `WorldSpaceId`, signed level, and
+  `WorldMapSectorId` values;
+- the source validates package/world-space/level/sector declarations, bounded
+  counts, normalized contained paths, symlink refusal, payload hashes, encoding
+  support, and every uniform tile scalar before exposing a sector;
+- `NativeLayeredTerrainSector` is immutable and detached. Its optional
+  legacy-shaped `Sector` copy is newly allocated and never registered with
+  `World`, `RegionManager`, collision, placements, packets, or the client;
+- the fixture now includes adjacent level `-2` sectors `(9,12)` and `(10,12)`.
+  Automated lookup crosses global X `479 -> 480` at Y `600` and observes the
+  correct distinct payload on each side;
+- the same X/Y on declared surface level `0` has no terrain and remains
+  isolated, while the level `-3` payload resolves normally;
+- a server regression substitutes level `-37` in package data and resolves it
+  without a source change, proving again that depth is not enumerated; and
+- the detached compatibility copy packs to the complete expected
+  `48 * 48 * 10` terrain bytes.
+
+The three new server-source tests pass, and the authoritative build compiles
+853 core plus 488 plugin sources. This remains a zero-runtime-authority
+checkpoint: neither the existing whole-world loader nor the synthetic deep
+fixture consumes the package yet.
+
+The next cut is the first separately gated native runtime seam. It should make
+the accepted level `-2` owner route read terrain/collision from this package
+instead of `synthetic-deep-fixture-v1`, while retaining an immediate gate-off
+rollback to the existing accepted world. Client presentation must receive
+matching native sector data/readiness rather than a hidden plane-0 alias before
+owner testing is requested.
+
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
 expose, and validate the next restoration prerequisite: known authored
@@ -17213,6 +17248,7 @@ private environment should validate at least:
 | 2026-07-25 | Make signed layers data-expandable beyond `-2`; loader/package/editor/runtime logic keys arbitrary declared signed levels and must not enumerate a maximum depth in source. | Confirmed |
 | 2026-07-25 | Select Authority Milestone E as the next implementation body: native package-owned layered terrain/collision/placements, smaller presentation chunks over retained 48-tile storage pages, and a real level `-2` private route. | Selected after full Milestone D acceptance |
 | 2026-07-25 | Complete Milestone E foundation checkpoint 1: freeze the deterministic 12-file Preservation map-source manifest and implement strict native package/uniform-sector validation with data-declared `-3` and `-37` depth proofs. | Implemented and automated-validated; no server/client/runtime terrain authority changed |
+| 2026-07-25 | Complete Milestone E foundation checkpoint 2: add the server's strict detached native package/sector source, adjacent level `-2` page lookup, same-X/Y isolation, arbitrary level `-37` proof, and full detached sector byte-fidelity check. | Implemented and automated-validated; 3 focused tests and authoritative 853/488 build pass, with zero `World`/Region/client authority |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

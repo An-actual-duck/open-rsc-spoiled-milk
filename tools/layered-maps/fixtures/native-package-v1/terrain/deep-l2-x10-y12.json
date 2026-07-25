@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "encoding": "uniform-layered-sector-v1",
+  "size": 48,
+  "tile": {
+    "elevation": 4,
+    "texture": 2,
+    "overlay": 0,
+    "roof": 0,
+    "verticalWall": 0,
+    "horizontalWall": 0,
+    "diagonalWall": 0
+  }
+}

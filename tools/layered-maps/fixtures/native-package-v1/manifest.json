@@ -46,6 +46,15 @@
     },
     {
       "worldSpace": "global",
+      "level": -2,
+      "sectorX": 10,
+      "sectorY": 12,
+      "encoding": "uniform-layered-sector-v1",
+      "path": "terrain/deep-l2-x10-y12.json",
+      "sha256": "299e8fb0be9d46c3f65b9a57700df59a3e9b56306b2750555e3d87a5a89b91c0"
+    },
+    {
+      "worldSpace": "global",
       "level": -3,
       "sectorX": 9,
       "sectorY": 12,

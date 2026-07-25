@@ -62,6 +62,17 @@ The compact `uniform-layered-sector-v1` payload is a laboratory encoding for
 the next private native-loader route. A full-fidelity converted-vanilla sector
 encoding remains a separately parity-tested step.
 
+The matching server-side reader lives in
+`server/src/com/openrsc/server/io/NativeLayeredWorldPackage.java`. It performs
+the same containment, identity, declaration, hash, and uniform-tile checks,
+then exposes immutable detached sectors by `WorldMapSectorId`. The fixture has
+two adjacent level `-2` pages and one same-X/Y level `-3` page. Tests resolve
+tiles on both sides of the 48-tile boundary, substitute level `-37`, and copy a
+sector into an unregistered legacy-shaped value for byte-fidelity checks.
+
+This server source has no `World`, `RegionManager`, collision, placement,
+packet, or client registration authority yet.
+
 ## Preflight
 
 From the repository root:
