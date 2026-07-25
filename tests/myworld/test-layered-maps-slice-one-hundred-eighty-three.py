@@ -308,10 +308,10 @@ class LayeredMapsSliceOneHundredEightyThreeTest(unittest.TestCase):
             boundary.index("captured[0] ="),
         )
         self.assertIn(
-            'EVENT_SCHEMA = "layered-map-parity-event-v59"', observer
+            'EVENT_SCHEMA = "layered-map-parity-event-v60"', observer
         )
         self.assertIn(
-            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v58"',
+            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v59"',
             observer,
         )
         serializer_start = observer.index(

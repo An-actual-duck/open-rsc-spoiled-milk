@@ -185,7 +185,7 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v59.schema.json`. Each v59 record
+traces emit `schema/layered-map-parity-event-v60.schema.json`. Each v60 record
 retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
@@ -316,6 +316,14 @@ ranges, timing/run ranges, and a deterministic fingerprint. Type identity does
 not reclassify an event: unattributed and incomplete callbacks remain
 blockers, and cancellation, rescheduling, preservation, runtime mutation,
 arrival, visibility, and lifecycle authority remain false.
+V60 refines those same blocker families with a detached execution-context
+identity. Ordinary callbacks report `NONE`; plugin ticks report only their
+bounded code entry-point name and whether they are bound to a walk-to action.
+This splits generic `PluginTickEvent` blockers by implementation context
+without retaining plugin tasks, script data, actions, callbacks, or runtime
+handles. Context identity is diagnostic only: every plugin tick remains a
+blocker and no attribution, scheduling, preservation, mutation, arrival,
+visibility, or lifecycle authority changes.
 The owner correlation accompanies proposal-scoped event
 inventories; only the explicit `::layerparity recover-noop` action may populate
 the separate recovery result, while ordinary movement, snapshots, and markers

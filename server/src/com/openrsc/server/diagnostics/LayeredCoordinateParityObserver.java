@@ -70,8 +70,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v59";
-	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v58";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v60";
+	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v59";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -6594,6 +6594,9 @@ public final class LayeredCoordinateParityObserver {
 			.append(inventory.getSelectedSourceReferenceCount()).append(',');
 		out.append("\"eventTypeIdentityComplete\":")
 			.append(inventory.isEventTypeIdentityComplete()).append(',');
+		out.append("\"eventExecutionContextIdentityComplete\":")
+			.append(inventory
+				.isEventExecutionContextIdentityComplete()).append(',');
 		out.append("\"pointInTimeOnly\":")
 			.append(inventory.isPointInTimeOnly()).append(',');
 		out.append("\"detachedSummaryOnly\":")
@@ -6644,6 +6647,17 @@ public final class LayeredCoordinateParityObserver {
 				.append(family.isLocalType()).append(',');
 			out.append("\"syntheticType\":")
 				.append(family.isSyntheticType()).append(',');
+			field(out, "executionContextKind",
+				family.getExecutionContextKind().name()).append(',');
+			out.append("\"executionContextName\":");
+			if (family.getExecutionContextName() == null) {
+				out.append("null");
+			} else {
+				quoted(out, family.getExecutionContextName());
+			}
+			out.append(',');
+			out.append("\"walkToActionBound\":")
+				.append(family.isWalkToActionBound()).append(',');
 			field(out, "ownerKind", family.getOwnerKind().name()).append(',');
 			field(out, "attributionKind",
 				family.getAttributionKind().name()).append(',');

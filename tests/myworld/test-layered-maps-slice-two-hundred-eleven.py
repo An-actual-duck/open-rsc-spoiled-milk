@@ -231,8 +231,8 @@ class LayeredMapsSliceTwoHundredElevenTest(unittest.TestCase):
     def test_json_exposes_bounded_families_without_event_payloads(self):
         observer = OBSERVER.read_text(encoding="utf-8")
         for required in (
-            'EVENT_SCHEMA = "layered-map-parity-event-v59"',
-            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v58"',
+            'EVENT_SCHEMA = "layered-map-parity-event-v60"',
+            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v59"',
             '\\"sourceSchedulerBlockerFamilyInventory\\":',
             "appendPackedRegionSchedulerBlockerFamilyInventory(",
             "getSourceSchedulerBlockerFamilyInventory()",
@@ -256,7 +256,7 @@ class LayeredMapsSliceTwoHundredElevenTest(unittest.TestCase):
         readme = README.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
         self.assertIn(
-            "schema/layered-map-parity-event-v59.schema.json", readme
+            "schema/layered-map-parity-event-v60.schema.json", readme
         )
         self.assertIn("sourceSchedulerBlockerFamilyInventory", readme)
         self.assertIn(

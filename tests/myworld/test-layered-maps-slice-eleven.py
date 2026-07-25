@@ -26,7 +26,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v59.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v60.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -72,6 +72,7 @@ SCHEMA_V55 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v55.sche
 SCHEMA_V56 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v56.schema.json"
 SCHEMA_V57 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v57.schema.json"
 SCHEMA_V58 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v58.schema.json"
+SCHEMA_V59 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v59.schema.json"
 
 
 POINT_STUB = r'''
@@ -928,6 +929,9 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
     public int getCandidateRelatedEventCount() { return 0; }
     public int getSelectedSourceReferenceCount() { return 0; }
     public boolean isEventTypeIdentityComplete() { return true; }
+    public boolean isEventExecutionContextIdentityComplete() {
+        return true;
+    }
     public boolean isPointInTimeOnly() { return true; }
     public boolean isDetachedSummaryOnly() { return true; }
     public boolean isAttributionChanged() { return false; }
@@ -947,6 +951,7 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
     }
 
     public enum Outcome { UNATTRIBUTED_BLOCKER }
+    public enum EventExecutionContextKind { NONE }
     public enum OwnerKind { NONE }
     public enum AttributionKind { UNATTRIBUTED }
     public enum RestorationKind { UNAVAILABLE }
@@ -960,6 +965,11 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
         public boolean isAnonymousType() { return false; }
         public boolean isLocalType() { return false; }
         public boolean isSyntheticType() { return false; }
+        public EventExecutionContextKind getExecutionContextKind() {
+            return EventExecutionContextKind.NONE;
+        }
+        public String getExecutionContextName() { return null; }
+        public boolean isWalkToActionBound() { return false; }
         public OwnerKind getOwnerKind() { return OwnerKind.NONE; }
         public AttributionKind getAttributionKind() {
             return AttributionKind.UNATTRIBUTED;
@@ -2109,7 +2119,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v59" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v60" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -3331,6 +3341,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v56 = json.loads(SCHEMA_V56.read_text(encoding="utf-8"))
                 v57 = json.loads(SCHEMA_V57.read_text(encoding="utf-8"))
                 v58 = json.loads(SCHEMA_V58.read_text(encoding="utf-8"))
+                v59 = json.loads(SCHEMA_V59.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -3377,6 +3388,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v56["$id"], Resource.from_contents(v56)),
                     (v57["$id"], Resource.from_contents(v57)),
                     (v58["$id"], Resource.from_contents(v58)),
+                    (v59["$id"], Resource.from_contents(v59)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

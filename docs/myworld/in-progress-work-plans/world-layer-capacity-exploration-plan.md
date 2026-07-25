@@ -16734,6 +16734,50 @@ Automated validation status:
 Status: implemented and automated-validated. Additive private-schema exposure
 remains pending.
 
+### Slice 214: Private plugin-context blocker diagnostics
+
+Objective: expose Slice 213's bounded execution-context split through the
+explicit private preservation diagnostic so the remaining generic plugin
+blockers can be audited by actual code entry point.
+
+Implemented:
+
+- additive `layered-map-parity-event-v60` preserves the complete v59 event and
+  changes only the nested scheduler-blocker family inventory;
+- the inventory now proves execution-context identity is complete, and every
+  family reports context kind, nullable bounded context name, and walk-to
+  binding;
+- schema invariants require an ordinary `NONE` context to have a null name and
+  no walk-to binding, while `PLUGIN_ENTRY_POINT` requires a valid bounded
+  name;
+- first-observation order, event/reference totals, scheduler ranges, timing/run
+  ranges, and fingerprints retain the exact Slice 211 reconciliation; and
+- v59 remains immutable for older diagnostics.
+
+Safety boundary:
+
+- the private JSON includes code identity only, never plugin tasks, script
+  arguments/data, walk-to actions, callbacks, owners, classes, schedulers, or
+  other runtime handles;
+- execution context cannot reclassify a callback, and all plugin ticks remain
+  hard blockers pending a separate implementation-specific audit; and
+- cancellation, rescheduling, preservation, source absence/reconstruction,
+  Region mutation, arrival, visibility, and lifecycle authority remain false.
+
+Automated validation status:
+
+- focused schema extension, fail-closed context invariants, serializer
+  boundary, documentation, detached-context, family-reduction, and v59
+  compatibility guards pass;
+- the Slice 182-214 lineage passes 137 tests across 33 focused files;
+- both end-to-end schema-v60 observer integration tests pass;
+- the authoritative bundled-Ant build compiles 844 core and 488 plugin
+  sources; and
+- the server build/classpath audit passes.
+
+Status: implemented and automated-validated. One private owner route remains
+pending.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -17176,6 +17220,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 212 by assigning only proven non-spatial scheduler affinities. | Implemented and automated-validated; shop restock is explicitly world-level non-spatial, player stat restoration is non-spatial while NPC stat restoration retains its owner-position preservation requirement, and arbitrary `PluginTickEvent` execution remains unspecified and blocking. No callback or scheduler behavior changes; four focused guards, the existing affinity/correlation fixtures, the 129-test Slice 182-212 lineage, both observer integrations, and the 844/488 Ant build/audit pass |
 | 2026-07-24 | Accept the Slice 212 narrow non-spatial-affinity route. | Owner-validated; four contiguous schema-v59 records and exact round trips classify all 3,881 callbacks, with the proven 98 shop-restock plus one player stat-restoration callback moving to the 99-event non-spatial count. The blocker set falls from 106 events across three families to seven player-owned `PluginTickEvent` callbacks in one family, with no unattributed callback remaining; all correlation/family identities and counts align, visuals and interaction remained normal, and one accepted 1,312 ms late tick contains 1,201 ms of opt-in diagnostic work |
 | 2026-07-24 | Continue with Slice 213 by detaching per-instance plugin execution context. | Implemented and automated-validated; scheduler snapshots now copy only a bounded plugin entry-point name plus walk-to-binding boolean, ordinary events carry an explicit empty context, and blocker families split by exact execution context without retaining plugin tasks, script data, actions, callbacks, owners, or handles. All plugin callbacks remain hard blockers and no attribution/runtime behavior changes; the 133-test Slice 182-213 lineage and 844/488 Ant build/audit pass, with additive private-schema exposure still pending |
+| 2026-07-24 | Continue with Slice 214 by exposing plugin execution context through the private blocker-family diagnostic. | Implemented and automated-validated; additive schema-v60 preserves the complete v59 event and adds only execution-context completeness plus context kind/name/walk binding to exact blocker families. Schema invariants keep ordinary and plugin contexts explicit, no task/script/action/callback/owner/runtime handle is retained, and every plugin tick remains a hard blocker with no scheduling, attribution, mutation, or lifecycle authority change; the 137-test Slice 182-214 lineage, both observer integrations, and 844/488 Ant build/audit pass. One private owner route remains pending |
 
 ## Next Discussion
 

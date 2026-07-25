@@ -217,8 +217,8 @@ class LayeredMapsSliceTwoHundredSevenTest(unittest.TestCase):
                 source,
             )
         for required in (
-            'EVENT_SCHEMA = "layered-map-parity-event-v59"',
-            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v58"',
+            'EVENT_SCHEMA = "layered-map-parity-event-v60"',
+            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v59"',
             '\\"sourceAuthoredDetachmentSchedulerCorrelation\\":',
             "appendPackedRegionAuthoredDetachmentSchedulerCorrelation(",
             "getSourceAuthoredDetachmentSchedulerCorrelation()",
