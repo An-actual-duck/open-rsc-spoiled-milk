@@ -17337,6 +17337,7 @@ private environment should validate at least:
 | 2026-07-24 | Record the technically valid Slice 214 capture without overlooking the invalid operator instruction. | Four contiguous schema-v60 records and exact round trips validate despite two refused `::lp 132 502` attempts, which emitted no records but were an instruction-quality failure. All 3,881 callbacks reconcile, and the remaining seven one-event families are exactly the seven non-walk-bound `onCommand` plugin wrappers created by `::lp preserve-noop` itself; six were stopped and only `Development.onCommand` was running. This is diagnostic self-observation, not an unexplained world dependency; all authority remains false and one 1,226 ms late tick contains 1,214 ms of opt-in diagnostic work. Owner acceptance is withheld during recalibration |
 | 2026-07-24 | Freeze the proof-only retirement/schema stream and return Phase 5 to coordinate-authority sequencing. | Recalibrated after 214 slices and 60 private schemas: the pre-authority reconstruction/preservation research is complete enough to reuse later, but packed Y remains runtime authority and no creator-testable layered conversion exists. Stop at schema-v60; next propose one coarse, owner-testable private milestone for authoritative `WorldLocation` plus copied-database persistence/session parity, then migrate Region/entity identity and client/protocol before resuming incremental streaming |
 | 2026-07-24 | Approve Phase 5 Authority Milestone A as one coarse implementation body. | Approved for implementation: make Player session location authoritative as `WorldLocation` behind a disabled-by-default private gate, retain derived packed `Point` compatibility, add additive versioned persistence fields and legacy receipts through the existing transactional Player cache, prove unchanged-world session parity, and avoid resuming schema-per-observation work |
+| 2026-07-25 | Accept Phase 5 Authority Milestone A on the private copied-data server. | Owner-validated across initial legacy bootstrap, ordinary walking, a geographically aligned surface/underground ladder round trip, upper-floor translation and NPC interaction, surface return, death/respawn, logout, and two reconnects. Layered and compatibility coordinates remained aligned; visuals, collision, interaction, inventory, and stats remained normal. The final copied-database record contains exactly the nine expected typed fields for global `(120,648,0)`, its legacy receipt is `(120,648)`, the pre-migration backup remains byte-identical, and the public server/database were untouched |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -17424,21 +17425,44 @@ Automated validation status:
   and 14 compatibility guards pass;
 - the authoritative bundled-Ant build compiles 846 core and 488 plugin
   sources and passes the build/classpath audit; and
-- private copied-database and owner session acceptance remain pending.
+- private copied-database inspection confirms exactly the nine expected typed
+  fields and matching legacy receipt after save/reconnect.
 
-Status: implementation and automated foundation complete; private runtime
-acceptance pending. Runtime/public promotion, Region/entity identity migration,
+Private owner acceptance completed on 2026-07-25. The route proved:
+
+- missing-record bootstrap and exact reconnect without a forced rewrite;
+- an actual surface/underground ladder round trip with geographic alignment;
+- packed upper-floor `(320,1491)` projecting to signed `(320,547,1)`, normal
+  movement, and Barmaid interaction;
+- return to `(320,547,0)`, normal death and respawn at `(120,648,0)`, and
+  another exact reconnect;
+- no authority divergence, exception, missing scenery, collision error, or
+  reported visual/gameplay regression; and
+- a final read-only database inspection showing only the nine expected
+  `layerloc_*` records, all mutually consistent with legacy player X/Y.
+
+The private database was copied before migration to
+`myworld_dev.db.pre_layer_authority_20260724-214859`; its SHA-256 remains
+`a0ad45ac0facd65f5b7dbe1de8305e6e3540ddb28881d8d7ec29bcf54027e734`.
+The public server and database were not used or modified.
+
+Status: implemented, automated-validated, and owner-accepted on the private
+copied-data server. Runtime/public promotion, Region/entity identity migration,
 protocol/client authority, level `-2`, streaming, Builder, conversion, and
 export remain separately gated.
 
 ## Next Discussion
 
-The coarse Phase 5 Authority Milestone A is approved and in implementation.
-The next architecture discussion occurs only after its private session and
-persistence parity is accepted: migrate Region, entity, collision, pathing,
-visibility, proximity, and cache identity as one separately approved authority
-body. The historical retirement findings below remain retained reference
-material for the later incremental-streaming milestone.
+The coarse Phase 5 Authority Milestone A is accepted. The recommended next
+coarse gate is **Authority Milestone B: Spatial Runtime Identity**: migrate
+Region, entity, collision, pathing, visibility, proximity, and cache identity
+to the accepted world-space/level-aware location contract while preserving a
+disabled-by-default private rollback boundary. It should be planned and
+approved as one owner-testable capability body, with internal checkpoints,
+rather than split into another diagnostic-schema chain. Protocol/client
+authority and the first synthetic level `-2` world remain later gates. The
+historical retirement findings below remain retained reference material for
+the later incremental-streaming milestone.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those

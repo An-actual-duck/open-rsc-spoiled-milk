@@ -630,6 +630,15 @@ transactional Player cache. This is the rollback-safe unchanged-world bridge;
 it does not claim Region/entity, protocol/client, extra-level, streaming, or
 Builder authority.
 
+Authority Milestone A was owner-accepted on the private copied-data server on
+2026-07-25. Initial bootstrap, exact reconnect, real surface/underground
+travel, upper-floor translation and interaction, surface return, death/respawn,
+and a second reconnect all preserved normal gameplay and aligned layered and
+legacy coordinates. Read-only inspection found exactly the nine expected
+typed persistence fields at final location `(120,648,0)` with a matching
+legacy receipt; the pre-migration backup remained byte-identical and no public
+data was used.
+
 Planning estimates at this checkpoint are approximately `40-45%` for Phase 5
 and `20-25%` for the complete Layered Maps product across Phases 5-7. No
 creator-testable conversion/export workflow exists yet; Phase 6 and Phase 7
@@ -1088,7 +1097,8 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Complete the twelfth Layered Maps foundation checkpoint: a checked read-only layered Player mirror synchronized from packed initial placement, movement, and session transitions, with no gameplay consumer or write-back. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the thirteenth Layered Maps foundation checkpoint: checked world-space/level-qualified Player region membership synchronized from the accepted location mirror without replacing packed RegionManager storage. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the fourteenth Layered Maps foundation checkpoint: checked legacy Player persistence snapshots on load, save, and offline-location updates while retaining the exact packed X/Y schema. | Implemented and owner-validated in the layered-world plan |
-| 2026-07-24 | Approve coarse Phase 5 Authority Milestone A: private-gated authoritative Player `WorldLocation`, derived legacy Point compatibility, additive cache-backed persistence receipts, and unchanged-world session parity. | Approved and in implementation in the layered-world plan |
+| 2026-07-24 | Approve coarse Phase 5 Authority Milestone A: private-gated authoritative Player `WorldLocation`, derived legacy Point compatibility, additive cache-backed persistence receipts, and unchanged-world session parity. | Approved and implemented in the layered-world plan |
+| 2026-07-25 | Accept coarse Phase 5 Authority Milestone A on the private copied-data server. | Owner-validated through bootstrap, surface/underground and upper-floor travel, interaction, death/respawn, logout, and reconnect; layered/legacy coordinates and the exact nine-field persistence record remained aligned, the pre-migration backup remained byte-identical, and public data was untouched |
 | 2026-07-18 | Complete the fifteenth Layered Maps foundation checkpoint: immutable level-qualified visibility windows and read-only manager projection while packed lookup, caches, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the sixteenth Layered Maps foundation checkpoint: a checked Player visibility-window shadow and versioned private diagnostic evidence while packed lookup, caches, and client behavior remain authoritative. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the seventeenth Layered Maps foundation checkpoint: deterministic, allocation-budgeted logical interest-window deltas while packed lookup, caches, packets, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |
