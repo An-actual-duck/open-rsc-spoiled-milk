@@ -16548,6 +16548,53 @@ Status: implemented and automated-validated. The reduction remains internal
 until it is exposed through an additive private schema and validated against
 the accepted 106-blocker route.
 
+### Slice 211: Private scheduler-blocker family diagnostics
+
+Objective: expose Slice 210's bounded family summary only through the existing
+explicit private preservation diagnostic so the remaining blocker
+implementations can be audited from one stable, AI-readable record.
+
+Implemented:
+
+- additive `layered-map-parity-event-v59` extends only
+  `packedRegionNpcOwnerPreservationNoOp` with nullable
+  `sourceSchedulerBlockerFamilyInventory` evidence and preserves schema-v58
+  unchanged;
+- the exact already-captured event inventory is reduced only after Slice 207's
+  detachment-scheduler correlation succeeds inside the same source lifecycle
+  boundary;
+- metadata requires matching generation, observation tick, scheduler identity,
+  source-correlation fingerprint, blocker total, and all four blocker outcome
+  counts before the summary can be written; and
+- JSON retains aggregate and first-observation-ordered family counts, copied
+  type names, scheduler ordinal/registration ranges, timing/run ranges, and one
+  deterministic fingerprint without duplicating callback records.
+
+Safety boundary:
+
+- owner-scope refusal requires the new field to be null, while the expected
+  `SOURCE_LIFECYCLE_UNAVAILABLE` result requires complete family evidence;
+- type identity is diagnostic and cannot alter attribution or blocker status;
+  every unattributed, incomplete, or non-preserved callback remains blocking;
+  and
+- no event, callback, owner, scheduler, class, entity, Region, tile, registry,
+  lifecycle boundary, or runtime handle is serialized or retained; all
+  cancellation, reschedule, preservation, mutation, arrival, visibility, and
+  lifecycle-authority facts remain false.
+
+Automated validation status:
+
+- five focused schema, refusal, runtime-wiring, bounded-JSON, and documentation
+  guards pass;
+- the Slice 182-211 lineage passes 125 tests across 30 focused files;
+- both end-to-end observer integration tests pass against schema-v59;
+- the authoritative bundled-Ant build compiles 844 core and 488 plugin
+  sources; and
+- the server build/classpath audit passes.
+
+Status: implemented and automated-validated. One fresh private owner route
+remains pending after the pushed checkpoint.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -16985,6 +17032,7 @@ private environment should validate at least:
 | 2026-07-24 | Prevent the legacy private-server launchers from silently targeting the public server. | Corrected after discarding the first v58 attempt: the Unix client delegates to the guarded canonical `--dev` target, the Unix server derives its client port from `myworld.conf` and refuses public port 43605, the Windows wrappers and tracked cache use 43615, both shell wrappers pass syntax validation, and four focused launcher guards pass. The public process was not stopped or restarted |
 | 2026-07-24 | Continue with Slice 209 by attaching detached implementation/family identity to each scheduler snapshot entry. | Implemented and automated-validated; bounded runtime, logical-family, and direct-supertype names plus anonymous/local/synthetic flags cross the existing snapshot boundary as primitives, legacy fixtures remain explicitly unknown, no `Class` or runtime handle survives, attribution and authority remain unchanged, the Slice 182-209 lineage passes 117 tests, and the 843/488 Ant build/audit passes. Identity remains internal pending a bounded blocker-family reduction |
 | 2026-07-24 | Continue with Slice 210 by reducing the exact scheduler blockers to stable technical families. | Implemented and automated-validated; generation, scheduler, ordinal, registration, attribution, restoration, owner, and detached implementation identity must align before reduction; exact first-observation-ordered families retain bounded counts, timing/run ranges, and one deterministic fingerprint without callbacks or handles; incomplete blocker details, uncaptured types, arithmetic drift, and family-budget overflow refuse; attribution and authority remain unchanged; the Slice 182-210 lineage passes 120 tests, and the 844/488 Ant build/audit passes. The summary remains internal pending additive private-schema exposure |
+| 2026-07-24 | Continue with Slice 211 by exposing the bounded blocker-family summary through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v59 changes only the preservation no-op, requires exact generation/tick/scheduler/correlation/blocker-count alignment, serializes first-observation-ordered technical families without callback payloads or handles, preserves schema-v58, keeps attribution and every authority false, passes five focused guards, the 125-test Slice 182-211 lineage, both observer integration tests, and the 844/488 Ant build/audit. One fresh private owner route remains pending |
 
 ## Next Discussion
 

@@ -26,7 +26,7 @@ CONFIG_SOURCE = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 COMMAND_SOURCE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 LOCAL_CONFIG = ROOT / "server/myworld.conf"
 HOST_CONFIG = ROOT / "server/myworld-host.conf"
-SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v58.schema.json"
+SCHEMA = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v59.schema.json"
 SCHEMA_V11 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v11.schema.json"
 SCHEMA_V12 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v12.schema.json"
 SCHEMA_V13 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v13.schema.json"
@@ -71,6 +71,7 @@ SCHEMA_V54 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v54.sche
 SCHEMA_V55 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v55.schema.json"
 SCHEMA_V56 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v56.schema.json"
 SCHEMA_V57 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v57.schema.json"
+SCHEMA_V58 = ROOT / "tools/layered-maps/schema/layered-map-parity-event-v58.schema.json"
 
 
 POINT_STUB = r'''
@@ -899,6 +900,85 @@ public final class
         public int getNonNpcOwnerEventCount() { return 0; }
         public int getExactRestorationIncompleteEventCount() { return 0; }
         public int getBlockerEventReferenceCount() { return 0; }
+    }
+}
+'''
+
+SCHEDULER_BLOCKER_FAMILY_INVENTORY_STUB = r'''
+package com.openrsc.server.model.world.region;
+
+import java.util.Collections;
+import java.util.List;
+
+public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
+    public long getGeneration() { return 0L; }
+    public long getEventObservedAtTick() { return 0L; }
+    public String getSchedulerInstanceIdentity() { return ""; }
+    public String getSourceCorrelationFingerprintSha256() { return ""; }
+    public String getFingerprintSha256() { return ""; }
+    public int getFamilyCount() { return 0; }
+    public int getBlockerEventCount() { return 0; }
+    public int getCandidateNpcOwnerUncorrelatedEventCount() { return 0; }
+    public int getCandidateNonNpcOwnerEventCount() { return 0; }
+    public int getCandidateExactRestorationIncompleteEventCount() {
+        return 0;
+    }
+    public int getUnattributedEventCount() { return 0; }
+    public int getRunningEventCount() { return 0; }
+    public int getCandidateRelatedEventCount() { return 0; }
+    public int getSelectedSourceReferenceCount() { return 0; }
+    public boolean isEventTypeIdentityComplete() { return true; }
+    public boolean isPointInTimeOnly() { return true; }
+    public boolean isDetachedSummaryOnly() { return true; }
+    public boolean isAttributionChanged() { return false; }
+    public boolean isRuntimeHandleRetained() { return false; }
+    public boolean isEventCancellation() { return false; }
+    public boolean isEventReschedule() { return false; }
+    public boolean isPreservationPerformed() { return false; }
+    public boolean isSourceAbsencePerformed() { return false; }
+    public boolean isSourceReconstructionPerformed() { return false; }
+    public boolean isRuntimeMutationAuthorized() { return false; }
+    public boolean isRuntimeMutationPerformed() { return false; }
+    public boolean isArrivalGate() { return false; }
+    public boolean isVisibilityReleased() { return false; }
+    public boolean isLifecycleAuthority() { return false; }
+    public List<BlockerFamily> getFamilies() {
+        return Collections.emptyList();
+    }
+
+    public enum Outcome { UNATTRIBUTED_BLOCKER }
+    public enum OwnerKind { NONE }
+    public enum AttributionKind { UNATTRIBUTED }
+    public enum RestorationKind { UNAVAILABLE }
+
+    public static final class BlockerFamily {
+        public int getFamilyOrdinal() { return 0; }
+        public Outcome getOutcome() { return Outcome.UNATTRIBUTED_BLOCKER; }
+        public String getRuntimeTypeName() { return ""; }
+        public String getFamilyTypeName() { return ""; }
+        public String getDirectSupertypeName() { return ""; }
+        public boolean isAnonymousType() { return false; }
+        public boolean isLocalType() { return false; }
+        public boolean isSyntheticType() { return false; }
+        public OwnerKind getOwnerKind() { return OwnerKind.NONE; }
+        public AttributionKind getAttributionKind() {
+            return AttributionKind.UNATTRIBUTED;
+        }
+        public RestorationKind getRestorationKind() {
+            return RestorationKind.UNAVAILABLE;
+        }
+        public int getEventCount() { return 0; }
+        public int getRunningEventCount() { return 0; }
+        public int getCandidateRelatedEventCount() { return 0; }
+        public int getSelectedSourceReferenceCount() { return 0; }
+        public int getFirstSnapshotOrdinal() { return 0; }
+        public int getLastSnapshotOrdinal() { return 0; }
+        public long getFirstRegistrationSequence() { return 0L; }
+        public long getLastRegistrationSequence() { return 0L; }
+        public long getMinimumTicksBeforeRun() { return 0L; }
+        public long getMaximumTicksBeforeRun() { return 0L; }
+        public int getMinimumTimesRan() { return 0; }
+        public int getMaximumTimesRan() { return 0; }
     }
 }
 '''
@@ -1955,6 +2035,9 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             "com/openrsc/server/model/world/region/"
             "LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation.java":
                 AUTHORED_DETACHMENT_SCHEDULER_CORRELATION_STUB,
+            "com/openrsc/server/model/world/region/"
+            "LayeredPackedRegionSchedulerBlockerFamilyInventory.java":
+                SCHEDULER_BLOCKER_FAMILY_INVENTORY_STUB,
             "com/openrsc/server/diagnostics/LayeredCoordinateParityObserverFixture.java":
                 OBSERVER_FIXTURE,
         }
@@ -2026,7 +2109,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
             self.assertEqual(-2, events[2]["delta"]["level"])
             self.assertEqual(-1, events[2]["to"]["layered"]["level"])
             self.assertEqual({"x": 2, "y": 0}, events[2]["to"]["region"])
-            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v58" for event in events))
+            self.assertTrue(all(event["schema"] == "layered-map-parity-event-v59" for event in events))
             self.assertTrue(all(
                 event["packedRegionPreservationBurden"] is None
                 for event in events
@@ -3247,6 +3330,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                 v55 = json.loads(SCHEMA_V55.read_text(encoding="utf-8"))
                 v56 = json.loads(SCHEMA_V56.read_text(encoding="utf-8"))
                 v57 = json.loads(SCHEMA_V57.read_text(encoding="utf-8"))
+                v58 = json.loads(SCHEMA_V58.read_text(encoding="utf-8"))
                 registry = Registry().with_resources([
                     (v11["$id"], Resource.from_contents(v11)),
                     (v12["$id"], Resource.from_contents(v12)),
@@ -3292,6 +3376,7 @@ class LayeredMapsSliceElevenTest(unittest.TestCase):
                     (v55["$id"], Resource.from_contents(v55)),
                     (v56["$id"], Resource.from_contents(v56)),
                     (v57["$id"], Resource.from_contents(v57)),
+                    (v58["$id"], Resource.from_contents(v58)),
                 ])
                 validator = jsonschema.Draft202012Validator(
                     schema, registry=registry

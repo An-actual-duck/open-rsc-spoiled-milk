@@ -55,6 +55,7 @@ import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredObjectDe
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredSourceStateVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
+import com.openrsc.server.model.world.region.LayeredPackedRegionSchedulerBlockerFamilyInventory;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceLifecycleBoundary;
 import com.openrsc.server.model.world.region.LayeredPackedRegionTerrainVerificationBatch;
@@ -597,6 +598,9 @@ public class GameEventHandler {
 				authoredDetachmentSchedulerCorrelation =
 					new
 						LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation[1];
+		final LayeredPackedRegionSchedulerBlockerFamilyInventory[]
+			schedulerBlockerFamilyInventory =
+				new LayeredPackedRegionSchedulerBlockerFamilyInventory[1];
 		boolean sourceBoundaryEntered =
 			getServer().getWorld().getRegionManager()
 				.withinLayeredPackedRegionSourceLifecycleBoundary(
@@ -678,6 +682,13 @@ public class GameEventHandler {
 									checkedInventory, checked,
 									LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation
 										.MAXIMUM_RETAINED_EVENTS);
+						schedulerBlockerFamilyInventory[0] =
+							LayeredPackedRegionSchedulerBlockerFamilyInventory
+								.reduce(
+									authoredDetachmentSchedulerCorrelation[0],
+									checkedInventory,
+									LayeredPackedRegionSchedulerBlockerFamilyInventory
+										.MAXIMUM_FAMILIES);
 						captured[0] =
 							GameTickEventNpcOwnerPreservationNoOpDiagnostic
 								.capture(
@@ -714,7 +725,8 @@ public class GameEventHandler {
 			runtimeAuthoredObjectObservation[0],
 			runtimeAuthoredObjectBaselineComparison[0],
 			authoredObjectDetachmentVerification[0],
-			authoredDetachmentSchedulerCorrelation[0]);
+			authoredDetachmentSchedulerCorrelation[0],
+			schedulerBlockerFamilyInventory[0]);
 	}
 
 	private void requireExactPackedSourceBoundary(

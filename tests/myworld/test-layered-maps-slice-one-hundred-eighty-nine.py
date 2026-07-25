@@ -238,8 +238,8 @@ class LayeredMapsSliceOneHundredEightyNineTest(unittest.TestCase):
             boundary.index("captured[0] ="),
         )
         for required in (
-            'EVENT_SCHEMA = "layered-map-parity-event-v58"',
-            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v57"',
+            'EVENT_SCHEMA = "layered-map-parity-event-v59"',
+            'PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v58"',
             '\\"sourceAuthoredCollisionVerification\\":',
             "appendPackedRegionAuthoredCollisionVerificationBatch(",
             "getSourceAuthoredCollisionVerification()",

@@ -40,6 +40,7 @@ import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredDetachme
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredObjectDetachmentVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionAuthoredSourceStateVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionReloadRecipe;
+import com.openrsc.server.model.world.region.LayeredPackedRegionSchedulerBlockerFamilyInventory;
 import com.openrsc.server.model.world.region.LayeredPackedRegionSourceAbsencePreflight;
 import com.openrsc.server.model.world.region.LayeredPackedRegionTerrainVerificationBatch;
 import com.openrsc.server.model.world.region.LayeredPackedRegionTransactionalAuthoredSourceVerificationBatch;
@@ -69,8 +70,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Opt-in, non-authoritative JSONL observer for private layered-coordinate parity tests. */
 public final class LayeredCoordinateParityObserver {
-	public static final String EVENT_SCHEMA = "layered-map-parity-event-v58";
-	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v57";
+	public static final String EVENT_SCHEMA = "layered-map-parity-event-v59";
+	public static final String PREVIOUS_EVENT_SCHEMA = "layered-map-parity-event-v58";
 	public static final String LOG_ROOT_PROPERTY = "openrsc.layeredParityLogRoot";
 	private static final int MAX_TRACE_PACKED_CELLS = 4096;
 	private static final int MAX_TRACE_REGIONS_PER_WINDOW = 4096;
@@ -4749,6 +4750,15 @@ public final class LayeredCoordinateParityObserver {
 					.getSourceAuthoredDetachmentSchedulerCorrelation());
 		}
 		out.append(',');
+		out.append("\"sourceSchedulerBlockerFamilyInventory\":");
+		if (diagnostic
+				.getSourceSchedulerBlockerFamilyInventory() == null) {
+			out.append("null");
+		} else {
+			appendPackedRegionSchedulerBlockerFamilyInventory(
+				out, diagnostic.getSourceSchedulerBlockerFamilyInventory());
+		}
+		out.append(',');
 		out.append("\"preservationEstablishedForConsumedWork\":false,");
 		out.append("\"preservationPerformed\":false,");
 		out.append("\"sourceAbsencePerformed\":false,");
@@ -6546,6 +6556,128 @@ public final class LayeredCoordinateParityObserver {
 		out.append("]}");
 	}
 
+	private static void appendPackedRegionSchedulerBlockerFamilyInventory(
+		final StringBuilder out,
+		final LayeredPackedRegionSchedulerBlockerFamilyInventory inventory) {
+		out.append('{');
+		out.append("\"generation\":")
+			.append(inventory.getGeneration()).append(',');
+		out.append("\"eventObservedAtTick\":")
+			.append(inventory.getEventObservedAtTick()).append(',');
+		field(out, "schedulerInstanceIdentity",
+			inventory.getSchedulerInstanceIdentity()).append(',');
+		field(out, "sourceCorrelationFingerprintSha256",
+			inventory.getSourceCorrelationFingerprintSha256()).append(',');
+		field(out, "fingerprintSha256",
+			inventory.getFingerprintSha256()).append(',');
+		out.append("\"familyCount\":")
+			.append(inventory.getFamilyCount()).append(',');
+		out.append("\"blockerEventCount\":")
+			.append(inventory.getBlockerEventCount()).append(',');
+		out.append("\"candidateNpcOwnerUncorrelatedEventCount\":")
+			.append(inventory
+				.getCandidateNpcOwnerUncorrelatedEventCount()).append(',');
+		out.append("\"candidateNonNpcOwnerEventCount\":")
+			.append(inventory.getCandidateNonNpcOwnerEventCount())
+			.append(',');
+		out.append("\"candidateExactRestorationIncompleteEventCount\":")
+			.append(inventory
+				.getCandidateExactRestorationIncompleteEventCount())
+			.append(',');
+		out.append("\"unattributedEventCount\":")
+			.append(inventory.getUnattributedEventCount()).append(',');
+		out.append("\"runningEventCount\":")
+			.append(inventory.getRunningEventCount()).append(',');
+		out.append("\"candidateRelatedEventCount\":")
+			.append(inventory.getCandidateRelatedEventCount()).append(',');
+		out.append("\"selectedSourceReferenceCount\":")
+			.append(inventory.getSelectedSourceReferenceCount()).append(',');
+		out.append("\"eventTypeIdentityComplete\":")
+			.append(inventory.isEventTypeIdentityComplete()).append(',');
+		out.append("\"pointInTimeOnly\":")
+			.append(inventory.isPointInTimeOnly()).append(',');
+		out.append("\"detachedSummaryOnly\":")
+			.append(inventory.isDetachedSummaryOnly()).append(',');
+		out.append("\"attributionChanged\":")
+			.append(inventory.isAttributionChanged()).append(',');
+		out.append("\"runtimeHandleRetained\":")
+			.append(inventory.isRuntimeHandleRetained()).append(',');
+		out.append("\"eventCancellation\":")
+			.append(inventory.isEventCancellation()).append(',');
+		out.append("\"eventReschedule\":")
+			.append(inventory.isEventReschedule()).append(',');
+		out.append("\"preservationPerformed\":")
+			.append(inventory.isPreservationPerformed()).append(',');
+		out.append("\"sourceAbsencePerformed\":")
+			.append(inventory.isSourceAbsencePerformed()).append(',');
+		out.append("\"sourceReconstructionPerformed\":")
+			.append(inventory.isSourceReconstructionPerformed()).append(',');
+		out.append("\"runtimeMutationAuthorized\":")
+			.append(inventory.isRuntimeMutationAuthorized()).append(',');
+		out.append("\"runtimeMutationPerformed\":")
+			.append(inventory.isRuntimeMutationPerformed()).append(',');
+		out.append("\"arrivalGate\":")
+			.append(inventory.isArrivalGate()).append(',');
+		out.append("\"visibilityReleased\":")
+			.append(inventory.isVisibilityReleased()).append(',');
+		out.append("\"lifecycleAuthority\":")
+			.append(inventory.isLifecycleAuthority()).append(',');
+		out.append("\"families\":[");
+		boolean first = true;
+		for (LayeredPackedRegionSchedulerBlockerFamilyInventory.BlockerFamily
+				family : inventory.getFamilies()) {
+			if (!first) { out.append(','); }
+			first = false;
+			out.append('{');
+			out.append("\"familyOrdinal\":")
+				.append(family.getFamilyOrdinal()).append(',');
+			field(out, "outcome", family.getOutcome().name()).append(',');
+			field(out, "runtimeTypeName", family.getRuntimeTypeName())
+				.append(',');
+			field(out, "familyTypeName", family.getFamilyTypeName())
+				.append(',');
+			field(out, "directSupertypeName",
+				family.getDirectSupertypeName()).append(',');
+			out.append("\"anonymousType\":")
+				.append(family.isAnonymousType()).append(',');
+			out.append("\"localType\":")
+				.append(family.isLocalType()).append(',');
+			out.append("\"syntheticType\":")
+				.append(family.isSyntheticType()).append(',');
+			field(out, "ownerKind", family.getOwnerKind().name()).append(',');
+			field(out, "attributionKind",
+				family.getAttributionKind().name()).append(',');
+			field(out, "restorationKind",
+				family.getRestorationKind().name()).append(',');
+			out.append("\"eventCount\":")
+				.append(family.getEventCount()).append(',');
+			out.append("\"runningEventCount\":")
+				.append(family.getRunningEventCount()).append(',');
+			out.append("\"candidateRelatedEventCount\":")
+				.append(family.getCandidateRelatedEventCount()).append(',');
+			out.append("\"selectedSourceReferenceCount\":")
+				.append(family.getSelectedSourceReferenceCount()).append(',');
+			out.append("\"firstSnapshotOrdinal\":")
+				.append(family.getFirstSnapshotOrdinal()).append(',');
+			out.append("\"lastSnapshotOrdinal\":")
+				.append(family.getLastSnapshotOrdinal()).append(',');
+			out.append("\"firstRegistrationSequence\":")
+				.append(family.getFirstRegistrationSequence()).append(',');
+			out.append("\"lastRegistrationSequence\":")
+				.append(family.getLastRegistrationSequence()).append(',');
+			out.append("\"minimumTicksBeforeRun\":")
+				.append(family.getMinimumTicksBeforeRun()).append(',');
+			out.append("\"maximumTicksBeforeRun\":")
+				.append(family.getMaximumTicksBeforeRun()).append(',');
+			out.append("\"minimumTimesRan\":")
+				.append(family.getMinimumTimesRan()).append(',');
+			out.append("\"maximumTimesRan\":")
+				.append(family.getMaximumTimesRan());
+			out.append('}');
+		}
+		out.append("]}");
+	}
+
 	private static void appendPackedRegionEventTargets(
 		final StringBuilder out,
 		final LayeredPackedRegionEventTargetObservation observation) {
@@ -8059,6 +8191,8 @@ public final class LayeredCoordinateParityObserver {
 		private final
 			LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation
 				sourceAuthoredDetachmentSchedulerCorrelation;
+		private final LayeredPackedRegionSchedulerBlockerFamilyInventory
+			sourceSchedulerBlockerFamilyInventory;
 
 		private PackedRegionNpcOwnerPreservationNoOpMetadata(
 			final String reason,
@@ -8097,7 +8231,9 @@ public final class LayeredCoordinateParityObserver {
 					sourceAuthoredObjectDetachmentVerification,
 			final
 				LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation
-					sourceAuthoredDetachmentSchedulerCorrelation) {
+					sourceAuthoredDetachmentSchedulerCorrelation,
+			final LayeredPackedRegionSchedulerBlockerFamilyInventory
+				sourceSchedulerBlockerFamilyInventory) {
 			this.reason = Objects.requireNonNull(reason, "reason");
 			this.generation = generation;
 			this.requirementsObservedAtTick = requirementsObservedAtTick;
@@ -8128,6 +8264,8 @@ public final class LayeredCoordinateParityObserver {
 				sourceAuthoredObjectDetachmentVerification;
 			this.sourceAuthoredDetachmentSchedulerCorrelation =
 				sourceAuthoredDetachmentSchedulerCorrelation;
+			this.sourceSchedulerBlockerFamilyInventory =
+				sourceSchedulerBlockerFamilyInventory;
 			if ((!"OWNER_SCOPE_REFUSED".equals(reason)
 					&& !"SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason))
 				|| generation < 0L || requirementsObservedAtTick < 0L
@@ -8152,7 +8290,8 @@ public final class LayeredCoordinateParityObserver {
 						|| sourceAuthoredObjectDetachmentVerification
 							!= null
 						|| sourceAuthoredDetachmentSchedulerCorrelation
-							!= null))
+							!= null
+						|| sourceSchedulerBlockerFamilyInventory != null))
 				|| ("SOURCE_LIFECYCLE_UNAVAILABLE".equals(reason)
 					&& (!ownerScopeEntered
 						|| sourceAbsencePreflight == null
@@ -8170,7 +8309,8 @@ public final class LayeredCoordinateParityObserver {
 						|| sourceAuthoredObjectDetachmentVerification
 							== null
 						|| sourceAuthoredDetachmentSchedulerCorrelation
-							== null))
+							== null
+						|| sourceSchedulerBlockerFamilyInventory == null))
 				|| (sourceAbsencePreflight != null
 					&& (sourceAbsencePreflight.getGeneration() != generation
 						|| sourceAbsencePreflight
@@ -8964,7 +9104,72 @@ public final class LayeredCoordinateParityObserver {
 								.isLifecycleAuthority()
 							|| !authoredDetachmentSchedulerSourcesMatch(
 								sourceAuthoredObjectDetachmentVerification,
-								sourceAuthoredDetachmentSchedulerCorrelation)))) {
+								sourceAuthoredDetachmentSchedulerCorrelation)))
+					|| (sourceSchedulerBlockerFamilyInventory != null
+						&& (sourceAuthoredDetachmentSchedulerCorrelation == null
+							|| sourceSchedulerBlockerFamilyInventory
+								.getGeneration() != generation
+							|| sourceSchedulerBlockerFamilyInventory
+								.getEventObservedAtTick()
+									!= requirementsObservedAtTick
+							|| !sourceSchedulerBlockerFamilyInventory
+								.getSchedulerInstanceIdentity().equals(
+									sourceAuthoredDetachmentSchedulerCorrelation
+										.getSchedulerInstanceIdentity())
+							|| !sourceSchedulerBlockerFamilyInventory
+								.getSourceCorrelationFingerprintSha256().equals(
+									sourceAuthoredDetachmentSchedulerCorrelation
+										.getFingerprintSha256())
+							|| sourceSchedulerBlockerFamilyInventory
+								.getBlockerEventCount()
+									!= sourceAuthoredDetachmentSchedulerCorrelation
+										.getBlockerEventCount()
+							|| sourceSchedulerBlockerFamilyInventory
+								.getCandidateNpcOwnerUncorrelatedEventCount()
+									!= sourceAuthoredDetachmentSchedulerCorrelation
+										.getCandidateNpcOwnerUncorrelatedEventCount()
+							|| sourceSchedulerBlockerFamilyInventory
+								.getCandidateNonNpcOwnerEventCount()
+									!= sourceAuthoredDetachmentSchedulerCorrelation
+										.getCandidateNonNpcOwnerEventCount()
+							|| sourceSchedulerBlockerFamilyInventory
+								.getCandidateExactRestorationIncompleteEventCount()
+									!= sourceAuthoredDetachmentSchedulerCorrelation
+										.getCandidateExactRestorationIncompleteEventCount()
+							|| sourceSchedulerBlockerFamilyInventory
+								.getUnattributedEventCount()
+									!= sourceAuthoredDetachmentSchedulerCorrelation
+										.getUnattributedEventCount()
+							|| !sourceSchedulerBlockerFamilyInventory
+								.isEventTypeIdentityComplete()
+							|| !sourceSchedulerBlockerFamilyInventory
+								.isPointInTimeOnly()
+							|| !sourceSchedulerBlockerFamilyInventory
+								.isDetachedSummaryOnly()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isAttributionChanged()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isRuntimeHandleRetained()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isEventCancellation()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isEventReschedule()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isPreservationPerformed()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isSourceAbsencePerformed()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isSourceReconstructionPerformed()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isRuntimeMutationAuthorized()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isRuntimeMutationPerformed()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isArrivalGate()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isVisibilityReleased()
+							|| sourceSchedulerBlockerFamilyInventory
+								.isLifecycleAuthority()))) {
 				throw new IllegalArgumentException(
 					"NPC owner preservation no-op metadata is inconsistent");
 			}
@@ -9007,7 +9212,9 @@ public final class LayeredCoordinateParityObserver {
 					sourceAuthoredObjectDetachmentVerification,
 			final
 				LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation
-					sourceAuthoredDetachmentSchedulerCorrelation) {
+					sourceAuthoredDetachmentSchedulerCorrelation,
+			final LayeredPackedRegionSchedulerBlockerFamilyInventory
+				sourceSchedulerBlockerFamilyInventory) {
 			return new PackedRegionNpcOwnerPreservationNoOpMetadata(
 				reason, generation, requirementsObservedAtTick,
 				selectedSourceCount, requiredEventLinkCount,
@@ -9023,7 +9230,8 @@ public final class LayeredCoordinateParityObserver {
 				sourceRuntimeAuthoredObjectObservation,
 				sourceRuntimeAuthoredObjectBaselineComparison,
 				sourceAuthoredObjectDetachmentVerification,
-				sourceAuthoredDetachmentSchedulerCorrelation);
+				sourceAuthoredDetachmentSchedulerCorrelation,
+				sourceSchedulerBlockerFamilyInventory);
 		}
 
 		private static boolean collisionSourcesMatch(
@@ -9469,6 +9677,10 @@ public final class LayeredCoordinateParityObserver {
 			LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation
 				getSourceAuthoredDetachmentSchedulerCorrelation() {
 			return sourceAuthoredDetachmentSchedulerCorrelation;
+		}
+		public LayeredPackedRegionSchedulerBlockerFamilyInventory
+			getSourceSchedulerBlockerFamilyInventory() {
+			return sourceSchedulerBlockerFamilyInventory;
 		}
 	}
 

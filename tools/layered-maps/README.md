@@ -185,7 +185,7 @@ username hash under `server/logs/layered-map-parity/`. They contain packed and
 layered positions, world space, level, logical region and terrain-sector keys,
 local sector coordinates, transition deltas, and round-trip status. They do
 not contain username text, IP addresses, credentials, or tile payloads. New
-traces emit `schema/layered-map-parity-event-v58.schema.json`. Each v58 record
+traces emit `schema/layered-map-parity-event-v59.schema.json`. Each v59 record
 retains the complete v38 position, logical-window, interest-delta,
 packed-coverage,
 logical 48×48 snapshot, current-tile parity, and 3×3 neighborhood evidence.
@@ -307,6 +307,15 @@ not a second copy of callback details. Correlation is point-in-time and
 non-executable: no scheduler boundary, event cancellation/reschedule,
 preservation, source mutation, arrival, visibility, or lifecycle authority is
 enabled.
+V59 adds nullable `sourceSchedulerBlockerFamilyInventory` evidence only to
+that explicit private action. It groups the exact V58 blocker set by stable
+runtime/family/direct-supertype identity, owner kind, attribution,
+restoration kind, and blocker outcome. Each first-observation-ordered family
+retains bounded event/reference counts, scheduler ordinal and registration
+ranges, timing/run ranges, and a deterministic fingerprint. Type identity does
+not reclassify an event: unattributed and incomplete callbacks remain
+blockers, and cancellation, rescheduling, preservation, runtime mutation,
+arrival, visibility, and lifecycle authority remain false.
 The owner correlation accompanies proposal-scoped event
 inventories; only the explicit `::layerparity recover-noop` action may populate
 the separate recovery result, while ordinary movement, snapshots, and markers
@@ -319,8 +328,9 @@ restoration-capable event: outer-fence outcome, lifecycle-version stability,
 exact Region-boundary
 target facts, target decision, and dormant contract result. These facts are
 read-only and point-in-time; all mutation, commit-token, executable-restoration,
-arrival-gate, and lifecycle-authority flags remain false. The v1-v57 schemas
+arrival-gate, and lifecycle-authority flags remain false. The v1-v58 schemas
 remain alongside it—including
+`schema/layered-map-parity-event-v58.schema.json`,
 `schema/layered-map-parity-event-v57.schema.json`,
 `schema/layered-map-parity-event-v56.schema.json`,
 `schema/layered-map-parity-event-v51.schema.json`,
