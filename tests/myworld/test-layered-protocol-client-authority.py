@@ -182,7 +182,7 @@ public final class LayeredProtocolClientAuthorityFixture {
             int level, int sectorX, int sectorY, int elevation) {
         return new NativeLayeredTerrainSnapshot(
             "rsc-remastered.native-loader-lab",
-            "0.1.0",
+            "0.2.0",
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             24,
             "global",

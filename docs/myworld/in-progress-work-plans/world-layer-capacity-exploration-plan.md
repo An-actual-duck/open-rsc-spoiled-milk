@@ -26,8 +26,9 @@ Milestone E runtime checkpoints 3 and 4 now put package-owned terrain on both
 server and client behind a fifth private gate, with protocol-v3 page identity
 and gate-off rollback. That first native runtime cut is owner-accepted. The
 bounded compatibility receipt and process-local test placements still exist;
-full-fidelity terrain, placements, and smaller incremental presentation remain
-the current implementation boundary.
+full-fidelity server/package terrain is now automated-validated, while
+full-fidelity client delivery, package placements, and smaller incremental
+presentation remain the current implementation boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -245,8 +246,38 @@ The in-game status originally placed page/chunk after long package fields, so
 the owner could not see that suffix in the game chat. The complete client log
 proves both values; the status is now split into a short identity line with
 page/chunk first and a second logical/receipt/bounds line. No repeat is needed.
-Continue with a full-fidelity non-uniform sector encoding and package-owned
-placement source before claiming Milestone E complete.
+### Authority Milestone E format checkpoint 5
+
+Implemented and automated-validated on 2026-07-25:
+
+- `rle-layered-sector-v1` is the definitive full-fidelity v1 terrain payload.
+  Positive runs expand to exactly 2,304 tiles in explicit
+  `x-major-y-minor` order, and 2,304 one-tile runs can represent a page with no
+  repeated neighbors;
+- the standalone package preflight and detached server source independently
+  enforce exact fields, size/order constants, positive bounded runs, exact
+  expansion count, all six unsigned-byte terrain fields, and the unsigned
+  32-bit diagonal-wall field;
+- the level `-2` page `(9,12)` fixture now contains five RLE bands. Automated
+  lookup proves distinct terrain inside one page, all seven scalar values,
+  exact unsigned diagonal bits, and a complete detached `48 * 48 * 10`
+  compatibility copy. The changed fixture is explicitly versioned `0.2.0`;
+- adjacent page `(10,12)` and expandable level `-3` deliberately retain the
+  uniform laboratory encoding, proving one package can dispatch supported
+  encodings per payload;
+- changed hashes, malformed tile values, underfill, and overfill refuse before
+  terrain is exposed. The server has a separate malformed-RLE refusal test;
+  and
+- the active room remains passable because its RLE bands carry zero overlay
+  and wall values. The high-value seven-field fidelity band sits immediately
+  outside the bounded room and is automated-only.
+
+The focused package and server suites pass. This checkpoint does not change
+the currently running private process: protocol v3 still carries one uniform
+page value, so restarting it against the new RLE fixture before matched client
+transport would misrepresent the page. The next implementation cut is
+full-fidelity chunk delivery and atomic client readiness, followed by
+package-owned placements; Milestone E is not complete.
 
 The first login attempt exposed and rejected one selector defect before any
 deep-room acceptance: with the fifth gate enabled,

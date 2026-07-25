@@ -36,6 +36,8 @@ public final class NativeLayeredWorldPackage {
 	public static final String PACKAGE_TYPE = "layered-world";
 	public static final String COORDINATE_MODEL = "signed-layered-v1";
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
+	public static final String RLE_ENCODING = "rle-layered-sector-v1";
+	public static final String RLE_TILE_ORDER = "x-major-y-minor";
 	public static final String RUNTIME_PROJECTION_ID =
 		"native-layered-package-v1";
 
@@ -239,7 +241,8 @@ public final class NativeLayeredWorldPackage {
 				throw new IOException("Duplicate terrain sector identity: " + identity);
 			}
 			String encoding = matchedString(value, "encoding", ID);
-			if (!UNIFORM_ENCODING.equals(encoding)) {
+			if (!UNIFORM_ENCODING.equals(encoding)
+				&& !RLE_ENCODING.equals(encoding)) {
 				throw new IOException(
 					"Terrain payload encoding is unsupported by this loader: " + encoding);
 			}
@@ -254,15 +257,23 @@ public final class NativeLayeredWorldPackage {
 				throw new IOException(
 					"Terrain payload hash differs from manifest: " + relativePath);
 			}
-			NativeLayeredTerrainTile tile = readUniformTile(payloadPath);
-			result.put(
-				identity,
-				NativeLayeredTerrainSector.uniform(
+			NativeLayeredTerrainSector sector;
+			if (UNIFORM_ENCODING.equals(encoding)) {
+				sector = NativeLayeredTerrainSector.uniform(
 					identity,
-					tile,
+					readUniformTile(payloadPath),
 					encoding,
 					relativePath,
-					expectedSha256));
+					expectedSha256);
+			} else {
+				sector = NativeLayeredTerrainSector.ofTiles(
+					identity,
+					readRleTiles(payloadPath),
+					encoding,
+					relativePath,
+					expectedSha256);
+			}
+			result.put(identity, sector);
 		}
 		return result;
 	}
@@ -274,10 +285,60 @@ public final class NativeLayeredWorldPackage {
 		requireInt(document, "schemaVersion", 1);
 		requireString(document, "encoding", UNIFORM_ENCODING);
 		requireInt(document, "size", NativeLayeredTerrainSector.SIZE);
-		JSONObject tile = object(document, "tile");
+		return readTerrainTile(object(document, "tile"), "uniform sector tile");
+	}
+
+	private static NativeLayeredTerrainTile[] readRleTiles(Path path)
+		throws IOException {
+		JSONObject document = readObject(path);
+		exactKeys(
+			document,
+			"RLE sector",
+			"schemaVersion",
+			"encoding",
+			"size",
+			"tileOrder",
+			"runs");
+		requireInt(document, "schemaVersion", 1);
+		requireString(document, "encoding", RLE_ENCODING);
+		requireInt(document, "size", NativeLayeredTerrainSector.SIZE);
+		requireString(document, "tileOrder", RLE_TILE_ORDER);
+		JSONArray runs = array(document, "runs");
+		if (runs.length() < 1 || runs.length() > NativeLayeredTerrainSector.TILE_COUNT) {
+			throw new IOException(
+				"RLE sector runs count must be 1.."
+					+ NativeLayeredTerrainSector.TILE_COUNT);
+		}
+
+		NativeLayeredTerrainTile[] tiles =
+			new NativeLayeredTerrainTile[NativeLayeredTerrainSector.TILE_COUNT];
+		int expanded = 0;
+		for (int index = 0; index < runs.length(); index++) {
+			JSONObject run = object(runs, index, "runs");
+			exactKeys(run, "runs[" + index + "]", "count", "tile");
+			int count = signedInt(run, "count");
+			if (count <= 0 || count > tiles.length - expanded) {
+				throw new IOException(
+					"runs[" + index + "].count exceeds the remaining sector capacity");
+			}
+			NativeLayeredTerrainTile tile =
+				readTerrainTile(object(run, "tile"), "runs[" + index + "].tile");
+			Arrays.fill(tiles, expanded, expanded + count, tile);
+			expanded += count;
+		}
+		if (expanded != tiles.length) {
+			throw new IOException(
+				"RLE sector runs must expand to exactly " + tiles.length
+					+ " tiles but expanded to " + expanded);
+		}
+		return tiles;
+	}
+
+	private static NativeLayeredTerrainTile readTerrainTile(
+		JSONObject tile, String label) throws IOException {
 		exactKeys(
 			tile,
-			"uniform sector tile",
+			label,
 			"elevation",
 			"texture",
 			"overlay",

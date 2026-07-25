@@ -47,6 +47,16 @@ public final class NativeLayeredTerrainSector {
 			identity, tiles, sourceEncoding, sourcePath, sourceSha256);
 	}
 
+	static NativeLayeredTerrainSector ofTiles(
+		WorldMapSectorId identity,
+		NativeLayeredTerrainTile[] tiles,
+		String sourceEncoding,
+		String sourcePath,
+		String sourceSha256) {
+		return new NativeLayeredTerrainSector(
+			identity, tiles, sourceEncoding, sourcePath, sourceSha256);
+	}
+
 	public NativeLayeredTerrainTile getTile(int localX, int localY) {
 		if (localX < 0 || localX >= SIZE || localY < 0 || localY >= SIZE) {
 			throw new IndexOutOfBoundsException(

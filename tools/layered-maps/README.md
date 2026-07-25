@@ -17,9 +17,9 @@ capability. It currently provides:
   spaces, arbitrary signed levels, hash-addressed terrain sectors, and
   presentation chunks smaller than the 48-tile storage page.
 
-It does **not** convert maps, change runtime coordinates, edit archives, modify
-player data, launch a server, export into a game, or yet make the runtime load
-the native package.
+It does **not** convert maps, edit archives, modify player data, launch a
+server, or export into a game. A separately gated private runtime can now load
+the native fixture; ordinary and public defaults remain unchanged.
 
 ## RSC Remastered Preservation baseline
 
@@ -58,20 +58,25 @@ storage page. The fixture deliberately declares levels `0`, `-2`, and `-3`;
 the latter proves `-2` is not a format or loader ceiling. Its 24-tile
 presentation chunks are independent from 48-tile storage ownership.
 
-The compact `uniform-layered-sector-v1` payload is a laboratory encoding for
-the next private native-loader route. A full-fidelity converted-vanilla sector
-encoding remains a separately parity-tested step.
+The compact `uniform-layered-sector-v1` payload remains a laboratory encoding.
+The definitive `rle-layered-sector-v1` payload expands positive runs in
+`x-major-y-minor` order to exactly 2,304 independent tile values. It retains
+all seven legacy terrain scalars and can represent an entirely non-repeating
+page with 2,304 one-tile runs. Both the tool and server reject underfill,
+overfill, invalid scalar ranges, changed ordering, and unknown fields.
 
 The matching server-side reader lives in
 `server/src/com/openrsc/server/io/NativeLayeredWorldPackage.java`. It performs
-the same containment, identity, declaration, hash, and uniform-tile checks,
+the same containment, identity, declaration, hash, and terrain-payload checks,
 then exposes immutable detached sectors by `WorldMapSectorId`. The fixture has
 two adjacent level `-2` pages and one same-X/Y level `-3` page. Tests resolve
-tiles on both sides of the 48-tile boundary, substitute level `-37`, and copy a
-sector into an unregistered legacy-shaped value for byte-fidelity checks.
+distinct RLE tile bands and both sides of the 48-tile boundary, substitute
+level `-37`, and copy a sector into an unregistered legacy-shaped value for
+byte-fidelity checks.
 
-This server source has no `World`, `RegionManager`, collision, placement,
-packet, or client registration authority yet.
+The fifth default-off private runtime gate consumes this source only for its
+bounded owner route. General `World` registration, package placements, and
+full-fidelity client delivery remain later milestones.
 
 ## Preflight
 

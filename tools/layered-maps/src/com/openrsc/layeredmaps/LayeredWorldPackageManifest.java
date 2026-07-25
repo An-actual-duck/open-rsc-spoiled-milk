@@ -213,6 +213,8 @@ public final class LayeredWorldPackageManifest {
 			}
 			if (UniformLayeredTerrainSector.ENCODING.equals(encoding)) {
 				UniformLayeredTerrainSector.load(payload);
+			} else if (RleLayeredTerrainSector.ENCODING.equals(encoding)) {
+				RleLayeredTerrainSector.load(payload);
 			} else {
 				throw new PreflightException(
 					"Terrain payload encoding is unsupported by this loader: " + encoding);

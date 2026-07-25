@@ -1,14 +1,68 @@
 {
   "schemaVersion": 1,
-  "encoding": "uniform-layered-sector-v1",
+  "encoding": "rle-layered-sector-v1",
   "size": 48,
-  "tile": {
-    "elevation": 0,
-    "texture": 0,
-    "overlay": 0,
-    "roof": 0,
-    "verticalWall": 0,
-    "horizontalWall": 0,
-    "diagonalWall": 0
-  }
+  "tileOrder": "x-major-y-minor",
+  "runs": [
+    {
+      "count": 384,
+      "tile": {
+        "elevation": 255,
+        "texture": 254,
+        "overlay": 253,
+        "roof": 252,
+        "verticalWall": 251,
+        "horizontalWall": 250,
+        "diagonalWall": 4294967295
+      }
+    },
+    {
+      "count": 384,
+      "tile": {
+        "elevation": 0,
+        "texture": 1,
+        "overlay": 0,
+        "roof": 0,
+        "verticalWall": 0,
+        "horizontalWall": 0,
+        "diagonalWall": 0
+      }
+    },
+    {
+      "count": 384,
+      "tile": {
+        "elevation": 4,
+        "texture": 2,
+        "overlay": 0,
+        "roof": 0,
+        "verticalWall": 0,
+        "horizontalWall": 0,
+        "diagonalWall": 0
+      }
+    },
+    {
+      "count": 384,
+      "tile": {
+        "elevation": 0,
+        "texture": 1,
+        "overlay": 0,
+        "roof": 0,
+        "verticalWall": 0,
+        "horizontalWall": 0,
+        "diagonalWall": 0
+      }
+    },
+    {
+      "count": 768,
+      "tile": {
+        "elevation": 0,
+        "texture": 0,
+        "overlay": 0,
+        "roof": 0,
+        "verticalWall": 0,
+        "horizontalWall": 0,
+        "diagonalWall": 0
+      }
+    }
+  ]
 }

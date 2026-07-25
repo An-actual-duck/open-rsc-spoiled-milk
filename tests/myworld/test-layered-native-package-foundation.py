@@ -145,6 +145,9 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             ("undeclared level", self.undeclare_level, "undeclared level"),
             ("bad chunk", self.bad_chunk, "positive divisor of 48"),
             ("invalid uniform tile", self.invalid_uniform_tile, "unsigned byte"),
+            ("invalid RLE tile", self.invalid_rle_tile, "unsigned byte"),
+            ("underfilled RLE sector", self.underfill_rle_sector, "exactly 2304"),
+            ("overfilled RLE sector", self.overfill_rle_sector, "remaining sector"),
         )
         for label, mutate, expected in cases:
             with self.subTest(label=label), tempfile.TemporaryDirectory(
@@ -177,6 +180,11 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 encoding="utf-8"
             )
         )
+        rle_schema = json.loads(
+            (TOOL_ROOT / "schema/rle-layered-sector-v1.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
         self.assertEqual(
             "rsc-remastered-preservation-r64-v1",
             baseline_schema["properties"]["baselineId"]["const"],
@@ -194,6 +202,25 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
         self.assertEqual(
             "uniform-layered-sector-v1",
             uniform_schema["properties"]["encoding"]["const"],
+        )
+        self.assertEqual(
+            "rle-layered-sector-v1",
+            rle_schema["properties"]["encoding"]["const"],
+        )
+        self.assertEqual(
+            "x-major-y-minor",
+            rle_schema["properties"]["tileOrder"]["const"],
+        )
+        self.assertEqual(
+            {
+                "uniform-layered-sector-v1",
+                "rle-layered-sector-v1",
+            },
+            set(
+                package_schema["properties"]["terrainSectors"]["items"][
+                    "properties"
+                ]["encoding"]["enum"]
+            ),
         )
 
     @staticmethod
@@ -219,17 +246,60 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
 
     @staticmethod
     def invalid_uniform_tile(package):
-        payload_path = package / "terrain/deep-l2-x9-y12.json"
+        payload_path = package / "terrain/deep-l2-x10-y12.json"
         payload = json.loads(payload_path.read_text(encoding="utf-8"))
         payload["tile"]["overlay"] = 256
         payload_path.write_text(
             json.dumps(payload, indent=2) + "\n", encoding="utf-8"
         )
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "terrain/deep-l2-x10-y12.json"
+        )
+
+    @staticmethod
+    def invalid_rle_tile(package):
+        payload_path = package / "terrain/deep-l2-x9-y12.json"
+        payload = json.loads(payload_path.read_text(encoding="utf-8"))
+        payload["runs"][1]["tile"]["overlay"] = 256
+        payload_path.write_text(
+            json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+        )
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "terrain/deep-l2-x9-y12.json"
+        )
+
+    @staticmethod
+    def underfill_rle_sector(package):
+        payload_path = package / "terrain/deep-l2-x9-y12.json"
+        payload = json.loads(payload_path.read_text(encoding="utf-8"))
+        payload["runs"][-1]["count"] -= 1
+        payload_path.write_text(
+            json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+        )
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "terrain/deep-l2-x9-y12.json"
+        )
+
+    @staticmethod
+    def overfill_rle_sector(package):
+        payload_path = package / "terrain/deep-l2-x9-y12.json"
+        payload = json.loads(payload_path.read_text(encoding="utf-8"))
+        payload["runs"][-1]["count"] += 1
+        payload_path.write_text(
+            json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+        )
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "terrain/deep-l2-x9-y12.json"
+        )
+
+    @staticmethod
+    def update_payload_hash(package, relative_path):
+        payload_path = package / relative_path
         payload_hash = hashlib.sha256(payload_path.read_bytes()).hexdigest()
         manifest_path = package / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         for sector in manifest["terrainSectors"]:
-            if sector["path"] == "terrain/deep-l2-x9-y12.json":
+            if sector["path"] == relative_path:
                 sector["sha256"] = payload_hash
         manifest_path.write_text(
             json.dumps(manifest, indent=2) + "\n", encoding="utf-8"

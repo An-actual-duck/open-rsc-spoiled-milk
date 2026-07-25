@@ -53,8 +53,15 @@ Each `terrainSectors` record declares:
 `uniform-layered-sector-v1` is a compact laboratory encoding that describes one
 complete 48-tile page using a single static tile value. It exists to prove the
 native loader and arbitrary-level contract without aliasing a legacy plane.
-The definitive converted vanilla package will use a full-fidelity sector
-encoding selected and parity-tested in the next conversion slice.
+
+`rle-layered-sector-v1` is the full-fidelity v1 encoding. Its `runs` expand to
+exactly 2,304 tile values in `x-major-y-minor` order: all local Y coordinates
+for local X `0`, followed by all local Y coordinates for local X `1`, through
+local X `47`. Each run carries a positive `count` and the seven terrain scalars
+used by the legacy sector representation. A page with no repeated neighbors
+may use 2,304 one-tile runs, so compression never limits fidelity. The loader
+rejects underfill, overfill, zero/negative counts, extra fields, invalid scalar
+ranges, or a different tile order.
 
 Placements and transitions will be separate, versioned, hash-addressed package
 indexes. They are intentionally not improvised into this first terrain
