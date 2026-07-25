@@ -17342,6 +17342,7 @@ private environment should validate at least:
 | 2026-07-25 | Approve Phase 5 Authority Milestone C as one coarse implementation body. | Approved for implementation: add a default-off, custom-client-only, versioned layered scene-context envelope; bind static-scene and movement snapshots to its sequence; make the client own and validate world-space/level-qualified location identity; reset client identity caches on scope changes; and preserve all default and legacy packet layouts |
 | 2026-07-25 | Implement Phase 5 Authority Milestone C behind its private gate. | Custom opcode 152 establishes checked client scope identity, unchanged absolute packets advance X/Y within it, scene-baseline v6 and movement-snapshot v2 bind to its sequence, scope changes clear level-sensitive client caches, the 10-test C/A/B lineage passes, and the authoritative 849/488 server plus 259-source client builds pass; private owner acceptance remains pending |
 | 2026-07-25 | Correct the deferred temporary-ground-item expiry fault exposed after Milestone B acceptance. | The accepted drop/pickup route removed the item correctly, but its previously scheduled expiry later attempted to remove the same entity again; the legacy Region tolerated that duplicate while strict layered membership refused it. Both temporary-item expiry callbacks now skip an already removed entity, while direct duplicate logical-index removal remains a tested refusal |
+| 2026-07-25 | Accept Phase 5 Authority Milestone C on the private three-gate server. | Owner-validated exact server/client agreement through ordinary surface movement and interaction, an upper-floor teleport and NPC interaction, real surface/underground ladder transitions in both directions, same-level teleport, clean logout, and reconnect. Scope sequences advanced only when level changed and restarted at 1 on reconnect; the delayed drop/pickup expiry completed without another membership exception, and no visual, collision, interaction, context, receipt, or reconnect fault appeared |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -17457,13 +17458,16 @@ export remain separately gated.
 
 ## Next Discussion
 
-The coarse Phase 5 Authority Milestones A and B are accepted. The recommended
-next coarse gate is **Authority Milestone C: Protocol and Client Location
-Identity**: make server-to-client scene identity explicitly world-space and
-level aware while retaining a default-off compatibility boundary for the
-current client and wire behavior. It should be planned and approved as one
-owner-testable capability body, with internal checkpoints, before introducing
-the first synthetic level `-2` fixture. Native layered terrain, true instances,
+The coarse Phase 5 Authority Milestones A, B, and C are accepted. The
+recommended next coarse gate is **Authority Milestone D: Synthetic Deep-Level
+Compatibility Boundary**: introduce one private, generated level `-2` fixture
+that exercises signed location, spatial membership, protocol scope, client
+cache isolation, collision, interaction, death/recovery, and persistence
+without editing the production landscape or pretending the four-plane packed
+archive can represent it. This milestone must first define the narrow
+temporary terrain/protocol projection used by the fixture and its rollback
+boundary; it must not silently map level `-2` onto a legacy plane or begin
+general archive conversion. Native layered terrain storage, true instances,
 streaming, Builder, conversion, and export remain later gates. The historical
 retirement findings below remain retained reference material for the later
 incremental-streaming milestone.
@@ -17770,11 +17774,39 @@ Implementation checkpoint:
 - the authoritative builds compile 849 core, 488 plugin, and 259 client
   sources.
 
-Status: implementation and automated validation complete; private three-gate
-startup and meaningful owner runtime acceptance pending. Native layered
-terrain, the first synthetic level `-2` fixture, outgoing logical action
-coordinates, true instances, streaming, Builder, conversion, and export remain
-separately gated.
+Private owner acceptance completed on 2026-07-25 with all three authority
+gates enabled. The accepted route established:
+
+- initial server `::layerloc` and client `::cloc` agreement at
+  `(120,648,L0)`, with sequence 1;
+- ordinary surface movement to `(128,658)` and scenery/NPC interaction while
+  the client retained sequence 1 and advanced only logical X/Y;
+- a teleport to packed `(320,1491)`, exact agreement at logical
+  `(320,547,L1)`, sequence 2, movement, and Barmaid interaction;
+- a return to surface `(147,499,L0)` at sequence 3, followed by a real ladder
+  transition to packed `(147,3331)` and exact logical `(147,499,L-1)` at
+  sequence 4;
+- underground movement and scenery interaction, then two real ladder-up/down
+  round trips advancing through sequences 5, 6, and 7 with no stale scene;
+- a same-level teleport to `(120,648,L0)` that correctly retained sequence 7;
+  and
+- clean logout/reconnect at `(120,648,L0)`, where the new client session
+  restarted at sequence 1 and again matched the server.
+
+The route also dropped and immediately recovered one temporary item. Its
+scheduled expiry elapsed more than two minutes later without the former
+duplicate logical-membership removal. The server emitted no membership,
+projection, protocol, receipt, or runtime exception, and the owner reported no
+visual, collision, interaction, or reconnect issue. Death/respawn was not
+repeated in this client milestone: accepted Milestones A and B already cover
+that server lifecycle, while this route exercised the same cross-level client
+scope replacement repeatedly plus full logout/reconnect reset.
+
+Status: implementation, automated validation, prerequisite-refusal startup,
+private three-gate startup, and meaningful owner runtime acceptance complete.
+Native layered terrain, the first synthetic level `-2` fixture, outgoing
+logical action coordinates, true instances, streaming, Builder, conversion,
+and export remain separately gated.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
