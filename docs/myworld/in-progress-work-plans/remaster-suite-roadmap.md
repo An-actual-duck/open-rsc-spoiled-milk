@@ -658,6 +658,15 @@ and underground movement and interaction; two underground death/respawn
 returns; logout; and exact reconnect without a reported visual, collision,
 interaction, membership, projection, or reconnect fault.
 
+Authority Milestone C was approved on 2026-07-25. It adds a third default-off
+private gate for a versioned server-to-client layered scene context containing
+world space, signed logical X/Y/level, sequence, tick, and the checked legacy
+receipt. Existing player/NPC/object/item packet layouts remain unchanged;
+scene-baseline v6 and movement-snapshot v2 bind to the context sequence, and
+the client clears spatial identity caches only when world space or level
+changes. Native terrain, outgoing logical action coordinates, and level `-2`
+remain later gates.
+
 Planning estimates at this checkpoint are approximately `40-45%` for Phase 5
 and `20-25%` for the complete Layered Maps product across Phases 5-7. No
 creator-testable conversion/export workflow exists yet; Phase 6 and Phase 7
@@ -1120,6 +1129,7 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-25 | Accept coarse Phase 5 Authority Milestone A on the private copied-data server. | Owner-validated through bootstrap, surface/underground and upper-floor travel, interaction, death/respawn, logout, and reconnect; layered/legacy coordinates and the exact nine-field persistence record remained aligned, the pre-migration backup remained byte-identical, and public data was untouched |
 | 2026-07-25 | Approve coarse Phase 5 Authority Milestone B: universal Entity `WorldLocation`, logical spatial membership, level-aware visibility/proximity/cache identity, and checked packed terrain/collision projection. | Approved and implemented in the layered-world plan; default-off private gate, unchanged archives/protocol/client, and one meaningful owner route |
 | 2026-07-25 | Accept coarse Phase 5 Authority Milestone B on the private both-gates-enabled server. | Owner-validated through surface, upper-floor, and underground movement and interaction; two underground death/respawn returns; logout; and exact reconnect. No visual, collision, interaction, membership, projection, or reconnect fault appeared, and the public server was untouched |
+| 2026-07-25 | Approve coarse Phase 5 Authority Milestone C: versioned layered scene context, client WorldLocation authority, context-bound static/movement snapshots, and scope-change cache isolation. | Approved for implementation in the layered-world plan; default-off matched-custom-client gate, unchanged legacy packet layouts, and no level `-2` or archive claim |
 | 2026-07-18 | Complete the fifteenth Layered Maps foundation checkpoint: immutable level-qualified visibility windows and read-only manager projection while packed lookup, caches, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the sixteenth Layered Maps foundation checkpoint: a checked Player visibility-window shadow and versioned private diagnostic evidence while packed lookup, caches, and client behavior remain authoritative. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the seventeenth Layered Maps foundation checkpoint: deterministic, allocation-budgeted logical interest-window deltas while packed lookup, caches, packets, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |

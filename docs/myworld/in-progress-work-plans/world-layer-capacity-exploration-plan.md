@@ -17339,6 +17339,7 @@ private environment should validate at least:
 | 2026-07-24 | Approve Phase 5 Authority Milestone A as one coarse implementation body. | Approved for implementation: make Player session location authoritative as `WorldLocation` behind a disabled-by-default private gate, retain derived packed `Point` compatibility, add additive versioned persistence fields and legacy receipts through the existing transactional Player cache, prove unchanged-world session parity, and avoid resuming schema-per-observation work |
 | 2026-07-25 | Accept Phase 5 Authority Milestone A on the private copied-data server. | Owner-validated across initial legacy bootstrap, ordinary walking, a geographically aligned surface/underground ladder round trip, upper-floor translation and NPC interaction, surface return, death/respawn, logout, and two reconnects. Layered and compatibility coordinates remained aligned; visuals, collision, interaction, inventory, and stats remained normal. The final copied-database record contains exactly the nine expected typed fields for global `(120,648,0)`, its legacy receipt is `(120,648)`, the pre-migration backup remains byte-identical, and the public server/database were untouched |
 | 2026-07-25 | Accept Phase 5 Authority Milestone B on the private both-gates-enabled server. | Owner-validated through surface movement and scenery/NPC/item interaction, upper-floor movement and NPC interaction, two real ladder transitions into underground movement/item interaction, two underground death/respawn returns, clean logout, and exact reconnect. No visual, collision, interaction, membership, projection, or reconnect fault appeared; the public server was untouched |
+| 2026-07-25 | Approve Phase 5 Authority Milestone C as one coarse implementation body. | Approved for implementation: add a default-off, custom-client-only, versioned layered scene-context envelope; bind static-scene and movement snapshots to its sequence; make the client own and validate world-space/level-qualified location identity; reset client identity caches on scope changes; and preserve all default and legacy packet layouts |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -17620,6 +17621,119 @@ Status: implemented, automated-validated, private-startup-validated, and
 owner-accepted. Protocol/client authority, native layered terrain storage,
 level `-2`, true instances, streaming, Builder, conversion, and export remain
 separately gated.
+
+## Phase 5 Authority Milestone C: Protocol and Client Location Identity
+
+Approved for implementation on 2026-07-25. This milestone carries the accepted
+runtime location authority across the server-to-client boundary without
+claiming native layered terrain, arbitrary signed-level rendering, or a
+rewritten interaction protocol.
+
+### Existing boundary and defect risk
+
+The current custom client receives several independent location views:
+
+- `SEND_WORLD_INFO` carries a legacy plane number and the 944-tile floor
+  distance but no stable world-space or signed-level identity;
+- `SEND_PLAYER_COORDS`, `SEND_NPC_COORDS`, scenery, wall, and ground-item
+  packets use packed absolute or local-relative coordinates;
+- custom movement and scene-baseline packets use signed numeric coordinates
+  but do not qualify them with world space or level; and
+- player/NPC server-index caches, scene-baseline page keys, and static-scene
+  application keys can survive a floor transition while retaining only packed
+  coordinate identity.
+
+Milestone B prevents the server from selecting cross-level entities, but the
+client cannot yet prove which spatial scope an arriving packet belongs to.
+Identical X/Y and reused server indexes can therefore only be distinguished by
+packet ordering and legacy floor side effects.
+
+### Protocol contract
+
+Under the new private gate, the matched custom client receives a versioned
+layered scene-context packet before the existing player/NPC/static-scene update
+group. The context contains:
+
+- a monotonically increasing per-session sequence and server tick;
+- the stable world-space ID;
+- signed logical X, Y, and level as 32-bit values; and
+- the exact legacy packed X/Y compatibility receipt used by unchanged packets.
+
+The context is sent on initial scene establishment and whenever authoritative
+location changes. TCP ordering makes the most recent accepted context the
+scope for following unchanged legacy packets. The existing opcode layouts for
+world info, player/NPC coordinates, scenery, walls, ground items, and
+appearance updates do not change.
+
+The existing optional scene baseline advances from protocol v5 to v6 under the
+gate and carries the context sequence. The optional movement snapshot advances
+from v1 to v2 and does the same. The client refuses a gated baseline or
+movement snapshot whose sequence does not match the accepted context, so pages
+and movement records cannot be combined across scopes.
+
+### Client authority and cache policy
+
+The client owns an immutable scene location containing world space, signed
+logical X/Y/level, and the checked legacy receipt. It must:
+
+- reject malformed world-space IDs, unsupported protocol versions, stale
+  sequences, and logical/legacy receipt disagreement;
+- validate the next absolute local-player packet against the accepted context;
+- qualify scene-baseline aggregation and application keys by context scope;
+- clear known-player, NPC, ground-item, static-object, wall, movement-target,
+  and related scene identity caches before consuming packets for a different
+  world space or level; and
+- retain those caches during ordinary movement within one world space and
+  level.
+
+The initial context establishes identity without performing a redundant reset
+because login already starts from empty caches. Logout clears the context so a
+new session cannot inherit its sequence or scope.
+
+### Gate, compatibility, and refusal rules
+
+- `OPENRSC_LAYERED_PROTOCOL_CLIENT_AUTHORITY=true` enables Milestone C and is
+  disabled by default.
+- The gate requires both Player-location and spatial-runtime authority.
+- Only the matching custom client is eligible while the gate is enabled;
+  authentic and older custom clients must not receive or silently ignore the
+  authoritative envelope.
+- With the gate disabled, the server sends no new opcode, scene baseline
+  remains v5, movement snapshot remains v1, and client behavior remains
+  unchanged.
+- The envelope is server-to-client authority only. Existing outgoing action
+  packets remain legacy packed coordinates and continue to be resolved in the
+  Player's authoritative Milestone B spatial domain.
+- Non-global world spaces and level `-2` remain unrepresentable by the legacy
+  terrain/protocol compatibility path and must refuse before packet emission.
+  The first synthetic level `-2` fixture follows this milestone rather than
+  weakening its rollback boundary.
+
+### Implementation and acceptance order
+
+1. Add the configuration gate, prerequisite validation, protocol enum/struct,
+   custom opcode mapping, and payload generation.
+2. Send one ordered context before the existing scene update group and retain
+   its exact sequence on the Player session.
+3. Add the client location/context value and checked legacy codec.
+4. Reset level/world-space-sensitive client identity caches only on scope
+   changes and clear context on logout/reconnect.
+5. Bind scene-baseline v6 and movement-snapshot v2 to the accepted sequence.
+6. Expose a concise client-side context summary for private validation.
+7. Prove default-off packet compatibility, invalid prerequisite refusal,
+   receipt and sequence refusal, scope-sensitive cache identity, and the
+   authoritative server/client builds.
+
+Private owner acceptance should use the existing world only: ordinary surface
+movement and interaction, upper-floor transition and interaction, underground
+transition and interaction, return, teleport, death/respawn, logout, and
+reconnect. The server `::layerloc` and client context summary must agree after
+each scope change. No level `-2` content or archive mutation belongs in this
+route.
+
+Status: approved; implementation pending. Native layered terrain, the first
+synthetic level `-2` fixture, outgoing logical action coordinates, true
+instances, streaming, Builder, conversion, and export remain separately gated.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
