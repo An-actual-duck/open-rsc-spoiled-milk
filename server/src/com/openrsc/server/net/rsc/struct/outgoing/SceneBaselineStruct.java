@@ -11,6 +11,7 @@ public class SceneBaselineStruct extends AbstractStruct<OpcodeOut> {
 	public int serverTick;
 	public int localX;
 	public int localY;
+	public int locationContextSequence;
 	public int players;
 	public int npcs;
 	public int scenery;

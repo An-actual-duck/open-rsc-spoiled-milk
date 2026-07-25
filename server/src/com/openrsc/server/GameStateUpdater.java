@@ -23,6 +23,7 @@ import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.entity.update.*;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.VisibilitySnapshot;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -62,9 +63,13 @@ public final class GameStateUpdater {
 	private static final int AUTHENTIC_LOCAL_MOB_COUNT_BITS = 8;
 	private static final int CUSTOM_LOCAL_MOB_COUNT_BITS = 16;
 	private static final int MOVEMENT_SNAPSHOT_PROTOCOL_VERSION = 1;
+	private static final int LAYERED_MOVEMENT_SNAPSHOT_PROTOCOL_VERSION = 2;
 	private static final int MOVEMENT_SNAPSHOT_FIXED_PAYLOAD_BYTES = 18;
+	private static final int LAYERED_CONTEXT_SEQUENCE_BYTES = 4;
 	private static final int MOVEMENT_SNAPSHOT_MOB_RECORD_BYTES = 7;
 	private static final int SCENE_BASELINE_PROTOCOL_VERSION = 5;
+	private static final int LAYERED_SCENE_BASELINE_PROTOCOL_VERSION = 6;
+	private static final int LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 1;
 	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
 	private static final int SCENE_BASELINE_PAGE_BURST_LIMIT = 4;
 	private static final int SCENE_BASELINE_FIXED_PAYLOAD_BYTES = 48;
@@ -78,6 +83,10 @@ public final class GameStateUpdater {
 	private static final String WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE = "world_time_last_sync_millis";
 	private static final String CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE = "custom_movement_client_mid_x";
 	private static final String CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE = "custom_movement_client_mid_y";
+	private static final String LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE =
+		"layered_scene_context_scope";
+	private static final String LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE =
+		"layered_scene_context_sequence";
 	private static final long WORLD_TIME_SYNC_INTERVAL_MILLIS = 15000L;
 	private static final long WORLD_TIME_FAST_SYNC_INTERVAL_MILLIS = 250L;
 	private static final int RECENT_VISIBILITY_SHADOW_LOG_LIMIT = 5;
@@ -134,6 +143,9 @@ public final class GameStateUpdater {
 	}
 
 	private void sendNormalUpdatePackets(final Player player, final boolean allowTickSnapshotCache) {
+		if (!ensureLayeredSceneContext(player)) {
+			return;
+		}
 		final VisibilitySnapshot packetVisibility = buildPacketVisibilitySnapshot(player, allowTickSnapshotCache);
 		final Collection<Player> visiblePlayers = packetVisibility.getPlayers();
 		final Collection<Npc> visibleNpcs = packetVisibility.getNpcs();
@@ -165,6 +177,64 @@ public final class GameStateUpdater {
 		sendSceneBaselineIfEnabled(player, sceneryChanged[0], wallsChanged[0], groundItemsChanged[0]);
 		recordUpdateTimeouts(() -> updateTimeouts(player));
 		sendWorldTimeIfNeeded(player);
+	}
+
+	private boolean ensureLayeredSceneContext(final Player player) {
+		if (!getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY) {
+			return true;
+		}
+		if (!player.isUsingCustomClient()
+			|| player.getClientVersion() != getServer().getConfig().CLIENT_VERSION) {
+			player.unregister(
+				UnregisterForcefulness.FORCED,
+				"Layered protocol/client authority requires the matched custom client");
+			return false;
+		}
+
+		final WorldLocation location = player.getWorldLocation();
+		final Point expectedLegacy = LegacyPackedPointAdapter.toLegacyPoint(location);
+		if (expectedLegacy.getX() != player.getX()
+			|| expectedLegacy.getY() != player.getY()) {
+			throw new IllegalStateException(
+				"Layered scene context legacy receipt disagrees with Player location");
+		}
+
+		final LayeredProtocolSceneScope nextScope =
+			LayeredProtocolSceneScope.from(location);
+		final LayeredProtocolSceneScope previousScope =
+			player.getAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, null);
+		if (nextScope.equals(previousScope)) {
+			return true;
+		}
+
+		final Integer previousSequence = player.getAttribute(
+			LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, Integer.valueOf(0));
+		final int sequence = Math.addExact(previousSequence.intValue(), 1);
+		final LayeredSceneContextStruct context = new LayeredSceneContextStruct();
+		context.protocolVersion = LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION;
+		context.sequence = sequence;
+		context.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
+		context.worldSpace = location.getWorldSpace().getValue();
+		context.logicalX = location.getCoordinate().getX();
+		context.logicalY = location.getCoordinate().getY();
+		context.logicalLevel = location.getCoordinate().getLevel();
+		context.legacyX = expectedLegacy.getX();
+		context.legacyY = expectedLegacy.getY();
+		tryFinalizeAndSendPacket(
+			OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, context, player);
+		player.setAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, nextScope);
+		player.setAttribute(LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, sequence);
+		return true;
+	}
+
+	private int requireLayeredSceneContextSequence(final Player player) {
+		final Integer sequence = player.getAttribute(
+			LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, null);
+		if (sequence == null || sequence.intValue() <= 0) {
+			throw new IllegalStateException(
+				"Layered protocol packet has no established scene context");
+		}
+		return sequence.intValue();
 	}
 
 	private VisibilitySnapshot buildPacketVisibilitySnapshot(final Player player, final boolean allowTickSnapshotCache) {
@@ -334,7 +404,8 @@ public final class GameStateUpdater {
 		final SceneBaselineStruct baseline = current.toStruct();
 		page.applyTo(baseline);
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENE_BASELINE, baseline, player);
-		getServer().addSceneBaselineMetrics(page.recordCount(), page.payloadBytes());
+		getServer().addSceneBaselineMetrics(
+			page.recordCount(), page.payloadBytes(current.protocolVersion));
 	}
 
 	private SceneBaselineSummary buildSceneBaselineSummary(
@@ -344,7 +415,14 @@ public final class GameStateUpdater {
 		final boolean wallsChanged,
 		final boolean groundItemsChanged) {
 		final SceneBaselineSummary summary = new SceneBaselineSummary();
-		summary.protocolVersion = SCENE_BASELINE_PROTOCOL_VERSION;
+		final boolean layeredProtocol =
+			getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
+		summary.protocolVersion = layeredProtocol
+			? LAYERED_SCENE_BASELINE_PROTOCOL_VERSION
+			: SCENE_BASELINE_PROTOCOL_VERSION;
+		summary.locationContextSequence = layeredProtocol
+			? requireLayeredSceneContextSequence(player)
+			: 0;
 		summary.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
 		summary.localX = player.getX();
 		summary.localY = player.getY();
@@ -475,6 +553,7 @@ public final class GameStateUpdater {
 
 	private static final class SceneBaselineSummary {
 		private int protocolVersion;
+		private int locationContextSequence;
 		private int serverTick;
 		private int localX;
 		private int localY;
@@ -490,6 +569,7 @@ public final class GameStateUpdater {
 
 		private boolean sameStaticPayload(final SceneBaselineSummary other) {
 			return protocolVersion == other.protocolVersion
+				&& locationContextSequence == other.locationContextSequence
 				&& scenery == other.scenery
 				&& walls == other.walls
 				&& groundItems == other.groundItems
@@ -511,6 +591,7 @@ public final class GameStateUpdater {
 		private SceneBaselineStruct toStruct() {
 			final SceneBaselineStruct struct = new SceneBaselineStruct();
 			struct.protocolVersion = protocolVersion;
+			struct.locationContextSequence = locationContextSequence;
 			struct.serverTick = serverTick;
 			struct.localX = localX;
 			struct.localY = localY;
@@ -549,8 +630,12 @@ public final class GameStateUpdater {
 			return objectRecords.size();
 		}
 
-		private int payloadBytes() {
-			return SCENE_BASELINE_FIXED_PAYLOAD_BYTES + recordCount() * SCENE_BASELINE_OBJECT_RECORD_BYTES;
+		private int payloadBytes(final int protocolVersion) {
+			return SCENE_BASELINE_FIXED_PAYLOAD_BYTES
+				+ (protocolVersion >= LAYERED_SCENE_BASELINE_PROTOCOL_VERSION
+					? LAYERED_CONTEXT_SEQUENCE_BYTES
+					: 0)
+				+ recordCount() * SCENE_BASELINE_OBJECT_RECORD_BYTES;
 		}
 
 		private void applyTo(final SceneBaselineStruct struct) {
@@ -820,6 +905,40 @@ public final class GameStateUpdater {
 		}
 	}
 
+	private static final class LayeredProtocolSceneScope {
+		private final String worldSpace;
+		private final int level;
+
+		private LayeredProtocolSceneScope(final String worldSpace, final int level) {
+			this.worldSpace = worldSpace;
+			this.level = level;
+		}
+
+		private static LayeredProtocolSceneScope from(final WorldLocation location) {
+			return new LayeredProtocolSceneScope(
+				location.getWorldSpace().getValue(),
+				location.getCoordinate().getLevel());
+		}
+
+		@Override
+		public boolean equals(final Object other) {
+			if (this == other) {
+				return true;
+			}
+			if (!(other instanceof LayeredProtocolSceneScope)) {
+				return false;
+			}
+			final LayeredProtocolSceneScope scope =
+				(LayeredProtocolSceneScope) other;
+			return level == scope.level && worldSpace.equals(scope.worldSpace);
+		}
+
+		@Override
+		public int hashCode() {
+			return 31 * worldSpace.hashCode() + level;
+		}
+	}
+
 	private void sendWorldTimeIfNeeded(final Player player) {
 		if (!player.isUsingCustomClient()) {
 			return;
@@ -923,6 +1042,9 @@ public final class GameStateUpdater {
 		if (!player.isUsingCustomClient()) {
 			return false;
 		}
+		if (!ensureLayeredSceneContext(player)) {
+			return false;
+		}
 		updateCustomMovementClientRegion(player);
 
 		MovementUpdateStruct struct = new MovementUpdateStruct();
@@ -976,10 +1098,20 @@ public final class GameStateUpdater {
 		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT) {
 			return false;
 		}
+		if (!ensureLayeredSceneContext(player)) {
+			return false;
+		}
 		updateCustomMovementClientRegion(player);
 
 		MovementSnapshotStruct struct = new MovementSnapshotStruct();
-		struct.protocolVersion = MOVEMENT_SNAPSHOT_PROTOCOL_VERSION;
+		final boolean layeredProtocol =
+			getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
+		struct.protocolVersion = layeredProtocol
+			? LAYERED_MOVEMENT_SNAPSHOT_PROTOCOL_VERSION
+			: MOVEMENT_SNAPSHOT_PROTOCOL_VERSION;
+		struct.locationContextSequence = layeredProtocol
+			? requireLayeredSceneContextSequence(player)
+			: 0;
 		struct.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
 		struct.sequence = ++movementSnapshotSequence;
 		struct.localX = player.getX();
@@ -1028,6 +1160,7 @@ public final class GameStateUpdater {
 		getServer().addMovementSnapshotMetrics(
 			1 + struct.players.size() + struct.npcs.size(),
 			MOVEMENT_SNAPSHOT_FIXED_PAYLOAD_BYTES
+				+ (layeredProtocol ? LAYERED_CONTEXT_SEQUENCE_BYTES : 0)
 				+ ((struct.players.size() + struct.npcs.size()) * MOVEMENT_SNAPSHOT_MOB_RECORD_BYTES));
 		return true;
 	}

@@ -17340,6 +17340,7 @@ private environment should validate at least:
 | 2026-07-25 | Accept Phase 5 Authority Milestone A on the private copied-data server. | Owner-validated across initial legacy bootstrap, ordinary walking, a geographically aligned surface/underground ladder round trip, upper-floor translation and NPC interaction, surface return, death/respawn, logout, and two reconnects. Layered and compatibility coordinates remained aligned; visuals, collision, interaction, inventory, and stats remained normal. The final copied-database record contains exactly the nine expected typed fields for global `(120,648,0)`, its legacy receipt is `(120,648)`, the pre-migration backup remains byte-identical, and the public server/database were untouched |
 | 2026-07-25 | Accept Phase 5 Authority Milestone B on the private both-gates-enabled server. | Owner-validated through surface movement and scenery/NPC/item interaction, upper-floor movement and NPC interaction, two real ladder transitions into underground movement/item interaction, two underground death/respawn returns, clean logout, and exact reconnect. No visual, collision, interaction, membership, projection, or reconnect fault appeared; the public server was untouched |
 | 2026-07-25 | Approve Phase 5 Authority Milestone C as one coarse implementation body. | Approved for implementation: add a default-off, custom-client-only, versioned layered scene-context envelope; bind static-scene and movement snapshots to its sequence; make the client own and validate world-space/level-qualified location identity; reset client identity caches on scope changes; and preserve all default and legacy packet layouts |
+| 2026-07-25 | Implement Phase 5 Authority Milestone C behind its private gate. | Custom opcode 152 establishes checked client scope identity, unchanged absolute packets advance X/Y within it, scene-baseline v6 and movement-snapshot v2 bind to its sequence, scope changes clear level-sensitive client caches, the 10-test C/A/B lineage passes, and the authoritative 849/488 server plus 259-source client builds pass; private owner acceptance remains pending |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -17660,7 +17661,9 @@ group. The context contains:
 - the exact legacy packed X/Y compatibility receipt used by unchanged packets.
 
 The context is sent on initial scene establishment and whenever authoritative
-location changes. TCP ordering makes the most recent accepted context the
+world space or level changes. Existing absolute local-player packets advance
+logical X/Y inside that checked scope, including ordinary walking and
+same-level teleports. TCP ordering makes the most recent accepted context the
 scope for following unchanged legacy packets. The existing opcode layouts for
 world info, player/NPC coordinates, scenery, walls, ground items, and
 appearance updates do not change.
@@ -17731,9 +17734,37 @@ reconnect. The server `::layerloc` and client context summary must agree after
 each scope change. No level `-2` content or archive mutation belongs in this
 route.
 
-Status: approved; implementation pending. Native layered terrain, the first
-synthetic level `-2` fixture, outgoing logical action coordinates, true
-instances, streaming, Builder, conversion, and export remain separately gated.
+Implementation checkpoint:
+
+- `OPENRSC_LAYERED_PROTOCOL_CLIENT_AUTHORITY=true` is a third default-off gate
+  and startup refuses it unless both earlier authority gates are enabled;
+- custom opcode 152 carries protocol v1 scope sequence, tick, world space,
+  signed logical X/Y/level, and the exact packed compatibility receipt;
+- the server sends the envelope before movement or normal scene updates and
+  refuses clients that do not match the configured custom-client build;
+- the client validates context protocol, world-space syntax, sequence,
+  representable level, and receipt before accepting the scope;
+- unchanged absolute Player packets advance logical X/Y only within that
+  accepted world space and level;
+- a scope change clears Player/NPC server-index caches, ground items, scenery,
+  walls, movement targets, transient spatial effects, predictive preload, and
+  resident object chunks before the new scene is consumed;
+- scene-baseline v6 and movement-snapshot v2 carry and validate the stable
+  scope sequence while their default-off forms remain v5 and v1;
+- `::layerloc` reports server protocol authority and local developer command
+  `::cloc` reports the accepted client context;
+- the focused context fixture proves receipt and sequence refusal, surface,
+  upper, and underground scope changes, cache-scope identity, unsupported
+  world-space/level refusal, logout reset, and reconnect sequence restart;
+- the Milestone C/A/B focused lineage passes 10 tests; and
+- the authoritative builds compile 849 core, 488 plugin, and 259 client
+  sources.
+
+Status: implementation and automated validation complete; private three-gate
+startup and meaningful owner runtime acceptance pending. Native layered
+terrain, the first synthetic level `-2` fixture, outgoing logical action
+coordinates, true instances, streaming, Builder, conversion, and export remain
+separately gated.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those

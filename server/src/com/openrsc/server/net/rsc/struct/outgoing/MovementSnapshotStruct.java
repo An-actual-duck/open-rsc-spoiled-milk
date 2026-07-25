@@ -8,6 +8,7 @@ import java.util.List;
 
 public class MovementSnapshotStruct extends AbstractStruct<OpcodeOut> {
 	public int protocolVersion;
+	public int locationContextSequence;
 	public int serverTick;
 	public int sequence;
 	public int localX;

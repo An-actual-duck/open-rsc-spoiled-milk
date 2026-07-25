@@ -2421,6 +2421,7 @@ public final class mudclient implements Runnable {
 				}
 			}
 			this.closeClientStreamOnly();
+			this.packetHandler.resetLayeredSceneProtocolState();
 			this.stopSoundPlayback();
 
 			this.setUsername("");
@@ -16009,6 +16010,16 @@ public final class mudclient implements Runnable {
 								|| var11.startsWith("::ct "))
 								&& canUseClickTeleport()) {
 								handleDevClickTeleportCommand(var11.substring(2));
+							} else if ((var11.equalsIgnoreCase("::cloc")
+								|| var11.equalsIgnoreCase("::clientlayer"))
+								&& localPlayer.isDev()) {
+								this.showMessage(
+									false,
+									null,
+									this.packetHandler.getLayeredSceneContextDebugSummary(),
+									MessageType.GAME,
+									0,
+									null);
 							} else if (var11.startsWith("::n ") && localPlayer.isDev()) {
 								devMenuNpcID = Integer.parseInt(var11.split(" ")[1]);
 							} else if (var11.equalsIgnoreCase("::overlay") && S_SIDE_MENU_TOGGLE) {
@@ -21273,6 +21284,7 @@ public final class mudclient implements Runnable {
 
 	private void resetGame(int var1) {
 		try {
+			this.packetHandler.resetLayeredSceneProtocolState();
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
 			this.loginScreenNumber = 0;
@@ -22928,6 +22940,47 @@ public final class mudclient implements Runnable {
 	public void beginAreaLoad() {
 		this.loadingArea = true;
 		this.sceneInstanceStore.clearPendingAreaLoadMarks();
+	}
+
+	public void applyLayeredSceneScope(int legacyPlane, boolean scopeChanged) {
+		if (legacyPlane < 0 || legacyPlane > 3) {
+			throw new IllegalArgumentException(
+				"Unsupported layered scene compatibility plane: " + legacyPlane);
+		}
+		if (scopeChanged) {
+			resetLayeredSceneIdentityCaches();
+		}
+		this.requestedPlane = legacyPlane;
+	}
+
+	private void resetLayeredSceneIdentityCaches() {
+		beginAreaLoad();
+		for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {
+			this.dematerializeGameObjectInstance(i);
+		}
+		for (int i = 0; i < this.getWallObjectInstanceCount(); i++) {
+			this.dematerializeWallObjectInstance(i);
+		}
+		this.setGameObjectInstanceCount(0);
+		this.setWallObjectInstanceCount(0);
+		this.groundItemCount = 0;
+		this.playerCount = 0;
+		this.knownPlayerCount = 0;
+		Arrays.fill(this.knownPlayers, null);
+		Arrays.fill(this.players, null);
+		Arrays.fill(this.playerServer, null);
+		this.npcCount = 0;
+		this.npcCacheCount = 0;
+		Arrays.fill(this.npcs, null);
+		Arrays.fill(this.npcsCache, null);
+		Arrays.fill(this.npcsServer, null);
+		Arrays.fill(this.customNpcMovementTargetValid, false);
+		Arrays.fill(this.customNpcMovementTargetResult, null);
+		this.teleportBubbleCount = 0;
+		this.detachedCombatEffectCount = 0;
+		this.detachedScreenCombatEffectCount = 0;
+		this.clearResidentObjectChunkCache();
+		this.resetPredictiveTerrainPreload();
 	}
 
 	public boolean isAreaLoadPending() {

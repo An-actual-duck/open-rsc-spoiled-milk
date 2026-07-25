@@ -116,6 +116,16 @@ public class RegionManager {
 				"Layered spatial runtime authority requires "
 					+ "layered Player location authority");
 		}
+		if (world.getServer().getConfig()
+				.WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
+			&& (!world.getServer().getConfig()
+					.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+				|| !world.getServer().getConfig()
+					.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY)) {
+			throw new IllegalStateException(
+				"Layered protocol/client authority requires layered Player "
+					+ "location and spatial runtime authority");
+		}
 		this.regions = new ConcurrentHashMap<>();
 		this.visibleRegionWindowCache = new ConcurrentHashMap<>();
 		this.visibleObjectWindowCache = new ConcurrentHashMap<>();

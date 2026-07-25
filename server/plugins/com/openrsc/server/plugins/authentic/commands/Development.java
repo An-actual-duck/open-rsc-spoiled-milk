@@ -1411,6 +1411,10 @@ public final class Development implements CommandTrigger {
 				+ " level=" + coordinate.getLevel()
 				+ " spatialAuthority="
 				+ (spatialAuthority ? "enabled" : "disabled")
+				+ " protocolAuthority="
+				+ (player.getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
+					? "enabled"
+					: "disabled")
 				+ " region=(" + regionKey.getRegionX() + ","
 				+ regionKey.getRegionY() + ",L" + regionKey.getLevel() + ")"
 				+ (spatialAuthority

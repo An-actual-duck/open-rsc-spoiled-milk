@@ -57,10 +57,12 @@ final class SceneBaselineState {
 	private int recentSceneSyncNext = 0;
 	private int recentSceneSyncCount = 0;
 	private int lastLoggedSceneIssueSignature = 0;
+	private String scopeIdentity = "legacy";
 
 	void recordPacket(
 		int protocolVersion,
 		int serverTick,
+		String scopeIdentity,
 		int localX,
 		int localY,
 		int scenery,
@@ -78,6 +80,7 @@ final class SceneBaselineState {
 		long now = System.currentTimeMillis();
 		int nextStaticSceneKey = staticSceneKey(
 			protocolVersion,
+			scopeIdentity,
 			scenery,
 			walls,
 			groundItems,
@@ -100,6 +103,7 @@ final class SceneBaselineState {
 
 		this.protocolVersion = protocolVersion;
 		this.serverTick = serverTick;
+		this.scopeIdentity = scopeIdentity;
 		this.localX = localX;
 		this.localY = localY;
 		this.scenery = scenery;
@@ -143,6 +147,16 @@ final class SceneBaselineState {
 		if (hasCompleteBaseline()) {
 			rebuildStoredBaseline();
 		}
+	}
+
+	void resetForScopeChange(String nextScopeIdentity) {
+		staticSceneKey = 0;
+		storedStaticSceneKey = 0;
+		resetPageState();
+		scopeIdentity = nextScopeIdentity == null ? "none" : nextScopeIdentity;
+		lastParityCheckMillis = 0L;
+		lastParityLegacySignature = 0;
+		lastParityLine = "scene sync match waiting";
 	}
 
 	String summary() {
@@ -307,6 +321,7 @@ final class SceneBaselineState {
 
 	private int staticSceneKey(
 		int protocolVersion,
+		String scopeIdentity,
 		int scenery,
 		int walls,
 		int groundItems,
@@ -315,6 +330,7 @@ final class SceneBaselineState {
 		int wallsHash,
 		int groundItemsHash) {
 		int hash = protocolVersion;
+		hash = hash * 31 + (scopeIdentity == null ? 0 : scopeIdentity.hashCode());
 		hash = hash * 31 + scenery;
 		hash = hash * 31 + walls;
 		hash = hash * 31 + groundItems;
@@ -346,6 +362,7 @@ final class SceneBaselineState {
 	private String buildRecentSceneSyncLine(String parity) {
 		return "v" + protocolVersion
 			+ " tick " + serverTick
+			+ " scope " + scopeIdentity
 			+ " origin " + localX + "," + localY
 			+ " state " + baselineState()
 			+ " static " + scenery + "/" + walls + "/" + groundItems

@@ -91,6 +91,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_FRIEND_UPDATE, 149);
 		put(OpcodeOut.SEND_BANK_PRESET, 150); // custom
 		put(OpcodeOut.SEND_WORLD_EDITOR, 151); // custom, versioned editor envelope
+		put(OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, 152); // custom, versioned layered scene scope
 		put(OpcodeOut.SEND_EQUIPMENT_STATS, 153);
 		put(OpcodeOut.SEND_STATS, 156);
 		put(OpcodeOut.SEND_STAT, 159);
@@ -144,6 +145,20 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 
 		if (builder != null && possiblyValid) {
 			switch (payload.getOpcode()) {
+				case SEND_LAYERED_SCENE_CONTEXT:
+					LayeredSceneContextStruct context =
+						(LayeredSceneContextStruct) payload;
+					builder.writeByte((byte) context.protocolVersion);
+					builder.writeInt(context.sequence);
+					builder.writeInt(context.serverTick);
+					builder.writeString(context.worldSpace);
+					builder.writeInt(context.logicalX);
+					builder.writeInt(context.logicalY);
+					builder.writeInt(context.logicalLevel);
+					builder.writeShort(context.legacyX);
+					builder.writeShort(context.legacyY);
+					break;
+
 				case SEND_WORLD_EDITOR:
 					WorldEditorStruct editor = (WorldEditorStruct) payload;
 					builder.writeByte((byte) editor.type);
@@ -777,6 +792,9 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 				case SEND_MOVEMENT_SNAPSHOT:
 					MovementSnapshotStruct movementSnapshot = (MovementSnapshotStruct) payload;
 					builder.writeByte((byte) movementSnapshot.protocolVersion);
+					if (movementSnapshot.protocolVersion >= 2) {
+						builder.writeInt(movementSnapshot.locationContextSequence);
+					}
 					builder.writeInt(movementSnapshot.serverTick);
 					builder.writeInt(movementSnapshot.sequence);
 					builder.writeShort(movementSnapshot.localX);
@@ -811,6 +829,9 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					builder.writeInt(baseline.serverTick);
 					builder.writeShort(baseline.localX);
 					builder.writeShort(baseline.localY);
+					if (baseline.protocolVersion >= 6) {
+						builder.writeInt(baseline.locationContextSequence);
+					}
 					builder.writeShort(baseline.players);
 					builder.writeShort(baseline.npcs);
 					builder.writeShort(baseline.scenery);

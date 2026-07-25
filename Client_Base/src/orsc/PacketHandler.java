@@ -47,6 +47,8 @@ public class PacketHandler {
 	private final SceneBaselineState sceneBaselineState = new SceneBaselineState();
 	private final MovementSnapshotDiagnostics movementSnapshotDiagnostics = new MovementSnapshotDiagnostics();
 	private final MovementSnapshotStage movementSnapshotStage = new MovementSnapshotStage();
+	private final LayeredSceneContextState layeredSceneContextState =
+		new LayeredSceneContextState();
 	private int appliedSceneBaselineKey = 0;
 
 	public String getSceneBaselineDebugSummary() {
@@ -63,6 +65,17 @@ public class PacketHandler {
 
 	public String[] getMovementSnapshotDebugSummaryLines() {
 		return movementSnapshotDiagnostics.summaryLines();
+	}
+
+	public String getLayeredSceneContextDebugSummary() {
+		return layeredSceneContextState.summary();
+	}
+
+	public void resetLayeredSceneProtocolState() {
+		layeredSceneContextState.reset();
+		sceneBaselineState.resetForScopeChange("none");
+		movementSnapshotStage.reset();
+		appliedSceneBaselineKey = 0;
 	}
 
 	private SpriteDef getProjectileDefForUpdate(int sprite, String targetType, int targetServerIndex, int shooterServerIndex) {
@@ -178,6 +191,7 @@ public class PacketHandler {
 		put(148, "SET_OPENPK_POINTS");
 		put(150, "UPDATE_PRESET");
 		put(151, "WORLD_EDITOR");
+		put(152, "LAYERED_SCENE_CONTEXT");
 		put(250, "UPDATE_UNLOCKED_APPEARANCES");
 		put(254, "UPDATE_EQUIPMENT");
 		put(255, "UPDATE_EQUIPMENT_SLOT");
@@ -345,6 +359,8 @@ public class PacketHandler {
 
 			else if (opcode == 151) updateWorldEditor();
 
+			else if (opcode == 152) updateLayeredSceneContext(length);
+
 				// Set Server Configs
 			else if (opcode == 19) setServerConfiguration();
 
@@ -353,6 +369,41 @@ public class PacketHandler {
 		} catch (RuntimeException var11) {
 			throw GenUtil.makeThrowable(var11, "client.LD(" + "dummy" + ',' + length + ',' + opcode + ')');
 		}
+	}
+
+	private void updateLayeredSceneContext(int length) {
+		int protocolVersion = packetsIncoming.getUnsignedByte();
+		int sequence = packetsIncoming.get32();
+		int serverTick = packetsIncoming.get32();
+		String worldSpace = packetsIncoming.readString();
+		int logicalX = packetsIncoming.get32();
+		int logicalY = packetsIncoming.get32();
+		int logicalLevel = packetsIncoming.get32();
+		int legacyX = packetsIncoming.getShort();
+		int legacyY = packetsIncoming.getShort();
+		LayeredSceneContextState.ApplyResult result =
+			layeredSceneContextState.accept(
+				protocolVersion,
+				sequence,
+				serverTick,
+				worldSpace,
+				logicalX,
+				logicalY,
+				logicalLevel,
+				legacyX,
+				legacyY);
+		if (result.isScopeChanged()) {
+			sceneBaselineState.resetForScopeChange(
+				layeredSceneContextState.scopeIdentity());
+			movementSnapshotStage.reset();
+			appliedSceneBaselineKey = 0;
+		}
+		mc.applyLayeredSceneScope(
+			result.getLegacyPlane(), result.isScopeChanged());
+		String summary = layeredSceneContextState.summary();
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+		packetsIncoming.packetEnd = length;
 	}
 
 	private void updateWorldEditor() {
@@ -1529,8 +1580,14 @@ public class PacketHandler {
 
 		packetsIncoming.startBitAccess();
 
-		mc.setLocalPlayerX(packetsIncoming.getBitMask(11));
-		mc.setLocalPlayerZ(packetsIncoming.getBitMask(13));
+		int packedLocalPlayerX = packetsIncoming.getBitMask(11);
+		int packedLocalPlayerY = packetsIncoming.getBitMask(13);
+		if (layeredSceneContextState.hasContext()) {
+			layeredSceneContextState.acceptLegacyPlayerPosition(
+				packedLocalPlayerX, packedLocalPlayerY);
+		}
+		mc.setLocalPlayerX(packedLocalPlayerX);
+		mc.setLocalPlayerZ(packedLocalPlayerY);
 
 		int direction = packetsIncoming.getBitMask(4);
 		mc.preloadTerrainForIncomingWorldPosition(mc.getLocalPlayerX(), mc.getLocalPlayerZ());
@@ -1617,6 +1674,9 @@ public class PacketHandler {
 		int localX = packetsIncoming.getShort();
 		int localZ = packetsIncoming.getShort();
 		int localDirection = packetsIncoming.getUnsignedByte();
+		if (layeredSceneContextState.hasContext()) {
+			layeredSceneContextState.acceptLegacyPlayerPosition(localX, localZ);
+		}
 		MovementSnapshotDiagnostics.Fingerprint fingerprint =
 			movementSnapshotDiagnostics.createFingerprint(localX, localZ, localDirection);
 		mc.applyCustomMovementUpdate(localX, localZ, localDirection);
@@ -1659,6 +1719,15 @@ public class PacketHandler {
 		MovementSnapshotStage.Frame stageFrame = null;
 		if (packetsIncoming.packetEnd + 16 <= length) {
 			protocolVersion = packetsIncoming.getUnsignedByte();
+			int locationContextSequence = protocolVersion >= 2
+				? packetsIncoming.get32()
+				: 0;
+			if (protocolVersion >= 2
+				&& !layeredSceneContextState.matchesSequence(
+					locationContextSequence)) {
+				throw new IllegalStateException(
+					"Movement snapshot does not match layered scene context");
+			}
 			serverTick = packetsIncoming.get32();
 			sequence = packetsIncoming.get32();
 			localX = packetsIncoming.getShort();
@@ -1741,12 +1810,23 @@ public class PacketHandler {
 		int pageIndex = 0;
 		int pageTotal = 0;
 		int recordsRead = 0;
+		int locationContextSequence = 0;
+		String scopeIdentity = "legacy";
 		List<SceneBaselineState.Record> pageRecords = new ArrayList<SceneBaselineState.Record>();
 		if (length >= 21) {
 			protocolVersion = packetsIncoming.getUnsignedByte();
 			serverTick = packetsIncoming.get32();
 			localX = packetsIncoming.getShort();
 			localY = packetsIncoming.getShort();
+			if (protocolVersion >= 6) {
+				locationContextSequence = packetsIncoming.get32();
+				if (!layeredSceneContextState.matchesSequence(
+						locationContextSequence)) {
+					throw new IllegalStateException(
+						"Scene baseline does not match layered scene context");
+				}
+				scopeIdentity = layeredSceneContextState.scopeIdentity();
+			}
 			packetsIncoming.getShort();
 			packetsIncoming.getShort();
 			scenery = packetsIncoming.getShort();
@@ -1781,6 +1861,7 @@ public class PacketHandler {
 		sceneBaselineState.recordPacket(
 			protocolVersion,
 			serverTick,
+			scopeIdentity,
 			localX,
 			localY,
 			scenery,

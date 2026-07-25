@@ -111,4 +111,5 @@ public enum OpcodeOut {
 	SEND_INVENTORY_SIZE, // known to be in mudclient69 to 75
     SEND_UNLOCKED_APPEARANCES, // custom
 	SEND_WORLD_EDITOR, // custom, versioned editor envelope
+	SEND_LAYERED_SCENE_CONTEXT, // custom, versioned layered scene scope
 }
