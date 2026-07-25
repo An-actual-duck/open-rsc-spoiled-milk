@@ -172,6 +172,7 @@ python3 ./tests/myworld/test-prayer-faction-setup.py
 python3 ./tests/myworld/test-quest-reward-guardrails.py
 python3 ./tests/myworld/test-robe-defense-budgets.py
 python3 ./tests/myworld/test-shop-tiering.py
+python3 ./tests/myworld/test-thrander-crystal-key-exchange.py
 python3 ./tests/myworld/test-brown-apron-crafting-guild.py
 python3 ./tests/myworld/test-ore-crusher.py
 python3 ./tests/myworld/test-guide-text-polish.py
