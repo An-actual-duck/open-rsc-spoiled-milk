@@ -230,6 +230,18 @@ recovery. If accepted, continue with a full-fidelity non-uniform sector
 encoding and package-owned placement source before claiming Milestone E
 complete.
 
+The first login attempt exposed and rejected one selector defect before any
+deep-room acceptance: with the fifth gate enabled,
+`nativeLayeredSceneTerrain` threw for an ordinary level-0 login rather than
+returning no native page. Authentication and layered Player restoration
+succeeded, but the first scene update disconnected `devduck`. The selector now
+returns the unchanged legacy/protocol-v1 path for every non-deep location and
+only requests native data for the package-backed deep scope. Regression
+coverage pairs the executable client surface-context case with an explicit
+server-selector guard, and the authoritative server build passes. No account
+or database repair was required; the failed logins saved the unchanged surface
+location.
+
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
 expose, and validate the next restoration prerequisite: known authored
@@ -17306,6 +17318,7 @@ private environment should validate at least:
 | 2026-07-25 | Complete Milestone E foundation checkpoint 1: freeze the deterministic 12-file Preservation map-source manifest and implement strict native package/uniform-sector validation with data-declared `-3` and `-37` depth proofs. | Implemented and automated-validated; no server/client/runtime terrain authority changed |
 | 2026-07-25 | Complete Milestone E foundation checkpoint 2: add the server's strict detached native package/sector source, adjacent level `-2` page lookup, same-X/Y isolation, arbitrary level `-37` proof, and full detached sector byte-fidelity check. | Implemented and automated-validated; 3 focused tests and authoritative 853/488 build pass, with zero `World`/Region/client authority |
 | 2026-07-25 | Complete Milestone E runtime checkpoints 3 and 4: add the fifth default-off native-package server gate and rollback, then protocol-v3 package/page identity with a fresh client-native terrain window and explicit void outside the bounded room. | Implemented and automated-validated; 23 focused A-E tests and authoritative server/client builds pass, private owner validation pending |
+| 2026-07-25 | Correct the rejected first Milestone E owner login: the fifth-gate selector must return the unchanged ordinary scene path outside native deep scope rather than treating level 0 as an error. | Root-caused from the first scene-update stack trace; narrow selector fix, regression guard, and authoritative server build pass; retest pending |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

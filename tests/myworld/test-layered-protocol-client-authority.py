@@ -315,6 +315,16 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
             "NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 3", updater
         )
         self.assertIn("nativeLayeredSceneTerrain(location)", updater)
+        self.assertIn(
+            "|| !LayeredCompatibilityPointAdapter\n"
+            "\t\t\t\t.isSyntheticDeepLevel(location)) {\n"
+            "\t\t\treturn null;",
+            updater,
+        )
+        self.assertNotIn(
+            "native terrain gate currently requires the accepted synthetic",
+            updater,
+        )
         self.assertIn("protocolVersion >= 3", generator)
         self.assertIn("NativeLayeredTerrainSnapshot", handler)
         self.assertIn("nativeManifestSha256", context_struct)

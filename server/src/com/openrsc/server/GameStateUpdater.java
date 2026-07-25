@@ -259,13 +259,10 @@ public final class GameStateUpdater {
 
 	private NativeLayeredSceneTerrain nativeLayeredSceneTerrain(
 		final WorldLocation location) {
-		if (!getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE) {
+		if (!getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			|| !LayeredCompatibilityPointAdapter
+				.isSyntheticDeepLevel(location)) {
 			return null;
-		}
-		if (!LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location)) {
-			throw new IllegalStateException(
-				"The private native terrain gate currently requires the accepted "
-					+ "synthetic deep compatibility boundary");
 		}
 		final NativeLayeredWorldPackage terrainPackage =
 			getServer().getWorld().getRegionManager()
