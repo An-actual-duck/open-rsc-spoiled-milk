@@ -37,8 +37,9 @@ def main() -> None:
 
     for dialogue in (
         '"Can you convert crystal key halves?"',
-        '"Crystal? Well I do have a knack for converting things, but crystal is brittle, "',
-        "\"I'll need 3 of a kind to cleanly swap them\"",
+        '"I do have a knack for converting things"',
+        '"But crystal is brittle"',
+        "\"I'll need at least three to do it properly\"",
         "\"Here's 3 loops\"",
         "\"Here's three teeth\"",
         '"No thanks"',
@@ -47,6 +48,12 @@ def main() -> None:
         "\"Here's your loop half\"",
     ):
         require(source, dialogue, "assigned dialogue")
+
+    intro = source.index('"I do have a knack for converting things"')
+    warning = source.index('"But crystal is brittle"')
+    requirement = source.index("\"I'll need at least three to do it properly\"")
+    if not intro < warning < requirement:
+        raise AssertionError("Thrander's conversion explanation is not paced in order")
 
     for existing_shop_contract in (
         '"Do you want to trade?"',
