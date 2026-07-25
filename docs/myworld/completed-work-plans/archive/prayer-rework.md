@@ -31,12 +31,13 @@ Combat prayers use these five tiers:
 | --- | --- | ---: | ---: |
 | 1 | Weak | 3 | 5% |
 | 2 | Lesser | 6 | 10% |
-| 3 | Plain | 10 | 15% |
-| 4 | Strong | 15 | 20% |
-| 5 | Greater | 21 | 25% |
+| 3 | Plain | 15 | 15% |
+| 4 | Strong | 29 | 20% |
+| 5 | Greater | 49 | 25% |
 
-All combat tiers in a set reserve 55 points. Their raw additive value is 75%,
-but the final combat offense or defense contribution is capped at 60%.
+All combat tiers in a set reserve 102 points. Their effects stack additively,
+so the complete set contributes its full 75% offense bonus or defense
+reduction.
 
 Combat prayer names follow:
 
@@ -48,12 +49,34 @@ Skilling prayers use these five tiers:
 | Tier | Prefix | Cost | Effect |
 | --- | --- | ---: | ---: |
 | 1 | Weak | 2 | 10% |
-| 2 | Lesser | 8 | 15% |
-| 3 | Plain | 20 | 20% |
-| 4 | Strong | 35 | 25% |
-| 5 | Greater | 55 | 30% |
+| 2 | Lesser | 7 | 15% |
+| 3 | Plain | 22 | 20% |
+| 4 | Strong | 46 | 25% |
+| 5 | Greater | 80 | 30% |
 
-All skilling tiers in a set reserve 120 points and stack to a 100% XP bonus.
+All skilling tiers in a set reserve 157 points and stack to a 100% XP bonus.
+
+## Active Effect Bound Audit
+
+Reviewed on 2026-07-25 when the artificial 60% combat stacking cap was
+removed:
+
+| Effect path | Active stacking behavior | Bound decision |
+| --- | --- | --- |
+| My World offense prayers | All five matching tiers add to 75% | Uncapped; the full additive value applies |
+| My World defense prayers | All five matching tiers add to 75% | Uncapped; the full additive value applies |
+| My World skilling prayers | All five matching tiers add to 100% | Already uncapped; unchanged |
+| Saving Grace | One special prayer with a health-scaled proc chance | Its 75% maximum probability and missing-HP heal limit are safety and balance bounds, not stacking caps; unchanged |
+| Divine Retribution | One special prayer with a damage-scaled proc chance | Its 90% maximum probability and actual-HP damage attribution are safety and balance bounds; unchanged |
+| Corrosive Aura | One special prayer with health-scaled poison power | Its 10–50 poison-power range is the effect's designed magnitude range; unchanged |
+| Legacy/non-My World prayers | Authentic strongest-tier behavior | Kept behind the existing non-My World gates; it does not cap My World additive effects |
+
+The combat formula retains a final nonnegative-damage guard. Allocation
+capacity and overflow deactivation, special-prayer point costs and god-cape
+discounts, the blessing frequency limit, Devotion storage bounds, UI capacity,
+and legacy prayer-stat protocol reconciliation were also reviewed. They govern
+resources, probabilities, persistence, or compatibility rather than the
+magnitude of an active stacked prayer effect, so none were removed.
 
 ## Altar Mapping
 
