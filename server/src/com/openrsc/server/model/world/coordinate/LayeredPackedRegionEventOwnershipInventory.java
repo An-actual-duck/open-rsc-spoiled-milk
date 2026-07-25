@@ -569,6 +569,89 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		HARVESTING_SCENERY
 	}
 
+	public enum EventExecutionContextKind {
+		NONE,
+		PLUGIN_ENTRY_POINT
+	}
+
+	/**
+	 * Detached implementation context for one scheduled callback.
+	 *
+	 * <p>The optional plugin entry point is copied as bounded code identity at
+	 * the scheduler snapshot boundary. Walk-to binding is retained only as a
+	 * boolean. No plugin task, script data, action, callback, event, owner,
+	 * scheduler, or runtime handle survives in this value.</p>
+	 */
+	public static final class EventExecutionContextIdentity {
+		public static final int MAXIMUM_CONTEXT_NAME_LENGTH = 512;
+		private static final EventExecutionContextIdentity NONE =
+			new EventExecutionContextIdentity(
+				EventExecutionContextKind.NONE, null, false);
+
+		private final EventExecutionContextKind kind;
+		private final String contextName;
+		private final boolean walkToActionBound;
+
+		private EventExecutionContextIdentity(
+			final EventExecutionContextKind kind,
+			final String contextName,
+			final boolean walkToActionBound) {
+			this.kind = Objects.requireNonNull(kind, "kind");
+			if (kind == EventExecutionContextKind.NONE) {
+				if (contextName != null || walkToActionBound) {
+					throw new IllegalArgumentException(
+						"Empty event execution context carries details");
+				}
+				this.contextName = null;
+			} else {
+				this.contextName = checkedContextName(contextName);
+			}
+			this.walkToActionBound = walkToActionBound;
+		}
+
+		public static EventExecutionContextIdentity none() {
+			return NONE;
+		}
+
+		public static EventExecutionContextIdentity pluginEntryPoint(
+			final String contextName,
+			final boolean walkToActionBound) {
+			return new EventExecutionContextIdentity(
+				EventExecutionContextKind.PLUGIN_ENTRY_POINT,
+				contextName, walkToActionBound);
+		}
+
+		private static String checkedContextName(final String value) {
+			String checked = Objects.requireNonNull(value, "contextName");
+			if (checked.isEmpty()
+				|| checked.length() > MAXIMUM_CONTEXT_NAME_LENGTH
+				|| !checked.equals(checked.trim())) {
+				throw new IllegalArgumentException(
+					"Event execution context name is invalid");
+			}
+			for (int index = 0; index < checked.length(); index++) {
+				if (Character.isISOControl(checked.charAt(index))) {
+					throw new IllegalArgumentException(
+						"Event execution context contains control characters");
+				}
+			}
+			return checked;
+		}
+
+		public EventExecutionContextKind getKind() { return kind; }
+		public String getContextName() { return contextName; }
+		public boolean isWalkToActionBound() { return walkToActionBound; }
+		public boolean isCaptured() { return true; }
+
+		public boolean isDetachedValue() { return true; }
+		public boolean isPluginTaskHandle() { return false; }
+		public boolean isScriptDataRetained() { return false; }
+		public boolean isActionHandle() { return false; }
+		public boolean isCallbackHandle() { return false; }
+		public boolean isSchedulerHandle() { return false; }
+		public boolean isLifecycleAuthority() { return false; }
+	}
+
 	/**
 	 * Detached implementation identity for one scheduled callback.
 	 *
@@ -1237,6 +1320,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		private final int snapshotOrdinal;
 		private final long registrationSequence;
 		private final EventTypeIdentity eventTypeIdentity;
+		private final EventExecutionContextIdentity
+			eventExecutionContextIdentity;
 		private final OwnerKind ownerKind;
 		private final NpcOwnerIdentity npcOwnerIdentity;
 		private final AttributionKind attributionKind;
@@ -1251,6 +1336,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final int snapshotOrdinal,
 			final long registrationSequence,
 			final EventTypeIdentity eventTypeIdentity,
+			final EventExecutionContextIdentity
+				eventExecutionContextIdentity,
 			final OwnerKind ownerKind,
 			final NpcOwnerIdentity npcOwnerIdentity,
 			final AttributionKind attributionKind,
@@ -1269,6 +1356,9 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			this.registrationSequence = registrationSequence;
 			this.eventTypeIdentity = Objects.requireNonNull(
 				eventTypeIdentity, "eventTypeIdentity");
+			this.eventExecutionContextIdentity = Objects.requireNonNull(
+				eventExecutionContextIdentity,
+				"eventExecutionContextIdentity");
 			this.ownerKind = Objects.requireNonNull(ownerKind, "ownerKind");
 			if (npcOwnerIdentity != null && ownerKind != OwnerKind.NPC) {
 				throw new IllegalArgumentException(
@@ -1361,7 +1451,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final List<SpatialReference> spatialReferences) {
 			return new EventState(
 				snapshotOrdinal, registrationSequence,
-				EventTypeIdentity.unspecified(), ownerKind, null,
+				EventTypeIdentity.unspecified(),
+				EventExecutionContextIdentity.none(), ownerKind, null,
 				attributionKind,
 				running,
 				ticksBeforeRun, timesRan, spatialReferences,
@@ -1380,7 +1471,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final EventRestorationState restorationState) {
 			return new EventState(
 				snapshotOrdinal, registrationSequence,
-				EventTypeIdentity.unspecified(), ownerKind, null,
+				EventTypeIdentity.unspecified(),
+				EventExecutionContextIdentity.none(), ownerKind, null,
 				attributionKind,
 				running,
 				ticksBeforeRun, timesRan, spatialReferences,
@@ -1400,7 +1492,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final boolean atomicTimingCaptured) {
 			return new EventState(
 				snapshotOrdinal, registrationSequence,
-				EventTypeIdentity.unspecified(), ownerKind, null,
+				EventTypeIdentity.unspecified(),
+				EventExecutionContextIdentity.none(), ownerKind, null,
 				attributionKind,
 				running, ticksBeforeRun, timesRan, spatialReferences,
 				restorationState, atomicTimingCaptured);
@@ -1420,7 +1513,8 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final boolean atomicTimingCaptured) {
 			return new EventState(
 				snapshotOrdinal, registrationSequence,
-				EventTypeIdentity.unspecified(), ownerKind,
+				EventTypeIdentity.unspecified(),
+				EventExecutionContextIdentity.none(), ownerKind,
 				npcOwnerIdentity, attributionKind, running, ticksBeforeRun,
 				timesRan, spatialReferences, restorationState,
 				atomicTimingCaptured);
@@ -1441,15 +1535,42 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 			final boolean atomicTimingCaptured) {
 			return new EventState(
 				snapshotOrdinal, registrationSequence, eventTypeIdentity,
+				EventExecutionContextIdentity.none(),
 				ownerKind, npcOwnerIdentity, attributionKind, running,
 				ticksBeforeRun, timesRan, spatialReferences,
 				restorationState, atomicTimingCaptured);
+		}
+
+		public static EventState of(
+			final int snapshotOrdinal,
+			final long registrationSequence,
+			final EventTypeIdentity eventTypeIdentity,
+			final EventExecutionContextIdentity
+				eventExecutionContextIdentity,
+			final OwnerKind ownerKind,
+			final NpcOwnerIdentity npcOwnerIdentity,
+			final AttributionKind attributionKind,
+			final boolean running,
+			final long ticksBeforeRun,
+			final int timesRan,
+			final List<SpatialReference> spatialReferences,
+			final EventRestorationState restorationState,
+			final boolean atomicTimingCaptured) {
+			return new EventState(
+				snapshotOrdinal, registrationSequence, eventTypeIdentity,
+				eventExecutionContextIdentity, ownerKind, npcOwnerIdentity,
+				attributionKind, running, ticksBeforeRun, timesRan,
+				spatialReferences, restorationState, atomicTimingCaptured);
 		}
 
 		public int getSnapshotOrdinal() { return snapshotOrdinal; }
 		public long getRegistrationSequence() { return registrationSequence; }
 		public EventTypeIdentity getEventTypeIdentity() {
 			return eventTypeIdentity;
+		}
+		public EventExecutionContextIdentity
+				getEventExecutionContextIdentity() {
+			return eventExecutionContextIdentity;
 		}
 		public OwnerKind getOwnerKind() { return ownerKind; }
 		public NpcOwnerIdentity getNpcOwnerIdentity() {
@@ -1491,6 +1612,10 @@ public final class LayeredPackedRegionEventOwnershipInventory {
 		}
 		public EventTypeIdentity getEventTypeIdentity() {
 			return state.getEventTypeIdentity();
+		}
+		public EventExecutionContextIdentity
+				getEventExecutionContextIdentity() {
+			return state.getEventExecutionContextIdentity();
 		}
 		public OwnerKind getOwnerKind() { return state.getOwnerKind(); }
 		public NpcOwnerIdentity getNpcOwnerIdentity() {

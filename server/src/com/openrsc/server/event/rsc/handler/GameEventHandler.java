@@ -9,6 +9,7 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationState;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetRevalidation;
 import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.event.rsc.ImmediateEvent;
+import com.openrsc.server.event.rsc.PluginTickEvent;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -31,6 +32,7 @@ import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnersh
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.DesiredState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventRestorationState;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventState;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventExecutionContextIdentity;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.EventTypeIdentity;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.ExecutionSemantics;
 import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory.GenerationBindingRequirement;
@@ -882,8 +884,11 @@ public class GameEventHandler {
 		}
 		EventTypeIdentity eventTypeIdentity =
 			detachEventTypeIdentity(event);
+		EventExecutionContextIdentity eventExecutionContextIdentity =
+			detachEventExecutionContextIdentity(event);
 		return EventState.of(
 			ordinal, registrationSequence, eventTypeIdentity,
+			eventExecutionContextIdentity,
 			ownerKind, npcOwnerIdentity,
 			attribution,
 			timing.isRunning(), timing.getTicksBeforeRun(),
@@ -909,6 +914,18 @@ public class GameEventHandler {
 				? GameTickEvent.class.getName()
 				: directSupertype.getName(),
 			anonymous, local, synthetic);
+	}
+
+	private EventExecutionContextIdentity
+			detachEventExecutionContextIdentity(
+				final GameTickEvent event) {
+		if (event instanceof PluginTickEvent) {
+			PluginTickEvent pluginEvent = (PluginTickEvent) event;
+			return EventExecutionContextIdentity.pluginEntryPoint(
+				pluginEvent.getPluginName(),
+				pluginEvent.isWalkToActionBound());
+		}
+		return EventExecutionContextIdentity.none();
 	}
 
 	private EventRestorationState detachEventRestorationState(

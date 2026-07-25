@@ -16685,6 +16685,55 @@ for a safe affinity decision, so the next slice must expose a bounded,
 per-instance plugin implementation identity before any further classification
 is considered.
 
+### Slice 213: Detached plugin execution-context identity
+
+Objective: distinguish generic plugin scheduler blockers by their actual code
+entry point and walk-to binding without retaining script data or changing
+their conservative blocker status.
+
+Implemented:
+
+- each scheduler snapshot now carries a detached execution-context identity in
+  addition to its Java event-type identity;
+- ordinary events use the explicit `NONE` context, while `PluginTickEvent`
+  copies its bounded plugin entry-point name and whether it is bound to a
+  walk-to action;
+- the snapshot boundary copies only code identity and one boolean; plugin
+  tasks, script data, walk-to actions, callbacks, owners, and scheduler handles
+  never cross it;
+- blocker-family reduction now includes execution-context kind, name, and
+  walk-to binding in its exact key and fingerprint, allowing callbacks with
+  the same generic `PluginTickEvent` class to form separate implementation
+  families; and
+- existing event-state factories retain the explicit empty context, preserving
+  legacy fixtures and callers. This slice makes no schema change; the refined
+  families remain internal until a following additive private-schema slice.
+
+Safety boundary:
+
+- plugin entry-point identity is diagnostic only and cannot establish spatial
+  affinity, preservation, or safety;
+- every plugin callback remains an unchanged hard blocker regardless of its
+  name or walk-to binding; and
+- no callback scheduling, execution, cancellation, script behavior,
+  attribution, source lifecycle, Region state, or runtime authority changes.
+
+Automated validation status:
+
+- the detached identity rejects empty, over-budget, and control-character
+  names and proves that no task, script data, action, callback, scheduler, or
+  lifecycle handle survives;
+- the reducer regression proves two callbacks sharing the same
+  `PluginTickEvent` runtime type split by distinct plugin entry points while
+  retaining exact aggregate blocker counts; and
+- the Slice 182-213 lineage passes 133 tests across 32 focused files;
+- the authoritative bundled-Ant build compiles 844 core and 488 plugin
+  sources; and
+- the server build/classpath audit passes.
+
+Status: implemented and automated-validated. Additive private-schema exposure
+remains pending.
+
 ### Slice 62: Authored reconstruction dependency diagnostics
 
 Objective: expose Slice 61's bounded recipe/requirement projection through the
@@ -17126,6 +17175,7 @@ private environment should validate at least:
 | 2026-07-24 | Accept the Slice 211 private scheduler-blocker family route. | Owner-validated; four contiguous schema-v59 records and exact round trips validate, all 106 blockers reduce to 98 `ShopRestockEvent`, one `StatRestorationEvent`, and seven `PluginTickEvent` callbacks, every aggregate/correlation/fingerprint/family count aligns, all authority remains false, and visuals/interactions remained normal. One accepted 1,216 ms late tick contains 1,149 ms of opt-in diagnostic work. The first two families are narrow candidates for explicit non-spatial audit; generic plugin ticks remain hard blockers pending a stronger per-instance contract |
 | 2026-07-24 | Continue with Slice 212 by assigning only proven non-spatial scheduler affinities. | Implemented and automated-validated; shop restock is explicitly world-level non-spatial, player stat restoration is non-spatial while NPC stat restoration retains its owner-position preservation requirement, and arbitrary `PluginTickEvent` execution remains unspecified and blocking. No callback or scheduler behavior changes; four focused guards, the existing affinity/correlation fixtures, the 129-test Slice 182-212 lineage, both observer integrations, and the 844/488 Ant build/audit pass |
 | 2026-07-24 | Accept the Slice 212 narrow non-spatial-affinity route. | Owner-validated; four contiguous schema-v59 records and exact round trips classify all 3,881 callbacks, with the proven 98 shop-restock plus one player stat-restoration callback moving to the 99-event non-spatial count. The blocker set falls from 106 events across three families to seven player-owned `PluginTickEvent` callbacks in one family, with no unattributed callback remaining; all correlation/family identities and counts align, visuals and interaction remained normal, and one accepted 1,312 ms late tick contains 1,201 ms of opt-in diagnostic work |
+| 2026-07-24 | Continue with Slice 213 by detaching per-instance plugin execution context. | Implemented and automated-validated; scheduler snapshots now copy only a bounded plugin entry-point name plus walk-to-binding boolean, ordinary events carry an explicit empty context, and blocker families split by exact execution context without retaining plugin tasks, script data, actions, callbacks, owners, or handles. All plugin callbacks remain hard blockers and no attribution/runtime behavior changes; the 133-test Slice 182-213 lineage and 844/488 Ant build/audit pass, with additive private-schema exposure still pending |
 
 ## Next Discussion
 

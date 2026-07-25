@@ -7,6 +7,10 @@ import com.openrsc.server.model.world.coordinate
 import com.openrsc.server.model.world.coordinate
 	.LayeredPackedRegionEventOwnershipInventory.EventRecord;
 import com.openrsc.server.model.world.coordinate
+	.LayeredPackedRegionEventOwnershipInventory.EventExecutionContextIdentity;
+import com.openrsc.server.model.world.coordinate
+	.LayeredPackedRegionEventOwnershipInventory.EventExecutionContextKind;
+import com.openrsc.server.model.world.coordinate
 	.LayeredPackedRegionEventOwnershipInventory.EventTypeIdentity;
 import com.openrsc.server.model.world.coordinate
 	.LayeredPackedRegionEventOwnershipInventory.OwnerKind;
@@ -146,6 +150,18 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
 				throw new IllegalArgumentException(
 					"Scheduler blocker type identity is incomplete");
 			}
+			EventExecutionContextIdentity context =
+				event.getEventExecutionContextIdentity();
+			if (context == null || !context.isCaptured()
+				|| context.isPluginTaskHandle()
+				|| context.isScriptDataRetained()
+				|| context.isActionHandle()
+				|| context.isCallbackHandle()
+				|| context.isSchedulerHandle()
+				|| context.isLifecycleAuthority()) {
+				throw new IllegalArgumentException(
+					"Scheduler blocker execution context is incomplete");
+			}
 			EventOutcome outcome = blocked.getOutcome();
 			switch (outcome) {
 				case CANDIDATE_NPC_OWNER_UNCORRELATED:
@@ -283,6 +299,7 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
 
 	public boolean areAllBlockersRetained() { return true; }
 	public boolean isEventTypeIdentityComplete() { return true; }
+	public boolean isEventExecutionContextIdentityComplete() { return true; }
 	public boolean isPointInTimeOnly() { return true; }
 	public boolean isDetachedSummaryOnly() { return true; }
 	public boolean isAttributionChanged() { return false; }
@@ -308,6 +325,9 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
 		private final boolean anonymousType;
 		private final boolean localType;
 		private final boolean syntheticType;
+		private final EventExecutionContextKind executionContextKind;
+		private final String executionContextName;
+		private final boolean walkToActionBound;
 		private final OwnerKind ownerKind;
 		private final AttributionKind attributionKind;
 		private final RestorationKind restorationKind;
@@ -333,6 +353,11 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
 			this.anonymousType = family.key.anonymousType;
 			this.localType = family.key.localType;
 			this.syntheticType = family.key.syntheticType;
+			this.executionContextKind =
+				family.key.executionContextKind;
+			this.executionContextName =
+				family.key.executionContextName;
+			this.walkToActionBound = family.key.walkToActionBound;
 			this.ownerKind = family.key.ownerKind;
 			this.attributionKind = family.key.attributionKind;
 			this.restorationKind = family.key.restorationKind;
@@ -364,6 +389,15 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
 		public boolean isAnonymousType() { return anonymousType; }
 		public boolean isLocalType() { return localType; }
 		public boolean isSyntheticType() { return syntheticType; }
+		public EventExecutionContextKind getExecutionContextKind() {
+			return executionContextKind;
+		}
+		public String getExecutionContextName() {
+			return executionContextName;
+		}
+		public boolean isWalkToActionBound() {
+			return walkToActionBound;
+		}
 		public OwnerKind getOwnerKind() { return ownerKind; }
 		public AttributionKind getAttributionKind() {
 			return attributionKind;
@@ -469,6 +503,9 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
 		private final boolean anonymousType;
 		private final boolean localType;
 		private final boolean syntheticType;
+		private final EventExecutionContextKind executionContextKind;
+		private final String executionContextName;
+		private final boolean walkToActionBound;
 		private final OwnerKind ownerKind;
 		private final AttributionKind attributionKind;
 		private final RestorationKind restorationKind;
@@ -484,6 +521,11 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
 			this.anonymousType = type.isAnonymousType();
 			this.localType = type.isLocalType();
 			this.syntheticType = type.isSyntheticType();
+			EventExecutionContextIdentity context =
+				event.getEventExecutionContextIdentity();
+			this.executionContextKind = context.getKind();
+			this.executionContextName = context.getContextName();
+			this.walkToActionBound = context.isWalkToActionBound();
 			this.ownerKind = event.getOwnerKind();
 			this.attributionKind = event.getAttributionKind();
 			this.restorationKind =
@@ -498,10 +540,14 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
 			return anonymousType == key.anonymousType
 				&& localType == key.localType
 				&& syntheticType == key.syntheticType
+				&& walkToActionBound == key.walkToActionBound
 				&& outcome == key.outcome
 				&& runtimeTypeName.equals(key.runtimeTypeName)
 				&& familyTypeName.equals(key.familyTypeName)
 				&& directSupertypeName.equals(key.directSupertypeName)
+				&& executionContextKind == key.executionContextKind
+				&& Objects.equals(
+					executionContextName, key.executionContextName)
 				&& ownerKind == key.ownerKind
 				&& attributionKind == key.attributionKind
 				&& restorationKind == key.restorationKind;
@@ -516,6 +562,11 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
 			result = 31 * result + (anonymousType ? 1 : 0);
 			result = 31 * result + (localType ? 1 : 0);
 			result = 31 * result + (syntheticType ? 1 : 0);
+			result = 31 * result + executionContextKind.hashCode();
+			result = 31 * result
+				+ (executionContextName == null
+					? 0 : executionContextName.hashCode());
+			result = 31 * result + (walkToActionBound ? 1 : 0);
 			result = 31 * result + ownerKind.hashCode();
 			result = 31 * result + attributionKind.hashCode();
 			result = 31 * result + restorationKind.hashCode();
@@ -538,6 +589,12 @@ public final class LayeredPackedRegionSchedulerBlockerFamilyInventory {
 			updateBoolean(digest, family.isAnonymousType());
 			updateBoolean(digest, family.isLocalType());
 			updateBoolean(digest, family.isSyntheticType());
+			updateInt(
+				digest, family.getExecutionContextKind().ordinal());
+			updateString(
+				digest, family.getExecutionContextName() == null
+					? "" : family.getExecutionContextName());
+			updateBoolean(digest, family.isWalkToActionBound());
 			updateInt(digest, family.getOwnerKind().ordinal());
 			updateInt(digest, family.getAttributionKind().ordinal());
 			updateInt(digest, family.getRestorationKind().ordinal());

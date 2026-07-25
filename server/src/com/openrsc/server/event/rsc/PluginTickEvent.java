@@ -70,4 +70,15 @@ public class PluginTickEvent extends GameTickEvent {
 	public String getPluginName() {
 		return pluginName;
 	}
+
+	/**
+	 * Reports whether this plugin callback is bound to the walk-to action that
+	 * selected its interaction target.
+	 *
+	 * <p>This is execution-context metadata only. It does not expose the action
+	 * or change cancellation behavior.</p>
+	 */
+	public boolean isWalkToActionBound() {
+		return walkToAction != null;
+	}
 }

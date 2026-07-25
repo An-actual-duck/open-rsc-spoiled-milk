@@ -31,6 +31,42 @@ public final class LayeredPackedRegionEventOwnershipInventory {
     public enum RestorationKind {
         UNAVAILABLE, SCENERY_SPAWN, SCENERY_REMOVE
     }
+    public enum EventExecutionContextKind {
+        NONE, PLUGIN_ENTRY_POINT
+    }
+
+    public static final class EventExecutionContextIdentity {
+        private final EventExecutionContextKind kind;
+        private final String name;
+        private final boolean walkBound;
+        public EventExecutionContextIdentity(
+                EventExecutionContextKind kind, String name,
+                boolean walkBound) {
+            this.kind = kind;
+            this.name = name;
+            this.walkBound = walkBound;
+        }
+        public static EventExecutionContextIdentity none() {
+            return new EventExecutionContextIdentity(
+                EventExecutionContextKind.NONE, null, false);
+        }
+        public static EventExecutionContextIdentity plugin(
+                String name, boolean walkBound) {
+            return new EventExecutionContextIdentity(
+                EventExecutionContextKind.PLUGIN_ENTRY_POINT,
+                name, walkBound);
+        }
+        public EventExecutionContextKind getKind() { return kind; }
+        public String getContextName() { return name; }
+        public boolean isWalkToActionBound() { return walkBound; }
+        public boolean isCaptured() { return true; }
+        public boolean isPluginTaskHandle() { return false; }
+        public boolean isScriptDataRetained() { return false; }
+        public boolean isActionHandle() { return false; }
+        public boolean isCallbackHandle() { return false; }
+        public boolean isSchedulerHandle() { return false; }
+        public boolean isLifecycleAuthority() { return false; }
+    }
 
     public static final class EventTypeIdentity {
         private final String runtime;
@@ -78,6 +114,7 @@ public final class LayeredPackedRegionEventOwnershipInventory {
         private final int ordinal;
         private final long registration;
         private final EventTypeIdentity type;
+        private final EventExecutionContextIdentity context;
         private final OwnerKind owner;
         private final AttributionKind attribution;
         private final EventRestorationState restoration;
@@ -91,9 +128,20 @@ public final class LayeredPackedRegionEventOwnershipInventory {
                 OwnerKind owner, AttributionKind attribution,
                 RestorationKind restoration, boolean running,
                 long ticks, int timesRan, List<Integer> candidates) {
+            this(ordinal, registration, type,
+                EventExecutionContextIdentity.none(), owner, attribution,
+                restoration, running, ticks, timesRan, candidates);
+        }
+        public EventRecord(
+                int ordinal, long registration, EventTypeIdentity type,
+                EventExecutionContextIdentity context,
+                OwnerKind owner, AttributionKind attribution,
+                RestorationKind restoration, boolean running,
+                long ticks, int timesRan, List<Integer> candidates) {
             this.ordinal = ordinal;
             this.registration = registration;
             this.type = type;
+            this.context = context;
             this.owner = owner;
             this.attribution = attribution;
             this.restoration =
@@ -106,6 +154,10 @@ public final class LayeredPackedRegionEventOwnershipInventory {
         public int getSnapshotOrdinal() { return ordinal; }
         public long getRegistrationSequence() { return registration; }
         public EventTypeIdentity getEventTypeIdentity() { return type; }
+        public EventExecutionContextIdentity
+                getEventExecutionContextIdentity() {
+            return context;
+        }
         public OwnerKind getOwnerKind() { return owner; }
         public AttributionKind getAttributionKind() {
             return attribution;
@@ -386,6 +438,54 @@ public final class SchedulerBlockerFamilyFixture {
                     9L, 12L, SCHEDULER,
                     Collections.singletonList(unknown)),
                 1));
+
+        EventTypeIdentity pluginType = type(
+            "PluginTickEvent", "PluginTickEvent", "GameTickEvent",
+            false, true);
+        List<EventRecord> pluginEvents = Arrays.asList(
+            event(0, 21L, pluginType,
+                EventExecutionContextIdentity.plugin(
+                    "RegularPlayer.onCommand", false),
+                OwnerKind.PLAYER, AttributionKind.OWNER_POSITION_HINT,
+                true, 0L, 0,
+                Collections.singletonList(Integer.valueOf(0))),
+            event(1, 22L, pluginType,
+                EventExecutionContextIdentity.plugin(
+                    "Development.onCommand", false),
+                OwnerKind.PLAYER, AttributionKind.OWNER_POSITION_HINT,
+                false, 0L, 1,
+                Collections.singletonList(Integer.valueOf(0))));
+        List<EventCorrelation> pluginBlockers = Arrays.asList(
+            blocked(0, 21L, OwnerKind.PLAYER,
+                EventOutcome.CANDIDATE_NON_NPC_OWNER,
+                Collections.singletonList(Integer.valueOf(0))),
+            blocked(1, 22L, OwnerKind.PLAYER,
+                EventOutcome.CANDIDATE_NON_NPC_OWNER,
+                Collections.singletonList(Integer.valueOf(0))));
+        LayeredPackedRegionSchedulerBlockerFamilyInventory pluginReduced =
+            LayeredPackedRegionSchedulerBlockerFamilyInventory.reduce(
+                new
+                    LayeredPackedRegionAuthoredDetachmentSchedulerCorrelation(
+                        9L, 12L, SCHEDULER, repeat('b', 64),
+                        2, 2, 0, 2, 0, 0, pluginBlockers),
+                new LayeredPackedRegionEventOwnershipInventory(
+                    9L, 12L, SCHEDULER, pluginEvents),
+                2);
+        check(pluginReduced.getFamilyCount() == 2
+                && pluginReduced
+                    .isEventExecutionContextIdentityComplete()
+                && pluginReduced.getFamilies().get(0)
+                    .getExecutionContextKind()
+                    == EventExecutionContextKind.PLUGIN_ENTRY_POINT
+                && pluginReduced.getFamilies().get(0)
+                    .getExecutionContextName()
+                    .equals("RegularPlayer.onCommand")
+                && pluginReduced.getFamilies().get(1)
+                    .getExecutionContextName()
+                    .equals("Development.onCommand")
+                && !pluginReduced.getFamilies().get(0)
+                    .isWalkToActionBound(),
+            "plugin execution contexts did not split blocker families");
         System.out.println("scheduler-blocker-family-reduction-ok");
     }
 
@@ -402,6 +502,17 @@ public final class SchedulerBlockerFamilyFixture {
             long ticks, int timesRan, List<Integer> candidates) {
         return new EventRecord(
             ordinal, registration, type, owner, attribution,
+            RestorationKind.UNAVAILABLE, running, ticks, timesRan,
+            candidates);
+    }
+
+    private static EventRecord event(
+            int ordinal, long registration, EventTypeIdentity type,
+            EventExecutionContextIdentity context,
+            OwnerKind owner, AttributionKind attribution, boolean running,
+            long ticks, int timesRan, List<Integer> candidates) {
+        return new EventRecord(
+            ordinal, registration, type, context, owner, attribution,
             RestorationKind.UNAVAILABLE, running, ticks, timesRan,
             candidates);
     }
