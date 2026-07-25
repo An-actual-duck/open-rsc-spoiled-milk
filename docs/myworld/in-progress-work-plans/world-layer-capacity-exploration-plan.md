@@ -16658,9 +16658,32 @@ Automated validation status:
   sources; and
 - the server build/classpath audit passes.
 
-Status: implemented and automated-validated. A schema-v59 owner route remains
-pending after the pushed checkpoint; the expected hard-blocker set is the
-seven generic plugin ticks, subject to normal live timing.
+Owner validation:
+
+- four contiguous schema-v59 records (`start`, `teleport`,
+  `preservation-noop`, `stop`) validate with exact coordinate round trips;
+- all 3,881 observed callbacks and 457 retained classifications reconcile:
+  450 exact NPC-owner fences remain preserved, 99 callbacks move into the
+  explicit non-spatial-global count, and only seven callbacks remain hard
+  blockers;
+- the 99 non-spatial callbacks exactly match the previously audited 98
+  `ShopRestockEvent` callbacks plus one player-owned
+  `StatRestorationEvent`; no unattributed callback remains;
+- all seven remaining blockers are player-owned `PluginTickEvent` callbacks
+  with owner-position hints. One was running, all seven were candidate-related,
+  and each referenced one selected source;
+- generation, observation tick, scheduler identity, source-correlation
+  fingerprint, blocker-family counts, and the family event sum align exactly;
+- the private diagnostic produced one accepted 1,312 ms late tick containing
+  1,201 ms of opt-in diagnostic work and skipped one following tick; and
+- the owner reported no visual or interaction issue throughout the route.
+
+Status: implemented, automated-validated, and owner-validated. The intended
+classification boundary is confirmed in a real scheduler: only arbitrary
+plugin ticks remain hard blockers. Their shared runtime class is insufficient
+for a safe affinity decision, so the next slice must expose a bounded,
+per-instance plugin implementation identity before any further classification
+is considered.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -17101,7 +17124,8 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 210 by reducing the exact scheduler blockers to stable technical families. | Implemented and automated-validated; generation, scheduler, ordinal, registration, attribution, restoration, owner, and detached implementation identity must align before reduction; exact first-observation-ordered families retain bounded counts, timing/run ranges, and one deterministic fingerprint without callbacks or handles; incomplete blocker details, uncaptured types, arithmetic drift, and family-budget overflow refuse; attribution and authority remain unchanged; the Slice 182-210 lineage passes 120 tests, and the 844/488 Ant build/audit passes. The summary remains internal pending additive private-schema exposure |
 | 2026-07-24 | Continue with Slice 211 by exposing the bounded blocker-family summary through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v59 changes only the preservation no-op, requires exact generation/tick/scheduler/correlation/blocker-count alignment, serializes first-observation-ordered technical families without callback payloads or handles, preserves schema-v58, keeps attribution and every authority false, passes five focused guards, the 125-test Slice 182-211 lineage, both observer integration tests, and the 844/488 Ant build/audit. One fresh private owner route remains pending |
 | 2026-07-24 | Accept the Slice 211 private scheduler-blocker family route. | Owner-validated; four contiguous schema-v59 records and exact round trips validate, all 106 blockers reduce to 98 `ShopRestockEvent`, one `StatRestorationEvent`, and seven `PluginTickEvent` callbacks, every aggregate/correlation/fingerprint/family count aligns, all authority remains false, and visuals/interactions remained normal. One accepted 1,216 ms late tick contains 1,149 ms of opt-in diagnostic work. The first two families are narrow candidates for explicit non-spatial audit; generic plugin ticks remain hard blockers pending a stronger per-instance contract |
-| 2026-07-24 | Continue with Slice 212 by assigning only proven non-spatial scheduler affinities. | Implemented and automated-validated; shop restock is explicitly world-level non-spatial, player stat restoration is non-spatial while NPC stat restoration retains its owner-position preservation requirement, and arbitrary `PluginTickEvent` execution remains unspecified and blocking. No callback or scheduler behavior changes; four focused guards, the existing affinity/correlation fixtures, the 129-test Slice 182-212 lineage, both observer integrations, and the 844/488 Ant build/audit pass. One schema-v59 owner route remains pending |
+| 2026-07-24 | Continue with Slice 212 by assigning only proven non-spatial scheduler affinities. | Implemented and automated-validated; shop restock is explicitly world-level non-spatial, player stat restoration is non-spatial while NPC stat restoration retains its owner-position preservation requirement, and arbitrary `PluginTickEvent` execution remains unspecified and blocking. No callback or scheduler behavior changes; four focused guards, the existing affinity/correlation fixtures, the 129-test Slice 182-212 lineage, both observer integrations, and the 844/488 Ant build/audit pass |
+| 2026-07-24 | Accept the Slice 212 narrow non-spatial-affinity route. | Owner-validated; four contiguous schema-v59 records and exact round trips classify all 3,881 callbacks, with the proven 98 shop-restock plus one player stat-restoration callback moving to the 99-event non-spatial count. The blocker set falls from 106 events across three families to seven player-owned `PluginTickEvent` callbacks in one family, with no unattributed callback remaining; all correlation/family identities and counts align, visuals and interaction remained normal, and one accepted 1,312 ms late tick contains 1,201 ms of opt-in diagnostic work |
 
 ## Next Discussion
 
