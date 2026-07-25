@@ -17991,6 +17991,18 @@ offsets before selecting loaded archive tiles; its cache revision must also
 change if an enabled projection receives different offsets. This retry remains
 rejected pending the offset-aware client rebuild.
 
+The offset-aware retry renders and walks the overlay-0 room correctly, resolves
+`::layerloc`, talks to the marked Man, and collects the marked coins. One
+interaction defect remains: the Player walks onto the Man's tile before
+conversation instead of stopping adjacent. The NPC's zero spawn radius only
+makes it stationary. The actual cause is `WalkToMobAction` calling the
+Point-only adjacency overload, which checks same-X/Y packed plane-0 water and
+rejects an otherwise valid adjacent deep tile. Route layered walk-to-Mob
+actions through a `WorldLocation` adjacency overload; require matching spatial
+domain and bounded named-projection receipts, use the immutable deep room
+product for this wall-free fixture, and preserve the legacy Point path when
+spatial authority is disabled.
+
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
 envelopes and all 14 support-only coordinates: their size is not evidence that

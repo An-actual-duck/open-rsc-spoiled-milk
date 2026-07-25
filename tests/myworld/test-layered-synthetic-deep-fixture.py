@@ -15,6 +15,9 @@ REGION_MANAGER = (
 ENTITY = ROOT / "server/src/com/openrsc/server/model/entity/Entity.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 PATH_VALIDATION = ROOT / "server/src/com/openrsc/server/model/PathValidation.java"
+WALK_TO_MOB_ACTION = (
+    ROOT / "server/src/com/openrsc/server/model/action/WalkToMobAction.java"
+)
 PLAYER_SERVICE = ROOT / "server/src/com/openrsc/server/service/PlayerService.java"
 DATABASE = ROOT / "server/src/com/openrsc/server/database/GameDatabase.java"
 UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
@@ -229,6 +232,7 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         entity = ENTITY.read_text(encoding="utf-8")
         player = PLAYER.read_text(encoding="utf-8")
         path_validation = PATH_VALIDATION.read_text(encoding="utf-8")
+        walk_to_mob_action = WALK_TO_MOB_ACTION.read_text(encoding="utf-8")
         player_service = PLAYER_SERVICE.read_text(encoding="utf-8")
         database = DATABASE.read_text(encoding="utf-8")
         development = DEVELOPMENT.read_text(encoding="utf-8")
@@ -260,6 +264,16 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         self.assertIn(
             "LayeredCompatibilityPointAdapter.deepLocation(x, y)",
             path_validation,
+        )
+        self.assertIn(
+            "final WorldLocation start", path_validation
+        )
+        self.assertIn(
+            "mob.getWorldLocation()", walk_to_mob_action
+        )
+        self.assertIn(
+            "WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY",
+            walk_to_mob_action,
         )
         self.assertIn(
             "WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", database

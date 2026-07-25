@@ -175,6 +175,50 @@ public class PathValidation {
 		return checkAdjacentDistance(world, startX, startY, destX, destY, ignoreProjectileAllowed, true);
 	}
 
+	public static boolean checkAdjacentDistance(
+		final World world,
+		final WorldLocation start,
+		final WorldLocation destination,
+		final boolean ignoreProjectileAllowed,
+		final boolean wantDiagCheck) {
+		if (!sameSpatialDomain(start, destination)) {
+			return false;
+		}
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(start)) {
+			try {
+				LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+					start,
+					world.getServer().getConfig()
+						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+				LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+					destination,
+					world.getServer().getConfig()
+						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+				return true;
+			} catch (IllegalArgumentException outsideFixture) {
+				return false;
+			}
+		}
+		Point startPoint =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				start,
+				world.getServer().getConfig()
+					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+		Point destinationPoint =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				destination,
+				world.getServer().getConfig()
+					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+		return checkAdjacentDistance(
+			world,
+			startPoint.getX(),
+			startPoint.getY(),
+			destinationPoint.getX(),
+			destinationPoint.getY(),
+			ignoreProjectileAllowed,
+			wantDiagCheck);
+	}
+
 	/**
 	 * Check whether the adjacent tile is a valid movement (mainly for WalkToMob actions)
 	 * @param world - World object
