@@ -1196,8 +1196,9 @@ current repository checkout.
 
 Renderer, Server, Layered Maps, World Builder, and Content remain living
 products after suite stabilization. Each keeps its own feature, performance,
-usability, security, and modernization roadmap. Suite completion means they can
-evolve safely and independently; it does not mean their feature work is done.
+usability, security, and modernization roadmap. RSC Remastered product
+stabilization means they can evolve safely and independently; it does not mean
+their feature work is done.
 
 ## Overall Completion Criteria
 
@@ -1244,6 +1245,12 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-25 | Present the public project as **RSC Remastered**, a definitive vanilla-content remaster with one coherent launcher/tooling experience; retain modular capability boundaries as internal architecture. | Confirmed; refines the earlier Suite-first packaging direction |
+| 2026-07-25 | Use the repository's Preservation revision-64 terrain, base placements, configuration, and definition set as the first definitive vanilla source candidate, subject to one complete provenance/fingerprint manifest. | Confirmed; local source set found, manifest remains a deliverable |
+| 2026-07-25 | Make the Universal Launcher own isolated, matched installation profiles and named fingerprinted import adapters; importing Cabbage or another supported distribution must never patch the default profile in place. | Confirmed |
+| 2026-07-25 | Begin modder drag-and-drop support with profile-local `content/walls` and `content/floors`, namespaced packs, stable registered identities, validation, and automatic World Builder discovery. | Confirmed architecture; implementation remains phased |
+| 2026-07-25 | Complete the concrete vanilla layered map rather than blocking on a polished general standalone map converter. Keep deterministic normalization, reports, receipts, review, and rollback as internal build facilities; place later external conversions behind named launcher adapters. | Confirmed; supersedes the converter-as-primary-end-user-product direction |
+| 2026-07-25 | Treat `-2` as the first deep validation level, not a format/runtime cap. Additional signed levels must be declared in package/editor data and load without new coordinate, protocol, renderer, collision, or persistence constants. | Confirmed |
 | 2026-07-17 | Build a reusable Remaster Suite rather than treating all technical improvements as inseparable Spoiled Milk changes. | Confirmed |
 | 2026-07-17 | Primary modules are Renderer, Server, Layered Maps, World Builder, and Content. | Confirmed |
 | 2026-07-17 | Content means material that was not part of vanilla. | Confirmed |

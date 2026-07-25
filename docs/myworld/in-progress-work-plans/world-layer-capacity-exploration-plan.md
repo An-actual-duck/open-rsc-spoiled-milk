@@ -12,7 +12,96 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
-Current milestone: owner-validated Slices 108-110 define, detach, privately
+## Current Direction Checkpoint: 2026-07-25
+
+Authority Milestones A through D are now automated-validated and
+owner-accepted. The maintained client/server can carry authoritative signed
+locations through Player persistence, spatial membership, protocol/client
+scope, collision/interaction, reconnect, explicit exit, and death recovery,
+including one bounded synthetic level `-2` room. The next gap is no longer
+proof that a deep identity can exist; it is replacing that compatibility room
+with native data-driven layered terrain and placements.
+
+The enclosing product direction is now **RSC Remastered**: a definitive
+vanilla-content remaster with an integrated launcher, layered World Builder,
+and simple modder content workflow. The earlier general one-way converter work
+remains useful as deterministic internal normalization, reporting, and
+provenance infrastructure, but a polished standalone converter is no longer a
+prerequisite. The concrete priority is to convert and complete the selected
+vanilla world, then let later named launcher adapters import supported external
+distributions into isolated profiles.
+
+### Preservation/vanilla source candidate located
+
+The repository contains the required Preservation source candidate; a fresh
+download is not currently needed. It is a coordinated baseline set, not one
+file:
+
+| Role | Repository input | Size / count | SHA-256 |
+| --- | --- | ---: | --- |
+| Preservation selectors | `legacy/docs/inherited-openrsc/server-configs/preservation.conf` | 22,385 bytes | `6e703860191e676acc8e904021316b25ea30abf0f847d9e7137801ca11bffa73` |
+| Preservation copied seed | `legacy/docs/inherited-openrsc/sqlite-seeds/preservation.db` | 315,392 bytes | `886947e24f08ba3afc9223b89f725ddd65a7083f6417891b0929f56b54313efb` |
+| Server map archive | `server/conf/server/data/maps/maps64.jag` | 37,613 bytes | `7e85a47c95ba690187ad10d8218f9b4e327b54c27e6f3da18229b061de35a2d1` |
+| Server members map archive | `server/conf/server/data/maps/maps64.mem` | 60,002 bytes | `6a43ffc81a5d95fe392a27fed347eea1c27ac87d11c5670b9e3f0dfe4a8fc7f7` |
+| Server land archive | `server/conf/server/data/maps/land64.jag` | 142,219 bytes | `6f0720a29d40f5dfcd477049d014b41422742d2e3a9900144287f835cc99813b` |
+| Server members land archive | `server/conf/server/data/maps/land64.mem` | 155,110 bytes | `c38cfcb1e8dddb17afd3ec9d0e8f0cdb076df2caf40a648bf6dd8ea400a55df0` |
+| Authentic terrain ZIP | `server/conf/server/data/Authentic_Landscape.orsc` | 945,225 bytes / 1,764 entries | `48ed0e1634b870888f96c0bc3e31cbaf152570b913140fdfd3596897a3eb29fa` |
+| Matching client terrain ZIP | `Client_Base/Cache/video/Authentic_Landscape.orsc` | 945,225 bytes / 1,764 entries | `48ed0e1634b870888f96c0bc3e31cbaf152570b913140fdfd3596897a3eb29fa` |
+| Base boundaries | `server/conf/server/defs/locs/BoundaryLocs.json` | 966 records | `4f7ff99d5489d4f8df419531edef7480804d44078d1af9b61776671c1b742be8` |
+| Base scenery | `server/conf/server/defs/locs/SceneryLocs.json` | 26,770 records | `a31cc016c6960b59f18ee815c5a44d9e5401d018a3dc837462ea19e47865e66e` |
+| Base NPCs | `server/conf/server/defs/locs/NpcLocs.json` | 3,612 records | `76341de559f1804ccd1965cae8b6eceeb2305e11ddcb603b25fbef57a66f9c6b` |
+| Base ground items | `server/conf/server/defs/locs/GroundItems.json` | 1,016 records | `dbbef438eccb381dd1f1e03431734fab43a3238936e19a2d7ed5ec9ded5e2862` |
+
+The Preservation configuration selects `based_map_data: 64`,
+`custom_landscape: false`, `member_world: true`, and the base location data.
+Consequently the server's vanilla terrain authority is the revision-64
+JAG/MEM set, while the maintained client/editor path also carries the matching
+authentic ORSC representation. Base placement JSON and compatible definitions
+complete the world; the SQLite file is a copied Preservation seed/behavior
+fixture, not a substitute for those map inputs. Before conversion, one
+generated provenance manifest must freeze archive inventories, file hashes,
+placement counts, definition fingerprints, selectors, and redistribution
+status together.
+
+### Expandable signed-level contract
+
+- Level numbers are signed data values. Surface `0`, shallow underground `-1`,
+  and the first deep layer `-2` are conventions, not an enumeration.
+- A layered world package declares a sparse `levels` collection whose entries
+  carry level number, display name, role, bounds/allocation claims, and terrain
+  indexes. Adding `-3` or another level means adding data and sectors; it must
+  not require a coordinate codec, loader switch, protocol opcode, renderer
+  constant, collision branch, or persistence migration.
+- Runtime stores and package indexes key sectors by
+  `(worldSpace, level, sectorX, sectorY)`. Unsupported levels refuse because
+  they are absent or outside declared resource limits, never because they are
+  not one of four or five hard-coded values.
+- The historical `48 x 48` sector remains a terrain storage and authoring page,
+  not the player's presentation/loading window. Native loading must expose
+  smaller incremental presentation chunks so crossing a storage-sector edge
+  does not reproduce the current abrupt 48-tile redraw.
+- True instances continue to use a separate world-space identity; instance
+  identity must not be encoded by reserving special level numbers.
+
+### Current implementation sequence
+
+1. Freeze the complete Preservation source manifest and a deterministic
+   layered-world package schema.
+2. Implement **Authority Milestone E: Native Layered Terrain and Package
+   Loader**, initially behind a private gate.
+3. Load a real package-owned level `-2` sector plus terrain collision and
+   placements without the synthetic plane-0 compatibility room.
+4. Prove adjacent sector loading, smaller presentation chunks, movement,
+   collision, scenery/NPC/item interaction, transition, reconnect, exit, and
+   recovery on the private server/client.
+5. Convert the exact vanilla baseline first without relocation and prove
+   parity; only then apply reviewed geographic alignment and deeper-level
+   moves.
+6. Add the layered Builder review/content workflow and promote the reviewed
+   vanilla output into the definitive RSC Remastered profile.
+
+Historical pre-authority checkpoint retained for traceability:
+owner-validated Slices 108-110 define, detach, privately
 expose, and validate the next restoration prerequisite: known authored
 spawns bind an exact destination slot, known authored removals bind an exact
 existing entity, any mismatch or missing authored identity refuses, and timer/
@@ -1090,12 +1179,13 @@ A cleaner distribution model separates three artifacts:
    - Reads, validates, edits, exports, and imports that map format.
    - Refuses targets whose engine capability or definitions do not match.
 
-These may be composed into an end-user **Layered Maps conversion workspace**.
-The workspace can bundle or launch the compatible World Builder and private
-client/server test harness while retaining their independent versions and
-ownership boundaries. From the user's perspective this is a standalone
-conversion module; internally it remains a tested bundle of the engine
-capability, converter, Builder, target adapter, and validation tools.
+These are composed internally into an **RSC Remastered layered-world
+workspace**. The workspace can bundle or launch the compatible World Builder
+and private client/server test harness while retaining their independent
+versions and ownership boundaries. It is the reviewed build environment for
+the definitive vanilla world, not currently a promised standalone converter
+for arbitrary repositories. Its reusable engine, normalizer, Builder adapter,
+and validation seams may later support named Universal Launcher imports.
 
 The bundled interface need not be a one-for-one copy of the standalone World
 Builder. Its initial product can be a focused **conversion workbench and dev
@@ -1105,15 +1195,12 @@ or teleport around the staged world, and launch/stop a private test client and
 server easily. General-purpose authoring features can remain in the standalone
 Builder unless conversion review actually needs them.
 
-The intended initial installation is deliberately developer-oriented: download
-the Layered Maps tool folder and extract it into the root of the repository to
-be converted. The expected user is a map author or server maintainer with a
-source checkout, not a player installing a graphical game option. Extraction
-installs only the contained tooling and metadata; it must not rewrite maps,
-runtime code, configuration, archives, or player data. A separately invoked
-preflight identifies the repository adapter and previews all later changes.
-Unknown layouts are refused or require an explicit adapter rather than being
-treated as approximately compatible.
+The existing developer folder remains useful as internal/read-only preflight
+infrastructure and as a future adapter seed. The public default is instead the
+Universal Launcher installing the already reviewed RSC Remastered profile.
+Any later source-import adapter remains non-mutating through preflight and
+staging, inventories the exact source, and refuses unknown layouts rather than
+treating them as approximately compatible.
 
 A renderer/client release is a separate compatibility dimension. A map should
 require a renderer capability only when it truly depends on renderer-specific
@@ -1180,14 +1267,17 @@ requirements difficult to diagnose. Geographic realignment of established
 content will likely need a source-coupled world content module or integrated
 release, even if new self-contained maps can eventually be more portable.
 
-### Legacy-to-Layered Conversion
+### Direct Vanilla Conversion and Reusable Internals
 
-A reusable one-way converter is a required Layered Maps deliverable, not an
-optional Spoiled Milk migration convenience. Its target is any compatible
-RuneScape Classic-derived world for which the converter can inventory the map,
-placements, and transition owners. Support should be capability- and
-adapter-driven rather than restricted to one Spoiled Milk fingerprint, while
-unknown structures and unresolved coordinate owners must still fail safely.
+The conversion pipeline remains required, but the public product direction was
+refined on 2026-07-25: a polished generic standalone converter is not a
+Layered Maps release gate. Its first and authoritative target is the frozen
+Preservation/vanilla baseline that becomes the definitive RSC Remastered
+world. The normalizer, transition/component analysis, reports, receipts,
+review workspace, and rollback remain reusable internals. Later external
+distributions may invoke them only through a named, fingerprinted Universal
+Launcher adapter; unknown structures and unresolved coordinate owners still
+fail safely.
 
 The conversion is a staged workspace operation:
 
@@ -1482,20 +1572,20 @@ a time.
 ### Current Module: Private Migration and Validation
 
 The focused layered-coordinate study above is the active discussion. Signed
-geographic levels, exact default vertical anchors, and an explicit legacy-format
-divergence are now selected. The Remaster Suite roadmap selects the package
-boundary: a Layered Maps product module contains a layered-world engine
-capability and separately versioned map packages, while World Builder remains a
-separate tool and non-vanilla Spoiled Milk maps remain optional Content.
+geographic levels, exact default vertical anchors, and an explicit
+legacy-format divergence are now selected. The RSC Remastered roadmap retains
+the internal package boundary: layered-world engine capability and versioned
+map packages remain distinct, while World Builder remains a separate tool and
+non-vanilla Spoiled Milk maps remain optional Content.
 
-The first migration scope is also selected at roadmap level: normalize an exact
-copied legacy world into explicit levels without relocating content, prove
-terrain, placement, transition, script, persistence, and gameplay parity, and
-only then begin geographic alignment or introduce level `-2`. That sequence is
-now part of a reusable conversion workspace rather than a Spoiled Milk-only
-map rewrite. Modules A through H are resolved. The private
-migration/validation sequence still requires discussion before a focused
-implementation plan is authorized.
+The first migration scope is also selected at roadmap level: normalize the
+exact copied vanilla baseline into explicit levels without relocating content,
+prove terrain, placement, transition, script, persistence, and gameplay parity,
+and only then begin geographic alignment. That sequence is an internal,
+reproducible RSC Remastered build workspace rather than a Spoiled Milk-only
+rewrite or a promised generic converter UI. Modules A through H are resolved.
+The accepted Authority Milestones A through D and the current Milestone E
+direction govern implementation.
 
 ### Module A: Meaning of Deep Underground
 
@@ -1779,39 +1869,43 @@ phase mutates the public/live server or preservation-critical data.
      travel, and an instance-template declaration.
    - Codec boundary, overflow, unsupported legacy encoding, deterministic
      serialization, and source-preservation tests run without a game process.
-2. **Copied vanilla baseline**
+   - Authority Milestones A through D have now completed the signed runtime,
+     persistence, protocol/client, and bounded synthetic level `-2` acceptance
+     portions of this gate.
+2. **Native layered package and incremental-loading laboratory**
+   - Replace the synthetic compatibility projection with package-owned terrain,
+     collision, placements, and transitions at level `-2`.
+   - Exercise an additional data-declared signed level, adjacent 48-tile
+     storage pages, smaller presentation chunks, continuous boundary
+     crossings, reversals, distant transitions, reconnect, recovery, roofs,
+     collision, and complete static/dynamic scene readiness.
+3. **Copied vanilla baseline**
    - Normalize an exact fingerprinted supported vanilla world without moving
      content.
    - Require terrain, placements, transitions, collision, and gameplay to
      remain equivalent and keep the source copy unchanged.
-3. **Copied Spoiled Milk world and player data**
+4. **Automatic-alignment and Builder review workspace**
+   - Run transition inference, component movement, growth allocation, report
+     generation, corrective edits, content/material discovery, and private
+     dev-launcher travel through every moved or flagged vanilla area.
+5. **Disposable RSC Remastered promotion rehearsal**
+   - Promote only to another copied profile. Verify the preview, unchanged
+     source fingerprint, changed-file inventory, backup, receipt,
+     deterministic rerun, and byte-exact rollback.
+6. **Copied Spoiled Milk world and player data**
    - Exercise custom terrain, overlays, definitions, quests, scripts,
      teleports, recovery paths, and copied player locations.
    - Cover login, logout, reconnect, death, respawn, walking, teleporting,
      scenery/NPC/item loading, combat, following, trading, and level/world-space
      isolation.
-4. **Incremental-streaming fixture**
-   - Keep the normalized world fixed while changing only loading/residency
-     ownership.
-   - Exercise continuous boundary crossings, reversals, camera look-ahead,
-     fast movement, distant teleports, level changes, relogging, roofs,
-     collision, and complete static/dynamic scene readiness.
-5. **Automatic-alignment workspace**
-   - Run transition inference, component movement, growth allocation, report
-     generation, workbench review, corrective edits, and dev-launcher travel
-     through every moved or flagged area.
-6. **Disposable export rehearsal**
-   - Export only to another copied target. Verify the preview, unchanged target
-     fingerprint, changed-file inventory, backup, receipt, deterministic rerun,
-     and byte-exact rollback.
-7. **Additional compatible RSC-derived fixture**
-   - Repeat discovery, normalization, report, private test, and disposable
-     export with at least one non-Spoiled-Milk adapter or generated compatibility
-     project so target assumptions remain explicit and reusable.
-8. **Owner acceptance**
+7. **Owner acceptance**
    - Combine automated evidence with visual traversal and gameplay checks.
-     Real-target export may be proposed only after the relevant fixture gates
-     pass and the owner accepts the staged result.
+     Definitive-profile promotion may be proposed only after the relevant
+     fixture gates pass and the owner accepts the staged result.
+
+Additional external RSC-derived adapter fixtures become Universal Launcher
+work after the definitive vanilla profile is complete. They reuse these safety
+gates but do not block the layered RSC Remastered map.
 
 #### Gate evidence
 
@@ -1836,8 +1930,9 @@ does not get waived merely because a later stage looks correct.
 
 ## Open Owner Questions
 
-None for the architecture study. Focused foundation implementation is
-continuing slice by slice; world mutation and live/public work remain gated.
+None for the current architecture. Coarse Milestone E implementation is next;
+definitive vanilla promotion, public/live work, and preservation-critical
+mutation remain separately gated.
 
 ## Implementation Progress Checkpoint: 2026-07-20
 
@@ -17073,6 +17168,11 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-25 | Reframe the enclosing product as RSC Remastered: one definitive vanilla-content remaster with integrated launcher, layered Builder, and modder workflow, while retaining modular technical boundaries internally. | Confirmed; recorded in the product roadmap |
+| 2026-07-25 | Use the locally present Preservation revision-64 server terrain, matching authentic ORSC, base placements, configuration, definitions, and copied seed as the first vanilla source candidate; freeze them as one provenance set before conversion. | Confirmed; inputs and current hashes inventoried |
+| 2026-07-25 | Remove a polished generic standalone converter from the critical path. Complete the exact vanilla conversion with deterministic internal tooling first; later external distributions use named launcher import adapters. | Confirmed; refines the 2026-07-18 conversion-product decision without discarding its safety contracts |
+| 2026-07-25 | Make signed layers data-expandable beyond `-2`; loader/package/editor/runtime logic keys arbitrary declared signed levels and must not enumerate a maximum depth in source. | Confirmed |
+| 2026-07-25 | Select Authority Milestone E as the next implementation body: native package-owned layered terrain/collision/placements, smaller presentation chunks over retained 48-tile storage pages, and a real level `-2` private route. | Selected after full Milestone D acceptance |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -17463,19 +17563,33 @@ export remain separately gated.
 
 ## Next Discussion
 
-The coarse Phase 5 Authority Milestones A, B, and C are accepted. The
-recommended next coarse gate is **Authority Milestone D: Synthetic Deep-Level
-Compatibility Boundary**: introduce one private, generated level `-2` fixture
-that exercises signed location, spatial membership, protocol scope, client
-cache isolation, collision, interaction, death/recovery, and persistence
-without editing the production landscape or pretending the four-plane packed
-archive can represent it. This milestone must first define the narrow
-temporary terrain/protocol projection used by the fixture and its rollback
-boundary; it must not silently map level `-2` onto a legacy plane or begin
-general archive conversion. Native layered terrain storage, true instances,
-streaming, Builder, conversion, and export remain later gates. The historical
-retirement findings below remain retained reference material for the later
-incremental-streaming milestone.
+The coarse Phase 5 Authority Milestones A through D are accepted. The
+recommended next coarse gate is **Authority Milestone E: Native Layered Terrain
+and Package Loader**. It replaces the synthetic level `-2` room's named
+plane-0 projection with one versioned, package-owned native layered terrain
+source keyed by `(worldSpace,level,sectorX,sectorY)`, including terrain
+collision and explicit layered placements.
+
+Milestone E must prove the loader has no fixed level enumeration: its fixture
+uses `-2`, while an automated package test adds another declared signed level
+without a source edit. The existing 48-tile page remains only the storage
+unit. Server interest and client presentation use smaller incremental chunks,
+with readiness and baseline sequencing preventing visible partial state at
+page boundaries or after a hard transition.
+
+The owner-testable acceptance route should enter the native deep room, cross at
+least one storage-page boundary, walk and collide normally, interact with one
+scenery object, roaming NPC, and ground item, reconnect at depth, exit, and
+exercise recovery. It must also prove identical X/Y on level 0 remains
+isolated. No full vanilla relocation, public-server activation, live database
+mutation, or Builder/export claim belongs in this milestone.
+
+Once Milestone E is accepted, the next product gate is direct, deterministic
+normalization of the frozen Preservation baseline into a parity-first layered
+package. Geographic realignment and additional depths follow review of that
+exact conversion; a generic standalone converter is no longer on the critical
+path. The historical retirement findings below remain retained reference
+material for the incremental-loading implementation.
 
 ## Phase 5 Authority Milestone B: Spatial Runtime Identity
 
