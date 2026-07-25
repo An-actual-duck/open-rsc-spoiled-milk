@@ -24,9 +24,10 @@ with native data-driven layered terrain and placements.
 
 Milestone E runtime checkpoints 3 and 4 now put package-owned terrain on both
 server and client behind a fifth private gate, with protocol-v3 page identity
-and gate-off rollback. Private owner validation is the current boundary. The
+and gate-off rollback. That first native runtime cut is owner-accepted. The
 bounded compatibility receipt and process-local test placements still exist;
-their replacement is not yet complete.
+full-fidelity terrain, placements, and smaller incremental presentation remain
+the current implementation boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -182,7 +183,7 @@ owner testing is requested.
 
 ### Authority Milestone E runtime checkpoints 3 and 4
 
-Implemented on 2026-07-25 and awaiting private owner validation:
+Implemented and private owner-accepted on 2026-07-25:
 
 - a fifth, default-off
   `want_layered_native_terrain_package` gate accepts its package path through
@@ -223,12 +224,29 @@ terrain/collision construction, 24-tile incremental presentation delivery,
 and removal of the bounded compatibility receipt remain later Milestone E
 cuts.
 
-The next action is a private fifth-gate owner route. It should confirm native
-protocol-v3 diagnostics, no leaked surface scenery/terrain, normal bounded-room
-movement and interaction, logout/reconnect at depth, explicit exit, and death
-recovery. If accepted, continue with a full-fidelity non-uniform sector
-encoding and package-owned placement source before claiming Milestone E
-complete.
+The corrected fifth-gate owner route is accepted:
+
+- the owner confirmed the package-backed room looked and behaved normally,
+  with no leaked surface terrain/scenery, water-floor regression, collision
+  problem, or interaction fault;
+- client diagnostics independently recorded
+  `native-layered-package-v1`, page `(9,12)`, chunk `24`, and manifest prefix
+  `ec5349190c59` on entry at `(450,600,L-2)`;
+- the Player walked through the room, picked up the five package-route test
+  coins, and spoke with the roaming Man normally;
+- a normal logout saved `(451,600,L-2)` and reconnect restored it exactly.
+  Client protocol-v3 restarted at sequence 1 with the same page, chunk, and
+  manifest identity, after which movement and Man interaction remained normal;
+- explicit exit restored `(120,648,L0)` and protocol v1
+  `legacy-packed-y-v1`; and
+- death/recovery retained `(120,648,L0)`.
+
+The in-game status originally placed page/chunk after long package fields, so
+the owner could not see that suffix in the game chat. The complete client log
+proves both values; the status is now split into a short identity line with
+page/chunk first and a second logical/receipt/bounds line. No repeat is needed.
+Continue with a full-fidelity non-uniform sector encoding and package-owned
+placement source before claiming Milestone E complete.
 
 The first login attempt exposed and rejected one selector defect before any
 deep-room acceptance: with the fifth gate enabled,
@@ -17317,8 +17335,9 @@ private environment should validate at least:
 | 2026-07-25 | Select Authority Milestone E as the next implementation body: native package-owned layered terrain/collision/placements, smaller presentation chunks over retained 48-tile storage pages, and a real level `-2` private route. | Selected after full Milestone D acceptance |
 | 2026-07-25 | Complete Milestone E foundation checkpoint 1: freeze the deterministic 12-file Preservation map-source manifest and implement strict native package/uniform-sector validation with data-declared `-3` and `-37` depth proofs. | Implemented and automated-validated; no server/client/runtime terrain authority changed |
 | 2026-07-25 | Complete Milestone E foundation checkpoint 2: add the server's strict detached native package/sector source, adjacent level `-2` page lookup, same-X/Y isolation, arbitrary level `-37` proof, and full detached sector byte-fidelity check. | Implemented and automated-validated; 3 focused tests and authoritative 853/488 build pass, with zero `World`/Region/client authority |
-| 2026-07-25 | Complete Milestone E runtime checkpoints 3 and 4: add the fifth default-off native-package server gate and rollback, then protocol-v3 package/page identity with a fresh client-native terrain window and explicit void outside the bounded room. | Implemented and automated-validated; 23 focused A-E tests and authoritative server/client builds pass, private owner validation pending |
-| 2026-07-25 | Correct the rejected first Milestone E owner login: the fifth-gate selector must return the unchanged ordinary scene path outside native deep scope rather than treating level 0 as an error. | Root-caused from the first scene-update stack trace; narrow selector fix, regression guard, and authoritative server build pass; retest pending |
+| 2026-07-25 | Complete Milestone E runtime checkpoints 3 and 4: add the fifth default-off native-package server gate and rollback, then protocol-v3 package/page identity with a fresh client-native terrain window and explicit void outside the bounded room. | Implemented and automated-validated; 23 focused A-E tests and authoritative server/client builds pass |
+| 2026-07-25 | Correct the rejected first Milestone E owner login: the fifth-gate selector must return the unchanged ordinary scene path outside native deep scope rather than treating level 0 as an error. | Root-caused from the first scene-update stack trace; narrow selector fix, regression guard, authoritative server build, and corrected owner retest pass |
+| 2026-07-25 | Accept the corrected Milestone E native-terrain owner route and split its oversized status output. | Owner-confirmed visuals/collision/interactions; logs prove native page `(9,12)`, chunk `24`, coin/Man interaction, exact depth reconnect, exit, and surface death recovery. Full-fidelity terrain, package placements, and incremental presentation remain |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

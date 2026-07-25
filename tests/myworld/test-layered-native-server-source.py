@@ -234,13 +234,16 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "return syntheticDeepFixtureTile()", region_manager
         )
         self.assertIn(
-            "Native layered deep fixture ", development
+            "Native layered deep ", development
         )
         self.assertIn(
             "NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID", development
         )
         self.assertIn(
             "nativePackage.getPresentationChunkSize()", development
+        )
+        self.assertIn(
+            '"Deep fixture logical="', development
         )
 
 

@@ -839,6 +839,17 @@ Exit gate:
 - legacy clients and maps receive clear compatibility results;
 - a copied level `-2` test world passes private client/server validation.
 
+Current Phase 5 checkpoint: Authority Milestones A through D are accepted, and
+the first native-terrain portion of Milestone E is now owner-accepted. A fifth
+default-off private gate loads the versioned layered package; server terrain
+lookup and scene-context protocol v3 identify native page `(9,12)`, declared
+presentation chunk `24`, and the checked manifest; the client builds that room
+without borrowing surface terrain. Entry, movement, item/NPC interaction,
+depth logout/reconnect, exit, and surface death recovery pass. This does not
+yet close Phase 5 or Milestone E: full-fidelity non-uniform terrain/collision,
+package-owned placements, actual smaller incremental presentation delivery,
+and removal of the bounded compatibility receipt remain.
+
 ### Phase 6: Layered World Builder generation
 
 Goal: make the layered RSC Remastered world and modder content directly
@@ -1304,6 +1315,7 @@ The RSC Remastered product roadmap is complete when:
 | 2026-07-25 | Accept the corrected Milestone D deep-NPC roam and adjacency route. | The owner confirmed repeated conversations stop correctly without delayed overlap. Runtime logs independently prove the radius-2 Man moved among `(452,600)`, `(453,600)`, and `(451,600)` while conversations continued to resolve. The Mob and Player follow-stop consumers now share the gated Mob-to-Mob `WorldLocation` adjacency seam; focused layered, movement, foundation, and combat guards plus the authoritative 850/488 server build pass |
 | 2026-07-25 | Accept the Milestone D deep death/recovery transition. | The owner invoked `::kill devduck` from level `-2` and confirmed return to level 0. Runtime evidence records the command at deep `(452,602)`, then successful location checks and timed processing at Lumbridge `(120,648)`. The final surface logout/reconnect remains before closing the full milestone acceptance route |
 | 2026-07-25 | Fully accept Phase 5 Authority Milestone D. | A clean post-death logout saved successfully, reconnect restored exact `global (120,648,L0)` authority with no fallback or rewrite, and `::layerloc` confirmed the recovered surface state. Together with the accepted room, movement, isolation, NPC/item interaction, deep reconnect, explicit exit, and death recovery routes, this closes the bounded synthetic level `-2` compatibility milestone. The broader layered-map workstream remains active |
+| 2026-07-25 | Accept the first native-terrain cut of Phase 5 Authority Milestone E. | Fifth-gate server/package terrain and protocol-v3 client page identity are owner-validated at native page `(9,12)`, chunk `24`, including visuals, movement, coin/Man interaction, exact depth reconnect, exit, and surface death recovery. Full-fidelity terrain, package placements, incremental delivery, and compatibility-boundary removal remain |
 | 2026-07-18 | Complete the fifteenth Layered Maps foundation checkpoint: immutable level-qualified visibility windows and read-only manager projection while packed lookup, caches, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the sixteenth Layered Maps foundation checkpoint: a checked Player visibility-window shadow and versioned private diagnostic evidence while packed lookup, caches, and client behavior remain authoritative. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the seventeenth Layered Maps foundation checkpoint: deterministic, allocation-budgeted logical interest-window deltas while packed lookup, caches, packets, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |

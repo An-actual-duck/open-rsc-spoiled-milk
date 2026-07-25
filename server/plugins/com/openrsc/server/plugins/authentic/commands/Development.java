@@ -1664,26 +1664,27 @@ public final class Development implements CommandTrigger {
 				}
 			}
 		}
+		String projection = nativeTerrain
+			? NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID
+			: LayeredCompatibilityPointAdapter.projectionId(
+				location, true);
 		player.message(messagePrefix
-			+ (nativeTerrain ? "Native layered deep fixture "
-				: "Synthetic deep fixture ")
+			+ (nativeTerrain ? "Native layered deep "
+				: "Synthetic deep ")
 			+ (inside ? "ACTIVE" : "inactive")
-			+ "; projection="
+			+ "; projection=" + projection
 			+ (nativeTerrain
-				? NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID
-				: LayeredCompatibilityPointAdapter.projectionId(
-					location, true))
-			+ (nativeTerrain
-				? "; package=" + nativePackage.getPackageId()
-					+ "@" + nativePackage.getPackageVersion()
-					+ "; manifest="
-					+ nativePackage.getManifestSha256().substring(0, 12)
-					+ "; page=(" + coordinate.getSectorX()
+				? "; page=(" + coordinate.getSectorX()
 					+ "," + coordinate.getSectorY() + ")"
 					+ "; chunk="
 					+ nativePackage.getPresentationChunkSize()
-				: "")
-			+ "; logical=" + location.getWorldSpace().getValue()
+					+ "; package=" + nativePackage.getPackageId()
+					+ "@" + nativePackage.getPackageVersion()
+					+ "; manifest="
+					+ nativePackage.getManifestSha256().substring(0, 12)
+				: ""));
+		player.message(messagePrefix
+			+ "Deep fixture logical=" + location.getWorldSpace().getValue()
 			+ "(" + coordinate.getX() + "," + coordinate.getY()
 			+ ",L" + coordinate.getLevel() + ")"
 			+ "; receipt=(" + receipt.getX() + "," + receipt.getY()
