@@ -52,7 +52,7 @@ def main():
     require("int prayerLevel = this.playerStatCurrent.length > 5 ? this.playerStatCurrent[5] : 0;" in mudclient,
             "Prayer UI should base available allocation on current Prayer points")
     require("int prayerLevel = this.playerStatBase.length > 5 ? this.playerStatBase[5] : 0;" not in mudclient,
-            "Prayer UI should not use max Prayer level for available allocation")
+            "Prayer UI should not use max Worship level for available allocation")
     require("getCompactPrayerTierIconFile" in mudclient,
             "Prayer icon loader should support compact tier names like xp.png, xp2.png")
     require("isSinglePrayerIconAsset(assetName)" in mudclient

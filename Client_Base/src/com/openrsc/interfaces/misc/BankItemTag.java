@@ -12,7 +12,7 @@ enum BankItemTag {
 	CRAFTING_WOOD("Crafting: Wood", Group.SKILLS),
 	CRAFTING_OTHER("Crafting: Other", Group.SKILLS),
 	ENCHANTING("Enchanting", Group.SKILLS),
-	PRAYER("Prayer", Group.SKILLS),
+	PRAYER("Worship", Group.SKILLS),
 	HERBLAW("Herblaw", Group.SKILLS),
 	COOKING("Cooking", Group.SKILLS),
 

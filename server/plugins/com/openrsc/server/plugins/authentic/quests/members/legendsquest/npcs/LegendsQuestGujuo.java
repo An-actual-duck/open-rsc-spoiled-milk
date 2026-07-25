@@ -1057,7 +1057,7 @@ public class LegendsQuestGujuo implements TalkNpcTrigger, UseNpcTrigger {
 				case Gujuo.HOW_DO_I_BLESS_THE_BOWL:
 					npcsay(player, n, "When you have made a bowl, bring it to me and I will help.",
 						"But you need to ensure that you are devout and have faith.",
-						"Your ability in prayer will be thoroughly tested.");
+						"Your Worship ability will be thoroughly tested.");
 					int opt14 = multi(player, n,
 						"Ungadulu looks strange.",
 						"I need to douse some flames with pure water.",
@@ -1141,7 +1141,7 @@ public class LegendsQuestGujuo implements TalkNpcTrigger, UseNpcTrigger {
 		if (getCurrentLevel(player, Skill.PRAYER.id()) < 42) {
 			npcsay(player, npc, "Bwana, I am very sorry,",
 				"But you are too inexperienced to bless this bowl.");
-			player.message("You need a prayer ability of 42 to complete this task.");
+			player.message("You need a Worship level of 42 to complete this task.");
 		} else {
 			npcsay(player, npc, "Very well Bwana...");
 			mes("Gujuo places the bowl on the floor in front of you,");

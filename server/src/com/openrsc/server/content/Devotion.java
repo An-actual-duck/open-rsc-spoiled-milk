@@ -257,7 +257,7 @@ public final class Devotion {
 		if (newDevotion > 0) {
 			player.playerServerMessage(
 				MessageType.QUEST,
-				"Your devotion to " + formatGodLine(godLine) + " grows. Future offerings grant +" + newDevotion + " Prayer XP."
+				"Your devotion to " + formatGodLine(godLine) + " grows. Future offerings grant +" + newDevotion + " Worship XP."
 			);
 			return;
 		}

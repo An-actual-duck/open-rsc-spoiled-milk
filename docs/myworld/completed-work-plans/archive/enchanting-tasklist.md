@@ -148,7 +148,7 @@ Expand the newly renamed `Enchanting` skill beyond rune production by moving jew
   - the destination is selected through the chat window / menu flow
 - `[done]` 12d. Choose the exact guild teleport ladder by tier:
   - tier 1: Crafting Guild / Mining Guild
-  - tier 2: Woodcutting Guild / Prayer Guild
+  - tier 2: Woodcutting Guild / Worship Guild
   - tier 3: Fishing Guild / Cooking Guild
   - tier 4: Heroes' Guild / Wizards' Guild
   - tier 5: Champions' Guild / Legends' Guild

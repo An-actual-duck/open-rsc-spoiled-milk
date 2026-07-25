@@ -206,7 +206,7 @@ public class DiscordService implements Runnable{
 									if (level < getServer().getConstants().getSkills().GLOBAL_LEVEL_LIMIT) {
 										tnl = getServer().getConstants().getSkills().experienceCurves.get(SkillDef.EXP_CURVE.ORIGINAL)[level] - experience;
 									}
-									rep.append(StringUtils.rightPad(skill.getLongName(),12," ")
+									rep.append(StringUtils.rightPad(skill.getDisplayName(),12," ")
 										+ ": " + String.format("%02d", level) + " (@ " + tnl + ")\n");
 								}
 								rep.append("`");

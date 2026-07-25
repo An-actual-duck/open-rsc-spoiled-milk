@@ -5775,7 +5775,7 @@
     },
     {
       "id": 1523,
-      "name": "Prayer cape",
+      "name": "Worship cape",
       "description": "The cape worn by the most pious",
       "command": "",
       "isFemaleOnly": 0,
@@ -11089,7 +11089,7 @@
     {
       "id": 1734,
       "name": "Sapphire Amulet of Attunement",
-      "description": "Boosts magic, summoning, and prayer XP by 5%.",
+      "description": "Boosts magic, summoning, and Worship XP by 5%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11112,7 +11112,7 @@
     {
       "id": 1735,
       "name": "Emerald Amulet of Attunement",
-      "description": "Boosts magic, summoning, and prayer XP by 10%.",
+      "description": "Boosts magic, summoning, and Worship XP by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11135,7 +11135,7 @@
     {
       "id": 1736,
       "name": "Ruby Amulet of Attunement",
-      "description": "Boosts magic, summoning, and prayer XP by 15%.",
+      "description": "Boosts magic, summoning, and Worship XP by 15%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11158,7 +11158,7 @@
     {
       "id": 1737,
       "name": "Diamond Amulet of Attunement",
-      "description": "Boosts magic, summoning, and prayer XP by 25%.",
+      "description": "Boosts magic, summoning, and Worship XP by 25%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11181,7 +11181,7 @@
     {
       "id": 1738,
       "name": "Dragonstone Amulet of Attunement",
-      "description": "Boosts magic, summoning, and prayer XP by 50%.",
+      "description": "Boosts magic, summoning, and Worship XP by 50%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

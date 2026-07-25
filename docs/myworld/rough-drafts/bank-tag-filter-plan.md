@@ -40,7 +40,7 @@ Add a secondary panel beside the current bank window. The panel title should be 
 
 The filter panel contains checkboxes for supported tags:
 
-- Skills: Mining, Smithing, Woodcutting, Fletching, Fishing, Cooking, Magic, Runecraft, Crafting, Prayer, Summoning, and other relevant skills.
+- Skills: Mining, Smithing, Woodcutting, Fletching, Fishing, Cooking, Magic, Runecraft, Crafting, Worship, Summoning, and other relevant skills.
 - Broad categories: Resources, Combat, Food, Quest, Tools, Runes, Jewelry, Armor, Weapons.
 
 Default state:

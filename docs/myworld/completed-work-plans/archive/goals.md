@@ -439,7 +439,7 @@ system. The accepted model is tracked in `docs/myworld/prayer-rework.md`.
 - Move holy-symbol enchanting away from the old spell-based model and onto an
   altar-based interaction similar to other jewelry, but without rune
   association or rune cost
-- Review current prayer leveling methods and design better progression if the
+- Review current Worship leveling methods and design better progression if the
   existing path is too thin or repetitive
 - Review individual prayers and identify which ones are too weak, redundant, or
   not useful enough to keep unchanged
@@ -484,7 +484,7 @@ It likely affects at least:
 - prayer equipment and itemization
 - silver crafting / blessing flow
 - altar interaction design
-- prayer XP sources
+- Worship XP sources
 - prayer activation balance, point costs, and any remaining drain/recovery rules
 - combat and utility systems touched by prayers
 - UI and player feedback for allocated versus free prayer points

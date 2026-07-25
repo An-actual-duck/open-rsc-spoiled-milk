@@ -466,7 +466,7 @@ public class Drinkables implements OpInvTrigger {
 	private void useFishingPotion(Player player, final Item item, final int newItem, final int left) {
 		int affectedStat = Skill.FISHING.id();
 		if (player.getConfig().WAIT_TO_REBOOST && isstatup(player, affectedStat)) {
-			player.playerServerMessage(MessageType.QUEST, "You already have boosted " + player.getWorld().getServer().getConstants().getSkills().getSkillName(affectedStat));
+			player.playerServerMessage(MessageType.QUEST, "You already have boosted " + player.getWorld().getServer().getConstants().getSkills().getSkillDisplayName(affectedStat));
 			return;
 		}
 
@@ -514,7 +514,7 @@ public class Drinkables implements OpInvTrigger {
 	private void useNormalPotion(Player player, final Item item, final int[] affectedStats, final int[] percentageIncreases, final int[] modifiers, final int newItem, final int left) {
 		for (int affectedStat : affectedStats) {
 			if (player.getConfig().WAIT_TO_REBOOST && isstatup(player, affectedStat)) {
-				player.playerServerMessage(MessageType.QUEST, "You already have boosted " + player.getWorld().getServer().getConstants().getSkills().getSkillName(affectedStat));
+				player.playerServerMessage(MessageType.QUEST, "You already have boosted " + player.getWorld().getServer().getConstants().getSkills().getSkillDisplayName(affectedStat));
 				return;
 			}
 		}
@@ -542,7 +542,7 @@ public class Drinkables implements OpInvTrigger {
 		if (affectedStat == Skill.RANGED.id()) {
 			skillName = "ranging";
 		} else {
-			skillName = player.getWorld().getServer().getConstants().getSkills().getSkillName(affectedStat).toLowerCase();
+			skillName = player.getWorld().getServer().getConstants().getSkills().getSkillDisplayName(affectedStat).toLowerCase();
 		}
 
 		if (player.getConfig().WAIT_TO_REBOOST && isstatup(player, affectedStat)) {
@@ -568,7 +568,7 @@ public class Drinkables implements OpInvTrigger {
 		int[] boostStats = {Skill.ATTACK.id(), Skill.STRENGTH.id()};
 		for (int affectedStat : boostStats) {
 			if (player.getConfig().WAIT_TO_REBOOST && isstatup(player, affectedStat)) {
-				player.playerServerMessage(MessageType.QUEST, "You already have boosted " + player.getWorld().getServer().getConstants().getSkills().getSkillName(affectedStat));
+				player.playerServerMessage(MessageType.QUEST, "You already have boosted " + player.getWorld().getServer().getConstants().getSkills().getSkillDisplayName(affectedStat));
 				return;
 			}
 		}

@@ -167,7 +167,7 @@ deferred until the limited release has testers and observed play data.
   - Equipment Status no longer displays `Prayer`
   - `Weapon Pow` is split into `Melee Pow`, `Ranged Pow`, and `Magic Pow`
   - `Summoning` uses the shorter stats-menu label `Summon`
-  - MyWorld player combat level uses `highest main combat type + ((Summoning + Prayer + Hits) / 3)`
+  - MyWorld player combat level uses `highest main combat type + ((Summoning + Worship + Hits) / 3)`
   - NPC combat levels keep the existing formula
 - Custom-bank quality-of-life shortcuts are live:
   - `Ctrl` plus left-click on a bank item withdraws its full available quantity
@@ -199,7 +199,7 @@ deferred until the limited release has testers and observed play data.
   falls to the ground instead of being destroyed.
 - Demon ash prayer source is implemented:
   - demon-family bone drops produce `Demon ash` instead of generic `Ashes`
-  - `Demon ash` scatters for Prayer XP through the normal inventory action path
+  - `Demon ash` scatters for Worship XP through the normal inventory action path
   - the Greater Demon summon consumes `Demon ash`
   - generic `Ashes` remain for non-demon sources such as imps, firemaking, and
     quest requirements

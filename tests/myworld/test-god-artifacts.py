@@ -66,10 +66,10 @@ def main() -> None:
         require(item in artifacts, f"Artifact pool missing {item}")
 
     for stale_hint in (
-        "low-Prayer",
+        "low-Worship",
         "low-devotion",
         "You need 800 devotion",
-        "You need to have a Prayer level of 80 to request",
+        "You need to have a Worship level of 80 to request",
     ):
         require(stale_hint not in artifacts, f"Hidden artifact trigger should not expose ordinary failure hint: {stale_hint}")
 

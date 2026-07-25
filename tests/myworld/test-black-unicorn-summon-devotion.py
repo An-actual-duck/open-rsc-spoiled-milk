@@ -41,12 +41,12 @@ def main() -> None:
     require(
         summoning,
         "final int xp = getPrayerDropExperience(itemId) * amount * 2;",
-        "Black unicorn auto-offerings should keep normal Prayer XP separate",
+        "Black unicorn auto-offerings should keep normal Worship XP separate",
     )
     require(
         summoning,
         "Devotion.awardOfferingPrayerXpBonus(owner, Skill.PRAYER.id(), devotionBonusXp);",
-        "Black unicorn auto-offerings should award devotion bonus as flat Prayer XP",
+        "Black unicorn auto-offerings should award devotion bonus as flat Worship XP",
     )
     require(
         summoning,

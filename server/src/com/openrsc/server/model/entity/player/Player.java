@@ -1147,14 +1147,14 @@ public final class Player extends Mob {
 			if (requiredSkillIndex >= 0 && getSkills().getMaxStat(requiredSkillIndex) < requiredLevel) {
 				if (!bypass) {
 					message("You are not a high enough level to use this item");
-					message("You need to have a " + getWorld().getServer().getConstants().getSkills().getSkillName(requiredSkillIndex) + " level of " + requiredLevel);
+					message("You need to have a " + getWorld().getServer().getConstants().getSkills().getSkillDisplayName(requiredSkillIndex) + " level of " + requiredLevel);
 					unWield = true;
 				}
 			}
 			if (optionalSkillIndex.isPresent() && getSkills().getMaxStat(optionalSkillIndex.get()) < optionalLevel.get()) {
 				if (!bypass) {
 					message("You are not a high enough level to use this item");
-					message("You need to have a " + getWorld().getServer().getConstants().getSkills().getSkillName(optionalSkillIndex.get()) + " level of " + optionalLevel.get());
+					message("You need to have a " + getWorld().getServer().getConstants().getSkills().getSkillDisplayName(optionalSkillIndex.get()) + " level of " + optionalLevel.get());
 					unWield = true;
 				}
 			}
@@ -1240,14 +1240,14 @@ public final class Player extends Mob {
 				if (requiredSkillIndex >= 0 && getSkills().getMaxStat(requiredSkillIndex) < requiredLevel) {
 					if (!bypass) {
 						message("You are not a high enough level to use this item");
-						message("You need to have a " + getWorld().getServer().getConstants().getSkills().getSkillName(requiredSkillIndex) + " level of " + requiredLevel);
+						message("You need to have a " + getWorld().getServer().getConstants().getSkills().getSkillDisplayName(requiredSkillIndex) + " level of " + requiredLevel);
 						unWield = true;
 					}
 				}
 				if (optionalSkillIndex.isPresent() && getSkills().getMaxStat(optionalSkillIndex.get()) < optionalLevel.get()) {
 					if (!bypass) {
 						message("You are not a high enough level to use this item");
-						message("You need to have a " + getWorld().getServer().getConstants().getSkills().getSkillName(optionalSkillIndex.get()) + " level of " + optionalLevel.get());
+						message("You need to have a " + getWorld().getServer().getConstants().getSkills().getSkillDisplayName(optionalSkillIndex.get()) + " level of " + optionalLevel.get());
 						unWield = true;
 					}
 				}
@@ -2926,7 +2926,7 @@ public final class Player extends Mob {
 			appliedAmount = (int) Math.round(getExperienceMultiplier(i) * amount);
 		if (isExperienceFrozen()) {
 			ActionSender.sendMessage(this, "You passed on " + appliedAmount / 4 + " " +
-				getWorld().getServer().getConstants().getSkills().getSkill(i).getLongName() + " experience because your exp is frozen.");
+				getWorld().getServer().getConstants().getSkills().getSkill(i).getDisplayName() + " experience because your exp is frozen.");
 			return;
 		}
 		incExp(i, amount, useFatigue, true);

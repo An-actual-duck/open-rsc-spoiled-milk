@@ -298,7 +298,7 @@ Current selectable skills:
 - `Defense`
 - `Strength`
 - `Hits`
-- `Prayer`
+- `Worship`
 - `Magic`
 - `Woodcutting`
 - `Crafting`

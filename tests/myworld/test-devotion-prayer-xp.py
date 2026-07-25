@@ -41,7 +41,7 @@ def main() -> None:
     require("getBlessingOfferingCostForResourceCost" in devotion,
             "devotion fractional blessing-cost helper should exist")
     require("getBlessingPrayerXp" in devotion and "100.0D + devotionLevel" in devotion,
-            "blessing Prayer XP should scale by 1% per devotion")
+            "blessing Worship XP should scale by 1% per devotion")
     require("clampOfferings((long) previousOfferings + offeringGain + blackUnicornOfferingGain)" in devotion,
             "offering gains should clamp after long arithmetic")
     require("clampOfferings((long) previousOfferings + ((long) devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL))" in devotion,
@@ -55,7 +55,7 @@ def main() -> None:
     require("player.getPrayers().deactivateOverflowingPrayers();" in devotion,
             "Devotion reductions should deactivate prayers above the new capacity")
     require("scaledXp >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) Math.ceil(scaledXp)" in devotion,
-            "blessing Prayer XP should saturate instead of overflowing")
+            "blessing Worship XP should saturate instead of overflowing")
     require("getDevotionLevelFromOfferings(previousOfferings)" in devotion,
             "devotion bonus should be based on completed prior offering tiers")
     require("if (newDevotion > previousDevotion)" in devotion and "sendDevotionIncreaseMessage" in devotion,
@@ -77,17 +77,17 @@ def main() -> None:
     require("player.getFatigue() >= player.MAX_FATIGUE" in devotion,
             "flat devotion XP should respect max fatigue")
     require("Devotion.awardOfferingPrayerXpBonus(player, praySkillId, devotionBonusXp);" in bones,
-            "devotion bonus should be awarded separately from normal Prayer XP modifiers")
+            "devotion bonus should be awarded separately from normal Worship XP modifiers")
     require("Every 10 offerings gives +1 devotion" in guide,
-            "Prayer skill guide should explain devotion levels")
+            "Worship skill guide should explain devotion levels")
     require("Devotion ranges from -1000 to 1000" in guide,
-            "Prayer skill guide should explain negative devotion range")
+            "Worship skill guide should explain negative devotion range")
     require("Blessed symbols give 1.5x devotion from offerings" in guide,
-            "Prayer skill guide should explain blessed symbol offering bonus")
-    require("+1 Prayer XP per offering for each devotion" in guide,
-            "Prayer skill guide should explain devotion XP scaling")
+            "Worship skill guide should explain blessed symbol offering bonus")
+    require("+1 Worship XP per offering for each devotion" in guide,
+            "Worship skill guide should explain devotion XP scaling")
     require('drawString("Devotion: " + this.currentDevotionLevel' in client,
-            "Prayer skill tooltip should show current devotion")
+            "Worship skill tooltip should show current devotion")
     require("private int readSignedShort()" in packet_handler
             and "value > Short.MAX_VALUE ? value - 0x10000 : value" in packet_handler,
             "client should have a signed short reader for devotion")
@@ -99,7 +99,7 @@ def main() -> None:
     require("builder.writeShort(devotion.devotionLevel)" in custom_generator,
             "server should send devotion as a signed short-sized value")
 
-    print("PASS: devotion Prayer XP scaling is wired to bone and ash offerings")
+    print("PASS: devotion Worship XP scaling is wired to bone and ash offerings")
 
 
 if __name__ == "__main__":

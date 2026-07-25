@@ -26,7 +26,7 @@ def main():
     require("DEVOTION_CHANGE_PER_RESOURCE = 1" in plugin,
             "devotion reward/penalty should be resource-cost based")
     require("PRAYER_XP_MULTIPLIER = 5" in plugin,
-            "destroying opposing gear should grant large Prayer XP")
+            "destroying opposing gear should grant large Worship XP")
     require("Devotion.adjustDevotionOfferings(player, worshippedGod, devotionOfferingChange)" in plugin,
             "destroying opposing gear should reward current god devotion")
     require("Devotion.adjustDevotionOfferings(player, itemGod, -devotionOfferingChange)" in plugin,

@@ -400,19 +400,19 @@ public class ABoneToPick implements TimedEventTrigger, TalkNpcTrigger, KillNpcTr
 				}
 				break;
 			case 2:
-				// Insult prayer level
+				// Insult Worship level
 				npcsay(player, scarie, "Hey, Spookie!");
 				int prayerLevel = player.getSkills().getMaxStat(Skill.PRAYER.id());
 				if (prayerLevel < 31) {
-					npcsay(player, scarie, "Only " + prayerLevel + " prayer?",
+					npcsay(player, scarie, "Only " + prayerLevel + " Worship?",
 						"Have you never touched a bone before?");
 					npcsay(player, spookie, "I thought we were the ones that didn't have any guts!");
 				} else if (prayerLevel < 80) {
-					npcsay(player, scarie, prayerLevel + " prayer?",
+					npcsay(player, scarie, prayerLevel + " Worship?",
 						"Bald-head Langley might think you're pious");
 					npcsay(player, spookie, "But we know you only want ultimate strength!");
 				} else {
-					npcsay(player, scarie, prayerLevel + " prayer?",
+					npcsay(player, scarie, prayerLevel + " Worship?",
 						"Looks like we've got a graverobber on our hands!");
 				}
 				break;
@@ -454,7 +454,7 @@ public class ABoneToPick implements TimedEventTrigger, TalkNpcTrigger, KillNpcTr
 					npcsay(player, spookie, "Yeah I can't believe you've played for...",
 						DataConversions.getDateFromMsec(timePlayed) + "!");
 				} else {
-					String lowestStatName = player.getWorld().getServer().getConstants().getSkills().getSkillName(lowestStatIndex);
+					String lowestStatName = player.getWorld().getServer().getConstants().getSkills().getSkillDisplayName(lowestStatIndex);
 					npcsay(player, spookie, "Bony cow!",
 						"You've played for " + DataConversions.getDateFromMsec(timePlayed) + "...");
 					npcsay(player, scarie, "And you only have " + lowestStatValue + " " + lowestStatName + "?!");

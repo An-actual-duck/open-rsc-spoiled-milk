@@ -196,6 +196,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   authoritative Ant server build, dependency, artifact, and Gradle-drift reference.
 - [testing-quick-reference.md](info/testing-quick-reference.md): compact test
   and field-validation reference.
+- [worship-skill-compatibility.md](info/worship-skill-compatibility.md):
+  player-facing Worship terminology and the Prayer-named identifiers retained
+  for save, database, protocol, and integration compatibility.
 
 ## Current Repository Shape
 

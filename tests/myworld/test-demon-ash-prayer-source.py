@@ -57,8 +57,8 @@ def main() -> int:
     require("currentNpcDrops.addItemDrop(ItemId.ASHES.id(), 1, 6);" in npc_drops, "imp-style generic Ashes drops must remain generic", failures)
 
     require('command.equalsIgnoreCase("scatter")' in bones, "prayer plugin must accept scatter actions", failures)
-    require("case DEMON_ASH:" in bones, "Demon ash must award Prayer XP through the bones plugin", failures)
-    require("skillXP = 2 * 80;" in bones, "Demon ash Prayer XP should stay pinned at 80 before config division", failures)
+    require("case DEMON_ASH:" in bones, "Demon ash must award Worship XP through the bones plugin", failures)
+    require("skillXP = 2 * 80;" in bones, "Demon ash Worship XP should stay pinned at 80 before config division", failures)
 
     greater_demon = re.search(r"GREATER_DEMON_PROFILE\s*=.*?;\n", summoning, re.S)
     require(greater_demon is not None and "ItemId.DEMON_ASH.id()" in greater_demon.group(0), "Greater Demon summon must consume Demon ash", failures)

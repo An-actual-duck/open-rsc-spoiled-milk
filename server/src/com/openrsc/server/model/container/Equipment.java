@@ -1133,14 +1133,14 @@ public class Equipment {
 		if (requiredSkillIndex >= 0 && player.getSkills().getMaxStat(requiredSkillIndex) < requiredLevel) {
 			if (!bypass) {
 				player.message("You are not a high enough level to use this item");
-				player.message("You need to have a " + player.getWorld().getServer().getConstants().getSkills().getSkillName(requiredSkillIndex) + " level of " + requiredLevel);
+				player.message("You need to have a " + player.getWorld().getServer().getConstants().getSkills().getSkillDisplayName(requiredSkillIndex) + " level of " + requiredLevel);
 				ableToWield = false;
 			}
 		}
 		if (optionalSkillIndex.isPresent() && player.getSkills().getMaxStat(optionalSkillIndex.get()) < optionalLevel.get()) {
 			if (!bypass) {
 				player.message("You are not a high enough level to use this item");
-				player.message("You need to have a " + player.getWorld().getServer().getConstants().getSkills().getSkillName(optionalSkillIndex.get()) + " level of " + optionalLevel.get());
+				player.message("You need to have a " + player.getWorld().getServer().getConstants().getSkills().getSkillDisplayName(optionalSkillIndex.get()) + " level of " + optionalLevel.get());
 				ableToWield = false;
 			}
 		}
@@ -1389,7 +1389,7 @@ public class Equipment {
 		}
 		if (player.getSkills().getMaxStat(Skill.PRAYER.id()) < GOD_MACE_PRAYER_REQUIREMENT) {
 			player.message("You are not a high enough level to use this item");
-			player.message("You need to have a Prayer level of " + GOD_MACE_PRAYER_REQUIREMENT);
+			player.message("You need to have a Worship level of " + GOD_MACE_PRAYER_REQUIREMENT);
 			return false;
 		}
 		return true;

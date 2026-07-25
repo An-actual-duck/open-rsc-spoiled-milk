@@ -234,7 +234,8 @@ public class Skills {
 			skills.add(new SkillDef("Strength", "Strength", 1, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
 			skills.add(new SkillDef("Hits", "Hits", 10, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
 			skills.add(new SkillDef("Ranged", "Ranged", 1, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
-			skills.add(new SkillDef("Prayer", "Prayer", 1, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
+			// Prayer remains the stable internal/database/protocol name; Worship is presentation-only.
+			skills.add(new SkillDef("Prayer", "Prayer", "Worship", 1, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
 			skills.add(new SkillDef("Magic", "Magic", 1, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
 			skills.add(new SkillDef("Cooking", "Cooking", 1, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
 			skills.add(new SkillDef("Woodcutting", "Woodcut", 1, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
@@ -269,6 +270,10 @@ public class Skills {
 		return skills.get(skillIndex).getShortName();
 	}
 
+	public String getSkillDisplayName(int skillIndex) {
+		return skills.get(skillIndex).getDisplayName();
+	}
+
 	public int getSkillsCount() {
 		return skills.size();
 	}
@@ -277,7 +282,8 @@ public class Skills {
 		int i = 0;
 		for (SkillDef skill : skills) {
 			if (skill.getShortName().equalsIgnoreCase(skillName)
-				|| skill.getLongName().equalsIgnoreCase(skillName))
+				|| skill.getLongName().equalsIgnoreCase(skillName)
+				|| skill.getDisplayName().equalsIgnoreCase(skillName))
 				return i;
 			i++;
 		}

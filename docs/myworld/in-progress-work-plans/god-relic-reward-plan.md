@@ -15,7 +15,7 @@ Terminology note:
 
 - Make god equipment feel like direct divine rewards rather than ordinary
   crafted or Mage Arena rewards.
-- Use Prayer level and devotion as the main access gates.
+- Use Worship level and devotion as the main access gates.
 - Keep artifact rewards aligned with the player's current god.
 - Prevent duplicate artifact rewards for the same god line.
 - Cover all combat styles with artifact options.
@@ -79,7 +79,7 @@ Existing-content note:
 
 To request a god artifact, the player must meet all of these:
 
-- Prayer level `80`
+- Worship level `80`
 - `800` devotion with the aligned god
 - active worship/alignment with that god
 - praying at the matching god altar
@@ -101,11 +101,11 @@ Equipment requirements:
 
 - all artifacts remain aligned to their matching god and should only function
   while the player worships that god
-- maces require Prayer `80` plus the normal melee/Attack requirement
-- staves require Prayer `80` plus the normal Magic requirement
-- capes require Prayer `80` plus matching worship/alignment
+- maces require Worship `80` plus the normal melee/Attack requirement
+- staves require Worship `80` plus the normal Magic requirement
+- capes require Worship `80` plus matching worship/alignment
 - future shield and crossbow artifacts should follow their combat role's normal
-  stat requirement plus Prayer `80`
+  stat requirement plus Worship `80`
 - artifacts should not require `800` current devotion to equip
 
 ## Altar Flow
@@ -127,7 +127,7 @@ god awards one from the remaining aligned artifact pool.
 
 No failure-message design:
 
-- do not show low-Prayer, low-devotion, wrong-god, or all-claimed artifact hints
+- do not show low-Worship, low-devotion, wrong-god, or all-claimed artifact hints
   from ordinary altar prayer
 - if requirements are not met, do only the normal altar behavior
 - if the player qualifies but declines the offer, do not charge devotion
@@ -363,7 +363,7 @@ set directly.
 The player receives:
 
 - all remaining unclaimed artifacts from the chosen god
-- a sizable Prayer XP award
+- a sizable Worship XP award
 - access to new prayers tied to full dedication
 - the ability for chosen-god blessed armor and weapons to progress toward
   tier-11 equivalency as devotion climbs above `1000`
@@ -416,7 +416,7 @@ Systems that must respect the new state:
 - god altar reward dialogue
 - artifact claim tracking
 - bank, inventory, and equipment cleanup
-- Prayer tab and devotion UI
+- Worship skill tab and devotion UI
 - blessed equipment scaling
 - prayer unlock checks
 
@@ -488,7 +488,7 @@ Target direction:
   have fixed high-end stats.
 - Exact stat budgets for artifact mace, paladin shield, crossbow, cape, and staff.
 - How the legacy Mace of Zamorak should be handled.
-- Exact Prayer XP award for god excommunication.
+- Exact Worship XP award for god excommunication.
 - Exact offering curve for devotion `1000-2000`.
 - Which new prayers unlock after god excommunication.
 - Whether excommunication requires only one off-god artifact or a larger artifact

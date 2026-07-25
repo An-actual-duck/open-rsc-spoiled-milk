@@ -228,7 +228,7 @@ Atelier Pixerelia.
 - cost: `1 Life rune`, `1 Body rune`, `1 Cosmic rune`, `1 bones`
 - effect: automatically buries prayer drops such as bones, big bones, bat
   bones, and similar drops
-- reward: awards double prayer XP for automatically buried drops
+- reward: awards double Worship XP for automatically buried drops
 
 ### Restless Shade
 
@@ -353,7 +353,7 @@ The first proof implementation has already established the core summon runtime.
 - `Mischief Imp` blocks hostile NPC aggro while active and despawns when the player
   starts attacking.
 - `Mourning Unicorn` auto-buries prayer drops, including bones, bat bones, big
-  bones, dragon bones, generic ashes, and demon ash, for double prayer XP.
+  bones, dragon bones, generic ashes, and demon ash, for double Worship XP.
 - `Guard Dog` limits PvM engagement to one enemy, suppresses player area
   attacks and procs, and restores normal targeting immediately when inactive.
 - Ranged and magic combat summons use projectile attacks with owner kill/XP

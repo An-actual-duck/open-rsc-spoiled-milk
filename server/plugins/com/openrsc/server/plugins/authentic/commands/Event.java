@@ -1095,7 +1095,7 @@ public final class Event implements CommandTrigger {
 				}
 
 				try {
-					statName = player.getWorld().getServer().getConstants().getSkills().getSkillName(stat);
+					statName = player.getWorld().getServer().getConstants().getSkills().getSkillDisplayName(stat);
 				}
 				catch (IndexOutOfBoundsException ex) {
 					player.message(messagePrefix + "Invalid stat");
@@ -1152,7 +1152,7 @@ public final class Event implements CommandTrigger {
 				}
 
 				try {
-					statName = player.getWorld().getServer().getConstants().getSkills().getSkillName(stat);
+					statName = player.getWorld().getServer().getConstants().getSkills().getSkillDisplayName(stat);
 				}
 				catch (IndexOutOfBoundsException e) {
 					player.message(messagePrefix + "Invalid stat");

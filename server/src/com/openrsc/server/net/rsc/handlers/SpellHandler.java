@@ -1677,7 +1677,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						affectsStat = CombatEffectUtil.remapLegacyPlayerMeleeStat(affectedMob, affectsStat);
 						final String statName = affectsStat == Skill.MELEE.id()
 							? "melee"
-							: getPlayer().getWorld().getServer().getConstants().getSkills().getSkill(affectsStat).getLongName().toLowerCase();
+							: getPlayer().getWorld().getServer().getConstants().getSkills().getSkill(affectsStat).getDisplayName().toLowerCase();
 						final String playerMessage;
 						if (spellEnum == Spells.CONFUSE) {
 							playerMessage = "Your " + statName + " has been reduced by a confuse spell!";
@@ -1700,7 +1700,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						/* New current level */
 						final int newStat = affectedMob.getSkills().getLevel(affectsStat) - lowerBy;
 						if (affectedMob.getSkills().getLevel(affectsStat) < affectedMob.getSkills().getMaxStat(affectsStat)) {
-							final String skillName = getPlayer().getWorld().getServer().getConstants().getSkills().getSkill(affectsStat).getLongName().toLowerCase();
+							final String skillName = getPlayer().getWorld().getServer().getConstants().getSkills().getSkill(affectsStat).getDisplayName().toLowerCase();
 							getPlayer().playerServerMessage(MessageType.QUEST, "Your opponent already has weakened " + skillName);
 							return;
 						}
@@ -2307,7 +2307,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					/* How much to boost the stat */
 					int baseStat = player.getSkills().getLevel(affectedStat) > player.getSkills().getMaxStat(affectedStat) ? player.getSkills().getMaxStat(affectedStat) : player.getSkills().getLevel(affectedStat);
 					if (player.getConfig().WAIT_TO_REBOOST && !isNormalLevel(player, affectedStat)) {
-						player.playerServerMessage(MessageType.QUEST, "You already have boosted " + player.getWorld().getServer().getConstants().getSkills().getSkillName(affectedStat));
+						player.playerServerMessage(MessageType.QUEST, "You already have boosted " + player.getWorld().getServer().getConstants().getSkills().getSkillDisplayName(affectedStat));
 						return;
 					}
 					int newStat = baseStat
