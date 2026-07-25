@@ -155,7 +155,13 @@ def main() -> None:
     require_contains(MAGIC_COMBAT_EVENT, "MagicCombatEvent.this.setDelayTicks(0);")
     require_contains(WALK_TO_MOB_ACTION, "boolean projectilePathAttack = actionType == ActionType.ATTACKMAGIC;")
     require_contains(WALK_TO_MOB_ACTION, "((ignoreProjectileAllowed || projectilePathAttack) && !myworldCombatAttack)")
-    require_contains(WALK_TO_MOB_ACTION, "checkedPoint.getX(), checkedPoint.getY(), mob.getX(), mob.getY(),")
+    require_contains(
+        WALK_TO_MOB_ACTION,
+        "checkedPoint.getX(),\n"
+        "\t\t\t\tcheckedPoint.getY(),\n"
+        "\t\t\t\tmob.getX(),\n"
+        "\t\t\t\tmob.getY(),",
+    )
     require_contains(WALK_TO_MOB_ACTION, "ignoreProjectileAllowed, !ignoreProjectileAllowed")
     require_regex(
         MAGIC_COMBAT_EVENT,

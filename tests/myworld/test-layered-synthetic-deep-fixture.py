@@ -14,6 +14,7 @@ REGION_MANAGER = (
 )
 ENTITY = ROOT / "server/src/com/openrsc/server/model/entity/Entity.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+MOB = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
 PATH_VALIDATION = ROOT / "server/src/com/openrsc/server/model/PathValidation.java"
 WALK_TO_MOB_ACTION = (
     ROOT / "server/src/com/openrsc/server/model/action/WalkToMobAction.java"
@@ -231,6 +232,7 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         region_manager = REGION_MANAGER.read_text(encoding="utf-8")
         entity = ENTITY.read_text(encoding="utf-8")
         player = PLAYER.read_text(encoding="utf-8")
+        mob = MOB.read_text(encoding="utf-8")
         path_validation = PATH_VALIDATION.read_text(encoding="utf-8")
         walk_to_mob_action = WALK_TO_MOB_ACTION.read_text(encoding="utf-8")
         player_service = PLAYER_SERVICE.read_text(encoding="utf-8")
@@ -260,6 +262,12 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         )
         self.assertIn("SYNTHETIC_DEEP_NPC_ATTRIBUTE", development)
         self.assertIn("SYNTHETIC_DEEP_ITEM_ATTRIBUTE", development)
+        self.assertIn(
+            "SYNTHETIC_DEEP_NPC_ROAM_RADIUS = 2", development
+        )
+        self.assertIn(
+            "SYNTHETIC_DEEP_NPC_ROAM_RADIUS);", development
+        )
         self.assertIn("syntheticDeepFixtureTile", region_manager)
         self.assertIn(
             "LayeredCompatibilityPointAdapter.deepLocation(x, y)",
@@ -270,6 +278,22 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         )
         self.assertIn(
             "mob.getWorldLocation()", walk_to_mob_action
+        )
+        self.assertIn(
+            "final Mob start", path_validation
+        )
+        self.assertIn(
+            "destination.getWorldLocation()", path_validation
+        )
+        self.assertIn(
+            "PathValidation.checkAdjacentDistance(\n"
+            "\t\t\t\t\t\tMob.this, mob, true, false)",
+            mob,
+        )
+        self.assertIn(
+            "PathValidation.checkAdjacentDistance(\n"
+            "\t\t\t\tthis, getFollowing(), true, false)",
+            player,
         )
         self.assertIn(
             "WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY",

@@ -541,7 +541,8 @@ public abstract class Mob extends Entity {
 				boolean shouldInterrupt = canInterrupt && (!duelActive && isBusy());
 				//In range and adjacent, and we ran this event more than once.
 				boolean shouldStopWalking = withinRange(mob, radius)
-					&& PathValidation.checkAdjacentDistance(getWorld(), getX(), getY(), mob.getX(), mob.getY(), true, false)
+					&& PathValidation.checkAdjacentDistance(
+						Mob.this, mob, true, false)
 					&& getTimesRan() >= 1;
 
 				if (!withinRange(mob) || shouldInterrupt) {

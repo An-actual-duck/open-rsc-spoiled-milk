@@ -18003,6 +18003,23 @@ domain and bounded named-projection receipts, use the immutable deep room
 product for this wall-free fixture, and preserve the legacy Point path when
 spatial authority is disabled.
 
+The first apparent success after that action-level correction is rejected on
+closer owner observation. The conversation began correctly, but the Player
+then advanced onto the Man after a delay. Private runtime evidence makes the
+sequence unambiguous: `Man.onTalkNpc` ran with the authoritative Player at
+`(450,600)` and Man at `(452,600)`, then a timed event observed the Player at
+`(452,600)`. The remaining defect is not client-only interpolation. The
+follow-stop paths in `Mob.setFollowing` and `Player.updatePosition` still call
+the Point-only collision seam, reject the valid deep adjacency against packed
+surface water, and allow the queued path to resume after the action fires.
+Route both consumers through one Mob-to-Mob adjacency overload that selects
+`WorldLocation` only under spatial authority and retains the existing
+coordinate path otherwise. Independently change the generated Man from radius
+zero to a small room-bounded roaming envelope, so stationary fixture
+configuration is no longer a competing explanation. Owner acceptance remains
+pending until the Man visibly roams and repeated conversations stop adjacent
+without any delayed overlap.
+
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
 envelopes and all 14 support-only coordinates: their size is not evidence that

@@ -176,6 +176,32 @@ public class PathValidation {
 	}
 
 	public static boolean checkAdjacentDistance(
+		final Mob start,
+		final Mob destination,
+		final boolean ignoreProjectileAllowed,
+		final boolean wantDiagCheck) {
+		if (start.getWorld() != destination.getWorld()) {
+			return false;
+		}
+		if (start.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			return checkAdjacentDistance(
+				start.getWorld(),
+				start.getWorldLocation(),
+				destination.getWorldLocation(),
+				ignoreProjectileAllowed,
+				wantDiagCheck);
+		}
+		return checkAdjacentDistance(
+			start.getWorld(),
+			start.getX(),
+			start.getY(),
+			destination.getX(),
+			destination.getY(),
+			ignoreProjectileAllowed,
+			wantDiagCheck);
+	}
+
+	public static boolean checkAdjacentDistance(
 		final World world,
 		final WorldLocation start,
 		final WorldLocation destination,
@@ -235,7 +261,8 @@ public class PathValidation {
 	}
 
 	public static boolean checkAdjacentDistance(World world, int startX, int startY, int destX, int destY, boolean ignoreProjectileAllowed, boolean wantDiagCheck) {
-		if (world.getServer().getConfig()
+		if (world != null
+			&& world.getServer().getConfig()
 				.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
 			&& !sameSpatialDomain(
 				LegacyPackedPointAdapter.fromLegacyPoint(

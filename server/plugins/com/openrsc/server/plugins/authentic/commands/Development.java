@@ -100,6 +100,7 @@ public final class Development implements CommandTrigger {
 		"layered-synthetic-deep-fixture-npc";
 	private static final String SYNTHETIC_DEEP_ITEM_ATTRIBUTE =
 		"layered-synthetic-deep-fixture-item";
+	private static final int SYNTHETIC_DEEP_NPC_ROAM_RADIUS = 2;
 	private static final String SYNTHETIC_DEEP_RETURN_SPACE_CACHE =
 		"layered_synthetic_deep_return_space";
 	private static final String SYNTHETIC_DEEP_RETURN_X_CACHE =
@@ -1599,7 +1600,8 @@ public final class Development implements CommandTrigger {
 		}
 		if (!npcFound) {
 			Npc npc = new Npc(
-				player.getWorld(), NpcId.MAN.id(), 452, 600, 0);
+				player.getWorld(), NpcId.MAN.id(), 452, 600,
+				SYNTHETIC_DEEP_NPC_ROAM_RADIUS);
 			npc.setAttribute(SYNTHETIC_DEEP_NPC_ATTRIBUTE, true);
 			npc.setWorldLocation(
 				LayeredCompatibilityPointAdapter.deepLocation(452, 600),
