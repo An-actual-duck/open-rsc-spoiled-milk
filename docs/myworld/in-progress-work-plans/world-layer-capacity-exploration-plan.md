@@ -18020,6 +18020,21 @@ configuration is no longer a competing explanation. Owner acceptance remains
 pending until the Man visibly roams and repeated conversations stop adjacent
 without any delayed overlap.
 
+The corrected route is owner-accepted. Repeated conversations stopped
+properly with no delayed move onto the Man, and the owner visually confirmed
+the generated NPC now roams. Server evidence independently records the Man at
+`(452,600)`, `(453,600)`, and `(451,600)` across three successful conversation
+attempts, proving that the radius-2 envelope is active rather than merely
+configured. The Mob-to-Mob adjacency overload now supplies the same-domain
+`WorldLocation` decision to both follow-stop consumers under spatial
+authority, while the legacy primitive path remains unchanged when the gate is
+off. The 16-test D/C/B/A lineage, path-queue, foundation-optimization, combat
+runtime, and combat-interaction guards pass, as does the authoritative
+850-core/488-plugin server build. Milestone D's room movement, NPC interaction,
+item interaction, exact deep reconnect, and explicit exit path are now
+accepted; death/recovery remains the outstanding owner route before the
+milestone can be closed.
+
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
 envelopes and all 14 support-only coordinates: their size is not evidence that
