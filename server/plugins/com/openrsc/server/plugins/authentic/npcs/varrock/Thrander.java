@@ -80,12 +80,10 @@ public class Thrander extends AbstractShop {
 	}
 
 	private void handleCrystalKeyExchange(final Player player, final Npc n) {
-		npcsay(
-			player,
-			n,
-			"Crystal? Well I do have a knack for converting things, but crystal is brittle, "
-				+ "I'll need 3 of a kind to cleanly swap them"
-		);
+		npcsay(player, n,
+			"I do have a knack for converting things",
+			"But crystal is brittle",
+			"I'll need at least three to do it properly");
 		final int option = multi(player, n,
 			"Here's 3 loops",
 			"Here's three teeth",
