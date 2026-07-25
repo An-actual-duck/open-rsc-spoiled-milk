@@ -166,6 +166,8 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeString(context.nativeManifestSha256);
 						builder.writeByte(
 							(byte) context.nativePresentationChunkSize);
+					}
+					if (context.protocolVersion == 3) {
 						builder.writeInt(context.nativeSectorX);
 						builder.writeInt(context.nativeSectorY);
 						builder.writeString(context.nativeEncoding);
@@ -177,6 +179,25 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeByte((byte) context.nativeVerticalWall);
 						builder.writeByte((byte) context.nativeHorizontalWall);
 						builder.writeInt(context.nativeDiagonalWall);
+					} else if (context.protocolVersion >= 4) {
+						builder.writeInt(context.nativeCurrentChunkX);
+						builder.writeInt(context.nativeCurrentChunkY);
+						builder.writeByte((byte) context.nativeChunkRadius);
+						builder.writeByte((byte) context.nativeChunks.size());
+						for (LayeredSceneTerrainChunkStruct chunk
+							: context.nativeChunks) {
+							builder.writeInt(chunk.chunkX);
+							builder.writeInt(chunk.chunkY);
+							builder.writeByte(chunk.available ? 1 : 0);
+							if (chunk.available) {
+								builder.writeInt(chunk.sourceSectorX);
+								builder.writeInt(chunk.sourceSectorY);
+								builder.writeString(chunk.sourceEncoding);
+								builder.writeString(chunk.sourcePayloadSha256);
+								builder.writeShort(chunk.tileBytes.length);
+								builder.write(chunk.tileBytes);
+							}
+						}
 					}
 					break;
 

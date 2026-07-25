@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 final class LayeredSceneContextState {
 	static final int PROTOCOL_VERSION = 1;
 	static final int SYNTHETIC_DEEP_PROTOCOL_VERSION = 2;
+	static final int UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION =
+		NativeLayeredTerrainSnapshot.UNIFORM_PAGE_PROTOCOL_VERSION;
 	static final int NATIVE_LAYERED_PROTOCOL_VERSION =
 		NativeLayeredTerrainSnapshot.PROTOCOL_VERSION;
 	static final int LEVEL_STRIDE = 944;
@@ -138,6 +140,8 @@ final class LayeredSceneContextState {
 			&& incomingProtocolVersion
 				!= SYNTHETIC_DEEP_PROTOCOL_VERSION
 			&& incomingProtocolVersion
+				!= UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION
+			&& incomingProtocolVersion
 				!= NATIVE_LAYERED_PROTOCOL_VERSION) {
 			throw new IllegalArgumentException(
 				"Unsupported layered scene-context protocol: "
@@ -163,16 +167,17 @@ final class LayeredSceneContextState {
 						== SYNTHETIC_DEEP_PROTOCOL_VERSION
 					&& !SYNTHETIC_DEEP_PROJECTION.equals(
 						incomingProjectionId))
-			|| (incomingProtocolVersion
-						== NATIVE_LAYERED_PROTOCOL_VERSION
+			|| (isNativeProtocol(incomingProtocolVersion)
 					&& !NATIVE_LAYERED_PROJECTION.equals(
 						incomingProjectionId))) {
 			throw new IllegalArgumentException(
 				"Invalid layered scene-context projection: "
 					+ incomingProjectionId);
 		}
-		if (incomingProtocolVersion == NATIVE_LAYERED_PROTOCOL_VERSION) {
+		if (isNativeProtocol(incomingProtocolVersion)) {
 			if (incomingTerrainSnapshot == null
+				|| incomingTerrainSnapshot.getProtocolVersion()
+					!= incomingProtocolVersion
 				|| !incomingTerrainSnapshot.covers(
 					incomingWorldSpace,
 					incomingLogicalLevel,
@@ -199,7 +204,7 @@ final class LayeredSceneContextState {
 			&& (!worldSpace.equals(incomingWorldSpace)
 				|| logicalLevel != incomingLogicalLevel
 				|| !projectionId.equals(incomingProjectionId)
-				|| !sameNativeTerrain(
+				|| !sameNativeTerrainScope(
 					nativeTerrainSnapshot, incomingTerrainSnapshot));
 		protocolVersion = incomingProtocolVersion;
 		sequence = incomingSequence;
@@ -311,10 +316,24 @@ final class LayeredSceneContextState {
 			+ acceptedContexts + "/" + acceptedPlayerPositions + "/" + scopeChanges;
 	}
 
-	private static boolean sameNativeTerrain(
+	private static boolean sameNativeTerrainScope(
 		NativeLayeredTerrainSnapshot left,
 		NativeLayeredTerrainSnapshot right) {
-		return left == null ? right == null : left.equals(right);
+		if (left == null || right == null) {
+			return left == right;
+		}
+		if (left.getProtocolVersion()
+				== NativeLayeredTerrainSnapshot.PROTOCOL_VERSION
+			&& right.getProtocolVersion()
+				== NativeLayeredTerrainSnapshot.PROTOCOL_VERSION) {
+			return left.packageIdentity().equals(right.packageIdentity());
+		}
+		return left.equals(right);
+	}
+
+	private static boolean isNativeProtocol(int version) {
+		return version == UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION
+			|| version == NATIVE_LAYERED_PROTOCOL_VERSION;
 	}
 
 	void reset() {

@@ -5,18 +5,18 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
- * Immutable, packet-decoded terrain page for one signed layered scene scope.
- *
- * <p>The first native format is deliberately small: one validated uniform
- * 48x48 storage page. The presentation chunk size remains independent and is
- * carried so later streaming can refresh smaller scopes without changing the
- * archive page contract.</p>
+ * Immutable, packet-decoded terrain readiness window for one signed layered
+ * scene scope. Protocol v3's uniform page remains readable; protocol v4 owns a
+ * radius-one set of presentation chunks with explicit void slots.
  */
 public final class NativeLayeredTerrainSnapshot {
-	public static final int PROTOCOL_VERSION = 3;
+	public static final int UNIFORM_PAGE_PROTOCOL_VERSION = 3;
+	public static final int PROTOCOL_VERSION = 4;
 	public static final int SECTOR_SIZE = 48;
 	public static final String PROJECTION_ID = "native-layered-package-v1";
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
+	public static final int STREAMING_CHUNK_SIZE = 24;
+	public static final int STREAMING_CHUNK_RADIUS = 1;
 
 	private static final Pattern ID =
 		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
@@ -24,6 +24,7 @@ public final class NativeLayeredTerrainSnapshot {
 		Pattern.compile("[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9._-]+)?");
 	private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
 
+	private final int protocolVersion;
 	private final String packageId;
 	private final String packageVersion;
 	private final String manifestSha256;
@@ -41,6 +42,10 @@ public final class NativeLayeredTerrainSnapshot {
 	private final int verticalWall;
 	private final int horizontalWall;
 	private final int diagonalWall;
+	private final int currentChunkX;
+	private final int currentChunkY;
+	private final int chunkRadius;
+	private final NativeLayeredTerrainChunk[] chunks;
 
 	public NativeLayeredTerrainSnapshot(
 		String packageId,
@@ -60,6 +65,7 @@ public final class NativeLayeredTerrainSnapshot {
 		int verticalWall,
 		int horizontalWall,
 		int diagonalWall) {
+		this.protocolVersion = UNIFORM_PAGE_PROTOCOL_VERSION;
 		this.packageId = matched(packageId, ID, "package ID");
 		this.packageVersion = matched(packageVersion, VERSION, "package version");
 		this.manifestSha256 = matched(
@@ -92,6 +98,83 @@ public final class NativeLayeredTerrainSnapshot {
 		this.horizontalWall = unsignedByte(horizontalWall, "horizontal wall");
 		// The wire uses all 32 raw bits, matching the legacy Tile field.
 		this.diagonalWall = diagonalWall;
+		this.currentChunkX = Math.floorDiv(
+			Math.multiplyExact(sectorX, SECTOR_SIZE),
+			presentationChunkSize);
+		this.currentChunkY = Math.floorDiv(
+			Math.multiplyExact(sectorY, SECTOR_SIZE),
+			presentationChunkSize);
+		this.chunkRadius = 0;
+		this.chunks = new NativeLayeredTerrainChunk[0];
+	}
+
+	public NativeLayeredTerrainSnapshot(
+		String packageId,
+		String packageVersion,
+		String manifestSha256,
+		int presentationChunkSize,
+		String worldSpace,
+		int level,
+		int currentChunkX,
+		int currentChunkY,
+		int chunkRadius,
+		NativeLayeredTerrainChunk[] chunks) {
+		this.protocolVersion = PROTOCOL_VERSION;
+		this.packageId = matched(packageId, ID, "package ID");
+		this.packageVersion = matched(packageVersion, VERSION, "package version");
+		this.manifestSha256 = matched(
+			manifestSha256, SHA256, "manifest SHA-256");
+		if (presentationChunkSize != STREAMING_CHUNK_SIZE) {
+			throw new IllegalArgumentException(
+				"Native terrain protocol v4 requires 24-tile chunks");
+		}
+		this.presentationChunkSize = presentationChunkSize;
+		this.worldSpace = matched(worldSpace, ID, "world space");
+		this.level = level;
+		requireSafeChunkCoordinate(currentChunkX, "current chunk X");
+		requireSafeChunkCoordinate(currentChunkY, "current chunk Y");
+		this.currentChunkX = currentChunkX;
+		this.currentChunkY = currentChunkY;
+		if (chunkRadius != STREAMING_CHUNK_RADIUS) {
+			throw new IllegalArgumentException(
+				"Native terrain protocol v4 requires radius-one readiness");
+		}
+		this.chunkRadius = chunkRadius;
+		int width = chunkRadius * 2 + 1;
+		int expectedCount = width * width;
+		if (chunks == null || chunks.length != expectedCount) {
+			throw new IllegalArgumentException(
+				"Native terrain readiness window must contain "
+					+ expectedCount + " explicit chunk slots");
+		}
+		this.chunks = new NativeLayeredTerrainChunk[chunks.length];
+		int index = 0;
+		for (int deltaX = -chunkRadius; deltaX <= chunkRadius; deltaX++) {
+			for (int deltaY = -chunkRadius; deltaY <= chunkRadius; deltaY++) {
+				NativeLayeredTerrainChunk chunk =
+					Objects.requireNonNull(chunks[index], "chunk");
+				int expectedX = Math.addExact(currentChunkX, deltaX);
+				int expectedY = Math.addExact(currentChunkY, deltaY);
+				if (chunk.getChunkX() != expectedX
+					|| chunk.getChunkY() != expectedY) {
+					throw new IllegalArgumentException(
+						"Native terrain chunks are not in x-major/y-minor "
+							+ "radius order at index " + index);
+				}
+				this.chunks[index++] = chunk;
+			}
+		}
+		this.sectorX = 0;
+		this.sectorY = 0;
+		this.encoding = "";
+		this.payloadSha256 = "";
+		this.elevation = 0;
+		this.texture = 0;
+		this.overlay = 0;
+		this.roof = 0;
+		this.verticalWall = 0;
+		this.horizontalWall = 0;
+		this.diagonalWall = 0;
 	}
 
 	public boolean covers(
@@ -102,6 +185,9 @@ public final class NativeLayeredTerrainSnapshot {
 		if (!worldSpace.equals(expectedWorldSpace) || level != expectedLevel) {
 			return false;
 		}
+		if (protocolVersion == PROTOCOL_VERSION) {
+			return findAvailableChunk(worldX, worldY) != null;
+		}
 		long minX = (long) sectorX * SECTOR_SIZE;
 		long minY = (long) sectorY * SECTOR_SIZE;
 		return worldX >= minX && worldX < minX + SECTOR_SIZE
@@ -109,6 +195,10 @@ public final class NativeLayeredTerrainSnapshot {
 	}
 
 	public Tile createUniformTile() {
+		if (protocolVersion != UNIFORM_PAGE_PROTOCOL_VERSION) {
+			throw new IllegalStateException(
+				"Chunked native terrain has no uniform tile");
+		}
 		Tile tile = new Tile();
 		tile.groundElevation = (byte) elevation;
 		tile.groundTexture = (byte) texture;
@@ -121,20 +211,68 @@ public final class NativeLayeredTerrainSnapshot {
 		return tile;
 	}
 
+	public Tile createTile(int worldX, int worldY) {
+		if (protocolVersion == UNIFORM_PAGE_PROTOCOL_VERSION) {
+			if (!covers(worldSpace, level, worldX, worldY)) {
+				throw new IllegalArgumentException(
+					"Uniform native page does not cover the requested tile");
+			}
+			return createUniformTile();
+		}
+		NativeLayeredTerrainChunk chunk =
+			findAvailableChunk(worldX, worldY);
+		if (chunk == null) {
+			throw new IllegalArgumentException(
+				"Native readiness window has no terrain for "
+					+ worldX + "," + worldY);
+		}
+		return chunk.createTile(worldX, worldY);
+	}
+
 	public String scopeIdentity() {
-		return packageId + "@" + packageVersion
-			+ ":" + manifestSha256
-			+ ":" + worldSpace + ":" + level
+		String identity = packageIdentity()
+			+ ":" + worldSpace + ":" + level;
+		if (protocolVersion == PROTOCOL_VERSION) {
+			StringBuilder result = new StringBuilder(identity)
+				.append(":center-")
+				.append(currentChunkX)
+				.append(',')
+				.append(currentChunkY)
+				.append(":radius-")
+				.append(chunkRadius);
+			for (NativeLayeredTerrainChunk chunk : chunks) {
+				result.append(':').append(chunk.identity());
+			}
+			return result.toString();
+		}
+		return identity
 			+ ":" + sectorX + "," + sectorY
 			+ ":" + payloadSha256
 			+ ":chunk-" + presentationChunkSize;
 	}
 
+	public String packageIdentity() {
+		return packageId + "@" + packageVersion + ":" + manifestSha256;
+	}
+
 	public String summary() {
-		return "native terrain " + packageId + "@" + packageVersion
+		String start = "native terrain " + packageId + "@" + packageVersion
 			+ " " + worldSpace + " L" + level
+			+ " chunk " + presentationChunkSize;
+		if (protocolVersion == PROTOCOL_VERSION) {
+			int available = 0;
+			for (NativeLayeredTerrainChunk chunk : chunks) {
+				if (chunk.isAvailable()) {
+					available++;
+				}
+			}
+			return start
+				+ " center " + currentChunkX + "," + currentChunkY
+				+ " ready " + available + "/" + chunks.length
+				+ " manifest " + manifestSha256.substring(0, 12);
+		}
+		return start
 			+ " page " + sectorX + "," + sectorY
-			+ " chunk " + presentationChunkSize
 			+ " manifest " + manifestSha256.substring(0, 12);
 	}
 
@@ -152,6 +290,38 @@ public final class NativeLayeredTerrainSnapshot {
 
 	public int getPresentationChunkSize() {
 		return presentationChunkSize;
+	}
+
+	public int getProtocolVersion() {
+		return protocolVersion;
+	}
+
+	public int getCurrentChunkX() {
+		return currentChunkX;
+	}
+
+	public int getCurrentChunkY() {
+		return currentChunkY;
+	}
+
+	public int getAvailableChunkCount() {
+		int result = 0;
+		for (NativeLayeredTerrainChunk chunk : chunks) {
+			if (chunk.isAvailable()) {
+				result++;
+			}
+		}
+		return result;
+	}
+
+	private NativeLayeredTerrainChunk findAvailableChunk(
+		int worldX, int worldY) {
+		for (NativeLayeredTerrainChunk chunk : chunks) {
+			if (chunk.isAvailable() && chunk.covers(worldX, worldY)) {
+				return chunk;
+			}
+		}
+		return null;
 	}
 
 	private static String matched(
@@ -173,6 +343,15 @@ public final class NativeLayeredTerrainSnapshot {
 	private static void requireSafeSectorCoordinate(int value, String label) {
 		long minimum = (long) value * SECTOR_SIZE;
 		long maximum = minimum + SECTOR_SIZE - 1L;
+		if (minimum < Integer.MIN_VALUE || maximum > Integer.MAX_VALUE) {
+			throw new IllegalArgumentException(
+				label + " cannot be represented as signed tile coordinates");
+		}
+	}
+
+	private static void requireSafeChunkCoordinate(int value, String label) {
+		long minimum = (long) value * STREAMING_CHUNK_SIZE;
+		long maximum = minimum + STREAMING_CHUNK_SIZE - 1L;
 		if (minimum < Integer.MIN_VALUE || maximum > Integer.MAX_VALUE) {
 			throw new IllegalArgumentException(
 				label + " cannot be represented as signed tile coordinates");

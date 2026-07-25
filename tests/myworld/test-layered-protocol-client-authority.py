@@ -12,6 +12,12 @@ CLIENT_STATE = (
 NATIVE_TERRAIN = (
     ROOT / "Client_Base/src/orsc/NativeLayeredTerrainSnapshot.java"
 )
+NATIVE_CHUNK = (
+    ROOT / "Client_Base/src/orsc/NativeLayeredTerrainChunk.java"
+)
+NATIVE_DECODER = (
+    ROOT / "Client_Base/src/orsc/NativeLayeredTerrainPacketDecoder.java"
+)
 CLIENT_TILE = (
     ROOT / "Client_Base/src/com/openrsc/client/model/Tile.java"
 )
@@ -127,7 +133,8 @@ public final class LayeredProtocolClientAuthorityFixture {
         check(nativeLeft.createUniformTile().groundOverlay == 0,
             "native tile decode");
         LayeredSceneContextState.ApplyResult nativeDeep = state.acceptNative(
-            3, 6, 108, "global", "native-layered-package-v1",
+            NativeLayeredTerrainSnapshot.UNIFORM_PAGE_PROTOCOL_VERSION,
+            6, 108, "global", "native-layered-package-v1",
             450, 600, -2, 450, 600, nativeLeft);
         check(nativeDeep.isScopeChanged(), "native transition");
         check(nativeDeep.getLegacyPlane() == 0, "native compatibility plane");
@@ -140,18 +147,51 @@ public final class LayeredProtocolClientAuthorityFixture {
 
         NativeLayeredTerrainSnapshot nativeRight = nativeTerrain(-2, 10, 12, 4);
         LayeredSceneContextState.ApplyResult adjacent = state.acceptNative(
-            3, 7, 109, "global", "native-layered-package-v1",
+            NativeLayeredTerrainSnapshot.UNIFORM_PAGE_PROTOCOL_VERSION,
+            7, 109, "global", "native-layered-package-v1",
             480, 600, -2, 480, 600, nativeRight);
         check(adjacent.isScopeChanged(), "native page transition");
         state.acceptLegacyPlayerPosition(480, 600);
 
         NativeLayeredTerrainSnapshot expanded = nativeTerrain(-37, 9, 12, 8);
         LayeredSceneContextState.ApplyResult arbitraryDepth = state.acceptNative(
-            3, 8, 110, "global", "native-layered-package-v1",
+            NativeLayeredTerrainSnapshot.UNIFORM_PAGE_PROTOCOL_VERSION,
+            8, 110, "global", "native-layered-package-v1",
             450, 600, -37, 450, 600, expanded);
         check(arbitraryDepth.isScopeChanged(), "arbitrary signed level transition");
         check(arbitraryDepth.getLegacyPlane() == 0, "arbitrary compatibility plane");
         state.acceptLegacyPlayerPosition(450, 600);
+
+        NativeLayeredTerrainSnapshot chunked = chunkTerrain(-2, 18, 25);
+        check(chunked.getProtocolVersion() == 4, "chunk protocol");
+        check(chunked.getAvailableChunkCount() == 4,
+            "explicit ready and void chunk slots");
+        check(chunked.covers("global", -2, 450, 600),
+            "chunk readiness covers receipt");
+        check((chunked.createTile(440, 600).groundTexture & 0xff) == 1,
+            "first non-uniform chunk band");
+        check((chunked.createTile(448, 600).groundElevation & 0xff) == 4
+                && (chunked.createTile(448, 600).groundTexture & 0xff) == 2,
+            "second non-uniform chunk band");
+        check((chunked.createTile(456, 600).groundTexture & 0xff) == 1,
+            "neighbor chunk band");
+        LayeredSceneContextState.ApplyResult chunkedDeep = state.acceptNative(
+            4, 9, 111, "global", "native-layered-package-v1",
+            450, 600, -2, 450, 600, chunked);
+        check(chunkedDeep.isScopeChanged(), "v3 to v4 transition");
+        state.acceptLegacyPlayerPosition(450, 600);
+        state.acceptLegacyPlayerPosition(479, 600);
+        expectIllegal(() -> state.acceptLegacyPlayerPosition(480, 600));
+
+        NativeLayeredTerrainSnapshot shifted = chunkTerrain(-2, 19, 25);
+        LayeredSceneContextState.ApplyResult shiftedResult = state.acceptNative(
+            4, 10, 112, "global", "native-layered-package-v1",
+            480, 600, -2, 480, 600, shifted);
+        check(!shiftedResult.isScopeChanged(),
+            "chunk readiness shift is not a world-scope reset");
+        check(shifted.getAvailableChunkCount() == 6,
+            "shifted readiness adds adjacent storage-page chunks");
+        state.acceptLegacyPlayerPosition(480, 600);
 
         state.reset();
         check(!state.hasContext(), "logout reset");
@@ -170,12 +210,83 @@ public final class LayeredProtocolClientAuthorityFixture {
 
         state.reset();
         state.acceptNative(
-            3, 1, 202, "global", "native-layered-package-v1",
-            450, 600, -2, 450, 600, nativeLeft);
+            4, 1, 202, "global", "native-layered-package-v1",
+            450, 600, -2, 450, 600, chunked);
         state.acceptLegacyPlayerPosition(450, 600);
         check(state.matchesSequence(1)
             && state.summary().contains("native terrain"),
             "native reconnect sequence restart");
+    }
+
+    private static NativeLayeredTerrainSnapshot chunkTerrain(
+            int level, int centerChunkX, int centerChunkY) {
+        NativeLayeredTerrainChunk[] chunks =
+            new NativeLayeredTerrainChunk[9];
+        int index = 0;
+        for (int deltaX = -1; deltaX <= 1; deltaX++) {
+            for (int deltaY = -1; deltaY <= 1; deltaY++) {
+                int chunkX = centerChunkX + deltaX;
+                int chunkY = centerChunkY + deltaY;
+                if (chunkX >= 18 && chunkX <= 21
+                        && chunkY >= 24 && chunkY <= 25) {
+                    int sectorX = Math.floorDiv(chunkX * 24, 48);
+                    chunks[index] = NativeLayeredTerrainChunk.available(
+                        24,
+                        chunkX,
+                        chunkY,
+                        sectorX,
+                        12,
+                        sectorX == 9
+                            ? "rle-layered-sector-v1"
+                            : "uniform-layered-sector-v1",
+                        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                        terrainBytes(chunkX));
+                } else {
+                    chunks[index] = NativeLayeredTerrainChunk.voidChunk(
+                        24, chunkX, chunkY);
+                }
+                index++;
+            }
+        }
+        return new NativeLayeredTerrainSnapshot(
+            "rsc-remastered.native-loader-lab",
+            "0.2.0",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            24,
+            "global",
+            level,
+            centerChunkX,
+            centerChunkY,
+            1,
+            chunks);
+    }
+
+    private static byte[] terrainBytes(int chunkX) {
+        byte[] result = new byte[24 * 24 * 10];
+        for (int localX = 0; localX < 24; localX++) {
+            for (int localY = 0; localY < 24; localY++) {
+                int offset = (localX * 24 + localY) * 10;
+                if (chunkX == 18 && localX < 8) {
+                    result[offset] = (byte) 255;
+                    result[offset + 1] = (byte) 254;
+                    result[offset + 2] = (byte) 253;
+                    result[offset + 3] = (byte) 252;
+                    result[offset + 4] = (byte) 251;
+                    result[offset + 5] = (byte) 250;
+                    result[offset + 6] = (byte) 255;
+                    result[offset + 7] = (byte) 255;
+                    result[offset + 8] = (byte) 255;
+                    result[offset + 9] = (byte) 255;
+                } else if ((chunkX == 18 && localX < 16)
+                        || (chunkX == 19 && localX < 8)) {
+                    result[offset + 1] = 1;
+                } else if (chunkX == 18 || chunkX >= 20) {
+                    result[offset] = 4;
+                    result[offset + 1] = 2;
+                }
+            }
+        }
+        return result;
     }
 
     private static NativeLayeredTerrainSnapshot nativeTerrain(
@@ -252,6 +363,7 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
                 "-d",
                 str(cls.classes),
                 str(CLIENT_TILE),
+                str(NATIVE_CHUNK),
                 str(NATIVE_TERRAIN),
                 str(CLIENT_STATE),
                 str(fixture),
@@ -286,6 +398,7 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         validator = PAYLOAD_VALIDATOR.read_text(encoding="utf-8")
         generator = CUSTOM_GENERATOR.read_text(encoding="utf-8")
         handler = CLIENT_HANDLER.read_text(encoding="utf-8")
+        native_decoder = NATIVE_DECODER.read_text(encoding="utf-8")
         client = CLIENT.read_text(encoding="utf-8")
         client_world = CLIENT_WORLD.read_text(encoding="utf-8")
         client_sector = CLIENT_SECTOR.read_text(encoding="utf-8")
@@ -312,7 +425,7 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         self.assertIn("SEND_LAYERED_SCENE_CONTEXT, 152", generator)
         self.assertIn("updateLayeredSceneContext(length)", handler)
         self.assertIn(
-            "NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 3", updater
+            "NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 4", updater
         )
         self.assertIn("nativeLayeredSceneTerrain(location)", updater)
         self.assertIn(
@@ -326,11 +439,21 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
             updater,
         )
         self.assertIn("protocolVersion >= 3", generator)
+        self.assertIn("context.protocolVersion >= 4", generator)
+        self.assertIn("nativeCurrentChunkX", context_struct)
+        self.assertIn("nativeChunks", context_struct)
         self.assertIn("NativeLayeredTerrainSnapshot", handler)
+        self.assertIn("NativeLayeredTerrainPacketDecoder.decodeV4", handler)
+        self.assertIn(
+            "Native terrain packet has trailing bytes", native_decoder
+        )
         self.assertIn("nativeManifestSha256", context_struct)
         self.assertIn("nativePresentationChunkSize", context_struct)
         self.assertIn("nativeLayeredVoidSector", client_world)
         self.assertIn("applyNativeLayeredFixtureTerrain", client_world)
+        self.assertIn(
+            "snapshot.createTile(logicalX, logicalZ)", client_world
+        )
         self.assertIn(
             "nativeLayeredTerrainSnapshot.scopeIdentity()", client_world
         )

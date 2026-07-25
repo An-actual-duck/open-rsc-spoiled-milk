@@ -75,8 +75,13 @@ level `-37`, and copy a sector into an unregistered legacy-shaped value for
 byte-fidelity checks.
 
 The fifth default-off private runtime gate consumes this source only for its
-bounded owner route. General `World` registration, package placements, and
-full-fidelity client delivery remain later milestones.
+bounded owner route. Matched scene-context protocol v4 projects a radius-one
+window of nine explicit 24-tile chunk slots. Available slots carry all 576
+fixed-width terrain tiles; unavailable slots are explicit void. The client
+accepts the complete window atomically, retains protocol-v3 uniform-page
+decoding for rollback evidence, and does not turn a same-package chunk shift
+into a full world-scope reset. General `World` registration and package
+placements remain later milestones.
 
 ## Preflight
 

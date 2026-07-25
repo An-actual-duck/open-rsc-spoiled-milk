@@ -26,9 +26,10 @@ Milestone E runtime checkpoints 3 and 4 now put package-owned terrain on both
 server and client behind a fifth private gate, with protocol-v3 page identity
 and gate-off rollback. That first native runtime cut is owner-accepted. The
 bounded compatibility receipt and process-local test placements still exist;
-full-fidelity server/package terrain is now automated-validated, while
-full-fidelity client delivery, package placements, and smaller incremental
-presentation remain the current implementation boundary.
+full-fidelity server/package terrain and protocol-v4 24-tile client readiness
+are now automated-validated. Owner validation of that chunked route,
+package-owned placements, and removal of the bounded compatibility receipt
+remain the current implementation boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -272,12 +273,59 @@ Implemented and automated-validated on 2026-07-25:
   and wall values. The high-value seven-field fidelity band sits immediately
   outside the bounded room and is automated-only.
 
-The focused package and server suites pass. This checkpoint does not change
-the currently running private process: protocol v3 still carries one uniform
-page value, so restarting it against the new RLE fixture before matched client
-transport would misrepresent the page. The next implementation cut is
-full-fidelity chunk delivery and atomic client readiness, followed by
-package-owned placements; Milestone E is not complete.
+The focused package and server suites pass. This format checkpoint did not
+change the then-running private process: protocol v3 carried one uniform page
+value, so it was intentionally not restarted against the RLE fixture until
+matched client transport existed.
+
+### Authority Milestone E runtime checkpoint 6
+
+Implemented and automated-validated on 2026-07-25:
+
+- matched scene-context protocol v4 replaces the emitted uniform-page scalar
+  with a radius-one readiness window centered on the Player's global
+  24-by-24 chunk. The nine slots are ordered x-major/y-minor and each is
+  explicitly complete terrain or explicit void;
+- the server derives each available chunk from the correct hash-addressed
+  48-tile source page. A chunk never crosses a storage-page boundary, and
+  lookup across X chunk `19 -> 20` resolves page `(9,12) -> (10,12)` without
+  changing the logical level;
+- each available chunk carries 576 fixed-width ten-byte tiles in the same
+  x-major/y-minor order as package decode. The wire preserves elevation,
+  texture, overlay, roof, vertical wall, horizontal wall, and all 32 diagonal
+  bits. One complete nine-chunk context remains below the custom protocol's
+  two-byte frame ceiling;
+- the isolated client decoder bounds strings/counts, requires radius one and
+  exact chunk order, validates source-page coverage and exact tile-byte
+  lengths, and rejects truncation, trailing data, invalid availability, or
+  malformed terrain before accepting the context;
+- the client applies the actual tile for each logical room coordinate. The
+  new RLE fixture therefore presents its distinct terrain bands instead of
+  repeating the Player's current tile over the whole room;
+- entering a different world space, level, projection, or package identity
+  remains a full scene-scope reset. Moving the radius-one readiness window
+  within the same checked package advances the context sequence and baseline
+  identity but deliberately does not clear Player/NPC/object caches. The
+  previous window already contains the adjacent chunk, while the refreshed
+  window supplies terrain needed by the next ordinary region rebuild;
+- protocol-v3 uniform-page decoding remains as a compatibility regression but
+  the fifth-gate server now emits v4; and
+- `::deepfixture status` now puts storage page, current presentation chunk,
+  ready-slot count, and chunk size on its short first line. Package/projection
+  identity moves to a second line so the owner can actually see all fields.
+
+Executable wire coverage creates a real server `PayloadCustomGenerator`
+packet and feeds its native body to the actual client decoder. Both a
+one-ready/eight-void window and a fully populated nine-chunk window round-trip;
+the latter is asserted below the 65,533-byte payload ceiling. The
+server/client builds and focused authority lineage pass.
+
+This checkpoint is ready for a meaningful private owner route, not yet owner
+accepted. That route should enter at `(450,600,L-2)`, verify the visible
+non-uniform bands, cross X `456` and Y `600` in both directions, confirm status
+centers/readiness, interact with the Man and coins, reconnect at depth, and
+exit. Package-owned placements remain the next implementation slice after
+acceptance; Milestone E is not complete.
 
 The first login attempt exposed and rejected one selector defect before any
 deep-room acceptance: with the fifth gate enabled,
@@ -17369,6 +17417,8 @@ private environment should validate at least:
 | 2026-07-25 | Complete Milestone E runtime checkpoints 3 and 4: add the fifth default-off native-package server gate and rollback, then protocol-v3 package/page identity with a fresh client-native terrain window and explicit void outside the bounded room. | Implemented and automated-validated; 23 focused A-E tests and authoritative server/client builds pass |
 | 2026-07-25 | Correct the rejected first Milestone E owner login: the fifth-gate selector must return the unchanged ordinary scene path outside native deep scope rather than treating level 0 as an error. | Root-caused from the first scene-update stack trace; narrow selector fix, regression guard, authoritative server build, and corrected owner retest pass |
 | 2026-07-25 | Accept the corrected Milestone E native-terrain owner route and split its oversized status output. | Owner-confirmed visuals/collision/interactions; logs prove native page `(9,12)`, chunk `24`, coin/Man interaction, exact depth reconnect, exit, and surface death recovery. Full-fidelity terrain, package placements, and incremental presentation remain |
+| 2026-07-25 | Complete Milestone E format checkpoint 5 with `rle-layered-sector-v1`. | Tool/server strict decode preserves arbitrary per-tile sequences and all seven terrain fields, rejects malformed expansion, and proves mixed encodings plus detached fidelity in package `0.2.0` |
+| 2026-07-25 | Complete Milestone E runtime checkpoint 6 with matched protocol-v4 radius-one 24-tile readiness. | Implemented and automated-validated; generated server wire round-trips through the client decoder for explicit void and all-ready windows, same-package shifts avoid full scope resets, and private owner acceptance remains |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

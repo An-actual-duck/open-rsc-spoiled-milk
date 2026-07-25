@@ -9,8 +9,8 @@ import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
+import com.openrsc.server.io.NativeLayeredTerrainChunk;
 import com.openrsc.server.io.NativeLayeredTerrainSector;
-import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.PlayerAppearance;
 import com.openrsc.server.model.Point;
@@ -76,7 +76,8 @@ public final class GameStateUpdater {
 	private static final int LAYERED_SCENE_BASELINE_PROTOCOL_VERSION = 6;
 	private static final int LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 1;
 	private static final int SYNTHETIC_DEEP_SCENE_CONTEXT_PROTOCOL_VERSION = 2;
-	private static final int NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 3;
+	private static final int NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 4;
+	private static final int NATIVE_LAYERED_CHUNK_RADIUS = 1;
 	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
 	private static final int SCENE_BASELINE_PAGE_BURST_LIMIT = 4;
 	private static final int SCENE_BASELINE_FIXED_PAYLOAD_BYTES = 48;
@@ -960,8 +961,9 @@ public final class GameStateUpdater {
 
 	private static final class NativeLayeredSceneTerrain {
 		private final NativeLayeredWorldPackage terrainPackage;
-		private final NativeLayeredTerrainSector sector;
-		private final NativeLayeredTerrainTile tile;
+		private final WorldLocation location;
+		private final int currentChunkX;
+		private final int currentChunkY;
 
 		private NativeLayeredSceneTerrain(
 			final NativeLayeredWorldPackage terrainPackage,
@@ -969,44 +971,67 @@ public final class GameStateUpdater {
 			final WorldLocation location) {
 			this.terrainPackage = Objects.requireNonNull(
 				terrainPackage, "terrainPackage");
-			this.sector = Objects.requireNonNull(sector, "sector");
-			this.tile = sector.getTile(
-				location.getCoordinate().getLocalX(),
-				location.getCoordinate().getLocalY());
+			Objects.requireNonNull(sector, "sector");
+			this.location = Objects.requireNonNull(location, "location");
+			final int chunkSize = terrainPackage.getPresentationChunkSize();
+			this.currentChunkX = Math.floorDiv(
+				location.getCoordinate().getX(), chunkSize);
+			this.currentChunkY = Math.floorDiv(
+				location.getCoordinate().getY(), chunkSize);
 		}
 
 		private String scopeIdentity() {
-			final WorldMapSectorId identity = sector.getIdentity();
 			return terrainPackage.getPackageId()
 				+ "@" + terrainPackage.getPackageVersion()
 				+ ":" + terrainPackage.getManifestSha256()
-				+ ":" + identity.getWorldSpace().getValue()
-				+ ":" + identity.getLevel()
-				+ ":" + identity.getSectorX()
-				+ "," + identity.getSectorY()
-				+ ":" + sector.getSourceSha256()
+				+ ":" + location.getWorldSpace().getValue()
+				+ ":" + location.getCoordinate().getLevel()
+				+ ":center-" + currentChunkX + "," + currentChunkY
 				+ ":chunk-" + terrainPackage.getPresentationChunkSize();
 		}
 
 		private void populate(final LayeredSceneContextStruct context) {
-			final WorldMapSectorId identity = sector.getIdentity();
 			context.nativePackageId = terrainPackage.getPackageId();
 			context.nativePackageVersion = terrainPackage.getPackageVersion();
 			context.nativeManifestSha256 =
 				terrainPackage.getManifestSha256();
 			context.nativePresentationChunkSize =
 				terrainPackage.getPresentationChunkSize();
-			context.nativeSectorX = identity.getSectorX();
-			context.nativeSectorY = identity.getSectorY();
-			context.nativeEncoding = sector.getSourceEncoding();
-			context.nativePayloadSha256 = sector.getSourceSha256();
-			context.nativeElevation = tile.getElevation();
-			context.nativeTexture = tile.getTexture();
-			context.nativeOverlay = tile.getOverlay();
-			context.nativeRoof = tile.getRoof();
-			context.nativeVerticalWall = tile.getVerticalWall();
-			context.nativeHorizontalWall = tile.getHorizontalWall();
-			context.nativeDiagonalWall = tile.getDiagonalWall();
+			context.nativeCurrentChunkX = currentChunkX;
+			context.nativeCurrentChunkY = currentChunkY;
+			context.nativeChunkRadius = NATIVE_LAYERED_CHUNK_RADIUS;
+			for (int deltaX = -NATIVE_LAYERED_CHUNK_RADIUS;
+				deltaX <= NATIVE_LAYERED_CHUNK_RADIUS;
+				deltaX++) {
+				for (int deltaY = -NATIVE_LAYERED_CHUNK_RADIUS;
+					deltaY <= NATIVE_LAYERED_CHUNK_RADIUS;
+					deltaY++) {
+					final int chunkX = Math.addExact(currentChunkX, deltaX);
+					final int chunkY = Math.addExact(currentChunkY, deltaY);
+					final LayeredSceneTerrainChunkStruct output =
+						new LayeredSceneTerrainChunkStruct();
+					output.chunkX = chunkX;
+					output.chunkY = chunkY;
+					final Optional<NativeLayeredTerrainChunk> source =
+						terrainPackage.findPresentationChunk(
+							location.getWorldSpace(),
+							location.getCoordinate().getLevel(),
+							chunkX,
+							chunkY);
+					output.available = source.isPresent();
+					if (source.isPresent()) {
+						final NativeLayeredTerrainChunk chunk = source.get();
+						output.sourceSectorX =
+							chunk.getSourceSector().getSectorX();
+						output.sourceSectorY =
+							chunk.getSourceSector().getSectorY();
+						output.sourceEncoding = chunk.getSourceEncoding();
+						output.sourcePayloadSha256 = chunk.getSourceSha256();
+						output.tileBytes = chunk.copyWireBytes();
+					}
+					context.nativeChunks.add(output);
+				}
+			}
 		}
 	}
 

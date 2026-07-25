@@ -1645,6 +1645,25 @@ public final class Development implements CommandTrigger {
 		boolean nativeTerrain = inside
 			&& player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
 			&& nativePackage != null;
+		int nativeChunkX = 0;
+		int nativeChunkY = 0;
+		int nativeReadyChunks = 0;
+		if (nativeTerrain) {
+			int chunkSize = nativePackage.getPresentationChunkSize();
+			nativeChunkX = Math.floorDiv(coordinate.getX(), chunkSize);
+			nativeChunkY = Math.floorDiv(coordinate.getY(), chunkSize);
+			for (int deltaX = -1; deltaX <= 1; deltaX++) {
+				for (int deltaY = -1; deltaY <= 1; deltaY++) {
+					if (nativePackage.findPresentationChunk(
+							location.getWorldSpace(),
+							coordinate.getLevel(),
+							nativeChunkX + deltaX,
+							nativeChunkY + deltaY).isPresent()) {
+						nativeReadyChunks++;
+					}
+				}
+			}
+		}
 		int npcCount = 0;
 		for (Npc npc : player.getWorld().getNpcs()) {
 			if (!npc.isRemoved()
@@ -1672,17 +1691,24 @@ public final class Development implements CommandTrigger {
 			+ (nativeTerrain ? "Native layered deep "
 				: "Synthetic deep ")
 			+ (inside ? "ACTIVE" : "inactive")
-			+ "; projection=" + projection
+			+ (nativeTerrain ? "" : "; projection=" + projection)
 			+ (nativeTerrain
 				? "; page=(" + coordinate.getSectorX()
 					+ "," + coordinate.getSectorY() + ")"
+					+ "; center=(" + nativeChunkX
+					+ "," + nativeChunkY + ")"
+					+ "; ready=" + nativeReadyChunks + "/9"
 					+ "; chunk="
 					+ nativePackage.getPresentationChunkSize()
-					+ "; package=" + nativePackage.getPackageId()
-					+ "@" + nativePackage.getPackageVersion()
-					+ "; manifest="
-					+ nativePackage.getManifestSha256().substring(0, 12)
 				: ""));
+		if (nativeTerrain) {
+			player.message(messagePrefix
+				+ "Projection=" + projection
+				+ "; package=" + nativePackage.getPackageId()
+				+ "@" + nativePackage.getPackageVersion()
+				+ "; manifest="
+				+ nativePackage.getManifestSha256().substring(0, 12));
+		}
 		player.message(messagePrefix
 			+ "Deep fixture logical=" + location.getWorldSpace().getValue()
 			+ "(" + coordinate.getX() + "," + coordinate.getY()

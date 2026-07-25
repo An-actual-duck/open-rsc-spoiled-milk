@@ -41,6 +41,14 @@ Runtime code may decode one 48-tile payload and publish smaller presentation
 products keyed by world space, level, and global chunk coordinate. Crossing a
 storage page must not force an abrupt 48-tile visual reload.
 
+The first runtime publication contract uses 24-tile chunks and a radius-one
+readiness window centered on the Player's current global chunk. Its nine slots
+are ordered x-major/y-minor and each is either complete terrain or explicit
+void. A context packet commits all nine slots atomically. Crossing a 24-tile
+boundary refreshes that window before the matching movement snapshot, but a
+same-package window shift is not a world-space/level scope reset. The retained
+48-tile page remains only storage/provenance.
+
 ## Terrain payloads
 
 Each `terrainSectors` record declares:

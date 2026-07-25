@@ -200,6 +200,10 @@ public class RegionManager {
 
 	private static void validateNativeDeepFixturePackage(
 		final NativeLayeredWorldPackage loaded) {
+		if (loaded.getPresentationChunkSize() != 24) {
+			throw new IllegalStateException(
+				"The first native layered streaming route requires 24-tile chunks");
+		}
 		if (!loaded.declaresLevel(
 				com.openrsc.server.model.world.coordinate.WorldSpaceId.GLOBAL,
 				LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_LEVEL)) {

@@ -2823,7 +2823,7 @@ public final class World {
 					sector.setTile(
 						tileInSector(localX),
 						tileInSector(localZ),
-						snapshot.createUniformTile());
+						snapshot.createTile(logicalX, logicalZ));
 				}
 			}
 		}

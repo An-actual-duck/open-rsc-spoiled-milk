@@ -386,7 +386,7 @@ public class PacketHandler {
 		int legacyY = packetsIncoming.getShort();
 		NativeLayeredTerrainSnapshot nativeTerrain = null;
 		if (protocolVersion
-				== LayeredSceneContextState.NATIVE_LAYERED_PROTOCOL_VERSION) {
+				== LayeredSceneContextState.UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION) {
 			nativeTerrain = new NativeLayeredTerrainSnapshot(
 				packetsIncoming.readString(),
 				packetsIncoming.readString(),
@@ -405,6 +405,17 @@ public class PacketHandler {
 				packetsIncoming.getUnsignedByte(),
 				packetsIncoming.getUnsignedByte(),
 				packetsIncoming.get32());
+		} else if (protocolVersion
+				== LayeredSceneContextState.NATIVE_LAYERED_PROTOCOL_VERSION) {
+			int bodyLength = length - packetsIncoming.packetEnd;
+			if (bodyLength <= 0) {
+				throw new IllegalArgumentException(
+					"Native terrain packet body is missing");
+			}
+			byte[] body = new byte[bodyLength];
+			packetsIncoming.readBytes(bodyLength, body);
+			nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV4(
+				body, worldSpace, logicalLevel);
 		}
 		LayeredSceneContextState.ApplyResult result = nativeTerrain == null
 			? layeredSceneContextState.accept(

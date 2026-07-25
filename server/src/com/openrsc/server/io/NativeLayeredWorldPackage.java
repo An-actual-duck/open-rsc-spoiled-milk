@@ -371,6 +371,56 @@ public final class NativeLayeredWorldPackage {
 		return Optional.of(sector.getTile(coordinate.getLocalX(), coordinate.getLocalY()));
 	}
 
+	public Optional<NativeLayeredTerrainChunk> findPresentationChunk(
+		WorldSpaceId worldSpace,
+		int level,
+		int chunkX,
+		int chunkY) {
+		long minimumX = (long) chunkX * presentationChunkSize;
+		long minimumY = (long) chunkY * presentationChunkSize;
+		long maximumX = minimumX + presentationChunkSize - 1L;
+		long maximumY = minimumY + presentationChunkSize - 1L;
+		if (minimumX < Integer.MIN_VALUE || maximumX > Integer.MAX_VALUE
+			|| minimumY < Integer.MIN_VALUE || maximumY > Integer.MAX_VALUE) {
+			return Optional.empty();
+		}
+		int sectorX = Math.floorDiv((int) minimumX, NativeLayeredTerrainSector.SIZE);
+		int sectorY = Math.floorDiv((int) minimumY, NativeLayeredTerrainSector.SIZE);
+		if (sectorX != Math.floorDiv((int) maximumX, NativeLayeredTerrainSector.SIZE)
+			|| sectorY
+				!= Math.floorDiv((int) maximumY, NativeLayeredTerrainSector.SIZE)) {
+			throw new IllegalStateException(
+				"Presentation chunk crosses its 48-tile storage page");
+		}
+		WorldMapSectorId sectorId =
+			new WorldMapSectorId(worldSpace, level, sectorX, sectorY);
+		NativeLayeredTerrainSector sector = terrainSectors.get(sectorId);
+		if (sector == null) {
+			return Optional.empty();
+		}
+
+		int firstLocalX = Math.floorMod((int) minimumX, NativeLayeredTerrainSector.SIZE);
+		int firstLocalY = Math.floorMod((int) minimumY, NativeLayeredTerrainSector.SIZE);
+		NativeLayeredTerrainTile[] tiles = new NativeLayeredTerrainTile[
+			presentationChunkSize * presentationChunkSize];
+		for (int localX = 0; localX < presentationChunkSize; localX++) {
+			for (int localY = 0; localY < presentationChunkSize; localY++) {
+				tiles[localX * presentationChunkSize + localY] =
+					sector.getTile(firstLocalX + localX, firstLocalY + localY);
+			}
+		}
+		return Optional.of(new NativeLayeredTerrainChunk(
+			worldSpace,
+			level,
+			chunkX,
+			chunkY,
+			presentationChunkSize,
+			sectorId,
+			sector.getSourceEncoding(),
+			sector.getSourceSha256(),
+			tiles));
+	}
+
 	public boolean declaresLevel(WorldSpaceId worldSpace, int level) {
 		return levels.contains(new LevelKey(worldSpace, level));
 	}

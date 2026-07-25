@@ -18,14 +18,24 @@ REGION_MANAGER = (
     SERVER
     / "src/com/openrsc/server/model/world/region/RegionManager.java"
 )
+GAME_STATE_UPDATER = SERVER / "src/com/openrsc/server/GameStateUpdater.java"
 DEVELOPMENT = (
     SERVER
     / "plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
+)
+CLIENT_TILE = ROOT / "Client_Base/src/com/openrsc/client/model/Tile.java"
+CLIENT_NATIVE_CHUNK = ROOT / "Client_Base/src/orsc/NativeLayeredTerrainChunk.java"
+CLIENT_NATIVE_SNAPSHOT = (
+    ROOT / "Client_Base/src/orsc/NativeLayeredTerrainSnapshot.java"
+)
+CLIENT_NATIVE_DECODER = (
+    ROOT / "Client_Base/src/orsc/NativeLayeredTerrainPacketDecoder.java"
 )
 
 
 HARNESS = r"""
 import com.openrsc.server.io.NativeLayeredTerrainSector;
+import com.openrsc.server.io.NativeLayeredTerrainChunk;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.Sector;
@@ -76,6 +86,34 @@ public final class NativeLayeredServerSourceFixture {
         check(!world.findTile(location(450, 600, 0)).isPresent(),
             "same X/Y surface isolation");
 
+        NativeLayeredTerrainChunk currentChunk = world.findPresentationChunk(
+            WorldSpaceId.GLOBAL, -2, 18, 25)
+            .orElseThrow(() -> new AssertionError("current presentation chunk"));
+        check(currentChunk.getSize() == 24, "presentation chunk size");
+        check(currentChunk.getTile(7, 0).getElevation() == 255,
+            "presentation chunk x-major tile projection");
+        check(currentChunk.getTile(16, 0).getElevation() == 4,
+            "presentation chunk non-uniform projection");
+        check(currentChunk.copyWireBytes().length == 24 * 24 * 10,
+            "presentation chunk wire byte count");
+        byte[] wire = currentChunk.copyWireBytes();
+        int fullTileOffset = (7 * 24) * 10;
+        check((wire[fullTileOffset] & 0xff) == 255,
+            "presentation wire elevation");
+        check((wire[fullTileOffset + 5] & 0xff) == 250,
+            "presentation wire horizontal wall");
+        check(wire[fullTileOffset + 6] == -1
+                && wire[fullTileOffset + 9] == -1,
+            "presentation wire diagonal bits");
+        check(!world.findPresentationChunk(
+                WorldSpaceId.GLOBAL, -2, 17, 25).isPresent(),
+            "absent presentation chunk remains absent");
+        check(world.findPresentationChunk(
+                WorldSpaceId.GLOBAL, -2, 20, 25)
+                .orElseThrow(() -> new AssertionError("adjacent presentation chunk"))
+                .getTile(0, 0).getElevation() == 4,
+            "presentation chunk crosses storage page through identity");
+
         WorldMapSectorId leftId =
             new WorldMapSectorId(WorldSpaceId.GLOBAL, -2, 9, 12);
         NativeLayeredTerrainSector left =
@@ -122,6 +160,165 @@ public final class NativeLayeredServerSourceFixture {
 """
 
 
+WIRE_HARNESS = r"""
+import com.openrsc.server.net.Packet;
+import com.openrsc.server.net.rsc.enums.OpcodeOut;
+import com.openrsc.server.net.rsc.generators.impl.PayloadCustomGenerator;
+import com.openrsc.server.net.rsc.struct.outgoing.LayeredSceneContextStruct;
+import com.openrsc.server.net.rsc.struct.outgoing.LayeredSceneTerrainChunkStruct;
+import io.netty.buffer.ByteBuf;
+import java.util.Arrays;
+import orsc.NativeLayeredTerrainPacketDecoder;
+import orsc.NativeLayeredTerrainSnapshot;
+
+public final class NativeLayeredChunkWireFixture {
+    public static void main(String[] args) {
+        LayeredSceneContextStruct context = new LayeredSceneContextStruct();
+        context.setOpcode(OpcodeOut.SEND_LAYERED_SCENE_CONTEXT);
+        context.protocolVersion = 4;
+        context.sequence = 7;
+        context.serverTick = 101;
+        context.worldSpace = "global";
+        context.projectionId = "native-layered-package-v1";
+        context.logicalX = 450;
+        context.logicalY = 600;
+        context.logicalLevel = -2;
+        context.legacyX = 450;
+        context.legacyY = 600;
+        context.nativePackageId = "rsc-remastered.native-loader-lab";
+        context.nativePackageVersion = "0.2.0";
+        context.nativeManifestSha256 =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        context.nativePresentationChunkSize = 24;
+        context.nativeCurrentChunkX = 18;
+        context.nativeCurrentChunkY = 25;
+        context.nativeChunkRadius = 1;
+
+        for (int deltaX = -1; deltaX <= 1; deltaX++) {
+            for (int deltaY = -1; deltaY <= 1; deltaY++) {
+                LayeredSceneTerrainChunkStruct chunk =
+                    new LayeredSceneTerrainChunkStruct();
+                chunk.chunkX = 18 + deltaX;
+                chunk.chunkY = 25 + deltaY;
+                chunk.available = deltaX == 0 && deltaY == 0;
+                if (chunk.available) {
+                    populateAvailable(chunk);
+                    int offset = (18 * 24) * 10;
+                    chunk.tileBytes[offset] = 4;
+                    chunk.tileBytes[offset + 1] = 2;
+                    chunk.tileBytes[offset + 2] = 3;
+                    chunk.tileBytes[offset + 3] = 5;
+                    chunk.tileBytes[offset + 4] = 6;
+                    chunk.tileBytes[offset + 5] = 7;
+                    chunk.tileBytes[offset + 6] = (byte) 0x89;
+                    chunk.tileBytes[offset + 7] = (byte) 0xab;
+                    chunk.tileBytes[offset + 8] = (byte) 0xcd;
+                    chunk.tileBytes[offset + 9] = (byte) 0xef;
+                }
+                context.nativeChunks.add(chunk);
+            }
+        }
+
+        Packet packet = new PayloadCustomGenerator().generate(context, null);
+        check(packet != null && packet.getID() == 152, "generated opcode");
+        byte[] body = nativeBody(packet);
+
+        NativeLayeredTerrainSnapshot decoded =
+            NativeLayeredTerrainPacketDecoder.decodeV4(body, "global", -2);
+        check(decoded.getProtocolVersion() == 4, "decoded protocol");
+        check(decoded.getCurrentChunkX() == 18
+                && decoded.getCurrentChunkY() == 25,
+            "decoded current chunk");
+        check(decoded.getAvailableChunkCount() == 1,
+            "decoded explicit readiness");
+        check(decoded.covers("global", -2, 450, 600),
+            "decoded receipt coverage");
+        com.openrsc.client.model.Tile tile = decoded.createTile(450, 600);
+        check((tile.groundElevation & 0xff) == 4, "decoded elevation");
+        check((tile.groundTexture & 0xff) == 2, "decoded texture");
+        check((tile.groundOverlay & 0xff) == 3, "decoded overlay");
+        check((tile.roofTexture & 0xff) == 5, "decoded roof");
+        check((tile.verticalWall & 0xff) == 6, "decoded vertical wall");
+        check((tile.horizontalWall & 0xff) == 7, "decoded horizontal wall");
+        check(tile.diagonalWalls == 0x89abcdef, "decoded diagonal bits");
+        expectIllegal(() -> NativeLayeredTerrainPacketDecoder.decodeV4(
+            Arrays.copyOf(body, body.length - 1), "global", -2));
+        byte[] trailing = Arrays.copyOf(body, body.length + 1);
+        expectIllegal(() -> NativeLayeredTerrainPacketDecoder.decodeV4(
+            trailing, "global", -2));
+
+        for (LayeredSceneTerrainChunkStruct chunk : context.nativeChunks) {
+            if (!chunk.available) {
+                chunk.available = true;
+                populateAvailable(chunk);
+            }
+        }
+        Packet fullPacket =
+            new PayloadCustomGenerator().generate(context, null);
+        check(fullPacket.getLength() < 65533,
+            "full radius-one packet fits two-byte custom frame");
+        NativeLayeredTerrainSnapshot fullDecoded =
+            NativeLayeredTerrainPacketDecoder.decodeV4(
+                nativeBody(fullPacket), "global", -2);
+        check(fullDecoded.getAvailableChunkCount() == 9,
+            "full readiness window round trip");
+    }
+
+    private static void populateAvailable(
+            LayeredSceneTerrainChunkStruct chunk) {
+        chunk.sourceSectorX = Math.floorDiv(chunk.chunkX * 24, 48);
+        chunk.sourceSectorY = Math.floorDiv(chunk.chunkY * 24, 48);
+        chunk.sourceEncoding = "rle-layered-sector-v1";
+        chunk.sourcePayloadSha256 =
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        chunk.tileBytes = new byte[24 * 24 * 10];
+    }
+
+    private static byte[] nativeBody(Packet packet) {
+        ByteBuf input = packet.getBuffer().duplicate();
+        check((input.readByte() & 0xff) == 4, "wire protocol");
+        check(input.readInt() == 7, "wire sequence");
+        check(input.readInt() == 101, "wire tick");
+        check("global".equals(readString(input)), "wire world space");
+        check("native-layered-package-v1".equals(readString(input)),
+            "wire projection");
+        check(input.readInt() == 450 && input.readInt() == 600,
+            "wire logical coordinates");
+        check(input.readInt() == -2, "wire signed level");
+        check(input.readShort() == 450 && input.readShort() == 600,
+            "wire compatibility receipt");
+        byte[] body = new byte[input.readableBytes()];
+        input.readBytes(body);
+        return body;
+    }
+
+    private static String readString(ByteBuf input) {
+        StringBuilder result = new StringBuilder();
+        byte value;
+        while ((value = input.readByte()) != 10) {
+            result.append((char) value);
+        }
+        return result.toString();
+    }
+
+    private static void expectIllegal(Runnable operation) {
+        try {
+            operation.run();
+            throw new AssertionError("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+            // Expected.
+        }
+    }
+
+    private static void check(boolean condition, String label) {
+        if (!condition) {
+            throw new AssertionError(label);
+        }
+    }
+}
+"""
+
+
 class LayeredNativeServerSourceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -135,8 +332,6 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             prefix="layered-native-server-source-"
         )
         cls.classes = Path(cls.compile_temp.name)
-        fixture = cls.classes / "NativeLayeredServerSourceFixture.java"
-        fixture.write_text(HARNESS, encoding="utf-8")
         subprocess.run(
             [
                 "javac",
@@ -148,7 +343,31 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 str(CORE_JAR),
                 "-d",
                 str(cls.classes),
+                str(CLIENT_TILE),
+                str(CLIENT_NATIVE_CHUNK),
+                str(CLIENT_NATIVE_SNAPSHOT),
+                str(CLIENT_NATIVE_DECODER),
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+        fixture = cls.classes / "NativeLayeredServerSourceFixture.java"
+        fixture.write_text(HARNESS, encoding="utf-8")
+        wire_fixture = cls.classes / "NativeLayeredChunkWireFixture.java"
+        wire_fixture.write_text(WIRE_HARNESS, encoding="utf-8")
+        subprocess.run(
+            [
+                "javac",
+                "-source",
+                "8",
+                "-target",
+                "8",
+                "-cp",
+                f"{cls.classes}:{CORE_JAR}",
+                "-d",
+                str(cls.classes),
                 str(fixture),
+                str(wire_fixture),
             ],
             cwd=ROOT,
             check=True,
@@ -174,6 +393,20 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
 
     def test_detached_server_source_loads_adjacent_pages_and_expanded_depth(self):
         result = self.run_fixture(PACKAGE)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_server_generator_and_client_decoder_share_chunk_wire_contract(self):
+        result = subprocess.run(
+            [
+                "java",
+                "-cp",
+                f"{self.classes}:{CORE_JAR}",
+                "NativeLayeredChunkWireFixture",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
         self.assertEqual(0, result.returncode, result.stderr)
 
     def test_server_loader_has_no_minus_two_or_minus_three_level_enumeration(self):
@@ -262,6 +495,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
     def test_private_runtime_gate_is_explicit_fail_closed_and_reversible(self):
         configuration = CONFIGURATION.read_text(encoding="utf-8")
         region_manager = REGION_MANAGER.read_text(encoding="utf-8")
+        game_state_updater = GAME_STATE_UPDATER.read_text(encoding="utf-8")
         development = DEVELOPMENT.read_text(encoding="utf-8")
         self.assertIn("WANT_LAYERED_NATIVE_TERRAIN_PACKAGE", configuration)
         self.assertIn(
@@ -298,6 +532,14 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
         )
         self.assertIn(
             "nativePackage.getPresentationChunkSize()", development
+        )
+        self.assertIn(
+            "The first native layered streaming route requires 24-tile chunks",
+            region_manager,
+        )
+        self.assertIn("findPresentationChunk(", game_state_updater)
+        self.assertIn(
+            '"; ready=" + nativeReadyChunks + "/9"', development
         )
         self.assertIn(
             '"Deep fixture logical="', development
