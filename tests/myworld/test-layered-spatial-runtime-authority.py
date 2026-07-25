@@ -19,6 +19,8 @@ DEVELOPMENT = (
     ROOT
     / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 )
+WORLD = ROOT / "server/src/com/openrsc/server/model/world/World.java"
+FUNCTIONS = ROOT / "server/src/com/openrsc/server/plugins/Functions.java"
 PLAN = (
     ROOT
     / "docs/myworld/in-progress-work-plans/world-layer-capacity-exploration-plan.md"
@@ -279,6 +281,8 @@ class LayeredSpatialRuntimeAuthorityTest(unittest.TestCase):
         visibility = VISIBILITY.read_text(encoding="utf-8")
         path_validation = PATH_VALIDATION.read_text(encoding="utf-8")
         development = DEVELOPMENT.read_text(encoding="utf-8")
+        world = WORLD.read_text(encoding="utf-8")
+        functions = FUNCTIONS.read_text(encoding="utf-8")
 
         self.assertIn("WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY", configuration)
         self.assertIn(
@@ -303,6 +307,15 @@ class LayeredSpatialRuntimeAuthorityTest(unittest.TestCase):
         self.assertIn("WorldLocation src", path_validation)
         self.assertIn("sameSpatialDomain(owner, destination)", path_validation)
         self.assertIn("spatialAuthority=", development)
+        self.assertIn(
+            "if (!i.isRemoved()) {\n\t\t\t\t\t\t\tunregisterItem(i);",
+            world,
+        )
+        self.assertIn(
+            "if (!i.isRemoved()) {\n"
+            "\t\t\t\t\t\ti.getWorld().unregisterItem(i);",
+            functions,
+        )
 
     def test_plan_records_boundary_and_refusal_rules(self):
         plan = PLAN.read_text(encoding="utf-8")

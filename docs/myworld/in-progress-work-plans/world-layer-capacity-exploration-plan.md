@@ -17341,6 +17341,7 @@ private environment should validate at least:
 | 2026-07-25 | Accept Phase 5 Authority Milestone B on the private both-gates-enabled server. | Owner-validated through surface movement and scenery/NPC/item interaction, upper-floor movement and NPC interaction, two real ladder transitions into underground movement/item interaction, two underground death/respawn returns, clean logout, and exact reconnect. No visual, collision, interaction, membership, projection, or reconnect fault appeared; the public server was untouched |
 | 2026-07-25 | Approve Phase 5 Authority Milestone C as one coarse implementation body. | Approved for implementation: add a default-off, custom-client-only, versioned layered scene-context envelope; bind static-scene and movement snapshots to its sequence; make the client own and validate world-space/level-qualified location identity; reset client identity caches on scope changes; and preserve all default and legacy packet layouts |
 | 2026-07-25 | Implement Phase 5 Authority Milestone C behind its private gate. | Custom opcode 152 establishes checked client scope identity, unchanged absolute packets advance X/Y within it, scene-baseline v6 and movement-snapshot v2 bind to its sequence, scope changes clear level-sensitive client caches, the 10-test C/A/B lineage passes, and the authoritative 849/488 server plus 259-source client builds pass; private owner acceptance remains pending |
+| 2026-07-25 | Correct the deferred temporary-ground-item expiry fault exposed after Milestone B acceptance. | The accepted drop/pickup route removed the item correctly, but its previously scheduled expiry later attempted to remove the same entity again; the legacy Region tolerated that duplicate while strict layered membership refused it. Both temporary-item expiry callbacks now skip an already removed entity, while direct duplicate logical-index removal remains a tested refusal |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -17617,6 +17618,15 @@ covered both cross-level removal/re-registration and exact session
 re-registration. No visual, collision, interaction, membership, or reconnect
 problem was reported, and the server emitted no membership mismatch,
 projection refusal, or runtime exception during the route.
+
+After the accepted route, its delayed temporary-item expiry fired and exposed
+one lifecycle defect: the picked-up item had already left both compatibility
+and logical membership, but the original expiry callback unconditionally
+called `unregisterItem` again. The layered index correctly refused that second
+removal. The ordinary World expiry and the separate timed plugin-item expiry
+now check the captured entity's removed state before expiring it. Direct
+duplicate removal remains a fail-fast index invariant; this correction does
+not make membership removal generally idempotent or conceal stale authority.
 
 Status: implemented, automated-validated, private-startup-validated, and
 owner-accepted. Protocol/client authority, native layered terrain storage,

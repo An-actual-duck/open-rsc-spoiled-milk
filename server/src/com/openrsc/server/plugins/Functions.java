@@ -1540,7 +1540,9 @@ public class Functions {
 		if (i.getLoc() == null) {
 			i.getWorld().getServer().getGameEventHandler().add(new SingleEvent(i.getWorld(), null, time, "Spawn Ground Item Timed") {
 				public void action() {
-					i.getWorld().unregisterItem(i);
+					if (!i.isRemoved()) {
+						i.getWorld().unregisterItem(i);
+					}
 				}
 			});
 		}

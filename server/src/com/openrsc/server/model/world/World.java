@@ -683,7 +683,9 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			if (i.getLoc() == null) {
 				getServer().getGameEventHandler().add(new SingleEvent(this, null, delayTime, "Register Item") {
 					public void action() {
-						unregisterItem(i);
+						if (!i.isRemoved()) {
+							unregisterItem(i);
+						}
 					}
 				});
 			}
