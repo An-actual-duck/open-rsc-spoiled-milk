@@ -16,6 +16,7 @@ ENTITY = ROOT / "server/src/com/openrsc/server/model/entity/Entity.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 PATH_VALIDATION = ROOT / "server/src/com/openrsc/server/model/PathValidation.java"
 PLAYER_SERVICE = ROOT / "server/src/com/openrsc/server/service/PlayerService.java"
+DATABASE = ROOT / "server/src/com/openrsc/server/database/GameDatabase.java"
 UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
 STRUCT = (
     ROOT
@@ -34,6 +35,8 @@ DEVELOPMENT = (
 )
 CLIENT_STATE = ROOT / "Client_Base/src/orsc/LayeredSceneContextState.java"
 CLIENT_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
+CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+CLIENT_WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
 PLAN = (
     ROOT
     / "docs/myworld/in-progress-work-plans/"
@@ -227,7 +230,10 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         player = PLAYER.read_text(encoding="utf-8")
         path_validation = PATH_VALIDATION.read_text(encoding="utf-8")
         player_service = PLAYER_SERVICE.read_text(encoding="utf-8")
+        database = DATABASE.read_text(encoding="utf-8")
         development = DEVELOPMENT.read_text(encoding="utf-8")
+        client = CLIENT.read_text(encoding="utf-8")
+        client_world = CLIENT_WORLD.read_text(encoding="utf-8")
 
         self.assertIn("WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", configuration)
         self.assertIn(
@@ -245,9 +251,28 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         self.assertIn("LayeredCompatibilityPointAdapter", path_validation)
         self.assertIn("WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", player_service)
         self.assertIn('command.equalsIgnoreCase("deepfixture")', development)
-        self.assertIn("requireSyntheticDeepSurfaceRectangleClear", development)
+        self.assertNotIn(
+            "requireSyntheticDeepSurfaceRectangleClear", development
+        )
         self.assertIn("SYNTHETIC_DEEP_NPC_ATTRIBUTE", development)
         self.assertIn("SYNTHETIC_DEEP_ITEM_ATTRIBUTE", development)
+        self.assertIn("syntheticDeepFixtureTile", region_manager)
+        self.assertIn(
+            "LayeredCompatibilityPointAdapter.deepLocation(x, y)",
+            path_validation,
+        )
+        self.assertIn(
+            "WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", database
+        )
+        self.assertIn(
+            "setSyntheticDeepFixtureTerrain", client
+        )
+        self.assertIn(
+            "applySyntheticDeepFixtureTerrain", client_world
+        )
+        self.assertIn(
+            "tile.groundOverlay = 0", client_world
+        )
 
     def test_protocol_v1_v2_projection_boundary_is_explicit(self):
         updater = UPDATER.read_text(encoding="utf-8")

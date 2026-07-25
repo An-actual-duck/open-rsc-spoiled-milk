@@ -1507,7 +1507,6 @@ public final class Development implements CommandTrigger {
 	private void enterSyntheticDeepFixture(final Player player) {
 		WorldLocation current = player.getLayeredLocation();
 		if (!LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(current)) {
-			requireSyntheticDeepSurfaceRectangleClear(player);
 			player.getCache().store(
 				SYNTHETIC_DEEP_RETURN_SPACE_CACHE,
 				current.getWorldSpace().getValue());
@@ -1586,25 +1585,6 @@ public final class Development implements CommandTrigger {
 				player.getDatabaseID(), invalidReturnRecord);
 		}
 		return WorldLocation.global(new WorldCoordinate(120, 648, 0));
-	}
-
-	private void requireSyntheticDeepSurfaceRectangleClear(
-		final Player player) {
-		RegionManager regionManager =
-			player.getWorld().getRegionManager();
-		for (GameObject object : regionManager.getRegion(
-			LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_ENTRY_X,
-			LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_ENTRY_Y)
-			.getGameObjects()) {
-			if (LayeredCompatibilityPointAdapter
-				.containsSyntheticDeepCoordinate(
-					object.getX(), object.getY())
-				&& object.getWorldLocation().getCoordinate().getLevel() == 0) {
-				throw new IllegalArgumentException(
-					"borrowed plane-0 rectangle contains live scenery at "
-						+ object.getX() + "," + object.getY());
-			}
-		}
 	}
 
 	private void ensureSyntheticDeepFixtureEntities(final Player player) {

@@ -17345,6 +17345,7 @@ private environment should validate at least:
 | 2026-07-25 | Accept Phase 5 Authority Milestone C on the private three-gate server. | Owner-validated exact server/client agreement through ordinary surface movement and interaction, an upper-floor teleport and NPC interaction, real surface/underground ladder transitions in both directions, same-level teleport, clean logout, and reconnect. Scope sequences advanced only when level changed and restarted at 1 on reconnect; the delayed drop/pickup expiry completed without another membership exception, and no visual, collision, interaction, context, receipt, or reconnect fault appeared |
 | 2026-07-25 | Approve Phase 5 Authority Milestone D as one coarse private fixture body. | Approved for implementation: add a fourth default-off gate; an explicit bounded `synthetic-deep-fixture-v1` compatibility projection; protocol-v2 projection identity; one generated level `-2` owner route with isolated NPC/item membership; checked terrain/collision reuse; exact persistence and rollback recovery; and no production archive, placement, or live-world mutation |
 | 2026-07-25 | Implement Phase 5 Authority Milestone D behind its fourth private gate. | The named bounded projection now carries authoritative global level `-2` through Entity/Player location, logical membership, checked plane-0 terrain/collision reuse, persistence, and scene-context protocol v2. `::deepfixture` supplies a runtime-clear-checked owner route with process-local marked NPC/item fixtures and reconnect-safe exit. The 14-test D/C/B/A lineage, prerequisite-refusal startup, 850/488 Ant server build, and 259-source client build pass; no production terrain or placement file changed, and owner acceptance remains pending |
+| 2026-07-25 | Correct the first Milestone D owner route after stopping at step 6. | Owner evidence proved that the borrowed compatibility rectangle was water: click teleport could collect the deep item, ordinary walking and Man interaction failed, and logout/reconnect returned to the prior surface save. Logs established a second exact cause: the legacy-only save snapshot decoded the `(450,600)` receipt as level 0, rejected the authoritative level `-2` mirror, and rolled back every deep autosave. Replace terrain borrowing with a bounded runtime-only flat overlay-0 room, suppress borrowed upper-plane geometry, resolve deep path/collision through that room, and capture named-projection persistence from the authoritative layered location plus its checked receipt. Production archives, placements, surface terrain, live data, and the public server remain untouched; corrected owner acceptance is pending |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -17829,13 +17830,14 @@ level `-2`. Milestone D therefore introduces one separately named projection:
 - owner entry tile: `(450,600,L-2)`; and
 - compatibility terrain plane: legacy plane 0 at the same X/Y.
 
-The selected surface rectangle contains no authored scenery or boundaries in
-the active placement sources. Fixture entry must nevertheless inspect live
-plane-0 object membership and refuse if the rectangle is no longer clear, so
-an added or dynamic surface object cannot create invisible deep collision.
-Terrain height, overlay, and base collision are read through the existing
-packed plane-0 template; they are not copied, edited, exported, or claimed as
-deep-world content.
+The compatibility plane is now only a wire/loader receipt. The first owner
+route proved that borrowing its terrain was unsafe because the selected
+rectangle is water. While the named projection is active, the server therefore
+supplies an immutable, walkable overlay-0 tile product for the bounded room and
+the client replaces only those 21 by 21 loaded tiles with flat overlay-0
+runtime tiles. Borrowed upper-plane geometry is suppressed. Surface terrain
+and every archive remain unchanged, and leaving the deep scope restores the
+ordinary cached/archive terrain mode.
 
 This is not a silent level alias. Every layered-to-packed operation must carry
 the projection ID and the fourth capability gate. Level `-2` outside the exact
@@ -17860,17 +17862,17 @@ receipt disagreement refuses. Ordinary levels continue to use
 - Logical visibility, interaction lookup, proximity, and server-index identity
   remain level-qualified. Plane-0 players, NPCs, items, and objects at the same
   X/Y remain invisible and non-interactable from level `-2`.
-- Collision/path queries use the explicit template projection only after their
-  source and destination are proven to share the fixture scope.
+- Collision/path queries use the immutable room product only after their
+  source and destination are proven to share the fixture scope. They never
+  consult same-X/Y surface water or scenery.
 
 ### Generated runtime fixture
 
 The developer command `::deepfixture` owns the private route:
 
-- `enter` records the current layered return location, checks that the template
-  rectangle has no live surface object/boundary membership, establishes the
-  level `-2` location, and ensures one marked test NPC plus one marked ground
-  item exist in level `-2`;
+- `enter` records the current layered return location, establishes the level
+  `-2` room, and ensures one marked test NPC plus one marked ground item exist
+  in level `-2`;
 - `status` reports logical location, projection ID, compatibility receipt,
   bounds, and fixture entity counts; and
 - `exit` returns to the recorded layered location, or the normal Lumbridge
@@ -17905,6 +17907,14 @@ the actual projection ID:
   without rewriting; and
 - existing `legacy-packed-y-v1` records and default-off behavior remain
   unchanged.
+
+The Player-data X/Y shadow snapshot has two strict capture paths. Ordinary
+legacy saves continue to decode and round-trip the packed Point exactly as
+before. Layer-authoritative saves instead capture the actual `WorldLocation`
+plus its adapter-checked compatibility Point. This distinction is necessary
+because `(450,600)` alone is deliberately ambiguous between surface level 0
+and the named level `-2` fixture; decoding it with the legacy Y-band codec
+would reject and roll back an otherwise valid deep save.
 
 ### Acceptance gate
 
@@ -17945,7 +17955,7 @@ Implementation checkpoint:
   boundary;
 - scene-context v1 remains the sole ordinary wire form, while v2 requires the
   explicit synthetic projection and binds client cache scope to its identity;
-- `::deepfixture enter|status|exit` verifies the live template rectangle,
+- `::deepfixture enter|status|exit` activates the runtime-only overlay-0 room,
   records a typed return location, generates only marked process-local
   NPC/item fixtures, reports logical/receipt state, and safely falls back to
   Lumbridge if its return record is absent or invalid;
@@ -17958,9 +17968,16 @@ Implementation checkpoint:
 - no terrain archive, structured placement source, live world, or public
   server state was modified.
 
-Status: implementation, automated validation, prerequisite-refusal startup,
-and authoritative builds complete. Four-gate private startup and meaningful
-owner acceptance remain pending.
+Correction checkpoint: the first owner route is rejected rather than counted
+as acceptance. The user stopped at step 6 after observing water, inability to
+walk or interact with the Man, click-teleport-only item collection, and a
+surface reconnect. Server logs prove that deep Player-data saves rolled back
+on `Loaded Player mirror does not match the layered persistence snapshot`.
+The runtime overlay-0 room and named-projection snapshot correction now pass
+the 14-test D/C/B/A lineage, the two Slice-14 persistence tests, and
+authoritative 850-core, 488-plugin, and 259-client-source builds. A fresh
+four-gate private owner route must still prove walking, Man interaction, item
+pickup, exact deep logout/reconnect, explicit exit, and death recovery.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those

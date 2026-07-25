@@ -139,7 +139,8 @@ final class LayeredSceneContextState {
 		}
 		return new ApplyResult(
 			scopeChanged,
-			compatibilityPlane(logicalLevel, projectionId));
+			compatibilityPlane(logicalLevel, projectionId),
+			SYNTHETIC_DEEP_PROJECTION.equals(projectionId));
 	}
 
 	void acceptLegacyPlayerPosition(int packedX, int packedY) {
@@ -373,10 +374,15 @@ final class LayeredSceneContextState {
 	static final class ApplyResult {
 		private final boolean scopeChanged;
 		private final int legacyPlane;
+		private final boolean syntheticDeepFixture;
 
-		private ApplyResult(boolean scopeChanged, int legacyPlane) {
+		private ApplyResult(
+			boolean scopeChanged,
+			int legacyPlane,
+			boolean syntheticDeepFixture) {
 			this.scopeChanged = scopeChanged;
 			this.legacyPlane = legacyPlane;
+			this.syntheticDeepFixture = syntheticDeepFixture;
 		}
 
 		boolean isScopeChanged() {
@@ -385,6 +391,10 @@ final class LayeredSceneContextState {
 
 		int getLegacyPlane() {
 			return legacyPlane;
+		}
+
+		boolean isSyntheticDeepFixture() {
+			return syntheticDeepFixture;
 		}
 	}
 

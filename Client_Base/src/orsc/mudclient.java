@@ -22942,7 +22942,10 @@ public final class mudclient implements Runnable {
 		this.sceneInstanceStore.clearPendingAreaLoadMarks();
 	}
 
-	public void applyLayeredSceneScope(int legacyPlane, boolean scopeChanged) {
+	public void applyLayeredSceneScope(
+		int legacyPlane,
+		boolean scopeChanged,
+		boolean syntheticDeepFixture) {
 		if (legacyPlane < 0 || legacyPlane > 3) {
 			throw new IllegalArgumentException(
 				"Unsupported layered scene compatibility plane: " + legacyPlane);
@@ -22950,6 +22953,7 @@ public final class mudclient implements Runnable {
 		if (scopeChanged) {
 			resetLayeredSceneIdentityCaches();
 		}
+		this.world.setSyntheticDeepFixtureTerrain(syntheticDeepFixture);
 		this.requestedPlane = legacyPlane;
 	}
 

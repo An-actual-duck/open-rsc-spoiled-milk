@@ -312,8 +312,11 @@ class LayeredPlayerLocationAuthorityTest(unittest.TestCase):
             "WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", player_service
         )
         self.assertIn(
-            "locationSnapshot.requireLayeredLocation(player.getLayeredLocation())",
+            "player.getLayeredLocation(),",
             database,
+        )
+        self.assertIn(
+            "WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", database
         )
         self.assertIn('command.equalsIgnoreCase("layerloc")', development)
         self.assertIn("persistenceOrigin=", development)

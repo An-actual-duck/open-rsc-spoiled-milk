@@ -43,6 +43,37 @@ public final class LegacyPlayerLocationPersistenceSnapshot {
 			authoritativeLegacyPoint.getX(), authoritativeLegacyPoint.getY(), projected);
 	}
 
+	/**
+	 * Captures an authoritative layered location together with its checked
+	 * compatibility receipt.
+	 *
+	 * <p>This overload is required for named projections whose packed X/Y
+	 * cannot be decoded by the legacy Y-band codec. It retains the exact same
+	 * database columns while refusing any receipt that does not match the
+	 * supplied layered location.</p>
+	 */
+	public static LegacyPlayerLocationPersistenceSnapshot capture(
+		final Point authoritativeCompatibilityPoint,
+		final WorldLocation authoritativeLayeredLocation,
+		final boolean allowSyntheticDeepFixture) {
+		Point checkedPoint = Objects.requireNonNull(
+			authoritativeCompatibilityPoint,
+			"authoritativeCompatibilityPoint");
+		WorldLocation checkedLocation = Objects.requireNonNull(
+			authoritativeLayeredLocation,
+			"authoritativeLayeredLocation");
+		Point expected =
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				checkedLocation, allowSyntheticDeepFixture);
+		if (expected.getX() != checkedPoint.getX()
+			|| expected.getY() != checkedPoint.getY()) {
+			throw new IllegalArgumentException(
+				"Layered player location does not match its compatibility receipt");
+		}
+		return new LegacyPlayerLocationPersistenceSnapshot(
+			checkedPoint.getX(), checkedPoint.getY(), checkedLocation);
+	}
+
 	public int getPackedX() {
 		return packedX;
 	}

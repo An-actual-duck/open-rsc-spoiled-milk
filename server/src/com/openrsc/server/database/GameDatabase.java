@@ -784,10 +784,14 @@ public abstract class GameDatabase {
 	public void querySavePlayerData(Player player) throws GameDatabaseException {
 		final PlayerData playerData = new PlayerData();
 		final LegacyPlayerLocationPersistenceSnapshot locationSnapshot =
-			LegacyPlayerLocationPersistenceSnapshot.capture(player.getLocation());
-		if (getServer().getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
-			locationSnapshot.requireLayeredLocation(player.getLayeredLocation());
-		}
+			getServer().getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+				? LegacyPlayerLocationPersistenceSnapshot.capture(
+					player.getLocation(),
+					player.getLayeredLocation(),
+					getServer().getConfig()
+						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE)
+				: LegacyPlayerLocationPersistenceSnapshot.capture(
+					player.getLocation());
 
 		playerData.combatLevel = player.getCombatLevel();
 		playerData.totalLevel = player.getSkills().getTotalLevel();

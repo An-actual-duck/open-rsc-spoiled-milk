@@ -403,7 +403,9 @@ public class PacketHandler {
 			appliedSceneBaselineKey = 0;
 		}
 		mc.applyLayeredSceneScope(
-			result.getLegacyPlane(), result.isScopeChanged());
+			result.getLegacyPlane(),
+			result.isScopeChanged(),
+			result.isSyntheticDeepFixture());
 		String summary = layeredSceneContextState.summary();
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);

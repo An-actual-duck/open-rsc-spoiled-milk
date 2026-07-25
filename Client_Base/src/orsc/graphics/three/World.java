@@ -2,6 +2,7 @@ package orsc.graphics.three;
 
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.model.Sector;
+import com.openrsc.client.model.Tile;
 import com.openrsc.data.DataConversions;
 import orsc.Config;
 import orsc.RenderTelemetry;
@@ -58,6 +59,10 @@ public final class World {
 	private static final int LAVA_GLOW_RADIUS = 384;
 	private static final int LAVA_GLOW_INTENSITY = 96;
 	private static final int LAVA_GLOW_NON_OVERWORLD_INTENSITY = 72;
+	private static final int SYNTHETIC_DEEP_MIN_X = 440;
+	private static final int SYNTHETIC_DEEP_MAX_X = 460;
+	private static final int SYNTHETIC_DEEP_MIN_Z = 590;
+	private static final int SYNTHETIC_DEEP_MAX_Z = 610;
 	private static final int SECTOR_PRELOAD_LOW_OFFSET = -ACTIVE_SECTION_ORIGIN_OFFSET - 1;
 	private static final int SECTOR_PRELOAD_HIGH_OFFSET = ACTIVE_SECTION_GRID - ACTIVE_SECTION_ORIGIN_OFFSET;
 	private final int[] colorToResource = new int[256];
@@ -75,6 +80,7 @@ public final class World {
 	private final Map<String, Map<Integer, TerrainPatch>> worldEditorTerrainPatches =
 		new HashMap<String, Map<Integer, TerrainPatch>>();
 	private volatile long worldEditorTerrainRevision = 0L;
+	private volatile boolean syntheticDeepFixtureTerrain;
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
 		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
 			@Override
@@ -204,6 +210,13 @@ public final class World {
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4,
 				"k.<init>(" + (var1 != null ? "{...}" : "null") + ',' + (var2 != null ? "{...}" : "null") + ')');
+		}
+	}
+
+	public void setSyntheticDeepFixtureTerrain(final boolean enabled) {
+		if (syntheticDeepFixtureTerrain != enabled) {
+			syntheticDeepFixtureTerrain = enabled;
+			worldEditorTerrainRevision++;
 		}
 	}
 
@@ -813,10 +826,13 @@ public final class World {
 	}
 
 	private Renderer3DWorldChunkFrame buildRenderer3DWorldChunkFrame(int plane, int sectionX, int sectionY) {
+		boolean includeUpperPlanes =
+			plane == 0 && !syntheticDeepFixtureTerrain;
 		List<Renderer3DWorldChunkFrame.ChunkMesh> chunks =
-			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(plane == 0 ? 3 : 1);
+			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
+				includeUpperPlanes ? 3 : 1);
 		addRenderer3DWorldChunkMesh(chunks, plane, sectionX, sectionY, true);
-		if (plane == 0) {
+		if (includeUpperPlanes) {
 			addRenderer3DWorldChunkMesh(chunks, 1, sectionX, sectionY, false);
 			addRenderer3DWorldChunkMesh(chunks, 2, sectionX, sectionY, false);
 		}
@@ -2436,7 +2452,7 @@ public final class World {
 			long activePlaneNanos = RenderTelemetry.elapsedSince(phaseStart);
 			long upperPlanesNanos = 0L;
 			long bridgeNanos = 0L;
-			if (plane == 0) {
+			if (plane == 0 && !syntheticDeepFixtureTerrain) {
 				phaseStart = RenderTelemetry.now();
 				this.generateLandscapeModel(worldX, 112, false, 1, worldZ);
 				this.generateLandscapeModel(worldX, 69, false, 2, worldZ);
@@ -2485,7 +2501,7 @@ public final class World {
 		preloadSectionWindow(plane, sectionX, sectionY);
 		queueCpuSectionWindowPreload(plane, sectionX, sectionY);
 		queueWorldModelProductPreload(plane, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);
-		if (plane == 0) {
+		if (plane == 0 && !syntheticDeepFixtureTerrain) {
 			preloadSectionWindow(1, sectionX, sectionY);
 			preloadSectionWindow(2, sectionX, sectionY);
 			queueCpuSectionWindowPreload(1, sectionX, sectionY);
@@ -2707,8 +2723,67 @@ public final class World {
 				applyWorldEditorTerrainPatches(window[y * ACTIVE_SECTION_GRID + x],height,sectorX,sectorY);
 			}
 		}
+		if (height == 0 && syntheticDeepFixtureTerrain) {
+			applySyntheticDeepFixtureTerrain(window, sectionX, sectionY);
+		}
 		applyBridgeDecorations(window);
 		return new CpuSectionWindow(window, true);
+	}
+
+	private static void applySyntheticDeepFixtureTerrain(
+		Sector[] window,
+		int sectionX,
+		int sectionY) {
+		int originX =
+			(sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
+		int originZ =
+			(sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
+		for (int worldX = SYNTHETIC_DEEP_MIN_X;
+			worldX <= SYNTHETIC_DEEP_MAX_X;
+			worldX++) {
+			for (int worldZ = SYNTHETIC_DEEP_MIN_Z;
+				worldZ <= SYNTHETIC_DEEP_MAX_Z;
+				worldZ++) {
+				int localX = worldX - originX;
+				int localZ = worldZ - originZ;
+				Sector sector = sectorForLocalTile(
+					window, localX, localZ);
+				if (sector == null) {
+					continue;
+				}
+				Tile tile = new Tile();
+				tile.groundOverlay = 0;
+				tile.editorPaintedOverlay = true;
+				sector.setTile(
+					tileInSector(localX),
+					tileInSector(localZ),
+					tile);
+			}
+		}
+		for (int worldX = SYNTHETIC_DEEP_MIN_X - 1;
+			worldX <= SYNTHETIC_DEEP_MAX_X + 1;
+			worldX++) {
+			for (int worldZ = SYNTHETIC_DEEP_MIN_Z - 1;
+				worldZ <= SYNTHETIC_DEEP_MAX_Z + 1;
+				worldZ++) {
+				if (worldX >= SYNTHETIC_DEEP_MIN_X
+					&& worldX <= SYNTHETIC_DEEP_MAX_X
+					&& worldZ >= SYNTHETIC_DEEP_MIN_Z
+					&& worldZ <= SYNTHETIC_DEEP_MAX_Z) {
+					continue;
+				}
+				int localX = worldX - originX;
+				int localZ = worldZ - originZ;
+				Sector sector = sectorForLocalTile(
+					window, localX, localZ);
+				if (sector != null) {
+					sector.getTile(
+						tileInSector(localX),
+						tileInSector(localZ))
+						.editorPaintedOverlay = true;
+				}
+			}
+		}
 	}
 
 	private static void applyBridgeDecorations(Sector[] window) {
@@ -2752,7 +2827,11 @@ public final class World {
 	}
 
 	private String sectionWindowKey(int height, int sectionX, int sectionY) {
-		return sectorFilename(height, sectionX, sectionY) + "-editor-"+worldEditorTerrainRevision+"-window";
+		return sectorFilename(height, sectionX, sectionY)
+			+ "-editor-" + worldEditorTerrainRevision
+			+ (syntheticDeepFixtureTerrain
+				? "-synthetic-deep-room-v1" : "-legacy-terrain")
+			+ "-window";
 	}
 
 	private String terrainModelInputKey(int height, int sectionX, int sectionY) {

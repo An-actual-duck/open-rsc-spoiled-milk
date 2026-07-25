@@ -47,6 +47,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.snapshot.Snapshot;
 import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.ConnectionAttachment;
@@ -698,7 +699,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	public Npc registerNpc(final Npc n) {
 		final NPCLoc npc = n.getLoc();
 		if (npc.startX < npc.minX || npc.startX > npc.maxX || npc.startY < npc.minY || npc.startY > npc.maxY
-			|| (getTile(npc.startX, npc.startY).overlay & 64) != 0) {
+			|| (getTile(n.getWorldLocation()).overlay & 64) != 0) {
 			LOGGER.error("Broken Npc: <id>" + npc.id + "</id><startX>" + npc.startX + "</startX><startY>"
 				+ npc.startY + "</startY>");
 		}
@@ -932,6 +933,10 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 
 	public TileValue getTile(final Point point) {
 		return getRegionManager().getTile(point);
+	}
+
+	public TileValue getTile(final WorldLocation location) {
+		return getRegionManager().getTile(location);
 	}
 
 	public boolean canYield(final Item item) {

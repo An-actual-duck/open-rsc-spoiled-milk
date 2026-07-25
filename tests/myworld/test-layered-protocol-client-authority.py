@@ -47,6 +47,7 @@ public final class LayeredProtocolClientAuthorityFixture {
             1, 1, 100, "global", 100, 400, 0, 100, 400);
         check(!surface.isScopeChanged(), "initial context is not a transition");
         check(surface.getLegacyPlane() == 0, "surface plane");
+        check(!surface.isSyntheticDeepFixture(), "surface terrain mode");
         check(state.matchesSequence(1), "surface sequence");
         check("global:0:1".equals(state.scopeIdentity()), "surface scope");
         state.acceptLegacyPlayerPosition(100, 400);
@@ -94,6 +95,7 @@ public final class LayeredProtocolClientAuthorityFixture {
             450, 600, -2, 450, 600);
         check(deep.isScopeChanged(), "deep transition");
         check(deep.getLegacyPlane() == 0, "deep compatibility plane");
+        check(deep.isSyntheticDeepFixture(), "deep terrain mode");
         check("global:-2:synthetic-deep-fixture-v1:5".equals(
             state.scopeIdentity()), "deep scope identity");
         state.acceptLegacyPlayerPosition(450, 600);

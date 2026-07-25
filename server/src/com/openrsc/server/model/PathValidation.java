@@ -66,6 +66,21 @@ public class PathValidation {
 		if (!sameSpatialDomain(src, dest)) {
 			return false;
 		}
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(src)) {
+			try {
+				LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+					src,
+					world.getServer().getConfig()
+						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+				LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+					dest,
+					world.getServer().getConfig()
+						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+				return true;
+			} catch (IllegalArgumentException outsideFixture) {
+				return false;
+			}
+		}
 		return checkLegacyPath(
 			world,
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
@@ -707,13 +722,28 @@ public class PathValidation {
 		if (DEBUG && mob.isPlayer()) System.out.println("Pathing 13");
 
 		// if (mob.isPlayer()) // for debugging
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(
+			mob.getWorldLocation())) {
+			return true;
+		}
 		return !PathValidation.checkDiagonalPassThroughCollisions(mob.getWorld(), startX, startY, destX, destY);
 		// return true; // for debugging
 
 	}
 
 	private static boolean checkBlocking(Mob mob, int x, int y, int bit, boolean isCurrentTile) {
-		TileValue t = mob.getWorld().getTile(x, y);
+		TileValue t;
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(
+			mob.getWorldLocation())) {
+			try {
+				t = mob.getWorld().getTile(
+					LayeredCompatibilityPointAdapter.deepLocation(x, y));
+			} catch (IllegalArgumentException outsideFixture) {
+				return true;
+			}
+		} else {
+			t = mob.getWorld().getTile(x, y);
+		}
 		/*boolean inFisherKingdom = (mob.getLocation().inBounds(415, 976, 423, 984)
 			|| mob.getLocation().inBounds(511, 976, 519, 984));*/
 		boolean blockedPath = PathValidation.isBlocking(t.traversalMask, (byte) bit, isCurrentTile);

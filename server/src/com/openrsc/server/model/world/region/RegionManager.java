@@ -3430,13 +3430,35 @@ public class RegionManager {
 	 * terrain remains the compatibility backend.
 	 */
 	public TileValue getTile(final WorldLocation location) {
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location)) {
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				location,
+				getWorld().getServer().getConfig()
+					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+			return syntheticDeepFixtureTile();
+		}
 		Point packed = requireLegacyTerrainProjection(location);
 		return getTile(packed);
 	}
 
 	public TileValue getMutableTile(final WorldLocation location) {
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location)) {
+			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+				location,
+				getWorld().getServer().getConfig()
+					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+			throw new UnsupportedOperationException(
+				"Synthetic deep fixture terrain is immutable");
+		}
 		Point packed = requireLegacyTerrainProjection(location);
 		return getMutableTile(packed.getX(), packed.getY());
+	}
+
+	private static TileValue syntheticDeepFixtureTile() {
+		TileValue tile = new TileValue();
+		tile.overlay = 0;
+		tile.initializeTerrainCollision();
+		return tile;
 	}
 
 	private Point requireLegacyTerrainProjection(

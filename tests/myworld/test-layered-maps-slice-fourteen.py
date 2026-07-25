@@ -78,6 +78,23 @@ public final class LegacyPlayerLocationPersistenceSnapshotFixture {
         expectState(() -> underground.requireLayeredLocation(
             WorldLocation.global(new WorldCoordinate(216, 468, 0))));
 
+        WorldLocation deep =
+            LayeredCompatibilityPointAdapter.syntheticDeepEntry();
+        LegacyPlayerLocationPersistenceSnapshot deepSnapshot =
+            LegacyPlayerLocationPersistenceSnapshot.capture(
+                Point.location(450, 600), deep, true);
+        check(deepSnapshot.getLayeredLocation().equals(deep),
+            "named deep projection remains authoritative");
+        check(deepSnapshot.getPackedX() == 450
+            && deepSnapshot.getPackedY() == 600,
+            "named deep compatibility receipt");
+        expectIllegal(() ->
+            LegacyPlayerLocationPersistenceSnapshot.capture(
+                Point.location(450, 600), deep, false));
+        expectIllegal(() ->
+            LegacyPlayerLocationPersistenceSnapshot.capture(
+                Point.location(451, 600), deep, true));
+
         expectIllegal(() -> LegacyPlayerLocationPersistenceSnapshot.capture(
             Point.location(-1, 0)));
         expectIllegal(() -> LegacyPlayerLocationPersistenceSnapshot.capture(
@@ -190,7 +207,13 @@ class LayeredMapsSliceFourteenTest(unittest.TestCase):
         snapshot = SNAPSHOT_SOURCE.read_text(encoding="utf-8")
         plan = PLAN.read_text(encoding="utf-8")
 
-        self.assertIn("LegacyPlayerLocationPersistenceSnapshot.capture(player.getLocation())", database)
+        self.assertIn("player.getLayeredLocation()", database)
+        self.assertIn("WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", database)
+        self.assertIn(
+            "LegacyPlayerLocationPersistenceSnapshot.capture(\n"
+            "\t\t\t\t\tplayer.getLocation(),",
+            database,
+        )
         self.assertIn("playerData.xLocation = locationSnapshot.getPackedX();", database)
         self.assertIn("playerData.yLocation = locationSnapshot.getPackedY();", database)
         self.assertIn("queryUpdatePlayerLocation(playerId, locationSnapshot.toLegacyPoint())", database)
