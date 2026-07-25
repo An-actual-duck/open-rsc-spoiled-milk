@@ -16592,8 +16592,29 @@ Automated validation status:
   sources; and
 - the server build/classpath audit passes.
 
-Status: implemented and automated-validated. One fresh private owner route
-remains pending after the pushed checkpoint.
+Owner validation:
+
+- four contiguous schema-v59 records (`start`, `teleport`,
+  `preservation-noop`, `stop`) validate with exact coordinate round trips;
+- the 106 blockers reconcile exactly to three first-observation-ordered
+  families: 98 owner-free `ShopRestockEvent` callbacks remain unattributed,
+  one player-owned `StatRestorationEvent` and seven player-owned
+  `PluginTickEvent` callbacks remain candidate non-NPC-owner events;
+- all 98 shop timers were running. The stat timer was running, while one of
+  seven plugin ticks was running; all eight player-owned events referenced one
+  selected source each;
+- generation, observation tick, scheduler identity, all four blocker outcome
+  counts, source-correlation fingerprint, family counts, and the family event
+  sum align exactly, while every authority fact remains false;
+- the private diagnostic produced one accepted 1,216 ms late tick containing
+  1,149 ms of opt-in diagnostic work; and
+- the owner reported normal visuals and interaction throughout the route.
+
+Status: implemented, automated-validated, and owner-validated. The family
+audit establishes a narrow next split: shop restocking and player stat
+restoration can be reviewed as explicitly non-spatial state, while generic
+plugin ticks must remain hard blockers until their arbitrary script context is
+given a stronger per-instance affinity/preservation contract.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -17033,6 +17054,7 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 209 by attaching detached implementation/family identity to each scheduler snapshot entry. | Implemented and automated-validated; bounded runtime, logical-family, and direct-supertype names plus anonymous/local/synthetic flags cross the existing snapshot boundary as primitives, legacy fixtures remain explicitly unknown, no `Class` or runtime handle survives, attribution and authority remain unchanged, the Slice 182-209 lineage passes 117 tests, and the 843/488 Ant build/audit passes. Identity remains internal pending a bounded blocker-family reduction |
 | 2026-07-24 | Continue with Slice 210 by reducing the exact scheduler blockers to stable technical families. | Implemented and automated-validated; generation, scheduler, ordinal, registration, attribution, restoration, owner, and detached implementation identity must align before reduction; exact first-observation-ordered families retain bounded counts, timing/run ranges, and one deterministic fingerprint without callbacks or handles; incomplete blocker details, uncaptured types, arithmetic drift, and family-budget overflow refuse; attribution and authority remain unchanged; the Slice 182-210 lineage passes 120 tests, and the 844/488 Ant build/audit passes. The summary remains internal pending additive private-schema exposure |
 | 2026-07-24 | Continue with Slice 211 by exposing the bounded blocker-family summary through the private preservation diagnostic. | Implemented and automated-validated; additive schema-v59 changes only the preservation no-op, requires exact generation/tick/scheduler/correlation/blocker-count alignment, serializes first-observation-ordered technical families without callback payloads or handles, preserves schema-v58, keeps attribution and every authority false, passes five focused guards, the 125-test Slice 182-211 lineage, both observer integration tests, and the 844/488 Ant build/audit. One fresh private owner route remains pending |
+| 2026-07-24 | Accept the Slice 211 private scheduler-blocker family route. | Owner-validated; four contiguous schema-v59 records and exact round trips validate, all 106 blockers reduce to 98 `ShopRestockEvent`, one `StatRestorationEvent`, and seven `PluginTickEvent` callbacks, every aggregate/correlation/fingerprint/family count aligns, all authority remains false, and visuals/interactions remained normal. One accepted 1,216 ms late tick contains 1,149 ms of opt-in diagnostic work. The first two families are narrow candidates for explicit non-spatial audit; generic plugin ticks remain hard blockers pending a stronger per-instance contract |
 
 ## Next Discussion
 
