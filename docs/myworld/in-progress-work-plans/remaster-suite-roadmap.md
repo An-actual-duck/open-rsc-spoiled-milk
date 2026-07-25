@@ -648,12 +648,15 @@ terrain/collision compatibility backend because the 944-tile level stride does
 not align with 48-tile Region rows. Protocol/client and native layered terrain
 remain later gates.
 
-The first Milestone B implementation checkpoint compiles 848 core and 488
-plugin sources and completes a private both-gates-enabled population of 28,732
-objects, 3,775 NPCs, and 882 ground items. Logical membership, level-aware
-visibility/interaction/proximity, typed scene identity, checked packed-terrain
-projection, and NPC respawn re-registration are implemented; meaningful owner
-runtime acceptance remains pending.
+Milestone B is owner-accepted as of 2026-07-25. Its implementation checkpoint
+compiles 848 core and 488 plugin sources and completes a private
+both-gates-enabled population of 28,732 objects, 3,775 NPCs, and 882 ground
+items. Logical membership, level-aware visibility/interaction/proximity, typed
+scene identity, checked packed-terrain projection, and NPC respawn
+re-registration are implemented. The owner route covered surface, upper-floor,
+and underground movement and interaction; two underground death/respawn
+returns; logout; and exact reconnect without a reported visual, collision,
+interaction, membership, projection, or reconnect fault.
 
 Planning estimates at this checkpoint are approximately `40-45%` for Phase 5
 and `20-25%` for the complete Layered Maps product across Phases 5-7. No
@@ -1115,7 +1118,8 @@ The Remaster Suite roadmap is complete when:
 | 2026-07-18 | Complete the fourteenth Layered Maps foundation checkpoint: checked legacy Player persistence snapshots on load, save, and offline-location updates while retaining the exact packed X/Y schema. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-24 | Approve coarse Phase 5 Authority Milestone A: private-gated authoritative Player `WorldLocation`, derived legacy Point compatibility, additive cache-backed persistence receipts, and unchanged-world session parity. | Approved and implemented in the layered-world plan |
 | 2026-07-25 | Accept coarse Phase 5 Authority Milestone A on the private copied-data server. | Owner-validated through bootstrap, surface/underground and upper-floor travel, interaction, death/respawn, logout, and reconnect; layered/legacy coordinates and the exact nine-field persistence record remained aligned, the pre-migration backup remained byte-identical, and public data was untouched |
-| 2026-07-25 | Approve coarse Phase 5 Authority Milestone B: universal Entity `WorldLocation`, logical spatial membership, level-aware visibility/proximity/cache identity, and checked packed terrain/collision projection. | Approved and in implementation in the layered-world plan; default-off private gate, unchanged archives/protocol/client, and one meaningful owner route |
+| 2026-07-25 | Approve coarse Phase 5 Authority Milestone B: universal Entity `WorldLocation`, logical spatial membership, level-aware visibility/proximity/cache identity, and checked packed terrain/collision projection. | Approved and implemented in the layered-world plan; default-off private gate, unchanged archives/protocol/client, and one meaningful owner route |
+| 2026-07-25 | Accept coarse Phase 5 Authority Milestone B on the private both-gates-enabled server. | Owner-validated through surface, upper-floor, and underground movement and interaction; two underground death/respawn returns; logout; and exact reconnect. No visual, collision, interaction, membership, projection, or reconnect fault appeared, and the public server was untouched |
 | 2026-07-18 | Complete the fifteenth Layered Maps foundation checkpoint: immutable level-qualified visibility windows and read-only manager projection while packed lookup, caches, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the sixteenth Layered Maps foundation checkpoint: a checked Player visibility-window shadow and versioned private diagnostic evidence while packed lookup, caches, and client behavior remain authoritative. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the seventeenth Layered Maps foundation checkpoint: deterministic, allocation-budgeted logical interest-window deltas while packed lookup, caches, packets, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |

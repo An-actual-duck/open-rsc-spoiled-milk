@@ -17338,6 +17338,7 @@ private environment should validate at least:
 | 2026-07-24 | Freeze the proof-only retirement/schema stream and return Phase 5 to coordinate-authority sequencing. | Recalibrated after 214 slices and 60 private schemas: the pre-authority reconstruction/preservation research is complete enough to reuse later, but packed Y remains runtime authority and no creator-testable layered conversion exists. Stop at schema-v60; next propose one coarse, owner-testable private milestone for authoritative `WorldLocation` plus copied-database persistence/session parity, then migrate Region/entity identity and client/protocol before resuming incremental streaming |
 | 2026-07-24 | Approve Phase 5 Authority Milestone A as one coarse implementation body. | Approved for implementation: make Player session location authoritative as `WorldLocation` behind a disabled-by-default private gate, retain derived packed `Point` compatibility, add additive versioned persistence fields and legacy receipts through the existing transactional Player cache, prove unchanged-world session parity, and avoid resuming schema-per-observation work |
 | 2026-07-25 | Accept Phase 5 Authority Milestone A on the private copied-data server. | Owner-validated across initial legacy bootstrap, ordinary walking, a geographically aligned surface/underground ladder round trip, upper-floor translation and NPC interaction, surface return, death/respawn, logout, and two reconnects. Layered and compatibility coordinates remained aligned; visuals, collision, interaction, inventory, and stats remained normal. The final copied-database record contains exactly the nine expected typed fields for global `(120,648,0)`, its legacy receipt is `(120,648)`, the pre-migration backup remains byte-identical, and the public server/database were untouched |
+| 2026-07-25 | Accept Phase 5 Authority Milestone B on the private both-gates-enabled server. | Owner-validated through surface movement and scenery/NPC/item interaction, upper-floor movement and NPC interaction, two real ladder transitions into underground movement/item interaction, two underground death/respawn returns, clean logout, and exact reconnect. No visual, collision, interaction, membership, projection, or reconnect fault appeared; the public server was untouched |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -17453,16 +17454,16 @@ export remain separately gated.
 
 ## Next Discussion
 
-The coarse Phase 5 Authority Milestone A is accepted. The recommended next
-coarse gate is **Authority Milestone B: Spatial Runtime Identity**: migrate
-Region, entity, collision, pathing, visibility, proximity, and cache identity
-to the accepted world-space/level-aware location contract while preserving a
-disabled-by-default private rollback boundary. It should be planned and
-approved as one owner-testable capability body, with internal checkpoints,
-rather than split into another diagnostic-schema chain. Protocol/client
-authority and the first synthetic level `-2` world remain later gates. The
-historical retirement findings below remain retained reference material for
-the later incremental-streaming milestone.
+The coarse Phase 5 Authority Milestones A and B are accepted. The recommended
+next coarse gate is **Authority Milestone C: Protocol and Client Location
+Identity**: make server-to-client scene identity explicitly world-space and
+level aware while retaining a default-off compatibility boundary for the
+current client and wire behavior. It should be planned and approved as one
+owner-testable capability body, with internal checkpoints, before introducing
+the first synthetic level `-2` fixture. Native layered terrain, true instances,
+streaming, Builder, conversion, and export remain later gates. The historical
+retirement findings below remain retained reference material for the later
+incremental-streaming milestone.
 
 ## Phase 5 Authority Milestone B: Spatial Runtime Identity
 
@@ -17594,10 +17595,31 @@ Implementation checkpoint:
 - a private both-gates-enabled startup populated 28,732 objects, 3,775 NPCs,
   and 882 ground items without a membership/collision refusal.
 
-Status: implementation foundation and private startup validation complete;
-meaningful owner runtime acceptance pending. Protocol/client authority, native
-layered terrain storage, level `-2`, true instances, streaming, Builder,
-conversion, and export remain separately gated.
+Private owner acceptance completed on 2026-07-25 with both authority gates
+enabled. The accepted route covered:
+
+- ordinary surface movement plus Shopkeeper interaction, furnace/scenery use,
+  and a ground-item drop/pickup;
+- an upper-floor teleport to packed `(320,1491)`, exact location inspection,
+  movement, and Barmaid interaction;
+- a real ladder at `(147,498)` to packed underground `(147,3331)`, exact
+  location inspection, movement, and ground-item pickup;
+- death/respawn from underground to `(120,648)` twice, exercising removal from
+  the underground index and re-registration on the surface; and
+- clean logout followed by exact reconnect at `(120,648,L0)`.
+
+An initially mistyped surface teleport was immediately corrected before the
+ladder route and produced no accepted transition evidence. The planned
+ladder-up return was replaced by two death/respawn returns, but the route still
+covered both cross-level removal/re-registration and exact session
+re-registration. No visual, collision, interaction, membership, or reconnect
+problem was reported, and the server emitted no membership mismatch,
+projection refusal, or runtime exception during the route.
+
+Status: implemented, automated-validated, private-startup-validated, and
+owner-accepted. Protocol/client authority, native layered terrain storage,
+level `-2`, true instances, streaming, Builder, conversion, and export remain
+separately gated.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
