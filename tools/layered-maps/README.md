@@ -98,10 +98,11 @@ them from the developer command. The layered item registry keys full
 timers after a world lifecycle reset. Package objects enter the level-aware
 spatial index without occupying a packed `Region`; their collision is derived
 through the canonical object-footprint planner and composed onto freshly
-decoded native terrain by full `WorldLocation`. This first object cut is
-intentionally static: dynamic door/object replacement, harvesting, removal,
-and respawn lifecycle authority remain later work, along with general world
-loading and removal of the bounded compatibility receipt.
+decoded native terrain by full `WorldLocation`. The static object route is
+owner-accepted for visuals, examine actions, blocking, alternate navigation,
+reconnect, and duplicate-free visibility. Dynamic door/object replacement,
+harvesting, removal, and respawn lifecycle authority remain later work, along
+with general world loading and removal of the bounded compatibility receipt.
 
 ## Preflight
 

@@ -31,10 +31,9 @@ Package-owned NPC/item placements now pass strict format, server decode,
 world-load, respawn-registry, private-startup validation, and the focused owner
 route. Static package-owned scenery/boundaries now pass strict format,
 independent server decode, world-load registration, level-qualified
-visibility/collision isolation, private startup, and automated validation.
-Their focused owner route remains pending. Dynamic object lifecycle authority
-and removal of the bounded compatibility receipt remain the current
-implementation boundary.
+visibility/collision isolation, private startup, automated validation, and the
+focused owner route. Dynamic object lifecycle authority and removal of the
+bounded compatibility receipt remain the current implementation boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -420,8 +419,8 @@ receipt remain later Milestone E cuts.
 
 ### Authority Milestone E placement checkpoint 8
 
-Implemented and automated/private-startup validated on 2026-07-25; focused
-owner acceptance remains pending:
+Implemented, automated/private-startup validated, and focused owner-accepted
+on 2026-07-25:
 
 - package `0.4.0` introduces `layered-world-placements-v2`, adding explicit
   `scenery` and `boundaries` collections beside the existing NPC and
@@ -462,11 +461,22 @@ A-through-E authority lineage, the authoritative 862-core/488-plugin server
 build, and the 262-source client build. Public and ordinary private defaults
 remain unchanged.
 
-The focused owner route must still confirm that the Table and Fence are
-visible and examinable, the Table tile and exact Fence edge block movement
-while adjacent routes remain passable, NPC/item behavior remains unchanged,
-logout/reconnect neither loses nor duplicates objects, and explicit exit
-returns to the legacy surface.
+The focused owner route is accepted:
+
+- the owner confirmed the Table and Fence appeared normally, both could be
+  examined, the Table tile and exact Fence edge blocked direct movement, and
+  the neighboring route remained passable;
+- client diagnostics identified package `0.4.0` and manifest prefix
+  `2a49c34ba64e` throughout the native route. Movement crossed presentation
+  chunk Y `25 -> 24 -> 25` without an additional scene-scope reset;
+- the server recorded normal five-coin collection at `(448,600,L-2)` and Man
+  dialogue immediately afterward;
+- the Player traversed the object area, logged out at
+  `(446,603,L-2)`, and reconnected to that exact signed location. The owner
+  confirmed all four placement families remained visible without duplicates;
+  and
+- explicit exit restored `(120,648,L0)`. Neither the client nor server
+  recorded a route-time exception.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
