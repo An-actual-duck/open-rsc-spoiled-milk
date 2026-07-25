@@ -607,6 +607,26 @@ construction remain authoritative. Entities, packets, persistence, and
 authoritative region/terrain storage have not adopted the contract, so these
 slices do not yet satisfy the later parity steps below.
 
+Progress recalibration (2026-07-24): the layered-world branch has now carried
+the read-only/dormant foundation through extensive Region-retirement,
+reconstruction, preservation, authored-state, NPC-owner, and scheduler proof.
+That pre-authority research is mature enough to freeze, but packed Y is still
+runtime authority. The work therefore improves the safety foundation without
+completing the Phase 5 exit gate.
+
+The implementation sequence must now return to coordinate authority:
+feature-gated `WorldLocation` ownership, copied-database persistence/migration
+receipts, unchanged-world session parity, level/world-space-aware Region and
+entity identity, then protocol/client adoption and a synthetic `-2` test.
+Incremental streaming/source retirement resumes only after those gates. Private
+diagnostic schema v60 is the stopping point for the proof-only chain unless an
+authority milestone exposes a new concrete failure.
+
+Planning estimates at this checkpoint are approximately `40-45%` for Phase 5
+and `20-25%` for the complete Layered Maps product across Phases 5-7. No
+creator-testable conversion/export workflow exists yet; Phase 6 and Phase 7
+remain substantial product work.
+
 Implementation sequence:
 
 1. Add a named, reversible codec for all existing packed coordinates.

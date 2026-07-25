@@ -1870,6 +1870,91 @@ has retired much of the design and observability risk, but the remaining
 authority-changing and tooling work is larger per milestone than most earlier
 slices.
 
+## Implementation Recalibration Checkpoint: 2026-07-24
+
+This checkpoint supersedes the 2026-07-20 progress estimate for sequencing.
+The branch now contains 214 numbered foundation slices, 60 private diagnostic
+schema versions, and more than 300 plan-affecting checkpoints since the
+architecture study began on 2026-07-17. That granularity produced unusually
+strong safety evidence, but it is not itself progress toward a usable layered
+world.
+
+What is genuinely complete:
+
+- the architecture, module boundary, coordinate model, compatibility policy,
+  transition/allocation/recovery rules, and validation ladder are settled;
+- legacy discovery, reversible coordinate codecs, lossless normalization,
+  source/placement/transition inventories, and detached layered value types are
+  mature;
+- packed-versus-layered tile, collision, visibility, interest, Region
+  residency, authored reconstruction, runtime authored-state, NPC-owner, and
+  scheduler evidence is extensively automated and owner exercised;
+- disposable unregistered Region reconstruction can reproduce static terrain,
+  authored object membership, collision products, transactional registration,
+  and exact detachment across the selected source set; and
+- the pre-authority source-lifecycle proof has reached its useful stopping
+  point. Its last seven apparent blockers are the private diagnostic command
+  observing its own seven plugin-dispatch wrappers, not an unidentified world
+  dependency.
+
+What is not complete:
+
+- packed Y remains the authoritative runtime coordinate identity;
+- authoritative Region/entity/collision/pathing/visibility keys have not been
+  cut over to `(worldSpace,x,y,level)`;
+- placement schemas, copied-database persistence and migration receipts, the
+  protocol, and the maintained client have not adopted explicit level/world
+  space as authority;
+- no signed `-2` runtime world, converted Builder project, reviewed automatic
+  alignment, transactional game export, or rollback rehearsal exists; and
+- incremental presentation streaming has not replaced the current section
+  window.
+
+Strategic finding: implementation sequencing drifted. The roadmap requires
+unchanged-world layered-coordinate authority and persistence parity before
+incremental streaming. Slices 79-214 pursued source retirement,
+reconstruction, and preservation proof much farther than necessary while the
+packed coordinate model remained authoritative. That work is reusable for the
+later streaming milestone, but extending the proof-only/schema chain further
+would not attack the current Phase 5 exit gate.
+
+Updated planning estimates:
+
+- architecture and pre-authority source-lifecycle research: complete enough to
+  freeze;
+- Phase 5 layered-world engine capability: approximately `40-45%` complete;
+- complete Layered Maps product across Phases 5-7: approximately `20-25%`
+  complete; and
+- a creator-testable layered conversion/export workflow: not yet available.
+
+These percentages deliberately remain conservative. Most remaining milestones
+change authority and are larger and riskier than the prior diagnostic pairs.
+
+Recalibrated execution order:
+
+1. Freeze schema-v60 and the Region-retirement proof stream. Generic plugin
+   ticks continue to block a real lifecycle operation; the private command's
+   self-observation is documented rather than reclassified.
+2. Make `WorldLocation(worldSpace,x,y,level)` authoritative for Player
+   location/session state in a private feature-gated unchanged-world adapter,
+   with legacy packed `Point` derived only at compatibility boundaries.
+3. Add preservation-safe explicit location persistence and migration receipts
+   only against a copied/private database, then prove login, walking, teleport,
+   vertical travel, logout/reconnect, death, and respawn.
+4. Migrate Region/entity/collision/pathing/visibility/proximity identity behind
+   the same unchanged-world gate and prove cross-level/world-space isolation.
+5. Normalize protocol/client authority and validate the first synthetic `-2`
+   laboratory.
+6. Return to incremental streaming/source retirement using the already-built
+   preservation and reconstruction foundation.
+7. Advance into Builder conversion, review, private dev launch, and
+   transactional export/rollback milestones.
+
+The next implementation proposal should cover steps 2-3 as one coarse,
+owner-testable authority milestone with internal commits, not another chain of
+diagnostic schema slices. It requires separate approval after this
+recalibration checkpoint.
+
 ## Foundation Implementation Slices: Implemented and Validated
 
 ### Slice 1: Layered coordinate contract and read-only preflight
@@ -16775,8 +16860,36 @@ Automated validation status:
   sources; and
 - the server build/classpath audit passes.
 
-Status: implemented and automated-validated. One private owner route remains
-pending.
+Private owner capture:
+
+- four contiguous schema-v60 records (`start`, `teleport`,
+  `preservation-noop`, `stop`) validate and round-trip exactly from
+  `(120,620,L0)` to `(132,502,L0)`;
+- two attempted `::lp 132 502` commands were invalid syntax. They were refused,
+  emitted no parity record, and did not alter the four valid records, but their
+  inclusion in the operator instructions was an instruction-quality failure;
+- all 3,881 callbacks reconcile exactly: 99 are explicitly non-spatial, 450
+  retain exact NPC-owner fences, and seven remain blockers;
+- the seven blocker families are precisely the seven plugin command-dispatch
+  wrappers created by the running `::lp preserve-noop` request:
+  `PlayerModerator.onCommand`, `SuperModerator.onCommand`,
+  `RegularPlayer.onCommand`, `Admins.onCommand`, `Moderator.onCommand`,
+  `Event.onCommand`, and `Development.onCommand`;
+- every family contains one non-walk-bound event. The first six were already
+  stopped and only `Development.onCommand`, which was executing the diagnostic,
+  remained running;
+- the result therefore identifies diagnostic self-observation rather than
+  seven unexplained ambient world callbacks. Runtime plugin ticks remain
+  conservative blockers, but further family/schema subdivision is not required
+  to explain this capture;
+- all family totals, ordinals, correlation identities, fingerprints, and
+  no-authority facts align; and
+- the explicit diagnostic produced one 1,226 ms late tick containing 1,214 ms
+  of opt-in diagnostic work.
+
+Status: implemented and automated-validated; the private capture is
+technically valid, but owner acceptance is deliberately withheld during the
+2026-07-24 project recalibration. No v61 diagnostic refinement is planned.
 
 ### Slice 62: Authored reconstruction dependency diagnostics
 
@@ -17220,9 +17333,20 @@ private environment should validate at least:
 | 2026-07-24 | Continue with Slice 212 by assigning only proven non-spatial scheduler affinities. | Implemented and automated-validated; shop restock is explicitly world-level non-spatial, player stat restoration is non-spatial while NPC stat restoration retains its owner-position preservation requirement, and arbitrary `PluginTickEvent` execution remains unspecified and blocking. No callback or scheduler behavior changes; four focused guards, the existing affinity/correlation fixtures, the 129-test Slice 182-212 lineage, both observer integrations, and the 844/488 Ant build/audit pass |
 | 2026-07-24 | Accept the Slice 212 narrow non-spatial-affinity route. | Owner-validated; four contiguous schema-v59 records and exact round trips classify all 3,881 callbacks, with the proven 98 shop-restock plus one player stat-restoration callback moving to the 99-event non-spatial count. The blocker set falls from 106 events across three families to seven player-owned `PluginTickEvent` callbacks in one family, with no unattributed callback remaining; all correlation/family identities and counts align, visuals and interaction remained normal, and one accepted 1,312 ms late tick contains 1,201 ms of opt-in diagnostic work |
 | 2026-07-24 | Continue with Slice 213 by detaching per-instance plugin execution context. | Implemented and automated-validated; scheduler snapshots now copy only a bounded plugin entry-point name plus walk-to-binding boolean, ordinary events carry an explicit empty context, and blocker families split by exact execution context without retaining plugin tasks, script data, actions, callbacks, owners, or handles. All plugin callbacks remain hard blockers and no attribution/runtime behavior changes; the 133-test Slice 182-213 lineage and 844/488 Ant build/audit pass, with additive private-schema exposure still pending |
-| 2026-07-24 | Continue with Slice 214 by exposing plugin execution context through the private blocker-family diagnostic. | Implemented and automated-validated; additive schema-v60 preserves the complete v59 event and adds only execution-context completeness plus context kind/name/walk binding to exact blocker families. Schema invariants keep ordinary and plugin contexts explicit, no task/script/action/callback/owner/runtime handle is retained, and every plugin tick remains a hard blocker with no scheduling, attribution, mutation, or lifecycle authority change; the 137-test Slice 182-214 lineage, both observer integrations, and 844/488 Ant build/audit pass. One private owner route remains pending |
+| 2026-07-24 | Continue with Slice 214 by exposing plugin execution context through the private blocker-family diagnostic. | Implemented and automated-validated; additive schema-v60 preserves the complete v59 event and adds only execution-context completeness plus context kind/name/walk binding to exact blocker families. Schema invariants keep ordinary and plugin contexts explicit, no task/script/action/callback/owner/runtime handle is retained, and every plugin tick remains a hard blocker with no scheduling, attribution, mutation, or lifecycle authority change; the 137-test Slice 182-214 lineage, both observer integrations, and 844/488 Ant build/audit pass |
+| 2026-07-24 | Record the technically valid Slice 214 capture without overlooking the invalid operator instruction. | Four contiguous schema-v60 records and exact round trips validate despite two refused `::lp 132 502` attempts, which emitted no records but were an instruction-quality failure. All 3,881 callbacks reconcile, and the remaining seven one-event families are exactly the seven non-walk-bound `onCommand` plugin wrappers created by `::lp preserve-noop` itself; six were stopped and only `Development.onCommand` was running. This is diagnostic self-observation, not an unexplained world dependency; all authority remains false and one 1,226 ms late tick contains 1,214 ms of opt-in diagnostic work. Owner acceptance is withheld during recalibration |
+| 2026-07-24 | Freeze the proof-only retirement/schema stream and return Phase 5 to coordinate-authority sequencing. | Recalibrated after 214 slices and 60 private schemas: the pre-authority reconstruction/preservation research is complete enough to reuse later, but packed Y remains runtime authority and no creator-testable layered conversion exists. Stop at schema-v60; next propose one coarse, owner-testable private milestone for authoritative `WorldLocation` plus copied-database persistence/session parity, then migrate Region/entity identity and client/protocol before resuming incremental streaming |
 
 ## Next Discussion
+
+The active next discussion is no longer another retirement diagnostic. It is
+the coarse Phase 5 authority milestone proposed by the 2026-07-24
+recalibration: authoritative Player `WorldLocation`, copied-database
+persistence/migration receipts, and unchanged-world session parity under a
+private feature gate. Its scope, rollback boundary, compatibility adapter, and
+owner test route must be approved before implementation. The historical
+retirement findings below remain retained reference material for the later
+incremental-streaming milestone.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
