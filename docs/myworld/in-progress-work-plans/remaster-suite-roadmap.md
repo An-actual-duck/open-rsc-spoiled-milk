@@ -467,6 +467,12 @@ distributable modules:
 - The terrain archive already stores an explicit plane in sector entry names,
   but active world coordinates, entities, regions, scripts, persistence, and
   other systems still rely on four packed-Y bands.
+- The repository contains a usable Preservation/vanilla revision-64 baseline:
+  the Preservation configuration and copied SQLite seed, the server's
+  `maps64`/`land64` JAG and MEM pairs, matching server/client authentic ORSC
+  archive, and the base boundary, scenery, NPC, and ground-item placement
+  files. This is a baseline set rather than one interchangeable map file and
+  must be frozen by fingerprint before conversion.
 - AI-1's layered-world study selected signed levels, geographic anchors,
   intentional legacy-format divergence, capability-oriented manifests, and a
   one-way conversion strategy.
@@ -481,7 +487,7 @@ distributable modules:
 ### One roadmap, many focused plans
 
 Each phase below should produce one or more focused plans with bounded branches,
-tests, and handoffs. Do not create a single long-running "Remaster Suite"
+tests, and handoffs. Do not create a single long-running "RSC Remastered"
 implementation branch.
 
 ### Monorepo before unnecessary repository splits
@@ -516,7 +522,15 @@ Goal: establish exactly what is being separated before changing ownership.
 
 Work:
 
-- Choose and fingerprint the supported vanilla baseline(s).
+- Freeze the local Preservation revision-64 baseline as the first definitive
+  vanilla source candidate. Its terrain set includes all four server archives
+  (`maps64.jag`, `maps64.mem`, `land64.jag`, and `land64.mem`) plus the
+  authentic ORSC consumed by the maintained client/tooling; its placements are
+  the base `BoundaryLocs`, `SceneryLocs`, `NpcLocs`, and `GroundItems` files.
+- Generate one checked-in machine-readable provenance manifest containing
+  paths, sizes, hashes, archive member inventories, placement counts,
+  configuration selectors, definition fingerprints, and redistribution
+  status. Do not treat matching terrain alone as a complete vanilla baseline.
 - Inventory source, definitions, maps, assets, scripts, configuration, database
   fields, generated data, and runtime artifacts.
 - Classify each owned component as foundation, vanilla target profile, Spoiled
@@ -821,15 +835,17 @@ Exit gate:
 
 ### Phase 6: Layered World Builder generation
 
-Goal: retool World Builder around the layered specification without sacrificing
-legacy projects.
+Goal: make the layered RSC Remastered world and modder content directly
+authorable while retaining a clearly separated legacy editor.
 
 Work:
 
 - Keep the final packed-Y release available as the Legacy World Builder.
-- Add a separately named layered project, export, receipt, and adapter schema.
-- Implement read-only legacy discovery and one-way conversion into a new copied
-  project.
+- Add a separately named RSC Remastered layered project, export, receipt, and
+  adapter schema.
+- Import the frozen vanilla baseline into a new copied project through
+  deterministic internal conversion tooling. A polished general-purpose
+  converter is not a Phase 6 release dependency.
 - Discover transitions and connected terrain components, propose explicit
   level/translation changes, and surface contradictory or unowned coordinates
   for review instead of guessing.
@@ -841,6 +857,12 @@ Work:
 - Show X/Y/level directly throughout navigation, inspect, copy, terrain,
   placement, transition, and validation interfaces.
 - Add level creation, bounds, naming, role, visibility, and allocation metadata.
+  The UI and schema must accept additional configured signed levels such as
+  `-3` without an editor rebuild or a fixed level enumeration.
+- Scan the selected profile's namespaced `content/walls`,
+  `content/floors`, and pack manifests into the material palettes through
+  stable registered identities; surface validation and missing-asset errors in
+  the project rather than silently renumbering materials.
 - Render occupied sectors and growth reservations from the allocation registry,
   and validate package ownership conflicts before edits or export.
 - Add optional instance-template metadata and required-capability declarations
@@ -865,11 +887,14 @@ Work:
 
 Exit gate:
 
-- a legacy project converts without changing the original;
+- the frozen vanilla source converts without changing the original;
 - conversion reports every unsupported or ambiguous content owner;
 - a layered project round-trips through save/export/import with deterministic
   results;
-- level `-2` and expanded extents are editable without packed-Y arithmetic;
+- level `-2`, later configured signed levels, and expanded extents are editable
+  without packed-Y arithmetic;
+- valid profile-local wall and floor assets appear in Builder palettes without
+  a source edit, while identity conflicts refuse deterministically;
 - Builder refuses incompatible engine, map, and definition targets before
   mutation.
 
@@ -881,8 +906,8 @@ Work:
 
 - Begin validation with a generated coordinate laboratory, then advance through
   exact copied vanilla and Spoiled Milk worlds, the separately gated streaming
-  fixture, alignment-workbench review, disposable export/rollback, and at least
-  one additional adapter fixture before real-target acceptance.
+  fixture, alignment-workbench review, and disposable promotion/rollback
+  before accepting the definitive remastered target.
 - Build a machine-readable inventory of existing areas, terrain bounds,
   placements, scripts, entrances, exits, dependencies, persistence risks, and
   growth reservations.
@@ -892,10 +917,10 @@ Work:
   relocations and prove byte/behavior parity where applicable.
 - Convert an exact copied Spoiled Milk world separately; do not allow its custom
   map changes to become part of the vanilla profile.
-- Generalize conversion behind explicit target adapters so other compatible
-  RuneScape Classic-derived worlds can use the same normalize, analyze, review,
-  private-test, and export workflow without pretending unknown sources are
-  safe.
+- Retain converter seams and receipts internally, but defer additional
+  distribution adapters to the Universal Launcher's named import profiles.
+  Completing a generic standalone converter must not delay the definitive
+  vanilla map.
 - Use void-bounded terrain-component analysis and transition constraints to
   propose aligned moves. A downward edge between two legacy-underground
   components may place its destination on `-2`; incompatible anchors, joined
@@ -916,6 +941,9 @@ Work:
   moved area.
 - Introduce connected or separated deep-underground areas only after the
   shallow-world migration and allocation policy are proven.
+- Prove that adding a declared level below `-2` requires only package/editor
+  data and ordinary allocation, not changes to coordinate, loader, protocol,
+  collision, renderer, or persistence constants.
 - Package complete worlds, world modules, and map patches as different artifact
   types.
 - Where redistribution rights prevent bundling base map data, support a
@@ -965,17 +993,25 @@ Exit gate:
 - full Spoiled Milk behavior and progression pass their existing tests and
   private field validation on the modular foundation.
 
-### Phase 9: Suite composition and end-user releases
+### Phase 9: Universal Launcher and end-user releases
 
-Goal: make supported combinations easy to install, understand, update, and
-recover.
+Goal: make RSC Remastered immediately playable and supported external
+distributions safe to import, isolate, launch, update, and recover.
 
 Work:
 
-- Build deterministic package composition from the minimal manifest system.
+- Build the Universal Launcher around deterministic profile composition from
+  the minimal manifest system.
 - Publish a tested compatibility matrix across module versions and target
   profiles.
-- Produce the supported end-state distributions listed above.
+- Make the definitive RSC Remastered profile the simple default install/play
+  path, with Builder/content tools discoverable without obstructing players.
+- Implement named, fingerprinted import adapters for supported external
+  archives, beginning only after their source layouts and redistribution
+  policies are known.
+- Optionally publish a curated discovery catalog; catalog inclusion, direct
+  hosting, and redistribution are separate permissions and every download is
+  hash-verified before staging.
 - Provide previews that show exactly which files, configuration, schemas,
   definitions, maps, assets, and database migrations will change.
 - Create installation receipts, backups, rollback, and repair/verify commands.
@@ -991,9 +1027,12 @@ Work:
 
 Exit gate:
 
-- a new user can intentionally choose Renderer-only, Server-only, Vanilla
-  Remaster, layered development, World Builder, third-party content, complete
-  Suite, or Spoiled Milk where supported;
+- a new user can install and play RSC Remastered through one clear default
+  flow;
+- a modder can open its Builder/content tools and add validated wall/floor
+  assets without altering another profile;
+- a supported external archive imports into a separate named profile with an
+  exact adapter report and no cross-profile save or file mutation;
 - unsupported combinations fail before mutation with an actionable explanation;
 - updates preserve user state and can be rolled back;
 - package contents and provenance are reproducible and published with hashes;
@@ -1162,12 +1201,12 @@ evolve safely and independently; it does not mean their feature work is done.
 
 ## Overall Completion Criteria
 
-The Remaster Suite roadmap is complete when:
+The RSC Remastered product roadmap is complete when:
 
 - the five primary modules have explicit, enforced ownership boundaries;
 - Renderer and Server can be packaged without Spoiled Milk Content;
-- a supported vanilla remaster and complete Spoiled Milk distribution both run
-  on the modular foundation;
+- the definitive vanilla remaster and complete optional Spoiled Milk
+  distribution both run on the modular foundation;
 - signed layered coordinates replace packed-Y identity in the maintained custom
   client/server path;
 - layered map packages and the layered World Builder complete safe real-world
@@ -1175,8 +1214,11 @@ The Remaster Suite roadmap is complete when:
 - legacy maps and the legacy Builder remain available and clearly labeled;
 - Spoiled Milk Content is a complete optional package rather than a hidden
   foundation dependency;
-- users can select supported module combinations with compatibility checked
-  before mutation;
+- the Universal Launcher can install/repair/update the default profile and
+  import supported external profiles with compatibility checked before
+  mutation;
+- profile-local drag-and-drop wall/floor content has stable identities and
+  automatic World Builder discovery;
 - installs, updates, migrations, and imports are reproducible, backed up,
   receipted, verifiable, and recoverable;
 - package provenance and redistribution status are known;
