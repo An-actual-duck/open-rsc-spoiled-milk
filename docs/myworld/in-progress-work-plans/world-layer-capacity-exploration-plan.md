@@ -17346,6 +17346,7 @@ private environment should validate at least:
 | 2026-07-25 | Approve Phase 5 Authority Milestone D as one coarse private fixture body. | Approved for implementation: add a fourth default-off gate; an explicit bounded `synthetic-deep-fixture-v1` compatibility projection; protocol-v2 projection identity; one generated level `-2` owner route with isolated NPC/item membership; checked terrain/collision reuse; exact persistence and rollback recovery; and no production archive, placement, or live-world mutation |
 | 2026-07-25 | Implement Phase 5 Authority Milestone D behind its fourth private gate. | The named bounded projection now carries authoritative global level `-2` through Entity/Player location, logical membership, checked plane-0 terrain/collision reuse, persistence, and scene-context protocol v2. `::deepfixture` supplies a runtime-clear-checked owner route with process-local marked NPC/item fixtures and reconnect-safe exit. The 14-test D/C/B/A lineage, prerequisite-refusal startup, 850/488 Ant server build, and 259-source client build pass; no production terrain or placement file changed, and owner acceptance remains pending |
 | 2026-07-25 | Accept Milestone D runtime movement, interaction, deep reconnect, explicit exit, and death recovery. | After correcting the generated room, client offsets, persistence snapshot, action adjacency, follow-stop adjacency, and NPC roam envelope, the owner confirmed the bounded level `-2` route works visually and interactively. Runtime evidence proves exact deep reconnect, a roaming NPC, successful NPC/item interaction, explicit surface exit, and death from `(452,602,L-2)` recovering to Lumbridge `(120,648,L0)`. Only the required post-death surface reconnect remains before full Milestone D acceptance |
+| 2026-07-25 | Fully accept Phase 5 Authority Milestone D. | The final normal logout completed its save, reconnect restored exact `WorldLocation(global,120,648,0)` with `rewriteRequired=false`, and `::layerloc` confirmed level 0. All automated and owner gates now pass for the bounded synthetic deep room: scope isolation, movement/collision, NPC/item interaction, level `-2` persistence, explicit exit, death recovery, and recovered-surface persistence. No production archive, placement, live data, or public server was modified |
 | 2026-07-25 | Correct the first Milestone D owner route after stopping at step 6. | Owner evidence proved that the borrowed compatibility rectangle was water: click teleport could collect the deep item, ordinary walking and Man interaction failed, and logout/reconnect returned to the prior surface save. Logs established a second exact cause: the legacy-only save snapshot decoded the `(450,600)` receipt as level 0, rejected the authoritative level `-2` mirror, and rolled back every deep autosave. Replace terrain borrowing with a bounded runtime-only flat overlay-0 room, suppress borrowed upper-plane geometry, resolve deep path/collision through that room, and capture named-projection persistence from the authoritative layered location plus its checked receipt. Production archives, placements, surface terrain, live data, and the public server remain untouched; corrected owner acceptance is pending |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
@@ -18045,6 +18046,15 @@ named level `-2` projection rather than retaining an ambiguous same-X/Y
 receipt. The acceptance route still requires one clean logout and reconnect
 from this recovered surface state; only that persistence check remains before
 Milestone D can be marked fully accepted.
+
+That final persistence check is accepted and Milestone D is complete. The
+normal logout saved without rollback; reconnect restored
+`WorldLocation{worldSpace=global, coordinate=WorldCoordinate{x=120, y=648,
+level=0}}` with `rewriteRequired=false`; and the subsequent `::layerloc`
+command ran at `(120,648)`. The recovered surface state therefore survives the
+full save/load boundary exactly. All Milestone D automated and owner routes
+now pass, while the public server, production landscape/placement inputs, and
+live player data remain untouched.
 
 The accepted schema-v22 routes establish that conservative NPC roaming
 envelopes, not scenery, create the long authored-cohort bridges. Preserve those
