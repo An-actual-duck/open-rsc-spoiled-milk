@@ -867,8 +867,11 @@ level-qualified replacement/removal transactions, exact collision deltas, and
 an ordinary Door/Doorframe fixture. Automated validation and the focused owner
 route pass repeated open/close collision transitions, crossing, nearby
 NPC/item interaction, exact depth reconnect, open-state continuity across a
-second reconnect, post-reconnect close, and exit. Delayed harvesting/respawn
-breadth and removal of the bounded compatibility receipt remain.
+second reconnect, post-reconnect close, and exit. Package `0.6.0` now adds an
+ordinary Tree/Treestump route through the real Woodcutting replacement and
+delayed-spawn scheduler; automated validation passes and focused owner
+acceptance remains. Removal of the bounded compatibility receipt follows that
+harvesting cut.
 
 ### Phase 6: Layered World Builder generation
 
@@ -1341,6 +1344,7 @@ The RSC Remastered product roadmap is complete when:
 | 2026-07-25 | Add and accept package-owned NPC/item placements for Milestone E. | Package `0.3.0` strictly decodes stable-ID, world-space/level-qualified NPC and respawning item data; world load owns registration, the native developer command cannot create them, equal X/Y on different levels remain distinct, stale lifecycle timers refuse, and matched private startup passes. Owner evidence proves normal Man roam/dialogue, two five-coin collections across respawn, exact depth reconnect, no duplicates, and normal exit |
 | 2026-07-25 | Add and accept static package-owned scenery/boundary authority for Milestone E. | Package `0.4.0` adds the backward-compatible v2 four-family placement payload; strict tool/server decode, world-load definition checks, level-aware visibility, canonical collision-footprint projection, same-X/Y level isolation, private startup, 30-test authority lineage, and authoritative builds pass. Owner evidence proves Table/Fence visuals, examine actions, blocking and alternate navigation, unchanged NPC/item interaction, exact depth reconnect, duplicate-free visibility, and exit. Dynamic object lifecycle remains pending |
 | 2026-07-25 | Implement and accept generation-fenced package-object replacement/removal for Milestone E. | Package `0.5.0` adds an ordinary Door/Doorframe fixture; immutable placement identity survives replacements and delayed reconstruction, registry and spatial-index transactions apply exact level-qualified collision/visibility changes without packed Regions, stale generations refuse, 30 A-E tests and authoritative server/client builds pass. Combined automated/owner evidence proves the exact `6/4/6` collision model, repeated open/close and crossing, unchanged Man/coin interaction, exact depth reconnect, an open Doorframe surviving a second reconnect, post-reconnect close, and normal exit |
+| 2026-07-25 | Implement package-owned harvesting and delayed restoration for Milestone E. | Package `0.6.0` adds an ordinary Tree using the existing Woodcutting plugin, Tree-to-Treestump replacement, and delayed-spawn scheduler. Its original location record retains generation-qualified placement identity, allowing the callback to replace the current stump without packed-Region lookup; exact Tree/stump/restored identity, collision, and duplicate-free registry behavior plus the 30-test A-E lineage and authoritative server/client builds pass. Matched private startup and focused owner acceptance remain pending |
 | 2026-07-18 | Complete the fifteenth Layered Maps foundation checkpoint: immutable level-qualified visibility windows and read-only manager projection while packed lookup, caches, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |
 | 2026-07-18 | Complete the sixteenth Layered Maps foundation checkpoint: a checked Player visibility-window shadow and versioned private diagnostic evidence while packed lookup, caches, and client behavior remain authoritative. | Implemented and owner-validated in the layered-world plan |
 | 2026-07-18 | Complete the seventeenth Layered Maps foundation checkpoint: deterministic, allocation-budgeted logical interest-window deltas while packed lookup, caches, packets, and client behavior remain authoritative. | Implemented and validated in the layered-world plan |

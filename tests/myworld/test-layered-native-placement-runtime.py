@@ -210,6 +210,53 @@ public final class NativeLayeredPlacementRegistryFixture {
         check(objects.getCollisionTileCount() == 6,
             "restoration reinstates exact collision");
 
+        WorldLocation treeLocation = new WorldLocation(
+            WorldSpaceId.GLOBAL, new WorldCoordinate(456, 604, -2));
+        GameTickEventRestorationCollisionFootprintPlanner.Result tree =
+            GameTickEventRestorationCollisionFootprintPlanner.plan(
+                Operation.REGISTER,
+                ConstructorState.of(1, 456, 604, 0, 0),
+                Definition.scenery(
+                    1, 1, 1, "Tree",
+                    new String[] {"tree", "treestump"}),
+                false,
+                WorldBounds.of(1000, 1000));
+        GameTickEventRestorationCollisionFootprintPlanner.Result stump =
+            GameTickEventRestorationCollisionFootprintPlanner.plan(
+                Operation.REGISTER,
+                ConstructorState.of(4, 456, 604, 0, 0),
+                Definition.scenery(
+                    1, 1, 1, "Treestump",
+                    new String[] {"tree", "treestump"}),
+                false,
+                WorldBounds.of(1000, 1000));
+        Object liveTree = new Object();
+        check(objects.register(
+                objectGeneration, "deep-tree", treeLocation,
+                0, 0, liveTree, tree) == liveTree,
+            "register package tree");
+        check(objects.size() == 4 && objects.countType(0) == 2
+                && objects.countType(1) == 2
+                && objects.getCollisionTileCount() == 7,
+            "harvesting fixture counts");
+        Object liveStump = new Object();
+        check(objects.replace(
+                objectGeneration, "deep-tree", liveTree,
+                treeLocation, 0, 0, liveStump, stump) == liveStump,
+            "tree becomes stump");
+        check(objects.find("deep-tree") == liveStump
+                && objects.getCollisionTileCount() == 7,
+            "stump retains placement and collision identity");
+        Object restoredTree = new Object();
+        check(objects.replace(
+                objectGeneration, "deep-tree", liveStump,
+                treeLocation, 0, 0, restoredTree, tree) == restoredTree,
+            "delayed callback restores tree");
+        check(objects.find("deep-tree") == restoredTree
+                && objects.size() == 4
+                && objects.getCollisionTileCount() == 7,
+            "delayed restoration remains duplicate-free");
+
         expectIllegal(() -> objects.register(
             objectGeneration, "deep-table", tableLocation,
             0, 0, new Object(), table));
@@ -338,6 +385,11 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
         )
         self.assertIn("registerNativeLayeredGroundItem", world)
         self.assertIn("removeNativeLayeredGroundItem", world)
+        self.assertIn("findNativeLayeredGameObject(o)", world)
+        self.assertIn(
+            "registerGameObject(new GameObject(getWorld(), loc)",
+            world,
+        )
         self.assertIn(
             '"Respawn Native Layered Ground Item"', item
         )

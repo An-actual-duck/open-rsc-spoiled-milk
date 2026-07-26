@@ -55,7 +55,7 @@ public final class NativeLayeredServerSourceFixture {
         NativeLayeredWorldPackage world =
             NativeLayeredWorldPackage.load(Paths.get(args[0]));
         check("rsc-remastered.native-loader-lab".equals(world.getPackageId()), "package ID");
-        check("0.5.0".equals(world.getPackageVersion()), "package version");
+        check("0.6.0".equals(world.getPackageVersion()), "package version");
         check(world.getPresentationChunkSize() == 24, "presentation chunk");
         check(world.getWorldSpaceCount() == 1, "world-space count");
         check(world.getLevelCount() == 3, "level count");
@@ -64,7 +64,7 @@ public final class NativeLayeredServerSourceFixture {
         check(world.getNpcPlacementCount() == 1, "NPC placement count");
         check(world.getGroundItemPlacementCount() == 1,
             "ground-item placement count");
-        check(world.getSceneryPlacementCount() == 1,
+        check(world.getSceneryPlacementCount() == 2,
             "scenery placement count");
         check(world.getBoundaryPlacementCount() == 2,
             "boundary placement count");
@@ -101,6 +101,15 @@ public final class NativeLayeredServerSourceFixture {
                 && scenery.getLocation().getCoordinate().getY() == 604
                 && scenery.getLocation().getCoordinate().getLevel() == -2,
             "scenery layered location");
+        NativeLayeredSceneryPlacement tree = placements.getScenery().get(1);
+        check("deep-fixture-tree".equals(tree.getPlacementId()),
+            "tree placement ID");
+        check(tree.getSceneryId() == 1 && tree.getDirection() == 0,
+            "tree placement values");
+        check(tree.getLocation().getCoordinate().getX() == 456
+                && tree.getLocation().getCoordinate().getY() == 604
+                && tree.getLocation().getCoordinate().getLevel() == -2,
+            "tree layered location");
         NativeLayeredBoundaryPlacement boundary =
             placements.getBoundaries().get(0);
         check("deep-fixture-fence".equals(boundary.getPlacementId()),
@@ -252,7 +261,7 @@ public final class NativeLayeredChunkWireFixture {
         context.legacyX = 450;
         context.legacyY = 600;
         context.nativePackageId = "rsc-remastered.native-loader-lab";
-        context.nativePackageVersion = "0.5.0";
+        context.nativePackageVersion = "0.6.0";
         context.nativeManifestSha256 =
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         context.nativePresentationChunkSize = 24;

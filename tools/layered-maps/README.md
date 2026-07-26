@@ -63,16 +63,18 @@ ground-item, scenery, and boundary placement a stable package-wide placement
 ID and an explicit world-space/level-qualified position. NPC roaming coverage,
 item positions, and object anchors must be backed by terrain from the same
 package. The first fixture owns one radius-2 Man, one five-coin spawn with a
-five-second respawn, one Table, one Fence, and one ordinary Door. Duplicate IDs
-or object slots, unknown fields, invalid amounts/timers/directions, identity
-disagreement, missing terrain, changed hashes, and unsafe/reused paths are
-refused independently by both the tool and server loaders. The earlier
-`layered-entity-placements-v1` NPC/item payload remains readable. At runtime,
-package-owned scenery and boundaries retain a generation-qualified placement
-identity across replacement and delayed reconstruction. Registration,
-replacement, and removal update the level-aware spatial index and exact
-collision overlay without entering a packed `Region`; stale-generation
-callbacks are refused.
+five-second respawn, one Table, one normal Tree, one Fence, and one ordinary
+Door. Duplicate IDs or object slots, unknown fields, invalid
+amounts/timers/directions, identity disagreement, missing terrain, changed
+hashes, and unsafe/reused paths are refused independently by both the tool and
+server loaders. The earlier `layered-entity-placements-v1` NPC/item payload
+remains readable. At runtime, package-owned scenery and boundaries retain a
+generation-qualified placement identity across replacement and delayed
+reconstruction. Registration, replacement, and removal update the level-aware
+spatial index and exact collision overlay without entering a packed `Region`;
+stale-generation callbacks are refused. The Tree exercises the ordinary
+Woodcutting Tree-to-stump replacement and delayed Tree restoration path
+without package-specific plugin behavior.
 
 The compact `uniform-layered-sector-v1` payload remains a laboratory encoding.
 The definitive `rle-layered-sector-v1` payload expands positive runs in

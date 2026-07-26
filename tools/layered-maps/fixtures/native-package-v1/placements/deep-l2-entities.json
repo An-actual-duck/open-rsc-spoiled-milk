@@ -35,6 +35,15 @@
         "y": 604
       },
       "direction": 0
+    },
+    {
+      "placementId": "deep-fixture-tree",
+      "sceneryId": 1,
+      "position": {
+        "x": 456,
+        "y": 604
+      },
+      "direction": 0
     }
   ],
   "boundaries": [

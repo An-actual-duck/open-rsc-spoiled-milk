@@ -36,8 +36,10 @@ focused owner route. The first dynamic package-object cut now provides
 generation-fenced replacement/removal identity, level-qualified
 visibility/collision transactions, and an ordinary Door/Doorframe fixture;
 automated validation and the focused owner route pass. Broader harvesting and
-delayed-restoration coverage plus removal of the bounded compatibility receipt
-remain the current implementation boundary.
+delayed restoration now have an ordinary package-owned Tree/Treestump fixture
+and passing automated coverage; focused owner acceptance remains. Removal of
+the bounded compatibility receipt remains the following implementation
+boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -555,6 +557,40 @@ The corrected focused owner route is accepted:
 - explicit exit restored `(120,648,L0)`. The matched client identified
   manifest prefix `ac1ff7a5c14c`, and neither client nor server recorded a
   route-time exception.
+
+### Authority Milestone E placement checkpoint 10
+
+Implemented and automated/private-build validated on 2026-07-25; focused owner
+acceptance remains pending:
+
+- package `0.6.0` adds one ordinary Tree at
+  `global (456,604,L-2)`. It is definition ID `1`, uses the existing
+  Woodcutting plugin and bronze-axe item ID `87`, becomes the ordinary
+  Treestump ID `4`, and uses that definition's existing ten-second effective
+  private-server restoration delay;
+- the plugin replaces Tree with stump through `World.replaceGameObject`, then
+  schedules `World.delayedSpawnObject` with the original `GameObjectLoc`.
+  The assign-once native identity on that location lets the callback find the
+  current stump by package placement ID and replace it with a fresh Tree
+  without a packed `Region` lookup;
+- both Tree and stump retain one blocking/projectile collision tile, so the
+  closed fixture's total becomes seven and remains seven during the temporary
+  stump. Visibility and interaction state, rather than a collision-count
+  change, prove this lifecycle;
+- the executable registry fixture now models all four package objects and
+  asserts exact Tree registration, Tree-to-stump replacement, stable
+  placement/collision identity, delayed stump-to-Tree replacement, and
+  duplicate-free restoration; and
+- the package still contains no custom Woodcutting behavior, diagnostic
+  mutation command, or timer override. The test is representative of ordinary
+  package-owned harvesting scenery.
+
+The strict package check passes with fingerprint
+`92f8acf9ce7e85fdff5ef93bb487a3c8406a20a4b22549aa61c9a473d28db6e2`;
+the complete 30-test A-through-E authority lineage passes; and the
+authoritative 864-core/488-plugin server and 262-source client builds pass.
+Matched private startup remains in the checkpoint procedure before owner
+testing. Public and ordinary private defaults remain unchanged.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately

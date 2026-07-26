@@ -241,12 +241,12 @@ public class RegionManager {
 		if (loaded.getPlacementSetCount() != 1
 			|| loaded.getNpcPlacementCount() != 1
 			|| loaded.getGroundItemPlacementCount() != 1
-			|| loaded.getSceneryPlacementCount() != 1
+			|| loaded.getSceneryPlacementCount() != 2
 			|| loaded.getBoundaryPlacementCount() != 2) {
 			throw new IllegalStateException(
 				"The first native layered placement route requires exactly "
-					+ "one placement set, NPC, ground item, scenery, and "
-					+ "two boundaries");
+					+ "one placement set, NPC, ground item, two scenery "
+					+ "objects, and two boundaries");
 		}
 		for (int x = LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_X;
 			x <= LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_X;

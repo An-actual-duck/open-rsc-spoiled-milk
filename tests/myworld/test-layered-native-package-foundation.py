@@ -115,7 +115,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assertEqual(1, report["placementSetCount"])
             self.assertEqual(1, report["npcPlacementCount"])
             self.assertEqual(1, report["groundItemPlacementCount"])
-            self.assertEqual(1, report["sceneryPlacementCount"])
+            self.assertEqual(2, report["sceneryPlacementCount"])
             self.assertEqual(2, report["boundaryPlacementCount"])
             self.assertEqual({0, -2, -3}, {level["level"] for level in report["levels"]})
 
