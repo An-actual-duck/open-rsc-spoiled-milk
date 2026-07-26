@@ -18708,14 +18708,12 @@ public final class mudclient implements Runnable {
 				if (!hardAreaLoad && this.hasCompletedInitialRegionLoad) {
 					this.world.preloadSections(wantX, wantZ, this.requestedPlane);
 				}
-				if (this.hasCompletedInitialRegionLoad
+				if (!hardAreaLoad
+					&& this.hasCompletedInitialRegionLoad
 					&& this.lastHeightOffset == this.requestedPlane
 					&& this.currentRegionMinX < wantX
 					&& this.currentRegionMaxX > wantX && this.currentRegionMinZ < wantZ
 					&& wantZ < this.currentRegionMaxZ) {
-					if (hardAreaLoad) {
-						this.resetGroundItemsForHardAreaLoad();
-					}
 					this.world.playerAlive = true;
 					return false;
 				} else {

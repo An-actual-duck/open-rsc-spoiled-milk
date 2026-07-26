@@ -882,6 +882,22 @@ unchanged client build compiles 262 sources, and matched two-package private
 startup populates `1n/2i/2s/2b` without a carrier exception. Owner acceptance
 remains deliberately separate.
 
+The first checkpoint-13 owner attempt exposed one client scene-rebuild defect
+before gameplay acceptance: entering the native package from legacy
+`(450,600,L0)` committed the correct server transition, sent and accepted
+native protocol sequence `2`, reported `ready=4/9`, and detached the packed
+Region carrier, but initially displayed the legacy water floor. Logout and
+reconnect rendered the native floor correctly. Root cause is the client's
+same-region fast path: a layered scope change marks a hard area load, but
+`loadNextRegion(...)` returned early whenever X/Y remained within the loaded
+region and the compatibility plane remained `P0`. Native entry deliberately
+preserves both, so the new terrain snapshot was not built until reconnect.
+Hard area loads now bypass that unchanged-coordinate early return and rebuild
+the section window from the newly accepted native snapshot. A focused
+regression guard freezes that distinction. The expanded 36-test Authority
+A-through-E lineage, the client region-load performance guard, and the
+262-source client build pass; owner retest remains required.
+
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
 expose, and validate the next restoration prerequisite: known authored

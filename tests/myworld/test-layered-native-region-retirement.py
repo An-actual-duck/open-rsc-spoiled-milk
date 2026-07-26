@@ -28,6 +28,7 @@ DEVELOPMENT = (
     SERVER
     / "plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 )
+CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 PLAN = (
     ROOT
     / "docs/myworld/in-progress-work-plans/"
@@ -119,6 +120,20 @@ class LayeredNativeRegionRetirementTest(unittest.TestCase):
         self.assertIn("runtime checkpoint 13", plan)
         self.assertIn("packed-Region entity carrier", plan)
         self.assertIn("Region-free native runtime", roadmap)
+
+    def test_same_coordinate_scope_change_forces_terrain_rebuild(self):
+        client = CLIENT.read_text(encoding="utf-8")
+        same_loaded_region = (
+            "if (!hardAreaLoad\n"
+            "\t\t\t\t\t&& this.hasCompletedInitialRegionLoad\n"
+            "\t\t\t\t\t&& this.lastHeightOffset == this.requestedPlane"
+        )
+        self.assertIn(same_loaded_region, client)
+        self.assertNotIn(
+            "if (this.hasCompletedInitialRegionLoad\n"
+            "\t\t\t\t\t&& this.lastHeightOffset == this.requestedPlane",
+            client,
+        )
 
 
 if __name__ == "__main__":

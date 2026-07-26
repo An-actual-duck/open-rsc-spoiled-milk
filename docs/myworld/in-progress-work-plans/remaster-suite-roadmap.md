@@ -903,6 +903,15 @@ server build, the 262-source client build, and matched two-package private
 startup pass. Focused private-owner acceptance remains required before
 Milestone E is closed.
 
+The first checkpoint-13 owner entry found and precisely bounded a client
+transition defect: legacy-to-native entry at unchanged `(450,600,P0)` accepted
+the correct native context but the same-region fast path suppressed its
+requested hard terrain rebuild, leaving the legacy water floor until
+reconnect. Hard layered scope changes now bypass that fast path so the accepted
+native snapshot rebuilds immediately. The expanded 36-test Authority
+A-through-E lineage, client region-load performance guard, and 262-source
+client build pass; a focused owner retest remains required.
+
 ### Phase 6: Layered World Builder generation
 
 Goal: make the layered RSC Remastered world and modder content directly
