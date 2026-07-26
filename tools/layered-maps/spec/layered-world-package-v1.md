@@ -106,6 +106,20 @@ Every NPC roaming tile and ground-item position must resolve to terrain owned
 by the same package. The standalone tool and server source validate the same
 identity, range, terrain-coverage, path, and hash boundaries independently.
 
+`layered-world-placements-v2` extends the payload with static scenery and
+boundary placements. Scenery slots are unique by location; boundary slots are
+unique by location and direction. Directions use the existing integer `0..7`
+definition orientation.
+
+`layered-world-placements-v3` replaces the NPC-only symmetric `roamRadius`
+shortcut with exact inclusive `roamBounds.minimum` and
+`roamBounds.maximum` positions. Bounds must be ordered, contain the start
+position, span no more than 4,096 tiles on either axis, and have package terrain
+for every intersected storage sector. Ground items, scenery, and boundaries
+retain their v2 shape. Version 3 is required when converting legacy NPC
+start/min/max rectangles; a converter must not approximate those rectangles
+with a radius.
+
 The first private runtime registers these entities during world population.
 The developer entry command only changes the Player's location and verifies
 that package population already happened; it does not construct native
@@ -113,6 +127,6 @@ entities. Ground-item spawn identity includes complete `WorldLocation`, so the
 same X/Y on different signed levels remains distinct. Respawn callbacks carry
 a world-lifecycle generation and cannot repopulate after unload/reset.
 
-Package-owned scenery/boundary placements and transitions remain separate
-future versioned indexes because their layered collision/transition ownership
-must be implemented explicitly rather than inferred from the entity format.
+Transitions remain a separate future versioned index because their layered
+ownership must be implemented explicitly rather than inferred from placement
+data.

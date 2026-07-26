@@ -264,6 +264,56 @@ public final class NativeLayeredTerrainOnlyFixture {
 }
 """
 
+PRESERVATION_REVIEW_HARNESS = r"""
+import com.openrsc.server.io.NativeLayeredNpcPlacement;
+import com.openrsc.server.io.NativeLayeredPlacementSet;
+import com.openrsc.server.io.NativeLayeredWorldPackage;
+import java.nio.file.Paths;
+
+public final class NativeLayeredPreservationReviewFixture {
+    public static void main(String[] args) throws Exception {
+        NativeLayeredWorldPackage world =
+            NativeLayeredWorldPackage.load(Paths.get(args[0]));
+        check(
+            "rsc-remastered.preservation-r64-parity-review".equals(
+                world.getPackageId()),
+            "package ID");
+        check("0.2.0".equals(world.getPackageVersion()), "package version");
+        check(world.getTerrainSectorCount() == 1764, "terrain count");
+        check(world.getLevelCount() == 4, "level count");
+        check(world.getPlacementSetCount() == 4, "placement-set count");
+        check(world.getNpcPlacementCount() == 3611, "NPC count");
+        check(world.getGroundItemPlacementCount() == 1016, "item count");
+        check(world.getSceneryPlacementCount() == 26770, "scenery count");
+        check(world.getBoundaryPlacementCount() == 966, "boundary count");
+        NativeLayeredNpcPlacement first = null;
+        for (NativeLayeredPlacementSet set : world.getPlacementSets().values()) {
+            for (NativeLayeredNpcPlacement npc : set.getNpcs()) {
+                if ("preservation-r64.npc.000000".equals(
+                        npc.getPlacementId())) {
+                    first = npc;
+                }
+            }
+        }
+        check(first != null, "first NPC");
+        check(first.getNpcId() == 401, "first NPC definition");
+        check(first.getStart().getCoordinate().getX() == 413
+                && first.getStart().getCoordinate().getY() == 11
+                && first.getStart().getCoordinate().getLevel() == 0,
+            "first NPC start");
+        check(first.getMinX() == 411 && first.getMinY() == 9
+                && first.getMaxX() == 413 && first.getMaxY() == 12,
+            "first NPC exact bounds");
+    }
+
+    private static void check(boolean condition, String label) {
+        if (!condition) {
+            throw new AssertionError(label);
+        }
+    }
+}
+"""
+
 
 WIRE_HARNESS = r"""
 import com.openrsc.server.net.Packet;
@@ -464,6 +514,12 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
         terrain_only_fixture.write_text(
             TERRAIN_ONLY_HARNESS, encoding="utf-8"
         )
+        preservation_fixture = (
+            cls.classes / "NativeLayeredPreservationReviewFixture.java"
+        )
+        preservation_fixture.write_text(
+            PRESERVATION_REVIEW_HARNESS, encoding="utf-8"
+        )
         wire_fixture = cls.classes / "NativeLayeredChunkWireFixture.java"
         wire_fixture.write_text(WIRE_HARNESS, encoding="utf-8")
         subprocess.run(
@@ -479,6 +535,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 str(cls.classes),
                 str(fixture),
                 str(terrain_only_fixture),
+                str(preservation_fixture),
                 str(wire_fixture),
             ],
             cwd=ROOT,
@@ -548,6 +605,84 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
 
             self.assertEqual(0, result.returncode, result.stderr)
 
+    def test_detached_server_source_decodes_v3_exact_npc_roam_bounds(self):
+        with tempfile.TemporaryDirectory(
+            prefix="native-server-placement-v3-"
+        ) as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            relative_path = "placements/deep-l2-entities.json"
+            payload_path = package / relative_path
+            payload = json.loads(payload_path.read_text(encoding="utf-8"))
+            payload["schemaVersion"] = 3
+            payload["encoding"] = "layered-world-placements-v3"
+            npc = payload["npcs"][0]
+            npc.pop("roamRadius")
+            npc["roamBounds"] = {
+                "minimum": {"x": 450, "y": 599},
+                "maximum": {"x": 455, "y": 603},
+            }
+            payload_path.write_text(
+                json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+            )
+            manifest_path = package / "manifest.json"
+            manifest = json.loads(
+                manifest_path.read_text(encoding="utf-8")
+            )
+            manifest["placementSets"][0]["encoding"] = (
+                "layered-world-placements-v3"
+            )
+            manifest["placementSets"][0]["sha256"] = hashlib.sha256(
+                payload_path.read_bytes()
+            ).hexdigest()
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+            )
+
+            probe_source = HARNESS.replace(
+                "NativeLayeredServerSourceFixture",
+                "NativeLayeredServerV3Fixture",
+            ).replace(
+                "npc.getNpcId() == 11 && npc.getRoamRadius() == 2",
+                "npc.getNpcId() == 11"
+                " && npc.getRoamRadius() == -1"
+                " && npc.getMinX() == 450 && npc.getMinY() == 599"
+                " && npc.getMaxX() == 455 && npc.getMaxY() == 603",
+            )
+            probe = self.classes / "NativeLayeredServerV3Fixture.java"
+            probe.write_text(probe_source, encoding="utf-8")
+            subprocess.run(
+                [
+                    "javac",
+                    "-source",
+                    "8",
+                    "-target",
+                    "8",
+                    "-cp",
+                    str(CORE_JAR),
+                    "-d",
+                    str(self.classes),
+                    str(probe),
+                ],
+                cwd=ROOT,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredServerV3Fixture",
+                    str(package),
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+
     def test_server_loader_accepts_terrain_only_review_package(self):
         with tempfile.TemporaryDirectory(
             prefix="native-server-terrain-only-"
@@ -578,6 +713,93 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             )
 
             self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_server_loader_accepts_generated_preservation_review_package(self):
+        subprocess.run(
+            [str(ROOT / "tools/layered-maps/layered-maps.sh"), "--help"],
+            cwd=ROOT,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        with tempfile.TemporaryDirectory(
+            prefix="native-server-preservation-review-"
+        ) as temp:
+            workspace = Path(temp) / "workspace"
+            generated = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    str(ROOT / "tools/layered-maps/build/classes"),
+                    "com.openrsc.layeredmaps.LayeredMapsCli",
+                    "preservation-package",
+                    "--root",
+                    str(ROOT),
+                    "--workspace",
+                    str(workspace),
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(0, generated.returncode, generated.stderr)
+
+            result = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredPreservationReviewFixture",
+                    str(workspace / "package"),
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_server_loader_refuses_inverted_v3_npc_roam_bounds(self):
+        with tempfile.TemporaryDirectory(
+            prefix="native-server-placement-v3-refusal-"
+        ) as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            relative_path = "placements/deep-l2-entities.json"
+            payload_path = package / relative_path
+            payload = json.loads(payload_path.read_text(encoding="utf-8"))
+            payload["schemaVersion"] = 3
+            payload["encoding"] = "layered-world-placements-v3"
+            npc = payload["npcs"][0]
+            npc.pop("roamRadius")
+            npc["roamBounds"] = {
+                "minimum": {"x": 456, "y": 599},
+                "maximum": {"x": 455, "y": 603},
+            }
+            payload_path.write_text(
+                json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+            )
+            manifest_path = package / "manifest.json"
+            manifest = json.loads(
+                manifest_path.read_text(encoding="utf-8")
+            )
+            manifest["placementSets"][0]["encoding"] = (
+                "layered-world-placements-v3"
+            )
+            manifest["placementSets"][0]["sha256"] = hashlib.sha256(
+                payload_path.read_bytes()
+            ).hexdigest()
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+            )
+
+            result = self.run_fixture(package)
+
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn(
+                "minimum must not exceed maximum",
+                result.stderr,
+            )
 
     def test_server_generator_and_client_decoder_share_chunk_wire_contract(self):
         result = subprocess.run(
@@ -733,6 +955,10 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "NativeLayeredTerrainTile source = owner.findTile",
             region_manager,
         )
+        self.assertIn("placement.getMinX()", region_manager)
+        self.assertIn("placement.getMaxX()", region_manager)
+        self.assertIn("placement.getMinY()", region_manager)
+        self.assertIn("placement.getMaxY()", region_manager)
         self.assertIn(
             "return nativeLayeredTile(location)", region_manager
         )

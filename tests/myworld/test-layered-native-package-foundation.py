@@ -175,6 +175,16 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 "must be positive",
             ),
             (
+                "inverted exact NPC bounds",
+                self.invert_exact_npc_bounds,
+                "minimum must not exceed maximum",
+            ),
+            (
+                "exact NPC bounds without terrain",
+                self.move_exact_npc_bounds_outside_terrain,
+                "roam bounds have no package terrain",
+            ),
+            (
                 "invalid boundary direction",
                 self.invalid_boundary_direction,
                 "must be 0..7",
@@ -296,7 +306,33 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assertEqual(0, report["sceneryPlacementCount"])
             self.assertEqual(0, report["boundaryPlacementCount"])
 
-    def test_preservation_terrain_package_is_exact_isolated_and_deterministic(self):
+    def test_v3_placements_preserve_exact_asymmetric_npc_roam_bounds(self):
+        with tempfile.TemporaryDirectory(
+            prefix="native-package-placement-v3-"
+        ) as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            self.convert_placements_to_v3(package)
+
+            result = self.run_command(
+                "package-check", Path(temp) / "report", package
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            payload = json.loads(
+                (package / "placements/deep-l2-entities.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                {
+                    "minimum": {"x": 450, "y": 599},
+                    "maximum": {"x": 455, "y": 603},
+                },
+                payload["npcs"][0]["roamBounds"],
+            )
+
+    def test_preservation_parity_package_is_exact_isolated_and_deterministic(self):
         source_archive = ROOT / "server/conf/server/data/Authentic_Landscape.orsc"
         source_sha = hashlib.sha256(source_archive.read_bytes()).hexdigest()
         with tempfile.TemporaryDirectory(
@@ -315,7 +351,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            self.assertEqual("terrain-only", report["reviewState"])
+            self.assertEqual("placements-incomplete", report["reviewState"])
             self.assertFalse(report["runtimePromotionApproved"])
             self.assertTrue(report["legacyRoundTripVerified"])
             self.assertEqual(
@@ -327,15 +363,48 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 {"-1": 441, "0": 441, "1": 441, "2": 441},
                 report["sectorCountByLevel"],
             )
-            self.assertEqual(0, report["placementSetsGenerated"])
-            self.assertEqual(32364, report["unconvertedPlacementRecords"])
+            self.assertEqual(
+                "layered-world-placements-v3",
+                report["placementEncoding"],
+            )
+            self.assertEqual(32364, report["sourcePlacementRecords"])
+            self.assertEqual(32363, report["convertedPlacementRecords"])
+            self.assertEqual(
+                {
+                    "boundaries": 966,
+                    "groundItems": 1016,
+                    "npcs": 3611,
+                    "scenery": 26770,
+                },
+                report["convertedPlacementRecordsByFamily"],
+            )
+            self.assertEqual(4, report["placementSetsGenerated"])
+            self.assertEqual(1, report["unconvertedPlacementRecords"])
+            self.assertEqual(1, len(report["unresolvedPlacements"]))
+            unresolved = report["unresolvedPlacements"][0]
+            self.assertEqual("npc", unresolved["family"])
+            self.assertEqual("base-npcs", unresolved["sourceRole"])
+            self.assertEqual(3376, unresolved["sourceIndex"])
+            self.assertEqual(67, unresolved["sourceDefinitionId"])
+            self.assertEqual(
+                "roam-bound-crosses-or-exceeds-start-level",
+                unresolved["reason"],
+            )
+            self.assertEqual(
+                {"x": 662, "y": 6549},
+                unresolved["maximumPacked"],
+            )
 
             package = first_workspace / "package"
             manifest = json.loads(
                 (package / "manifest.json").read_text(encoding="utf-8")
             )
             self.assertEqual(1764, len(manifest["terrainSectors"]))
-            self.assertEqual([], manifest["placementSets"])
+            self.assertEqual(4, len(manifest["placementSets"]))
+            self.assertTrue(all(
+                placement["encoding"] == "layered-world-placements-v3"
+                for placement in manifest["placementSets"]
+            ))
             self.assertEqual(
                 {-1, 0, 1, 2},
                 {level["level"] for level in manifest["levels"]},
@@ -351,6 +420,9 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assert_preservation_terrain_round_trip(
                 source_archive, package, manifest
             )
+            self.assert_preservation_placement_round_trip(
+                package, manifest
+            )
 
             validation_workspace = Path(temp) / "validation"
             validation = self.run_command(
@@ -363,7 +435,17 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 )
             )
             self.assertEqual(1764, validation_report["terrainSectorCount"])
-            self.assertEqual(0, validation_report["placementSetCount"])
+            self.assertEqual(4, validation_report["placementSetCount"])
+            self.assertEqual(3611, validation_report["npcPlacementCount"])
+            self.assertEqual(
+                1016, validation_report["groundItemPlacementCount"]
+            )
+            self.assertEqual(
+                26770, validation_report["sceneryPlacementCount"]
+            )
+            self.assertEqual(
+                966, validation_report["boundaryPlacementCount"]
+            )
 
             second = self.run_command(
                 "preservation-package", second_workspace
@@ -417,6 +499,12 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 / "schema/layered-world-placements-v2.schema.json"
             ).read_text(encoding="utf-8")
         )
+        world_placement_v3_schema = json.loads(
+            (
+                TOOL_ROOT
+                / "schema/layered-world-placements-v3.schema.json"
+            ).read_text(encoding="utf-8")
+        )
         self.assertEqual(
             "rsc-remastered-preservation-r64-v1",
             baseline_schema["properties"]["baselineId"]["const"],
@@ -452,9 +540,14 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             world_placement_schema["properties"]["encoding"]["const"],
         )
         self.assertEqual(
+            "layered-world-placements-v3",
+            world_placement_v3_schema["properties"]["encoding"]["const"],
+        )
+        self.assertEqual(
             {
                 "layered-entity-placements-v1",
                 "layered-world-placements-v2",
+                "layered-world-placements-v3",
             },
             set(
             package_schema["properties"]["placementSets"]["items"][
@@ -613,6 +706,28 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
         )
 
     @staticmethod
+    def invert_exact_npc_bounds(package):
+        LayeredNativePackageFoundationTest.convert_placements_to_v3(package)
+        path = package / "placements/deep-l2-entities.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["npcs"][0]["roamBounds"]["minimum"]["x"] = 456
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "placements/deep-l2-entities.json"
+        )
+
+    @staticmethod
+    def move_exact_npc_bounds_outside_terrain(package):
+        LayeredNativePackageFoundationTest.convert_placements_to_v3(package)
+        path = package / "placements/deep-l2-entities.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["npcs"][0]["roamBounds"]["maximum"]["x"] = 600
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, "placements/deep-l2-entities.json"
+        )
+
+    @staticmethod
     def invalid_boundary_direction(package):
         path = package / "placements/deep-l2-entities.json"
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -686,6 +801,33 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
         )
         return raw_relative
 
+    @staticmethod
+    def convert_placements_to_v3(package):
+        relative_path = "placements/deep-l2-entities.json"
+        path = package / relative_path
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["schemaVersion"] = 3
+        payload["encoding"] = "layered-world-placements-v3"
+        npc = payload["npcs"][0]
+        npc.pop("roamRadius")
+        npc["roamBounds"] = {
+            "minimum": {"x": 450, "y": 599},
+            "maximum": {"x": 455, "y": 603},
+        }
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        manifest_path = package / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["packageVersion"] = "0.8.0"
+        manifest["placementSets"][0]["encoding"] = (
+            "layered-world-placements-v3"
+        )
+        manifest_path.write_text(
+            json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+        )
+        LayeredNativePackageFoundationTest.update_payload_hash(
+            package, relative_path
+        )
+
     def assert_preservation_terrain_round_trip(
         self, source_archive, package, manifest
     ):
@@ -705,6 +847,98 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                         native[offset + 4],
                     )
                 self.assertEqual(legacy, native, entry)
+
+    def assert_preservation_placement_round_trip(self, package, manifest):
+        generated = {
+            "npcs": {},
+            "groundItems": {},
+            "scenery": {},
+            "boundaries": {},
+        }
+        for placement_set in manifest["placementSets"]:
+            payload = json.loads(
+                (package / placement_set["path"]).read_text(encoding="utf-8")
+            )
+            for family in generated:
+                for record in payload[family]:
+                    generated[family][record["placementId"]] = record
+
+        source_specs = (
+            (
+                "boundaries",
+                ROOT / "server/conf/server/defs/locs/BoundaryLocs.json",
+                "boundaries",
+                "boundary",
+            ),
+            (
+                "scenery",
+                ROOT / "server/conf/server/defs/locs/SceneryLocs.json",
+                "sceneries",
+                "scenery",
+            ),
+            (
+                "groundItems",
+                ROOT / "server/conf/server/defs/locs/GroundItems.json",
+                "grounditems",
+                "ground-item",
+            ),
+        )
+        for family, path, source_key, id_family in source_specs:
+            values = json.loads(path.read_text(encoding="utf-8"))[source_key]
+            for index, source in enumerate(values):
+                placement_id = (
+                    f"preservation-r64.{id_family}.{index:06d}"
+                )
+                record = generated[family][placement_id]
+                expected_position = self.decode_packed_position(source["pos"])
+                self.assertEqual(expected_position, record["position"])
+                self.assertEqual(source["id"], record[
+                    {
+                        "boundaries": "boundaryId",
+                        "scenery": "sceneryId",
+                        "groundItems": "itemId",
+                    }[family]
+                ])
+                if family in {"boundaries", "scenery"}:
+                    self.assertEqual(source["direction"], record["direction"])
+                else:
+                    self.assertEqual(source["amount"], record["amount"])
+                    self.assertEqual(
+                        source["respawn"], record["respawnSeconds"]
+                    )
+
+        npc_values = json.loads(
+            (
+                ROOT / "server/conf/server/defs/locs/NpcLocs.json"
+            ).read_text(encoding="utf-8")
+        )["npclocs"]
+        for index, source in enumerate(npc_values):
+            placement_id = f"preservation-r64.npc.{index:06d}"
+            if index == 3376:
+                self.assertNotIn(placement_id, generated["npcs"])
+                continue
+            record = generated["npcs"][placement_id]
+            self.assertEqual(source["id"], record["npcId"])
+            self.assertEqual(
+                self.decode_packed_position(source["start"]),
+                record["start"],
+            )
+            self.assertEqual(
+                self.decode_packed_position(source["min"]),
+                record["roamBounds"]["minimum"],
+            )
+            self.assertEqual(
+                self.decode_packed_position(source["max"]),
+                record["roamBounds"]["maximum"],
+            )
+
+    @staticmethod
+    def decode_packed_position(position):
+        plane_to_level = {0: 0, 1: 1, 2: 2, 3: -1}
+        plane, y = divmod(position["Y"], 944)
+        if plane not in plane_to_level:
+            raise AssertionError(f"unsupported packed position: {position}")
+        return {"x": position["X"], "y": y}
 
     @staticmethod
     def package_tree_hash(package):

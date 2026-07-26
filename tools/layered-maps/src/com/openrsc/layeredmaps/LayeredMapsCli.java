@@ -176,12 +176,15 @@ public final class LayeredMapsCli {
 		writeAtomically(reportMarkdown, result.toMarkdown());
 		writeAtomically(validationJson, result.validationJson);
 
-		System.out.println("Preservation layered terrain package generated");
-		System.out.println("reviewState=terrain-only");
+		System.out.println("Preservation layered parity package generated");
+		System.out.println("reviewState=placements-incomplete");
 		System.out.println("runtimePromotionApproved=false");
 		System.out.println("baselineSha256=" + result.baselineFingerprint);
 		System.out.println("terrainSectors=" + result.terrainSectorCount);
 		System.out.println("terrainPayloadBytes=" + result.terrainPayloadBytes);
+		System.out.println("sourcePlacements=" + result.sourcePlacementCount);
+		System.out.println("convertedPlacements="
+			+ (result.sourcePlacementCount - result.unconvertedPlacementCount));
 		System.out.println("unconvertedPlacements="
 			+ result.unconvertedPlacementCount);
 		System.out.println("package=" + result.packageRoot);

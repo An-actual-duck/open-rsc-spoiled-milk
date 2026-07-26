@@ -15,9 +15,11 @@ import java.util.regex.Pattern;
 public final class LayeredEntityPlacements {
 	public static final String ENCODING_V1 = "layered-entity-placements-v1";
 	public static final String ENCODING_V2 = "layered-world-placements-v2";
-	public static final String ENCODING = ENCODING_V2;
+	public static final String ENCODING_V3 = "layered-world-placements-v3";
+	public static final String ENCODING = ENCODING_V3;
 	private static final int MAX_PLACEMENTS = 65536;
 	private static final int MAX_NPC_ROAM_RADIUS = 64;
+	private static final int MAX_NPC_ROAM_SPAN = 4096;
 	private static final int MAX_RESPAWN_SECONDS = 86400;
 	private static final Pattern ID =
 		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
@@ -60,7 +62,9 @@ public final class LayeredEntityPlacements {
 			schemaVersion == 1 && ENCODING_V1.equals(encoding);
 		boolean version2 =
 			schemaVersion == 2 && ENCODING_V2.equals(encoding);
-		if (!version1 && !version2) {
+		boolean version3 =
+			schemaVersion == 3 && ENCODING_V3.equals(encoding);
+		if (!version1 && !version2 && !version3) {
 			throw new PreflightException(
 				"Placement schemaVersion/encoding pair is unsupported.");
 		}
@@ -91,9 +95,9 @@ public final class LayeredEntityPlacements {
 		int level = integer(document, "level");
 		List<Object> npcValues = array(document, "npcs");
 		List<Object> itemValues = array(document, "groundItems");
-		List<Object> sceneryValues = version2
+		List<Object> sceneryValues = !version1
 			? array(document, "scenery") : Collections.<Object>emptyList();
-		List<Object> boundaryValues = version2
+		List<Object> boundaryValues = !version1
 			? array(document, "boundaries") : Collections.<Object>emptyList();
 		int placementCount = Math.addExact(
 			Math.addExact(npcValues.size(), itemValues.size()),
@@ -113,30 +117,88 @@ public final class LayeredEntityPlacements {
 		for (int index = 0; index < npcValues.size(); index++) {
 			Map<String, Object> value =
 				object(npcValues.get(index), "npcs[" + index + "]");
-			exactKeys(
-				value,
-				"npcs[" + index + "]",
-				"placementId",
-				"npcId",
-				"start",
-				"roamRadius");
+			if (version3) {
+				exactKeys(
+					value,
+					"npcs[" + index + "]",
+					"placementId",
+					"npcId",
+					"start",
+					"roamBounds");
+			} else {
+				exactKeys(
+					value,
+					"npcs[" + index + "]",
+					"placementId",
+					"npcId",
+					"start",
+					"roamRadius");
+			}
 			String placementId = uniquePlacementId(
 				value, "npcs[" + index + "]", placementIds);
-			int roamRadius = nonNegativeInt(value, "roamRadius");
-			if (roamRadius > MAX_NPC_ROAM_RADIUS) {
-				throw new PreflightException(
-					"npcs[" + index + "].roamRadius must be 0.."
-						+ MAX_NPC_ROAM_RADIUS + ".");
-			}
 			Position start = position(
 				object(value.get("start"), "npcs[" + index + "].start"),
 				"npcs[" + index + "].start");
-			npcs.add(new NpcPlacement(
-				placementId,
-				nonNegativeInt(value, "npcId"),
-				start.x,
-				start.y,
-				roamRadius));
+			if (version3) {
+				Map<String, Object> bounds = object(
+					value.get("roamBounds"),
+					"npcs[" + index + "].roamBounds");
+				exactKeys(
+					bounds,
+					"npcs[" + index + "].roamBounds",
+					"minimum",
+					"maximum");
+				Position minimum = position(
+					object(
+						bounds.get("minimum"),
+						"npcs[" + index + "].roamBounds.minimum"),
+					"npcs[" + index + "].roamBounds.minimum");
+				Position maximum = position(
+					object(
+						bounds.get("maximum"),
+						"npcs[" + index + "].roamBounds.maximum"),
+					"npcs[" + index + "].roamBounds.maximum");
+				requireNpcBounds(
+					start,
+					minimum,
+					maximum,
+					"npcs[" + index + "].roamBounds");
+				npcs.add(new NpcPlacement(
+					placementId,
+					nonNegativeInt(value, "npcId"),
+					start.x,
+					start.y,
+					minimum.x,
+					minimum.y,
+					maximum.x,
+					maximum.y,
+					-1));
+			} else {
+				int roamRadius = nonNegativeInt(value, "roamRadius");
+				if (roamRadius > MAX_NPC_ROAM_RADIUS) {
+					throw new PreflightException(
+						"npcs[" + index + "].roamRadius must be 0.."
+							+ MAX_NPC_ROAM_RADIUS + ".");
+				}
+				npcs.add(new NpcPlacement(
+					placementId,
+					nonNegativeInt(value, "npcId"),
+					start.x,
+					start.y,
+					checkedCoordinate(
+						start.x, -roamRadius,
+						"npcs[" + index + "].roamRadius"),
+					checkedCoordinate(
+						start.y, -roamRadius,
+						"npcs[" + index + "].roamRadius"),
+					checkedCoordinate(
+						start.x, roamRadius,
+						"npcs[" + index + "].roamRadius"),
+					checkedCoordinate(
+						start.y, roamRadius,
+						"npcs[" + index + "].roamRadius"),
+					roamRadius));
+			}
 		}
 
 		List<GroundItemPlacement> groundItems =
@@ -277,6 +339,38 @@ public final class LayeredEntityPlacements {
 		return new Position(integer(value, "x"), integer(value, "y"));
 	}
 
+	private static void requireNpcBounds(
+		Position start,
+		Position minimum,
+		Position maximum,
+		String label) throws PreflightException {
+		if (minimum.x > maximum.x || minimum.y > maximum.y) {
+			throw new PreflightException(
+				label + " minimum must not exceed maximum.");
+		}
+		if (start.x < minimum.x || start.x > maximum.x
+			|| start.y < minimum.y || start.y > maximum.y) {
+			throw new PreflightException(
+				label + " must contain the NPC start position.");
+		}
+		if ((long) maximum.x - minimum.x > MAX_NPC_ROAM_SPAN
+			|| (long) maximum.y - minimum.y > MAX_NPC_ROAM_SPAN) {
+			throw new PreflightException(
+				label + " width and height must not exceed "
+					+ MAX_NPC_ROAM_SPAN + " tiles.");
+		}
+	}
+
+	private static int checkedCoordinate(
+		int coordinate, int delta, String label) throws PreflightException {
+		long result = (long) coordinate + delta;
+		if (result < Integer.MIN_VALUE || result > Integer.MAX_VALUE) {
+			throw new PreflightException(
+				label + " exceeds signed 32-bit coordinate range.");
+		}
+		return (int) result;
+	}
+
 	private static String uniquePlacementId(
 		Map<String, Object> value,
 		String label,
@@ -410,14 +504,30 @@ public final class LayeredEntityPlacements {
 		private final int npcId;
 		private final int x;
 		private final int y;
+		private final int minX;
+		private final int minY;
+		private final int maxX;
+		private final int maxY;
 		private final int roamRadius;
 
 		NpcPlacement(
-			String placementId, int npcId, int x, int y, int roamRadius) {
+			String placementId,
+			int npcId,
+			int x,
+			int y,
+			int minX,
+			int minY,
+			int maxX,
+			int maxY,
+			int roamRadius) {
 			this.placementId = placementId;
 			this.npcId = npcId;
 			this.x = x;
 			this.y = y;
+			this.minX = minX;
+			this.minY = minY;
+			this.maxX = maxX;
+			this.maxY = maxY;
 			this.roamRadius = roamRadius;
 		}
 
@@ -425,6 +535,10 @@ public final class LayeredEntityPlacements {
 		public int getNpcId() { return npcId; }
 		public int getX() { return x; }
 		public int getY() { return y; }
+		public int getMinX() { return minX; }
+		public int getMinY() { return minY; }
+		public int getMaxX() { return maxX; }
+		public int getMaxY() { return maxY; }
 		public int getRoamRadius() { return roamRadius; }
 	}
 

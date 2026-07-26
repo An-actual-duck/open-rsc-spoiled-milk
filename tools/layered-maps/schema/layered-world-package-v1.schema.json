@@ -159,7 +159,8 @@
           "encoding": {
             "enum": [
               "layered-entity-placements-v1",
-              "layered-world-placements-v2"
+              "layered-world-placements-v2",
+              "layered-world-placements-v3"
             ]
           },
           "path": {"type": "string", "minLength": 1},

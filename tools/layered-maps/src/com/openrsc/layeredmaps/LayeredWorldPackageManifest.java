@@ -287,7 +287,8 @@ public final class LayeredWorldPackageManifest {
 			}
 			String encoding = matchedString(value, "encoding", ID);
 			if (!LayeredEntityPlacements.ENCODING_V1.equals(encoding)
-				&& !LayeredEntityPlacements.ENCODING_V2.equals(encoding)) {
+				&& !LayeredEntityPlacements.ENCODING_V2.equals(encoding)
+				&& !LayeredEntityPlacements.ENCODING_V3.equals(encoding)) {
 				throw new PreflightException(
 					"Placement payload encoding is unsupported by this loader: "
 						+ encoding + ".");
@@ -321,20 +322,10 @@ public final class LayeredWorldPackageManifest {
 				: placements.getNpcs()) {
 				requireUniquePlacementId(
 					npc.getPlacementId(), placementIds);
-				for (int deltaX = -npc.getRoamRadius();
-					deltaX <= npc.getRoamRadius();
-					deltaX++) {
-					for (int deltaY = -npc.getRoamRadius();
-						deltaY <= npc.getRoamRadius();
-						deltaY++) {
-						requirePlacementTerrain(
-							levelKey,
-							Math.addExact(npc.getX(), deltaX),
-							Math.addExact(npc.getY(), deltaY),
-							npc.getPlacementId(),
-							terrainIdentities);
-					}
-				}
+				requireNpcRoamTerrain(
+					levelKey,
+					npc,
+					terrainIdentities);
 			}
 			for (LayeredEntityPlacements.GroundItemPlacement item
 				: placements.getGroundItems()) {
@@ -391,6 +382,38 @@ public final class LayeredWorldPackageManifest {
 		if (!placementIds.add(placementId)) {
 			throw new PreflightException(
 				"Duplicate package placement ID: " + placementId + ".");
+		}
+	}
+
+	private static void requireNpcRoamTerrain(
+		LevelKey level,
+		LayeredEntityPlacements.NpcPlacement npc,
+		Set<WorldMapSectorId> terrainIdentities)
+		throws PreflightException {
+		int minSectorX = Math.floorDiv(npc.getMinX(), STORAGE_SECTOR_SIZE);
+		int maxSectorX = Math.floorDiv(npc.getMaxX(), STORAGE_SECTOR_SIZE);
+		int minSectorY = Math.floorDiv(npc.getMinY(), STORAGE_SECTOR_SIZE);
+		int maxSectorY = Math.floorDiv(npc.getMaxY(), STORAGE_SECTOR_SIZE);
+		for (int sectorX = minSectorX; ; sectorX++) {
+			for (int sectorY = minSectorY; ; sectorY++) {
+				WorldMapSectorId terrain = new WorldMapSectorId(
+					level.worldSpace,
+					level.level,
+					sectorX,
+					sectorY);
+				if (!terrainIdentities.contains(terrain)) {
+					throw new PreflightException(
+						"NPC roam bounds have no package terrain at "
+							+ npc.getPlacementId() + ": sector "
+							+ sectorX + "," + sectorY + ".");
+				}
+				if (sectorY == maxSectorY) {
+					break;
+				}
+			}
+			if (sectorX == maxSectorX) {
+				break;
+			}
 		}
 	}
 

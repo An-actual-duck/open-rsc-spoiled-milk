@@ -45,8 +45,10 @@ public final class NativeLayeredWorldPackage {
 		"layered-entity-placements-v1";
 	public static final String WORLD_PLACEMENT_ENCODING_V2 =
 		"layered-world-placements-v2";
+	public static final String WORLD_PLACEMENT_ENCODING_V3 =
+		"layered-world-placements-v3";
 	public static final String ENTITY_PLACEMENT_ENCODING =
-		WORLD_PLACEMENT_ENCODING_V2;
+		WORLD_PLACEMENT_ENCODING_V3;
 	public static final String RUNTIME_PROJECTION_ID =
 		LayeredCompatibilityPointAdapter.NATIVE_LAYERED_PACKAGE_ID;
 
@@ -57,6 +59,7 @@ public final class NativeLayeredWorldPackage {
 	private static final int MAX_PLACEMENT_SETS = 4096;
 	private static final int MAX_PLACEMENTS_PER_SET = 65536;
 	private static final int MAX_NPC_ROAM_RADIUS = 64;
+	private static final int MAX_NPC_ROAM_SPAN = 4096;
 	private static final int MAX_GROUND_ITEM_RESPAWN_SECONDS = 86400;
 	private static final Pattern ID =
 		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
@@ -360,7 +363,8 @@ public final class NativeLayeredWorldPackage {
 			}
 			String encoding = matchedString(value, "encoding", ID);
 			if (!ENTITY_PLACEMENT_ENCODING_V1.equals(encoding)
-				&& !WORLD_PLACEMENT_ENCODING_V2.equals(encoding)) {
+				&& !WORLD_PLACEMENT_ENCODING_V2.equals(encoding)
+				&& !WORLD_PLACEMENT_ENCODING_V3.equals(encoding)) {
 				throw new IOException(
 					"Placement payload encoding is unsupported by this loader: "
 						+ encoding);
@@ -409,7 +413,10 @@ public final class NativeLayeredWorldPackage {
 		boolean version2 =
 			schemaVersion == 2
 				&& WORLD_PLACEMENT_ENCODING_V2.equals(payloadEncoding);
-		if (!version1 && !version2) {
+		boolean version3 =
+			schemaVersion == 3
+				&& WORLD_PLACEMENT_ENCODING_V3.equals(payloadEncoding);
+		if (!version1 && !version2 && !version3) {
 			throw new IOException(
 				"Placement schemaVersion/encoding pair is unsupported");
 		}
@@ -445,9 +452,9 @@ public final class NativeLayeredWorldPackage {
 		requireInt(document, "level", level);
 		JSONArray npcValues = array(document, "npcs");
 		JSONArray itemValues = array(document, "groundItems");
-		JSONArray sceneryValues = version2
+		JSONArray sceneryValues = !version1
 			? array(document, "scenery") : new JSONArray();
-		JSONArray boundaryValues = version2
+		JSONArray boundaryValues = !version1
 			? array(document, "boundaries") : new JSONArray();
 		int placementCount = Math.addExact(
 			Math.addExact(npcValues.length(), itemValues.length()),
@@ -466,31 +473,90 @@ public final class NativeLayeredWorldPackage {
 			new java.util.ArrayList<NativeLayeredNpcPlacement>();
 		for (int index = 0; index < npcValues.length(); index++) {
 			JSONObject value = object(npcValues, index, "npcs");
-			exactKeys(
-				value,
-				"npcs[" + index + "]",
-				"placementId",
-				"npcId",
-				"start",
-				"roamRadius");
+			if (version3) {
+				exactKeys(
+					value,
+					"npcs[" + index + "]",
+					"placementId",
+					"npcId",
+					"start",
+					"roamBounds");
+			} else {
+				exactKeys(
+					value,
+					"npcs[" + index + "]",
+					"placementId",
+					"npcId",
+					"start",
+					"roamRadius");
+			}
 			String placementId = uniquePlacementId(
 				value, index, "npcs", placementIds);
 			int npcId = nonNegativeInt(value, "npcId");
-			int roamRadius = nonNegativeInt(value, "roamRadius");
-			if (roamRadius > MAX_NPC_ROAM_RADIUS) {
-				throw new IOException(
-					"npcs[" + index + "].roamRadius must be 0.."
-						+ MAX_NPC_ROAM_RADIUS);
-			}
-			npcs.add(new NativeLayeredNpcPlacement(
-				placementId,
-				npcId,
-				readLocation(
-					object(value, "start"),
-					"npcs[" + index + "].start",
+			WorldLocation start = readLocation(
+				object(value, "start"),
+				"npcs[" + index + "].start",
+				worldSpace,
+				level);
+			if (version3) {
+				JSONObject bounds = object(value, "roamBounds");
+				exactKeys(
+					bounds,
+					"npcs[" + index + "].roamBounds",
+					"minimum",
+					"maximum");
+				WorldLocation minimum = readLocation(
+					object(bounds, "minimum"),
+					"npcs[" + index + "].roamBounds.minimum",
 					worldSpace,
-					level),
-				roamRadius));
+					level);
+				WorldLocation maximum = readLocation(
+					object(bounds, "maximum"),
+					"npcs[" + index + "].roamBounds.maximum",
+					worldSpace,
+					level);
+				requireNpcBounds(
+					start,
+					minimum,
+					maximum,
+					"npcs[" + index + "].roamBounds");
+				npcs.add(new NativeLayeredNpcPlacement(
+					placementId,
+					npcId,
+					start,
+					minimum.getCoordinate().getX(),
+					minimum.getCoordinate().getY(),
+					maximum.getCoordinate().getX(),
+					maximum.getCoordinate().getY()));
+			} else {
+				int roamRadius = nonNegativeInt(value, "roamRadius");
+				if (roamRadius > MAX_NPC_ROAM_RADIUS) {
+					throw new IOException(
+						"npcs[" + index + "].roamRadius must be 0.."
+							+ MAX_NPC_ROAM_RADIUS);
+				}
+				checkedCoordinate(
+					start.getCoordinate().getX(),
+					-roamRadius,
+					"npcs[" + index + "].roamRadius");
+				checkedCoordinate(
+					start.getCoordinate().getY(),
+					-roamRadius,
+					"npcs[" + index + "].roamRadius");
+				checkedCoordinate(
+					start.getCoordinate().getX(),
+					roamRadius,
+					"npcs[" + index + "].roamRadius");
+				checkedCoordinate(
+					start.getCoordinate().getY(),
+					roamRadius,
+					"npcs[" + index + "].roamRadius");
+				npcs.add(new NativeLayeredNpcPlacement(
+					placementId,
+					npcId,
+					start,
+					roamRadius));
+			}
 		}
 		java.util.List<NativeLayeredGroundItemPlacement> groundItems =
 			new java.util.ArrayList<NativeLayeredGroundItemPlacement>();
@@ -628,29 +694,54 @@ public final class NativeLayeredWorldPackage {
 				level));
 	}
 
+	private static void requireNpcBounds(
+		WorldLocation start,
+		WorldLocation minimum,
+		WorldLocation maximum,
+		String label) throws IOException {
+		WorldCoordinate startCoordinate = start.getCoordinate();
+		WorldCoordinate minimumCoordinate = minimum.getCoordinate();
+		WorldCoordinate maximumCoordinate = maximum.getCoordinate();
+		if (minimumCoordinate.getX() > maximumCoordinate.getX()
+			|| minimumCoordinate.getY() > maximumCoordinate.getY()) {
+			throw new IOException(
+				label + " minimum must not exceed maximum");
+		}
+		if (startCoordinate.getX() < minimumCoordinate.getX()
+			|| startCoordinate.getX() > maximumCoordinate.getX()
+			|| startCoordinate.getY() < minimumCoordinate.getY()
+			|| startCoordinate.getY() > maximumCoordinate.getY()) {
+			throw new IOException(
+				label + " must contain the NPC start position");
+		}
+		if ((long) maximumCoordinate.getX() - minimumCoordinate.getX()
+				> MAX_NPC_ROAM_SPAN
+			|| (long) maximumCoordinate.getY() - minimumCoordinate.getY()
+				> MAX_NPC_ROAM_SPAN) {
+			throw new IOException(
+				label + " width and height must not exceed "
+					+ MAX_NPC_ROAM_SPAN + " tiles");
+		}
+	}
+
+	private static int checkedCoordinate(
+		int coordinate, int delta, String label) throws IOException {
+		long result = (long) coordinate + delta;
+		if (result < Integer.MIN_VALUE || result > Integer.MAX_VALUE) {
+			throw new IOException(
+				label + " exceeds signed 32-bit coordinate range");
+		}
+		return (int) result;
+	}
+
 	private static void validatePlacementTerrainCoverage(
 		NativeLayeredPlacementSet set,
 		Map<WorldMapSectorId, NativeLayeredTerrainSector> terrainSectors)
 		throws IOException {
 		for (NativeLayeredNpcPlacement npc : set.getNpcs()) {
-			WorldCoordinate start = npc.getStart().getCoordinate();
-			for (int deltaX = -npc.getRoamRadius();
-				deltaX <= npc.getRoamRadius();
-				deltaX++) {
-				for (int deltaY = -npc.getRoamRadius();
-					deltaY <= npc.getRoamRadius();
-					deltaY++) {
-					requirePlacementTerrain(
-						new WorldLocation(
-							npc.getStart().getWorldSpace(),
-							new WorldCoordinate(
-								Math.addExact(start.getX(), deltaX),
-								Math.addExact(start.getY(), deltaY),
-								start.getLevel())),
-						npc.getPlacementId(),
-						terrainSectors);
-				}
-			}
+			requireNpcRoamTerrain(
+				npc,
+				terrainSectors);
 		}
 		for (NativeLayeredGroundItemPlacement item : set.getGroundItems()) {
 			requirePlacementTerrain(
@@ -667,6 +758,42 @@ public final class NativeLayeredWorldPackage {
 				boundary.getLocation(),
 				boundary.getPlacementId(),
 				terrainSectors);
+		}
+	}
+
+	private static void requireNpcRoamTerrain(
+		NativeLayeredNpcPlacement npc,
+		Map<WorldMapSectorId, NativeLayeredTerrainSector> terrainSectors)
+		throws IOException {
+		int level = npc.getStart().getCoordinate().getLevel();
+		int minSectorX = Math.floorDiv(
+			npc.getMinX(), NativeLayeredTerrainSector.SIZE);
+		int maxSectorX = Math.floorDiv(
+			npc.getMaxX(), NativeLayeredTerrainSector.SIZE);
+		int minSectorY = Math.floorDiv(
+			npc.getMinY(), NativeLayeredTerrainSector.SIZE);
+		int maxSectorY = Math.floorDiv(
+			npc.getMaxY(), NativeLayeredTerrainSector.SIZE);
+		for (int sectorX = minSectorX; ; sectorX++) {
+			for (int sectorY = minSectorY; ; sectorY++) {
+				WorldMapSectorId identity = new WorldMapSectorId(
+					npc.getStart().getWorldSpace(),
+					level,
+					sectorX,
+					sectorY);
+				if (!terrainSectors.containsKey(identity)) {
+					throw new IOException(
+						"NPC roam bounds have no package terrain at "
+							+ npc.getPlacementId() + ": sector "
+							+ sectorX + "," + sectorY);
+				}
+				if (sectorY == maxSectorY) {
+					break;
+				}
+			}
+			if (sectorX == maxSectorX) {
+				break;
+			}
 		}
 	}
 

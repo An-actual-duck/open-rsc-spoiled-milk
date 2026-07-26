@@ -3904,7 +3904,10 @@ public class RegionManager {
 					placement.getNpcId(),
 					location.getCoordinate().getX(),
 					location.getCoordinate().getY(),
-					placement.getRoamRadius());
+					placement.getMinX(),
+					placement.getMaxX(),
+					placement.getMinY(),
+					placement.getMaxY());
 				markNativeLayeredPlacement(
 					npc,
 					worldPackage.getPackageId(),

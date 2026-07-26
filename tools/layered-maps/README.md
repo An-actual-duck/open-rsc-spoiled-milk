@@ -41,8 +41,7 @@ byte-for-byte before direct vanilla conversion begins. This baseline is a
 coordinated source set; neither the ORSC nor the SQLite seed alone is the
 vanilla map.
 
-The first direct-conversion slice generates a terrain-only native review
-package:
+The direct-conversion command generates a native parity review package:
 
 ```bash
 ./tools/layered-maps/layered-maps.sh preservation-package
@@ -53,10 +52,18 @@ frozen baseline byte-for-byte. It writes only under the isolated
 `tools/layered-maps/workspace/preservation-package/` directory, transforms
 all 1,764 authentic ORSC sectors into signed identities and fixed-width native
 payloads, reverses every wall-byte swap to prove exact source fidelity, and
-validates the generated package independently. The report explicitly marks
-the result `terrain-only` and `runtimePromotionApproved=false`; placement and
-transition conversion must complete before private runtime promotion, and no
-game/export path is modified.
+converts all base boundaries, scenery, ground items, and every exactly
+representable NPC into four level-qualified v3 placement sets. Stable
+placement IDs retain source family and ordinal.
+
+The frozen source contains one known NPC anomaly at source index 3376: its
+packed start/minimum are on underground plane 3 while its maximum Y `6549` is
+outside the four-plane model. The tool does not guess a repair. It emits
+32,363 of 32,364 placement records, preserves the complete offending source
+coordinates in `unresolvedPlacements`, and marks the result
+`placements-incomplete` and `runtimePromotionApproved=false`. Transition
+conversion, review of that anomaly, and complete-world replacement ownership
+must finish before private runtime promotion. No game/export path is modified.
 
 ## Native package check
 
@@ -92,6 +99,13 @@ spatial index and exact collision overlay without entering a packed `Region`;
 stale-generation callbacks are refused. The Tree exercises the ordinary
 Woodcutting Tree-to-stump replacement and delayed Tree restoration path
 without package-specific plugin behavior.
+
+`layered-world-placements-v3` retains the same four placement families while
+replacing the fixture-oriented NPC radius with exact inclusive minimum/maximum
+roaming bounds. The bounds must contain the start, remain within the loader's
+4,096-tile per-axis safety limit, and be backed by package terrain. This is the
+parity-preserving format for legacy NPC records whose roaming rectangles are
+not necessarily square or centered on their start.
 
 The compact `uniform-layered-sector-v1` payload remains a laboratory encoding.
 The definitive `rle-layered-sector-v1` payload expands positive runs in

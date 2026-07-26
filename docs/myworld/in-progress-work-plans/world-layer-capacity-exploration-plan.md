@@ -18022,13 +18022,81 @@ The review package remains deliberately ineligible for runtime promotion:
   package, so launching it as a complete world would be incomplete and could
   duplicate ownership.
 
-The next bounded milestone is exact, deterministic base-placement conversion
+The next bounded milestone was exact, deterministic base-placement conversion
 with stable source-derived IDs and full legacy behavior fields. It must retain
 the terrain-only review boundary until all four placement families validate
 against package terrain and a complete-world population profile can replace,
 rather than supplement, the legacy population source. Transition discovery,
 geographic alignment, Builder review, private runtime promotion, and final
 export remain later gates.
+
+## Preservation Normalization Milestone 2: Exact Base Placements
+
+Status: implemented and automated-validated on 2026-07-26, with one
+preservation-source anomaly awaiting owner disposition. Runtime promotion and
+source mutation remain unauthorized.
+
+The package placement contract now has
+`layered-world-placements-v3`. It retains boundaries, scenery, NPCs, and ground
+items from v2, but replaces the fixture-oriented symmetric NPC radius with
+exact inclusive minimum/maximum roaming bounds. Tool and server loaders
+independently require ordered bounds, containment of the start coordinate,
+bounded spans, and package terrain throughout every intersected storage
+sector. Existing v1 and v2 fixtures remain readable. Native runtime NPC
+construction now passes the decoded exact rectangle to the existing NPC model
+instead of rebuilding a square radius.
+
+The converter emits four deterministic placement sets, one for each populated
+signed level, with source-family/ordinal stable IDs. Exact source-to-package
+comparison covers every emitted record:
+
+- 966 of 966 boundaries;
+- 26,770 of 26,770 scenery objects;
+- 1,016 of 1,016 ground items; and
+- 3,611 of 3,612 NPCs.
+
+This produces 32,363 of the frozen baseline's 32,364 placement records. The
+package is
+`rsc-remastered.preservation-r64-parity-review@0.2.0`, with manifest SHA-256
+`bfa48d07d0dadc577c7ea873c8c482c794c99f170d9dc3f5c7de7dd97a9b0b50`
+and package fingerprint
+`b1e7eafcd8d3941fc7c0d1d2db42e60f9e7755b0d72c7c81e1edeaa86adb7971`.
+It remains `placements-incomplete` and
+`runtimePromotionApproved=false`.
+
+The five native-package suites now pass 35 focused tests, including exact
+v3 asymmetric bounds, malformed-bound refusal in both loaders, all-record
+source comparison, repeated deterministic generation, and detached server
+loading of the complete review package. The authoritative build compiles 865
+core and 488 plugin sources.
+
+The one unresolved source record is
+`server/conf/server/defs/locs/NpcLocs.json` index 3376, Hobgoblin definition
+67:
+
+- start `(647,3534)`;
+- minimum `(632,3519)`; and
+- maximum `(662,6549)`.
+
+Maximum Y `6549` is outside the four legacy 944-tile bands and cannot be
+decoded as the start's underground level. The surrounding values give strong
+evidence of a one-digit source error: X is exactly `647 +/- 15`, minimum Y is
+`3534 - 15`, so the symmetric maximum is `3549`; nearby Hobgoblin records use
+the same 15-tile rectangle, including other maximum-Y `3549` records. The
+converter does not silently make that repair. It omits the record, preserves
+all raw coordinates and the reason in `unresolvedPlacements`, and keeps the
+package non-runnable as a complete world.
+
+Recommended disposition: retain the frozen source and baseline unchanged, but
+add a reviewed conversion repair receipt mapping only this record's maximum Y
+from `6549` to `3549`. Repeated conversion must apply the repair only when the
+complete source fingerprint and exact record still match. Preserving `6549` as
+a layered roam bound would create a multi-thousand-tile invalid range; omitting
+the Hobgoblin would knowingly lose vanilla population.
+
+After that owner decision, the next gate is transition discovery and exact
+unchanged-world population replacement. The review package must not be added
+beside legacy population because that would duplicate 32,363 placements.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -18116,6 +18184,7 @@ private environment should validate at least:
 | 2026-07-26 | Make `::layerloc` carrier diagnostics readable in the in-game chat after final checkpoint-13 acceptance exposed single-line clipping. | The complete response already proved `spatialCarrier=packed-region` in the client technical capture. The command now presents unchanged fields as seven bounded logical lines; focused guards, the authoritative server build, and owner visual confirmation pass |
 | 2026-07-26 | Close Authority Milestone E and the Phase 5 layered-world engine capability. | Native package terrain/collision/placements, signed levels, incremental 24-tile presentation, cross-package transitions, exact persistence, regionless native entity membership, legacy reattachment, rollback, and all focused automated/build/private-owner routes pass. The next active product gate is parity-first normalization of the frozen Preservation baseline |
 | 2026-07-26 | Complete Preservation normalization milestone 1 as an exact terrain-only native review package. | The frozen 12-file baseline gates conversion; all 1,764 ORSC sectors convert deterministically into 40,642,560 bytes of strict raw native terrain across levels `0`, `+1`, `+2`, and `-1`, and reverse byte-for-byte. Tool/server validation, zero-placement review packages, overwrite refusal, and source immutability pass. All 32,364 placements remain explicitly unconverted and runtime promotion remains false |
+| 2026-07-26 | Complete Preservation normalization milestone 2 with exact v3 base-placement conversion, stopping on rather than guessing at source anomalies. | All 966 boundaries, 26,770 scenery objects, 1,016 ground items, and 3,611 of 3,612 NPCs convert with stable IDs and exact roaming rectangles. Hobgoblin source index 3376 has impossible maximum Y `6549`; evidence indicates `3549`, but the frozen source remains unchanged and the package remains non-runtime pending owner disposition |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -18518,12 +18587,18 @@ above: all 1,764 authentic sectors convert deterministically and reverse to
 their original bytes, while all 32,364 base placement records remain honestly
 reported as unconverted. No runtime or export path consumes that package yet.
 
-The next implementation slice is exact base-placement conversion, beginning
-with a schema that preserves legacy NPC roaming rectangles instead of reducing
-them to a radius. Geographic realignment and additional depths follow review
-of the complete unchanged-world conversion; a generic standalone converter is
-not on the critical path. The historical retirement findings below remain
-retained reference material for later source-lifecycle work.
+Milestone 2 now converts all four placement families with exact v3 NPC roaming
+rectangles: 32,363 records pass source-to-package equality and detached server
+loading. One Hobgoblin record remains explicit and unresolved because maximum
+Y `6549` lies outside the legacy coordinate model; exact surrounding evidence
+indicates `3549`. The current owner decision is whether to accept that one
+fingerprint-gated conversion repair while leaving the frozen source unchanged.
+
+After the anomaly is resolved, transition discovery and complete-world
+population replacement are next. Geographic realignment and additional depths
+follow review of the complete unchanged-world conversion; a generic standalone
+converter is not on the critical path. The historical retirement findings
+below remain retained reference material for later source-lifecycle work.
 
 ## Phase 5 Authority Milestone B: Spatial Runtime Identity
 
