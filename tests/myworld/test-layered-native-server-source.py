@@ -278,11 +278,11 @@ public final class NativeLayeredPreservationReviewFixture {
             "rsc-remastered.preservation-r64-parity-review".equals(
                 world.getPackageId()),
             "package ID");
-        check("0.2.0".equals(world.getPackageVersion()), "package version");
+        check("0.3.0".equals(world.getPackageVersion()), "package version");
         check(world.getTerrainSectorCount() == 1764, "terrain count");
         check(world.getLevelCount() == 4, "level count");
         check(world.getPlacementSetCount() == 4, "placement-set count");
-        check(world.getNpcPlacementCount() == 3611, "NPC count");
+        check(world.getNpcPlacementCount() == 3612, "NPC count");
         check(world.getGroundItemPlacementCount() == 1016, "item count");
         check(world.getSceneryPlacementCount() == 26770, "scenery count");
         check(world.getBoundaryPlacementCount() == 966, "boundary count");

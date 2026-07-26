@@ -31,7 +31,7 @@ import java.util.zip.ZipFile;
 final class PreservationTerrainPackageGenerator {
 	static final String PACKAGE_ID =
 		"rsc-remastered.preservation-r64-parity-review";
-	static final String PACKAGE_VERSION = "0.2.0";
+	static final String PACKAGE_VERSION = "0.3.0";
 	static final String REPORT_TYPE =
 		"preservation-layered-parity-generation";
 	static final int REPORT_SCHEMA_VERSION = 1;
@@ -41,6 +41,15 @@ final class PreservationTerrainPackageGenerator {
 			+ "rsc-remastered-preservation-r64-v1.json";
 	private static final int TILE_BYTES = 10;
 	private static final int SECTOR_BYTES = 48 * 48 * TILE_BYTES;
+	private static final int HOBGOBLIN_REPAIR_SOURCE_INDEX = 3376;
+	private static final int HOBGOBLIN_REPAIR_DEFINITION_ID = 67;
+	private static final int HOBGOBLIN_REPAIR_START_X = 647;
+	private static final int HOBGOBLIN_REPAIR_START_Y = 3534;
+	private static final int HOBGOBLIN_REPAIR_MIN_X = 632;
+	private static final int HOBGOBLIN_REPAIR_MIN_Y = 3519;
+	private static final int HOBGOBLIN_REPAIR_MAX_X = 662;
+	private static final int HOBGOBLIN_REPAIR_SOURCE_MAX_Y = 6549;
+	private static final int HOBGOBLIN_REPAIR_TARGET_MAX_Y = 3549;
 
 	Result generate(Path requestedRoot, Path requestedWorkspace)
 		throws IOException, PreflightException {
@@ -149,6 +158,7 @@ final class PreservationTerrainPackageGenerator {
 			sourcePlacements,
 			placements.convertedByFamily,
 			placements.sets.size(),
+			placements.repairs,
 			placements.unresolved,
 			manifestSha256,
 			loaded.getPackageFingerprint(),
@@ -317,6 +327,8 @@ final class PreservationTerrainPackageGenerator {
 		converted.put("boundaries", Integer.valueOf(0));
 		List<UnresolvedPlacement> unresolved =
 			new ArrayList<UnresolvedPlacement>();
+		List<ConversionRepair> repairs =
+			new ArrayList<ConversionRepair>();
 
 		convertBoundaries(
 			root,
@@ -333,6 +345,7 @@ final class PreservationTerrainPackageGenerator {
 			baselineFile(baseline, "base-npcs"),
 			buckets,
 			converted,
+			repairs,
 			unresolved);
 		convertGroundItems(
 			root,
@@ -373,6 +386,7 @@ final class PreservationTerrainPackageGenerator {
 		return new PlacementConversion(
 			sets,
 			converted,
+			repairs,
 			unresolved);
 	}
 
@@ -447,6 +461,7 @@ final class PreservationTerrainPackageGenerator {
 		PreservationBaselineInventory.FileRecord source,
 		Map<Integer, PlacementBucket> buckets,
 		Map<String, Integer> converted,
+		List<ConversionRepair> repairs,
 		List<UnresolvedPlacement> unresolved)
 		throws IOException, PreflightException {
 		List<Object> values = sourceRecords(root, source, "npclocs");
@@ -469,6 +484,29 @@ final class PreservationTerrainPackageGenerator {
 			PackedSourcePosition maximum = packedSourcePosition(
 				value.get("max"),
 				"npclocs[" + index + "].max");
+			if (approvedHobgoblinRepair(
+				index,
+				sourceNonNegativeInt(value, "id"),
+				start,
+				minimum,
+				maximum)) {
+				PackedSourcePosition repairedMaximum =
+					new PackedSourcePosition(
+						HOBGOBLIN_REPAIR_MAX_X,
+						HOBGOBLIN_REPAIR_TARGET_MAX_Y);
+				repairs.add(new ConversionRepair(
+					"preservation-r64.npc.003376.max-y-6549-to-3549",
+					"npc",
+					source.role,
+					source.path,
+					index,
+					HOBGOBLIN_REPAIR_DEFINITION_ID,
+					"owner-approved-vanilla-baseline-repair",
+					"maximumPacked.y",
+					Long.valueOf(HOBGOBLIN_REPAIR_SOURCE_MAX_Y),
+					Long.valueOf(HOBGOBLIN_REPAIR_TARGET_MAX_Y)));
+				maximum = repairedMaximum;
+			}
 			if (!start.decodable()
 				|| !minimum.decodable()
 				|| !maximum.decodable()
@@ -510,6 +548,22 @@ final class PreservationTerrainPackageGenerator {
 			bucket(buckets, startCoordinate.getLevel()).npcs.add(record);
 			increment(converted, "npcs");
 		}
+	}
+
+	private static boolean approvedHobgoblinRepair(
+		int sourceIndex,
+		int definitionId,
+		PackedSourcePosition start,
+		PackedSourcePosition minimum,
+		PackedSourcePosition maximum) {
+		return sourceIndex == HOBGOBLIN_REPAIR_SOURCE_INDEX
+			&& definitionId == HOBGOBLIN_REPAIR_DEFINITION_ID
+			&& start.x == HOBGOBLIN_REPAIR_START_X
+			&& start.y == HOBGOBLIN_REPAIR_START_Y
+			&& minimum.x == HOBGOBLIN_REPAIR_MIN_X
+			&& minimum.y == HOBGOBLIN_REPAIR_MIN_Y
+			&& maximum.x == HOBGOBLIN_REPAIR_MAX_X
+			&& maximum.y == HOBGOBLIN_REPAIR_SOURCE_MAX_Y;
 	}
 
 	private static void convertGroundItems(
@@ -881,6 +935,7 @@ final class PreservationTerrainPackageGenerator {
 		final long sourcePlacementCount;
 		final Map<String, Integer> convertedPlacementCountByFamily;
 		final int placementSetCount;
+		final List<ConversionRepair> conversionRepairs;
 		final List<UnresolvedPlacement> unresolvedPlacements;
 		final long unconvertedPlacementCount;
 		final String manifestSha256;
@@ -898,6 +953,7 @@ final class PreservationTerrainPackageGenerator {
 			long sourcePlacementCount,
 			Map<String, Integer> convertedPlacementCountByFamily,
 			int placementSetCount,
+			List<ConversionRepair> conversionRepairs,
 			List<UnresolvedPlacement> unresolvedPlacements,
 			String manifestSha256,
 			String packageFingerprint,
@@ -916,6 +972,8 @@ final class PreservationTerrainPackageGenerator {
 					new LinkedHashMap<String, Integer>(
 						convertedPlacementCountByFamily));
 			this.placementSetCount = placementSetCount;
+			this.conversionRepairs = Collections.unmodifiableList(
+				new ArrayList<ConversionRepair>(conversionRepairs));
 			this.unresolvedPlacements = Collections.unmodifiableList(
 				new ArrayList<UnresolvedPlacement>(unresolvedPlacements));
 			this.unconvertedPlacementCount = unresolvedPlacements.size();
@@ -928,7 +986,7 @@ final class PreservationTerrainPackageGenerator {
 			Map<String, Object> document = map();
 			document.put("schemaVersion", Long.valueOf(REPORT_SCHEMA_VERSION));
 			document.put("reportType", REPORT_TYPE);
-			document.put("reviewState", "placements-incomplete");
+			document.put("reviewState", "transitions-pending");
 			document.put("runtimePromotionApproved", Boolean.FALSE);
 			document.put(
 				"baselineId",
@@ -977,6 +1035,11 @@ final class PreservationTerrainPackageGenerator {
 			document.put(
 				"unconvertedPlacementRecords",
 				Long.valueOf(unconvertedPlacementCount));
+			List<Object> repairs = new ArrayList<Object>();
+			for (ConversionRepair repair : conversionRepairs) {
+				repairs.add(repair.toDocument());
+			}
+			document.put("conversionRepairs", repairs);
 			List<Object> unresolved = new ArrayList<Object>();
 			for (UnresolvedPlacement placement : unresolvedPlacements) {
 				unresolved.add(placement.toDocument());
@@ -992,7 +1055,7 @@ final class PreservationTerrainPackageGenerator {
 		String toMarkdown() {
 			StringBuilder out = new StringBuilder();
 			out.append("# Preservation Layered Parity Review Package\n\n");
-			out.append("- Review state: `placements-incomplete`\n");
+			out.append("- Review state: `transitions-pending`\n");
 			out.append("- Runtime promotion approved: `false`\n");
 			out.append("- Baseline: `")
 				.append(PreservationBaselineInventory.BASELINE_ID)
@@ -1014,8 +1077,21 @@ final class PreservationTerrainPackageGenerator {
 			out.append("- Converted placement records: ")
 				.append(convertedPlacementCount()).append(" / ")
 				.append(sourcePlacementCount).append("\n");
+			out.append("- Approved conversion repairs: ")
+				.append(conversionRepairs.size()).append("\n");
 			out.append("- Unconverted placement records: ")
 				.append(unconvertedPlacementCount).append("\n\n");
+			for (ConversionRepair repair : conversionRepairs) {
+				out.append("- Repair `")
+					.append(repair.repairId)
+					.append("`: `")
+					.append(repair.field)
+					.append("` ")
+					.append(repair.sourceValue)
+					.append(" -> ")
+					.append(repair.targetValue)
+					.append("\n");
+			}
 			for (UnresolvedPlacement placement : unresolvedPlacements) {
 				out.append("- Unresolved `")
 					.append(placement.family)
@@ -1029,7 +1105,7 @@ final class PreservationTerrainPackageGenerator {
 			out.append(
 				"This package remains inside the isolated review workspace. "
 					+ "It is not eligible for runtime promotion or game export "
-					+ "until every placement anomaly and transition is reviewed "
+					+ "until every transition is reviewed "
 					+ "and complete-world replacement ownership is proven.\n");
 			return out.toString();
 		}
@@ -1103,16 +1179,20 @@ final class PreservationTerrainPackageGenerator {
 	private static final class PlacementConversion {
 		final List<PlacementSetRecord> sets;
 		final Map<String, Integer> convertedByFamily;
+		final List<ConversionRepair> repairs;
 		final List<UnresolvedPlacement> unresolved;
 
 		PlacementConversion(
 			List<PlacementSetRecord> sets,
 			Map<String, Integer> convertedByFamily,
+			List<ConversionRepair> repairs,
 			List<UnresolvedPlacement> unresolved) {
 			this.sets = Collections.unmodifiableList(
 				new ArrayList<PlacementSetRecord>(sets));
 			this.convertedByFamily = Collections.unmodifiableMap(
 				new LinkedHashMap<String, Integer>(convertedByFamily));
+			this.repairs = Collections.unmodifiableList(
+				new ArrayList<ConversionRepair>(repairs));
 			this.unresolved = Collections.unmodifiableList(
 				new ArrayList<UnresolvedPlacement>(unresolved));
 		}
@@ -1127,6 +1207,59 @@ final class PreservationTerrainPackageGenerator {
 			for (Integer count : convertedByFamily.values()) {
 				result = Math.addExact(result, count.intValue());
 			}
+			return result;
+		}
+	}
+
+	private static final class ConversionRepair {
+		final String repairId;
+		final String family;
+		final String sourceRole;
+		final String sourcePath;
+		final int sourceIndex;
+		final int sourceDefinitionId;
+		final String policy;
+		final String field;
+		final Long sourceValue;
+		final Long targetValue;
+
+		ConversionRepair(
+			String repairId,
+			String family,
+			String sourceRole,
+			String sourcePath,
+			int sourceIndex,
+			int sourceDefinitionId,
+			String policy,
+			String field,
+			Long sourceValue,
+			Long targetValue) {
+			this.repairId = repairId;
+			this.family = family;
+			this.sourceRole = sourceRole;
+			this.sourcePath = sourcePath;
+			this.sourceIndex = sourceIndex;
+			this.sourceDefinitionId = sourceDefinitionId;
+			this.policy = policy;
+			this.field = field;
+			this.sourceValue = sourceValue;
+			this.targetValue = targetValue;
+		}
+
+		Map<String, Object> toDocument() {
+			Map<String, Object> result = map();
+			result.put("repairId", repairId);
+			result.put("family", family);
+			result.put("sourceRole", sourceRole);
+			result.put("sourcePath", sourcePath);
+			result.put("sourceIndex", Long.valueOf(sourceIndex));
+			result.put(
+				"sourceDefinitionId",
+				Long.valueOf(sourceDefinitionId));
+			result.put("policy", policy);
+			result.put("field", field);
+			result.put("sourceValue", sourceValue);
+			result.put("targetValue", targetValue);
 			return result;
 		}
 	}

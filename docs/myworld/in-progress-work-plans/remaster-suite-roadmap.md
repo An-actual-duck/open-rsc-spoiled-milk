@@ -984,15 +984,20 @@ radius. The parity package contains four level-qualified sets and exactly
 matches 966 boundaries, 26,770 scenery objects, 1,016 ground items, and 3,611
 NPCs back to their frozen source records.
 
-One of 3,612 NPC records is deliberately unresolved: Hobgoblin source index
-3376 starts at packed Y `3534` with minimum `3519` but maximum `6549`, outside
-the four-plane model. The record's X and minimum-Y offsets and neighboring
-Hobgoblin records all support maximum `3549`. The converter preserves the raw
-finding, omits the ambiguous record, and keeps runtime promotion false rather
-than silently repairing content. The recommended resolution is a
-fingerprint-gated conversion repair receipt from `6549` to `3549`, leaving the
-frozen baseline source unchanged. Owner approval of that disposition precedes
-transition discovery and complete-world population replacement.
+Hobgoblin source index 3376 starts at packed Y `3534` with minimum `3519` but
+maximum `6549`, outside the four-plane model. The record's X and minimum-Y
+offsets and neighboring Hobgoblin records all support maximum `3549`. The
+owner approved that definitive vanilla-map value. The converter now applies
+the repair only under the exact frozen baseline and complete matching source
+tuple, leaves the source unchanged, and emits a machine-readable
+`conversionRepairs` receipt. All 32,364 placements convert and the package
+advances to `transitions-pending`; runtime promotion remains false.
+
+This also defines the product boundary: RSC Remastered may contain reviewed,
+receipted corrections needed for a clean definitive vanilla starting point.
+Those corrections do not become silent generic rewrite rules for creator
+expansions. Supported third-party imports surface their own findings for
+creator/profile-specific adaptation.
 
 ### Phase 6: Layered World Builder generation
 
@@ -1410,6 +1415,7 @@ The RSC Remastered product roadmap is complete when:
 | 2026-07-25 | Use the repository's Preservation revision-64 terrain, base placements, configuration, and definition set as the first definitive vanilla source candidate, subject to one complete provenance/fingerprint manifest. | Confirmed; local source set found, manifest remains a deliverable |
 | 2026-07-26 | Complete the first Preservation normalization milestone as an isolated terrain-only native review package. | Frozen-baseline verification, all 1,764 exact ORSC sectors, deterministic raw native payloads, byte-for-byte reverse proof, tool/server validation, source immutability, and overwrite refusal pass. The package remains non-runtime with zero placement sets and 32,364 explicitly unconverted placement records |
 | 2026-07-26 | Complete the second Preservation normalization milestone with exact v3 placement rectangles and deterministic four-level placement sets. | 32,363 of 32,364 base records convert exactly. One Hobgoblin has packed maximum Y `6549` outside the source coordinate model; likely `3549`, but the tool records and omits it pending owner-approved conversion repair, leaving source and runtime untouched |
+| 2026-07-26 | Approve a fingerprint-gated `6549 -> 3549` conversion repair for the anomalous vanilla Hobgoblin and distinguish vanilla corrections from creator expansion policy. | All 32,364 placements now convert with one explicit receipt and unchanged source. Reviewed vanilla repairs may define the concrete RSC Remastered baseline; expansion findings remain creator-controlled |
 | 2026-07-25 | Make the Universal Launcher own isolated, matched installation profiles and named fingerprinted import adapters; importing Cabbage or another supported distribution must never patch the default profile in place. | Confirmed |
 | 2026-07-25 | Begin modder drag-and-drop support with profile-local `content/walls` and `content/floors`, namespaced packs, stable registered identities, validation, and automatic World Builder discovery. | Confirmed architecture; implementation remains phased |
 | 2026-07-25 | Complete the concrete vanilla layered map rather than blocking on a polished general standalone map converter. Keep deterministic normalization, reports, receipts, review, and rollback as internal build facilities; place later external conversions behind named launcher adapters. | Confirmed; supersedes the converter-as-primary-end-user-product direction |

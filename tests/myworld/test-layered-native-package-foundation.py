@@ -335,6 +335,8 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
     def test_preservation_parity_package_is_exact_isolated_and_deterministic(self):
         source_archive = ROOT / "server/conf/server/data/Authentic_Landscape.orsc"
         source_sha = hashlib.sha256(source_archive.read_bytes()).hexdigest()
+        npc_source = ROOT / "server/conf/server/defs/locs/NpcLocs.json"
+        npc_source_sha = hashlib.sha256(npc_source.read_bytes()).hexdigest()
         with tempfile.TemporaryDirectory(
             prefix="preservation-terrain-package-"
         ) as temp:
@@ -351,7 +353,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            self.assertEqual("placements-incomplete", report["reviewState"])
+            self.assertEqual("transitions-pending", report["reviewState"])
             self.assertFalse(report["runtimePromotionApproved"])
             self.assertTrue(report["legacyRoundTripVerified"])
             self.assertEqual(
@@ -368,32 +370,36 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 report["placementEncoding"],
             )
             self.assertEqual(32364, report["sourcePlacementRecords"])
-            self.assertEqual(32363, report["convertedPlacementRecords"])
+            self.assertEqual(32364, report["convertedPlacementRecords"])
             self.assertEqual(
                 {
                     "boundaries": 966,
                     "groundItems": 1016,
-                    "npcs": 3611,
+                    "npcs": 3612,
                     "scenery": 26770,
                 },
                 report["convertedPlacementRecordsByFamily"],
             )
             self.assertEqual(4, report["placementSetsGenerated"])
-            self.assertEqual(1, report["unconvertedPlacementRecords"])
-            self.assertEqual(1, len(report["unresolvedPlacements"]))
-            unresolved = report["unresolvedPlacements"][0]
-            self.assertEqual("npc", unresolved["family"])
-            self.assertEqual("base-npcs", unresolved["sourceRole"])
-            self.assertEqual(3376, unresolved["sourceIndex"])
-            self.assertEqual(67, unresolved["sourceDefinitionId"])
+            self.assertEqual(0, report["unconvertedPlacementRecords"])
+            self.assertEqual([], report["unresolvedPlacements"])
+            self.assertEqual(1, len(report["conversionRepairs"]))
+            repair = report["conversionRepairs"][0]
             self.assertEqual(
-                "roam-bound-crosses-or-exceeds-start-level",
-                unresolved["reason"],
+                "preservation-r64.npc.003376.max-y-6549-to-3549",
+                repair["repairId"],
             )
+            self.assertEqual("npc", repair["family"])
+            self.assertEqual("base-npcs", repair["sourceRole"])
+            self.assertEqual(3376, repair["sourceIndex"])
+            self.assertEqual(67, repair["sourceDefinitionId"])
             self.assertEqual(
-                {"x": 662, "y": 6549},
-                unresolved["maximumPacked"],
+                "owner-approved-vanilla-baseline-repair",
+                repair["policy"],
             )
+            self.assertEqual("maximumPacked.y", repair["field"])
+            self.assertEqual(6549, repair["sourceValue"])
+            self.assertEqual(3549, repair["targetValue"])
 
             package = first_workspace / "package"
             manifest = json.loads(
@@ -436,7 +442,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             )
             self.assertEqual(1764, validation_report["terrainSectorCount"])
             self.assertEqual(4, validation_report["placementSetCount"])
-            self.assertEqual(3611, validation_report["npcPlacementCount"])
+            self.assertEqual(3612, validation_report["npcPlacementCount"])
             self.assertEqual(
                 1016, validation_report["groundItemPlacementCount"]
             )
@@ -464,6 +470,10 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assertEqual(
                 source_sha,
                 hashlib.sha256(source_archive.read_bytes()).hexdigest(),
+            )
+            self.assertEqual(
+                npc_source_sha,
+                hashlib.sha256(npc_source.read_bytes()).hexdigest(),
             )
 
     def test_new_schemas_are_valid_and_keep_level_signed(self):
@@ -915,8 +925,10 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
         for index, source in enumerate(npc_values):
             placement_id = f"preservation-r64.npc.{index:06d}"
             if index == 3376:
-                self.assertNotIn(placement_id, generated["npcs"])
-                continue
+                source = {
+                    **source,
+                    "max": {**source["max"], "Y": 3549},
+                }
             record = generated["npcs"][placement_id]
             self.assertEqual(source["id"], record["npcId"])
             self.assertEqual(

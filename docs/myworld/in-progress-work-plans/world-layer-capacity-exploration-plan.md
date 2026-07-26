@@ -18032,9 +18032,8 @@ export remain later gates.
 
 ## Preservation Normalization Milestone 2: Exact Base Placements
 
-Status: implemented and automated-validated on 2026-07-26, with one
-preservation-source anomaly awaiting owner disposition. Runtime promotion and
-source mutation remain unauthorized.
+Status: implemented, owner-decided, and automated-validated on 2026-07-26.
+Runtime promotion and source mutation remain unauthorized.
 
 The package placement contract now has
 `layered-world-placements-v3`. It retains boundaries, scenery, NPCs, and ground
@@ -18047,21 +18046,21 @@ construction now passes the decoded exact rectangle to the existing NPC model
 instead of rebuilding a square radius.
 
 The converter emits four deterministic placement sets, one for each populated
-signed level, with source-family/ordinal stable IDs. Exact source-to-package
-comparison covers every emitted record:
+signed level, with source-family/ordinal stable IDs. Exact source comparison,
+plus one explicit owner-approved repair receipt, covers every emitted record:
 
 - 966 of 966 boundaries;
 - 26,770 of 26,770 scenery objects;
 - 1,016 of 1,016 ground items; and
-- 3,611 of 3,612 NPCs.
+- 3,612 of 3,612 NPCs.
 
-This produces 32,363 of the frozen baseline's 32,364 placement records. The
+This produces all 32,364 frozen-baseline placement records. The
 package is
-`rsc-remastered.preservation-r64-parity-review@0.2.0`, with manifest SHA-256
-`bfa48d07d0dadc577c7ea873c8c482c794c99f170d9dc3f5c7de7dd97a9b0b50`
+`rsc-remastered.preservation-r64-parity-review@0.3.0`, with manifest SHA-256
+`ccb3e4514de96d7c5f60b1c2cee8e9b4ea83fec5c82860c2107f84c69869cc7e`
 and package fingerprint
-`b1e7eafcd8d3941fc7c0d1d2db42e60f9e7755b0d72c7c81e1edeaa86adb7971`.
-It remains `placements-incomplete` and
+`58ee4710af5ec499537ab25c82fe423f84b6af2235732eb6d78dc4137c1e5e65`.
+It is `transitions-pending` and remains
 `runtimePromotionApproved=false`.
 
 The five native-package suites now pass 35 focused tests, including exact
@@ -18070,7 +18069,7 @@ source comparison, repeated deterministic generation, and detached server
 loading of the complete review package. The authoritative build compiles 865
 core and 488 plugin sources.
 
-The one unresolved source record is
+The one repaired source record is
 `server/conf/server/defs/locs/NpcLocs.json` index 3376, Hobgoblin definition
 67:
 
@@ -18082,21 +18081,27 @@ Maximum Y `6549` is outside the four legacy 944-tile bands and cannot be
 decoded as the start's underground level. The surrounding values give strong
 evidence of a one-digit source error: X is exactly `647 +/- 15`, minimum Y is
 `3534 - 15`, so the symmetric maximum is `3549`; nearby Hobgoblin records use
-the same 15-tile rectangle, including other maximum-Y `3549` records. The
-converter does not silently make that repair. It omits the record, preserves
-all raw coordinates and the reason in `unresolvedPlacements`, and keeps the
-package non-runnable as a complete world.
+the same 15-tile rectangle, including other maximum-Y `3549` records.
 
-Recommended disposition: retain the frozen source and baseline unchanged, but
-add a reviewed conversion repair receipt mapping only this record's maximum Y
-from `6549` to `3549`. Repeated conversion must apply the repair only when the
-complete source fingerprint and exact record still match. Preserving `6549` as
-a layered roam bound would create a multi-thousand-tile invalid range; omitting
-the Hobgoblin would knowingly lose vanilla population.
+The owner approved `3549` as the definitive vanilla-map value. Conversion now
+applies repair
+`preservation-r64.npc.003376.max-y-6549-to-3549` only when the complete frozen
+baseline and exact record index, definition ID, start, minimum, and original
+maximum all match. The generation report records the field, old value, new
+value, policy, and source identity. The original source and baseline remain
+byte-identical. The resulting signed underground rectangle is minimum
+`(632,687)`, maximum `(662,717)`, containing start `(647,702)`.
 
-After that owner decision, the next gate is transition discovery and exact
-unchanged-world population replacement. The review package must not be added
-beside legacy population because that would duplicate 32,363 placements.
+This establishes the vanilla-conversion correction policy: RSC Remastered may
+make reviewed, receipted, fingerprint-gated repairs needed to produce its
+concrete definitive vanilla map. The converter must not generalize those
+repairs into silent changes to third-party expansions. Imported creator content
+reports its own incompatible or ambiguous records, and its creator chooses how
+to adapt them.
+
+The next gate is transition discovery and exact unchanged-world population
+replacement. The review package must not be added beside legacy population
+because that would duplicate all 32,364 placements.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -18185,6 +18190,7 @@ private environment should validate at least:
 | 2026-07-26 | Close Authority Milestone E and the Phase 5 layered-world engine capability. | Native package terrain/collision/placements, signed levels, incremental 24-tile presentation, cross-package transitions, exact persistence, regionless native entity membership, legacy reattachment, rollback, and all focused automated/build/private-owner routes pass. The next active product gate is parity-first normalization of the frozen Preservation baseline |
 | 2026-07-26 | Complete Preservation normalization milestone 1 as an exact terrain-only native review package. | The frozen 12-file baseline gates conversion; all 1,764 ORSC sectors convert deterministically into 40,642,560 bytes of strict raw native terrain across levels `0`, `+1`, `+2`, and `-1`, and reverse byte-for-byte. Tool/server validation, zero-placement review packages, overwrite refusal, and source immutability pass. All 32,364 placements remain explicitly unconverted and runtime promotion remains false |
 | 2026-07-26 | Complete Preservation normalization milestone 2 with exact v3 base-placement conversion, stopping on rather than guessing at source anomalies. | All 966 boundaries, 26,770 scenery objects, 1,016 ground items, and 3,611 of 3,612 NPCs convert with stable IDs and exact roaming rectangles. Hobgoblin source index 3376 has impossible maximum Y `6549`; evidence indicates `3549`, but the frozen source remains unchanged and the package remains non-runtime pending owner disposition |
+| 2026-07-26 | Approve the single Preservation vanilla conversion repair and define its scope. | Hobgoblin index 3376 maximum Y converts from `6549` to `3549` only under the exact frozen baseline/source tuple, with a machine-readable receipt and unchanged source. All 32,364 placements now convert. RSC Remastered may use reviewed repairs for its definitive vanilla map; third-party expansions receive findings and creator-controlled adaptation rather than inherited silent rewrites |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -18588,14 +18594,12 @@ their original bytes, while all 32,364 base placement records remain honestly
 reported as unconverted. No runtime or export path consumes that package yet.
 
 Milestone 2 now converts all four placement families with exact v3 NPC roaming
-rectangles: 32,363 records pass source-to-package equality and detached server
-loading. One Hobgoblin record remains explicit and unresolved because maximum
-Y `6549` lies outside the legacy coordinate model; exact surrounding evidence
-indicates `3549`. The current owner decision is whether to accept that one
-fingerprint-gated conversion repair while leaving the frozen source unchanged.
+rectangles: all 32,364 records pass source comparison or the one explicit
+owner-approved `6549 -> 3549` repair receipt. The repair is gated by the frozen
+baseline and exact source tuple, while the source file remains unchanged.
 
-After the anomaly is resolved, transition discovery and complete-world
-population replacement are next. Geographic realignment and additional depths
+Transition discovery and complete-world population replacement are next.
+Geographic realignment and additional depths
 follow review of the complete unchanged-world conversion; a generic standalone
 converter is not on the critical path. The historical retirement findings
 below remain retained reference material for later source-lifecycle work.

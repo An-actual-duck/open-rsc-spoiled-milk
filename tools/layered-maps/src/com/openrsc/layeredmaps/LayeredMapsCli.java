@@ -177,7 +177,7 @@ public final class LayeredMapsCli {
 		writeAtomically(validationJson, result.validationJson);
 
 		System.out.println("Preservation layered parity package generated");
-		System.out.println("reviewState=placements-incomplete");
+		System.out.println("reviewState=transitions-pending");
 		System.out.println("runtimePromotionApproved=false");
 		System.out.println("baselineSha256=" + result.baselineFingerprint);
 		System.out.println("terrainSectors=" + result.terrainSectorCount);

@@ -58,12 +58,17 @@ placement IDs retain source family and ordinal.
 
 The frozen source contains one known NPC anomaly at source index 3376: its
 packed start/minimum are on underground plane 3 while its maximum Y `6549` is
-outside the four-plane model. The tool does not guess a repair. It emits
-32,363 of 32,364 placement records, preserves the complete offending source
-coordinates in `unresolvedPlacements`, and marks the result
-`placements-incomplete` and `runtimePromotionApproved=false`. Transition
-conversion, review of that anomaly, and complete-world replacement ownership
-must finish before private runtime promotion. No game/export path is modified.
+outside the four-plane model. Owner review confirmed the symmetric maximum
+`3549` as the intended concrete vanilla-map value. Conversion applies that
+single repair only after the complete frozen baseline and exact source
+index/definition/start/minimum/maximum tuple match. It leaves the source file
+unchanged and emits a machine-readable `conversionRepairs` receipt. All 32,364
+placements therefore convert, while the package remains
+`transitions-pending` and `runtimePromotionApproved=false`. This receipt is
+specific to the selected vanilla baseline; it is not a generic policy for
+rewriting creator expansions. Transition conversion and complete-world
+replacement ownership must finish before private runtime promotion. No
+game/export path is modified.
 
 ## Native package check
 
