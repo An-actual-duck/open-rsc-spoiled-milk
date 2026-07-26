@@ -1441,36 +1441,57 @@ public final class Development implements CommandTrigger {
 			.runtimeProjectionId(location);
 		player.getWorld().getRegionManager()
 			.requireEntitySpatialCarrier(player);
+		String spatialCarrier = player.getRegion() == null
+			? "layered-index"
+			: "packed-region";
 		player.message(
 			messagePrefix
-				+ "Layered location authority="
-				+ (player.isLayeredLocationAuthorityEnabled() ? "enabled" : "disabled")
-				+ " space=" + location.getWorldSpace().getValue()
-				+ " x=" + coordinate.getX()
-				+ " y=" + coordinate.getY()
-				+ " level=" + coordinate.getLevel()
-				+ " spatialAuthority="
+				+ "Layered authority="
+				+ (player.isLayeredLocationAuthorityEnabled()
+					? "enabled"
+					: "disabled")
+				+ "; spatialAuthority="
 				+ (spatialAuthority ? "enabled" : "disabled")
-				+ " protocolAuthority="
+				+ ".");
+		player.message(
+			messagePrefix
+				+ "protocolAuthority="
 				+ (player.getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
 					? "enabled"
 					: "disabled")
-				+ " projection=" + projectionId
-				+ " spatialCarrier="
-				+ (player.getRegion() == null
-					? "layered-index"
-					: "packed-region")
-				+ " syntheticDeep="
+				+ "; syntheticDeep="
 				+ (syntheticDeep ? "enabled" : "disabled")
-				+ " region=(" + regionKey.getRegionX() + ","
+				+ ".");
+		player.message(
+			messagePrefix
+				+ "Location space=" + location.getWorldSpace().getValue()
+				+ " x=" + coordinate.getX()
+				+ " y=" + coordinate.getY()
+				+ " level=" + coordinate.getLevel()
+				+ ".");
+		player.message(
+			messagePrefix
+				+ "projection=" + projectionId
+				+ "; spatialCarrier=" + spatialCarrier
+				+ ".");
+		player.message(
+			messagePrefix
+				+ "region=(" + regionKey.getRegionX() + ","
 				+ regionKey.getRegionY() + ",L" + regionKey.getLevel() + ")"
-				+ (spatialAuthority
-					? " indexedEntities="
-						+ player.getWorld().getRegionManager()
-							.getLayeredSpatialMembershipCount()
-					: "")
-				+ " legacy=(" + player.getX() + "," + player.getY() + ")"
-				+ " persistenceOrigin=" + player.getLayeredLocationPersistenceOrigin());
+				+ "; legacy=(" + player.getX() + "," + player.getY() + ").");
+		if (spatialAuthority) {
+			player.message(
+				messagePrefix
+					+ "indexedEntities="
+					+ player.getWorld().getRegionManager()
+						.getLayeredSpatialMembershipCount()
+					+ ".");
+		}
+		player.message(
+			messagePrefix
+				+ "persistenceOrigin="
+				+ player.getLayeredLocationPersistenceOrigin()
+				+ ".");
 	}
 
 	private void syntheticDeepFixture(

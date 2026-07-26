@@ -50,8 +50,10 @@ visibility. Cross-package transitions and retirement of the remaining packed
 Region carrier are the remaining Milestone E boundaries. Runtime checkpoint
 12 implements and owner-validates the first of those boundaries with a
 separate `-4` package. Runtime checkpoint 13 now implements and
-automated-validates Region-free entity membership inside native package
-terrain; focused private-owner acceptance remains before Milestone E closes.
+validates Region-free entity membership inside native package terrain through
+automated and private-owner routes. The final route exposed only clipped
+single-line diagnostic presentation; its bounded-line correction is built and
+awaits one focused visual confirmation before Milestone E closes.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -928,6 +930,29 @@ context sequence `1`, the same transition package and terrain, and
 `spatialCarrier=layered-index` / `packedRegion=detached`. The owner reported
 no visual, movement, interaction, or reconnect abnormality. Only the reverse
 package switch and step 6's legacy exit/packed-Region reattachment remain.
+
+The final checkpoint-13 owner phase completes the behavioral acceptance. The
+reverse command committed
+`CROSS_PACKAGE native-transition-lab -> native-loader-lab`, client context
+sequence `2` selected the original level `-2` package, and status retained
+`packedRegion=detached`. Exit then committed
+`EXIT_PACKAGE native-loader-lab -> legacy`, and client context sequence `3`
+selected `legacy-packed-y-v1` at `(450,600,L0)`. After the expected water
+return, `::tp 120 620` restored ordinary surface traversal; the owner moved to
+`(122,625,L0)` and completed normal Goblin attack/kill interaction. The final
+`::layerloc` response contained `projection=legacy-packed-y-v1` and
+`spatialCarrier=packed-region`, confirming legacy reattachment. The owner
+reported no gameplay abnormality.
+
+That final response exposed one presentation defect: `::layerloc` emitted all
+technical fields in one oversized chat message, so the carrier field was
+clipped on the in-game display even though the client technical capture
+contained it. The command now emits the same stable fields as bounded logical
+lines for authority flags, signed location, projection/carrier, region/legacy
+coordinates, indexed membership, and persistence origin. Focused diagnostic
+guards and the authoritative 865-core/488-plugin server build pass. One
+private visual invocation of the rebuilt command remains before the
+presentation correction and Milestone E are marked closed.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -18014,8 +18039,9 @@ private environment should validate at least:
 | 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Owner-accepted after correcting two stale bounded-room assumptions; adjacent-page walking, exact deep reconnect at `(490,620)`, restored package `0.7.0` fixture terrain and placements, Man/item interaction, exact `(448,600,L-2)` reconnect, and prior surface exit pass while synthetic D remains independent rollback |
 | 2026-07-25 | Make the package-wide native runtime fixture renderable across all declared terrain rather than retaining a maximum-value codec band outside the former bounded room. | Package `0.7.0` uses a valid non-default blocking band, adds a runtime-definition guard, preserves full-range acceptance in the generic package codec, and passes focused owner floor/placement/interaction/reconnect acceptance |
 | 2026-07-25 | Implement Milestone E runtime checkpoint 12 as a fail-closed multi-package catalog and atomic explicit package-transition boundary. | Owner-accepted; distinct `-4` transition package, exact non-overlapping ownership, destination readiness preflight, package-scoped protocol/object identity, implicit-cross refusal, 35-test A-E lineage, authoritative builds, both package switches, three-coin interaction, exact `L-4` reconnect, and legacy surface exit pass |
-| 2026-07-25 | Implement Milestone E runtime checkpoint 13 by retiring packed-Region entity membership and Region-as-lookup facades from exact native package scopes. | Automated/build-validated; 35 focused A-E tests, 865/488 server build, 262-source client build, and matched two-package private startup pass. Owner acceptance now covers native detached-carrier diagnostics, interactions, authored respawn/restoration, ordinary item drop/recovery, the forward package switch, and exact detached-carrier `L-4` reconnect; reverse switch and legacy reattachment remain |
+| 2026-07-25 | Implement Milestone E runtime checkpoint 13 by retiring packed-Region entity membership and Region-as-lookup facades from exact native package scopes. | Automated/build-validated and behaviorally owner-accepted across native detached-carrier diagnostics, interactions, authored respawn/restoration, ordinary item drop/recovery, both package switches, exact detached-carrier `L-4` reconnect, legacy exit, packed-Region reattachment, and normal surface combat |
 | 2026-07-26 | Correct and accept checkpoint 13's initial legacy-to-native scene rebuild. | Same-X/Y, compatibility-`P0` native entry had accepted the new scope but incorrectly used the client same-region fast path; hard layered loads now rebuild immediately. Regression/performance/build guards pass, and owner evidence confirms the native floor and movement without reconnect while the entity carrier remains detached from packed Regions |
+| 2026-07-26 | Make `::layerloc` carrier diagnostics readable in the in-game chat after final checkpoint-13 acceptance exposed single-line clipping. | The complete response already proved `spatialCarrier=packed-region` in the client technical capture. The command now presents unchanged fields as bounded logical lines; focused guards and the authoritative server build pass, with one private visual confirmation pending |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

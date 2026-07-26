@@ -900,8 +900,10 @@ and expose the carrier choice. Legacy archive locations and the synthetic-deep
 rollback route keep their existing packed membership. Automated validation is
 complete: 35 focused Authority A-through-E tests, the 865-core/488-plugin
 server build, the 262-source client build, and matched two-package private
-startup pass. Focused private-owner acceptance remains required before
-Milestone E is closed.
+startup pass. The complete private-owner behavioral route now passes. Its
+only finding was clipped single-line diagnostic presentation; the bounded-line
+correction is built and awaits one visual invocation before Milestone E is
+closed.
 
 The first checkpoint-13 owner entry found and precisely bounded a client
 transition defect: legacy-to-native entry at unchanged `(450,600,P0)` accepted
@@ -936,6 +938,20 @@ signed location with a fresh client context, the correct transition terrain,
 `spatialCarrier=layered-index`, and `packedRegion=detached`. No abnormality
 was observed. Only reverse switching and legacy packed-Region reattachment
 remain for checkpoint-13 owner acceptance.
+
+The final owner phase accepts both remaining boundaries. The reverse switch
+selected the original level `-2` package and retained its detached carrier;
+explicit exit then selected `legacy-packed-y-v1` at level `0`. At a walkable
+surface location, ordinary movement and Goblin combat completed normally, and
+the final technical response reported `spatialCarrier=packed-region`.
+Checkpoint 13 is therefore behaviorally owner-accepted.
+
+The carrier response was complete in the client technical capture but too
+long for the in-game chat line, hiding the field from visual inspection.
+`::layerloc` now emits its unchanged AI-readable fields as bounded logical
+lines. Focused diagnostic tests and the authoritative 865-core/488-plugin
+server build pass; one private visual invocation remains before this
+presentation correction and Milestone E are marked closed.
 
 ### Phase 6: Layered World Builder generation
 

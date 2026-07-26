@@ -116,6 +116,9 @@ class LayeredNativeRegionRetirementTest(unittest.TestCase):
         roadmap = ROADMAP.read_text(encoding="utf-8")
 
         self.assertIn("spatialCarrier=", development)
+        self.assertIn('+ "projection=" + projectionId', development)
+        self.assertIn('+ "; spatialCarrier=" + spatialCarrier', development)
+        self.assertNotIn('+ "Layered location authority="', development)
         self.assertIn("; packedRegion=detached", development)
         self.assertIn("runtime checkpoint 13", plan)
         self.assertIn("packed-Region entity carrier", plan)
