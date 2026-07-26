@@ -7,13 +7,13 @@
     {
       "count": 384,
       "tile": {
-        "elevation": 255,
-        "texture": 254,
-        "overlay": 253,
-        "roof": 252,
-        "verticalWall": 251,
-        "horizontalWall": 250,
-        "diagonalWall": 4294967295
+        "elevation": 8,
+        "texture": 3,
+        "overlay": 2,
+        "roof": 1,
+        "verticalWall": 1,
+        "horizontalWall": 1,
+        "diagonalWall": 1
       }
     },
     {

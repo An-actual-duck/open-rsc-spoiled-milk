@@ -55,7 +55,7 @@ public final class NativeLayeredServerSourceFixture {
         NativeLayeredWorldPackage world =
             NativeLayeredWorldPackage.load(Paths.get(args[0]));
         check("rsc-remastered.native-loader-lab".equals(world.getPackageId()), "package ID");
-        check("0.6.0".equals(world.getPackageVersion()), "package version");
+        check("0.7.0".equals(world.getPackageVersion()), "package version");
         check(world.getPresentationChunkSize() == 24, "presentation chunk");
         check(world.getWorldSpaceCount() == 1, "world-space count");
         check(world.getLevelCount() == 3, "level count");
@@ -136,13 +136,13 @@ public final class NativeLayeredServerSourceFixture {
         check(!world.declaresLevel(WorldSpaceId.GLOBAL, -4), "absent declaration");
 
         NativeLayeredTerrainTile full = tile(world, 439, 600, -2);
-        check(full.getElevation() == 255, "RLE elevation");
-        check(full.getTexture() == 254, "RLE texture");
-        check(full.getOverlay() == 253, "RLE overlay");
-        check(full.getRoof() == 252, "RLE roof");
-        check(full.getVerticalWall() == 251, "RLE vertical wall");
-        check(full.getHorizontalWall() == 250, "RLE horizontal wall");
-        check(full.getDiagonalWall() == -1, "RLE unsigned diagonal bits");
+        check(full.getElevation() == 8, "RLE elevation");
+        check(full.getTexture() == 3, "RLE texture");
+        check(full.getOverlay() == 2, "RLE overlay");
+        check(full.getRoof() == 1, "RLE roof");
+        check(full.getVerticalWall() == 1, "RLE vertical wall");
+        check(full.getHorizontalWall() == 1, "RLE horizontal wall");
+        check(full.getDiagonalWall() == 1, "RLE diagonal wall");
         check(tile(world, 440, 600, -2).getTexture() == 1,
             "first RLE terrain band");
         check(tile(world, 448, 600, -2).getElevation() == 4
@@ -165,7 +165,7 @@ public final class NativeLayeredServerSourceFixture {
             WorldSpaceId.GLOBAL, -2, 18, 25)
             .orElseThrow(() -> new AssertionError("current presentation chunk"));
         check(currentChunk.getSize() == 24, "presentation chunk size");
-        check(currentChunk.getTile(7, 0).getElevation() == 255,
+        check(currentChunk.getTile(7, 0).getElevation() == 8,
             "presentation chunk x-major tile projection");
         check(currentChunk.getTile(16, 0).getElevation() == 4,
             "presentation chunk non-uniform projection");
@@ -173,12 +173,12 @@ public final class NativeLayeredServerSourceFixture {
             "presentation chunk wire byte count");
         byte[] wire = currentChunk.copyWireBytes();
         int fullTileOffset = (7 * 24) * 10;
-        check((wire[fullTileOffset] & 0xff) == 255,
+        check((wire[fullTileOffset] & 0xff) == 8,
             "presentation wire elevation");
-        check((wire[fullTileOffset + 5] & 0xff) == 250,
+        check((wire[fullTileOffset + 5] & 0xff) == 1,
             "presentation wire horizontal wall");
-        check(wire[fullTileOffset + 6] == -1
-                && wire[fullTileOffset + 9] == -1,
+        check(wire[fullTileOffset + 6] == 0
+                && wire[fullTileOffset + 9] == 1,
             "presentation wire diagonal bits");
         check(!world.findPresentationChunk(
                 WorldSpaceId.GLOBAL, -2, 17, 25).isPresent(),
@@ -196,19 +196,19 @@ public final class NativeLayeredServerSourceFixture {
         check("rle-layered-sector-v1".equals(left.getSourceEncoding()),
             "RLE source encoding");
         Sector detached = left.copyToDetachedLegacySector();
-        check(detached.getTile(0, 0).getGroundElevation() == 255,
+        check(detached.getTile(0, 0).getGroundElevation() == 8,
             "detached RLE elevation");
-        check(detached.getTile(0, 0).getGroundTexture() == 254,
+        check(detached.getTile(0, 0).getGroundTexture() == 3,
             "detached RLE texture");
-        check(detached.getTile(0, 0).getGroundOverlay() == 253,
+        check(detached.getTile(0, 0).getGroundOverlay() == 2,
             "detached RLE overlay");
-        check(detached.getTile(0, 0).getRoofTexture() == 252,
+        check(detached.getTile(0, 0).getRoofTexture() == 1,
             "detached RLE roof");
-        check(detached.getTile(0, 0).getVerticalWall() == 251,
+        check(detached.getTile(0, 0).getVerticalWall() == 1,
             "detached RLE vertical wall");
-        check(detached.getTile(0, 0).getHorizontalWall() == 250,
+        check(detached.getTile(0, 0).getHorizontalWall() == 1,
             "detached RLE horizontal wall");
-        check(detached.getTile(0, 0).getDiagonalWalls() == -1,
+        check(detached.getTile(0, 0).getDiagonalWalls() == 1,
             "detached RLE diagonal bits");
         check(detached.getTile(47, 47).getGroundTexture() == 0,
             "detached sector last tile");

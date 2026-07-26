@@ -83,6 +83,14 @@ all seven legacy terrain scalars and can represent an entirely non-repeating
 page with 2,304 one-tile runs. Both the tool and server reject underfill,
 overfill, invalid scalar ranges, changed ordering, and unknown fields.
 
+Package `0.7.0` keeps the level `-2` RLE page fully runtime-renderable now that
+native ownership covers every declared tile. Its western non-default band uses
+defined blocking tile, roof, and wall IDs instead of the earlier maximum-value
+codec proof that was safe only outside the former bounded runtime room. The
+generic format continues to accept its full unsigned storage ranges; runtime
+packages must additionally match the definitions available to their target
+client and server profile.
+
 The matching server-side reader lives in
 `server/src/com/openrsc/server/io/NativeLayeredWorldPackage.java`. It performs
 the same containment, identity, declaration, hash, and terrain-payload checks,

@@ -690,6 +690,35 @@ the failed water/reconnect route is rejected evidence, while native startup,
 synthetic-to-native saved-location migration, signed scope, page/chunk
 advancement, and server-side exact persistence remain valid evidence.
 
+The second focused attempt validated the corrected package-wide client
+application before exposing a separate stale fixture-content assumption:
+
+- login at saved `(490,620,L-2)` succeeded, package page/chunk advancement
+  remained exact, and ordinary walking succeeded in both the adjacent page and
+  page `(9,12)` outside the former synthetic bounds;
+- returning to `(450,600,L-2)` made the original floor disappear, and two
+  reconnect attempts failed while the server continued to report the exact
+  `1n/1i/2s/2b` package placements and seven collision-overlay tiles;
+- the client stack stopped in `collectTerrainVertexInputs` because the western
+  eight columns of page `(9,12)` still carried the format-checkpoint maximum
+  scalar band (`overlay 253`, `roof 252`, wall values `250/251`). That band was
+  documented as automated-only and safe only while it remained outside the
+  bounded 21-by-21 runtime room; exact package coverage correctly made it
+  reachable and therefore invalidated that assumption; and
+- package `0.7.0` replaces the obsolete maximum-value band with a valid
+  non-default blocking band using defined tile, roof, and wall IDs. A fixture
+  guard now checks every declared runtime terrain run against the client
+  definition ceilings. The generic codec still accepts the complete stored
+  scalar ranges; this is a runtime-fixture compatibility rule, not a format
+  contraction.
+
+The complete 31-test Authority A-through-E lineage and authoritative
+864-core/488-plugin server plus 262-source client builds pass after the
+correction. The private server must reload package `0.7.0`, then owner
+acceptance needs only verify the restored floor and package placements at
+`(450,600,L-2)`, one interaction, and one exact reconnect; the already
+successful adjacent-page walking does not need repetition.
+
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
 expose, and validate the next restoration prerequisite: known authored
@@ -17773,6 +17802,7 @@ private environment should validate at least:
 | 2026-07-25 | Complete and accept Milestone E placement checkpoint 7 with package-owned NPC/item world population. | Package `0.3.0`, strict tool/server decode, layered spawn identity, generation-safe item respawn, command-independent world registration, fail-closed definition validation, focused tests, authoritative build, and matched private startup pass. Owner evidence proves normal Man roam/dialogue, two collections of the same five-coin spawn across its five-second respawn, exact level `-2` reconnect, no duplicates, and normal exit |
 | 2026-07-25 | Complete and accept Milestone E placement checkpoints 8 through 10 for static, dynamic, and harvesting objects. | Packages `0.4.0` through `0.6.0` prove level-qualified scenery/boundary visibility and collision, generation-fenced Door replacement, and ordinary Tree-to-stump-to-Tree delayed restoration without packed Region membership. Automated authority lineage, authoritative builds, matched private startup, focused owner interaction, exact deep reconnect, and duplicate-free live counts pass |
 | 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Implemented and automated/build validated; first owner attempt exposed and corrected stale client fixture-only terrain application, synthetic D remains independent rollback, exact uncovered saves safely rebase, and corrected native-only owner acceptance remains pending |
+| 2026-07-25 | Make the package-wide native runtime fixture renderable across all declared terrain rather than retaining a maximum-value codec band outside the former bounded room. | Package `0.7.0` uses a valid non-default blocking band, adds a runtime-definition guard, and preserves full-range acceptance in the generic package codec; focused owner floor/placement/reconnect retest pending |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

@@ -333,6 +333,31 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             ),
         )
 
+    def test_runtime_fixture_uses_client_renderable_definitions(self):
+        manifest = json.loads(
+            (PACKAGE / "manifest.json").read_text(encoding="utf-8")
+        )
+        for sector in manifest["terrainSectors"]:
+            payload = json.loads(
+                (PACKAGE / sector["path"]).read_text(encoding="utf-8")
+            )
+            tiles = (
+                [payload["tile"]]
+                if payload["encoding"] == "uniform-layered-sector-v1"
+                else [run["tile"] for run in payload["runs"]]
+            )
+            for tile in tiles:
+                self.assertLessEqual(tile["overlay"], 26)
+                self.assertLessEqual(tile["roof"], 6)
+                self.assertLessEqual(tile["verticalWall"], 214)
+                self.assertLessEqual(tile["horizontalWall"], 214)
+                diagonal = tile["diagonalWall"]
+                self.assertTrue(
+                    diagonal == 0
+                    or 1 <= diagonal <= 214
+                    or 12001 <= diagonal <= 12214
+                )
+
     @staticmethod
     def change_payload(package):
         path = package / "terrain/deep-l2-x9-y12.json"
