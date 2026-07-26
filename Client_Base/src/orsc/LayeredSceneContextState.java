@@ -458,6 +458,14 @@ final class LayeredSceneContextState {
 		int level,
 		String projectionId) {
 		if (NATIVE_LAYERED_PROJECTION.equals(projectionId)) {
+			/*
+			 * Preserve authentic plane rendering for the four levels the
+			 * legacy client already understands. Arbitrary package depths
+			 * still use the isolated plane-0 presentation carrier.
+			 */
+			if (level == 0 || level == 1 || level == 2 || level == -1) {
+				return legacyPlaneForLevel(level);
+			}
 			return 0;
 		}
 		if (SYNTHETIC_DEEP_PROJECTION.equals(projectionId)) {

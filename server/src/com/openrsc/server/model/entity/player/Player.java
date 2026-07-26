@@ -70,6 +70,7 @@ import com.openrsc.server.model.world.coordinate.LayeredRegionMembershipMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.LayeredVisibilityWindowMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRelativeTransition;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
@@ -4094,7 +4095,7 @@ public final class Player extends Mob {
 		if (getCache().hasKey("death_location_y")) {
 			getCache().remove("death_location_y");
 		}
-		teleport(getConfig().RESPAWN_LOCATION_X, getConfig().RESPAWN_LOCATION_Y, false);
+		teleportToConfiguredRespawn(false);
 		ActionSender.sendEquipmentStats(this);
 		ActionSender.sendInventory(this);
 
@@ -4760,6 +4761,84 @@ public final class Player extends Mob {
 		setLocation(Point.location(x, y), true);
 		resetPath();
 		ActionSender.sendWorldInfo(this);
+	}
+
+	/**
+	 * Teleports to the configured legacy respawn coordinate without allowing
+	 * the current native package level to reinterpret that destination.
+	 */
+	public void teleportToConfiguredRespawn(final boolean bubble) {
+		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			teleport(
+				getConfig().RESPAWN_LOCATION_X,
+				getConfig().RESPAWN_LOCATION_Y,
+				bubble);
+			return;
+		}
+		teleportLayered(
+			LegacyPackedPointAdapter.fromPackedValues(
+				getConfig().RESPAWN_LOCATION_X,
+				getConfig().RESPAWN_LOCATION_Y),
+			bubble);
+	}
+
+	/**
+	 * Teleports to an explicit signed world location.
+	 */
+	public void teleportLayered(
+		final WorldLocation destination,
+		final boolean bubble) {
+		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			throw new IllegalStateException(
+				"Explicit layered teleport requires layered Player authority");
+		}
+		if (inCombat()) {
+			this.setLastOpponent(null);
+			combatEvent.resetCombat();
+		}
+		if (bubble) {
+			for (Player player : getViewArea().getPlayersInView()) {
+				if (!isInvisibleTo(player)) {
+					ActionSender.sendTeleBubble(
+						player, getX(), getY(), false);
+				}
+			}
+			ActionSender.sendTeleBubble(this, getX(), getY(), false);
+		}
+		setLayeredLocation(destination, true);
+		resetPath();
+		ActionSender.sendWorldInfo(this);
+	}
+
+	/**
+	 * Performs one explicit, geographically aligned signed-level transition.
+	 *
+	 * <p>Legacy ladder arithmetic encodes a floor in the Y coordinate. Native
+	 * package coordinates deliberately do not, so relative vertical movement
+	 * must change the signed level without first manufacturing a packed Y.</p>
+	 */
+	public void teleportRelativeLayer(
+		final int x,
+		final int y,
+		final int levelDelta,
+		final boolean bubble) {
+		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			throw new IllegalStateException(
+				"Relative layered teleport requires layered Player authority");
+		}
+		WorldLocation current = getLayeredLocation();
+		if (!getWorld().getRegionManager().hasNativeLayeredTerrain(current)) {
+			throw new IllegalStateException(
+				"Relative layered teleport requires native package terrain");
+		}
+		if (levelDelta == 0) {
+			throw new IllegalArgumentException(
+				"Relative layered teleport requires a non-zero level delta");
+		}
+		teleportLayered(
+			LayeredRelativeTransition.destination(
+				current, x, y, levelDelta),
+			bubble);
 	}
 
 	@Override
@@ -5994,7 +6073,7 @@ public final class Player extends Mob {
 				if (hitter.isPlayer()) {
 					((Player) hitter).resetAll();
 				}
-				this.teleport(getConfig().RESPAWN_LOCATION_X, getConfig().RESPAWN_LOCATION_Y, false);
+				this.teleportToConfiguredRespawn(false);
 				this.message("Your ring of life shines brightly");
 				final double survivalChance = EnchantingItemEffects.getSoulRingSurvivalChance(wornRing.getCatalogId());
 				if (DataConversions.getRandom().nextDouble() >= survivalChance) {
@@ -6215,7 +6294,7 @@ public final class Player extends Mob {
 			if (getCache().hasKey("tutorial")) {
 				getCache().remove("tutorial");
 			}
-			teleport(getConfig().RESPAWN_LOCATION_X, getConfig().RESPAWN_LOCATION_Y, false);
+			teleportToConfiguredRespawn(false);
 
 			if (this.getWorld().getServer().getConfig().SKIP_TUTORIAL_GIVES_ITEMS) {
 				giveTutorialItems();

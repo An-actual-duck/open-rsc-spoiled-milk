@@ -2741,10 +2741,12 @@ public final class World {
 		Sector[] window = new Sector[ACTIVE_SECTION_COUNT];
 		int originX = sectionX - ACTIVE_SECTION_ORIGIN_OFFSET;
 		int originY = sectionY - ACTIVE_SECTION_ORIGIN_OFFSET;
+		int nativePresentationPlane = nativeLayeredPresentationPlane();
 		for (int y = 0; y < ACTIVE_SECTION_GRID; y++) {
 			for (int x = 0; x < ACTIVE_SECTION_GRID; x++) {
 				int sectorX=originX+x,sectorY=originY+y;
-				if (height == 0 && nativeLayeredTerrainSnapshot != null) {
+				if (height == nativePresentationPlane
+					&& nativeLayeredTerrainSnapshot != null) {
 					window[y * ACTIVE_SECTION_GRID + x] =
 						nativeLayeredVoidSector();
 				} else {
@@ -2758,13 +2760,32 @@ public final class World {
 				}
 			}
 		}
-		if (height == 0 && nativeLayeredTerrainSnapshot != null) {
+		if (height == nativePresentationPlane
+			&& nativeLayeredTerrainSnapshot != null) {
 			applyNativeLayeredTerrain(window, sectionX, sectionY);
 		} else if (height == 0 && syntheticDeepFixtureTerrain) {
 			applySyntheticDeepFixtureTerrain(window, sectionX, sectionY);
 		}
 		applyBridgeDecorations(window);
 		return new CpuSectionWindow(window, true);
+	}
+
+	private int nativeLayeredPresentationPlane() {
+		if (nativeLayeredTerrainSnapshot == null) {
+			return -1;
+		}
+		switch (nativeLayeredTerrainSnapshot.getLevel()) {
+			case 0:
+				return 0;
+			case 1:
+				return 1;
+			case 2:
+				return 2;
+			case -1:
+				return 3;
+			default:
+				return 0;
+		}
 	}
 
 	private static Sector nativeLayeredVoidSector() {

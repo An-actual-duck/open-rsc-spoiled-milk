@@ -248,8 +248,7 @@ public class Ladders {
 					return;
 				}
 			}
-			int[] coords = coordModifier(player, true, obj);
-			player.teleport(coords[0], coords[1], false);
+			teleportVertical(player, true, obj);
 			player.message(
 				"You " + command.replace("-", " ") + " the "
 					+ obj.getGameObjectDef().getName().toLowerCase());
@@ -276,27 +275,56 @@ public class Ladders {
 			player.teleport(148, 563, false);
 		} else if (command.equals("climb-up") || command.equals("climb up")
 			|| command.equals("go up")) {
-			int[] coords = coordModifier(player, true, obj);
-			player.teleport(coords[0], coords[1], false);
+			teleportVertical(player, true, obj);
 			player.message(
 				"You " + command.replace("-", " ") + " the "
 					+ obj.getGameObjectDef().getName().toLowerCase());
 		} else if (command.equals("climb-down") || command.equals("climb down")
 			|| command.equals("go down")) {
-			int[] coords = coordModifier(player, false, obj);
-			player.teleport(coords[0], coords[1], false);
+			teleportVertical(player, false, obj);
 			player.message(
 				"You " + command.replace("-", " ") + " the "
 					+ obj.getGameObjectDef().getName().toLowerCase());
 		}
 	}
 
+	private void teleportVertical(
+		Player player,
+		boolean up,
+		GameObject object) {
+		boolean nativeLayered = player.getConfig()
+				.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+			&& player.getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(player.getWorldLocation());
+		int[] coords = coordModifier(player, up, object, !nativeLayered);
+		if (nativeLayered) {
+			player.teleportRelativeLayer(
+				coords[0], coords[1], up ? 1 : -1, false);
+		} else {
+			player.teleport(coords[0], coords[1], false);
+		}
+	}
+
 	private int[] coordModifier(Player player, boolean up, GameObject object) {
+		return coordModifier(player, up, object, true);
+	}
+
+	private int[] coordModifier(
+		Player player,
+		boolean up,
+		GameObject object,
+		boolean encodeLegacyPlane) {
 		if (object.getGameObjectDef().getHeight() <= 1) {
 			return new int[]{player.getX(),
-				Formulae.getNewY(player.getY(), up)};
+				encodeLegacyPlane
+					? Formulae.getNewY(player.getY(), up)
+					: player.getY()};
 		}
-		int[] coords = {object.getX(), Formulae.getNewY(object.getY(), up)};
+		int[] coords = {
+			object.getX(),
+			encodeLegacyPlane
+				? Formulae.getNewY(object.getY(), up)
+				: object.getY()};
 		switch (object.getDirection()) {
 			case 0:
 				coords[1] -= (up ? -object.getGameObjectDef().getHeight() : 1);

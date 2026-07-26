@@ -218,6 +218,30 @@ public final class LayeredProtocolClientAuthorityFixture {
         check(state.matchesSequence(1)
             && state.summary().contains("native terrain"),
             "native reconnect sequence restart");
+
+        state.reset();
+        NativeLayeredTerrainSnapshot nativeUpper =
+            nativeTerrain(1, 2, 13, 0);
+        LayeredSceneContextState.ApplyResult nativeUpperResult =
+            state.acceptNative(
+                NativeLayeredTerrainSnapshot.UNIFORM_PAGE_PROTOCOL_VERSION,
+                1, 203, "global", "native-layered-package-v1",
+                138, 666, 1, 138, 666, nativeUpper);
+        check(nativeUpperResult.getLegacyPlane() == 1,
+            "native upper level keeps authentic plane semantics");
+        state.acceptLegacyPlayerPosition(138, 666);
+
+        state.reset();
+        NativeLayeredTerrainSnapshot nativeUnderground =
+            nativeTerrain(-1, 2, 13, 0);
+        LayeredSceneContextState.ApplyResult nativeUndergroundResult =
+            state.acceptNative(
+                NativeLayeredTerrainSnapshot.UNIFORM_PAGE_PROTOCOL_VERSION,
+                1, 204, "global", "native-layered-package-v1",
+                138, 666, -1, 138, 666, nativeUnderground);
+        check(nativeUndergroundResult.getLegacyPlane() == 3,
+            "native underground keeps authentic plane semantics");
+        state.acceptLegacyPlayerPosition(138, 666);
     }
 
     private static NativeLayeredTerrainSnapshot chunkTerrain(
@@ -438,7 +462,7 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         self.assertIn(
             "NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 4", updater
         )
-        self.assertIn("nativeLayeredSceneTerrain(location)", updater)
+        self.assertIn("nativeLayeredSceneTerrain(player, location)", updater)
         self.assertIn(
             ".hasNativeLayeredTerrain(location)",
             updater,

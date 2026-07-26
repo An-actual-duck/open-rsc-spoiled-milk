@@ -18192,6 +18192,8 @@ private environment should validate at least:
 | 2026-07-26 | Complete Preservation normalization milestone 2 with exact v3 base-placement conversion, stopping on rather than guessing at source anomalies. | All 966 boundaries, 26,770 scenery objects, 1,016 ground items, and 3,611 of 3,612 NPCs convert with stable IDs and exact roaming rectangles. Hobgoblin source index 3376 has impossible maximum Y `6549`; evidence indicates `3549`, but the frozen source remains unchanged and the package remains non-runtime pending owner disposition |
 | 2026-07-26 | Approve the single Preservation vanilla conversion repair and define its scope. | Hobgoblin index 3376 maximum Y converts from `6549` to `3549` only under the exact frozen baseline/source tuple, with a machine-readable receipt and unchanged source. All 32,364 placements now convert. RSC Remastered may use reviewed repairs for its definitive vanilla map; third-party expansions receive findings and creator-controlled adaptation rather than inherited silent rewrites |
 | 2026-07-26 | Complete Preservation normalization milestone 3 as a frozen transition-compatibility inventory rather than an inferred Java graph. | All 20 `ObjectTelePoints.xml` edges normalize losslessly with zero unresolved; 107 authentic script owners, 695 teleport calls, nine location mutations, and four bridge sources are pinned by a supplementary fail-closed lock. Scripted behavior remains active compatibility logic for first parity runtime; complete-world replacement is next |
+| 2026-07-26 | Implement the first complete-world Preservation replacement profile. | Default-off profile `preservation-r64-replacement` pins package `rsc-remastered.preservation-r64-parity-review@0.3.0` and manifest `ccb3e4514de96d7c5f60b1c2cee8e9b4ea83fec5c82860c2107f84c69869cc7e`, requires the exact 1,764 terrain pages and all 32,364 base placements, suppresses only legacy base population, and retains legacy scripted transition consumers. Focused validation and the authoritative 866/488 build pass; private owner acceptance remains required |
+| 2026-07-26 | Reject the first full Preservation owner route and correct its five exposed parity defects. | Owner evidence found NPC wall traversal, repeated movement stalls around the 24-tile X boundary, incorrect upper-floor presentation, `L1 -> L-1` generic descent, and death respawn retaining native level `-1`. Native NPC roam/A-star collision now resolves through the NPC's signed level; a six-tile presentation-window retention margin prevents boundary flip-flop; native levels `0`, `+1`, `+2`, and `-1` retain their authentic client plane semantics while arbitrary depths remain plane-0 carriers; generic vertical travel changes signed level directly while explicit/long-distance legacy teleports remain unchanged; and configured respawn coordinates decode once into an explicit signed destination rather than inheriting the current package layer. The reviewed transition lock now pins 693 lexical teleport calls after two generic direct calls moved behind the common vertical helper. Focused regression tests, transition inventory, and authoritative 868/488 plus 262-source client builds pass. The explicit death recovery sub-route is owner-accepted from saved `L-1` to Lumbridge `L0`; complete corrected route acceptance remains pending |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -18602,7 +18604,7 @@ baseline and exact source tuple, while the source file remains unchanged.
 Transition discovery milestone 3 is now complete as supplementary execution
 provenance. The accepted lock pins all 20 explicit `ObjectTelePoints.xml`
 edges, 107 authentic Java source owners selected by transition/location-
-mutation signals, 695 lexical teleport calls, nine location-mutation calls,
+mutation signals, 693 lexical teleport calls, nine location-mutation calls,
 and the four exact runtime bridge sources. Every XML edge losslessly
 normalizes; zero are unresolved. Scripted quest gates, transports, random
 offsets, and unusual or long-distance topology deliberately remain
@@ -18610,16 +18612,30 @@ offsets, and unusual or long-distance topology deliberately remain
 misrepresent Java control flow as a complete graph, modify the accepted
 12-file map baseline, or impose a topology policy on creator expansions.
 
-Complete-world population replacement is next. It requires a separately named,
-default-off runtime profile that validates the exact Preservation package and
-uses its 32,364 placements *instead of* legacy `WorldPopulator` base
-placements. The existing fixture profile must retain its exact bounded checks;
-the full package must not weaken them or load additively. Legacy scripted
-transition consumers remain active in compatibility mode for the first parity
-runtime. Geographic realignment and additional depths follow review of that
-complete unchanged-world conversion; a generic standalone converter is not on
-the critical path. The historical retirement findings below remain retained
-reference material for later source-lifecycle work.
+Complete-world population replacement is now implemented behind the separately
+named, default-off `preservation-r64-replacement` runtime profile. The profile
+validates the exact Preservation package and uses its 32,364 placements
+*instead of* legacy `WorldPopulator` base placements; the existing fixture
+profile retains its bounded additive checks. Legacy scripted transition
+consumers remain active for first parity runtime.
+
+The first owner route correctly rejected parity. Its deterministic findings
+are now guarded: generic aligned stairs change signed level directly, native
+NPC roam and A-star collision stay in the owner's signed scope, native legacy-
+representable levels retain authentic client plane semantics, and a retained
+presentation center prevents rapid 24-tile boundary reversals from rebuilding
+the terrain window repeatedly. Configured legacy respawn coordinates are now
+decoded into an explicit signed destination, preventing a death on a native
+package level from reinterpreting Lumbridge in that same level. That recovery
+sub-route is now owner-accepted: the client restored the saved `(120,648,L-1)`
+state, then recorded a new native scene context at `(120,648,L0)` immediately
+after `::kill devduck`; `::layerloc` independently reported global level `0`.
+Explicit and long-distance scripted teleports remain unchanged. Corrected
+private visual/gameplay acceptance is the active gate. Geographic realignment
+and additional depths follow acceptance of this complete unchanged-world
+conversion; a generic standalone converter is not on the critical path. The
+historical retirement findings below remain retained reference material for
+later source-lifecycle work.
 
 ## Phase 5 Authority Milestone B: Spatial Runtime Identity
 

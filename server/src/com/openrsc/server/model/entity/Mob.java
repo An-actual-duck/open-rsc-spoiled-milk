@@ -27,7 +27,9 @@ import com.openrsc.server.model.entity.update.UpdateFlags;
 import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.model.states.HostileState;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.DropObjTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
@@ -789,6 +791,28 @@ public abstract class Mob extends Entity {
 		}
 	}
 
+	/**
+	 * Resolves an unqualified movement coordinate in this mob's current signed
+	 * native scope. Legacy callers still receive the packed Region tile.
+	 */
+	public final TileValue getTileAtCurrentLevel(
+		final int x,
+		final int y) {
+		WorldLocation owner = getWorldLocation();
+		if (getWorld().getRegionManager().hasNativeLayeredTerrain(owner)
+			|| LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(owner)) {
+			return getWorld().getTile(
+				new WorldLocation(
+					owner.getWorldSpace(),
+					new com.openrsc.server.model.world.coordinate
+						.WorldCoordinate(
+							x,
+							y,
+							owner.getCoordinate().getLevel())));
+		}
+		return getWorld().getTile(x, y);
+	}
+
 	public void walk(final int x, final int y) {
 		getWalkingQueue().reset();
 		final Path path = new Path(this, PathType.WALK_TO_POINT);
@@ -806,7 +830,8 @@ public abstract class Mob extends Entity {
 	public void walkToEntityAStar(final int x, final int y, final int depth) {
 		getWalkingQueue().reset();
 		final Point mobPos = new Point(this.getX(), this.getY());
-		final AStarPathfinder pathFinder = new AStarPathfinder(this.getWorld(), mobPos, new Point(x, y), depth);
+		final AStarPathfinder pathFinder =
+			new AStarPathfinder(this, mobPos, new Point(x, y), depth);
 		pathFinder.feedPath(new Path(this, PathType.WALK_TO_ENTITY));
 		Path newPath = pathFinder.findPath();
 		if (newPath == null)

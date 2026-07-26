@@ -1706,7 +1706,7 @@ public class Npc extends Mob {
 	}
 
 	private boolean checkBlocking(World world, int x, int y, int bit) {
-		TileValue t = world.getTile(x, y);
+		TileValue t = getTileAtCurrentLevel(x, y);
 		Point point = new Point(x, y);
 		for (Npc n : getViewArea().getNpcsInView()) {
 			if (n.getLocation().equals(point)) {

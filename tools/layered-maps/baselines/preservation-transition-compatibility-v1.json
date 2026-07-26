@@ -6,21 +6,21 @@
     "sha256": "957b32b927860170905460b9d2a5f6377256ce493503b62b738175fdda68f4ed",
     "unresolvedEdgeCount": 0
   },
-  "inventoryFingerprintSha256": "c4b714bb8ba26041b204cbfe5560fd5b5eab1f9f27b4a24a516be01363140589",
+  "inventoryFingerprintSha256": "2e93bf57d37d86e506cd042eef939ed37acb8dcf3e646ab04f444cb1dd1e65c3",
   "manifestType": "rsc-remastered-preservation-transition-compatibility-lock",
   "parentBaselineFingerprintSha256": "ffbf27806fbe8fb3287b1d9543b355deebf0e22a329aec13885a16c7399fb86a",
   "parentBaselineId": "rsc-remastered-preservation-r64-v1",
   "runtimeBridgeSourceSet": {
     "sourceFileCount": 4,
-    "sourceSetFingerprintSha256": "4205a42cd75b6719f44d36a30c7d458340f237cf8e01e0cb8c2e26d64ee9e51d"
+    "sourceSetFingerprintSha256": "3c35d3d0764ffb7022d86c5964df06f648b46de2e1143d68b7da64d6901b5a2c"
   },
   "schemaVersion": 1,
   "scriptedSourceSet": {
     "locationMutationCallCount": 9,
     "sourceFileCount": 107,
     "sourceRoot": "server/plugins/com/openrsc/server/plugins/authentic",
-    "sourceSetFingerprintSha256": "ccdebfe56024d877575a24de489dd7d5fbc8d824e23aade524904b05bb0cb320",
+    "sourceSetFingerprintSha256": "3e7034d63a78680d84d90abb3501f285fc0ea6c979d7afec02d84159cb5ed359",
     "telePointReferenceCount": 2,
-    "teleportCallCount": 695
+    "teleportCallCount": 693
   }
 }
