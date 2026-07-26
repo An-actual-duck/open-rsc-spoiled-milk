@@ -999,6 +999,23 @@ Those corrections do not become silent generic rewrite rules for creator
 expansions. Supported third-party imports surface their own findings for
 creator/profile-specific adaptation.
 
+Preservation normalization milestone 3 now freezes the transition execution
+boundary without guessing at Java semantics. A supplementary lock, separate
+from the accepted 12-file vanilla map baseline, covers the exact
+`ObjectTelePoints.xml` source and all 20 losslessly normalized directed edges,
+107 authentic Java source owners selected by transition/location-mutation
+signals, 695 lexical teleport calls, nine location mutations, and four runtime
+bridge sources. No explicit edge is unresolved.
+
+The first complete-world parity runtime will therefore retain those scripted
+quest gates, random offsets, transport rules, and unconventional or
+long-distance transitions as compatibility behavior. They are not yet a
+complete declarative graph and must not be silently rewritten. The next
+implementation gate is a default-off full-world replacement profile: it must
+validate the exact Preservation package and suppress legacy base placement
+population so all 32,364 package placements load once, while leaving the
+existing bounded fixture profile unchanged.
+
 ### Phase 6: Layered World Builder generation
 
 Goal: make the layered RSC Remastered world and modder content directly
@@ -1416,6 +1433,7 @@ The RSC Remastered product roadmap is complete when:
 | 2026-07-26 | Complete the first Preservation normalization milestone as an isolated terrain-only native review package. | Frozen-baseline verification, all 1,764 exact ORSC sectors, deterministic raw native payloads, byte-for-byte reverse proof, tool/server validation, source immutability, and overwrite refusal pass. The package remains non-runtime with zero placement sets and 32,364 explicitly unconverted placement records |
 | 2026-07-26 | Complete the second Preservation normalization milestone with exact v3 placement rectangles and deterministic four-level placement sets. | 32,363 of 32,364 base records convert exactly. One Hobgoblin has packed maximum Y `6549` outside the source coordinate model; likely `3549`, but the tool records and omits it pending owner-approved conversion repair, leaving source and runtime untouched |
 | 2026-07-26 | Approve a fingerprint-gated `6549 -> 3549` conversion repair for the anomalous vanilla Hobgoblin and distinguish vanilla corrections from creator expansion policy. | All 32,364 placements now convert with one explicit receipt and unchanged source. Reviewed vanilla repairs may define the concrete RSC Remastered baseline; expansion findings remain creator-controlled |
+| 2026-07-26 | Freeze Preservation transition compatibility as supplementary execution provenance. | All 20 explicit XML edges normalize with zero unresolved; 107 authentic script owners and the four runtime bridge sources are hash-pinned without claiming Java is a declarative graph. First parity runtime retains those scripts, and full-world replacement population is the next gate |
 | 2026-07-25 | Make the Universal Launcher own isolated, matched installation profiles and named fingerprinted import adapters; importing Cabbage or another supported distribution must never patch the default profile in place. | Confirmed |
 | 2026-07-25 | Begin modder drag-and-drop support with profile-local `content/walls` and `content/floors`, namespaced packs, stable registered identities, validation, and automatic World Builder discovery. | Confirmed architecture; implementation remains phased |
 | 2026-07-25 | Complete the concrete vanilla layered map rather than blocking on a polished general standalone map converter. Keep deterministic normalization, reports, receipts, review, and rollback as internal build facilities; place later external conversions behind named launcher adapters. | Confirmed; supersedes the converter-as-primary-end-user-product direction |

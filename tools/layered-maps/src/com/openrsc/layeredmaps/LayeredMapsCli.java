@@ -27,6 +27,7 @@ public final class LayeredMapsCli {
 		if (!"preflight".equals(args[0])
 			&& !"normalize".equals(args[0])
 			&& !"baseline".equals(args[0])
+			&& !"preservation-transitions".equals(args[0])
 			&& !"preservation-package".equals(args[0])
 			&& !"package-check".equals(args[0])) {
 			System.err.println("[layered-maps] Unknown command: " + args[0]);
@@ -50,6 +51,8 @@ public final class LayeredMapsCli {
 				runNormalization(root, workspace);
 			} else if ("baseline".equals(args[0])) {
 				runBaseline(root, workspace);
+			} else if ("preservation-transitions".equals(args[0])) {
+				runPreservationTransitions(root, workspace);
 			} else if ("preservation-package".equals(args[0])) {
 				runPreservationPackage(root, workspace);
 			} else {
@@ -165,6 +168,30 @@ public final class LayeredMapsCli {
 		System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
 	}
 
+	private static void runPreservationTransitions(Path root, Path workspace)
+		throws PreflightException, IOException {
+		PreservationTransitionCompatibilityInventory.Result result =
+			new PreservationTransitionCompatibilityInventory().inspect(root);
+		Files.createDirectories(workspace);
+		Path jsonPath = workspace.resolve("transition-compatibility.json");
+		Path markdownPath = workspace.resolve("transition-compatibility.md");
+		writeAtomically(jsonPath, result.toJson());
+		writeAtomically(markdownPath, result.toMarkdown());
+
+		System.out.println(
+			"Preservation transition compatibility inventory complete");
+		System.out.println("inventoryFingerprint=" + result.fingerprint);
+		System.out.println("explicitEdges=" + result.explicitEdgeCount);
+		System.out.println(
+			"scriptedSourceFiles=" + result.scriptedSourceFileCount);
+		System.out.println("teleportCalls=" + result.teleportCallCount);
+		System.out.println(
+			"locationMutationCalls=" + result.locationMutationCallCount);
+		System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
+		System.out.println(
+			"markdown=" + markdownPath.toAbsolutePath().normalize());
+	}
+
 	private static void runPreservationPackage(Path root, Path workspace)
 		throws PreflightException, IOException {
 		PreservationTerrainPackageGenerator.Result result =
@@ -253,7 +280,7 @@ public final class LayeredMapsCli {
 	private static void usage() {
 		System.err.println(
 			"Usage: layered-maps <preflight|normalize|baseline"
-				+ "|preservation-package|package-check>"
+				+ "|preservation-transitions|preservation-package|package-check>"
 				+ " --root PATH --workspace PATH [--package PATH]");
 	}
 }

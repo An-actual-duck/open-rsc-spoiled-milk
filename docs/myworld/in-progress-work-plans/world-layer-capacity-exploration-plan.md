@@ -18191,6 +18191,7 @@ private environment should validate at least:
 | 2026-07-26 | Complete Preservation normalization milestone 1 as an exact terrain-only native review package. | The frozen 12-file baseline gates conversion; all 1,764 ORSC sectors convert deterministically into 40,642,560 bytes of strict raw native terrain across levels `0`, `+1`, `+2`, and `-1`, and reverse byte-for-byte. Tool/server validation, zero-placement review packages, overwrite refusal, and source immutability pass. All 32,364 placements remain explicitly unconverted and runtime promotion remains false |
 | 2026-07-26 | Complete Preservation normalization milestone 2 with exact v3 base-placement conversion, stopping on rather than guessing at source anomalies. | All 966 boundaries, 26,770 scenery objects, 1,016 ground items, and 3,611 of 3,612 NPCs convert with stable IDs and exact roaming rectangles. Hobgoblin source index 3376 has impossible maximum Y `6549`; evidence indicates `3549`, but the frozen source remains unchanged and the package remains non-runtime pending owner disposition |
 | 2026-07-26 | Approve the single Preservation vanilla conversion repair and define its scope. | Hobgoblin index 3376 maximum Y converts from `6549` to `3549` only under the exact frozen baseline/source tuple, with a machine-readable receipt and unchanged source. All 32,364 placements now convert. RSC Remastered may use reviewed repairs for its definitive vanilla map; third-party expansions receive findings and creator-controlled adaptation rather than inherited silent rewrites |
+| 2026-07-26 | Complete Preservation normalization milestone 3 as a frozen transition-compatibility inventory rather than an inferred Java graph. | All 20 `ObjectTelePoints.xml` edges normalize losslessly with zero unresolved; 107 authentic script owners, 695 teleport calls, nine location mutations, and four bridge sources are pinned by a supplementary fail-closed lock. Scripted behavior remains active compatibility logic for first parity runtime; complete-world replacement is next |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -18598,11 +18599,27 @@ rectangles: all 32,364 records pass source comparison or the one explicit
 owner-approved `6549 -> 3549` repair receipt. The repair is gated by the frozen
 baseline and exact source tuple, while the source file remains unchanged.
 
-Transition discovery and complete-world population replacement are next.
-Geographic realignment and additional depths
-follow review of the complete unchanged-world conversion; a generic standalone
-converter is not on the critical path. The historical retirement findings
-below remain retained reference material for later source-lifecycle work.
+Transition discovery milestone 3 is now complete as supplementary execution
+provenance. The accepted lock pins all 20 explicit `ObjectTelePoints.xml`
+edges, 107 authentic Java source owners selected by transition/location-
+mutation signals, 695 lexical teleport calls, nine location-mutation calls,
+and the four exact runtime bridge sources. Every XML edge losslessly
+normalizes; zero are unresolved. Scripted quest gates, transports, random
+offsets, and unusual or long-distance topology deliberately remain
+`compatibility-runtime-preserved` and `not-yet-declarative`. This does not
+misrepresent Java control flow as a complete graph, modify the accepted
+12-file map baseline, or impose a topology policy on creator expansions.
+
+Complete-world population replacement is next. It requires a separately named,
+default-off runtime profile that validates the exact Preservation package and
+uses its 32,364 placements *instead of* legacy `WorldPopulator` base
+placements. The existing fixture profile must retain its exact bounded checks;
+the full package must not weaken them or load additively. Legacy scripted
+transition consumers remain active in compatibility mode for the first parity
+runtime. Geographic realignment and additional depths follow review of that
+complete unchanged-world conversion; a generic standalone converter is not on
+the critical path. The historical retirement findings below remain retained
+reference material for later source-lifecycle work.
 
 ## Phase 5 Authority Milestone B: Spatial Runtime Identity
 

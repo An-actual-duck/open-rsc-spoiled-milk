@@ -14,6 +14,9 @@ TOOL_ROOT = ROOT / "tools" / "layered-maps"
 SOURCE_ROOT = TOOL_ROOT / "src"
 MAIN_CLASS = "com.openrsc.layeredmaps.LayeredMapsCli"
 BASELINE = TOOL_ROOT / "baselines/rsc-remastered-preservation-r64-v1.json"
+TRANSITION_LOCK = (
+    TOOL_ROOT / "baselines/preservation-transition-compatibility-v1.json"
+)
 PACKAGE = TOOL_ROOT / "fixtures/native-package-v1"
 
 
@@ -98,6 +101,59 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             )
             self.assertEqual(
                 1764, terrain["server-authentic-terrain"]["archiveEntryCount"]
+            )
+
+    def test_preservation_transition_compatibility_is_pinned_not_guessed(self):
+        with tempfile.TemporaryDirectory(
+            prefix="preservation-transitions-"
+        ) as temp:
+            workspace = Path(temp) / "report"
+            result = self.run_command("preservation-transitions", workspace)
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            report = json.loads(
+                (workspace / "transition-compatibility.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            lock = json.loads(TRANSITION_LOCK.read_text(encoding="utf-8"))
+            self.assertEqual(
+                lock["inventoryFingerprintSha256"],
+                report["inventoryFingerprintSha256"],
+            )
+            self.assertEqual(
+                lock["explicitTransitionSource"]["sha256"],
+                report["explicitTransitionGraph"]["sourceSha256"],
+            )
+            self.assertEqual(
+                20, report["explicitTransitionGraph"]["edgeCount"]
+            )
+            self.assertEqual(
+                20, report["explicitTransitionGraph"]["normalizedEdgeCount"]
+            )
+            self.assertEqual(
+                0, report["explicitTransitionGraph"]["unresolvedEdgeCount"]
+            )
+            self.assertFalse(
+                report["declarativeCoverage"]["completeDeclarativeGraph"]
+            )
+            self.assertEqual(
+                "not-yet-declarative",
+                report["declarativeCoverage"]["scriptedSemanticStatus"],
+            )
+            self.assertEqual(
+                "compatibility-runtime-preserved",
+                report["scriptedSources"]["runtimeTreatment"],
+            )
+            self.assertEqual(
+                lock["scriptedSourceSet"]["sourceFileCount"],
+                len(report["scriptedSources"]["files"]),
+            )
+            self.assertTrue(
+                report["policy"]["longDistanceTransitionsRemainValid"]
+            )
+            self.assertFalse(
+                report["policy"]["scriptBehaviorMayBeSilentlyRewritten"]
             )
 
     def test_native_fixture_validates_arbitrary_declared_depth_and_chunk_split(self):

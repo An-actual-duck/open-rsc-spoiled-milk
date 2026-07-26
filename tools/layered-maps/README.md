@@ -70,6 +70,23 @@ rewriting creator expansions. Transition conversion and complete-world
 replacement ownership must finish before private runtime promotion. No
 game/export path is modified.
 
+The supplementary transition inventory is generated separately:
+
+```bash
+./tools/layered-maps/layered-maps.sh preservation-transitions
+```
+
+This command requires the accepted map baseline, losslessly normalizes the 20
+explicit `ObjectTelePoints.xml` edges, and inventories every authentic Java
+source with transition/location-mutation signals by path, hash, and lexical
+call counts. The compact accepted lock is
+`baselines/preservation-transition-compatibility-v1.json`; detailed output
+stays in the isolated workspace. Scripted quest gates, random offsets,
+transports, and unconventional or long-distance topology are deliberately
+classified as compatibility-runtime behavior rather than guessed into a
+declarative graph. The report is execution provenance supplementary to the
+12-file map baseline, not an expansion rewrite policy.
+
 ## Native package check
 
 `layered-world-package-v1` declares terrain with explicit
