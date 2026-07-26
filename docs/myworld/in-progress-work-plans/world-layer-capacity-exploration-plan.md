@@ -48,8 +48,9 @@ owner-accepted with adjacent-page walking, exact deep reconnect, restored
 fixture terrain, Man/item interaction, and stable package placement
 visibility. Cross-package transitions and retirement of the remaining packed
 Region carrier are the remaining Milestone E boundaries. Runtime checkpoint
-12 now implements and automated-validates the first of those boundaries with a
-separate `-4` package; focused owner acceptance is pending.
+12 implements and owner-validates the first of those boundaries with a
+separate `-4` package. Retirement of remaining packed Region
+terrain/collision backing from native scopes is next.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -741,8 +742,8 @@ Package-wide native runtime capacity is no longer bounded by the synthetic
 
 ### Authority Milestone E runtime checkpoint 12
 
-Implemented and automated/build validated on 2026-07-25; focused private-owner
-acceptance remains pending:
+Implemented, automated/build validated, and focused private-owner accepted on
+2026-07-25:
 
 - `NativeLayeredWorldPackageCatalog` composes one or more immutable package
   roots through the existing private package-path setting. One path retains
@@ -782,17 +783,32 @@ that destination preflight precedes Player mutation. The authoritative
 single-package path, package `0.7.0`, synthetic rollback gate, and all public
 defaults remain unchanged.
 
-Focused owner acceptance should:
+Focused owner acceptance completed:
 
-1. enter the accepted `-2` package and verify its original floor and
-   placements;
-2. run `::deepfixture package`, confirm level `-4`, package
-   `rsc-remastered.native-transition-lab`, a normal floor, and the three-coin
-   spawn;
-3. walk, collect the coins, logout, and reconnect exactly at level `-4`;
-4. run `::deepfixture package` again and confirm the original `-2` package
-   floor/placements return without stale `-4` terrain or items; and
-5. exit to the saved surface location.
+- initial login restored `(448,600,L-2)` through package
+  `rsc-remastered.native-loader-lab@0.7.0`, protocol sequence `1`, center
+  `(18,25)`, readiness `4/9`, and both-package startup count `2`;
+- the owner visually confirmed the accepted `-2` floor and placements before
+  `::deepfixture package` committed the exact
+  `CROSS_PACKAGE native-loader-lab -> native-transition-lab` transition to
+  `(450,600,L-4)`;
+- the client changed to package
+  `rsc-remastered.native-transition-lab@0.1.0`, protocol sequence `2`,
+  readiness `4/9`, and manifest prefix `e1fecf41609a`. The owner confirmed the
+  floor and walking, then collected the package-owned three-coin spawn;
+- normal logout saved `(451,604,L-4)`. Reconnect restored that exact signed
+  location with a fresh protocol sequence `1`, the same transition package
+  and readiness identity, and no stale `-2` scene;
+- the reverse command committed
+  `CROSS_PACKAGE native-transition-lab -> native-loader-lab`, and client
+  sequence `2` rebuilt the original `-2` package at `(450,600)` with the
+  original placement/collision status;
+- exit committed `EXIT_PACKAGE native-loader-lab -> legacy`, and client
+  sequence `3` restored `(450,600,L0)` through
+  `legacy-packed-y-v1`; and
+- the owner reported no hitch across visuals, movement, item interaction,
+  logout/reconnect, either package change, or surface recovery. Neither client
+  nor server emitted a route-time exception.
 
 This checkpoint does not yet claim authored transition-graph schema, arbitrary
 package hot-loading, true instances, signed-X/Y carrier retirement, packed
@@ -17884,7 +17900,7 @@ private environment should validate at least:
 | 2026-07-25 | Complete and accept Milestone E placement checkpoints 8 through 10 for static, dynamic, and harvesting objects. | Packages `0.4.0` through `0.6.0` prove level-qualified scenery/boundary visibility and collision, generation-fenced Door replacement, and ordinary Tree-to-stump-to-Tree delayed restoration without packed Region membership. Automated authority lineage, authoritative builds, matched private startup, focused owner interaction, exact deep reconnect, and duplicate-free live counts pass |
 | 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Owner-accepted after correcting two stale bounded-room assumptions; adjacent-page walking, exact deep reconnect at `(490,620)`, restored package `0.7.0` fixture terrain and placements, Man/item interaction, exact `(448,600,L-2)` reconnect, and prior surface exit pass while synthetic D remains independent rollback |
 | 2026-07-25 | Make the package-wide native runtime fixture renderable across all declared terrain rather than retaining a maximum-value codec band outside the former bounded room. | Package `0.7.0` uses a valid non-default blocking band, adds a runtime-definition guard, preserves full-range acceptance in the generic package codec, and passes focused owner floor/placement/interaction/reconnect acceptance |
-| 2026-07-25 | Implement Milestone E runtime checkpoint 12 as a fail-closed multi-package catalog and atomic explicit package-transition boundary. | Implemented and automated/build validated; distinct `-4` transition package, exact non-overlapping ownership, destination readiness preflight, package-scoped protocol/object identity, implicit-cross refusal, 35-test A-E lineage, and authoritative builds pass; focused owner transition/reconnect acceptance pending |
+| 2026-07-25 | Implement Milestone E runtime checkpoint 12 as a fail-closed multi-package catalog and atomic explicit package-transition boundary. | Owner-accepted; distinct `-4` transition package, exact non-overlapping ownership, destination readiness preflight, package-scoped protocol/object identity, implicit-cross refusal, 35-test A-E lineage, authoritative builds, both package switches, three-coin interaction, exact `L-4` reconnect, and legacy surface exit pass |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

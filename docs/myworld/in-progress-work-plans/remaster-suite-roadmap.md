@@ -882,9 +882,12 @@ fail-closed catalog, preflights explicit package changes before Player state
 mutation, resolves protocol-v4 identity and package-scoped dynamic objects
 through exact destination ownership, and adds an isolated `-4` transition
 package. The 35-test A-through-E lineage and authoritative server/client builds
-pass; focused owner transition/reconnect acceptance remains pending. After
-that acceptance, retirement of packed Region terrain/collision backing from
-native scopes is the remaining Milestone E engine boundary.
+pass. Focused owner acceptance also passes both package changes, normal
+walking and package-owned item interaction, exact level `-4` logout/reconnect,
+return to the original `-2` package, and legacy surface exit without stale
+scene state or a route-time exception. Retirement of packed Region
+terrain/collision backing from native scopes is now the remaining Milestone E
+engine boundary.
 
 ### Phase 6: Layered World Builder generation
 
