@@ -5,7 +5,6 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Path;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 
 public abstract class WalkToMobAction extends WalkToAction {
@@ -75,11 +74,10 @@ public abstract class WalkToMobAction extends WalkToAction {
 		}
 		try {
 			WorldLocation checkedLocation =
-				LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+				getPlayer().getWorld().getRegionManager()
+					.fromRuntimeCompatibilityPoint(
 					checkedPoint,
 					getPlayer().getWorldLocation(),
-					getPlayer().getConfig()
-						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
 					false);
 			return PathValidation.checkAdjacentDistance(
 				getPlayer().getWorld(),

@@ -429,9 +429,7 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         )
         self.assertIn("nativeLayeredSceneTerrain(location)", updater)
         self.assertIn(
-            "|| !LayeredCompatibilityPointAdapter\n"
-            "\t\t\t\t.isSyntheticDeepLevel(location)) {\n"
-            "\t\t\treturn null;",
+            ".hasNativeLayeredTerrain(location)",
             updater,
         )
         self.assertNotIn(

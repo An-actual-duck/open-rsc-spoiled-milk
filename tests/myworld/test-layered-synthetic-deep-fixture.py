@@ -252,8 +252,10 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
             "WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY",
         ):
             self.assertIn(prerequisite, region_manager)
-        self.assertIn("LayeredCompatibilityPointAdapter", entity)
-        self.assertIn("LayeredCompatibilityPointAdapter", player)
+        self.assertIn("toRuntimeCompatibilityPoint", entity)
+        self.assertIn("fromRuntimeCompatibilityPoint", entity)
+        self.assertIn("toRuntimeCompatibilityPoint", player)
+        self.assertIn("fromRuntimeCompatibilityPoint", player)
         self.assertIn("LayeredCompatibilityPointAdapter", path_validation)
         self.assertIn("WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", player_service)
         self.assertIn('command.equalsIgnoreCase("deepfixture")', development)
@@ -270,7 +272,11 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         )
         self.assertIn("syntheticDeepFixtureTile", region_manager)
         self.assertIn(
-            "LayeredCompatibilityPointAdapter.deepLocation(x, y)",
+            "hasNativeLayeredTerrain(owner)",
+            path_validation,
+        )
+        self.assertIn(
+            "LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(owner)",
             path_validation,
         )
         self.assertIn(

@@ -4,6 +4,7 @@ import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldMapSectorId;
 import com.openrsc.server.model.world.coordinate.WorldSpaceId;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
@@ -45,7 +46,7 @@ public final class NativeLayeredWorldPackage {
 	public static final String ENTITY_PLACEMENT_ENCODING =
 		WORLD_PLACEMENT_ENCODING_V2;
 	public static final String RUNTIME_PROJECTION_ID =
-		"native-layered-package-v1";
+		LayeredCompatibilityPointAdapter.NATIVE_LAYERED_PACKAGE_ID;
 
 	private static final long MAX_JSON_BYTES = 16L * 1024L * 1024L;
 	private static final int MAX_WORLD_SPACES = 128;

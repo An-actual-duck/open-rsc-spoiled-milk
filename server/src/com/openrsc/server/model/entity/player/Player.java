@@ -40,7 +40,6 @@ import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
-import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationAuthority;
@@ -3247,8 +3246,10 @@ public final class Player extends Mob {
 		}
 		boolean allowSynthetic =
 			getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
+		boolean nativeLayered = getWorld().getRegionManager()
+			.hasNativeLayeredTerrain(location);
 		Point projection = layeredLocationAuthority.initialize(
-			location, allowSynthetic);
+			location, allowSynthetic, nativeLayered);
 		synchronizeLayeredMirrors(projection, location);
 		if (getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
 			super.setInitialWorldLocation(location);
@@ -3259,18 +3260,23 @@ public final class Player extends Mob {
 
 	public WorldLocation getLayeredLocation() {
 		if (getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			WorldLocation entityLocation = getWorldLocation();
+			boolean nativeLayered = getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(entityLocation);
 			WorldLocation authoritative =
 				layeredLocationAuthority.requireCurrent(
 					getLocation(),
-					getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+					getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+					nativeLayered);
 			WorldLocation mirrored = layeredLocationMirror.requireCurrent(
 				getLocation(),
-				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				nativeLayered);
 			if (!authoritative.equals(mirrored)) {
 				throw new IllegalStateException(
 					"Layered Player authority differs from its compatibility mirror");
 			}
-			if (!authoritative.equals(getWorldLocation())) {
+			if (!authoritative.equals(entityLocation)) {
 				throw new IllegalStateException(
 					"Layered Player authority differs from Entity spatial authority");
 			}
@@ -3279,7 +3285,9 @@ public final class Player extends Mob {
 		WorldLocation mirrored =
 			layeredLocationMirror.requireCurrent(
 				getLocation(),
-				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				getWorld().getRegionManager().hasNativeLayeredTerrain(
+					getWorldLocation()));
 		if (!mirrored.equals(getWorldLocation())) {
 			throw new IllegalStateException(
 				"Layered Player mirror differs from Entity spatial location");
@@ -3738,7 +3746,9 @@ public final class Player extends Mob {
 		WorldLocation layeredLocation = layeredLocationMirror.synchronize(
 			point,
 			layeredTarget,
-			getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+			getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+			getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(layeredTarget));
 		layeredRegionMembershipMirror.synchronize(layeredLocation);
 		WorldRegionWindow window = getWorld().getRegionManager()
 			.getLayeredVisibleRegionWindow(layeredLocation);
@@ -4758,10 +4768,10 @@ public final class Player extends Mob {
 				? getLayeredLocation()
 				: null;
 			setLayeredLocation(
-				LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+				getWorld().getRegionManager()
+					.fromRuntimeCompatibilityPoint(
 					point,
 					current,
-					getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
 					teleported),
 				teleported);
 			return;
@@ -4776,10 +4786,8 @@ public final class Player extends Mob {
 			throw new IllegalStateException(
 				"Layered Player location authority is disabled");
 		}
-		Point projection =
-			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				location,
-				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+		Point projection = getWorld().getRegionManager()
+			.toRuntimeCompatibilityPoint(location);
 		setLocationCompatibility(projection, location, teleported);
 	}
 
@@ -4814,7 +4822,9 @@ public final class Player extends Mob {
 		if (layeredTarget != null) {
 			layeredLocationAuthority.move(
 				layeredTarget,
-				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(layeredTarget));
 		}
 		getLayeredVisibilityWindow();
 		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {

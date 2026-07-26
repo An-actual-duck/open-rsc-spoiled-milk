@@ -24,12 +24,26 @@ public final class LayeredLocationMirror {
 		final Point compatibilityPoint,
 		final WorldLocation projectedLocation,
 		final boolean allowSyntheticDeepFixture) {
+		return synchronize(
+			compatibilityPoint,
+			projectedLocation,
+			allowSyntheticDeepFixture,
+			false);
+	}
+
+	public WorldLocation synchronize(
+		final Point compatibilityPoint,
+		final WorldLocation projectedLocation,
+		final boolean allowSyntheticDeepFixture,
+		final boolean nativeLayeredLocation) {
 		Objects.requireNonNull(compatibilityPoint, "compatibilityPoint");
 		WorldLocation projected = Objects.requireNonNull(
 			projectedLocation, "projectedLocation");
 		Point reconstructed =
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				projected, allowSyntheticDeepFixture);
+				projected,
+				allowSyntheticDeepFixture,
+				nativeLayeredLocation);
 		if (reconstructed.getX() != compatibilityPoint.getX()
 			|| reconstructed.getY() != compatibilityPoint.getY()) {
 			throw new IllegalArgumentException(
@@ -49,6 +63,14 @@ public final class LayeredLocationMirror {
 	public WorldLocation requireCurrent(
 		final Point authoritativePoint,
 		final boolean allowSyntheticDeepFixture) {
+		return requireCurrent(
+			authoritativePoint, allowSyntheticDeepFixture, false);
+	}
+
+	public WorldLocation requireCurrent(
+		final Point authoritativePoint,
+		final boolean allowSyntheticDeepFixture,
+		final boolean nativeLayeredLocation) {
 		Objects.requireNonNull(authoritativePoint, "authoritativePoint");
 		State current = state.get();
 		if (current == null) {
@@ -61,7 +83,9 @@ public final class LayeredLocationMirror {
 		}
 		Point reconstructed =
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				current.location, allowSyntheticDeepFixture);
+				current.location,
+				allowSyntheticDeepFixture,
+				nativeLayeredLocation);
 		if (reconstructed.getX() != authoritativePoint.getX()
 			|| reconstructed.getY() != authoritativePoint.getY()) {
 			throw new IllegalStateException(

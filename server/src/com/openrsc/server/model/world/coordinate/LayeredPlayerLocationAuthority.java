@@ -31,11 +31,21 @@ public final class LayeredPlayerLocationAuthority {
 	public Point initialize(
 		final WorldLocation proposedLocation,
 		final boolean allowSyntheticDeepFixture) {
+		return initialize(
+			proposedLocation, allowSyntheticDeepFixture, false);
+	}
+
+	public Point initialize(
+		final WorldLocation proposedLocation,
+		final boolean allowSyntheticDeepFixture,
+		final boolean nativeLayeredLocation) {
 		WorldLocation checked = Objects.requireNonNull(
 			proposedLocation, "proposedLocation");
 		Point projection =
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				checked, allowSyntheticDeepFixture);
+				checked,
+				allowSyntheticDeepFixture,
+				nativeLayeredLocation);
 		location.set(checked);
 		return projection;
 	}
@@ -52,8 +62,18 @@ public final class LayeredPlayerLocationAuthority {
 	public Point move(
 		final WorldLocation proposedLocation,
 		final boolean allowSyntheticDeepFixture) {
+		return move(proposedLocation, allowSyntheticDeepFixture, false);
+	}
+
+	public Point move(
+		final WorldLocation proposedLocation,
+		final boolean allowSyntheticDeepFixture,
+		final boolean nativeLayeredLocation) {
 		requireInitialized();
-		return initialize(proposedLocation, allowSyntheticDeepFixture);
+		return initialize(
+			proposedLocation,
+			allowSyntheticDeepFixture,
+			nativeLayeredLocation);
 	}
 
 	public WorldLocation requireCurrent(final Point derivedLegacyPoint) {
@@ -63,11 +83,21 @@ public final class LayeredPlayerLocationAuthority {
 	public WorldLocation requireCurrent(
 		final Point derivedLegacyPoint,
 		final boolean allowSyntheticDeepFixture) {
+		return requireCurrent(
+			derivedLegacyPoint, allowSyntheticDeepFixture, false);
+	}
+
+	public WorldLocation requireCurrent(
+		final Point derivedLegacyPoint,
+		final boolean allowSyntheticDeepFixture,
+		final boolean nativeLayeredLocation) {
 		Objects.requireNonNull(derivedLegacyPoint, "derivedLegacyPoint");
 		WorldLocation current = requireInitialized();
 		Point expected =
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				current, allowSyntheticDeepFixture);
+				current,
+				allowSyntheticDeepFixture,
+				nativeLayeredLocation);
 		if (expected.getX() != derivedLegacyPoint.getX()
 			|| expected.getY() != derivedLegacyPoint.getY()) {
 			throw new IllegalStateException(

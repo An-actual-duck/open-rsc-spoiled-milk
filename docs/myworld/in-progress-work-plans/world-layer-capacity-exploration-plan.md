@@ -38,8 +38,13 @@ visibility/collision transactions, and an ordinary Door/Doorframe fixture;
 automated validation and the focused owner route pass. Broader harvesting and
 delayed restoration now have an ordinary package-owned Tree/Treestump fixture
 and passing automated coverage plus focused owner acceptance through the real
-Woodcutting and delayed-spawn paths. Removal of the bounded compatibility
-receipt remains the following implementation boundary.
+Woodcutting and delayed-spawn paths. Native runtime selection, movement,
+collision lookup, persistence, protocol scope, and diagnostics now follow
+exact package coverage without requiring the bounded synthetic gate or its
+21-by-21 receipt. The retained packed `Point` is only a temporary non-negative
+X/Y carrier for unchanged APIs; synthetic Milestone D remains independently
+available as a rollback route. Cross-package transitions and retirement of the
+remaining packed Region carrier are later Milestone E boundaries.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -611,6 +616,52 @@ The focused owner route is accepted:
   natural harvest/restoration cycle plus reconnect is sufficient for owner
   acceptance because the executable registry regression separately repeats
   Tree-to-stump-to-Tree replacement and asserts duplicate refusal.
+
+### Authority Milestone E runtime checkpoint 11
+
+Implemented and automated/build validated on 2026-07-25; focused owner
+acceptance remains pending:
+
+- the native package now starts with Authority Milestones A, B, and C enabled
+  and no longer requires the synthetic Milestone D gate;
+- `RegionManager.hasNativeLayeredTerrain(...)` is the one native projection
+  selector. Exact package coverage—not level `-2`, a fixture rectangle, or a
+  global permission boolean—selects native terrain, compatibility-carrier
+  projection, signed-scope movement reconstruction, persistence adapter,
+  protocol context, path/collision lookup, and developer diagnostics;
+- native ordinary movement may cross adjacent package sectors while retaining
+  the same world space and signed level. It refuses an absent package tile;
+  only an explicit transition may leave that scope;
+- saved native coordinates use `native-layered-package-v1`. A saved synthetic
+  coordinate migrates in place only when that exact location is backed by the
+  loaded native package. If the native gate/package is absent or the exact
+  saved tile is no longer covered, restore safely rebases from the unchanged
+  legacy X/Y receipt rather than initializing an unowned signed location;
+- server package validation no longer requires every tile in X `440..460`, Y
+  `590..610` to exist or be flat. It requires the owner-route entry and every
+  package placement anchor to have package terrain, while the package codec
+  continues to validate all declared sectors independently;
+- the native carrier currently accepts non-negative X/Y through
+  `Short.MAX_VALUE`. This removes the synthetic 21-by-21 capacity boundary but
+  does not yet claim signed X/Y or complete retirement of packed `Point`/
+  `Region` compatibility; and
+- synthetic Milestone D remains default-off and independently runnable. Gate
+  rollback therefore has a tested safe receipt path without making it a
+  prerequisite of native operation.
+
+The full 30-test Authority A-through-E lineage passes, including new native
+projection/persistence coverage outside the old fixture bounds and exact-
+coverage migration/refusal checks. The authoritative 864-core/488-plugin
+server and 262-source client builds pass. Ordinary and public defaults remain
+unchanged.
+
+The focused owner route for this checkpoint must run A+B+C+native with the
+synthetic gate absent. It must enter package level `-2`, move/teleport beyond
+the old X `440..460`, Y `590..610` bounds and across an adjacent package page,
+retain exact level/package scope, walk normally, reconnect at that coordinate,
+return to the fixture placements for one interaction/status check, and exit
+to the saved surface location. This proves the synthetic receipt is no longer
+native runtime capacity.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -17694,6 +17745,7 @@ private environment should validate at least:
 | 2026-07-25 | Complete and accept Milestone E runtime checkpoint 6 with matched protocol-v4 radius-one 24-tile readiness. | Automated wire tests and owner evidence prove visible full-fidelity terrain, both chunk-boundary axes, `4/9 -> 6/9 -> 4/9` readiness, stable same-package scene scope, interaction, exact depth reconnect, and exit |
 | 2026-07-25 | Complete and accept Milestone E placement checkpoint 7 with package-owned NPC/item world population. | Package `0.3.0`, strict tool/server decode, layered spawn identity, generation-safe item respawn, command-independent world registration, fail-closed definition validation, focused tests, authoritative build, and matched private startup pass. Owner evidence proves normal Man roam/dialogue, two collections of the same five-coin spawn across its five-second respawn, exact level `-2` reconnect, no duplicates, and normal exit |
 | 2026-07-25 | Complete and accept Milestone E placement checkpoints 8 through 10 for static, dynamic, and harvesting objects. | Packages `0.4.0` through `0.6.0` prove level-qualified scenery/boundary visibility and collision, generation-fenced Door replacement, and ordinary Tree-to-stump-to-Tree delayed restoration without packed Region membership. Automated authority lineage, authoritative builds, matched private startup, focused owner interaction, exact deep reconnect, and duplicate-free live counts pass |
+| 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Implemented and automated/build validated; synthetic D remains independent rollback, exact uncovered saves safely rebase, and native-only focused owner acceptance remains pending |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

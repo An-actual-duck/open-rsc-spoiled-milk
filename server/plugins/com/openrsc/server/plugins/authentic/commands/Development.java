@@ -1424,9 +1424,8 @@ public final class Development implements CommandTrigger {
 			player.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
 		boolean syntheticDeep =
 			player.getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
-		String projectionId =
-			LayeredCompatibilityPointAdapter.projectionId(
-				location, syntheticDeep);
+		String projectionId = player.getWorld().getRegionManager()
+			.runtimeProjectionId(location);
 		player.message(
 			messagePrefix
 				+ "Layered location authority="
@@ -1459,17 +1458,23 @@ public final class Development implements CommandTrigger {
 		final Player player,
 		final String command,
 		final String[] args) {
-		if (!player.getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE) {
+		RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		boolean nativeRoute =
+			player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+				&& regionManager.getNativeLayeredWorldPackage() != null;
+		if (!player.getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE
+			&& !nativeRoute) {
 			player.message(messagePrefix
-				+ "Synthetic deep fixture is disabled on this server."
-				+ " Enable it only on an isolated private/local route.");
+				+ "Layered deep route is disabled on this server."
+				+ " Enable a private native package or synthetic fixture.");
 			return;
 		}
 		if (!player.getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
 			|| !player.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
 			|| !player.getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY) {
 			player.message(messagePrefix
-				+ "Synthetic deep fixture requires layered model, spatial,"
+				+ "Layered deep route requires layered model, spatial,"
 				+ " and protocol authority.");
 			return;
 		}
@@ -1521,15 +1526,27 @@ public final class Development implements CommandTrigger {
 			player.getCache().set(
 				SYNTHETIC_DEEP_RETURN_LEVEL_CACHE,
 				current.getCoordinate().getLevel());
-			player.setLayeredLocation(
-				LayeredCompatibilityPointAdapter.syntheticDeepEntry(), true);
+			WorldLocation entry =
+				player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+					? WorldLocation.global(new WorldCoordinate(
+						LayeredCompatibilityPointAdapter
+							.SYNTHETIC_DEEP_ENTRY_X,
+						LayeredCompatibilityPointAdapter
+							.SYNTHETIC_DEEP_ENTRY_Y,
+						LayeredCompatibilityPointAdapter
+							.SYNTHETIC_DEEP_LEVEL))
+					: LayeredCompatibilityPointAdapter.syntheticDeepEntry();
+			player.setLayeredLocation(entry, true);
 			player.resetPath();
 			ActionSender.sendWorldInfo(player);
 		}
 		ensureSyntheticDeepFixtureEntities(player);
 		showSyntheticDeepFixtureStatus(player);
 		player.message(messagePrefix
-			+ "Synthetic deep fixture entered. Use ::deepfixture exit"
+			+ (player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+				? "Native layered route entered. "
+				: "Synthetic deep fixture entered. ")
+			+ "Use ::deepfixture exit"
 			+ " to return.");
 	}
 
@@ -1541,8 +1558,8 @@ public final class Development implements CommandTrigger {
 			return;
 		}
 		WorldLocation destination = syntheticDeepReturnLocation(player);
-		LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-			destination, true);
+		player.getWorld().getRegionManager()
+			.toRuntimeCompatibilityPoint(destination);
 		player.setLayeredLocation(destination, true);
 		player.resetPath();
 		ActionSender.sendWorldInfo(player);
@@ -1576,8 +1593,8 @@ public final class Development implements CommandTrigger {
 							SYNTHETIC_DEEP_RETURN_Y_CACHE),
 						player.getCache().getInt(
 							SYNTHETIC_DEEP_RETURN_LEVEL_CACHE)));
-				LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-					candidate, false);
+				player.getWorld().getRegionManager()
+					.toRuntimeCompatibilityPoint(candidate);
 				return candidate;
 			}
 		} catch (RuntimeException invalidReturnRecord) {
@@ -1644,17 +1661,18 @@ public final class Development implements CommandTrigger {
 	private void showSyntheticDeepFixtureStatus(final Player player) {
 		WorldLocation location = player.getLayeredLocation();
 		WorldCoordinate coordinate = location.getCoordinate();
-		Point receipt =
-			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				location, true);
-		boolean inside =
-			LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location);
+		RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		Point receipt = regionManager.toRuntimeCompatibilityPoint(location);
 		NativeLayeredWorldPackage nativePackage =
-			player.getWorld().getRegionManager()
-				.getNativeLayeredWorldPackage();
-		boolean nativeTerrain = inside
-			&& player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
-			&& nativePackage != null;
+			regionManager.getNativeLayeredWorldPackage();
+		boolean nativeTerrain =
+			player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			&& nativePackage != null
+			&& regionManager.hasNativeLayeredTerrain(location);
+		boolean inside = nativeTerrain
+			|| LayeredCompatibilityPointAdapter
+				.isSyntheticDeepLevel(location);
 		int nativeChunkX = 0;
 		int nativeChunkY = 0;
 		int nativeReadyChunks = 0;
@@ -1675,8 +1693,6 @@ public final class Development implements CommandTrigger {
 			}
 		}
 		int npcCount = 0;
-		RegionManager regionManager =
-			player.getWorld().getRegionManager();
 		for (Npc npc : player.getWorld().getNpcs()) {
 			if (!npc.isRemoved()
 				&& (nativeTerrain
@@ -1720,10 +1736,7 @@ public final class Development implements CommandTrigger {
 				}
 			}
 		}
-		String projection = nativeTerrain
-			? NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID
-			: LayeredCompatibilityPointAdapter.projectionId(
-				location, true);
+		String projection = regionManager.runtimeProjectionId(location);
 		player.message(messagePrefix
 			+ (nativeTerrain ? "Native layered deep "
 				: "Synthetic deep ")
@@ -1755,22 +1768,30 @@ public final class Development implements CommandTrigger {
 			+ "Deep fixture logical=" + location.getWorldSpace().getValue()
 			+ "(" + coordinate.getX() + "," + coordinate.getY()
 			+ ",L" + coordinate.getLevel() + ")"
-			+ "; receipt=(" + receipt.getX() + "," + receipt.getY()
+			+ (nativeTerrain ? "; carrier=(" : "; receipt=(")
+			+ receipt.getX() + "," + receipt.getY()
 			+ ",P"
-			+ LayeredCompatibilityPointAdapter.compatibilityPlane(
-				location, true)
+			+ regionManager.runtimeCompatibilityPlane(location)
 			+ ")"
-			+ "; bounds=("
-			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_X
-			+ ".."
-			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_X
-			+ ","
-			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_Y
-			+ ".."
-			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_Y
-			+ ",L"
-			+ LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_LEVEL
-			+ "); live=" + npcCount + "n/" + itemCount + "i/"
+			+ (nativeTerrain
+				? "; coverage=package"
+				: "; bounds=("
+					+ LayeredCompatibilityPointAdapter
+						.SYNTHETIC_DEEP_MIN_X
+					+ ".."
+					+ LayeredCompatibilityPointAdapter
+						.SYNTHETIC_DEEP_MAX_X
+					+ ","
+					+ LayeredCompatibilityPointAdapter
+						.SYNTHETIC_DEEP_MIN_Y
+					+ ".."
+					+ LayeredCompatibilityPointAdapter
+						.SYNTHETIC_DEEP_MAX_Y
+					+ ",L"
+					+ LayeredCompatibilityPointAdapter
+						.SYNTHETIC_DEEP_LEVEL
+					+ ")")
+			+ "; live=" + npcCount + "n/" + itemCount + "i/"
 			+ sceneryCount + "s/" + boundaryCount + "b"
 			+ "; collision="
 			+ (nativeTerrain

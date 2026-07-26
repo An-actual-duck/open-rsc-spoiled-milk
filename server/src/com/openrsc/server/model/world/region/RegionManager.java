@@ -171,11 +171,15 @@ public class RegionManager {
 		}
 		if (world.getServer().getConfig()
 				.WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
-			&& !world.getServer().getConfig()
-				.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE) {
+			&& (!world.getServer().getConfig()
+					.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+				|| !world.getServer().getConfig()
+					.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+				|| !world.getServer().getConfig()
+					.WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY)) {
 			throw new IllegalStateException(
-				"Layered native terrain package requires the accepted synthetic "
-					+ "deep compatibility boundary during this private milestone");
+				"Layered native terrain package requires layered Player "
+					+ "location, spatial runtime, and protocol/client authority");
 		}
 		this.nativeLayeredWorldPackage =
 			loadNativeLayeredWorldPackage(world);
@@ -248,42 +252,47 @@ public class RegionManager {
 					+ "one placement set, NPC, ground item, two scenery "
 					+ "objects, and two boundaries");
 		}
-		for (int x = LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_X;
-			x <= LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_X;
-			x++) {
-			for (int y = LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MIN_Y;
-				y <= LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_MAX_Y;
-				y++) {
-				WorldLocation location = LayeredCompatibilityPointAdapter.deepLocation(x, y);
-				NativeLayeredTerrainTile tile = loaded.findTile(location)
-					.orElseThrow(() -> new IllegalStateException(
-						"Native layered terrain package has no fixture tile at "
-							+ location));
-				if (tile.getOverlay() != 0
-					|| tile.getVerticalWall() != 0
-					|| tile.getHorizontalWall() != 0
-					|| tile.getDiagonalWall() != 0) {
-					throw new IllegalStateException(
-						"The first native deep runtime fixture requires passable "
-							+ "wall-free overlay-0 terrain at " + location);
-				}
-			}
+		WorldLocation entry = WorldLocation.global(
+			new com.openrsc.server.model.world.coordinate.WorldCoordinate(
+				LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_ENTRY_X,
+				LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_ENTRY_Y,
+				LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_LEVEL));
+		LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+			entry, false, true);
+		NativeLayeredTerrainTile entryTile = loaded.findTile(entry)
+			.orElseThrow(() -> new IllegalStateException(
+				"Native layered terrain package has no owner-route entry tile at "
+					+ entry));
+		if (entryTile.getOverlay() != 0
+			|| entryTile.getVerticalWall() != 0
+			|| entryTile.getHorizontalWall() != 0
+			|| entryTile.getDiagonalWall() != 0) {
+			throw new IllegalStateException(
+				"The first native owner-route entry requires passable "
+					+ "wall-free overlay-0 terrain at " + entry);
 		}
 		for (NativeLayeredPlacementSet set
 			: loaded.getPlacementSets().values()) {
 			for (NativeLayeredNpcPlacement npc : set.getNpcs()) {
-				requireNativeDeepFixtureLocation(npc.getStart());
+				requireNativeRuntimeLocation(loaded, npc.getStart());
 			}
 			for (NativeLayeredGroundItemPlacement item
 				: set.getGroundItems()) {
-				requireNativeDeepFixtureLocation(item.getLocation());
+				requireNativeRuntimeLocation(loaded, item.getLocation());
 			}
 		}
 	}
 
-	private static void requireNativeDeepFixtureLocation(
+	private static void requireNativeRuntimeLocation(
+		final NativeLayeredWorldPackage loaded,
 		final WorldLocation location) {
-		LayeredCompatibilityPointAdapter.toCompatibilityPoint(location, true);
+		LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+			location, false, true);
+		if (!loaded.findTile(location).isPresent()) {
+			throw new IllegalStateException(
+				"Native layered placement has no package terrain at "
+					+ location);
+		}
 	}
 
 	public void load() {
@@ -721,14 +730,11 @@ public class RegionManager {
 			checkedObserver, observerLocation);
 		WorldLocation target;
 		try {
-			target =
-				LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
-					Objects.requireNonNull(
-						legacyLocation, "legacyLocation"),
-					observerLocation,
-					getWorld().getServer().getConfig()
-						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
-					false);
+			target = fromRuntimeCompatibilityPoint(
+				Objects.requireNonNull(
+					legacyLocation, "legacyLocation"),
+				observerLocation,
+				false);
 		} catch (IllegalArgumentException outsideScope) {
 			return null;
 		}
@@ -3556,18 +3562,103 @@ public class RegionManager {
 	}
 
 	/**
+	 * Returns whether the exact signed location is backed by the active native
+	 * package. This is the native runtime projection selector; level number and
+	 * the former synthetic fixture rectangle are not selectors.
+	 */
+	public boolean hasNativeLayeredTerrain(
+		final WorldLocation location) {
+		return nativeLayeredWorldPackage != null
+			&& nativeLayeredWorldPackage.findTile(
+				Objects.requireNonNull(location, "location")).isPresent();
+	}
+
+	public Point toRuntimeCompatibilityPoint(
+		final WorldLocation location) {
+		WorldLocation checked = Objects.requireNonNull(location, "location");
+		return LayeredCompatibilityPointAdapter.toCompatibilityPoint(
+			checked,
+			getWorld().getServer().getConfig()
+				.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+			hasNativeLayeredTerrain(checked));
+	}
+
+	public String runtimeProjectionId(
+		final WorldLocation location) {
+		WorldLocation checked = Objects.requireNonNull(location, "location");
+		return LayeredCompatibilityPointAdapter.projectionId(
+			checked,
+			getWorld().getServer().getConfig()
+				.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+			hasNativeLayeredTerrain(checked));
+	}
+
+	public int runtimeCompatibilityPlane(
+		final WorldLocation location) {
+		WorldLocation checked = Objects.requireNonNull(location, "location");
+		return LayeredCompatibilityPointAdapter.compatibilityPlane(
+			checked,
+			getWorld().getServer().getConfig()
+				.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+			hasNativeLayeredTerrain(checked));
+	}
+
+	/**
+	 * Reconstructs an unchanged Point proposal inside its established signed
+	 * scope. Native movement may cross any adjacent package sector but cannot
+	 * enter an absent tile. An explicit transition may leave native scope and
+	 * is then decoded by the legacy/synthetic rollback adapter.
+	 */
+	public WorldLocation fromRuntimeCompatibilityPoint(
+		final Point point,
+		final WorldLocation currentScope,
+		final boolean allowExplicitScopeExit) {
+		Point checked = Objects.requireNonNull(point, "point");
+		if (currentScope != null
+			&& hasNativeLayeredTerrain(currentScope)) {
+			WorldLocation candidate =
+				LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+					checked,
+					currentScope,
+					getWorld().getServer().getConfig()
+						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+					false,
+					true);
+			if (hasNativeLayeredTerrain(candidate)) {
+				return candidate;
+			}
+			if (!allowExplicitScopeExit) {
+				throw new IllegalArgumentException(
+					"Ordinary movement cannot leave native package terrain");
+			}
+			return LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+				checked,
+				null,
+				getWorld().getServer().getConfig()
+					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				true);
+		}
+		return LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+			checked,
+			currentScope,
+			getWorld().getServer().getConfig()
+				.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+			allowExplicitScopeExit);
+	}
+
+	/**
 	 * Resolves one logical tile through its exact legacy fragment while packed
 	 * terrain remains the compatibility backend.
 	 */
 	public TileValue getTile(final WorldLocation location) {
+		if (hasNativeLayeredTerrain(location)) {
+			return nativeLayeredTile(location);
+		}
 		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location)) {
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
 				location,
 				getWorld().getServer().getConfig()
 					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
-			if (nativeLayeredWorldPackage != null) {
-				return nativeDeepFixtureTile(location);
-			}
 			return syntheticDeepFixtureTile();
 		}
 		Point packed = requireLegacyTerrainProjection(location);
@@ -3575,6 +3666,10 @@ public class RegionManager {
 	}
 
 	public TileValue getMutableTile(final WorldLocation location) {
+		if (hasNativeLayeredTerrain(location)) {
+			throw new UnsupportedOperationException(
+				"Native layered package terrain is immutable");
+		}
 		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location)) {
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
 				location,
@@ -3594,7 +3689,7 @@ public class RegionManager {
 		return tile;
 	}
 
-	private TileValue nativeDeepFixtureTile(final WorldLocation location) {
+	private TileValue nativeLayeredTile(final WorldLocation location) {
 		NativeLayeredTerrainTile source = nativeLayeredWorldPackage
 			.findTile(location)
 			.orElseThrow(() -> new IllegalStateException(

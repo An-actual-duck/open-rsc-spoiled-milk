@@ -623,7 +623,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             region_manager,
         )
         self.assertIn(
-            "return nativeDeepFixtureTile(location)", region_manager
+            "return nativeLayeredTile(location)", region_manager
         )
         self.assertIn(
             "return syntheticDeepFixtureTile()", region_manager
@@ -632,13 +632,24 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "Native layered deep ", development
         )
         self.assertIn(
-            "NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID", development
+            "regionManager.runtimeProjectionId(location)", development
         )
         self.assertIn(
             "nativePackage.getPresentationChunkSize()", development
         )
         self.assertIn(
             "The first native layered streaming route requires 24-tile chunks",
+            region_manager,
+        )
+        self.assertIn(
+            "hasNativeLayeredTerrain", region_manager
+        )
+        self.assertIn(
+            "Ordinary movement cannot leave native package terrain",
+            region_manager,
+        )
+        self.assertNotIn(
+            "Layered native terrain package requires the accepted synthetic",
             region_manager,
         )
         self.assertIn("findPresentationChunk(", game_state_updater)

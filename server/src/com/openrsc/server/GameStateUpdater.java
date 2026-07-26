@@ -200,16 +200,14 @@ public final class GameStateUpdater {
 		}
 
 		final WorldLocation location = player.getWorldLocation();
-		final boolean allowSyntheticDeep =
-			getServer().getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
+		final com.openrsc.server.model.world.region.RegionManager regionManager =
+			getServer().getWorld().getRegionManager();
 		final Point expectedLegacy =
-			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				location, allowSyntheticDeep);
+			regionManager.toRuntimeCompatibilityPoint(location);
 		final NativeLayeredSceneTerrain nativeTerrain =
 			nativeLayeredSceneTerrain(location);
 		final String projectionId = nativeTerrain == null
-			? LayeredCompatibilityPointAdapter.projectionId(
-				location, allowSyntheticDeep)
+			? regionManager.runtimeProjectionId(location)
 			: NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID;
 		if (expectedLegacy.getX() != player.getX()
 			|| expectedLegacy.getY() != player.getY()) {
@@ -261,8 +259,8 @@ public final class GameStateUpdater {
 	private NativeLayeredSceneTerrain nativeLayeredSceneTerrain(
 		final WorldLocation location) {
 		if (!getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
-			|| !LayeredCompatibilityPointAdapter
-				.isSyntheticDeepLevel(location)) {
+			|| !getServer().getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(location)) {
 			return null;
 		}
 		final NativeLayeredWorldPackage terrainPackage =

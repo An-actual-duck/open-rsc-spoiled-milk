@@ -56,6 +56,18 @@ public final class LegacyPlayerLocationPersistenceSnapshot {
 		final Point authoritativeCompatibilityPoint,
 		final WorldLocation authoritativeLayeredLocation,
 		final boolean allowSyntheticDeepFixture) {
+		return capture(
+			authoritativeCompatibilityPoint,
+			authoritativeLayeredLocation,
+			allowSyntheticDeepFixture,
+			false);
+	}
+
+	public static LegacyPlayerLocationPersistenceSnapshot capture(
+		final Point authoritativeCompatibilityPoint,
+		final WorldLocation authoritativeLayeredLocation,
+		final boolean allowSyntheticDeepFixture,
+		final boolean nativeLayeredLocation) {
 		Point checkedPoint = Objects.requireNonNull(
 			authoritativeCompatibilityPoint,
 			"authoritativeCompatibilityPoint");
@@ -64,7 +76,9 @@ public final class LegacyPlayerLocationPersistenceSnapshot {
 			"authoritativeLayeredLocation");
 		Point expected =
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				checkedLocation, allowSyntheticDeepFixture);
+				checkedLocation,
+				allowSyntheticDeepFixture,
+				nativeLayeredLocation);
 		if (expected.getX() != checkedPoint.getX()
 			|| expected.getY() != checkedPoint.getY()) {
 			throw new IllegalArgumentException(

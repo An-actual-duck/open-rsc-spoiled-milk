@@ -92,15 +92,21 @@ distinct RLE tile bands and both sides of the 48-tile boundary, substitute
 level `-37`, and copy a sector into an unregistered legacy-shaped value for
 byte-fidelity checks.
 
-The fifth default-off private runtime gate consumes this source only for its
-bounded owner route. Matched scene-context protocol v4 projects a radius-one
-window of nine explicit 24-tile chunk slots. Available slots carry all 576
-fixed-width terrain tiles; unavailable slots are explicit void. The client
-accepts the complete window atomically, retains protocol-v3 uniform-page
-decoding for rollback evidence, and does not turn a same-package chunk shift
-into a full world-scope reset. The private server now registers the package
-NPC, item, Table, and Fence once during world population rather than creating
-them from the developer command. The layered item registry keys full
+The fifth default-off private runtime gate consumes this source wherever the
+exact signed location has package terrain; it no longer depends on the
+synthetic gate or its X `440..460`, Y `590..610` room. Matched scene-context
+protocol v4 projects a radius-one window of nine explicit 24-tile chunk slots.
+Available slots carry all 576 fixed-width terrain tiles; unavailable slots are
+explicit void. The client accepts the complete window atomically, retains
+protocol-v3 uniform-page decoding for rollback evidence, and does not turn a
+same-package chunk shift into a full world-scope reset. Native movement and
+persistence preserve world space and signed level across adjacent package
+pages and refuse absent package tiles. A saved synthetic record migrates only
+when the exact coordinate is package-backed; package removal or coverage loss
+safely rebases through the unchanged legacy receipt. The private server
+registers the package NPC, item, Table, Tree, Fence, and Door once during world
+population rather than creating them from the developer command. The layered
+item registry keys full
 `WorldLocation`, deduplicates the active spawn, and rejects stale respawn
 timers after a world lifecycle reset. Package objects enter the level-aware
 spatial index without occupying a packed `Region`; their collision is derived
@@ -110,9 +116,11 @@ owner-accepted for visuals, examine actions, blocking, alternate navigation,
 reconnect, and duplicate-free visibility. Dynamic door/object replacement and
 Tree-to-stump-to-Tree delayed restoration routes are also owner-accepted
 through their existing gameplay plugins, generation-fenced placement identity,
-level-qualified collision transactions, and exact deep reconnect. General
-world loading and removal of the bounded compatibility receipt remain later
-work.
+level-qualified collision transactions, and exact deep reconnect. The retained
+packed `Point` is now a temporary non-negative X/Y carrier rather than native
+scope authority; complete packed Region/carrier retirement, cross-package
+transitions, and general world loading remain later work. The old synthetic
+fixture remains an independent default-off rollback route.
 
 ## Preflight
 

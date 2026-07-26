@@ -789,7 +789,10 @@ public abstract class GameDatabase {
 					player.getLocation(),
 					player.getLayeredLocation(),
 					getServer().getConfig()
-						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE)
+						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+					player.getWorld().getRegionManager()
+						.hasNativeLayeredTerrain(
+							player.getLayeredLocation()))
 				: LegacyPlayerLocationPersistenceSnapshot.capture(
 					player.getLocation());
 

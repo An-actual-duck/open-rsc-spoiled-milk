@@ -765,11 +765,8 @@ public abstract class Mob extends Entity {
 	public void setWorldLocation(
 		final WorldLocation location,
 		final boolean teleported) {
-		Point projection =
-			com.openrsc.server.model.world.coordinate
-				.LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-					location,
-					getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+		Point projection = getWorld().getRegionManager()
+			.toRuntimeCompatibilityPoint(location);
 		if (!teleported && getLocation().isWithin1Tile(projection)) {
 			setHasMoved(true);
 		} else {

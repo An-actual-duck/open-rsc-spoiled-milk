@@ -178,6 +178,71 @@ public final class LayeredPlayerLocationAuthorityFixture {
             WorldLocation.global(new WorldCoordinate(450, 600, 0))),
             "disabled deep safely rebases to compatibility receipt");
 
+        WorldLocation nativeLocation =
+            WorldLocation.global(new WorldCoordinate(470, 620, -2));
+        LayeredPlayerLocationAuthority nativeAuthority =
+            new LayeredPlayerLocationAuthority();
+        Point nativeProjection = nativeAuthority.initialize(
+            nativeLocation, false, true);
+        check(nativeProjection.getX() == 470
+                && nativeProjection.getY() == 620,
+            "native projection is not limited by synthetic bounds");
+        check(nativeAuthority.requireCurrent(
+                nativeProjection, false, true).equals(nativeLocation),
+            "native authority");
+        expectIllegal(() -> nativeAuthority.requireCurrent(
+            nativeProjection, false, false));
+
+        Map<String, Object> nativeCache = new HashMap<String, Object>();
+        LayeredPlayerLocationPersistence.write(
+            nativeCache,
+            nativeLocation,
+            nativeProjection,
+            LayeredPlayerLocationPersistence.LEGACY_BOOTSTRAP,
+            false,
+            true);
+        check(LayeredCompatibilityPointAdapter.NATIVE_LAYERED_PACKAGE_ID
+            .equals(nativeCache.get(
+                LayeredPlayerLocationPersistence.KEY_ADAPTER)),
+            "native adapter persistence");
+        LayeredPlayerLocationPersistence.RestoreResult nativeExact =
+            LayeredPlayerLocationPersistence.restore(
+                nativeCache, nativeProjection, false,
+                location -> location.equals(nativeLocation));
+        check(!nativeExact.isRewriteRequired()
+                && nativeExact.getLocation().equals(nativeLocation),
+            "native exact restore");
+        LayeredPlayerLocationPersistence.RestoreResult nativeDisabled =
+            LayeredPlayerLocationPersistence.restore(
+                nativeCache, nativeProjection, false,
+                location -> false);
+        check(nativeDisabled.isRewriteRequired()
+                && LayeredPlayerLocationPersistence.NATIVE_DISABLED_REBASE
+                    .equals(nativeDisabled.getOrigin()),
+            "disabled native safely rebases");
+        LayeredPlayerLocationPersistence.RestoreResult syntheticMigrated =
+            LayeredPlayerLocationPersistence.restore(
+                deepCache, deepProjection, false,
+                location -> location.equals(deepLocation));
+        check(syntheticMigrated.isRewriteRequired()
+                && syntheticMigrated.getLocation().equals(deepLocation)
+                && LayeredPlayerLocationPersistence
+                    .SYNTHETIC_TO_NATIVE_MIGRATION.equals(
+                        syntheticMigrated.getOrigin()),
+            "accepted synthetic record migrates to native projection");
+        LayeredPlayerLocationPersistence.RestoreResult syntheticUncovered =
+            LayeredPlayerLocationPersistence.restore(
+                deepCache, deepProjection, false,
+                location -> false);
+        check(syntheticUncovered.isRewriteRequired()
+                && LayeredPlayerLocationPersistence
+                    .SYNTHETIC_DISABLED_REBASE.equals(
+                        syntheticUncovered.getOrigin())
+                && syntheticUncovered.getLocation().equals(
+                    WorldLocation.global(
+                        new WorldCoordinate(450, 600, 0))),
+            "uncovered synthetic record safely rebases");
+
         LayeredPlayerLocationAuthority reconnect =
             new LayeredPlayerLocationAuthority();
         Point reconnectProjection = reconnect.initialize(exact.getLocation());

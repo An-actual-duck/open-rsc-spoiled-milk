@@ -4,6 +4,7 @@ import com.openrsc.server.model.Point;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * Versioned Player-cache representation for an authoritative layered location.
@@ -20,6 +21,10 @@ public final class LayeredPlayerLocationPersistence {
 	public static final String LEGACY_REBASE = "legacy-rebase-v1";
 	public static final String SYNTHETIC_DISABLED_REBASE =
 		"synthetic-deep-disabled-rebase-v1";
+	public static final String NATIVE_DISABLED_REBASE =
+		"native-layered-disabled-rebase-v1";
+	public static final String SYNTHETIC_TO_NATIVE_MIGRATION =
+		"synthetic-to-native-layered-v1";
 
 	public static final String KEY_FORMAT = "layerloc_format";
 	public static final String KEY_SPACE = "layerloc_space";
@@ -56,8 +61,23 @@ public final class LayeredPlayerLocationPersistence {
 		final Map<String, Object> cache,
 		final Point legacyPoint,
 		final boolean allowSyntheticDeepFixture) {
+		return restore(
+			cache,
+			legacyPoint,
+			allowSyntheticDeepFixture,
+			location -> false);
+	}
+
+	public static RestoreResult restore(
+		final Map<String, Object> cache,
+		final Point legacyPoint,
+		final boolean allowSyntheticDeepFixture,
+		final Predicate<WorldLocation> nativeLayeredCoverage) {
 		Objects.requireNonNull(cache, "cache");
 		Objects.requireNonNull(legacyPoint, "legacyPoint");
+		Predicate<WorldLocation> checkedNativeCoverage =
+			Objects.requireNonNull(
+				nativeLayeredCoverage, "nativeLayeredCoverage");
 
 		int present = 0;
 		for (String key : KEYS) {
@@ -90,12 +110,16 @@ public final class LayeredPlayerLocationPersistence {
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
 				persisted,
 				LayeredCompatibilityPointAdapter
-					.SYNTHETIC_DEEP_FIXTURE_ID.equals(adapter));
+					.SYNTHETIC_DEEP_FIXTURE_ID.equals(adapter),
+				LayeredCompatibilityPointAdapter
+					.NATIVE_LAYERED_PACKAGE_ID.equals(adapter));
 		String expectedAdapter =
 			LayeredCompatibilityPointAdapter.projectionId(
 				persisted,
 				LayeredCompatibilityPointAdapter
-					.SYNTHETIC_DEEP_FIXTURE_ID.equals(adapter));
+					.SYNTHETIC_DEEP_FIXTURE_ID.equals(adapter),
+				LayeredCompatibilityPointAdapter
+					.NATIVE_LAYERED_PACKAGE_ID.equals(adapter));
 		if (!expectedAdapter.equals(adapter)) {
 			throw new IllegalStateException(
 				"Layered Player location adapter does not match its location");
@@ -116,9 +140,23 @@ public final class LayeredPlayerLocationPersistence {
 		if (LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_FIXTURE_ID
 				.equals(adapter)
 			&& !allowSyntheticDeepFixture) {
+			if (checkedNativeCoverage.test(persisted)) {
+				return new RestoreResult(
+					persisted,
+					SYNTHETIC_TO_NATIVE_MIGRATION,
+					true);
+			}
 			return new RestoreResult(
 				LegacyPackedPointAdapter.fromLegacyPoint(legacyPoint),
 				SYNTHETIC_DISABLED_REBASE,
+				true);
+		}
+		if (LayeredCompatibilityPointAdapter.NATIVE_LAYERED_PACKAGE_ID
+				.equals(adapter)
+			&& !checkedNativeCoverage.test(persisted)) {
+			return new RestoreResult(
+				LegacyPackedPointAdapter.fromLegacyPoint(legacyPoint),
+				NATIVE_DISABLED_REBASE,
 				true);
 		}
 		return new RestoreResult(persisted, origin, false);
@@ -138,6 +176,22 @@ public final class LayeredPlayerLocationPersistence {
 		final Point derivedLegacyPoint,
 		final String origin,
 		final boolean allowSyntheticDeepFixture) {
+		write(
+			cache,
+			location,
+			derivedLegacyPoint,
+			origin,
+			allowSyntheticDeepFixture,
+			false);
+	}
+
+	public static void write(
+		final Map<String, Object> cache,
+		final WorldLocation location,
+		final Point derivedLegacyPoint,
+		final String origin,
+		final boolean allowSyntheticDeepFixture,
+		final boolean nativeLayeredLocation) {
 		Objects.requireNonNull(cache, "cache");
 		Objects.requireNonNull(location, "location");
 		Objects.requireNonNull(derivedLegacyPoint, "derivedLegacyPoint");
@@ -145,9 +199,13 @@ public final class LayeredPlayerLocationPersistence {
 
 		Point projection =
 			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				location, allowSyntheticDeepFixture);
+				location,
+				allowSyntheticDeepFixture,
+				nativeLayeredLocation);
 		String adapter = LayeredCompatibilityPointAdapter.projectionId(
-			location, allowSyntheticDeepFixture);
+			location,
+			allowSyntheticDeepFixture,
+			nativeLayeredLocation);
 		if (projection.getX() != derivedLegacyPoint.getX()
 			|| projection.getY() != derivedLegacyPoint.getY()) {
 			throw new IllegalStateException(

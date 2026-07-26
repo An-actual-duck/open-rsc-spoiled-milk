@@ -66,16 +66,15 @@ public class PathValidation {
 		if (!sameSpatialDomain(src, dest)) {
 			return false;
 		}
+		if (world.getRegionManager().hasNativeLayeredTerrain(src)) {
+			return world.getRegionManager().hasNativeLayeredTerrain(dest);
+		}
 		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(src)) {
 			try {
-				LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-					src,
-					world.getServer().getConfig()
-						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
-				LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-					dest,
-					world.getServer().getConfig()
-						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+				world.getRegionManager()
+					.toRuntimeCompatibilityPoint(src);
+				world.getRegionManager()
+					.toRuntimeCompatibilityPoint(dest);
 				return true;
 			} catch (IllegalArgumentException outsideFixture) {
 				return false;
@@ -83,14 +82,8 @@ public class PathValidation {
 		}
 		return checkLegacyPath(
 			world,
-			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				src,
-				world.getServer().getConfig()
-					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE),
-			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				dest,
-				world.getServer().getConfig()
-					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE),
+			world.getRegionManager().toRuntimeCompatibilityPoint(src),
+			world.getRegionManager().toRuntimeCompatibilityPoint(dest),
 			ignoreProjectileAllowed);
 	}
 
@@ -210,31 +203,25 @@ public class PathValidation {
 		if (!sameSpatialDomain(start, destination)) {
 			return false;
 		}
+		if (world.getRegionManager().hasNativeLayeredTerrain(start)) {
+			return world.getRegionManager()
+				.hasNativeLayeredTerrain(destination);
+		}
 		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(start)) {
 			try {
-				LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-					start,
-					world.getServer().getConfig()
-						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
-				LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-					destination,
-					world.getServer().getConfig()
-						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+				world.getRegionManager()
+					.toRuntimeCompatibilityPoint(start);
+				world.getRegionManager()
+					.toRuntimeCompatibilityPoint(destination);
 				return true;
 			} catch (IllegalArgumentException outsideFixture) {
 				return false;
 			}
 		}
-		Point startPoint =
-			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				start,
-				world.getServer().getConfig()
-					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
-		Point destinationPoint =
-			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				destination,
-				world.getServer().getConfig()
-					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
+		Point startPoint = world.getRegionManager()
+			.toRuntimeCompatibilityPoint(start);
+		Point destinationPoint = world.getRegionManager()
+			.toRuntimeCompatibilityPoint(destination);
 		return checkAdjacentDistance(
 			world,
 			startPoint.getX(),
@@ -680,18 +667,16 @@ public class PathValidation {
 			WorldLocation destination;
 			try {
 				start =
-					LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+					mob.getWorld().getRegionManager()
+						.fromRuntimeCompatibilityPoint(
 						Point.location(startX, startY),
 						owner,
-						mob.getConfig()
-							.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
 						false);
 				destination =
-					LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+					mob.getWorld().getRegionManager()
+						.fromRuntimeCompatibilityPoint(
 						Point.location(destX, destY),
 						owner,
-						mob.getConfig()
-							.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
 						false);
 			} catch (IllegalArgumentException outsideScope) {
 				return false;
@@ -793,8 +778,10 @@ public class PathValidation {
 		if (DEBUG && mob.isPlayer()) System.out.println("Pathing 13");
 
 		// if (mob.isPlayer()) // for debugging
-		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(
-			mob.getWorldLocation())) {
+		if (mob.getWorld().getRegionManager().hasNativeLayeredTerrain(
+				mob.getWorldLocation())
+			|| LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(
+				mob.getWorldLocation())) {
 			return true;
 		}
 		return !PathValidation.checkDiagonalPassThroughCollisions(mob.getWorld(), startX, startY, destX, destY);
@@ -804,12 +791,21 @@ public class PathValidation {
 
 	private static boolean checkBlocking(Mob mob, int x, int y, int bit, boolean isCurrentTile) {
 		TileValue t;
-		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(
-			mob.getWorldLocation())) {
+		WorldLocation owner = mob.getWorldLocation();
+		if (mob.getWorld().getRegionManager().hasNativeLayeredTerrain(owner)
+			|| LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(owner)) {
 			try {
 				t = mob.getWorld().getTile(
-					LayeredCompatibilityPointAdapter.deepLocation(x, y));
+					new WorldLocation(
+						owner.getWorldSpace(),
+						new com.openrsc.server.model.world.coordinate
+							.WorldCoordinate(
+								x,
+								y,
+								owner.getCoordinate().getLevel())));
 			} catch (IllegalArgumentException outsideFixture) {
+				return true;
+			} catch (IllegalStateException missingNativeTerrain) {
 				return true;
 			}
 		} else {

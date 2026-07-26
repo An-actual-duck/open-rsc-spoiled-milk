@@ -13,6 +13,8 @@ import java.util.Objects;
  * fifth plane.</p>
  */
 public final class LayeredCompatibilityPointAdapter {
+	public static final String NATIVE_LAYERED_PACKAGE_ID =
+		"native-layered-package-v1";
 	public static final String SYNTHETIC_DEEP_FIXTURE_ID =
 		"synthetic-deep-fixture-v1";
 	public static final int SYNTHETIC_DEEP_LEVEL = -2;
@@ -29,7 +31,27 @@ public final class LayeredCompatibilityPointAdapter {
 	public static Point toCompatibilityPoint(
 		final WorldLocation location,
 		final boolean allowSyntheticDeepFixture) {
+		return toCompatibilityPoint(
+			location, allowSyntheticDeepFixture, false);
+	}
+
+	/**
+	 * Produces the temporary Point carrier used by unchanged runtime APIs.
+	 *
+	 * <p>The native selector is deliberately supplied per location by the
+	 * package-aware runtime. It is not a general permission boolean: callers
+	 * must prove that the exact location has package terrain before setting it.
+	 * Unlike the synthetic selector, it preserves the signed level in the
+	 * authoritative {@link WorldLocation} and imposes no fixture rectangle.</p>
+	 */
+	public static Point toCompatibilityPoint(
+		final WorldLocation location,
+		final boolean allowSyntheticDeepFixture,
+		final boolean nativeLayeredLocation) {
 		WorldLocation checked = Objects.requireNonNull(location, "location");
+		if (nativeLayeredLocation) {
+			return nativeLayeredPoint(checked);
+		}
 		if (isSyntheticDeepLevel(checked)) {
 			requireSyntheticDeepLocation(checked, allowSyntheticDeepFixture);
 			return Point.location(
@@ -42,7 +64,18 @@ public final class LayeredCompatibilityPointAdapter {
 	public static String projectionId(
 		final WorldLocation location,
 		final boolean allowSyntheticDeepFixture) {
+		return projectionId(location, allowSyntheticDeepFixture, false);
+	}
+
+	public static String projectionId(
+		final WorldLocation location,
+		final boolean allowSyntheticDeepFixture,
+		final boolean nativeLayeredLocation) {
 		WorldLocation checked = Objects.requireNonNull(location, "location");
+		if (nativeLayeredLocation) {
+			nativeLayeredPoint(checked);
+			return NATIVE_LAYERED_PACKAGE_ID;
+		}
 		if (isSyntheticDeepLevel(checked)) {
 			requireSyntheticDeepLocation(checked, allowSyntheticDeepFixture);
 			return SYNTHETIC_DEEP_FIXTURE_ID;
@@ -54,7 +87,19 @@ public final class LayeredCompatibilityPointAdapter {
 	public static int compatibilityPlane(
 		final WorldLocation location,
 		final boolean allowSyntheticDeepFixture) {
+		return compatibilityPlane(
+			location, allowSyntheticDeepFixture, false);
+	}
+
+	public static int compatibilityPlane(
+		final WorldLocation location,
+		final boolean allowSyntheticDeepFixture,
+		final boolean nativeLayeredLocation) {
 		WorldLocation checked = Objects.requireNonNull(location, "location");
+		if (nativeLayeredLocation) {
+			nativeLayeredPoint(checked);
+			return 0;
+		}
 		if (isSyntheticDeepLevel(checked)) {
 			requireSyntheticDeepLocation(checked, allowSyntheticDeepFixture);
 			return 0;
@@ -75,7 +120,31 @@ public final class LayeredCompatibilityPointAdapter {
 		final WorldLocation currentScope,
 		final boolean allowSyntheticDeepFixture,
 		final boolean allowExplicitScopeExit) {
+		return fromCompatibilityPoint(
+			point,
+			currentScope,
+			allowSyntheticDeepFixture,
+			allowExplicitScopeExit,
+			false);
+	}
+
+	public static WorldLocation fromCompatibilityPoint(
+		final Point point,
+		final WorldLocation currentScope,
+		final boolean allowSyntheticDeepFixture,
+		final boolean allowExplicitScopeExit,
+		final boolean nativeLayeredCurrentScope) {
 		Point checked = Objects.requireNonNull(point, "point");
+		if (nativeLayeredCurrentScope) {
+			WorldLocation checkedScope = Objects.requireNonNull(
+				currentScope, "currentScope");
+			return new WorldLocation(
+				checkedScope.getWorldSpace(),
+				new WorldCoordinate(
+					checked.getX(),
+					checked.getY(),
+					checkedScope.getCoordinate().getLevel()));
+		}
 		if (currentScope != null && isSyntheticDeepLevel(currentScope)) {
 			requireSyntheticDeepLocation(
 				currentScope, allowSyntheticDeepFixture);
@@ -96,15 +165,39 @@ public final class LayeredCompatibilityPointAdapter {
 		final WorldLocation location,
 		final Point receipt,
 		final boolean allowSyntheticDeepFixture) {
+		return requireReceipt(
+			projectionId,
+			location,
+			receipt,
+			allowSyntheticDeepFixture,
+			false);
+	}
+
+	public static WorldLocation requireReceipt(
+		final String projectionId,
+		final WorldLocation location,
+		final Point receipt,
+		final boolean allowSyntheticDeepFixture,
+		final boolean allowNativeLayeredLocation) {
 		String checkedId = Objects.requireNonNull(
 			projectionId, "projectionId");
 		WorldLocation checkedLocation = Objects.requireNonNull(
 			location, "location");
 		Point checkedReceipt = Objects.requireNonNull(receipt, "receipt");
+		boolean nativeLayeredLocation =
+			NATIVE_LAYERED_PACKAGE_ID.equals(checkedId);
+		if (nativeLayeredLocation && !allowNativeLayeredLocation) {
+			throw new IllegalArgumentException(
+				"Native layered package projection is disabled");
+		}
 		String expectedId = projectionId(
-			checkedLocation, allowSyntheticDeepFixture);
+			checkedLocation,
+			allowSyntheticDeepFixture,
+			nativeLayeredLocation);
 		Point expectedReceipt = toCompatibilityPoint(
-			checkedLocation, allowSyntheticDeepFixture);
+			checkedLocation,
+			allowSyntheticDeepFixture,
+			nativeLayeredLocation);
 		if (!expectedId.equals(checkedId)
 			|| expectedReceipt.getX() != checkedReceipt.getX()
 			|| expectedReceipt.getY() != checkedReceipt.getY()) {
@@ -143,6 +236,20 @@ public final class LayeredCompatibilityPointAdapter {
 			&& x <= SYNTHETIC_DEEP_MAX_X
 			&& y >= SYNTHETIC_DEEP_MIN_Y
 			&& y <= SYNTHETIC_DEEP_MAX_Y;
+	}
+
+	private static Point nativeLayeredPoint(
+		final WorldLocation location) {
+		WorldCoordinate coordinate = location.getCoordinate();
+		int x = coordinate.getX();
+		int y = coordinate.getY();
+		if (x < 0 || x > Short.MAX_VALUE
+			|| y < 0 || y > Short.MAX_VALUE) {
+			throw new IllegalArgumentException(
+				"Native layered location is outside the temporary Point "
+					+ "carrier range: " + location);
+		}
+		return Point.location(x, y);
 	}
 
 	private static void requireSyntheticDeepLocation(
