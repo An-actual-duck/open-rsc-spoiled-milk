@@ -840,7 +840,8 @@ Exit gate:
 - a copied level `-2` test world passes private client/server validation.
 
 Current Phase 5 checkpoint: Authority Milestones A through D are accepted, and
-the first native-terrain portion of Milestone E is now owner-accepted. A fifth
+Milestone E's package-wide native runtime through checkpoint 11 is
+owner-accepted. A fifth
 default-off private gate loads the versioned layered package; server terrain
 lookup and scene-context protocol v3 identify native page `(9,12)`, declared
 presentation chunk `24`, and the checked manifest; the client builds that room
@@ -871,8 +872,19 @@ second reconnect, post-reconnect close, and exit. Package `0.6.0` now adds an
 ordinary Tree/Treestump route through the real Woodcutting replacement and
 delayed-spawn scheduler. Automated validation and focused owner acceptance pass
 the natural harvest, stump, restoration, exact deep reconnect, stable live
-counts, and collision continuity. Removal of the bounded compatibility receipt
-is now the next implementation boundary.
+counts, and collision continuity. Package `0.7.0` removes the bounded
+compatibility receipt from native selection, movement, persistence, collision,
+protocol scope, and client terrain application; accepted routes cover both
+declared pages outside the former synthetic room.
+
+Runtime checkpoint 12 now composes non-overlapping packages under one
+fail-closed catalog, preflights explicit package changes before Player state
+mutation, resolves protocol-v4 identity and package-scoped dynamic objects
+through exact destination ownership, and adds an isolated `-4` transition
+package. The 35-test A-through-E lineage and authoritative server/client builds
+pass; focused owner transition/reconnect acceptance remains pending. After
+that acceptance, retirement of packed Region terrain/collision backing from
+native scopes is the remaining Milestone E engine boundary.
 
 ### Phase 6: Layered World Builder generation
 

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "packageType": "layered-world",
+  "packageId": "rsc-remastered.native-transition-lab",
+  "packageVersion": "0.1.0",
+  "coordinateModel": "signed-layered-v1",
+  "storage": {
+    "sectorSize": 48,
+    "presentationChunkSize": 24
+  },
+  "worldSpaces": [
+    {
+      "id": "global",
+      "kind": "static"
+    }
+  ],
+  "levels": [
+    {
+      "worldSpace": "global",
+      "level": -4,
+      "name": "Cross-package transition proof",
+      "role": "transition-proof"
+    }
+  ],
+  "terrainSectors": [
+    {
+      "worldSpace": "global",
+      "level": -4,
+      "sectorX": 9,
+      "sectorY": 12,
+      "encoding": "uniform-layered-sector-v1",
+      "path": "terrain/transition-l4-x9-y12.json",
+      "sha256": "8554cdce2a8c3b56e5e9e138b6db4aaf9335868b2f38de971b6516c8f1611216"
+    }
+  ],
+  "placementSets": [
+    {
+      "id": "transition-fixture-entities",
+      "worldSpace": "global",
+      "level": -4,
+      "encoding": "layered-world-placements-v2",
+      "path": "placements/transition-l4-entities.json",
+      "sha256": "d833ac41a506dfcb35fe16b129eed0d905e7881b1f068d14bf6118a499507770"
+    }
+  ]
+}

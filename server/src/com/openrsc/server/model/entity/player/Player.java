@@ -40,6 +40,7 @@ import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
 import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationAuthority;
@@ -4786,9 +4787,36 @@ public final class Player extends Mob {
 			throw new IllegalStateException(
 				"Layered Player location authority is disabled");
 		}
+		NativeLayeredWorldPackageCatalog.Transition transition =
+			getWorld().getRegionManager().prepareNativeLayeredTransition(
+				layeredLocationAuthority.isInitialized()
+					? getLayeredLocation() : null,
+				location,
+				teleported);
 		Point projection = getWorld().getRegionManager()
 			.toRuntimeCompatibilityPoint(location);
 		setLocationCompatibility(projection, location, teleported);
+		if (transition != null
+			&& transition.getKind()
+				!= NativeLayeredWorldPackageCatalog.TransitionKind
+					.WITHIN_PACKAGE
+			&& transition.getKind()
+				!= NativeLayeredWorldPackageCatalog.TransitionKind
+					.WITHIN_LEGACY) {
+			setAttribute(
+				"native-layered-last-transition",
+				transition.toString());
+			LOGGER.info(
+				"Native layered transition committed playerId={} kind={} "
+					+ "sourcePackage={} destinationPackage={} destination={}",
+				getDatabaseID(),
+				transition.getKind(),
+				transition.getSourcePackageId().isEmpty()
+					? "legacy" : transition.getSourcePackageId(),
+				transition.getDestinationPackageId().isEmpty()
+					? "legacy" : transition.getDestinationPackageId(),
+				transition.getDestination());
+		}
 	}
 
 	private void setLocationCompatibility(

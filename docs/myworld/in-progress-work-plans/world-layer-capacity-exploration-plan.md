@@ -47,7 +47,9 @@ available as a rollback route. The corrected package-wide route is
 owner-accepted with adjacent-page walking, exact deep reconnect, restored
 fixture terrain, Man/item interaction, and stable package placement
 visibility. Cross-package transitions and retirement of the remaining packed
-Region carrier are later Milestone E boundaries.
+Region carrier are the remaining Milestone E boundaries. Runtime checkpoint
+12 now implements and automated-validates the first of those boundaries with a
+separate `-4` package; focused owner acceptance is pending.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -736,6 +738,67 @@ gate absent and completed the remaining owner evidence:
 Authority Milestone E runtime checkpoint 11 is therefore owner-accepted.
 Package-wide native runtime capacity is no longer bounded by the synthetic
 21-by-21 room, while the synthetic gate remains an independent rollback route.
+
+### Authority Milestone E runtime checkpoint 12
+
+Implemented and automated/build validated on 2026-07-25; focused private-owner
+acceptance remains pending:
+
+- `NativeLayeredWorldPackageCatalog` composes one or more immutable package
+  roots through the existing private package-path setting. One path retains
+  the accepted behavior; multiple roots use the platform path separator;
+- package IDs and exact terrain-sector ownership must be unique. Duplicate
+  package identities, overlapping `(worldSpace,level,sectorX,sectorY)` claims,
+  mixed presentation-chunk sizes, empty path entries, unsafe package inputs,
+  and changed payloads all fail before World population;
+- exact tile ownership selects the active package. Terrain, collision,
+  protocol-v4 package/manifest/chunk identity, developer status, placements,
+  and dynamic-object identity now resolve through that owner rather than
+  assuming the first loaded package;
+- package object keys are namespace-qualified internally, so the package ID
+  retained by `NativeLayeredGameObjectIdentity` participates in replacement,
+  removal, delayed restoration, and collision transactions;
+- `prepareNativeLayeredTransition(...)` resolves the entire destination and
+  its center presentation chunk before Player, interest-window, cache, or
+  protocol state changes. Ordinary movement remains legal inside one package,
+  but entering, exiting, or changing package authority requires an explicit
+  transition. A refusal leaves the source unchanged;
+- successful cross-scope commits record one concise technical log containing
+  only player database ID, transition class, source/destination package IDs,
+  and signed destination—never credentials or player data;
+- `native-package-transition-v1` is a distinct package at
+  `global(450,600,L-4)` with one package-owned three-coin spawn. It does not
+  overlap or modify accepted package `0.7.0`; and
+- private `::deepfixture package` toggles between the primary level `-2`
+  package and the separate level `-4` package through the same preflight and
+  Player commit path. `::deepfixture exit` can recover from either package.
+
+The complete Authority A-through-E lineage now passes 35 tests. Coverage adds
+two-package configured loading, initial restore, same-package movement,
+explicit enter/exit/switch classification, implicit switch refusal, immutable
+catalog exposure, duplicate package refusal, overlap refusal, and verification
+that destination preflight precedes Player mutation. The authoritative
+865-core/488-plugin server and 262-source client builds pass. The original
+single-package path, package `0.7.0`, synthetic rollback gate, and all public
+defaults remain unchanged.
+
+Focused owner acceptance should:
+
+1. enter the accepted `-2` package and verify its original floor and
+   placements;
+2. run `::deepfixture package`, confirm level `-4`, package
+   `rsc-remastered.native-transition-lab`, a normal floor, and the three-coin
+   spawn;
+3. walk, collect the coins, logout, and reconnect exactly at level `-4`;
+4. run `::deepfixture package` again and confirm the original `-2` package
+   floor/placements return without stale `-4` terrain or items; and
+5. exit to the saved surface location.
+
+This checkpoint does not yet claim authored transition-graph schema, arbitrary
+package hot-loading, true instances, signed-X/Y carrier retirement, packed
+Region retirement, Builder/export, or vanilla conversion. Once owner accepted,
+the remaining Milestone E engine boundary is retirement of packed Region
+terrain/collision backing from native scopes.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -17821,6 +17884,7 @@ private environment should validate at least:
 | 2026-07-25 | Complete and accept Milestone E placement checkpoints 8 through 10 for static, dynamic, and harvesting objects. | Packages `0.4.0` through `0.6.0` prove level-qualified scenery/boundary visibility and collision, generation-fenced Door replacement, and ordinary Tree-to-stump-to-Tree delayed restoration without packed Region membership. Automated authority lineage, authoritative builds, matched private startup, focused owner interaction, exact deep reconnect, and duplicate-free live counts pass |
 | 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Owner-accepted after correcting two stale bounded-room assumptions; adjacent-page walking, exact deep reconnect at `(490,620)`, restored package `0.7.0` fixture terrain and placements, Man/item interaction, exact `(448,600,L-2)` reconnect, and prior surface exit pass while synthetic D remains independent rollback |
 | 2026-07-25 | Make the package-wide native runtime fixture renderable across all declared terrain rather than retaining a maximum-value codec band outside the former bounded room. | Package `0.7.0` uses a valid non-default blocking band, adds a runtime-definition guard, preserves full-range acceptance in the generic package codec, and passes focused owner floor/placement/interaction/reconnect acceptance |
+| 2026-07-25 | Implement Milestone E runtime checkpoint 12 as a fail-closed multi-package catalog and atomic explicit package-transition boundary. | Implemented and automated/build validated; distinct `-4` transition package, exact non-overlapping ownership, destination readiness preflight, package-scoped protocol/object identity, implicit-cross refusal, 35-test A-E lineage, and authoritative builds pass; focused owner transition/reconnect acceptance pending |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

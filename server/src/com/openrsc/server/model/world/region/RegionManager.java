@@ -22,6 +22,7 @@ import com.openrsc.server.io.NativeLayeredSceneryPlacement;
 import com.openrsc.server.io.NativeLayeredBoundaryPlacement;
 import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
+import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
@@ -76,7 +77,6 @@ import com.openrsc.server.external.EntityHandler;
 import com.openrsc.server.external.GameObjectDef;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -87,6 +87,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -132,6 +133,8 @@ public class RegionManager {
 	private final LayeredSpatialEntityIndex layeredSpatialEntityIndex;
 	private final NativeLayeredGameObjectRegistry<GameObject>
 		nativeLayeredGameObjects;
+	private final NativeLayeredWorldPackageCatalog
+		nativeLayeredWorldPackageCatalog;
 	private final NativeLayeredWorldPackage nativeLayeredWorldPackage;
 	private boolean nativeLayeredPlacementsPopulated;
 
@@ -181,8 +184,12 @@ public class RegionManager {
 				"Layered native terrain package requires layered Player "
 					+ "location, spatial runtime, and protocol/client authority");
 		}
+		this.nativeLayeredWorldPackageCatalog =
+			loadNativeLayeredWorldPackages(world);
 		this.nativeLayeredWorldPackage =
-			loadNativeLayeredWorldPackage(world);
+			nativeLayeredWorldPackageCatalog == null
+				? null
+				: nativeLayeredWorldPackageCatalog.getPrimaryPackage();
 		this.regions = new ConcurrentHashMap<>();
 		this.visibleRegionWindowCache = new ConcurrentHashMap<>();
 		this.visibleObjectWindowCache = new ConcurrentHashMap<>();
@@ -205,7 +212,7 @@ public class RegionManager {
 		this.nativeLayeredPlacementsPopulated = false;
 	}
 
-	private static NativeLayeredWorldPackage loadNativeLayeredWorldPackage(
+	private static NativeLayeredWorldPackageCatalog loadNativeLayeredWorldPackages(
 		final World world) {
 		if (!world.getServer().getConfig()
 				.WANT_LAYERED_NATIVE_TERRAIN_PACKAGE) {
@@ -218,9 +225,14 @@ public class RegionManager {
 				"Layered native terrain package path is required when its gate is enabled");
 		}
 		try {
-			NativeLayeredWorldPackage loaded =
-				NativeLayeredWorldPackage.load(Paths.get(configuredPath.trim()));
-			validateNativeDeepFixturePackage(loaded);
+			NativeLayeredWorldPackageCatalog loaded =
+				NativeLayeredWorldPackageCatalog.loadConfigured(
+					configuredPath.trim());
+			for (NativeLayeredWorldPackage worldPackage
+				: loaded.getPackages()) {
+				validateNativeRuntimePackage(worldPackage);
+			}
+			validateNativeDeepFixturePackage(loaded.getPrimaryPackage());
 			return loaded;
 		} catch (IOException failure) {
 			throw new IllegalStateException(
@@ -230,12 +242,16 @@ public class RegionManager {
 		}
 	}
 
-	private static void validateNativeDeepFixturePackage(
+	private static void validateNativeRuntimePackage(
 		final NativeLayeredWorldPackage loaded) {
 		if (loaded.getPresentationChunkSize() != 24) {
 			throw new IllegalStateException(
 				"The first native layered streaming route requires 24-tile chunks");
 		}
+	}
+
+	private static void validateNativeDeepFixturePackage(
+		final NativeLayeredWorldPackage loaded) {
 		if (!loaded.declaresLevel(
 				com.openrsc.server.model.world.coordinate.WorldSpaceId.GLOBAL,
 				LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_LEVEL)) {
@@ -3568,9 +3584,50 @@ public class RegionManager {
 	 */
 	public boolean hasNativeLayeredTerrain(
 		final WorldLocation location) {
-		return nativeLayeredWorldPackage != null
-			&& nativeLayeredWorldPackage.findTile(
+		return nativeLayeredWorldPackageCatalog != null
+			&& nativeLayeredWorldPackageCatalog.findPackage(
 				Objects.requireNonNull(location, "location")).isPresent();
+	}
+
+	public Optional<NativeLayeredWorldPackage> findNativeLayeredWorldPackage(
+		final WorldLocation location) {
+		return nativeLayeredWorldPackageCatalog == null
+			? Optional.<NativeLayeredWorldPackage>empty()
+			: nativeLayeredWorldPackageCatalog.findPackage(
+				Objects.requireNonNull(location, "location"));
+	}
+
+	public Optional<NativeLayeredWorldPackage> findNativeLayeredWorldPackage(
+		final String packageId) {
+		return nativeLayeredWorldPackageCatalog == null
+			? Optional.<NativeLayeredWorldPackage>empty()
+			: nativeLayeredWorldPackageCatalog.findPackage(
+				Objects.requireNonNull(packageId, "packageId"));
+	}
+
+	public NativeLayeredWorldPackageCatalog.Transition
+		prepareNativeLayeredTransition(
+			final WorldLocation source,
+			final WorldLocation destination,
+			final boolean explicit) {
+		WorldLocation checkedDestination = Objects.requireNonNull(
+			destination, "destination");
+		NativeLayeredWorldPackageCatalog.Transition transition =
+			nativeLayeredWorldPackageCatalog == null
+				? null
+				: nativeLayeredWorldPackageCatalog.prepareTransition(
+					source, checkedDestination, explicit);
+		/*
+		 * Complete the non-native half of the preflight before any Player
+		 * state changes. Native destinations were already checked through
+		 * exact package terrain and their center presentation chunk.
+		 */
+		if (!hasNativeLayeredTerrain(checkedDestination)
+			&& !LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(
+				checkedDestination)) {
+			requireLegacyTerrainProjection(checkedDestination);
+		}
+		return transition;
 	}
 
 	public Point toRuntimeCompatibilityPoint(
@@ -3625,25 +3682,35 @@ public class RegionManager {
 					false,
 					true);
 			if (hasNativeLayeredTerrain(candidate)) {
+				prepareNativeLayeredTransition(
+					currentScope, candidate, allowExplicitScopeExit);
 				return candidate;
 			}
 			if (!allowExplicitScopeExit) {
 				throw new IllegalArgumentException(
 					"Ordinary movement cannot leave native package terrain");
 			}
-			return LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+			WorldLocation destination =
+				LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
 				checked,
 				null,
 				getWorld().getServer().getConfig()
 					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
 				true);
+			prepareNativeLayeredTransition(
+				currentScope, destination, true);
+			return destination;
 		}
-		return LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
+		WorldLocation destination =
+			LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
 			checked,
 			currentScope,
 			getWorld().getServer().getConfig()
 				.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
 			allowExplicitScopeExit);
+		prepareNativeLayeredTransition(
+			currentScope, destination, allowExplicitScopeExit);
+		return destination;
 	}
 
 	/**
@@ -3690,8 +3757,12 @@ public class RegionManager {
 	}
 
 	private TileValue nativeLayeredTile(final WorldLocation location) {
-		NativeLayeredTerrainTile source = nativeLayeredWorldPackage
-			.findTile(location)
+		NativeLayeredWorldPackage owner = findNativeLayeredWorldPackage(
+			location)
+			.orElseThrow(() -> new IllegalStateException(
+				"Native layered terrain has no package owner at "
+					+ location));
+		NativeLayeredTerrainTile source = owner.findTile(location)
 			.orElseThrow(() -> new IllegalStateException(
 				"Native layered terrain disappeared after startup validation: "
 					+ location));
@@ -3709,8 +3780,13 @@ public class RegionManager {
 		return nativeLayeredWorldPackage;
 	}
 
+	public int getNativeLayeredWorldPackageCount() {
+		return nativeLayeredWorldPackageCatalog == null
+			? 0 : nativeLayeredWorldPackageCatalog.size();
+	}
+
 	public void populateNativeLayeredPlacements() {
-		if (nativeLayeredWorldPackage == null) {
+		if (nativeLayeredWorldPackageCatalog == null) {
 			return;
 		}
 		if (nativeLayeredPlacementsPopulated) {
@@ -3721,8 +3797,10 @@ public class RegionManager {
 		int groundItemCount = 0;
 		int sceneryCount = 0;
 		int boundaryCount = 0;
+		for (NativeLayeredWorldPackage worldPackage
+			: nativeLayeredWorldPackageCatalog.getPackages()) {
 		for (NativeLayeredPlacementSet set
-			: nativeLayeredWorldPackage.getPlacementSets().values()) {
+			: worldPackage.getPlacementSets().values()) {
 			for (NativeLayeredNpcPlacement placement : set.getNpcs()) {
 				if (world.getServer().getEntityHandler()
 						.getNpcDef(placement.getNpcId()) == null) {
@@ -3738,7 +3816,10 @@ public class RegionManager {
 					location.getCoordinate().getY(),
 					placement.getRoamRadius());
 				markNativeLayeredPlacement(
-					npc, placement.getPlacementId(), NATIVE_LAYERED_NPC_KIND);
+					npc,
+					worldPackage.getPackageId(),
+					placement.getPlacementId(),
+					NATIVE_LAYERED_NPC_KIND);
 				npc.setWorldLocation(location, true);
 				world.registerNpc(npc);
 				npcCount++;
@@ -3760,6 +3841,7 @@ public class RegionManager {
 				}
 				markNativeLayeredPlacement(
 					item,
+					worldPackage.getPackageId(),
 					placement.getPlacementId(),
 					NATIVE_LAYERED_GROUND_ITEM_KIND);
 				groundItemCount++;
@@ -3773,6 +3855,7 @@ public class RegionManager {
 							+ placement.getSceneryId());
 				}
 				populateNativeLayeredGameObject(
+					worldPackage.getPackageId(),
 					placement.getPlacementId(),
 					placement.getLocation(),
 					placement.getSceneryId(),
@@ -3790,6 +3873,7 @@ public class RegionManager {
 							+ placement.getBoundaryId());
 				}
 				populateNativeLayeredGameObject(
+					worldPackage.getPackageId(),
 					placement.getPlacementId(),
 					placement.getLocation(),
 					placement.getBoundaryId(),
@@ -3799,12 +3883,12 @@ public class RegionManager {
 				boundaryCount++;
 			}
 		}
+		}
 		nativeLayeredPlacementsPopulated = true;
 		LOGGER.info(
-			"Populated native layered package {}@{} with {} NPC, {} "
+			"Populated {} native layered package(s) with {} NPC, {} "
 				+ "ground-item, {} scenery, and {} boundary placements",
-			nativeLayeredWorldPackage.getPackageId(),
-			nativeLayeredWorldPackage.getPackageVersion(),
+			nativeLayeredWorldPackageCatalog.size(),
 			npcCount,
 			groundItemCount,
 			sceneryCount,
@@ -3812,6 +3896,7 @@ public class RegionManager {
 	}
 
 	private void populateNativeLayeredGameObject(
+		final String packageId,
 		final String placementId,
 		final WorldLocation location,
 		final int objectId,
@@ -3846,10 +3931,11 @@ public class RegionManager {
 				location, placementId, contribution);
 		}
 		object.setInitialWorldLocation(location);
-		markNativeLayeredPlacement(object, placementId, kind);
+		markNativeLayeredPlacement(
+			object, packageId, placementId, kind);
 		if (nativeLayeredGameObjects.register(
 			nativeLayeredGameObjects.getGeneration(),
-			placementId,
+			nativePlacementKey(packageId, placementId),
 			location,
 			type.getId(),
 			direction,
@@ -3875,10 +3961,16 @@ public class RegionManager {
 				contribution.getX(),
 				contribution.getY(),
 				origin.getCoordinate().getLevel()));
-		if (!nativeLayeredWorldPackage.findTile(
-				collisionLocation).isPresent()) {
+		NativeLayeredWorldPackage collisionOwner =
+			findNativeLayeredWorldPackage(collisionLocation)
+				.orElse(null);
+		NativeLayeredWorldPackage originOwner =
+			findNativeLayeredWorldPackage(origin).orElse(null);
+		if (collisionOwner == null
+			|| originOwner == null
+			|| collisionOwner != originOwner) {
 			throw new IllegalStateException(
-				"Native layered object collision leaves package terrain for "
+				"Native layered object collision leaves its package terrain for "
 					+ placementId + ": " + collisionLocation);
 		}
 	}
@@ -3898,9 +3990,10 @@ public class RegionManager {
 			throw new IllegalArgumentException(
 				"GameObject has no native layered identity");
 		}
-		if (nativeLayeredWorldPackage == null
-			|| !nativeLayeredWorldPackage.getPackageId().equals(
-				identity.getPackageId())) {
+		NativeLayeredWorldPackage owner = findNativeLayeredWorldPackage(
+			identity.getLocation()).orElse(null);
+		if (owner == null
+			|| !owner.getPackageId().equals(identity.getPackageId())) {
 			throw new IllegalStateException(
 				"Native layered object package identity differs");
 		}
@@ -3930,7 +4023,10 @@ public class RegionManager {
 				"Native layered object location differs from its identity");
 		}
 		setNativeLayeredPlacementAttributes(
-			checked, identity.getPlacementId(), identity.getKind());
+			checked,
+			identity.getPackageId(),
+			identity.getPlacementId(),
+			identity.getKind());
 		return true;
 	}
 
@@ -3939,7 +4035,7 @@ public class RegionManager {
 		NativeLayeredGameObjectIdentity identity = Objects.requireNonNull(
 			object, "object").getLoc().getNativeLayeredGameObjectIdentity();
 		return identity == null ? null
-			: nativeLayeredGameObjects.find(identity.getPlacementId());
+			: nativeLayeredGameObjects.find(nativePlacementKey(identity));
 	}
 
 	public void inheritNativeLayeredGameObjectIdentity(
@@ -4048,7 +4144,7 @@ public class RegionManager {
 		long generation = identity.getGeneration();
 		if (oldObject == null) {
 			if (nativeLayeredGameObjects.register(
-					generation, identity.getPlacementId(),
+					generation, nativePlacementKey(identity),
 					identity.getLocation(), newObject.getType(),
 					newObject.getDirection(), newObject,
 					newRegisterFootprint) == null) {
@@ -4059,12 +4155,12 @@ public class RegionManager {
 					newObject, null, identity.getLocation());
 			} catch (RuntimeException failure) {
 				nativeLayeredGameObjects.unregister(
-					generation, identity.getPlacementId(), newObject);
+					generation, nativePlacementKey(identity), newObject);
 				throw failure;
 			}
 		} else if (newObject == null) {
 			if (nativeLayeredGameObjects.unregister(
-					generation, identity.getPlacementId(),
+					generation, nativePlacementKey(identity),
 					oldObject) == null) {
 				return;
 			}
@@ -4073,7 +4169,7 @@ public class RegionManager {
 					oldObject, identity.getLocation());
 			} catch (RuntimeException failure) {
 				nativeLayeredGameObjects.register(
-					generation, identity.getPlacementId(),
+					generation, nativePlacementKey(identity),
 					identity.getLocation(), oldObject.getType(),
 					oldObject.getDirection(), oldObject,
 					oldRollbackRegisterFootprint);
@@ -4081,7 +4177,7 @@ public class RegionManager {
 			}
 		} else {
 			if (nativeLayeredGameObjects.replace(
-					generation, identity.getPlacementId(), oldObject,
+					generation, nativePlacementKey(identity), oldObject,
 					identity.getLocation(), newObject.getType(),
 					newObject.getDirection(), newObject,
 					newRegisterFootprint) == null) {
@@ -4092,7 +4188,7 @@ public class RegionManager {
 					oldObject, newObject, identity.getLocation());
 			} catch (RuntimeException failure) {
 				nativeLayeredGameObjects.replace(
-					generation, identity.getPlacementId(), newObject,
+					generation, nativePlacementKey(identity), newObject,
 					identity.getLocation(), oldObject.getType(),
 					oldObject.getDirection(), oldObject,
 					oldRollbackRegisterFootprint);
@@ -4129,34 +4225,71 @@ public class RegionManager {
 
 	public boolean isNativeLayeredPlacement(
 		final Entity entity, final String kind) {
-		return entity != null
-			&& nativeLayeredWorldPackage != null
-			&& kind.equals(entity.getAttribute(
+		if (entity == null
+			|| nativeLayeredWorldPackageCatalog == null
+			|| kind == null) {
+			return false;
+		}
+		String packageId = entity.getAttribute(
+			NATIVE_LAYERED_PLACEMENT_PACKAGE_ATTRIBUTE, "");
+		NativeLayeredWorldPackage owner =
+			findNativeLayeredWorldPackage(entity.getWorldLocation())
+				.orElse(null);
+		return kind.equals(entity.getAttribute(
 				NATIVE_LAYERED_PLACEMENT_KIND_ATTRIBUTE, ""))
-			&& nativeLayeredWorldPackage.getPackageId().equals(
-				entity.getAttribute(
-					NATIVE_LAYERED_PLACEMENT_PACKAGE_ATTRIBUTE, ""));
+			&& owner != null
+			&& owner.getPackageId().equals(packageId);
 	}
 
 	public void markNativeLayeredPlacement(
 		final Entity entity,
 		final String placementId,
 		final String kind) {
+		NativeLayeredWorldPackage owner = findNativeLayeredWorldPackage(
+			Objects.requireNonNull(entity, "entity").getWorldLocation())
+			.orElseThrow(() -> new IllegalStateException(
+				"Native layered placement has no package terrain owner"));
+		markNativeLayeredPlacement(
+			entity, owner.getPackageId(), placementId, kind);
+	}
+
+	public void markNativeLayeredPlacement(
+		final Entity entity,
+		final String packageId,
+		final String placementId,
+		final String kind) {
+		NativeLayeredWorldPackage owner =
+			nativeLayeredWorldPackageCatalog == null
+				? null
+				: nativeLayeredWorldPackageCatalog.findPackage(
+					Objects.requireNonNull(packageId, "packageId"))
+					.orElse(null);
+		if (owner == null) {
+			throw new IllegalStateException(
+				"Native layered placement package is not loaded: "
+					+ packageId);
+		}
 		if (entity instanceof GameObject) {
 			GameObject object = (GameObject) entity;
+			if (!owner.findTile(object.getWorldLocation()).isPresent()) {
+				throw new IllegalStateException(
+					"Native layered object is outside its package terrain");
+			}
 			object.getLoc().assignNativeLayeredGameObjectIdentity(
 				new NativeLayeredGameObjectIdentity(
-					nativeLayeredWorldPackage.getPackageId(),
+					owner.getPackageId(),
 					nativeLayeredGameObjects.getGeneration(),
 					placementId,
 					kind,
 					object.getWorldLocation()));
 		}
-		setNativeLayeredPlacementAttributes(entity, placementId, kind);
+		setNativeLayeredPlacementAttributes(
+			entity, owner.getPackageId(), placementId, kind);
 	}
 
 	private void setNativeLayeredPlacementAttributes(
 		final Entity entity,
+		final String packageId,
 		final String placementId,
 		final String kind) {
 		entity.setAttribute(
@@ -4164,7 +4297,20 @@ public class RegionManager {
 		entity.setAttribute(NATIVE_LAYERED_PLACEMENT_KIND_ATTRIBUTE, kind);
 		entity.setAttribute(
 			NATIVE_LAYERED_PLACEMENT_PACKAGE_ATTRIBUTE,
-			nativeLayeredWorldPackage.getPackageId());
+			packageId);
+	}
+
+	private static String nativePlacementKey(
+		final NativeLayeredGameObjectIdentity identity) {
+		return nativePlacementKey(
+			identity.getPackageId(), identity.getPlacementId());
+	}
+
+	private static String nativePlacementKey(
+		final String packageId,
+		final String placementId) {
+		return Objects.requireNonNull(packageId, "packageId")
+			+ ":" + Objects.requireNonNull(placementId, "placementId");
 	}
 
 	private Point requireLegacyTerrainProjection(

@@ -13,6 +13,9 @@ SERVER = ROOT / "server"
 CORE_JAR = SERVER / "core.jar"
 PACKAGE = ROOT / "tools/layered-maps/fixtures/native-package-v1"
 SOURCE = SERVER / "src/com/openrsc/server/io/NativeLayeredWorldPackage.java"
+CATALOG = (
+    SERVER / "src/com/openrsc/server/io/NativeLayeredWorldPackageCatalog.java"
+)
 CONFIGURATION = SERVER / "src/com/openrsc/server/ServerConfiguration.java"
 REGION_MANAGER = (
     SERVER
@@ -598,6 +601,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
 
     def test_private_runtime_gate_is_explicit_fail_closed_and_reversible(self):
         configuration = CONFIGURATION.read_text(encoding="utf-8")
+        catalog = CATALOG.read_text(encoding="utf-8")
         region_manager = REGION_MANAGER.read_text(encoding="utf-8")
         game_state_updater = GAME_STATE_UPDATER.read_text(encoding="utf-8")
         development = DEVELOPMENT.read_text(encoding="utf-8")
@@ -613,13 +617,14 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "LAYERED_NATIVE_TERRAIN_PACKAGE_PATH", configuration
         )
         self.assertIn(
-            "NativeLayeredWorldPackage.load", region_manager
+            "NativeLayeredWorldPackageCatalog.loadConfigured", region_manager
         )
         self.assertIn(
-            "validateNativeDeepFixturePackage(loaded)", region_manager
+            "validateNativeDeepFixturePackage(loaded.getPrimaryPackage())",
+            region_manager,
         )
         self.assertIn(
-            "NativeLayeredTerrainTile source = nativeLayeredWorldPackage",
+            "NativeLayeredTerrainTile source = owner.findTile",
             region_manager,
         )
         self.assertIn(
@@ -645,8 +650,8 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "hasNativeLayeredTerrain", region_manager
         )
         self.assertIn(
-            "Ordinary movement cannot leave native package terrain",
-            region_manager,
+            "Cross-scope native layered movement requires an explicit transition",
+            catalog,
         )
         self.assertNotIn(
             "Layered native terrain package requires the accepted synthetic",

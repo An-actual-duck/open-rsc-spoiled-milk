@@ -265,7 +265,8 @@ public final class GameStateUpdater {
 		}
 		final NativeLayeredWorldPackage terrainPackage =
 			getServer().getWorld().getRegionManager()
-				.getNativeLayeredWorldPackage();
+				.findNativeLayeredWorldPackage(location)
+				.orElse(null);
 		if (terrainPackage == null) {
 			throw new IllegalStateException(
 				"Native layered terrain gate has no loaded package");

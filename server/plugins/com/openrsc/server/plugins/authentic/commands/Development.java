@@ -110,6 +110,8 @@ public final class Development implements CommandTrigger {
 		"layered_synthetic_deep_return_y";
 	private static final String SYNTHETIC_DEEP_RETURN_LEVEL_CACHE =
 		"layered_synthetic_deep_return_level";
+	private static final String NATIVE_TRANSITION_FIXTURE_PACKAGE_ID =
+		"rsc-remastered.native-transition-lab";
 
 	public static String messagePrefix = null;
 	public static String badSyntaxPrefix = null;
@@ -1484,15 +1486,19 @@ public final class Development implements CommandTrigger {
 		if (args.length > 1
 			|| (!"enter".equals(action)
 				&& !"status".equals(action)
+				&& !"package".equals(action)
 				&& !"exit".equals(action))) {
 			player.message(badSyntaxPrefix
-				+ command.toUpperCase() + " [enter|status|exit]");
+				+ command.toUpperCase()
+				+ " [enter|status|package|exit]");
 			return;
 		}
 
 		try {
 			if ("enter".equals(action)) {
 				enterSyntheticDeepFixture(player);
+			} else if ("package".equals(action)) {
+				switchNativeDeepFixturePackage(player);
 			} else if ("exit".equals(action)) {
 				exitSyntheticDeepFixture(player);
 			} else {
@@ -1552,7 +1558,9 @@ public final class Development implements CommandTrigger {
 
 	private void exitSyntheticDeepFixture(final Player player) {
 		if (!LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(
-			player.getLayeredLocation())) {
+				player.getLayeredLocation())
+			&& !player.getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(player.getLayeredLocation())) {
 			player.message(messagePrefix
 				+ "You are not inside the synthetic deep fixture.");
 			return;
@@ -1574,6 +1582,47 @@ public final class Development implements CommandTrigger {
 			+ " (" + destination.getCoordinate().getX()
 			+ "," + destination.getCoordinate().getY()
 			+ ",L" + destination.getCoordinate().getLevel() + ").");
+	}
+
+	private void switchNativeDeepFixturePackage(final Player player) {
+		RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		NativeLayeredWorldPackage transitionPackage =
+			regionManager.findNativeLayeredWorldPackage(
+				NATIVE_TRANSITION_FIXTURE_PACKAGE_ID).orElse(null);
+		if (transitionPackage == null) {
+			player.message(messagePrefix
+				+ "Cross-package transition fixture is not loaded.");
+			return;
+		}
+		NativeLayeredWorldPackage currentPackage =
+			regionManager.findNativeLayeredWorldPackage(
+				player.getLayeredLocation()).orElse(null);
+		NativeLayeredWorldPackage primary =
+			regionManager.getNativeLayeredWorldPackage();
+		if (currentPackage == null
+			|| (currentPackage != primary
+				&& currentPackage != transitionPackage)) {
+			player.message(messagePrefix
+				+ "Enter the native deep route before switching packages.");
+			return;
+		}
+		WorldLocation destination = WorldLocation.global(
+			new WorldCoordinate(
+				450,
+				600,
+				currentPackage == transitionPackage ? -2 : -4));
+		player.setLayeredLocation(destination, true);
+		player.resetPath();
+		ActionSender.sendWorldInfo(player);
+		showSyntheticDeepFixtureStatus(player);
+		player.message(messagePrefix
+			+ "Atomic package transition committed to "
+			+ regionManager.findNativeLayeredWorldPackage(destination)
+				.orElseThrow(() -> new IllegalStateException(
+					"Committed package transition lost destination ownership"))
+				.getPackageId()
+			+ ".");
 	}
 
 	private WorldLocation syntheticDeepReturnLocation(final Player player) {
@@ -1665,7 +1714,8 @@ public final class Development implements CommandTrigger {
 			player.getWorld().getRegionManager();
 		Point receipt = regionManager.toRuntimeCompatibilityPoint(location);
 		NativeLayeredWorldPackage nativePackage =
-			regionManager.getNativeLayeredWorldPackage();
+			regionManager.findNativeLayeredWorldPackage(location)
+				.orElse(null);
 		boolean nativeTerrain =
 			player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
 			&& nativePackage != null
@@ -1756,6 +1806,8 @@ public final class Development implements CommandTrigger {
 				+ "Projection=" + projection
 				+ "; package=" + nativePackage.getPackageId()
 				+ "@" + nativePackage.getPackageVersion()
+				+ "; loadedPackages="
+				+ regionManager.getNativeLayeredWorldPackageCount()
 				+ "; placements="
 				+ nativePackage.getNpcPlacementCount() + "n/"
 				+ nativePackage.getGroundItemPlacementCount() + "i/"
