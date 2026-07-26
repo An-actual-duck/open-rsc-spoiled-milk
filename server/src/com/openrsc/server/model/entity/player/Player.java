@@ -5948,7 +5948,9 @@ public final class Player extends Mob {
 		if (checkPlayerActionState && (isBusy() || isRanging())) {
 			return false;
 		}
-		if (item.isRemoved() || getRegion().getItem(item.getID(), item.getLocation(), this) == null
+		if (item.isRemoved() || getWorld().getRegionManager()
+				.findInteractionGroundItem(
+					item.getID(), item.getLocation(), this) == null
 			|| !canReach(item) || item.getAmount() < 1) {
 			return false;
 		}

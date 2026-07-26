@@ -485,8 +485,40 @@ public class RegionManager {
 	}
 
 	/**
-	 * Synchronizes one Entity's authoritative logical membership after its
-	 * compatibility Region membership has accepted the same movement.
+	 * Returns whether this exact native location must use only the layered
+	 * spatial index. Legacy and synthetic compatibility scopes retain packed
+	 * Region membership.
+	 */
+	public boolean usesNativeLayeredRegionlessMembership(
+		final WorldLocation location) {
+		return isLayeredSpatialRuntimeAuthorityEnabled()
+			&& hasNativeLayeredTerrain(
+				Objects.requireNonNull(location, "location"));
+	}
+
+	/**
+	 * Verifies the spatial membership and packed-Region carrier invariant for
+	 * one live entity.
+	 */
+	public void requireEntitySpatialCarrier(final Entity entity) {
+		Entity checked = Objects.requireNonNull(entity, "entity");
+		WorldLocation location = checked.getWorldLocation();
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			layeredSpatialEntityIndex.requireMembership(checked, location);
+		}
+		boolean nativeRegionless =
+			usesNativeLayeredRegionlessMembership(location);
+		if (nativeRegionless != (checked.getRegion() == null)) {
+			throw new IllegalStateException(
+				nativeRegionless
+					? "Native layered entity occupies a packed Region"
+					: "Legacy entity is missing packed Region membership");
+		}
+	}
+
+	/**
+	 * Synchronizes one Entity's authoritative logical membership. Native
+	 * package scopes deliberately have no compatibility Region membership.
 	 */
 	public void synchronizeLayeredSpatialMembership(
 		final Entity entity,
@@ -526,6 +558,64 @@ public class RegionManager {
 
 	public int getLayeredSpatialMembershipCount() {
 		return layeredSpatialEntityIndex.getMembershipCount();
+	}
+
+	/**
+	 * Finds interaction entities through exact layered identity when the
+	 * spatial authority gate is active, otherwise through the legacy Region.
+	 * These adapters keep native callers from acquiring a packed Region solely
+	 * to use it as a lookup facade.
+	 */
+	public GameObject findInteractionScenery(
+		final Point location,
+		final Entity observer) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return findLayeredGameObject(
+				location, observer, GameObjectType.SCENERY, null);
+		}
+		return getRegion(location).getGameObject(location, observer);
+	}
+
+	public GameObject findInteractionBoundary(
+		final Point location,
+		final Entity observer) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return findLayeredGameObject(
+				location, observer, GameObjectType.BOUNDARY, null);
+		}
+		return getRegion(location).getWallGameObject(location, observer);
+	}
+
+	public Npc findInteractionNpc(
+		final Point location,
+		final Entity observer) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return findLayeredNpc(location, observer);
+		}
+		return getRegion(location).getNpc(location, observer);
+	}
+
+	public Player findInteractionPlayer(
+		final int x,
+		final int y,
+		final Entity observer,
+		final boolean includeSelf) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return findLayeredPlayer(
+				Point.location(x, y), observer, includeSelf);
+		}
+		return getRegion(x, y).getPlayer(
+			x, y, observer, includeSelf);
+	}
+
+	public GroundItem findInteractionGroundItem(
+		final int id,
+		final Point location,
+		final Entity observer) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			return findLayeredGroundItem(id, location, observer);
+		}
+		return getRegion(location).getItem(id, location, observer);
 	}
 
 	private Collection<Player> getLayeredLocalPlayers(final Entity observer) {

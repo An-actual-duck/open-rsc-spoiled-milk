@@ -5,7 +5,6 @@ import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.model.world.region.Region;
 
 /**
  * A WalkingQueue stores steps the client needs to walk and allows
@@ -37,10 +36,13 @@ public class WalkingQueue {
 				Point targetTile = currentPlayer.getLastTileClicked();
 
 				if (targetTile != null) {
-					Region region = currentPlayer.getWorld().getRegionManager().getRegion(targetTile);
-
 					// Target would be the other player currentPlayer clicked on.
-					Player target = region.getPlayer(targetTile.getX(), targetTile.getY(), currentPlayer, false);
+					Player target = currentPlayer.getWorld()
+						.getRegionManager().findInteractionPlayer(
+							targetTile.getX(),
+							targetTile.getY(),
+							currentPlayer,
+							false);
 
 					if (target != null && target != currentPlayer) {
 						// Is current player within 1 tile of target?

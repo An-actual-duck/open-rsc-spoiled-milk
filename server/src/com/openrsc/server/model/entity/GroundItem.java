@@ -10,6 +10,8 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.AuthoredLayeredGroundItemRegistry;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 
 public class GroundItem extends Entity {
 	/**
@@ -64,7 +66,7 @@ public class GroundItem extends Entity {
 		setAmount(amount);
 		this.ownerUsernameHash = owner == null ? 0 : owner.getUsernameHash();
 		spawnedTime = spawnTime;
-		trySetLocation(Point.location(x, y));
+		trySetLocation(Point.location(x, y), owner);
 		if (owner != null) {
 			if (owner.getIronMan() == IronmanMode.Transfer.id()) {
 				// disallow everyone from picking up transfer ironman items
@@ -100,9 +102,28 @@ public class GroundItem extends Entity {
 	}
 
 	public void trySetLocation(Point point) {
+		trySetLocation(point, null);
+	}
+
+	private void trySetLocation(
+		final Point point,
+		final Player spatialOwner) {
 		if (getWorld().getServer().getConfig().RESTRICT_ITEM_ID <= ItemId.NOTHING.id()
 			|| this.getID() <= getWorld().getServer().getConfig().RESTRICT_ITEM_ID) {
-			setLocation(point);
+			if (spatialOwner != null
+				&& getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+				WorldLocation ownerLocation =
+					spatialOwner.getWorldLocation();
+				setInitialWorldLocation(new WorldLocation(
+					ownerLocation.getWorldSpace(),
+					new WorldCoordinate(
+						point.getX(),
+						point.getY(),
+						ownerLocation.getCoordinate().getLevel())));
+				updateRegion();
+			} else {
+				setLocation(point);
+			}
 		}
 	}
 

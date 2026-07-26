@@ -49,8 +49,9 @@ fixture terrain, Man/item interaction, and stable package placement
 visibility. Cross-package transitions and retirement of the remaining packed
 Region carrier are the remaining Milestone E boundaries. Runtime checkpoint
 12 implements and owner-validates the first of those boundaries with a
-separate `-4` package. Retirement of remaining packed Region
-terrain/collision backing from native scopes is next.
+separate `-4` package. Runtime checkpoint 13 now implements and
+automated-validates Region-free entity membership inside native package
+terrain; focused private-owner acceptance remains before Milestone E closes.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -815,6 +816,71 @@ package hot-loading, true instances, signed-X/Y carrier retirement, packed
 Region retirement, Builder/export, or vanilla conversion. Once owner accepted,
 the remaining Milestone E engine boundary is retirement of packed Region
 terrain/collision backing from native scopes.
+
+### Authority Milestone E runtime checkpoint 13
+
+Implemented and automated/build-validated on 2026-07-25; focused private-owner
+acceptance remains:
+
+- exact native package terrain and object collision already bypass packed
+  `Region` tile storage. Package-owned scenery and boundaries already bypass
+  packed entity membership as well;
+- the remaining compatibility leak is the packed-Region entity carrier:
+  Players, NPCs, and ground items at a native signed location are also inserted
+  into the legacy surface `Region` at the same non-negative X/Y;
+- while layered spatial authority is enabled, an exact package-owned location
+  must therefore use only `LayeredSpatialEntityIndex`. Its compatibility
+  `Point` remains an X/Y input/output carrier, but `Entity.getRegion()` must be
+  null and checked as an invariant;
+- legacy archive locations and the independently gated synthetic-deep rollback
+  fixture keep packed `Region` membership. This checkpoint is not a global
+  Region rewrite and does not change public/default-off behavior;
+- movement across native packages remains regionless; explicit exit attaches
+  the entity to the destination legacy Region; explicit entry removes the
+  legacy membership before publishing the exact layered destination; and
+  logout, NPC death/respawn, and ground-item take/respawn must remove and
+  restore the correct carrier without guessing;
+- core interaction, walking-finish, mob/player blocking, scripting, ground-item
+  use/take, and spell lookups use exact world-space/level-qualified helpers
+  instead of acquiring a packed `Region` as a lookup facade;
+- owner-attributed runtime ground items inherit the owner's world space and
+  signed level before registration. Thus ordinary item drops and NPC/player
+  rewards in a native scope cannot leak into level 0 at matching X/Y; and
+- private `::layerloc` and `::deepfixture status` fail closed on a carrier
+  mismatch and identify `spatialCarrier=layered-index` /
+  `packedRegion=detached` for native package locations.
+
+Automated acceptance requires the full Authority A-through-E lineage, a
+focused source guard for the carrier boundary and migrated lookup consumers,
+the authoritative bundled-Ant server build, and unchanged client build
+lineage. Focused owner acceptance should prove:
+
+1. surface login reports `spatialCarrier=packed-region`;
+2. native level `-2` entry reports `spatialCarrier=layered-index` and
+   `packedRegion=detached`;
+3. walking, Man dialogue, authored coin take/respawn, Door interaction, and
+   Tree harvesting/restoration remain normal;
+4. one ordinary inventory drop is visible and can be recovered on the same
+   native level;
+5. the level `-4` package switch, three-coin take, logout/reconnect, and reverse
+   switch remain exact and regionless; and
+6. surface exit reattaches `spatialCarrier=packed-region` with normal movement
+   and scenery interaction.
+
+This closes only the native packed-Region carrier boundary. Arbitrary
+ownerless legacy plugin factories still require an explicit `WorldLocation`
+before they can create content in a native package; signed-X/Y carrier
+retirement, authored transition graphs, true instances, Builder/export, and
+vanilla conversion remain later work.
+
+Automated evidence now passes all 35 focused Authority A-through-E tests
+across eight files. The new four-test guard proves native entity detachment,
+the exact interaction/blocking lookup boundary, owner-scoped runtime-item
+level inheritance, and the private diagnostic/documentation contract. The
+authoritative bundled-Ant build compiles 865 core and 488 plugin sources, the
+unchanged client build compiles 262 sources, and matched two-package private
+startup populates `1n/2i/2s/2b` without a carrier exception. Owner acceptance
+remains deliberately separate.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -17901,6 +17967,7 @@ private environment should validate at least:
 | 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Owner-accepted after correcting two stale bounded-room assumptions; adjacent-page walking, exact deep reconnect at `(490,620)`, restored package `0.7.0` fixture terrain and placements, Man/item interaction, exact `(448,600,L-2)` reconnect, and prior surface exit pass while synthetic D remains independent rollback |
 | 2026-07-25 | Make the package-wide native runtime fixture renderable across all declared terrain rather than retaining a maximum-value codec band outside the former bounded room. | Package `0.7.0` uses a valid non-default blocking band, adds a runtime-definition guard, preserves full-range acceptance in the generic package codec, and passes focused owner floor/placement/interaction/reconnect acceptance |
 | 2026-07-25 | Implement Milestone E runtime checkpoint 12 as a fail-closed multi-package catalog and atomic explicit package-transition boundary. | Owner-accepted; distinct `-4` transition package, exact non-overlapping ownership, destination readiness preflight, package-scoped protocol/object identity, implicit-cross refusal, 35-test A-E lineage, authoritative builds, both package switches, three-coin interaction, exact `L-4` reconnect, and legacy surface exit pass |
+| 2026-07-25 | Implement Milestone E runtime checkpoint 13 by retiring packed-Region entity membership and Region-as-lookup facades from exact native package scopes. | Automated/build-validated; 35 focused A-E tests, 865/488 server build, 262-source client build, and matched two-package private startup pass; focused owner acceptance remains |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

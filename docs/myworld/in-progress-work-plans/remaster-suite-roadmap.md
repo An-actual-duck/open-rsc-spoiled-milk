@@ -889,6 +889,20 @@ scene state or a route-time exception. Retirement of packed Region
 terrain/collision backing from native scopes is now the remaining Milestone E
 engine boundary.
 
+Runtime checkpoint 13 is the selected Region-free native runtime cut. Native
+package terrain, collision, scenery, and boundaries were already independent
+of packed Regions; this checkpoint removes the remaining packed-Region entity
+carrier from package-owned locations. Players, NPCs, and ground items use only
+the exact layered spatial index while inside native terrain, core interaction
+and blocking lookups no longer acquire a Region as a facade, owner-attributed
+runtime items retain the owner's signed domain, and private diagnostics enforce
+and expose the carrier choice. Legacy archive locations and the synthetic-deep
+rollback route keep their existing packed membership. Automated validation is
+complete: 35 focused Authority A-through-E tests, the 865-core/488-plugin
+server build, the 262-source client build, and matched two-package private
+startup pass. Focused private-owner acceptance remains required before
+Milestone E is closed.
+
 ### Phase 6: Layered World Builder generation
 
 Goal: make the layered RSC Remastered world and modder content directly

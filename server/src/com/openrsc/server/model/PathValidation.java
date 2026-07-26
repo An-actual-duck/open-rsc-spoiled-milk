@@ -11,7 +11,6 @@ import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
-import com.openrsc.server.model.world.region.Region;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.CollisionFlag;
 
@@ -855,8 +854,9 @@ public class PathValidation {
 				return false;
 			case 1: // Players can walk through other players, but only if they are not the last point on their path (authentic to 2018 RSC)
 			case 2: // Players act like solid objects. Possibly authentic to very early RSC, based on reports that players could stand in doors to block off buildings.
-				Region region = localPlayer.getWorld().getRegionManager().getRegion(Point.location(x, y));
-				Player player = region.getPlayer(x, y, localPlayer, false);
+				Player player = localPlayer.getWorld().getRegionManager()
+					.findInteractionPlayer(
+						x, y, localPlayer, false);
 
 				if (player != null) {
 					localPlayer.face(player);
@@ -868,14 +868,13 @@ public class PathValidation {
 	}
 
 	public static boolean isMobBlocking(Mob mob, int x, int y) {
-		Region region = mob.getWorld().getRegionManager().getRegion(Point.location(x, y));
-
 		if (mob.getX() == x && mob.getY() == y) {
 			return false;
 		}
 
 		// visible (&alive) npcs
-		Npc npc = region.getNpc(Point.location(x, y), mob);
+		Npc npc = mob.getWorld().getRegionManager()
+			.findInteractionNpc(Point.location(x, y), mob);
 
 		/*
 		 * NPC blocking config controlled
@@ -898,7 +897,8 @@ public class PathValidation {
 		}
 
 		if (mob.isNpc()) {
-			Player player = region.getPlayer(x, y, mob, false);
+			Player player = mob.getWorld().getRegionManager()
+				.findInteractionPlayer(x, y, mob, false);
 			return player != null;
 		}
 		return false;

@@ -3214,7 +3214,8 @@ public final class Admins implements CommandTrigger {
 		}
 
 		int radius = 15;
-		for (Player targetPlayer : player.getRegion().getPlayers()) {
+		for (Player targetPlayer : player.getWorld().getRegionManager()
+				.getLocalPlayers(player)) {
 			// only stock those near the staff player
 			if (!targetPlayer.withinRange(player.getLocation(), radius)) continue;
 			if (targetPlayer.equals(player)) continue;

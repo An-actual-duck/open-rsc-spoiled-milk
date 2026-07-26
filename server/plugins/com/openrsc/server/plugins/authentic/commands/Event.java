@@ -1327,7 +1327,8 @@ public final class Event implements CommandTrigger {
 
 		// for performance reasons only search within the players region
 		int numTeleported = 0;
-		for (Player targetPlayer : player.getRegion().getPlayers()) {
+		for (Player targetPlayer : player.getWorld().getRegionManager()
+				.getLocalPlayers(player)) {
 			// only teleport those near the staff player
 			if (!targetPlayer.withinRange(player.getLocation(), radius)) continue;
 			if (targetPlayer.equals(player)) continue;
@@ -1378,7 +1379,8 @@ public final class Event implements CommandTrigger {
 
 		// for performance reasons only search within the players region
 		int numReturned = 0;
-		for (Player targetPlayer : player.getRegion().getPlayers()) {
+		for (Player targetPlayer : player.getWorld().getRegionManager()
+				.getLocalPlayers(player)) {
 			// only return those near the staff player
 			if (!targetPlayer.withinRange(player.getLocation(), radius)) continue;
 			if (targetPlayer.equals(player)) continue;

@@ -1392,8 +1392,19 @@ public final class Development implements CommandTrigger {
 			debugObjects = true;
 		}
 
-		ActionSender.sendBox(player, player.getRegion().toString(debugPlayers, debugNpcs, debugItems, debugObjects)
-			.replaceAll("\n", "%"), true);
+		if (player.getRegion() == null) {
+			player.message(messagePrefix
+				+ "Native layered scopes do not have a packed Region."
+				+ " Use ::layerloc and ::deepfixture status.");
+			return;
+		}
+		ActionSender.sendBox(
+			player,
+			player.getRegion()
+				.toString(
+					debugPlayers, debugNpcs, debugItems, debugObjects)
+				.replaceAll("\n", "%"),
+			true);
 	}
 
 	private void currentCoordinates(Player player, String[] args) {
@@ -1428,6 +1439,8 @@ public final class Development implements CommandTrigger {
 			player.getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
 		String projectionId = player.getWorld().getRegionManager()
 			.runtimeProjectionId(location);
+		player.getWorld().getRegionManager()
+			.requireEntitySpatialCarrier(player);
 		player.message(
 			messagePrefix
 				+ "Layered location authority="
@@ -1443,6 +1456,10 @@ public final class Development implements CommandTrigger {
 					? "enabled"
 					: "disabled")
 				+ " projection=" + projectionId
+				+ " spatialCarrier="
+				+ (player.getRegion() == null
+					? "layered-index"
+					: "packed-region")
 				+ " syntheticDeep="
 				+ (syntheticDeep ? "enabled" : "disabled")
 				+ " region=(" + regionKey.getRegionX() + ","
@@ -1787,6 +1804,7 @@ public final class Development implements CommandTrigger {
 			}
 		}
 		String projection = regionManager.runtimeProjectionId(location);
+		regionManager.requireEntitySpatialCarrier(player);
 		player.message(messagePrefix
 			+ (nativeTerrain ? "Native layered deep "
 				: "Synthetic deep ")
@@ -1826,7 +1844,7 @@ public final class Development implements CommandTrigger {
 			+ regionManager.runtimeCompatibilityPlane(location)
 			+ ")"
 			+ (nativeTerrain
-				? "; coverage=package"
+				? "; coverage=package; packedRegion=detached"
 				: "; bounds=("
 					+ LayeredCompatibilityPointAdapter
 						.SYNTHETIC_DEEP_MIN_X

@@ -61,14 +61,27 @@ public abstract class Entity {
 	private synchronized void updateRegion(
 		final Point oldLocation,
 		final WorldLocation oldWorldLocation) {
-		if (getRegion() != null && oldLocation != null) {
-			region.get().removeEntity(oldLocation, this);
+		final Region oldRegion = region.get();
+		if (oldRegion != null && oldLocation != null) {
+			oldRegion.removeEntity(oldLocation, this);
 		}
 
-		final Region newRegion = getWorld().getRegionManager().getRegion(getLocation());
 		if (!isRemoved()) {
-			region.set(newRegion);
-			region.get().addEntity(this);
+			if (getWorld().getRegionManager()
+					.usesNativeLayeredRegionlessMembership(
+						getWorldLocation())) {
+				/*
+				 * Native package terrain is keyed by signed WorldLocation and
+				 * must not borrow the packed surface Region at the same X/Y.
+				 * Point remains only a compatibility coordinate carrier.
+				 */
+				region.set(null);
+			} else {
+				final Region newRegion = getWorld().getRegionManager()
+					.getRegion(getLocation());
+				region.set(newRegion);
+				newRegion.addEntity(this);
+			}
 			if (getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
 				getWorld().getRegionManager().synchronizeLayeredSpatialMembership(
 					this, oldWorldLocation, getWorldLocation());
@@ -346,12 +359,25 @@ public abstract class Entity {
 	}
 
 	public void remove() {
-		if (region.get() == null) {
-			throw new IllegalStateException("Region should not be null if remove() is called.");
-		}
 		if (getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			final boolean nativeRegionless =
+				getWorld().getRegionManager()
+					.usesNativeLayeredRegionlessMembership(
+						getWorldLocation());
+			if (nativeRegionless && region.get() != null) {
+				throw new IllegalStateException(
+					"Native layered entity unexpectedly occupies a packed Region");
+			}
 			getWorld().getRegionManager().removeLayeredSpatialMembership(
 				this, getWorldLocation());
+			if (nativeRegionless) {
+				setRemoved(true);
+				return;
+			}
+		}
+		if (region.get() == null) {
+			throw new IllegalStateException(
+				"Packed Region should not be null if remove() is called");
 		}
 		getRegion().removeEntity(this);
 		setRemoved(true);

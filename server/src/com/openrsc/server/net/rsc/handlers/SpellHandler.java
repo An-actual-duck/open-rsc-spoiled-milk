@@ -1803,7 +1803,10 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						}
 
 						boolean giveExp = true;
-						if (affectedMob.getRegion().getGameObject(affectedMob.getLocation(), getPlayer()) == null) {
+						if (getPlayer().getWorld().getRegionManager()
+								.findInteractionScenery(
+									affectedMob.getLocation(),
+									getPlayer()) == null) {
 							// Authentically, the Guthix god spell only gave XP if the opponent was not stat drained already. Just RSC things...
 							if (affectedMob.getConfig().WANT_BUGGED_CLAWS_XP && isClaws && affectedMob.getSkills().getLevel(Skill.DEFENSE.id()) < affectedMob.getSkills().getMaxStat(Skill.DEFENSE.id())) {
 								giveExp = false;
