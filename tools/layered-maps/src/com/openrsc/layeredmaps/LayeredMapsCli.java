@@ -27,6 +27,7 @@ public final class LayeredMapsCli {
 		if (!"preflight".equals(args[0])
 			&& !"normalize".equals(args[0])
 			&& !"baseline".equals(args[0])
+			&& !"preservation-package".equals(args[0])
 			&& !"package-check".equals(args[0])) {
 			System.err.println("[layered-maps] Unknown command: " + args[0]);
 			usage();
@@ -49,6 +50,8 @@ public final class LayeredMapsCli {
 				runNormalization(root, workspace);
 			} else if ("baseline".equals(args[0])) {
 				runBaseline(root, workspace);
+			} else if ("preservation-package".equals(args[0])) {
+				runPreservationPackage(root, workspace);
 			} else {
 				runPackageCheck(requiredPath(options, "--package"), workspace);
 			}
@@ -162,6 +165,30 @@ public final class LayeredMapsCli {
 		System.out.println("json=" + jsonPath.toAbsolutePath().normalize());
 	}
 
+	private static void runPreservationPackage(Path root, Path workspace)
+		throws PreflightException, IOException {
+		PreservationTerrainPackageGenerator.Result result =
+			new PreservationTerrainPackageGenerator().generate(root, workspace);
+		Path reportJson = workspace.resolve("generation-report.json");
+		Path reportMarkdown = workspace.resolve("generation-report.md");
+		Path validationJson = workspace.resolve("package-validation.json");
+		writeAtomically(reportJson, result.toJson());
+		writeAtomically(reportMarkdown, result.toMarkdown());
+		writeAtomically(validationJson, result.validationJson);
+
+		System.out.println("Preservation layered terrain package generated");
+		System.out.println("reviewState=terrain-only");
+		System.out.println("runtimePromotionApproved=false");
+		System.out.println("baselineSha256=" + result.baselineFingerprint);
+		System.out.println("terrainSectors=" + result.terrainSectorCount);
+		System.out.println("terrainPayloadBytes=" + result.terrainPayloadBytes);
+		System.out.println("unconvertedPlacements="
+			+ result.unconvertedPlacementCount);
+		System.out.println("package=" + result.packageRoot);
+		System.out.println("report=" + reportJson);
+		System.out.println("validation=" + validationJson);
+	}
+
 	private static Map<String, String> options(String[] args) {
 		Map<String, String> result = new HashMap<String, String>();
 		for (int index = 1; index < args.length; index += 2) {
@@ -222,7 +249,8 @@ public final class LayeredMapsCli {
 
 	private static void usage() {
 		System.err.println(
-			"Usage: layered-maps <preflight|normalize|baseline|package-check>"
+			"Usage: layered-maps <preflight|normalize|baseline"
+				+ "|preservation-package|package-check>"
 				+ " --root PATH --workspace PATH [--package PATH]");
 	}
 }

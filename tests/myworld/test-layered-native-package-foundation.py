@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 
@@ -243,6 +244,146 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assertEqual(0, report["sceneryPlacementCount"])
             self.assertEqual(0, report["boundaryPlacementCount"])
 
+    def test_raw_sector_accepts_exact_native_bytes_and_refuses_wrong_length(self):
+        with tempfile.TemporaryDirectory(prefix="native-package-raw-") as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            relative_path = self.replace_expansion_with_raw(package)
+
+            accepted = self.run_command(
+                "package-check", Path(temp) / "accepted", package
+            )
+
+            self.assertEqual(0, accepted.returncode, accepted.stderr)
+            raw_path = package / relative_path
+            raw_path.write_bytes(raw_path.read_bytes()[:-1])
+            self.update_payload_hash(package, relative_path)
+
+            refused = self.run_command(
+                "package-check", Path(temp) / "refused", package
+            )
+
+            self.assertEqual(3, refused.returncode, refused.stderr)
+            self.assertIn("exactly 23040 bytes", refused.stderr)
+
+    def test_terrain_only_review_package_accepts_no_placement_sets(self):
+        with tempfile.TemporaryDirectory(
+            prefix="native-package-terrain-only-"
+        ) as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            manifest_path = package / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["packageId"] = "rsc-remastered.terrain-only-review"
+            manifest["placementSets"] = []
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+            )
+
+            result = self.run_command(
+                "package-check", Path(temp) / "report", package
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            report = json.loads(
+                (Path(temp) / "report/package-validation.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(0, report["placementSetCount"])
+            self.assertEqual(0, report["npcPlacementCount"])
+            self.assertEqual(0, report["groundItemPlacementCount"])
+            self.assertEqual(0, report["sceneryPlacementCount"])
+            self.assertEqual(0, report["boundaryPlacementCount"])
+
+    def test_preservation_terrain_package_is_exact_isolated_and_deterministic(self):
+        source_archive = ROOT / "server/conf/server/data/Authentic_Landscape.orsc"
+        source_sha = hashlib.sha256(source_archive.read_bytes()).hexdigest()
+        with tempfile.TemporaryDirectory(
+            prefix="preservation-terrain-package-"
+        ) as temp:
+            first_workspace = Path(temp) / "first"
+            second_workspace = Path(temp) / "second"
+
+            first = self.run_command(
+                "preservation-package", first_workspace
+            )
+
+            self.assertEqual(0, first.returncode, first.stderr)
+            report = json.loads(
+                (first_workspace / "generation-report.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual("terrain-only", report["reviewState"])
+            self.assertFalse(report["runtimePromotionApproved"])
+            self.assertTrue(report["legacyRoundTripVerified"])
+            self.assertEqual(
+                "raw-layered-sector-v1", report["terrainEncoding"]
+            )
+            self.assertEqual(1764, report["terrainSectorCount"])
+            self.assertEqual(1764 * 48 * 48 * 10, report["terrainPayloadBytes"])
+            self.assertEqual(
+                {"-1": 441, "0": 441, "1": 441, "2": 441},
+                report["sectorCountByLevel"],
+            )
+            self.assertEqual(0, report["placementSetsGenerated"])
+            self.assertEqual(32364, report["unconvertedPlacementRecords"])
+
+            package = first_workspace / "package"
+            manifest = json.loads(
+                (package / "manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(1764, len(manifest["terrainSectors"]))
+            self.assertEqual([], manifest["placementSets"])
+            self.assertEqual(
+                {-1, 0, 1, 2},
+                {level["level"] for level in manifest["levels"]},
+            )
+            self.assertTrue(all(
+                sector["encoding"] == "raw-layered-sector-v1"
+                for sector in manifest["terrainSectors"]
+            ))
+            self.assertTrue(all(
+                (package / sector["path"]).stat().st_size == 23040
+                for sector in manifest["terrainSectors"]
+            ))
+            self.assert_preservation_terrain_round_trip(
+                source_archive, package, manifest
+            )
+
+            validation_workspace = Path(temp) / "validation"
+            validation = self.run_command(
+                "package-check", validation_workspace, package
+            )
+            self.assertEqual(0, validation.returncode, validation.stderr)
+            validation_report = json.loads(
+                (validation_workspace / "package-validation.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(1764, validation_report["terrainSectorCount"])
+            self.assertEqual(0, validation_report["placementSetCount"])
+
+            second = self.run_command(
+                "preservation-package", second_workspace
+            )
+            self.assertEqual(0, second.returncode, second.stderr)
+            self.assertEqual(
+                self.package_tree_hash(package),
+                self.package_tree_hash(second_workspace / "package"),
+            )
+
+            refused = self.run_command(
+                "preservation-package", first_workspace
+            )
+            self.assertEqual(3, refused.returncode, refused.stderr)
+            self.assertIn("use a fresh isolated workspace", refused.stderr)
+            self.assertEqual(
+                source_sha,
+                hashlib.sha256(source_archive.read_bytes()).hexdigest(),
+            )
+
     def test_new_schemas_are_valid_and_keep_level_signed(self):
         baseline_schema = json.loads(
             (TOOL_ROOT / "schema/preservation-baseline-v1.schema.json").read_text(
@@ -325,12 +466,17 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             {
                 "uniform-layered-sector-v1",
                 "rle-layered-sector-v1",
+                "raw-layered-sector-v1",
             },
             set(
                 package_schema["properties"]["terrainSectors"]["items"][
                     "properties"
                 ]["encoding"]["enum"]
             ),
+        )
+        self.assertEqual(
+            0,
+            package_schema["properties"]["placementSets"]["minItems"],
         )
 
     def test_runtime_fixture_uses_client_renderable_definitions(self):
@@ -504,6 +650,70 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
         manifest_path.write_text(
             json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
         )
+
+    @staticmethod
+    def replace_expansion_with_raw(package):
+        json_relative = "terrain/expansion-l3-x9-y12.json"
+        raw_relative = "terrain/expansion-l3-x9-y12.raw"
+        source = json.loads(
+            (package / json_relative).read_text(encoding="utf-8")
+        )
+        tile = source["tile"]
+        raw_tile = bytes(
+            [
+                tile["elevation"],
+                tile["texture"],
+                tile["overlay"],
+                tile["roof"],
+                tile["verticalWall"],
+                tile["horizontalWall"],
+            ]
+        ) + tile["diagonalWall"].to_bytes(4, byteorder="big")
+        raw_path = package / raw_relative
+        raw_path.write_bytes(raw_tile * (48 * 48))
+
+        manifest_path = package / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        for sector in manifest["terrainSectors"]:
+            if sector["path"] == json_relative:
+                sector["encoding"] = "raw-layered-sector-v1"
+                sector["path"] = raw_relative
+                sector["sha256"] = hashlib.sha256(
+                    raw_path.read_bytes()
+                ).hexdigest()
+        manifest_path.write_text(
+            json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+        )
+        return raw_relative
+
+    def assert_preservation_terrain_round_trip(
+        self, source_archive, package, manifest
+    ):
+        plane_by_level = {0: 0, 1: 1, 2: 2, -1: 3}
+        with zipfile.ZipFile(source_archive) as archive:
+            for sector in manifest["terrainSectors"]:
+                entry = "h{}x{}y{}".format(
+                    plane_by_level[sector["level"]],
+                    sector["sectorX"] + 48,
+                    sector["sectorY"] + 37,
+                )
+                legacy = archive.read(entry)
+                native = bytearray((package / sector["path"]).read_bytes())
+                for offset in range(0, len(native), 10):
+                    native[offset + 4], native[offset + 5] = (
+                        native[offset + 5],
+                        native[offset + 4],
+                    )
+                self.assertEqual(legacy, native, entry)
+
+    @staticmethod
+    def package_tree_hash(package):
+        digest = hashlib.sha256()
+        for path in sorted(item for item in package.rglob("*") if item.is_file()):
+            digest.update(path.relative_to(package).as_posix().encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(hashlib.sha256(path.read_bytes()).digest())
+        return digest.hexdigest()
 
 
 if __name__ == "__main__":

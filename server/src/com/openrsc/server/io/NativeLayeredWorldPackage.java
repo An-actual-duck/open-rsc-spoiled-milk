@@ -6,6 +6,7 @@ import com.openrsc.server.model.world.coordinate.WorldMapSectorId;
 import com.openrsc.server.model.world.coordinate.WorldSpaceId;
 import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
@@ -38,6 +39,7 @@ public final class NativeLayeredWorldPackage {
 	public static final String COORDINATE_MODEL = "signed-layered-v1";
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
 	public static final String RLE_ENCODING = "rle-layered-sector-v1";
+	public static final String RAW_ENCODING = "raw-layered-sector-v1";
 	public static final String RLE_TILE_ORDER = "x-major-y-minor";
 	public static final String ENTITY_PLACEMENT_ENCODING_V1 =
 		"layered-entity-placements-v1";
@@ -274,7 +276,8 @@ public final class NativeLayeredWorldPackage {
 			}
 			String encoding = matchedString(value, "encoding", ID);
 			if (!UNIFORM_ENCODING.equals(encoding)
-				&& !RLE_ENCODING.equals(encoding)) {
+				&& !RLE_ENCODING.equals(encoding)
+				&& !RAW_ENCODING.equals(encoding)) {
 				throw new IOException(
 					"Terrain payload encoding is unsupported by this loader: " + encoding);
 			}
@@ -297,10 +300,17 @@ public final class NativeLayeredWorldPackage {
 					encoding,
 					relativePath,
 					expectedSha256);
-			} else {
+			} else if (RLE_ENCODING.equals(encoding)) {
 				sector = NativeLayeredTerrainSector.ofTiles(
 					identity,
 					readRleTiles(payloadPath),
+					encoding,
+					relativePath,
+					expectedSha256);
+			} else {
+				sector = NativeLayeredTerrainSector.ofTiles(
+					identity,
+					readRawTiles(payloadPath),
 					encoding,
 					relativePath,
 					expectedSha256);
@@ -317,9 +327,9 @@ public final class NativeLayeredWorldPackage {
 		Set<String> paths,
 		Map<WorldMapSectorId, NativeLayeredTerrainSector> terrainSectors)
 		throws IOException {
-		if (values.length() < 1 || values.length() > MAX_PLACEMENT_SETS) {
+		if (values.length() > MAX_PLACEMENT_SETS) {
 			throw new IOException(
-				"placementSets count must be 1.." + MAX_PLACEMENT_SETS);
+				"placementSets count must be 0.." + MAX_PLACEMENT_SETS);
 		}
 		Map<String, NativeLayeredPlacementSet> result =
 			new LinkedHashMap<String, NativeLayeredPlacementSet>();
@@ -726,6 +736,36 @@ public final class NativeLayeredWorldPackage {
 			throw new IOException(
 				"RLE sector runs must expand to exactly " + tiles.length
 					+ " tiles but expanded to " + expanded);
+		}
+		return tiles;
+	}
+
+	private static NativeLayeredTerrainTile[] readRawTiles(Path path)
+		throws IOException {
+		final int tileBytes = 10;
+		final int expectedBytes =
+			NativeLayeredTerrainSector.TILE_COUNT * tileBytes;
+		byte[] payload = Files.readAllBytes(path);
+		if (payload.length != expectedBytes) {
+			throw new IOException(
+				"Raw sector must contain exactly " + expectedBytes
+					+ " bytes but contained " + payload.length);
+		}
+		ByteBuffer input = ByteBuffer.wrap(payload);
+		NativeLayeredTerrainTile[] tiles =
+			new NativeLayeredTerrainTile[NativeLayeredTerrainSector.TILE_COUNT];
+		for (int index = 0; index < tiles.length; index++) {
+			tiles[index] = new NativeLayeredTerrainTile(
+				input.get() & 0xff,
+				input.get() & 0xff,
+				input.get() & 0xff,
+				input.get() & 0xff,
+				input.get() & 0xff,
+				input.get() & 0xff,
+				input.getInt());
+		}
+		if (input.hasRemaining()) {
+			throw new IOException("Raw sector decoder left trailing bytes");
 		}
 		return tiles;
 	}

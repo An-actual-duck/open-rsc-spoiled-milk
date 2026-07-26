@@ -957,6 +957,26 @@ closed. The next active product gate is deterministic parity-first
 normalization of the frozen Preservation baseline into a reviewable native
 layered package.
 
+Preservation normalization milestone 1 is complete as of 2026-07-26. The
+internal `preservation-package` command refuses unless all 12 frozen source
+inputs reproduce the accepted baseline, writes only to a fresh isolated
+workspace, and produces
+`rsc-remastered.preservation-r64-terrain-review@0.1.0`. All 1,764 authentic
+terrain sectors convert evenly across signed levels `0`, `+1`, `+2`, and `-1`
+into 40,642,560 bytes of strict fixed-width native terrain. Every sector
+reverse-transforms byte-for-byte to its ORSC source, repeated generation is
+deterministic, and both the tool and detached server loader accept the result.
+
+This is deliberately a terrain-only review package:
+`runtimePromotionApproved=false`, zero placement sets, and all 32,364 base
+placement records reported as unconverted. The next product slice must convert
+boundaries, scenery, NPCs, and ground items with stable IDs and exact behavior.
+In particular, legacy NPC start/min/max roaming rectangles require a lossless
+package field rather than approximation by the current radius-only fixture
+schema. Transition ownership, complete-world population replacement,
+geographic alignment, Builder review, private runtime promotion, and export
+remain separately gated.
+
 ### Phase 6: Layered World Builder generation
 
 Goal: make the layered RSC Remastered world and modder content directly
@@ -1371,6 +1391,7 @@ The RSC Remastered product roadmap is complete when:
 | --- | --- | --- |
 | 2026-07-25 | Present the public project as **RSC Remastered**, a definitive vanilla-content remaster with one coherent launcher/tooling experience; retain modular capability boundaries as internal architecture. | Confirmed; refines the earlier Suite-first packaging direction |
 | 2026-07-25 | Use the repository's Preservation revision-64 terrain, base placements, configuration, and definition set as the first definitive vanilla source candidate, subject to one complete provenance/fingerprint manifest. | Confirmed; local source set found, manifest remains a deliverable |
+| 2026-07-26 | Complete the first Preservation normalization milestone as an isolated terrain-only native review package. | Frozen-baseline verification, all 1,764 exact ORSC sectors, deterministic raw native payloads, byte-for-byte reverse proof, tool/server validation, source immutability, and overwrite refusal pass. The package remains non-runtime with zero placement sets and 32,364 explicitly unconverted placement records |
 | 2026-07-25 | Make the Universal Launcher own isolated, matched installation profiles and named fingerprinted import adapters; importing Cabbage or another supported distribution must never patch the default profile in place. | Confirmed |
 | 2026-07-25 | Begin modder drag-and-drop support with profile-local `content/walls` and `content/floors`, namespaced packs, stable registered identities, validation, and automatic World Builder discovery. | Confirmed architecture; implementation remains phased |
 | 2026-07-25 | Complete the concrete vanilla layered map rather than blocking on a polished general standalone map converter. Keep deterministic normalization, reports, receipts, review, and rollback as internal build facilities; place later external conversions behind named launcher adapters. | Confirmed; supersedes the converter-as-primary-end-user-product direction |

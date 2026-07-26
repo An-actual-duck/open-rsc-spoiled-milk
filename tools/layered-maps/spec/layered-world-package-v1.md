@@ -62,7 +62,7 @@ Each `terrainSectors` record declares:
 complete 48-tile page using a single static tile value. It exists to prove the
 native loader and arbitrary-level contract without aliasing a legacy plane.
 
-`rle-layered-sector-v1` is the full-fidelity v1 encoding. Its `runs` expand to
+`rle-layered-sector-v1` is the human-readable full-fidelity v1 encoding. Its `runs` expand to
 exactly 2,304 tile values in `x-major-y-minor` order: all local Y coordinates
 for local X `0`, followed by all local Y coordinates for local X `1`, through
 local X `47`. Each run carries a positive `count` and the seven terrain scalars
@@ -70,6 +70,16 @@ used by the legacy sector representation. A page with no repeated neighbors
 may use 2,304 one-tile runs, so compression never limits fidelity. The loader
 rejects underfill, overfill, zero/negative counts, extra fields, invalid scalar
 ranges, or a different tile order.
+
+`raw-layered-sector-v1` is the compact full-scale package encoding. It stores
+the same 2,304 tiles as exactly 23,040 bytes in the same
+`x-major-y-minor` order. Each ten-byte tile contains elevation, texture,
+overlay, roof, vertical wall, horizontal wall, then the big-endian 32-bit
+diagonal-wall value. This order matches the native client wire contract. It
+deliberately differs from legacy ORSC's horizontal-before-vertical byte order;
+conversion must swap those two bytes and verify that reversing the transform
+reproduces the exact source payload. The payload carries no implicit level or
+sector identity.
 
 ## Entity-placement payloads
 
@@ -80,6 +90,10 @@ Each `placementSets` record declares:
 - versioned `encoding`;
 - a normalized relative payload `path`; and
 - exact payload `sha256`.
+
+The array may be empty for a terrain-only module or an intermediate isolated
+review package. Runtime publication of a complete world remains a separate
+profile-level decision; the package loader does not invent placements.
 
 `layered-entity-placements-v1` owns NPC and ground-item spawns. Every placement
 has a package-wide stable `placementId`; IDs cannot be reused across sets or

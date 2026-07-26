@@ -237,6 +237,33 @@ public final class NativeLayeredServerSourceFixture {
 }
 """
 
+TERRAIN_ONLY_HARNESS = r"""
+import com.openrsc.server.io.NativeLayeredWorldPackage;
+import java.nio.file.Paths;
+
+public final class NativeLayeredTerrainOnlyFixture {
+    public static void main(String[] args) throws Exception {
+        NativeLayeredWorldPackage world =
+            NativeLayeredWorldPackage.load(Paths.get(args[0]));
+        check(world.getTerrainSectorCount() == 3, "terrain count");
+        check(world.getPlacementSetCount() == 0, "placement-set count");
+        check(world.getNpcPlacementCount() == 0, "NPC placement count");
+        check(world.getGroundItemPlacementCount() == 0,
+            "ground-item placement count");
+        check(world.getSceneryPlacementCount() == 0,
+            "scenery placement count");
+        check(world.getBoundaryPlacementCount() == 0,
+            "boundary placement count");
+    }
+
+    private static void check(boolean condition, String label) {
+        if (!condition) {
+            throw new AssertionError(label);
+        }
+    }
+}
+"""
+
 
 WIRE_HARNESS = r"""
 import com.openrsc.server.net.Packet;
@@ -431,6 +458,12 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
         )
         fixture = cls.classes / "NativeLayeredServerSourceFixture.java"
         fixture.write_text(HARNESS, encoding="utf-8")
+        terrain_only_fixture = (
+            cls.classes / "NativeLayeredTerrainOnlyFixture.java"
+        )
+        terrain_only_fixture.write_text(
+            TERRAIN_ONLY_HARNESS, encoding="utf-8"
+        )
         wire_fixture = cls.classes / "NativeLayeredChunkWireFixture.java"
         wire_fixture.write_text(WIRE_HARNESS, encoding="utf-8")
         subprocess.run(
@@ -445,6 +478,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 "-d",
                 str(cls.classes),
                 str(fixture),
+                str(terrain_only_fixture),
                 str(wire_fixture),
             ],
             cwd=ROOT,
@@ -472,6 +506,78 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
     def test_detached_server_source_loads_adjacent_pages_and_expanded_depth(self):
         result = self.run_fixture(PACKAGE)
         self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_detached_server_source_decodes_raw_native_sector(self):
+        with tempfile.TemporaryDirectory(prefix="native-server-raw-") as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            json_relative = "terrain/expansion-l3-x9-y12.json"
+            raw_relative = "terrain/expansion-l3-x9-y12.raw"
+            source = json.loads(
+                (package / json_relative).read_text(encoding="utf-8")
+            )
+            tile = source["tile"]
+            raw_tile = bytes(
+                [
+                    tile["elevation"],
+                    tile["texture"],
+                    tile["overlay"],
+                    tile["roof"],
+                    tile["verticalWall"],
+                    tile["horizontalWall"],
+                ]
+            ) + tile["diagonalWall"].to_bytes(4, byteorder="big")
+            raw_path = package / raw_relative
+            raw_path.write_bytes(raw_tile * (48 * 48))
+            manifest_path = package / "manifest.json"
+            manifest = json.loads(
+                manifest_path.read_text(encoding="utf-8")
+            )
+            for sector in manifest["terrainSectors"]:
+                if sector["path"] == json_relative:
+                    sector["encoding"] = "raw-layered-sector-v1"
+                    sector["path"] = raw_relative
+                    sector["sha256"] = hashlib.sha256(
+                        raw_path.read_bytes()
+                    ).hexdigest()
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+            )
+
+            result = self.run_fixture(package)
+
+            self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_server_loader_accepts_terrain_only_review_package(self):
+        with tempfile.TemporaryDirectory(
+            prefix="native-server-terrain-only-"
+        ) as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            manifest_path = package / "manifest.json"
+            manifest = json.loads(
+                manifest_path.read_text(encoding="utf-8")
+            )
+            manifest["packageId"] = "rsc-remastered.terrain-only-review"
+            manifest["placementSets"] = []
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+            )
+
+            result = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredTerrainOnlyFixture",
+                    str(package),
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
 
     def test_server_generator_and_client_decoder_share_chunk_wire_contract(self):
         result = subprocess.run(

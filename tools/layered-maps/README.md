@@ -41,6 +41,23 @@ byte-for-byte before direct vanilla conversion begins. This baseline is a
 coordinated source set; neither the ORSC nor the SQLite seed alone is the
 vanilla map.
 
+The first direct-conversion slice generates a terrain-only native review
+package:
+
+```bash
+./tools/layered-maps/layered-maps.sh preservation-package
+```
+
+The command first requires the current 12-file source set to reproduce the
+frozen baseline byte-for-byte. It writes only under the isolated
+`tools/layered-maps/workspace/preservation-package/` directory, transforms
+all 1,764 authentic ORSC sectors into signed identities and fixed-width native
+payloads, reverses every wall-byte swap to prove exact source fidelity, and
+validates the generated package independently. The report explicitly marks
+the result `terrain-only` and `runtimePromotionApproved=false`; placement and
+transition conversion must complete before private runtime promotion, and no
+game/export path is modified.
+
 ## Native package check
 
 `layered-world-package-v1` declares terrain with explicit
@@ -82,6 +99,14 @@ The definitive `rle-layered-sector-v1` payload expands positive runs in
 all seven legacy terrain scalars and can represent an entirely non-repeating
 page with 2,304 one-tile runs. Both the tool and server reject underfill,
 overfill, invalid scalar ranges, changed ordering, and unknown fields.
+
+The full-scale Preservation package uses `raw-layered-sector-v1`: exactly
+23,040 bytes per 48-tile sector in the same x-major/y-minor order and the
+native vertical-wall-before-horizontal-wall field order. It avoids expanding
+1,764 vanilla sectors into large JSON payloads while retaining exact hashes
+and full tile fidelity. Conversion from ORSC swaps only the two legacy wall
+bytes and must reverse that transformation byte-for-byte before accepting a
+generated payload.
 
 Package `0.7.0` keeps the level `-2` RLE page fully runtime-renderable now that
 native ownership covers every declared tile. Its western non-default band uses

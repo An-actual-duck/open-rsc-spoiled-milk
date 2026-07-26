@@ -17966,6 +17966,70 @@ Automated validation status:
 Status: implemented and automated-validated. No lifecycle authority is
 authorized.
 
+## Preservation Normalization Milestone 1: Exact Terrain Review Package
+
+Status: implemented and automated-validated on 2026-07-26. This is the first
+post-engine product milestone. It does not authorize runtime promotion, map
+alignment, Builder export, or mutation of the source game.
+
+The `preservation-package` command now requires the current repository inputs
+to reproduce the checked 12-file
+`rsc-remastered-preservation-r64-v1` baseline byte-for-byte before it performs
+any conversion. It writes only to a fresh isolated workspace, refuses to
+overwrite an existing package or staging directory, and never edits the
+terrain archive, placement files, database, configuration, or runtime profile.
+
+The generated
+`rsc-remastered.preservation-r64-terrain-review@0.1.0` package contains:
+
+- all 1,764 Preservation terrain sectors, split evenly as 441 sectors on each
+  signed level `0`, `+1`, `+2`, and `-1`;
+- 40,642,560 bytes of fixed-width `raw-layered-sector-v1` terrain;
+- explicit `signed-layered-v1` sector identities and 24-tile presentation
+  metadata over retained 48-tile storage pages;
+- zero placement sets, with 32,364 source placement records explicitly
+  reported as unconverted; and
+- deterministic manifest SHA-256
+  `d18719e754381fdb6449e6010e2ed550fd3f4f5e2eea6df070bedfdfb7a1458f`
+  and package fingerprint
+  `4b507a6d7e3e146c4641d255521aeb5af81e458f87f1cc0dad47c1e45cd97c79`.
+
+The raw encoding stores each 48-by-48 sector as exactly 23,040 bytes in
+x-major/y-minor order. Each tile carries elevation, texture, overlay, roof,
+vertical wall, horizontal wall, and a big-endian diagonal-wall value. Legacy
+ORSC reverses the two wall fields, so conversion swaps only those bytes and
+then reverses every generated sector to prove exact equality with its source
+archive entry. Two complete conversions produce the same package tree
+fingerprint. Both the standalone package validator and detached server loader
+accept the raw encoding and terrain-only package shape; wrong payload lengths
+and overwrite attempts fail closed.
+
+The five focused native-package suites pass 31 tests, including full-archive
+round-trip and repeated-generation checks. The authoritative server build
+compiles 865 core and 488 plugin sources. The generated 42 MiB review workspace
+remains ignored build output; its reproducible manifest, schemas, converter,
+specification, and guards are the versioned project inputs.
+
+The review package remains deliberately ineligible for runtime promotion:
+
+- base boundary, scenery, NPC, and ground-item placement conversion is not yet
+  implemented;
+- transition/script ownership and recovery paths are not yet represented;
+- NPC legacy roaming rectangles cannot be approximated by the current
+  radius-only package field without behavior loss, so the next placement
+  schema must preserve exact start/min/max bounds; and
+- no legacy population source has yet been disabled or replaced by this
+  package, so launching it as a complete world would be incomplete and could
+  duplicate ownership.
+
+The next bounded milestone is exact, deterministic base-placement conversion
+with stable source-derived IDs and full legacy behavior fields. It must retain
+the terrain-only review boundary until all four placement families validate
+against package terrain and a complete-world population profile can replace,
+rather than supplement, the legacy population source. Transition discovery,
+geographic alignment, Builder review, private runtime promotion, and final
+export remain later gates.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -18051,6 +18115,7 @@ private environment should validate at least:
 | 2026-07-26 | Correct and accept checkpoint 13's initial legacy-to-native scene rebuild. | Same-X/Y, compatibility-`P0` native entry had accepted the new scope but incorrectly used the client same-region fast path; hard layered loads now rebuild immediately. Regression/performance/build guards pass, and owner evidence confirms the native floor and movement without reconnect while the entity carrier remains detached from packed Regions |
 | 2026-07-26 | Make `::layerloc` carrier diagnostics readable in the in-game chat after final checkpoint-13 acceptance exposed single-line clipping. | The complete response already proved `spatialCarrier=packed-region` in the client technical capture. The command now presents unchanged fields as seven bounded logical lines; focused guards, the authoritative server build, and owner visual confirmation pass |
 | 2026-07-26 | Close Authority Milestone E and the Phase 5 layered-world engine capability. | Native package terrain/collision/placements, signed levels, incremental 24-tile presentation, cross-package transitions, exact persistence, regionless native entity membership, legacy reattachment, rollback, and all focused automated/build/private-owner routes pass. The next active product gate is parity-first normalization of the frozen Preservation baseline |
+| 2026-07-26 | Complete Preservation normalization milestone 1 as an exact terrain-only native review package. | The frozen 12-file baseline gates conversion; all 1,764 ORSC sectors convert deterministically into 40,642,560 bytes of strict raw native terrain across levels `0`, `+1`, `+2`, and `-1`, and reverse byte-for-byte. Tool/server validation, zero-placement review packages, overwrite refusal, and source immutability pass. All 32,364 placements remain explicitly unconverted and runtime promotion remains false |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -18439,35 +18504,26 @@ copied-data server. Runtime/public promotion, Region/entity identity migration,
 protocol/client authority, level `-2`, streaming, Builder, conversion, and
 export remain separately gated.
 
-## Next Discussion
+## Current Product Gate
 
-The coarse Phase 5 Authority Milestones A through D are accepted. The
-recommended next coarse gate is **Authority Milestone E: Native Layered Terrain
-and Package Loader**. It replaces the synthetic level `-2` room's named
-plane-0 projection with one versioned, package-owned native layered terrain
-source keyed by `(worldSpace,level,sectorX,sectorY)`, including terrain
-collision and explicit layered placements.
+The coarse Phase 5 Authority Milestones A through E are accepted. Signed
+runtime identity, native package terrain/collision/placements, incremental
+presentation, persistence, cross-package transitions, and Region-free native
+entity membership have completed their focused automated and private-owner
+routes.
 
-Milestone E must prove the loader has no fixed level enumeration: its fixture
-uses `-2`, while an automated package test adds another declared signed level
-without a source edit. The existing 48-tile page remains only the storage
-unit. Server interest and client presentation use smaller incremental chunks,
-with readiness and baseline sequencing preventing visible partial state at
-page boundaries or after a hard transition.
+The active gate is now the parity-first Preservation conversion. Its first
+milestone produces the exact terrain-only native review package described
+above: all 1,764 authentic sectors convert deterministically and reverse to
+their original bytes, while all 32,364 base placement records remain honestly
+reported as unconverted. No runtime or export path consumes that package yet.
 
-The owner-testable acceptance route should enter the native deep room, cross at
-least one storage-page boundary, walk and collide normally, interact with one
-scenery object, roaming NPC, and ground item, reconnect at depth, exit, and
-exercise recovery. It must also prove identical X/Y on level 0 remains
-isolated. No full vanilla relocation, public-server activation, live database
-mutation, or Builder/export claim belongs in this milestone.
-
-Once Milestone E is accepted, the next product gate is direct, deterministic
-normalization of the frozen Preservation baseline into a parity-first layered
-package. Geographic realignment and additional depths follow review of that
-exact conversion; a generic standalone converter is no longer on the critical
-path. The historical retirement findings below remain retained reference
-material for the incremental-loading implementation.
+The next implementation slice is exact base-placement conversion, beginning
+with a schema that preserves legacy NPC roaming rectangles instead of reducing
+them to a radius. Geographic realignment and additional depths follow review
+of the complete unchanged-world conversion; a generic standalone converter is
+not on the critical path. The historical retirement findings below remain
+retained reference material for later source-lifecycle work.
 
 ## Phase 5 Authority Milestone B: Spatial Runtime Identity
 

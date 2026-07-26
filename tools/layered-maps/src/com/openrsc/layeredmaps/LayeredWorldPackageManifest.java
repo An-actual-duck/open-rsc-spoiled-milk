@@ -231,6 +231,8 @@ public final class LayeredWorldPackageManifest {
 				UniformLayeredTerrainSector.load(payload);
 			} else if (RleLayeredTerrainSector.ENCODING.equals(encoding)) {
 				RleLayeredTerrainSector.load(payload);
+			} else if (RawLayeredTerrainSector.ENCODING.equals(encoding)) {
+				RawLayeredTerrainSector.load(payload);
 			} else {
 				throw new PreflightException(
 					"Terrain payload encoding is unsupported by this loader: " + encoding);
@@ -248,9 +250,6 @@ public final class LayeredWorldPackageManifest {
 		Set<String> paths,
 		List<TerrainSector> terrainSectors)
 		throws IOException, PreflightException {
-		if (values.isEmpty()) {
-			throw new PreflightException("placementSets must not be empty.");
-		}
 		Set<String> setIds = new HashSet<String>();
 		Set<String> placementIds = new HashSet<String>();
 		Set<WorldMapSectorId> terrainIdentities =
