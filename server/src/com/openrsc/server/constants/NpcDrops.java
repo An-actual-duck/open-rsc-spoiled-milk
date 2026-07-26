@@ -1270,8 +1270,8 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.AIR_RUNE.id(), 12, 8);
 		currentNpcDrops.addItemDrop(ItemId.WATER_RUNE.id(), 6, 6);
 		currentNpcDrops.addItemDrop(ItemId.BODY_RUNE.id(), 6, 6);
-		currentNpcDrops.addItemDrop(ItemId.PRIEST_ROBE.id(), 1, 4);
-		currentNpcDrops.addItemDrop(ItemId.PRIEST_GOWN.id(), 1, 4);
+		currentNpcDrops.addItemDrop(ItemId.SARADOMIN_WOOL_ROBE_TOP.id(), 1, 4);
+		currentNpcDrops.addItemDrop(ItemId.SARADOMIN_WOOL_ROBE_BOTTOM.id(), 1, 4);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 18, 3);
 		currentNpcDrops.addItemDrop(ItemId.LAW_RUNE.id(), 1, 1);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
@@ -1287,8 +1287,8 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.CHAOS_RUNE.id(), 2, 8);
 		currentNpcDrops.addItemDrop(ItemId.BODY_RUNE.id(), 6, 6);
 		currentNpcDrops.addItemDrop(ItemId.FIRE_RUNE.id(), 6, 6);
-		currentNpcDrops.addItemDrop(ItemId.ROBE_OF_ZAMORAK_TOP.id(), 1, 4);
-		currentNpcDrops.addItemDrop(ItemId.ROBE_OF_ZAMORAK_BOTTOM.id(), 1, 4);
+		currentNpcDrops.addItemDrop(ItemId.ZAMORAK_WOOL_ROBE_TOP.id(), 1, 4);
+		currentNpcDrops.addItemDrop(ItemId.ZAMORAK_WOOL_ROBE_BOTTOM.id(), 1, 4);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 22, 3);
 		currentNpcDrops.addItemDrop(ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id(), 1, 2);
 		currentNpcDrops.addItemDrop(ItemId.STEEL_MACE.id(), 1, 1);
@@ -1419,8 +1419,8 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 2, 10);
 		currentNpcDrops.addItemDrop(ItemId.EMPTY_VIAL.id(), 1, 10);
 		currentNpcDrops.addItemDrop(ItemId.IRON_DAGGER.id(), 1, 6);
-		currentNpcDrops.addItemDrop(ItemId.DRUIDS_ROBE_TOP.id(), 1, 6);
-		currentNpcDrops.addItemDrop(ItemId.DRUIDS_ROBE_BOTTOM.id(), 1, 5);
+		currentNpcDrops.addItemDrop(ItemId.GUTHIX_WOOL_ROBE_TOP.id(), 1, 6);
+		currentNpcDrops.addItemDrop(ItemId.GUTHIX_WOOL_ROBE_BOTTOM.id(), 1, 5);
 		currentNpcDrops.addItemDrop(ItemId.EARTH_RUNE.id(), 18, 4);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 4, 4);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 15, 3);

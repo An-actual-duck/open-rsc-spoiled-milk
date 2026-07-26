@@ -49,11 +49,11 @@ public class GrapeEmpowerment implements UseInvTrigger {
 				return;
 			}
 
-			if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.MONKS_ROBE_TOP.id())
-				&& !player.getCarriedItems().getEquipment().hasEquipped(ItemId.MONKS_ROBE_BOTTOM.id())) {
+			if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.SARADOMIN_WOOL_ROBE_TOP.id())
+				&& !player.getCarriedItems().getEquipment().hasEquipped(ItemId.SARADOMIN_WOOL_ROBE_BOTTOM.id())) {
 				player.playerServerMessage(MessageType.QUEST, "Your faith in Saradomin is not strong enough");
 				delay(2);
-				player.playerServerMessage(MessageType.QUEST, "You need to be wearing the set of monk robes to bless the grapes");
+				player.playerServerMessage(MessageType.QUEST, "You need to be wearing Saradomin's blessed wool robes to bless the grapes");
 				return;
 			}
 
@@ -98,11 +98,11 @@ public class GrapeEmpowerment implements UseInvTrigger {
 				return;
 			}
 
-			if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.ROBE_OF_ZAMORAK_TOP.id())
-				&& !player.getCarriedItems().getEquipment().hasEquipped(ItemId.ROBE_OF_ZAMORAK_BOTTOM.id())) {
+			if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.ZAMORAK_WOOL_ROBE_TOP.id())
+				&& !player.getCarriedItems().getEquipment().hasEquipped(ItemId.ZAMORAK_WOOL_ROBE_BOTTOM.id())) {
 				player.playerServerMessage(MessageType.QUEST, "Your faith in Zamorak is not strong enough");
 				delay(2);
-				player.playerServerMessage(MessageType.QUEST, "You need to be wearing the set of zamorak robes to curse the grapes");
+				player.playerServerMessage(MessageType.QUEST, "You need to be wearing Zamorak's blessed wool robes to curse the grapes");
 				return;
 			}
 

@@ -221,12 +221,12 @@ def main():
     require("god capes should no longer be Mage Arena rewards" in god_relic_plan,
             "God relic plan should own future god cape rewards")
     require('currentNpcDrops = new DropTable("Priest (9)");' in npc_drops
-            and "ItemId.PRIEST_ROBE.id()" in npc_drops
-            and "ItemId.PRIEST_GOWN.id()" in npc_drops,
+            and "ItemId.SARADOMIN_WOOL_ROBE_TOP.id()" in npc_drops
+            and "ItemId.SARADOMIN_WOOL_ROBE_BOTTOM.id()" in npc_drops,
             "Priests should supply the Saradomin robe line")
     require('currentNpcDrops = new DropTable("Monk of Zamorak Level 29 (139)");' in npc_drops
-            and "ItemId.ROBE_OF_ZAMORAK_TOP.id()" in npc_drops
-            and "ItemId.ROBE_OF_ZAMORAK_BOTTOM.id()" in npc_drops
+            and "ItemId.ZAMORAK_WOOL_ROBE_TOP.id()" in npc_drops
+            and "ItemId.ZAMORAK_WOOL_ROBE_BOTTOM.id()" in npc_drops
             and "this.npcDrops.put(NpcId.MONK_OF_ZAMORAK.id(), currentNpcDrops);" in npc_drops
             and "this.npcDrops.put(NpcId.MONK_OF_ZAMORAK_AGGRESSIVE.id(), currentNpcDrops);" in npc_drops,
             "Monks of Zamorak should supply the Zamorak robe line")

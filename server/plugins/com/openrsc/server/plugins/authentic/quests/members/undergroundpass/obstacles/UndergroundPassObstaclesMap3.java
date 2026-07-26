@@ -129,8 +129,8 @@ public class UndergroundPassObstaclesMap3 implements OpLocTrigger {
 					player.message("...you cannot enter");
 					return;
 				}
-				if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.ROBE_OF_ZAMORAK_TOP.id())
-					&& player.getCarriedItems().getEquipment().hasEquipped(ItemId.ROBE_OF_ZAMORAK_BOTTOM.id())) {
+				if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.ZAMORAK_WOOL_ROBE_TOP.id())
+					&& player.getCarriedItems().getEquipment().hasEquipped(ItemId.ZAMORAK_WOOL_ROBE_BOTTOM.id())) {
 					changeloc(obj, new GameObject(obj.getWorld(), obj.getLocation(), 914, obj.getDirection(), obj.getType()));
 					addloc(obj.getWorld(), obj.getLoc(), 3000);
 					player.teleport(792, 3469);

@@ -17,15 +17,6 @@ def item_by_id(items, item_id: int):
     raise AssertionError(f"missing item {item_id}")
 
 
-def apply_item_overrides(items, overrides):
-    by_id = {item["id"]: item.copy() for item in items}
-    for override in overrides:
-        item_id = override["id"]
-        if item_id in by_id:
-            by_id[item_id].update(override)
-    return by_id
-
-
 def npc_by_id(npcs, npc_id: int):
     for npc in npcs:
         if npc["id"] == npc_id:
@@ -35,39 +26,36 @@ def npc_by_id(npcs, npc_id: int):
 
 def main():
     items = load_json("server/conf/server/defs/ItemDefs.json", "item")
+    custom_items = load_json("server/conf/server/defs/ItemDefsCustom.json", "items")
     item_overrides = load_json("server/conf/server/defs/ItemDefsMyWorld.json", "items")
-    item_defs = apply_item_overrides(items, item_overrides)
+    item_defs = {item["id"]: item.copy() for item in items}
+    item_defs.update({item["id"]: item.copy() for item in custom_items})
+    for override in item_overrides:
+        item_defs.setdefault(override["id"], {}).update(override)
     npcs = load_json("server/conf/server/defs/NpcDefs.json", "npcs")
 
-    robe_of_guthix_top = item_defs[607]
-    robe_of_guthix_bottom = item_defs[608]
-    robe_of_saradomin_top = item_defs[807]
-    robe_of_saradomin_bottom = item_defs[808]
-    robe_of_zamorak_top = item_defs[702]
-    robe_of_zamorak_bottom = item_defs[703]
+    for item_id in (388, 389, 607, 608, 702, 703, 807, 808):
+        item = item_defs[item_id]
+        assert item["name"].startswith("Retired ")
+        assert item["isWearable"] == 0
+        assert item["appearanceID"] == 0
+        assert item["wearableID"] == 0
+        assert item["wearSlot"] == -1
+        assert item["prayerBonus"] == 0
 
-    assert robe_of_guthix_top["name"] == "Robe of Guthix"
-    assert robe_of_guthix_bottom["name"] == "Robe of Guthix"
-    assert robe_of_saradomin_top["name"] == "Robe of Saradomin"
-    assert robe_of_saradomin_bottom["name"] == "Robe of Saradomin"
-
-    for item in (
-        robe_of_guthix_top,
-        robe_of_saradomin_top,
-        robe_of_zamorak_top,
-    ):
-        assert item["magicBonus"] == 0, f"{item['name']} should not give magic bonus"
-        assert item["prayerBonus"] == 6, f"{item['name']} top should match monks robe top"
-    for item in (
-        robe_of_guthix_bottom,
-        robe_of_saradomin_bottom,
-        robe_of_zamorak_bottom,
-    ):
-        assert item["magicBonus"] == 0, f"{item['name']} should not give magic bonus"
-        assert item["prayerBonus"] == 5, f"{item['name']} bottom should match monks robe bottom"
-
-    assert robe_of_saradomin_top["appearanceID"] == 77
-    assert robe_of_saradomin_bottom["appearanceID"] == 82
+    active_god_robes = {
+        3138: ("Wool robe top blessed by Zamorak", 4),
+        3139: ("Wool robe bottom blessed by Zamorak", 3),
+        3143: ("Wool robe top blessed by Saradomin", 4),
+        3144: ("Wool robe bottom blessed by Saradomin", 3),
+        3148: ("Wool robe top blessed by Guthix", 4),
+        3149: ("Wool robe bottom blessed by Guthix", 3),
+    }
+    for item_id, (name, prayer_bonus) in active_god_robes.items():
+        item = item_defs[item_id]
+        assert item["name"] == name
+        assert item["isWearable"] == 1
+        assert item["prayerBonus"] == prayer_bonus
 
     priest = npc_by_id(npcs, 9)
     druid = npc_by_id(npcs, 200)

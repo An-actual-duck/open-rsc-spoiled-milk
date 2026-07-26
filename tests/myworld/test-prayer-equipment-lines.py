@@ -234,19 +234,12 @@ def main():
         assert item["magicBonus"] == magic
         assert item["prayerBonus"] == prayer
 
-    expected_god_robes = {
-        607: ("Robe of Guthix", 6),
-        608: ("Robe of Guthix", 5),
-        702: ("Robe of Zamorak", 6),
-        703: ("Robe of Zamorak", 5),
-        807: ("Robe of Saradomin", 6),
-        808: ("Robe of Saradomin", 5),
-    }
-    for item_id, (name, prayer) in expected_god_robes.items():
-        item = by_id(base_items, item_id)
-        assert item["name"] == name
-        assert item["magicBonus"] == 0
-        assert item["prayerBonus"] == prayer
+    for item_id in (388, 389, 607, 608, 702, 703, 807, 808):
+        item = by_id(myworld_items, item_id)
+        assert item["name"].startswith("Retired ")
+        assert item["isWearable"] == 0
+        assert item["wearSlot"] == -1
+        assert item["prayerBonus"] == 0
 
     expected_blessed_wool = {
         3137: ("Wool hat blessed by Zamorak", 1),
