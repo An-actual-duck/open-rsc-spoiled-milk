@@ -280,6 +280,10 @@ public final class NativeLayeredTerrainSnapshot {
 		return level;
 	}
 
+	public String getWorldSpace() {
+		return worldSpace;
+	}
+
 	public int getSectorX() {
 		return sectorX;
 	}

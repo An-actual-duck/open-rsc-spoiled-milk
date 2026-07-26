@@ -164,6 +164,8 @@ public final class LayeredProtocolClientAuthorityFixture {
 
         NativeLayeredTerrainSnapshot chunked = chunkTerrain(-2, 18, 25);
         check(chunked.getProtocolVersion() == 4, "chunk protocol");
+        check("global".equals(chunked.getWorldSpace()),
+            "chunk world-space identity");
         check(chunked.getAvailableChunkCount() == 4,
             "explicit ready and void chunk slots");
         check(chunked.covers("global", -2, 450, 600),
@@ -448,7 +450,24 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         self.assertIn("nativeManifestSha256", context_struct)
         self.assertIn("nativePresentationChunkSize", context_struct)
         self.assertIn("nativeLayeredVoidSector", client_world)
-        self.assertIn("applyNativeLayeredFixtureTerrain", client_world)
+        self.assertIn("applyNativeLayeredTerrain", client_world)
+        self.assertNotIn(
+            "applyNativeLayeredFixtureTerrain", client_world
+        )
+        native_apply = client_world[
+            client_world.index("private void applyNativeLayeredTerrain("):
+            client_world.index(
+                "private void applySyntheticDeepFixtureTerrain("
+            )
+        ]
+        self.assertIn("localX < LOCAL_TILE_COUNT", native_apply)
+        self.assertIn("localZ < LOCAL_TILE_COUNT", native_apply)
+        self.assertIn("snapshot.getWorldSpace()", native_apply)
+        self.assertNotIn("SYNTHETIC_DEEP_MIN_", native_apply)
+        self.assertNotIn("SYNTHETIC_DEEP_MAX_", native_apply)
+        self.assertNotIn(
+            "does not cover the deep fixture", native_apply
+        )
         self.assertIn(
             "snapshot.createTile(logicalX, logicalZ)", client_world
         )

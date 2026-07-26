@@ -99,7 +99,10 @@ protocol v4 projects a radius-one window of nine explicit 24-tile chunk slots.
 Available slots carry all 576 fixed-width terrain tiles; unavailable slots are
 explicit void. The client accepts the complete window atomically, retains
 protocol-v3 uniform-page decoding for rollback evidence, and does not turn a
-same-package chunk shift into a full world-scope reset. Native movement and
+same-package chunk shift into a full world-scope reset. Every available
+snapshot tile is applied to the active client window; native rendering no
+longer clips package terrain to the synthetic fixture rectangle, while
+genuinely unavailable slots remain explicit void. Native movement and
 persistence preserve world space and signed level across adjacent package
 pages and refuse absent package tiles. A saved synthetic record migrates only
 when the exact coordinate is package-backed; package removal or coverage loss

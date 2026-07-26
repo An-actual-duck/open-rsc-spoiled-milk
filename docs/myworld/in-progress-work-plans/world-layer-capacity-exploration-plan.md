@@ -663,6 +663,33 @@ return to the fixture placements for one interaction/status check, and exit
 to the saved surface location. This proves the synthetic receipt is no longer
 native runtime capacity.
 
+The first focused attempt stopped correctly and exposed a stale client
+consumer:
+
+- the server retained native level `-2` at `(470,620)` and `(490,620)`, shifted
+  readiness from center chunk `(18,25)` through `(19,25)` to `(20,25)`, and
+  saved/restored exact `(490,620,L-2)`;
+- the client still initialized the 144-tile active window as explicit void and
+  copied native snapshot tiles only into the old X `440..460`, Y `590..610`
+  room. Both test coordinates therefore appeared as unwalkable water despite
+  their package chunks being ready;
+- reconnect decoded the correct package snapshot and signed location, then
+  the same stale room loop threw `Native layered packet page does not cover
+  the deep fixture`, disconnected, and caused immediate retry response `4`;
+  and
+- the corrected client applies every available tile in the protocol-v4
+  readiness snapshot to the active window, leaves only genuinely unavailable
+  chunks as explicit void, and carries packet-declared world-space identity
+  through that application. A source regression guard forbids synthetic
+  min/max constants and the retired fixture-coverage exception in this native
+  method.
+
+The corrected full 30-test Authority A-through-E lineage and authoritative
+262-source client build pass. Native-only focused owner retest remains pending;
+the failed water/reconnect route is rejected evidence, while native startup,
+synthetic-to-native saved-location migration, signed scope, page/chunk
+advancement, and server-side exact persistence remain valid evidence.
+
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
 expose, and validate the next restoration prerequisite: known authored
@@ -17745,7 +17772,7 @@ private environment should validate at least:
 | 2026-07-25 | Complete and accept Milestone E runtime checkpoint 6 with matched protocol-v4 radius-one 24-tile readiness. | Automated wire tests and owner evidence prove visible full-fidelity terrain, both chunk-boundary axes, `4/9 -> 6/9 -> 4/9` readiness, stable same-package scene scope, interaction, exact depth reconnect, and exit |
 | 2026-07-25 | Complete and accept Milestone E placement checkpoint 7 with package-owned NPC/item world population. | Package `0.3.0`, strict tool/server decode, layered spawn identity, generation-safe item respawn, command-independent world registration, fail-closed definition validation, focused tests, authoritative build, and matched private startup pass. Owner evidence proves normal Man roam/dialogue, two collections of the same five-coin spawn across its five-second respawn, exact level `-2` reconnect, no duplicates, and normal exit |
 | 2026-07-25 | Complete and accept Milestone E placement checkpoints 8 through 10 for static, dynamic, and harvesting objects. | Packages `0.4.0` through `0.6.0` prove level-qualified scenery/boundary visibility and collision, generation-fenced Door replacement, and ordinary Tree-to-stump-to-Tree delayed restoration without packed Region membership. Automated authority lineage, authoritative builds, matched private startup, focused owner interaction, exact deep reconnect, and duplicate-free live counts pass |
-| 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Implemented and automated/build validated; synthetic D remains independent rollback, exact uncovered saves safely rebase, and native-only focused owner acceptance remains pending |
+| 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Implemented and automated/build validated; first owner attempt exposed and corrected stale client fixture-only terrain application, synthetic D remains independent rollback, exact uncovered saves safely rebase, and corrected native-only owner acceptance remains pending |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

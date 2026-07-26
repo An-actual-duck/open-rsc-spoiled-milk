@@ -2759,7 +2759,7 @@ public final class World {
 			}
 		}
 		if (height == 0 && nativeLayeredTerrainSnapshot != null) {
-			applyNativeLayeredFixtureTerrain(window, sectionX, sectionY);
+			applyNativeLayeredTerrain(window, sectionX, sectionY);
 		} else if (height == 0 && syntheticDeepFixtureTerrain) {
 			applySyntheticDeepFixtureTerrain(window, sectionX, sectionY);
 		}
@@ -2779,7 +2779,7 @@ public final class World {
 		return sector;
 	}
 
-	private void applyNativeLayeredFixtureTerrain(
+	private void applyNativeLayeredTerrain(
 		Sector[] window,
 		int sectionX,
 		int sectionY) {
@@ -2793,38 +2793,31 @@ public final class World {
 			(sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
 		int originZ =
 			(sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
-		int roomMinX = Math.addExact(
-			SYNTHETIC_DEEP_MIN_X, syntheticDeepFixtureOffsetX);
-		int roomMaxX = Math.addExact(
-			SYNTHETIC_DEEP_MAX_X, syntheticDeepFixtureOffsetX);
-		int roomMinZ = Math.addExact(
-			SYNTHETIC_DEEP_MIN_Z, syntheticDeepFixtureOffsetZ);
-		int roomMaxZ = Math.addExact(
-			SYNTHETIC_DEEP_MAX_Z, syntheticDeepFixtureOffsetZ);
-		for (int worldX = roomMinX; worldX <= roomMaxX; worldX++) {
-			for (int worldZ = roomMinZ; worldZ <= roomMaxZ; worldZ++) {
+		for (int localX = 0; localX < LOCAL_TILE_COUNT; localX++) {
+			for (int localZ = 0; localZ < LOCAL_TILE_COUNT; localZ++) {
+				int worldX = Math.addExact(originX, localX);
+				int worldZ = Math.addExact(originZ, localZ);
 				int logicalX = Math.subtractExact(
 					worldX, syntheticDeepFixtureOffsetX);
 				int logicalZ = Math.subtractExact(
 					worldZ, syntheticDeepFixtureOffsetZ);
 				if (!snapshot.covers(
-						"global",
+						snapshot.getWorldSpace(),
 						snapshot.getLevel(),
 						logicalX,
 						logicalZ)) {
-					throw new IllegalStateException(
-						"Native layered packet page does not cover the deep fixture");
+					continue;
 				}
-				int localX = worldX - originX;
-				int localZ = worldZ - originZ;
 				Sector sector = sectorForLocalTile(
 					window, localX, localZ);
-				if (sector != null) {
-					sector.setTile(
-						tileInSector(localX),
-						tileInSector(localZ),
-						snapshot.createTile(logicalX, logicalZ));
+				if (sector == null) {
+					throw new IllegalStateException(
+						"Native layered tile escaped its active section window");
 				}
+				sector.setTile(
+					tileInSector(localX),
+					tileInSector(localZ),
+					snapshot.createTile(logicalX, logicalZ));
 			}
 		}
 	}
