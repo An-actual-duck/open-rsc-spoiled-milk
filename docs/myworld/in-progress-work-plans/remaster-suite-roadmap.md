@@ -910,7 +910,13 @@ requested hard terrain rebuild, leaving the legacy water floor until
 reconnect. Hard layered scope changes now bypass that fast path so the accepted
 native snapshot rebuilds immediately. The expanded 36-test Authority
 A-through-E lineage, client region-load performance guard, and 262-source
-client build pass; a focused owner retest remains required.
+client build pass. The 2026-07-26 focused owner retest also passes: a legacy
+exit followed by immediate same-X/Y native entry advanced the client from
+legacy context sequence `2` to package context sequence `3`, rendered the
+native floor, and allowed movement without reconnect while diagnostics
+retained `packedRegion=detached` and `spatialCarrier=layered-index`. The
+scene-rebuild correction is accepted; the rest of checkpoint 13's
+interaction, cross-package, reconnect, and legacy-reattachment route remains.
 
 ### Phase 6: Layered World Builder generation
 

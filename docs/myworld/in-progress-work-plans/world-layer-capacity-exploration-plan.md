@@ -896,7 +896,14 @@ Hard area loads now bypass that unchanged-coordinate early return and rebuild
 the section window from the newly accepted native snapshot. A focused
 regression guard freezes that distinction. The expanded 36-test Authority
 A-through-E lineage, the client region-load performance guard, and the
-262-source client build pass; owner retest remains required.
+262-source client build pass. The focused owner retest passed on 2026-07-26:
+legacy exit produced client context sequence `2`, immediate native re-entry
+produced sequence `3` for package `rsc-remastered.native-loader-lab@0.7.0`,
+the native floor appeared and allowed movement without reconnect, and
+diagnostics continued to report `packedRegion=detached` and
+`spatialCarrier=layered-index`. This accepts the scene-rebuild correction;
+the remaining checkpoint-13 interaction, package-switch, reconnect, and
+surface-reattachment route remains deliberately separate.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -17984,6 +17991,7 @@ private environment should validate at least:
 | 2026-07-25 | Make the package-wide native runtime fixture renderable across all declared terrain rather than retaining a maximum-value codec band outside the former bounded room. | Package `0.7.0` uses a valid non-default blocking band, adds a runtime-definition guard, preserves full-range acceptance in the generic package codec, and passes focused owner floor/placement/interaction/reconnect acceptance |
 | 2026-07-25 | Implement Milestone E runtime checkpoint 12 as a fail-closed multi-package catalog and atomic explicit package-transition boundary. | Owner-accepted; distinct `-4` transition package, exact non-overlapping ownership, destination readiness preflight, package-scoped protocol/object identity, implicit-cross refusal, 35-test A-E lineage, authoritative builds, both package switches, three-coin interaction, exact `L-4` reconnect, and legacy surface exit pass |
 | 2026-07-25 | Implement Milestone E runtime checkpoint 13 by retiring packed-Region entity membership and Region-as-lookup facades from exact native package scopes. | Automated/build-validated; 35 focused A-E tests, 865/488 server build, 262-source client build, and matched two-package private startup pass; focused owner acceptance remains |
+| 2026-07-26 | Correct and accept checkpoint 13's initial legacy-to-native scene rebuild. | Same-X/Y, compatibility-`P0` native entry had accepted the new scope but incorrectly used the client same-region fast path; hard layered loads now rebuild immediately. Regression/performance/build guards pass, and owner evidence confirms the native floor and movement without reconnect while the entity carrier remains detached from packed Regions |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
