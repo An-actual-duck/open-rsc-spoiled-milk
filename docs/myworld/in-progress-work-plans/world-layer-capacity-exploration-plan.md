@@ -51,9 +51,12 @@ Region carrier are the remaining Milestone E boundaries. Runtime checkpoint
 12 implements and owner-validates the first of those boundaries with a
 separate `-4` package. Runtime checkpoint 13 now implements and
 validates Region-free entity membership inside native package terrain through
-automated and private-owner routes. The final route exposed only clipped
-single-line diagnostic presentation; its bounded-line correction is built and
-awaits one focused visual confirmation before Milestone E closes.
+automated and private-owner routes. The final route's clipped single-line
+diagnostic presentation is corrected and owner-confirmed as seven readable
+logical lines. Milestone E and the Phase 5 layered-world engine capability are
+complete. The active product boundary is now deterministic parity-first
+normalization of the frozen Preservation baseline into a reviewable native
+layered package.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -951,8 +954,13 @@ contained it. The command now emits the same stable fields as bounded logical
 lines for authority flags, signed location, projection/carrier, region/legacy
 coordinates, indexed membership, and persistence origin. Focused diagnostic
 guards and the authoritative 865-core/488-plugin server build pass. One
-private visual invocation of the rebuilt command remains before the
-presentation correction and Milestone E are marked closed.
+private visual invocation of the rebuilt command remained before closure.
+That invocation passed on 2026-07-26: the client displayed all seven bounded
+lines, including
+`projection=legacy-packed-y-v1; spatialCarrier=packed-region`, at
+`(122,625,L0)`. The presentation correction, checkpoint 13, Milestone E, and
+the Phase 5 engine exit gate are accepted. The workstream remains active for
+the parity-first Preservation normalization gate.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -18041,7 +18049,8 @@ private environment should validate at least:
 | 2026-07-25 | Implement Milestone E runtime checkpoint 12 as a fail-closed multi-package catalog and atomic explicit package-transition boundary. | Owner-accepted; distinct `-4` transition package, exact non-overlapping ownership, destination readiness preflight, package-scoped protocol/object identity, implicit-cross refusal, 35-test A-E lineage, authoritative builds, both package switches, three-coin interaction, exact `L-4` reconnect, and legacy surface exit pass |
 | 2026-07-25 | Implement Milestone E runtime checkpoint 13 by retiring packed-Region entity membership and Region-as-lookup facades from exact native package scopes. | Automated/build-validated and behaviorally owner-accepted across native detached-carrier diagnostics, interactions, authored respawn/restoration, ordinary item drop/recovery, both package switches, exact detached-carrier `L-4` reconnect, legacy exit, packed-Region reattachment, and normal surface combat |
 | 2026-07-26 | Correct and accept checkpoint 13's initial legacy-to-native scene rebuild. | Same-X/Y, compatibility-`P0` native entry had accepted the new scope but incorrectly used the client same-region fast path; hard layered loads now rebuild immediately. Regression/performance/build guards pass, and owner evidence confirms the native floor and movement without reconnect while the entity carrier remains detached from packed Regions |
-| 2026-07-26 | Make `::layerloc` carrier diagnostics readable in the in-game chat after final checkpoint-13 acceptance exposed single-line clipping. | The complete response already proved `spatialCarrier=packed-region` in the client technical capture. The command now presents unchanged fields as bounded logical lines; focused guards and the authoritative server build pass, with one private visual confirmation pending |
+| 2026-07-26 | Make `::layerloc` carrier diagnostics readable in the in-game chat after final checkpoint-13 acceptance exposed single-line clipping. | The complete response already proved `spatialCarrier=packed-region` in the client technical capture. The command now presents unchanged fields as seven bounded logical lines; focused guards, the authoritative server build, and owner visual confirmation pass |
+| 2026-07-26 | Close Authority Milestone E and the Phase 5 layered-world engine capability. | Native package terrain/collision/placements, signed levels, incremental 24-tile presentation, cross-package transitions, exact persistence, regionless native entity membership, legacy reattachment, rollback, and all focused automated/build/private-owner routes pass. The next active product gate is parity-first normalization of the frozen Preservation baseline |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |

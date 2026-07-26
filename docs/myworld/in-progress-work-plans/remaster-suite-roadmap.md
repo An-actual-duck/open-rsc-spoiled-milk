@@ -839,9 +839,9 @@ Exit gate:
 - legacy clients and maps receive clear compatibility results;
 - a copied level `-2` test world passes private client/server validation.
 
-Current Phase 5 checkpoint: Authority Milestones A through D are accepted, and
-Milestone E's package-wide native runtime through checkpoint 11 is
-owner-accepted. A fifth
+Phase 5 completion record: Authority Milestones A through E are accepted. The
+following retained progression shows how Milestone E reached that closure.
+Its package-wide native runtime through checkpoint 11 was owner-accepted. A fifth
 default-off private gate loads the versioned layered package; server terrain
 lookup and scene-context protocol v3 identify native page `(9,12)`, declared
 presentation chunk `24`, and the checked manifest; the client builds that room
@@ -949,9 +949,13 @@ Checkpoint 13 is therefore behaviorally owner-accepted.
 The carrier response was complete in the client technical capture but too
 long for the in-game chat line, hiding the field from visual inspection.
 `::layerloc` now emits its unchanged AI-readable fields as bounded logical
-lines. Focused diagnostic tests and the authoritative 865-core/488-plugin
-server build pass; one private visual invocation remains before this
-presentation correction and Milestone E are marked closed.
+lines. Focused diagnostic tests, the authoritative 865-core/488-plugin server
+build, and the final private visual invocation pass. The client displayed all
+seven lines, including `spatialCarrier=packed-region`. The presentation
+correction, checkpoint 13, Milestone E, and the Phase 5 engine exit gate are
+closed. The next active product gate is deterministic parity-first
+normalization of the frozen Preservation baseline into a reviewable native
+layered package.
 
 ### Phase 6: Layered World Builder generation
 
