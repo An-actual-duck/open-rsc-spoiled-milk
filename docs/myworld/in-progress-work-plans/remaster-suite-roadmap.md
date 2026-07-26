@@ -927,6 +927,16 @@ on package `0.7.0`, readiness `4/9`, live counts `1n/1i/2s/2b`, and
 switching, and legacy packed-Region reattachment remain to close the
 checkpoint.
 
+The next owner phase accepts the forward cross-package and exact native
+reconnect boundaries. The runtime committed
+`native-loader-lab -> native-transition-lab`, selected transition package
+`0.1.0` at level `-4`, and served its three-coin placement normally. Movement
+to `(456,600,L-4)` was saved by normal logout and restored at that exact
+signed location with a fresh client context, the correct transition terrain,
+`spatialCarrier=layered-index`, and `packedRegion=detached`. No abnormality
+was observed. Only reverse switching and legacy packed-Region reattachment
+remain for checkpoint-13 owner acceptance.
+
 ### Phase 6: Layered World Builder generation
 
 Goal: make the layered RSC Remastered world and modder content directly
