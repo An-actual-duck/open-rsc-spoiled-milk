@@ -9,6 +9,7 @@ public final class NativeLayeredTerrainChunk {
 	public static final int TILE_WIRE_BYTES = 10;
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
 	public static final String RLE_ENCODING = "rle-layered-sector-v1";
+	public static final String RAW_ENCODING = "raw-layered-sector-v1";
 
 	private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
 
@@ -47,7 +48,8 @@ public final class NativeLayeredTerrainChunk {
 		this.sourceSectorY = sourceSectorY;
 		if (available) {
 			if (!UNIFORM_ENCODING.equals(sourceEncoding)
-				&& !RLE_ENCODING.equals(sourceEncoding)) {
+				&& !RLE_ENCODING.equals(sourceEncoding)
+				&& !RAW_ENCODING.equals(sourceEncoding)) {
 				throw new IllegalArgumentException(
 					"Unsupported terrain source encoding: " + sourceEncoding);
 			}

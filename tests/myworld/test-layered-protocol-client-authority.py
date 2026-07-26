@@ -232,17 +232,26 @@ public final class LayeredProtocolClientAuthorityFixture {
                 if (chunkX >= 18 && chunkX <= 21
                         && chunkY >= 24 && chunkY <= 25) {
                     int sectorX = Math.floorDiv(chunkX * 24, 48);
-                    chunks[index] = NativeLayeredTerrainChunk.available(
+                    String sourceEncoding = sectorX == 9
+                        ? NativeLayeredTerrainChunk.RLE_ENCODING
+                        : sectorX == 10
+                            ? NativeLayeredTerrainChunk.RAW_ENCODING
+                            : NativeLayeredTerrainChunk.UNIFORM_ENCODING;
+                    NativeLayeredTerrainChunk chunk =
+                        NativeLayeredTerrainChunk.available(
                         24,
                         chunkX,
                         chunkY,
                         sectorX,
                         12,
-                        sectorX == 9
-                            ? "rle-layered-sector-v1"
-                            : "uniform-layered-sector-v1",
+                        sourceEncoding,
                         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
                         terrainBytes(chunkX));
+                    check(sectorX != 10
+                            || chunk.identity().contains(
+                                "raw-layered-sector-v1"),
+                        "raw source encoding retained");
+                    chunks[index] = chunk;
                 } else {
                     chunks[index] = NativeLayeredTerrainChunk.voidChunk(
                         24, chunkX, chunkY);
