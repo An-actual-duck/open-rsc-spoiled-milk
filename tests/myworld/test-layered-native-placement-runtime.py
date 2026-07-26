@@ -114,7 +114,8 @@ public final class NativeLayeredPlacementRegistryFixture {
             GameTickEventRestorationCollisionFootprintPlanner.plan(
                 Operation.REGISTER,
                 ConstructorState.of(4, 448, 604, 0, 1),
-                Definition.boundary(1, "Fence", new String[0]),
+                Definition.boundary(
+                    1, "Fence", new String[] {"fence"}),
                 false,
                 WorldBounds.of(1000, 1000));
         Object fenceObject = new Object();
@@ -132,53 +133,81 @@ public final class NativeLayeredPlacementRegistryFixture {
             fenceSouth);
         check((fenceSouth.traversalMask & CollisionFlag.WALL_SOUTH) != 0,
             "boundary reciprocal collision composed");
+        TileValue fenceProjectile = emptyTile();
+        objects.applyCollision(
+            new WorldLocation(
+                WorldSpaceId.GLOBAL, new WorldCoordinate(447, 604, -2)),
+            fenceProjectile);
+        check(fenceProjectile.getDynamicProjectileCount() == 1,
+            "allowlisted boundary projectile footprint composed");
         check(objects.size() == 2 && objects.countType(0) == 1
                 && objects.countType(1) == 1,
             "typed package object counts");
-        check(objects.getCollisionTileCount() == 3,
+        check(objects.getCollisionTileCount() == 4,
             "combined collision tile count");
+
+        WorldLocation doorLocation = new WorldLocation(
+            WorldSpaceId.GLOBAL, new WorldCoordinate(452, 604, -2));
+        GameTickEventRestorationCollisionFootprintPlanner.Result door =
+            GameTickEventRestorationCollisionFootprintPlanner.plan(
+                Operation.REGISTER,
+                ConstructorState.of(2, 452, 604, 0, 1),
+                Definition.boundary(
+                    1, "Door", new String[] {"fence"}),
+                false,
+                WorldBounds.of(1000, 1000));
+        Object closedDoor = new Object();
+        check(objects.register(
+                objectGeneration, "deep-door", doorLocation,
+                1, 0, closedDoor, door) == closedDoor,
+            "register package door");
+        check(objects.size() == 3 && objects.countType(0) == 1
+                && objects.countType(1) == 2,
+            "fixture object counts");
+        check(objects.getCollisionTileCount() == 6,
+            "closed fixture collision tile count");
 
         GameTickEventRestorationCollisionFootprintPlanner.Result doorframe =
             GameTickEventRestorationCollisionFootprintPlanner.plan(
                 Operation.REGISTER,
-                ConstructorState.of(1, 448, 604, 0, 1),
+                ConstructorState.of(1, 452, 604, 0, 1),
                 Definition.boundary(0, "Doorframe", new String[0]),
                 false,
                 WorldBounds.of(1000, 1000));
         Object openDoorframe = new Object();
         check(objects.replace(
-                objectGeneration, "deep-fence", fenceObject,
-                fenceLocation, 1, 0, openDoorframe, doorframe)
+                objectGeneration, "deep-door", closedDoor,
+                doorLocation, 1, 0, openDoorframe, doorframe)
                 == openDoorframe,
             "replace package boundary");
-        check(objects.find("deep-fence") == openDoorframe
-                && objects.size() == 2,
+        check(objects.find("deep-door") == openDoorframe
+                && objects.size() == 3,
             "replacement retains placement identity");
         TileValue openedNorth = emptyTile();
-        objects.applyCollision(fenceLocation, openedNorth);
+        objects.applyCollision(doorLocation, openedNorth);
         check((openedNorth.traversalMask & CollisionFlag.WALL_NORTH) == 0,
             "replacement removes closed boundary collision");
         TileValue openedSouth = emptyTile();
         objects.applyCollision(
             new WorldLocation(
-                WorldSpaceId.GLOBAL, new WorldCoordinate(448, 603, -2)),
+                WorldSpaceId.GLOBAL, new WorldCoordinate(452, 603, -2)),
             openedSouth);
         check((openedSouth.traversalMask & CollisionFlag.WALL_SOUTH) == 0,
             "replacement removes reciprocal boundary collision");
-        check(objects.getCollisionTileCount() == 1,
+        check(objects.getCollisionTileCount() == 4,
             "replacement commits exact collision delta");
 
         check(objects.unregister(
-                objectGeneration, "deep-fence", openDoorframe)
+                objectGeneration, "deep-door", openDoorframe)
                 == openDoorframe,
             "remove package boundary");
-        check(objects.find("deep-fence") == null && objects.size() == 1,
+        check(objects.find("deep-door") == null && objects.size() == 2,
             "removal releases placement identity");
         check(objects.register(
-                objectGeneration, "deep-fence", fenceLocation,
-                1, 0, fenceObject, fence) == fenceObject,
+                objectGeneration, "deep-door", doorLocation,
+                1, 0, closedDoor, door) == closedDoor,
             "same-generation delayed restoration");
-        check(objects.getCollisionTileCount() == 3,
+        check(objects.getCollisionTileCount() == 6,
             "restoration reinstates exact collision");
 
         expectIllegal(() -> objects.register(
@@ -190,8 +219,8 @@ public final class NativeLayeredPlacementRegistryFixture {
 
         NativeLayeredGameObjectIdentity identity =
             new NativeLayeredGameObjectIdentity(
-                "test.package", objectGeneration, "deep-fence",
-                "boundary", fenceLocation);
+                "test.package", objectGeneration, "deep-door",
+                "boundary", doorLocation);
         NativeLayeredGameObjectIdentitySlot identitySlot =
             new NativeLayeredGameObjectIdentitySlot();
         identitySlot.assign(identity);
@@ -200,8 +229,8 @@ public final class NativeLayeredPlacementRegistryFixture {
             "native placement identity assignment is idempotent");
         expectIllegalState(() -> identitySlot.assign(
             new NativeLayeredGameObjectIdentity(
-                "test.package", objectGeneration, "other-fence",
-                "boundary", fenceLocation)));
+                "test.package", objectGeneration, "other-door",
+                "boundary", doorLocation)));
 
         objects.reset();
         check(objects.size() == 0 && objects.getCollisionTileCount() == 0,

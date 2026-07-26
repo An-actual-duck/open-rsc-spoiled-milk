@@ -526,6 +526,16 @@ confirm the Door appears, opens to a Doorframe, releases its exact edge,
 closes back into the same placement, restores collision, remains
 duplicate-free, and does not regress nearby entities or reconnect.
 
+The first owner attempt correctly stopped when status reported six collision
+overlay tiles rather than the instructed five. Source and runtime evidence
+show this is an instruction/test-fixture error, not an extra runtime object:
+the Table owns one tile, the closed Fence owns its two traversal-edge tiles
+plus one distinct allowlisted projectile-only tile, and the closed Door owns
+two tiles, for `1 + 3 + 2 = 6`. Opening only the Door must reduce the total to
+four; closing it must restore six. The executable fixture now uses the real
+Fence projectile allowlist and all three package objects, asserting exact
+closed/open/restored counts of `6/4/6`.
+
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
 expose, and validate the next restoration prerequisite: known authored
