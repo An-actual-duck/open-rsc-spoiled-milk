@@ -899,7 +899,8 @@ public class DoorAction {
 						doDoor(obj, player);
 						return;
 					}
-					if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.PRIEST_ROBE.id()) && player.getCarriedItems().getEquipment().hasEquipped(ItemId.PRIEST_GOWN.id())) {
+					if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.SARADOMIN_WOOL_ROBE_TOP.id())
+						&& player.getCarriedItems().getEquipment().hasEquipped(ItemId.SARADOMIN_WOOL_ROBE_BOTTOM.id())) {
 						player.message("guidors wife allows you to go in");
 						player.playerServerMessage(MessageType.QUEST, "You go through the door");
 						doDoor(obj, player);

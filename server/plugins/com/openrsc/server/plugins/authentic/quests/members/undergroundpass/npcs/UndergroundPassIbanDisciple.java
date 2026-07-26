@@ -34,8 +34,8 @@ public class UndergroundPassIbanDisciple implements TalkNpcTrigger, KillNpcTrigg
 					player.message("but find nothing");
 				}
 			} else {
-				addobject(ItemId.ROBE_OF_ZAMORAK_TOP.id(), 1, player.getX(), player.getY(), player);
-				addobject(ItemId.ROBE_OF_ZAMORAK_BOTTOM.id(), 1, player.getX(), player.getY(), player);
+				addobject(ItemId.ZAMORAK_WOOL_ROBE_TOP.id(), 1, player.getX(), player.getY(), player);
+				addobject(ItemId.ZAMORAK_WOOL_ROBE_BOTTOM.id(), 1, player.getX(), player.getY(), player);
 			}
 		}
 	}
@@ -43,8 +43,8 @@ public class UndergroundPassIbanDisciple implements TalkNpcTrigger, KillNpcTrigg
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
 		say(player, n, "hi");
-		if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.ROBE_OF_ZAMORAK_TOP.id())
-			|| !player.getCarriedItems().getEquipment().hasEquipped(ItemId.ROBE_OF_ZAMORAK_BOTTOM.id())) {
+		if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.ZAMORAK_WOOL_ROBE_TOP.id())
+			|| !player.getCarriedItems().getEquipment().hasEquipped(ItemId.ZAMORAK_WOOL_ROBE_BOTTOM.id())) {
 			npcsay(player, n, "an imposter....die scum");
 			n.startCombat(player);
 		} else {

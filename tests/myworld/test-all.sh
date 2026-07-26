@@ -173,6 +173,7 @@ python3 ./tests/myworld/test-prayer-equipment-lines.py
 python3 ./tests/myworld/test-poisoned-god-weapon-alignment.py
 python3 ./tests/myworld/test-prayer-faction-setup.py
 python3 ./tests/myworld/test-quest-reward-guardrails.py
+python3 ./tests/myworld/test-legacy-god-robe-retirement.py
 python3 ./tests/myworld/test-robe-defense-budgets.py
 python3 ./tests/myworld/test-shop-tiering.py
 python3 ./tests/myworld/test-thrander-crystal-key-exchange.py

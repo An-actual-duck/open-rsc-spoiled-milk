@@ -31,6 +31,11 @@ that as a bug unless the source is explicitly listed here.
   - retired from the standard ladder
   - repurposed as live god-aligned knight equipment, alongside the new Grey
     Knight line, rather than generic progression
+- legacy Monk, Druid/Guthix, Zamorak, and Priest/Saradomin robe IDs
+  - IDs `388`, `389`, `607`, `608`, `702`, `703`, `807`, and `808` are inert
+    compatibility records pending a later player-property migration
+  - active god-aligned robes are the blessed wool families
+  - normal drops and content checks must use the blessed wool IDs
 - crowns and the crown mould
   - scrubbed from active jewelry progression
   - should not re-enter standard shops, drops, or crafting
@@ -41,7 +46,7 @@ that as a bug unless the source is explicitly listed here.
   - normal fishing uses equipped wood-tier rods
   - `Fishing Contest`, `Dragon Slayer`, and lava-eel compatibility paths may
     still reference old tools where the quest specifically needs them
-- `Pink skirt`, `Priest robe`, and `Priest gown`
+- `Pink skirt`
   - kept for quest/cosmetic compatibility
   - not part of the retired wizard-gear line
 - `Dramen staff` and `Wizard staff`

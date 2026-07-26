@@ -388,7 +388,7 @@ def main():
         player_fixture(items, "rune_dagger_compare", 40, "melee", [396]),
         player_fixture(items, "rune_spear_compare", 40, "melee", [1092]),
         player_fixture(items, "wizard_apprentice", 10, "magic", [100, 2050, 2051]),
-        player_fixture(items, "battle_mage", 50, "magic", [617, 702, 703, 1264]),
+        player_fixture(items, "battle_mage", 50, "magic", [617, 3138, 3139, 1264]),
         magic_spell_fixture(items, "tier6_air_mind_lesser_demon", 51, [1785], "mind"),
         magic_spell_fixture(items, "tier6_air_chaos_lesser_demon", 51, [1785], "chaos"),
         magic_spell_fixture(items, "tier6_air_death_lesser_demon", 51, [1785], "death"),

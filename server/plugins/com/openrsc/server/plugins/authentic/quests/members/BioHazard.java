@@ -923,7 +923,8 @@ public class BioHazard implements QuestInterface, TalkNpcTrigger,
 				return;
 			}
 			if (player.getQuestStage(this) == 7) {
-				if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.PRIEST_ROBE.id()) && player.getCarriedItems().getEquipment().hasEquipped(ItemId.PRIEST_GOWN.id())) {
+				if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.SARADOMIN_WOOL_ROBE_TOP.id())
+					&& player.getCarriedItems().getEquipment().hasEquipped(ItemId.SARADOMIN_WOOL_ROBE_BOTTOM.id())) {
 					npcsay(player, n, "Father, thank heavens you're here. My husband is very ill",
 						"Perhaps you could go and perform his final ceremony");
 					say(player, n, "I'll see what I can do");
