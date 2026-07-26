@@ -16,10 +16,16 @@ SOURCE = SERVER / "src/com/openrsc/server/io/NativeLayeredWorldPackage.java"
 CATALOG = (
     SERVER / "src/com/openrsc/server/io/NativeLayeredWorldPackageCatalog.java"
 )
+RUNTIME_PROFILE = (
+    SERVER / "src/com/openrsc/server/io/NativeLayeredWorldRuntimeProfile.java"
+)
 CONFIGURATION = SERVER / "src/com/openrsc/server/ServerConfiguration.java"
 REGION_MANAGER = (
     SERVER
     / "src/com/openrsc/server/model/world/region/RegionManager.java"
+)
+WORLD_POPULATOR = (
+    SERVER / "src/com/openrsc/server/database/WorldPopulator.java"
 )
 GAME_STATE_UPDATER = SERVER / "src/com/openrsc/server/GameStateUpdater.java"
 DEVELOPMENT = (
@@ -314,6 +320,37 @@ public final class NativeLayeredPreservationReviewFixture {
 }
 """
 
+RUNTIME_PROFILE_HARNESS = r"""
+import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
+import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
+
+public final class NativeLayeredRuntimeProfileFixture {
+    public static void main(String[] args) throws Exception {
+        NativeLayeredWorldRuntimeProfile profile =
+            NativeLayeredWorldRuntimeProfile.fromConfiguration(args[0]);
+        NativeLayeredWorldPackageCatalog catalog =
+            NativeLayeredWorldPackageCatalog.loadConfigured(args[1]);
+        boolean expectAcceptance = Boolean.parseBoolean(args[2]);
+        try {
+            profile.validate(catalog);
+            check(expectAcceptance, "unexpected profile acceptance");
+            check(
+                profile.replacesLegacyBasePopulation()
+                    == Boolean.parseBoolean(args[3]),
+                "replacement ownership");
+        } catch (IllegalStateException expected) {
+            check(!expectAcceptance, "unexpected profile refusal");
+        }
+    }
+
+    private static void check(boolean condition, String label) {
+        if (!condition) {
+            throw new AssertionError(label);
+        }
+    }
+}
+"""
+
 
 WIRE_HARNESS = r"""
 import com.openrsc.server.net.Packet;
@@ -520,6 +557,12 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
         preservation_fixture.write_text(
             PRESERVATION_REVIEW_HARNESS, encoding="utf-8"
         )
+        runtime_profile_fixture = (
+            cls.classes / "NativeLayeredRuntimeProfileFixture.java"
+        )
+        runtime_profile_fixture.write_text(
+            RUNTIME_PROFILE_HARNESS, encoding="utf-8"
+        )
         wire_fixture = cls.classes / "NativeLayeredChunkWireFixture.java"
         wire_fixture.write_text(WIRE_HARNESS, encoding="utf-8")
         subprocess.run(
@@ -536,6 +579,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 str(fixture),
                 str(terrain_only_fixture),
                 str(preservation_fixture),
+                str(runtime_profile_fixture),
                 str(wire_fixture),
             ],
             cwd=ROOT,
@@ -759,6 +803,77 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
 
             self.assertEqual(0, result.returncode, result.stderr)
 
+            accepted = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredRuntimeProfileFixture",
+                    "preservation-r64-replacement",
+                    str(workspace / "package"),
+                    "true",
+                    "true",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(0, accepted.returncode, accepted.stderr)
+
+            wrong_profile = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredRuntimeProfileFixture",
+                    "fixture-additive",
+                    str(workspace / "package"),
+                    "false",
+                    "false",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(
+                0, wrong_profile.returncode, wrong_profile.stderr
+            )
+
+    def test_fixture_and_preservation_runtime_profiles_do_not_cross_accept(self):
+        accepted = subprocess.run(
+            [
+                "java",
+                "-cp",
+                f"{self.classes}:{CORE_JAR}",
+                "NativeLayeredRuntimeProfileFixture",
+                "fixture-additive",
+                str(PACKAGE),
+                "true",
+                "false",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(0, accepted.returncode, accepted.stderr)
+
+        refused = subprocess.run(
+            [
+                "java",
+                "-cp",
+                f"{self.classes}:{CORE_JAR}",
+                "NativeLayeredRuntimeProfileFixture",
+                "preservation-r64-replacement",
+                str(PACKAGE),
+                "false",
+                "true",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(0, refused.returncode, refused.stderr)
+
     def test_server_loader_refuses_inverted_v3_npc_roam_bounds(self):
         with tempfile.TemporaryDirectory(
             prefix="native-server-placement-v3-refusal-"
@@ -930,7 +1045,9 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
     def test_private_runtime_gate_is_explicit_fail_closed_and_reversible(self):
         configuration = CONFIGURATION.read_text(encoding="utf-8")
         catalog = CATALOG.read_text(encoding="utf-8")
+        runtime_profile = RUNTIME_PROFILE.read_text(encoding="utf-8")
         region_manager = REGION_MANAGER.read_text(encoding="utf-8")
+        world_populator = WORLD_POPULATOR.read_text(encoding="utf-8")
         game_state_updater = GAME_STATE_UPDATER.read_text(encoding="utf-8")
         development = DEVELOPMENT.read_text(encoding="utf-8")
         self.assertIn("WANT_LAYERED_NATIVE_TERRAIN_PACKAGE", configuration)
@@ -945,11 +1062,31 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "LAYERED_NATIVE_TERRAIN_PACKAGE_PATH", configuration
         )
         self.assertIn(
+            "OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE", configuration
+        )
+        self.assertIn(
+            '"layered_native_world_runtime_profile",\n'
+            '\t\t\t"fixture-additive"',
+            configuration,
+        )
+        self.assertIn(
             "NativeLayeredWorldPackageCatalog.loadConfigured", region_manager
         )
         self.assertIn(
-            "validateNativeDeepFixturePackage(loaded.getPrimaryPackage())",
+            "profile.validate(loaded)",
             region_manager,
+        )
+        self.assertIn(
+            "PRESERVATION_R64_REPLACEMENT", runtime_profile
+        )
+        self.assertIn(
+            "PRESERVATION_MANIFEST_SHA256", runtime_profile
+        )
+        self.assertIn(
+            "replacesLegacyBasePopulation()", world_populator
+        )
+        self.assertIn(
+            "Suppressing legacy base placement population", world_populator
         )
         self.assertIn(
             "NativeLayeredTerrainTile source = owner.findTile",
@@ -975,8 +1112,8 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "nativePackage.getPresentationChunkSize()", development
         )
         self.assertIn(
-            "The first native layered streaming route requires 24-tile chunks",
-            region_manager,
+            "Native layered runtime requires 24-tile presentation chunks",
+            runtime_profile,
         )
         self.assertIn(
             "hasNativeLayeredTerrain", region_manager

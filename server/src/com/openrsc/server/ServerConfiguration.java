@@ -95,6 +95,7 @@ public class ServerConfiguration {
 	public boolean WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
 	public boolean WANT_LAYERED_NATIVE_TERRAIN_PACKAGE;
 	public String LAYERED_NATIVE_TERRAIN_PACKAGE_PATH;
+	public String LAYERED_NATIVE_WORLD_RUNTIME_PROFILE;
 	public int MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS;
 	public int MOVEMENT_STUTTER_POLL_OUTLIER_MS;
 	public int MOVEMENT_STUTTER_TICK_OUTLIER_MS;
@@ -548,6 +549,11 @@ public class ServerConfiguration {
 			"OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH",
 			"layered_native_terrain_package_path",
 			"");
+		LAYERED_NATIVE_WORLD_RUNTIME_PROFILE = readStringSystemEnvConfig(
+			"openrsc.layeredNativeWorldRuntimeProfile",
+			"OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE",
+			"layered_native_world_runtime_profile",
+			"fixture-additive");
 		MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS = Math.max(5, readIntSystemEnvConfig(
 			"openrsc.movementStutterDiagnosticSummarySeconds",
 			"OPENRSC_MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS",

@@ -94,6 +94,20 @@ public final class WorldPopulator {
 			LayeredPackedRegionAuthoredPopulationOutcome.builder(
 				constructionGeneration);
 		try {
+			if (getWorld().getRegionManager()
+					.replacesLegacyBasePopulation()) {
+				LOGGER.info(
+					"Suppressing legacy base placement population for native "
+						+ "layered runtime profile {}",
+					getWorld().getRegionManager()
+						.getNativeLayeredWorldRuntimeProfileId());
+				completePopulation(
+					constructionInventory,
+					placementManifest,
+					placementDependencies,
+					populationOutcome);
+				return;
+			}
 			// LOAD OBJECTS //
 			int countOBJ = 0;
 			String authenticSceneryFile, authenticBoundaryFile, authenticGroundItemsFile, authenticMobFile;
@@ -293,77 +307,97 @@ public final class WorldPopulator {
 			}
 			LOGGER.info("Loaded {}", box(countGI) + " grounditems.");
 
-			//Load the in-use ItemID's from the database
-			Long inUseItemIds[] = getWorld().getServer().getDatabase().getInUseItemIds();
-			for (Long itemId : inUseItemIds)
-				getWorld().getServer().getDatabase().getItemIDList().add(itemId);
-
-			LOGGER.info("Loaded {}", box(getWorld().getServer().getDatabase().getItemIDList().size()) + " itemIDs.");
-			LayeredPackedRegionAuthoredConstructionInventory completedInventory =
-				constructionInventory.build();
-			LayeredPackedRegionAuthoredPlacementManifest completedManifest =
-				placementManifest.build();
-			LayeredPackedRegionAuthoredPlacementDependencyInventory
-				completedDependencies = placementDependencies.build();
-			LayeredPackedRegionAuthoredPopulationOutcome completedOutcome =
-				populationOutcome.build(completedManifest);
-			LayeredPackedRegionAuthoredReconstructionRecipe completedRecipe =
-				LayeredPackedRegionAuthoredReconstructionRecipe.derive(
-					completedManifest, completedDependencies, completedOutcome);
-			if (!completedManifest.isCountEquivalentTo(completedInventory)) {
-				throw new IllegalStateException(
-					"Authored placement manifest does not match construction inventory");
-			}
-			if (!completedDependencies.isAlignedWith(completedManifest)) {
-				throw new IllegalStateException(
-					"Authored placement dependencies do not align with manifest");
-			}
-			LOGGER.info(
-				"Recorded {} authored population supersessions; {} of {} manifest "
-					+ "placements remain final-live expectations.",
-				box(completedOutcome.getSupersessionCount()),
-				box(completedOutcome.getFinalExpectedPlacementCount()),
-				box(completedOutcome.getManifestPlacementCount()));
-			LOGGER.info(
-				"Prepared {} inert authored reconstruction recipe entries across {} "
-					+ "packed sources; {} entries cross source boundaries ({} source "
-					+ "references, maximum {} per entry).",
-				box(completedRecipe.getReconstructionPlacementCount()),
-				box(completedRecipe.getSourceCount()),
-				box(completedRecipe.getCrossSourcePlacementCount()),
-				box(completedRecipe.getAffectedSourceReferenceCount()),
-				box(completedRecipe.getMaximumAffectedSourceCount()));
-			LOGGER.info(
-				"Indexed {} authored placement dependency envelopes; "
-					+ "{} cross packed-source boundaries ({} source references, "
-					+ "maximum {} per placement). Object footprints: {} total, "
-					+ "{} cross-source, {} references, maximum {}. NPC roaming: "
-					+ "{} total, {} cross-source, {} references, maximum {}. "
-					+ "Anchor-only: {} total, {} references.",
-				box(completedDependencies.getDependencyCount()),
-				box(completedDependencies.getCrossSourceDependencyCount()),
-				box(completedDependencies.getAffectedSourceReferenceCount()),
-				box(completedDependencies.getMaximumAffectedSourceCount()),
-				box(completedDependencies.getObjectFootprintDependencyCount()),
-				box(completedDependencies.getCrossSourceObjectFootprintCount()),
-				box(completedDependencies.getObjectFootprintSourceReferenceCount()),
-				box(completedDependencies.getMaximumObjectFootprintSourceCount()),
-				box(completedDependencies.getNpcRoamingDependencyCount()),
-				box(completedDependencies.getCrossSourceNpcRoamingCount()),
-				box(completedDependencies.getNpcRoamingSourceReferenceCount()),
-				box(completedDependencies.getMaximumNpcRoamingSourceCount()),
-				box(completedDependencies.getAnchorOnlyDependencyCount()),
-				box(completedDependencies.getAnchorOnlySourceReferenceCount()));
-			authoredPlacementDependencies = completedDependencies;
-			authoredPopulationOutcome = completedOutcome;
-			authoredReconstructionRecipe = completedRecipe;
-			authoredPlacementManifest = completedManifest;
-			authoredConstructionInventory = completedInventory;
+			completePopulation(
+				constructionInventory,
+				placementManifest,
+				placementDependencies,
+				populationOutcome);
 
 		} catch (Exception e) {
 			LOGGER.catching(e);
 			SystemUtil.exit(1);
 		}
+	}
+
+	private void completePopulation(
+		final LayeredPackedRegionAuthoredConstructionInventory.Builder
+			constructionInventory,
+		final LayeredPackedRegionAuthoredPlacementManifest.Builder
+			placementManifest,
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			placementDependencies,
+		final LayeredPackedRegionAuthoredPopulationOutcome.Builder
+			populationOutcome) {
+		// Item-instance IDs are database state, not map placement population.
+		Long[] inUseItemIds =
+			getWorld().getServer().getDatabase().getInUseItemIds();
+		for (Long itemId : inUseItemIds) {
+			getWorld().getServer().getDatabase().getItemIDList().add(itemId);
+		}
+		LOGGER.info(
+			"Loaded {} itemIDs.",
+			box(getWorld().getServer().getDatabase().getItemIDList().size()));
+
+		LayeredPackedRegionAuthoredConstructionInventory completedInventory =
+			constructionInventory.build();
+		LayeredPackedRegionAuthoredPlacementManifest completedManifest =
+			placementManifest.build();
+		LayeredPackedRegionAuthoredPlacementDependencyInventory
+			completedDependencies = placementDependencies.build();
+		LayeredPackedRegionAuthoredPopulationOutcome completedOutcome =
+			populationOutcome.build(completedManifest);
+		LayeredPackedRegionAuthoredReconstructionRecipe completedRecipe =
+			LayeredPackedRegionAuthoredReconstructionRecipe.derive(
+				completedManifest, completedDependencies, completedOutcome);
+		if (!completedManifest.isCountEquivalentTo(completedInventory)) {
+			throw new IllegalStateException(
+				"Authored placement manifest does not match construction inventory");
+		}
+		if (!completedDependencies.isAlignedWith(completedManifest)) {
+			throw new IllegalStateException(
+				"Authored placement dependencies do not align with manifest");
+		}
+		LOGGER.info(
+			"Recorded {} authored population supersessions; {} of {} manifest "
+				+ "placements remain final-live expectations.",
+			box(completedOutcome.getSupersessionCount()),
+			box(completedOutcome.getFinalExpectedPlacementCount()),
+			box(completedOutcome.getManifestPlacementCount()));
+		LOGGER.info(
+			"Prepared {} inert authored reconstruction recipe entries across {} "
+				+ "packed sources; {} entries cross source boundaries ({} source "
+				+ "references, maximum {} per entry).",
+			box(completedRecipe.getReconstructionPlacementCount()),
+			box(completedRecipe.getSourceCount()),
+			box(completedRecipe.getCrossSourcePlacementCount()),
+			box(completedRecipe.getAffectedSourceReferenceCount()),
+			box(completedRecipe.getMaximumAffectedSourceCount()));
+		LOGGER.info(
+			"Indexed {} authored placement dependency envelopes; "
+				+ "{} cross packed-source boundaries ({} source references, "
+				+ "maximum {} per placement). Object footprints: {} total, "
+				+ "{} cross-source, {} references, maximum {}. NPC roaming: "
+				+ "{} total, {} cross-source, {} references, maximum {}. "
+				+ "Anchor-only: {} total, {} references.",
+			box(completedDependencies.getDependencyCount()),
+			box(completedDependencies.getCrossSourceDependencyCount()),
+			box(completedDependencies.getAffectedSourceReferenceCount()),
+			box(completedDependencies.getMaximumAffectedSourceCount()),
+			box(completedDependencies.getObjectFootprintDependencyCount()),
+			box(completedDependencies.getCrossSourceObjectFootprintCount()),
+			box(completedDependencies.getObjectFootprintSourceReferenceCount()),
+			box(completedDependencies.getMaximumObjectFootprintSourceCount()),
+			box(completedDependencies.getNpcRoamingDependencyCount()),
+			box(completedDependencies.getCrossSourceNpcRoamingCount()),
+			box(completedDependencies.getNpcRoamingSourceReferenceCount()),
+			box(completedDependencies.getMaximumNpcRoamingSourceCount()),
+			box(completedDependencies.getAnchorOnlyDependencyCount()),
+			box(completedDependencies.getAnchorOnlySourceReferenceCount()));
+		authoredPlacementDependencies = completedDependencies;
+		authoredPopulationOutcome = completedOutcome;
+		authoredReconstructionRecipe = completedRecipe;
+		authoredPlacementManifest = completedManifest;
+		authoredConstructionInventory = completedInventory;
 	}
 
 	private void recordConstruction(

@@ -23,6 +23,7 @@ import com.openrsc.server.io.NativeLayeredBoundaryPlacement;
 import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
+import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
@@ -136,6 +137,8 @@ public class RegionManager {
 	private final NativeLayeredWorldPackageCatalog
 		nativeLayeredWorldPackageCatalog;
 	private final NativeLayeredWorldPackage nativeLayeredWorldPackage;
+	private final NativeLayeredWorldRuntimeProfile
+		nativeLayeredWorldRuntimeProfile;
 	private boolean nativeLayeredPlacementsPopulated;
 
 	private final World world;
@@ -184,8 +187,13 @@ public class RegionManager {
 				"Layered native terrain package requires layered Player "
 					+ "location, spatial runtime, and protocol/client authority");
 		}
+		this.nativeLayeredWorldRuntimeProfile =
+			NativeLayeredWorldRuntimeProfile.fromConfiguration(
+				world.getServer().getConfig()
+					.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE);
 		this.nativeLayeredWorldPackageCatalog =
-			loadNativeLayeredWorldPackages(world);
+			loadNativeLayeredWorldPackages(
+				world, nativeLayeredWorldRuntimeProfile);
 		this.nativeLayeredWorldPackage =
 			nativeLayeredWorldPackageCatalog == null
 				? null
@@ -213,7 +221,8 @@ public class RegionManager {
 	}
 
 	private static NativeLayeredWorldPackageCatalog loadNativeLayeredWorldPackages(
-		final World world) {
+		final World world,
+		final NativeLayeredWorldRuntimeProfile profile) {
 		if (!world.getServer().getConfig()
 				.WANT_LAYERED_NATIVE_TERRAIN_PACKAGE) {
 			return null;
@@ -228,86 +237,13 @@ public class RegionManager {
 			NativeLayeredWorldPackageCatalog loaded =
 				NativeLayeredWorldPackageCatalog.loadConfigured(
 					configuredPath.trim());
-			for (NativeLayeredWorldPackage worldPackage
-				: loaded.getPackages()) {
-				validateNativeRuntimePackage(worldPackage);
-			}
-			validateNativeDeepFixturePackage(loaded.getPrimaryPackage());
+			profile.validate(loaded);
 			return loaded;
 		} catch (IOException failure) {
 			throw new IllegalStateException(
 				"Could not load the private native layered terrain package: "
 					+ failure.getMessage(),
 				failure);
-		}
-	}
-
-	private static void validateNativeRuntimePackage(
-		final NativeLayeredWorldPackage loaded) {
-		if (loaded.getPresentationChunkSize() != 24) {
-			throw new IllegalStateException(
-				"The first native layered streaming route requires 24-tile chunks");
-		}
-	}
-
-	private static void validateNativeDeepFixturePackage(
-		final NativeLayeredWorldPackage loaded) {
-		if (!loaded.declaresLevel(
-				com.openrsc.server.model.world.coordinate.WorldSpaceId.GLOBAL,
-				LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_LEVEL)) {
-			throw new IllegalStateException(
-				"Native layered terrain package does not declare level -2");
-		}
-		if (loaded.getPlacementSetCount() != 1
-			|| loaded.getNpcPlacementCount() != 1
-			|| loaded.getGroundItemPlacementCount() != 1
-			|| loaded.getSceneryPlacementCount() != 2
-			|| loaded.getBoundaryPlacementCount() != 2) {
-			throw new IllegalStateException(
-				"The first native layered placement route requires exactly "
-					+ "one placement set, NPC, ground item, two scenery "
-					+ "objects, and two boundaries");
-		}
-		WorldLocation entry = WorldLocation.global(
-			new com.openrsc.server.model.world.coordinate.WorldCoordinate(
-				LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_ENTRY_X,
-				LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_ENTRY_Y,
-				LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_LEVEL));
-		LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-			entry, false, true);
-		NativeLayeredTerrainTile entryTile = loaded.findTile(entry)
-			.orElseThrow(() -> new IllegalStateException(
-				"Native layered terrain package has no owner-route entry tile at "
-					+ entry));
-		if (entryTile.getOverlay() != 0
-			|| entryTile.getVerticalWall() != 0
-			|| entryTile.getHorizontalWall() != 0
-			|| entryTile.getDiagonalWall() != 0) {
-			throw new IllegalStateException(
-				"The first native owner-route entry requires passable "
-					+ "wall-free overlay-0 terrain at " + entry);
-		}
-		for (NativeLayeredPlacementSet set
-			: loaded.getPlacementSets().values()) {
-			for (NativeLayeredNpcPlacement npc : set.getNpcs()) {
-				requireNativeRuntimeLocation(loaded, npc.getStart());
-			}
-			for (NativeLayeredGroundItemPlacement item
-				: set.getGroundItems()) {
-				requireNativeRuntimeLocation(loaded, item.getLocation());
-			}
-		}
-	}
-
-	private static void requireNativeRuntimeLocation(
-		final NativeLayeredWorldPackage loaded,
-		final WorldLocation location) {
-		LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-			location, false, true);
-		if (!loaded.findTile(location).isPresent()) {
-			throw new IllegalStateException(
-				"Native layered placement has no package terrain at "
-					+ location);
 		}
 	}
 
@@ -3873,6 +3809,21 @@ public class RegionManager {
 	public int getNativeLayeredWorldPackageCount() {
 		return nativeLayeredWorldPackageCatalog == null
 			? 0 : nativeLayeredWorldPackageCatalog.size();
+	}
+
+	public String getNativeLayeredWorldRuntimeProfileId() {
+		return nativeLayeredWorldRuntimeProfile.getId();
+	}
+
+	/**
+	 * True only for an explicitly selected, validated complete-world package.
+	 * Fixture packages remain additive and ordinary disabled worlds remain
+	 * legacy-populated.
+	 */
+	public boolean replacesLegacyBasePopulation() {
+		return nativeLayeredWorldPackageCatalog != null
+			&& nativeLayeredWorldRuntimeProfile
+				.replacesLegacyBasePopulation();
 	}
 
 	public void populateNativeLayeredPlacements() {
