@@ -107,9 +107,12 @@ spatial index without occupying a packed `Region`; their collision is derived
 through the canonical object-footprint planner and composed onto freshly
 decoded native terrain by full `WorldLocation`. The static object route is
 owner-accepted for visuals, examine actions, blocking, alternate navigation,
-reconnect, and duplicate-free visibility. Dynamic door/object replacement,
-harvesting, removal, and respawn lifecycle authority remain later work, along
-with general world loading and removal of the bounded compatibility receipt.
+reconnect, and duplicate-free visibility. Dynamic door/object replacement and
+Tree-to-stump-to-Tree delayed restoration routes are also owner-accepted
+through their existing gameplay plugins, generation-fenced placement identity,
+level-qualified collision transactions, and exact deep reconnect. General
+world loading and removal of the bounded compatibility receipt remain later
+work.
 
 ## Preflight
 

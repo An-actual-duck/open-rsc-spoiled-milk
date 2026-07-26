@@ -37,9 +37,9 @@ generation-fenced replacement/removal identity, level-qualified
 visibility/collision transactions, and an ordinary Door/Doorframe fixture;
 automated validation and the focused owner route pass. Broader harvesting and
 delayed restoration now have an ordinary package-owned Tree/Treestump fixture
-and passing automated coverage; focused owner acceptance remains. Removal of
-the bounded compatibility receipt remains the following implementation
-boundary.
+and passing automated coverage plus focused owner acceptance through the real
+Woodcutting and delayed-spawn paths. Removal of the bounded compatibility
+receipt remains the following implementation boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -560,8 +560,8 @@ The corrected focused owner route is accepted:
 
 ### Authority Milestone E placement checkpoint 10
 
-Implemented and automated/private-build validated on 2026-07-25; focused owner
-acceptance remains pending:
+Implemented, automated/private-build validated, and focused owner-accepted on
+2026-07-25:
 
 - package `0.6.0` adds one ordinary Tree at
   `global (456,604,L-2)`. It is definition ID `1`, uses the existing
@@ -589,8 +589,28 @@ The strict package check passes with fingerprint
 `92f8acf9ce7e85fdff5ef93bb487a3c8406a20a4b22549aa61c9a473d28db6e2`;
 the complete 30-test A-through-E authority lineage passes; and the
 authoritative 864-core/488-plugin server and 262-source client builds pass.
-Matched private startup remains in the checkpoint procedure before owner
-testing. Public and ordinary private defaults remain unchanged.
+Matched private startup passes. Public and ordinary private defaults remain
+unchanged.
+
+The focused owner route is accepted:
+
+- matched private startup populated package `0.6.0` with one NPC, one ground
+  item, two scenery objects, and two boundaries, and initial status reported
+  all six live placements plus the exact seven-tile collision overlay;
+- the existing Woodcutting plugin handled the package-owned Tree at
+  `(456,604,L-2)`, with the Player adjacent at `(455,604,L-2)`. Client evidence
+  records the normal bronze-hatchet swing and successful log reward;
+- the owner visually confirmed the Tree became a stump and returned after the
+  normal delayed-spawn interval. The Player remained in the native level
+  `-2` scope throughout;
+- logout saved exact `(455,604,L-2)`, reconnect restored that same signed
+  location, and post-reconnect status still reported `1n/1i/2s/2b` with seven
+  collision-overlay tiles. No duplicate Tree, stale stump, placement loss, or
+  collision leak appeared; and
+- neither client nor server recorded a route-time exception. One successful
+  natural harvest/restoration cycle plus reconnect is sufficient for owner
+  acceptance because the executable registry regression separately repeats
+  Tree-to-stump-to-Tree replacement and asserts duplicate refusal.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -17673,6 +17693,7 @@ private environment should validate at least:
 | 2026-07-25 | Complete Milestone E format checkpoint 5 with `rle-layered-sector-v1`. | Tool/server strict decode preserves arbitrary per-tile sequences and all seven terrain fields, rejects malformed expansion, and proves mixed encodings plus detached fidelity in package `0.2.0` |
 | 2026-07-25 | Complete and accept Milestone E runtime checkpoint 6 with matched protocol-v4 radius-one 24-tile readiness. | Automated wire tests and owner evidence prove visible full-fidelity terrain, both chunk-boundary axes, `4/9 -> 6/9 -> 4/9` readiness, stable same-package scene scope, interaction, exact depth reconnect, and exit |
 | 2026-07-25 | Complete and accept Milestone E placement checkpoint 7 with package-owned NPC/item world population. | Package `0.3.0`, strict tool/server decode, layered spawn identity, generation-safe item respawn, command-independent world registration, fail-closed definition validation, focused tests, authoritative build, and matched private startup pass. Owner evidence proves normal Man roam/dialogue, two collections of the same five-coin spawn across its five-second respawn, exact level `-2` reconnect, no duplicates, and normal exit |
+| 2026-07-25 | Complete and accept Milestone E placement checkpoints 8 through 10 for static, dynamic, and harvesting objects. | Packages `0.4.0` through `0.6.0` prove level-qualified scenery/boundary visibility and collision, generation-fenced Door replacement, and ordinary Tree-to-stump-to-Tree delayed restoration without packed Region membership. Automated authority lineage, authoritative builds, matched private startup, focused owner interaction, exact deep reconnect, and duplicate-free live counts pass |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
