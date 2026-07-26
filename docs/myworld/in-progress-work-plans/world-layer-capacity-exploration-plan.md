@@ -43,8 +43,11 @@ collision lookup, persistence, protocol scope, and diagnostics now follow
 exact package coverage without requiring the bounded synthetic gate or its
 21-by-21 receipt. The retained packed `Point` is only a temporary non-negative
 X/Y carrier for unchanged APIs; synthetic Milestone D remains independently
-available as a rollback route. Cross-package transitions and retirement of the
-remaining packed Region carrier are later Milestone E boundaries.
+available as a rollback route. The corrected package-wide route is
+owner-accepted with adjacent-page walking, exact deep reconnect, restored
+fixture terrain, Man/item interaction, and stable package placement
+visibility. Cross-package transitions and retirement of the remaining packed
+Region carrier are later Milestone E boundaries.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -619,8 +622,8 @@ The focused owner route is accepted:
 
 ### Authority Milestone E runtime checkpoint 11
 
-Implemented and automated/build validated on 2026-07-25; focused owner
-acceptance remains pending:
+Implemented, automated/build validated, and focused owner-accepted on
+2026-07-25:
 
 - the native package now starts with Authority Milestones A, B, and C enabled
   and no longer requires the synthetic Milestone D gate;
@@ -649,7 +652,7 @@ acceptance remains pending:
   rollback therefore has a tested safe receipt path without making it a
   prerequisite of native operation.
 
-The full 30-test Authority A-through-E lineage passes, including new native
+The full 31-test Authority A-through-E lineage passes, including new native
 projection/persistence coverage outside the old fixture bounds and exact-
 coverage migration/refusal checks. The authoritative 864-core/488-plugin
 server and 262-source client builds pass. Ordinary and public defaults remain
@@ -714,10 +717,25 @@ application before exposing a separate stale fixture-content assumption:
 
 The complete 31-test Authority A-through-E lineage and authoritative
 864-core/488-plugin server plus 262-source client builds pass after the
-correction. The private server must reload package `0.7.0`, then owner
-acceptance needs only verify the restored floor and package placements at
-`(450,600,L-2)`, one interaction, and one exact reconnect; the already
-successful adjacent-page walking does not need repetition.
+correction. The final focused retest loaded package `0.7.0` with the synthetic
+gate absent and completed the remaining owner evidence:
+
+- login restored exact `(450,600,L-2)` with protocol sequence `1`, center chunk
+  `(18,25)`, readiness `4/9`, and manifest prefix `006051f80c50`;
+- the owner confirmed the original floor and all package placements were
+  visible, then ordinary Man dialogue and collection of the five-coin package
+  spawn both completed;
+- normal logout saved `(448,600,L-2)`, and reconnect restored that exact signed
+  location with a fresh protocol sequence `1`, the same package/chunk/readiness
+  identity, and no client terrain exception; and
+- combined with the already accepted `(490,620)` reconnect, page `(10,12)` and
+  page `(9,12)` walking outside the former synthetic bounds, plus the earlier
+  native exit-to-surface proof, the route covers every checkpoint-11
+  acceptance obligation without repeating rejected evidence.
+
+Authority Milestone E runtime checkpoint 11 is therefore owner-accepted.
+Package-wide native runtime capacity is no longer bounded by the synthetic
+21-by-21 room, while the synthetic gate remains an independent rollback route.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
@@ -17801,8 +17819,8 @@ private environment should validate at least:
 | 2026-07-25 | Complete and accept Milestone E runtime checkpoint 6 with matched protocol-v4 radius-one 24-tile readiness. | Automated wire tests and owner evidence prove visible full-fidelity terrain, both chunk-boundary axes, `4/9 -> 6/9 -> 4/9` readiness, stable same-package scene scope, interaction, exact depth reconnect, and exit |
 | 2026-07-25 | Complete and accept Milestone E placement checkpoint 7 with package-owned NPC/item world population. | Package `0.3.0`, strict tool/server decode, layered spawn identity, generation-safe item respawn, command-independent world registration, fail-closed definition validation, focused tests, authoritative build, and matched private startup pass. Owner evidence proves normal Man roam/dialogue, two collections of the same five-coin spawn across its five-second respawn, exact level `-2` reconnect, no duplicates, and normal exit |
 | 2026-07-25 | Complete and accept Milestone E placement checkpoints 8 through 10 for static, dynamic, and harvesting objects. | Packages `0.4.0` through `0.6.0` prove level-qualified scenery/boundary visibility and collision, generation-fenced Door replacement, and ordinary Tree-to-stump-to-Tree delayed restoration without packed Region membership. Automated authority lineage, authoritative builds, matched private startup, focused owner interaction, exact deep reconnect, and duplicate-free live counts pass |
-| 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Implemented and automated/build validated; first owner attempt exposed and corrected stale client fixture-only terrain application, synthetic D remains independent rollback, exact uncovered saves safely rebase, and corrected native-only owner acceptance remains pending |
-| 2026-07-25 | Make the package-wide native runtime fixture renderable across all declared terrain rather than retaining a maximum-value codec band outside the former bounded room. | Package `0.7.0` uses a valid non-default blocking band, adds a runtime-definition guard, and preserves full-range acceptance in the generic package codec; focused owner floor/placement/reconnect retest pending |
+| 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Owner-accepted after correcting two stale bounded-room assumptions; adjacent-page walking, exact deep reconnect at `(490,620)`, restored package `0.7.0` fixture terrain and placements, Man/item interaction, exact `(448,600,L-2)` reconnect, and prior surface exit pass while synthetic D remains independent rollback |
+| 2026-07-25 | Make the package-wide native runtime fixture renderable across all declared terrain rather than retaining a maximum-value codec band outside the former bounded room. | Package `0.7.0` uses a valid non-default blocking band, adds a runtime-definition guard, preserves full-range acceptance in the generic package codec, and passes focused owner floor/placement/interaction/reconnect acceptance |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
