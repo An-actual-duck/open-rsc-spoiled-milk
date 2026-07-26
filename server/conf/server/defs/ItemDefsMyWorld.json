@@ -544,6 +544,7 @@
       "id": 1,
       "meleeOffense": 13,
       "weaponSpeed": 4,
+      "prayerBonus": 0,
       "basePrice": 240
     },
     {

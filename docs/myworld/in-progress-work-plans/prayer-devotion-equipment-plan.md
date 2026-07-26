@@ -118,6 +118,31 @@ Supported metal weapons:
 - spear
 - crossbow if present in the god equipment family
 
+### Poisoned god-weapon parity
+
+The authentic Poisoned Black Dagger (`565`) is the poisoned form of the
+Zamorak-aligned Black Dagger. It retains the Black Dagger's Prayer bonus,
+worship restriction, Devotion scaling, and opposing-altar destruction
+behavior.
+
+The broader poisoned god-weapon family is not yet complete. The generic
+weapon-poison interaction resolves products by exact item name, and there are
+currently no definitions for:
+
+- Poisoned White Dagger
+- Poisoned Grey Dagger
+- Poisoned Black Spear
+- Poisoned White Spear
+- Poisoned Grey Spear
+
+Using weapon poison on those five unpoisoned god weapons therefore produces
+the existing “Nothing interesting happens” response. Adding them is a separate
+feature wave requiring new stable item IDs, server/client definitions and
+visual mappings, poison combat classification, god-line and Devotion coverage,
+destruction coverage, and acquisition/persistence tests. Do not silently map
+them to ordinary steel poisoned weapons, because that would discard the
+blessed item's identity and value.
+
 Excluded metal equipment:
 
 - chain bodies

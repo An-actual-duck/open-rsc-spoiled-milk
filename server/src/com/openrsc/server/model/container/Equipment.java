@@ -1434,6 +1434,7 @@ public class Equipment {
 	private boolean isBlackKnightEquipment(final int itemId) {
 		switch (itemId) {
 			case 423: // BLACK_DAGGER
+			case 565: // POISONED_BLACK_DAGGER
 			case 424: // BLACK_SHORT_SWORD
 			case 425: // BLACK_LONG_SWORD
 			case 426: // BLACK_2_HANDED_SWORD

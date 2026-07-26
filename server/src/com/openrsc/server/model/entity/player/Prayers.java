@@ -141,7 +141,7 @@ public class Prayers {
 				totalPercent += definition.getEffectPercent();
 			}
 		}
-		return Math.min(totalPercent, PrayerCatalog.COMBAT_EFFECT_CAP_PERCENT);
+		return totalPercent;
 	}
 
 	public void resetPrayers() {

@@ -88,9 +88,9 @@ public class BrotherJered implements TalkNpcTrigger {
 				"What can it do?");
 			if (choice == 1) {
 				npcsay("By wearing this cape, you show your devotion to the gods",
-					"Your prayers to the gods will endure longer",
+					"The cape channels that devotion into vitality",
 					"Also, when you show your respect to the deceased...",
-					"...you will receive additional favor from the gods");
+					"...it can restore some of your health");
 			}
 		}
 		if (choice == 0) {

@@ -79,6 +79,7 @@ python3 ./tests/myworld/test-production-flow.py
 python3 ./tests/myworld/test-prayer-rework.py
 python3 ./tests/myworld/test-prayer-ui.py
 python3 ./tests/myworld/test-worship-skill-name.py
+python3 ./tests/myworld/test-worship-cape-healing.py
 python3 ./tests/myworld/test-devotion-blessing-implementation.py
 python3 ./tests/myworld/test-spellbook-text-layouts.py
 python3 ./tests/myworld/test-client-elemental-spell-display-metadata.py
@@ -169,6 +170,7 @@ python3 ./tests/myworld/test-poison-balance.py
 python3 ./tests/myworld/test-poison-model.py
 python3 ./tests/myworld/test-potion-runtime.py
 python3 ./tests/myworld/test-prayer-equipment-lines.py
+python3 ./tests/myworld/test-poisoned-god-weapon-alignment.py
 python3 ./tests/myworld/test-prayer-faction-setup.py
 python3 ./tests/myworld/test-quest-reward-guardrails.py
 python3 ./tests/myworld/test-robe-defense-budgets.py

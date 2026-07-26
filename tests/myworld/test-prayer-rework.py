@@ -72,8 +72,21 @@ def main():
     require(combat_costs == [3, 6, 15, 29, 49], "Combat prayer costs drifted")
     require(combat_effects == [5, 10, 15, 20, 25], "Combat prayer effects drifted")
     require(sum(combat_costs) == 102, "All combat tiers should reserve 102 prayer points")
-    require(sum(combat_effects) == 75, "Raw combat tiers should total 75 before the cap")
-    require("COMBAT_EFFECT_CAP_PERCENT = 60" in catalog, "Combat prayer cap must stay at 60%")
+    require(sum(combat_effects) == 75, "All five combat tiers should total 75%")
+    require("COMBAT_EFFECT_CAP_PERCENT" not in catalog,
+            "Combat prayer definitions must not retain an artificial effect cap")
+    combat_aggregation = re.search(
+        r"private int getCombatEffectPercent\(.*?\n\t\}",
+        prayers,
+        re.DOTALL,
+    )
+    require(combat_aggregation, "Missing combat prayer effect aggregation")
+    require("totalPercent += definition.getEffectPercent();" in combat_aggregation.group(0),
+            "Combat prayer tiers should stack additively")
+    require("return totalPercent;" in combat_aggregation.group(0),
+            "Combat prayer aggregation should return the complete additive effect")
+    require("Math.min" not in combat_aggregation.group(0),
+            "Combat prayer aggregation must not clamp the active effect")
 
     require(skilling_costs == [2, 7, 22, 46, 80], "Skilling prayer costs drifted")
     require(skilling_effects == [10, 15, 20, 25, 30], "Skilling prayer effects drifted")
@@ -105,12 +118,19 @@ def main():
             "Prayer catalog should include the Guthix special prayer")
     require("Prayers.DIVINE_GRACE" in divine_grace and "PrayerCatalog.GodLine.SARADOMIN" in divine_grace,
             "Saving Grace should be gated to Saradomin's special slot")
+    require("MAX_PROC_CHANCE = 0.75D" in divine_grace
+            and "Math.min(damageDealt, Math.max(0, maxHits - currentHits))" in divine_grace
+            and "Math.max(0.0D, Math.min(1.0D" in divine_grace,
+            "Saving Grace probability and missing-health safety bounds must remain")
     require("ItemId.SARADOMIN_MACE.id()" in divine_grace,
             "Saving Grace should require the Saradomin mace")
     require("new CombatEffect(attacker, CombatEffect.DIVINE_GRACE)" in divine_grace,
             "Saving Grace proc should display its on-player combat effect")
     require("Prayers.DIVINE_RETRIBUTION" in divine_retribution and "PrayerCatalog.GodLine.ZAMORAK" in divine_retribution,
             "Divine Retribution should be gated to Zamorak's special slot")
+    require("MAX_PROC_CHANCE = 0.90D" in divine_retribution
+            and "Math.min(reflectedDamage, lastHits)" in divine_retribution,
+            "Divine Retribution probability and actual-damage attribution bounds must remain")
     require("ItemId.ZAMORAK_MACE.id()" in divine_retribution,
             "Divine Retribution should require the Zamorak mace")
     require("new CombatEffect(attacker, CombatEffect.DIVINE_RETRIBUTION)" in divine_retribution,
@@ -147,6 +167,15 @@ def main():
             and "PrayerCatalog.CombatStyle.RANGED" in combat_formula
             and "PrayerCatalog.CombatStyle.MAGIC" in combat_formula,
             "Combat damage should apply MyWorld prayer offense/defense modifiers by style")
+    require("damage * (100.0D + offenseBonus) / 100.0D" in combat_formula,
+            "Combat offense should apply the complete additive prayer percent")
+    require("damage * (100.0D - defenseReduction) / 100.0D" in combat_formula
+            and "return Math.max(0, damage);" in combat_formula,
+            "Combat defense should apply the complete reduction while preserving nonnegative damage")
+    require(int(100 * (100 + sum(combat_effects)) / 100) == 175,
+            "A full offense stack should turn a 100-damage roll into 175")
+    require(int(100 * (100 - sum(combat_effects)) / 100) == 25,
+            "A full defense stack should reduce a 100-damage roll to 25")
     require("getOffenseBonusPercent" in prayers and "getDefenseReductionPercent" in prayers,
             "Prayer state should expose style-specific combat modifiers")
     require("getSkillingBonusPercent" in prayers and "getPrayerSkillingBonusPercent" in player,

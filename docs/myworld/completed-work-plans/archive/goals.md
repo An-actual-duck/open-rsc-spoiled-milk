@@ -464,10 +464,11 @@ system. The accepted model is tracked in `docs/myworld/prayer-rework.md`.
 #### Current progress
 
 - `PrayerCatalog` now pins the accepted MyWorld prayer tiers in server source:
-  combat costs `3/6/10/15/21`, combat effects `5/10/15/20/25`, skilling costs
-  `2/8/20/35/55`, and skilling effects `10/15/20/25/30`.
-- Combat prayer effects stack additively but cap at 60%; full skilling prayer
-  stacks reach a 100% XP bonus and require 120 allocation points.
+  combat costs `3/6/15/29/49`, combat effects `5/10/15/20/25`, skilling costs
+  `2/7/22/46/80`, and skilling effects `10/15/20/25/30`.
+- Combat prayer effects stack additively to their full 75%; full skilling
+  prayer stacks reach a 100% XP bonus. The complete stacks require 102 and 157
+  allocation points respectively.
 - God-line altar mapping is centralized for runtime wiring.
 - The custom client now renders a 15-slot current-book prayer grid and can swap
   between Saradomin, Zamorak, and Guthix books from a server packet.
