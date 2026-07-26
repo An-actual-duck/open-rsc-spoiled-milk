@@ -36,6 +36,7 @@ final class EquipmentStatCalculator {
 	static int godEquipmentResourceCost(final int itemId) {
 		switch (itemId) {
 			case 423: // BLACK_DAGGER
+			case 565: // POISONED_BLACK_DAGGER
 			case 424: // BLACK_SHORT_SWORD
 			case 430: // BLACK_MACE
 			case 2151: // WHITE_DAGGER
@@ -109,7 +110,7 @@ final class EquipmentStatCalculator {
 
 	static int godEquipmentTargetWeaponAim(final int itemId) {
 		switch (itemId) {
-			case 423: case 2151: case 3113:
+			case 423: case 565: case 2151: case 3113:
 				return 15;
 			case 424: case 2152: case 3114:
 				return 25;
@@ -134,7 +135,7 @@ final class EquipmentStatCalculator {
 
 	static int godEquipmentTargetWeaponPower(final int itemId) {
 		switch (itemId) {
-			case 423: case 2151: case 3113:
+			case 423: case 565: case 2151: case 3113:
 				return 15;
 			case 424: case 2152: case 3114:
 				return 25;
@@ -179,7 +180,7 @@ final class EquipmentStatCalculator {
 
 	static int godEquipmentTargetMeleeOffense(final int itemId) {
 		switch (itemId) {
-			case 423: case 2151: case 3113:
+			case 423: case 565: case 2151: case 3113:
 				return 15;
 			case 424: case 2152: case 3114:
 				return 32;

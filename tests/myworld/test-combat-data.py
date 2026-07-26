@@ -646,6 +646,7 @@ def main() -> None:
     require_absent(items_by_id, 187, "Legacy blue skirt combat stats")
     require_exact(items_by_id, 199, "magicBonus", 0, "Legacy black wizard hat magic offense removal")
     require_exact(items_by_id, 216, "magicBonus", 0, "Legacy black robe magic offense removal")
+    require_exact(items_by_id, 1, "prayerBonus", 0, "Iron short sword prayer neutrality")
     require_exact(items_by_id, 423, "meleeOffense", 9, "Black dagger steel-tier profile")
     require_exact(items_by_id, 423, "prayerBonus", 1, "Black dagger prayer bonus")
     require_exact(items_by_id, 565, "meleeOffense", items_by_id[423]["meleeOffense"], "Poisoned black dagger parity")

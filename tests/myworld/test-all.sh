@@ -170,6 +170,7 @@ python3 ./tests/myworld/test-poison-balance.py
 python3 ./tests/myworld/test-poison-model.py
 python3 ./tests/myworld/test-potion-runtime.py
 python3 ./tests/myworld/test-prayer-equipment-lines.py
+python3 ./tests/myworld/test-poisoned-god-weapon-alignment.py
 python3 ./tests/myworld/test-prayer-faction-setup.py
 python3 ./tests/myworld/test-quest-reward-guardrails.py
 python3 ./tests/myworld/test-robe-defense-budgets.py
