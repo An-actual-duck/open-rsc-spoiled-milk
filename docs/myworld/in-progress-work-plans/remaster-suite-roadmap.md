@@ -918,6 +918,15 @@ retained `packedRegion=detached` and `spatialCarrier=layered-index`. The
 scene-rebuild correction is accepted; the rest of checkpoint 13's
 interaction, cross-package, reconnect, and legacy-reattachment route remains.
 
+The following 2026-07-26 owner phase accepts checkpoint-13 native interaction
+and ordinary runtime-item behavior. Man dialogue, authored coin take/respawn,
+Door operation, Tree harvest/restoration, and an owner-attributed Logs
+drop/recovery all behaved normally on level `-2`. Final diagnostics remained
+on package `0.7.0`, readiness `4/9`, live counts `1n/1i/2s/2b`, and
+`packedRegion=detached`. Cross-package switching, native reconnect, reverse
+switching, and legacy packed-Region reattachment remain to close the
+checkpoint.
+
 ### Phase 6: Layered World Builder generation
 
 Goal: make the layered RSC Remastered world and modder content directly

@@ -905,6 +905,17 @@ diagnostics continued to report `packedRegion=detached` and
 the remaining checkpoint-13 interaction, package-switch, reconnect, and
 surface-reattachment route remains deliberately separate.
 
+The next checkpoint-13 owner phase passed on 2026-07-26 without an abnormal
+result. Server/client evidence records normal Man dialogue, the authored
+five-coin take, Door operation, successful Tree harvesting, an ordinary
+owner-attributed Logs drop, and a final fixture status at `(455,604,L-2)` with
+`packedRegion=detached`, package readiness `4/9`, and unchanged live placement
+counts `1n/1i/2s/2b`. The owner also visually confirmed the authored coin
+respawn, Tree restoration, and recovery of the ordinary dropped item. This
+accepts owner-route steps 2 through 4. Cross-package switching, exact native
+reconnect, reverse switching, and packed-Region reattachment on legacy exit
+remain.
+
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
 expose, and validate the next restoration prerequisite: known authored
@@ -17990,7 +18001,7 @@ private environment should validate at least:
 | 2026-07-25 | Complete Milestone E runtime checkpoint 11 by selecting native runtime projection, persistence, movement, collision, protocol scope, and diagnostics through exact package coverage rather than the bounded synthetic fixture. | Owner-accepted after correcting two stale bounded-room assumptions; adjacent-page walking, exact deep reconnect at `(490,620)`, restored package `0.7.0` fixture terrain and placements, Man/item interaction, exact `(448,600,L-2)` reconnect, and prior surface exit pass while synthetic D remains independent rollback |
 | 2026-07-25 | Make the package-wide native runtime fixture renderable across all declared terrain rather than retaining a maximum-value codec band outside the former bounded room. | Package `0.7.0` uses a valid non-default blocking band, adds a runtime-definition guard, preserves full-range acceptance in the generic package codec, and passes focused owner floor/placement/interaction/reconnect acceptance |
 | 2026-07-25 | Implement Milestone E runtime checkpoint 12 as a fail-closed multi-package catalog and atomic explicit package-transition boundary. | Owner-accepted; distinct `-4` transition package, exact non-overlapping ownership, destination readiness preflight, package-scoped protocol/object identity, implicit-cross refusal, 35-test A-E lineage, authoritative builds, both package switches, three-coin interaction, exact `L-4` reconnect, and legacy surface exit pass |
-| 2026-07-25 | Implement Milestone E runtime checkpoint 13 by retiring packed-Region entity membership and Region-as-lookup facades from exact native package scopes. | Automated/build-validated; 35 focused A-E tests, 865/488 server build, 262-source client build, and matched two-package private startup pass; focused owner acceptance remains |
+| 2026-07-25 | Implement Milestone E runtime checkpoint 13 by retiring packed-Region entity membership and Region-as-lookup facades from exact native package scopes. | Automated/build-validated; 35 focused A-E tests, 865/488 server build, 262-source client build, and matched two-package private startup pass. Owner acceptance now covers native detached-carrier diagnostics, interactions, authored respawn/restoration, and ordinary item drop/recovery; cross-package/reconnect/legacy-reattachment acceptance remains |
 | 2026-07-26 | Correct and accept checkpoint 13's initial legacy-to-native scene rebuild. | Same-X/Y, compatibility-`P0` native entry had accepted the new scope but incorrectly used the client same-region fast path; hard layered loads now rebuild immediately. Regression/performance/build guards pass, and owner evidence confirms the native floor and movement without reconnect while the entity carrier remains detached from packed Regions |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
