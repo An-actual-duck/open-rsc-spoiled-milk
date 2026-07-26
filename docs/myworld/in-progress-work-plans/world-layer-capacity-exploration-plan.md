@@ -35,9 +35,9 @@ visibility/collision isolation, private startup, automated validation, and the
 focused owner route. The first dynamic package-object cut now provides
 generation-fenced replacement/removal identity, level-qualified
 visibility/collision transactions, and an ordinary Door/Doorframe fixture;
-automated validation passes and focused owner acceptance remains. Broader
-harvesting/restoration coverage and removal of the bounded compatibility
-receipt remain the current implementation boundary.
+automated validation and the focused owner route pass. Broader harvesting and
+delayed-restoration coverage plus removal of the bounded compatibility receipt
+remain the current implementation boundary.
 
 The enclosing product direction is now **RSC Remastered**: a definitive
 vanilla-content remaster with an integrated launcher, layered World Builder,
@@ -484,8 +484,8 @@ The focused owner route is accepted:
 
 ### Authority Milestone E placement checkpoint 9
 
-Implemented and automated/private-build validated on 2026-07-25; focused owner
-acceptance remains pending:
+Implemented, automated/private-build validated, and focused owner-accepted on
+2026-07-25:
 
 - package `0.5.0` adds one ordinary closed Door at
   `global (452,604,L-2)` beside the accepted static fixture. It uses the
@@ -521,10 +521,9 @@ The strict package check passes with fingerprint
 `af65de093cc4afd7c59ab17862785bcdec6611ad586cfca47e18bd1194653934`;
 the complete 30-test A-through-E authority lineage passes; and the
 authoritative 864-core/488-plugin server plus 262-source client builds pass.
-Public and ordinary private defaults remain unchanged. Owner acceptance must
-confirm the Door appears, opens to a Doorframe, releases its exact edge,
-closes back into the same placement, restores collision, remains
-duplicate-free, and does not regress nearby entities or reconnect.
+Public and ordinary private defaults remain unchanged. The focused owner route
+covers Door appearance, Doorframe replacement, exact edge release/restoration,
+duplicate-free visibility, nearby entities, reconnect, and exit.
 
 The first owner attempt correctly stopped when status reported six collision
 overlay tiles rather than the instructed five. Source and runtime evidence
@@ -535,6 +534,27 @@ two tiles, for `1 + 3 + 2 = 6`. Opening only the Door must reduce the total to
 four; closing it must restore six. The executable fixture now uses the real
 Fence projectile allowlist and all three package objects, asserting exact
 closed/open/restored counts of `6/4/6`.
+
+The corrected focused owner route is accepted:
+
+- package `0.5.0` initially reported the expected one NPC, one ground item, one
+  scenery object, two boundaries, and six collision-overlay tiles;
+- opening boundary ID `2` at `(452,604,L-2)` produced one Doorframe at the same
+  placement and status reported four collision-overlay tiles. The owner
+  confirmed the opening was traversable;
+- closing that ID `1` Doorframe, reopening it, crossing the edge, and closing
+  it from the opposite side all behaved normally. The owner confirmed the
+  closed edge blocked again, with no duplicate, stale image, or interaction
+  fault;
+- the package Man still dialogued and the five-coin spawn was collected after
+  the repeated replacements;
+- logout/reconnect first restored exact `(448,600,L-2)`. The Door was then
+  opened and a second logout/reconnect restored exact `(452,603,L-2)` while
+  the current Doorframe remained actionable; closing it after reconnect
+  succeeded; and
+- explicit exit restored `(120,648,L0)`. The matched client identified
+  manifest prefix `ac1ff7a5c14c`, and neither client nor server recorded a
+  route-time exception.
 
 Historical pre-authority checkpoint retained for traceability:
 owner-validated Slices 108-110 define, detach, privately
