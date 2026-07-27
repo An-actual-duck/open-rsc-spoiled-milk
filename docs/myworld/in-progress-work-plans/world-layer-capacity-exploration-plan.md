@@ -123,15 +123,15 @@ status together.
 
 1. Generate the independently identified Spoiled Milk layered package from
    the exact custom terrain pair and the effective `server/myworld.conf`
-   placement composition. **Implemented and automated-validated as package
-   `0.2.0`; private owner validation remains.**
+   placement composition. **Implemented, automated-validated, and privately
+   owner-accepted as package `0.2.0`.**
 2. Run the complete configured Spoiled Milk world through the replacement runtime and
    preserve terrain, collision, scenery, NPCs, items, transitions, reconnect,
    recovery, and current custom behavior.
 3. Continue resolving native layered-loader, presentation, transition, and
    expandable-depth issues against that complete integration target.
-4. Add the layered Builder review/content workflow for the complete Spoiled
-   Milk package.
+4. **Next active product gate:** add the layered Builder review/content
+   workflow for the complete Spoiled Milk package.
 5. Once stable, extract reusable engine/package/launcher boundaries and define
    supported community distribution adapters.
 6. Resume vanilla/Preservation only with a complete coordinated content set;
@@ -18155,8 +18155,8 @@ below.
 
 ## Spoiled Milk Native Composition Milestone
 
-Status: implemented and automated-validated on 2026-07-26; focused private
-owner validation is next.
+Status: implemented, automated-validated, and focused-private-owner-accepted
+on 2026-07-26.
 
 The active target now reproduces the maintained Spoiled Milk configuration
 rather than treating the four base placement files as the whole world:
@@ -18213,6 +18213,16 @@ package fingerprint is
 The independently named, default-off `spoiled-milk-replacement` profile pins
 those exact counts and identity. Preservation `0.4.0` remains unchanged and
 continues to use its authentic 1,764-sector source.
+
+Focused private acceptance used that exact pinned package and profile. The
+owner confirmed that the familiar Spoiled Milk custom terrain and configured
+world content were present and that the previously missing rune-altar glyph
+and orb presentation was restored as expected. This closes the package
+composition/restoration gate. The 143 Harvesting conversions and complete
+placement inventory remain protected by deterministic package/runtime tests;
+individual quest and content-script behavior remains part of normal Spoiled
+Milk gameplay regression rather than a reason to return to the incomplete
+base-file package.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -18310,7 +18320,8 @@ private environment should validate at least:
 | 2026-07-26 | Classify and remove surviving rune-altar glyphs in the Preservation endpoint as orphan custom visualization, not missing vanilla scenery. | The Preservation placement baseline correctly excludes the custom MyWorld Runecraft altars and obelisks. The client independently drew glyph/orb billboards from fixed coordinates, so those effects survived without owners. Rendering now requires the exact matching loaded altar or obelisk scenery identity and caches ownership by scene-object revision; custom worlds retain their effects while vanilla scenes omit them. Focused guards, the authoritative 262-source client build, and private owner visual confirmation pass |
 | 2026-07-26 | Remove the remaining embedded expansion placements from the definitive Preservation output without deleting their MyWorld sources. | Package `0.4.0` excludes five exact scenery, two exact NPC, and six exact ground-item tuples; reports 32,351 vanilla outputs plus 13 exclusions from all 32,364 frozen inputs; retains zero unresolved; and carries 14 receipts including the Hobgoblin correction. Exact conversion allowlists and an independent runtime definition boundary refuse unreviewed non-vanilla placements. Automated validation passes; its owner route was superseded when Preservation was paused |
 | 2026-07-26 | Pause vanilla/Preservation as a distribution target and continue layered-world integration against complete Spoiled Milk content. | Preserve the audit and clean generator for later; add independently named `rsc-remastered.spoiled-milk-layered-world@0.1.0` plus `spoiled-milk-replacement`, restoring all 32,364 placements. Stabilize renderer/server/layered/Builder integration here before extracting broadly reusable and coordinated vanilla/community packages |
-| 2026-07-26 | Correct the active Spoiled Milk package from base-file restoration to the exact configured effective world. | Package `0.2.0` uses the matching 1,771-sector Custom terrain pair and composes every active `myworld.conf` placement source with legacy removals, cleanup, supersession, and 143 Harvesting reclassifications. It emits 33,515 effective placements (`3775n/882i/27886s/972b`), retains the direction-8 travel cart, and restores all 14 glyph anchors plus 56 orb-owner obelisks. Focused package, server-load, runtime-registry, altar, and authoritative build validation pass; private owner validation is next |
+| 2026-07-26 | Correct the active Spoiled Milk package from base-file restoration to the exact configured effective world. | Package `0.2.0` uses the matching 1,771-sector Custom terrain pair and composes every active `myworld.conf` placement source with legacy removals, cleanup, supersession, and 143 Harvesting reclassifications. It emits 33,515 effective placements (`3775n/882i/27886s/972b`), retains the direction-8 travel cart, and restores all 14 glyph anchors plus 56 orb-owner obelisks. Focused package, server-load, runtime-registry, altar, and authoritative build validation pass; the owner accepted the exact private package after confirming the custom terrain, configured content, glyphs, and orbs appeared as expected |
+| 2026-07-26 | Move the active layered-map product gate from runtime restoration to a layered adapter for the existing isolated World Builder. | Begin with read-only discovery and launch of the exact `0.2.0` package in a copied workspace, signed-level navigation, visible package/review identity, and source-immutability proof. Add workspace-owned layered edits and explicit transactional export only after that visual checkpoint |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -18707,7 +18718,7 @@ presentation, persistence, cross-package transitions, and Region-free native
 entity membership have completed their focused automated and private-owner
 routes.
 
-The active gate is the complete configured Spoiled Milk layered distribution:
+The complete configured Spoiled Milk layered distribution is accepted:
 `rsc-remastered.spoiled-milk-layered-world@0.2.0`, selected only by the
 default-off `spoiled-milk-replacement` profile. It uses the exact 1,771-sector
 Custom terrain pair and 33,515 effective configured placements:
@@ -18717,9 +18728,27 @@ active placement inputs and the removals, cleanup, same-slot supersessions,
 and 143 Harvesting reclassifications that produce the effective live set.
 It uses the accepted runtime, protocol, collision, transition, persistence,
 and Region-free entity work without making a vanilla content claim. Automated
-validation is complete; the next gate is focused private owner acceptance of
-terrain, glyph/orb ownership, placements, Harvesting, transitions, reconnect,
-and recovery before Builder/content authoring and later extraction.
+validation and the focused private content-restoration route are complete.
+The accepted engine routes already cover transitions, reconnect, recovery,
+streaming, and signed-level behavior. The next active gate is a layered
+adapter for the existing isolated World Builder workflow:
+
+1. open the exact `0.2.0` package in a workspace without mutating its source;
+2. expose package identity, manifest hash, world space, signed level, and
+   dirty/review state in the Builder;
+3. preserve ordinary `(x,y)` while navigating and editing declared signed
+   levels, including data-added depths beyond `-2`;
+4. save only to the isolated review workspace and validate the complete
+   terrain/placement/transition output deterministically; and
+5. require a separate explicit export/import action with preview, receipt,
+   backup, and rollback before any game files change.
+
+The safest first slice is read-only package discovery and private Builder
+launch against a copied `0.2.0` workspace. It should reuse the Builder's
+existing isolation and dev-runtime machinery, prove exact terrain and
+placement counts, allow signed-level navigation, and make no editing or
+export promise yet. That produces a meaningful visual checkpoint before the
+legacy packed-coordinate save model is replaced.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first
