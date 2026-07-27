@@ -232,7 +232,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 
 	private void selectMode(Mode selected){
 		if(isLayeredReview()&&(selected==Mode.TERRAIN||selected==Mode.SCENERY||selected==Mode.NPC)){
-			mode=Mode.NAVIGATE;inspectionStatus="Layered package review is read-only; editing will follow in the native writer slice.";
+			mode=Mode.NAVIGATE;rejectLayeredReviewMutation("Layered package review is read-only; editing will follow in the native writer slice.");
 			coordinateFocus=0;toolbar.open(WorldEditorToolbarState.Flyout.NAVIGATE);updatePresentationBounds();return;
 		}
 		if(mode==Mode.TERRAIN&&selected!=Mode.TERRAIN&&terrainDragActive)releaseTerrainDrag();
@@ -341,7 +341,8 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private String focusedText(){switch(coordinateFocus){case 1:return teleportX;case 2:return teleportY;case 13:return teleportLevel;case 3:return sceneryIdText;case 4:return npcIdText;case 5:return npcRadiusText;case 6:return terrainElevationText;case 7:return terrainFloorColorText;case 8:return terrainFloorTextureText;case 9:return terrainRoofText;case 10:return terrainNorthWallText;case 11:return terrainEastWallText;default:return terrainDiagonalWallText;}}
 	private void setFocusedText(String value){switch(coordinateFocus){case 1:teleportX=value;break;case 2:teleportY=value;break;case 13:teleportLevel=value;break;case 3:sceneryIdText=value;break;case 4:npcIdText=value;break;case 5:npcRadiusText=value;break;case 6:terrainElevationText=value;break;case 7:terrainFloorColorText=value;break;case 8:terrainFloorTextureText=value;break;case 9:terrainRoofText=value;break;case 10:terrainNorthWallText=value;break;case 11:terrainEastWallText=value;break;default:terrainDiagonalWallText=value;}}
 	private void focusNumber(int focus){coordinateFocus=focus;replaceFocusedText=true;}
-	private void requestWorldEditSave(){if(isLayeredReview()){inspectionStatus="Layered package review is read-only; no files were changed.";saveRequested=false;return;}if(terrainStrokeTiles!=null||terrainDragActive||terrainDragReleasePending){inspectionStatus="Wait for the active terrain stroke to finish before saving.";return;}mc.sendCommandString("saveworldedits");saveRequested=true;closeArmed=false;inspectionStatus="World edit save requested; see game messages for verification.";}
+	private void rejectLayeredReviewMutation(String message){inspectionStatus=message;mc.showWorldEditorStatus(message);}
+	private void requestWorldEditSave(){if(isLayeredReview()){rejectLayeredReviewMutation("Layered package review is read-only; no files were changed.");saveRequested=false;return;}if(terrainStrokeTiles!=null||terrainDragActive||terrainDragReleasePending){inspectionStatus="Wait for the active terrain stroke to finish before saving.";return;}mc.sendCommandString("saveworldedits");saveRequested=true;closeArmed=false;inspectionStatus="World edit save requested; see game messages for verification.";}
 	private void requestEditorClose(){
 		if(unsavedChanges&&!closeArmed){closeArmed=true;inspectionStatus="Unsaved edits remain. Select Close again to exit without saving.";return;}
 		setTerrainBuildMode(false);mc.setWorldEditorNavigateClickTeleport(false);send(1,0,0,0,0,0,0);setVisible(false);

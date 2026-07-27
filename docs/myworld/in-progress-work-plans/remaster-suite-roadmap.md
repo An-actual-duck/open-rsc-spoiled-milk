@@ -1081,6 +1081,20 @@ exists. The ordinary client coordinate overlay now uses the same logical
 coordinate vocabulary. This is a review checkpoint, not yet a map-authoring
 release.
 
+The first owner review found and corrected a rapid-navigation presentation
+race: complete native receipts could be cached under an earlier snapshot key
+by an asynchronous preload, producing a false water band at a window edge.
+Native receipts now build only on their authoritative foreground path and all
+terrain/model caches fence publication by the complete scope key. Builder
+refusals are also emitted as visible game messages, and layered `::tp` supports
+both `(x,y,current-level)` and explicit `(x,y,level)` forms.
+
+Additional signed levels remain data-declared, not hard-coded. The next
+workspace-writer slice will make this usable through a transactional Create
+Level action that allocates safe initial terrain and an empty placement set
+before allowing navigation. Teleporting into an undeclared level remains a
+correct refusal, because an absent level has no terrain or collision contract.
+
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
 from the accepted 12-file vanilla map baseline, covers the exact
@@ -1511,6 +1525,8 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Make arbitrary signed depth a transactional Builder authoring action, not an implicit teleport into absent terrain. | The engine/package format already accepts data-declared `-3`, `+3`, and later levels. The next native-writer slice creates level metadata, safe initial terrain, and an empty placement set atomically in the isolated workspace; undeclared destinations continue to refuse |
+| 2026-07-27 | Prevent native presentation preloads from publishing terrain built under a different receipt scope. | Native package windows no longer schedule speculative terrain/model builds, every relevant cache fences publication by its complete scope key, and the rapid-navigation water-edge route is queued for owner retest |
 | 2026-07-25 | Present the public project as **RSC Remastered**, a definitive vanilla-content remaster with one coherent launcher/tooling experience; retain modular capability boundaries as internal architecture. | Confirmed; refines the earlier Suite-first packaging direction |
 | 2026-07-25 | Use the repository's Preservation revision-64 terrain, base placements, configuration, and definition set as the first definitive vanilla source candidate, subject to one complete provenance/fingerprint manifest. | Confirmed; local source set found, manifest remains a deliverable |
 | 2026-07-26 | Complete the first Preservation normalization milestone as an isolated terrain-only native review package. | Frozen-baseline verification, all 1,764 exact ORSC sectors, deterministic raw native payloads, byte-for-byte reverse proof, tool/server validation, source immutability, and overwrite refusal pass. The package remains non-runtime with zero placement sets and 32,364 explicitly unconverted placement records |

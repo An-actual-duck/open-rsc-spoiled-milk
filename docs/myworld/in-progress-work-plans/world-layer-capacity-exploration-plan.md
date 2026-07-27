@@ -18789,6 +18789,38 @@ ordinary movement/interaction/inspection, package identity, and read-only
 refusal. Only after that acceptance should the next slice define the
 transactional native terrain/placement draft and deterministic package writer.
 
+The first owner review on 2026-07-27 accepted signed navigation, inspection,
+package identity, and mutation refusal, then exposed three focused follow-ups:
+
+- fast Builder navigation could show a water band at the edge of otherwise
+  present terrain. Every captured server receipt contained all nine requested
+  native sectors. The defect was a client cache race: an asynchronous preload
+  could retain snapshot A's cache key, read snapshot B after a rapid sector
+  shift, and publish B's model under A. Native package receipts now bypass
+  speculative terrain/model preloads because they cannot fetch a future server
+  snapshot, and every CPU/model cache refuses a build if its complete scope key
+  changes before publication;
+- layered staff teleport accepts `::tp x y` as the current signed level and
+  `::tp x y level` as an explicit signed destination. Named-player and town
+  forms retain their legacy meanings. Missing package terrain or an
+  unrepresentable compatibility destination refuses before location mutation;
+  and
+- read-only client controls now put the refusal in the game-message stream as
+  well as the compact Builder status, so a blocked edit/save action cannot look
+  inert.
+
+Arbitrary depth remains a package capability rather than a teleport loophole.
+The engine, manifest, runtime loaders, and signed coordinate model already
+accept declared levels beyond `-2`; the current Spoiled Milk package truthfully
+declares only `[-1,0,1,2]`. The first native-writer slice must add an explicit
+**Create Level** transaction. It will create workspace-owned level metadata, an
+empty v3 placement set, and a safe initial terrain allocation around a selected
+anchor before navigation becomes valid. It must update payload/manifest hashes
+atomically, validate the entire draft, and remain isolated from source and game
+files. Undeclared `-3` or `+3` must continue to refuse: treating absent terrain
+as a new level would recreate the water/soft-lock behavior this rebuild is
+designed to eliminate.
+
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first
 milestone produces the exact terrain-only native review package described

@@ -21754,6 +21754,10 @@ public final class mudclient implements Runnable {
 		showMessage(crownEnabled, sender, message, type, crownID, formerName, null);
 	}
 
+	public void showWorldEditorStatus(String message) {
+		this.showMessage(false, null, message, MessageType.GAME, 0, null);
+	}
+
 	public final void showMessage(boolean crownEnabled, String sender, String message, MessageType type, int crownID,
 								  String formerName, String colourOverride) {
 		try {

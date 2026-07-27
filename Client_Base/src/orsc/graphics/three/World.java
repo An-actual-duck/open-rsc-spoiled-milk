@@ -813,6 +813,10 @@ public final class World {
 			roofInput,
 			includeRoofGeometry);
 		WorldModelProduct built = new WorldModelProduct(terrainInput, wallInput, roofInput, gpuChunkMesh);
+		if (!key.equals(worldModelProductKey(
+				plane, sectionX, sectionY, includeRoofGeometry))) {
+			return built;
+		}
 		boolean storedBuilt = false;
 		synchronized (worldModelProductCacheLock) {
 			cached = worldModelProductCache.get(key);
@@ -1200,6 +1204,9 @@ public final class World {
 
 		CpuSectionWindow window = loadCpuSectionWindow(plane, sectionX, sectionY);
 		TerrainModelInput built = buildTerrainModelInput(plane, window.sectors);
+		if (!key.equals(terrainModelInputKey(plane, sectionX, sectionY))) {
+			return built;
+		}
 		boolean storedBuilt = false;
 		synchronized (terrainModelInputCacheLock) {
 			cached = terrainModelInputCache.get(key);
@@ -1652,6 +1659,9 @@ public final class World {
 
 		CpuSectionWindow window = loadCpuSectionWindow(plane, sectionX, sectionY);
 		WallModelInput built = buildWallModelInput(window.sectors);
+		if (!key.equals(wallModelInputKey(plane, sectionX, sectionY))) {
+			return built;
+		}
 		boolean storedBuilt = false;
 		synchronized (wallModelInputCacheLock) {
 			cached = wallModelInputCache.get(key);
@@ -1839,6 +1849,9 @@ public final class World {
 
 		CpuSectionWindow window = loadCpuSectionWindow(plane, sectionX, sectionY);
 		RoofModelInput built = buildRoofModelInput(window.sectors);
+		if (!key.equals(roofModelInputKey(plane, sectionX, sectionY))) {
+			return built;
+		}
 		boolean storedBuilt = false;
 		synchronized (roofModelInputCacheLock) {
 			cached = roofModelInputCache.get(key);
@@ -2521,6 +2534,16 @@ public final class World {
 	}
 
 	public void preloadSections(int worldX, int worldZ, int plane) {
+		/*
+		 * Native package terrain arrives as one complete, server-authoritative
+		 * presentation window. A speculative build cannot fetch the next
+		 * package window, and letting it outlive a rapid window shift can pair
+		 * terrain decoded from the new snapshot with the old snapshot's cache
+		 * key. Build native windows only on the foreground receipt path.
+		 */
+		if (nativeLayeredTerrainSnapshot != null) {
+			return;
+		}
 		int sectionX = worldTileToSection(worldX);
 		int sectionY = worldTileToSection(worldZ);
 		preloadSectionWindow(plane, sectionX, sectionY);
@@ -2721,6 +2744,14 @@ public final class World {
 			ACTIVE_SECTION_GRID,
 			ACTIVE_SECTION_ORIGIN_OFFSET,
 			WorldStreamManager.elapsedSince(buildStart));
+		if (!key.equals(sectionWindowKey(height, sectionX, sectionY))) {
+			/*
+			 * A package receipt or editor revision changed while an async
+			 * build was running. The caller may discard its detached result,
+			 * but it must never poison the cache entry for the prior scope.
+			 */
+			return built;
+		}
 		synchronized (cpuSectionWindowCacheLock) {
 			cached = cpuSectionWindowCache.get(key);
 			if (cached != null) {
