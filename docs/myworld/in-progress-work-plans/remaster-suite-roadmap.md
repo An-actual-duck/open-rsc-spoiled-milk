@@ -999,6 +999,27 @@ Those corrections do not become silent generic rewrite rules for creator
 expansions. Supported third-party imports surface their own findings for
 creator/profile-specific adaptation.
 
+A subsequent residual-content audit refined the meaning of "base" for the
+definitive vanilla endpoint. The frozen placement inputs contain 13 records
+whose definition IDs belong to later MyWorld content: four inert obelisks, one
+ore crusher, Arlen, the Master tanner, and six cow-hide equipment spawns.
+Package `0.4.0` preserves the frozen inputs but excludes those 13 exact source
+tuples during Preservation conversion. Each exclusion has a stable
+machine-readable receipt; any unreviewed placement beyond the vanilla
+definition maxima fails conversion, and the replacement runtime independently
+refuses such a package. Normal MyWorld loading still retains the source
+records.
+
+The clean Preservation output is therefore 32,351 placements: 966 boundaries,
+26,765 scenery objects, 1,010 ground items, and 3,610 NPCs. The generation
+report accounts for all 32,364 source records as 32,351 output records plus 13
+reviewed exclusions, with zero unresolved records. Together with the
+Hobgoblin value correction it carries 14 receipts. The reviewed package is
+`rsc-remastered.preservation-r64-parity-review@0.4.0`, manifest SHA-256
+`560dae205d13c2034b38f52d8bb6841ee56c245fadc8e9d18361ace1346cd73f`,
+and package fingerprint
+`ea0af380d88d3f742abd9e8dea885101d98550471e9b6a7044bed7fb570e85e6`.
+
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
 from the accepted 12-file vanilla map baseline, covers the exact
@@ -1013,7 +1034,7 @@ long-distance transitions as compatibility behavior. They are not yet a
 complete declarative graph and must not be silently rewritten. The next
 implementation gate is a default-off full-world replacement profile: it must
 validate the exact Preservation package and suppress legacy base placement
-population so all 32,364 package placements load once, while leaving the
+population so all 32,351 package placements load once, while leaving the
 existing bounded fixture profile unchanged.
 
 ### Phase 6: Layered World Builder generation
@@ -1433,6 +1454,7 @@ The RSC Remastered product roadmap is complete when:
 | 2026-07-26 | Complete the first Preservation normalization milestone as an isolated terrain-only native review package. | Frozen-baseline verification, all 1,764 exact ORSC sectors, deterministic raw native payloads, byte-for-byte reverse proof, tool/server validation, source immutability, and overwrite refusal pass. The package remains non-runtime with zero placement sets and 32,364 explicitly unconverted placement records |
 | 2026-07-26 | Complete the second Preservation normalization milestone with exact v3 placement rectangles and deterministic four-level placement sets. | 32,363 of 32,364 base records convert exactly. One Hobgoblin has packed maximum Y `6549` outside the source coordinate model; likely `3549`, but the tool records and omits it pending owner-approved conversion repair, leaving source and runtime untouched |
 | 2026-07-26 | Approve a fingerprint-gated `6549 -> 3549` conversion repair for the anomalous vanilla Hobgoblin and distinguish vanilla corrections from creator expansion policy. | All 32,364 placements now convert with one explicit receipt and unchanged source. Reviewed vanilla repairs may define the concrete RSC Remastered baseline; expansion findings remain creator-controlled |
+| 2026-07-26 | Refine Preservation conversion ownership after a systematic residual-content audit found expansion records embedded in the frozen base placement inputs. | Package `0.4.0` excludes five exact custom scenery, two exact custom NPC, and six exact custom ground-item records without changing MyWorld sources. The report accounts for 32,351 vanilla outputs plus 13 exclusions from 32,364 inputs, carries 14 receipts including the Hobgoblin repair, and both conversion and replacement runtime fail closed against any unreviewed non-vanilla definition ID |
 | 2026-07-26 | Freeze Preservation transition compatibility as supplementary execution provenance. | All 20 explicit XML edges normalize with zero unresolved; 107 authentic script owners and the four runtime bridge sources are hash-pinned without claiming Java is a declarative graph. First parity runtime retains those scripts, and full-world replacement population is the next gate |
 | 2026-07-25 | Make the Universal Launcher own isolated, matched installation profiles and named fingerprinted import adapters; importing Cabbage or another supported distribution must never patch the default profile in place. | Confirmed |
 | 2026-07-25 | Begin modder drag-and-drop support with profile-local `content/walls` and `content/floors`, namespaced packs, stable registered identities, validation, and automatic World Builder discovery. | Confirmed architecture; implementation remains phased |

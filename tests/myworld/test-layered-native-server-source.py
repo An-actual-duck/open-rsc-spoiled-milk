@@ -284,13 +284,13 @@ public final class NativeLayeredPreservationReviewFixture {
             "rsc-remastered.preservation-r64-parity-review".equals(
                 world.getPackageId()),
             "package ID");
-        check("0.3.0".equals(world.getPackageVersion()), "package version");
+        check("0.4.0".equals(world.getPackageVersion()), "package version");
         check(world.getTerrainSectorCount() == 1764, "terrain count");
         check(world.getLevelCount() == 4, "level count");
         check(world.getPlacementSetCount() == 4, "placement-set count");
-        check(world.getNpcPlacementCount() == 3612, "NPC count");
-        check(world.getGroundItemPlacementCount() == 1016, "item count");
-        check(world.getSceneryPlacementCount() == 26770, "scenery count");
+        check(world.getNpcPlacementCount() == 3610, "NPC count");
+        check(world.getGroundItemPlacementCount() == 1010, "item count");
+        check(world.getSceneryPlacementCount() == 26765, "scenery count");
         check(world.getBoundaryPlacementCount() == 966, "boundary count");
         NativeLayeredNpcPlacement first = null;
         for (NativeLayeredPlacementSet set : world.getPlacementSets().values()) {
@@ -1176,6 +1176,13 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
         self.assertIn(
             "PRESERVATION_MANIFEST_SHA256", runtime_profile
         )
+        self.assertIn(
+            "validatePreservationDefinitionIds(loaded)", runtime_profile
+        )
+        self.assertIn("VANILLA_MAX_SCENERY_ID", runtime_profile)
+        self.assertIn("VANILLA_MAX_NPC_ID", runtime_profile)
+        self.assertIn("VANILLA_MAX_ITEM_ID", runtime_profile)
+        self.assertIn("VANILLA_MAX_BOUNDARY_ID", runtime_profile)
         self.assertIn(
             "replacesLegacyBasePopulation()", world_populator
         )

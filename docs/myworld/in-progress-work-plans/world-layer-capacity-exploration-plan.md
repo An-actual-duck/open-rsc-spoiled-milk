@@ -18103,6 +18103,45 @@ The next gate is transition discovery and exact unchanged-world population
 replacement. The review package must not be added beside legacy population
 because that would duplicate all 32,364 placements.
 
+## Preservation Residual Content Audit
+
+Status: implemented and automated-validated on 2026-07-26; focused private
+owner validation remains.
+
+A systematic audit of world-visible ownership found two distinct residual
+content classes. First, the client drew rune-altar glyph/orb billboards at
+fixed coordinates even when no matching scenery object existed. That path now
+requires the exact loaded altar/obelisk owner and therefore remains available
+to custom worlds without appearing in Preservation.
+
+Second, the frozen files named as base placements are not completely vanilla
+at the record level. They contain 13 records whose IDs lie beyond the
+revision-64 vanilla definition boundaries:
+
+| Family | Source indices | Definitions | Packed source positions |
+| --- | --- | --- | --- |
+| Scenery | `4639`, `8728`, `22097`, `22752`, `23573` | inert obelisk `1323` (four), ore crusher `1324` (one) | `(231,394)`, `(414,509)`, `(343,1547)`, `(230,3248)`, `(421,3336)` |
+| NPC | `572`, `2416` | Arlen `839`, Master tanner `837` | starts `(115,515)`, `(345,1554)` with exact source roam bounds checked by the converter |
+| Ground item | `176`, `237`, `253`, `496`, `539`, `689` | cow-hide gloves `1836` (five), cow-hide cuirass `1839` (one) | `(217,453)`, `(107,526)`, `(306,522)`, `(645,650)`, `(116,710)`, `(107,1478)` |
+
+These source records support current MyWorld features and therefore remain
+unchanged. Preservation package `0.4.0` excludes only the complete reviewed
+tuples (family, ordinal, definition, position/bounds, direction or
+amount/respawn). A changed tuple or any additional placement over the vanilla
+maxima—boundary `213`, scenery `1189`, NPC `793`, or item `1289`—fails
+conversion. The pinned replacement runtime repeats the definition-boundary
+check before population.
+
+The resulting package contains 966 boundaries, 26,765 scenery objects, 3,610
+NPCs, and 1,010 ground items: 32,351 output placements. Its report accounts
+for all 32,364 frozen source records as 32,351 converted, 13 explicitly
+excluded, and zero unresolved. There are 14 total receipts: the 13 source
+exclusions plus the existing Hobgoblin maximum-Y repair. Package identity is
+`rsc-remastered.preservation-r64-parity-review@0.4.0`; manifest SHA-256 is
+`560dae205d13c2034b38f52d8bb6841ee56c245fadc8e9d18361ace1346cd73f`;
+package fingerprint is
+`ea0af380d88d3f742abd9e8dea885101d98550471e9b6a7044bed7fb570e85e6`.
+
 ## Semantic Area Inventory: Pending Later Analysis
 
 The completed planning document will include an underground-area inventory
@@ -18197,6 +18236,7 @@ private environment should validate at least:
 | 2026-07-26 | Reject the corrected full route on remaining NPC collision and movement smoothness defects. | Owner retest accepts interactions and signed layer transitions, but NPCs still cross walls and ordinary walking stutter-steps. Runtime evidence identifies two independent omissions: native tiles copied raw wall/overlay values without deriving the reciprocal server traversal product built by `WorldLoader`, and a signed-level scene reset near X `120` moved the client local base from `96` to `48` while the server movement filter retained base `96`. The latter sent out-of-window NPC targets and triggered an unbounded movement-cache mismatch log storm. Native collision derivation, scene-scope movement-window realignment, and bounded diagnostic emission are implemented and compile; focused private owner retest is pending |
 | 2026-07-26 | Accept the corrected Preservation terrain window, bridge metadata, NPC collision, and movement-performance route. | Protocol v5 restores the complete client 3-by-3 48-tile active window; native archive tiles no longer inherit editor-only overlay metadata; signed NPC collision and scene-scope movement admission align; and level-qualified Player/game-object projections remove repeated mixed-entity snapshot allocation. Private measurements fell to 31-36 ms average active ticks and 2-3 ms movement-poll work, while the owner confirms normal terrain, bridge faces, collisions/interactions, and no remaining movement stutter |
 | 2026-07-26 | Classify and remove surviving rune-altar glyphs in the Preservation endpoint as orphan custom visualization, not missing vanilla scenery. | The Preservation placement baseline correctly excludes the custom MyWorld Runecraft altars and obelisks. The client independently drew glyph/orb billboards from fixed coordinates, so those effects survived without owners. Rendering now requires the exact matching loaded altar or obelisk scenery identity and caches ownership by scene-object revision; custom worlds retain their effects while vanilla scenes omit them. Focused guards, the authoritative 262-source client build, and private owner visual confirmation pass |
+| 2026-07-26 | Remove the remaining embedded expansion placements from the definitive Preservation output without deleting their MyWorld sources. | Package `0.4.0` excludes five exact scenery, two exact NPC, and six exact ground-item tuples; reports 32,351 vanilla outputs plus 13 exclusions from all 32,364 frozen inputs; retains zero unresolved; and carries 14 receipts including the Hobgoblin correction. Exact conversion allowlists and an independent runtime definition boundary refuse unreviewed non-vanilla placements. Automated validation passes; focused private owner validation remains |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -18599,10 +18639,12 @@ above: all 1,764 authentic sectors convert deterministically and reverse to
 their original bytes, while all 32,364 base placement records remain honestly
 reported as unconverted. No runtime or export path consumes that package yet.
 
-Milestone 2 now converts all four placement families with exact v3 NPC roaming
-rectangles: all 32,364 records pass source comparison or the one explicit
-owner-approved `6549 -> 3549` repair receipt. The repair is gated by the frozen
-baseline and exact source tuple, while the source file remains unchanged.
+Milestone 2 established exact v3 conversion for all four placement families.
+The subsequent residual-content audit now distinguishes 32,351 vanilla output
+placements from 13 exact expansion records embedded in the 32,364 frozen
+inputs. Every source record is accounted for by output, exclusion, or the one
+owner-approved `6549 -> 3549` field repair, with no unresolved record and no
+source-file mutation.
 
 Transition discovery milestone 3 is now complete as supplementary execution
 provenance. The accepted lock pins all 20 explicit `ObjectTelePoints.xml`
@@ -18617,7 +18659,7 @@ misrepresent Java control flow as a complete graph, modify the accepted
 
 Complete-world population replacement is now implemented behind the separately
 named, default-off `preservation-r64-replacement` runtime profile. The profile
-validates the exact Preservation package and uses its 32,364 placements
+validates the exact Preservation package and uses its 32,351 placements
 *instead of* legacy `WorldPopulator` base placements; the existing fixture
 profile retains its bounded additive checks. Legacy scripted transition
 consumers remain active for first parity runtime.

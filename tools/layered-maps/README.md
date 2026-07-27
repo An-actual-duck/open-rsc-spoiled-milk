@@ -62,8 +62,21 @@ outside the four-plane model. Owner review confirmed the symmetric maximum
 `3549` as the intended concrete vanilla-map value. Conversion applies that
 single repair only after the complete frozen baseline and exact source
 index/definition/start/minimum/maximum tuple match. It leaves the source file
-unchanged and emits a machine-readable `conversionRepairs` receipt. All 32,364
-placements therefore convert, while the package remains
+unchanged and emits a machine-readable `conversionRepairs` receipt.
+
+The frozen placement files also contain 13 expansion records that are not part
+of the revision-64 vanilla definition ranges: five scenery placements (four
+inert obelisks and one ore crusher), two NPC placements (Arlen and the Master
+tanner), and six cow-hide equipment ground items. Package `0.4.0` excludes
+only those exact reviewed source tuples, emits one exclusion receipt per
+record, and fails closed if any other placement crosses the vanilla definition
+boundaries (boundary `213`, scenery `1189`, NPC `793`, item `1289`). The
+ordinary MyWorld source files remain unchanged so their custom features still
+work outside the Preservation replacement profile.
+
+The resulting package contains 32,351 vanilla placements from 32,364 frozen
+source records, with 13 explicit exclusions, zero unresolved records, and the
+one Hobgoblin value repair. It remains
 `transitions-pending` and `runtimePromotionApproved=false`. This receipt is
 specific to the selected vanilla baseline; it is not a generic policy for
 rewriting creator expansions. Transition conversion and complete-world

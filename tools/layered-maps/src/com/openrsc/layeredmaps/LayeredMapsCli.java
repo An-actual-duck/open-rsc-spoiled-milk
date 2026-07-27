@@ -211,7 +211,9 @@ public final class LayeredMapsCli {
 		System.out.println("terrainPayloadBytes=" + result.terrainPayloadBytes);
 		System.out.println("sourcePlacements=" + result.sourcePlacementCount);
 		System.out.println("convertedPlacements="
-			+ (result.sourcePlacementCount - result.unconvertedPlacementCount));
+			+ result.convertedPlacementCount());
+		System.out.println("excludedSourcePlacements="
+			+ result.excludedSourcePlacementCount);
 		System.out.println("unconvertedPlacements="
 			+ result.unconvertedPlacementCount);
 		System.out.println("package=" + result.packageRoot);

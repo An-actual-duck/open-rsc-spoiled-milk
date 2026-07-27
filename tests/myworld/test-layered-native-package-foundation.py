@@ -409,6 +409,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
+            self.assertEqual(2, report["schemaVersion"])
             self.assertEqual("transitions-pending", report["reviewState"])
             self.assertFalse(report["runtimePromotionApproved"])
             self.assertTrue(report["legacyRoundTripVerified"])
@@ -426,21 +427,27 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 report["placementEncoding"],
             )
             self.assertEqual(32364, report["sourcePlacementRecords"])
-            self.assertEqual(32364, report["convertedPlacementRecords"])
+            self.assertEqual(32351, report["convertedPlacementRecords"])
+            self.assertEqual(13, report["excludedSourcePlacementRecords"])
             self.assertEqual(
                 {
                     "boundaries": 966,
-                    "groundItems": 1016,
-                    "npcs": 3612,
-                    "scenery": 26770,
+                    "groundItems": 1010,
+                    "npcs": 3610,
+                    "scenery": 26765,
                 },
                 report["convertedPlacementRecordsByFamily"],
             )
             self.assertEqual(4, report["placementSetsGenerated"])
             self.assertEqual(0, report["unconvertedPlacementRecords"])
             self.assertEqual([], report["unresolvedPlacements"])
-            self.assertEqual(1, len(report["conversionRepairs"]))
-            repair = report["conversionRepairs"][0]
+            self.assertEqual(14, len(report["conversionRepairs"]))
+            repair = next(
+                item
+                for item in report["conversionRepairs"]
+                if item["repairId"]
+                == "preservation-r64.npc.003376.max-y-6549-to-3549"
+            )
             self.assertEqual(
                 "preservation-r64.npc.003376.max-y-6549-to-3549",
                 repair["repairId"],
@@ -453,14 +460,45 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 "owner-approved-vanilla-baseline-repair",
                 repair["policy"],
             )
+            self.assertEqual("converted", repair["sourceDisposition"])
             self.assertEqual("maximumPacked.y", repair["field"])
             self.assertEqual(6549, repair["sourceValue"])
             self.assertEqual(3549, repair["targetValue"])
+            exclusion_ids = {
+                item["repairId"]
+                for item in report["conversionRepairs"]
+                if item["sourceDisposition"] == "excluded"
+            }
+            self.assertEqual(
+                {
+                    "preservation-r64.scenery.004639.non-vanilla-source-removal",
+                    "preservation-r64.scenery.008728.non-vanilla-source-removal",
+                    "preservation-r64.scenery.022097.non-vanilla-source-removal",
+                    "preservation-r64.scenery.022752.non-vanilla-source-removal",
+                    "preservation-r64.scenery.023573.non-vanilla-source-removal",
+                    "preservation-r64.npc.000572.non-vanilla-source-removal",
+                    "preservation-r64.npc.002416.non-vanilla-source-removal",
+                    "preservation-r64.ground-item.000176.non-vanilla-source-removal",
+                    "preservation-r64.ground-item.000237.non-vanilla-source-removal",
+                    "preservation-r64.ground-item.000253.non-vanilla-source-removal",
+                    "preservation-r64.ground-item.000496.non-vanilla-source-removal",
+                    "preservation-r64.ground-item.000539.non-vanilla-source-removal",
+                    "preservation-r64.ground-item.000689.non-vanilla-source-removal",
+                },
+                exclusion_ids,
+            )
+            self.assertTrue(all(
+                item["policy"]
+                == "owner-approved-non-vanilla-source-removal"
+                for item in report["conversionRepairs"]
+                if item["sourceDisposition"] == "excluded"
+            ))
 
             package = first_workspace / "package"
             manifest = json.loads(
                 (package / "manifest.json").read_text(encoding="utf-8")
             )
+            self.assertEqual("0.4.0", manifest["packageVersion"])
             self.assertEqual(1764, len(manifest["terrainSectors"]))
             self.assertEqual(4, len(manifest["placementSets"]))
             self.assertTrue(all(
@@ -498,12 +536,12 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             )
             self.assertEqual(1764, validation_report["terrainSectorCount"])
             self.assertEqual(4, validation_report["placementSetCount"])
-            self.assertEqual(3612, validation_report["npcPlacementCount"])
+            self.assertEqual(3610, validation_report["npcPlacementCount"])
             self.assertEqual(
-                1016, validation_report["groundItemPlacementCount"]
+                1010, validation_report["groundItemPlacementCount"]
             )
             self.assertEqual(
-                26770, validation_report["sceneryPlacementCount"]
+                26765, validation_report["sceneryPlacementCount"]
             )
             self.assertEqual(
                 966, validation_report["boundaryPlacementCount"]
@@ -915,6 +953,21 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 self.assertEqual(legacy, native, entry)
 
     def assert_preservation_placement_round_trip(self, package, manifest):
+        excluded_placement_ids = {
+            "preservation-r64.scenery.004639",
+            "preservation-r64.scenery.008728",
+            "preservation-r64.scenery.022097",
+            "preservation-r64.scenery.022752",
+            "preservation-r64.scenery.023573",
+            "preservation-r64.npc.000572",
+            "preservation-r64.npc.002416",
+            "preservation-r64.ground-item.000176",
+            "preservation-r64.ground-item.000237",
+            "preservation-r64.ground-item.000253",
+            "preservation-r64.ground-item.000496",
+            "preservation-r64.ground-item.000539",
+            "preservation-r64.ground-item.000689",
+        }
         generated = {
             "npcs": {},
             "groundItems": {},
@@ -955,6 +1008,9 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 placement_id = (
                     f"preservation-r64.{id_family}.{index:06d}"
                 )
+                if placement_id in excluded_placement_ids:
+                    self.assertNotIn(placement_id, generated[family])
+                    continue
                 record = generated[family][placement_id]
                 expected_position = self.decode_packed_position(source["pos"])
                 self.assertEqual(expected_position, record["position"])
@@ -980,6 +1036,9 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
         )["npclocs"]
         for index, source in enumerate(npc_values):
             placement_id = f"preservation-r64.npc.{index:06d}"
+            if placement_id in excluded_placement_ids:
+                self.assertNotIn(placement_id, generated["npcs"])
+                continue
             if index == 3376:
                 source = {
                     **source,
@@ -999,6 +1058,18 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 self.decode_packed_position(source["max"]),
                 record["roamBounds"]["maximum"],
             )
+
+        maximum_definition_ids = {
+            "npcs": ("npcId", 793),
+            "groundItems": ("itemId", 1289),
+            "scenery": ("sceneryId", 1189),
+            "boundaries": ("boundaryId", 213),
+        }
+        for family, (field, maximum) in maximum_definition_ids.items():
+            self.assertTrue(all(
+                record[field] <= maximum
+                for record in generated[family].values()
+            ))
 
     @staticmethod
     def decode_packed_position(position):

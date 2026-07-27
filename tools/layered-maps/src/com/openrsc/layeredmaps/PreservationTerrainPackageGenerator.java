@@ -31,14 +31,18 @@ import java.util.zip.ZipFile;
 final class PreservationTerrainPackageGenerator {
 	static final String PACKAGE_ID =
 		"rsc-remastered.preservation-r64-parity-review";
-	static final String PACKAGE_VERSION = "0.3.0";
+	static final String PACKAGE_VERSION = "0.4.0";
 	static final String REPORT_TYPE =
 		"preservation-layered-parity-generation";
-	static final int REPORT_SCHEMA_VERSION = 1;
+	static final int REPORT_SCHEMA_VERSION = 2;
 
 	private static final String FROZEN_BASELINE =
 		"tools/layered-maps/baselines/"
 			+ "rsc-remastered-preservation-r64-v1.json";
+	private static final int VANILLA_MAX_BOUNDARY_ID = 213;
+	private static final int VANILLA_MAX_SCENERY_ID = 1189;
+	private static final int VANILLA_MAX_NPC_ID = 793;
+	private static final int VANILLA_MAX_ITEM_ID = 1289;
 	private static final int TILE_BYTES = 10;
 	private static final int SECTOR_BYTES = 48 * 48 * TILE_BYTES;
 	private static final int HOBGOBLIN_REPAIR_SOURCE_INDEX = 3376;
@@ -143,6 +147,7 @@ final class PreservationTerrainPackageGenerator {
 		}
 		if (sourcePlacements
 			!= (long) placements.convertedCount()
+				+ placements.excludedCount()
 				+ placements.unresolved.size()) {
 			throw new PreflightException(
 				"Placement conversion accounting differs from the frozen baseline.");
@@ -156,6 +161,7 @@ final class PreservationTerrainPackageGenerator {
 			payloadBytes,
 			levelCounts,
 			sourcePlacements,
+			placements.excludedCount(),
 			placements.convertedByFamily,
 			placements.sets.size(),
 			placements.repairs,
@@ -339,7 +345,8 @@ final class PreservationTerrainPackageGenerator {
 			root,
 			baselineFile(baseline, "base-scenery"),
 			buckets,
-			converted);
+			converted,
+			repairs);
 		convertNpcs(
 			root,
 			baselineFile(baseline, "base-npcs"),
@@ -351,7 +358,8 @@ final class PreservationTerrainPackageGenerator {
 			root,
 			baselineFile(baseline, "base-ground-items"),
 			buckets,
-			converted);
+			converted,
+			repairs);
 
 		List<PlacementSetRecord> sets =
 			new ArrayList<PlacementSetRecord>();
@@ -409,11 +417,14 @@ final class PreservationTerrainPackageGenerator {
 			WorldCoordinate position = sourcePosition(
 				value.get("pos"),
 				"boundaries[" + index + "].pos");
+			int definitionId = sourceNonNegativeInt(value, "id");
+			requireVanillaDefinition(
+				"boundary", index, definitionId, VANILLA_MAX_BOUNDARY_ID);
 			Map<String, Object> record = map();
 			record.put(
 				"placementId",
 				placementId("boundary", index));
-			record.put("boundaryId", sourceNonNegativeInt(value, "id"));
+			record.put("boundaryId", definitionId);
 			record.put("position", position(position));
 			record.put(
 				"direction",
@@ -427,7 +438,8 @@ final class PreservationTerrainPackageGenerator {
 		Path root,
 		PreservationBaselineInventory.FileRecord source,
 		Map<Integer, PlacementBucket> buckets,
-		Map<String, Integer> converted)
+		Map<String, Integer> converted,
+		List<ConversionRepair> repairs)
 		throws IOException, PreflightException {
 		List<Object> values = sourceRecords(root, source, "sceneries");
 		for (int index = 0; index < values.size(); index++) {
@@ -439,18 +451,31 @@ final class PreservationTerrainPackageGenerator {
 				"id",
 				"pos",
 				"direction");
-			WorldCoordinate position = sourcePosition(
+			int definitionId = sourceNonNegativeInt(value, "id");
+			PackedSourcePosition packedPosition = packedSourcePosition(
 				value.get("pos"),
+				"sceneries[" + index + "].pos");
+			int direction = sourceDirection(value, "direction");
+			if (definitionId > VANILLA_MAX_SCENERY_ID) {
+				if (!approvedNonVanillaSceneryRemoval(
+						index, definitionId, packedPosition, direction)) {
+					throw unapprovedNonVanillaDefinition(
+						"scenery", index, definitionId);
+				}
+				repairs.add(excludedPlacementRepair(
+					"scenery", source, index, definitionId));
+				continue;
+			}
+			WorldCoordinate position = decodeSourcePosition(
+				packedPosition,
 				"sceneries[" + index + "].pos");
 			Map<String, Object> record = map();
 			record.put(
 				"placementId",
 				placementId("scenery", index));
-			record.put("sceneryId", sourceNonNegativeInt(value, "id"));
+			record.put("sceneryId", definitionId);
 			record.put("position", position(position));
-			record.put(
-				"direction",
-				sourceDirection(value, "direction"));
+			record.put("direction", direction);
 			bucket(buckets, position.getLevel()).scenery.add(record);
 			increment(converted, "scenery");
 		}
@@ -484,9 +509,20 @@ final class PreservationTerrainPackageGenerator {
 			PackedSourcePosition maximum = packedSourcePosition(
 				value.get("max"),
 				"npclocs[" + index + "].max");
+			int definitionId = sourceNonNegativeInt(value, "id");
+			if (definitionId > VANILLA_MAX_NPC_ID) {
+				if (!approvedNonVanillaNpcRemoval(
+						index, definitionId, start, minimum, maximum)) {
+					throw unapprovedNonVanillaDefinition(
+						"npc", index, definitionId);
+				}
+				repairs.add(excludedPlacementRepair(
+					"npc", source, index, definitionId));
+				continue;
+			}
 			if (approvedHobgoblinRepair(
 				index,
-				sourceNonNegativeInt(value, "id"),
+				definitionId,
 				start,
 				minimum,
 				maximum)) {
@@ -501,6 +537,7 @@ final class PreservationTerrainPackageGenerator {
 					source.path,
 					index,
 					HOBGOBLIN_REPAIR_DEFINITION_ID,
+					"converted",
 					"owner-approved-vanilla-baseline-repair",
 					"maximumPacked.y",
 					Long.valueOf(HOBGOBLIN_REPAIR_SOURCE_MAX_Y),
@@ -517,7 +554,7 @@ final class PreservationTerrainPackageGenerator {
 					source.role,
 					source.path,
 					index,
-					sourceNonNegativeInt(value, "id"),
+					definitionId,
 					"roam-bound-crosses-or-exceeds-start-level",
 					start,
 					minimum,
@@ -542,7 +579,7 @@ final class PreservationTerrainPackageGenerator {
 			bounds.put("maximum", position(maximumCoordinate));
 			Map<String, Object> record = map();
 			record.put("placementId", placementId("npc", index));
-			record.put("npcId", sourceNonNegativeInt(value, "id"));
+			record.put("npcId", definitionId);
 			record.put("start", position(startCoordinate));
 			record.put("roamBounds", bounds);
 			bucket(buckets, startCoordinate.getLevel()).npcs.add(record);
@@ -566,11 +603,151 @@ final class PreservationTerrainPackageGenerator {
 			&& maximum.y == HOBGOBLIN_REPAIR_SOURCE_MAX_Y;
 	}
 
+	private static boolean approvedNonVanillaSceneryRemoval(
+		int sourceIndex,
+		int definitionId,
+		PackedSourcePosition position,
+		int direction) {
+		switch (sourceIndex) {
+			case 4639:
+				return definitionId == 1323
+					&& matches(position, 231, 394)
+					&& direction == 4;
+			case 8728:
+				return definitionId == 1323
+					&& matches(position, 414, 509)
+					&& direction == 0;
+			case 22097:
+				return definitionId == 1324
+					&& matches(position, 343, 1547)
+					&& direction == 2;
+			case 22752:
+				return definitionId == 1323
+					&& matches(position, 230, 3248)
+					&& direction == 6;
+			case 23573:
+				return definitionId == 1323
+					&& matches(position, 421, 3336)
+					&& direction == 0;
+			default:
+				return false;
+		}
+	}
+
+	private static boolean approvedNonVanillaNpcRemoval(
+		int sourceIndex,
+		int definitionId,
+		PackedSourcePosition start,
+		PackedSourcePosition minimum,
+		PackedSourcePosition maximum) {
+		switch (sourceIndex) {
+			case 572:
+				return definitionId == 839
+					&& matches(start, 115, 515)
+					&& matches(minimum, 113, 512)
+					&& matches(maximum, 116, 516);
+			case 2416:
+				return definitionId == 837
+					&& matches(start, 345, 1554)
+					&& matches(minimum, 343, 1551)
+					&& matches(maximum, 346, 1557);
+			default:
+				return false;
+		}
+	}
+
+	private static boolean approvedNonVanillaGroundItemRemoval(
+		int sourceIndex,
+		int definitionId,
+		PackedSourcePosition position,
+		int amount,
+		int respawnSeconds) {
+		switch (sourceIndex) {
+			case 176:
+				return definitionId == 1836
+					&& matches(position, 217, 453)
+					&& amount == 1
+					&& respawnSeconds == 37;
+			case 237:
+				return definitionId == 1839
+					&& matches(position, 107, 526)
+					&& amount == 1
+					&& respawnSeconds == 63;
+			case 253:
+				return definitionId == 1836
+					&& matches(position, 306, 522)
+					&& amount == 1
+					&& respawnSeconds == 37;
+			case 496:
+				return definitionId == 1839
+					&& matches(position, 645, 650)
+					&& amount == 1
+					&& respawnSeconds == 61;
+			case 539:
+				return definitionId == 1836
+					&& matches(position, 116, 710)
+					&& amount == 1
+					&& respawnSeconds == 37;
+			case 689:
+				return definitionId == 1836
+					&& matches(position, 107, 1478)
+					&& amount == 1
+					&& respawnSeconds == 37;
+			default:
+				return false;
+		}
+	}
+
+	private static boolean matches(
+		PackedSourcePosition position, int x, int y) {
+		return position.x == x && position.y == y;
+	}
+
+	private static ConversionRepair excludedPlacementRepair(
+		String family,
+		PreservationBaselineInventory.FileRecord source,
+		int sourceIndex,
+		int definitionId) {
+		return new ConversionRepair(
+			placementId(family, sourceIndex)
+				+ ".non-vanilla-source-removal",
+			family,
+			source.role,
+			source.path,
+			sourceIndex,
+			definitionId,
+			"excluded",
+			"owner-approved-non-vanilla-source-removal",
+			"placement",
+			Long.valueOf(definitionId),
+			null);
+	}
+
+	private static void requireVanillaDefinition(
+		String family,
+		int sourceIndex,
+		int definitionId,
+		int maximumDefinitionId) throws PreflightException {
+		if (definitionId > maximumDefinitionId) {
+			throw unapprovedNonVanillaDefinition(
+				family, sourceIndex, definitionId);
+		}
+	}
+
+	private static PreflightException unapprovedNonVanillaDefinition(
+		String family, int sourceIndex, int definitionId) {
+		return new PreflightException(
+			"Preservation " + family + " source index " + sourceIndex
+				+ " uses non-vanilla definition " + definitionId
+				+ " without an exact reviewed exclusion.");
+	}
+
 	private static void convertGroundItems(
 		Path root,
 		PreservationBaselineInventory.FileRecord source,
 		Map<Integer, PlacementBucket> buckets,
-		Map<String, Integer> converted)
+		Map<String, Integer> converted,
+		List<ConversionRepair> repairs)
 		throws IOException, PreflightException {
 		List<Object> values = sourceRecords(root, source, "grounditems");
 		for (int index = 0; index < values.size(); index++) {
@@ -583,19 +760,37 @@ final class PreservationTerrainPackageGenerator {
 				"pos",
 				"amount",
 				"respawn");
-			WorldCoordinate position = sourcePosition(
+			int definitionId = sourceNonNegativeInt(value, "id");
+			PackedSourcePosition packedPosition = packedSourcePosition(
 				value.get("pos"),
+				"grounditems[" + index + "].pos");
+			int amount = sourcePositiveInt(value, "amount");
+			int respawnSeconds = sourcePositiveInt(value, "respawn");
+			if (definitionId > VANILLA_MAX_ITEM_ID) {
+				if (!approvedNonVanillaGroundItemRemoval(
+						index,
+						definitionId,
+						packedPosition,
+						amount,
+						respawnSeconds)) {
+					throw unapprovedNonVanillaDefinition(
+						"ground item", index, definitionId);
+				}
+				repairs.add(excludedPlacementRepair(
+					"ground-item", source, index, definitionId));
+				continue;
+			}
+			WorldCoordinate position = decodeSourcePosition(
+				packedPosition,
 				"grounditems[" + index + "].pos");
 			Map<String, Object> record = map();
 			record.put(
 				"placementId",
 				placementId("ground-item", index));
-			record.put("itemId", sourceNonNegativeInt(value, "id"));
+			record.put("itemId", definitionId);
 			record.put("position", position(position));
-			record.put("amount", sourcePositiveInt(value, "amount"));
-			record.put(
-				"respawnSeconds",
-				sourcePositiveInt(value, "respawn"));
+			record.put("amount", amount);
+			record.put("respawnSeconds", respawnSeconds);
 			bucket(buckets, position.getLevel()).groundItems.add(record);
 			increment(converted, "groundItems");
 		}
@@ -694,6 +889,11 @@ final class PreservationTerrainPackageGenerator {
 	private static WorldCoordinate sourcePosition(
 		Object value, String label) throws PreflightException {
 		PackedSourcePosition packed = packedSourcePosition(value, label);
+		return decodeSourcePosition(packed, label);
+	}
+
+	private static WorldCoordinate decodeSourcePosition(
+		PackedSourcePosition packed, String label) throws PreflightException {
 		if (!packed.decodable()) {
 			throw new PreflightException(
 				label + " is outside the legacy four-level coordinate model.");
@@ -933,6 +1133,7 @@ final class PreservationTerrainPackageGenerator {
 		final long terrainPayloadBytes;
 		final Map<Integer, Integer> sectorCountByLevel;
 		final long sourcePlacementCount;
+		final long excludedSourcePlacementCount;
 		final Map<String, Integer> convertedPlacementCountByFamily;
 		final int placementSetCount;
 		final List<ConversionRepair> conversionRepairs;
@@ -951,6 +1152,7 @@ final class PreservationTerrainPackageGenerator {
 			long terrainPayloadBytes,
 			Map<Integer, Integer> sectorCountByLevel,
 			long sourcePlacementCount,
+			long excludedSourcePlacementCount,
 			Map<String, Integer> convertedPlacementCountByFamily,
 			int placementSetCount,
 			List<ConversionRepair> conversionRepairs,
@@ -967,6 +1169,8 @@ final class PreservationTerrainPackageGenerator {
 			this.sectorCountByLevel = Collections.unmodifiableMap(
 				new LinkedHashMap<Integer, Integer>(sectorCountByLevel));
 			this.sourcePlacementCount = sourcePlacementCount;
+			this.excludedSourcePlacementCount =
+				excludedSourcePlacementCount;
 			this.convertedPlacementCountByFamily =
 				Collections.unmodifiableMap(
 					new LinkedHashMap<String, Integer>(
@@ -1030,6 +1234,9 @@ final class PreservationTerrainPackageGenerator {
 				"convertedPlacementRecords",
 				Long.valueOf(convertedPlacementCount()));
 			document.put(
+				"excludedSourcePlacementRecords",
+				Long.valueOf(excludedSourcePlacementCount));
+			document.put(
 				"placementSetsGenerated",
 				Long.valueOf(placementSetCount));
 			document.put(
@@ -1077,6 +1284,8 @@ final class PreservationTerrainPackageGenerator {
 			out.append("- Converted placement records: ")
 				.append(convertedPlacementCount()).append(" / ")
 				.append(sourcePlacementCount).append("\n");
+			out.append("- Excluded non-vanilla source placements: ")
+				.append(excludedSourcePlacementCount).append("\n");
 			out.append("- Approved conversion repairs: ")
 				.append(conversionRepairs.size()).append("\n");
 			out.append("- Unconverted placement records: ")
@@ -1084,13 +1293,20 @@ final class PreservationTerrainPackageGenerator {
 			for (ConversionRepair repair : conversionRepairs) {
 				out.append("- Repair `")
 					.append(repair.repairId)
-					.append("`: `")
-					.append(repair.field)
-					.append("` ")
-					.append(repair.sourceValue)
-					.append(" -> ")
-					.append(repair.targetValue)
-					.append("\n");
+					.append("`: ");
+				if ("excluded".equals(repair.sourceDisposition)) {
+					out.append("excluded definition `")
+						.append(repair.sourceDefinitionId)
+						.append("`\n");
+				} else {
+					out.append("`")
+						.append(repair.field)
+						.append("` ")
+						.append(repair.sourceValue)
+						.append(" -> ")
+						.append(repair.targetValue)
+						.append("\n");
+				}
 			}
 			for (UnresolvedPlacement placement : unresolvedPlacements) {
 				out.append("- Unresolved `")
@@ -1110,7 +1326,7 @@ final class PreservationTerrainPackageGenerator {
 			return out.toString();
 		}
 
-		private int convertedPlacementCount() {
+		int convertedPlacementCount() {
 			int result = 0;
 			for (Integer count : convertedPlacementCountByFamily.values()) {
 				result = Math.addExact(result, count.intValue());
@@ -1209,6 +1425,16 @@ final class PreservationTerrainPackageGenerator {
 			}
 			return result;
 		}
+
+		int excludedCount() {
+			int result = 0;
+			for (ConversionRepair repair : repairs) {
+				if ("excluded".equals(repair.sourceDisposition)) {
+					result = Math.addExact(result, 1);
+				}
+			}
+			return result;
+		}
 	}
 
 	private static final class ConversionRepair {
@@ -1218,6 +1444,7 @@ final class PreservationTerrainPackageGenerator {
 		final String sourcePath;
 		final int sourceIndex;
 		final int sourceDefinitionId;
+		final String sourceDisposition;
 		final String policy;
 		final String field;
 		final Long sourceValue;
@@ -1230,6 +1457,7 @@ final class PreservationTerrainPackageGenerator {
 			String sourcePath,
 			int sourceIndex,
 			int sourceDefinitionId,
+			String sourceDisposition,
 			String policy,
 			String field,
 			Long sourceValue,
@@ -1240,6 +1468,7 @@ final class PreservationTerrainPackageGenerator {
 			this.sourcePath = sourcePath;
 			this.sourceIndex = sourceIndex;
 			this.sourceDefinitionId = sourceDefinitionId;
+			this.sourceDisposition = sourceDisposition;
 			this.policy = policy;
 			this.field = field;
 			this.sourceValue = sourceValue;
@@ -1256,6 +1485,7 @@ final class PreservationTerrainPackageGenerator {
 			result.put(
 				"sourceDefinitionId",
 				Long.valueOf(sourceDefinitionId));
+			result.put("sourceDisposition", sourceDisposition);
 			result.put("policy", policy);
 			result.put("field", field);
 			result.put("sourceValue", sourceValue);

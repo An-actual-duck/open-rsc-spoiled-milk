@@ -24,9 +24,13 @@ public enum NativeLayeredWorldRuntimeProfile {
 	public static final String DEFAULT_ID = "fixture-additive";
 	public static final String PRESERVATION_PACKAGE_ID =
 		"rsc-remastered.preservation-r64-parity-review";
-	public static final String PRESERVATION_PACKAGE_VERSION = "0.3.0";
+	public static final String PRESERVATION_PACKAGE_VERSION = "0.4.0";
 	public static final String PRESERVATION_MANIFEST_SHA256 =
-		"ccb3e4514de96d7c5f60b1c2cee8e9b4ea83fec5c82860c2107f84c69869cc7e";
+		"560dae205d13c2034b38f52d8bb6841ee56c245fadc8e9d18361ace1346cd73f";
+	private static final int VANILLA_MAX_BOUNDARY_ID = 213;
+	private static final int VANILLA_MAX_SCENERY_ID = 1189;
+	private static final int VANILLA_MAX_NPC_ID = 793;
+	private static final int VANILLA_MAX_ITEM_ID = 1289;
 
 	private final String id;
 	private final boolean replacesLegacyBasePopulation;
@@ -154,14 +158,15 @@ public enum NativeLayeredWorldRuntimeProfile {
 			|| loaded.getLevelCount() != 4
 			|| loaded.getTerrainSectorCount() != 1764
 			|| loaded.getPlacementSetCount() != 4
-			|| loaded.getNpcPlacementCount() != 3612
-			|| loaded.getGroundItemPlacementCount() != 1016
-			|| loaded.getSceneryPlacementCount() != 26770
+			|| loaded.getNpcPlacementCount() != 3610
+			|| loaded.getGroundItemPlacementCount() != 1010
+			|| loaded.getSceneryPlacementCount() != 26765
 			|| loaded.getBoundaryPlacementCount() != 966) {
 			throw new IllegalStateException(
 				"The preservation-r64-replacement profile package counts do "
 					+ "not match the accepted complete-world review");
 		}
+		validatePreservationDefinitionIds(loaded);
 		final Set<Integer> expectedLevels = new HashSet<Integer>(
 			Arrays.asList(
 				Integer.valueOf(-1),
@@ -192,6 +197,57 @@ public enum NativeLayeredWorldRuntimeProfile {
 			throw new IllegalStateException(
 				"The preservation-r64-replacement placement levels do not "
 					+ "match the accepted complete-world review");
+		}
+	}
+
+	private static void validatePreservationDefinitionIds(
+		final NativeLayeredWorldPackage loaded) {
+		for (NativeLayeredPlacementSet set
+			: loaded.getPlacementSets().values()) {
+			for (NativeLayeredNpcPlacement npc : set.getNpcs()) {
+				requireVanillaDefinition(
+					"NPC",
+					npc.getPlacementId(),
+					npc.getNpcId(),
+					VANILLA_MAX_NPC_ID);
+			}
+			for (NativeLayeredGroundItemPlacement item
+				: set.getGroundItems()) {
+				requireVanillaDefinition(
+					"ground item",
+					item.getPlacementId(),
+					item.getItemId(),
+					VANILLA_MAX_ITEM_ID);
+			}
+			for (NativeLayeredSceneryPlacement scenery
+				: set.getScenery()) {
+				requireVanillaDefinition(
+					"scenery",
+					scenery.getPlacementId(),
+					scenery.getSceneryId(),
+					VANILLA_MAX_SCENERY_ID);
+			}
+			for (NativeLayeredBoundaryPlacement boundary
+				: set.getBoundaries()) {
+				requireVanillaDefinition(
+					"boundary",
+					boundary.getPlacementId(),
+					boundary.getBoundaryId(),
+					VANILLA_MAX_BOUNDARY_ID);
+			}
+		}
+	}
+
+	private static void requireVanillaDefinition(
+		final String family,
+		final String placementId,
+		final int definitionId,
+		final int maximumDefinitionId) {
+		if (definitionId > maximumDefinitionId) {
+			throw new IllegalStateException(
+				"The preservation-r64-replacement profile refuses non-vanilla "
+					+ family + " definition " + definitionId + " at "
+					+ placementId);
 		}
 	}
 
