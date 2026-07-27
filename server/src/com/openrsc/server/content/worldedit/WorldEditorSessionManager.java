@@ -2,11 +2,14 @@ package com.openrsc.server.content.worldedit;
 
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.external.GameObjectLoc;
+import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.coordinate.NativeLayeredGameObjectIdentity;
 import com.openrsc.server.io.WorldEditorTerrainArchive;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
@@ -57,6 +60,14 @@ public final class WorldEditorSessionManager {
 		new LinkedHashMap<NativeSceneryKey,NativeSceneryState>();
 	private final Set<NativeSceneryKey> nativeSceneryDirty =
 		new HashSet<NativeSceneryKey>();
+	private final Map<NativeNpcKey,NativeNpcState> nativeNpcBase =
+		new LinkedHashMap<NativeNpcKey,NativeNpcState>();
+	private final Map<NativeNpcKey,NativeNpcState> nativeNpcOverlay =
+		new LinkedHashMap<NativeNpcKey,NativeNpcState>();
+	private final Map<NativeNpcKey,NativeNpcState> nativeNpcSaved =
+		new LinkedHashMap<NativeNpcKey,NativeNpcState>();
+	private final Set<NativeNpcKey> nativeNpcDirty =
+		new HashSet<NativeNpcKey>();
 	private String nativeTerrainBaseManifestSha256;
 	public WorldEditorSessionManager() { this(null, new SecureRandom()); }
 	public WorldEditorSessionManager(WorldEditStorageContext storage) { this(storage, new SecureRandom()); }
@@ -353,6 +364,57 @@ public final class WorldEditorSessionManager {
 		return replacement;
 	}
 
+	public synchronized Npc placeNativeNpc(
+		Player player, int npcId, int radius, int x, int y) {
+		WorldLocation location = activeNativePlacementLocation(player, x, y);
+		if (player.getWorld().getServer().getEntityHandler()
+				.getNpcDef(npcId) == null) {
+			throw new IllegalArgumentException("Invalid NPC definition ID.");
+		}
+		if (radius < 0 || radius > 64) {
+			throw new IllegalArgumentException("NPC radius must be from 0 to 64.");
+		}
+		int minX = Math.subtractExact(x, radius);
+		int minY = Math.subtractExact(y, radius);
+		int maxX = Math.addExact(x, radius);
+		int maxY = Math.addExact(y, radius);
+		requireNativeNpcTerrainCoverage(player, location, minX, minY, maxX, maxY);
+		String placementId = availableNativeNpcPlacementId(player, location);
+		NativeNpcKey key = new NativeNpcKey(
+			location.getWorldSpace(), placementId);
+		captureNativeNpcBase(key, null);
+		Npc npc = new Npc(
+			player.getWorld(), npcId, x, y, minX, maxX, minY, maxY);
+		npc.setWorldLocation(location, true);
+		NativeLayeredWorldPackage owner = nativeOwner(player, location);
+		player.getWorld().getRegionManager().markNativeLayeredPlacement(
+			npc, owner.getPackageId(), placementId,
+			RegionManager.NATIVE_LAYERED_NPC_KIND);
+		player.getWorld().registerNpc(npc);
+		recordNativeNpc(key, NativeNpcState.from(npc));
+		return npc;
+	}
+
+	public synchronized Npc removeNativeNpc(Player player, Npc npc) {
+		int level = player == null ? 0
+			: player.getLayeredLocation().getCoordinate().getLevel();
+		requireNativeTerrainAuthoring(player, level);
+		if (npc == null
+			|| !player.getWorld().getRegionManager().isNativeLayeredPlacement(
+				npc, RegionManager.NATIVE_LAYERED_NPC_KIND)
+			|| npc.getWorldLocation().getCoordinate().getLevel() != level) {
+			throw new IllegalArgumentException(
+				"Only package-owned NPCs on this Builder-created level are editable.");
+		}
+		NativeNpcState current = NativeNpcState.from(npc);
+		NativeNpcKey key = new NativeNpcKey(
+			npc.getWorldLocation().getWorldSpace(), current.placementId);
+		captureNativeNpcBase(key, current);
+		player.getWorld().unregisterNpc(npc);
+		recordNativeNpc(key, null);
+		return npc;
+	}
+
 	public synchronized WorldEditorLayeredTerrainJournal.SaveResult
 		saveNativeTerrainDraft(Player player) throws IOException {
 		if (!ownsActiveSession(player)) {
@@ -361,7 +423,8 @@ public final class WorldEditorSessionManager {
 		}
 		if (nativeTerrainDirty.isEmpty()
 			&& nativeTerrainGrowth.equals(nativeTerrainGrowthSaved)
-			&& nativeSceneryDirty.isEmpty()) {
+			&& nativeSceneryDirty.isEmpty()
+			&& nativeNpcDirty.isEmpty()) {
 			throw new IllegalStateException("Layered draft is empty.");
 		}
 		if (nativeTerrainBaseManifestSha256 == null) {
@@ -409,13 +472,37 @@ public final class WorldEditorSessionManager {
 				persisted.sceneryId,
 				persisted.direction));
 		}
+		List<WorldEditorLayeredTerrainJournal.NpcEdit> npcs =
+			new ArrayList<WorldEditorLayeredTerrainJournal.NpcEdit>(
+				nativeNpcOverlay.size());
+		for (Map.Entry<NativeNpcKey,NativeNpcState> entry
+			: nativeNpcOverlay.entrySet()) {
+			NativeNpcState target = entry.getValue();
+			NativeNpcState persisted = target == null
+				? nativeNpcBase.get(entry.getKey()) : target;
+			if (persisted == null) {
+				throw new IllegalStateException(
+					"Layered NPC removal has no persisted identity.");
+			}
+			npcs.add(new WorldEditorLayeredTerrainJournal.NpcEdit(
+				target == null,
+				persisted.level,
+				persisted.startX,
+				persisted.startY,
+				persisted.placementId,
+				persisted.npcId,
+				persisted.minX,
+				persisted.minY,
+				persisted.maxX,
+				persisted.maxY));
+		}
 		WorldEditStorageContext paths = storage(player);
 		Path journal = paths.layeredTerrainDraftJournal();
 		paths.validateWorkingAuthoredFile(journal);
 		WorldEditorLayeredTerrainJournal.SaveResult saved =
 			WorldEditorLayeredTerrainJournal.save(
 				journal, nativeTerrainBaseManifestSha256, sectors, tiles,
-				scenery);
+				scenery, npcs);
 		nativeTerrainSaved.clear();
 		nativeTerrainSaved.putAll(nativeTerrainOverlay);
 		nativeTerrainDirty.clear();
@@ -424,6 +511,9 @@ public final class WorldEditorSessionManager {
 		nativeScenerySaved.clear();
 		nativeScenerySaved.putAll(nativeSceneryOverlay);
 		nativeSceneryDirty.clear();
+		nativeNpcSaved.clear();
+		nativeNpcSaved.putAll(nativeNpcOverlay);
+		nativeNpcDirty.clear();
 		return saved;
 	}
 
@@ -441,6 +531,10 @@ public final class WorldEditorSessionManager {
 
 	public synchronized int nativeSceneryDraftSize() {
 		return nativeSceneryDirty.size();
+	}
+
+	public synchronized int nativeNpcDraftSize() {
+		return nativeNpcDirty.size();
 	}
 
 	public synchronized int terrainDraftSize(){return terrainDraft.size()+nativeTerrainDraftSize();}
@@ -481,6 +575,10 @@ public final class WorldEditorSessionManager {
 	}
 	private WorldLocation activeNativeSceneryLocation(
 		Player player,int x,int y){
+		return activeNativePlacementLocation(player,x,y);
+	}
+	private WorldLocation activeNativePlacementLocation(
+		Player player,int x,int y){
 		int level=player==null?0
 			:player.getLayeredLocation().getCoordinate().getLevel();
 		requireNativeTerrainAuthoring(player,level);
@@ -489,8 +587,42 @@ public final class WorldEditorSessionManager {
 			new WorldCoordinate(x,y,level));
 		nativeOwner(player,location).findTile(location)
 			.orElseThrow(()->new IllegalArgumentException(
-				"Scenery must be placed on allocated package terrain."));
+				"Authored content must be placed on allocated package terrain."));
 		return location;
+	}
+	private void requireNativeNpcTerrainCoverage(
+		Player player,WorldLocation start,int minX,int minY,int maxX,int maxY){
+		NativeLayeredWorldPackage owner=nativeOwner(player,start);
+		int level=start.getCoordinate().getLevel();
+		for(int sectorX=Math.floorDiv(minX,NativeLayeredTerrainSector.SIZE);
+			sectorX<=Math.floorDiv(maxX,NativeLayeredTerrainSector.SIZE);sectorX++){
+			for(int sectorY=Math.floorDiv(minY,NativeLayeredTerrainSector.SIZE);
+				sectorY<=Math.floorDiv(maxY,NativeLayeredTerrainSector.SIZE);sectorY++){
+				WorldMapSectorId sector=new WorldMapSectorId(
+					start.getWorldSpace(),level,sectorX,sectorY);
+				if(!owner.findSector(sector).isPresent()){
+					throw new IllegalArgumentException(
+						"NPC roaming bounds must remain on allocated package terrain.");
+				}
+			}
+		}
+	}
+	private String availableNativeNpcPlacementId(
+		Player player,WorldLocation location){
+		String prefix=nativeNpcPlacementPrefix(location);
+		for(int slot=0;slot<4096;slot++){
+			String candidate=prefix+".s"+slot;
+			boolean used=false;
+			for(Npc npc:player.getWorld().getNpcs()){
+				if(candidate.equals(npc.getAttribute(
+					RegionManager.NATIVE_LAYERED_PLACEMENT_ID_ATTRIBUTE,""))){
+					used=true;break;
+				}
+			}
+			if(!used)return candidate;
+		}
+		throw new IllegalStateException(
+			"NPC placement slots at this tile are exhausted.");
 	}
 	private NativeSceneryState requireEditableNativeScenery(
 		Player player,WorldLocation location,GameObject object){
@@ -532,6 +664,28 @@ public final class WorldEditorSessionManager {
 			+signedToken(coordinate.getLevel())+".x"
 			+signedToken(coordinate.getX())+".y"
 			+signedToken(coordinate.getY());
+	}
+	private static String nativeNpcPlacementPrefix(WorldLocation location){
+		WorldCoordinate coordinate=location.getCoordinate();
+		return "spoiled-milk.builder.npc.l"
+			+signedToken(coordinate.getLevel())+".x"
+			+signedToken(coordinate.getX())+".y"
+			+signedToken(coordinate.getY());
+	}
+	private void captureNativeNpcBase(
+		NativeNpcKey key,NativeNpcState state){
+		if(!nativeNpcBase.containsKey(key))nativeNpcBase.put(key,state);
+	}
+	private void recordNativeNpc(NativeNpcKey key,NativeNpcState state){
+		NativeNpcState base=nativeNpcBase.get(key);
+		if(java.util.Objects.equals(base,state))nativeNpcOverlay.remove(key);
+		else nativeNpcOverlay.put(key,state);
+		NativeNpcState target=nativeNpcOverlay.containsKey(key)
+			?nativeNpcOverlay.get(key):base;
+		NativeNpcState saved=nativeNpcSaved.containsKey(key)
+			?nativeNpcSaved.get(key):base;
+		if(java.util.Objects.equals(target,saved))nativeNpcDirty.remove(key);
+		else nativeNpcDirty.add(key);
 	}
 	private static String signedToken(int value){
 		return value<0?"m"+Long.toString(-(long)value):"p"+Integer.toString(value);
@@ -637,6 +791,33 @@ public final class WorldEditorSessionManager {
 		}
 		@Override public boolean equals(Object other){if(this==other)return true;if(!(other instanceof NativeSceneryState))return false;NativeSceneryState state=(NativeSceneryState)other;return sceneryId==state.sceneryId&&direction==state.direction&&placementId.equals(state.placementId);}
 		@Override public int hashCode(){int result=placementId.hashCode();result=31*result+sceneryId;return 31*result+direction;}
+	}
+	private static final class NativeNpcKey {
+		final WorldSpaceId worldSpace;final String placementId;
+		NativeNpcKey(WorldSpaceId worldSpace,String placementId){
+			this.worldSpace=worldSpace;this.placementId=placementId;
+		}
+		@Override public boolean equals(Object other){if(this==other)return true;if(!(other instanceof NativeNpcKey))return false;NativeNpcKey key=(NativeNpcKey)other;return worldSpace.equals(key.worldSpace)&&placementId.equals(key.placementId);}
+		@Override public int hashCode(){return 31*worldSpace.hashCode()+placementId.hashCode();}
+	}
+	private static final class NativeNpcState {
+		final String placementId;final int level,npcId,startX,startY,minX,minY,maxX,maxY;
+		NativeNpcState(String placementId,int level,int npcId,int startX,int startY,int minX,int minY,int maxX,int maxY){
+			this.placementId=placementId;this.level=level;this.npcId=npcId;
+			this.startX=startX;this.startY=startY;this.minX=minX;this.minY=minY;this.maxX=maxX;this.maxY=maxY;
+		}
+		static NativeNpcState from(Npc npc){
+			String placementId=npc.getAttribute(
+				RegionManager.NATIVE_LAYERED_PLACEMENT_ID_ATTRIBUTE,"");
+			if(placementId.isEmpty())throw new IllegalArgumentException(
+				"Native layered NPC identity is unavailable.");
+			NPCLoc loc=npc.getLoc();
+			return new NativeNpcState(
+				placementId,npc.getWorldLocation().getCoordinate().getLevel(),
+				npc.getID(),loc.startX,loc.startY,loc.minX,loc.minY,loc.maxX,loc.maxY);
+		}
+		@Override public boolean equals(Object other){if(this==other)return true;if(!(other instanceof NativeNpcState))return false;NativeNpcState state=(NativeNpcState)other;return level==state.level&&npcId==state.npcId&&startX==state.startX&&startY==state.startY&&minX==state.minX&&minY==state.minY&&maxX==state.maxX&&maxY==state.maxY&&placementId.equals(state.placementId);}
+		@Override public int hashCode(){int result=placementId.hashCode();result=31*result+level;result=31*result+npcId;result=31*result+startX;result=31*result+startY;result=31*result+minX;result=31*result+minY;result=31*result+maxX;return 31*result+maxY;}
 	}
 	public static final class NativeTerrainSnapshot {
 		public final WorldLocation location;public final NativeLayeredTerrainTile tile;

@@ -18288,6 +18288,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Replace narrow family-by-family Builder review with one free-form generated-level authoring workbench. | Implemented for owner review: logical non-source levels expose terrain surfaces, terrain structures/walls, scenery, and NPCs together; one backward-compatible v3 journal atomically persists all enabled families; NPC identity and roaming bounds survive clean close/reopen; source levels, ground items, standalone boundaries, export, and target files remain locked. Generated levels no longer compose unrelated legacy upper-plane models, correcting the reported long-zoom player occlusion and void-selection interference |
 | 2026-07-25 | Reframe the enclosing product as RSC Remastered: one definitive vanilla-content remaster with integrated launcher, layered Builder, and modder workflow, while retaining modular technical boundaries internally. | Confirmed; recorded in the product roadmap |
 | 2026-07-25 | Use the locally present Preservation revision-64 server terrain, matching authentic ORSC, base placements, configuration, definitions, and copied seed as the first vanilla source candidate; freeze them as one provenance set before conversion. | Confirmed; inputs and current hashes inventoried |
 | 2026-07-25 | Remove a polished generic standalone converter from the critical path. Complete the exact vanilla conversion with deterministic internal tooling first; later external distributions use named launcher import adapters. | Confirmed; refines the 2026-07-18 conversion-product decision without discarding its safety contracts |
@@ -18855,17 +18856,17 @@ after the transaction. Working drafts must retain every accepted source level,
 terrain identity, placement set, path, and payload hash. Every additional
 level starts with one contiguous nine-sector allocation and one empty placement
 set, then may grow only through edge-connected Builder transactions. Later
-Builder-owned transactions may add scenery to that new level without changing
-the accepted source placement sets. Duplicate
+Builder-owned transactions may add NPCs and scenery to that new level without
+changing the accepted source placement sets. Duplicate
 levels, active Builder
 sessions, unsafe paths, source drift, malformed hashes, partial terrain, or
-new levels containing NPC, ground-item, or boundary placements refuse before
+new levels containing ground-item or boundary placements refuse before
 publication.
 
 Empty v3 placement payloads are now an explicit format capability; v1 and v2
 retain their non-empty rule. Runtime consumption uses the new
 `spoiled-milk-builder-draft` profile, which accepts the exact original
-per-level placement-family totals plus additive terrain and scenery-only new
+per-level placement-family totals plus additive terrain, NPC, and scenery new
 levels. `WorldBuilderMode` refuses that
 profile outside the isolated Builder. The ordinary
 `spoiled-milk-replacement` profile remains pinned to the exact accepted
@@ -18959,13 +18960,14 @@ and confirmed the saved tiles after restart. Navigation to allocated
 navigation to unallocated `(240,640,-3)` visibly refused and retained the
 prior location. The additional owner-painted tiles were intentional.
 
-The next bounded authoring slice now enables **scenery only** on
-Builder-created levels and is awaiting focused owner acceptance. Place, rotate,
-and remove use the existing Scenery controls, but the server independently
-requires an active isolated Builder session, allocated package terrain, a
-non-source signed level, and native package ownership. NPCs, ground items,
-boundaries, accepted source levels, export, and target-game mutation remain
-locked.
+The scenery-only checkpoint has now been absorbed into a broader
+**Builder-created-level workbench** and is awaiting free-form owner
+acceptance. Terrain Surface and Structure controls, Scenery
+Place/Rotate/Remove, and NPC Place/Remove are enabled together on an additional
+signed level. The server independently requires an active isolated Builder
+session, allocated package terrain, a non-source signed level, and native
+package ownership. Ground items, standalone boundary-object placement,
+accepted source levels, export, and target-game mutation remain locked.
 
 New scenery receives a deterministic placement identity derived from
 `(level,x,y)`. Rotation retains that identity; removing and re-adding a
@@ -18974,17 +18976,35 @@ replacement, and removal reuse the native layered object transaction, so
 spatial membership and exact collision footprints change together and never
 enter a packed legacy Region.
 
-New saves use the backward-compatible v2 form of the existing bounded draft
-journal. Terrain tiles, sector growth, and scenery operations are sorted and
+NPCs use deterministic identities derived from signed level, start tile, and a
+bounded same-tile slot. Their exact start and roaming rectangle are retained;
+runtime placement and removal use native signed locations and refuse a roaming
+rectangle whose sectors are not allocated. Multiple NPCs may deliberately
+share a start tile without colliding identities.
+
+New saves use v3 of the existing bounded draft journal while the launcher
+continues to read v1 terrain-only and v2 terrain/scenery journals. Terrain
+tiles, sector growth, scenery operations, and NPC operations are sorted and
 committed in one clean-close copy-on-write package swap; there is no second
 placement transaction that could partially publish. Reverting all saved
 changes to the current manifest removes the pending journal. The launcher
 updates only the created level's v3 placement payload and its manifest hash,
-then revalidates source ancestry, scenery-only family restrictions, terrain
+then revalidates source ancestry, allowed placement families, terrain
 coverage, payload identity, and the installed working review before deleting
-the journal. Automated coverage proves a combined terrain/scenery commit,
-restart visibility, identity-preserving rotation, exact removal, stable
+the journal. Automated coverage proves combined authoring, restart visibility,
+identity-preserving scenery rotation, exact scenery/NPC removal, stable
 ordering, stale-match refusal, and unchanged accepted source payloads.
+
+The owner-reported `-3` failure exposed a presentation defect before broad
+review began. Arbitrary signed levels use render plane `0` as a compatibility
+carrier, but the client interpreted that carrier as the actual surface and
+composed legacy planes `1` and `2` above the generated level. At long zoom,
+those unrelated upper-plane models could cover the player and intercept the
+otherwise face-less void canvas. Upper-plane composition now occurs only for
+logical level `0`; generated signed levels render solely from their native
+package snapshot. Overlay-8 void still emits no visible/depth terrain face, and
+the editor-only camera-to-ground fallback remains responsible for selecting it
+so the first terrain tile can be painted.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first

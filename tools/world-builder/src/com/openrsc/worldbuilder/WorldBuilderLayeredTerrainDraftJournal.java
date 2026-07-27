@@ -32,11 +32,14 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		"world-builder-layered-terrain-draft-v1";
 	private static final String COMBINED_HEADER =
 		"world-builder-layered-draft-v2";
+	private static final String AUTHORING_HEADER =
+		"world-builder-layered-draft-v3";
 	private static final int SECTOR_SIZE = 48;
 	private static final int TILE_BYTES = 10;
 	private static final int MAX_TILES = 4096;
 	private static final int MAX_SECTORS = 64;
 	private static final int MAX_SCENERY = 4096;
+	private static final int MAX_NPCS = 4096;
 	private static final java.util.regex.Pattern ID =
 		java.util.regex.Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
 
@@ -108,6 +111,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			return new CommitResult(
 				journal.tiles.size(), journal.sectors.size(),
 				journal.scenery.size(),
+				journal.npcs.size(),
 				installed.manifestSha256,
 				installed.packageFingerprintSha256);
 		} catch (IOException failure) {
@@ -236,6 +240,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 				"sha256", WorldBuilderHashes.sha256(changed.getKey()));
 		}
 		applyScenery(packageRoot, source, current, manifest, journal.scenery);
+		applyNpcs(packageRoot, source, current, manifest, journal.npcs);
 		sortTerrain(terrain);
 		Path stagedManifest = packageRoot.resolve(".manifest.terrain-draft");
 		Files.write(
@@ -244,6 +249,119 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 				.getBytes(StandardCharsets.UTF_8),
 			StandardOpenOption.CREATE_NEW);
 		moveFile(stagedManifest, manifestPath);
+	}
+
+	private static void applyNpcs(
+		Path packageRoot,
+		WorldBuilderLayeredPackage source,
+		WorldBuilderLayeredPackage current,
+		Map<String,Object> manifest,
+		List<NpcEdit> edits)
+		throws IOException, WorldBuilderDiscoveryException {
+		if (edits.isEmpty()) return;
+		Set<Integer> sourceLevels = new HashSet<Integer>(source.levels);
+		Map<Integer,Map<String,Object>> declarations =
+			new LinkedHashMap<Integer,Map<String,Object>>();
+		for (Object value : array(manifest, "placementSets")) {
+			Map<String,Object> declaration = object(value);
+			declarations.put(
+				Integer.valueOf(number(declaration, "level")), declaration);
+		}
+		Map<Integer,List<NpcEdit>> byLevel =
+			new LinkedHashMap<Integer,List<NpcEdit>>();
+		for (NpcEdit edit : edits) {
+			if (sourceLevels.contains(Integer.valueOf(edit.level))
+				|| !current.levels.contains(Integer.valueOf(edit.level))) {
+				throw new WorldBuilderDiscoveryException(
+					"NPC editing is restricted to a Builder-created level.");
+			}
+			List<NpcEdit> levelEdits = byLevel.get(Integer.valueOf(edit.level));
+			if (levelEdits == null) {
+				levelEdits = new ArrayList<NpcEdit>();
+				byLevel.put(Integer.valueOf(edit.level), levelEdits);
+			}
+			levelEdits.add(edit);
+		}
+		for (Map.Entry<Integer,List<NpcEdit>> levelEntry : byLevel.entrySet()) {
+			int level = levelEntry.getKey().intValue();
+			Map<String,Object> declaration =
+				declarations.get(Integer.valueOf(level));
+			if (declaration == null) {
+				throw new WorldBuilderDiscoveryException(
+					"Builder-created level has no placement declaration: "
+						+ level);
+			}
+			String expectedPath = "placements/global/l"
+				+ WorldBuilderLayeredPackage.signedToken(level) + ".json";
+			String relative = text(declaration, "path");
+			if (!expectedPath.equals(relative)) {
+				throw new WorldBuilderDiscoveryException(
+					"NPC placement payload path is not deterministic.");
+			}
+			Path payloadPath = packageRoot.resolve(relative).normalize();
+			requireContained(packageRoot, payloadPath, relative);
+			Map<String,Object> payload =
+				WorldBuilderJsonDocuments.readObject(payloadPath);
+			List<Object> npcs = array(payload, "npcs");
+			Map<String,Map<String,Object>> byId =
+				new LinkedHashMap<String,Map<String,Object>>();
+			Set<String> placementIds = placementIds(payload);
+			for (Object value : npcs) {
+				Map<String,Object> record = object(value);
+				String placementId = text(record, "placementId");
+				if (byId.put(placementId, record) != null) {
+					throw new WorldBuilderDiscoveryException(
+						"Builder-created NPC payload contains duplicate identity.");
+				}
+			}
+			for (NpcEdit edit : levelEntry.getValue()) {
+				Map<String,Object> existing = byId.get(edit.placementId);
+				if (edit.remove) {
+					if (existing == null || !edit.matches(existing)) {
+						throw new WorldBuilderDiscoveryException(
+							"NPC removal no longer matches the working package.");
+					}
+					npcs.remove(existing);
+					byId.remove(edit.placementId);
+					placementIds.remove(edit.placementId);
+					continue;
+				}
+				if (existing == null && !placementIds.add(edit.placementId)) {
+					throw new WorldBuilderDiscoveryException(
+						"NPC upsert duplicates another placement ID.");
+				}
+				Map<String,Object> replacement = edit.toJson();
+				if (existing == null) npcs.add(replacement);
+				else npcs.set(npcs.indexOf(existing), replacement);
+				byId.put(edit.placementId, replacement);
+			}
+			sortNpcs(npcs);
+			Path stagedPayload = payloadPath.resolveSibling(
+				payloadPath.getFileName() + ".npc-draft");
+			Files.write(
+				stagedPayload,
+				WorldBuilderJsonDocuments.pretty(payload)
+					.getBytes(StandardCharsets.UTF_8),
+				StandardOpenOption.CREATE_NEW);
+			moveFile(stagedPayload, payloadPath);
+			declaration.put("sha256", WorldBuilderHashes.sha256(payloadPath));
+		}
+	}
+
+	private static Set<String> placementIds(Map<String,Object> payload)
+		throws WorldBuilderDiscoveryException {
+		Set<String> result = new HashSet<String>();
+		for (String key : new String[] {
+			"npcs", "groundItems", "scenery", "boundaries"}) {
+			for (Object value : array(payload, key)) {
+				String placementId = text(object(value), "placementId");
+				if (!result.add(placementId)) {
+					throw new WorldBuilderDiscoveryException(
+						"Placement payload contains duplicate identity.");
+				}
+			}
+		}
+		return result;
 	}
 
 	private static void applyScenery(
@@ -362,9 +480,12 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 	private static Journal read(Path path)
 		throws IOException, WorldBuilderDiscoveryException {
 		List<String> lines = Files.readAllLines(path, StandardCharsets.US_ASCII);
-		boolean combined =
-			!lines.isEmpty() && COMBINED_HEADER.equals(lines.get(0));
-		if (lines.size() < 4
+		boolean authoring =
+			!lines.isEmpty() && AUTHORING_HEADER.equals(lines.get(0));
+		boolean combined = authoring
+			|| (!lines.isEmpty() && COMBINED_HEADER.equals(lines.get(0)));
+		int minimumHeaderLines = authoring ? 6 : combined ? 5 : 4;
+		if (lines.size() < minimumHeaderLines
 			|| (!combined && !HEADER.equals(lines.get(0)))) {
 			throw new WorldBuilderDiscoveryException(
 				"Layered draft journal header is invalid.");
@@ -380,19 +501,23 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		int sceneryCount = combined
 			? boundedCount(field(lines.get(4), "scenery-count"), MAX_SCENERY)
 			: 0;
-		int recordStart = combined ? 5 : 4;
-		if (tileCount == 0 && sectorCount == 0 && sceneryCount == 0) {
+		int npcCount = authoring
+			? boundedCount(field(lines.get(5), "npc-count"), MAX_NPCS) : 0;
+		int recordStart = authoring ? 6 : combined ? 5 : 4;
+		if (tileCount == 0 && sectorCount == 0 && sceneryCount == 0
+			&& npcCount == 0) {
 			throw new WorldBuilderDiscoveryException(
 				"Layered draft journal is empty.");
 		}
 		if (lines.size()
-			!= recordStart + sectorCount + tileCount + sceneryCount) {
+			!= recordStart + sectorCount + tileCount + sceneryCount + npcCount) {
 			throw new WorldBuilderDiscoveryException(
 				"Layered draft journal count is inconsistent.");
 		}
 		List<SectorGrowth> sectors = new ArrayList<SectorGrowth>();
 		List<TileEdit> tiles = new ArrayList<TileEdit>();
 		List<SceneryEdit> scenery = new ArrayList<SceneryEdit>();
+		List<NpcEdit> npcs = new ArrayList<NpcEdit>();
 		Set<String> sectorKeys = new HashSet<String>();
 		Set<String> tileKeys = new HashSet<String>();
 		Set<String> sceneryKeys = new HashSet<String>();
@@ -454,7 +579,32 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			}
 			scenery.add(edit);
 		}
-		return new Journal(base, sectors, tiles, scenery);
+		for (int item = 0; item < npcCount; item++, index++) {
+			String[] values = lines.get(index).split("\\t", -1);
+			if (values.length != 11 || !"npc".equals(values[0])
+				|| (!"upsert".equals(values[1])
+					&& !"remove".equals(values[1]))) {
+				throw new WorldBuilderDiscoveryException(
+					"Layered NPC record is malformed.");
+			}
+			NpcEdit edit = new NpcEdit(
+				"remove".equals(values[1]),
+				signed(values[2]),
+				coordinate(values[3]),
+				coordinate(values[4]),
+				identifier(values[5]),
+				nonNegative(values[6]),
+				coordinate(values[7]),
+				coordinate(values[8]),
+				coordinate(values[9]),
+				coordinate(values[10]));
+			if (!placementIds.add(edit.placementId)) {
+				throw new WorldBuilderDiscoveryException(
+					"Layered NPC journal contains duplicate identity.");
+			}
+			npcs.add(edit);
+		}
+		return new Journal(base, sectors, tiles, scenery, npcs);
 	}
 
 	private static String field(String line, String name)
@@ -597,6 +747,25 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 					result = text(a, "placementId").compareTo(
 						text(b, "placementId"));
 				}
+				return result;
+			}
+		});
+	}
+
+	private static void sortNpcs(List<Object> values) {
+		Collections.sort(values, new Comparator<Object>() {
+			@Override
+			public int compare(Object left, Object right) {
+				Map<String,Object> a = object(left);
+				Map<String,Object> b = object(right);
+				Map<String,Object> aStart = object(a.get("start"));
+				Map<String,Object> bStart = object(b.get("start"));
+				int result = Integer.compare(
+					number(aStart, "x"), number(bStart, "x"));
+				if (result == 0) result = Integer.compare(
+					number(aStart, "y"), number(bStart, "y"));
+				if (result == 0) result = text(a, "placementId").compareTo(
+					text(b, "placementId"));
 				return result;
 			}
 		});
@@ -755,15 +924,17 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		final int tileCount;
 		final int sectorCount;
 		final int sceneryCount;
+		final int npcCount;
 		final String manifestSha256;
 		final String packageFingerprintSha256;
 
 		CommitResult(
-			int tileCount, int sectorCount, int sceneryCount,
+			int tileCount, int sectorCount, int sceneryCount, int npcCount,
 			String manifestSha256, String packageFingerprintSha256) {
 			this.tileCount = tileCount;
 			this.sectorCount = sectorCount;
 			this.sceneryCount = sceneryCount;
+			this.npcCount = npcCount;
 			this.manifestSha256 = manifestSha256;
 			this.packageFingerprintSha256 = packageFingerprintSha256;
 		}
@@ -774,16 +945,19 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		final List<SectorGrowth> sectors;
 		final List<TileEdit> tiles;
 		final List<SceneryEdit> scenery;
+		final List<NpcEdit> npcs;
 
 		Journal(
 			String baseManifestSha256,
 			List<SectorGrowth> sectors,
 			List<TileEdit> tiles,
-			List<SceneryEdit> scenery) {
+			List<SceneryEdit> scenery,
+			List<NpcEdit> npcs) {
 			this.baseManifestSha256 = baseManifestSha256;
 			this.sectors = sectors;
 			this.tiles = tiles;
 			this.scenery = scenery;
+			this.npcs = npcs;
 		}
 	}
 
@@ -873,6 +1047,83 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			result.put("position", position);
 			result.put("sceneryId", Long.valueOf(sceneryId));
 			return result;
+		}
+	}
+
+	private static final class NpcEdit {
+		final boolean remove;
+		final int level;
+		final int startX;
+		final int startY;
+		final String placementId;
+		final int npcId;
+		final int minX;
+		final int minY;
+		final int maxX;
+		final int maxY;
+
+		NpcEdit(
+			boolean remove,
+			int level,
+			int startX,
+			int startY,
+			String placementId,
+			int npcId,
+			int minX,
+			int minY,
+			int maxX,
+			int maxY) throws WorldBuilderDiscoveryException {
+			if (minX > startX || startX > maxX
+				|| minY > startY || startY > maxY
+				|| maxX - minX > 128 || maxY - minY > 128) {
+				throw new WorldBuilderDiscoveryException(
+					"Layered NPC roaming bounds are invalid.");
+			}
+			this.remove = remove;
+			this.level = level;
+			this.startX = startX;
+			this.startY = startY;
+			this.placementId = placementId;
+			this.npcId = npcId;
+			this.minX = minX;
+			this.minY = minY;
+			this.maxX = maxX;
+			this.maxY = maxY;
+		}
+
+		boolean matches(Map<String,Object> record) {
+			Map<String,Object> start = object(record.get("start"));
+			Map<String,Object> bounds = object(record.get("roamBounds"));
+			Map<String,Object> minimum = object(bounds.get("minimum"));
+			Map<String,Object> maximum = object(bounds.get("maximum"));
+			return placementId.equals(text(record, "placementId"))
+				&& npcId == number(record, "npcId")
+				&& startX == number(start, "x")
+				&& startY == number(start, "y")
+				&& minX == number(minimum, "x")
+				&& minY == number(minimum, "y")
+				&& maxX == number(maximum, "x")
+				&& maxY == number(maximum, "y");
+		}
+
+		Map<String,Object> toJson() {
+			Map<String,Object> start = point(startX, startY);
+			Map<String,Object> bounds = new LinkedHashMap<String,Object>();
+			bounds.put("maximum", point(maxX, maxY));
+			bounds.put("minimum", point(minX, minY));
+			Map<String,Object> result = new LinkedHashMap<String,Object>();
+			result.put("npcId", Long.valueOf(npcId));
+			result.put("placementId", placementId);
+			result.put("roamBounds", bounds);
+			result.put("start", start);
+			return result;
+		}
+
+		private static Map<String,Object> point(int x, int y) {
+			Map<String,Object> point = new LinkedHashMap<String,Object>();
+			point.put("x", Long.valueOf(x));
+			point.put("y", Long.valueOf(y));
+			return point;
 		}
 	}
 }

@@ -277,6 +277,41 @@ public final class WorldBuilderLayeredDraftHarness {
                 .manifestSha256.equals(combinedCommit.manifestSha256),
             "combined commit changed across reopen");
 
+        String npcPlacementId =
+            "spoiled-milk.builder.npc.lm3.xp142.yp641.s0";
+        String npcDraft =
+            "world-builder-layered-draft-v3\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "tile-count\t0\n"
+            + "sector-count\t0\n"
+            + "scenery-count\t0\n"
+            + "npc-count\t1\n"
+            + "npc\tupsert\t-3\t142\t641\t" + npcPlacementId
+            + "\t0\t141\t640\t143\t642\n";
+        Files.write(journal, npcDraft.getBytes(StandardCharsets.US_ASCII));
+        WorldBuilderLayeredTerrainDraftJournal.CommitResult npcCommit =
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        require(npcCommit.npcCount == 1 && npcCommit.sceneryCount == 0,
+            "NPC journal commit");
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        draft.requireTerrainDraftDescendant(accepted);
+        authored = null;
+        for (WorldBuilderLayeredPackage.PlacementRecord record
+            : draft.placementRecords) {
+            if (record.level == -3) authored = record;
+        }
+        require(authored != null && authored.npcCount == 1
+                && authored.sceneryCount == 1,
+            "new-level NPC/scenery placement payload");
+        authoredText = new String(
+            Files.readAllBytes(authoredPayload), StandardCharsets.UTF_8);
+        require(authoredText.contains("\"placementId\": \""
+                    + npcPlacementId + "\"")
+                && authoredText.contains("\"npcId\": 0")
+                && authoredText.contains("\"roamBounds\""),
+            "authored NPC payload");
+
         String rotateDraft =
             "world-builder-layered-draft-v2\n"
             + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
@@ -342,8 +377,34 @@ public final class WorldBuilderLayeredDraftHarness {
             : draft.placementRecords) {
             if (record.level == -3) authored = record;
         }
+        require(authored != null && authored.sceneryCount == 0
+                && authored.npcCount == 1,
+            "scenery removal retained NPC placement");
+
+        String removeNpcDraft =
+            "world-builder-layered-draft-v3\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "tile-count\t0\n"
+            + "sector-count\t0\n"
+            + "scenery-count\t0\n"
+            + "npc-count\t1\n"
+            + "npc\tremove\t-3\t142\t641\t" + npcPlacementId
+            + "\t0\t141\t640\t143\t642\n";
+        Files.write(
+            journal, removeNpcDraft.getBytes(StandardCharsets.US_ASCII));
+        WorldBuilderLayeredTerrainDraftJournal.CommitResult removeNpcCommit =
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        require(removeNpcCommit.npcCount == 1,
+            "NPC removal journal commit");
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        authored = null;
+        for (WorldBuilderLayeredPackage.PlacementRecord record
+            : draft.placementRecords) {
+            if (record.level == -3) authored = record;
+        }
         require(authored != null && authored.placementCount == 0,
-            "scenery removal restored empty placement payload");
+            "NPC removal restored empty placement payload");
 
         String refusedSourceEdit =
             "world-builder-layered-terrain-draft-v1\n"

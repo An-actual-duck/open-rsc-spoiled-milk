@@ -343,14 +343,13 @@ final class WorldBuilderLayeredPackage {
 			PlacementRecord placement =
 				currentPlacements.get(Integer.valueOf(level));
 			if (placement == null
-				|| placement.npcCount != 0
 				|| placement.groundItemCount != 0
 				|| placement.boundaryCount != 0
 				|| !placement.path.equals(
 					"placements/global/l" + signedToken(level) + ".json")) {
 				throw new WorldBuilderDiscoveryException(
 					"Builder-created level " + level
-						+ " may contain scenery only in its v3 placement set.");
+						+ " may contain NPC and scenery placements only in its v3 placement set.");
 			}
 			List<TerrainRecord> starter = new ArrayList<TerrainRecord>();
 			for (TerrainRecord record : terrainRecords) {

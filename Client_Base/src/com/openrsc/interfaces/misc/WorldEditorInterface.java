@@ -91,12 +91,12 @@ public final class WorldEditorInterface extends NCustomComponent {
 	public boolean isKeyboardShortcutMode(){return isEditorOpen()&&keyboardShortcutsEnabled;}
 	public boolean isInspecting(){return isEditorOpen()&&mode==Mode.INSPECT;}
 	public boolean isNavigating(){return isEditorOpen()&&mode==Mode.NAVIGATE;}
-	public boolean isTerrainPainting(){return isEditorOpen()&&(!isLayeredReview()||isLayeredTerrainDraft())&&mode==Mode.TERRAIN;}
+	public boolean isTerrainPainting(){return isEditorOpen()&&(!isLayeredReview()||isLayeredPlacementDraftLevel())&&mode==Mode.TERRAIN;}
 	public boolean isSceneryPlacing(){return isEditorOpen()&&(!isLayeredReview()||isLayeredSceneryDraftLevel())&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.PLACE;}
 	public boolean isSceneryRotating(){return isEditorOpen()&&(!isLayeredReview()||isLayeredSceneryDraftLevel())&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.ROTATE;}
 	public boolean isSceneryRemoving(){return isEditorOpen()&&(!isLayeredReview()||isLayeredSceneryDraftLevel())&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.REMOVE;}
-	public boolean isNpcPlacing(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.NPC&&npcTool==NpcTool.PLACE;}
-	public boolean isNpcRemoving(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.NPC&&npcTool==NpcTool.REMOVE;}
+	public boolean isNpcPlacing(){return isEditorOpen()&&(!isLayeredReview()||isLayeredPlacementDraftLevel())&&mode==Mode.NPC&&npcTool==NpcTool.PLACE;}
+	public boolean isNpcRemoving(){return isEditorOpen()&&(!isLayeredReview()||isLayeredPlacementDraftLevel())&&mode==Mode.NPC&&npcTool==NpcTool.REMOVE;}
 	public int getSceneryId(){return sceneryId;}
 	public int getNpcId(){return npcId;}
 	public int getNpcRadius(){return npcRadius;}
@@ -231,9 +231,9 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 
 	private void selectMode(Mode selected){
-		if(isLayeredReview()&&((selected==Mode.TERRAIN&&!isLayeredTerrainDraft())||(selected==Mode.SCENERY&&!isLayeredSceneryDraftLevel())||selected==Mode.NPC)){
+		if(isLayeredReview()&&((selected==Mode.TERRAIN&&!isLayeredPlacementDraftLevel())||(selected==Mode.SCENERY&&!isLayeredSceneryDraftLevel())||(selected==Mode.NPC&&!isLayeredPlacementDraftLevel()))){
 			mode=Mode.NAVIGATE;rejectLayeredReviewMutation(isLayeredTerrainDraft()
-				?"Scenery editing is limited to Builder-created levels; NPC and boundary editing remain locked."
+				?"Terrain, scenery, and NPC editing are limited to Builder-created levels; boundaries remain locked."
 				:"Layered package review is read-only; create a draft level before editing terrain.");
 			coordinateFocus=0;toolbar.open(WorldEditorToolbarState.Flyout.NAVIGATE);updatePresentationBounds();return;
 		}
@@ -621,7 +621,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		graphics().drawString("Y",x+112,y+214,0xffffff,2);textField(x+128,y+197,70,teleportY,coordinateFocus==2);
 		if(isLayeredReview()){graphics().drawString("L",x+204,y+214,0xffffff,2);textField(x+220,y+197,58,teleportLevel,coordinateFocus==13);}
 		button(x+295,y+197,80,"Teleport");
-		graphics().drawString(isLayeredTerrainDraft()?"Terrain plus new-level scenery editing; source placements/export are locked.":isLayeredReview()?"Read-only package review; navigate and inspect are enabled.":"Navigate uses movement options; brush/edit actions are off.",x+10,y+244,0xff981f,1);
+		graphics().drawString(isLayeredTerrainDraft()?"New-level terrain, structures, scenery, and NPCs are editable; source/export stay locked.":isLayeredReview()?"Read-only package review; navigate and inspect are enabled.":"Navigate uses movement options; brush/edit actions are off.",x+10,y+244,0xff981f,1);
 	}
 	private void renderInspect(int x,int y){
 		graphics().drawString(inspectionStatus,x+10,y+70,0xffff00,2);int line=y+89;
@@ -688,6 +688,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private boolean isLayeredReview(){return WorldBuilderClientProfile.current().isLayeredReview();}
 	private boolean isLayeredTerrainDraft(){return WorldBuilderClientProfile.current().isLayeredTerrainDraft();}
 	private boolean isLayeredSceneryDraftLevel(){if(!isLayeredTerrainDraft())return false;int level=mc.getEditorPlayerWorldLevel();return level!=-1&&level!=0&&level!=1&&level!=2;}
+	private boolean isLayeredPlacementDraftLevel(){return isLayeredSceneryDraftLevel();}
 	private int editorLevel(int worldY){return isLayeredReview()?mc.getEditorPlayerWorldLevel():Math.floorDiv(worldY,944);}
 	private boolean validTeleportLevel(int level){return !isLayeredReview()||WorldBuilderClientProfile.current().declaresLayer(level);}
 	private static int logicalLevelForLegacyPlane(int plane){return plane==3?-1:plane;}

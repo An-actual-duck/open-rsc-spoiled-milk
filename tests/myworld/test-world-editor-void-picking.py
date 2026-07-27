@@ -42,5 +42,10 @@ if "return tileDecorationID(tileX, tileZ) == 26;" not in WORLD:
     raise AssertionError("normal transparent-terrain pick geometry was changed")
 if "tileDecorationID(tileX, tileZ) == 10" in WORLD:
     raise AssertionError("overlay 10 became globally pickable outside the editor")
+require_upper = "if (shouldLoadUpperPlaneModels(plane))"
+if WORLD.count(require_upper) != 2:
+    raise AssertionError("active loading and preloading do not share the upper-plane gate")
+if "nativeLayeredTerrainSnapshot.getLevel() == 0" not in WORLD:
+    raise AssertionError("generated signed levels can still compose unrelated upper-plane models")
 
-print("PASS: editor-only void tile projection and action parity are guarded")
+print("PASS: editor void picking and generated-level render isolation are guarded")

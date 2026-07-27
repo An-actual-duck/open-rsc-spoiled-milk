@@ -2491,7 +2491,7 @@ public final class World {
 			long activePlaneNanos = RenderTelemetry.elapsedSince(phaseStart);
 			long upperPlanesNanos = 0L;
 			long bridgeNanos = 0L;
-			if (plane == 0 && !syntheticDeepFixtureTerrain) {
+			if (shouldLoadUpperPlaneModels(plane)) {
 				phaseStart = RenderTelemetry.now();
 				this.generateLandscapeModel(worldX, 112, false, 1, worldZ);
 				this.generateLandscapeModel(worldX, 69, false, 2, worldZ);
@@ -2550,7 +2550,7 @@ public final class World {
 		preloadSectionWindow(plane, sectionX, sectionY);
 		queueCpuSectionWindowPreload(plane, sectionX, sectionY);
 		queueWorldModelProductPreload(plane, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);
-		if (plane == 0 && !syntheticDeepFixtureTerrain) {
+		if (shouldLoadUpperPlaneModels(plane)) {
 			preloadSectionWindow(1, sectionX, sectionY);
 			preloadSectionWindow(2, sectionX, sectionY);
 			queueCpuSectionWindowPreload(1, sectionX, sectionY);
@@ -2558,6 +2558,13 @@ public final class World {
 			queueWorldModelProductPreload(1, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);
 			queueWorldModelProductPreload(2, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);
 		}
+	}
+
+	private boolean shouldLoadUpperPlaneModels(int presentationPlane) {
+		return presentationPlane == 0
+			&& !syntheticDeepFixtureTerrain
+			&& (nativeLayeredTerrainSnapshot == null
+				|| nativeLayeredTerrainSnapshot.getLevel() == 0);
 	}
 
 	private void preloadSectionWindow(int height, int sectionX, int sectionY) {

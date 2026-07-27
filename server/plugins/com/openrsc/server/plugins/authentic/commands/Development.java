@@ -318,7 +318,14 @@ public final class Development implements CommandTrigger {
 
 	private static boolean isLayeredBuilderSceneryCommand(String command) {
 		String normalized=command==null?"":command.toLowerCase(java.util.Locale.ROOT);
-		return normalized.equals("removeobject")
+		return normalized.equals("radiusnpc")
+			||normalized.equals("createnpc")
+			||normalized.equals("cnpc")
+			||normalized.equals("cpc")
+			||normalized.equals("rpc")
+			||normalized.equals("rnpc")
+			||normalized.equals("removenpc")
+			||normalized.equals("removeobject")
 			||normalized.equals("robject")
 			||normalized.equals("removescenery")
 			||normalized.equals("rscenery")
@@ -916,13 +923,27 @@ public final class Development implements CommandTrigger {
 			return;
 		}
 
-		Point npcLoc = new Point(x,y);
-		final Npc n = new Npc(player.getWorld(), id, x, y, x - radius, x + radius, y - radius, y + radius);
-
 		if (player.getWorld().getServer().getEntityHandler().getNpcDef(id) == null) {
 			player.message(messagePrefix + "Invalid npc id");
 			return;
 		}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				Npc npc=player.getWorld().getServer().getWorldEditorSessions()
+					.placeNativeNpc(player,id,radius,x,y);
+				player.message(messagePrefix+"Added layered NPC: "
+					+npc.getDef().getName()+" at "+npc.getWorldLocation()
+					+" with radius "+radius+" and instance ID "
+					+npc.getIndex()+". Save and close/reopen the Builder to commit.");
+			}catch(Exception failure){
+				player.message(messagePrefix+"Layered NPC placement refused: "
+					+failure.getMessage());
+			}
+			return;
+		}
+
+		Point npcLoc = new Point(x,y);
+		final Npc n = new Npc(player.getWorld(), id, x, y, x - radius, x + radius, y - radius, y + radius);
 
 		player.getWorld().registerNpc(n);
 		n.setShouldRespawn(true);
@@ -949,6 +970,19 @@ public final class Development implements CommandTrigger {
 
 		if(npc == null) {
 			player.message(messagePrefix + "Invalid npc instance id");
+			return;
+		}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				Npc removed=player.getWorld().getServer()
+					.getWorldEditorSessions().removeNativeNpc(player,npc);
+				player.message(messagePrefix+"Removed layered NPC: "
+					+removed.getDef().getName()+" with instance ID "+id
+					+". Save and close/reopen the Builder to commit.");
+			}catch(Exception failure){
+				player.message(messagePrefix+"Layered NPC removal refused: "
+					+failure.getMessage());
+			}
 			return;
 		}
 
@@ -1410,13 +1444,14 @@ public final class Development implements CommandTrigger {
 		int terrainGrowth=player.getWorld().getServer().getWorldEditorSessions().nativeTerrainGrowthDraftSize();
 		int terrainSectors=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSectorCount();
 		int nativeScenery=player.getWorld().getServer().getWorldEditorSessions().nativeSceneryDraftSize();
-		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0&&nativeScenery==0) {
+		int nativeNpcs=player.getWorld().getServer().getWorldEditorSessions().nativeNpcDraftSize();
+		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0&&nativeScenery==0&&nativeNpcs==0) {
 			player.message(messagePrefix + "No pending world edits.");
 			return;
 		}
 
 		player.message(messagePrefix + "Pending world edits: terrain " + terrainEdits+" tiles / "+terrainGrowth+" new sectors / "+terrainSectors+" affected sectors, scenery " + (edits.size()+nativeScenery)
-			+ ", NPCs " + npcEdits.size() + ".");
+			+ ", NPCs " + (npcEdits.size()+nativeNpcs) + ".");
 		int shown = 0;
 		for (WorldSceneryEditFiles.Edit edit : edits) {
 			if (shown >= 8) {
@@ -1446,26 +1481,27 @@ public final class Development implements CommandTrigger {
 			npcEdits = new ArrayList<WorldNpcEditFiles.Edit>(PENDING_NPC_EDITS.values());
 		}
 
-		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int terrainEdits=editor.terrainDraftSize();int terrainGrowth=editor.nativeTerrainGrowthDraftSize();int nativeScenery=editor.nativeSceneryDraftSize();
-		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0&&nativeScenery==0) {
+		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int terrainEdits=editor.terrainDraftSize();int terrainGrowth=editor.nativeTerrainGrowthDraftSize();int nativeScenery=editor.nativeSceneryDraftSize();int nativeNpcs=editor.nativeNpcDraftSize();
+		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0&&nativeScenery==0&&nativeNpcs==0) {
 			player.message(messagePrefix + "No pending world edits to save.");
 			return;
 		}
-		if((terrainEdits>0||terrainGrowth>0||nativeScenery>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the layered draft.");return;}
+		if((terrainEdits>0||terrainGrowth>0||nativeScenery>0||nativeNpcs>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the layered draft.");return;}
 		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
 			try{
 				com.openrsc.server.content.worldedit.WorldEditorLayeredTerrainJournal.SaveResult saved=
 					editor.saveNativeTerrainDraft(player);
-				int total=saved.tileCount+saved.sectorCount+saved.sceneryCount;
+				int total=saved.tileCount+saved.sectorCount+saved.sceneryCount+saved.npcCount;
 				player.message(messagePrefix+"Saved "+total+" world edits.");
 				player.message(messagePrefix+"Layered draft journal: "+saved.tileCount
 					+" tiles, "+saved.sectorCount+" new sectors, "
-					+saved.sceneryCount+" scenery edits. Close and reopen "
+					+saved.sceneryCount+" scenery edits, "+saved.npcCount
+					+" NPC edits. Close and reopen "
 					+"the Builder to commit and reload the working package.");
 				LOGGER.info(player.getUsername()+" saved layered draft journal "
 					+saved.journal+" with "+saved.tileCount+" tiles and "
 					+saved.sectorCount+" sectors and "+saved.sceneryCount
-					+" scenery edits");
+					+" scenery edits and "+saved.npcCount+" NPC edits");
 			}catch(Exception failure){
 				LOGGER.error(failure);
 				player.message(messagePrefix+"Failed to save world edits: "+failure.getMessage());

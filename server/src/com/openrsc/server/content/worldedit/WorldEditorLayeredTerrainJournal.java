@@ -20,9 +20,12 @@ public final class WorldEditorLayeredTerrainJournal {
 		"world-builder-layered-terrain-draft-v1";
 	private static final String COMBINED_HEADER =
 		"world-builder-layered-draft-v2";
+	private static final String AUTHORING_HEADER =
+		"world-builder-layered-draft-v3";
 	private static final int MAX_TILES = 4096;
 	private static final int MAX_SECTORS = 64;
 	private static final int MAX_SCENERY = 4096;
+	private static final int MAX_NPCS = 4096;
 
 	private WorldEditorLayeredTerrainJournal() {
 	}
@@ -35,7 +38,8 @@ public final class WorldEditorLayeredTerrainJournal {
 		throws IOException {
 		return save(
 			journal, baseManifestSha256, requestedSectors, requestedTiles,
-			Collections.<SceneryEdit>emptyList(), false);
+			Collections.<SceneryEdit>emptyList(),
+			Collections.<NpcEdit>emptyList(), false, false);
 	}
 
 	public static SaveResult save(
@@ -47,7 +51,20 @@ public final class WorldEditorLayeredTerrainJournal {
 		throws IOException {
 		return save(
 			journal, baseManifestSha256, requestedSectors, requestedTiles,
-			requestedScenery, true);
+			requestedScenery, Collections.<NpcEdit>emptyList(), true, false);
+	}
+
+	public static SaveResult save(
+		Path journal,
+		String baseManifestSha256,
+		Collection<SectorGrowth> requestedSectors,
+		Collection<TileEdit> requestedTiles,
+		Collection<SceneryEdit> requestedScenery,
+		Collection<NpcEdit> requestedNpcs)
+		throws IOException {
+		return save(
+			journal, baseManifestSha256, requestedSectors, requestedTiles,
+			requestedScenery, requestedNpcs, true, true);
 	}
 
 	private static SaveResult save(
@@ -56,7 +73,9 @@ public final class WorldEditorLayeredTerrainJournal {
 		Collection<SectorGrowth> requestedSectors,
 		Collection<TileEdit> requestedTiles,
 		Collection<SceneryEdit> requestedScenery,
-		boolean combined)
+		Collection<NpcEdit> requestedNpcs,
+		boolean combined,
+		boolean authoring)
 		throws IOException {
 		if (journal == null || baseManifestSha256 == null
 			|| !baseManifestSha256.matches("[0-9a-f]{64}")) {
@@ -72,8 +91,11 @@ public final class WorldEditorLayeredTerrainJournal {
 		List<SceneryEdit> scenery = new ArrayList<SceneryEdit>(
 			requestedScenery == null
 				? Collections.<SceneryEdit>emptyList() : requestedScenery);
+		List<NpcEdit> npcs = new ArrayList<NpcEdit>(
+			requestedNpcs == null
+				? Collections.<NpcEdit>emptyList() : requestedNpcs);
 		if (sectors.size() > MAX_SECTORS || tiles.size() > MAX_TILES
-			|| scenery.size() > MAX_SCENERY) {
+			|| scenery.size() > MAX_SCENERY || npcs.size() > MAX_NPCS) {
 			throw new IllegalArgumentException(
 				"Layered draft exceeds its bounded journal.");
 		}
@@ -104,6 +126,16 @@ public final class WorldEditorLayeredTerrainJournal {
 				return value;
 			}
 		});
+		Collections.sort(npcs, new Comparator<NpcEdit>() {
+			@Override
+			public int compare(NpcEdit left, NpcEdit right) {
+				int value = Integer.compare(left.level, right.level);
+				if (value == 0) value = Integer.compare(left.startX, right.startX);
+				if (value == 0) value = Integer.compare(left.startY, right.startY);
+				if (value == 0) value = left.placementId.compareTo(right.placementId);
+				return value;
+			}
+		});
 		Set<String> identities = new HashSet<String>();
 		for (SectorGrowth sector : sectors) {
 			if (!identities.add(
@@ -131,22 +163,33 @@ public final class WorldEditorLayeredTerrainJournal {
 					"Layered draft contains duplicate scenery placement IDs.");
 			}
 		}
-		if (sectors.isEmpty() && tiles.isEmpty() && scenery.isEmpty()) {
+		for (NpcEdit edit : npcs) {
+			if (!placementIds.add(edit.placementId)) {
+				throw new IllegalArgumentException(
+					"Layered draft contains duplicate placement IDs.");
+			}
+		}
+		if (sectors.isEmpty() && tiles.isEmpty() && scenery.isEmpty()
+			&& npcs.isEmpty()) {
 			Files.deleteIfExists(journal);
 			Files.deleteIfExists(
 				journal.resolveSibling(journal.getFileName() + ".tmp"));
-			return new SaveResult(journal, 0, 0, 0);
+			return new SaveResult(journal, 0, 0, 0, 0);
 		}
 		StringBuilder output = new StringBuilder(
 			180 + sectors.size() * 40 + tiles.size() * 80
-				+ scenery.size() * 100);
-		output.append(combined ? COMBINED_HEADER : HEADER).append('\n')
+				+ scenery.size() * 100 + npcs.size() * 140);
+		output.append(authoring ? AUTHORING_HEADER
+				: combined ? COMBINED_HEADER : HEADER).append('\n')
 			.append("base-manifest-sha256\t")
 			.append(baseManifestSha256).append('\n')
 			.append("tile-count\t").append(tiles.size()).append('\n')
 			.append("sector-count\t").append(sectors.size()).append('\n');
 		if (combined) {
 			output.append("scenery-count\t").append(scenery.size()).append('\n');
+		}
+		if (authoring) {
+			output.append("npc-count\t").append(npcs.size()).append('\n');
 		}
 		for (SectorGrowth sector : sectors) {
 			output.append("sector\t").append(sector.level).append('\t')
@@ -173,6 +216,16 @@ public final class WorldEditorLayeredTerrainJournal {
 				.append(edit.sceneryId).append('\t')
 				.append(edit.direction).append('\n');
 		}
+		for (NpcEdit edit : npcs) {
+			output.append("npc\t")
+				.append(edit.remove ? "remove" : "upsert").append('\t')
+				.append(edit.level).append('\t')
+				.append(edit.startX).append('\t').append(edit.startY).append('\t')
+				.append(edit.placementId).append('\t')
+				.append(edit.npcId).append('\t')
+				.append(edit.minX).append('\t').append(edit.minY).append('\t')
+				.append(edit.maxX).append('\t').append(edit.maxY).append('\n');
+		}
 		Files.createDirectories(journal.getParent());
 		Path staged = journal.resolveSibling(journal.getFileName() + ".tmp");
 		if (Files.exists(staged, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
@@ -195,7 +248,7 @@ public final class WorldEditorLayeredTerrainJournal {
 			Files.deleteIfExists(staged);
 		}
 		return new SaveResult(
-			journal, tiles.size(), sectors.size(), scenery.size());
+			journal, tiles.size(), sectors.size(), scenery.size(), npcs.size());
 	}
 
 	public static final class SectorGrowth {
@@ -281,22 +334,76 @@ public final class WorldEditorLayeredTerrainJournal {
 		}
 	}
 
+	public static final class NpcEdit {
+		public final boolean remove;
+		public final int level;
+		public final int startX;
+		public final int startY;
+		public final String placementId;
+		public final int npcId;
+		public final int minX;
+		public final int minY;
+		public final int maxX;
+		public final int maxY;
+
+		public NpcEdit(
+			boolean remove,
+			int level,
+			int startX,
+			int startY,
+			String placementId,
+			int npcId,
+			int minX,
+			int minY,
+			int maxX,
+			int maxY) {
+			if (!coordinate(startX) || !coordinate(startY)
+				|| !coordinate(minX) || !coordinate(minY)
+				|| !coordinate(maxX) || !coordinate(maxY)
+				|| placementId == null
+				|| !SceneryEdit.ID.matcher(placementId).matches()
+				|| npcId < 0 || minX > startX || startX > maxX
+				|| minY > startY || startY > maxY
+				|| maxX - minX > 128 || maxY - minY > 128) {
+				throw new IllegalArgumentException(
+					"Layered NPC journal edit is outside supported bounds.");
+			}
+			this.remove = remove;
+			this.level = level;
+			this.startX = startX;
+			this.startY = startY;
+			this.placementId = placementId;
+			this.npcId = npcId;
+			this.minX = minX;
+			this.minY = minY;
+			this.maxX = maxX;
+			this.maxY = maxY;
+		}
+	}
+
 	public static final class SaveResult {
 		public final Path journal;
 		public final int tileCount;
 		public final int sectorCount;
 		public final int sceneryCount;
+		public final int npcCount;
 
 		SaveResult(
-			Path journal, int tileCount, int sectorCount, int sceneryCount) {
+			Path journal, int tileCount, int sectorCount, int sceneryCount,
+			int npcCount) {
 			this.journal = journal;
 			this.tileCount = tileCount;
 			this.sectorCount = sectorCount;
 			this.sceneryCount = sceneryCount;
+			this.npcCount = npcCount;
 		}
 	}
 
 	private static boolean rawByte(int value) {
 		return value >= 0 && value <= 255;
+	}
+
+	private static boolean coordinate(int value) {
+		return value >= 0 && value <= 32767;
 	}
 }
