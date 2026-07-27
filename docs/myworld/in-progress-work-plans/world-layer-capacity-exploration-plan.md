@@ -123,10 +123,11 @@ Implementation sequence:
      and no disk cache is introduced.
    - Transfer telemetry now distinguishes payload sectors from resident
      references in per-tick and benchmark summaries; the client context log/F6
-     summary records its current `residentSectors` count. Focused tests prove
-     first receipt, six-of-nine overlap, three incoming payloads, reconnect
-     refusal, cache clear, malformed-packet atomicity, bounded LRU eviction,
-     transaction conflicts, and v4/v5 compatibility.
+     summary records `residentSectors`, `lastPayloads`, and `lastReferences`
+     after each atomic receipt. Focused tests prove first receipt, six-of-nine
+     overlap, three incoming payloads, reconnect refusal, cache clear,
+     malformed-packet atomicity, bounded LRU eviction, transaction conflicts,
+     and v4/v5 compatibility.
 
 3. **Readiness acknowledgement, predictive delivery, and atomic activation**
    - Stage required sectors before a window boundary using authoritative

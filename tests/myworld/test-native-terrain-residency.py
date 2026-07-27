@@ -138,6 +138,9 @@ class NativeTerrainResidencyTest(unittest.TestCase):
                     require(first.getAvailableChunkCount() == 9,
                         "initial readiness");
                     require(cache.size() == 9, "initial resident size");
+                    require(cache.getLastPayloads() == 9
+                            && cache.getLastReferences() == 0,
+                        "initial receipt counters");
 
                     NativeLayeredTerrainSnapshot shifted =
                         NativeLayeredTerrainPacketDecoder.decodeV6(
@@ -148,6 +151,9 @@ class NativeTerrainResidencyTest(unittest.TestCase):
                     require(shifted.getAvailableChunkCount() == 9,
                         "shifted readiness");
                     require(cache.size() == 12, "six overlap plus three new");
+                    require(cache.getLastPayloads() == 3
+                            && cache.getLastReferences() == 6,
+                        "shifted receipt counters");
                     require(
                         (shifted.createTile(9 * 48, 12 * 48)
                             .groundElevation & 0xff) == 9,
@@ -182,6 +188,9 @@ class NativeTerrainResidencyTest(unittest.TestCase):
                         "malformed receipt partially poisoned cache");
 
                     cache.clear();
+                    require(cache.getLastPayloads() == 0
+                            && cache.getLastReferences() == 0,
+                        "clear receipt counters");
                     expectFailure(
                         () -> NativeLayeredTerrainPacketDecoder.decodeV6(
                             receiptUnchecked(10, false, false),
@@ -345,6 +354,8 @@ class NativeTerrainResidencyTest(unittest.TestCase):
             "NativeLayeredTerrainPacketDecoder.decodeV6(", packet_handler
         )
         self.assertIn('" residentSectors="', packet_handler)
+        self.assertIn('" lastPayloads="', packet_handler)
+        self.assertIn('" lastReferences="', packet_handler)
 
     def _compile_and_run(self, class_name, harness, sources):
         with tempfile.TemporaryDirectory() as temporary:

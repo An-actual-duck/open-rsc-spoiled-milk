@@ -73,7 +73,11 @@ public class PacketHandler {
 	public String getLayeredSceneContextDebugSummary() {
 		return layeredSceneContextState.summary()
 			+ " residentSectors="
-			+ nativeLayeredTerrainResidentCache.size();
+			+ nativeLayeredTerrainResidentCache.size()
+			+ " lastPayloads="
+			+ nativeLayeredTerrainResidentCache.getLastPayloads()
+			+ " lastReferences="
+			+ nativeLayeredTerrainResidentCache.getLastReferences();
 	}
 
 	public boolean hasLayeredSceneContext() {

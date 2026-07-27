@@ -11,6 +11,8 @@ public final class NativeLayeredTerrainResidentCache {
 	private final int capacity;
 	private final LinkedHashMap<String, NativeLayeredTerrainChunk> resident;
 	private long version;
+	private int lastPayloads;
+	private int lastReferences;
 
 	public NativeLayeredTerrainResidentCache() {
 		this(DEFAULT_CAPACITY);
@@ -38,8 +40,18 @@ public final class NativeLayeredTerrainResidentCache {
 		return resident.size();
 	}
 
+	public synchronized int getLastPayloads() {
+		return lastPayloads;
+	}
+
+	public synchronized int getLastReferences() {
+		return lastReferences;
+	}
+
 	public synchronized void clear() {
 		resident.clear();
+		lastPayloads = 0;
+		lastReferences = 0;
 		version = Math.addExact(version, 1L);
 	}
 
@@ -54,6 +66,8 @@ public final class NativeLayeredTerrainResidentCache {
 		}
 		resident.clear();
 		resident.putAll(transaction.staged);
+		lastPayloads = transaction.payloads;
+		lastReferences = transaction.references;
 		version = Math.addExact(version, 1L);
 		transaction.committed = true;
 	}
@@ -96,6 +110,8 @@ public final class NativeLayeredTerrainResidentCache {
 		private final long baseVersion;
 		private final LinkedHashMap<String, NativeLayeredTerrainChunk> staged;
 		private boolean committed;
+		private int payloads;
+		private int references;
 
 		private Transaction(
 			final NativeLayeredTerrainResidentCache owner,
@@ -119,6 +135,7 @@ public final class NativeLayeredTerrainResidentCache {
 			}
 			staged.put(checkedIdentity, checkedChunk);
 			trim(staged, owner.capacity);
+			payloads = Math.addExact(payloads, 1);
 			return checkedChunk;
 		}
 
@@ -131,6 +148,7 @@ public final class NativeLayeredTerrainResidentCache {
 				throw new IllegalStateException(
 					"Native terrain receipt references a missing resident sector");
 			}
+			references = Math.addExact(references, 1);
 			return chunk;
 		}
 
