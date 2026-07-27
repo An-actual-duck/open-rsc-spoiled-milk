@@ -283,6 +283,11 @@ final class WorldBuilderLayeredPackage {
 
 	void requireFirstDraftDescendant(WorldBuilderLayeredPackage source)
 		throws WorldBuilderDiscoveryException {
+		requireTerrainDraftDescendant(source);
+	}
+
+	void requireTerrainDraftDescendant(WorldBuilderLayeredPackage source)
+		throws WorldBuilderDiscoveryException {
 		if (source == null
 			|| !PACKAGE_ID.equals(packageId)
 			|| !PACKAGE_VERSION.equals(packageVersion)
@@ -348,28 +353,20 @@ final class WorldBuilderLayeredPackage {
 			for (TerrainRecord record : terrainRecords) {
 				if (record.level == level) starter.add(record);
 			}
-			requireStarterWindow(level, starter);
+			requireBuilderTerrain(level, starter);
 		}
 	}
 
-	private static void requireStarterWindow(
+	private static void requireBuilderTerrain(
 		int level, List<TerrainRecord> records)
 		throws WorldBuilderDiscoveryException {
-		if (records.size() != 9) {
+		if (records.size() < 9) {
 			throw new WorldBuilderDiscoveryException(
 				"Builder-created level " + level
-					+ " must contain exactly one 3x3 starter window.");
+					+ " must retain at least its 3x3 starter window.");
 		}
-		int minimumX = Integer.MAX_VALUE;
-		int maximumX = Integer.MIN_VALUE;
-		int minimumY = Integer.MAX_VALUE;
-		int maximumY = Integer.MIN_VALUE;
 		Set<String> coordinates = new HashSet<String>();
 		for (TerrainRecord record : records) {
-			minimumX = Math.min(minimumX, record.sectorX);
-			maximumX = Math.max(maximumX, record.sectorX);
-			minimumY = Math.min(minimumY, record.sectorY);
-			maximumY = Math.max(maximumY, record.sectorY);
 			coordinates.add(record.sectorX + ":" + record.sectorY);
 			String expected = "terrain/global/l" + signedToken(level)
 				+ "/x" + signedToken(record.sectorX)
@@ -380,23 +377,55 @@ final class WorldBuilderLayeredPackage {
 						+ record.path);
 			}
 		}
-		if ((long)maximumX - minimumX != 2L
-			|| (long)maximumY - minimumY != 2L) {
+		if (!containsThreeByThree(coordinates)) {
 			throw new WorldBuilderDiscoveryException(
 				"Builder-created level " + level
-					+ " starter terrain is not a contiguous 3x3 window.");
+					+ " no longer contains a complete 3x3 starter window.");
 		}
-		for (int offsetX = 0; offsetX < 3; offsetX++) {
-			int x = (int)((long)minimumX + offsetX);
-			for (int offsetY = 0; offsetY < 3; offsetY++) {
-				int y = (int)((long)minimumY + offsetY);
-				if (!coordinates.contains(x + ":" + y)) {
-					throw new WorldBuilderDiscoveryException(
-						"Builder-created level " + level
-							+ " starter terrain has a gap.");
+		Set<String> reached = new HashSet<String>();
+		List<String> pending = new ArrayList<String>();
+		pending.add(coordinates.iterator().next());
+		while (!pending.isEmpty()) {
+			String current = pending.remove(pending.size() - 1);
+			if (!reached.add(current)) continue;
+			int separator = current.indexOf(':');
+			int x = Integer.parseInt(current.substring(0, separator));
+			int y = Integer.parseInt(current.substring(separator + 1));
+			for (int[] direction : new int[][] {
+				{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+				String neighbor = ((long)x + direction[0])
+					+ ":" + ((long)y + direction[1]);
+				if (coordinates.contains(neighbor) && !reached.contains(neighbor)) {
+					pending.add(neighbor);
 				}
 			}
 		}
+		if (reached.size() != coordinates.size()) {
+			throw new WorldBuilderDiscoveryException(
+				"Builder-created level " + level
+					+ " terrain sectors are not edge-connected.");
+		}
+	}
+
+	private static boolean containsThreeByThree(Set<String> coordinates) {
+		for (String candidate : coordinates) {
+			int separator = candidate.indexOf(':');
+			int minimumX = Integer.parseInt(candidate.substring(0, separator));
+			int minimumY = Integer.parseInt(candidate.substring(separator + 1));
+			boolean complete = true;
+			for (int offsetX = 0; offsetX < 3 && complete; offsetX++) {
+				for (int offsetY = 0; offsetY < 3; offsetY++) {
+					if (!coordinates.contains(
+						((long)minimumX + offsetX) + ":"
+							+ ((long)minimumY + offsetY))) {
+						complete = false;
+						break;
+					}
+				}
+			}
+			if (complete) return true;
+		}
+		return false;
 	}
 
 	static String signedToken(int value) {

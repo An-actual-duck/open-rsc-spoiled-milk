@@ -121,6 +121,16 @@ final class WorldBuilderLayeredReview {
 		return value.toString();
 	}
 
+	boolean hasBuilderCreatedLevels() {
+		for (Integer level : levels) {
+			int value = level.intValue();
+			if (value != -1 && value != 0 && value != 1 && value != 2) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private static void exactKeys(Map<String,Object> object, String... names)
 		throws WorldBuilderDiscoveryException {
 		java.util.Set<String> expected =

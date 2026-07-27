@@ -139,8 +139,15 @@ public final class Development implements CommandTrigger {
 			layeredBuilderGoTo(player, command, args);
 			return;
 		}
+		if (command.equalsIgnoreCase("buildergrow")) {
+			layeredBuilderGrow(player, command, args);
+			return;
+		}
 		if (player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
-			&& isLayeredBuilderMutationCommand(command)) {
+			&& isLayeredBuilderMutationCommand(command)
+			&& !(command.equalsIgnoreCase("saveworldedits")
+				&& "spoiled-milk-builder-draft".equals(
+					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE))) {
 			player.message(messagePrefix
 				+ "Layered package review is read-only; no world files were changed.");
 			return;
@@ -347,6 +354,45 @@ public final class Development implements CommandTrigger {
 		player.teleportLayered(destination,false);
 		player.message(messagePrefix+"Builder location: "
 			+x+","+y+",L"+level+".");
+	}
+
+	private static void layeredBuilderGrow(
+		Player player, String command, String[] args) {
+		if (!player.getConfig().WORLD_BUILDER_MODE
+			|| !player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
+			|| !"spoiled-milk-builder-draft".equals(
+				player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)
+			|| !player.getWorld().getServer().getWorldEditorSessions()
+				.ownsActiveSession(player)) {
+			player.message(messagePrefix
+				+ "Terrain allocation requires an active isolated Builder draft session.");
+			return;
+		}
+		if (args.length < 2 || args.length > 3) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [world-x] [world-y] (level)");
+			return;
+		}
+		try {
+			int x = Integer.parseInt(args[0]);
+			int y = Integer.parseInt(args[1]);
+			int level = args.length == 3
+				? Integer.parseInt(args[2])
+				: player.getLayeredLocation().getCoordinate().getLevel();
+			com.openrsc.server.model.world.coordinate.WorldMapSectorId sector =
+				player.getWorld().getServer().getWorldEditorSessions()
+					.queueNativeTerrainSectorGrowth(player, x, y, level);
+			player.message(messagePrefix + "Queued flat terrain sector "
+				+ sector.getSectorX() + "," + sector.getSectorY() + " on L"
+				+ sector.getLevel() + ". Save, close, and reopen the Builder "
+				+ "before navigating into it.");
+		} catch (NumberFormatException failure) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [world-x] [world-y] (level)");
+		} catch (Exception failure) {
+			player.message(messagePrefix
+				+ "Terrain allocation refused: " + failure.getMessage());
+		}
 	}
 
 	private void setWorldTime(Player player, String command, String[] args) {
@@ -1300,13 +1346,14 @@ public final class Development implements CommandTrigger {
 		}
 
 		int terrainEdits=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSize();
+		int terrainGrowth=player.getWorld().getServer().getWorldEditorSessions().nativeTerrainGrowthDraftSize();
 		int terrainSectors=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSectorCount();
-		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0) {
+		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0) {
 			player.message(messagePrefix + "No pending world edits.");
 			return;
 		}
 
-		player.message(messagePrefix + "Pending world edits: terrain " + terrainEdits+" tiles / "+terrainSectors+" sectors, scenery " + edits.size()
+		player.message(messagePrefix + "Pending world edits: terrain " + terrainEdits+" tiles / "+terrainGrowth+" new sectors / "+terrainSectors+" affected sectors, scenery " + edits.size()
 			+ ", NPCs " + npcEdits.size() + ".");
 		int shown = 0;
 		for (WorldSceneryEditFiles.Edit edit : edits) {
@@ -1337,12 +1384,30 @@ public final class Development implements CommandTrigger {
 			npcEdits = new ArrayList<WorldNpcEditFiles.Edit>(PENDING_NPC_EDITS.values());
 		}
 
-		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int terrainEdits=editor.terrainDraftSize();
-		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0) {
+		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int terrainEdits=editor.terrainDraftSize();int terrainGrowth=editor.nativeTerrainGrowthDraftSize();
+		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0) {
 			player.message(messagePrefix + "No pending world edits to save.");
 			return;
 		}
-		if(terrainEdits>0&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the terrain draft.");return;}
+		if((terrainEdits>0||terrainGrowth>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the terrain draft.");return;}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				com.openrsc.server.content.worldedit.WorldEditorLayeredTerrainJournal.SaveResult saved=
+					editor.saveNativeTerrainDraft(player);
+				int total=saved.tileCount+saved.sectorCount;
+				player.message(messagePrefix+"Saved "+total+" world edits.");
+				player.message(messagePrefix+"Layered terrain journal: "+saved.tileCount
+					+" tiles, "+saved.sectorCount+" new sectors. Close and reopen "
+					+"the Builder to commit and reload the working package.");
+				LOGGER.info(player.getUsername()+" saved layered terrain draft journal "
+					+saved.journal+" with "+saved.tileCount+" tiles and "
+					+saved.sectorCount+" sectors");
+			}catch(Exception failure){
+				LOGGER.error(failure);
+				player.message(messagePrefix+"Failed to save world edits: "+failure.getMessage());
+			}
+			return;
+		}
 
 		try {
 			WorldEditorTerrainSaveFiles.SaveResult terrainResult=terrainEdits==0?null:editor.saveTerrainDraft(player);

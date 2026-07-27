@@ -2,6 +2,8 @@ package com.openrsc.server.net.rsc.handlers;
 
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager.Validation;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager.TerrainStrokeResult;
+import com.openrsc.server.content.worldedit.WorldEditorSessionManager.NativeTerrainSnapshot;
+import com.openrsc.server.content.worldedit.WorldEditorSessionManager.NativeTerrainStrokeResult;
 import com.openrsc.server.content.worldedit.WorldEditorTerrainStroke;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.WorldEditorTerrainArchive;
@@ -33,7 +35,9 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		}
 		try {
 			if (player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
-				&& (request.type == 5 || request.type == 6)) {
+				&& (request.type == 5 || request.type == 6)
+				&& !"spoiled-milk-builder-draft".equals(
+					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)) {
 				error(player, validation.nextSequence,
 					"Layered package review is read-only; no terrain was changed.");
 				return;
@@ -61,10 +65,9 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 			throw new IllegalArgumentException("Inspect a tile on the active signed level.");
 		WorldCoordinate coordinate=new WorldCoordinate(r.x,r.y,r.plane);
 		WorldLocation location=new WorldLocation(current.getWorldSpace(),coordinate);
-		NativeLayeredTerrainTile source=p.getWorld().getRegionManager()
-			.findNativeLayeredWorldPackage(location)
-			.flatMap(owner->owner.findTile(location))
-			.orElseThrow(()->new IllegalArgumentException("Tile is not present in the reviewed package."));
+		NativeTerrainSnapshot inspected=p.getWorld().getServer()
+			.getWorldEditorSessions().inspectNativeTerrain(p,location);
+		NativeLayeredTerrainTile source=inspected.tile;
 		TileValue runtime=p.getWorld().getTile(location);
 		WorldEditorStruct out=new WorldEditorStruct();out.type=3;out.sequence=next;
 		out.x=coordinate.getX();out.y=coordinate.getY();out.plane=coordinate.getLevel();
@@ -83,6 +86,11 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		ActionSender.sendWorldEditor(p,out);
 	}
 	private void paintTerrain(WorldEditorRequestStruct r,Player p,int next) throws Exception {
+		if(p.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			r.terrainTiles=new int[][]{{r.x,r.y}};
+			paintNativeTerrainStroke(r,p,next);
+			return;
+		}
 		if(!p.getWorld().withinWorld(r.x,r.y))throw new IllegalArgumentException("Terrain tile is outside the runtime world.");
 		validateTerrainDefinitions(p,r);
 		WorldEditorTerrainArchive.Snapshot before=p.getWorld().getServer().getWorldEditorSessions().inspectTerrain(p,r.x,r.y,r.plane);
@@ -91,6 +99,10 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		sendTerrain(p,s,next,7,false,r.fieldMask);
 	}
 	private void paintTerrainStroke(WorldEditorRequestStruct r,Player p,int next) throws Exception {
+		if(p.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			paintNativeTerrainStroke(r,p,next);
+			return;
+		}
 		validateTerrainDefinitions(p,r);
 		int[][] coordinates=WorldEditorTerrainStroke.validateTiles(r.terrainTiles);
 		for(int[] coordinate:coordinates){
@@ -109,6 +121,44 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		out.message=wallDefinitionName(p,center.verticalWall-1)+"\t"+wallDefinitionName(p,center.horizontalWall-1)
 			+"\t"+wallDefinitionName(p,center.diagonalDefinitionId());
 		ActionSender.sendWorldEditor(p,out);
+	}
+	private void paintNativeTerrainStroke(WorldEditorRequestStruct r,Player p,int next) {
+		validateTerrainDefinitions(p,r);
+		WorldLocation current=p.getLayeredLocation();
+		if(r.plane!=current.getCoordinate().getLevel())
+			throw new IllegalArgumentException("Paint terrain on the active signed level.");
+		int[][] coordinates=WorldEditorTerrainStroke.validateTiles(r.terrainTiles);
+		for(int[] coordinate:coordinates){
+			if(coordinate[0]<0||coordinate[0]>32767||coordinate[1]<0||coordinate[1]>32767)
+				throw new IllegalArgumentException("Terrain stroke leaves supported Builder coordinates.");
+		}
+		NativeTerrainStrokeResult result=p.getWorld().getServer().getWorldEditorSessions()
+			.paintNativeTerrainStroke(p,coordinates,r.plane,r.fieldMask,r.elevation,
+				r.groundTexture,r.groundOverlay,r.roofTexture,r.horizontalWall,
+				r.verticalWall,r.diagonal);
+		WorldEditorStruct out=new WorldEditorStruct();out.type=8;out.sequence=next;out.fieldMask=r.fieldMask;
+		for(NativeTerrainSnapshot after:result.after)out.terrainTiles.add(nativeTerrainTile(p,after));
+		NativeLayeredTerrainTile center=result.after.get(0).tile;
+		out.message=wallDefinitionName(p,center.getVerticalWall()-1)+"\t"
+			+wallDefinitionName(p,center.getHorizontalWall()-1)+"\t"
+			+wallDefinitionName(p,diagonalRawWall(center.getDiagonalWall())-1);
+		ActionSender.sendWorldEditor(p,out);
+	}
+	private WorldEditorStruct.TerrainTile nativeTerrainTile(Player p,NativeTerrainSnapshot snapshot){
+		WorldCoordinate coordinate=snapshot.location.getCoordinate();
+		NativeLayeredTerrainTile source=snapshot.tile;
+		TileValue runtime=p.getWorld().getTile(snapshot.location);
+		WorldEditorStruct.TerrainTile tile=new WorldEditorStruct.TerrainTile();
+		tile.x=coordinate.getX();tile.y=coordinate.getY();tile.plane=coordinate.getLevel();
+		tile.sectorX=coordinate.getSectorX();tile.sectorY=coordinate.getSectorY();
+		tile.localX=coordinate.getLocalX();tile.localY=coordinate.getLocalY();
+		tile.elevation=source.getElevation();tile.groundTexture=source.getTexture();
+		tile.groundOverlay=inspectionGroundOverlay(runtime,source.getOverlay());
+		tile.roofTexture=source.getRoof();tile.horizontalWall=source.getHorizontalWall();
+		tile.verticalWall=source.getVerticalWall();tile.diagonal=source.getDiagonalWall();
+		tile.traversalMask=runtime==null?0:runtime.traversalMask&0xff;
+		tile.projectileAllowed=runtime!=null&&runtime.projectileAllowed;
+		return tile;
 	}
 	private void applyRuntimeTerrain(Player p,WorldEditorTerrainArchive.Snapshot before,WorldEditorTerrainArchive.Snapshot s,int fieldMask){
 		int x=s.coordinates.worldX,y=s.coordinates.worldY;TileValue runtime=p.getWorld().getMutableTile(x,y);

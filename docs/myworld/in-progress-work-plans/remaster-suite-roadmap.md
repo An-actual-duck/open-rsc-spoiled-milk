@@ -1121,10 +1121,17 @@ presentation boundaries, tile inspection, surface return, and the complete
 route again after a clean client/server restart of the unchanged workspace.
 The source package remained immutable.
 
-The next Builder slice can therefore add controlled terrain authoring and
-deterministic draft persistence, including explicit sector growth at an
-allocated edge. It must remain working-copy-only; placement authoring, broad
-save/export, and target-game mutation stay behind later gates.
+The next bounded Builder slice is implemented and awaiting focused owner
+acceptance. Existing terrain controls are enabled only on Builder-created
+levels; accepted source levels remain immutable. Painting updates the active
+native presentation/collision overlay, while **Save** writes a bounded,
+deterministic journal. A clean close lets the launcher materialize that journal
+through a source-reverified copy-on-write package swap, and the next launch
+reopens the durable result. `::buildergrow x y (level)` deliberately allocates
+one flat edge-adjacent sector; gaps, duplicates, edits to source levels, more
+than 4,096 tiles, or more than 64 new sectors refuse. Placement authoring,
+terrain deletion, layered export, and target-game mutation remain locked
+behind later gates.
 
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
@@ -1556,6 +1563,7 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Keep the first live layered terrain writer restricted to Builder-created levels and commit through the isolated working package only. | Implemented for focused owner review: terrain paint is immediately visible in the Builder, Save writes a deterministic bounded journal, normal close/reopen performs a validated copy-on-write package commit, and explicit edge-adjacent sector growth is available through `::buildergrow`; source levels, placements, export, and target files remain locked |
 | 2026-07-27 | Make arbitrary signed depth a transactional Builder authoring action, not an implicit teleport into absent terrain. | The engine/package format already accepts data-declared `-3`, `+3`, and later levels. The next native-writer slice creates level metadata, safe initial terrain, and an empty placement set atomically in the isolated workspace; undeclared destinations continue to refuse |
 | 2026-07-27 | Prevent native presentation preloads from publishing terrain built under a different receipt scope. | Native package windows no longer schedule speculative terrain/model builds, every relevant cache fences publication by its complete scope key, and the rapid-navigation water-edge route is queued for owner retest |
 | 2026-07-25 | Present the public project as **RSC Remastered**, a definitive vanilla-content remaster with one coherent launcher/tooling experience; retain modular capability boundaries as internal architecture. | Confirmed; refines the earlier Suite-first packaging direction |

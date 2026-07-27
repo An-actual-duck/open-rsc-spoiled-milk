@@ -21563,7 +21563,9 @@ public final class mudclient implements Runnable {
 		int roofTexture,int horizontalWall,int verticalWall,int diagonal,boolean overlayPainted,boolean rebuild){
 		if(world==null)return;
 		world.applyWorldEditorTerrainPatch(plane,worldX+worldOffsetX,worldY+worldOffsetZ,elevation,groundTexture,groundOverlay,roofTexture,horizontalWall,verticalWall,diagonal,overlayPainted);
-		if(rebuild&&plane==requestedPlane)reloadWorldEditorTerrain();
+		if(rebuild&&(plane==requestedPlane
+			|| (WorldBuilderClientProfile.current().isLayeredTerrainDraft()
+				&& plane==getEditorPlayerWorldLevel())))reloadWorldEditorTerrain();
 	}
 	public void reloadWorldEditorTerrain(){
 		if(!hasCompletedInitialRegionLoad||localPlayer==null)return;

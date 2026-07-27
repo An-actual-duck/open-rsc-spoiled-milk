@@ -17,6 +17,8 @@ public final class WorldBuilderClientProfile {
 	public static final String PROJECT_NAME_PROPERTY = "openrsc.worldBuilderProjectName";
 	public static final String SOURCE_REVISION_PROPERTY = "openrsc.worldBuilderSourceRevision";
 	public static final String LAYERED_REVIEW_PROPERTY = "openrsc.worldBuilderLayeredReview";
+	public static final String LAYERED_TERRAIN_DRAFT_PROPERTY =
+		"openrsc.worldBuilderLayeredTerrainDraft";
 	public static final String LAYERED_PACKAGE_ID_PROPERTY =
 		"openrsc.worldBuilderLayeredPackageId";
 	public static final String LAYERED_PACKAGE_VERSION_PROPERTY =
@@ -41,6 +43,7 @@ public final class WorldBuilderClientProfile {
 	private final String projectName;
 	private final String sourceRevision;
 	private final boolean layeredReview;
+	private final boolean layeredTerrainDraft;
 	private final String layeredPackageId;
 	private final String layeredPackageVersion;
 	private final String layeredManifestSha256;
@@ -49,6 +52,7 @@ public final class WorldBuilderClientProfile {
 
 	private WorldBuilderClientProfile(boolean enabled, String host, int port, String credential,
 		String projectName, String sourceRevision, boolean layeredReview,
+		boolean layeredTerrainDraft,
 		String layeredPackageId, String layeredPackageVersion,
 		String layeredManifestSha256, String layeredWorldSpace, int[] layeredLevels) {
 		this.enabled = enabled;
@@ -58,6 +62,7 @@ public final class WorldBuilderClientProfile {
 		this.projectName = projectName;
 		this.sourceRevision = sourceRevision;
 		this.layeredReview = layeredReview;
+		this.layeredTerrainDraft = layeredTerrainDraft;
 		this.layeredPackageId = layeredPackageId;
 		this.layeredPackageVersion = layeredPackageVersion;
 		this.layeredManifestSha256 = layeredManifestSha256;
@@ -102,6 +107,13 @@ public final class WorldBuilderClientProfile {
 		boolean layeredReview = strictBoolean(
 			LAYERED_REVIEW_PROPERTY,
 			System.getProperty(LAYERED_REVIEW_PROPERTY, "false"));
+		boolean layeredTerrainDraft = strictBoolean(
+			LAYERED_TERRAIN_DRAFT_PROPERTY,
+			System.getProperty(LAYERED_TERRAIN_DRAFT_PROPERTY, "false"));
+		if (layeredTerrainDraft && !layeredReview) {
+			throw new IllegalArgumentException(
+				LAYERED_TERRAIN_DRAFT_PROPERTY + " requires layered review");
+		}
 		String layeredPackageId = "";
 		String layeredPackageVersion = "";
 		String layeredManifestSha256 = "";
@@ -129,7 +141,8 @@ public final class WorldBuilderClientProfile {
 		}
 		current = new WorldBuilderClientProfile(
 			true, host, port, credential, projectName, sourceRevision,
-			layeredReview, layeredPackageId, layeredPackageVersion,
+			layeredReview, layeredTerrainDraft,
+			layeredPackageId, layeredPackageVersion,
 			layeredManifestSha256, layeredWorldSpace, layeredLevels);
 		return current;
 	}
@@ -170,6 +183,10 @@ public final class WorldBuilderClientProfile {
 		return enabled && layeredReview;
 	}
 
+	public boolean isLayeredTerrainDraft() {
+		return enabled && layeredReview && layeredTerrainDraft;
+	}
+
 	public String layeredPackageId() {
 		return layeredPackageId;
 	}
@@ -205,7 +222,8 @@ public final class WorldBuilderClientProfile {
 
 	private static WorldBuilderClientProfile disabled() {
 		return new WorldBuilderClientProfile(
-			false, null, 0, null, "", "", false, "", "", "", "", new int[0]);
+			false, null, 0, null, "", "", false, false,
+			"", "", "", "", new int[0]);
 	}
 
 	private static boolean strictBoolean(String property, String value) {

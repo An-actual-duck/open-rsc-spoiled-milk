@@ -3847,6 +3847,10 @@ public class RegionManager {
 			.orElseThrow(() -> new IllegalStateException(
 				"Native layered terrain disappeared after startup validation: "
 					+ location));
+		if (getWorld().getServer().getConfig().WORLD_BUILDER_MODE) {
+			source = getWorld().getServer().getWorldEditorSessions()
+				.resolveNativeTerrainTile(location, source);
+		}
 		TileValue tile = new TileValue();
 		tile.overlay = (byte) source.getOverlay();
 		tile.diagWallVal = (short) source.getDiagonalWall();
@@ -3871,14 +3875,19 @@ public class RegionManager {
 		final int deltaX,
 		final int deltaY) {
 		WorldCoordinate coordinate = location.getCoordinate();
-		return owner.findTile(
-			new WorldLocation(
-				location.getWorldSpace(),
-				new WorldCoordinate(
-					Math.addExact(coordinate.getX(), deltaX),
-					Math.addExact(coordinate.getY(), deltaY),
-					coordinate.getLevel())))
-			.orElse(null);
+		WorldLocation neighbor = new WorldLocation(
+			location.getWorldSpace(),
+			new WorldCoordinate(
+				Math.addExact(coordinate.getX(), deltaX),
+				Math.addExact(coordinate.getY(), deltaY),
+				coordinate.getLevel()));
+		NativeLayeredTerrainTile source = owner.findTile(neighbor).orElse(null);
+		if (source == null
+			|| !getWorld().getServer().getConfig().WORLD_BUILDER_MODE) {
+			return source;
+		}
+		return getWorld().getServer().getWorldEditorSessions()
+			.resolveNativeTerrainTile(neighbor, source);
 	}
 
 	private boolean nativeTerrainOverlayBlocks(final int overlayId) {

@@ -172,6 +172,72 @@ public final class WorldBuilderLayeredDraftHarness {
         require(empty != null && empty.placementCount == 0,
             "empty v3 placement set");
 
+        Path journal = workspace.resolve(
+            WorldBuilderLayeredTerrainDraftJournal.RELATIVE_PATH);
+        String journalText =
+            "world-builder-layered-terrain-draft-v1\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "tile-count\t1\n"
+            + "sector-count\t1\n"
+            + "sector\t-3\t4\t13\n"
+            + "tile\t-3\t140\t640\t7\t8\t0\t0\t0\t0\t0\n";
+        Files.write(journal, journalText.getBytes(StandardCharsets.US_ASCII));
+        WorldBuilderLayeredTerrainDraftJournal.CommitResult terrainCommit =
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        require(terrainCommit != null && terrainCommit.tileCount == 1,
+            "terrain tile journal commit");
+        require(terrainCommit.sectorCount == 1,
+            "terrain sector-growth journal commit");
+        require(!Files.exists(journal), "committed journal retained");
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        draft.requireTerrainDraftDescendant(accepted);
+        require(draft.terrainSectorCount == 1781, "grown terrain count");
+        Path changed = working.resolve("terrain/global/lm3/xp2-yp13.raw");
+        byte[] changedBytes = Files.readAllBytes(changed);
+        int changedOffset = (Math.floorMod(140, 48) * 48
+            + Math.floorMod(640, 48)) * 10;
+        require((changedBytes[changedOffset] & 255) == 7,
+            "committed elevation");
+        require((changedBytes[changedOffset + 1] & 255) == 8,
+            "committed floor color");
+        require(Files.size(
+            working.resolve("terrain/global/lm3/xp4-yp13.raw"))
+                == 48 * 48 * 10,
+            "grown sector payload");
+        require(sourceManifestHash.equals(WorldBuilderHashes.sha256(sourceManifest)),
+            "source changed during terrain commit");
+        WorldBuilderSourceSnapshot.verify(workspace);
+        WorldBuilderLayeredReview terrainRestart =
+            WorldBuilderLayeredReview.readIfPresent(workspace);
+        require(terrainCommit.manifestSha256.equals(
+            terrainRestart.manifestSha256),
+            "terrain manifest changed across reopen");
+
+        String refusedSourceEdit =
+            "world-builder-layered-terrain-draft-v1\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "tile-count\t1\n"
+            + "sector-count\t0\n"
+            + "tile\t0\t120\t648\t7\t8\t0\t0\t0\t0\t0\n";
+        Files.write(
+            journal,
+            refusedSourceEdit.getBytes(StandardCharsets.US_ASCII));
+        boolean sourceEditRefused = false;
+        try {
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        } catch (WorldBuilderDiscoveryException expected) {
+            sourceEditRefused = expected.getMessage().contains(
+                "restricted to a Builder-created level");
+        }
+        require(sourceEditRefused, "accepted source-level edit refusal");
+        require(Files.exists(journal), "refused journal was discarded");
+        require(terrainCommit.manifestSha256.equals(
+            WorldBuilderLayeredPackage.discoverDraft(working).manifestSha256),
+            "source-level refusal changed the working draft");
+        Files.delete(journal);
+
         String stableFingerprint = draft.packageFingerprintSha256;
         boolean duplicateRefused = false;
         try {

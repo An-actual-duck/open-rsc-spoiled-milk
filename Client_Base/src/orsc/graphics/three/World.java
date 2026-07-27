@@ -2794,6 +2794,15 @@ public final class World {
 		if (height == nativePresentationPlane
 			&& nativeLayeredTerrainSnapshot != null) {
 			applyNativeLayeredTerrain(window, sectionX, sectionY);
+			for (int y = 0; y < ACTIVE_SECTION_GRID; y++) {
+				for (int x = 0; x < ACTIVE_SECTION_GRID; x++) {
+					applyWorldEditorTerrainPatches(
+						window[y * ACTIVE_SECTION_GRID + x],
+						nativeLayeredTerrainSnapshot.getLevel(),
+						originX + x,
+						originY + y);
+				}
+			}
 		} else if (height == 0 && syntheticDeepFixtureTerrain) {
 			applySyntheticDeepFixtureTerrain(window, sectionX, sectionY);
 		}

@@ -91,6 +91,34 @@ public final class WorldEditStorageContext {
 		return configDirectory;
 	}
 
+	public Path layeredWorkingPackage() throws IOException {
+		if (!builderMode) {
+			throw new IOException(
+				"Layered draft storage is restricted to World Builder mode.");
+		}
+		return requireContainedDirectory(
+			workspaceRoot,
+			workingRoot.resolve("layered-world/package").normalize(),
+			"layered working package");
+	}
+
+	public Path layeredTerrainDraftJournal() throws IOException {
+		if (!builderMode) {
+			throw new IOException(
+				"Layered draft storage is restricted to World Builder mode.");
+		}
+		Path journal =
+			workingRoot.resolve("layered-world/terrain-draft-v1.tsv").normalize();
+		requireContainedPath(workspaceRoot, journal, "layered terrain draft journal");
+		if (Files.exists(journal, LinkOption.NOFOLLOW_LINKS)
+			&& (!Files.isRegularFile(journal, LinkOption.NOFOLLOW_LINKS)
+				|| Files.isSymbolicLink(journal))) {
+			throw new IOException(
+				"Layered terrain draft journal is unsafe: " + journal);
+		}
+		return journal;
+	}
+
 	public Path terrainArchive(ServerConfiguration config) throws IOException {
 		String name = config.WANT_CUSTOM_LANDSCAPE ? "Custom_Landscape.orsc"
 			: (config.MEMBER_WORLD ? "Authentic_Landscape.orsc" : "F2PLandscape.orsc");

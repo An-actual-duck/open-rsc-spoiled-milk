@@ -299,6 +299,7 @@ public final class GameStateUpdater {
 				"Native client-sector window does not cover the player");
 		}
 		return new NativeLayeredSceneTerrain(
+			getServer(),
 			terrainPackage,
 			location,
 			centerSectorX,
@@ -984,16 +985,19 @@ public final class GameStateUpdater {
 	}
 
 	private static final class NativeLayeredSceneTerrain {
+		private final Server server;
 		private final NativeLayeredWorldPackage terrainPackage;
 		private final WorldLocation location;
 		private final int currentChunkX;
 		private final int currentChunkY;
 
 		private NativeLayeredSceneTerrain(
+			final Server server,
 			final NativeLayeredWorldPackage terrainPackage,
 			final WorldLocation location,
 			final int currentChunkX,
 			final int currentChunkY) {
+			this.server = Objects.requireNonNull(server, "server");
 			this.terrainPackage = Objects.requireNonNull(
 				terrainPackage, "terrainPackage");
 			this.location = Objects.requireNonNull(location, "location");
@@ -1048,10 +1052,18 @@ public final class GameStateUpdater {
 							chunk.getIdentity().getSectorY();
 						output.sourceEncoding =
 							chunk.getSourceEncoding();
-						output.sourcePayloadSha256 =
-							chunk.getSourceSha256();
-						output.tileBytes =
-							compressNativeTerrain(chunk.copyWireBytes());
+						if(server.getConfig().WORLD_BUILDER_MODE){
+							output.sourcePayloadSha256 =
+								server.getWorldEditorSessions()
+									.nativeTerrainSectorSha256(chunk);
+							output.tileBytes =
+								compressNativeTerrain(
+									server.getWorldEditorSessions()
+										.copyNativeTerrainSectorWireBytes(chunk));
+						}else{
+							output.sourcePayloadSha256=chunk.getSourceSha256();
+							output.tileBytes=compressNativeTerrain(chunk.copyWireBytes());
+						}
 					}
 					context.nativeChunks.add(output);
 				}

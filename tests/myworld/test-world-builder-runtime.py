@@ -240,10 +240,15 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         System.setProperty(WorldBuilderClientProfile.LAYERED_LEVELS_PROPERTY, "-1,0,1,2");
                         profile = WorldBuilderClientProfile.initializeFromSystemProperties();
                         require(profile.isLayeredReview(), "layered review enabled");
+                        require(!profile.isLayeredTerrainDraft(), "review is not writable by default");
                         require(profile.declaresLayer(-1) && profile.declaresLayer(2)
                             && !profile.declaresLayer(-2), "declared signed levels");
                         require("-1,0,1,2".equals(profile.layeredLevelsLabel()), "level label");
                         require("fab8d7d1a51e".equals(profile.layeredManifestShort()), "manifest identity");
+                        System.setProperty(
+                            WorldBuilderClientProfile.LAYERED_TERRAIN_DRAFT_PROPERTY, "true");
+                        profile = WorldBuilderClientProfile.initializeFromSystemProperties();
+                        require(profile.isLayeredTerrainDraft(), "terrain draft enabled");
 
                         expectRefusal("0.0.0.0", "43615", args[0]);
                         expectRefusal("127.0.0.1", "0", args[0]);
@@ -392,7 +397,7 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
         self.assertIn("Layered package review is read-only", editor)
         self.assertIn("declaresLayer(level)", editor)
         self.assertIn("WORLD_BUILDER_LAYERED_REVIEW_MODE", editor_handler)
-        self.assertIn("findNativeLayeredWorldPackage(location)", editor_handler)
+        self.assertIn("inspectNativeTerrain(p,location)", editor_handler)
         self.assertIn("editor.plane=packet.readByte();", parser)
         self.assertIn("layeredBuilderGoTo(player, command, args)", command)
         self.assertIn("isLayeredBuilderMutationCommand(command)", command)
@@ -408,6 +413,7 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
         self.assertIn("-Dopenrsc.worldBuilderWorkspaceRoot=", supervisor)
         self.assertIn("-Dopenrsc.worldBuilderSourceRevision=", supervisor)
         self.assertIn("-Dopenrsc.worldBuilderLayeredReview=true", supervisor)
+        self.assertIn("-Dopenrsc.worldBuilderLayeredTerrainDraft=", supervisor)
         self.assertIn("WorldBuilderLayeredReview.readIfPresent(workspace)", supervisor)
         self.assertIn("rsc-remastered.spoiled-milk-layered-world", layered_package)
         self.assertIn("Layered package contains missing or untracked files", layered_package)

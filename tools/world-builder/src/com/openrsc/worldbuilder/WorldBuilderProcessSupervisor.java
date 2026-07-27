@@ -34,9 +34,8 @@ public final class WorldBuilderProcessSupervisor {
 	public int runPrepared(Path requestedWorkspace, int port)
 		throws IOException, WorldBuilderDiscoveryException, InterruptedException {
 		Path workspace = validateWorkspace(requestedWorkspace, port);
-		return superviseWithCommands(workspace, port,
-			defaultServerCommand(workspace), defaultClientCommand(workspace, port),
-			DEFAULT_READY_TIMEOUT_MILLIS);
+		return superviseWithCommands(
+			workspace, port, null, null, DEFAULT_READY_TIMEOUT_MILLIS);
 	}
 
 	int superviseWithCommands(Path workspace, int port, List<String> serverCommand,
@@ -56,10 +55,45 @@ public final class WorldBuilderProcessSupervisor {
 					"This World Builder workspace is already running: " + workspace);
 			}
 			try {
-				return superviseLocked(workspace, port, serverCommand, clientCommand, readyTimeoutMillis);
+				boolean preparedCommands = serverCommand == null && clientCommand == null;
+				if ((serverCommand == null) != (clientCommand == null)) {
+					throw new IllegalArgumentException(
+						"World Builder server and client commands must both be supplied.");
+				}
+				if (preparedCommands) {
+					commitPendingLayeredTerrain(workspace);
+					validateWorkspace(workspace, port);
+					serverCommand = defaultServerCommand(workspace);
+					clientCommand = defaultClientCommand(workspace, port);
+				}
+				int exit = superviseLocked(
+					workspace, port, serverCommand, clientCommand, readyTimeoutMillis);
+				if (preparedCommands && exit == 0) {
+					commitPendingLayeredTerrain(workspace);
+					validateWorkspace(workspace, port);
+				} else if (preparedCommands) {
+					System.err.println(
+						"World Builder did not close cleanly; any saved layered "
+							+ "terrain journal was retained without committing.");
+				}
+				return exit;
 			} finally {
 				lock.release();
 			}
+		}
+	}
+
+	private static void commitPendingLayeredTerrain(Path workspace)
+		throws IOException, WorldBuilderDiscoveryException {
+		WorldBuilderLayeredTerrainDraftJournal.CommitResult committed =
+			new WorldBuilderLayeredTerrainDraftJournal()
+				.commitIfPresentLocked(workspace);
+		if (committed != null) {
+			System.out.println(
+				"Committed layered Builder terrain draft: "
+					+ committed.tileCount + " tiles, "
+					+ committed.sectorCount + " sectors, manifest "
+					+ committed.manifestSha256.substring(0, 12));
 		}
 	}
 
@@ -130,7 +164,7 @@ public final class WorldBuilderProcessSupervisor {
 				}
 			}
 			serverExit = active[0].waitFor();
-			return serverFailedFirst ? 5 : clientExit;
+			return serverFailedFirst || serverExit != 0 ? 5 : clientExit;
 		} finally {
 			if (active[1] != null && active[1].isAlive()) {
 				active[1].destroy();
@@ -236,6 +270,8 @@ public final class WorldBuilderProcessSupervisor {
 			"-Dopenrsc.worldBuilderSourceRevision=" + sourceRevision));
 		if (layered != null) {
 			command.add("-Dopenrsc.worldBuilderLayeredReview=true");
+			command.add("-Dopenrsc.worldBuilderLayeredTerrainDraft="
+				+ layered.hasBuilderCreatedLevels());
 			command.add("-Dopenrsc.worldBuilderLayeredPackageId=" + layered.packageId);
 			command.add("-Dopenrsc.worldBuilderLayeredPackageVersion="
 				+ layered.packageVersion);

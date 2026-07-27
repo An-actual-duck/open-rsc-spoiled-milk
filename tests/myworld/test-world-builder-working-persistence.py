@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 JSON_JAR = ROOT / "server/lib/json-20190722.jar"
 SOURCES = (
     ROOT / "server/src/com/openrsc/server/io/WorldEditorTerrainSaveFiles.java",
+    ROOT / "server/src/com/openrsc/server/content/worldedit/WorldEditorLayeredTerrainJournal.java",
     ROOT / "server/src/com/openrsc/server/util/WorldSceneryEditFiles.java",
     ROOT / "server/src/com/openrsc/server/util/WorldNpcEditFiles.java",
 )
@@ -16,6 +17,7 @@ SOURCES = (
 
 HARNESS = r"""
 import com.openrsc.server.external.NPCLoc;
+import com.openrsc.server.content.worldedit.WorldEditorLayeredTerrainJournal;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.util.WorldNpcEditFiles;
 import com.openrsc.server.util.WorldSceneryEditFiles;
@@ -124,6 +126,30 @@ public final class WorldBuilderWorkingPersistenceHarness {
             "target terrain changed");
         require(Files.list(project.resolve("backups/terrain")).count() == 2,
             "terrain backups were not workspace-owned");
+
+        Path layeredJournal =
+            working.resolve("layered-world/terrain-draft-v1.tsv");
+        WorldEditorLayeredTerrainJournal.SaveResult layered =
+            WorldEditorLayeredTerrainJournal.save(
+                layeredJournal,
+                "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                Arrays.asList(
+                    new WorldEditorLayeredTerrainJournal.SectorGrowth(-3, 4, 13)),
+                Arrays.asList(
+                    new WorldEditorLayeredTerrainJournal.TileEdit(
+                        -3, 141, 640, 9, 10, 0, 0, 0, 0, 0),
+                    new WorldEditorLayeredTerrainJournal.TileEdit(
+                        -3, 140, 640, 7, 8, 0, 0, 0, 0, 0)));
+        require(layered.tileCount == 2 && layered.sectorCount == 1,
+            "layered journal counts");
+        String journalText = new String(
+            Files.readAllBytes(layeredJournal), "US-ASCII");
+        require(journalText.indexOf("tile\t-3\t140\t640")
+                < journalText.indexOf("tile\t-3\t141\t640"),
+            "layered journal tile order is not deterministic");
+        require(!Files.exists(
+            layeredJournal.resolveSibling("terrain-draft-v1.tsv.tmp")),
+            "layered journal staging file retained");
         System.out.println("working-persistence-ok");
     }
 }
