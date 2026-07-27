@@ -18288,7 +18288,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
-| 2026-07-27 | Implement the intent-driven sparse canvas behind explicit Builder actions. | Implemented and automated-validated, pending focused owner review. **Go/Create** can create an arbitrary signed level or a detached 3-by-3 void work area live; an edge-crossing terrain stroke atomically allocates its connected touched sectors; v4 journals level creation with terrain/scenery/NPC edits; every detached component must retain a complete 3-by-3 canvas; passive movement/camera loading, source levels, transition inference, export, and target files remain non-authoritative |
+| 2026-07-27 | Implement the intent-driven sparse canvas behind explicit Builder actions. | Owner-accepted. **Go/Create** created a detached nine-sector `-3` work area and new level `-4` live; v4 clean-close/reopen preserved both canvases, entry pads, and two scenery edits; a later edge stroke crossed `x=575/576` immediately and committed exactly one sector `(12,14)` plus 21 tiles. Every detached component retains a complete 3-by-3 canvas; passive movement/camera loading, source levels, transition inference, export, and target files remain non-authoritative |
 | 2026-07-27 | Replace narrow family-by-family Builder review with one free-form generated-level authoring workbench. | Owner-accepted: logical non-source levels expose terrain surfaces, terrain structures/walls, scenery, and NPCs together; one backward-compatible v3 journal atomically persists all enabled families; NPC identity and roaming bounds survive clean close/reopen; source levels, ground items, standalone boundaries, export, and target files remain locked. Generated levels no longer compose unrelated legacy upper-plane models, and the owner confirmed correct long-zoom player visibility and void authoring on level `-3` |
 | 2026-07-25 | Reframe the enclosing product as RSC Remastered: one definitive vanilla-content remaster with integrated launcher, layered Builder, and modder workflow, while retaining modular technical boundaries internally. | Confirmed; recorded in the product roadmap |
 | 2026-07-25 | Use the locally present Preservation revision-64 server terrain, matching authentic ORSC, base placements, configuration, definitions, and copied seed as the first vanilla source candidate; freeze them as one provenance set before conversion. | Confirmed; inputs and current hashes inventoried |
@@ -19041,8 +19041,8 @@ new canvas is usable. The recommended next milestone is an
 This keeps 48-by-48 pages as an internal sparse storage unit while presenting
 an effectively expandable canvas to creators.
 
-The intent-driven sparse canvas is now implemented and automated-validated,
-pending one focused private owner route:
+The intent-driven sparse canvas is now implemented, automated-validated, and
+owner-accepted:
 
 - the draft Navigate fields accept any signed integer level and present one
   explicit **Go/Create** action. Navigating to an absent level creates its
@@ -19076,11 +19076,24 @@ pending one focused private owner route:
 The focused regression route materializes and reopens a new signed level with
 two detached 3-by-3 canvases plus same-transaction terrain and scenery, while
 the existing v1-v3 lifecycle, persistence, Builder foundation, runtime, native
-loader, authoritative server build, and client build remain covered. The
-remaining gate is owner confirmation of live Create/Go, live paint-at-edge,
-Save, clean close, and reopen. Transition records and ladder/stair-driven
-creation remain deliberately deferred until the editor stores explicit route
-semantics.
+loader, authoritative server build, and client build remain covered.
+
+Owner acceptance completed on 2026-07-27 in the preserved isolated workspace.
+**Go/Create** added a detached nine-sector work area to level `-3` at
+`(500,700)` and created level `-4` with its own nine-sector work area at the
+same logical coordinates. Both appeared immediately with walkable entry pads
+and surrounding void. Free-form terrain work plus Pine Tree and Ladder scenery
+persisted through a clean v4 close/reopen transaction containing one level, 18
+sectors, 18 entry-pad tiles, and two scenery edits. A second ordinary terrain
+transaction persisted 29 more tiles without allocating a sector.
+
+The final edge-only route navigated within the existing `-4` canvas and painted
+across its eastern `x=575/576` boundary. Terrain appeared and became traversable
+without restart; the Save receipt reported exactly one new sector and 21
+tiles. Clean close materialized only sector `(12,14)` and the edited tiles,
+advancing the working manifest to `416560d7d3ce` with no retained journal.
+Transition records and ladder/stair-driven creation remain deliberately
+deferred until the editor stores explicit route semantics.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first

@@ -1177,8 +1177,8 @@ the editor can author an explicit transition record; object appearance alone
 must not erase valid decorative, same-level, distant, one-way, or scripted
 topology.
 
-That sparse-canvas milestone is now implemented and automated-validated,
-pending focused owner review. The draft Navigate panel exposes **Go/Create**
+That sparse-canvas milestone is now implemented, automated-validated, and
+owner-accepted. The draft Navigate panel exposes **Go/Create**
 for any signed integer level. An absent level receives deterministic metadata,
 an empty placement set, and a 3-by-3 void sector canvas; an absent coordinate
 on an existing generated level receives another complete 3-by-3 canvas and may
@@ -1194,8 +1194,14 @@ level-creation records to the existing combined terrain/scenery/NPC
 transaction; the launcher remains backward-compatible with v1-v3 and permits
 disconnected generated areas only when every component contains a complete
 3-by-3 work canvas. Source levels, target files, export, implicit
-ladder/stair creation, and passive allocation remain locked. The remaining
-route is private visual validation followed by Save, clean close, and reopen.
+ladder/stair creation, and passive allocation remain locked.
+
+Private acceptance created a detached nine-sector area on `-3`, created level
+`-4` with another nine-sector area, authored two scenery objects, and preserved
+the combined result through a clean v4 close/reopen. A later edge stroke made
+terrain across `x=575/576` live and traversable without restart; Save reported
+exactly one new sector and clean close materialized only sector `(12,14)` plus
+21 tiles. The accepted working manifest is `416560d7d3ce`.
 
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
@@ -1627,7 +1633,7 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
-| 2026-07-27 | Implement explicit live sparse-canvas growth for the layered Builder. | Implemented and automated-validated, pending owner review. **Go/Create** creates arbitrary signed levels or detached 3-by-3 work areas without restart; edge painting atomically allocates connected touched sectors; v4 journals level metadata with the existing combined authoring transaction; every detached component must contain a complete work canvas; passive loading, source mutation, transition inference, export, and target mutation remain locked |
+| 2026-07-27 | Implement explicit live sparse-canvas growth for the layered Builder. | Owner-accepted. **Go/Create** created detached `-3` and new `-4` nine-sector work areas live; v4 close/reopen retained both plus authored scenery; edge painting crossed `x=575/576` immediately and committed exactly sector `(12,14)` plus 21 tiles. Every detached component must contain a complete work canvas; passive loading, source mutation, transition inference, export, and target mutation remain locked |
 | 2026-07-27 | Broaden generated-level review into one terrain/structure/scenery/NPC workbench and isolate arbitrary signed levels from surface upper-plane composition. | Owner-accepted. A v3 atomic journal persists NPCs with exact roaming bounds alongside the accepted terrain/scenery operations while older journals remain readable; the owner verified mixed editing and correct long-zoom visibility on level `-3`; generated levels render only their native snapshot; accepted source levels, ground items, standalone boundaries, export, and target files remain locked |
 | 2026-07-27 | Make scenery the first native placement family authored on Builder-created levels and commit it atomically with terrain. | Implemented for focused owner review: Place/Rotate/Remove reuse native layered membership/collision transactions, deterministic slot identities survive rotation and replacement, the v2 bounded journal combines terrain and scenery in one clean-close copy-on-write swap, and accepted source placements plus NPC/ground-item/boundary families remain locked |
 | 2026-07-27 | Make unallocated and newly allocated Builder space explicit void, retaining only a minimal walkable Create Level anchor. | Owner-accepted. Missing sectors and new sector payloads use blocking/invisible overlay `8` over Floor Color `1`; Create Level clears only a centered 3-by-3 tile pad. No water appeared, void inspection/collision were correct, live-painted floor became walkable, paints persisted, allocated void accepted navigation/editing, and unallocated terrain refused without location mutation |
