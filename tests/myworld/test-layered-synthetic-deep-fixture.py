@@ -32,6 +32,7 @@ GENERATOR = (
     / "server/src/com/openrsc/server/net/rsc/generators/impl/"
     "PayloadCustomGenerator.java"
 )
+ACTION_SENDER = ROOT / "server/src/com/openrsc/server/net/rsc/ActionSender.java"
 DEVELOPMENT = (
     ROOT
     / "server/plugins/com/openrsc/server/plugins/authentic/commands/"
@@ -108,6 +109,22 @@ public final class LayeredSyntheticDeepFixture {
                 deep, true)), "deep projection identity");
         check(LayeredCompatibilityPointAdapter.compatibilityPlane(
             deep, true) == 0, "deep terrain plane");
+        check(LayeredCompatibilityPointAdapter.clientPresentationPlane(
+            surface) == 0, "surface presentation plane");
+        check(LayeredCompatibilityPointAdapter.clientPresentationPlane(
+            WorldLocation.global(new WorldCoordinate(450, 600, 1))) == 1,
+            "upper presentation plane");
+        check(LayeredCompatibilityPointAdapter.clientPresentationPlane(
+            WorldLocation.global(new WorldCoordinate(450, 600, 2))) == 2,
+            "second upper presentation plane");
+        check(LayeredCompatibilityPointAdapter.clientPresentationPlane(
+            WorldLocation.global(new WorldCoordinate(450, 600, -1))) == 3,
+            "underground presentation plane");
+        check(LayeredCompatibilityPointAdapter.clientPresentationPlane(
+            deep) == 0, "deep presentation carrier");
+        check(LayeredCompatibilityPointAdapter.clientPresentationPlane(
+            WorldLocation.global(new WorldCoordinate(450, 600, 37))) == 0,
+            "arbitrary presentation carrier");
 
         WorldLocation walked =
             LayeredCompatibilityPointAdapter.fromCompatibilityPoint(
@@ -238,6 +255,7 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         player_service = PLAYER_SERVICE.read_text(encoding="utf-8")
         database = DATABASE.read_text(encoding="utf-8")
         development = DEVELOPMENT.read_text(encoding="utf-8")
+        action_sender = ACTION_SENDER.read_text(encoding="utf-8")
         client = CLIENT.read_text(encoding="utf-8")
         client_world = CLIENT_WORLD.read_text(encoding="utf-8")
 
@@ -257,6 +275,14 @@ class LayeredSyntheticDeepFixtureTest(unittest.TestCase):
         self.assertIn("toRuntimeCompatibilityPoint", player)
         self.assertIn("fromRuntimeCompatibilityPoint", player)
         self.assertIn("LayeredCompatibilityPointAdapter", path_validation)
+        self.assertIn(
+            "player.isLayeredLocationAuthorityEnabled()",
+            action_sender,
+        )
+        self.assertIn(
+            "LayeredCompatibilityPointAdapter.clientPresentationPlane(",
+            action_sender,
+        )
         self.assertIn("WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE", player_service)
         self.assertIn('command.equalsIgnoreCase("deepfixture")', development)
         self.assertNotIn(

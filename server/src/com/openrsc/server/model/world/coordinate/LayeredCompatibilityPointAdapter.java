@@ -109,6 +109,31 @@ public final class LayeredCompatibilityPointAdapter {
 	}
 
 	/**
+	 * Selects the legacy client model plane used to present one signed level.
+	 *
+	 * <p>The native Point carrier deliberately keeps geographic Y unpacked, so
+	 * deriving this value from {@code Formulae.getHeight(Point)} would reset
+	 * every native location to plane zero. The four historically renderable
+	 * levels retain their authentic model planes; arbitrary declared levels use
+	 * the isolated plane-zero carrier until the client no longer needs it.</p>
+	 */
+	public static int clientPresentationPlane(
+		final WorldLocation location) {
+		int level = Objects.requireNonNull(location, "location")
+			.getCoordinate().getLevel();
+		switch (level) {
+			case 0:
+			case 1:
+			case 2:
+				return level;
+			case -1:
+				return 3;
+			default:
+				return 0;
+		}
+	}
+
+	/**
 	 * Resolves an incoming compatibility Point inside an established scope.
 	 *
 	 * <p>Ordinary movement cannot walk out of the fixture and become surface

@@ -22,6 +22,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.world.WorldDayNightClock;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.net.rsc.generators.PayloadGenerator;
@@ -1969,7 +1970,10 @@ public class ActionSender {
 		struct.serverIndex = player.getIndex();
 		struct.planeWidth = 2304;
 		struct.planeHeight = 1776;
-		struct.planeFloor = Formulae.getHeight(player.getLocation());
+		struct.planeFloor = player.isLayeredLocationAuthorityEnabled()
+			? LayeredCompatibilityPointAdapter.clientPresentationPlane(
+				player.getLayeredLocation())
+			: Formulae.getHeight(player.getLocation());
 		struct.distanceBetweenFloors = 944;
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_WORLD_INFO, struct, player);
 	}

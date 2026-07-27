@@ -18809,6 +18809,17 @@ package identity, and mutation refusal, then exposed three focused follow-ups:
   well as the compact Builder status, so a blocked edit/save action cannot look
   inert.
 
+The first teleport retest found a second, independent presentation issue. An
+explicit level-1 teleport established the correct native scene context, but a
+later same-window `::tp x y` sent ordinary world-info without needing another
+context packet. World-info derived its floor from the unpacked native Point
+carrier, so it reset `requestedPlane` to zero while Player and native terrain
+authority correctly remained at level 1. World-info now derives its
+presentation plane from signed Player authority: levels `0`, `1`, `2`, and
+`-1` map to legacy render planes `0`, `1`, `2`, and `3`; arbitrary declared
+levels continue to use the isolated plane-0 carrier. This makes repeated
+same-level teleports agree with the scene-context selector.
+
 Arbitrary depth remains a package capability rather than a teleport loophole.
 The engine, manifest, runtime loaders, and signed coordinate model already
 accept declared levels beyond `-2`; the current Spoiled Milk package truthfully

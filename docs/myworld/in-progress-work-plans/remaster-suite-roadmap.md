@@ -1095,6 +1095,13 @@ Level action that allocates safe initial terrain and an empty placement set
 before allowing navigation. Teleporting into an undeclared level remains a
 correct refusal, because an absent level has no terrain or collision contract.
 
+The follow-up teleport route also corrected ordinary world-info ownership.
+Native coordinates keep Y unpacked, so legacy height inference always reported
+plane zero even while signed Player authority remained on level 1. World-info
+now uses signed authority for the four authentic presentation planes and the
+plane-0 carrier for later arbitrary levels, matching the native scene-context
+contract across repeated same-level teleports.
+
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
 from the accepted 12-file vanilla map baseline, covers the exact
