@@ -367,6 +367,9 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
             ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
         ).read_text()
         client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
+        client_world = (
+            ROOT / "Client_Base/src/orsc/graphics/three/World.java"
+        ).read_text()
         editor = (
             ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java"
         ).read_text()
@@ -414,6 +417,9 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
         self.assertIn("-Dopenrsc.worldBuilderSourceRevision=", supervisor)
         self.assertIn("-Dopenrsc.worldBuilderLayeredReview=true", supervisor)
         self.assertIn("-Dopenrsc.worldBuilderLayeredTerrainDraft=", supervisor)
+        self.assertIn("tile.groundOverlay = (byte) 8;", client_world)
+        self.assertIn("isBuilderCreatedLevel(snapshot.getLevel())", client_world)
+        self.assertIn("tile.editorPaintedOverlay = true;", client_world)
         self.assertIn("WorldBuilderLayeredReview.readIfPresent(workspace)", supervisor)
         self.assertIn("rsc-remastered.spoiled-milk-layered-world", layered_package)
         self.assertIn("Layered package contains missing or untracked files", layered_package)

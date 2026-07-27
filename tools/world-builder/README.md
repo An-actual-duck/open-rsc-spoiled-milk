@@ -73,10 +73,11 @@ java -jar output/world-builder-tools/world-builder-tools.jar create-level \
 Optional `--name` and lowercase identifier `--role` values override the
 generated level metadata. The transaction takes the same per-workspace lock as
 the launcher, revalidates the immutable source package, stages a complete
-copy-on-write draft, creates a flat walkable 3-by-3 sector window plus an empty
-v3 placement set, rewrites all manifest hashes deterministically, validates
-the full descendant, and swaps it into `working` with rollback protection.
-The source snapshot and target game are reverified unchanged before success.
+copy-on-write draft, creates a void-backed 3-by-3 sector window with a
+walkable 3-by-3 tile pad centered on the anchor plus an empty v3 placement
+set, rewrites all manifest hashes deterministically, validates the full
+descendant, and swaps it into `working` with rollback protection. The source
+snapshot and target game are reverified unchanged before success.
 
 Reopen the Builder to navigate to the new level. Repeating an existing level,
 running the operation while the Builder is open, malformed metadata, source
@@ -101,7 +102,7 @@ materializes that journal through a copy-on-write package transaction, verifies
 the complete source descendant and hashes, then removes the journal. Reopen the
 same workspace to review the durable result.
 
-Allocate one new flat sector at an existing edge from an active
+Allocate one new void-backed sector at an existing edge from an active
 Builder-created level with:
 
 ```text
@@ -110,10 +111,13 @@ Builder-created level with:
 
 The optional signed level defaults to the current level. Allocation must share
 an edge with existing or already queued terrain; gaps, duplicates, source
-levels, and more than 64 sectors per transaction are refused. Save, close, and
-reopen before navigating into a new sector. Each transaction is also limited
-to 4,096 distinct edited tiles. Placement authoring, terrain deletion,
-layered-package export, and target-game import remain separate future gates.
+levels, and more than 64 sectors per transaction are refused. New sector tiles
+use Floor Color `1` plus blocking/invisible Floor Texture `8`, so creators
+paint only the area they want instead of erasing a large floor or ocean.
+Unallocated sectors use the same explicit-void presentation. Save, close, and
+reopen before painting a new sector. Each transaction is also limited to 4,096
+distinct edited tiles. Placement authoring, terrain deletion, layered-package
+export, and target-game import remain separate future gates.
 
 After closing the Builder, export the saved working map with explicit release
 provenance:

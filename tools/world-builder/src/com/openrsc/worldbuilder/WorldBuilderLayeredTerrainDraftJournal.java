@@ -161,7 +161,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			Path payload = packageRoot.resolve(relative).normalize();
 			requireContained(packageRoot, payload, relative);
 			Files.createDirectories(payload.getParent());
-			Files.write(payload, starterTerrain(), StandardOpenOption.CREATE_NEW);
+			Files.write(payload, voidTerrain(), StandardOpenOption.CREATE_NEW);
 			Map<String,Object> declaration = new LinkedHashMap<String,Object>();
 			declaration.put("encoding", "raw-layered-sector-v1");
 			declaration.put("level", Long.valueOf(growth.level));
@@ -361,10 +361,11 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			|| occupied.contains(key(level, sectorX, sectorY - 1));
 	}
 
-	private static byte[] starterTerrain() {
+	private static byte[] voidTerrain() {
 		byte[] result = new byte[SECTOR_SIZE * SECTOR_SIZE * TILE_BYTES];
 		for (int offset = 0; offset < result.length; offset += TILE_BYTES) {
 			result[offset + 1] = 1;
+			result[offset + 2] = 8;
 		}
 		return result;
 	}

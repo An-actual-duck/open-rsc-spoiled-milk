@@ -1111,8 +1111,9 @@ read-only Builder adapter is accepted.
 The first copy-on-write native-draft slice is implemented and owner-accepted.
 Offline `create-level` holds the workspace lock, revalidates immutable source
 ancestry, adds arbitrary signed level metadata, one empty v3 placement set,
-and a deterministic flat/walkable 3-by-3 sector starter window, then validates
-every path/hash/count before a rollback-protected working-package swap. The
+and a deterministic void-backed 3-by-3 sector starter allocation with only a
+3-by-3 tile walkable anchor pad, then validates every path/hash/count before a
+rollback-protected working-package swap. The
 Builder-only runtime profile accepts additive terrain-only descendants and is
 explicitly refused outside World Builder; ordinary Spoiled Milk remains pinned
 to its exact reviewed manifest. The first private draft is level `-3` at
@@ -1128,10 +1129,19 @@ native presentation/collision overlay, while **Save** writes a bounded,
 deterministic journal. A clean close lets the launcher materialize that journal
 through a source-reverified copy-on-write package swap, and the next launch
 reopens the durable result. `::buildergrow x y (level)` deliberately allocates
-one flat edge-adjacent sector; gaps, duplicates, edits to source levels, more
+one void-backed edge-adjacent sector; gaps, duplicates, edits to source levels, more
 than 4,096 tiles, or more than 64 new sectors refuse. Placement authoring,
 terrain deletion, layered export, and target-game mutation remain locked
 behind later gates.
+
+The first owner persistence route accepted live paint, clean-close commit,
+restart identity, source-level refusal, placement locks, and walking across a
+new sector boundary. It also exposed a design-quality issue: absent native
+sectors still appeared as distant water, while pre-filling every allocated
+sector with walkable floor would force creators to erase unwanted terrain.
+The active correction presents absent space as blocking/invisible overlay `8`,
+initializes new sectors with the same void, and retains only a small walkable
+anchor pad on Create Level.
 
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
@@ -1563,6 +1573,7 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Make unallocated and newly allocated Builder space explicit void, retaining only a minimal walkable Create Level anchor. | Owner persistence and growth behavior passed, but the allocation edge appeared as water and broad flat fill is undesirable authoring debt. Missing sectors and new sector payloads now use blocking/invisible overlay `8` over Floor Color `1`; Create Level clears only a centered 3-by-3 tile pad for safe entry. Focused visual acceptance is pending |
 | 2026-07-27 | Keep the first live layered terrain writer restricted to Builder-created levels and commit through the isolated working package only. | Implemented for focused owner review: terrain paint is immediately visible in the Builder, Save writes a deterministic bounded journal, normal close/reopen performs a validated copy-on-write package commit, and explicit edge-adjacent sector growth is available through `::buildergrow`; source levels, placements, export, and target files remain locked |
 | 2026-07-27 | Make arbitrary signed depth a transactional Builder authoring action, not an implicit teleport into absent terrain. | The engine/package format already accepts data-declared `-3`, `+3`, and later levels. The next native-writer slice creates level metadata, safe initial terrain, and an empty placement set atomically in the isolated workspace; undeclared destinations continue to refuse |
 | 2026-07-27 | Prevent native presentation preloads from publishing terrain built under a different receipt scope. | Native package windows no longer schedule speculative terrain/model builds, every relevant cache fences publication by its complete scope key, and the rapid-navigation water-edge route is queued for owner retest |

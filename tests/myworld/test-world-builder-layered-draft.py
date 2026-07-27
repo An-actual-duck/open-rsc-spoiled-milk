@@ -154,10 +154,20 @@ public final class WorldBuilderLayeredDraftHarness {
             newTerrain++;
             byte[] bytes = Files.readAllBytes(working.resolve(record.path));
             require(bytes.length == 48 * 48 * 10, "starter payload size");
-            for (int offset = 0; offset < bytes.length; offset += 10) {
+            for (int tile = 0; tile < 48 * 48; tile++) {
+                int offset = tile * 10;
+                int localX = tile / 48;
+                int localY = tile % 48;
+                int worldX = record.sectorX * 48 + localX;
+                int worldY = record.sectorY * 48 + localY;
+                boolean anchorPad =
+                    Math.abs(worldX - 140) <= 1
+                        && Math.abs(worldY - 640) <= 1;
                 require(bytes[offset] == 0, "starter elevation");
                 require(bytes[offset + 1] == 1, "starter texture");
-                for (int field = 2; field < 10; field++) {
+                require((bytes[offset + 2] & 255) == (anchorPad ? 0 : 8),
+                    "starter void/pad overlay");
+                for (int field = 3; field < 10; field++) {
                     require(bytes[offset + field] == 0,
                         "starter collision/structure field");
                 }
@@ -201,10 +211,21 @@ public final class WorldBuilderLayeredDraftHarness {
             "committed elevation");
         require((changedBytes[changedOffset + 1] & 255) == 8,
             "committed floor color");
-        require(Files.size(
-            working.resolve("terrain/global/lm3/xp4-yp13.raw"))
-                == 48 * 48 * 10,
+        Path grown =
+            working.resolve("terrain/global/lm3/xp4-yp13.raw");
+        require(Files.size(grown) == 48 * 48 * 10,
             "grown sector payload");
+        byte[] grownBytes = Files.readAllBytes(grown);
+        for (int offset = 0; offset < grownBytes.length; offset += 10) {
+            require(grownBytes[offset] == 0, "grown void elevation");
+            require(grownBytes[offset + 1] == 1, "grown void texture");
+            require((grownBytes[offset + 2] & 255) == 8,
+                "grown void overlay");
+            for (int field = 3; field < 10; field++) {
+                require(grownBytes[offset + field] == 0,
+                    "grown void structure field");
+            }
+        }
         require(sourceManifestHash.equals(WorldBuilderHashes.sha256(sourceManifest)),
             "source changed during terrain commit");
         WorldBuilderSourceSnapshot.verify(workspace);

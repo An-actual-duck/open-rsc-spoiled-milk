@@ -18598,8 +18598,9 @@ private environment should validate at least:
 | 2026-07-25 | Fully accept Phase 5 Authority Milestone D. | The final normal logout completed its save, reconnect restored exact `WorldLocation(global,120,648,0)` with `rewriteRequired=false`, and `::layerloc` confirmed level 0. All automated and owner gates now pass for the bounded synthetic deep room: scope isolation, movement/collision, NPC/item interaction, level `-2` persistence, explicit exit, death recovery, and recovered-surface persistence. No production archive, placement, live data, or public server was modified |
 | 2026-07-25 | Correct the first Milestone D owner route after stopping at step 6. | Owner evidence proved that the borrowed compatibility rectangle was water: click teleport could collect the deep item, ordinary walking and Man interaction failed, and logout/reconnect returned to the prior surface save. Logs established a second exact cause: the legacy-only save snapshot decoded the `(450,600)` receipt as level 0, rejected the authoritative level `-2` mirror, and rolled back every deep autosave. Replace terrain borrowing with a bounded runtime-only flat overlay-0 room, suppress borrowed upper-plane geometry, resolve deep path/collision through that room, and capture named-projection persistence from the authoritative layered location plus its checked receipt. Production archives, placements, surface terrain, live data, and the public server remain untouched; corrected owner acceptance is pending |
 | 2026-07-26 | Begin the signed-layer World Builder adapter with logical coordinate presentation. | Implemented the first review-only slice: strict discovery accepts only the exact Spoiled Milk `0.2.0` package and profile, copies and fingerprints all 1,776 package files into isolated working/source trees, launches the package under complete layered authority, exposes signed `(x,y,level)` navigation and native terrain inspection, changes the ordinary HUD to logical coordinates, and blocks editing, saving, and export in both client and server boundaries. The private Builder auto-login and exact package load pass; focused owner visual/navigation acceptance remains pending before the native writer slice |
-| 2026-07-27 | Implement and accept the first workspace-owned native draft transaction. | Offline `create-level` takes the Builder workspace lock, revalidates the immutable accepted source, stages a complete descendant, adds arbitrary signed level metadata, nine flat walkable raw sectors around the selected geographic anchor, and one empty v3 placement set, then verifies all paths, hashes, counts, source ancestry, and restart identity before a rollback-protected package swap. A Builder-only runtime profile accepts this additive terrain-only descendant while ordinary Spoiled Milk remains pinned to its exact reviewed manifest and non-Builder servers refuse the draft profile. Automated writer, tool, server-loader, runtime-profile, preparation, and authoritative 869/488 compilation pass. Owner navigation, boundary movement, inspection, surface return, and clean restart persistence also pass; terrain editing and export remain disabled pending separate gates |
-| 2026-07-27 | Make the first live layered terrain writer a bounded working-copy transaction restricted to Builder-created levels. | Implemented and automated-validated; existing terrain controls update native presentation/collision, Save writes a deterministic manifest-bound journal, clean close/reopen performs the source-reverified copy-on-write package commit, and `::buildergrow` adds only edge-adjacent flat sectors. Accepted source levels, placements, export, target files, and ordinary servers remain unchanged; focused owner acceptance is pending |
+| 2026-07-27 | Implement and accept the first workspace-owned native draft transaction. | Offline `create-level` takes the Builder workspace lock, revalidates the immutable accepted source, stages a complete descendant, adds arbitrary signed level metadata, nine raw sectors around the geographic anchor, and one empty v3 placement set, then verifies all paths, hashes, counts, source ancestry, and restart identity before a rollback-protected package swap. The first flat starter proved the transaction and was later refined to overlay-8 void plus a 3-by-3 tile anchor pad. A Builder-only runtime profile accepts the additive terrain-only descendant while ordinary Spoiled Milk remains pinned to its exact reviewed manifest and non-Builder servers refuse the draft profile |
+| 2026-07-27 | Make the first live layered terrain writer a bounded working-copy transaction restricted to Builder-created levels. | Implemented and owner-validated for live paint, deterministic Save/clean-close commit, restart persistence, source-level refusal, placement locks, and edge-sector crossing. Accepted source levels, export, target files, and ordinary servers remain unchanged. The route exposed one follow-up: absent terrain still looked like distant water and broad flat-filled allocations are undesirable authoring defaults |
+| 2026-07-27 | Represent unallocated and newly allocated Builder terrain as explicit overlay-8 void, with only a minimal Create Level anchor pad. | Implemented for focused retest: the 3-by-3 starter sector allocation and later edge-growth sectors use Floor Color `1` plus blocking/invisible Floor Texture `8`; Create Level clears a centered 3-by-3 tile pad so the creator can enter safely; native missing-sector presentation uses the same void instead of special water overlay `250` |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -18841,17 +18842,19 @@ copy-on-write package, and creates:
 - one signed global-level record with bounded display name and stable role;
 - one empty `layered-world-placements-v3` payload and hashed manifest record;
 - a deterministic 3-by-3 window of raw 48-tile sectors centered on the
-  requested geographic anchor. Every starter tile is flat texture 1,
-  overlay 0, roof/wall/diagonal 0, so the whole initial review window is
-  walkable rather than void or water; and
+  requested geographic anchor. Every starter tile uses Floor Color 1,
+  blocking/invisible overlay 8, and zero roof/wall/diagonal values except for
+  the centered 3-by-3 tile pad, whose overlay is cleared to 0 for safe entry;
+  and
 - a deterministically rewritten manifest, complete payload inventory,
   fingerprint, and rollback-protected working-package swap.
 
 The source package, source inventory, and target game are verified before and
 after the transaction. Working drafts must retain every accepted source level,
 terrain identity, placement set, path, and payload hash. Every additional
-level must remain exactly one contiguous nine-sector starter allocation and
-one empty placement set during this slice. Duplicate levels, active Builder
+level starts with one contiguous nine-sector allocation and one empty placement
+set, then may grow only through edge-connected Builder transactions. Duplicate
+levels, active Builder
 sessions, unsafe paths, source drift, malformed hashes, partial terrain, or
 content-bearing new levels refuse before publication.
 
@@ -18895,7 +18898,7 @@ workspace lock and:
 
 1. revalidates the immutable source snapshot and accepted ancestor;
 2. copies the complete current working package into a transaction stage;
-3. creates only requested flat sectors and replaces only edited raw tile
+3. creates only requested void-backed sectors and replaces only edited raw tile
    records;
 4. rewrites deterministic payload hashes and the package manifest;
 5. validates source ancestry, canonical paths, the retained 3-by-3 starter,
@@ -18905,7 +18908,7 @@ workspace lock and:
    revalidate.
 
 `::buildergrow x y (level)` is the first deliberate allocation control. It
-queues one flat 48-by-48 sector that must share an edge with existing or
+queues one void-backed 48-by-48 sector that must share an edge with existing or
 already queued terrain on the current Builder-created level. Existing sectors,
 gaps, source levels, cross-level requests, more than 64 new sectors, and more
 than 4,096 edited tiles refuse. A new sector becomes navigable only after Save,
@@ -18916,6 +18919,25 @@ The source package, target private-server tree, placement sets, and accepted
 source-level payloads remain byte-identical. Placement authoring, terrain
 deletion, native export, and target-game import remain locked and should
 follow only after this terrain persistence route is visually accepted.
+
+The first owner route accepted the transaction itself. One Floor Color `40`
+tile at `(122,648,-3)` persisted exactly through clean shutdown/reopen, one
+new sector `(4,13)` materialized, the source hash stayed unchanged, movement
+crossed `x=192` normally, source-level paint refused, and placement controls
+remained locked. The owner correctly identified the visible water beyond the
+new sector as the allocation edge, not a failed growth transaction, and
+rejected both ocean and broad flat fill as creator defaults.
+
+The refinement now uses one consistent sparse-authoring vocabulary:
+
+- an absent sector is visual/collision void, presented as overlay `8` rather
+  than the legacy special-water overlay `250`;
+- a newly allocated sector contains editable raw tiles with Floor Color `1`
+  and overlay `8`, so clearing or repainting only intended tiles reveals
+  useful floor without a separate mass-erasure pass; and
+- Create Level allocates the same void-backed 3-by-3 sector window but clears
+  only the centered 3-by-3 **tile** pad around the requested anchor. This is
+  enough for safe arrival while leaving the rest of the level authoring-clean.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first

@@ -7,6 +7,7 @@ import com.openrsc.data.DataConversions;
 import orsc.Config;
 import orsc.NativeLayeredTerrainSnapshot;
 import orsc.RenderTelemetry;
+import orsc.WorldBuilderClientProfile;
 import orsc.graphics.two.GraphicsController;
 import orsc.util.FastMath;
 import orsc.util.GenUtil;
@@ -2833,7 +2834,8 @@ public final class World {
 		for (int localX = 0; localX < SECTION_SIZE; localX++) {
 			for (int localZ = 0; localZ < SECTION_SIZE; localZ++) {
 				Tile tile = sector.getTile(localX, localZ);
-				tile.groundOverlay = (byte) 250;
+				tile.groundTexture = (byte) 1;
+				tile.groundOverlay = (byte) 8;
 				tile.editorPaintedOverlay = true;
 			}
 		}
@@ -2875,12 +2877,22 @@ public final class World {
 					throw new IllegalStateException(
 						"Native layered tile escaped its active section window");
 				}
+				Tile tile = snapshot.createTile(logicalX, logicalZ);
+				if (isBuilderCreatedLevel(snapshot.getLevel())
+					&& (tile.groundOverlay & 0xff) == 8) {
+					tile.editorPaintedOverlay = true;
+				}
 				sector.setTile(
 					tileInSector(localX),
 					tileInSector(localZ),
-					snapshot.createTile(logicalX, logicalZ));
+					tile);
 			}
 		}
+	}
+
+	private static boolean isBuilderCreatedLevel(int level) {
+		return WorldBuilderClientProfile.current().isLayeredTerrainDraft()
+			&& level != -1 && level != 0 && level != 1 && level != 2;
 	}
 
 	private void applySyntheticDeepFixtureTerrain(

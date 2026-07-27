@@ -382,7 +382,7 @@ public final class Development implements CommandTrigger {
 			com.openrsc.server.model.world.coordinate.WorldMapSectorId sector =
 				player.getWorld().getServer().getWorldEditorSessions()
 					.queueNativeTerrainSectorGrowth(player, x, y, level);
-			player.message(messagePrefix + "Queued flat terrain sector "
+			player.message(messagePrefix + "Queued void-backed terrain sector "
 				+ sector.getSectorX() + "," + sector.getSectorY() + " on L"
 				+ sector.getLevel() + ". Save, close, and reopen the Builder "
 				+ "before navigating into it.");

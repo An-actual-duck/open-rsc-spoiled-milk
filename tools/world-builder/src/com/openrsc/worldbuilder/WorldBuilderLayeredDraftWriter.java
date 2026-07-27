@@ -126,7 +126,7 @@ final class WorldBuilderLayeredDraftWriter {
 		try {
 			copyTree(packageRoot, stage);
 			writeLevel(
-				stage, level, name, role,
+				stage, level, name, role, anchorX, anchorY,
 				minimumSectorX, maximumSectorX,
 				minimumSectorY, maximumSectorY);
 			WorldBuilderLayeredPackage candidate =
@@ -181,6 +181,8 @@ final class WorldBuilderLayeredDraftWriter {
 		int level,
 		String name,
 		String role,
+		int anchorX,
+		int anchorY,
 		int minimumSectorX,
 		int maximumSectorX,
 		int minimumSectorY,
@@ -200,9 +202,10 @@ final class WorldBuilderLayeredDraftWriter {
 		levelRecord.put("worldSpace", "global");
 		levels.add(levelRecord);
 
-		byte[] starterTerrain = starterTerrain();
 		for (int sectorX = minimumSectorX; sectorX <= maximumSectorX; sectorX++) {
 			for (int sectorY = minimumSectorY; sectorY <= maximumSectorY; sectorY++) {
+				byte[] starterTerrain =
+					starterTerrain(sectorX, sectorY, anchorX, anchorY);
 				String relative = terrainPath(level, sectorX, sectorY);
 				Path payload = packageRoot.resolve(relative).normalize();
 				requireContained(packageRoot, payload, relative);
@@ -262,10 +265,20 @@ final class WorldBuilderLayeredDraftWriter {
 		moveFile(stagedManifest, manifestPath);
 	}
 
-	private static byte[] starterTerrain() {
+	private static byte[] starterTerrain(
+		int sectorX, int sectorY, int anchorX, int anchorY) {
 		byte[] result = new byte[SECTOR_SIZE * SECTOR_SIZE * TILE_BYTES];
-		for (int offset = 0; offset < result.length; offset += TILE_BYTES) {
-			result[offset + 1] = 1;
+		for (int localX = 0; localX < SECTOR_SIZE; localX++) {
+			for (int localY = 0; localY < SECTOR_SIZE; localY++) {
+				int offset = (localX * SECTOR_SIZE + localY) * TILE_BYTES;
+				result[offset + 1] = 1;
+				long worldX = (long)sectorX * SECTOR_SIZE + localX;
+				long worldY = (long)sectorY * SECTOR_SIZE + localY;
+				boolean anchorPad =
+					Math.abs(worldX - anchorX) <= 1L
+						&& Math.abs(worldY - anchorY) <= 1L;
+				result[offset + 2] = (byte)(anchorPad ? 0 : 8);
+			}
 		}
 		return result;
 	}
