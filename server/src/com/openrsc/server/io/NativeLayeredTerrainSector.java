@@ -67,6 +67,31 @@ public final class NativeLayeredTerrainSector {
 	}
 
 	/**
+	 * Returns a fresh fixed-width x-major/y-minor wire image of this complete
+	 * storage sector. Field order matches
+	 * {@link NativeLayeredTerrainChunk#copyWireBytes()}.
+	 */
+	public byte[] copyWireBytes() {
+		byte[] result =
+			new byte[TILE_COUNT * NativeLayeredTerrainChunk.TILE_WIRE_BYTES];
+		int offset = 0;
+		for (NativeLayeredTerrainTile tile : tiles) {
+			result[offset++] = (byte) tile.getElevation();
+			result[offset++] = (byte) tile.getTexture();
+			result[offset++] = (byte) tile.getOverlay();
+			result[offset++] = (byte) tile.getRoof();
+			result[offset++] = (byte) tile.getVerticalWall();
+			result[offset++] = (byte) tile.getHorizontalWall();
+			int diagonal = tile.getDiagonalWall();
+			result[offset++] = (byte) (diagonal >>> 24);
+			result[offset++] = (byte) (diagonal >>> 16);
+			result[offset++] = (byte) (diagonal >>> 8);
+			result[offset++] = (byte) diagonal;
+		}
+		return result;
+	}
+
+	/**
 	 * Creates a detached legacy-shaped value for parity tests and compatibility
 	 * application. The returned Sector is not registered with World or RegionManager.
 	 */

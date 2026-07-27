@@ -41,6 +41,24 @@ public final class GameObject extends Entity {
 }
 """
 
+PLAYER_STUB = r"""
+package com.openrsc.server.model.entity.player;
+
+import com.openrsc.server.model.entity.Entity;
+
+public final class Player extends Entity {
+    private final boolean inRange;
+
+    public Player(boolean inRange) {
+        this.inRange = inRange;
+    }
+
+    public boolean withinRange(Entity observer) {
+        return inRange;
+    }
+}
+"""
+
 POINT_STUB = r"""
 package com.openrsc.server.model;
 
@@ -90,6 +108,7 @@ package com.openrsc.server.model.world.region;
 
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
@@ -129,6 +148,20 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
         check(snapshot(index, surfaceLocation).getEntities().get(0) == surface,
             "surface identity");
 
+        Player nearbyPlayer = new Player(true);
+        Player outOfRangePlayer = new Player(false);
+        index.synchronize(nearbyPlayer, null, surfaceLocation);
+        index.synchronize(outOfRangePlayer, null, upperLocation);
+        check(index.hasPlayerWithinRange(
+                WorldRegionWindow.around(surfaceLocation, 15), surface),
+            "player-only surface range hit");
+        check(!index.hasPlayerWithinRange(
+                WorldRegionWindow.around(upperLocation, 15), upper),
+            "player-only range predicate");
+        check(!index.hasPlayerWithinRange(
+                WorldRegionWindow.around(deepLocation, 15), deep),
+            "player-only level isolation");
+
         WorldLocation boundaryOrigin = location(47, 943, 0);
         WorldLocation boundaryTarget = location(48, 942, 0);
         index.synchronize(surface, surfaceLocation, boundaryOrigin);
@@ -150,17 +183,51 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
 
         GameObject object = new GameObject();
         index.synchronize(object, null, boundaryTarget);
+        check(index.snapshotGameObjects(
+                WorldRegionWindow.around(boundaryTarget, 15))
+                .getGameObjects().size() == 1,
+            "game-object-only projection includes object");
+        check(index.snapshotGameObjects(
+                WorldRegionWindow.around(boundaryTarget, 15))
+                .getGameObjects().get(0) == object,
+            "game-object-only projection preserves identity");
+        check(index.snapshotGameObjects(
+                WorldRegionWindow.around(deepLocation, 15))
+                .getGameObjects().isEmpty(),
+            "game-object-only projection preserves level isolation");
+        check(index.hasGameObjectAt(
+                WorldRegionWindow.around(boundaryTarget, 15),
+                48,
+                942,
+                (candidate, tileX, tileY) ->
+                    candidate == object && tileX == 48 && tileY == 942),
+            "allocation-free game-object query finds matching object");
+        check(!index.hasGameObjectAt(
+                WorldRegionWindow.around(deepLocation, 15),
+                48,
+                942,
+                (candidate, tileX, tileY) -> true),
+            "allocation-free game-object query preserves level isolation");
         long objectVersionAfter = snapshot(
             index, boundaryTarget).getObjectVersion();
         check(objectVersionAfter > objectVersionBefore,
             "object registration advances object version");
         index.remove(object, boundaryTarget);
+        check(index.snapshotGameObjects(
+                WorldRegionWindow.around(boundaryTarget, 15))
+                .getGameObjects().isEmpty(),
+            "game-object-only projection removes object");
 
+        index.remove(nearbyPlayer, surfaceLocation);
+        index.remove(outOfRangePlayer, upperLocation);
         index.remove(surface, boundaryTarget);
         check(index.getMembershipCount() == 3, "removal count");
         expectState(() -> index.remove(surface, boundaryTarget));
         index.clear();
         check(index.getMembershipCount() == 0, "clear");
+        check(!index.hasPlayerWithinRange(
+                WorldRegionWindow.around(surfaceLocation, 15), surface),
+            "player-only clear");
     }
 
     private static LayeredSpatialEntityIndex.Snapshot snapshot(
@@ -208,6 +275,9 @@ class LayeredSpatialRuntimeAuthorityTest(unittest.TestCase):
                 "src/com/openrsc/server/model/entity/GameObject.java"
             ): GAME_OBJECT_STUB,
             (
+                "src/com/openrsc/server/model/entity/player/Player.java"
+            ): PLAYER_STUB,
+            (
                 "src/com/openrsc/server/model/world/region/RegionManager.java"
             ): REGION_MANAGER_STUB,
             "src/com/openrsc/server/model/world/region/Region.java": REGION_STUB,
@@ -227,6 +297,8 @@ class LayeredSpatialRuntimeAuthorityTest(unittest.TestCase):
             cls.temp / "src/com/openrsc/server/model/Point.java",
             cls.temp / "src/com/openrsc/server/model/entity/Entity.java",
             cls.temp / "src/com/openrsc/server/model/entity/GameObject.java",
+            cls.temp
+            / "src/com/openrsc/server/model/entity/player/Player.java",
             cls.temp
             / "src/com/openrsc/server/model/world/region/RegionManager.java",
             cls.temp / "src/com/openrsc/server/model/world/region/Region.java",
@@ -309,6 +381,7 @@ class LayeredSpatialRuntimeAuthorityTest(unittest.TestCase):
             region_manager,
         )
         self.assertIn("buildLayeredVisibilitySnapshot", region_manager)
+        self.assertIn("hasPlayerWithinRange", region_manager)
         self.assertIn("requireLegacyTerrainProjection", region_manager)
         self.assertIn("LayeredSpatialWindowKey", visibility)
         self.assertIn("WorldLocation src", path_validation)

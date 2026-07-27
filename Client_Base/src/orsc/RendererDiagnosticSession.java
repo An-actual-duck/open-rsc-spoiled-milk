@@ -31,10 +31,15 @@ final class RendererDiagnosticSession {
 	private static final long MAX_LOG_BYTES = Math.max(
 		1024L * 1024L,
 		readLong(MAX_LOG_BYTES_PROPERTY, MAX_LOG_BYTES_ENV, DEFAULT_MAX_LOG_BYTES));
+	private static final long EVENT_RESERVED_BYTES = Math.min(
+		8L * 1024L * 1024L,
+		Math.max(256L * 1024L, MAX_LOG_BYTES / 8L));
 
 	private static boolean started;
 	private static boolean closed;
 	private static boolean truncated;
+	private static boolean bulkTruncated;
+	private static boolean eventTruncated;
 	private static long startedNanos;
 	private static long structuredBytes;
 	private static String startedAt;
@@ -141,7 +146,7 @@ final class RendererDiagnosticSession {
 			return;
 		}
 		synchronized (LOCK) {
-			writeRecord(telemetryWriter, record);
+			writeRecord(telemetryWriter, record, false);
 		}
 	}
 
@@ -220,7 +225,7 @@ final class RendererDiagnosticSession {
 				record.string("failure", failure);
 			}
 			record.strings("artifacts", artifacts);
-			writeRecord(captureIndexWriter, record);
+			writeRecord(captureIndexWriter, record, false);
 
 			Record event = newRecord("event");
 			event.string("eventType", "capture.frame." + status);
@@ -315,7 +320,7 @@ final class RendererDiagnosticSession {
 	}
 
 	private static void writeEvent(Record event) {
-		writeRecord(eventWriter, event);
+		writeRecord(eventWriter, event, true);
 	}
 
 	private static void flushSuppressedReasonEvents() {
@@ -343,16 +348,32 @@ final class RendererDiagnosticSession {
 		writeEvent(event);
 	}
 
-	private static void writeRecord(PrintWriter writer, Record record) {
-		if (writer == null || record == null || truncated) {
+	private static void writeRecord(
+		PrintWriter writer,
+		Record record,
+		boolean eventRecord) {
+		if (writer == null || record == null
+			|| (eventRecord ? eventTruncated : bulkTruncated)) {
 			return;
 		}
 		String line = record.toJson();
 		long estimatedBytes = line.length() * 2L + 2L;
-		if (structuredBytes + estimatedBytes > MAX_LOG_BYTES) {
+		long limit = eventRecord
+			? MAX_LOG_BYTES
+			: MAX_LOG_BYTES - EVENT_RESERVED_BYTES;
+		if (structuredBytes + estimatedBytes > limit) {
 			truncated = true;
+			if (eventRecord) {
+				eventTruncated = true;
+			} else {
+				bulkTruncated = true;
+			}
 			System.err.println(
-				"[renderer diagnostics] structured log budget reached; further records are disabled.");
+				"[renderer diagnostics] "
+					+ (eventRecord ? "event" : "bulk telemetry")
+					+ " log budget reached; further "
+					+ (eventRecord ? "event" : "bulk")
+					+ " records are disabled.");
 			return;
 		}
 		writer.println(line);
@@ -373,6 +394,9 @@ final class RendererDiagnosticSession {
 			record.string("endedAt", endedAt);
 		}
 		record.number("maxStructuredLogBytes", MAX_LOG_BYTES);
+		record.number("reservedEventLogBytes", EVENT_RESERVED_BYTES);
+		record.bool("bulkLogTruncated", bulkTruncated);
+		record.bool("eventLogTruncated", eventTruncated);
 		record.string("branch", readEnvironment("SPOILED_MILK_CLIENT_BRANCH", "unknown"));
 		record.string("commit", readEnvironment("SPOILED_MILK_CLIENT_COMMIT", "unknown"));
 		record.string("targetMode", readEnvironment("SPOILED_MILK_CLIENT_TARGET_MODE", "unknown"));

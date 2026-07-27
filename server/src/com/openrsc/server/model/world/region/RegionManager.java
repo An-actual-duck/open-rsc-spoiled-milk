@@ -16,6 +16,7 @@ import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision;
 import com.openrsc.server.event.rsc.GameTickEventRestorationTargetDecision
 	.TargetOperation;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
+import com.openrsc.server.io.WorldLoader;
 import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
 import com.openrsc.server.io.NativeLayeredNpcPlacement;
 import com.openrsc.server.io.NativeLayeredSceneryPlacement;
@@ -98,6 +99,28 @@ import org.apache.logging.log4j.Logger;
 public class RegionManager {
 	private static final Logger LOGGER =
 		LogManager.getLogger(RegionManager.class);
+	private static final LayeredSpatialEntityIndex.GameObjectTilePredicate
+		NPC_BLOCKING_SCENERY_AT_TILE =
+			(gameObject, tileX, tileY) -> {
+				if (!gameObject.isScenery()
+					|| gameObject.getGameObjectDef().getType() == 0) {
+					return false;
+				}
+				final int width;
+				final int height;
+				if (gameObject.getDirection() == 0
+					|| gameObject.getDirection() == 4) {
+					width = gameObject.getGameObjectDef().getWidth();
+					height = gameObject.getGameObjectDef().getHeight();
+				} else {
+					width = gameObject.getGameObjectDef().getHeight();
+					height = gameObject.getGameObjectDef().getWidth();
+				}
+				return tileX >= gameObject.getX()
+					&& tileX < gameObject.getX() + width
+					&& tileY >= gameObject.getY()
+					&& tileY < gameObject.getY() + height;
+			};
 	public static final int MAX_LAYERED_REGIONS_PER_INTEREST_OWNER = 4096;
 	public static final int MAX_LAYERED_PACKED_SOURCES_PER_RETIREMENT_PLAN =
 		MAX_LAYERED_REGIONS_PER_INTEREST_OWNER
@@ -297,7 +320,11 @@ public class RegionManager {
 
 	public boolean hasLocalPlayers(final Entity entity) {
 		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
-			return !getLayeredLocalPlayers(entity).isEmpty();
+			Entity checked = Objects.requireNonNull(entity, "entity");
+			WorldLocation location = checked.getWorldLocation();
+			layeredSpatialEntityIndex.requireMembership(checked, location);
+			return layeredSpatialEntityIndex.hasPlayerWithinRange(
+				getLayeredVisibleRegionWindow(location), checked);
 		}
 		for (final Region region : getVisibleRegionWindow(entity.getLocation())) {
 			for (final Player player : region.getPlayers()) {
@@ -353,6 +380,31 @@ public class RegionManager {
 			}
 		}
 		return localObjects;
+	}
+
+	public boolean isNpcBlockedByScenery(
+		final Npc npc,
+		final int tileX,
+		final int tileY) {
+		if (isLayeredSpatialRuntimeAuthorityEnabled()) {
+			Npc checked = Objects.requireNonNull(npc, "npc");
+			WorldLocation location = checked.getWorldLocation();
+			layeredSpatialEntityIndex.requireMembership(checked, location);
+			return layeredSpatialEntityIndex.hasGameObjectAt(
+				getLayeredVisibleRegionWindow(
+					location,
+					getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE),
+				tileX,
+				tileY,
+				NPC_BLOCKING_SCENERY_AT_TILE);
+		}
+		for (GameObject object : getLocalObjects(npc)) {
+			if (NPC_BLOCKING_SCENERY_AT_TILE.matches(
+					object, tileX, tileY)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public Collection<GroundItem> getLocalGroundItems(final Mob entity) {
@@ -583,13 +635,16 @@ public class RegionManager {
 	private Collection<GameObject> getLayeredLocalObjects(final Mob observer) {
 		LinkedHashSet<GameObject> objects = new LinkedHashSet<GameObject>();
 		int distance = getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE;
-		for (Entity candidate : layeredSpatialSnapshot(observer, distance)
-				.getEntities()) {
-			if (candidate instanceof GameObject
-				&& candidate.sharesSpatialDomain(observer)
-				&& candidate.getLocation().withinGridRange(
+		WorldLocation observerLocation = observer.getWorldLocation();
+		layeredSpatialEntityIndex.requireMembership(
+			observer, observerLocation);
+		for (GameObject candidate : layeredSpatialEntityIndex
+				.snapshotGameObjects(getLayeredVisibleRegionWindow(
+					observerLocation, distance))
+				.getGameObjects()) {
+			if (candidate.getLocation().withinGridRange(
 					observer.getLocation(), distance)) {
-				objects.add((GameObject) candidate);
+				objects.add(candidate);
 			}
 		}
 		return objects;
@@ -3799,7 +3854,50 @@ public class RegionManager {
 		tile.verticalWallVal = (byte) source.getVerticalWall();
 		tile.elevation = (byte) source.getElevation();
 		tile.initializeTerrainCollision();
+		NativeLayeredTerrainCollisionPlan.derive(
+			source,
+			nativeLayeredNeighbor(owner, location, 1, 0),
+			nativeLayeredNeighbor(owner, location, 0, 1),
+			this::nativeTerrainOverlayBlocks,
+			this::nativeTerrainWallBlocks,
+			WorldLoader::projectileClipAllowed)
+			.applyTo(tile);
 		return nativeLayeredGameObjects.applyCollision(location, tile);
+	}
+
+	private NativeLayeredTerrainTile nativeLayeredNeighbor(
+		final NativeLayeredWorldPackage owner,
+		final WorldLocation location,
+		final int deltaX,
+		final int deltaY) {
+		WorldCoordinate coordinate = location.getCoordinate();
+		return owner.findTile(
+			new WorldLocation(
+				location.getWorldSpace(),
+				new WorldCoordinate(
+					Math.addExact(coordinate.getX(), deltaX),
+					Math.addExact(coordinate.getY(), deltaY),
+					coordinate.getLevel())))
+			.orElse(null);
+	}
+
+	private boolean nativeTerrainOverlayBlocks(final int overlayId) {
+		return overlayId > 0
+			&& getWorld().getServer().getEntityHandler()
+				.getTileDef(overlayId - 1)
+				.getObjectType() != 0;
+	}
+
+	private boolean nativeTerrainWallBlocks(final int wallId) {
+		if (wallId <= 0) {
+			return false;
+		}
+		DoorDef definition =
+			getWorld().getServer().getEntityHandler()
+				.getDoorDef(wallId - 1);
+		return definition != null
+			&& definition.getUnknown() == 0
+			&& definition.getDoorType() != 0;
 	}
 
 	public NativeLayeredWorldPackage getNativeLayeredWorldPackage() {

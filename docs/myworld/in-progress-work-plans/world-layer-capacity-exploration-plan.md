@@ -18194,6 +18194,9 @@ private environment should validate at least:
 | 2026-07-26 | Complete Preservation normalization milestone 3 as a frozen transition-compatibility inventory rather than an inferred Java graph. | All 20 `ObjectTelePoints.xml` edges normalize losslessly with zero unresolved; 107 authentic script owners, 695 teleport calls, nine location mutations, and four bridge sources are pinned by a supplementary fail-closed lock. Scripted behavior remains active compatibility logic for first parity runtime; complete-world replacement is next |
 | 2026-07-26 | Implement the first complete-world Preservation replacement profile. | Default-off profile `preservation-r64-replacement` pins package `rsc-remastered.preservation-r64-parity-review@0.3.0` and manifest `ccb3e4514de96d7c5f60b1c2cee8e9b4ea83fec5c82860c2107f84c69869cc7e`, requires the exact 1,764 terrain pages and all 32,364 base placements, suppresses only legacy base population, and retains legacy scripted transition consumers. Focused validation and the authoritative 866/488 build pass; private owner acceptance remains required |
 | 2026-07-26 | Reject the first full Preservation owner route and correct its five exposed parity defects. | Owner evidence found NPC wall traversal, repeated movement stalls around the 24-tile X boundary, incorrect upper-floor presentation, `L1 -> L-1` generic descent, and death respawn retaining native level `-1`. Native NPC roam/A-star collision now resolves through the NPC's signed level; a six-tile presentation-window retention margin prevents boundary flip-flop; native levels `0`, `+1`, `+2`, and `-1` retain their authentic client plane semantics while arbitrary depths remain plane-0 carriers; generic vertical travel changes signed level directly while explicit/long-distance legacy teleports remain unchanged; and configured respawn coordinates decode once into an explicit signed destination rather than inheriting the current package layer. The reviewed transition lock now pins 693 lexical teleport calls after two generic direct calls moved behind the common vertical helper. Focused regression tests, transition inventory, and authoritative 868/488 plus 262-source client builds pass. The explicit death recovery sub-route is owner-accepted from saved `L-1` to Lumbridge `L0`; complete corrected route acceptance remains pending |
+| 2026-07-26 | Reject the corrected full route on remaining NPC collision and movement smoothness defects. | Owner retest accepts interactions and signed layer transitions, but NPCs still cross walls and ordinary walking stutter-steps. Runtime evidence identifies two independent omissions: native tiles copied raw wall/overlay values without deriving the reciprocal server traversal product built by `WorldLoader`, and a signed-level scene reset near X `120` moved the client local base from `96` to `48` while the server movement filter retained base `96`. The latter sent out-of-window NPC targets and triggered an unbounded movement-cache mismatch log storm. Native collision derivation, scene-scope movement-window realignment, and bounded diagnostic emission are implemented and compile; focused private owner retest is pending |
+| 2026-07-26 | Accept the corrected Preservation terrain window, bridge metadata, NPC collision, and movement-performance route. | Protocol v5 restores the complete client 3-by-3 48-tile active window; native archive tiles no longer inherit editor-only overlay metadata; signed NPC collision and scene-scope movement admission align; and level-qualified Player/game-object projections remove repeated mixed-entity snapshot allocation. Private measurements fell to 31-36 ms average active ticks and 2-3 ms movement-poll work, while the owner confirms normal terrain, bridge faces, collisions/interactions, and no remaining movement stutter |
+| 2026-07-26 | Classify surviving rune-altar glyphs in the Preservation endpoint as orphan custom visualization, not missing vanilla scenery. | The Preservation placement baseline correctly excludes the custom MyWorld Runecraft altars and obelisks. The client independently drew glyph/orb billboards from fixed coordinates, so those effects survived without owners. Rendering now requires the exact matching loaded altar or obelisk scenery identity and caches ownership by scene-object revision; custom worlds retain their effects while vanilla scenes omit them. Focused guards and the authoritative 262-source client build pass; owner visual confirmation remains pending |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -18636,6 +18639,127 @@ and additional depths follow acceptance of this complete unchanged-world
 conversion; a generic standalone converter is not on the critical path. The
 historical retirement findings below remain retained reference material for
 later source-lifecycle work.
+
+The next corrected route still rejects complete parity despite accepting
+interactions and signed layer transitions. Native terrain materialization had
+preserved raw wall and overlay bytes but omitted the server collision product
+that the mutable legacy loader derives from those values, including reciprocal
+positive-axis wall contributions. Client collision therefore protected the
+Player while server-driven NPC paths saw open terrain. Separately, a signed
+level transition at X `119` forced the client to choose local scene base `48`
+while the server retained its pre-transition base `96`; movement snapshots
+then contained NPC targets outside the client's 144-tile local window. The
+client rejected those targets and the diagnostic printed five-record mismatch
+bursts on nearly every update, compounding the visible stutter. Native tile
+materialization now derives the same terrain, reciprocal wall, diagonal,
+overlay, and projectile collision product without mutating package data;
+scene-scope changes realign the server's custom movement window to the exact
+current tile; and mismatch bursts are limited to one representative capture
+per ten seconds. The next private route accepted NPC wall collision, Player
+collision, interactions, and signed transitions, but rejected overall parity:
+movement remained visibly choppy, terrain beyond a repeatable boundary became
+void/water, and bridge edges inside that damaged presentation were incomplete.
+
+The capture establishes that these are loader-boundary defects, not expected
+first-pass smoothing. Protocol v4 replaced the client's 3-by-3 48-tile active
+section window (144 by 144 tiles) with only a radius-one set of 24-tile
+presentation chunks (72 by 72 tiles). `World` deliberately initialized every
+native active section as void before applying that partial snapshot, so the
+uncovered majority necessarily appeared as water. The 24-tile presentation
+center also changed independently from the client's 48-tile region base,
+causing unnecessary context traffic; NPC movement diagnostics still captured
+targets outside the client's actual local base during those shifts.
+
+The current correction advances the native scene wire to protocol v5. It sends
+a radius-one 3-by-3 set of complete 48-tile storage sectors aligned to the
+client's active section center. Each sector is independently zlib-compressed,
+so even nine populated Preservation sectors fit inside the existing two-byte
+custom packet frame; the client strictly inflates each sector to exactly
+23,040 bytes and retains protocol-v4 decoding for old focused fixtures. One
+context now supplies the complete 144-by-144 terrain window, including bridge
+adjacency at its normal active edges. The server updates its mirrored client
+midpoint before choosing that window, and custom NPC admission/retention now
+refuses positions outside the same active local window. Automated wire
+coverage, malformed/truncated input refusal, authoritative builds, and the
+focused parity guards pass. The owner now accepts terrain continuity and
+confirms the former repeatable water boundary is gone. The remaining invisible
+bridge edges have a separate exact cause: native archive tiles were incorrectly
+tagged with transient World Builder `editorPaintedOverlay` metadata, which
+suppresses the legacy client's automatic adjacent overlay edge faces. Native
+archive decoding now leaves that metadata false and pins it in both v4 and v5
+wire regressions; synthetic editor/void inputs retain their explicit metadata.
+The owner accepts the corrected bridge faces. Movement-cache mismatch bursts
+are absent from the v5 capture, while a reduced but cyclic visible stutter
+remained.
+
+The bounded server capture identifies that remaining cadence exactly. With no
+Player online, 640 ms world ticks average about 2 ms. After one Player logs in,
+the same ticks average roughly 190-225 ms almost entirely in NPC processing,
+and the single game thread consequently delays nominal 10 ms movement polls by
+roughly 300-450 ms. The layered `hasLocalPlayers` route was materializing and
+copying a complete mixed-entity visibility snapshot for each idle-NPC
+eligibility check; the Preservation replacement makes that repeated allocation
+especially expensive. The layered spatial index now maintains a
+level-qualified player-only projection and answers the boolean range query
+without copying NPC, scenery, or item membership. Exact membership movement,
+replacement, removal, clear, range refusal, and signed-level isolation remain
+guarded. That first correction reduced active tick averages to roughly
+156-192 ms, but did not clear the visible cadence gate.
+
+The next capture retained all eight owner `Ctrl+F8` observations. At those
+markers the client loop remained near its stable 16.7 ms cadence, recent loop
+maxima were normally about 20-26 ms, waypoint depth never exceeded two, and no
+authoritative correction snap occurred. Movement and snapshot arrivals instead
+showed repeated 450-750 ms gaps. The client and renderer therefore were not
+the source of the cyclic pause; they were presenting late server movement.
+
+Bounded JVM GameThread samples identified the remaining server cost exactly.
+Both the world-tick roam path and the 10 ms movement path spent their active
+samples under `PathValidation.isNpcBlockedByScenery`. Its layered
+`getLocalObjects` implementation copied the complete mixed-entity 127-tile
+window, converted every candidate's domain identity, discarded every
+non-object, and built another set. One NPC step invokes that check several
+times, so Preservation's 3,612 NPCs and 27,736 static objects amplified the
+mistake across both schedulers.
+
+The layered index now keeps a level-qualified game-object-only projection.
+General object consumers can snapshot that projection without traversing mobs
+or items; NPC collision uses an allocation-free, early-exit tile predicate
+directly against it. Registration, movement, replacement, removal, clear,
+object-version advancement, and signed-level isolation stay coupled to the
+primary membership index. This preserves the accepted blocking rule and does
+not change NPC scheduling or view-distance semantics.
+
+Private measurements under the same logged-in workload show the staged result:
+the object-only snapshot first reduced steady active ticks to about 66-73 ms
+and movement-poll bursts to at most 9-15 ms; the direct blocking query then
+reduced the latest steady windows to 31-36 ms average ticks, 48-60 ms maximum
+ticks, and 2-3 ms maximum poll work. This restores substantial margin beneath
+the 430 ms walking cadence. The owner confirms that the cyclic stutter is gone;
+together with the preceding normal NPC collision, interaction, terrain, and
+bridge checks, the performance correction is accepted.
+
+The earlier five `Ctrl+F8` presses were lost after bulk telemetry consumed the
+shared 64 MB structured budget. Renderer diagnostics now reserve up to 8 MB
+for event records after bulk telemetry truncates and show an in-game
+acknowledgement for each marker. The latest eight-marker session proves that
+reserve works. This diagnostic correction is default-off and does not alter
+release function-key policy.
+
+The next visible parity finding is residual custom altar visualization. The
+Preservation package correctly contains neither the MyWorld Runecraft altars
+nor their decorative obelisks, but the client previously synthesized fourteen
+glyphs and fifty-six orbs from fixed world coordinates without consulting
+loaded scenery. This made a clean vanilla placement conversion look as though
+its altars were missing. Glyph rendering now requires the exact altar object ID
+at its authored anchor; each orb independently requires the exact obelisk ID at
+its authored corner. A scene-object revision cache recomputes those owners only
+when scenery identity or the local scene base changes, avoiding a full
+27,736-object scan on every frame. Custom MyWorld scenes therefore retain their
+visuals, while Preservation scenes cannot display orphan billboards. Automated
+owner-ID/placement symmetry, fallback-asset, scene-revision, and authoritative
+client-build checks pass. One private visual confirmation is the active parity
+gate before continuing the broader residual-content inventory.
 
 ## Phase 5 Authority Milestone B: Spatial Runtime Identity
 

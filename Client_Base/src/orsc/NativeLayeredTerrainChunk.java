@@ -143,7 +143,6 @@ public final class NativeLayeredTerrainChunk {
 				| (tileBytes[offset++] & 0xff) << 16
 				| (tileBytes[offset++] & 0xff) << 8
 				| tileBytes[offset] & 0xff;
-		tile.editorPaintedOverlay = true;
 		return tile;
 	}
 

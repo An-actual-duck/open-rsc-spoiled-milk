@@ -360,6 +360,7 @@ import com.openrsc.server.net.rsc.struct.outgoing.LayeredSceneContextStruct;
 import com.openrsc.server.net.rsc.struct.outgoing.LayeredSceneTerrainChunkStruct;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
+import java.util.zip.Deflater;
 import orsc.NativeLayeredTerrainPacketDecoder;
 import orsc.NativeLayeredTerrainSnapshot;
 
@@ -413,7 +414,7 @@ public final class NativeLayeredChunkWireFixture {
 
         Packet packet = new PayloadCustomGenerator().generate(context, null);
         check(packet != null && packet.getID() == 152, "generated opcode");
-        byte[] body = nativeBody(packet);
+        byte[] body = nativeBody(packet, 4);
 
         NativeLayeredTerrainSnapshot decoded =
             NativeLayeredTerrainPacketDecoder.decodeV4(body, "global", -2);
@@ -433,6 +434,8 @@ public final class NativeLayeredChunkWireFixture {
         check((tile.verticalWall & 0xff) == 6, "decoded vertical wall");
         check((tile.horizontalWall & 0xff) == 7, "decoded horizontal wall");
         check(tile.diagonalWalls == 0x89abcdef, "decoded diagonal bits");
+        check(!tile.editorPaintedOverlay,
+            "decoded archive tile is not editor-painted");
         expectIllegal(() -> NativeLayeredTerrainPacketDecoder.decodeV4(
             Arrays.copyOf(body, body.length - 1), "global", -2));
         byte[] trailing = Arrays.copyOf(body, body.length + 1);
@@ -451,9 +454,10 @@ public final class NativeLayeredChunkWireFixture {
             "full radius-one packet fits two-byte custom frame");
         NativeLayeredTerrainSnapshot fullDecoded =
             NativeLayeredTerrainPacketDecoder.decodeV4(
-                nativeBody(fullPacket), "global", -2);
+                nativeBody(fullPacket, 4), "global", -2);
         check(fullDecoded.getAvailableChunkCount() == 9,
             "full readiness window round trip");
+        testV5StorageSectorWindow();
     }
 
     private static void populateAvailable(
@@ -466,9 +470,99 @@ public final class NativeLayeredChunkWireFixture {
         chunk.tileBytes = new byte[24 * 24 * 10];
     }
 
-    private static byte[] nativeBody(Packet packet) {
+    private static void testV5StorageSectorWindow() {
+        LayeredSceneContextStruct context = new LayeredSceneContextStruct();
+        context.setOpcode(OpcodeOut.SEND_LAYERED_SCENE_CONTEXT);
+        context.protocolVersion = 5;
+        context.sequence = 7;
+        context.serverTick = 101;
+        context.worldSpace = "global";
+        context.projectionId = "native-layered-package-v1";
+        context.logicalX = 450;
+        context.logicalY = 600;
+        context.logicalLevel = -2;
+        context.legacyX = 450;
+        context.legacyY = 600;
+        context.nativePackageId = "rsc-remastered.native-loader-lab";
+        context.nativePackageVersion = "0.6.0";
+        context.nativeManifestSha256 =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        context.nativePresentationChunkSize = 48;
+        context.nativeCurrentChunkX = 9;
+        context.nativeCurrentChunkY = 12;
+        context.nativeChunkRadius = 1;
+        for (int deltaX = -1; deltaX <= 1; deltaX++) {
+            for (int deltaY = -1; deltaY <= 1; deltaY++) {
+                LayeredSceneTerrainChunkStruct chunk =
+                    new LayeredSceneTerrainChunkStruct();
+                chunk.chunkX = 9 + deltaX;
+                chunk.chunkY = 12 + deltaY;
+                chunk.available = true;
+                chunk.sourceSectorX = chunk.chunkX;
+                chunk.sourceSectorY = chunk.chunkY;
+                chunk.sourceEncoding = "raw-layered-sector-v1";
+                chunk.sourcePayloadSha256 =
+                    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+                byte[] raw = new byte[48 * 48 * 10];
+                if (deltaX == 0 && deltaY == 0) {
+                    int offset = (18 * 48 + 24) * 10;
+                    raw[offset] = 4;
+                    raw[offset + 1] = 2;
+                    raw[offset + 2] = 3;
+                    raw[offset + 3] = 5;
+                    raw[offset + 4] = 6;
+                    raw[offset + 5] = 7;
+                    raw[offset + 6] = (byte) 0x89;
+                    raw[offset + 7] = (byte) 0xab;
+                    raw[offset + 8] = (byte) 0xcd;
+                    raw[offset + 9] = (byte) 0xef;
+                }
+                chunk.tileBytes = compress(raw);
+                context.nativeChunks.add(chunk);
+            }
+        }
+        Packet packet = new PayloadCustomGenerator().generate(context, null);
+        check(packet.getLength() < 65533,
+            "compressed 144-tile window fits custom frame");
+        NativeLayeredTerrainSnapshot decoded =
+            NativeLayeredTerrainPacketDecoder.decodeV5(
+                nativeBody(packet, 5), "global", -2);
+        check(decoded.getProtocolVersion() == 5, "v5 decoded protocol");
+        check(decoded.getPresentationChunkSize() == 48,
+            "v5 storage-sector chunks");
+        check(decoded.getAvailableChunkCount() == 9,
+            "v5 full client window readiness");
+        check(decoded.covers("global", -2, 384, 528)
+                && decoded.covers("global", -2, 527, 671),
+            "v5 covers complete 144-tile client window");
+        com.openrsc.client.model.Tile tile = decoded.createTile(450, 600);
+        check((tile.groundElevation & 0xff) == 4, "v5 elevation");
+        check(tile.diagonalWalls == 0x89abcdef, "v5 diagonal bits");
+        check(!tile.editorPaintedOverlay,
+            "v5 archive tile is not editor-painted");
+        byte[] truncated = Arrays.copyOf(
+            nativeBody(packet, 5), nativeBody(packet, 5).length - 1);
+        expectIllegal(() -> NativeLayeredTerrainPacketDecoder.decodeV5(
+            truncated, "global", -2));
+    }
+
+    private static byte[] compress(byte[] source) {
+        Deflater compressor = new Deflater(Deflater.BEST_SPEED);
+        try {
+            compressor.setInput(source);
+            compressor.finish();
+            byte[] output = new byte[source.length + 128];
+            int length = compressor.deflate(output);
+            check(compressor.finished(), "fixture compression");
+            return Arrays.copyOf(output, length);
+        } finally {
+            compressor.end();
+        }
+    }
+
+    private static byte[] nativeBody(Packet packet, int protocolVersion) {
         ByteBuf input = packet.getBuffer().duplicate();
-        check((input.readByte() & 0xff) == 4, "wire protocol");
+        check((input.readByte() & 0xff) == protocolVersion, "wire protocol");
         check(input.readInt() == 7, "wire sequence");
         check(input.readInt() == 101, "wire tick");
         check("global".equals(readString(input)), "wire world space");
@@ -1126,7 +1220,8 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "Layered native terrain package requires the accepted synthetic",
             region_manager,
         )
-        self.assertIn("findPresentationChunk(", game_state_updater)
+        self.assertIn("findSector(new WorldMapSectorId(", game_state_updater)
+        self.assertIn("compressNativeTerrain(", game_state_updater)
         self.assertIn(
             '"; ready=" + nativeReadyChunks + "/9"', development
         )

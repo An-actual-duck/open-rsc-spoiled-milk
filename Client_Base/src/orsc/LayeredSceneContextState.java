@@ -13,6 +13,8 @@ final class LayeredSceneContextState {
 	static final int SYNTHETIC_DEEP_PROTOCOL_VERSION = 2;
 	static final int UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION =
 		NativeLayeredTerrainSnapshot.UNIFORM_PAGE_PROTOCOL_VERSION;
+	static final int LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION =
+		NativeLayeredTerrainSnapshot.LEGACY_CHUNKED_PROTOCOL_VERSION;
 	static final int NATIVE_LAYERED_PROTOCOL_VERSION =
 		NativeLayeredTerrainSnapshot.PROTOCOL_VERSION;
 	static final int LEVEL_STRIDE = 944;
@@ -141,6 +143,8 @@ final class LayeredSceneContextState {
 				!= SYNTHETIC_DEEP_PROTOCOL_VERSION
 			&& incomingProtocolVersion
 				!= UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION
+			&& incomingProtocolVersion
+				!= LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
 			&& incomingProtocolVersion
 				!= NATIVE_LAYERED_PROTOCOL_VERSION) {
 			throw new IllegalArgumentException(
@@ -322,10 +326,8 @@ final class LayeredSceneContextState {
 		if (left == null || right == null) {
 			return left == right;
 		}
-		if (left.getProtocolVersion()
-				== NativeLayeredTerrainSnapshot.PROTOCOL_VERSION
-			&& right.getProtocolVersion()
-				== NativeLayeredTerrainSnapshot.PROTOCOL_VERSION) {
+		if (isChunkedNativeProtocol(left.getProtocolVersion())
+			&& isChunkedNativeProtocol(right.getProtocolVersion())) {
 			return left.packageIdentity().equals(right.packageIdentity());
 		}
 		return left.equals(right);
@@ -333,6 +335,12 @@ final class LayeredSceneContextState {
 
 	private static boolean isNativeProtocol(int version) {
 		return version == UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION
+			|| version == LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
+			|| version == NATIVE_LAYERED_PROTOCOL_VERSION;
+	}
+
+	private static boolean isChunkedNativeProtocol(int version) {
+		return version == LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
 			|| version == NATIVE_LAYERED_PROTOCOL_VERSION;
 	}
 

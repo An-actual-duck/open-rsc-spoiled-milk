@@ -21,6 +21,11 @@ CLIENT_WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
 FIXTURE = r"""
 package com.openrsc.server.model.world.coordinate;
 
+import com.openrsc.server.io.NativeLayeredTerrainTile;
+import com.openrsc.server.model.world.region.NativeLayeredTerrainCollisionPlan;
+import com.openrsc.server.model.world.region.TileValue;
+import com.openrsc.server.util.rsc.CollisionFlag;
+
 public final class LayeredPreservationRuntimeParityFixture {
     public static void main(String[] args) {
         WorldLocation surface = location(138, 666, 0);
@@ -75,6 +80,45 @@ public final class LayeredPreservationRuntimeParityFixture {
                 24, 1, 6, teleported);
         check(changedLevel.getCenterChunkX() == 12,
             "level change starts a fresh window");
+
+        NativeLayeredTerrainTile current = new NativeLayeredTerrainTile(
+            0, 0, 250, 0, 1, 2, 3);
+        NativeLayeredTerrainTile positiveX = new NativeLayeredTerrainTile(
+            0, 0, 0, 0, 0, 5, 0);
+        NativeLayeredTerrainTile positiveY = new NativeLayeredTerrainTile(
+            0, 0, 0, 0, 4, 0, 0);
+        NativeLayeredTerrainCollisionPlan.Result collision =
+            NativeLayeredTerrainCollisionPlan.derive(
+                current,
+                positiveX,
+                positiveY,
+                overlayId -> overlayId == 2,
+                wallId -> true,
+                wallId -> wallId % 2 == 0);
+        int expectedTerrainMask =
+            CollisionFlag.WALL_NORTH
+                | CollisionFlag.WALL_EAST
+                | CollisionFlag.WALL_SOUTH
+                | CollisionFlag.WALL_WEST
+                | CollisionFlag.FULL_BLOCK_B;
+        check(collision.getTraversalMask() == expectedTerrainMask,
+            "native walls derive current and reciprocal collision");
+        check(collision.isTerrainBlocked(),
+            "overlay 250 retains legacy collision alias 2");
+        check(!collision.isOverlayProjectileBlocked(),
+            "overlay projectile behavior retains the raw legacy value");
+        check(collision.getProjectileWallCount() == 2,
+            "native projectile wall contributions are exact");
+        TileValue runtimeTile = new TileValue();
+        runtimeTile.initializeTerrainCollision();
+        collision.applyTo(runtimeTile);
+        check((runtimeTile.traversalMask & expectedTerrainMask)
+                == expectedTerrainMask,
+            "derived native traversal mask reaches runtime tile");
+        check((runtimeTile.traversalMask & CollisionFlag.FULL_BLOCK_C) != 0,
+            "derived native overlay block reaches runtime tile");
+        check(runtimeTile.getTerrainWallProjectileCount() == 2,
+            "derived projectile count reaches runtime tile");
     }
 
     private static WorldLocation location(int x, int y, int level) {
@@ -113,6 +157,23 @@ class LayeredPreservationRuntimeParityTest(unittest.TestCase):
                 COORDINATES / "WorldLocation.java",
                 COORDINATES / "LayeredRelativeTransition.java",
                 COORDINATES / "NativeLayeredPresentationWindow.java",
+                ROOT / (
+                    "server/src/com/openrsc/server/io/"
+                    "NativeLayeredTerrainTile.java"
+                ),
+                ROOT / "server/src/com/openrsc/server/io/Tile.java",
+                ROOT / (
+                    "server/src/com/openrsc/server/model/world/region/"
+                    "NativeLayeredTerrainCollisionPlan.java"
+                ),
+                ROOT / (
+                    "server/src/com/openrsc/server/model/world/region/"
+                    "TileValue.java"
+                ),
+                ROOT / (
+                    "server/src/com/openrsc/server/util/rsc/"
+                    "CollisionFlag.java"
+                ),
                 fixture,
             ]
             subprocess.run(
@@ -166,9 +227,19 @@ class LayeredPreservationRuntimeParityTest(unittest.TestCase):
         self.assertIn("public AStarPathfinder(Mob owner", astar)
         self.assertIn("owner.getTileAtCurrentLevel(", astar)
         self.assertIn(
-            "NATIVE_LAYERED_CHUNK_RETENTION_MARGIN = 6", updater
+            "NATIVE_LAYERED_WIRE_CHUNK_SIZE =", updater
         )
-        self.assertIn("NativeLayeredPresentationWindow.select(", updater)
+        self.assertIn("updateCustomMovementClientRegion(player);", updater)
+        self.assertIn("compressNativeTerrain(", updater)
+        self.assertIn("isWithinClientLocalTileWindow(", updater)
+
+        region_manager = (
+            ROOT
+            / "server/src/com/openrsc/server/model/world/region/RegionManager.java"
+        ).read_text(encoding="utf-8")
+        self.assertIn("NativeLayeredTerrainCollisionPlan.derive(", region_manager)
+        self.assertIn("nativeLayeredNeighbor(owner, location, 1, 0)", region_manager)
+        self.assertIn("nativeLayeredNeighbor(owner, location, 0, 1)", region_manager)
 
     def test_native_legacy_levels_keep_authentic_client_plane_semantics(self):
         state = CLIENT_STATE.read_text(encoding="utf-8")

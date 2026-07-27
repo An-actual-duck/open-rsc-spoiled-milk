@@ -337,6 +337,12 @@ public final class mudclient implements Runnable {
 		0xD8F7FF, 0x3D78FF, 0x7A4C28, 0xFF5A24, 0xDFA8FF, 0x7DD6B1, 0x6D48B8, 0x8B1E1E,
 		0x3FBF4A, 0xF1F1D0, 0x4C5666, 0xA31324, 0xA6D8FF, 0xF3DD59
 	};
+	private static final int[] ALTAR_OBJECT_IDS = new int[] {
+		1191, 1195, 1197, 1199, 1193, 1201, 1203, 1205, 1207, 1209, 1211, 1213, 1296, 1321
+	};
+	private static final int[] ALTAR_OBELISK_OBJECT_IDS = new int[] {
+		303, 300, 304, 301, 1298, 1299, 1300, 1301, 1302, 1303, 1304, 1305, 1306, 1322
+	};
 	private static final int[][] ALTAR_TILES = new int[][] {
 		{306, 593}, {147, 684}, {62, 464}, {50, 633}, {297, 438}, {259, 503}, {104, 3556},
 		{232, 375}, {392, 804}, {409, 534}, {392, 3540}, {247, 102}, {611, 3599}, {283, 694}
@@ -1039,6 +1045,11 @@ public final class mudclient implements Runnable {
 	private int spriteCount = 0;
 	private final Sprite[] worldGlyphSprites = new Sprite[ALTAR_VISUAL_COUNT];
 	private final Sprite[] worldOrbSprites = new Sprite[ALTAR_VISUAL_COUNT];
+	private final boolean[] altarGlyphOwnerPresent = new boolean[ALTAR_VISUAL_COUNT];
+	private final boolean[][] altarOrbOwnerPresent = new boolean[ALTAR_VISUAL_COUNT][4];
+	private long altarVisualOwnerRevision = Long.MIN_VALUE;
+	private int altarVisualOwnerBaseX = Integer.MIN_VALUE;
+	private int altarVisualOwnerBaseZ = Integer.MIN_VALUE;
 	private final Sprite[][] combatEffectSprites = new Sprite[COMBAT_EFFECT_COUNT + 1][COMBAT_EFFECT_FRAME_SLOTS];
 	private final int[] combatEffectFrameCounts = new int[COMBAT_EFFECT_COUNT + 1];
 	private final String[] combatEffectNames = new String[] {
@@ -6939,8 +6950,10 @@ public final class mudclient implements Runnable {
 						}
 					}
 
+					refreshAltarVisualOwnerPresence();
 					for (int altarIndex = 0; altarIndex < ALTAR_ELEMENTS.length; altarIndex++) {
-						if (this.worldGlyphSprites[altarIndex] != null) {
+						if (this.worldGlyphSprites[altarIndex] != null
+							&& this.altarGlyphOwnerPresent[altarIndex]) {
 							int glyphTileX = ALTAR_TILES[altarIndex][0] - this.midRegionBaseX;
 							int glyphTileZ = ALTAR_TILES[altarIndex][1] - this.midRegionBaseZ;
 							if (canDrawWorldSpriteAtLocalTile(glyphTileX, glyphTileZ)) {
@@ -6955,6 +6968,9 @@ public final class mudclient implements Runnable {
 
 						if (this.worldOrbSprites[altarIndex] != null && ALTAR_OBELISK_TILES[altarIndex] != null) {
 							for (int orbIndex = 0; orbIndex < ALTAR_OBELISK_TILES[altarIndex].length; orbIndex++) {
+								if (!this.altarOrbOwnerPresent[altarIndex][orbIndex]) {
+									continue;
+								}
 								int orbTileX = ALTAR_OBELISK_TILES[altarIndex][orbIndex][0] - this.midRegionBaseX;
 								int orbTileZ = ALTAR_OBELISK_TILES[altarIndex][orbIndex][1] - this.midRegionBaseZ;
 								if (canDrawWorldSpriteAtLocalTile(orbTileX, orbTileZ)) {
@@ -22290,6 +22306,58 @@ public final class mudclient implements Runnable {
 		return this.world != null && this.world.isTerrainLoadedAtLocalTile(tileX, tileZ);
 	}
 
+	private void refreshAltarVisualOwnerPresence() {
+		long gameObjectRevision = this.sceneInstanceStore.getGameObjectRevision();
+		if (this.altarVisualOwnerRevision == gameObjectRevision
+			&& this.altarVisualOwnerBaseX == this.midRegionBaseX
+			&& this.altarVisualOwnerBaseZ == this.midRegionBaseZ) {
+			return;
+		}
+
+		Arrays.fill(this.altarGlyphOwnerPresent, false);
+		for (boolean[] orbOwners : this.altarOrbOwnerPresent) {
+			Arrays.fill(orbOwners, false);
+		}
+
+		for (int objectIndex = 0; objectIndex < this.getGameObjectInstanceCount(); objectIndex++) {
+			int objectId = this.getGameObjectInstanceID(objectIndex);
+			int worldX = this.getGameObjectInstanceX(objectIndex) + this.midRegionBaseX;
+			int worldZ = this.getGameObjectInstanceZ(objectIndex) + this.midRegionBaseZ;
+
+			int altarIndex = indexOfAltarOwner(ALTAR_OBJECT_IDS, objectId);
+			if (altarIndex >= 0
+				&& ALTAR_TILES[altarIndex][0] == worldX
+				&& ALTAR_TILES[altarIndex][1] == worldZ) {
+				this.altarGlyphOwnerPresent[altarIndex] = true;
+			}
+
+			int obeliskIndex = indexOfAltarOwner(ALTAR_OBELISK_OBJECT_IDS, objectId);
+			if (obeliskIndex < 0) {
+				continue;
+			}
+			for (int orbIndex = 0; orbIndex < ALTAR_OBELISK_TILES[obeliskIndex].length; orbIndex++) {
+				int[] orbTile = ALTAR_OBELISK_TILES[obeliskIndex][orbIndex];
+				if (orbTile[0] == worldX && orbTile[1] == worldZ) {
+					this.altarOrbOwnerPresent[obeliskIndex][orbIndex] = true;
+					break;
+				}
+			}
+		}
+
+		this.altarVisualOwnerRevision = gameObjectRevision;
+		this.altarVisualOwnerBaseX = this.midRegionBaseX;
+		this.altarVisualOwnerBaseZ = this.midRegionBaseZ;
+	}
+
+	private static int indexOfAltarOwner(int[] ownerIds, int objectId) {
+		for (int index = 0; index < ownerIds.length; index++) {
+			if (ownerIds[index] == objectId) {
+				return index;
+			}
+		}
+		return -1;
+	}
+
 	private boolean canDrawWorldSpriteAtLocalPixel(int pixelX, int pixelZ) {
 		return this.world != null && this.world.isTerrainLoadedAtLocalPixel(pixelX, pixelZ);
 	}
@@ -22508,7 +22576,13 @@ public final class mudclient implements Runnable {
 	}
 
 	public void markMovementStutterObserved() {
+		boolean enabled = MovementTimingDiagnostics.isEnabled();
 		MovementTimingDiagnostics.markStutterObserved(this.localPlayer);
+		this.showMessage(false, null,
+			enabled
+				? "Movement stutter marker recorded."
+				: "Movement diagnostics are not enabled.",
+			MessageType.GAME, 0, null);
 	}
 
 	private boolean isValidCustomMovementDirection(int direction) {

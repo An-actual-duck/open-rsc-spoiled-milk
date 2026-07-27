@@ -4,7 +4,6 @@ import com.google.common.collect.Multimap;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.model.action.WalkToMobAction;
 import com.openrsc.server.model.entity.Mob;
-import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
@@ -824,25 +823,8 @@ public class PathValidation {
 	}
 
 	private static boolean isNpcBlockedByScenery(Npc npc, int x, int y) {
-		for (GameObject object : npc.getWorld().getRegionManager().getLocalObjects(npc)) {
-			if (!object.isScenery() || object.getGameObjectDef().getType() == 0) {
-				continue;
-			}
-			int width;
-			int height;
-			if (object.getDirection() == 0 || object.getDirection() == 4) {
-				width = object.getGameObjectDef().getWidth();
-				height = object.getGameObjectDef().getHeight();
-			} else {
-				width = object.getGameObjectDef().getHeight();
-				height = object.getGameObjectDef().getWidth();
-			}
-			if (x >= object.getX() && x < object.getX() + width
-				&& y >= object.getY() && y < object.getY() + height) {
-				return true;
-			}
-		}
-		return false;
+		return npc.getWorld().getRegionManager()
+			.isNpcBlockedByScenery(npc, x, y);
 	}
 
 	public static boolean isPlayerBlocking(Player localPlayer, int x, int y) {

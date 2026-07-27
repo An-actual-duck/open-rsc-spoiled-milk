@@ -406,7 +406,10 @@ public class PacketHandler {
 				packetsIncoming.getUnsignedByte(),
 				packetsIncoming.get32());
 		} else if (protocolVersion
-				== LayeredSceneContextState.NATIVE_LAYERED_PROTOCOL_VERSION) {
+					== LayeredSceneContextState
+						.LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
+				|| protocolVersion
+					== LayeredSceneContextState.NATIVE_LAYERED_PROTOCOL_VERSION) {
 			int bodyLength = length - packetsIncoming.packetEnd;
 			if (bodyLength <= 0) {
 				throw new IllegalArgumentException(
@@ -414,8 +417,14 @@ public class PacketHandler {
 			}
 			byte[] body = new byte[bodyLength];
 			packetsIncoming.readBytes(bodyLength, body);
-			nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV4(
-				body, worldSpace, logicalLevel);
+			nativeTerrain =
+				protocolVersion
+						== LayeredSceneContextState
+							.LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
+					? NativeLayeredTerrainPacketDecoder.decodeV4(
+						body, worldSpace, logicalLevel)
+					: NativeLayeredTerrainPacketDecoder.decodeV5(
+						body, worldSpace, logicalLevel);
 		}
 		LayeredSceneContextState.ApplyResult result = nativeTerrain == null
 			? layeredSceneContextState.accept(

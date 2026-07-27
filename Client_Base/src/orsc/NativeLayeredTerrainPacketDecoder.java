@@ -3,6 +3,8 @@ package orsc;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.DataFormatException;
+import java.util.zip.Inflater;
 
 /** Strict protocol-v4 native terrain body decoder, isolated for wire tests. */
 public final class NativeLayeredTerrainPacketDecoder {
@@ -15,6 +17,27 @@ public final class NativeLayeredTerrainPacketDecoder {
 
 	public static NativeLayeredTerrainSnapshot decodeV4(
 		byte[] payload, String worldSpace, int level) {
+		return decodeChunked(
+			payload,
+			worldSpace,
+			level,
+			NativeLayeredTerrainSnapshot.LEGACY_CHUNKED_PROTOCOL_VERSION);
+	}
+
+	public static NativeLayeredTerrainSnapshot decodeV5(
+		byte[] payload, String worldSpace, int level) {
+		return decodeChunked(
+			payload,
+			worldSpace,
+			level,
+			NativeLayeredTerrainSnapshot.PROTOCOL_VERSION);
+	}
+
+	private static NativeLayeredTerrainSnapshot decodeChunked(
+		byte[] payload,
+		String worldSpace,
+		int level,
+		int protocolVersion) {
 		if (payload == null) {
 			throw new IllegalArgumentException(
 				"Native terrain packet body is required");
@@ -31,6 +54,17 @@ public final class NativeLayeredTerrainPacketDecoder {
 			int currentChunkY = input.getInt();
 			int chunkRadius = unsignedByte(input);
 			int chunkCount = unsignedByte(input);
+			int expectedChunkSize =
+				protocolVersion
+						== NativeLayeredTerrainSnapshot
+							.LEGACY_CHUNKED_PROTOCOL_VERSION
+					? NativeLayeredTerrainSnapshot
+						.LEGACY_STREAMING_CHUNK_SIZE
+					: NativeLayeredTerrainSnapshot.STREAMING_CHUNK_SIZE;
+			if (chunkSize != expectedChunkSize) {
+				throw new IllegalArgumentException(
+					"Native terrain packet has an invalid chunk size");
+			}
 			int width = chunkRadius * 2 + 1;
 			if (chunkRadius
 					!= NativeLayeredTerrainSnapshot.STREAMING_CHUNK_RADIUS
@@ -55,17 +89,27 @@ public final class NativeLayeredTerrainPacketDecoder {
 						readString(input, MAX_ID_BYTES, "source encoding");
 					String sourcePayloadSha256 =
 						readString(input, SHA256_BYTES, "source SHA-256");
-					int tileByteCount = input.getShort() & 0xffff;
+					int wireByteCount = input.getShort() & 0xffff;
 					int expectedTileBytes = Math.multiplyExact(
 						Math.multiplyExact(chunkSize, chunkSize),
 						NativeLayeredTerrainChunk.TILE_WIRE_BYTES);
-					if (tileByteCount != expectedTileBytes
-						|| input.remaining() < tileByteCount) {
+					if (wireByteCount <= 0
+						|| input.remaining() < wireByteCount
+						|| protocolVersion
+								== NativeLayeredTerrainSnapshot
+									.LEGACY_CHUNKED_PROTOCOL_VERSION
+							&& wireByteCount != expectedTileBytes) {
 						throw new IllegalArgumentException(
 							"Native terrain chunk has an invalid wire length");
 					}
-					byte[] tileBytes = new byte[tileByteCount];
-					input.get(tileBytes);
+					byte[] wireBytes = new byte[wireByteCount];
+					input.get(wireBytes);
+					byte[] tileBytes =
+						protocolVersion
+								== NativeLayeredTerrainSnapshot
+									.LEGACY_CHUNKED_PROTOCOL_VERSION
+							? wireBytes
+							: inflateSector(wireBytes, expectedTileBytes);
 					chunks[index] = NativeLayeredTerrainChunk.available(
 						chunkSize,
 						chunkX,
@@ -84,7 +128,8 @@ public final class NativeLayeredTerrainPacketDecoder {
 				throw new IllegalArgumentException(
 					"Native terrain packet has trailing bytes");
 			}
-			return new NativeLayeredTerrainSnapshot(
+			NativeLayeredTerrainSnapshot result =
+				new NativeLayeredTerrainSnapshot(
 				packageId,
 				packageVersion,
 				manifestSha256,
@@ -95,10 +140,38 @@ public final class NativeLayeredTerrainPacketDecoder {
 				currentChunkY,
 				chunkRadius,
 				chunks);
+			if (result.getProtocolVersion() != protocolVersion) {
+				throw new IllegalArgumentException(
+					"Native terrain packet protocol/chunk-size mismatch");
+			}
+			return result;
 		} catch (BufferUnderflowException failure) {
 			throw new IllegalArgumentException(
 				"Native terrain packet ended before its declared content",
 				failure);
+		}
+	}
+
+	private static byte[] inflateSector(
+		byte[] compressed, int expectedLength) {
+		Inflater inflater = new Inflater();
+		try {
+			inflater.setInput(compressed);
+			byte[] result = new byte[expectedLength];
+			int length = inflater.inflate(result);
+			if (length != expectedLength
+				|| !inflater.finished()
+				|| inflater.getRemaining() != 0) {
+				throw new IllegalArgumentException(
+					"Compressed native terrain sector has an invalid length");
+			}
+			return result;
+		} catch (DataFormatException failure) {
+			throw new IllegalArgumentException(
+				"Compressed native terrain sector is malformed",
+				failure);
+		} finally {
+			inflater.end();
 		}
 	}
 

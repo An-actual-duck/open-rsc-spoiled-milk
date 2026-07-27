@@ -24,6 +24,9 @@ CLIENT_TILE = (
 CLIENT_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 CLIENT_WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
+MOVEMENT_DIAGNOSTICS = (
+    ROOT / "Client_Base/src/orsc/MovementSnapshotDiagnostics.java"
+)
 CLIENT_SECTOR = (
     ROOT / "Client_Base/src/com/openrsc/client/model/Sector.java"
 )
@@ -439,6 +442,9 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         client_sector = CLIENT_SECTOR.read_text(encoding="utf-8")
         baseline = SCENE_BASELINE_STATE.read_text(encoding="utf-8")
         movement_stage = MOVEMENT_STAGE.read_text(encoding="utf-8")
+        movement_diagnostics = MOVEMENT_DIAGNOSTICS.read_text(
+            encoding="utf-8"
+        )
         context_struct = CONTEXT_STRUCT.read_text(encoding="utf-8")
 
         self.assertIn("WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY", configuration)
@@ -460,7 +466,7 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         self.assertIn("SEND_LAYERED_SCENE_CONTEXT, 152", generator)
         self.assertIn("updateLayeredSceneContext(length)", handler)
         self.assertIn(
-            "NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 4", updater
+            "NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 5", updater
         )
         self.assertIn("nativeLayeredSceneTerrain(player, location)", updater)
         self.assertIn(
@@ -477,6 +483,7 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         self.assertIn("nativeChunks", context_struct)
         self.assertIn("NativeLayeredTerrainSnapshot", handler)
         self.assertIn("NativeLayeredTerrainPacketDecoder.decodeV4", handler)
+        self.assertIn("NativeLayeredTerrainPacketDecoder.decodeV5", handler)
         self.assertIn(
             "Native terrain packet has trailing bytes", native_decoder
         )
@@ -512,6 +519,13 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
         self.assertIn("resetLayeredSceneIdentityCaches", client)
         self.assertIn("resetForScopeChange", baseline)
         self.assertIn("void reset()", movement_stage)
+        self.assertIn(
+            "MOVE_CACHE_LOG_INTERVAL_MILLIS = 10000L",
+            movement_diagnostics,
+        )
+        self.assertIn(
+            "lastLoggedMismatchMillis", movement_diagnostics
+        )
 
     def test_plan_preserves_ordinary_wire_compatibility_and_defines_deep_v2(self):
         plan = PLAN.read_text(encoding="utf-8")

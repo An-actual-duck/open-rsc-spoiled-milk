@@ -6,16 +6,19 @@ import java.util.regex.Pattern;
 
 /**
  * Immutable, packet-decoded terrain readiness window for one signed layered
- * scene scope. Protocol v3's uniform page remains readable; protocol v4 owns a
- * radius-one set of presentation chunks with explicit void slots.
+ * scene scope. Protocol v3's uniform page and protocol v4's 24-tile window
+ * remain readable. Protocol v5 owns a radius-one set of complete compressed
+ * 48-tile storage sectors aligned with the client's active section grid.
  */
 public final class NativeLayeredTerrainSnapshot {
 	public static final int UNIFORM_PAGE_PROTOCOL_VERSION = 3;
-	public static final int PROTOCOL_VERSION = 4;
+	public static final int LEGACY_CHUNKED_PROTOCOL_VERSION = 4;
+	public static final int PROTOCOL_VERSION = 5;
 	public static final int SECTOR_SIZE = 48;
 	public static final String PROJECTION_ID = "native-layered-package-v1";
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
-	public static final int STREAMING_CHUNK_SIZE = 24;
+	public static final int LEGACY_STREAMING_CHUNK_SIZE = 24;
+	public static final int STREAMING_CHUNK_SIZE = SECTOR_SIZE;
 	public static final int STREAMING_CHUNK_RADIUS = 1;
 
 	private static final Pattern ID =
@@ -119,25 +122,31 @@ public final class NativeLayeredTerrainSnapshot {
 		int currentChunkY,
 		int chunkRadius,
 		NativeLayeredTerrainChunk[] chunks) {
-		this.protocolVersion = PROTOCOL_VERSION;
+		this.protocolVersion =
+			presentationChunkSize == LEGACY_STREAMING_CHUNK_SIZE
+				? LEGACY_CHUNKED_PROTOCOL_VERSION
+				: PROTOCOL_VERSION;
 		this.packageId = matched(packageId, ID, "package ID");
 		this.packageVersion = matched(packageVersion, VERSION, "package version");
 		this.manifestSha256 = matched(
 			manifestSha256, SHA256, "manifest SHA-256");
-		if (presentationChunkSize != STREAMING_CHUNK_SIZE) {
+		if (presentationChunkSize != LEGACY_STREAMING_CHUNK_SIZE
+			&& presentationChunkSize != STREAMING_CHUNK_SIZE) {
 			throw new IllegalArgumentException(
-				"Native terrain protocol v4 requires 24-tile chunks");
+				"Chunked native terrain requires 24- or 48-tile chunks");
 		}
 		this.presentationChunkSize = presentationChunkSize;
 		this.worldSpace = matched(worldSpace, ID, "world space");
 		this.level = level;
-		requireSafeChunkCoordinate(currentChunkX, "current chunk X");
-		requireSafeChunkCoordinate(currentChunkY, "current chunk Y");
+		requireSafeChunkCoordinate(
+			currentChunkX, presentationChunkSize, "current chunk X");
+		requireSafeChunkCoordinate(
+			currentChunkY, presentationChunkSize, "current chunk Y");
 		this.currentChunkX = currentChunkX;
 		this.currentChunkY = currentChunkY;
 		if (chunkRadius != STREAMING_CHUNK_RADIUS) {
 			throw new IllegalArgumentException(
-				"Native terrain protocol v4 requires radius-one readiness");
+				"Chunked native terrain requires radius-one readiness");
 		}
 		this.chunkRadius = chunkRadius;
 		int width = chunkRadius * 2 + 1;
@@ -185,7 +194,7 @@ public final class NativeLayeredTerrainSnapshot {
 		if (!worldSpace.equals(expectedWorldSpace) || level != expectedLevel) {
 			return false;
 		}
-		if (protocolVersion == PROTOCOL_VERSION) {
+		if (isChunkedProtocol()) {
 			return findAvailableChunk(worldX, worldY) != null;
 		}
 		long minX = (long) sectorX * SECTOR_SIZE;
@@ -207,7 +216,6 @@ public final class NativeLayeredTerrainSnapshot {
 		tile.verticalWall = (byte) verticalWall;
 		tile.horizontalWall = (byte) horizontalWall;
 		tile.diagonalWalls = diagonalWall;
-		tile.editorPaintedOverlay = true;
 		return tile;
 	}
 
@@ -232,7 +240,7 @@ public final class NativeLayeredTerrainSnapshot {
 	public String scopeIdentity() {
 		String identity = packageIdentity()
 			+ ":" + worldSpace + ":" + level;
-		if (protocolVersion == PROTOCOL_VERSION) {
+		if (isChunkedProtocol()) {
 			StringBuilder result = new StringBuilder(identity)
 				.append(":center-")
 				.append(currentChunkX)
@@ -259,7 +267,7 @@ public final class NativeLayeredTerrainSnapshot {
 		String start = "native terrain " + packageId + "@" + packageVersion
 			+ " " + worldSpace + " L" + level
 			+ " chunk " + presentationChunkSize;
-		if (protocolVersion == PROTOCOL_VERSION) {
+		if (isChunkedProtocol()) {
 			int available = 0;
 			for (NativeLayeredTerrainChunk chunk : chunks) {
 				if (chunk.isAvailable()) {
@@ -353,9 +361,15 @@ public final class NativeLayeredTerrainSnapshot {
 		}
 	}
 
-	private static void requireSafeChunkCoordinate(int value, String label) {
-		long minimum = (long) value * STREAMING_CHUNK_SIZE;
-		long maximum = minimum + STREAMING_CHUNK_SIZE - 1L;
+	private boolean isChunkedProtocol() {
+		return protocolVersion == LEGACY_CHUNKED_PROTOCOL_VERSION
+			|| protocolVersion == PROTOCOL_VERSION;
+	}
+
+	private static void requireSafeChunkCoordinate(
+		int value, int chunkSize, String label) {
+		long minimum = (long) value * chunkSize;
+		long maximum = minimum + chunkSize - 1L;
 		if (minimum < Integer.MIN_VALUE || maximum > Integer.MAX_VALUE) {
 			throw new IllegalArgumentException(
 				label + " cannot be represented as signed tile coordinates");

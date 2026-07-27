@@ -9,7 +9,6 @@ import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
-import com.openrsc.server.io.NativeLayeredTerrainChunk;
 import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.PlayerAppearance;
@@ -28,7 +27,6 @@ import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
 import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
-import com.openrsc.server.model.world.coordinate.NativeLayeredPresentationWindow;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldMapSectorId;
 import com.openrsc.server.model.world.region.VisibilitySnapshot;
@@ -44,6 +42,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.zip.Deflater;
 
 import static com.openrsc.server.net.rsc.ActionSender.isRetroClient;
 import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacket;
@@ -77,9 +76,10 @@ public final class GameStateUpdater {
 	private static final int LAYERED_SCENE_BASELINE_PROTOCOL_VERSION = 6;
 	private static final int LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 1;
 	private static final int SYNTHETIC_DEEP_SCENE_CONTEXT_PROTOCOL_VERSION = 2;
-	private static final int NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 4;
+	private static final int NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 5;
 	private static final int NATIVE_LAYERED_CHUNK_RADIUS = 1;
-	private static final int NATIVE_LAYERED_CHUNK_RETENTION_MARGIN = 6;
+	private static final int NATIVE_LAYERED_WIRE_CHUNK_SIZE =
+		NativeLayeredTerrainSector.SIZE;
 	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
 	private static final int SCENE_BASELINE_PAGE_BURST_LIMIT = 4;
 	private static final int SCENE_BASELINE_FIXED_PAYLOAD_BYTES = 48;
@@ -97,8 +97,6 @@ public final class GameStateUpdater {
 		"layered_scene_context_scope";
 	private static final String LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE =
 		"layered_scene_context_sequence";
-	private static final String NATIVE_LAYERED_PRESENTATION_WINDOW_ATTRIBUTE =
-		"native_layered_presentation_window";
 	private static final long WORLD_TIME_SYNC_INTERVAL_MILLIS = 15000L;
 	private static final long WORLD_TIME_FAST_SYNC_INTERVAL_MILLIS = 250L;
 	private static final int RECENT_VISIBILITY_SHADOW_LOG_LIMIT = 5;
@@ -203,6 +201,7 @@ public final class GameStateUpdater {
 			return false;
 		}
 
+		updateCustomMovementClientRegion(player);
 		final WorldLocation location = player.getWorldLocation();
 		final com.openrsc.server.model.world.region.RegionManager regionManager =
 			getServer().getWorld().getRegionManager();
@@ -255,14 +254,6 @@ public final class GameStateUpdater {
 		}
 		tryFinalizeAndSendPacket(
 			OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, context, player);
-		if (nativeTerrain != null) {
-			player.setAttribute(
-				NATIVE_LAYERED_PRESENTATION_WINDOW_ATTRIBUTE,
-				nativeTerrain.getPresentationWindow());
-		} else {
-			player.removeAttribute(
-				NATIVE_LAYERED_PRESENTATION_WINDOW_ATTRIBUTE);
-		}
 		player.setAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, nextScope);
 		player.setAttribute(LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, sequence);
 		return true;
@@ -285,32 +276,33 @@ public final class GameStateUpdater {
 				"Native layered terrain gate has no loaded package");
 		}
 		final WorldMapSectorId sectorId = WorldMapSectorId.from(location);
-		final NativeLayeredTerrainSector sector = terrainPackage
-			.findSector(sectorId)
+		terrainPackage.findSector(sectorId)
 			.orElseThrow(() -> new IllegalStateException(
 				"Native layered scene has no terrain page at " + sectorId));
-		final NativeLayeredPresentationWindow previous =
-			player.getAttribute(
-				NATIVE_LAYERED_PRESENTATION_WINDOW_ATTRIBUTE, null);
-		final NativeLayeredPresentationWindow presentationWindow =
-			NativeLayeredPresentationWindow.select(
-				terrainPackage.getPackageId()
-					+ "@" + terrainPackage.getPackageVersion()
-					+ ":" + terrainPackage.getManifestSha256(),
-				location,
-				terrainPackage.getPresentationChunkSize(),
-				NATIVE_LAYERED_CHUNK_RADIUS,
-				NATIVE_LAYERED_CHUNK_RETENTION_MARGIN,
-				previous);
-		if (!presentationWindow.covers(
-				location,
-				terrainPackage.getPresentationChunkSize(),
-				NATIVE_LAYERED_CHUNK_RADIUS)) {
+		final int centerSectorX = Math.floorDiv(
+			currentClientLocalMidpoint(
+				player,
+				CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
+				CLIENT_LOCAL_PLANE_WIDTH),
+			NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		final int centerSectorY = Math.floorDiv(
+			currentClientLocalMidpoint(
+				player,
+				CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
+				CLIENT_LOCAL_PLANE_HEIGHT),
+			NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		if (Math.abs(sectorId.getSectorX() - centerSectorX)
+				> NATIVE_LAYERED_CHUNK_RADIUS
+			|| Math.abs(sectorId.getSectorY() - centerSectorY)
+				> NATIVE_LAYERED_CHUNK_RADIUS) {
 			throw new IllegalStateException(
-				"Native presentation window does not cover the player");
+				"Native client-sector window does not cover the player");
 		}
 		return new NativeLayeredSceneTerrain(
-			terrainPackage, sector, location, presentationWindow);
+			terrainPackage,
+			location,
+			centerSectorX,
+			centerSectorY);
 	}
 
 	private int requireLayeredSceneContextSequence(final Player player) {
@@ -996,25 +988,17 @@ public final class GameStateUpdater {
 		private final WorldLocation location;
 		private final int currentChunkX;
 		private final int currentChunkY;
-		private final NativeLayeredPresentationWindow presentationWindow;
 
 		private NativeLayeredSceneTerrain(
 			final NativeLayeredWorldPackage terrainPackage,
-			final NativeLayeredTerrainSector sector,
 			final WorldLocation location,
-			final NativeLayeredPresentationWindow presentationWindow) {
+			final int currentChunkX,
+			final int currentChunkY) {
 			this.terrainPackage = Objects.requireNonNull(
 				terrainPackage, "terrainPackage");
-			Objects.requireNonNull(sector, "sector");
 			this.location = Objects.requireNonNull(location, "location");
-			this.presentationWindow = Objects.requireNonNull(
-				presentationWindow, "presentationWindow");
-			this.currentChunkX = presentationWindow.getCenterChunkX();
-			this.currentChunkY = presentationWindow.getCenterChunkY();
-		}
-
-		private NativeLayeredPresentationWindow getPresentationWindow() {
-			return presentationWindow;
+			this.currentChunkX = currentChunkX;
+			this.currentChunkY = currentChunkY;
 		}
 
 		private String scopeIdentity() {
@@ -1024,7 +1008,7 @@ public final class GameStateUpdater {
 				+ ":" + location.getWorldSpace().getValue()
 				+ ":" + location.getCoordinate().getLevel()
 				+ ":center-" + currentChunkX + "," + currentChunkY
-				+ ":chunk-" + terrainPackage.getPresentationChunkSize();
+				+ ":chunk-" + NATIVE_LAYERED_WIRE_CHUNK_SIZE;
 		}
 
 		private void populate(final LayeredSceneContextStruct context) {
@@ -1033,7 +1017,7 @@ public final class GameStateUpdater {
 			context.nativeManifestSha256 =
 				terrainPackage.getManifestSha256();
 			context.nativePresentationChunkSize =
-				terrainPackage.getPresentationChunkSize();
+				NATIVE_LAYERED_WIRE_CHUNK_SIZE;
 			context.nativeCurrentChunkX = currentChunkX;
 			context.nativeCurrentChunkY = currentChunkY;
 			context.nativeChunkRadius = NATIVE_LAYERED_CHUNK_RADIUS;
@@ -1049,26 +1033,47 @@ public final class GameStateUpdater {
 						new LayeredSceneTerrainChunkStruct();
 					output.chunkX = chunkX;
 					output.chunkY = chunkY;
-					final Optional<NativeLayeredTerrainChunk> source =
-						terrainPackage.findPresentationChunk(
+					final Optional<NativeLayeredTerrainSector> source =
+						terrainPackage.findSector(new WorldMapSectorId(
 							location.getWorldSpace(),
 							location.getCoordinate().getLevel(),
 							chunkX,
-							chunkY);
+							chunkY));
 					output.available = source.isPresent();
 					if (source.isPresent()) {
-						final NativeLayeredTerrainChunk chunk = source.get();
+						final NativeLayeredTerrainSector chunk = source.get();
 						output.sourceSectorX =
-							chunk.getSourceSector().getSectorX();
+							chunk.getIdentity().getSectorX();
 						output.sourceSectorY =
-							chunk.getSourceSector().getSectorY();
-						output.sourceEncoding = chunk.getSourceEncoding();
-						output.sourcePayloadSha256 = chunk.getSourceSha256();
-						output.tileBytes = chunk.copyWireBytes();
+							chunk.getIdentity().getSectorY();
+						output.sourceEncoding =
+							chunk.getSourceEncoding();
+						output.sourcePayloadSha256 =
+							chunk.getSourceSha256();
+						output.tileBytes =
+							compressNativeTerrain(chunk.copyWireBytes());
 					}
 					context.nativeChunks.add(output);
 				}
 			}
+		}
+	}
+
+	private static byte[] compressNativeTerrain(final byte[] source) {
+		final Deflater compressor = new Deflater(Deflater.BEST_SPEED);
+		try {
+			compressor.setInput(source);
+			compressor.finish();
+			final byte[] buffer = new byte[source.length + 128];
+			final int length = compressor.deflate(buffer);
+			if (!compressor.finished() || length <= 0
+				|| length > 0xFFFF) {
+				throw new IllegalStateException(
+					"Native terrain sector compression exceeded one packet field");
+			}
+			return Arrays.copyOf(buffer, length);
+		} finally {
+			compressor.end();
 		}
 	}
 
@@ -1465,7 +1470,9 @@ public final class GameStateUpdater {
 		return !npc.isRemoved()
 			&& !npc.isRespawning()
 			&& npc.withinAuthenticRangeAdditionally(player)
-			&& player.withinRange(npc);
+			&& player.withinRange(npc)
+			&& isWithinClientLocalTileWindow(
+				player, npc.getX(), npc.getY());
 	}
 
 	private static List<Npc> prioritizeVisibleNpcs(final Player player, final Collection<Npc> visibleNpcs) {
@@ -1618,6 +1625,7 @@ public final class GameStateUpdater {
 				}
 
 				if (!localNpc.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(localNpc) || // remove because they are out of range
+					!isWithinClientLocalTileWindow(playerToUpdate, localNpc.getX(), localNpc.getY()) ||
 					(localNpc.isRemoved() && !hasPendingDeathVisual) || // remove because they are removed
 					localNpc.isTeleporting() || // if they've teleported, then they may have moved more than one square, and thus require a full coordinate refresh
 					(localNpc.inCombat() && !hasPendingDeathVisual && !useCustomMovementStream) || // remove because when FIRST entering combat, they may have advanced towards the player, then their sprite is incompatible with a movement update (no direction, and > 7) TODO: should be inCombatChanged(), since it's only necessary on the first round of combat.
