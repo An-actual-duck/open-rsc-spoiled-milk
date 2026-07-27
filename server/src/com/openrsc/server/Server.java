@@ -204,6 +204,8 @@ public class Server implements Runnable {
 	private long lastNativeTerrainContextPackets = 0;
 	private long lastNativeTerrainSectorSlots = 0;
 	private long lastNativeTerrainAvailableSectors = 0;
+	private long lastNativeTerrainPayloadSectors = 0;
+	private long lastNativeTerrainReferencedSectors = 0;
 	private long lastNativeTerrainRawBytes = 0;
 	private long lastNativeTerrainWireBytes = 0;
 	private long lastNativeTerrainWireCacheRequests = 0;
@@ -319,6 +321,8 @@ public class Server implements Runnable {
 	private long benchmarkNativeTerrainContextPackets = 0;
 	private long benchmarkNativeTerrainSectorSlots = 0;
 	private long benchmarkNativeTerrainAvailableSectors = 0;
+	private long benchmarkNativeTerrainPayloadSectors = 0;
+	private long benchmarkNativeTerrainReferencedSectors = 0;
 	private long benchmarkNativeTerrainRawBytes = 0;
 	private long benchmarkNativeTerrainWireBytes = 0;
 	private long benchmarkNativeTerrainWireCacheRequests = 0;
@@ -1662,6 +1666,8 @@ public class Server implements Runnable {
 			+ " nativeTerrainContextPackets=" + benchmarkNativeTerrainContextPackets
 			+ " nativeTerrainSectorSlots=" + benchmarkNativeTerrainSectorSlots
 			+ " nativeTerrainAvailableSectors=" + benchmarkNativeTerrainAvailableSectors
+			+ " nativeTerrainPayloadSectors=" + benchmarkNativeTerrainPayloadSectors
+			+ " nativeTerrainReferencedSectors=" + benchmarkNativeTerrainReferencedSectors
 			+ " nativeTerrainRawBytes=" + benchmarkNativeTerrainRawBytes
 			+ " nativeTerrainWireBytes=" + benchmarkNativeTerrainWireBytes
 			+ " nativeTerrainWireCacheRequests=" + benchmarkNativeTerrainWireCacheRequests
@@ -2191,6 +2197,14 @@ public class Server implements Runnable {
 		return lastNativeTerrainAvailableSectors;
 	}
 
+	public long getLastNativeTerrainPayloadSectors() {
+		return lastNativeTerrainPayloadSectors;
+	}
+
+	public long getLastNativeTerrainReferencedSectors() {
+		return lastNativeTerrainReferencedSectors;
+	}
+
 	public long getLastNativeTerrainRawBytes() {
 		return lastNativeTerrainRawBytes;
 	}
@@ -2619,6 +2633,8 @@ public class Server implements Runnable {
 		final int contextPackets,
 		final int sectorSlots,
 		final int availableSectors,
+		final int payloadSectors,
+		final int referencedSectors,
 		final long rawBytes,
 		final long wireBytes,
 		final long cacheRequests,
@@ -2629,6 +2645,8 @@ public class Server implements Runnable {
 		this.lastNativeTerrainContextPackets += contextPackets;
 		this.lastNativeTerrainSectorSlots += sectorSlots;
 		this.lastNativeTerrainAvailableSectors += availableSectors;
+		this.lastNativeTerrainPayloadSectors += payloadSectors;
+		this.lastNativeTerrainReferencedSectors += referencedSectors;
 		this.lastNativeTerrainRawBytes += rawBytes;
 		this.lastNativeTerrainWireBytes += wireBytes;
 		this.lastNativeTerrainWireCacheRequests += cacheRequests;
@@ -2642,6 +2660,8 @@ public class Server implements Runnable {
 			this.benchmarkNativeTerrainContextPackets += contextPackets;
 			this.benchmarkNativeTerrainSectorSlots += sectorSlots;
 			this.benchmarkNativeTerrainAvailableSectors += availableSectors;
+			this.benchmarkNativeTerrainPayloadSectors += payloadSectors;
+			this.benchmarkNativeTerrainReferencedSectors += referencedSectors;
 			this.benchmarkNativeTerrainRawBytes += rawBytes;
 			this.benchmarkNativeTerrainWireBytes += wireBytes;
 			this.benchmarkNativeTerrainWireCacheRequests += cacheRequests;
@@ -2748,6 +2768,8 @@ public class Server implements Runnable {
 		this.lastNativeTerrainContextPackets = 0;
 		this.lastNativeTerrainSectorSlots = 0;
 		this.lastNativeTerrainAvailableSectors = 0;
+		this.lastNativeTerrainPayloadSectors = 0;
+		this.lastNativeTerrainReferencedSectors = 0;
 		this.lastNativeTerrainRawBytes = 0;
 		this.lastNativeTerrainWireBytes = 0;
 		this.lastNativeTerrainWireCacheRequests = 0;

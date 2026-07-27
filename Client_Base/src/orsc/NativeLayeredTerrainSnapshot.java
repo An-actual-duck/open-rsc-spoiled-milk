@@ -14,6 +14,7 @@ public final class NativeLayeredTerrainSnapshot {
 	public static final int UNIFORM_PAGE_PROTOCOL_VERSION = 3;
 	public static final int LEGACY_CHUNKED_PROTOCOL_VERSION = 4;
 	public static final int PROTOCOL_VERSION = 5;
+	public static final int RESIDENT_PROTOCOL_VERSION = 6;
 	public static final int SECTOR_SIZE = 48;
 	public static final String PROJECTION_ID = "native-layered-package-v1";
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
@@ -122,18 +123,52 @@ public final class NativeLayeredTerrainSnapshot {
 		int currentChunkY,
 		int chunkRadius,
 		NativeLayeredTerrainChunk[] chunks) {
-		this.protocolVersion =
+		this(
 			presentationChunkSize == LEGACY_STREAMING_CHUNK_SIZE
 				? LEGACY_CHUNKED_PROTOCOL_VERSION
-				: PROTOCOL_VERSION;
+				: PROTOCOL_VERSION,
+			packageId,
+			packageVersion,
+			manifestSha256,
+			presentationChunkSize,
+			worldSpace,
+			level,
+			currentChunkX,
+			currentChunkY,
+			chunkRadius,
+			chunks);
+	}
+
+	public NativeLayeredTerrainSnapshot(
+		int protocolVersion,
+		String packageId,
+		String packageVersion,
+		String manifestSha256,
+		int presentationChunkSize,
+		String worldSpace,
+		int level,
+		int currentChunkX,
+		int currentChunkY,
+		int chunkRadius,
+		NativeLayeredTerrainChunk[] chunks) {
+		if (protocolVersion != LEGACY_CHUNKED_PROTOCOL_VERSION
+			&& protocolVersion != PROTOCOL_VERSION
+			&& protocolVersion != RESIDENT_PROTOCOL_VERSION) {
+			throw new IllegalArgumentException(
+				"Unsupported chunked native terrain protocol: "
+					+ protocolVersion);
+		}
+		this.protocolVersion = protocolVersion;
 		this.packageId = matched(packageId, ID, "package ID");
 		this.packageVersion = matched(packageVersion, VERSION, "package version");
 		this.manifestSha256 = matched(
 			manifestSha256, SHA256, "manifest SHA-256");
-		if (presentationChunkSize != LEGACY_STREAMING_CHUNK_SIZE
-			&& presentationChunkSize != STREAMING_CHUNK_SIZE) {
+		int expectedChunkSize =
+			protocolVersion == LEGACY_CHUNKED_PROTOCOL_VERSION
+				? LEGACY_STREAMING_CHUNK_SIZE : STREAMING_CHUNK_SIZE;
+		if (presentationChunkSize != expectedChunkSize) {
 			throw new IllegalArgumentException(
-				"Chunked native terrain requires 24- or 48-tile chunks");
+				"Chunked native terrain protocol/chunk-size mismatch");
 		}
 		this.presentationChunkSize = presentationChunkSize;
 		this.worldSpace = matched(worldSpace, ID, "world space");
@@ -363,7 +398,8 @@ public final class NativeLayeredTerrainSnapshot {
 
 	private boolean isChunkedProtocol() {
 		return protocolVersion == LEGACY_CHUNKED_PROTOCOL_VERSION
-			|| protocolVersion == PROTOCOL_VERSION;
+			|| protocolVersion == PROTOCOL_VERSION
+			|| protocolVersion == RESIDENT_PROTOCOL_VERSION;
 	}
 
 	private static void requireSafeChunkCoordinate(

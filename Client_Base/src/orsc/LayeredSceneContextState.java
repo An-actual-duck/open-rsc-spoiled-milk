@@ -17,6 +17,8 @@ final class LayeredSceneContextState {
 		NativeLayeredTerrainSnapshot.LEGACY_CHUNKED_PROTOCOL_VERSION;
 	static final int NATIVE_LAYERED_PROTOCOL_VERSION =
 		NativeLayeredTerrainSnapshot.PROTOCOL_VERSION;
+	static final int RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION =
+		NativeLayeredTerrainSnapshot.RESIDENT_PROTOCOL_VERSION;
 	static final int LEVEL_STRIDE = 944;
 	static final int LEGACY_PLANE_COUNT = 4;
 	static final int MAX_LEGACY_X = Short.MAX_VALUE;
@@ -146,7 +148,9 @@ final class LayeredSceneContextState {
 			&& incomingProtocolVersion
 				!= LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
 			&& incomingProtocolVersion
-				!= NATIVE_LAYERED_PROTOCOL_VERSION) {
+				!= NATIVE_LAYERED_PROTOCOL_VERSION
+			&& incomingProtocolVersion
+				!= RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION) {
 			throw new IllegalArgumentException(
 				"Unsupported layered scene-context protocol: "
 					+ incomingProtocolVersion);
@@ -362,12 +366,14 @@ final class LayeredSceneContextState {
 	private static boolean isNativeProtocol(int version) {
 		return version == UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION
 			|| version == LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
-			|| version == NATIVE_LAYERED_PROTOCOL_VERSION;
+			|| version == NATIVE_LAYERED_PROTOCOL_VERSION
+			|| version == RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION;
 	}
 
 	private static boolean isChunkedNativeProtocol(int version) {
 		return version == LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
-			|| version == NATIVE_LAYERED_PROTOCOL_VERSION;
+			|| version == NATIVE_LAYERED_PROTOCOL_VERSION
+			|| version == RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION;
 	}
 
 	void reset() {

@@ -9,5 +9,6 @@ public final class LayeredSceneTerrainChunkStruct {
 	public int sourceSectorY;
 	public String sourceEncoding;
 	public String sourcePayloadSha256;
+	public boolean payloadPresent;
 	public byte[] tileBytes;
 }

@@ -369,6 +369,8 @@ public class GameEventHandler {
 			s.append("Contexts=").append(getServer().getLastNativeTerrainContextPackets())
 				.append(", slots=").append(getServer().getLastNativeTerrainSectorSlots())
 				.append(", available=").append(getServer().getLastNativeTerrainAvailableSectors())
+				.append(", payloads=").append(getServer().getLastNativeTerrainPayloadSectors())
+				.append(", references=").append(getServer().getLastNativeTerrainReferencedSectors())
 				.append(", rawBytes=").append(getServer().getLastNativeTerrainRawBytes())
 				.append(", wireBytes=").append(getServer().getLastNativeTerrainWireBytes())
 				.append(newLine);

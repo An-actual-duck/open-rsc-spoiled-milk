@@ -49,6 +49,9 @@ public class PacketHandler {
 	private final MovementSnapshotStage movementSnapshotStage = new MovementSnapshotStage();
 	private final LayeredSceneContextState layeredSceneContextState =
 		new LayeredSceneContextState();
+	private final NativeLayeredTerrainResidentCache
+		nativeLayeredTerrainResidentCache =
+			new NativeLayeredTerrainResidentCache();
 	private int appliedSceneBaselineKey = 0;
 
 	public String getSceneBaselineDebugSummary() {
@@ -68,7 +71,9 @@ public class PacketHandler {
 	}
 
 	public String getLayeredSceneContextDebugSummary() {
-		return layeredSceneContextState.summary();
+		return layeredSceneContextState.summary()
+			+ " residentSectors="
+			+ nativeLayeredTerrainResidentCache.size();
 	}
 
 	public boolean hasLayeredSceneContext() {
@@ -125,6 +130,7 @@ public class PacketHandler {
 
 	public void resetLayeredSceneProtocolState() {
 		layeredSceneContextState.reset();
+		nativeLayeredTerrainResidentCache.clear();
 		sceneBaselineState.resetForScopeChange("none");
 		movementSnapshotStage.reset();
 		appliedSceneBaselineKey = 0;
@@ -461,7 +467,10 @@ public class PacketHandler {
 					== LayeredSceneContextState
 						.LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
 				|| protocolVersion
-					== LayeredSceneContextState.NATIVE_LAYERED_PROTOCOL_VERSION) {
+					== LayeredSceneContextState.NATIVE_LAYERED_PROTOCOL_VERSION
+				|| protocolVersion
+					== LayeredSceneContextState
+						.RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION) {
 			int bodyLength = length - packetsIncoming.packetEnd;
 			if (bodyLength <= 0) {
 				throw new IllegalArgumentException(
@@ -469,14 +478,23 @@ public class PacketHandler {
 			}
 			byte[] body = new byte[bodyLength];
 			packetsIncoming.readBytes(bodyLength, body);
-			nativeTerrain =
-				protocolVersion
-						== LayeredSceneContextState
-							.LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
-					? NativeLayeredTerrainPacketDecoder.decodeV4(
-						body, worldSpace, logicalLevel)
-					: NativeLayeredTerrainPacketDecoder.decodeV5(
-						body, worldSpace, logicalLevel);
+			if (protocolVersion
+					== LayeredSceneContextState
+						.LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION) {
+				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV4(
+					body, worldSpace, logicalLevel);
+			} else if (protocolVersion
+					== LayeredSceneContextState
+						.NATIVE_LAYERED_PROTOCOL_VERSION) {
+				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV5(
+					body, worldSpace, logicalLevel);
+			} else {
+				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV6(
+					body,
+					worldSpace,
+					logicalLevel,
+					nativeLayeredTerrainResidentCache);
+			}
 		}
 		LayeredSceneContextState.ApplyResult result = nativeTerrain == null
 			? layeredSceneContextState.accept(
@@ -513,7 +531,7 @@ public class PacketHandler {
 			result.isScopeChanged(),
 			result.isSyntheticDeepFixture(),
 			result.getNativeTerrainSnapshot());
-		String summary = layeredSceneContextState.summary();
+		String summary = getLayeredSceneContextDebugSummary();
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
 		packetsIncoming.packetEnd = length;

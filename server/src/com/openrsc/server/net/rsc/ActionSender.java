@@ -111,11 +111,24 @@ public class ActionSender {
 	 * Silently fails out if the appropriate generator could not generate packet
 	 * */
 	public static void tryFinalizeAndSendPacket(OpcodeOut opcode, AbstractStruct<OpcodeOut> payload, Player player) {
+		tryFinalizeAndSendPacketChecked(opcode, payload, player);
+	}
+
+	/**
+	 * Result-bearing form for transactional protocol state which may advance
+	 * only after a packet reaches the player's ordered outbound queue.
+	 */
+	public static boolean tryFinalizeAndSendPacketChecked(
+			OpcodeOut opcode,
+			AbstractStruct<OpcodeOut> payload,
+			Player player) {
 		payload.setOpcode(opcode);
 		try {
 			Packet p = getGenerator(player).generate(payload, player);
-			if (p != null)
+			if (p != null) {
 				player.write(p);
+				return true;
+			}
 		} catch (GameNetworkException gne) {
 			// do nothing, the player just doesn't get the packet (possibly logged out) & script this is called from can continue
 			String username, clientVersion;
@@ -128,6 +141,7 @@ public class ActionSender {
 			}
 			LOGGER.warn("GameNetworkException for player " + username + " with client version " + clientVersion + " on opcode " + opcode.name());
 		}
+		return false;
 	}
 
 	public static void sendWorldEditor(Player player, WorldEditorStruct struct) {

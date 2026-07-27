@@ -4,8 +4,8 @@ Status: ACTIVE. The signed layered-world engine, complete Spoiled Milk native
 package/runtime, and first layered Builder generation are implemented and
 owner-accepted. Further editor capability work is paused after automatic
 generic ladder/stair pairing. The active implementation focus is native loader
-performance: measurable sector-product reuse first, followed by resident
-client terrain and delta delivery.
+performance: measurable sector-product reuse and protocol-v6 resident-sector
+delivery are implemented; private visual/transfer review comes next.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -99,16 +99,34 @@ Implementation sequence:
      available sectors, raw/wire bytes, cache requests/hits/misses, build time,
      and maximum cache entries. Protocol v5 and client behavior are unchanged.
 
-2. **Resident-sector protocol and in-memory client cache — next**
-   - Introduce a matched-custom-client protocol revision that separates stable
-     package/world-space/level identity from the moving residency window.
-   - Retain decoded sectors by manifest, world space, signed level, sector
-     coordinates, and payload hash.
-   - Send an explicit inventory plus only missing/changed payloads. A normal
-     one-sector shift should require at most the three newly exposed sectors;
-     a retained return may require no terrain payload.
-   - Keep protocol v5 as the rollback path. Persistent disk caching is not part
-     of this first resident cut.
+2. **Resident-sector protocol and in-memory client cache — implemented,
+   private acceptance pending**
+   - Optional protocol v6 retains exact decoded 48-by-48 sectors in a bounded
+     64-entry, connection-local access-order cache keyed by package/version/
+     manifest, world space, signed level, logical sector, source sector,
+     encoding, and source hash.
+   - Every receipt still carries the complete explicit nine-slot inventory.
+     Available slots carry either a compressed payload or a one-byte resident
+     reference. An adjacent one-sector shift reuses six sectors and sends only
+     the three newly exposed sectors; retained returns may carry no terrain
+     payload.
+   - Server and client apply identical ordered LRU transactions. The server
+     publishes its client-residency mirror only after the receipt reaches the
+     ordered outbound queue. The client publishes decoded payloads/touches only
+     after the complete packet, snapshot, and trailing-byte boundary validate.
+   - Reconnect/reset starts with an empty client cache and a new Player mirror,
+     forcing full payload delivery. Missing references fail closed; malformed
+     receipts cannot partially poison the cache.
+   - The gate defaults off through
+     `want_layered_native_terrain_residency`; protocol v5 remains the immediate
+     rollback path. Builder content hashes still invalidate changed sectors,
+     and no disk cache is introduced.
+   - Transfer telemetry now distinguishes payload sectors from resident
+     references in per-tick and benchmark summaries; the client context log/F6
+     summary records its current `residentSectors` count. Focused tests prove
+     first receipt, six-of-nine overlap, three incoming payloads, reconnect
+     refusal, cache clear, malformed-packet atomicity, bounded LRU eviction,
+     transaction conflicts, and v4/v5 compatibility.
 
 3. **Readiness acknowledgement, predictive delivery, and atomic activation**
    - Stage required sectors before a window boundary using authoritative
@@ -177,9 +195,11 @@ accepting that complexity.
 
 ### Recommended order from this checkpoint
 
-Complete selected loader-v2 stages 1 through 3, visually validate ordinary
-travel/return travel/teleport/reconnect and transfer metrics, then decide
-whether incremental model products are necessary for the showcase target.
+Privately validate implemented loader-v2 stage 2 across ordinary travel,
+return travel, teleport, death, and reconnect while reviewing payload/reference
+metrics. Then implement stage 3 readiness acknowledgement and predictive
+activation before deciding whether incremental model products are necessary
+for the showcase target.
 Resume production package promotion and durable transition ownership before a
 private release candidate. Server eviction follows only measured need;
 distribution-neutral extraction follows the proven Spoiled Milk runtime.
@@ -18462,6 +18482,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Implement loader-v2 resident-sector delivery as a default-off protocol-v6 milestone with protocol-v5 rollback. | Automated-validated; exact 64-entry connection-local LRU identities, transactional server/client updates, outbound-queue commit fencing, full nine-slot inventories with payload/reference discrimination, reconnect/reset full refill, malformed/missing-reference refusal, and payload/reference telemetry pass focused tests plus client/server builds. Private visual and transfer acceptance remains |
 | 2026-07-27 | Select native loader performance as the active showcase workstream and begin with behavior-preserving sector-product reuse. | Slice 1 lazily caches immutable protocol-v5 sector wire products by exact package/manifest, signed slot, and content hash; Builder revisions retain their uncached safety path. AI-readable profiling/benchmark metrics now expose contexts, slots, available sectors, raw/wire bytes, cache hits/misses, build time, and entries. The wire protocol and client presentation remain unchanged while resident delta delivery is designed next |
 | 2026-07-27 | Accept automatic adjacent-level pairing as a narrow authoring convention for generic ladders and wooden/stone stairs, then pause further editor capability work. | Owner-accepted. IDs `5/6`, `41/42`, and `43/44` alone create the inverse object and safe landing on a missing non-source adjacent level. The accepted route round-tripped and reused the pair; v4 clean close committed level `-5`, nine sectors, nine landing tiles, and two scenery edits in manifest `d8fc45941e93`. Specialized and exceptional transitions remain explicit |
 | 2026-07-27 | Trim the active layered roadmap around loader productionization rather than continuing Builder expansion or the historical diagnostic slice chain. | Current focus decision remains with the owner. The concise choices are normal-server production package promotion, durable transition ownership, measured server residency/streaming, and later distribution-neutral extraction; editor polish, Preservation conversion/alignment, true-instance lifecycle, and launcher work are held |

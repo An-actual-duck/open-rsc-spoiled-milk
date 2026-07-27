@@ -194,8 +194,15 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 								builder.writeInt(chunk.sourceSectorY);
 								builder.writeString(chunk.sourceEncoding);
 								builder.writeString(chunk.sourcePayloadSha256);
-								builder.writeShort(chunk.tileBytes.length);
-								builder.write(chunk.tileBytes);
+								if (context.protocolVersion >= 6) {
+									builder.writeByte(
+										chunk.payloadPresent ? 1 : 0);
+								}
+								if (context.protocolVersion < 6
+									|| chunk.payloadPresent) {
+									builder.writeShort(chunk.tileBytes.length);
+									builder.write(chunk.tileBytes);
+								}
 							}
 						}
 					}

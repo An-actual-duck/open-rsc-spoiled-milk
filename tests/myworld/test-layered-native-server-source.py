@@ -40,6 +40,9 @@ CLIENT_NATIVE_SNAPSHOT = (
 CLIENT_NATIVE_DECODER = (
     ROOT / "Client_Base/src/orsc/NativeLayeredTerrainPacketDecoder.java"
 )
+CLIENT_NATIVE_RESIDENCY = (
+    ROOT / "Client_Base/src/orsc/NativeLayeredTerrainResidentCache.java"
+)
 
 
 HARNESS = r"""
@@ -407,6 +410,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
 import java.util.zip.Deflater;
 import orsc.NativeLayeredTerrainPacketDecoder;
+import orsc.NativeLayeredTerrainResidentCache;
 import orsc.NativeLayeredTerrainSnapshot;
 
 public final class NativeLayeredChunkWireFixture {
@@ -589,6 +593,43 @@ public final class NativeLayeredChunkWireFixture {
             nativeBody(packet, 5), nativeBody(packet, 5).length - 1);
         expectIllegal(() -> NativeLayeredTerrainPacketDecoder.decodeV5(
             truncated, "global", -2));
+        testV6ResidentReferences(context);
+    }
+
+    private static void testV6ResidentReferences(
+            LayeredSceneContextStruct context) {
+        context.protocolVersion = 6;
+        for (LayeredSceneTerrainChunkStruct chunk : context.nativeChunks) {
+            chunk.payloadPresent = true;
+        }
+        NativeLayeredTerrainResidentCache cache =
+            new NativeLayeredTerrainResidentCache();
+        Packet firstPacket =
+            new PayloadCustomGenerator().generate(context, null);
+        NativeLayeredTerrainSnapshot first =
+            NativeLayeredTerrainPacketDecoder.decodeV6(
+                nativeBody(firstPacket, 6), "global", -2, cache);
+        check(first.getProtocolVersion() == 6, "v6 decoded protocol");
+        check(first.getAvailableChunkCount() == 9, "v6 payload readiness");
+        check(cache.size() == 9, "v6 initial residency");
+
+        for (LayeredSceneTerrainChunkStruct chunk : context.nativeChunks) {
+            chunk.payloadPresent = false;
+        }
+        Packet referencePacket =
+            new PayloadCustomGenerator().generate(context, null);
+        NativeLayeredTerrainSnapshot referenced =
+            NativeLayeredTerrainPacketDecoder.decodeV6(
+                nativeBody(referencePacket, 6), "global", -2, cache);
+        check(referenced.getAvailableChunkCount() == 9,
+            "v6 reference readiness");
+        check(referencePacket.getLength() < firstPacket.getLength(),
+            "v6 references reduce packet length");
+        expectState(() -> NativeLayeredTerrainPacketDecoder.decodeV6(
+            nativeBody(referencePacket, 6),
+            "global",
+            -2,
+            new NativeLayeredTerrainResidentCache()));
     }
 
     private static byte[] compress(byte[] source) {
@@ -641,6 +682,15 @@ public final class NativeLayeredChunkWireFixture {
         }
     }
 
+    private static void expectState(Runnable operation) {
+        try {
+            operation.run();
+            throw new AssertionError("Expected IllegalStateException");
+        } catch (IllegalStateException expected) {
+            // Expected.
+        }
+    }
+
     private static void check(boolean condition, String label) {
         if (!condition) {
             throw new AssertionError(label);
@@ -677,6 +727,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 str(CLIENT_TILE),
                 str(CLIENT_NATIVE_CHUNK),
                 str(CLIENT_NATIVE_SNAPSHOT),
+                str(CLIENT_NATIVE_RESIDENCY),
                 str(CLIENT_NATIVE_DECODER),
             ],
             cwd=ROOT,
