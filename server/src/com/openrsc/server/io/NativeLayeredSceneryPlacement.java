@@ -17,7 +17,7 @@ public final class NativeLayeredSceneryPlacement {
 		final int direction) {
 		this.placementId = Objects.requireNonNull(
 			placementId, "placementId");
-		if (sceneryId < 0 || direction < 0 || direction > 7) {
+		if (sceneryId < 0 || direction < 0 || direction > 8) {
 			throw new IllegalArgumentException(
 				"Native layered scenery placement is invalid");
 		}

@@ -121,9 +121,11 @@ status together.
 
 ### Current implementation sequence
 
-1. Generate the independently identified Spoiled Milk layered package with all
-   32,364 current placements and its exact source fingerprint.
-2. Run the complete Spoiled Milk world through the replacement runtime and
+1. Generate the independently identified Spoiled Milk layered package from
+   the exact custom terrain pair and the effective `server/myworld.conf`
+   placement composition. **Implemented and automated-validated as package
+   `0.2.0`; private owner validation remains.**
+2. Run the complete configured Spoiled Milk world through the replacement runtime and
    preserve terrain, collision, scenery, NPCs, items, transitions, reconnect,
    recovery, and current custom behavior.
 3. Continue resolving native layered-loader, presentation, transition, and
@@ -18144,9 +18146,73 @@ package fingerprint is
 
 The audit is preserved because it accurately demonstrates why a later vanilla
 distribution needs a coordinated source set. The active Spoiled Milk package
-does not apply these exclusions: it restores all 13 records, produces all
-32,364 placements, and uses the independently pinned package/profile identity
-recorded in the Current Product Gate.
+does not apply these exclusions. Its first `0.1.0` cut restored all 32,364
+base-file records, but owner review correctly exposed that this was not yet
+the configured Spoiled Milk world: it still used authentic terrain and
+suppressed feature/MyWorld follow-on placement loaders. Package `0.2.0`
+supersedes that incomplete cut with the exact configured composition recorded
+below.
+
+## Spoiled Milk Native Composition Milestone
+
+Status: implemented and automated-validated on 2026-07-26; focused private
+owner validation is next.
+
+The active target now reproduces the maintained Spoiled Milk configuration
+rather than treating the four base placement files as the whole world:
+
+- terrain comes from the byte-identical server/client
+  `Custom_Landscape.orsc` pair, SHA-256
+  `d50089fcc81d51aa461567f4416a8f1a329ed439bcf64606ca1441c600e7229b`,
+  with 1,771 sectors;
+- placement composition is selected by `server/myworld.conf` and inventories
+  every active base, Discontinued, Mod Room, Runecraft, Harvesting, Custom
+  Quest, Expansion, Woodcutting Guild, Other, Auction, and MyWorld source;
+- the composition applies the legacy load order, ten matching MyWorld scenery
+  removals, two matching MyWorld NPC removals, event-disabled NPC policy,
+  Tutorial Island cleanup, banker-cluster cleanup, same-slot last-writer
+  ownership, and ground-item replacement;
+- 143 harvestable ground-item sources become their configured scenery
+  identities before packaging. This preserves the current Harvesting world
+  instead of incorrectly exposing those sources as ordinary collectible
+  ground items; and
+- scenery direction `8` is retained for the authored travel cart at
+  `(465,663)`. The native scenery contract now accepts `0..8`, while boundary
+  direction remains `0..7`.
+
+The source composition contains 33,623 placement records:
+3,856 NPCs, 1,025 ground items, 27,769 scenery records, and 973 boundaries.
+After the exact configured removals, cleanup, reclassification, and
+same-slot supersession rules, package `0.2.0` contains 33,515 effective
+placements:
+
+| Family | Effective package count |
+| --- | ---: |
+| NPCs | 3,775 |
+| Ordinary ground items | 882 |
+| Scenery, including 143 harvested locations | 27,886 |
+| Boundaries | 972 |
+
+These counts agree with the repeated pre-native startup oracle for 3,775 NPCs
+and 882 ordinary ground items. The legacy `28,732 Objects` log is a
+source-iteration count before same-slot replacement and before harvested
+ground items become scenery; the package deliberately represents the
+effective live ownership set instead of duplicate intermediate registrations.
+
+This correction also closes the missing rune-altar visual ownership path.
+The first package did not contain `SceneryLocsRunecraft.json` anchors or
+`MyWorldSceneryLocs.json` obelisks, so the client correctly suppressed their
+owner-gated glyphs and orbs. Regression coverage now proves all 14 configured
+altar anchors and all 56 corresponding obelisk owners survive conversion.
+
+The pinned active identity is
+`rsc-remastered.spoiled-milk-layered-world@0.2.0`; manifest SHA-256 is
+`fab8d7d1a51e948a7d8b18769eb0b3e9f5abf9e30538abfedba4d90374b1447b`;
+package fingerprint is
+`9a7939b7608bb0cb441ffbf81113681155d29a2a96c1fd1ab4b0344d85c8c377`.
+The independently named, default-off `spoiled-milk-replacement` profile pins
+those exact counts and identity. Preservation `0.4.0` remains unchanged and
+continues to use its authentic 1,764-sector source.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -18244,6 +18310,7 @@ private environment should validate at least:
 | 2026-07-26 | Classify and remove surviving rune-altar glyphs in the Preservation endpoint as orphan custom visualization, not missing vanilla scenery. | The Preservation placement baseline correctly excludes the custom MyWorld Runecraft altars and obelisks. The client independently drew glyph/orb billboards from fixed coordinates, so those effects survived without owners. Rendering now requires the exact matching loaded altar or obelisk scenery identity and caches ownership by scene-object revision; custom worlds retain their effects while vanilla scenes omit them. Focused guards, the authoritative 262-source client build, and private owner visual confirmation pass |
 | 2026-07-26 | Remove the remaining embedded expansion placements from the definitive Preservation output without deleting their MyWorld sources. | Package `0.4.0` excludes five exact scenery, two exact NPC, and six exact ground-item tuples; reports 32,351 vanilla outputs plus 13 exclusions from all 32,364 frozen inputs; retains zero unresolved; and carries 14 receipts including the Hobgoblin correction. Exact conversion allowlists and an independent runtime definition boundary refuse unreviewed non-vanilla placements. Automated validation passes; its owner route was superseded when Preservation was paused |
 | 2026-07-26 | Pause vanilla/Preservation as a distribution target and continue layered-world integration against complete Spoiled Milk content. | Preserve the audit and clean generator for later; add independently named `rsc-remastered.spoiled-milk-layered-world@0.1.0` plus `spoiled-milk-replacement`, restoring all 32,364 placements. Stabilize renderer/server/layered/Builder integration here before extracting broadly reusable and coordinated vanilla/community packages |
+| 2026-07-26 | Correct the active Spoiled Milk package from base-file restoration to the exact configured effective world. | Package `0.2.0` uses the matching 1,771-sector Custom terrain pair and composes every active `myworld.conf` placement source with legacy removals, cleanup, supersession, and 143 Harvesting reclassifications. It emits 33,515 effective placements (`3775n/882i/27886s/972b`), retains the direction-8 travel cart, and restores all 14 glyph anchors plus 56 orb-owner obelisks. Focused package, server-load, runtime-registry, altar, and authoritative build validation pass; private owner validation is next |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -18640,13 +18707,19 @@ presentation, persistence, cross-package transitions, and Region-free native
 entity membership have completed their focused automated and private-owner
 routes.
 
-The active gate is the complete Spoiled Milk layered distribution:
-`rsc-remastered.spoiled-milk-layered-world@0.1.0`, selected only by the
-default-off `spoiled-milk-replacement` profile. It retains all 32,364 current
-placements and uses the accepted terrain, runtime, protocol, collision,
-transition, persistence, and Region-free entity work without making a vanilla
-content claim. The next work should finish and harden this full integration,
-then proceed to Builder/content authoring and later extraction.
+The active gate is the complete configured Spoiled Milk layered distribution:
+`rsc-remastered.spoiled-milk-layered-world@0.2.0`, selected only by the
+default-off `spoiled-milk-replacement` profile. It uses the exact 1,771-sector
+Custom terrain pair and 33,515 effective configured placements:
+3,775 NPCs, 882 ordinary ground items, 27,886 scenery objects, and 972
+boundaries. Its fail-closed composition report inventories all 33,623 raw
+active placement inputs and the removals, cleanup, same-slot supersessions,
+and 143 Harvesting reclassifications that produce the effective live set.
+It uses the accepted runtime, protocol, collision, transition, persistence,
+and Region-free entity work without making a vanilla content claim. Automated
+validation is complete; the next gate is focused private owner acceptance of
+terrain, glyph/orb ownership, placements, Harvesting, transitions, reconnect,
+and recovery before Builder/content authoring and later extraction.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first
@@ -18680,7 +18753,8 @@ validates the exact Preservation package and uses its 32,351 placements
 *instead of* legacy `WorldPopulator` base placements; the existing fixture
 profile retains its bounded additive checks. It is not the active private
 runtime. The parallel `spoiled-milk-replacement` profile restores all 13
-audited Spoiled Milk placements and validates the complete 32,364-record
+audited base-file Spoiled Milk placements and additionally reproduces every
+configured custom/MyWorld placement source in the 33,515-record effective
 package independently. Legacy scripted transition consumers remain active.
 
 The first owner route correctly rejected parity. Its deterministic findings

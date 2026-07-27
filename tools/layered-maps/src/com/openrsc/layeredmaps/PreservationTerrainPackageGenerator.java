@@ -34,7 +34,7 @@ final class PreservationTerrainPackageGenerator {
 	static final String PACKAGE_VERSION = "0.4.0";
 	static final String SPOILED_MILK_PACKAGE_ID =
 		"rsc-remastered.spoiled-milk-layered-world";
-	static final String SPOILED_MILK_PACKAGE_VERSION = "0.1.0";
+	static final String SPOILED_MILK_PACKAGE_VERSION = "0.2.0";
 	static final String PRESERVATION_REPORT_TYPE =
 		"preservation-layered-parity-generation";
 	static final String SPOILED_MILK_REPORT_TYPE =
@@ -50,6 +50,13 @@ final class PreservationTerrainPackageGenerator {
 	private static final int VANILLA_MAX_ITEM_ID = 1289;
 	private static final int TILE_BYTES = 10;
 	private static final int SECTOR_BYTES = 48 * 48 * TILE_BYTES;
+	private static final String SPOILED_MILK_SERVER_TERRAIN =
+		"server/conf/server/data/Custom_Landscape.orsc";
+	private static final String SPOILED_MILK_CLIENT_TERRAIN =
+		"Client_Base/Cache/video/Custom_Landscape.orsc";
+	private static final String SPOILED_MILK_TERRAIN_SHA256 =
+		"d50089fcc81d51aa461567f4416a8f1a329ed439bcf64606ca1441c600e7229b";
+	private static final int SPOILED_MILK_TERRAIN_SECTOR_COUNT = 1771;
 	private static final int HOBGOBLIN_REPAIR_SOURCE_INDEX = 3376;
 	private static final int HOBGOBLIN_REPAIR_DEFINITION_ID = 67;
 	private static final int HOBGOBLIN_REPAIR_START_X = 647;
@@ -130,15 +137,16 @@ final class PreservationTerrainPackageGenerator {
 		}
 		Files.createDirectory(stagingRoot);
 
-		PreservationBaselineInventory.FileRecord terrainSource =
-			baselineFile(baseline, "server-authentic-terrain");
-		Path archivePath = root.resolve(terrainSource.path).normalize();
+		TerrainSource terrainSource =
+			terrainSource(root, baseline, target);
+		Path archivePath = root.resolve(terrainSource.serverPath).normalize();
 		List<SectorRecord> sectors =
 			writeTerrain(archivePath, stagingRoot);
-		if (terrainSource.archiveEntryCount == null
-			|| sectors.size() != terrainSource.archiveEntryCount.longValue()) {
+		if (sectors.size() != terrainSource.archiveEntryCount) {
 			throw new PreflightException(
-				"Generated terrain count differs from the accepted baseline.");
+				"Generated terrain count differs from the accepted "
+					+ target.name().toLowerCase(Locale.ROOT)
+					+ " source.");
 		}
 		PlacementConversion placements =
 			writePlacements(root, baseline, stagingRoot, target);
@@ -188,12 +196,20 @@ final class PreservationTerrainPackageGenerator {
 				Integer.valueOf(prior == null ? 1 : prior.intValue() + 1));
 			payloadBytes = Math.addExact(payloadBytes, sector.payloadBytes);
 		}
-		long sourcePlacements = 0L;
-		for (PreservationBaselineInventory.FileRecord file : baseline.files) {
-			if (file.recordCount != null) {
-				sourcePlacements =
-					Math.addExact(sourcePlacements, file.recordCount.longValue());
+		long sourcePlacements;
+		if (placements.sourceComposition == null) {
+			sourcePlacements = 0L;
+			for (PreservationBaselineInventory.FileRecord file : baseline.files) {
+				if (file.recordCount != null) {
+					sourcePlacements =
+						Math.addExact(
+							sourcePlacements,
+							file.recordCount.longValue());
+				}
 			}
+		} else {
+			sourcePlacements =
+				placements.sourceComposition.effectiveCount();
 		}
 		if (sourcePlacements
 			!= (long) placements.convertedCount()
@@ -205,7 +221,7 @@ final class PreservationTerrainPackageGenerator {
 		return new Result(
 			packageRoot,
 			baseline.sourceSetFingerprint,
-			terrainSource.path,
+			terrainSource.serverPath,
 			terrainSource.sha256,
 			sectors.size(),
 			payloadBytes,
@@ -219,7 +235,59 @@ final class PreservationTerrainPackageGenerator {
 			manifestSha256,
 			loaded.getPackageFingerprint(),
 			validationJson,
-			target);
+			target,
+			placements.sourceComposition);
+	}
+
+	private static TerrainSource terrainSource(
+		Path root,
+		PreservationBaselineInventory.Baseline baseline,
+		ContentTarget target) throws IOException, PreflightException {
+		if (target == ContentTarget.PRESERVATION) {
+			PreservationBaselineInventory.FileRecord source =
+				baselineFile(baseline, "server-authentic-terrain");
+			if (source.archiveEntryCount == null) {
+				throw new PreflightException(
+					"Frozen Preservation terrain has no accepted entry count.");
+			}
+			return new TerrainSource(
+				source.path,
+				baselineFile(baseline, "client-authentic-terrain").path,
+				source.sha256,
+				source.archiveEntryCount.intValue());
+		}
+
+		Path server = requiredRegularSource(
+			root, SPOILED_MILK_SERVER_TERRAIN);
+		Path client = requiredRegularSource(
+			root, SPOILED_MILK_CLIENT_TERRAIN);
+		String serverSha256 = Hashes.sha256(server);
+		String clientSha256 = Hashes.sha256(client);
+		if (!SPOILED_MILK_TERRAIN_SHA256.equals(serverSha256)
+			|| !serverSha256.equals(clientSha256)
+			|| Files.size(server) != Files.size(client)) {
+			throw new PreflightException(
+				"Server and client Spoiled Milk Custom_Landscape.orsc "
+					+ "sources must remain the exact reviewed pair.");
+		}
+		return new TerrainSource(
+			SPOILED_MILK_SERVER_TERRAIN,
+			SPOILED_MILK_CLIENT_TERRAIN,
+			serverSha256,
+			SPOILED_MILK_TERRAIN_SECTOR_COUNT);
+	}
+
+	private static Path requiredRegularSource(Path root, String relativePath)
+		throws IOException, PreflightException {
+		Path path = root.resolve(relativePath).normalize();
+		if (!path.startsWith(root)
+			|| !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)
+			|| Files.isSymbolicLink(path)) {
+			throw new PreflightException(
+				"Layered package source is missing or unsafe: "
+					+ relativePath);
+		}
+		return path;
 	}
 
 	private static Map<String, Integer> loadedPlacementCounts(
@@ -370,6 +438,9 @@ final class PreservationTerrainPackageGenerator {
 		PreservationBaselineInventory.Baseline baseline,
 		Path stagingRoot,
 		ContentTarget target) throws IOException, PreflightException {
+		if (target == ContentTarget.SPOILED_MILK) {
+			return writeSpoiledMilkPlacements(root, stagingRoot);
+		}
 		Map<Integer, PlacementBucket> buckets =
 			new LinkedHashMap<Integer, PlacementBucket>();
 		for (int level : new int[] {0, 1, 2, -1}) {
@@ -451,7 +522,269 @@ final class PreservationTerrainPackageGenerator {
 			sets,
 			converted,
 			repairs,
-			unresolved);
+			unresolved,
+			null);
+	}
+
+	private static PlacementConversion writeSpoiledMilkPlacements(
+		Path root,
+		Path stagingRoot) throws IOException, PreflightException {
+		SpoiledMilkWorldComposition.Result composition =
+			new SpoiledMilkWorldComposition().inspect(root);
+		Map<Integer, PlacementBucket> buckets =
+			new LinkedHashMap<Integer, PlacementBucket>();
+		for (int level : new int[] {0, 1, 2, -1}) {
+			buckets.put(
+				Integer.valueOf(level),
+				new PlacementBucket(level));
+		}
+		Map<String, Integer> converted =
+			new LinkedHashMap<String, Integer>();
+		converted.put("npcs", Integer.valueOf(0));
+		converted.put("groundItems", Integer.valueOf(0));
+		converted.put("scenery", Integer.valueOf(0));
+		converted.put("boundaries", Integer.valueOf(0));
+		List<ConversionRepair> repairs =
+			new ArrayList<ConversionRepair>();
+		List<UnresolvedPlacement> unresolved =
+			new ArrayList<UnresolvedPlacement>();
+
+		convertSpoiledMilkBoundaries(
+			composition.boundaries, buckets, converted);
+		convertSpoiledMilkScenery(
+			composition.scenery, buckets, converted);
+		convertSpoiledMilkNpcs(
+			composition.npcs, buckets, converted, repairs, unresolved);
+		convertSpoiledMilkGroundItems(
+			composition.groundItems, buckets, converted);
+
+		List<PlacementSetRecord> sets =
+			writePlacementSets(
+				stagingRoot,
+				buckets,
+				"spoiled-milk-l");
+		return new PlacementConversion(
+			sets,
+			converted,
+			repairs,
+			unresolved,
+			composition);
+	}
+
+	private static List<PlacementSetRecord> writePlacementSets(
+		Path stagingRoot,
+		Map<Integer, PlacementBucket> buckets,
+		String setPrefix) throws IOException, PreflightException {
+		List<PlacementSetRecord> sets =
+			new ArrayList<PlacementSetRecord>();
+		for (PlacementBucket bucket : buckets.values()) {
+			Map<String, Object> document = map();
+			document.put("schemaVersion", Long.valueOf(3));
+			document.put("encoding", LayeredEntityPlacements.ENCODING_V3);
+			document.put("worldSpace", "global");
+			document.put("level", Long.valueOf(bucket.level));
+			document.put("npcs", bucket.npcs);
+			document.put("groundItems", bucket.groundItems);
+			document.put("scenery", bucket.scenery);
+			document.put("boundaries", bucket.boundaries);
+			String relativePath =
+				"placements/global/l" + signedToken(bucket.level) + ".json";
+			Path destination = stagingRoot.resolve(relativePath).normalize();
+			if (!destination.startsWith(stagingRoot)) {
+				throw new PreflightException(
+					"Generated placement path escaped its package root.");
+			}
+			Files.createDirectories(destination.getParent());
+			writeNew(
+				destination,
+				JsonDocuments.pretty(document).getBytes(StandardCharsets.UTF_8));
+			sets.add(new PlacementSetRecord(
+				setPrefix + signedToken(bucket.level),
+				bucket.level,
+				relativePath,
+				Hashes.sha256(destination),
+				bucket.count()));
+		}
+		return sets;
+	}
+
+	private static void convertSpoiledMilkBoundaries(
+		List<SpoiledMilkWorldComposition.Record> values,
+		Map<Integer, PlacementBucket> buckets,
+		Map<String, Integer> converted) throws PreflightException {
+		for (SpoiledMilkWorldComposition.Record source : values) {
+			Map<String, Object> value = source.value;
+			requireSourceKeys(
+				value,
+				source.path + " boundaries[" + source.sourceIndex + "]",
+				"id",
+				"pos",
+				"direction");
+			WorldCoordinate position = sourcePosition(
+				value.get("pos"),
+				source.path + " boundaries[" + source.sourceIndex + "].pos");
+			Map<String, Object> record = map();
+			record.put(
+				"placementId",
+				source.placementId("boundary"));
+			record.put(
+				"boundaryId",
+				sourceNonNegativeInt(value, "id"));
+			record.put("position", position(position));
+			record.put(
+				"direction",
+				sourceDirection(value, "direction"));
+			bucket(buckets, position.getLevel()).boundaries.add(record);
+			increment(converted, "boundaries");
+		}
+	}
+
+	private static void convertSpoiledMilkScenery(
+		List<SpoiledMilkWorldComposition.Record> values,
+		Map<Integer, PlacementBucket> buckets,
+		Map<String, Integer> converted) throws PreflightException {
+		for (SpoiledMilkWorldComposition.Record source : values) {
+			Map<String, Object> value = source.value;
+			requireSourceKeys(
+				value,
+				source.path + " sceneries[" + source.sourceIndex + "]",
+				"id",
+				"pos",
+				"direction");
+			WorldCoordinate position = sourcePosition(
+				value.get("pos"),
+				source.path + " sceneries[" + source.sourceIndex + "].pos");
+			Map<String, Object> record = map();
+			record.put(
+				"placementId",
+				source.placementId("scenery"));
+			record.put(
+				"sceneryId",
+				sourceNonNegativeInt(value, "id"));
+			record.put("position", position(position));
+			record.put(
+				"direction",
+				sourceSceneryDirection(value, "direction"));
+			bucket(buckets, position.getLevel()).scenery.add(record);
+			increment(converted, "scenery");
+		}
+	}
+
+	private static void convertSpoiledMilkNpcs(
+		List<SpoiledMilkWorldComposition.Record> values,
+		Map<Integer, PlacementBucket> buckets,
+		Map<String, Integer> converted,
+		List<ConversionRepair> repairs,
+		List<UnresolvedPlacement> unresolved)
+		throws PreflightException {
+		for (SpoiledMilkWorldComposition.Record source : values) {
+			Map<String, Object> value = source.value;
+			String label =
+				source.path + " npclocs[" + source.sourceIndex + "]";
+			requireSourceKeys(
+				value, label, "id", "start", "min", "max");
+			PackedSourcePosition start = packedSourcePosition(
+				value.get("start"), label + ".start");
+			PackedSourcePosition minimum = packedSourcePosition(
+				value.get("min"), label + ".min");
+			PackedSourcePosition maximum = packedSourcePosition(
+				value.get("max"), label + ".max");
+			int definitionId = sourceNonNegativeInt(value, "id");
+			if (approvedHobgoblinRepair(
+					source.sourceIndex,
+					definitionId,
+					start,
+					minimum,
+					maximum)) {
+				maximum = new PackedSourcePosition(
+					HOBGOBLIN_REPAIR_MAX_X,
+					HOBGOBLIN_REPAIR_TARGET_MAX_Y);
+				repairs.add(new ConversionRepair(
+					"spoiled-milk.npc.npclocs-json.003376."
+						+ "max-y-6549-to-3549",
+					"npc",
+					source.role,
+					source.path,
+					source.sourceIndex,
+					HOBGOBLIN_REPAIR_DEFINITION_ID,
+					"converted",
+					"owner-approved-shared-source-repair",
+					"maximumPacked.y",
+					Long.valueOf(HOBGOBLIN_REPAIR_SOURCE_MAX_Y),
+					Long.valueOf(HOBGOBLIN_REPAIR_TARGET_MAX_Y)));
+			}
+			if (!start.decodable()
+				|| !minimum.decodable()
+				|| !maximum.decodable()
+				|| start.plane() != minimum.plane()
+				|| start.plane() != maximum.plane()) {
+				unresolved.add(new UnresolvedPlacement(
+					"npc",
+					source.role,
+					source.path,
+					source.sourceIndex,
+					definitionId,
+					"roam-bound-crosses-or-exceeds-start-level",
+					start,
+					minimum,
+					maximum));
+				continue;
+			}
+			WorldCoordinate startCoordinate = start.decode();
+			WorldCoordinate minimumCoordinate = minimum.decode();
+			WorldCoordinate maximumCoordinate = maximum.decode();
+			if (minimumCoordinate.getX() > maximumCoordinate.getX()
+				|| minimumCoordinate.getY() > maximumCoordinate.getY()
+				|| startCoordinate.getX() < minimumCoordinate.getX()
+				|| startCoordinate.getX() > maximumCoordinate.getX()
+				|| startCoordinate.getY() < minimumCoordinate.getY()
+				|| startCoordinate.getY() > maximumCoordinate.getY()) {
+				throw new PreflightException(
+					"Legacy Spoiled Milk NPC bounds are ordered incorrectly at "
+						+ source.path + " index " + source.sourceIndex + ".");
+			}
+			Map<String, Object> bounds = map();
+			bounds.put("minimum", position(minimumCoordinate));
+			bounds.put("maximum", position(maximumCoordinate));
+			Map<String, Object> record = map();
+			record.put("placementId", source.placementId("npc"));
+			record.put("npcId", definitionId);
+			record.put("start", position(startCoordinate));
+			record.put("roamBounds", bounds);
+			bucket(buckets, startCoordinate.getLevel()).npcs.add(record);
+			increment(converted, "npcs");
+		}
+	}
+
+	private static void convertSpoiledMilkGroundItems(
+		List<SpoiledMilkWorldComposition.Record> values,
+		Map<Integer, PlacementBucket> buckets,
+		Map<String, Integer> converted) throws PreflightException {
+		for (SpoiledMilkWorldComposition.Record source : values) {
+			Map<String, Object> value = source.value;
+			String label =
+				source.path + " grounditems[" + source.sourceIndex + "]";
+			requireSourceKeys(
+				value, label, "id", "pos", "amount", "respawn");
+			WorldCoordinate position = sourcePosition(
+				value.get("pos"), label + ".pos");
+			Map<String, Object> record = map();
+			record.put(
+				"placementId",
+				source.placementId("ground-item"));
+			record.put(
+				"itemId",
+				sourceNonNegativeInt(value, "id"));
+			record.put("position", position(position));
+			record.put(
+				"amount",
+				sourcePositiveInt(value, "amount"));
+			record.put(
+				"respawnSeconds",
+				sourcePositiveInt(value, "respawn"));
+			bucket(buckets, position.getLevel()).groundItems.add(record);
+			increment(converted, "groundItems");
+		}
 	}
 
 	private static void convertBoundaries(
@@ -942,6 +1275,16 @@ final class PreservationTerrainPackageGenerator {
 		return result;
 	}
 
+	private static int sourceSceneryDirection(
+		Map<String, Object> value, String key) throws PreflightException {
+		int result = sourceInt(value, key);
+		if (result < 0 || result > 8) {
+			throw new PreflightException(
+				key + " must be 0..8 for scenery.");
+		}
+		return result;
+	}
+
 	private static PackedSourcePosition packedSourcePosition(
 		Object value, String label) throws PreflightException {
 		Map<String, Object> position = sourceObject(value, label);
@@ -1209,6 +1552,7 @@ final class PreservationTerrainPackageGenerator {
 		final String packageFingerprint;
 		final String validationJson;
 		final ContentTarget target;
+		final SpoiledMilkWorldComposition.Result sourceComposition;
 
 		Result(
 			Path packageRoot,
@@ -1227,7 +1571,8 @@ final class PreservationTerrainPackageGenerator {
 			String manifestSha256,
 			String packageFingerprint,
 			String validationJson,
-			ContentTarget target) {
+			ContentTarget target,
+			SpoiledMilkWorldComposition.Result sourceComposition) {
 			this.packageRoot = packageRoot;
 			this.baselineFingerprint = baselineFingerprint;
 			this.sourceTerrainPath = sourceTerrainPath;
@@ -1253,6 +1598,7 @@ final class PreservationTerrainPackageGenerator {
 			this.packageFingerprint = packageFingerprint;
 			this.validationJson = validationJson;
 			this.target = target;
+			this.sourceComposition = sourceComposition;
 		}
 
 		String toJson() {
@@ -1293,6 +1639,11 @@ final class PreservationTerrainPackageGenerator {
 			document.put(
 				"sourcePlacementRecords",
 				Long.valueOf(sourcePlacementCount));
+			if (sourceComposition != null) {
+				document.put(
+					"sourceComposition",
+					sourceComposition.toDocument());
+			}
 			Map<String, Object> placementCounts = map();
 			for (Map.Entry<String, Integer> entry
 				: convertedPlacementCountByFamily.entrySet()) {
@@ -1361,6 +1712,19 @@ final class PreservationTerrainPackageGenerator {
 			out.append("- Converted placement records: ")
 				.append(convertedPlacementCount()).append(" / ")
 				.append(sourcePlacementCount).append("\n");
+			if (sourceComposition != null) {
+				out.append("- Raw configured placement inputs: ")
+					.append(sourceComposition.rawInputCount)
+					.append("\n");
+				out.append("- Effective configured placement records: ")
+					.append(sourceComposition.effectiveCount())
+					.append("\n");
+				out.append("- Harvesting ground items reclassified as scenery: ")
+					.append(
+						sourceComposition.transformations.get(
+							"harvestingGroundItemsReclassified"))
+					.append("\n");
+			}
 			out.append("- Excluded non-vanilla source placements: ")
 				.append(excludedSourcePlacementCount).append("\n");
 			out.append("- Approved conversion repairs: ")
@@ -1430,6 +1794,24 @@ final class PreservationTerrainPackageGenerator {
 		}
 	}
 
+	private static final class TerrainSource {
+		final String serverPath;
+		final String clientPath;
+		final String sha256;
+		final int archiveEntryCount;
+
+		TerrainSource(
+			String serverPath,
+			String clientPath,
+			String sha256,
+			int archiveEntryCount) {
+			this.serverPath = serverPath;
+			this.clientPath = clientPath;
+			this.sha256 = sha256;
+			this.archiveEntryCount = archiveEntryCount;
+		}
+	}
+
 	private static final class PlacementBucket {
 		final int level;
 		final List<Object> npcs = new ArrayList<Object>();
@@ -1474,12 +1856,14 @@ final class PreservationTerrainPackageGenerator {
 		final Map<String, Integer> convertedByFamily;
 		final List<ConversionRepair> repairs;
 		final List<UnresolvedPlacement> unresolved;
+		final SpoiledMilkWorldComposition.Result sourceComposition;
 
 		PlacementConversion(
 			List<PlacementSetRecord> sets,
 			Map<String, Integer> convertedByFamily,
 			List<ConversionRepair> repairs,
-			List<UnresolvedPlacement> unresolved) {
+			List<UnresolvedPlacement> unresolved,
+			SpoiledMilkWorldComposition.Result sourceComposition) {
 			this.sets = Collections.unmodifiableList(
 				new ArrayList<PlacementSetRecord>(sets));
 			this.convertedByFamily = Collections.unmodifiableMap(
@@ -1488,6 +1872,7 @@ final class PreservationTerrainPackageGenerator {
 				new ArrayList<ConversionRepair>(repairs));
 			this.unresolved = Collections.unmodifiableList(
 				new ArrayList<UnresolvedPlacement>(unresolved));
+			this.sourceComposition = sourceComposition;
 		}
 
 		int count(String family) {

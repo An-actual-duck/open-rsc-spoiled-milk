@@ -330,10 +330,16 @@ SPOILED_MILK_REVIEW_HARNESS = (
         "rsc-remastered.preservation-r64-parity-review",
         "rsc-remastered.spoiled-milk-layered-world",
     )
-    .replace('"0.4.0"', '"0.1.0"')
-    .replace("== 3610", "== 3612")
-    .replace("== 1010", "== 1016")
-    .replace("== 26765", "== 26770")
+    .replace('"0.4.0"', '"0.2.0"')
+    .replace("== 1764", "== 1771")
+    .replace("== 3610", "== 3775")
+    .replace("== 1010", "== 882")
+    .replace("== 26765", "== 27886")
+    .replace("== 966", "== 972")
+    .replace(
+        '"preservation-r64.npc.000000"',
+        '"spoiled-milk.npc.npclocs-json.000000"',
+    )
 )
 
 RUNTIME_PROFILE_HARNESS = r"""

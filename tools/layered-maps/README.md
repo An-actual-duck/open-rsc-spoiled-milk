@@ -30,16 +30,25 @@ The active integration target is the complete current Spoiled Milk world:
 ./tools/layered-maps/layered-maps.sh spoiled-milk-package
 ```
 
-This command requires the same frozen coordinated source fingerprint used by
-the earlier audit, but it does not classify later Spoiled Milk definitions as
-vanilla contamination. It converts all 32,364 placement records into four
-level-qualified sets: 966 boundaries, 26,770 scenery objects, 3,612 NPCs, and
-1,016 ground items. The one existing Hobgoblin maximum-Y correction remains
-necessary for the legacy record to decode and retains its explicit receipt.
+This command preserves the frozen Preservation audit as an independent
+prerequisite, then validates the active `server/myworld.conf` selectors and
+reproduces the configured Spoiled Milk world. It converts the exact matching
+server/client `Custom_Landscape.orsc` pair (1,771 sectors), inventories all
+33,623 placement inputs selected from base, feature, and MyWorld sources, and
+applies the same removal, cleanup, same-slot replacement, and Harvesting rules
+as legacy population.
+
+The resulting four level-qualified sets contain 33,515 effective placements:
+972 boundaries, 27,886 scenery objects, 3,775 NPCs, and 882 ordinary ground
+items. The scenery count includes 143 ground-item locations reclassified as
+their configured harvestable scenery. The one existing Hobgoblin maximum-Y
+correction remains necessary for the legacy record to decode and retains its
+explicit receipt. Scenery direction `8` is preserved for the travel cart;
+boundaries remain restricted to directions `0..7`.
 
 The active package is
-`rsc-remastered.spoiled-milk-layered-world@0.1.0`, manifest SHA-256
-`7ae049ba514261cd5a93a81529c84527938fd23e2a70936050ef09933a4e02ad`.
+`rsc-remastered.spoiled-milk-layered-world@0.2.0`, manifest SHA-256
+`fab8d7d1a51e948a7d8b18769eb0b3e9f5abf9e30538abfedba4d90374b1447b`.
 It is consumed only by the default-off `spoiled-milk-replacement` private
 runtime profile. This complete distribution is the reference integration
 target while the layered engine and authoring path stabilize.

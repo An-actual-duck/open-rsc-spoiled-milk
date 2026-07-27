@@ -610,7 +610,7 @@ public final class NativeLayeredWorldPackage {
 				"scenery[" + index + "].position",
 				worldSpace,
 				level);
-			int direction = direction(value, "direction");
+			int direction = sceneryDirection(value, "direction");
 			String slot = location.toString();
 			if (!scenerySlots.add(slot)) {
 				throw new IOException(
@@ -1215,6 +1215,15 @@ public final class NativeLayeredWorldPackage {
 		int result = signedInt(value, key);
 		if (result < 0 || result > 7) {
 			throw new IOException(key + " must be 0..7");
+		}
+		return result;
+	}
+
+	private static int sceneryDirection(JSONObject value, String key)
+		throws IOException {
+		int result = signedInt(value, key);
+		if (result < 0 || result > 8) {
+			throw new IOException(key + " must be 0..8 for scenery");
 		}
 		return result;
 	}

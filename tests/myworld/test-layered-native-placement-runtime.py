@@ -108,6 +108,25 @@ public final class NativeLayeredPlacementRegistryFixture {
         check((surfaceTableTile.traversalMask & CollisionFlag.FULL_BLOCK) == 0,
             "same XY surface collision remains isolated");
 
+        WorldLocation cartLocation = new WorldLocation(
+            WorldSpaceId.GLOBAL, new WorldCoordinate(465, 663, 0));
+        GameTickEventRestorationCollisionFootprintPlanner.Result cart =
+            GameTickEventRestorationCollisionFootprintPlanner.plan(
+                Operation.REGISTER,
+                ConstructorState.of(769, 465, 663, 8, 0),
+                Definition.scenery(0, 1, 1, "Travel cart", new String[0]),
+                false,
+                WorldBounds.of(1000, 1000));
+        Object cartObject = new Object();
+        check(objects.register(
+                objectGeneration, "spoiled-milk-cart", cartLocation,
+                0, 8, cartObject, cart) == cartObject,
+            "register authored direction-eight scenery");
+        check(objects.unregister(
+                objectGeneration, "spoiled-milk-cart", cartObject)
+                == cartObject,
+            "remove authored direction-eight scenery");
+
         WorldLocation fenceLocation = new WorldLocation(
             WorldSpaceId.GLOBAL, new WorldCoordinate(448, 604, -2));
         GameTickEventRestorationCollisionFootprintPlanner.Result fence =

@@ -214,7 +214,7 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			checkedFootprint = Objects.requireNonNull(
 				footprint, "footprint");
 		if (checkedId.isEmpty() || (type != 0 && type != 1)
-			|| direction < 0 || direction > 7
+			|| direction < 0 || direction > (type == 0 ? 8 : 7)
 			|| !checkedFootprint.isFootprintAvailable()
 			|| checkedFootprint.getOperation() != Operation.REGISTER
 			|| checkedFootprint.isLegacySaturatingUnregister()) {

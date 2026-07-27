@@ -79,7 +79,7 @@
           "placementId": {"$ref": "#/$defs/placementId"},
           "sceneryId": {"type": "integer", "minimum": 0, "maximum": 2147483647},
           "position": {"$ref": "#/$defs/position"},
-          "direction": {"type": "integer", "minimum": 0, "maximum": 7}
+          "direction": {"type": "integer", "minimum": 0, "maximum": 8}
         }
       }
     },

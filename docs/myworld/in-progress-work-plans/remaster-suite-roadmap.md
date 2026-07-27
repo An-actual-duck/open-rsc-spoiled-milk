@@ -1042,11 +1042,23 @@ Milk. The Preservation package, receipts, and fail-closed profile remain
 available as research, but the vanilla distribution is now **on hold** and is
 not the active private runtime.
 
-The active target is
-`rsc-remastered.spoiled-milk-layered-world@0.1.0`. It retains all 32,364
-current placements—966 boundaries, 26,770 scenery objects, 3,612 NPCs, and
-1,016 ground items—and is pinned independently by manifest SHA-256
-`7ae049ba514261cd5a93a81529c84527938fd23e2a70936050ef09933a4e02ad`.
+The initial active target
+`rsc-remastered.spoiled-milk-layered-world@0.1.0` proved that restoring all
+32,364 records from the four base files was still not the complete configured
+game: it used authentic terrain and native replacement suppressed the
+Runecraft, Harvesting, Custom Quest, Expansion, Other, Auction, and MyWorld
+follow-on loaders.
+
+Package `0.2.0` supersedes that incomplete cut. It uses the exact matching
+1,771-sector `Custom_Landscape.orsc` pair and composes all sources selected by
+`server/myworld.conf`. Its report fingerprints 33,623 raw placement inputs,
+then applies the current removals, event-disabled cleanup, Tutorial Island and
+banker cleanup, same-slot ownership, and 143 Harvesting reclassifications to
+produce 33,515 effective placements: 972 boundaries, 27,886 scenery objects,
+3,775 NPCs, and 882 ordinary ground items. The direction-8 travel cart and all
+14 rune-altar/56 obelisk visual owners are explicitly covered. Manifest
+SHA-256 is
+`fab8d7d1a51e948a7d8b18769eb0b3e9f5abf9e30538abfedba4d90374b1447b`.
 The separately named `spoiled-milk-replacement` profile prevents the complete
 current game from being mistaken for a vanilla claim. Engine/package
 capability boundaries remain reusable; broad extraction resumes only after
@@ -1489,6 +1501,7 @@ The RSC Remastered product roadmap is complete when:
 | 2026-07-26 | Approve a fingerprint-gated `6549 -> 3549` conversion repair for the anomalous vanilla Hobgoblin and distinguish vanilla corrections from creator expansion policy. | All 32,364 placements now convert with one explicit receipt and unchanged source. Reviewed vanilla repairs may define the concrete RSC Remastered baseline; expansion findings remain creator-controlled |
 | 2026-07-26 | Refine Preservation conversion ownership after a systematic residual-content audit found expansion records embedded in the frozen base placement inputs. | Package `0.4.0` excludes five exact custom scenery, two exact custom NPC, and six exact custom ground-item records without changing MyWorld sources. The report accounts for 32,351 vanilla outputs plus 13 exclusions from 32,364 inputs, carries 14 receipts including the Hobgoblin repair, and both conversion and replacement runtime fail closed against any unreviewed non-vanilla definition ID |
 | 2026-07-26 | Put the vanilla/Preservation distribution on hold and make the complete Spoiled Milk world the active integration target. | The subtractive audit proved the current repository is a coordinated hybrid, not a map-only vanilla swap. Preserve all audit/generator work, restore all 32,364 placements through independently named package `rsc-remastered.spoiled-milk-layered-world@0.1.0` and profile `spoiled-milk-replacement`, stabilize the full stack there, then extract broader RSC Remastered and vanilla/community distributions |
+| 2026-07-26 | Correct the Spoiled Milk layered target to reproduce the configured effective world, not only the four base placement files. | Package `0.2.0` converts the exact 1,771-sector Custom terrain pair and inventories every active `myworld.conf` source. After the same removals, cleanup, supersession, and 143 Harvesting reclassifications as legacy population, it pins 33,515 effective placements (`3775n/882i/27886s/972b`), including the direction-8 cart and every rune-altar glyph/orb owner. Automated package/server/runtime/build validation passes; private owner acceptance remains |
 | 2026-07-26 | Freeze Preservation transition compatibility as supplementary execution provenance. | All 20 explicit XML edges normalize with zero unresolved; 107 authentic script owners and the four runtime bridge sources are hash-pinned without claiming Java is a declarative graph. First parity runtime retains those scripts, and full-world replacement population is the next gate |
 | 2026-07-25 | Make the Universal Launcher own isolated, matched installation profiles and named fingerprinted import adapters; importing Cabbage or another supported distribution must never patch the default profile in place. | Confirmed |
 | 2026-07-25 | Begin modder drag-and-drop support with profile-local `content/walls` and `content/floors`, namespaced packs, stable registered identities, validation, and automatic World Builder discovery. | Confirmed architecture; implementation remains phased |

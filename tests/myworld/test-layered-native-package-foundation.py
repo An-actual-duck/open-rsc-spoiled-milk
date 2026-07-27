@@ -403,6 +403,38 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 payload["npcs"][0]["roamBounds"],
             )
 
+    def test_v3_scenery_preserves_direction_eight_but_refuses_nine(self):
+        with tempfile.TemporaryDirectory(
+            prefix="native-package-scenery-direction-"
+        ) as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            self.convert_placements_to_v3(package)
+            relative_path = "placements/deep-l2-entities.json"
+            payload_path = package / relative_path
+            payload = json.loads(payload_path.read_text(encoding="utf-8"))
+            payload["scenery"][0]["direction"] = 8
+            payload_path.write_text(
+                json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+            )
+            self.update_payload_hash(package, relative_path)
+
+            accepted = self.run_command(
+                "package-check", Path(temp) / "accepted", package
+            )
+            self.assertEqual(0, accepted.returncode, accepted.stderr)
+
+            payload["scenery"][0]["direction"] = 9
+            payload_path.write_text(
+                json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+            )
+            self.update_payload_hash(package, relative_path)
+            refused = self.run_command(
+                "package-check", Path(temp) / "refused", package
+            )
+            self.assertEqual(3, refused.returncode, refused.stderr)
+            self.assertIn("0..8 for scenery", refused.stderr)
+
     def test_preservation_parity_package_is_exact_isolated_and_deterministic(self):
         source_archive = ROOT / "server/conf/server/data/Authentic_Landscape.orsc"
         source_sha = hashlib.sha256(source_archive.read_bytes()).hexdigest()
@@ -590,7 +622,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             )
 
     def test_spoiled_milk_package_retains_complete_current_world_content(self):
-        source_archive = ROOT / "server/conf/server/data/Authentic_Landscape.orsc"
+        source_archive = ROOT / "server/conf/server/data/Custom_Landscape.orsc"
         with tempfile.TemporaryDirectory(
             prefix="spoiled-milk-layered-package-"
         ) as temp:
@@ -612,20 +644,60 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 report["reportType"],
             )
             self.assertEqual("spoiled-milk", report["contentTarget"])
-            self.assertEqual(32364, report["sourcePlacementRecords"])
-            self.assertEqual(32364, report["convertedPlacementRecords"])
+            self.assertEqual(33515, report["sourcePlacementRecords"])
+            self.assertEqual(33515, report["convertedPlacementRecords"])
             self.assertEqual(0, report["excludedSourcePlacementRecords"])
             self.assertEqual(0, report["unconvertedPlacementRecords"])
             self.assertEqual(
                 {
-                    "boundaries": 966,
-                    "groundItems": 1016,
-                    "npcs": 3612,
-                    "scenery": 26770,
+                    "boundaries": 972,
+                    "groundItems": 882,
+                    "npcs": 3775,
+                    "scenery": 27886,
                 },
                 report["convertedPlacementRecordsByFamily"],
             )
             self.assertEqual(1, len(report["conversionRepairs"]))
+            composition = report["sourceComposition"]
+            self.assertEqual(
+                "myworld-config-effective-world-v1",
+                composition["policy"],
+            )
+            self.assertEqual(33623, composition["rawInputPlacementRecords"])
+            self.assertEqual(33515, composition["effectivePlacementRecords"])
+            self.assertEqual(
+                {
+                    "boundaries": 973,
+                    "groundItems": 1025,
+                    "npcs": 3856,
+                    "scenery": 27769,
+                },
+                composition["rawInputRecordsByFamily"],
+            )
+            self.assertEqual(
+                {
+                    "boundaries": 972,
+                    "groundItems": 882,
+                    "npcs": 3775,
+                    "scenery": 27886,
+                },
+                composition["effectiveRecordsByFamily"],
+            )
+            self.assertEqual(
+                {
+                    "bankerClusterNpcRemovals": 26,
+                    "boundarySameSlotSupersessions": 1,
+                    "eventPolicyNpcRemovals": 9,
+                    "groundItemSameTileSupersessions": 0,
+                    "harvestingGroundItemsReclassified": 143,
+                    "harvestingScenerySupersessions": 4,
+                    "myWorldNpcRemovalsApplied": 2,
+                    "myWorldSceneryRemovalsApplied": 10,
+                    "scenerySameTileSupersessions": 12,
+                    "tutorialIslandNpcRemovals": 44,
+                },
+                composition["transformations"],
+            )
 
             package = workspace / "package"
             manifest = json.loads(
@@ -635,15 +707,130 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 "rsc-remastered.spoiled-milk-layered-world",
                 manifest["packageId"],
             )
-            self.assertEqual("0.1.0", manifest["packageVersion"])
+            self.assertEqual("0.2.0", manifest["packageVersion"])
+            self.assertEqual(1771, len(manifest["terrainSectors"]))
             self.assert_preservation_terrain_round_trip(
                 source_archive, package, manifest
             )
-            self.assert_preservation_placement_round_trip(
-                package,
-                manifest,
-                frozenset(),
-                vanilla_only=False,
+            generated_records = {
+                "npcs": [],
+                "groundItems": [],
+                "scenery": [],
+                "boundaries": [],
+            }
+            for placement_set in manifest["placementSets"]:
+                payload = json.loads(
+                    (package / placement_set["path"]).read_text(
+                        encoding="utf-8"
+                    )
+                )
+                for family in generated_records:
+                    generated_records[family].extend(
+                        {
+                            **record,
+                            "_level": placement_set["level"],
+                        }
+                        for record in payload[family]
+                    )
+            all_ids = [
+                record["placementId"]
+                for records in generated_records.values()
+                for record in records
+            ]
+            self.assertEqual(len(all_ids), len(set(all_ids)))
+            scenery_by_slot = {
+                (
+                    record["position"]["x"],
+                    record["position"]["y"],
+                    record["_level"],
+                ): record
+                for record in generated_records["scenery"]
+            }
+            self.assertEqual(
+                8,
+                scenery_by_slot[(465, 663, 0)]["direction"],
+            )
+            self.assertEqual(
+                769,
+                scenery_by_slot[(465, 663, 0)]["sceneryId"],
+            )
+            self.assertEqual(
+                143,
+                sum(
+                    record["placementId"].startswith(
+                        "spoiled-milk.scenery.grounditems"
+                    )
+                    for record in generated_records["scenery"]
+                ),
+            )
+            altar_specs = (
+                (306, 593, 1191, 303),
+                (147, 684, 1195, 300),
+                (62, 464, 1197, 304),
+                (50, 633, 1199, 301),
+                (297, 438, 1193, 1298),
+                (259, 503, 1201, 1299),
+                (104, 3556, 1203, 1300),
+                (232, 375, 1205, 1301),
+                (392, 804, 1207, 1302),
+                (409, 534, 1209, 1303),
+                (392, 3540, 1211, 1304),
+                (247, 102, 1213, 1305),
+                (611, 3599, 1296, 1306),
+                (283, 694, 1321, 1322),
+            )
+            expected_altar_owners = set()
+            expected_orb_owners = set()
+            for x, packed_y, altar_id, obelisk_id in altar_specs:
+                decoded = self.decode_packed_position(
+                    {"X": x, "Y": packed_y}
+                )
+                level = {0: 0, 1: 1, 2: 2, 3: -1}[packed_y // 944]
+                expected_altar_owners.add(
+                    (
+                        decoded["x"],
+                        decoded["y"],
+                        level,
+                        altar_id,
+                    )
+                )
+                for orb_x, orb_y in {
+                    (x - 2, packed_y + 3),
+                    (x + 3, packed_y + 3),
+                    (x + 3, packed_y - 2),
+                    (x - 2, packed_y - 2),
+                }:
+                    decoded_orb = self.decode_packed_position(
+                        {"X": orb_x, "Y": orb_y}
+                    )
+                    orb_level = {
+                        0: 0,
+                        1: 1,
+                        2: 2,
+                        3: -1,
+                    }[orb_y // 944]
+                    expected_orb_owners.add(
+                        (
+                            decoded_orb["x"],
+                            decoded_orb["y"],
+                            orb_level,
+                            obelisk_id,
+                        )
+                    )
+            actual_scenery_owners = {
+                (
+                    record["position"]["x"],
+                    record["position"]["y"],
+                    record["_level"],
+                    record["sceneryId"],
+                )
+                for record in generated_records["scenery"]
+            }
+            self.assertTrue(
+                expected_altar_owners.issubset(actual_scenery_owners)
+            )
+            self.assertTrue(
+                expected_orb_owners.issubset(actual_scenery_owners)
             )
 
             repeated = self.run_command(

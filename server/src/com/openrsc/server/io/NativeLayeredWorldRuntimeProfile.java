@@ -30,9 +30,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 		"560dae205d13c2034b38f52d8bb6841ee56c245fadc8e9d18361ace1346cd73f";
 	public static final String SPOILED_MILK_PACKAGE_ID =
 		"rsc-remastered.spoiled-milk-layered-world";
-	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.1.0";
+	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.2.0";
 	public static final String SPOILED_MILK_MANIFEST_SHA256 =
-		"7ae049ba514261cd5a93a81529c84527938fd23e2a70936050ef09933a4e02ad";
+		"fab8d7d1a51e948a7d8b18769eb0b3e9f5abf9e30538abfedba4d90374b1447b";
 	private static final int VANILLA_MAX_BOUNDARY_ID = 213;
 	private static final int VANILLA_MAX_SCENERY_ID = 1189;
 	private static final int VANILLA_MAX_NPC_ID = 793;
@@ -153,9 +153,11 @@ public enum NativeLayeredWorldRuntimeProfile {
 			PRESERVATION_PACKAGE_ID,
 			PRESERVATION_PACKAGE_VERSION,
 			PRESERVATION_MANIFEST_SHA256,
+			1764,
 			3610,
 			1010,
 			26765,
+			966,
 			true);
 	}
 
@@ -167,9 +169,11 @@ public enum NativeLayeredWorldRuntimeProfile {
 			SPOILED_MILK_PACKAGE_ID,
 			SPOILED_MILK_PACKAGE_VERSION,
 			SPOILED_MILK_MANIFEST_SHA256,
-			3612,
-			1016,
-			26770,
+			1771,
+			3775,
+			882,
+			27886,
+			972,
 			false);
 	}
 
@@ -179,9 +183,11 @@ public enum NativeLayeredWorldRuntimeProfile {
 		final String packageId,
 		final String packageVersion,
 		final String manifestSha256,
+		final int terrainSectorCount,
 		final int npcCount,
 		final int groundItemCount,
 		final int sceneryCount,
+		final int boundaryCount,
 		final boolean vanillaOnly) {
 		if (catalog.size() != 1) {
 			throw new IllegalStateException(
@@ -201,12 +207,12 @@ public enum NativeLayeredWorldRuntimeProfile {
 		}
 		if (loaded.getWorldSpaceCount() != 1
 			|| loaded.getLevelCount() != 4
-			|| loaded.getTerrainSectorCount() != 1764
+			|| loaded.getTerrainSectorCount() != terrainSectorCount
 			|| loaded.getPlacementSetCount() != 4
 			|| loaded.getNpcPlacementCount() != npcCount
 			|| loaded.getGroundItemPlacementCount() != groundItemCount
 			|| loaded.getSceneryPlacementCount() != sceneryCount
-			|| loaded.getBoundaryPlacementCount() != 966) {
+			|| loaded.getBoundaryPlacementCount() != boundaryCount) {
 			throw new IllegalStateException(
 				"The " + profileId + " profile package counts do "
 					+ "not match the accepted complete-world review");

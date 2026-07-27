@@ -254,7 +254,7 @@ public final class LayeredEntityPlacements {
 				object(value.get("position"),
 					"scenery[" + index + "].position"),
 				"scenery[" + index + "].position");
-			int direction = direction(value, "direction");
+			int direction = sceneryDirection(value, "direction");
 			String slot = location.x + ":" + location.y;
 			if (!scenerySlots.add(slot)) {
 				throw new PreflightException(
@@ -455,6 +455,15 @@ public final class LayeredEntityPlacements {
 		int result = integer(value, key);
 		if (result < 0 || result > 7) {
 			throw new PreflightException(key + " must be 0..7.");
+		}
+		return result;
+	}
+
+	private static int sceneryDirection(
+		Map<String, Object> value, String key) throws PreflightException {
+		int result = integer(value, key);
+		if (result < 0 || result > 8) {
+			throw new PreflightException(key + " must be 0..8 for scenery.");
 		}
 		return result;
 	}
