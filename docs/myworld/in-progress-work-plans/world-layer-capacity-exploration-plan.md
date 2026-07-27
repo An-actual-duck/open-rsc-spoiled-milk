@@ -3,8 +3,9 @@
 Status: ACTIVE. The signed layered-world engine, complete Spoiled Milk native
 package/runtime, and first layered Builder generation are implemented and
 owner-accepted. Further editor capability work is paused after automatic
-generic ladder/stair pairing. The active decision is which loader
-productionization boundary to tackle next.
+generic ladder/stair pairing. The active implementation focus is native loader
+performance: measurable sector-product reuse first, followed by resident
+client terrain and delta delivery.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -26,8 +27,11 @@ estimates and “next slice” language below are historical unless repeated her
 - Native layered packages own full-fidelity terrain plus NPC, ground-item,
   scenery, boundary, and dynamic replacement/restoration behavior without
   requiring a packed Region inside native scopes.
-- The client receives level-qualified scene context and incrementally presents
-  24-tile chunks independently of the retained 48-by-48 storage pages.
+- The client receives level-qualified scene context. The accepted protocol-v4
+  milestone used 24-tile presentation chunks; current protocol v5 deliberately
+  carries a radius-one 3-by-3 window of complete 48-by-48 storage sectors.
+  Treat references below to current 24-tile delivery as historical v4 evidence,
+  not the active v5 wire shape.
 - The complete configured Spoiled Milk world is reproducible as
   `rsc-remastered.spoiled-milk-layered-world@0.2.0`, with 1,771 terrain sectors
   and 33,515 effective placements, and has passed focused private runtime
@@ -64,7 +68,74 @@ estimates and “next slice” language below are historical unless repeated her
   evidence. Native scopes are already Region-free; no new diagnostic slice is
   justified without a concrete loader requirement.
 
-### Remaining loader focus choices
+### Selected loader-v2 performance milestone
+
+The owner selected a visible loader/performance upgrade before resuming broad
+package promotion or editor work. Preserve protocol-v5 behavior until each
+replacement stage proves the same terrain and scene identity.
+
+Current measured code shape:
+
+- a native scene receipt contains nine explicit 48-by-48 sector slots;
+- each available sector has a 23,040-byte fixed-width raw wire image;
+- an ordinary one-sector window shift retains six slots but protocol v5 still
+  rebuilds, recompresses, and sends every available slot;
+- the client then reconstructs a 3-by-3, 144-by-144 CPU terrain window;
+- native package snapshots disable the existing speculative terrain preloader;
+- the server eagerly holds 1,771 sectors as approximately 4.08 million
+  per-tile objects and derives native static collision during tile queries.
+
+Implementation sequence:
+
+1. **Sector-product cache and baseline telemetry — implemented**
+   - Lazily cache each immutable normal-runtime sector's compressed wire
+     product by exact package/manifest, signed sector slot, and content hash.
+   - A cache hit invokes neither `copyWireBytes()` nor `Deflater`.
+   - Changed content replaces the same logical slot rather than growing an
+     unbounded revision history.
+   - Builder mode retains its revision-derived payload/hash path and cannot
+     consume a stale normal-runtime product.
+   - Stable profiling and benchmark fields now record context packets, slots,
+     available sectors, raw/wire bytes, cache requests/hits/misses, build time,
+     and maximum cache entries. Protocol v5 and client behavior are unchanged.
+
+2. **Resident-sector protocol and in-memory client cache — next**
+   - Introduce a matched-custom-client protocol revision that separates stable
+     package/world-space/level identity from the moving residency window.
+   - Retain decoded sectors by manifest, world space, signed level, sector
+     coordinates, and payload hash.
+   - Send an explicit inventory plus only missing/changed payloads. A normal
+     one-sector shift should require at most the three newly exposed sectors;
+     a retained return may require no terrain payload.
+   - Keep protocol v5 as the rollback path. Persistent disk caching is not part
+     of this first resident cut.
+
+3. **Readiness acknowledgement, predictive delivery, and atomic activation**
+   - Stage required sectors before a window boundary using authoritative
+     movement/waypoint direction.
+   - Activate a new terrain window only after the client acknowledges its exact
+     generation as ready.
+   - Bind terrain readiness, static-scene baseline, and dynamic scene identity
+     so teleports, reconnects, and deaths cannot expose a half-applied scene.
+
+4. **Incremental client CPU/model products**
+   - Preserve the six overlapping sector products during an adjacent shift and
+     build only incoming terrain/wall/roof edges.
+   - Fence bridges, reciprocal walls, roof joins, elevation normals, renderer
+     settings, and dynamic scenery by sector/content revision.
+
+5. **Compact server collision pages and path-query fast path**
+   - Measure and then replace repeated per-query static collision derivation
+     with immutable precomputed sector masks plus a versioned dynamic overlay.
+   - Modernize bounded pathfinding only after the allocation-free collision
+     query passes movement, projectile, scenery, and NPC parity.
+
+Do not adopt lazy server terrain/placement eviction in this milestone. Global
+NPCs, respawns, dynamic objects, and scheduled events need a separate residency
+lifecycle; compact storage and collision products should be measured before
+accepting that complexity.
+
+### Remaining loader work after the selected optimization milestone
 
 1. **Production package acceptance and promotion**
    - Replace the normal runtime's code-pinned exact `0.2.0` manifest/count
@@ -88,8 +159,9 @@ estimates and “next slice” language below are historical unless repeated her
    - Validate destination terrain, arrival collision, inverse/one-way policy,
      package ownership, and recovery before committing a transition.
 
-3. **Server-side package streaming and residency**
-   - Keep the accepted 24-tile client presentation behavior.
+3. **Server-side package residency and eviction**
+   - Keep this distinct from the selected client resident-sector/delta
+     protocol.
    - Decide whether current world size actually warrants lazy server terrain/
      placement loading, then connect only the necessary portions of the frozen
      residency/reconstruction foundation.
@@ -103,15 +175,16 @@ estimates and “next slice” language below are historical unless repeated her
    - Defer this until the normal Spoiled Milk production package path is
      concrete; otherwise abstraction would lead integration evidence.
 
-### Recommended order if loader work resumes
+### Recommended order from this checkpoint
 
-The shortest path to an end product is `1 -> 2 -> private release-candidate
-validation`. Choice 3 should follow only if measured memory/startup/residency
-costs justify it. Choice 4 is the later extraction step after the Spoiled Milk
-loader can run a reviewed descendant outside Builder mode.
+Complete selected loader-v2 stages 1 through 3, visually validate ordinary
+travel/return travel/teleport/reconnect and transfer metrics, then decide
+whether incremental model products are necessary for the showcase target.
+Resume production package promotion and durable transition ownership before a
+private release candidate. Server eviction follows only measured need;
+distribution-neutral extraction follows the proven Spoiled Milk runtime.
 
-The next implementation milestone should not begin until the owner selects the
-focus. No public/live configuration or map data is part of this roadmap review.
+No public/live configuration or map data is part of this work.
 
 ## Current Direction Checkpoint: 2026-07-25
 
@@ -18389,6 +18462,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Select native loader performance as the active showcase workstream and begin with behavior-preserving sector-product reuse. | Slice 1 lazily caches immutable protocol-v5 sector wire products by exact package/manifest, signed slot, and content hash; Builder revisions retain their uncached safety path. AI-readable profiling/benchmark metrics now expose contexts, slots, available sectors, raw/wire bytes, cache hits/misses, build time, and entries. The wire protocol and client presentation remain unchanged while resident delta delivery is designed next |
 | 2026-07-27 | Accept automatic adjacent-level pairing as a narrow authoring convention for generic ladders and wooden/stone stairs, then pause further editor capability work. | Owner-accepted. IDs `5/6`, `41/42`, and `43/44` alone create the inverse object and safe landing on a missing non-source adjacent level. The accepted route round-tripped and reused the pair; v4 clean close committed level `-5`, nine sectors, nine landing tiles, and two scenery edits in manifest `d8fc45941e93`. Specialized and exceptional transitions remain explicit |
 | 2026-07-27 | Trim the active layered roadmap around loader productionization rather than continuing Builder expansion or the historical diagnostic slice chain. | Current focus decision remains with the owner. The concise choices are normal-server production package promotion, durable transition ownership, measured server residency/streaming, and later distribution-neutral extraction; editor polish, Preservation conversion/alignment, true-instance lifecycle, and launcher work are held |
 | 2026-07-27 | Implement the intent-driven sparse canvas behind explicit Builder actions. | Owner-accepted. **Go/Create** created a detached nine-sector `-3` work area and new level `-4` live; v4 clean-close/reopen preserved both canvases, entry pads, and two scenery edits; a later edge stroke crossed `x=575/576` immediately and committed exactly one sector `(12,14)` plus 21 tiles. Every detached component retains a complete 3-by-3 canvas; passive movement/camera loading, source levels, transition inference, export, and target files remain non-authoritative |

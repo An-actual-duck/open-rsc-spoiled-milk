@@ -363,6 +363,22 @@ public class GameEventHandler {
 				.append(", maxMobRegions=").append(getServer().getLastVisibilityShadowMobRegionsMax())
 				.append(", maxObjectRegions=").append(getServer().getLastVisibilityShadowObjectRegionsMax())
 				.append(newLine);
+			s.append("========================").append(newLine);
+			s.append("=== Native Terrain Transfer ===").append(newLine);
+			s.append("========================").append(newLine);
+			s.append("Contexts=").append(getServer().getLastNativeTerrainContextPackets())
+				.append(", slots=").append(getServer().getLastNativeTerrainSectorSlots())
+				.append(", available=").append(getServer().getLastNativeTerrainAvailableSectors())
+				.append(", rawBytes=").append(getServer().getLastNativeTerrainRawBytes())
+				.append(", wireBytes=").append(getServer().getLastNativeTerrainWireBytes())
+				.append(newLine);
+			s.append("Wire cache: requests=")
+				.append(getServer().getLastNativeTerrainWireCacheRequests())
+				.append(", hits=").append(getServer().getLastNativeTerrainWireCacheHits())
+				.append(", misses=").append(getServer().getLastNativeTerrainWireCacheMisses())
+				.append(", entriesMax=").append(getServer().getLastNativeTerrainWireCacheEntriesMax())
+				.append(", buildNanos=").append(getServer().getLastNativeTerrainWireBuildNanos())
+				.append(newLine);
 		}
 
 		final boolean forcedGc = getServer().getConfig().WANT_FORCE_GC_ON_PROFILING;

@@ -554,15 +554,18 @@ a requirement to work through every bullet sequentially.
 
 The recommended near-term loader order is:
 
-1. accept one explicitly configured, reviewed descendant of the Spoiled Milk
+1. complete the selected native loader performance milestone through cached
+   protocol-v5 sector products, resident client sectors, delta delivery, and
+   readiness-gated predictive activation;
+2. accept one explicitly configured, reviewed descendant of the Spoiled Milk
    package in a normal non-Builder private server;
-2. formalize package transition ownership while preserving scripted
+3. formalize package transition ownership while preserving scripted
    exceptions;
-3. complete a private release-candidate route across added signed depth,
+4. complete a private release-candidate route across added signed depth,
    transition, reconnect, death/recovery, collision, and ordinary content;
-4. measure startup/memory/residency behavior before deciding whether actual
+5. measure startup/memory/residency behavior before deciding whether actual
    lazy server paging is worth its lifecycle complexity; and
-5. extract a distribution-neutral loader profile only after that Spoiled Milk
+6. extract a distribution-neutral loader profile only after that Spoiled Milk
    path is proven.
 
 No near-term item authorizes public/live activation.
@@ -1690,6 +1693,7 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Select native loader performance as the immediate RSC Remastered showcase milestone. | Begin with protocol-preserving server wire-product caching and stable transfer metrics, then add resident client sectors, delta delivery, readiness acknowledgement, and predictive activation. Current protocol v5 uses complete 48-tile sectors; older 24-tile wording describes historical protocol v4. Lazy server eviction remains deferred pending measurement and entity-lifecycle design |
 | 2026-07-27 | Accept canonical generic ladder/stair pairing as the final Builder capability before an editor hold. | IDs `5/6`, `41/42`, and `43/44` alone create a missing adjacent non-source level, safe landing, and inverse object. Owner round-trip/reuse passed; v4 clean close committed level `-5`, nine sectors, nine landing tiles, and two scenery records in manifest `d8fc45941e93`. Exceptional transition types remain explicit |
 | 2026-07-27 | Narrow the active layered roadmap from editor expansion and historical diagnostic slices to loader productionization choices. | The owner will select among normal-server reviewed-package promotion, durable transition ownership, and measured server residency/streaming. Distribution-neutral extraction follows proven Spoiled Milk integration; Preservation, further editor work, instances, and launcher scope remain held |
 | 2026-07-27 | Implement explicit live sparse-canvas growth for the layered Builder. | Owner-accepted. **Go/Create** created detached `-3` and new `-4` nine-sector work areas live; v4 close/reopen retained both plus authored scenery; edge painting crossed `x=575/576` immediately and committed exactly sector `(12,14)` plus 21 tiles. Every detached component must contain a complete work canvas; passive loading, source mutation, transition inference, export, and target mutation remain locked |

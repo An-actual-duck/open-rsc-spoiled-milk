@@ -9,6 +9,7 @@ import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
+import com.openrsc.server.io.NativeLayeredTerrainChunk;
 import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.PlayerAppearance;
@@ -31,6 +32,7 @@ import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldMapSectorId;
 import com.openrsc.server.model.world.region.VisibilitySnapshot;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.net.rsc.NativeLayeredTerrainWireCache;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.net.rsc.struct.outgoing.*;
 import com.openrsc.server.plugins.triggers.TimedEventTrigger;
@@ -108,6 +110,8 @@ public final class GameStateUpdater {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	private final Server server;
+	private final NativeLayeredTerrainWireCache nativeTerrainWireCache =
+		new NativeLayeredTerrainWireCache();
 	private final Map<Long, CachedVisibilitySnapshot> visibilityTickSnapshotCache = new HashMap<>();
 	private long visibilityTickSnapshotCacheTick = Long.MIN_VALUE;
 	private int movementSnapshotSequence = 0;
@@ -300,6 +304,7 @@ public final class GameStateUpdater {
 		}
 		return new NativeLayeredSceneTerrain(
 			getServer(),
+			nativeTerrainWireCache,
 			terrainPackage,
 			location,
 			centerSectorX,
@@ -996,6 +1001,7 @@ public final class GameStateUpdater {
 
 	private static final class NativeLayeredSceneTerrain {
 		private final Server server;
+		private final NativeLayeredTerrainWireCache wireCache;
 		private final NativeLayeredWorldPackage terrainPackage;
 		private final WorldLocation location;
 		private final int currentChunkX;
@@ -1003,11 +1009,13 @@ public final class GameStateUpdater {
 
 		private NativeLayeredSceneTerrain(
 			final Server server,
+			final NativeLayeredTerrainWireCache wireCache,
 			final NativeLayeredWorldPackage terrainPackage,
 			final WorldLocation location,
 			final int currentChunkX,
 			final int currentChunkY) {
 			this.server = Objects.requireNonNull(server, "server");
+			this.wireCache = Objects.requireNonNull(wireCache, "wireCache");
 			this.terrainPackage = Objects.requireNonNull(
 				terrainPackage, "terrainPackage");
 			this.location = Objects.requireNonNull(location, "location");
@@ -1040,6 +1048,13 @@ public final class GameStateUpdater {
 			context.nativeCurrentChunkX = currentChunkX;
 			context.nativeCurrentChunkY = currentChunkY;
 			context.nativeChunkRadius = NATIVE_LAYERED_CHUNK_RADIUS;
+			int availableSectors = 0;
+			long rawBytes = 0L;
+			long wireBytes = 0L;
+			long cacheRequests = 0L;
+			long cacheHits = 0L;
+			long cacheMisses = 0L;
+			long wireBuildNanos = 0L;
 			for (int deltaX = -NATIVE_LAYERED_CHUNK_RADIUS;
 				deltaX <= NATIVE_LAYERED_CHUNK_RADIUS;
 				deltaX++) {
@@ -1065,6 +1080,7 @@ public final class GameStateUpdater {
 							:terrainPackage.findSector(sectorId);
 					output.available = source.isPresent();
 					if (source.isPresent()) {
+						availableSectors++;
 						final NativeLayeredTerrainSector chunk = source.get();
 						output.sourceSectorX =
 							chunk.getIdentity().getSectorX();
@@ -1073,6 +1089,7 @@ public final class GameStateUpdater {
 						output.sourceEncoding =
 							chunk.getSourceEncoding();
 						if(server.getConfig().WORLD_BUILDER_MODE){
+							long buildStart = System.nanoTime();
 							output.sourcePayloadSha256 =
 								server.getWorldEditorSessions()
 									.nativeTerrainSectorSha256(chunk);
@@ -1080,14 +1097,46 @@ public final class GameStateUpdater {
 								compressNativeTerrain(
 									server.getWorldEditorSessions()
 										.copyNativeTerrainSectorWireBytes(chunk));
+							wireBuildNanos += System.nanoTime() - buildStart;
 						}else{
 							output.sourcePayloadSha256=chunk.getSourceSha256();
-							output.tileBytes=compressNativeTerrain(chunk.copyWireBytes());
+							NativeLayeredTerrainWireCache.Lookup lookup =
+								wireCache.getOrCompress(
+									terrainPackage.getPackageId()
+										+ "@" + terrainPackage.getPackageVersion()
+										+ ":" + terrainPackage.getManifestSha256()
+										+ ":" + chunk.getIdentity(),
+									chunk.getSourceSha256(),
+									NativeLayeredTerrainSector.TILE_COUNT
+										* NativeLayeredTerrainChunk.TILE_WIRE_BYTES,
+									chunk::copyWireBytes);
+							output.tileBytes = lookup.getCompressedBytes();
+							cacheRequests++;
+							if (lookup.isCacheHit()) {
+								cacheHits++;
+							} else {
+								cacheMisses++;
+							}
+							wireBuildNanos += lookup.getBuildNanos();
 						}
+						rawBytes += NativeLayeredTerrainSector.TILE_COUNT
+							* NativeLayeredTerrainChunk.TILE_WIRE_BYTES;
+						wireBytes += output.tileBytes.length;
 					}
 					context.nativeChunks.add(output);
 				}
 			}
+			server.addNativeTerrainTransferMetrics(
+				1,
+				context.nativeChunks.size(),
+				availableSectors,
+				rawBytes,
+				wireBytes,
+				cacheRequests,
+				cacheHits,
+				cacheMisses,
+				wireBuildNanos,
+				wireCache.size());
 		}
 	}
 
