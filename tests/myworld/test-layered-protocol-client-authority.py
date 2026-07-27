@@ -77,6 +77,12 @@ public final class LayeredProtocolClientAuthorityFixture {
         state.acceptLegacyPlayerPosition(100, 400);
         state.acceptLegacyPlayerPosition(101, 401);
         check(state.summary().contains("101,401,L0"), "surface movement");
+        check(state.getLogicalX() == 101 && state.getLogicalY() == 401
+                && state.getLogicalLevel() == 0
+                && "global".equals(state.getWorldSpace()),
+            "logical surface display");
+        check(state.logicalYForCompatibilityPosition(101, 401) == 401,
+            "surface display Y");
 
         expectState(() -> state.accept(
             1, 1, 101, "global", 101, 401, 0, 101, 401));
@@ -94,6 +100,9 @@ public final class LayeredProtocolClientAuthorityFixture {
         check(upper.isScopeChanged(), "upper transition");
         check(upper.getLegacyPlane() == 1, "upper plane");
         state.acceptLegacyPlayerPosition(101, 1345);
+        check(state.logicalYForCompatibilityPosition(101, 1345) == 401
+                && state.getLogicalLevel() == 1,
+            "upper packed Y becomes geographic Y plus signed level");
         expectState(() -> state.acceptLegacyPlayerPosition(101, 401));
 
         LayeredSceneContextState.ApplyResult underground = state.accept(
@@ -101,6 +110,9 @@ public final class LayeredProtocolClientAuthorityFixture {
         check(underground.isScopeChanged(), "underground transition");
         check(underground.getLegacyPlane() == 3, "underground plane");
         state.acceptLegacyPlayerPosition(101, 3233);
+        check(state.logicalYForCompatibilityPosition(101, 3233) == 401
+                && state.getLogicalLevel() == -1,
+            "underground packed Y becomes geographic Y plus signed level");
         check(state.summary().contains("contexts/positions/scopes 4/5/2"),
             "acceptance counters");
 
@@ -245,6 +257,9 @@ public final class LayeredProtocolClientAuthorityFixture {
         check(nativeUndergroundResult.getLegacyPlane() == 3,
             "native underground keeps authentic plane semantics");
         state.acceptLegacyPlayerPosition(138, 666);
+        check(state.logicalYForCompatibilityPosition(138, 666) == 666
+                && state.getLogicalLevel() == -1,
+            "native underground coordinates remain geographic");
     }
 
     private static NativeLayeredTerrainSnapshot chunkTerrain(

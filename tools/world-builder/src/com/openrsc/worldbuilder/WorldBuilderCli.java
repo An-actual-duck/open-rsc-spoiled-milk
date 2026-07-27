@@ -356,7 +356,9 @@ public final class WorldBuilderCli {
 		return "--server-root".equals(argument)
 			|| "--runtime-root".equals(argument)
 			|| "--config".equals(argument)
-			|| "--runtime-config".equals(argument);
+			|| "--runtime-config".equals(argument)
+			|| "--layered-package".equals(argument)
+			|| "--layered-profile".equals(argument);
 	}
 
 	private static int prepare(String[] args) {
@@ -365,6 +367,8 @@ public final class WorldBuilderCli {
 		Path workspace = null;
 		String config = WorldBuilderDiscovery.DEFAULT_CONFIG;
 		String runtimeConfig = WorldBuilderDiscovery.DEFAULT_CONFIG;
+		Path layeredPackagePath = null;
+		String layeredProfile = null;
 		int port = 0;
 		for (int index = 1; index < args.length; index++) {
 			String argument = args[index];
@@ -378,6 +382,10 @@ public final class WorldBuilderCli {
 				config = args[++index];
 			} else if ("--runtime-config".equals(argument) && index + 1 < args.length) {
 				runtimeConfig = args[++index];
+			} else if ("--layered-package".equals(argument) && index + 1 < args.length) {
+				layeredPackagePath = Paths.get(args[++index]);
+			} else if ("--layered-profile".equals(argument) && index + 1 < args.length) {
+				layeredProfile = args[++index];
 			} else if ("--port".equals(argument) && index + 1 < args.length) {
 				try {
 					port = Integer.parseInt(args[++index]);
@@ -402,9 +410,17 @@ public final class WorldBuilderCli {
 			WorldBuilderDiscoveryResult runtime = discovery.discover(runtimeRoot, runtimeConfig, null);
 			WorldBuilderDiscoveryResult source = discovery.discover(
 				targetRoot, config, runtime.contentFingerprintSha256);
+			if ((layeredPackagePath == null) != (layeredProfile == null)) {
+				throw new WorldBuilderDiscoveryException(
+					"--layered-package and --layered-profile must be supplied together.");
+			}
+			WorldBuilderLayeredPackage layered = layeredPackagePath == null
+				? null
+				: WorldBuilderLayeredPackage.discover(
+					layeredPackagePath, layeredProfile);
 			WorldBuilderRuntimePreparer.PreparedRuntime prepared =
 				new WorldBuilderRuntimePreparer().prepare(
-					targetRoot, runtimeRoot, workspace, port, source, runtime);
+					targetRoot, runtimeRoot, workspace, port, source, runtime, layered);
 			System.out.print(prepared.toJson());
 			return 0;
 		} catch (WorldBuilderDiscoveryException refusal) {
@@ -423,6 +439,7 @@ public final class WorldBuilderCli {
 			+ "\n  WorldBuilderCli prepare --server-root <path> --runtime-root <path>"
 			+ " --workspace <path> --port <port>"
 			+ " [--config server/myworld.conf] [--runtime-config server/myworld.conf]"
+			+ " [--layered-package <package> --layered-profile spoiled-milk-replacement]"
 			+ "\n  WorldBuilderCli launch <same arguments as prepare>"
 			+ "\n  WorldBuilderCli run --workspace <prepared-path> [--port <port>]");
 		System.err.println("  WorldBuilderCli export --workspace <prepared-path>"

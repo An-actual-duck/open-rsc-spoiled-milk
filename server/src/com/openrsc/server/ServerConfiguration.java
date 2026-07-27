@@ -283,6 +283,7 @@ public class ServerConfiguration {
 	/** Disabled-by-default gate for the desktop in-game world editor foundation. */
 	public boolean ALLOW_IN_GAME_WORLD_EDITOR;
 	public boolean WORLD_BUILDER_MODE;
+	public boolean WORLD_BUILDER_LAYERED_REVIEW_MODE;
 	public boolean LENIENT_CONTACT_DETAILS;
 	//loosened checks
 	public boolean LOOSE_SHALLOW_WATER_CHECK;
@@ -668,6 +669,8 @@ public class ServerConfiguration {
 		ALLOW_RESIZE = tryReadBool("allow_resize").orElse(false);
 		ALLOW_IN_GAME_WORLD_EDITOR = tryReadBool("allow_in_game_world_editor").orElse(false);
 		WORLD_BUILDER_MODE = tryReadBool("world_builder_mode").orElse(false);
+		WORLD_BUILDER_LAYERED_REVIEW_MODE =
+			tryReadBool("world_builder_layered_review_mode").orElse(false);
 		LENIENT_CONTACT_DETAILS = tryReadBool("lenient_contact_details").orElse(false);
 		CHAR_NAME_CAN_CONTAIN_MOD = tryReadBool("char_name_can_contain_mod").orElse(false);
 		CHAR_NAME_CAN_EQUAL_GLOBAL = tryReadBool("char_name_can_equal_global").orElse(false);

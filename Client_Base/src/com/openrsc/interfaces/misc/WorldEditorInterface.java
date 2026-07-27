@@ -35,8 +35,8 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private boolean copyNextInspection=false;
 	private int[] copiedTerrainFields;
 	private int[] inspectedTerrainFields;
-	private int lastClickedX=-1,lastClickedY=-1,brushX=-1,brushY=-1;
-	private String teleportX="",teleportY="";
+	private int lastClickedX=-1,lastClickedY=-1,lastClickedLevel=0,brushX=-1,brushY=-1,brushLevel=0;
+	private String teleportX="",teleportY="",teleportLevel="0";
 	private int coordinateFocus=0;
 	private boolean replaceFocusedText=false;
 	private boolean clickTeleportPreferred=false;
@@ -80,7 +80,8 @@ public final class WorldEditorInterface extends NCustomComponent {
 	public void open(long id,int sequence){
 		if(Config.isAndroid())return;
 		sessionId=id;nextSequence=sequence;mode=Mode.NAVIGATE;toolbar.reset();icons.initialize();
-		int x=mc.getEditorPlayerWorldX(),y=mc.getEditorPlayerWorldY();brushX=x;brushY=y;teleportX=String.valueOf(x);teleportY=String.valueOf(y);
+		int x=mc.getEditorPlayerWorldX(),y=mc.getEditorPlayerWorldY(),level=mc.getEditorPlayerWorldLevel();
+		brushX=x;brushY=y;brushLevel=level;teleportX=String.valueOf(x);teleportY=String.valueOf(y);teleportLevel=String.valueOf(level);
 		clickTeleportPreferred=false;keyboardShortcutsEnabled=true;unsavedChanges=false;saveRequested=false;closeArmed=false;pendingEntityActions=0;
 		setTerrainBuildMode(false);mc.setWorldEditorNavigateClickTeleport(false);clearTerrainDrag();updatePresentationBounds();setVisible(true);
 	}
@@ -90,19 +91,23 @@ public final class WorldEditorInterface extends NCustomComponent {
 	public boolean isKeyboardShortcutMode(){return isEditorOpen()&&keyboardShortcutsEnabled;}
 	public boolean isInspecting(){return isEditorOpen()&&mode==Mode.INSPECT;}
 	public boolean isNavigating(){return isEditorOpen()&&mode==Mode.NAVIGATE;}
-	public boolean isTerrainPainting(){return isEditorOpen()&&mode==Mode.TERRAIN;}
-	public boolean isSceneryPlacing(){return isEditorOpen()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.PLACE;}
-	public boolean isSceneryRotating(){return isEditorOpen()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.ROTATE;}
-	public boolean isSceneryRemoving(){return isEditorOpen()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.REMOVE;}
-	public boolean isNpcPlacing(){return isEditorOpen()&&mode==Mode.NPC&&npcTool==NpcTool.PLACE;}
-	public boolean isNpcRemoving(){return isEditorOpen()&&mode==Mode.NPC&&npcTool==NpcTool.REMOVE;}
+	public boolean isTerrainPainting(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.TERRAIN;}
+	public boolean isSceneryPlacing(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.PLACE;}
+	public boolean isSceneryRotating(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.ROTATE;}
+	public boolean isSceneryRemoving(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.REMOVE;}
+	public boolean isNpcPlacing(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.NPC&&npcTool==NpcTool.PLACE;}
+	public boolean isNpcRemoving(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.NPC&&npcTool==NpcTool.REMOVE;}
 	public int getSceneryId(){return sceneryId;}
 	public int getNpcId(){return npcId;}
 	public int getNpcRadius(){return npcRadius;}
 	public void selectScenery(int id){setSceneryId(id);}
 	public void selectNpc(int id,int radius){setNpcId(id);setNpcRadius(radius);}
 	public void setSequence(int sequence){nextSequence=sequence;}
-	public void recordWorldClick(int x,int y){lastClickedX=x;lastClickedY=y;if(mode!=Mode.NAVIGATE){brushX=x;brushY=y;}coordinateFocus=0;toolbar.closeUnpinnedAfterWorldAction();updatePresentationBounds();}
+	public void recordWorldClick(int x,int y){
+		int level=mc.getEditorPlayerWorldLevel();lastClickedX=x;lastClickedY=y;lastClickedLevel=level;
+		if(mode!=Mode.NAVIGATE){brushX=x;brushY=y;brushLevel=level;}
+		coordinateFocus=0;toolbar.closeUnpinnedAfterWorldAction();updatePresentationBounds();
+	}
 	public void markPotentialEntityEdit(){if(!isEditorOpen())return;pendingEntityActions++;unsavedChanges=true;saveRequested=false;closeArmed=false;}
 	public void observeGameMessage(String message){
 		if(!isEditorOpen()||message==null)return;
@@ -127,8 +132,10 @@ public final class WorldEditorInterface extends NCustomComponent {
 		String[] names=definitions==null?new String[0]:definitions.split("\\t",-1);
 		String northName=names.length>0?names[0]:"unknown",eastName=names.length>1?names[1]:"unknown",diagonalName=names.length>2?names[2]:"unknown";
 		int northId=vwall>0?vwall-1:-1,eastId=hwall>0?hwall-1:-1,diagonalId=diagonalDefinitionId(diag);
+		int displayY=isLayeredReview()?y:Math.floorMod(y,944);
+		int displayLevel=isLayeredReview()?plane:logicalLevelForLegacyPlane(plane);
 		java.util.List<String> lines=new java.util.ArrayList<String>();java.util.Collections.addAll(lines,
-			"Coordinates: "+x+", "+y,"Plane: "+plane+" ("+planeName(plane)+")","Elevation: "+elev,
+			"Coordinates: "+x+", "+displayY+", L"+displayLevel,"Level: "+displayLevel+" ("+planeName(displayLevel)+")","Elevation: "+elev,
 			"Floor Color: "+texture,"Floor Texture: "+overlay,
 			"Walls: North "+wall(northId,northName)+" | East "+wall(eastId,eastName),
 			"Diagonal "+wall(diagonalId,diagonalName)+" ("+diagonalRotation(diag)+")",
@@ -161,7 +168,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		else inspectionStatus=terrainDragStatus();
 	}
 	public int[] getCopiedTerrainFields(){return copiedTerrainFields==null?null:copiedTerrainFields.clone();}
-	public void inspectTerrain(int worldX,int worldY,boolean copy){recordWorldClick(worldX,worldY);send(2,worldX,worldY,Math.floorDiv(worldY,944),0,0,copy?1:0);}
+	public void inspectTerrain(int worldX,int worldY,boolean copy){recordWorldClick(worldX,worldY);send(2,worldX,worldY,editorLevel(worldY),0,0,copy?1:0);}
 	public void paintTerrain(int worldX,int worldY){
 		recordWorldClick(worldX,worldY);int mask=terrainPaintMask();
 		if(mask==0){showError("Select at least one terrain field to paint.");return;}if(!isTerrainPainting()||terrainStrokeTiles!=null||terrainDragActive||terrainDragReleasePending)return;
@@ -212,7 +219,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 	private static int[][] centeredThreeByThree(int x,int y){int[][] tiles=new int[9][2];tiles[0][0]=x;tiles[0][1]=y;int at=1;for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++)if(dx!=0||dy!=0){tiles[at][0]=x+dx;tiles[at++][1]=y+dy;}return tiles;}
 	public void inspectObject(int worldX,int worldY,int id,int direction,int type){inspectObject(worldX,worldY,id,direction,type,false);}
-	public void inspectObject(int worldX,int worldY,int id,int direction,int type,boolean copy){recordWorldClick(worldX,worldY);copyNextInspection=copy;send(3,worldX,worldY,Math.floorDiv(worldY,944),id,direction,type);}
+	public void inspectObject(int worldX,int worldY,int id,int direction,int type,boolean copy){recordWorldClick(worldX,worldY);copyNextInspection=copy;send(3,worldX,worldY,editorLevel(worldY),id,direction,type);}
 	public void inspectNpc(int serverIndex){inspectNpc(serverIndex,false);}
 	public void inspectNpc(int serverIndex,boolean copy){copyNextInspection=copy;send(4,0,0,0,serverIndex,0,0);}
 	public void copyInspected(){
@@ -224,6 +231,10 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 
 	private void selectMode(Mode selected){
+		if(isLayeredReview()&&(selected==Mode.TERRAIN||selected==Mode.SCENERY||selected==Mode.NPC)){
+			mode=Mode.NAVIGATE;inspectionStatus="Layered package review is read-only; editing will follow in the native writer slice.";
+			coordinateFocus=0;toolbar.open(WorldEditorToolbarState.Flyout.NAVIGATE);updatePresentationBounds();return;
+		}
 		if(mode==Mode.TERRAIN&&selected!=Mode.TERRAIN&&terrainDragActive)releaseTerrainDrag();
 		boolean same=mode==selected;mode=selected;coordinateFocus=0;replaceFocusedText=false;closeArmed=false;
 		WorldEditorToolbarState.Flyout flyout=flyoutFor(selected);if(same)toolbar.selectMode(flyout);else toolbar.open(flyout);
@@ -244,9 +255,12 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private int encodedDiagonalWall(){return terrainDiagonalWall==0?0:(terrainDiagonalOrientation==0?terrainDiagonalWall:12000+terrainDiagonalWall);}
 	private static int rawByte(int value){return Math.max(0,Math.min(value,255));}
 	private void teleportToFields(){
-		try{int x=Integer.parseInt(teleportX),y=Integer.parseInt(teleportY);if(x<0||x>32767||y<0||y>32767)throw new NumberFormatException();
-			recordWorldClick(x,y);mc.worldEditorTeleport(x,y);
-		}catch(NumberFormatException e){inspectionStatus="Coordinates must be whole numbers from 0 to 32767";inspectionDetails=new String[0];}
+		try{int x=Integer.parseInt(teleportX),y=Integer.parseInt(teleportY),level=Integer.parseInt(teleportLevel);
+			if(x<0||x>32767||y<0||y>32767||!validTeleportLevel(level))throw new NumberFormatException();
+			lastClickedX=x;lastClickedY=y;lastClickedLevel=level;coordinateFocus=0;mc.worldEditorTeleport(x,y,level);
+		}catch(NumberFormatException e){inspectionStatus=isLayeredReview()
+			?"X/Y must be 0..32767 and Level must be one of "+WorldBuilderClientProfile.current().layeredLevelsLabel()
+			:"Coordinates must be whole numbers from 0 to 32767";inspectionDetails=new String[0];}
 	}
 	private void send(int type,int x,int y,int plane,int id,int direction,int subtype){
 		if(!isEditorOpen())return;mc.packetHandler.getClientStream().newPacket(152);mc.packetHandler.getClientStream().bufferBits.putByte(type);
@@ -276,8 +290,14 @@ public final class WorldEditorInterface extends NCustomComponent {
 		}
 		String value=focusedText();
 		if(key==8){if(replaceFocusedText)value="";else if(value.length()>0)value=value.substring(0,value.length()-1);replaceFocusedText=false;}
-		else if(key==9){coordinateFocus=coordinateFocus==1?2:coordinateFocus==2?1:coordinateFocus;replaceFocusedText=true;return true;}
+		else if(key==9){
+			if(coordinateFocus==1)coordinateFocus=2;
+			else if(coordinateFocus==2)coordinateFocus=isLayeredReview()?13:1;
+			else if(coordinateFocus==13)coordinateFocus=1;
+			replaceFocusedText=true;return true;
+		}
 		else if((key==10||key==13)&&!value.isEmpty()){applyFocusedValue(value);return true;}
+		else if(c=='-'&&coordinateFocus==13&&(replaceFocusedText||value.isEmpty())){value="-";replaceFocusedText=false;}
 		else if(c>='0'&&c<='9'&&(replaceFocusedText||value.length()<5)){value=replaceFocusedText?String.valueOf(c):value+c;replaceFocusedText=false;}
 		else return true;
 		setFocusedText(value);return true;
@@ -315,13 +335,13 @@ public final class WorldEditorInterface extends NCustomComponent {
 		if(toolbar.isCollapsed())toolbar.toggleCollapsed();openTerrainTool(field);focusNumber(field);updatePresentationBounds();
 	}
 	private void applyFocusedValue(String value){
-		try{int parsed=Integer.parseInt(value);if(coordinateFocus==1||coordinateFocus==2){teleportToFields();return;}if(coordinateFocus==3)setSceneryId(parsed);else if(coordinateFocus==4)setNpcId(parsed);else if(coordinateFocus==5)setNpcRadius(parsed);else if(coordinateFocus==6)setTerrainElevation(parsed);else if(coordinateFocus==7)setTerrainFloorColor(parsed);else if(coordinateFocus==8)setTerrainFloorTexture(parsed);else if(coordinateFocus==9)setTerrainRoof(parsed);else if(coordinateFocus==10)setTerrainNorthWall(parsed);else if(coordinateFocus==11)setTerrainEastWall(parsed);else setTerrainDiagonalWall(parsed);}
+		try{int parsed=Integer.parseInt(value);if(coordinateFocus==1||coordinateFocus==2||coordinateFocus==13){teleportToFields();return;}if(coordinateFocus==3)setSceneryId(parsed);else if(coordinateFocus==4)setNpcId(parsed);else if(coordinateFocus==5)setNpcRadius(parsed);else if(coordinateFocus==6)setTerrainElevation(parsed);else if(coordinateFocus==7)setTerrainFloorColor(parsed);else if(coordinateFocus==8)setTerrainFloorTexture(parsed);else if(coordinateFocus==9)setTerrainRoof(parsed);else if(coordinateFocus==10)setTerrainNorthWall(parsed);else if(coordinateFocus==11)setTerrainEastWall(parsed);else setTerrainDiagonalWall(parsed);}
 		catch(NumberFormatException ignored){}coordinateFocus=0;
 	}
-	private String focusedText(){switch(coordinateFocus){case 1:return teleportX;case 2:return teleportY;case 3:return sceneryIdText;case 4:return npcIdText;case 5:return npcRadiusText;case 6:return terrainElevationText;case 7:return terrainFloorColorText;case 8:return terrainFloorTextureText;case 9:return terrainRoofText;case 10:return terrainNorthWallText;case 11:return terrainEastWallText;default:return terrainDiagonalWallText;}}
-	private void setFocusedText(String value){switch(coordinateFocus){case 1:teleportX=value;break;case 2:teleportY=value;break;case 3:sceneryIdText=value;break;case 4:npcIdText=value;break;case 5:npcRadiusText=value;break;case 6:terrainElevationText=value;break;case 7:terrainFloorColorText=value;break;case 8:terrainFloorTextureText=value;break;case 9:terrainRoofText=value;break;case 10:terrainNorthWallText=value;break;case 11:terrainEastWallText=value;break;default:terrainDiagonalWallText=value;}}
+	private String focusedText(){switch(coordinateFocus){case 1:return teleportX;case 2:return teleportY;case 13:return teleportLevel;case 3:return sceneryIdText;case 4:return npcIdText;case 5:return npcRadiusText;case 6:return terrainElevationText;case 7:return terrainFloorColorText;case 8:return terrainFloorTextureText;case 9:return terrainRoofText;case 10:return terrainNorthWallText;case 11:return terrainEastWallText;default:return terrainDiagonalWallText;}}
+	private void setFocusedText(String value){switch(coordinateFocus){case 1:teleportX=value;break;case 2:teleportY=value;break;case 13:teleportLevel=value;break;case 3:sceneryIdText=value;break;case 4:npcIdText=value;break;case 5:npcRadiusText=value;break;case 6:terrainElevationText=value;break;case 7:terrainFloorColorText=value;break;case 8:terrainFloorTextureText=value;break;case 9:terrainRoofText=value;break;case 10:terrainNorthWallText=value;break;case 11:terrainEastWallText=value;break;default:terrainDiagonalWallText=value;}}
 	private void focusNumber(int focus){coordinateFocus=focus;replaceFocusedText=true;}
-	private void requestWorldEditSave(){if(terrainStrokeTiles!=null||terrainDragActive||terrainDragReleasePending){inspectionStatus="Wait for the active terrain stroke to finish before saving.";return;}mc.sendCommandString("saveworldedits");saveRequested=true;closeArmed=false;inspectionStatus="World edit save requested; see game messages for verification.";}
+	private void requestWorldEditSave(){if(isLayeredReview()){inspectionStatus="Layered package review is read-only; no files were changed.";saveRequested=false;return;}if(terrainStrokeTiles!=null||terrainDragActive||terrainDragReleasePending){inspectionStatus="Wait for the active terrain stroke to finish before saving.";return;}mc.sendCommandString("saveworldedits");saveRequested=true;closeArmed=false;inspectionStatus="World edit save requested; see game messages for verification.";}
 	private void requestEditorClose(){
 		if(unsavedChanges&&!closeArmed){closeArmed=true;inspectionStatus="Unsaved edits remain. Select Close again to exit without saving.";return;}
 		setTerrainBuildMode(false);mc.setWorldEditorNavigateClickTeleport(false);send(1,0,0,0,0,0,0);setVisible(false);
@@ -373,6 +393,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private Mode dockModeAt(int x,int y){if(dockHit(x,y,0,1))return Mode.NAVIGATE;if(dockHit(x,y,0,2))return Mode.INSPECT;if(dockHit(x,y,1,0))return Mode.SCENERY;if(dockHit(x,y,1,1))return Mode.NPC;return null;}
 	private int terrainFieldAtDock(int x,int y){if(dockHit(x,y,1,2))return 6;if(dockHit(x,y,1,3))return 7;if(dockHit(x,y,1,4))return 8;if(dockHit(x,y,1,5))return 9;if(dockHit(x,y,1,6))return 10;if(dockHit(x,y,1,7))return 11;if(dockHit(x,y,1,8))return 12;return -1;}
 	private void openTerrainTool(int field){
+		if(isLayeredReview()){selectMode(Mode.TERRAIN);return;}
 		mode=Mode.TERRAIN;terrainActiveField=field;if(field>0)terrainStructureTab=field>=9;coordinateFocus=0;replaceFocusedText=false;closeArmed=false;
 		mc.setWorldEditorNavigateClickTeleport(false);toolbar.open(WorldEditorToolbarState.Flyout.TERRAIN);updatePresentationBounds();
 	}
@@ -388,7 +409,11 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 	private void handleCompactNavigateMouse(int x,int y){
 		if(y>=74&&y<98){clickTeleportPreferred=!clickTeleportPreferred;mc.setWorldEditorNavigateClickTeleport(clickTeleportPreferred);return;}
-		if(y>=118&&y<142){if(x<90)focusNumber(1);else focusNumber(2);return;}if(y>=148&&y<172){coordinateFocus=0;teleportToFields();}
+		if(y>=118&&y<142){
+			if(!isLayeredReview()){if(x<90)focusNumber(1);else focusNumber(2);}
+			else if(x<62)focusNumber(1);else if(x<120)focusNumber(2);else focusNumber(13);
+			return;
+		}if(y>=148&&y<172){coordinateFocus=0;teleportToFields();}
 	}
 	private void handleCompactInspectMouse(int x,int y){if(y>=158&&y<182&&!inspectionKind.isEmpty())copyInspected();}
 	private void handleCompactTerrainMouse(int x,int y){
@@ -418,8 +443,9 @@ public final class WorldEditorInterface extends NCustomComponent {
 			if(ry>=30&&ry<50){selectMode(Mode.values()[Math.min(4,Math.max(0,rx/78))]);return true;}
 			if(mode==Mode.NAVIGATE){
 				if(ry>=150&&ry<172){clickTeleportPreferred=!clickTeleportPreferred;mc.setWorldEditorNavigateClickTeleport(clickTeleportPreferred);return true;}
-				if(ry>=197&&ry<221&&rx>=45&&rx<145){focusNumber(1);return true;}
-				if(ry>=197&&ry<221&&rx>=180&&rx<280){focusNumber(2);return true;}
+				if(ry>=197&&ry<221&&rx>=38&&rx<108){focusNumber(1);return true;}
+				if(ry>=197&&ry<221&&rx>=128&&rx<198){focusNumber(2);return true;}
+				if(isLayeredReview()&&ry>=197&&ry<221&&rx>=220&&rx<278){focusNumber(13);return true;}
 				if(ry>=197&&ry<221&&rx>=295&&rx<375){coordinateFocus=0;teleportToFields();return true;}
 			}
 			if(mode==Mode.INSPECT&&ry>=276&&ry<300&&rx>=10&&rx<175&&!inspectionKind.isEmpty()){copyInspected();return true;}
@@ -514,10 +540,12 @@ public final class WorldEditorInterface extends NCustomComponent {
 		if(sprite!=null)graphics().drawSprite(sprite,x+6,y);else graphics().drawString(key.fallbackLabel(),x+5,y+16,0xffffff,1);
 	}
 	private void renderCompactNavigate(int x,int y){
-		int px=mc.getEditorPlayerWorldX(),py=mc.getEditorPlayerWorldY();graphics().drawString("Player "+px+","+py+" p"+Math.floorDiv(py,944),x+8,y+47,0xffffff,1);
-		graphics().drawString("Clicked "+point(lastClickedX,lastClickedY)+" | brush "+point(brushX,brushY),x+8,y+63,0xbdbdbd,1);
-		checkbox(x+8,y+74,clickTeleportPreferred,"Click teleport");graphics().drawString("Teleport X / Y",x+8,y+111,0xffff00,1);
-		textField(x+8,y+118,78,teleportX,coordinateFocus==1);textField(x+94,y+118,78,teleportY,coordinateFocus==2);button(x+8,y+148,164,"Teleport");
+		int px=mc.getEditorPlayerWorldX(),py=mc.getEditorPlayerWorldY(),level=mc.getEditorPlayerWorldLevel();graphics().drawString("Player "+px+","+py+",L"+level,x+8,y+47,0xffffff,1);
+		graphics().drawString("Clicked "+point(lastClickedX,lastClickedY,lastClickedLevel),x+8,y+63,0xbdbdbd,1);
+		checkbox(x+8,y+74,clickTeleportPreferred,"Click teleport");graphics().drawString(isLayeredReview()?"Teleport X / Y / Level":"Teleport X / Y",x+8,y+111,0xffff00,1);
+		if(isLayeredReview()){textField(x+8,y+118,50,teleportX,coordinateFocus==1);textField(x+62,y+118,54,teleportY,coordinateFocus==2);textField(x+120,y+118,52,teleportLevel,coordinateFocus==13);}
+		else{textField(x+8,y+118,78,teleportX,coordinateFocus==1);textField(x+94,y+118,78,teleportY,coordinateFocus==2);}
+		button(x+8,y+148,164,"Teleport");
 	}
 	private void renderCompactInspect(int x,int y){
 		graphics().drawString(compactLine(inspectionStatus,28),x+8,y+47,0xffff00,1);int line=y+64;for(String text:inspectionDetails){if(line>y+145)break;graphics().drawString(compactLine(text,28),x+8,line,0xffffff,1);line+=14;}
@@ -542,11 +570,11 @@ public final class WorldEditorInterface extends NCustomComponent {
 		toolButton(x+8,y+138,76,"Place",npcTool==NpcTool.PLACE);toolButton(x+92,y+138,76,"Remove",npcTool==NpcTool.REMOVE);
 	}
 	private void renderCompactStatus(int x,int y){
-		int px=mc.getEditorPlayerWorldX(),py=mc.getEditorPlayerWorldY(),queued=terrainDragPending.size()+(terrainStrokeTiles==null?0:terrainStrokeTiles.length)+pendingEntityActions;
-		graphics().drawLineHoriz(x+8,y+194,FLYOUT_WIDTH-16,0x70512d);graphics().drawString("@yel@"+px+","+py+" p"+Math.floorDiv(py,944)+" @whi@| "+mode+" | "+terrainBrushSize+"x"+terrainBrushSize,x+8,y+211,0xffffff,1);
+		int px=mc.getEditorPlayerWorldX(),py=mc.getEditorPlayerWorldY(),level=mc.getEditorPlayerWorldLevel(),queued=terrainDragPending.size()+(terrainStrokeTiles==null?0:terrainStrokeTiles.length)+pendingEntityActions;
+		graphics().drawLineHoriz(x+8,y+194,FLYOUT_WIDTH-16,0x70512d);graphics().drawString("@yel@"+px+","+py+",L"+level+" @whi@| "+mode,x+8,y+211,0xffffff,1);
 		graphics().drawString(compactLine("Queued "+queued+" | ack "+lastAckMillis+" | rebuild "+lastRebuildMillis,28),x+8,y+228,0xbdbdbd,1);
 		graphics().drawString(unsavedChanges?"Unsaved"+(saveRequested?" (save requested)":""):"Saved/clean",x+8,y+245,unsavedChanges?0xff981f:0x80c080,1);
-		String status=WorldBuilderClientProfile.isEnabled()?"Source "+WorldBuilderClientProfile.current().sourceRevisionShort():inspectionStatus;
+		String status=isLayeredReview()?"Review "+WorldBuilderClientProfile.current().layeredPackageVersion()+" "+WorldBuilderClientProfile.current().layeredManifestShort():(WorldBuilderClientProfile.isEnabled()?"Source "+WorldBuilderClientProfile.current().sourceRevisionShort():inspectionStatus);
 		graphics().drawString(compactLine(status,28),x+8,y+264,0xbdbdbd,1);
 	}
 	private void renderCompactTooltip(int x,int y){
@@ -571,24 +599,26 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void renderExpanded(){
 		if(!isVisible()||Config.isAndroid())return;int x=getX(),y=getY();
 		graphics().drawBoxAlpha(x,y,390,330,0x24190c,235);graphics().drawBoxBorder(x,390,y,330,0);graphics().drawBoxAlpha(x,y,390,24,0x4a3620,255);
-		String title=WorldBuilderClientProfile.isEnabled()?"World Builder: "+WorldBuilderClientProfile.current().projectName():"World Editor";
+		String title=isLayeredReview()?"World Builder Review: "+WorldBuilderClientProfile.current().projectName():(WorldBuilderClientProfile.isEnabled()?"World Builder: "+WorldBuilderClientProfile.current().projectName():"World Editor");
 		graphics().drawString(compactLine(title,38),x+8,y+17,0xffff00,2);button(x+278,y,82,"Compact");graphics().drawString("X",x+372,y+17,0xffffff,2);
 		for(int i=0;i<TABS.length;i++){graphics().drawBoxAlpha(x+i*78,y+30,77,20,mode.ordinal()==i?0x6b8e23:0x333333,220);graphics().drawString(TABS[i],x+i*78+6,y+44,0xffffff,2);}
 		if(mode==Mode.NAVIGATE)renderNavigate(x,y);else if(mode==Mode.INSPECT)renderInspect(x,y);else if(mode==Mode.TERRAIN)renderTerrain(x,y);else if(mode==Mode.SCENERY)renderScenery(x,y);else renderNpc(x,y);
-		String revision=WorldBuilderClientProfile.isEnabled()?" | source "+WorldBuilderClientProfile.current().sourceRevisionShort():"";
+		String revision=isLayeredReview()?" | package "+WorldBuilderClientProfile.current().layeredPackageVersion()+" "+WorldBuilderClientProfile.current().layeredManifestShort():(WorldBuilderClientProfile.isEnabled()?" | source "+WorldBuilderClientProfile.current().sourceRevisionShort():"");
 		graphics().drawString("Mode: "+mode+" | session sequence "+nextSequence+revision,x+10,y+321,0xbdbdbd,1);
 	}
 	private void renderNavigate(int x,int y){
-		int px=mc.getEditorPlayerWorldX(),py=mc.getEditorPlayerWorldY();
+		int px=mc.getEditorPlayerWorldX(),py=mc.getEditorPlayerWorldY(),level=mc.getEditorPlayerWorldLevel();
 		graphics().drawString("Navigation",x+10,y+70,0xffff00,2);
-		graphics().drawString("Player: "+px+","+py+"  plane "+Math.floorDiv(py,944),x+10,y+91,0xffffff,2);
-		graphics().drawString("Last clicked tile: "+point(lastClickedX,lastClickedY),x+10,y+111,0xffffff,2);
-		graphics().drawString("Brush: inactive at "+point(brushX,brushY),x+10,y+131,0xbdbdbd,2);
+		graphics().drawString("Player: "+px+", "+py+", level "+level,x+10,y+91,0xffffff,2);
+		graphics().drawString("Last clicked tile: "+point(lastClickedX,lastClickedY,lastClickedLevel),x+10,y+111,0xffffff,2);
+		graphics().drawString(isLayeredReview()?"Package: "+WorldBuilderClientProfile.current().layeredPackageId()+" "+WorldBuilderClientProfile.current().layeredPackageVersion():"Brush: inactive at "+point(brushX,brushY,brushLevel),x+10,y+131,0xbdbdbd,2);
 		checkbox(x+10,y+150,clickTeleportPreferred,"Click teleport (Navigate only)");
 		graphics().drawString("Teleport to coordinates",x+10,y+188,0xffff00,2);
-		graphics().drawString("X",x+28,y+214,0xffffff,2);textField(x+45,y+197,100,teleportX,coordinateFocus==1);
-		graphics().drawString("Y",x+163,y+214,0xffffff,2);textField(x+180,y+197,100,teleportY,coordinateFocus==2);button(x+295,y+197,80,"Teleport");
-		graphics().drawString("Navigate uses movement options; brush/edit actions are off.",x+10,y+244,0xff981f,1);
+		graphics().drawString("X",x+20,y+214,0xffffff,2);textField(x+38,y+197,70,teleportX,coordinateFocus==1);
+		graphics().drawString("Y",x+112,y+214,0xffffff,2);textField(x+128,y+197,70,teleportY,coordinateFocus==2);
+		if(isLayeredReview()){graphics().drawString("L",x+204,y+214,0xffffff,2);textField(x+220,y+197,58,teleportLevel,coordinateFocus==13);}
+		button(x+295,y+197,80,"Teleport");
+		graphics().drawString(isLayeredReview()?"Read-only package review; navigate and inspect are enabled.":"Navigate uses movement options; brush/edit actions are off.",x+10,y+244,0xff981f,1);
 	}
 	private void renderInspect(int x,int y){
 		graphics().drawString(inspectionStatus,x+10,y+70,0xffff00,2);int line=y+89;
@@ -652,11 +682,16 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void textField(int x,int y,int w,String text,boolean focused){graphics().drawBoxAlpha(x,y,w,24,focused?0x6580b7:0x222222,240);graphics().drawBoxBorder(x,w,y,24,0);graphics().drawString(text+(focused?"*":""),x+6,y+17,0xffffff,2);}
 	private void checkbox(int x,int y,boolean checked,String text){graphics().drawBoxAlpha(x,y,18,18,checked?0x365b82:0x333333,255);graphics().drawBoxBorder(x,18,y,18,checked?0x66b3ff:0);if(checked)graphics().drawString("X",x+5,y+14,0xffffff,2);graphics().drawString(text,x+26,y+14,0xffffff,2);}
 	private void button(int x,int y,int w,String text){graphics().drawBoxAlpha(x,y,w,24,0x333333,220);graphics().drawBoxBorder(x,w,y,24,0);graphics().drawString(text,x+6,y+17,0xffffff,2);}
+	private boolean isLayeredReview(){return WorldBuilderClientProfile.current().isLayeredReview();}
+	private int editorLevel(int worldY){return isLayeredReview()?mc.getEditorPlayerWorldLevel():Math.floorDiv(worldY,944);}
+	private boolean validTeleportLevel(int level){return !isLayeredReview()||WorldBuilderClientProfile.current().declaresLayer(level);}
+	private static int logicalLevelForLegacyPlane(int plane){return plane==3?-1:plane;}
 	private static String point(int x,int y){return x<0||y<0?"not set":x+","+y;}
+	private static String point(int x,int y,int level){return x<0||y<0?"not set":x+","+y+",L"+level;}
 	private static int diagonalDefinitionId(int v){if(v>0&&v<12000)return v-1;if(v>12000&&v<24000)return v-12001;return -1;}
 	private static String diagonalRotation(int v){return v>12000&&v<24000?"rotated":v>0&&v<12000?"not rotated":"none";}
 	private static String wall(int id,String name){return id<0?"none":"#"+id+" ("+name+")";}
-	private static String planeName(int plane){switch(plane){case 0:return "Surface";case 1:return "First floor";case 2:return "Second floor";case 3:return "Underground";default:return "Unknown";}}
+	private static String planeName(int plane){switch(plane){case 0:return "Surface";case 1:return "First floor";case 2:return "Second floor";case -1:case 3:return "Underground";default:return plane<0?"Depth "+plane:"Upper level "+plane;}}
 	private static int valueAfter(String text,String marker){if(text==null)return -1;int at=text.indexOf(marker);if(at<0)return -1;at+=marker.length();int end=at;while(end<text.length()&&Character.isDigit(text.charAt(end)))end++;try{return Integer.parseInt(text.substring(at,end));}catch(Exception e){return -1;}}
 	private static String join(String[] lines){StringBuilder b=new StringBuilder();for(String line:lines)b.append(line).append(' ');return b.toString();}
 	private static String compactLine(String text,int max){if(text==null)return "";return text.length()<=max?text:text.substring(0,Math.max(0,max-3))+"...";}

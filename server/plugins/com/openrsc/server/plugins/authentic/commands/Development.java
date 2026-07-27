@@ -135,6 +135,17 @@ public final class Development implements CommandTrigger {
 			badSyntaxPrefix = config().BAD_SYNTAX_PREFIX;
 		}
 
+		if (command.equalsIgnoreCase("buildergoto")) {
+			layeredBuilderGoTo(player, command, args);
+			return;
+		}
+		if (player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
+			&& isLayeredBuilderMutationCommand(command)) {
+			player.message(messagePrefix
+				+ "Layered package review is read-only; no world files were changed.");
+			return;
+		}
+
 		if (command.equalsIgnoreCase("worldeditormode")) {
 			openWorldEditor(player);
 		}
@@ -272,6 +283,70 @@ public final class Development implements CommandTrigger {
 		else if (command.equalsIgnoreCase("killnearnpcs") || command.equalsIgnoreCase("killnearcombat") || command.equalsIgnoreCase("killcombatnear")) {
 			killNearbyCombatNpcs(player, command, args);
 		}
+	}
+
+	private static boolean isLayeredBuilderMutationCommand(String command) {
+		String normalized=command==null?"":command.toLowerCase(java.util.Locale.ROOT);
+		return normalized.equals("radiusnpc")||normalized.equals("createnpc")
+			||normalized.equals("cnpc")||normalized.equals("cpc")
+			||normalized.equals("rpc")||normalized.equals("rnpc")
+			||normalized.equals("removenpc")||normalized.equals("removeobject")
+			||normalized.equals("robject")||normalized.equals("removescenery")
+			||normalized.equals("rscenery")||normalized.equals("createobject")
+			||normalized.equals("cobject")||normalized.equals("addobject")
+			||normalized.equals("aobject")||normalized.equals("createscenery")
+			||normalized.equals("cscenery")||normalized.equals("addscenery")
+			||normalized.equals("ascenery")||normalized.equals("r")
+			||normalized.equals("repeatobject")||normalized.equals("repeatscenery")
+			||normalized.equals("createwallobject")||normalized.equals("cwallobject")
+			||normalized.equals("addwallobject")||normalized.equals("awallobject")
+			||normalized.equals("createboundary")||normalized.equals("cboundary")
+			||normalized.equals("addboundary")||normalized.equals("aboundary")
+			||normalized.equals("rotateobject")||normalized.equals("rotatescenery")
+			||normalized.equals("saveworldedits")
+			||normalized.equals("clearworldedits")
+			||normalized.equals("discardworldedits");
+	}
+
+	private static void layeredBuilderGoTo(
+		Player player, String command, String[] args) {
+		if (!player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
+			|| !player.getWorld().getServer().getWorldEditorSessions()
+				.ownsActiveSession(player)) {
+			player.message(messagePrefix
+				+ "Signed Builder navigation requires an active layered review session.");
+			return;
+		}
+		if (args.length != 3) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [x] [y] [level]");
+			return;
+		}
+		final int x;
+		final int y;
+		final int level;
+		try {
+			x=Integer.parseInt(args[0]);
+			y=Integer.parseInt(args[1]);
+			level=Integer.parseInt(args[2]);
+		} catch (NumberFormatException exception) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [x] [y] [level]");
+			return;
+		}
+		WorldLocation current=player.getLayeredLocation();
+		WorldLocation destination=new WorldLocation(
+			current.getWorldSpace(),new WorldCoordinate(x,y,level));
+		if (!player.getWorld().getRegionManager()
+			.hasNativeLayeredTerrain(destination)) {
+			player.message(messagePrefix
+				+ "The reviewed package has no terrain at "
+				+x+","+y+",L"+level+".");
+			return;
+		}
+		player.teleportLayered(destination,false);
+		player.message(messagePrefix+"Builder location: "
+			+x+","+y+",L"+level+".");
 	}
 
 	private void setWorldTime(Player player, String command, String[] args) {

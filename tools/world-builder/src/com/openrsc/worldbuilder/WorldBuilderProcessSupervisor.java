@@ -183,6 +183,7 @@ public final class WorldBuilderProcessSupervisor {
 			}
 		}
 		WorldBuilderSourceSnapshot.verify(workspace);
+		WorldBuilderLayeredReview.readIfPresent(workspace);
 		int preparedPort = readPreparedPort(workspace);
 		if (port != preparedPort) {
 			throw new WorldBuilderDiscoveryException(
@@ -215,7 +216,8 @@ public final class WorldBuilderProcessSupervisor {
 		String credential = workspace.resolve(WorldBuilderRuntimePreparer.BUILDER_CREDENTIAL).toString();
 		String projectName = workspace.getFileName().toString();
 		String sourceRevision = readSourceRevision(workspace);
-		return Arrays.asList(
+		WorldBuilderLayeredReview layered = readLayeredReview(workspace);
+		List<String> command = new ArrayList<String>(Arrays.asList(
 			javaExecutable(),
 			"-Xms512m",
 			"-Xmx2g",
@@ -231,9 +233,35 @@ public final class WorldBuilderProcessSupervisor {
 			"-Dopenrsc.worldBuilderPort=" + port,
 			"-Dopenrsc.worldBuilderCredentialFile=" + credential,
 			"-Dopenrsc.worldBuilderProjectName=" + projectName,
-			"-Dopenrsc.worldBuilderSourceRevision=" + sourceRevision,
+			"-Dopenrsc.worldBuilderSourceRevision=" + sourceRevision));
+		if (layered != null) {
+			command.add("-Dopenrsc.worldBuilderLayeredReview=true");
+			command.add("-Dopenrsc.worldBuilderLayeredPackageId=" + layered.packageId);
+			command.add("-Dopenrsc.worldBuilderLayeredPackageVersion="
+				+ layered.packageVersion);
+			command.add("-Dopenrsc.worldBuilderLayeredManifestSha256="
+				+ layered.manifestSha256);
+			command.add("-Dopenrsc.worldBuilderLayeredWorldSpace="
+				+ layered.worldSpace);
+			command.add("-Dopenrsc.worldBuilderLayeredLevels="
+				+ layered.levelsProperty());
+		}
+		command.addAll(Arrays.asList(
 			"-jar",
-			"Open_RSC_Client.jar");
+			"Open_RSC_Client.jar"));
+		return command;
+	}
+
+	private static WorldBuilderLayeredReview readLayeredReview(Path workspace) {
+		try {
+			return WorldBuilderLayeredReview.readIfPresent(workspace);
+		} catch (IOException failure) {
+			throw new IllegalStateException(
+				"Prepared World Builder layered review metadata is invalid", failure);
+		} catch (WorldBuilderDiscoveryException failure) {
+			throw new IllegalStateException(
+				"Prepared World Builder layered review metadata is invalid", failure);
+		}
 	}
 
 	private static String readSourceRevision(Path workspace) {

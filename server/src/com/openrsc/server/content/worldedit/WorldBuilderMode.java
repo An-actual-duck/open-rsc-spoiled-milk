@@ -60,6 +60,17 @@ public final class WorldBuilderMode {
 			throw new IllegalArgumentException(
 				"Unsafe World Builder configuration: " + String.join("; ", errors));
 		}
+		if (config.WORLD_BUILDER_LAYERED_REVIEW_MODE
+			&& (!config.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+				|| !config.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+				|| !config.WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
+				|| !config.WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+				|| !"spoiled-milk-replacement".equals(
+					config.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE))) {
+			throw new IllegalArgumentException(
+				"Unsafe World Builder configuration: layered review requires "
+					+ "the complete Spoiled Milk native package authority");
+		}
 	}
 
 	public static List<String> validationErrors(

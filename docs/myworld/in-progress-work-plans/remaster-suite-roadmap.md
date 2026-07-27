@@ -1068,7 +1068,18 @@ configured world content appeared as expected, including the restored
 rune-altar glyph and orb presentation. The next active integration boundary
 is a layered-package adapter for the existing isolated World Builder, starting
 with read-only copied-workspace launch and signed-level navigation before any
-layered editing or export is enabled.
+layered editing or export is enabled. Player-facing and Builder-facing
+locations use logical `(x,y,level)` throughout this work; packed legacy Y is
+an internal compatibility representation, not an authored coordinate.
+
+The first adapter slice is implemented and awaiting owner acceptance. The
+isolated Builder now strictly discovers, fingerprints, copies, and launches
+the exact Spoiled Milk layered package; presents package identity plus signed
+coordinates; navigates and inspects the native package across its declared
+levels; and refuses editing, saving, or export until a native package writer
+exists. The ordinary client coordinate overlay now uses the same logical
+coordinate vocabulary. This is a review checkpoint, not yet a map-authoring
+release.
 
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate

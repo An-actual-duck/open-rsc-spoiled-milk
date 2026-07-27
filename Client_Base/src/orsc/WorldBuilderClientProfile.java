@@ -16,9 +16,22 @@ public final class WorldBuilderClientProfile {
 	public static final String CREDENTIAL_FILE_PROPERTY = "openrsc.worldBuilderCredentialFile";
 	public static final String PROJECT_NAME_PROPERTY = "openrsc.worldBuilderProjectName";
 	public static final String SOURCE_REVISION_PROPERTY = "openrsc.worldBuilderSourceRevision";
+	public static final String LAYERED_REVIEW_PROPERTY = "openrsc.worldBuilderLayeredReview";
+	public static final String LAYERED_PACKAGE_ID_PROPERTY =
+		"openrsc.worldBuilderLayeredPackageId";
+	public static final String LAYERED_PACKAGE_VERSION_PROPERTY =
+		"openrsc.worldBuilderLayeredPackageVersion";
+	public static final String LAYERED_MANIFEST_SHA256_PROPERTY =
+		"openrsc.worldBuilderLayeredManifestSha256";
+	public static final String LAYERED_WORLD_SPACE_PROPERTY =
+		"openrsc.worldBuilderLayeredWorldSpace";
+	public static final String LAYERED_LEVELS_PROPERTY =
+		"openrsc.worldBuilderLayeredLevels";
 	public static final String ACCOUNT_NAME = "Builder";
 	private static final Pattern CREDENTIAL_PATTERN = Pattern.compile("[A-Za-z0-9]{20}");
 	private static final Pattern SOURCE_REVISION_PATTERN = Pattern.compile("[0-9a-f]{64}");
+	private static final Pattern PACKAGE_ID_PATTERN =
+		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
 	private static WorldBuilderClientProfile current = disabled();
 
 	private final boolean enabled;
@@ -27,15 +40,29 @@ public final class WorldBuilderClientProfile {
 	private final String credential;
 	private final String projectName;
 	private final String sourceRevision;
+	private final boolean layeredReview;
+	private final String layeredPackageId;
+	private final String layeredPackageVersion;
+	private final String layeredManifestSha256;
+	private final String layeredWorldSpace;
+	private final int[] layeredLevels;
 
 	private WorldBuilderClientProfile(boolean enabled, String host, int port, String credential,
-		String projectName, String sourceRevision) {
+		String projectName, String sourceRevision, boolean layeredReview,
+		String layeredPackageId, String layeredPackageVersion,
+		String layeredManifestSha256, String layeredWorldSpace, int[] layeredLevels) {
 		this.enabled = enabled;
 		this.host = host;
 		this.port = port;
 		this.credential = credential;
 		this.projectName = projectName;
 		this.sourceRevision = sourceRevision;
+		this.layeredReview = layeredReview;
+		this.layeredPackageId = layeredPackageId;
+		this.layeredPackageVersion = layeredPackageVersion;
+		this.layeredManifestSha256 = layeredManifestSha256;
+		this.layeredWorldSpace = layeredWorldSpace;
+		this.layeredLevels = layeredLevels.clone();
 	}
 
 	public static synchronized WorldBuilderClientProfile initializeFromSystemProperties() {
@@ -72,7 +99,38 @@ public final class WorldBuilderClientProfile {
 		if (!SOURCE_REVISION_PATTERN.matcher(sourceRevision).matches()) {
 			throw new IllegalArgumentException("World Builder source revision is invalid");
 		}
-		current = new WorldBuilderClientProfile(true, host, port, credential, projectName, sourceRevision);
+		boolean layeredReview = strictBoolean(
+			LAYERED_REVIEW_PROPERTY,
+			System.getProperty(LAYERED_REVIEW_PROPERTY, "false"));
+		String layeredPackageId = "";
+		String layeredPackageVersion = "";
+		String layeredManifestSha256 = "";
+		String layeredWorldSpace = "";
+		int[] layeredLevels = new int[0];
+		if (layeredReview) {
+			layeredPackageId = requiredIdentifier(
+				LAYERED_PACKAGE_ID_PROPERTY,
+				System.getProperty(LAYERED_PACKAGE_ID_PROPERTY, ""));
+			layeredPackageVersion = requiredText(
+				LAYERED_PACKAGE_VERSION_PROPERTY,
+				System.getProperty(LAYERED_PACKAGE_VERSION_PROPERTY, ""));
+			layeredManifestSha256 =
+				System.getProperty(LAYERED_MANIFEST_SHA256_PROPERTY, "")
+					.trim().toLowerCase();
+			if (!SOURCE_REVISION_PATTERN.matcher(layeredManifestSha256).matches()) {
+				throw new IllegalArgumentException(
+					LAYERED_MANIFEST_SHA256_PROPERTY + " is invalid");
+			}
+			layeredWorldSpace = requiredIdentifier(
+				LAYERED_WORLD_SPACE_PROPERTY,
+				System.getProperty(LAYERED_WORLD_SPACE_PROPERTY, ""));
+			layeredLevels = parseLevels(
+				System.getProperty(LAYERED_LEVELS_PROPERTY, ""));
+		}
+		current = new WorldBuilderClientProfile(
+			true, host, port, credential, projectName, sourceRevision,
+			layeredReview, layeredPackageId, layeredPackageVersion,
+			layeredManifestSha256, layeredWorldSpace, layeredLevels);
 		return current;
 	}
 
@@ -108,8 +166,105 @@ public final class WorldBuilderClientProfile {
 		return sourceRevision == null ? "" : sourceRevision.substring(0, 12);
 	}
 
+	public boolean isLayeredReview() {
+		return enabled && layeredReview;
+	}
+
+	public String layeredPackageId() {
+		return layeredPackageId;
+	}
+
+	public String layeredPackageVersion() {
+		return layeredPackageVersion;
+	}
+
+	public String layeredManifestShort() {
+		return layeredManifestSha256 == null || layeredManifestSha256.length() < 12
+			? "" : layeredManifestSha256.substring(0, 12);
+	}
+
+	public String layeredWorldSpace() {
+		return layeredWorldSpace;
+	}
+
+	public String layeredLevelsLabel() {
+		StringBuilder label = new StringBuilder();
+		for (int index = 0; index < layeredLevels.length; index++) {
+			if (index > 0) label.append(',');
+			label.append(layeredLevels[index]);
+		}
+		return label.toString();
+	}
+
+	public boolean declaresLayer(int level) {
+		for (int declared : layeredLevels) {
+			if (declared == level) return true;
+		}
+		return false;
+	}
+
 	private static WorldBuilderClientProfile disabled() {
-		return new WorldBuilderClientProfile(false, null, 0, null, "", "");
+		return new WorldBuilderClientProfile(
+			false, null, 0, null, "", "", false, "", "", "", "", new int[0]);
+	}
+
+	private static boolean strictBoolean(String property, String value) {
+		String normalized = value == null ? "" : value.trim();
+		if (!"true".equalsIgnoreCase(normalized)
+			&& !"false".equalsIgnoreCase(normalized)) {
+			throw new IllegalArgumentException(property + " must be true or false");
+		}
+		return Boolean.parseBoolean(normalized);
+	}
+
+	private static String requiredIdentifier(String property, String value) {
+		String normalized = value == null ? "" : value.trim();
+		if (!PACKAGE_ID_PATTERN.matcher(normalized).matches()) {
+			throw new IllegalArgumentException(property + " is invalid");
+		}
+		return normalized;
+	}
+
+	private static String requiredText(String property, String value) {
+		String normalized = value == null ? "" : value.trim();
+		if (normalized.isEmpty() || normalized.length() > 64) {
+			throw new IllegalArgumentException(property + " is invalid");
+		}
+		for (int index = 0; index < normalized.length(); index++) {
+			if (Character.isISOControl(normalized.charAt(index))) {
+				throw new IllegalArgumentException(property + " is invalid");
+			}
+		}
+		return normalized;
+	}
+
+	private static int[] parseLevels(String value) {
+		String normalized = value == null ? "" : value.trim();
+		if (normalized.isEmpty()) {
+			throw new IllegalArgumentException(
+				LAYERED_LEVELS_PROPERTY + " is required");
+		}
+		String[] values = normalized.split(",", -1);
+		if (values.length < 1 || values.length > 64) {
+			throw new IllegalArgumentException(
+				LAYERED_LEVELS_PROPERTY + " is invalid");
+		}
+		int[] result = new int[values.length];
+		for (int index = 0; index < values.length; index++) {
+			try {
+				result[index] = Integer.parseInt(values[index].trim());
+			} catch (NumberFormatException exception) {
+				throw new IllegalArgumentException(
+					LAYERED_LEVELS_PROPERTY + " is invalid");
+			}
+			for (int prior = 0; prior < index; prior++) {
+				if (result[prior] == result[index]) {
+					throw new IllegalArgumentException(
+						LAYERED_LEVELS_PROPERTY + " contains a duplicate");
+				}
+			}
+		}
+		return result;
 	}
 
 	private static String validateProjectName(String value) {

@@ -12700,8 +12700,18 @@ public final class mudclient implements Runnable {
 		this.drawPlayerHealthBar(x, y);
 		y += HEALTH_HUD_HEIGHT + HEALTH_HUD_COORDINATE_GAP;
 		if (this.showCoordinatesOverlay) {
-			this.getSurface().drawString("Tile: @gre@(@whi@" + (this.playerLocalX + this.midRegionBaseX)
-				+ "@gre@,@whi@" + (this.playerLocalZ + this.midRegionBaseZ) + "@gre@)", x, y, 0xFFFFFF, 1);
+			int compatibilityX = this.playerLocalX + this.midRegionBaseX;
+			int compatibilityY = this.playerLocalZ + this.midRegionBaseZ;
+			int logicalX = this.packetHandler.getLogicalPlayerX(compatibilityX);
+			int logicalY = this.packetHandler.getLogicalPlayerY(
+				compatibilityX, compatibilityY);
+			int logicalLevel =
+				this.packetHandler.getLogicalWorldLevel(compatibilityY);
+			this.getSurface().drawString(
+				"Tile: @gre@(@whi@" + logicalX
+					+ "@gre@,@whi@" + logicalY
+					+ "@gre@,L@whi@" + logicalLevel + "@gre@)",
+				x, y, 0xFFFFFF, 1);
 		}
 	}
 
@@ -21533,7 +21543,15 @@ public final class mudclient implements Runnable {
 	}
 
 	public void worldEditorTeleport(int worldX, int worldY) {
+		worldEditorTeleport(worldX, worldY, getEditorPlayerWorldLevel());
+	}
+
+	public void worldEditorTeleport(int worldX, int worldY, int level) {
 		if (worldEditorInterface == null || !worldEditorInterface.isNavigating() || !canUseClickTeleport()) return;
+		if (WorldBuilderClientProfile.current().isLayeredReview()) {
+			sendCommandString("buildergoto " + worldX + " " + worldY + " " + level);
+			return;
+		}
 		preloadTerrainForLocalTarget(worldX - midRegionBaseX, worldY - midRegionBaseZ);
 		this.packetHandler.getClientStream().newPacket(Opcodes.Out.BLINK.getOpcode());
 		this.packetHandler.getClientStream().bufferBits.putShort(worldX);
@@ -25426,8 +25444,27 @@ public final class mudclient implements Runnable {
 		return localPlayer;
 	}
 
-	public int getEditorPlayerWorldX() { return midRegionBaseX + (localPlayer == null ? playerLocalX : localPlayer.currentX / tileSize); }
-	public int getEditorPlayerWorldY() { return midRegionBaseZ + (localPlayer == null ? playerLocalZ : localPlayer.currentZ / tileSize); }
+	public int getEditorPlayerWorldX() {
+		return midRegionBaseX
+			+ (localPlayer == null ? playerLocalX : localPlayer.currentX / tileSize);
+	}
+
+	public int getEditorPlayerWorldY() {
+		int compatibilityX = getEditorPlayerWorldX();
+		int compatibilityY = midRegionBaseZ
+			+ (localPlayer == null ? playerLocalZ : localPlayer.currentZ / tileSize);
+		return WorldBuilderClientProfile.current().isLayeredReview()
+			? packetHandler.getLogicalPlayerY(compatibilityX, compatibilityY)
+			: compatibilityY;
+	}
+
+	public int getEditorPlayerWorldLevel() {
+		int compatibilityY = midRegionBaseZ
+			+ (localPlayer == null ? playerLocalZ : localPlayer.currentZ / tileSize);
+		return WorldBuilderClientProfile.current().isLayeredReview()
+			? packetHandler.getLogicalWorldLevel(compatibilityY)
+			: Math.floorDiv(compatibilityY, 944);
+	}
 
 	public void setLocalPlayer(ORSCharacter p) {
 		this.localPlayer = p;

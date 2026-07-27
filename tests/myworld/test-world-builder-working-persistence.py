@@ -11,7 +11,6 @@ SOURCES = (
     ROOT / "server/src/com/openrsc/server/io/WorldEditorTerrainSaveFiles.java",
     ROOT / "server/src/com/openrsc/server/util/WorldSceneryEditFiles.java",
     ROOT / "server/src/com/openrsc/server/util/WorldNpcEditFiles.java",
-    ROOT / "server/src/com/openrsc/server/external/NPCLoc.java",
 )
 
 
@@ -134,6 +133,22 @@ public final class WorldBuilderWorkingPersistenceHarness {
 def main() -> None:
     with tempfile.TemporaryDirectory(prefix="world-builder-persistence-") as temp:
         root = Path(temp)
+        npc_loc = root / "com/openrsc/server/external/NPCLoc.java"
+        npc_loc.parent.mkdir(parents=True)
+        npc_loc.write_text(
+            """
+package com.openrsc.server.external;
+public class NPCLoc {
+    public int id,startX,startY,minX,maxX,minY,maxY;
+    public NPCLoc() {}
+    public NPCLoc(int id,int startX,int startY,int minX,int maxX,int minY,int maxY) {
+        this.id=id;this.startX=startX;this.startY=startY;
+        this.minX=minX;this.maxX=maxX;this.minY=minY;this.maxY=maxY;
+    }
+}
+""".strip() + "\n",
+            encoding="utf-8",
+        )
         harness = root / "WorldBuilderWorkingPersistenceHarness.java"
         harness.write_text(textwrap.dedent(HARNESS), encoding="utf-8")
         classes = root / "classes"
@@ -142,7 +157,7 @@ def main() -> None:
             [
                 "javac", "-source", "8", "-target", "8",
                 "-cp", str(JSON_JAR), "-d", str(classes),
-                *map(str, SOURCES), str(harness),
+                str(npc_loc), *map(str, SOURCES), str(harness),
             ],
             cwd=ROOT,
             check=True,

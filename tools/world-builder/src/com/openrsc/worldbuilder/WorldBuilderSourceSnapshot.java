@@ -22,7 +22,7 @@ final class WorldBuilderSourceSnapshot {
 			|| Files.isSymbolicLink(inventoryPath)) {
 			throw new WorldBuilderDiscoveryException("World Builder source inventory is missing or unsafe.");
 		}
-		if (Files.size(inventoryPath) > 65_536L) {
+		if (Files.size(inventoryPath) > 1_048_576L) {
 			throw new WorldBuilderDiscoveryException("World Builder source inventory is unexpectedly large.");
 		}
 		List<String> lines = Files.readAllLines(inventoryPath, StandardCharsets.UTF_8);

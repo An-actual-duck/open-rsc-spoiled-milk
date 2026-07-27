@@ -71,6 +71,58 @@ public class PacketHandler {
 		return layeredSceneContextState.summary();
 	}
 
+	public boolean hasLayeredSceneContext() {
+		return layeredSceneContextState.hasContext();
+	}
+
+	public int getLogicalWorldX(int compatibilityX) {
+		return compatibilityX;
+	}
+
+	public int getLogicalPlayerX(int compatibilityX) {
+		return layeredSceneContextState.hasContext()
+			? layeredSceneContextState.getLogicalX() : compatibilityX;
+	}
+
+	public int getLogicalPlayerY(int compatibilityX, int compatibilityY) {
+		return layeredSceneContextState.hasContext()
+			? layeredSceneContextState.getLogicalY()
+			: getLogicalWorldY(compatibilityX, compatibilityY);
+	}
+
+	public int getLogicalWorldY(int compatibilityX, int compatibilityY) {
+		if (layeredSceneContextState.hasContext()) {
+			return layeredSceneContextState.logicalYForCompatibilityPosition(
+				compatibilityX, compatibilityY);
+		}
+		return Math.floorMod(
+			compatibilityY, LayeredSceneContextState.LEVEL_STRIDE);
+	}
+
+	public int getLogicalWorldLevel(int compatibilityY) {
+		if (layeredSceneContextState.hasContext()) {
+			return layeredSceneContextState.getLogicalLevel();
+		}
+		switch (Math.floorDiv(
+			compatibilityY, LayeredSceneContextState.LEVEL_STRIDE)) {
+			case 0:
+				return 0;
+			case 1:
+				return 1;
+			case 2:
+				return 2;
+			case 3:
+				return -1;
+			default:
+				return 0;
+		}
+	}
+
+	public String getLogicalWorldSpace() {
+		return layeredSceneContextState.hasContext()
+			? layeredSceneContextState.getWorldSpace() : "global";
+	}
+
 	public void resetLayeredSceneProtocolState() {
 		layeredSceneContextState.reset();
 		sceneBaselineState.resetForScopeChange("none");
@@ -475,13 +527,13 @@ public class PacketHandler {
 		if(type==8){int fieldMask=packetsIncoming.getByte()&0xff,count=packetsIncoming.getByte()&0xff;
 			if(count<1||count>64){mc.worldEditorInterface.showError("Server returned an invalid terrain stroke size.");return;}
 			int[][] tiles=new int[count][15];boolean[] projectiles=new boolean[count];
-			for(int i=0;i<count;i++){int[] tile=tiles[i];tile[0]=packetsIncoming.getShort();tile[1]=packetsIncoming.getShort();tile[2]=packetsIncoming.getByte()&0xff;
+			for(int i=0;i<count;i++){int[] tile=tiles[i];tile[0]=packetsIncoming.getShort();tile[1]=packetsIncoming.getShort();tile[2]=packetsIncoming.getByte();
 				tile[3]=packetsIncoming.getShort();tile[4]=packetsIncoming.getShort();tile[5]=packetsIncoming.getByte()&0xff;tile[6]=packetsIncoming.getByte()&0xff;
 				tile[7]=packetsIncoming.getByte()&0xff;tile[8]=packetsIncoming.getByte()&0xff;tile[9]=packetsIncoming.getByte()&0xff;tile[10]=packetsIncoming.getByte()&0xff;
 				tile[11]=packetsIncoming.getByte()&0xff;tile[12]=packetsIncoming.getByte()&0xff;tile[13]=packetsIncoming.get32();tile[14]=packetsIncoming.getShort()&0xffff;
 				projectiles[i]=packetsIncoming.getByte()!=0;}
 			mc.worldEditorInterface.acceptTerrainStroke(sequence,fieldMask,tiles,projectiles,packetsIncoming.readString());return;}
-		if(type==3||type==7){int x=packetsIncoming.getShort(),y=packetsIncoming.getShort(),plane=packetsIncoming.getByte()&0xff;
+		if(type==3||type==7){int x=packetsIncoming.getShort(),y=packetsIncoming.getShort(),plane=packetsIncoming.getByte();
 			int sx=packetsIncoming.getShort(),sy=packetsIncoming.getShort(),lx=packetsIncoming.getByte()&0xff,ly=packetsIncoming.getByte()&0xff;
 			int elev=packetsIncoming.getByte()&0xff,texture=packetsIncoming.getByte()&0xff,overlay=packetsIncoming.getByte()&0xff,roof=packetsIncoming.getByte()&0xff;
 			int hw=packetsIncoming.getByte()&0xff,vw=packetsIncoming.getByte()&0xff,diag=packetsIncoming.get32(),collision=packetsIncoming.getShort()&0xffff;

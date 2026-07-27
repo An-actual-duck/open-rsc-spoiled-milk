@@ -18597,6 +18597,7 @@ private environment should validate at least:
 | 2026-07-25 | Accept Milestone D runtime movement, interaction, deep reconnect, explicit exit, and death recovery. | After correcting the generated room, client offsets, persistence snapshot, action adjacency, follow-stop adjacency, and NPC roam envelope, the owner confirmed the bounded level `-2` route works visually and interactively. Runtime evidence proves exact deep reconnect, a roaming NPC, successful NPC/item interaction, explicit surface exit, and death from `(452,602,L-2)` recovering to Lumbridge `(120,648,L0)`. Only the required post-death surface reconnect remains before full Milestone D acceptance |
 | 2026-07-25 | Fully accept Phase 5 Authority Milestone D. | The final normal logout completed its save, reconnect restored exact `WorldLocation(global,120,648,0)` with `rewriteRequired=false`, and `::layerloc` confirmed level 0. All automated and owner gates now pass for the bounded synthetic deep room: scope isolation, movement/collision, NPC/item interaction, level `-2` persistence, explicit exit, death recovery, and recovered-surface persistence. No production archive, placement, live data, or public server was modified |
 | 2026-07-25 | Correct the first Milestone D owner route after stopping at step 6. | Owner evidence proved that the borrowed compatibility rectangle was water: click teleport could collect the deep item, ordinary walking and Man interaction failed, and logout/reconnect returned to the prior surface save. Logs established a second exact cause: the legacy-only save snapshot decoded the `(450,600)` receipt as level 0, rejected the authoritative level `-2` mirror, and rolled back every deep autosave. Replace terrain borrowing with a bounded runtime-only flat overlay-0 room, suppress borrowed upper-plane geometry, resolve deep path/collision through that room, and capture named-projection persistence from the authoritative layered location plus its checked receipt. Production archives, placements, surface terrain, live data, and the public server remain untouched; corrected owner acceptance is pending |
+| 2026-07-26 | Begin the signed-layer World Builder adapter with logical coordinate presentation. | Implemented the first review-only slice: strict discovery accepts only the exact Spoiled Milk `0.2.0` package and profile, copies and fingerprints all 1,776 package files into isolated working/source trees, launches the package under complete layered authority, exposes signed `(x,y,level)` navigation and native terrain inspection, changes the ordinary HUD to logical coordinates, and blocks editing, saving, and export in both client and server boundaries. The private Builder auto-login and exact package load pass; focused owner visual/navigation acceptance remains pending before the native writer slice |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -18749,6 +18750,44 @@ existing isolation and dev-runtime machinery, prove exact terrain and
 placement counts, allow signed-level navigation, and make no editing or
 export promise yet. That produces a meaningful visual checkpoint before the
 legacy packed-coordinate save model is replaced.
+
+Owner approval on 2026-07-26 adds one presentation requirement to this slice:
+the ordinary on-screen coordinate overlay and every Builder-facing location
+must display logical `(x,y,level)` rather than packed legacy Y/plane values.
+Compatibility coordinates may remain internal at protocol and legacy-adapter
+boundaries, but must not be presented as the authored location. The first
+Builder cut remains review-only and must enforce that restriction on the
+server as well as in its client controls; signed-level editing is enabled only
+after the native save/export contract is implemented.
+
+The first Builder adapter slice is now implemented as
+`spoiled-milk-layered-package-v1`. Preparation requires the exact package ID,
+version `0.2.0`, manifest SHA-256, `spoiled-milk-replacement` runtime profile,
+global static world space, declared levels `[-1,0,1,2]`, 1,771 terrain
+sectors, four placement sets, and an exact no-extra-file package inventory.
+The launcher copies the package independently into immutable source and
+working review trees, includes every payload in the source snapshot, rechecks
+the complete working-package fingerprint before every launch, and passes only
+validated identity metadata to the client.
+
+The prepared server runs the real package under Player, spatial, protocol,
+and native-terrain authority. The Builder presents logical
+`(x,y,level)`, accepts negative level input, navigates only to a declared tile
+through an explicit signed `buildergoto` boundary, and inspects terrain from
+the native package/runtime view rather than the legacy archive. The ordinary
+F6 coordinate overlay likewise shows logical Y and signed level. Legacy
+Builder sessions retain their existing packed archive semantics internally.
+
+This slice deliberately has no native writer. Terrain/scenery/NPC edit modes,
+world-edit mutation commands, save, and export all refuse while layered review
+mode is active, with matching client and server enforcement. The exact private
+workspace has started and auto-logged in at global `(120,648,0)` with native
+package identity and all 33,515 effective placements loaded. Automated
+compilation and focused guards pass; owner acceptance should now verify the
+visible coordinate labels, same-coordinate travel among declared levels,
+ordinary movement/interaction/inspection, package identity, and read-only
+refusal. Only after that acceptance should the next slice define the
+transactional native terrain/placement draft and deterministic package writer.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first

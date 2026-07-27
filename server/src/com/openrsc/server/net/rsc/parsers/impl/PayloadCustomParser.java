@@ -502,20 +502,20 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				editor.sessionId = packet.readLong();
 				editor.sequence = packet.readInt();
 				if (editor.type == 2) {
-					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte();
 					editor.objectType=packet.readByte()&0xff;
 				} else if (editor.type == 3) {
-					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte();
 					editor.entityId=packet.readShort(); editor.direction=packet.readByte()&0xff; editor.objectType=packet.readByte()&0xff;
 				} else if (editor.type == 4) editor.entityId=packet.readShort();
 				else if (editor.type == 5) {
-					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte();
 					editor.fieldMask=packet.readByte()&0xff; editor.elevation=packet.readByte()&0xff;
 					editor.groundTexture=packet.readByte()&0xff; editor.groundOverlay=packet.readByte()&0xff;
 					editor.roofTexture=packet.readByte()&0xff;editor.horizontalWall=packet.readByte()&0xff;
 					editor.verticalWall=packet.readByte()&0xff;editor.diagonal=packet.readInt();
 				} else if(editor.type==6){
-					editor.plane=packet.readByte()&0xff;editor.fieldMask=packet.readByte()&0xff;editor.elevation=packet.readByte()&0xff;
+					editor.plane=packet.readByte();editor.fieldMask=packet.readByte()&0xff;editor.elevation=packet.readByte()&0xff;
 					editor.groundTexture=packet.readByte()&0xff;editor.groundOverlay=packet.readByte()&0xff;editor.roofTexture=packet.readByte()&0xff;
 					editor.horizontalWall=packet.readByte()&0xff;editor.verticalWall=packet.readByte()&0xff;editor.diagonal=packet.readInt();
 					int count=packet.readByte()&0xff;if(count<1||count>64||packet.getLength()!=26+count*4)return null;

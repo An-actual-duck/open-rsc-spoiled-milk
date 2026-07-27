@@ -287,6 +287,32 @@ final class LayeredSceneContextState {
 		return logicalLevel;
 	}
 
+	int getLogicalX() {
+		requireEstablished();
+		return logicalX;
+	}
+
+	int getLogicalY() {
+		requireEstablished();
+		return logicalY;
+	}
+
+	String getWorldSpace() {
+		requireEstablished();
+		return worldSpace;
+	}
+
+	int logicalYForCompatibilityPosition(int packedX, int packedY) {
+		requireEstablished();
+		return decodeCompatibilityPosition(
+			packedX,
+			packedY,
+			logicalLevel,
+			projectionId,
+			worldSpace,
+			nativeTerrainSnapshot).y;
+	}
+
 	String scopeIdentity() {
 		if (!established) {
 			return "none";
