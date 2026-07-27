@@ -1,9 +1,13 @@
 package com.openrsc.server.content.worldedit;
 
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
+import com.openrsc.server.model.Point;
+import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.world.coordinate.NativeLayeredGameObjectIdentity;
 import com.openrsc.server.io.WorldEditorTerrainArchive;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
@@ -45,6 +49,14 @@ public final class WorldEditorSessionManager {
 		new java.util.LinkedHashSet<WorldMapSectorId>();
 	private final Set<WorldMapSectorId> nativeTerrainGrowthSaved =
 		new java.util.LinkedHashSet<WorldMapSectorId>();
+	private final Map<NativeSceneryKey,NativeSceneryState> nativeSceneryBase =
+		new LinkedHashMap<NativeSceneryKey,NativeSceneryState>();
+	private final Map<NativeSceneryKey,NativeSceneryState> nativeSceneryOverlay =
+		new LinkedHashMap<NativeSceneryKey,NativeSceneryState>();
+	private final Map<NativeSceneryKey,NativeSceneryState> nativeScenerySaved =
+		new LinkedHashMap<NativeSceneryKey,NativeSceneryState>();
+	private final Set<NativeSceneryKey> nativeSceneryDirty =
+		new HashSet<NativeSceneryKey>();
 	private String nativeTerrainBaseManifestSha256;
 	public WorldEditorSessionManager() { this(null, new SecureRandom()); }
 	public WorldEditorSessionManager(WorldEditStorageContext storage) { this(storage, new SecureRandom()); }
@@ -276,6 +288,71 @@ public final class WorldEditorSessionManager {
 		return requested;
 	}
 
+	public synchronized GameObject placeNativeScenery(
+		Player player, int sceneryId, int x, int y) {
+		WorldLocation location = activeNativeSceneryLocation(player, x, y);
+		if (player.getWorld().getRegionManager().findInteractionScenery(
+				Point.location(x, y), player) != null) {
+			throw new IllegalArgumentException(
+				"There is already scenery in that spot.");
+		}
+		NativeSceneryKey key = new NativeSceneryKey(location);
+		captureNativeSceneryBase(key, null);
+		NativeSceneryState base = nativeSceneryBase.get(key);
+		String placementId = base == null
+			? nativeSceneryPlacementId(location) : base.placementId;
+		GameObject object = new GameObject(
+			player.getWorld(),
+			new GameObjectLoc(sceneryId, x, y, 0, 0));
+		object.setInitialWorldLocation(location);
+		NativeLayeredWorldPackage owner = nativeOwner(player, location);
+		player.getWorld().getRegionManager().markNativeLayeredPlacement(
+			object,
+			owner.getPackageId(),
+			placementId,
+			com.openrsc.server.model.world.region.RegionManager
+				.NATIVE_LAYERED_SCENERY_KIND);
+		player.getWorld().registerGameObject(object);
+		recordNativeScenery(key, NativeSceneryState.from(object));
+		return object;
+	}
+
+	public synchronized GameObject removeNativeScenery(
+		Player player, int x, int y) {
+		WorldLocation location = activeNativeSceneryLocation(player, x, y);
+		GameObject object =
+			player.getWorld().getRegionManager().findInteractionScenery(
+				Point.location(x, y), player);
+		NativeSceneryState current =
+			requireEditableNativeScenery(player, location, object);
+		NativeSceneryKey key = new NativeSceneryKey(location);
+		captureNativeSceneryBase(key, current);
+		player.getWorld().unregisterGameObject(object);
+		recordNativeScenery(key, null);
+		return object;
+	}
+
+	public synchronized GameObject rotateNativeScenery(
+		Player player, int x, int y, Integer requestedDirection) {
+		WorldLocation location = activeNativeSceneryLocation(player, x, y);
+		GameObject object =
+			player.getWorld().getRegionManager().findInteractionScenery(
+				Point.location(x, y), player);
+		NativeSceneryState current =
+			requireEditableNativeScenery(player, location, object);
+		NativeSceneryKey key = new NativeSceneryKey(location);
+		captureNativeSceneryBase(key, current);
+		int direction = requestedDirection == null
+			? (object.getDirection() + 1) % 8
+			: Math.floorMod(requestedDirection.intValue(), 8);
+		GameObject replacement = new GameObject(
+			player.getWorld(),
+			new GameObjectLoc(object.getID(), x, y, direction, 0));
+		player.getWorld().replaceGameObject(object, replacement);
+		recordNativeScenery(key, NativeSceneryState.from(replacement));
+		return replacement;
+	}
+
 	public synchronized WorldEditorLayeredTerrainJournal.SaveResult
 		saveNativeTerrainDraft(Player player) throws IOException {
 		if (!ownsActiveSession(player)) {
@@ -283,8 +360,9 @@ public final class WorldEditorSessionManager {
 				"An active world editor session owned by this administrator is required.");
 		}
 		if (nativeTerrainDirty.isEmpty()
-			&& nativeTerrainGrowth.equals(nativeTerrainGrowthSaved)) {
-			throw new IllegalStateException("Layered terrain draft is empty.");
+			&& nativeTerrainGrowth.equals(nativeTerrainGrowthSaved)
+			&& nativeSceneryDirty.isEmpty()) {
+			throw new IllegalStateException("Layered draft is empty.");
 		}
 		if (nativeTerrainBaseManifestSha256 == null) {
 			nativeOwner(player, player.getLayeredLocation());
@@ -309,17 +387,43 @@ public final class WorldEditorSessionManager {
 			sectors.add(new WorldEditorLayeredTerrainJournal.SectorGrowth(
 				sector.getLevel(), sector.getSectorX(), sector.getSectorY()));
 		}
+		List<WorldEditorLayeredTerrainJournal.SceneryEdit> scenery =
+			new ArrayList<WorldEditorLayeredTerrainJournal.SceneryEdit>(
+				nativeSceneryOverlay.size());
+		for (Map.Entry<NativeSceneryKey,NativeSceneryState> entry
+			: nativeSceneryOverlay.entrySet()) {
+			NativeSceneryKey key = entry.getKey();
+			NativeSceneryState target = entry.getValue();
+			NativeSceneryState persisted = target == null
+				? nativeSceneryBase.get(key) : target;
+			if (persisted == null) {
+				throw new IllegalStateException(
+					"Layered scenery removal has no persisted identity.");
+			}
+			scenery.add(new WorldEditorLayeredTerrainJournal.SceneryEdit(
+				target == null,
+				key.level,
+				key.x,
+				key.y,
+				persisted.placementId,
+				persisted.sceneryId,
+				persisted.direction));
+		}
 		WorldEditStorageContext paths = storage(player);
 		Path journal = paths.layeredTerrainDraftJournal();
 		paths.validateWorkingAuthoredFile(journal);
 		WorldEditorLayeredTerrainJournal.SaveResult saved =
 			WorldEditorLayeredTerrainJournal.save(
-				journal, nativeTerrainBaseManifestSha256, sectors, tiles);
+				journal, nativeTerrainBaseManifestSha256, sectors, tiles,
+				scenery);
 		nativeTerrainSaved.clear();
 		nativeTerrainSaved.putAll(nativeTerrainOverlay);
 		nativeTerrainDirty.clear();
 		nativeTerrainGrowthSaved.clear();
 		nativeTerrainGrowthSaved.addAll(nativeTerrainGrowth);
+		nativeScenerySaved.clear();
+		nativeScenerySaved.putAll(nativeSceneryOverlay);
+		nativeSceneryDirty.clear();
 		return saved;
 	}
 
@@ -333,6 +437,10 @@ public final class WorldEditorSessionManager {
 			if (!nativeTerrainGrowthSaved.contains(sector)) result++;
 		}
 		return result;
+	}
+
+	public synchronized int nativeSceneryDraftSize() {
+		return nativeSceneryDirty.size();
 	}
 
 	public synchronized int terrainDraftSize(){return terrainDraft.size()+nativeTerrainDraftSize();}
@@ -370,6 +478,63 @@ public final class WorldEditorSessionManager {
 			throw new IllegalArgumentException(
 				"Paint terrain on the currently active signed level.");
 		}
+	}
+	private WorldLocation activeNativeSceneryLocation(
+		Player player,int x,int y){
+		int level=player==null?0
+			:player.getLayeredLocation().getCoordinate().getLevel();
+		requireNativeTerrainAuthoring(player,level);
+		WorldLocation location=new WorldLocation(
+			player.getLayeredLocation().getWorldSpace(),
+			new WorldCoordinate(x,y,level));
+		nativeOwner(player,location).findTile(location)
+			.orElseThrow(()->new IllegalArgumentException(
+				"Scenery must be placed on allocated package terrain."));
+		return location;
+	}
+	private NativeSceneryState requireEditableNativeScenery(
+		Player player,WorldLocation location,GameObject object){
+		if(object==null)throw new IllegalArgumentException(
+			"There is no scenery at those coordinates.");
+		NativeLayeredGameObjectIdentity identity=
+			object.getLoc().getNativeLayeredGameObjectIdentity();
+		if(identity==null
+			||!"scenery".equals(identity.getKind())
+			||!location.equals(identity.getLocation())
+			||!player.getWorld().getRegionManager()
+				.isNativeLayeredGameObject(object)){
+			throw new IllegalArgumentException(
+				"Only package-owned scenery on this Builder-created level is editable.");
+		}
+		return NativeSceneryState.from(object);
+	}
+	private void captureNativeSceneryBase(
+		NativeSceneryKey key,NativeSceneryState state){
+		if(!nativeSceneryBase.containsKey(key)){
+			nativeSceneryBase.put(key,state);
+		}
+	}
+	private void recordNativeScenery(
+		NativeSceneryKey key,NativeSceneryState state){
+		NativeSceneryState base=nativeSceneryBase.get(key);
+		if(java.util.Objects.equals(base,state))nativeSceneryOverlay.remove(key);
+		else nativeSceneryOverlay.put(key,state);
+		NativeSceneryState target=nativeSceneryOverlay.containsKey(key)
+			?nativeSceneryOverlay.get(key):base;
+		NativeSceneryState saved=nativeScenerySaved.containsKey(key)
+			?nativeScenerySaved.get(key):base;
+		if(java.util.Objects.equals(target,saved))nativeSceneryDirty.remove(key);
+		else nativeSceneryDirty.add(key);
+	}
+	private static String nativeSceneryPlacementId(WorldLocation location){
+		WorldCoordinate coordinate=location.getCoordinate();
+		return "spoiled-milk.builder.scenery.l"
+			+signedToken(coordinate.getLevel())+".x"
+			+signedToken(coordinate.getX())+".y"
+			+signedToken(coordinate.getY());
+	}
+	private static String signedToken(int value){
+		return value<0?"m"+Long.toString(-(long)value):"p"+Integer.toString(value);
 	}
 	private NativeLayeredWorldPackage nativeOwner(Player player,WorldLocation location){
 		NativeLayeredWorldPackage owner=player.getWorld().getRegionManager()
@@ -452,6 +617,26 @@ public final class WorldEditorSessionManager {
 		NativeTileKey(WorldLocation location){worldSpace=location.getWorldSpace();WorldCoordinate coordinate=location.getCoordinate();level=coordinate.getLevel();x=coordinate.getX();y=coordinate.getY();}
 		@Override public boolean equals(Object other){if(this==other)return true;if(!(other instanceof NativeTileKey))return false;NativeTileKey key=(NativeTileKey)other;return level==key.level&&x==key.x&&y==key.y&&worldSpace.equals(key.worldSpace);}
 		@Override public int hashCode(){int result=worldSpace.hashCode();result=31*result+level;result=31*result+x;return 31*result+y;}
+	}
+	private static final class NativeSceneryKey {
+		final WorldSpaceId worldSpace;final int level,x,y;
+		NativeSceneryKey(WorldLocation location){worldSpace=location.getWorldSpace();WorldCoordinate coordinate=location.getCoordinate();level=coordinate.getLevel();x=coordinate.getX();y=coordinate.getY();}
+		@Override public boolean equals(Object other){if(this==other)return true;if(!(other instanceof NativeSceneryKey))return false;NativeSceneryKey key=(NativeSceneryKey)other;return level==key.level&&x==key.x&&y==key.y&&worldSpace.equals(key.worldSpace);}
+		@Override public int hashCode(){int result=worldSpace.hashCode();result=31*result+level;result=31*result+x;return 31*result+y;}
+	}
+	private static final class NativeSceneryState {
+		final String placementId;final int sceneryId,direction;
+		NativeSceneryState(String placementId,int sceneryId,int direction){this.placementId=placementId;this.sceneryId=sceneryId;this.direction=direction;}
+		static NativeSceneryState from(GameObject object){
+			NativeLayeredGameObjectIdentity identity=object.getLoc()
+				.getNativeLayeredGameObjectIdentity();
+			if(identity==null)throw new IllegalArgumentException(
+				"Native layered scenery identity is unavailable.");
+			return new NativeSceneryState(
+				identity.getPlacementId(),object.getID(),object.getDirection());
+		}
+		@Override public boolean equals(Object other){if(this==other)return true;if(!(other instanceof NativeSceneryState))return false;NativeSceneryState state=(NativeSceneryState)other;return sceneryId==state.sceneryId&&direction==state.direction&&placementId.equals(state.placementId);}
+		@Override public int hashCode(){int result=placementId.hashCode();result=31*result+sceneryId;return 31*result+direction;}
 	}
 	public static final class NativeTerrainSnapshot {
 		public final WorldLocation location;public final NativeLayeredTerrainTile tile;

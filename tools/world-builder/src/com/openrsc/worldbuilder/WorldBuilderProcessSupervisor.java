@@ -90,9 +90,10 @@ public final class WorldBuilderProcessSupervisor {
 				.commitIfPresentLocked(workspace);
 		if (committed != null) {
 			System.out.println(
-				"Committed layered Builder terrain draft: "
+				"Committed layered Builder draft: "
 					+ committed.tileCount + " tiles, "
-					+ committed.sectorCount + " sectors, manifest "
+					+ committed.sectorCount + " sectors, "
+					+ committed.sceneryCount + " scenery edits, manifest "
 					+ committed.manifestSha256.substring(0, 12));
 		}
 	}

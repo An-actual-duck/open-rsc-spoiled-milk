@@ -145,9 +145,10 @@ public final class Development implements CommandTrigger {
 		}
 		if (player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
 			&& isLayeredBuilderMutationCommand(command)
-			&& !(command.equalsIgnoreCase("saveworldedits")
-				&& "spoiled-milk-builder-draft".equals(
-					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE))) {
+			&& !("spoiled-milk-builder-draft".equals(
+					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)
+				&& (command.equalsIgnoreCase("saveworldedits")
+					|| isLayeredBuilderSceneryCommand(command)))) {
 			player.message(messagePrefix
 				+ "Layered package review is read-only; no world files were changed.");
 			return;
@@ -313,6 +314,24 @@ public final class Development implements CommandTrigger {
 			||normalized.equals("saveworldedits")
 			||normalized.equals("clearworldedits")
 			||normalized.equals("discardworldedits");
+	}
+
+	private static boolean isLayeredBuilderSceneryCommand(String command) {
+		String normalized=command==null?"":command.toLowerCase(java.util.Locale.ROOT);
+		return normalized.equals("removeobject")
+			||normalized.equals("robject")
+			||normalized.equals("removescenery")
+			||normalized.equals("rscenery")
+			||normalized.equals("createobject")
+			||normalized.equals("cobject")
+			||normalized.equals("addobject")
+			||normalized.equals("aobject")
+			||normalized.equals("createscenery")
+			||normalized.equals("cscenery")
+			||normalized.equals("addscenery")
+			||normalized.equals("ascenery")
+			||normalized.equals("rotateobject")
+			||normalized.equals("rotatescenery");
 	}
 
 	private static void layeredBuilderGoTo(
@@ -987,6 +1006,22 @@ public final class Development implements CommandTrigger {
 			player.message(messagePrefix + "Invalid scenery id");
 			return;
 		}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				GameObject newObject=player.getWorld().getServer()
+					.getWorldEditorSessions()
+					.placeNativeScenery(player,id,x,y);
+				rememberLastSceneryPlacement(player,id);
+				player.message(messagePrefix+"Added layered scenery: "
+					+newObject.getGameObjectDef().getName()+" with ID "
+					+newObject.getID()+" at "+newObject.getWorldLocation()
+					+". Save and close/reopen the Builder to commit.");
+			}catch(Exception failure){
+				player.message(messagePrefix+"Layered scenery placement refused: "
+					+failure.getMessage());
+			}
+			return;
+		}
 
 		final GameObject newObject = new GameObject(player.getWorld(), Point.location(x, y), id, 0, 0);
 
@@ -1128,6 +1163,20 @@ public final class Development implements CommandTrigger {
 			player.message(messagePrefix + "Invalid coordinates");
 			return;
 		}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				GameObject removed=player.getWorld().getServer()
+					.getWorldEditorSessions()
+					.removeNativeScenery(player,x,y);
+				player.message(messagePrefix+"Removed layered scenery: "
+					+removed.getGameObjectDef().getName()+" with ID "
+					+removed.getID()+". Save and close/reopen the Builder to commit.");
+			}catch(Exception failure){
+				player.message(messagePrefix+"Layered scenery removal refused: "
+					+failure.getMessage());
+			}
+			return;
+		}
 
 		final Point objectLocation = Point.location(x, y);
 		final GameObject object = player.getViewArea().getGameObject(objectLocation);
@@ -1250,15 +1299,6 @@ public final class Development implements CommandTrigger {
 			return;
 		}
 
-		final Point objectLocation = Point.location(x, y);
-		final GameObject object = player.getViewArea().getGameObject(objectLocation);
-
-		if(object == null)
-		{
-			player.message(messagePrefix + "There is no object at coordinates " + objectLocation);
-			return;
-		}
-
 		int direction = -1;
 		if(args.length >= 3) {
 			try {
@@ -1267,10 +1307,31 @@ public final class Development implements CommandTrigger {
 				player.message(badSyntaxPrefix + command.toUpperCase() + " (x) (y) (direction)");
 				return;
 			}
-		} else {
-			direction = object.getDirection() + 1;
+		}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				GameObject rotated=player.getWorld().getServer()
+					.getWorldEditorSessions().rotateNativeScenery(
+						player,x,y,direction<0?null:Integer.valueOf(direction));
+				player.message(messagePrefix+"Rotated layered scenery: "
+					+rotated.getGameObjectDef().getName()+" to rotation "
+					+rotated.getDirection()+". Save and close/reopen the Builder to commit.");
+			}catch(Exception failure){
+				player.message(messagePrefix+"Layered scenery rotation refused: "
+					+failure.getMessage());
+			}
+			return;
 		}
 
+		final Point objectLocation = Point.location(x, y);
+		final GameObject object = player.getViewArea().getGameObject(objectLocation);
+
+		if(object == null)
+		{
+			player.message(messagePrefix + "There is no object at coordinates " + objectLocation);
+			return;
+		}
+		if(direction<0)direction=object.getDirection()+1;
 		direction %= 8;
 		direction = Math.abs(direction);
 
@@ -1348,12 +1409,13 @@ public final class Development implements CommandTrigger {
 		int terrainEdits=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSize();
 		int terrainGrowth=player.getWorld().getServer().getWorldEditorSessions().nativeTerrainGrowthDraftSize();
 		int terrainSectors=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSectorCount();
-		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0) {
+		int nativeScenery=player.getWorld().getServer().getWorldEditorSessions().nativeSceneryDraftSize();
+		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0&&nativeScenery==0) {
 			player.message(messagePrefix + "No pending world edits.");
 			return;
 		}
 
-		player.message(messagePrefix + "Pending world edits: terrain " + terrainEdits+" tiles / "+terrainGrowth+" new sectors / "+terrainSectors+" affected sectors, scenery " + edits.size()
+		player.message(messagePrefix + "Pending world edits: terrain " + terrainEdits+" tiles / "+terrainGrowth+" new sectors / "+terrainSectors+" affected sectors, scenery " + (edits.size()+nativeScenery)
 			+ ", NPCs " + npcEdits.size() + ".");
 		int shown = 0;
 		for (WorldSceneryEditFiles.Edit edit : edits) {
@@ -1384,24 +1446,26 @@ public final class Development implements CommandTrigger {
 			npcEdits = new ArrayList<WorldNpcEditFiles.Edit>(PENDING_NPC_EDITS.values());
 		}
 
-		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int terrainEdits=editor.terrainDraftSize();int terrainGrowth=editor.nativeTerrainGrowthDraftSize();
-		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0) {
+		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int terrainEdits=editor.terrainDraftSize();int terrainGrowth=editor.nativeTerrainGrowthDraftSize();int nativeScenery=editor.nativeSceneryDraftSize();
+		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0&&nativeScenery==0) {
 			player.message(messagePrefix + "No pending world edits to save.");
 			return;
 		}
-		if((terrainEdits>0||terrainGrowth>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the terrain draft.");return;}
+		if((terrainEdits>0||terrainGrowth>0||nativeScenery>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the layered draft.");return;}
 		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
 			try{
 				com.openrsc.server.content.worldedit.WorldEditorLayeredTerrainJournal.SaveResult saved=
 					editor.saveNativeTerrainDraft(player);
-				int total=saved.tileCount+saved.sectorCount;
+				int total=saved.tileCount+saved.sectorCount+saved.sceneryCount;
 				player.message(messagePrefix+"Saved "+total+" world edits.");
-				player.message(messagePrefix+"Layered terrain journal: "+saved.tileCount
-					+" tiles, "+saved.sectorCount+" new sectors. Close and reopen "
+				player.message(messagePrefix+"Layered draft journal: "+saved.tileCount
+					+" tiles, "+saved.sectorCount+" new sectors, "
+					+saved.sceneryCount+" scenery edits. Close and reopen "
 					+"the Builder to commit and reload the working package.");
-				LOGGER.info(player.getUsername()+" saved layered terrain draft journal "
+				LOGGER.info(player.getUsername()+" saved layered draft journal "
 					+saved.journal+" with "+saved.tileCount+" tiles and "
-					+saved.sectorCount+" sectors");
+					+saved.sectorCount+" sectors and "+saved.sceneryCount
+					+" scenery edits");
 			}catch(Exception failure){
 				LOGGER.error(failure);
 				player.message(messagePrefix+"Failed to save world edits: "+failure.getMessage());

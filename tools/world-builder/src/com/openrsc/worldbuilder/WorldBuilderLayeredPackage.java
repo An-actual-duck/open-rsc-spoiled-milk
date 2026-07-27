@@ -225,10 +225,10 @@ final class WorldBuilderLayeredPackage {
 			String path = normalizedRelative(string(placement, "path"));
 			String sha256 = hash(placement, "sha256");
 			registerReference(root, referenced, path, sha256);
-			int placementCount = validatePlacementPayload(
+			PlacementCounts placementCounts = validatePlacementPayload(
 				requiredFile(root, path), worldSpace, level);
 			placementRecords.add(new PlacementRecord(
-				id, level, path, sha256, placementCount));
+				id, level, path, sha256, placementCounts));
 		}
 
 		List<FileRecord> files = inventory(root);
@@ -342,12 +342,15 @@ final class WorldBuilderLayeredPackage {
 			int level = levelValue.intValue();
 			PlacementRecord placement =
 				currentPlacements.get(Integer.valueOf(level));
-			if (placement == null || placement.placementCount != 0
+			if (placement == null
+				|| placement.npcCount != 0
+				|| placement.groundItemCount != 0
+				|| placement.boundaryCount != 0
 				|| !placement.path.equals(
 					"placements/global/l" + signedToken(level) + ".json")) {
 				throw new WorldBuilderDiscoveryException(
 					"Builder-created level " + level
-						+ " must have one empty v3 placement set.");
+						+ " may contain scenery only in its v3 placement set.");
 			}
 			List<TerrainRecord> starter = new ArrayList<TerrainRecord>();
 			for (TerrainRecord record : terrainRecords) {
@@ -434,7 +437,7 @@ final class WorldBuilderLayeredPackage {
 			: "p" + Integer.toString(value);
 	}
 
-	private static int validatePlacementPayload(
+	private static PlacementCounts validatePlacementPayload(
 		Path path, String worldSpace, int level)
 		throws IOException, WorldBuilderDiscoveryException {
 		Map<String,Object> payload = WorldBuilderJsonDocuments.readObject(path);
@@ -448,16 +451,18 @@ final class WorldBuilderLayeredPackage {
 			throw new WorldBuilderDiscoveryException(
 				"Layered placement payload identity is invalid: " + path);
 		}
-		long count = 0L;
-		for (String family : Arrays.asList(
-			"npcs", "groundItems", "scenery", "boundaries")) {
-			count += array(payload, family).size();
-		}
+		int npcCount = array(payload, "npcs").size();
+		int groundItemCount = array(payload, "groundItems").size();
+		int sceneryCount = array(payload, "scenery").size();
+		int boundaryCount = array(payload, "boundaries").size();
+		long count = (long)npcCount + groundItemCount
+			+ sceneryCount + boundaryCount;
 		if (count > 65536L) {
 			throw new WorldBuilderDiscoveryException(
 				"Layered placement payload exceeds 65536 entries: " + path);
 		}
-		return (int)count;
+		return new PlacementCounts(
+			npcCount, groundItemCount, sceneryCount, boundaryCount);
 	}
 
 	private static void registerReference(
@@ -671,15 +676,23 @@ final class WorldBuilderLayeredPackage {
 		final String path;
 		final String sha256;
 		final int placementCount;
+		final int npcCount;
+		final int groundItemCount;
+		final int sceneryCount;
+		final int boundaryCount;
 
 		PlacementRecord(
 			String id, int level, String path, String sha256,
-			int placementCount) {
+			PlacementCounts counts) {
 			this.id = id;
 			this.level = level;
 			this.path = path;
 			this.sha256 = sha256;
-			this.placementCount = placementCount;
+			this.npcCount = counts.npcCount;
+			this.groundItemCount = counts.groundItemCount;
+			this.sceneryCount = counts.sceneryCount;
+			this.boundaryCount = counts.boundaryCount;
+			this.placementCount = counts.total();
 		}
 
 		boolean same(PlacementRecord other) {
@@ -687,6 +700,28 @@ final class WorldBuilderLayeredPackage {
 				&& level == other.level && path.equals(other.path)
 				&& sha256.equals(other.sha256)
 				&& placementCount == other.placementCount;
+		}
+	}
+
+	private static final class PlacementCounts {
+		final int npcCount;
+		final int groundItemCount;
+		final int sceneryCount;
+		final int boundaryCount;
+
+		PlacementCounts(
+			int npcCount,
+			int groundItemCount,
+			int sceneryCount,
+			int boundaryCount) {
+			this.npcCount = npcCount;
+			this.groundItemCount = groundItemCount;
+			this.sceneryCount = sceneryCount;
+			this.boundaryCount = boundaryCount;
+		}
+
+		int total() {
+			return npcCount + groundItemCount + sceneryCount + boundaryCount;
 		}
 	}
 

@@ -1114,7 +1114,8 @@ ancestry, adds arbitrary signed level metadata, one empty v3 placement set,
 and a deterministic void-backed 3-by-3 sector starter allocation with only a
 3-by-3 tile walkable anchor pad, then validates every path/hash/count before a
 rollback-protected working-package swap. The
-Builder-only runtime profile accepts additive terrain-only descendants and is
+Builder-only runtime profile accepts exact source placements plus additive
+terrain and scenery-only new-level descendants and is
 explicitly refused outside World Builder; ordinary Spoiled Milk remains pinned
 to its exact reviewed manifest. The first private draft is level `-3` at
 `(140,640)`. The owner verified signed navigation, movement across sector and
@@ -1130,7 +1131,10 @@ deterministic journal. A clean close lets the launcher materialize that journal
 through a source-reverified copy-on-write package swap, and the next launch
 reopens the durable result. `::buildergrow x y (level)` deliberately allocates
 one void-backed edge-adjacent sector; gaps, duplicates, edits to source levels, more
-than 4,096 tiles, or more than 64 new sectors refuse. Placement authoring,
+than 4,096 tiles, or more than 64 new sectors refuse. Scenery place, rotate,
+and remove now form the next bounded owner-review slice on Builder-created
+levels, using stable `(level,x,y)` identities and the same atomic clean-close
+journal as terrain. NPCs, ground items, boundaries, source-level placements,
 terrain deletion, layered export, and target-game mutation remain locked
 behind later gates.
 
@@ -1577,6 +1581,7 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Make scenery the first native placement family authored on Builder-created levels and commit it atomically with terrain. | Implemented for focused owner review: Place/Rotate/Remove reuse native layered membership/collision transactions, deterministic slot identities survive rotation and replacement, the v2 bounded journal combines terrain and scenery in one clean-close copy-on-write swap, and accepted source placements plus NPC/ground-item/boundary families remain locked |
 | 2026-07-27 | Make unallocated and newly allocated Builder space explicit void, retaining only a minimal walkable Create Level anchor. | Owner-accepted. Missing sectors and new sector payloads use blocking/invisible overlay `8` over Floor Color `1`; Create Level clears only a centered 3-by-3 tile pad. No water appeared, void inspection/collision were correct, live-painted floor became walkable, paints persisted, allocated void accepted navigation/editing, and unallocated terrain refused without location mutation |
 | 2026-07-27 | Keep the first live layered terrain writer restricted to Builder-created levels and commit through the isolated working package only. | Implemented for focused owner review: terrain paint is immediately visible in the Builder, Save writes a deterministic bounded journal, normal close/reopen performs a validated copy-on-write package commit, and explicit edge-adjacent sector growth is available through `::buildergrow`; source levels, placements, export, and target files remain locked |
 | 2026-07-27 | Make arbitrary signed depth a transactional Builder authoring action, not an implicit teleport into absent terrain. | The engine/package format already accepts data-declared `-3`, `+3`, and later levels. The next native-writer slice creates level metadata, safe initial terrain, and an empty placement set atomically in the isolated workspace; undeclared destinations continue to refuse |

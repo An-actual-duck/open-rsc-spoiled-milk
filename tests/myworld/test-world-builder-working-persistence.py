@@ -150,6 +150,42 @@ public final class WorldBuilderWorkingPersistenceHarness {
         require(!Files.exists(
             layeredJournal.resolveSibling("terrain-draft-v1.tsv.tmp")),
             "layered journal staging file retained");
+        layered = WorldEditorLayeredTerrainJournal.save(
+            layeredJournal,
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.SectorGrowth(-3, 4, 13)),
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.TileEdit(
+                    -3, 140, 640, 7, 8, 0, 0, 0, 0, 0)),
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.SceneryEdit(
+                    false, -3, 142, 640,
+                    "spoiled-milk.builder.scenery.lm3.xp142.yp640",
+                    4, 1),
+                new WorldEditorLayeredTerrainJournal.SceneryEdit(
+                    false, -3, 141, 640,
+                    "spoiled-milk.builder.scenery.lm3.xp141.yp640",
+                    3, 0)));
+        require(layered.tileCount == 1 && layered.sectorCount == 1
+                && layered.sceneryCount == 2,
+            "combined layered journal counts");
+        journalText = new String(
+            Files.readAllBytes(layeredJournal), "US-ASCII");
+        require(journalText.startsWith("world-builder-layered-draft-v2\n")
+                && journalText.contains("scenery-count\t2\n")
+                && journalText.indexOf("scenery\tupsert\t-3\t141\t640")
+                    < journalText.indexOf("scenery\tupsert\t-3\t142\t640"),
+            "combined layered journal is not stable and deterministic");
+        layered = WorldEditorLayeredTerrainJournal.save(
+            layeredJournal,
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.SectorGrowth>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.TileEdit>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.SceneryEdit>emptyList());
+        require(layered.tileCount == 0 && layered.sectorCount == 0
+                && layered.sceneryCount == 0 && !Files.exists(layeredJournal),
+            "fully reverted layered draft retained a stale journal");
         System.out.println("working-persistence-ok");
     }
 }

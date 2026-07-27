@@ -18598,9 +18598,10 @@ private environment should validate at least:
 | 2026-07-25 | Fully accept Phase 5 Authority Milestone D. | The final normal logout completed its save, reconnect restored exact `WorldLocation(global,120,648,0)` with `rewriteRequired=false`, and `::layerloc` confirmed level 0. All automated and owner gates now pass for the bounded synthetic deep room: scope isolation, movement/collision, NPC/item interaction, level `-2` persistence, explicit exit, death recovery, and recovered-surface persistence. No production archive, placement, live data, or public server was modified |
 | 2026-07-25 | Correct the first Milestone D owner route after stopping at step 6. | Owner evidence proved that the borrowed compatibility rectangle was water: click teleport could collect the deep item, ordinary walking and Man interaction failed, and logout/reconnect returned to the prior surface save. Logs established a second exact cause: the legacy-only save snapshot decoded the `(450,600)` receipt as level 0, rejected the authoritative level `-2` mirror, and rolled back every deep autosave. Replace terrain borrowing with a bounded runtime-only flat overlay-0 room, suppress borrowed upper-plane geometry, resolve deep path/collision through that room, and capture named-projection persistence from the authoritative layered location plus its checked receipt. Production archives, placements, surface terrain, live data, and the public server remain untouched; corrected owner acceptance is pending |
 | 2026-07-26 | Begin the signed-layer World Builder adapter with logical coordinate presentation. | Implemented the first review-only slice: strict discovery accepts only the exact Spoiled Milk `0.2.0` package and profile, copies and fingerprints all 1,776 package files into isolated working/source trees, launches the package under complete layered authority, exposes signed `(x,y,level)` navigation and native terrain inspection, changes the ordinary HUD to logical coordinates, and blocks editing, saving, and export in both client and server boundaries. The private Builder auto-login and exact package load pass; focused owner visual/navigation acceptance remains pending before the native writer slice |
-| 2026-07-27 | Implement and accept the first workspace-owned native draft transaction. | Offline `create-level` takes the Builder workspace lock, revalidates the immutable accepted source, stages a complete descendant, adds arbitrary signed level metadata, nine raw sectors around the geographic anchor, and one empty v3 placement set, then verifies all paths, hashes, counts, source ancestry, and restart identity before a rollback-protected package swap. The first flat starter proved the transaction and was later refined to overlay-8 void plus a 3-by-3 tile anchor pad. A Builder-only runtime profile accepts the additive terrain-only descendant while ordinary Spoiled Milk remains pinned to its exact reviewed manifest and non-Builder servers refuse the draft profile |
+| 2026-07-27 | Implement and accept the first workspace-owned native draft transaction. | Offline `create-level` takes the Builder workspace lock, revalidates the immutable accepted source, stages a complete descendant, adds arbitrary signed level metadata, nine raw sectors around the geographic anchor, and one empty v3 placement set, then verifies all paths, hashes, counts, source ancestry, and restart identity before a rollback-protected package swap. The first flat starter proved the transaction and was later refined to overlay-8 void plus a 3-by-3 tile anchor pad. A Builder-only runtime profile accepts exact source placements plus additive terrain and scenery-only new-level descendants while ordinary Spoiled Milk remains pinned to its exact reviewed manifest and non-Builder servers refuse the draft profile |
 | 2026-07-27 | Make the first live layered terrain writer a bounded working-copy transaction restricted to Builder-created levels. | Implemented and owner-validated for live paint, deterministic Save/clean-close commit, restart persistence, source-level refusal, placement locks, and edge-sector crossing. Accepted source levels, export, target files, and ordinary servers remain unchanged. The route exposed one follow-up: absent terrain still looked like distant water and broad flat-filled allocations are undesirable authoring defaults |
 | 2026-07-27 | Represent unallocated and newly allocated Builder terrain as explicit overlay-8 void, with only a minimal Create Level anchor pad. | Owner-accepted: the 3-by-3 starter sector allocation and later edge-growth sectors use Floor Color `1` plus blocking/invisible Floor Texture `8`; Create Level clears a centered 3-by-3 tile pad; no water appeared, void remained blocked and inspectable, painting revealed immediately walkable floor, saved paints survived restart, allocated void accepted navigation/editing, and unallocated terrain refused without moving the player |
+| 2026-07-27 | Make scenery the first native placement family authored on Builder-created levels and commit it atomically with terrain. | Implemented for focused owner review: Scenery Place/Rotate/Remove use stable `(level,x,y)` placement identities and native spatial/collision transactions; a backward-compatible v2 journal combines terrain, growth, and scenery in one clean-close copy-on-write package swap; accepted source placements and all NPC, ground-item, and boundary editing remain locked |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -18853,15 +18854,19 @@ The source package, source inventory, and target game are verified before and
 after the transaction. Working drafts must retain every accepted source level,
 terrain identity, placement set, path, and payload hash. Every additional
 level starts with one contiguous nine-sector allocation and one empty placement
-set, then may grow only through edge-connected Builder transactions. Duplicate
+set, then may grow only through edge-connected Builder transactions. Later
+Builder-owned transactions may add scenery to that new level without changing
+the accepted source placement sets. Duplicate
 levels, active Builder
 sessions, unsafe paths, source drift, malformed hashes, partial terrain, or
-content-bearing new levels refuse before publication.
+new levels containing NPC, ground-item, or boundary placements refuse before
+publication.
 
 Empty v3 placement payloads are now an explicit format capability; v1 and v2
 retain their non-empty rule. Runtime consumption uses the new
-`spoiled-milk-builder-draft` profile, which accepts only the original placement
-totals plus additive terrain/empty levels. `WorldBuilderMode` refuses that
+`spoiled-milk-builder-draft` profile, which accepts the exact original
+per-level placement-family totals plus additive terrain and scenery-only new
+levels. `WorldBuilderMode` refuses that
 profile outside the isolated Builder. The ordinary
 `spoiled-milk-replacement` profile remains pinned to the exact accepted
 manifest, so this change cannot silently broaden a normal or live server.
@@ -18916,9 +18921,9 @@ close, and reopen. This preserves 48-by-48 as a sparse storage/authoring page,
 not a visible loading boundary or fixed world-size limit.
 
 The source package, target private-server tree, placement sets, and accepted
-source-level payloads remain byte-identical. Placement authoring, terrain
-deletion, native export, and target-game import remain locked and should
-follow only after this terrain persistence route is visually accepted.
+source-level payloads remain byte-identical. Terrain deletion, native export,
+and target-game import remain locked and should follow only after bounded
+authoring routes are visually accepted.
 
 The first owner route accepted the transaction itself. One Floor Color `40`
 tile at `(122,648,-3)` persisted exactly through clean shutdown/reopen, one
@@ -18953,6 +18958,33 @@ and confirmed the saved tiles after restart. Navigation to allocated
 `(200,640,-3)` succeeded and its void could be painted and traversed;
 navigation to unallocated `(240,640,-3)` visibly refused and retained the
 prior location. The additional owner-painted tiles were intentional.
+
+The next bounded authoring slice now enables **scenery only** on
+Builder-created levels and is awaiting focused owner acceptance. Place, rotate,
+and remove use the existing Scenery controls, but the server independently
+requires an active isolated Builder session, allocated package terrain, a
+non-source signed level, and native package ownership. NPCs, ground items,
+boundaries, accepted source levels, export, and target-game mutation remain
+locked.
+
+New scenery receives a deterministic placement identity derived from
+`(level,x,y)`. Rotation retains that identity; removing and re-adding a
+pre-existing draft object also retains its slot identity. Live registration,
+replacement, and removal reuse the native layered object transaction, so
+spatial membership and exact collision footprints change together and never
+enter a packed legacy Region.
+
+New saves use the backward-compatible v2 form of the existing bounded draft
+journal. Terrain tiles, sector growth, and scenery operations are sorted and
+committed in one clean-close copy-on-write package swap; there is no second
+placement transaction that could partially publish. Reverting all saved
+changes to the current manifest removes the pending journal. The launcher
+updates only the created level's v3 placement payload and its manifest hash,
+then revalidates source ancestry, scenery-only family restrictions, terrain
+coverage, payload identity, and the installed working review before deleting
+the journal. Automated coverage proves a combined terrain/scenery commit,
+restart visibility, identity-preserving rotation, exact removal, stable
+ordering, stale-match refusal, and unchanged accepted source payloads.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first

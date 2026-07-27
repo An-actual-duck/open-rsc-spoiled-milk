@@ -196,11 +196,11 @@ public enum NativeLayeredWorldRuntimeProfile {
 			|| loaded.getPlacementSetCount() != loaded.getLevelCount()
 			|| loaded.getNpcPlacementCount() != 3775
 			|| loaded.getGroundItemPlacementCount() != 882
-			|| loaded.getSceneryPlacementCount() != 27886
+			|| loaded.getSceneryPlacementCount() < 27886
 			|| loaded.getBoundaryPlacementCount() != 972) {
 			throw new IllegalStateException(
 				"The spoiled-milk-builder-draft profile requires an additive "
-					+ "terrain-only descendant of the accepted Spoiled Milk package");
+					+ "terrain/scenery descendant of the accepted Spoiled Milk package");
 		}
 		for (int level : new int[] {-1, 0, 1, 2}) {
 			if (!loaded.declaresLevel(WorldSpaceId.GLOBAL, level)) {
@@ -218,10 +218,40 @@ public enum NativeLayeredWorldRuntimeProfile {
 					"The Spoiled Milk Builder draft requires one global v3 "
 						+ "placement set per declared level");
 			}
+			if (set.getLevel() == -1) {
+				requireBuilderSourcePlacementCounts(set, 1188, 262, 4374, 165);
+			} else if (set.getLevel() == 0) {
+				requireBuilderSourcePlacementCounts(set, 2386, 535, 22234, 677);
+			} else if (set.getLevel() == 1) {
+				requireBuilderSourcePlacementCounts(set, 164, 63, 1079, 94);
+			} else if (set.getLevel() == 2) {
+				requireBuilderSourcePlacementCounts(set, 37, 22, 199, 36);
+			} else if (!set.getNpcs().isEmpty()
+				|| !set.getGroundItems().isEmpty()
+				|| !set.getBoundaries().isEmpty()) {
+				throw new IllegalStateException(
+					"Builder-created levels may contain scenery placements only");
+			}
 		}
 		if (placementLevels.size() != loaded.getLevelCount()) {
 			throw new IllegalStateException(
 				"The Spoiled Milk Builder draft placement levels are incomplete");
+		}
+	}
+
+	private static void requireBuilderSourcePlacementCounts(
+		NativeLayeredPlacementSet set,
+		int npcCount,
+		int groundItemCount,
+		int sceneryCount,
+		int boundaryCount) {
+		if (set.getNpcs().size() != npcCount
+			|| set.getGroundItems().size() != groundItemCount
+			|| set.getScenery().size() != sceneryCount
+			|| set.getBoundaries().size() != boundaryCount) {
+			throw new IllegalStateException(
+				"The Spoiled Milk Builder draft changed accepted placements "
+					+ "on global level " + set.getLevel());
 		}
 	}
 

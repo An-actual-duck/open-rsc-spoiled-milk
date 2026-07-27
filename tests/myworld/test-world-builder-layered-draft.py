@@ -235,6 +235,116 @@ public final class WorldBuilderLayeredDraftHarness {
             terrainRestart.manifestSha256),
             "terrain manifest changed across reopen");
 
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        String placementId =
+            "spoiled-milk.builder.scenery.lm3.xp141.yp640";
+        String combinedDraft =
+            "world-builder-layered-draft-v2\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "tile-count\t1\n"
+            + "sector-count\t0\n"
+            + "scenery-count\t1\n"
+            + "tile\t-3\t141\t641\t0\t1\t0\t0\t0\t0\t0\n"
+            + "scenery\tupsert\t-3\t141\t640\t"
+            + placementId + "\t3\t0\n";
+        Files.write(journal, combinedDraft.getBytes(StandardCharsets.US_ASCII));
+        WorldBuilderLayeredTerrainDraftJournal.CommitResult combinedCommit =
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        require(combinedCommit.tileCount == 1
+                && combinedCommit.sceneryCount == 1,
+            "combined terrain/scenery journal commit");
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        draft.requireTerrainDraftDescendant(accepted);
+        WorldBuilderLayeredPackage.PlacementRecord authored = null;
+        for (WorldBuilderLayeredPackage.PlacementRecord record
+            : draft.placementRecords) {
+            if (record.level == -3) authored = record;
+        }
+        require(authored != null && authored.sceneryCount == 1
+                && authored.npcCount == 0
+                && authored.groundItemCount == 0
+                && authored.boundaryCount == 0,
+            "new-level scenery-only placement payload");
+        Path authoredPayload = working.resolve(
+            "placements/global/lm3.json");
+        String authoredText = new String(
+            Files.readAllBytes(authoredPayload), StandardCharsets.UTF_8);
+        require(authoredText.contains("\"placementId\": \"" + placementId + "\"")
+                && authoredText.contains("\"sceneryId\": 3"),
+            "authored scenery payload");
+        require(WorldBuilderLayeredReview.readIfPresent(workspace)
+                .manifestSha256.equals(combinedCommit.manifestSha256),
+            "combined commit changed across reopen");
+
+        String rotateDraft =
+            "world-builder-layered-draft-v2\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "tile-count\t0\n"
+            + "sector-count\t0\n"
+            + "scenery-count\t1\n"
+            + "scenery\tupsert\t-3\t141\t640\t"
+            + placementId + "\t3\t1\n";
+        Files.write(journal, rotateDraft.getBytes(StandardCharsets.US_ASCII));
+        WorldBuilderLayeredTerrainDraftJournal.CommitResult rotateCommit =
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        require(rotateCommit.sceneryCount == 1,
+            "scenery rotation journal commit");
+        authoredText = new String(
+            Files.readAllBytes(authoredPayload), StandardCharsets.UTF_8);
+        require(authoredText.contains("\"direction\": 1")
+                && authoredText.contains("\"placementId\": \"" + placementId + "\""),
+            "rotation retained scenery identity");
+
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        String staleRemoveDraft =
+            "world-builder-layered-draft-v2\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "tile-count\t0\n"
+            + "sector-count\t0\n"
+            + "scenery-count\t1\n"
+            + "scenery\tremove\t-3\t141\t640\t"
+            + placementId + "\t3\t0\n";
+        Files.write(
+            journal, staleRemoveDraft.getBytes(StandardCharsets.US_ASCII));
+        boolean staleRemovalRefused = false;
+        try {
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        } catch (WorldBuilderDiscoveryException expected) {
+            staleRemovalRefused = expected.getMessage().contains(
+                "no longer matches");
+        }
+        require(staleRemovalRefused && Files.exists(journal),
+            "stale scenery removal refusal");
+        require(draft.manifestSha256.equals(
+            WorldBuilderLayeredPackage.discoverDraft(working).manifestSha256),
+            "stale scenery removal changed working package");
+
+        String removeDraft =
+            "world-builder-layered-draft-v2\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "tile-count\t0\n"
+            + "sector-count\t0\n"
+            + "scenery-count\t1\n"
+            + "scenery\tremove\t-3\t141\t640\t"
+            + placementId + "\t3\t1\n";
+        Files.write(journal, removeDraft.getBytes(StandardCharsets.US_ASCII));
+        WorldBuilderLayeredTerrainDraftJournal.CommitResult removeCommit =
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        require(removeCommit.sceneryCount == 1,
+            "scenery removal journal commit");
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        authored = null;
+        for (WorldBuilderLayeredPackage.PlacementRecord record
+            : draft.placementRecords) {
+            if (record.level == -3) authored = record;
+        }
+        require(authored != null && authored.placementCount == 0,
+            "scenery removal restored empty placement payload");
+
         String refusedSourceEdit =
             "world-builder-layered-terrain-draft-v1\n"
             + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"

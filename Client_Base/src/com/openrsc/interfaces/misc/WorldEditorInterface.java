@@ -92,9 +92,9 @@ public final class WorldEditorInterface extends NCustomComponent {
 	public boolean isInspecting(){return isEditorOpen()&&mode==Mode.INSPECT;}
 	public boolean isNavigating(){return isEditorOpen()&&mode==Mode.NAVIGATE;}
 	public boolean isTerrainPainting(){return isEditorOpen()&&(!isLayeredReview()||isLayeredTerrainDraft())&&mode==Mode.TERRAIN;}
-	public boolean isSceneryPlacing(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.PLACE;}
-	public boolean isSceneryRotating(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.ROTATE;}
-	public boolean isSceneryRemoving(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.REMOVE;}
+	public boolean isSceneryPlacing(){return isEditorOpen()&&(!isLayeredReview()||isLayeredSceneryDraftLevel())&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.PLACE;}
+	public boolean isSceneryRotating(){return isEditorOpen()&&(!isLayeredReview()||isLayeredSceneryDraftLevel())&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.ROTATE;}
+	public boolean isSceneryRemoving(){return isEditorOpen()&&(!isLayeredReview()||isLayeredSceneryDraftLevel())&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.REMOVE;}
 	public boolean isNpcPlacing(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.NPC&&npcTool==NpcTool.PLACE;}
 	public boolean isNpcRemoving(){return isEditorOpen()&&!isLayeredReview()&&mode==Mode.NPC&&npcTool==NpcTool.REMOVE;}
 	public int getSceneryId(){return sceneryId;}
@@ -231,9 +231,9 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 
 	private void selectMode(Mode selected){
-		if(isLayeredReview()&&((selected==Mode.TERRAIN&&!isLayeredTerrainDraft())||selected==Mode.SCENERY||selected==Mode.NPC)){
+		if(isLayeredReview()&&((selected==Mode.TERRAIN&&!isLayeredTerrainDraft())||(selected==Mode.SCENERY&&!isLayeredSceneryDraftLevel())||selected==Mode.NPC)){
 			mode=Mode.NAVIGATE;rejectLayeredReviewMutation(isLayeredTerrainDraft()
-				?"This draft currently permits terrain editing only; placement editing remains locked."
+				?"Scenery editing is limited to Builder-created levels; NPC and boundary editing remain locked."
 				:"Layered package review is read-only; create a draft level before editing terrain.");
 			coordinateFocus=0;toolbar.open(WorldEditorToolbarState.Flyout.NAVIGATE);updatePresentationBounds();return;
 		}
@@ -344,7 +344,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void setFocusedText(String value){switch(coordinateFocus){case 1:teleportX=value;break;case 2:teleportY=value;break;case 13:teleportLevel=value;break;case 3:sceneryIdText=value;break;case 4:npcIdText=value;break;case 5:npcRadiusText=value;break;case 6:terrainElevationText=value;break;case 7:terrainFloorColorText=value;break;case 8:terrainFloorTextureText=value;break;case 9:terrainRoofText=value;break;case 10:terrainNorthWallText=value;break;case 11:terrainEastWallText=value;break;default:terrainDiagonalWallText=value;}}
 	private void focusNumber(int focus){coordinateFocus=focus;replaceFocusedText=true;}
 	private void rejectLayeredReviewMutation(String message){inspectionStatus=message;mc.showWorldEditorStatus(message);}
-	private void requestWorldEditSave(){if(isLayeredReview()&&!isLayeredTerrainDraft()){rejectLayeredReviewMutation("Layered package review is read-only; no files were changed.");saveRequested=false;return;}if(terrainStrokeTiles!=null||terrainDragActive||terrainDragReleasePending){inspectionStatus="Wait for the active terrain stroke to finish before saving.";return;}mc.sendCommandString("saveworldedits");saveRequested=true;closeArmed=false;inspectionStatus=isLayeredTerrainDraft()?"Terrain draft save requested; it will commit to working/ when this Builder closes.":"World edit save requested; see game messages for verification.";}
+	private void requestWorldEditSave(){if(isLayeredReview()&&!isLayeredTerrainDraft()){rejectLayeredReviewMutation("Layered package review is read-only; no files were changed.");saveRequested=false;return;}if(terrainStrokeTiles!=null||terrainDragActive||terrainDragReleasePending){inspectionStatus="Wait for the active terrain stroke to finish before saving.";return;}mc.sendCommandString("saveworldedits");saveRequested=true;closeArmed=false;inspectionStatus=isLayeredTerrainDraft()?"Layered draft save requested; it will commit to working/ when this Builder closes.":"World edit save requested; see game messages for verification.";}
 	private void requestEditorClose(){
 		if(unsavedChanges&&!closeArmed){closeArmed=true;inspectionStatus="Unsaved edits remain. Select Close again to exit without saving.";return;}
 		setTerrainBuildMode(false);mc.setWorldEditorNavigateClickTeleport(false);send(1,0,0,0,0,0,0);setVisible(false);
@@ -621,7 +621,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		graphics().drawString("Y",x+112,y+214,0xffffff,2);textField(x+128,y+197,70,teleportY,coordinateFocus==2);
 		if(isLayeredReview()){graphics().drawString("L",x+204,y+214,0xffffff,2);textField(x+220,y+197,58,teleportLevel,coordinateFocus==13);}
 		button(x+295,y+197,80,"Teleport");
-		graphics().drawString(isLayeredTerrainDraft()?"Working-copy terrain editing is enabled; placements/export are locked.":isLayeredReview()?"Read-only package review; navigate and inspect are enabled.":"Navigate uses movement options; brush/edit actions are off.",x+10,y+244,0xff981f,1);
+		graphics().drawString(isLayeredTerrainDraft()?"Terrain plus new-level scenery editing; source placements/export are locked.":isLayeredReview()?"Read-only package review; navigate and inspect are enabled.":"Navigate uses movement options; brush/edit actions are off.",x+10,y+244,0xff981f,1);
 	}
 	private void renderInspect(int x,int y){
 		graphics().drawString(inspectionStatus,x+10,y+70,0xffff00,2);int line=y+89;
@@ -639,7 +639,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		graphics().drawString(floorTextureDescription(),x+10,y+232,0xbdbdbd,1);
 		graphics().drawString("Click once, or Ctrl + left-drag across distinct terrain tiles.",x+10,y+252,0xffffff,2);
 		graphics().drawString(terrainDragActive||terrainDragReleasePending?terrainDragStatus():"Copy inspected fills values; checked fields are painted.",x+10,y+272,0xff981f,1);
-		graphics().drawString(isLayeredTerrainDraft()?"Save journals working terrain; close/reopen commits it.":"Save commits server/client archives; undo remains disabled.",x+10,y+290,0xff981f,1);
+		graphics().drawString(isLayeredTerrainDraft()?"Save journals the layered draft; close/reopen commits it.":"Save commits server/client archives; undo remains disabled.",x+10,y+290,0xff981f,1);
 		graphics().drawString(inspectionStatus,x+10,y+307,0xbdbdbd,1);
 	}
 	private void renderTerrainStructure(int x,int y){
@@ -687,6 +687,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void button(int x,int y,int w,String text){graphics().drawBoxAlpha(x,y,w,24,0x333333,220);graphics().drawBoxBorder(x,w,y,24,0);graphics().drawString(text,x+6,y+17,0xffffff,2);}
 	private boolean isLayeredReview(){return WorldBuilderClientProfile.current().isLayeredReview();}
 	private boolean isLayeredTerrainDraft(){return WorldBuilderClientProfile.current().isLayeredTerrainDraft();}
+	private boolean isLayeredSceneryDraftLevel(){if(!isLayeredTerrainDraft())return false;int level=mc.getEditorPlayerWorldLevel();return level!=-1&&level!=0&&level!=1&&level!=2;}
 	private int editorLevel(int worldY){return isLayeredReview()?mc.getEditorPlayerWorldLevel():Math.floorDiv(worldY,944);}
 	private boolean validTeleportLevel(int level){return !isLayeredReview()||WorldBuilderClientProfile.current().declaresLayer(level);}
 	private static int logicalLevelForLegacyPlane(int plane){return plane==3?-1:plane;}
