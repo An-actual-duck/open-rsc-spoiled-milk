@@ -1,16 +1,117 @@
 # World Layer Capacity Exploration Plan
 
-Status: architecture design complete; Slices 1-59, 62, 64, 66, 68, 70, 72,
-74, 78, 82, 85, 87, 91, 94, 97, 100, 103, 106, 107, 110, 113, 117, 120, 125, and 136 owner-validated, Slice 60 private-runtime validated, Slice 76's
-contained path, Slice 158's safe refusal path, Slice 162's corrected owner
-continuity route, and Slices 167-168's corrected owner-preservation route
-owner-validated, and Slices 61, 63, 65, 67, 69, 71, 73, 75,
-76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, and 177 automated-validated on the active
-refinement branch
+Status: ACTIVE. The signed layered-world engine, complete Spoiled Milk native
+package/runtime, and first layered Builder generation are implemented and
+owner-accepted. Further editor capability work is paused after automatic
+generic ladder/stair pairing. The active decision is which loader
+productionization boundary to tackle next.
+
+The numbered Slice 1-214 material below is retained as the detailed validation
+and architectural record. It is no longer the active execution queue.
 
 Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
+
+## Active Loader Roadmap: 2026-07-27
+
+This section is the concise source of truth for current work. Older progress
+estimates and “next slice” language below are historical unless repeated here.
+
+### Completed and accepted
+
+- `WorldLocation(worldSpace,x,y,level)` owns signed Player and entity location,
+  persistence, visibility, collision, interaction, protocol scope, and client
+  scene identity.
+- Native layered packages own full-fidelity terrain plus NPC, ground-item,
+  scenery, boundary, and dynamic replacement/restoration behavior without
+  requiring a packed Region inside native scopes.
+- The client receives level-qualified scene context and incrementally presents
+  24-tile chunks independently of the retained 48-by-48 storage pages.
+- The complete configured Spoiled Milk world is reproducible as
+  `rsc-remastered.spoiled-milk-layered-world@0.2.0`, with 1,771 terrain sectors
+  and 33,515 effective placements, and has passed focused private runtime
+  review.
+- Signed levels are data-declared and expandable. The loader, protocol,
+  renderer, collision, persistence, and Builder have exercised depths beyond
+  `-2` without adding another level constant or coordinate codec.
+- The isolated Builder can review the complete package; create detached sparse
+  canvases and arbitrary levels; author terrain, scenery, and NPCs; and commit
+  deterministic v4 working-package transactions while preserving the accepted
+  source.
+- The six canonical generic vertical objects now form a deliberately narrow
+  authoring convention. Using an authored generic up/down ladder or wooden/
+  stone stair creates a missing adjacent non-source level, a safe 3-by-3
+  landing, and the inverse object at the same geographic anchor. Specialized,
+  decorative, quest, distant, one-way, and scripted objects retain their
+  established behavior. Owner acceptance created and round-tripped level
+  `-5`; clean close committed one level, nine sectors, nine tiles, and two
+  scenery records in manifest `d8fc45941e93`.
+
+### Explicit holds
+
+- Additional Builder tools, placement families, polish, and export UI are
+  paused. The accepted Builder remains the development/review workbench.
+- Vanilla/Preservation conversion, geographic realignment, and the generic
+  legacy converter remain on hold. Spoiled Milk is the integration target.
+- True instance runtime lifecycle is deferred. World-space identity and
+  template metadata remain reserved so later instances do not consume level
+  numbers.
+- Universal Launcher, broad module extraction, community import adapters, and
+  drag-and-drop content packaging remain product-roadmap work rather than
+  loader prerequisites.
+- The long packed-Region retirement/reconstruction proof chain remains frozen
+  evidence. Native scopes are already Region-free; no new diagnostic slice is
+  justified without a concrete loader requirement.
+
+### Remaining loader focus choices
+
+1. **Production package acceptance and promotion**
+   - Replace the normal runtime's code-pinned exact `0.2.0` manifest/count
+     policy with a reviewed, configuration-bound production package contract.
+   - Let a normal non-Builder private server consume an explicitly selected
+     Spoiled Milk descendant containing additional signed levels.
+   - Validate source ancestry, package capabilities, definition fingerprints,
+     configured package fingerprint, complete placement ownership, and safe
+     failure before world mutation.
+   - Keep Builder drafts and normal production packages as separate profiles;
+     no draft or working journal becomes runnable merely because it exists.
+
+2. **Durable transition ownership**
+   - Record canonical generic vertical adjacency as a formal package/runtime
+     convention and define explicit records for non-generic vertical,
+     same-level, distant, magical, quest, one-way, recovery, and cross-package
+     transitions.
+   - Preserve existing scripted behavior until each owner is deliberately
+     migrated; a scenery definition alone remains insufficient outside the six
+     accepted generic IDs.
+   - Validate destination terrain, arrival collision, inverse/one-way policy,
+     package ownership, and recovery before committing a transition.
+
+3. **Server-side package streaming and residency**
+   - Keep the accepted 24-tile client presentation behavior.
+   - Decide whether current world size actually warrants lazy server terrain/
+     placement loading, then connect only the necessary portions of the frozen
+     residency/reconstruction foundation.
+   - Treat this as a scalability milestone, not as a prerequisite for correct
+     signed levels or eliminating visible 48-tile redraws.
+
+4. **Distribution-neutral loader profile**
+   - Move package acceptance from Spoiled Milk-specific IDs/counts to a
+     capability-, definition-, and fingerprint-driven target profile.
+   - Retain Spoiled Milk as the first exact conformance fixture.
+   - Defer this until the normal Spoiled Milk production package path is
+     concrete; otherwise abstraction would lead integration evidence.
+
+### Recommended order if loader work resumes
+
+The shortest path to an end product is `1 -> 2 -> private release-candidate
+validation`. Choice 3 should follow only if measured memory/startup/residency
+costs justify it. Choice 4 is the later extraction step after the Spoiled Milk
+loader can run a reviewed descendant outside Builder mode.
+
+The next implementation milestone should not begin until the owner selects the
+focus. No public/live configuration or map data is part of this roadmap review.
 
 ## Current Direction Checkpoint: 2026-07-25
 
@@ -18288,6 +18389,8 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Accept automatic adjacent-level pairing as a narrow authoring convention for generic ladders and wooden/stone stairs, then pause further editor capability work. | Owner-accepted. IDs `5/6`, `41/42`, and `43/44` alone create the inverse object and safe landing on a missing non-source adjacent level. The accepted route round-tripped and reused the pair; v4 clean close committed level `-5`, nine sectors, nine landing tiles, and two scenery edits in manifest `d8fc45941e93`. Specialized and exceptional transitions remain explicit |
+| 2026-07-27 | Trim the active layered roadmap around loader productionization rather than continuing Builder expansion or the historical diagnostic slice chain. | Current focus decision remains with the owner. The concise choices are normal-server production package promotion, durable transition ownership, measured server residency/streaming, and later distribution-neutral extraction; editor polish, Preservation conversion/alignment, true-instance lifecycle, and launcher work are held |
 | 2026-07-27 | Implement the intent-driven sparse canvas behind explicit Builder actions. | Owner-accepted. **Go/Create** created a detached nine-sector `-3` work area and new level `-4` live; v4 clean-close/reopen preserved both canvases, entry pads, and two scenery edits; a later edge stroke crossed `x=575/576` immediately and committed exactly one sector `(12,14)` plus 21 tiles. Every detached component retains a complete 3-by-3 canvas; passive movement/camera loading, source levels, transition inference, export, and target files remain non-authoritative |
 | 2026-07-27 | Replace narrow family-by-family Builder review with one free-form generated-level authoring workbench. | Owner-accepted: logical non-source levels expose terrain surfaces, terrain structures/walls, scenery, and NPCs together; one backward-compatible v3 journal atomically persists all enabled families; NPC identity and roaming bounds survive clean close/reopen; source levels, ground items, standalone boundaries, export, and target files remain locked. Generated levels no longer compose unrelated legacy upper-plane models, and the owner confirmed correct long-zoom player visibility and void authoring on level `-3` |
 | 2026-07-25 | Reframe the enclosing product as RSC Remastered: one definitive vanilla-content remaster with integrated launcher, layered Builder, and modder workflow, while retaining modular technical boundaries internally. | Confirmed; recorded in the product roadmap |
@@ -19033,10 +19136,11 @@ new canvas is usable. The recommended next milestone is an
 - the Builder must make the exact new level/sectors visible and usable without
   a manual command or launcher restart, while Save/discard and clean-close
   recovery retain the existing bounded journal guarantees; and
-- ladder/stair testing may create a missing destination only after the editor
-  stores explicit transition semantics. A scenery definition alone must not
-  imply `level + 1` or `level - 1`, because decorative, long-distance,
-  same-level, one-way, and scripted transitions remain valid designs.
+- ladder/stair creation was deferred at this checkpoint. The later owner
+  decision resolves only the six canonical generic vertical IDs as an
+  automatic adjacent-level authoring convention. Decorative, long-distance,
+  same-level, one-way, and scripted transitions remain valid designs and
+  require explicit ownership.
 
 This keeps 48-by-48 pages as an internal sparse storage unit while presenting
 an effectively expandable canvas to creators.
@@ -19092,8 +19196,9 @@ across its eastern `x=575/576` boundary. Terrain appeared and became traversable
 without restart; the Save receipt reported exactly one new sector and 21
 tiles. Clean close materialized only sector `(12,14)` and the edited tiles,
 advancing the working manifest to `416560d7d3ce` with no retained journal.
-Transition records and ladder/stair-driven creation remain deliberately
-deferred until the editor stores explicit route semantics.
+Explicit records for non-generic, same-level, distant, one-way, scripted, and
+cross-package transitions remain deferred. The later accepted generic
+ladder/stair convention is recorded in the active loader roadmap above.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first

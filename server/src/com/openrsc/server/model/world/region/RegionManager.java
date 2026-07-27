@@ -4211,6 +4211,14 @@ public class RegionManager {
 			: nativeLayeredGameObjects.find(nativePlacementKey(identity));
 	}
 
+	public GameObject findNativeLayeredScenery(
+		final WorldLocation location) {
+		return nativeLayeredGameObjects.find(
+			Objects.requireNonNull(location, "location"),
+			GameObjectType.SCENERY.getId(),
+			0);
+	}
+
 	public void inheritNativeLayeredGameObjectIdentity(
 		final GameObject source,
 		final GameObject replacement) {

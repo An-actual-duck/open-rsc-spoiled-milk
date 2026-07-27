@@ -188,6 +188,19 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		}
 	}
 
+	public T find(
+		final WorldLocation location,
+		final int type,
+		final int direction) {
+		synchronized (lock) {
+			Entry<T> entry = slots.get(new Slot(
+				Objects.requireNonNull(location, "location"),
+				type,
+				direction));
+			return entry == null ? null : entry.instance;
+		}
+	}
+
 	public void reset() {
 		synchronized (lock) {
 			placements.clear();

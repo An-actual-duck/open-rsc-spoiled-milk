@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.authentic.defaults;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.model.TelePoint;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -32,6 +33,9 @@ public class Ladders {
 	}
 
 	public void onObjectAction(GameObject obj, String command, Player player) {
+		if (tryWorldBuilderVerticalPair(obj, command, player)) {
+			return;
+		}
 		if (obj.getID() == 487 && !config().MEMBER_WORLD) {
 			player.message(player.MEMBER_MESSAGE);
 			return;
@@ -285,6 +289,53 @@ public class Ladders {
 			player.message(
 				"You " + command.replace("-", " ") + " the "
 					+ obj.getGameObjectDef().getName().toLowerCase());
+		}
+	}
+
+	private boolean tryWorldBuilderVerticalPair(
+		GameObject object,
+		String command,
+		Player player) {
+		boolean up = command.equals("climb-up")
+			|| command.equals("climb up")
+			|| command.equals("go up");
+		boolean down = command.equals("climb-down")
+			|| command.equals("climb down")
+			|| command.equals("go down");
+		if (!up && !down) {
+			return false;
+		}
+		int[] coordinates = coordModifier(
+			player, up, object, false);
+		try {
+			WorldEditorSessionManager.NativeVerticalPairResult result =
+				player.getWorld().getServer().getWorldEditorSessions()
+					.prepareNativeVerticalPair(
+						player,
+						object,
+						coordinates[0],
+						coordinates[1],
+						up ? 1 : -1);
+			if (!result.applicable) {
+				return false;
+			}
+			player.teleportLayered(result.destination, false);
+			player.message(
+				"You " + command.replace("-", " ") + " the "
+					+ object.getGameObjectDef().getName().toLowerCase());
+			if (result.createdInverse) {
+				player.message(
+					"Builder: created the paired "
+						+ (up ? "down" : "up")
+						+ " object on level "
+						+ result.destination.getCoordinate().getLevel()
+						+ ".");
+			}
+			return true;
+		} catch (IllegalArgumentException | IllegalStateException failure) {
+			player.message(
+				"Builder vertical pairing: " + failure.getMessage());
+			return true;
 		}
 	}
 

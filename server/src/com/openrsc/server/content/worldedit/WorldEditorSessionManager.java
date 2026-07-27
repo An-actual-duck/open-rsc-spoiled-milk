@@ -409,6 +409,97 @@ public final class WorldEditorSessionManager {
 			destination, createdLevel, added.size());
 	}
 
+	public synchronized NativeVerticalPairResult prepareNativeVerticalPair(
+		Player player,
+		GameObject source,
+		int destinationX,
+		int destinationY,
+		int levelDelta) {
+		WorldEditorVerticalPairing.Pairing pairing =
+			source == null ? null
+				: WorldEditorVerticalPairing.find(source.getID());
+		if (pairing == null
+			|| player == null
+			|| !player.getConfig().WORLD_BUILDER_MODE
+			|| !player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE) {
+			return NativeVerticalPairResult.notApplicable();
+		}
+		NativeLayeredGameObjectIdentity sourceIdentity =
+			source.getLoc().getNativeLayeredGameObjectIdentity();
+		if (sourceIdentity == null
+			|| !"scenery".equals(sourceIdentity.getKind())
+			|| !nativeSceneryPlacementId(sourceIdentity.getLocation())
+				.equals(sourceIdentity.getPlacementId())) {
+			return NativeVerticalPairResult.notApplicable();
+		}
+		WorldLocation sourceLocation = sourceIdentity.getLocation();
+		int sourceLevel = sourceLocation.getCoordinate().getLevel();
+		requireNativeTerrainAuthoring(player, sourceLevel);
+		requireEditableNativeScenery(player, sourceLocation, source);
+		if (player.getWorld().getRegionManager()
+				.findNativeLayeredScenery(sourceLocation) != source) {
+			throw new IllegalStateException(
+				"The Builder vertical source is no longer current.");
+		}
+		if (pairing.getLevelDelta() != levelDelta) {
+			throw new IllegalArgumentException(
+				"The vertical object's action does not match its pairing direction.");
+		}
+		requireBuilderCoordinate(destinationX, destinationY);
+		int destinationLevel = Math.addExact(sourceLevel, levelDelta);
+		if (isSourceLevel(destinationLevel)) {
+			throw new IllegalArgumentException(
+				"Automatic pairing cannot modify an accepted source level.");
+		}
+		WorldSpaceId worldSpace = sourceLocation.getWorldSpace();
+		WorldLocation destination = new WorldLocation(
+			worldSpace,
+			new WorldCoordinate(
+				destinationX, destinationY, destinationLevel));
+		WorldLocation inverseLocation = new WorldLocation(
+			worldSpace,
+			new WorldCoordinate(
+				source.getX(), source.getY(), destinationLevel));
+		GameObject inverse = player.getWorld().getRegionManager()
+			.findNativeLayeredScenery(inverseLocation);
+		if (inverse != null) {
+			NativeLayeredGameObjectIdentity inverseIdentity =
+				inverse.getLoc().getNativeLayeredGameObjectIdentity();
+			if (inverse.getID() != pairing.getInverseSceneryId()
+				|| inverse.getDirection() != source.getDirection()
+				|| inverseIdentity == null
+				|| !nativeSceneryPlacementId(inverseLocation)
+					.equals(inverseIdentity.getPlacementId())) {
+				throw new IllegalArgumentException(
+					"Automatic pairing found conflicting scenery at the "
+						+ "destination coordinates.");
+			}
+		}
+
+		NativeVerticalProvision provision =
+			provisionNativeVerticalTarget(
+				player, destination, inverseLocation);
+		boolean createdInverse = false;
+		try {
+			if (inverse == null) {
+				placeNativeSceneryAt(
+					player,
+					pairing.getInverseSceneryId(),
+					source.getDirection(),
+					inverseLocation);
+				createdInverse = true;
+			}
+		} catch (RuntimeException failure) {
+			rollbackNativeVerticalProvision(provision);
+			throw failure;
+		}
+		return new NativeVerticalPairResult(
+			destination,
+			createdInverse,
+			provision.createdLevel,
+			provision.added.size());
+	}
+
 	public synchronized GameObject placeNativeScenery(
 		Player player, int sceneryId, int x, int y) {
 		WorldLocation location = activeNativeSceneryLocation(player, x, y);
@@ -417,25 +508,8 @@ public final class WorldEditorSessionManager {
 			throw new IllegalArgumentException(
 				"There is already scenery in that spot.");
 		}
-		NativeSceneryKey key = new NativeSceneryKey(location);
-		captureNativeSceneryBase(key, null);
-		NativeSceneryState base = nativeSceneryBase.get(key);
-		String placementId = base == null
-			? nativeSceneryPlacementId(location) : base.placementId;
-		GameObject object = new GameObject(
-			player.getWorld(),
-			new GameObjectLoc(sceneryId, x, y, 0, 0));
-		object.setInitialWorldLocation(location);
-		NativeLayeredWorldPackage owner = nativeOwner(player, location);
-		player.getWorld().getRegionManager().markNativeLayeredPlacement(
-			object,
-			owner.getPackageId(),
-			placementId,
-			com.openrsc.server.model.world.region.RegionManager
-				.NATIVE_LAYERED_SCENERY_KIND);
-		player.getWorld().registerGameObject(object);
-		recordNativeScenery(key, NativeSceneryState.from(object));
-		return object;
+		return placeNativeSceneryAt(
+			player, sceneryId, 0, location);
 	}
 
 	public synchronized GameObject removeNativeScenery(
@@ -810,6 +884,172 @@ public final class WorldEditorSessionManager {
 		nativeTerrainLiveSectors.put(
 			identity,NativeLayeredTerrainSector.worldBuilderVoid(identity));
 	}
+	private NativeVerticalProvision provisionNativeVerticalTarget(
+		Player player,
+		WorldLocation destination,
+		WorldLocation inverseLocation){
+		WorldCoordinate destinationCoordinate=destination.getCoordinate();
+		WorldCoordinate inverseCoordinate=inverseLocation.getCoordinate();
+		requireBuilderCoordinate(
+			inverseCoordinate.getX(),inverseCoordinate.getY());
+		if(destinationCoordinate.getLevel()!=inverseCoordinate.getLevel()
+			||!destination.getWorldSpace().equals(
+				inverseLocation.getWorldSpace())){
+			throw new IllegalArgumentException(
+				"Vertical destination and inverse scenery must share one level.");
+		}
+		int level=destinationCoordinate.getLevel();
+		if(isSourceLevel(level))throw new IllegalArgumentException(
+			"Automatic pairing cannot modify an accepted source level.");
+		NativeLayeredWorldPackage owner=player.getWorld().getRegionManager()
+			.getNativeLayeredWorldPackage();
+		if(owner==null)throw new IllegalStateException(
+			"Layered Builder package is unavailable.");
+		if(nativeTerrainBaseManifestSha256==null){
+			nativeTerrainBaseManifestSha256=owner.getManifestSha256();
+		}else if(!nativeTerrainBaseManifestSha256.equals(
+				owner.getManifestSha256())){
+			throw new IllegalStateException(
+				"Layered terrain draft crossed a package-manifest boundary.");
+		}
+		boolean destinationMissing=!findNativeTerrainSector(
+			owner,WorldMapSectorId.from(destination)).isPresent();
+		boolean inverseMissing=!findNativeTerrainSector(
+			owner,WorldMapSectorId.from(inverseLocation)).isPresent();
+		boolean createdLevel=
+			!owner.declaresLevel(destination.getWorldSpace(),level)
+				&&!nativeLevelCreations.containsKey(Integer.valueOf(level));
+		Set<WorldMapSectorId> added=
+			new java.util.LinkedHashSet<WorldMapSectorId>();
+		if(destinationMissing){
+			collectNativeVerticalWorkArea(owner,destination,added);
+		}
+		if(inverseMissing){
+			collectNativeVerticalWorkArea(owner,inverseLocation,added);
+		}
+		if((destinationMissing||inverseMissing)&&added.isEmpty()){
+			throw new IllegalStateException(
+				"Vertical target has no terrain but its work area is already allocated.");
+		}
+		if(nativeTerrainGrowth.size()+added.size()>64){
+			throw new IllegalStateException(
+				"Terrain sector-growth draft limit reached.");
+		}
+		if(createdLevel){
+			nativeLevelCreations.put(
+				Integer.valueOf(level),
+				new NativeLevelCreation(
+					level,
+					destinationCoordinate.getX(),
+					destinationCoordinate.getY(),
+					defaultLevelName(level),
+					defaultLevelRole(level)));
+		}
+		for(WorldMapSectorId identity:added)addNativeTerrainSector(identity);
+		Set<NativeTileKey> cleared=
+			new java.util.LinkedHashSet<NativeTileKey>();
+		if(destinationMissing){
+			for(int x=destinationCoordinate.getX()-1;
+				x<=destinationCoordinate.getX()+1;x++){
+				for(int y=destinationCoordinate.getY()-1;
+					y<=destinationCoordinate.getY()+1;y++){
+					if(x<0||x>32767||y<0||y>32767)continue;
+					WorldLocation location=new WorldLocation(
+						destination.getWorldSpace(),
+						new WorldCoordinate(x,y,level));
+					if(!added.contains(WorldMapSectorId.from(location)))continue;
+					NativeLayeredTerrainTile base=nativeBaseTile(owner,location);
+					NativeTileKey key=new NativeTileKey(location);
+					nativeTerrainOverlay.put(
+						key,
+						new NativeLayeredTerrainTile(
+							base.getElevation(),1,0,0,0,0,0));
+					refreshNativeDirty(key);
+					cleared.add(key);
+				}
+			}
+		}
+		if(createdLevel||!added.isEmpty())nativeTerrainSceneRevision++;
+		return new NativeVerticalProvision(
+			level,createdLevel,added,cleared);
+	}
+	private void collectNativeVerticalWorkArea(
+		NativeLayeredWorldPackage owner,
+		WorldLocation center,
+		Set<WorldMapSectorId> added){
+		WorldMapSectorId centerSector=WorldMapSectorId.from(center);
+		for(int sectorX=centerSector.getSectorX()-1;
+			sectorX<=centerSector.getSectorX()+1;sectorX++){
+			for(int sectorY=centerSector.getSectorY()-1;
+				sectorY<=centerSector.getSectorY()+1;sectorY++){
+				WorldMapSectorId identity=new WorldMapSectorId(
+					center.getWorldSpace(),
+					center.getCoordinate().getLevel(),
+					sectorX,sectorY);
+				if(!findNativeTerrainSector(owner,identity).isPresent()){
+					added.add(identity);
+				}
+			}
+		}
+	}
+	private void rollbackNativeVerticalProvision(
+		NativeVerticalProvision provision){
+		if(provision==null)return;
+		for(NativeTileKey key:provision.cleared){
+			nativeTerrainOverlay.remove(key);
+			nativeTerrainDirty.remove(key);
+		}
+		for(WorldMapSectorId identity:provision.added){
+			nativeTerrainLiveSectors.remove(identity);
+			nativeTerrainGrowth.remove(identity);
+		}
+		if(provision.createdLevel){
+			nativeLevelCreations.remove(Integer.valueOf(provision.level));
+		}
+		if(provision.createdLevel||!provision.added.isEmpty()){
+			nativeTerrainSceneRevision++;
+		}
+	}
+	private GameObject placeNativeSceneryAt(
+		Player player,
+		int sceneryId,
+		int direction,
+		WorldLocation location){
+		if(player.getWorld().getServer().getEntityHandler()
+				.getGameObjectDef(sceneryId)==null){
+			throw new IllegalArgumentException(
+				"Invalid scenery definition ID.");
+		}
+		if(player.getWorld().getRegionManager()
+				.findNativeLayeredScenery(location)!=null){
+			throw new IllegalArgumentException(
+				"There is already scenery in that spot.");
+		}
+		NativeLayeredWorldPackage owner=nativeOwner(player,location);
+		NativeSceneryKey key=new NativeSceneryKey(location);
+		captureNativeSceneryBase(key,null);
+		NativeSceneryState base=nativeSceneryBase.get(key);
+		String placementId=base==null
+			?nativeSceneryPlacementId(location):base.placementId;
+		WorldCoordinate coordinate=location.getCoordinate();
+		GameObject object=new GameObject(
+			player.getWorld(),
+			new GameObjectLoc(
+				sceneryId,
+				coordinate.getX(),
+				coordinate.getY(),
+				Math.floorMod(direction,8),
+				0));
+		object.setInitialWorldLocation(location);
+		player.getWorld().getRegionManager().markNativeLayeredPlacement(
+			object,
+			owner.getPackageId(),
+			placementId,
+			RegionManager.NATIVE_LAYERED_SCENERY_KIND);
+		player.getWorld().registerGameObject(object);
+		recordNativeScenery(key,NativeSceneryState.from(object));
+		return object;
+	}
 	private WorldLocation activeNativeSceneryLocation(
 		Player player,int x,int y){
 		return activeNativePlacementLocation(player,x,y);
@@ -1085,6 +1325,50 @@ public final class WorldEditorSessionManager {
 		@Override public int hashCode(){
 			int result=level;result=31*result+anchorX;result=31*result+anchorY;
 			result=31*result+name.hashCode();return 31*result+role.hashCode();
+		}
+	}
+	private static final class NativeVerticalProvision {
+		final int level;
+		final boolean createdLevel;
+		final Set<WorldMapSectorId> added;
+		final Set<NativeTileKey> cleared;
+		NativeVerticalProvision(
+			int level,
+			boolean createdLevel,
+			Set<WorldMapSectorId> added,
+			Set<NativeTileKey> cleared){
+			this.level=level;
+			this.createdLevel=createdLevel;
+			this.added=added;
+			this.cleared=cleared;
+		}
+	}
+	public static final class NativeVerticalPairResult {
+		public final boolean applicable;
+		public final WorldLocation destination;
+		public final boolean createdInverse;
+		public final boolean createdLevel;
+		public final int allocatedSectorCount;
+		private NativeVerticalPairResult(
+			WorldLocation destination,
+			boolean createdInverse,
+			boolean createdLevel,
+			int allocatedSectorCount){
+			this.applicable=true;
+			this.destination=destination;
+			this.createdInverse=createdInverse;
+			this.createdLevel=createdLevel;
+			this.allocatedSectorCount=allocatedSectorCount;
+		}
+		private NativeVerticalPairResult(){
+			this.applicable=false;
+			this.destination=null;
+			this.createdInverse=false;
+			this.createdLevel=false;
+			this.allocatedSectorCount=0;
+		}
+		private static NativeVerticalPairResult notApplicable(){
+			return new NativeVerticalPairResult();
 		}
 	}
 	public static final class NativeTerrainProvisionResult {
