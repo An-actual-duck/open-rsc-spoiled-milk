@@ -1044,6 +1044,115 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 preservation_refused.stderr,
             )
 
+            package = workspace / "package"
+            manifest_path = package / "manifest.json"
+            manifest = json.loads(
+                manifest_path.read_text(encoding="utf-8")
+            )
+            manifest["levels"].append(
+                {
+                    "level": -3,
+                    "name": "Underground level 3",
+                    "role": "underground-level-3",
+                    "worldSpace": "global",
+                }
+            )
+            starter = bytearray(48 * 48 * 10)
+            for offset in range(0, len(starter), 10):
+                starter[offset + 1] = 1
+            for sector_x in range(1, 4):
+                for sector_y in range(12, 15):
+                    relative = (
+                        "terrain/global/lm3/"
+                        f"xp{sector_x}-yp{sector_y}.raw"
+                    )
+                    payload = package / relative
+                    payload.parent.mkdir(parents=True, exist_ok=True)
+                    payload.write_bytes(starter)
+                    manifest["terrainSectors"].append(
+                        {
+                            "encoding": "raw-layered-sector-v1",
+                            "level": -3,
+                            "path": relative,
+                            "sectorX": sector_x,
+                            "sectorY": sector_y,
+                            "sha256": hashlib.sha256(starter).hexdigest(),
+                            "worldSpace": "global",
+                        }
+                    )
+            placement_relative = "placements/global/lm3.json"
+            placement_path = package / placement_relative
+            placement = {
+                "boundaries": [],
+                "encoding": "layered-world-placements-v3",
+                "groundItems": [],
+                "level": -3,
+                "npcs": [],
+                "scenery": [],
+                "schemaVersion": 3,
+                "worldSpace": "global",
+            }
+            placement_path.write_text(
+                json.dumps(placement, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            manifest["placementSets"].append(
+                {
+                    "encoding": "layered-world-placements-v3",
+                    "id": "spoiled-milk-builder-lm3",
+                    "level": -3,
+                    "path": placement_relative,
+                    "sha256": hashlib.sha256(
+                        placement_path.read_bytes()
+                    ).hexdigest(),
+                    "worldSpace": "global",
+                }
+            )
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+            builder_draft = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredRuntimeProfileFixture",
+                    "spoiled-milk-builder-draft",
+                    str(package),
+                    "true",
+                    "true",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(
+                0, builder_draft.returncode, builder_draft.stderr
+            )
+
+            pinned_release_refused = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredRuntimeProfileFixture",
+                    "spoiled-milk-replacement",
+                    str(package),
+                    "false",
+                    "true",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(
+                0,
+                pinned_release_refused.returncode,
+                pinned_release_refused.stderr,
+            )
+
     def test_fixture_and_replacement_runtime_profiles_do_not_cross_accept(self):
         accepted = subprocess.run(
             [

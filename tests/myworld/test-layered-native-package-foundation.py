@@ -377,6 +377,39 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assertEqual(0, report["sceneryPlacementCount"])
             self.assertEqual(0, report["boundaryPlacementCount"])
 
+    def test_v3_placement_payload_may_be_empty_for_a_new_level(self):
+        with tempfile.TemporaryDirectory(
+            prefix="native-package-empty-v3-placement-"
+        ) as temp:
+            package = Path(temp) / "package"
+            shutil.copytree(PACKAGE, package)
+            self.convert_placements_to_v3(package)
+            relative_path = "placements/deep-l2-entities.json"
+            payload_path = package / relative_path
+            payload = json.loads(payload_path.read_text(encoding="utf-8"))
+            for family in ("npcs", "groundItems", "scenery", "boundaries"):
+                payload[family] = []
+            payload_path.write_text(
+                json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+            )
+            self.update_payload_hash(package, relative_path)
+
+            result = self.run_command(
+                "package-check", Path(temp) / "report", package
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            report = json.loads(
+                (Path(temp) / "report/package-validation.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(1, report["placementSetCount"])
+            self.assertEqual(0, report["npcPlacementCount"])
+            self.assertEqual(0, report["groundItemPlacementCount"])
+            self.assertEqual(0, report["sceneryPlacementCount"])
+            self.assertEqual(0, report["boundaryPlacementCount"])
+
     def test_v3_placements_preserve_exact_asymmetric_npc_roam_bounds(self):
         with tempfile.TemporaryDirectory(
             prefix="native-package-placement-v3-"

@@ -459,14 +459,15 @@ public final class NativeLayeredWorldPackage {
 		int placementCount = Math.addExact(
 			Math.addExact(npcValues.length(), itemValues.length()),
 			Math.addExact(sceneryValues.length(), boundaryValues.length()));
-		if (placementCount < 1
+		if ((!version3 && placementCount < 1)
 			|| npcValues.length() > MAX_PLACEMENTS_PER_SET
 			|| itemValues.length() > MAX_PLACEMENTS_PER_SET
 			|| sceneryValues.length() > MAX_PLACEMENTS_PER_SET
 			|| boundaryValues.length() > MAX_PLACEMENTS_PER_SET
 			|| placementCount > MAX_PLACEMENTS_PER_SET) {
 			throw new IOException(
-				"World placement set count must be 1.."
+				"World placement set count must be "
+					+ (version3 ? "0.." : "1..")
 					+ MAX_PLACEMENTS_PER_SET);
 		}
 		java.util.List<NativeLayeredNpcPlacement> npcs =

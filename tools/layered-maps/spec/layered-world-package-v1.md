@@ -118,7 +118,9 @@ position, span no more than 4,096 tiles on either axis, and have package terrain
 for every intersected storage sector. Ground items, scenery, and boundaries
 retain their v2 shape. Version 3 is required when converting legacy NPC
 start/min/max rectangles; a converter must not approximate those rectangles
-with a radius.
+with a radius. A v3 payload may contain zero placements so a transaction can
+declare a valid new terrain level before any gameplay content is authored.
+Versions 1 and 2 retain their original non-empty requirement.
 
 The first private runtime registers these entities during world population.
 The developer entry command only changes the Player's location and verifies

@@ -56,6 +56,34 @@ last-run receipt under `<workspace>/run`, and refuses a second process for the
 same workspace. Closing the client requests an orderly local server shutdown.
 Generated credentials are never printed or placed in manifests.
 
+## Layered draft: Create Level
+
+The first native layered writer is deliberately narrower than ordinary map
+editing. With the layered Builder closed, create a workspace-owned signed
+level around a geographic anchor:
+
+```bash
+java -jar output/world-builder-tools/world-builder-tools.jar create-level \
+  --workspace /path/to/world-builder-project \
+  --level -3 \
+  --anchor-x 140 \
+  --anchor-y 640
+```
+
+Optional `--name` and lowercase identifier `--role` values override the
+generated level metadata. The transaction takes the same per-workspace lock as
+the launcher, revalidates the immutable source package, stages a complete
+copy-on-write draft, creates a flat walkable 3-by-3 sector window plus an empty
+v3 placement set, rewrites all manifest hashes deterministically, validates
+the full descendant, and swaps it into `working` with rollback protection.
+The source snapshot and target game are reverified unchanged before success.
+
+Reopen the Builder to navigate to the new level. Repeating an existing level,
+running the operation while the Builder is open, malformed metadata, source
+drift, or a draft that changes accepted package content is refused. The
+Builder-only runtime profile cannot start an ordinary server. Terrain/entity
+editing and layered export remain disabled in this slice.
+
 After closing the Builder, export the saved working map with explicit release
 provenance:
 

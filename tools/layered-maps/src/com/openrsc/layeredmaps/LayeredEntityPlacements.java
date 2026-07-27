@@ -102,14 +102,15 @@ public final class LayeredEntityPlacements {
 		int placementCount = Math.addExact(
 			Math.addExact(npcValues.size(), itemValues.size()),
 			Math.addExact(sceneryValues.size(), boundaryValues.size()));
-		if (placementCount < 1
+		if ((!version3 && placementCount < 1)
 			|| npcValues.size() > MAX_PLACEMENTS
 			|| itemValues.size() > MAX_PLACEMENTS
 			|| sceneryValues.size() > MAX_PLACEMENTS
 			|| boundaryValues.size() > MAX_PLACEMENTS
 			|| placementCount > MAX_PLACEMENTS) {
 			throw new PreflightException(
-				"World placement set count must be 1.." + MAX_PLACEMENTS + ".");
+				"World placement set count must be "
+					+ (version3 ? "0.." : "1..") + MAX_PLACEMENTS + ".");
 		}
 
 		Set<String> placementIds = new HashSet<String>();

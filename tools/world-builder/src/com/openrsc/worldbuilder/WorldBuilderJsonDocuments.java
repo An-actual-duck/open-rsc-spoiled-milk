@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /** Small dependency-free JSON reader and strict authored-overlay validator. */
 final class WorldBuilderJsonDocuments {
@@ -42,6 +43,80 @@ final class WorldBuilderJsonDocuments {
 		}
 		@SuppressWarnings("unchecked") Map<String,Object> object = (Map<String,Object>)parsed;
 		return object;
+	}
+
+	static String pretty(Object value) {
+		StringBuilder output = new StringBuilder(64 * 1024);
+		write(value, output, 0);
+		return output.append('\n').toString();
+	}
+
+	private static void write(Object value, StringBuilder output, int depth) {
+		if (value == null) {
+			output.append("null");
+		} else if (value instanceof String) {
+			writeString((String)value, output);
+		} else if (value instanceof Boolean || value instanceof Byte
+			|| value instanceof Short || value instanceof Integer
+			|| value instanceof Long) {
+			output.append(value);
+		} else if (value instanceof Map) {
+			@SuppressWarnings("unchecked") Map<String,Object> object =
+				(Map<String,Object>)value;
+			output.append('{');
+			int index = 0;
+			for (Map.Entry<String,Object> entry
+				: new TreeMap<String,Object>(object).entrySet()) {
+				if (index++ > 0) output.append(',');
+				line(output, depth + 1);
+				writeString(entry.getKey(), output);
+				output.append(": ");
+				write(entry.getValue(), output, depth + 1);
+			}
+			if (!object.isEmpty()) line(output, depth);
+			output.append('}');
+		} else if (value instanceof List) {
+			@SuppressWarnings("unchecked") List<Object> array = (List<Object>)value;
+			output.append('[');
+			for (int index = 0; index < array.size(); index++) {
+				if (index > 0) output.append(',');
+				line(output, depth + 1);
+				write(array.get(index), output, depth + 1);
+			}
+			if (!array.isEmpty()) line(output, depth);
+			output.append(']');
+		} else {
+			throw new IllegalArgumentException(
+				"Unsupported JSON value: " + value.getClass().getName());
+		}
+	}
+
+	private static void line(StringBuilder output, int depth) {
+		output.append('\n');
+		for (int index = 0; index < depth; index++) output.append("  ");
+	}
+
+	private static void writeString(String value, StringBuilder output) {
+		output.append('"');
+		for (int index = 0; index < value.length(); index++) {
+			char character = value.charAt(index);
+			switch (character) {
+				case '"': output.append("\\\""); break;
+				case '\\': output.append("\\\\"); break;
+				case '\b': output.append("\\b"); break;
+				case '\f': output.append("\\f"); break;
+				case '\n': output.append("\\n"); break;
+				case '\r': output.append("\\r"); break;
+				case '\t': output.append("\\t"); break;
+				default:
+					if (character < 0x20) {
+						output.append(String.format("\\u%04x", (int)character));
+					} else {
+						output.append(character);
+					}
+			}
+		}
+		output.append('"');
 	}
 
 	static int validateSceneryLocs(Path path) throws IOException, WorldBuilderDiscoveryException {

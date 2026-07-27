@@ -120,15 +120,5 @@
         }
       }
     }
-  },
-  "allOf": [
-    {
-      "anyOf": [
-        {"properties": {"npcs": {"minItems": 1}}},
-        {"properties": {"groundItems": {"minItems": 1}}},
-        {"properties": {"scenery": {"minItems": 1}}},
-        {"properties": {"boundaries": {"minItems": 1}}}
-      ]
-    }
-  ]
+  }
 }

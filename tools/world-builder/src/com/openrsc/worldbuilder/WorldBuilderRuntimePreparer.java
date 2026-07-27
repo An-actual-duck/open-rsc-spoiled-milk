@@ -247,7 +247,7 @@ public final class WorldBuilderRuntimePreparer {
 					.toAbsolutePath().normalize().toString());
 			values.put(
 				"layered_native_world_runtime_profile",
-				WorldBuilderLayeredPackage.PROFILE_ID);
+				WorldBuilderLayeredPackage.BUILDER_DRAFT_PROFILE_ID);
 		}
 		return values;
 	}

@@ -18598,6 +18598,7 @@ private environment should validate at least:
 | 2026-07-25 | Fully accept Phase 5 Authority Milestone D. | The final normal logout completed its save, reconnect restored exact `WorldLocation(global,120,648,0)` with `rewriteRequired=false`, and `::layerloc` confirmed level 0. All automated and owner gates now pass for the bounded synthetic deep room: scope isolation, movement/collision, NPC/item interaction, level `-2` persistence, explicit exit, death recovery, and recovered-surface persistence. No production archive, placement, live data, or public server was modified |
 | 2026-07-25 | Correct the first Milestone D owner route after stopping at step 6. | Owner evidence proved that the borrowed compatibility rectangle was water: click teleport could collect the deep item, ordinary walking and Man interaction failed, and logout/reconnect returned to the prior surface save. Logs established a second exact cause: the legacy-only save snapshot decoded the `(450,600)` receipt as level 0, rejected the authoritative level `-2` mirror, and rolled back every deep autosave. Replace terrain borrowing with a bounded runtime-only flat overlay-0 room, suppress borrowed upper-plane geometry, resolve deep path/collision through that room, and capture named-projection persistence from the authoritative layered location plus its checked receipt. Production archives, placements, surface terrain, live data, and the public server remain untouched; corrected owner acceptance is pending |
 | 2026-07-26 | Begin the signed-layer World Builder adapter with logical coordinate presentation. | Implemented the first review-only slice: strict discovery accepts only the exact Spoiled Milk `0.2.0` package and profile, copies and fingerprints all 1,776 package files into isolated working/source trees, launches the package under complete layered authority, exposes signed `(x,y,level)` navigation and native terrain inspection, changes the ordinary HUD to logical coordinates, and blocks editing, saving, and export in both client and server boundaries. The private Builder auto-login and exact package load pass; focused owner visual/navigation acceptance remains pending before the native writer slice |
+| 2026-07-27 | Implement the first workspace-owned native draft transaction. | Offline `create-level` now takes the Builder workspace lock, revalidates the immutable accepted source, stages a complete descendant, adds arbitrary signed level metadata, nine flat walkable raw sectors around the selected geographic anchor, and one empty v3 placement set, then verifies all paths, hashes, counts, source ancestry, and restart identity before a rollback-protected package swap. A Builder-only runtime profile accepts this additive terrain-only descendant while ordinary Spoiled Milk remains pinned to its exact reviewed manifest and non-Builder servers refuse the draft profile. Automated writer, tool, server-loader, runtime-profile, preparation, and authoritative 869/488 compilation pass; private owner navigation/restart acceptance is pending and editing/export remain disabled |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -18830,16 +18831,49 @@ is therefore accepted, and the active boundary advances to the isolated
 native-draft writer described below.
 
 Arbitrary depth remains a package capability rather than a teleport loophole.
-The engine, manifest, runtime loaders, and signed coordinate model already
-accept declared levels beyond `-2`; the current Spoiled Milk package truthfully
-declares only `[-1,0,1,2]`. The first native-writer slice must add an explicit
-**Create Level** transaction. It will create workspace-owned level metadata, an
-empty v3 placement set, and a safe initial terrain allocation around a selected
-anchor before navigation becomes valid. It must update payload/manifest hashes
-atomically, validate the entire draft, and remain isolated from source and game
-files. Undeclared `-3` or `+3` must continue to refuse: treating absent terrain
-as a new level would recreate the water/soft-lock behavior this rebuild is
-designed to eliminate.
+The accepted Spoiled Milk source still truthfully declares only
+`[-1,0,1,2]`; additional levels now enter the working copy through an explicit
+offline **Create Level** transaction. The command takes the same workspace
+lock as the launcher, revalidates the immutable source, stages a complete
+copy-on-write package, and creates:
+
+- one signed global-level record with bounded display name and stable role;
+- one empty `layered-world-placements-v3` payload and hashed manifest record;
+- a deterministic 3-by-3 window of raw 48-tile sectors centered on the
+  requested geographic anchor. Every starter tile is flat texture 1,
+  overlay 0, roof/wall/diagonal 0, so the whole initial review window is
+  walkable rather than void or water; and
+- a deterministically rewritten manifest, complete payload inventory,
+  fingerprint, and rollback-protected working-package swap.
+
+The source package, source inventory, and target game are verified before and
+after the transaction. Working drafts must retain every accepted source level,
+terrain identity, placement set, path, and payload hash. Every additional
+level must remain exactly one contiguous nine-sector starter allocation and
+one empty placement set during this slice. Duplicate levels, active Builder
+sessions, unsafe paths, source drift, malformed hashes, partial terrain, or
+content-bearing new levels refuse before publication.
+
+Empty v3 placement payloads are now an explicit format capability; v1 and v2
+retain their non-empty rule. Runtime consumption uses the new
+`spoiled-milk-builder-draft` profile, which accepts only the original placement
+totals plus additive terrain/empty levels. `WorldBuilderMode` refuses that
+profile outside the isolated Builder. The ordinary
+`spoiled-milk-replacement` profile remains pinned to the exact accepted
+manifest, so this change cannot silently broaden a normal or live server.
+
+The first private draft declares level `-3` at anchor `(140,640)`, sectors
+`x=1..3`, `y=12..14`. Its manifest is
+`e1fbd7d46378a0f5cfbf729559ba38b1d87775fa8c0a068e5cba83124cb0cc43`
+and complete package fingerprint is
+`f1b30155d01cbc7a83139223497de06e33f5dd937040a4fc305a091e7ac760ed`;
+the source manifest remains
+`fab8d7d1a51e948a7d8b18769eb0b3e9f5abf9e30538abfedba4d90374b1447b`.
+The private Builder loads and auto-logs in successfully with all five levels.
+Owner acceptance should navigate from level 0 to `(140,640,-3)`, verify the
+flat floor and ordinary movement, return to level 0, close, relaunch, and
+repeat the level `-3` visit. Terrain/entity authoring, save, and native export
+remain disabled until this create/reopen boundary is accepted.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first

@@ -113,6 +113,16 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         ordinary.DB_TYPE = DatabaseType.MYSQL;
                         ordinary.DB_NAME = "live";
                         WorldBuilderMode.validate(ordinary);
+                        ordinary.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE =
+                            "spoiled-milk-builder-draft";
+                        boolean publicDraftRefused = false;
+                        try {
+                            WorldBuilderMode.validate(ordinary);
+                        } catch (IllegalArgumentException expected) {
+                            publicDraftRefused = expected.getMessage().contains(
+                                "restricted to isolated World Builder mode");
+                        }
+                        require(publicDraftRefused, "public Builder draft profile");
 
                         WorldBuilderMode.validate(config(true, "127.0.0.1"));
                         ServerConfiguration layered = config(true, "127.0.0.1");
@@ -129,7 +139,8 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         layered.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY = true;
                         layered.WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY = true;
                         layered.WANT_LAYERED_NATIVE_TERRAIN_PACKAGE = true;
-                        layered.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE = "spoiled-milk-replacement";
+                        layered.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE =
+                            "spoiled-milk-builder-draft";
                         WorldBuilderMode.validate(layered);
                         require(WorldBuilderMode.isBuilderAccount("builder"), "identity case");
                         require(!WorldBuilderMode.isBuilderAccount("DevDuck"), "identity scope");

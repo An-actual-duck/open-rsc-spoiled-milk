@@ -20,7 +20,8 @@ import java.util.Set;
 public enum NativeLayeredWorldRuntimeProfile {
 	FIXTURE_ADDITIVE("fixture-additive", false),
 	PRESERVATION_R64_REPLACEMENT("preservation-r64-replacement", true),
-	SPOILED_MILK_REPLACEMENT("spoiled-milk-replacement", true);
+	SPOILED_MILK_REPLACEMENT("spoiled-milk-replacement", true),
+	SPOILED_MILK_BUILDER_DRAFT("spoiled-milk-builder-draft", true);
 
 	public static final String DEFAULT_ID = "fixture-additive";
 	public static final String PRESERVATION_PACKAGE_ID =
@@ -89,6 +90,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 				return;
 			case SPOILED_MILK_REPLACEMENT:
 				validateSpoiledMilk(catalog);
+				return;
+			case SPOILED_MILK_BUILDER_DRAFT:
+				validateSpoiledMilkBuilderDraft(catalog);
 				return;
 			default:
 				throw new IllegalStateException(
@@ -175,6 +179,50 @@ public enum NativeLayeredWorldRuntimeProfile {
 			27886,
 			972,
 			false);
+	}
+
+	private static void validateSpoiledMilkBuilderDraft(
+		final NativeLayeredWorldPackageCatalog catalog) {
+		if (catalog.size() != 1) {
+			throw new IllegalStateException(
+				"The spoiled-milk-builder-draft profile requires exactly one package");
+		}
+		final NativeLayeredWorldPackage loaded = catalog.getPrimaryPackage();
+		if (!SPOILED_MILK_PACKAGE_ID.equals(loaded.getPackageId())
+			|| !SPOILED_MILK_PACKAGE_VERSION.equals(loaded.getPackageVersion())
+			|| loaded.getWorldSpaceCount() != 1
+			|| loaded.getLevelCount() < 4
+			|| loaded.getTerrainSectorCount() < 1771
+			|| loaded.getPlacementSetCount() != loaded.getLevelCount()
+			|| loaded.getNpcPlacementCount() != 3775
+			|| loaded.getGroundItemPlacementCount() != 882
+			|| loaded.getSceneryPlacementCount() != 27886
+			|| loaded.getBoundaryPlacementCount() != 972) {
+			throw new IllegalStateException(
+				"The spoiled-milk-builder-draft profile requires an additive "
+					+ "terrain-only descendant of the accepted Spoiled Milk package");
+		}
+		for (int level : new int[] {-1, 0, 1, 2}) {
+			if (!loaded.declaresLevel(WorldSpaceId.GLOBAL, level)) {
+				throw new IllegalStateException(
+					"The Spoiled Milk Builder draft is missing global level " + level);
+			}
+		}
+		final Set<Integer> placementLevels = new HashSet<Integer>();
+		for (NativeLayeredPlacementSet set : loaded.getPlacementSets().values()) {
+			if (!WorldSpaceId.GLOBAL.equals(set.getWorldSpace())
+				|| !"layered-world-placements-v3".equals(
+					set.getSourceEncoding())
+				|| !placementLevels.add(Integer.valueOf(set.getLevel()))) {
+				throw new IllegalStateException(
+					"The Spoiled Milk Builder draft requires one global v3 "
+						+ "placement set per declared level");
+			}
+		}
+		if (placementLevels.size() != loaded.getLevelCount()) {
+			throw new IllegalStateException(
+				"The Spoiled Milk Builder draft placement levels are incomplete");
+		}
 	}
 
 	private static void validateCompleteWorld(

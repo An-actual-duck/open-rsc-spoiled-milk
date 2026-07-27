@@ -73,6 +73,22 @@ final class WorldBuilderLayeredReview {
 			throw new WorldBuilderDiscoveryException(
 				"Prepared layered review metadata counts or levels are invalid.");
 		}
+		Path sourcePackage =
+			workspace.resolve(WorldBuilderRuntimePreparer.LAYERED_SOURCE_PACKAGE)
+				.normalize();
+		if (!sourcePackage.startsWith(workspace)
+			|| !Files.isDirectory(sourcePackage, LinkOption.NOFOLLOW_LINKS)
+			|| Files.isSymbolicLink(sourcePackage)) {
+			throw new WorldBuilderDiscoveryException(
+				"Prepared layered source package is missing or unsafe.");
+		}
+		WorldBuilderLayeredPackage accepted =
+			WorldBuilderLayeredPackage.discover(
+				sourcePackage, WorldBuilderLayeredPackage.PROFILE_ID);
+		if (!fingerprint.equals(accepted.packageFingerprintSha256)) {
+			throw new WorldBuilderDiscoveryException(
+				"Prepared layered source package fingerprint changed.");
+		}
 		Path workingPackage =
 			workspace.resolve(WorldBuilderRuntimePreparer.LAYERED_WORKING_PACKAGE)
 				.normalize();
@@ -82,30 +98,18 @@ final class WorldBuilderLayeredReview {
 			throw new WorldBuilderDiscoveryException(
 				"Prepared layered review package is missing or unsafe.");
 		}
-		Path manifest = workingPackage.resolve("manifest.json");
-		if (!Files.isRegularFile(manifest, LinkOption.NOFOLLOW_LINKS)
-			|| Files.isSymbolicLink(manifest)
-			|| !WorldBuilderLayeredPackage.MANIFEST_SHA256.equals(
-				WorldBuilderHashes.sha256(manifest))) {
-			throw new WorldBuilderDiscoveryException(
-				"Prepared layered review manifest changed.");
-		}
 		WorldBuilderLayeredPackage verified =
-			WorldBuilderLayeredPackage.discover(
-				workingPackage, WorldBuilderLayeredPackage.PROFILE_ID);
-		if (!fingerprint.equals(verified.packageFingerprintSha256)) {
-			throw new WorldBuilderDiscoveryException(
-				"Prepared layered review package fingerprint changed.");
-		}
+			WorldBuilderLayeredPackage.discoverDraft(workingPackage);
+		verified.requireFirstDraftDescendant(accepted);
 		return new WorldBuilderLayeredReview(
-			WorldBuilderLayeredPackage.PACKAGE_ID,
-			WorldBuilderLayeredPackage.PACKAGE_VERSION,
-			WorldBuilderLayeredPackage.MANIFEST_SHA256,
-			fingerprint,
-			"global",
-			levels,
-			1771,
-			4);
+			verified.packageId,
+			verified.packageVersion,
+			verified.manifestSha256,
+			verified.packageFingerprintSha256,
+			verified.worldSpace,
+			verified.levels,
+			verified.terrainSectorCount,
+			verified.placementSetCount);
 	}
 
 	String levelsProperty() {
