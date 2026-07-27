@@ -1108,17 +1108,23 @@ return navigation, visible mutation refusal, and refusal of undeclared levels
 also behaved as designed, with no remaining issue reported in the route. The
 read-only Builder adapter is accepted.
 
-The first copy-on-write native-draft slice is now implemented and awaiting
-focused owner acceptance. Offline `create-level` holds the workspace lock,
-revalidates immutable source ancestry, adds arbitrary signed level metadata,
-one empty v3 placement set, and a deterministic flat/walkable 3-by-3 sector
-starter window, then validates every path/hash/count before a rollback-protected
-working-package swap. The Builder-only runtime profile accepts additive
-terrain-only descendants and is explicitly refused outside World Builder;
-ordinary Spoiled Milk remains pinned to its exact reviewed manifest. The first
-private draft is level `-3` at `(140,640)`. Broad editing, save, and layered
-export remain disabled until its navigation and reopen-persistence route is
-accepted.
+The first copy-on-write native-draft slice is implemented and owner-accepted.
+Offline `create-level` holds the workspace lock, revalidates immutable source
+ancestry, adds arbitrary signed level metadata, one empty v3 placement set,
+and a deterministic flat/walkable 3-by-3 sector starter window, then validates
+every path/hash/count before a rollback-protected working-package swap. The
+Builder-only runtime profile accepts additive terrain-only descendants and is
+explicitly refused outside World Builder; ordinary Spoiled Milk remains pinned
+to its exact reviewed manifest. The first private draft is level `-3` at
+`(140,640)`. The owner verified signed navigation, movement across sector and
+presentation boundaries, tile inspection, surface return, and the complete
+route again after a clean client/server restart of the unchanged workspace.
+The source package remained immutable.
+
+The next Builder slice can therefore add controlled terrain authoring and
+deterministic draft persistence, including explicit sector growth at an
+allocated edge. It must remain working-copy-only; placement authoring, broad
+save/export, and target-game mutation stay behind later gates.
 
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
