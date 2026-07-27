@@ -91,6 +91,7 @@ public final class WorldBuilderProcessSupervisor {
 		if (committed != null) {
 			System.out.println(
 				"Committed layered Builder draft: "
+					+ committed.levelCount + " levels, "
 					+ committed.tileCount + " tiles, "
 					+ committed.sectorCount + " sectors, "
 					+ committed.sceneryCount + " scenery edits, "

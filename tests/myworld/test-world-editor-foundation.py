@@ -91,6 +91,31 @@ class WorldEditorFoundationTest(unittest.TestCase):
         ):
             self.assertIn(label, ui)
 
+    def test_layered_builder_allocation_is_explicit_live_and_sparse(self):
+        ui = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java").read_text()
+        commands = (ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java").read_text()
+        sessions = (ROOT / "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java").read_text()
+        updater = (ROOT / "server/src/com/openrsc/server/GameStateUpdater.java").read_text()
+        region = (ROOT / "server/src/com/openrsc/server/model/world/region/RegionManager.java").read_text()
+        journal = (ROOT / "server/src/com/openrsc/server/content/worldedit/WorldEditorLayeredTerrainJournal.java").read_text()
+        materializer = (ROOT / "tools/world-builder/src/com/openrsc/worldbuilder/WorldBuilderLayeredTerrainDraftJournal.java").read_text()
+        package = (ROOT / "tools/world-builder/src/com/openrsc/worldbuilder/WorldBuilderLayeredPackage.java").read_text()
+
+        self.assertIn('isLayeredTerrainDraft()?"Go/Create":"Teleport"', ui)
+        self.assertIn("isLayeredTerrainDraft()||WorldBuilderClientProfile.current().declaresLayer(level)", ui)
+        self.assertIn("provisionNativeNavigationTarget(player,x,y,level)", commands)
+        self.assertIn("ensureNativePaintCoverage(player, coordinates, level)", sessions)
+        self.assertIn("centerSectorX - 1", sessions)
+        self.assertIn("centerSectorX + 1", sessions)
+        self.assertIn("hasAllocatedNeighbor(owner,sector,accepted)", sessions)
+        self.assertIn("nativeTerrainSceneRevision()", updater)
+        self.assertIn("findNativeTerrainSector(terrainPackage,sectorId)", updater)
+        self.assertIn("hasWorldBuilderDraftTerrain(checked)", region)
+        self.assertIn("world-builder-layered-draft-v4", journal)
+        self.assertIn("world-builder-layered-draft-v4", materializer)
+        self.assertIn("detached component without a complete", package)
+        self.assertNotIn("provisionNativeNavigationTarget", updater)
+
     def test_scenery_and_npc_tools_delegate_to_established_commands(self):
         ui = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java").read_text()
         client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()

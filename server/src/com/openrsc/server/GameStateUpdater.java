@@ -276,7 +276,7 @@ public final class GameStateUpdater {
 				"Native layered terrain gate has no loaded package");
 		}
 		final WorldMapSectorId sectorId = WorldMapSectorId.from(location);
-		terrainPackage.findSector(sectorId)
+		findNativeLayeredSceneSector(terrainPackage,sectorId)
 			.orElseThrow(() -> new IllegalStateException(
 				"Native layered scene has no terrain page at " + sectorId));
 		final int centerSectorX = Math.floorDiv(
@@ -304,6 +304,16 @@ public final class GameStateUpdater {
 			location,
 			centerSectorX,
 			centerSectorY);
+	}
+
+	private Optional<NativeLayeredTerrainSector> findNativeLayeredSceneSector(
+		final NativeLayeredWorldPackage terrainPackage,
+		final WorldMapSectorId sectorId){
+		if(getServer().getConfig().WORLD_BUILDER_MODE){
+			return getServer().getWorldEditorSessions()
+				.findNativeTerrainSector(terrainPackage,sectorId);
+		}
+		return terrainPackage.findSector(sectorId);
 	}
 
 	private int requireLayeredSceneContextSequence(final Player player) {
@@ -1006,13 +1016,18 @@ public final class GameStateUpdater {
 		}
 
 		private String scopeIdentity() {
-			return terrainPackage.getPackageId()
+			String identity=terrainPackage.getPackageId()
 				+ "@" + terrainPackage.getPackageVersion()
 				+ ":" + terrainPackage.getManifestSha256()
 				+ ":" + location.getWorldSpace().getValue()
 				+ ":" + location.getCoordinate().getLevel()
 				+ ":center-" + currentChunkX + "," + currentChunkY
 				+ ":chunk-" + NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+			return server.getConfig().WORLD_BUILDER_MODE
+				?identity+":draft-"
+					+server.getWorldEditorSessions()
+						.nativeTerrainSceneRevision()
+				:identity;
 		}
 
 		private void populate(final LayeredSceneContextStruct context) {
@@ -1037,12 +1052,17 @@ public final class GameStateUpdater {
 						new LayeredSceneTerrainChunkStruct();
 					output.chunkX = chunkX;
 					output.chunkY = chunkY;
-					final Optional<NativeLayeredTerrainSector> source =
-						terrainPackage.findSector(new WorldMapSectorId(
+					final WorldMapSectorId sectorId=new WorldMapSectorId(
 							location.getWorldSpace(),
 							location.getCoordinate().getLevel(),
 							chunkX,
-							chunkY));
+							chunkY);
+					final Optional<NativeLayeredTerrainSector> source =
+						server.getConfig().WORLD_BUILDER_MODE
+							?server.getWorldEditorSessions()
+								.findNativeTerrainSector(
+									terrainPackage,sectorId)
+							:terrainPackage.findSector(sectorId);
 					output.available = source.isPresent();
 					if (source.isPresent()) {
 						final NativeLayeredTerrainSector chunk = source.get();

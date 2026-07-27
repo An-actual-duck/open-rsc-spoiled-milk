@@ -168,7 +168,24 @@ public final class NativeLayeredWorldPackageCatalog {
 					"Native layered transition destination has no presentable chunk");
 			}
 		}
+		return prepareResolvedTransition(
+			source, checkedDestination, explicit,
+			sourcePackage, destinationPackage);
+	}
 
+	public Transition prepareResolvedTransition(
+		final WorldLocation source,
+		final WorldLocation destination,
+		final boolean explicit,
+		final NativeLayeredWorldPackage sourcePackage,
+		final NativeLayeredWorldPackage destinationPackage) {
+		WorldLocation checkedDestination=Objects.requireNonNull(
+			destination,"destination");
+		if((sourcePackage!=null&&!packages.contains(sourcePackage))
+			||(destinationPackage!=null&&!packages.contains(destinationPackage))){
+			throw new IllegalArgumentException(
+				"Resolved transition references a package outside this catalog");
+		}
 		TransitionKind kind;
 		if (source == null) {
 			kind = destinationPackage == null

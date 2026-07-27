@@ -260,7 +260,9 @@ public final class WorldEditorInterface extends NCustomComponent {
 		try{int x=Integer.parseInt(teleportX),y=Integer.parseInt(teleportY),level=Integer.parseInt(teleportLevel);
 			if(x<0||x>32767||y<0||y>32767||!validTeleportLevel(level))throw new NumberFormatException();
 			lastClickedX=x;lastClickedY=y;lastClickedLevel=level;coordinateFocus=0;mc.worldEditorTeleport(x,y,level);
-		}catch(NumberFormatException e){inspectionStatus=isLayeredReview()
+		}catch(NumberFormatException e){inspectionStatus=isLayeredTerrainDraft()
+			?"X/Y must be 0..32767; Level may be any signed whole number."
+			:isLayeredReview()
 			?"X/Y must be 0..32767 and Level must be one of "+WorldBuilderClientProfile.current().layeredLevelsLabel()
 			:"Coordinates must be whole numbers from 0 to 32767";inspectionDetails=new String[0];}
 	}
@@ -548,7 +550,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		checkbox(x+8,y+74,clickTeleportPreferred,"Click teleport");graphics().drawString(isLayeredReview()?"Teleport X / Y / Level":"Teleport X / Y",x+8,y+111,0xffff00,1);
 		if(isLayeredReview()){textField(x+8,y+118,50,teleportX,coordinateFocus==1);textField(x+62,y+118,54,teleportY,coordinateFocus==2);textField(x+120,y+118,52,teleportLevel,coordinateFocus==13);}
 		else{textField(x+8,y+118,78,teleportX,coordinateFocus==1);textField(x+94,y+118,78,teleportY,coordinateFocus==2);}
-		button(x+8,y+148,164,"Teleport");
+		button(x+8,y+148,164,isLayeredTerrainDraft()?"Go/Create":"Teleport");
 	}
 	private void renderCompactInspect(int x,int y){
 		graphics().drawString(compactLine(inspectionStatus,28),x+8,y+47,0xffff00,1);int line=y+64;for(String text:inspectionDetails){if(line>y+145)break;graphics().drawString(compactLine(text,28),x+8,line,0xffffff,1);line+=14;}
@@ -620,7 +622,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		graphics().drawString("X",x+20,y+214,0xffffff,2);textField(x+38,y+197,70,teleportX,coordinateFocus==1);
 		graphics().drawString("Y",x+112,y+214,0xffffff,2);textField(x+128,y+197,70,teleportY,coordinateFocus==2);
 		if(isLayeredReview()){graphics().drawString("L",x+204,y+214,0xffffff,2);textField(x+220,y+197,58,teleportLevel,coordinateFocus==13);}
-		button(x+295,y+197,80,"Teleport");
+		button(x+295,y+197,80,isLayeredTerrainDraft()?"Go/Create":"Teleport");
 		graphics().drawString(isLayeredTerrainDraft()?"New-level terrain, structures, scenery, and NPCs are editable; source/export stay locked.":isLayeredReview()?"Read-only package review; navigate and inspect are enabled.":"Navigate uses movement options; brush/edit actions are off.",x+10,y+244,0xff981f,1);
 	}
 	private void renderInspect(int x,int y){
@@ -690,7 +692,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private boolean isLayeredSceneryDraftLevel(){if(!isLayeredTerrainDraft())return false;int level=mc.getEditorPlayerWorldLevel();return level!=-1&&level!=0&&level!=1&&level!=2;}
 	private boolean isLayeredPlacementDraftLevel(){return isLayeredSceneryDraftLevel();}
 	private int editorLevel(int worldY){return isLayeredReview()?mc.getEditorPlayerWorldLevel():Math.floorDiv(worldY,944);}
-	private boolean validTeleportLevel(int level){return !isLayeredReview()||WorldBuilderClientProfile.current().declaresLayer(level);}
+	private boolean validTeleportLevel(int level){return !isLayeredReview()||isLayeredTerrainDraft()||WorldBuilderClientProfile.current().declaresLayer(level);}
 	private static int logicalLevelForLegacyPlane(int plane){return plane==3?-1:plane;}
 	private static String point(int x,int y){return x<0||y<0?"not set":x+","+y;}
 	private static String point(int x,int y,int level){return x<0||y<0?"not set":x+","+y+",L"+level;}

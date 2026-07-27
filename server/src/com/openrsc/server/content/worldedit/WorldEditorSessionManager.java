@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /** Single-owner, strictly sequenced editor session and bounded server-lifetime terrain draft. */
@@ -52,6 +53,13 @@ public final class WorldEditorSessionManager {
 		new java.util.LinkedHashSet<WorldMapSectorId>();
 	private final Set<WorldMapSectorId> nativeTerrainGrowthSaved =
 		new java.util.LinkedHashSet<WorldMapSectorId>();
+	private final Map<WorldMapSectorId,NativeLayeredTerrainSector>
+		nativeTerrainLiveSectors =
+			new LinkedHashMap<WorldMapSectorId,NativeLayeredTerrainSector>();
+	private final Map<Integer,NativeLevelCreation> nativeLevelCreations =
+		new LinkedHashMap<Integer,NativeLevelCreation>();
+	private final Map<Integer,NativeLevelCreation> nativeLevelCreationsSaved =
+		new LinkedHashMap<Integer,NativeLevelCreation>();
 	private final Map<NativeSceneryKey,NativeSceneryState> nativeSceneryBase =
 		new LinkedHashMap<NativeSceneryKey,NativeSceneryState>();
 	private final Map<NativeSceneryKey,NativeSceneryState> nativeSceneryOverlay =
@@ -69,6 +77,7 @@ public final class WorldEditorSessionManager {
 	private final Set<NativeNpcKey> nativeNpcDirty =
 		new HashSet<NativeNpcKey>();
 	private String nativeTerrainBaseManifestSha256;
+	private long nativeTerrainSceneRevision;
 	public WorldEditorSessionManager() { this(null, new SecureRandom()); }
 	public WorldEditorSessionManager(WorldEditStorageContext storage) { this(storage, new SecureRandom()); }
 	WorldEditorSessionManager(SecureRandom random) { this(null, random); }
@@ -154,13 +163,32 @@ public final class WorldEditorSessionManager {
 
 	public synchronized NativeTerrainSnapshot inspectNativeTerrain(
 		Player player, WorldLocation location) {
-		NativeLayeredTerrainTile base = nativeOwner(player, location)
-			.findTile(location)
-			.orElseThrow(() -> new IllegalArgumentException(
-				"Terrain tile is not allocated in the layered working package."));
+		NativeLayeredTerrainTile base = nativeBaseTile(player, location);
 		NativeTileKey key = new NativeTileKey(location);
 		NativeLayeredTerrainTile current = nativeTerrainOverlay.get(key);
 		return new NativeTerrainSnapshot(location, current == null ? base : current);
+	}
+
+	public synchronized boolean hasNativeTerrainDraft(
+		WorldLocation location) {
+		return location != null
+			&& nativeTerrainGrowth.contains(WorldMapSectorId.from(location));
+	}
+
+	public synchronized Optional<NativeLayeredTerrainSector>
+		findNativeTerrainSector(
+			NativeLayeredWorldPackage owner,
+			WorldMapSectorId identity) {
+		if (owner == null || identity == null) {
+			return Optional.empty();
+		}
+		Optional<NativeLayeredTerrainSector> source = owner.findSector(identity);
+		if (source.isPresent()) return source;
+		return Optional.ofNullable(nativeTerrainLiveSectors.get(identity));
+	}
+
+	public synchronized long nativeTerrainSceneRevision() {
+		return nativeTerrainSceneRevision;
 	}
 
 	public synchronized NativeTerrainStrokeResult paintNativeTerrainStroke(
@@ -180,6 +208,7 @@ public final class WorldEditorSessionManager {
 			fieldMask, elevation, groundTexture, groundOverlay, roofTexture,
 			horizontalWall, verticalWall);
 		int[][] coordinates = WorldEditorTerrainStroke.validateTiles(requestedTiles);
+		ensureNativePaintCoverage(player, coordinates, level);
 		WorldSpaceId worldSpace = player.getLayeredLocation().getWorldSpace();
 		List<NativeTerrainSnapshot> before =
 			new ArrayList<NativeTerrainSnapshot>(coordinates.length);
@@ -227,7 +256,13 @@ public final class WorldEditorSessionManager {
 		WorldLocation location, NativeLayeredTerrainTile source) {
 		NativeLayeredTerrainTile drafted =
 			nativeTerrainOverlay.get(new NativeTileKey(location));
-		return drafted == null ? source : drafted;
+		if (drafted != null) return drafted;
+		if (source != null) return source;
+		NativeLayeredTerrainSector live =
+			nativeTerrainLiveSectors.get(WorldMapSectorId.from(location));
+		if (live == null) return null;
+		WorldCoordinate coordinate = location.getCoordinate();
+		return live.getTile(coordinate.getLocalX(), coordinate.getLocalY());
 	}
 
 	public synchronized byte[] copyNativeTerrainSectorWireBytes(
@@ -270,33 +305,108 @@ public final class WorldEditorSessionManager {
 		int sectorY = Math.floorDiv(worldY, NativeLayeredTerrainSector.SIZE);
 		WorldMapSectorId requested = new WorldMapSectorId(
 			player.getLayeredLocation().getWorldSpace(), level, sectorX, sectorY);
-		if (owner.findSector(requested).isPresent()
-			|| nativeTerrainGrowth.contains(requested)) {
+		if (findNativeTerrainSector(owner, requested).isPresent()) {
 			throw new IllegalArgumentException(
 				"That terrain sector is already allocated or queued.");
 		}
-		boolean adjacent = false;
-		for (int[] direction : new int[][] {
-			{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
-			WorldMapSectorId neighbor = new WorldMapSectorId(
-				requested.getWorldSpace(), level,
-				sectorX + direction[0], sectorY + direction[1]);
-			if (owner.findSector(neighbor).isPresent()
-				|| nativeTerrainGrowth.contains(neighbor)) {
-				adjacent = true;
-				break;
-			}
-		}
-		if (!adjacent) {
+		if (!hasAllocatedNeighbor(owner, requested)) {
 			throw new IllegalArgumentException(
 				"New terrain must share an edge with allocated terrain.");
 		}
-		if (nativeTerrainGrowth.size() >= 64) {
+		addNativeTerrainSector(requested);
+		nativeTerrainSceneRevision++;
+		return requested;
+	}
+
+	public synchronized NativeTerrainProvisionResult
+		provisionNativeNavigationTarget(
+			Player player, int worldX, int worldY, int level) {
+		requireNativeDraftSession(player);
+		requireBuilderCoordinate(worldX, worldY);
+		WorldSpaceId worldSpace =
+			player.getLayeredLocation().getWorldSpace();
+		WorldLocation destination = new WorldLocation(
+			worldSpace, new WorldCoordinate(worldX, worldY, level));
+		if (player.getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(destination)) {
+			return NativeTerrainProvisionResult.existing(destination);
+		}
+		if (isSourceLevel(level)) {
+			throw new IllegalArgumentException(
+				"Accepted source levels cannot be expanded in this Builder draft.");
+		}
+		NativeLayeredWorldPackage owner =
+			player.getWorld().getRegionManager()
+				.getNativeLayeredWorldPackage();
+		if (owner == null) {
+			throw new IllegalStateException(
+				"Layered Builder package is unavailable.");
+		}
+		if (nativeTerrainBaseManifestSha256 == null) {
+			nativeTerrainBaseManifestSha256 = owner.getManifestSha256();
+		} else if (!nativeTerrainBaseManifestSha256.equals(
+				owner.getManifestSha256())) {
+			throw new IllegalStateException(
+				"Layered terrain draft crossed a package-manifest boundary.");
+		}
+		boolean createdLevel =
+			!owner.declaresLevel(worldSpace, level)
+				&& !nativeLevelCreations.containsKey(Integer.valueOf(level));
+		if (createdLevel) {
+			nativeLevelCreations.put(
+				Integer.valueOf(level),
+				new NativeLevelCreation(
+					level, worldX, worldY,
+					defaultLevelName(level), defaultLevelRole(level)));
+		}
+		int centerSectorX =
+			Math.floorDiv(worldX, NativeLayeredTerrainSector.SIZE);
+		int centerSectorY =
+			Math.floorDiv(worldY, NativeLayeredTerrainSector.SIZE);
+		Set<WorldMapSectorId> added =
+			new java.util.LinkedHashSet<WorldMapSectorId>();
+		for (int sectorX = centerSectorX - 1;
+			sectorX <= centerSectorX + 1; sectorX++) {
+			for (int sectorY = centerSectorY - 1;
+				sectorY <= centerSectorY + 1; sectorY++) {
+				WorldMapSectorId identity = new WorldMapSectorId(
+					worldSpace, level, sectorX, sectorY);
+				if (!findNativeTerrainSector(owner, identity).isPresent()) {
+					added.add(identity);
+				}
+			}
+		}
+		if (added.isEmpty()) {
+			throw new IllegalStateException(
+				"Navigation target has no terrain but its work area is already allocated.");
+		}
+		if (nativeTerrainGrowth.size() + added.size() > 64) {
+			if (createdLevel) nativeLevelCreations.remove(Integer.valueOf(level));
 			throw new IllegalStateException(
 				"Terrain sector-growth draft limit reached.");
 		}
-		nativeTerrainGrowth.add(requested);
-		return requested;
+		for (WorldMapSectorId identity : added) {
+			addNativeTerrainSector(identity);
+		}
+		for (int x = worldX - 1; x <= worldX + 1; x++) {
+			for (int y = worldY - 1; y <= worldY + 1; y++) {
+				if (x < 0 || x > 32767 || y < 0 || y > 32767) continue;
+				WorldLocation location = new WorldLocation(
+					worldSpace, new WorldCoordinate(x, y, level));
+				if (!added.contains(WorldMapSectorId.from(location))) continue;
+				NativeLayeredTerrainTile base =
+					nativeBaseTile(owner, location);
+				NativeTileKey key = new NativeTileKey(location);
+				NativeLayeredTerrainTile floor =
+					new NativeLayeredTerrainTile(
+						base.getElevation(), 1, 0, 0, 0, 0, 0);
+				nativeTerrainOverlay.put(key, floor);
+				refreshNativeDirty(key);
+			}
+		}
+		nativeTerrainSceneRevision++;
+		return new NativeTerrainProvisionResult(
+			destination, createdLevel, added.size());
 	}
 
 	public synchronized GameObject placeNativeScenery(
@@ -423,6 +533,7 @@ public final class WorldEditorSessionManager {
 		}
 		if (nativeTerrainDirty.isEmpty()
 			&& nativeTerrainGrowth.equals(nativeTerrainGrowthSaved)
+			&& nativeLevelCreations.equals(nativeLevelCreationsSaved)
 			&& nativeSceneryDirty.isEmpty()
 			&& nativeNpcDirty.isEmpty()) {
 			throw new IllegalStateException("Layered draft is empty.");
@@ -449,6 +560,14 @@ public final class WorldEditorSessionManager {
 		for (WorldMapSectorId sector : nativeTerrainGrowth) {
 			sectors.add(new WorldEditorLayeredTerrainJournal.SectorGrowth(
 				sector.getLevel(), sector.getSectorX(), sector.getSectorY()));
+		}
+		List<WorldEditorLayeredTerrainJournal.LevelCreation> levels =
+			new ArrayList<WorldEditorLayeredTerrainJournal.LevelCreation>(
+				nativeLevelCreations.size());
+		for (NativeLevelCreation level : nativeLevelCreations.values()) {
+			levels.add(new WorldEditorLayeredTerrainJournal.LevelCreation(
+				level.level, level.anchorX, level.anchorY,
+				level.name, level.role));
 		}
 		List<WorldEditorLayeredTerrainJournal.SceneryEdit> scenery =
 			new ArrayList<WorldEditorLayeredTerrainJournal.SceneryEdit>(
@@ -501,13 +620,15 @@ public final class WorldEditorSessionManager {
 		paths.validateWorkingAuthoredFile(journal);
 		WorldEditorLayeredTerrainJournal.SaveResult saved =
 			WorldEditorLayeredTerrainJournal.save(
-				journal, nativeTerrainBaseManifestSha256, sectors, tiles,
-				scenery, npcs);
+				journal, nativeTerrainBaseManifestSha256, levels, sectors,
+				tiles, scenery, npcs);
 		nativeTerrainSaved.clear();
 		nativeTerrainSaved.putAll(nativeTerrainOverlay);
 		nativeTerrainDirty.clear();
 		nativeTerrainGrowthSaved.clear();
 		nativeTerrainGrowthSaved.addAll(nativeTerrainGrowth);
+		nativeLevelCreationsSaved.clear();
+		nativeLevelCreationsSaved.putAll(nativeLevelCreations);
 		nativeScenerySaved.clear();
 		nativeScenerySaved.putAll(nativeSceneryOverlay);
 		nativeSceneryDirty.clear();
@@ -525,6 +646,16 @@ public final class WorldEditorSessionManager {
 		int result = 0;
 		for (WorldMapSectorId sector : nativeTerrainGrowth) {
 			if (!nativeTerrainGrowthSaved.contains(sector)) result++;
+		}
+		return result;
+	}
+
+	public synchronized int nativeLevelCreationDraftSize() {
+		int result = 0;
+		for (Map.Entry<Integer,NativeLevelCreation> entry
+			: nativeLevelCreations.entrySet()) {
+			if (!entry.getValue().equals(
+					nativeLevelCreationsSaved.get(entry.getKey()))) result++;
 		}
 		return result;
 	}
@@ -556,7 +687,7 @@ public final class WorldEditorSessionManager {
 			terrainBaseSha256=saved.resultSha256;terrainArchive=new WorldEditorTerrainArchive(terrainArchivePath.toFile());terrainDraft.clear();return saved;
 		}catch(IOException|RuntimeException failure){try{terrainArchive=new WorldEditorTerrainArchive(terrainArchivePath.toFile());}catch(IOException reopen){failure.addSuppressed(reopen);}throw failure;}
 	}
-	private void requireNativeTerrainAuthoring(Player player,int level){
+	private void requireNativeDraftSession(Player player){
 		if(player==null||!player.getConfig().WORLD_BUILDER_MODE
 			||!player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
 			||!"spoiled-milk-builder-draft".equals(
@@ -564,7 +695,14 @@ public final class WorldEditorSessionManager {
 			throw new IllegalStateException(
 				"Layered terrain authoring requires an isolated Builder draft.");
 		}
-		if(level==-1||level==0||level==1||level==2){
+		if(!ownsActiveSession(player)){
+			throw new IllegalStateException(
+				"Layered terrain authoring requires the active Builder editor session.");
+		}
+	}
+	private void requireNativeTerrainAuthoring(Player player,int level){
+		requireNativeDraftSession(player);
+		if(isSourceLevel(level)){
 			throw new IllegalArgumentException(
 				"This first terrain-authoring slice is restricted to Builder-created levels.");
 		}
@@ -572,6 +710,105 @@ public final class WorldEditorSessionManager {
 			throw new IllegalArgumentException(
 				"Paint terrain on the currently active signed level.");
 		}
+	}
+	private static boolean isSourceLevel(int level){
+		return level==-1||level==0||level==1||level==2;
+	}
+	private static void requireBuilderCoordinate(int x,int y){
+		if(x<0||x>32767||y<0||y>32767){
+			throw new IllegalArgumentException(
+				"Builder coordinates must be from 0 to 32767.");
+		}
+	}
+	private static String defaultLevelName(int level){
+		if(level<0)return "Underground level "+Long.toString(-(long)level);
+		if(level>0)return "Upper level "+Integer.toString(level);
+		return "Surface";
+	}
+	private static String defaultLevelRole(int level){
+		if(level<0)return "underground-level-"+Long.toString(-(long)level);
+		if(level>0)return "upper-level-"+Integer.toString(level);
+		return "surface";
+	}
+	private void ensureNativePaintCoverage(
+		Player player,int[][] coordinates,int level){
+		NativeLayeredWorldPackage owner=
+			nativeOwner(player,player.getLayeredLocation());
+		WorldSpaceId worldSpace=
+			player.getLayeredLocation().getWorldSpace();
+		Set<WorldMapSectorId> missing=
+			new java.util.LinkedHashSet<WorldMapSectorId>();
+		for(int[] coordinate:coordinates){
+			requireBuilderCoordinate(coordinate[0],coordinate[1]);
+			WorldMapSectorId sector=new WorldMapSectorId(
+				worldSpace,level,
+				Math.floorDiv(coordinate[0],NativeLayeredTerrainSector.SIZE),
+				Math.floorDiv(coordinate[1],NativeLayeredTerrainSector.SIZE));
+			if(!findNativeTerrainSector(owner,sector).isPresent())missing.add(sector);
+		}
+		if(missing.isEmpty())return;
+		Set<WorldMapSectorId> pending=
+			new java.util.LinkedHashSet<WorldMapSectorId>(missing);
+		Set<WorldMapSectorId> accepted=
+			new java.util.LinkedHashSet<WorldMapSectorId>();
+		boolean progressed;
+		do{
+			progressed=false;
+			java.util.Iterator<WorldMapSectorId> iterator=pending.iterator();
+			while(iterator.hasNext()){
+				WorldMapSectorId sector=iterator.next();
+				if(hasAllocatedNeighbor(owner,sector,accepted)){
+					accepted.add(sector);
+					iterator.remove();
+					progressed=true;
+				}
+			}
+		}while(progressed&&!pending.isEmpty());
+		if(!pending.isEmpty()){
+			throw new IllegalArgumentException(
+				"Terrain painting can expand across an allocated edge, "
+					+"but cannot create a detached sector.");
+		}
+		if(nativeTerrainGrowth.size()+accepted.size()>64){
+			throw new IllegalStateException(
+				"Terrain sector-growth draft limit reached.");
+		}
+		for(WorldMapSectorId sector:accepted)addNativeTerrainSector(sector);
+		nativeTerrainSceneRevision++;
+	}
+	private boolean hasAllocatedNeighbor(
+		NativeLayeredWorldPackage owner,WorldMapSectorId requested){
+		for(int[] direction:new int[][]{{1,0},{-1,0},{0,1},{0,-1}}){
+			WorldMapSectorId neighbor=new WorldMapSectorId(
+				requested.getWorldSpace(),requested.getLevel(),
+				requested.getSectorX()+direction[0],
+				requested.getSectorY()+direction[1]);
+			if(findNativeTerrainSector(owner,neighbor).isPresent())return true;
+		}
+		return false;
+	}
+	private boolean hasAllocatedNeighbor(
+		NativeLayeredWorldPackage owner,WorldMapSectorId requested,
+		Set<WorldMapSectorId> accepted){
+		for(int[] direction:new int[][]{{1,0},{-1,0},{0,1},{0,-1}}){
+			WorldMapSectorId neighbor=new WorldMapSectorId(
+				requested.getWorldSpace(),requested.getLevel(),
+				requested.getSectorX()+direction[0],
+				requested.getSectorY()+direction[1]);
+			if(accepted.contains(neighbor)
+				||findNativeTerrainSector(owner,neighbor).isPresent())return true;
+		}
+		return false;
+	}
+	private void addNativeTerrainSector(WorldMapSectorId identity){
+		if(nativeTerrainGrowth.contains(identity))return;
+		if(nativeTerrainGrowth.size()>=64){
+			throw new IllegalStateException(
+				"Terrain sector-growth draft limit reached.");
+		}
+		nativeTerrainGrowth.add(identity);
+		nativeTerrainLiveSectors.put(
+			identity,NativeLayeredTerrainSector.worldBuilderVoid(identity));
 	}
 	private WorldLocation activeNativeSceneryLocation(
 		Player player,int x,int y){
@@ -585,9 +822,12 @@ public final class WorldEditorSessionManager {
 		WorldLocation location=new WorldLocation(
 			player.getLayeredLocation().getWorldSpace(),
 			new WorldCoordinate(x,y,level));
-		nativeOwner(player,location).findTile(location)
-			.orElseThrow(()->new IllegalArgumentException(
-				"Authored content must be placed on allocated package terrain."));
+		NativeLayeredWorldPackage owner=nativeOwner(player,location);
+		if(!findNativeTerrainSector(
+				owner,WorldMapSectorId.from(location)).isPresent()){
+			throw new IllegalArgumentException(
+				"Authored content must be placed on allocated package terrain.");
+		}
 		return location;
 	}
 	private void requireNativeNpcTerrainCoverage(
@@ -600,7 +840,7 @@ public final class WorldEditorSessionManager {
 				sectorY<=Math.floorDiv(maxY,NativeLayeredTerrainSector.SIZE);sectorY++){
 				WorldMapSectorId sector=new WorldMapSectorId(
 					start.getWorldSpace(),level,sectorX,sectorY);
-				if(!owner.findSector(sector).isPresent()){
+				if(!findNativeTerrainSector(owner,sector).isPresent()){
 					throw new IllegalArgumentException(
 						"NPC roaming bounds must remain on allocated package terrain.");
 				}
@@ -702,12 +942,20 @@ public final class WorldEditorSessionManager {
 		return owner;
 	}
 	private NativeLayeredTerrainTile nativeBaseTile(Player player,WorldLocation location){
+		return nativeBaseTile(nativeOwner(player,location),location);
+	}
+	private NativeLayeredTerrainTile nativeBaseTile(
+		NativeLayeredWorldPackage owner,WorldLocation location){
 		NativeTileKey key=new NativeTileKey(location);
 		NativeLayeredTerrainTile known=nativeTerrainBase.get(key);
 		if(known!=null)return known;
-		NativeLayeredTerrainTile source=nativeOwner(player,location).findTile(location)
-			.orElseThrow(()->new IllegalArgumentException(
-				"Terrain tile is not allocated in the layered working package."));
+		Optional<NativeLayeredTerrainSector> sector=findNativeTerrainSector(
+			owner,WorldMapSectorId.from(location));
+		if(!sector.isPresent())throw new IllegalArgumentException(
+			"Terrain tile is not allocated in the layered working package.");
+		WorldCoordinate coordinate=location.getCoordinate();
+		NativeLayeredTerrainTile source=sector.get().getTile(
+			coordinate.getLocalX(),coordinate.getLocalY());
 		nativeTerrainBase.put(key,source);
 		return source;
 	}
@@ -818,6 +1066,42 @@ public final class WorldEditorSessionManager {
 		}
 		@Override public boolean equals(Object other){if(this==other)return true;if(!(other instanceof NativeNpcState))return false;NativeNpcState state=(NativeNpcState)other;return level==state.level&&npcId==state.npcId&&startX==state.startX&&startY==state.startY&&minX==state.minX&&minY==state.minY&&maxX==state.maxX&&maxY==state.maxY&&placementId.equals(state.placementId);}
 		@Override public int hashCode(){int result=placementId.hashCode();result=31*result+level;result=31*result+npcId;result=31*result+startX;result=31*result+startY;result=31*result+minX;result=31*result+minY;result=31*result+maxX;return 31*result+maxY;}
+	}
+	private static final class NativeLevelCreation {
+		final int level,anchorX,anchorY;final String name,role;
+		NativeLevelCreation(
+			int level,int anchorX,int anchorY,String name,String role){
+			this.level=level;this.anchorX=anchorX;this.anchorY=anchorY;
+			this.name=name;this.role=role;
+		}
+		@Override public boolean equals(Object other){
+			if(this==other)return true;
+			if(!(other instanceof NativeLevelCreation))return false;
+			NativeLevelCreation value=(NativeLevelCreation)other;
+			return level==value.level&&anchorX==value.anchorX
+				&&anchorY==value.anchorY&&name.equals(value.name)
+				&&role.equals(value.role);
+		}
+		@Override public int hashCode(){
+			int result=level;result=31*result+anchorX;result=31*result+anchorY;
+			result=31*result+name.hashCode();return 31*result+role.hashCode();
+		}
+	}
+	public static final class NativeTerrainProvisionResult {
+		public final WorldLocation destination;
+		public final boolean createdLevel;
+		public final int allocatedSectorCount;
+		private NativeTerrainProvisionResult(
+			WorldLocation destination,boolean createdLevel,
+			int allocatedSectorCount){
+			this.destination=destination;this.createdLevel=createdLevel;
+			this.allocatedSectorCount=allocatedSectorCount;
+		}
+		private static NativeTerrainProvisionResult existing(
+			WorldLocation destination){
+			return new NativeTerrainProvisionResult(destination,false,0);
+		}
+		public boolean allocated(){return allocatedSectorCount>0;}
 	}
 	public static final class NativeTerrainSnapshot {
 		public final WorldLocation location;public final NativeLayeredTerrainTile tile;

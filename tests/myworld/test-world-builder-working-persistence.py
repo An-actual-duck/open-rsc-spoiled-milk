@@ -192,12 +192,40 @@ public final class WorldBuilderWorkingPersistenceHarness {
         layered = WorldEditorLayeredTerrainJournal.save(
             layeredJournal,
             "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.LevelCreation(
+                    -4, 500, 700,
+                    "Underground level 4", "underground-level-4")),
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.SectorGrowth(-4, 11, 15),
+                new WorldEditorLayeredTerrainJournal.SectorGrowth(-4, 9, 13)),
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.TileEdit(
+                    -4, 500, 700, 0, 1, 0, 0, 0, 0, 0)),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.SceneryEdit>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.NpcEdit>emptyList());
+        require(layered.levelCount == 1 && layered.tileCount == 1
+                && layered.sectorCount == 2,
+            "allocation journal counts");
+        journalText = new String(
+            Files.readAllBytes(layeredJournal), "US-ASCII");
+        require(journalText.startsWith("world-builder-layered-draft-v4\n")
+                && journalText.contains("level-count\t1\n")
+                && journalText.contains(
+                    "level\t-4\t500\t700\tUnderground level 4\tunderground-level-4\n")
+                && journalText.indexOf("sector\t-4\t9\t13")
+                    < journalText.indexOf("sector\t-4\t11\t15"),
+            "allocation journal is not stable and deterministic");
+        layered = WorldEditorLayeredTerrainJournal.save(
+            layeredJournal,
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
             java.util.Collections.<WorldEditorLayeredTerrainJournal.SectorGrowth>emptyList(),
             java.util.Collections.<WorldEditorLayeredTerrainJournal.TileEdit>emptyList(),
             java.util.Collections.<WorldEditorLayeredTerrainJournal.SceneryEdit>emptyList(),
             java.util.Collections.<WorldEditorLayeredTerrainJournal.NpcEdit>emptyList());
         require(layered.tileCount == 0 && layered.sectorCount == 0
                 && layered.sceneryCount == 0 && layered.npcCount == 0
+                && layered.levelCount == 0
                 && !Files.exists(layeredJournal),
             "fully reverted layered draft retained a stale journal");
         System.out.println("working-persistence-ok");

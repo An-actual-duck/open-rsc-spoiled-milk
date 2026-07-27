@@ -384,28 +384,35 @@ final class WorldBuilderLayeredPackage {
 				"Builder-created level " + level
 					+ " no longer contains a complete 3x3 starter window.");
 		}
-		Set<String> reached = new HashSet<String>();
-		List<String> pending = new ArrayList<String>();
-		pending.add(coordinates.iterator().next());
-		while (!pending.isEmpty()) {
-			String current = pending.remove(pending.size() - 1);
-			if (!reached.add(current)) continue;
-			int separator = current.indexOf(':');
-			int x = Integer.parseInt(current.substring(0, separator));
-			int y = Integer.parseInt(current.substring(separator + 1));
-			for (int[] direction : new int[][] {
-				{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
-				String neighbor = ((long)x + direction[0])
-					+ ":" + ((long)y + direction[1]);
-				if (coordinates.contains(neighbor) && !reached.contains(neighbor)) {
-					pending.add(neighbor);
+		Set<String> remaining = new HashSet<String>(coordinates);
+		while (!remaining.isEmpty()) {
+			Set<String> component = new HashSet<String>();
+			List<String> pending = new ArrayList<String>();
+			pending.add(remaining.iterator().next());
+			while (!pending.isEmpty()) {
+				String current = pending.remove(pending.size() - 1);
+				if (!component.add(current)) continue;
+				remaining.remove(current);
+				int separator = current.indexOf(':');
+				int x = Integer.parseInt(current.substring(0, separator));
+				int y = Integer.parseInt(current.substring(separator + 1));
+				for (int[] direction : new int[][] {
+					{ 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }
+				}) {
+					String neighbor = ((long)x + direction[0]) + ":"
+						+ ((long)y + direction[1]);
+					if (coordinates.contains(neighbor)
+						&& !component.contains(neighbor)) {
+						pending.add(neighbor);
+					}
 				}
 			}
-		}
-		if (reached.size() != coordinates.size()) {
-			throw new WorldBuilderDiscoveryException(
-				"Builder-created level " + level
-					+ " terrain sectors are not edge-connected.");
+			if (!containsThreeByThree(component)) {
+				throw new WorldBuilderDiscoveryException(
+					"Builder-created level " + level
+						+ " has a detached component without a complete "
+						+ "3x3 work-area allocation.");
+			}
 		}
 	}
 

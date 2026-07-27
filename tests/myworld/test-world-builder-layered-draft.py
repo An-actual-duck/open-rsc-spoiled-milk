@@ -406,6 +406,78 @@ public final class WorldBuilderLayeredDraftHarness {
         require(authored != null && authored.placementCount == 0,
             "NPC removal restored empty placement payload");
 
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        int priorTerrainCount = draft.terrainSectorCount;
+        int priorPlacementCount = draft.placementSetCount;
+        String v4SceneryId =
+            "spoiled-milk.builder.scenery.lm4.xp500.yp700";
+        StringBuilder allocationDraft = new StringBuilder()
+            .append("world-builder-layered-draft-v4\n")
+            .append("base-manifest-sha256\t")
+            .append(draft.manifestSha256).append('\n')
+            .append("level-count\t1\n")
+            .append("tile-count\t2\n")
+            .append("sector-count\t18\n")
+            .append("scenery-count\t1\n")
+            .append("npc-count\t0\n")
+            .append("level\t-4\t500\t700\tUnderground level 4\t")
+            .append("underground-level-4\n");
+        int levelCenterX = Math.floorDiv(500, 48);
+        int levelCenterY = Math.floorDiv(700, 48);
+        for (int sectorX = levelCenterX - 1;
+            sectorX <= levelCenterX + 1; sectorX++) {
+            for (int sectorY = levelCenterY - 1;
+                sectorY <= levelCenterY + 1; sectorY++) {
+                allocationDraft.append("sector\t-4\t")
+                    .append(sectorX).append('\t')
+                    .append(sectorY).append('\n');
+            }
+        }
+        for (int sectorX = 19; sectorX <= 21; sectorX++) {
+            for (int sectorY = 19; sectorY <= 21; sectorY++) {
+                allocationDraft.append("sector\t-4\t")
+                    .append(sectorX).append('\t')
+                    .append(sectorY).append('\n');
+            }
+        }
+        allocationDraft
+            .append("tile\t-4\t500\t700\t0\t1\t0\t0\t0\t0\t0\n")
+            .append("tile\t-4\t960\t960\t0\t1\t0\t0\t0\t0\t0\n")
+            .append("scenery\tupsert\t-4\t500\t700\t")
+            .append(v4SceneryId).append("\t3\t0\n");
+        Files.write(
+            journal,
+            allocationDraft.toString().getBytes(StandardCharsets.US_ASCII));
+        WorldBuilderLayeredTerrainDraftJournal.CommitResult allocationCommit =
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        require(allocationCommit.levelCount == 1
+                && allocationCommit.sectorCount == 18
+                && allocationCommit.tileCount == 2
+                && allocationCommit.sceneryCount == 1,
+            "v4 level/sparse allocation commit");
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        draft.requireTerrainDraftDescendant(accepted);
+        require(draft.levels.contains(Integer.valueOf(-4)),
+            "v4 level declaration");
+        require(draft.terrainSectorCount == priorTerrainCount + 18,
+            "v4 terrain count");
+        require(draft.placementSetCount == priorPlacementCount + 1,
+            "v4 placement-set count");
+        require(Files.isRegularFile(
+                working.resolve("terrain/global/lm4/xp20-yp20.raw")),
+            "detached v4 canvas");
+        Path v4Payload = working.resolve("placements/global/lm4.json");
+        String v4Text = new String(
+            Files.readAllBytes(v4Payload), StandardCharsets.UTF_8);
+        require(v4Text.contains("\"placementId\": \""
+                + v4SceneryId + "\""),
+            "v4 same-transaction scenery");
+        require(WorldBuilderLayeredReview.readIfPresent(workspace)
+                .levels.contains(Integer.valueOf(-4)),
+            "v4 level survives reopen");
+
+        String beforeSourceRefusal = draft.manifestSha256;
         String refusedSourceEdit =
             "world-builder-layered-terrain-draft-v1\n"
             + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
@@ -425,7 +497,7 @@ public final class WorldBuilderLayeredDraftHarness {
         }
         require(sourceEditRefused, "accepted source-level edit refusal");
         require(Files.exists(journal), "refused journal was discarded");
-        require(terrainCommit.manifestSha256.equals(
+        require(beforeSourceRefusal.equals(
             WorldBuilderLayeredPackage.discoverDraft(working).manifestSha256),
             "source-level refusal changed the working draft");
         Files.delete(journal);

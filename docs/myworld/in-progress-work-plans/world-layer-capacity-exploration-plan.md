@@ -18288,6 +18288,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Implement the intent-driven sparse canvas behind explicit Builder actions. | Implemented and automated-validated, pending focused owner review. **Go/Create** can create an arbitrary signed level or a detached 3-by-3 void work area live; an edge-crossing terrain stroke atomically allocates its connected touched sectors; v4 journals level creation with terrain/scenery/NPC edits; every detached component must retain a complete 3-by-3 canvas; passive movement/camera loading, source levels, transition inference, export, and target files remain non-authoritative |
 | 2026-07-27 | Replace narrow family-by-family Builder review with one free-form generated-level authoring workbench. | Owner-accepted: logical non-source levels expose terrain surfaces, terrain structures/walls, scenery, and NPCs together; one backward-compatible v3 journal atomically persists all enabled families; NPC identity and roaming bounds survive clean close/reopen; source levels, ground items, standalone boundaries, export, and target files remain locked. Generated levels no longer compose unrelated legacy upper-plane models, and the owner confirmed correct long-zoom player visibility and void authoring on level `-3` |
 | 2026-07-25 | Reframe the enclosing product as RSC Remastered: one definitive vanilla-content remaster with integrated launcher, layered Builder, and modder workflow, while retaining modular technical boundaries internally. | Confirmed; recorded in the product roadmap |
 | 2026-07-25 | Use the locally present Preservation revision-64 server terrain, matching authentic ORSC, base placements, configuration, definitions, and copied seed as the first vanilla source candidate; freeze them as one provenance set before conversion. | Confirmed; inputs and current hashes inventoried |
@@ -19038,9 +19039,48 @@ new canvas is usable. The recommended next milestone is an
   same-level, one-way, and scripted transitions remain valid designs.
 
 This keeps 48-by-48 pages as an internal sparse storage unit while presenting
-an effectively expandable canvas to creators. The exact live package-refresh
-and journal-version design remains to be implemented and validated before
-transition authoring is widened.
+an effectively expandable canvas to creators.
+
+The intent-driven sparse canvas is now implemented and automated-validated,
+pending one focused private owner route:
+
+- the draft Navigate fields accept any signed integer level and present one
+  explicit **Go/Create** action. Navigating to an absent level creates its
+  deterministic level metadata, empty v3 placement set, and void-backed 3-by-3
+  sector work area; navigating to absent terrain on an existing generated
+  level creates another 3-by-3 work area, which may be deliberately detached;
+- creation is live in the running isolated Builder. The server adds
+  provisional native sectors to terrain, collision, transitions, inspection,
+  scenery/NPC coverage, and the complete 3-by-3 client scene window, then
+  advances a draft scene revision so the client refreshes without a launcher
+  restart. Camera motion and ordinary walking do not call the allocator;
+- every new work area is blocking/invisible overlay-8 void except for a
+  centered 3-by-3 tile arrival pad on a newly created destination. Existing
+  tiles are never cleared merely because a later work area overlaps them;
+- a terrain stroke crossing an allocated edge preflights all touched sectors,
+  refuses a detached stroke or the existing 64-sector growth budget, then
+  allocates every accepted touched sector and applies the paint as one
+  synchronized operation. A corner-crossing 3-by-3 stroke may include the two
+  edge neighbors and their diagonal only when the complete touched set is
+  connected back to allocated terrain;
+- v4 of the bounded journal adds sorted level-creation records while retaining
+  v1-v3 readers. Save continues to describe the full server-lifetime delta
+  against the current working manifest; clean close materializes level
+  metadata, empty placement payloads, sparse raw sectors, tile edits, scenery,
+  and NPCs through the existing staged copy-on-write swap; and
+- descendant validation now permits multiple disconnected components on a
+  generated level only when each component contains a complete 3-by-3 work
+  area. Accepted source levels remain immutable, arbitrary single-sector
+  islands fail closed, and the source package/export target remain untouched.
+
+The focused regression route materializes and reopens a new signed level with
+two detached 3-by-3 canvases plus same-transaction terrain and scenery, while
+the existing v1-v3 lifecycle, persistence, Builder foundation, runtime, native
+loader, authoritative server build, and client build remain covered. The
+remaining gate is owner confirmation of live Create/Go, live paint-at-edge,
+Save, clean close, and reopen. Transition records and ladder/stair-driven
+creation remain deliberately deferred until the editor stores explicit route
+semantics.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first

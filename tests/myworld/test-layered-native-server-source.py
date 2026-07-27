@@ -223,6 +223,29 @@ public final class NativeLayeredServerSourceFixture {
             "detached sector last tile");
         check(detached.pack().remaining() == 48 * 48 * 10,
             "detached full-fidelity byte count");
+
+        WorldMapSectorId voidId =
+            new WorldMapSectorId(WorldSpaceId.GLOBAL, -4, 20, 20);
+        NativeLayeredTerrainSector voidSector =
+            NativeLayeredTerrainSector.worldBuilderVoid(voidId);
+        NativeLayeredTerrainTile voidTile = voidSector.getTile(47, 47);
+        check(voidSector.getIdentity().equals(voidId),
+            "Builder void identity");
+        check(voidTile.getElevation() == 0
+                && voidTile.getTexture() == 1
+                && voidTile.getOverlay() == 8
+                && voidTile.getRoof() == 0
+                && voidTile.getVerticalWall() == 0
+                && voidTile.getHorizontalWall() == 0
+                && voidTile.getDiagonalWall() == 0,
+            "Builder void tile");
+        check("raw-layered-sector-v1".equals(
+                voidSector.getSourceEncoding()),
+            "Builder void encoding");
+        check(voidSector.getSourceSha256().matches("[0-9a-f]{64}"),
+            "Builder void digest");
+        check(voidSector.copyWireBytes().length == 48 * 48 * 10,
+            "Builder void wire byte count");
     }
 
     private static NativeLayeredTerrainTile tile(
@@ -1435,9 +1458,11 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "Suppressing legacy base placement population", world_populator
         )
         self.assertIn(
-            "NativeLayeredTerrainTile source = owner.findTile",
+            "NativeLayeredTerrainTile source =",
             region_manager,
         )
+        self.assertIn("resolveNativeTerrainTile(", region_manager)
+        self.assertIn("owner.findTile(location).orElse(null)", region_manager)
         self.assertIn("placement.getMinX()", region_manager)
         self.assertIn("placement.getMaxX()", region_manager)
         self.assertIn("placement.getMinY()", region_manager)
@@ -1472,7 +1497,11 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "Layered native terrain package requires the accepted synthetic",
             region_manager,
         )
-        self.assertIn("findSector(new WorldMapSectorId(", game_state_updater)
+        self.assertIn("findNativeLayeredSceneSector(", game_state_updater)
+        self.assertIn(
+            "findNativeTerrainSector(terrainPackage,sectorId)",
+            game_state_updater,
+        )
         self.assertIn("compressNativeTerrain(", game_state_updater)
         self.assertIn(
             '"; ready=" + nativeReadyChunks + "/9"', development

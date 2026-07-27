@@ -372,10 +372,30 @@ public final class Development implements CommandTrigger {
 			current.getWorldSpace(),new WorldCoordinate(x,y,level));
 		if (!player.getWorld().getRegionManager()
 			.hasNativeLayeredTerrain(destination)) {
-			player.message(messagePrefix
-				+ "The reviewed package has no terrain at "
-				+x+","+y+",L"+level+".");
-			return;
+			if (!player.getConfig().WORLD_BUILDER_MODE
+				|| !"spoiled-milk-builder-draft".equals(
+					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)) {
+				player.message(messagePrefix
+					+ "The reviewed package has no terrain at "
+					+x+","+y+",L"+level+".");
+				return;
+			}
+			try {
+				WorldEditorSessionManager.NativeTerrainProvisionResult result =
+					player.getWorld().getServer().getWorldEditorSessions()
+						.provisionNativeNavigationTarget(player,x,y,level);
+				destination=result.destination;
+				player.message(messagePrefix
+					+(result.createdLevel?"Created layer ":"Expanded layer ")
+					+level+" with "+result.allocatedSectorCount
+					+" void-backed sector"
+					+(result.allocatedSectorCount==1?"":"s")
+					+" around "+x+","+y+".");
+			} catch (Exception failure) {
+				player.message(messagePrefix
+					+"Builder navigation refused: "+failure.getMessage());
+				return;
+			}
 		}
 		player.teleportLayered(destination,false);
 		player.message(messagePrefix+"Builder location: "
@@ -1441,16 +1461,17 @@ public final class Development implements CommandTrigger {
 		}
 
 		int terrainEdits=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSize();
+		int levelCreations=player.getWorld().getServer().getWorldEditorSessions().nativeLevelCreationDraftSize();
 		int terrainGrowth=player.getWorld().getServer().getWorldEditorSessions().nativeTerrainGrowthDraftSize();
 		int terrainSectors=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSectorCount();
 		int nativeScenery=player.getWorld().getServer().getWorldEditorSessions().nativeSceneryDraftSize();
 		int nativeNpcs=player.getWorld().getServer().getWorldEditorSessions().nativeNpcDraftSize();
-		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0&&nativeScenery==0&&nativeNpcs==0) {
+		if (edits.isEmpty() && npcEdits.isEmpty() && levelCreations==0&&terrainEdits==0&&terrainGrowth==0&&nativeScenery==0&&nativeNpcs==0) {
 			player.message(messagePrefix + "No pending world edits.");
 			return;
 		}
 
-		player.message(messagePrefix + "Pending world edits: terrain " + terrainEdits+" tiles / "+terrainGrowth+" new sectors / "+terrainSectors+" affected sectors, scenery " + (edits.size()+nativeScenery)
+		player.message(messagePrefix + "Pending world edits: "+levelCreations+" new levels / terrain " + terrainEdits+" tiles / "+terrainGrowth+" new sectors / "+terrainSectors+" affected sectors, scenery " + (edits.size()+nativeScenery)
 			+ ", NPCs " + (npcEdits.size()+nativeNpcs) + ".");
 		int shown = 0;
 		for (WorldSceneryEditFiles.Edit edit : edits) {
@@ -1481,25 +1502,27 @@ public final class Development implements CommandTrigger {
 			npcEdits = new ArrayList<WorldNpcEditFiles.Edit>(PENDING_NPC_EDITS.values());
 		}
 
-		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int terrainEdits=editor.terrainDraftSize();int terrainGrowth=editor.nativeTerrainGrowthDraftSize();int nativeScenery=editor.nativeSceneryDraftSize();int nativeNpcs=editor.nativeNpcDraftSize();
-		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0&&terrainGrowth==0&&nativeScenery==0&&nativeNpcs==0) {
+		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int levelCreations=editor.nativeLevelCreationDraftSize();int terrainEdits=editor.terrainDraftSize();int terrainGrowth=editor.nativeTerrainGrowthDraftSize();int nativeScenery=editor.nativeSceneryDraftSize();int nativeNpcs=editor.nativeNpcDraftSize();
+		if (edits.isEmpty() && npcEdits.isEmpty() && levelCreations==0&&terrainEdits==0&&terrainGrowth==0&&nativeScenery==0&&nativeNpcs==0) {
 			player.message(messagePrefix + "No pending world edits to save.");
 			return;
 		}
-		if((terrainEdits>0||terrainGrowth>0||nativeScenery>0||nativeNpcs>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the layered draft.");return;}
+		if((levelCreations>0||terrainEdits>0||terrainGrowth>0||nativeScenery>0||nativeNpcs>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the layered draft.");return;}
 		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
 			try{
 				com.openrsc.server.content.worldedit.WorldEditorLayeredTerrainJournal.SaveResult saved=
 					editor.saveNativeTerrainDraft(player);
-				int total=saved.tileCount+saved.sectorCount+saved.sceneryCount+saved.npcCount;
+				int total=saved.levelCount+saved.tileCount+saved.sectorCount+saved.sceneryCount+saved.npcCount;
 				player.message(messagePrefix+"Saved "+total+" world edits.");
-				player.message(messagePrefix+"Layered draft journal: "+saved.tileCount
-					+" tiles, "+saved.sectorCount+" new sectors, "
+				player.message(messagePrefix+"Layered draft journal: "+saved.levelCount
+					+" new levels, "+saved.tileCount+" tiles, "
+					+saved.sectorCount+" new sectors, "
 					+saved.sceneryCount+" scenery edits, "+saved.npcCount
 					+" NPC edits. Close and reopen "
 					+"the Builder to commit and reload the working package.");
 				LOGGER.info(player.getUsername()+" saved layered draft journal "
-					+saved.journal+" with "+saved.tileCount+" tiles and "
+					+saved.journal+" with "+saved.levelCount+" levels and "
+					+saved.tileCount+" tiles and "
 					+saved.sectorCount+" sectors and "+saved.sceneryCount
 					+" scenery edits and "+saved.npcCount+" NPC edits");
 			}catch(Exception failure){

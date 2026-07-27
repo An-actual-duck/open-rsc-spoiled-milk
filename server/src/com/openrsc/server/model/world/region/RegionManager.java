@@ -3665,17 +3665,30 @@ public class RegionManager {
 	 */
 	public boolean hasNativeLayeredTerrain(
 		final WorldLocation location) {
+		WorldLocation checked=Objects.requireNonNull(location,"location");
 		return nativeLayeredWorldPackageCatalog != null
-			&& nativeLayeredWorldPackageCatalog.findPackage(
-				Objects.requireNonNull(location, "location")).isPresent();
+			&& (nativeLayeredWorldPackageCatalog.findPackage(checked).isPresent()
+				||hasWorldBuilderDraftTerrain(checked));
 	}
 
 	public Optional<NativeLayeredWorldPackage> findNativeLayeredWorldPackage(
 		final WorldLocation location) {
-		return nativeLayeredWorldPackageCatalog == null
-			? Optional.<NativeLayeredWorldPackage>empty()
-			: nativeLayeredWorldPackageCatalog.findPackage(
-				Objects.requireNonNull(location, "location"));
+		if(nativeLayeredWorldPackageCatalog==null)
+			return Optional.<NativeLayeredWorldPackage>empty();
+		WorldLocation checked=Objects.requireNonNull(location,"location");
+		Optional<NativeLayeredWorldPackage> source=
+			nativeLayeredWorldPackageCatalog.findPackage(checked);
+		if(source.isPresent())return source;
+		return hasWorldBuilderDraftTerrain(checked)
+			?Optional.of(nativeLayeredWorldPackage)
+			:Optional.<NativeLayeredWorldPackage>empty();
+	}
+
+	private boolean hasWorldBuilderDraftTerrain(
+		final WorldLocation location){
+		return world.getServer().getConfig().WORLD_BUILDER_MODE
+			&&world.getServer().getWorldEditorSessions()
+				.hasNativeTerrainDraft(location);
 	}
 
 	public Optional<NativeLayeredWorldPackage> findNativeLayeredWorldPackage(
@@ -3693,11 +3706,22 @@ public class RegionManager {
 			final boolean explicit) {
 		WorldLocation checkedDestination = Objects.requireNonNull(
 			destination, "destination");
-		NativeLayeredWorldPackageCatalog.Transition transition =
-			nativeLayeredWorldPackageCatalog == null
-				? null
-				: nativeLayeredWorldPackageCatalog.prepareTransition(
-					source, checkedDestination, explicit);
+		NativeLayeredWorldPackageCatalog.Transition transition = null;
+		if(nativeLayeredWorldPackageCatalog!=null){
+			if(hasWorldBuilderDraftTerrain(checkedDestination)
+				||(source!=null&&hasWorldBuilderDraftTerrain(source))){
+				transition=nativeLayeredWorldPackageCatalog
+					.prepareResolvedTransition(
+						source,checkedDestination,explicit,
+						source==null?null:findNativeLayeredWorldPackage(source)
+							.orElse(null),
+						findNativeLayeredWorldPackage(checkedDestination)
+							.orElse(null));
+			}else{
+				transition=nativeLayeredWorldPackageCatalog.prepareTransition(
+					source,checkedDestination,explicit);
+			}
+		}
 		/*
 		 * Complete the non-native half of the preflight before any Player
 		 * state changes. Native destinations were already checked through
@@ -3843,14 +3867,15 @@ public class RegionManager {
 			.orElseThrow(() -> new IllegalStateException(
 				"Native layered terrain has no package owner at "
 					+ location));
-		NativeLayeredTerrainTile source = owner.findTile(location)
-			.orElseThrow(() -> new IllegalStateException(
+		NativeLayeredTerrainTile source =
+			getWorld().getServer().getConfig().WORLD_BUILDER_MODE
+				?getWorld().getServer().getWorldEditorSessions()
+					.resolveNativeTerrainTile(
+						location,owner.findTile(location).orElse(null))
+				:owner.findTile(location).orElse(null);
+		if(source==null)throw new IllegalStateException(
 				"Native layered terrain disappeared after startup validation: "
-					+ location));
-		if (getWorld().getServer().getConfig().WORLD_BUILDER_MODE) {
-			source = getWorld().getServer().getWorldEditorSessions()
-				.resolveNativeTerrainTile(location, source);
-		}
+					+ location);
 		TileValue tile = new TileValue();
 		tile.overlay = (byte) source.getOverlay();
 		tile.diagWallVal = (short) source.getDiagonalWall();
@@ -3881,13 +3906,10 @@ public class RegionManager {
 				Math.addExact(coordinate.getX(), deltaX),
 				Math.addExact(coordinate.getY(), deltaY),
 				coordinate.getLevel()));
-		NativeLayeredTerrainTile source = owner.findTile(neighbor).orElse(null);
-		if (source == null
-			|| !getWorld().getServer().getConfig().WORLD_BUILDER_MODE) {
-			return source;
-		}
+		NativeLayeredTerrainTile source=owner.findTile(neighbor).orElse(null);
+		if(!getWorld().getServer().getConfig().WORLD_BUILDER_MODE)return source;
 		return getWorld().getServer().getWorldEditorSessions()
-			.resolveNativeTerrainTile(neighbor, source);
+			.resolveNativeTerrainTile(neighbor,source);
 	}
 
 	private boolean nativeTerrainOverlayBlocks(final int overlayId) {
@@ -4422,7 +4444,9 @@ public class RegionManager {
 		}
 		if (entity instanceof GameObject) {
 			GameObject object = (GameObject) entity;
-			if (!owner.findTile(object.getWorldLocation()).isPresent()) {
+			if (!hasNativeLayeredTerrain(object.getWorldLocation())
+				|| findNativeLayeredWorldPackage(object.getWorldLocation())
+					.orElse(null)!=owner) {
 				throw new IllegalStateException(
 					"Native layered object is outside its package terrain");
 			}

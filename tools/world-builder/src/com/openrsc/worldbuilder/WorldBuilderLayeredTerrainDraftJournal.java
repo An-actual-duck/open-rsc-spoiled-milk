@@ -34,14 +34,19 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		"world-builder-layered-draft-v2";
 	private static final String AUTHORING_HEADER =
 		"world-builder-layered-draft-v3";
+	private static final String ALLOCATION_HEADER =
+		"world-builder-layered-draft-v4";
 	private static final int SECTOR_SIZE = 48;
 	private static final int TILE_BYTES = 10;
 	private static final int MAX_TILES = 4096;
 	private static final int MAX_SECTORS = 64;
 	private static final int MAX_SCENERY = 4096;
 	private static final int MAX_NPCS = 4096;
+	private static final int MAX_LEVELS = 64;
 	private static final java.util.regex.Pattern ID =
 		java.util.regex.Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
+	private static final java.util.regex.Pattern LEVEL_NAME =
+		java.util.regex.Pattern.compile("[A-Za-z0-9 ._-]{1,128}");
 
 	CommitResult commitIfPresentLocked(Path requestedWorkspace)
 		throws IOException, WorldBuilderDiscoveryException {
@@ -92,6 +97,13 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 				throw new WorldBuilderDiscoveryException(
 					"Terrain draft candidate sector count is inconsistent.");
 			}
+			if (candidate.levels.size()
+					!= current.levels.size() + journal.levels.size()
+				|| candidate.placementSetCount
+					!= current.placementSetCount + journal.levels.size()) {
+				throw new WorldBuilderDiscoveryException(
+					"Terrain draft candidate level allocation is inconsistent.");
+			}
 			WorldBuilderSourceSnapshot.verify(workspace);
 			moveDirectory(packageRoot, backup);
 			originalMoved = true;
@@ -109,6 +121,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			originalMoved = false;
 			deleteTreeQuietly(backup);
 			return new CommitResult(
+				journal.levels.size(),
 				journal.tiles.size(), journal.sectors.size(),
 				journal.scenery.size(),
 				journal.npcs.size(),
@@ -137,7 +150,14 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		Path manifestPath = packageRoot.resolve("manifest.json");
 		Map<String,Object> manifest =
 			WorldBuilderJsonDocuments.readObject(manifestPath);
+		List<Object> levels = array(manifest, "levels");
 		List<Object> terrain = array(manifest, "terrainSectors");
+		List<Object> placements = array(manifest, "placementSets");
+		Set<Integer> sourceLevels = new HashSet<Integer>(source.levels);
+		Set<Integer> writableLevels = new HashSet<Integer>(current.levels);
+		applyLevelCreations(
+			packageRoot, levels, placements, sourceLevels, writableLevels,
+			journal.levels, journal.sectors);
 		Map<String,Map<String,Object>> declarations =
 			new LinkedHashMap<String,Map<String,Object>>();
 		Set<String> occupied = new HashSet<String>();
@@ -148,10 +168,9 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			declarations.put(key, record);
 			occupied.add(key);
 		}
-		Set<Integer> sourceLevels = new HashSet<Integer>(source.levels);
 		for (SectorGrowth growth : journal.sectors) {
 			if (sourceLevels.contains(Integer.valueOf(growth.level))
-				|| !current.levels.contains(Integer.valueOf(growth.level))) {
+				|| !writableLevels.contains(Integer.valueOf(growth.level))) {
 				throw new WorldBuilderDiscoveryException(
 					"Terrain sector growth is restricted to a Builder-created level.");
 			}
@@ -161,7 +180,10 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 					"Terrain draft tries to recreate an allocated sector: "
 						+ identity);
 			}
-			if (!adjacent(occupied, growth.level, growth.sectorX, growth.sectorY)) {
+			if (!journal.sparseAllocation
+				&& !adjacent(
+					occupied, growth.level,
+					growth.sectorX, growth.sectorY)) {
 				throw new WorldBuilderDiscoveryException(
 					"Terrain sector growth must share an edge with allocated terrain: "
 						+ identity);
@@ -190,7 +212,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			new HashMap<Path,Map<String,Object>>();
 		for (TileEdit edit : journal.tiles) {
 			if (sourceLevels.contains(Integer.valueOf(edit.level))
-				|| !current.levels.contains(Integer.valueOf(edit.level))) {
+				|| !writableLevels.contains(Integer.valueOf(edit.level))) {
 				throw new WorldBuilderDiscoveryException(
 					"Terrain editing is restricted to a Builder-created level.");
 			}
@@ -239,8 +261,14 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			changedDeclarations.get(changed.getKey()).put(
 				"sha256", WorldBuilderHashes.sha256(changed.getKey()));
 		}
-		applyScenery(packageRoot, source, current, manifest, journal.scenery);
-		applyNpcs(packageRoot, source, current, manifest, journal.npcs);
+		applyScenery(
+			packageRoot, sourceLevels, writableLevels, manifest,
+			journal.scenery);
+		applyNpcs(
+			packageRoot, sourceLevels, writableLevels, manifest,
+			journal.npcs);
+		sortByLevel(levels);
+		sortPlacements(placements);
 		sortTerrain(terrain);
 		Path stagedManifest = packageRoot.resolve(".manifest.terrain-draft");
 		Files.write(
@@ -251,15 +279,117 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		moveFile(stagedManifest, manifestPath);
 	}
 
+	private static void applyLevelCreations(
+		Path packageRoot,
+		List<Object> levels,
+		List<Object> placements,
+		Set<Integer> sourceLevels,
+		Set<Integer> writableLevels,
+		List<LevelCreation> creations,
+		List<SectorGrowth> sectors)
+		throws IOException, WorldBuilderDiscoveryException {
+		if(creations.isEmpty())return;
+		Set<Integer> declared=new HashSet<Integer>();
+		for(Object value:levels){
+			int level=number(object(value),"level");
+			if(!declared.add(Integer.valueOf(level))){
+				throw new WorldBuilderDiscoveryException(
+					"Working package contains duplicate level metadata.");
+			}
+		}
+		Set<String> placementIds=new HashSet<String>();
+		for(Object value:placements){
+			String id=text(object(value),"id");
+			if(!placementIds.add(id)){
+				throw new WorldBuilderDiscoveryException(
+					"Working package contains duplicate placement-set identity.");
+			}
+		}
+		Set<String> growth=new HashSet<String>();
+		for(SectorGrowth sector:sectors){
+			growth.add(key(sector.level,sector.sectorX,sector.sectorY));
+		}
+		for(LevelCreation creation:creations){
+			Integer level=Integer.valueOf(creation.level);
+			if(sourceLevels.contains(level)||declared.contains(level)
+				||writableLevels.contains(level)){
+				throw new WorldBuilderDiscoveryException(
+					"Layer creation collides with an existing level: "
+						+creation.level);
+			}
+			int centerX=Math.floorDiv(creation.anchorX,SECTOR_SIZE);
+			int centerY=Math.floorDiv(creation.anchorY,SECTOR_SIZE);
+			for(int sectorX=centerX-1;sectorX<=centerX+1;sectorX++){
+				for(int sectorY=centerY-1;sectorY<=centerY+1;sectorY++){
+					if(!growth.contains(
+							key(creation.level,sectorX,sectorY))){
+						throw new WorldBuilderDiscoveryException(
+							"New level is missing its complete starter canvas: "
+								+creation.level);
+					}
+				}
+			}
+			Map<String,Object> levelRecord=
+				new LinkedHashMap<String,Object>();
+			levelRecord.put("level",Long.valueOf(creation.level));
+			levelRecord.put("name",creation.name);
+			levelRecord.put("role",creation.role);
+			levelRecord.put("worldSpace","global");
+			levels.add(levelRecord);
+
+			String placementPath="placements/global/l"
+				+WorldBuilderLayeredPackage.signedToken(creation.level)
+				+".json";
+			Path payloadPath=packageRoot.resolve(placementPath).normalize();
+			requireContained(packageRoot,payloadPath,placementPath);
+			if(Files.exists(payloadPath,LinkOption.NOFOLLOW_LINKS)){
+				throw new WorldBuilderDiscoveryException(
+					"New level placement payload already exists.");
+			}
+			Files.createDirectories(payloadPath.getParent());
+			Map<String,Object> payload=new LinkedHashMap<String,Object>();
+			payload.put("boundaries",new ArrayList<Object>());
+			payload.put("encoding","layered-world-placements-v3");
+			payload.put("groundItems",new ArrayList<Object>());
+			payload.put("level",Long.valueOf(creation.level));
+			payload.put("npcs",new ArrayList<Object>());
+			payload.put("scenery",new ArrayList<Object>());
+			payload.put("schemaVersion",Long.valueOf(3));
+			payload.put("worldSpace","global");
+			Files.write(
+				payloadPath,
+				WorldBuilderJsonDocuments.pretty(payload)
+					.getBytes(StandardCharsets.UTF_8),
+				StandardOpenOption.CREATE_NEW);
+			String placementId="spoiled-milk-builder-l"
+				+WorldBuilderLayeredPackage.signedToken(creation.level);
+			if(!placementIds.add(placementId)){
+				throw new WorldBuilderDiscoveryException(
+					"New level placement-set identity already exists.");
+			}
+			Map<String,Object> declaration=
+				new LinkedHashMap<String,Object>();
+			declaration.put("encoding","layered-world-placements-v3");
+			declaration.put("id",placementId);
+			declaration.put("level",Long.valueOf(creation.level));
+			declaration.put("path",placementPath);
+			declaration.put(
+				"sha256",WorldBuilderHashes.sha256(payloadPath));
+			declaration.put("worldSpace","global");
+			placements.add(declaration);
+			declared.add(level);
+			writableLevels.add(level);
+		}
+	}
+
 	private static void applyNpcs(
 		Path packageRoot,
-		WorldBuilderLayeredPackage source,
-		WorldBuilderLayeredPackage current,
+		Set<Integer> sourceLevels,
+		Set<Integer> writableLevels,
 		Map<String,Object> manifest,
 		List<NpcEdit> edits)
 		throws IOException, WorldBuilderDiscoveryException {
 		if (edits.isEmpty()) return;
-		Set<Integer> sourceLevels = new HashSet<Integer>(source.levels);
 		Map<Integer,Map<String,Object>> declarations =
 			new LinkedHashMap<Integer,Map<String,Object>>();
 		for (Object value : array(manifest, "placementSets")) {
@@ -271,7 +401,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			new LinkedHashMap<Integer,List<NpcEdit>>();
 		for (NpcEdit edit : edits) {
 			if (sourceLevels.contains(Integer.valueOf(edit.level))
-				|| !current.levels.contains(Integer.valueOf(edit.level))) {
+				|| !writableLevels.contains(Integer.valueOf(edit.level))) {
 				throw new WorldBuilderDiscoveryException(
 					"NPC editing is restricted to a Builder-created level.");
 			}
@@ -366,13 +496,12 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 
 	private static void applyScenery(
 		Path packageRoot,
-		WorldBuilderLayeredPackage source,
-		WorldBuilderLayeredPackage current,
+		Set<Integer> sourceLevels,
+		Set<Integer> writableLevels,
 		Map<String,Object> manifest,
 		List<SceneryEdit> edits)
 		throws IOException, WorldBuilderDiscoveryException {
 		if (edits.isEmpty()) return;
-		Set<Integer> sourceLevels = new HashSet<Integer>(source.levels);
 		Map<Integer,Map<String,Object>> declarations =
 			new LinkedHashMap<Integer,Map<String,Object>>();
 		for (Object value : array(manifest, "placementSets")) {
@@ -384,7 +513,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			new LinkedHashMap<Integer,List<SceneryEdit>>();
 		for (SceneryEdit edit : edits) {
 			if (sourceLevels.contains(Integer.valueOf(edit.level))
-				|| !current.levels.contains(Integer.valueOf(edit.level))) {
+				|| !writableLevels.contains(Integer.valueOf(edit.level))) {
 				throw new WorldBuilderDiscoveryException(
 					"Scenery editing is restricted to a Builder-created level.");
 			}
@@ -480,11 +609,14 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 	private static Journal read(Path path)
 		throws IOException, WorldBuilderDiscoveryException {
 		List<String> lines = Files.readAllLines(path, StandardCharsets.US_ASCII);
-		boolean authoring =
-			!lines.isEmpty() && AUTHORING_HEADER.equals(lines.get(0));
+		boolean allocation =
+			!lines.isEmpty() && ALLOCATION_HEADER.equals(lines.get(0));
+		boolean authoring = allocation
+			|| (!lines.isEmpty() && AUTHORING_HEADER.equals(lines.get(0)));
 		boolean combined = authoring
 			|| (!lines.isEmpty() && COMBINED_HEADER.equals(lines.get(0)));
-		int minimumHeaderLines = authoring ? 6 : combined ? 5 : 4;
+		int minimumHeaderLines = allocation ? 7
+			: authoring ? 6 : combined ? 5 : 4;
 		if (lines.size() < minimumHeaderLines
 			|| (!combined && !HEADER.equals(lines.get(0)))) {
 			throw new WorldBuilderDiscoveryException(
@@ -495,25 +627,34 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			throw new WorldBuilderDiscoveryException(
 				"Layered terrain draft base manifest is invalid.");
 		}
-		int tileCount = boundedCount(field(lines.get(2), "tile-count"), MAX_TILES);
+		int fieldOffset=allocation?1:0;
+		int levelCount=allocation
+			?boundedCount(field(lines.get(2),"level-count"),MAX_LEVELS):0;
+		int tileCount = boundedCount(
+			field(lines.get(2+fieldOffset), "tile-count"), MAX_TILES);
 		int sectorCount =
-			boundedCount(field(lines.get(3), "sector-count"), MAX_SECTORS);
+			boundedCount(
+				field(lines.get(3+fieldOffset), "sector-count"), MAX_SECTORS);
 		int sceneryCount = combined
-			? boundedCount(field(lines.get(4), "scenery-count"), MAX_SCENERY)
+			? boundedCount(
+				field(lines.get(4+fieldOffset), "scenery-count"), MAX_SCENERY)
 			: 0;
 		int npcCount = authoring
-			? boundedCount(field(lines.get(5), "npc-count"), MAX_NPCS) : 0;
-		int recordStart = authoring ? 6 : combined ? 5 : 4;
-		if (tileCount == 0 && sectorCount == 0 && sceneryCount == 0
+			? boundedCount(
+				field(lines.get(5+fieldOffset), "npc-count"), MAX_NPCS) : 0;
+		int recordStart = allocation?7:authoring ? 6 : combined ? 5 : 4;
+		if (levelCount == 0 && tileCount == 0 && sectorCount == 0 && sceneryCount == 0
 			&& npcCount == 0) {
 			throw new WorldBuilderDiscoveryException(
 				"Layered draft journal is empty.");
 		}
 		if (lines.size()
-			!= recordStart + sectorCount + tileCount + sceneryCount + npcCount) {
+			!= recordStart + levelCount + sectorCount + tileCount
+				+ sceneryCount + npcCount) {
 			throw new WorldBuilderDiscoveryException(
 				"Layered draft journal count is inconsistent.");
 		}
+		List<LevelCreation> levels = new ArrayList<LevelCreation>();
 		List<SectorGrowth> sectors = new ArrayList<SectorGrowth>();
 		List<TileEdit> tiles = new ArrayList<TileEdit>();
 		List<SceneryEdit> scenery = new ArrayList<SceneryEdit>();
@@ -522,7 +663,24 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		Set<String> tileKeys = new HashSet<String>();
 		Set<String> sceneryKeys = new HashSet<String>();
 		Set<String> placementIds = new HashSet<String>();
+		Set<Integer> levelKeys = new HashSet<Integer>();
 		int index = recordStart;
+		for(int item=0;item<levelCount;item++,index++){
+			String[] values=lines.get(index).split("\\t",-1);
+			if(values.length!=6||!"level".equals(values[0])){
+				throw new WorldBuilderDiscoveryException(
+					"Layered level-creation record is malformed.");
+			}
+			LevelCreation creation=new LevelCreation(
+				signed(values[1]),coordinate(values[2]),
+				coordinate(values[3]),levelName(values[4]),
+				identifier(values[5]));
+			if(!levelKeys.add(Integer.valueOf(creation.level))){
+				throw new WorldBuilderDiscoveryException(
+					"Layered level journal contains duplicate identity.");
+			}
+			levels.add(creation);
+		}
 		for (int item = 0; item < sectorCount; item++, index++) {
 			String[] values = lines.get(index).split("\\t", -1);
 			if (values.length != 4 || !"sector".equals(values[0])) {
@@ -604,7 +762,8 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			}
 			npcs.add(edit);
 		}
-		return new Journal(base, sectors, tiles, scenery, npcs);
+		return new Journal(
+			base, levels, sectors, tiles, scenery, npcs, allocation);
 	}
 
 	private static String field(String line, String name)
@@ -676,6 +835,15 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		return value;
 	}
 
+	private static String levelName(String value)
+		throws WorldBuilderDiscoveryException {
+		if(value==null||!LEVEL_NAME.matcher(value).matches()){
+			throw new WorldBuilderDiscoveryException(
+				"Layered level name is invalid.");
+		}
+		return value;
+	}
+
 	private static int signed(String value)
 		throws WorldBuilderDiscoveryException {
 		try {
@@ -725,6 +893,26 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 				if (result == 0) result = Integer.compare(
 					number(a, "sectorY"), number(b, "sectorY"));
 				return result;
+			}
+		});
+	}
+
+	private static void sortByLevel(List<Object> values) {
+		Collections.sort(values,new Comparator<Object>(){
+			@Override public int compare(Object left,Object right){
+				return Integer.compare(
+					number(object(left),"level"),number(object(right),"level"));
+			}
+		});
+	}
+
+	private static void sortPlacements(List<Object> values) {
+		Collections.sort(values,new Comparator<Object>(){
+			@Override public int compare(Object left,Object right){
+				int result=Integer.compare(
+					number(object(left),"level"),number(object(right),"level"));
+				return result!=0?result
+					:text(object(left),"id").compareTo(text(object(right),"id"));
 			}
 		});
 	}
@@ -921,6 +1109,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 	}
 
 	static final class CommitResult {
+		final int levelCount;
 		final int tileCount;
 		final int sectorCount;
 		final int sceneryCount;
@@ -929,8 +1118,10 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		final String packageFingerprintSha256;
 
 		CommitResult(
-			int tileCount, int sectorCount, int sceneryCount, int npcCount,
+			int levelCount, int tileCount, int sectorCount,
+			int sceneryCount, int npcCount,
 			String manifestSha256, String packageFingerprintSha256) {
+			this.levelCount = levelCount;
 			this.tileCount = tileCount;
 			this.sectorCount = sectorCount;
 			this.sceneryCount = sceneryCount;
@@ -942,22 +1133,45 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 
 	private static final class Journal {
 		final String baseManifestSha256;
+		final List<LevelCreation> levels;
 		final List<SectorGrowth> sectors;
 		final List<TileEdit> tiles;
 		final List<SceneryEdit> scenery;
 		final List<NpcEdit> npcs;
+		final boolean sparseAllocation;
 
 		Journal(
 			String baseManifestSha256,
+			List<LevelCreation> levels,
 			List<SectorGrowth> sectors,
 			List<TileEdit> tiles,
 			List<SceneryEdit> scenery,
-			List<NpcEdit> npcs) {
+			List<NpcEdit> npcs,
+			boolean sparseAllocation) {
 			this.baseManifestSha256 = baseManifestSha256;
+			this.levels = levels;
 			this.sectors = sectors;
 			this.tiles = tiles;
 			this.scenery = scenery;
 			this.npcs = npcs;
+			this.sparseAllocation = sparseAllocation;
+		}
+	}
+
+	private static final class LevelCreation {
+		final int level;
+		final int anchorX;
+		final int anchorY;
+		final String name;
+		final String role;
+
+		LevelCreation(
+			int level,int anchorX,int anchorY,String name,String role){
+			this.level=level;
+			this.anchorX=anchorX;
+			this.anchorY=anchorY;
+			this.name=name;
+			this.role=role;
 		}
 	}
 

@@ -1,6 +1,8 @@
 package com.openrsc.server.io;
 
 import com.openrsc.server.model.world.coordinate.WorldMapSectorId;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -55,6 +57,51 @@ public final class NativeLayeredTerrainSector {
 		String sourceSha256) {
 		return new NativeLayeredTerrainSector(
 			identity, tiles, sourceEncoding, sourcePath, sourceSha256);
+	}
+
+	/**
+	 * Creates the deterministic blocking/invisible page used by an isolated
+	 * World Builder live allocation before its journal is materialized.
+	 */
+	public static NativeLayeredTerrainSector worldBuilderVoid(
+		WorldMapSectorId identity) {
+		NativeLayeredTerrainTile tile =
+			new NativeLayeredTerrainTile(0, 1, 8, 0, 0, 0, 0);
+		NativeLayeredTerrainTile[] tiles =
+			new NativeLayeredTerrainTile[TILE_COUNT];
+		Arrays.fill(tiles, tile);
+		return new NativeLayeredTerrainSector(
+			identity,
+			tiles,
+			NativeLayeredWorldPackage.RAW_ENCODING,
+			"world-builder-live-void",
+			sha256(tiles));
+	}
+
+	private static String sha256(NativeLayeredTerrainTile[] tiles) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			for (NativeLayeredTerrainTile tile : tiles) {
+				digest.update((byte)tile.getElevation());
+				digest.update((byte)tile.getTexture());
+				digest.update((byte)tile.getOverlay());
+				digest.update((byte)tile.getRoof());
+				digest.update((byte)tile.getVerticalWall());
+				digest.update((byte)tile.getHorizontalWall());
+				int diagonal = tile.getDiagonalWall();
+				digest.update((byte)(diagonal >>> 24));
+				digest.update((byte)(diagonal >>> 16));
+				digest.update((byte)(diagonal >>> 8));
+				digest.update((byte)diagonal);
+			}
+			StringBuilder result = new StringBuilder(64);
+			for (byte value : digest.digest()) {
+				result.append(String.format("%02x", value & 0xff));
+			}
+			return result.toString();
+		} catch (NoSuchAlgorithmException impossible) {
+			throw new IllegalStateException("SHA-256 is unavailable", impossible);
+		}
 	}
 
 	public NativeLayeredTerrainTile getTile(int localX, int localY) {
