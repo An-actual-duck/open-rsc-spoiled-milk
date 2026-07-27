@@ -7,22 +7,30 @@ Started: 2026-07-17
 
 Public product direction refined: 2026-07-25
 
+Implementation sequence refined: 2026-07-26
+
 ## Purpose
 
 Spoiled Milk has produced substantial client, renderer, server, map, editor,
-diagnostic, and workflow improvements that are useful beyond Spoiled Milk's
-custom game. The public end product is now **RSC Remastered**: one definitive,
-end-user-friendly remaster of the selected vanilla RuneScape Classic baseline,
-with the improved renderer, server, explicit layered world, editor integration,
-modder asset workflow, and universal launcher delivered as one coherent
-project.
+diagnostic, and workflow improvements that are useful beyond its custom game.
+The active implementation target is now the complete **Spoiled Milk**
+distribution. Renderer v2, server v2, the explicit layered world, editor
+integration, and later launcher/content workflows will first be made solid
+together in the game that currently exercises all of them.
 
 The internal Suite architecture remains useful for ownership, testing, and
-versioned capability boundaries. It is no longer the primary public product or
-a requirement that every capability become a separately marketed download.
-RSC Remastered must support at least these outcomes:
+versioned capability boundaries. Once the complete Spoiled Milk stack is
+stable, those proven boundaries become the basis for a broader **RSC
+Remastered** platform/package that other RSC distributions can adopt. The
+vanilla/Preservation distribution is explicitly on hold until then; its audit
+and conversion evidence remain preserved.
 
-- a complete remastered game whose definitive content baseline is vanilla RSC;
+The longer-term RSC Remastered direction must support at least these outcomes:
+
+- a complete Spoiled Milk reference distribution using the full remastered
+  stack;
+- a later coordinated vanilla/Preservation distribution built from a complete
+  trustworthy content set rather than subtraction from Spoiled Milk;
 - a universal launcher that owns isolated installations and matching
   client/server profiles;
 - named import adapters for supported external distributions such as Cabbage,
@@ -31,8 +39,8 @@ RSC Remastered must support at least these outcomes:
   textures, with automatic editor discovery and stable identities;
 - layered maps authored and expanded without packed-Y or a fixed `-2` depth
   ceiling; and
-- optional third-party or Spoiled Milk content that does not redefine the
-  vanilla RSC Remastered baseline.
+- third-party distributions that reuse the technical platform without
+  inheriting Spoiled Milk content accidentally.
 
 This is a start-to-finish product and architecture roadmap. It defines ordering,
 boundaries, dependencies, and completion gates. Detailed implementation remains
@@ -40,35 +48,39 @@ owned by focused module plans and short-lived topic branches.
 
 ## North-Star Product
 
-The final public product is an integrated RSC Remastered installation. Its
-internals remain versioned and modular so the launcher, editor, imports, and
-content packs can reason about compatibility without turning the repository
-back into an opaque monolith.
+The first complete product is an integrated Spoiled Milk installation on the
+remastered stack. RSC Remastered is the later shared platform/umbrella derived
+from that proven implementation. Its internals remain versioned and modular so
+the launcher, editor, imports, and content packs can reason about compatibility
+without turning the repository back into an opaque monolith.
 
 ```text
-                         RSC Remastered
-                               |
-                     Universal Launcher
-                               |
-            +------------------+------------------+
-            |                                     |
-     definitive vanilla                   imported profiles
-     remastered profile               Cabbage / supported forks
-            |
-   Renderer + Server + Layered World + Builder integration
-            |
-      version-local content/ packs and modder assets
+               RSC Remastered shared platform
+                              |
+       Renderer + Server + Layered World + Builder
+                              |
+                    Universal Launcher
+                              |
+          +-------------------+--------------------+
+          |                   |                    |
+   Spoiled Milk          later vanilla       imported/community
+ reference profile      Preservation profile      profiles
 ```
 
-The launcher may expose tools and optional profiles, but the default download
-must give a new player a clear **Install/Play RSC Remastered** path. A user
-should not need to understand internal modules or install Spoiled Milk content
-to receive the technical remaster.
+The first launcher-ready download may present Spoiled Milk as its complete
+reference game. Later platform packaging must let a user install another
+supported distribution without understanding internal modules or receiving
+Spoiled Milk gameplay content unintentionally.
 
 ## Terminology
 
-- **RSC Remastered:** the public, definitive vanilla-content remaster and its
-  integrated launcher/tooling project.
+- **RSC Remastered:** the shared technical platform/umbrella eventually
+  extracted from the proven Spoiled Milk renderer, server, layered-world,
+  Builder, content, and launcher integration.
+- **Spoiled Milk reference distribution:** the active first-party integration
+  target and first complete consumer of the remastered stack.
+- **Vanilla/Preservation distribution:** a future coordinated content profile;
+  its current subtractive conversion experiment is on hold.
 - **Remaster internals:** the module and capability boundaries retained inside
   RSC Remastered for ownership, compatibility, testing, and optional reuse.
 - **Universal Launcher:** the profile manager that installs, imports,
@@ -105,10 +117,13 @@ install-time bundles because they alter core runtime identity.
 
 ## Non-Negotiable Product Rules
 
-1. **Content neutrality is provable.** The foundation must build and run against
-   a supported vanilla target without silently loading Spoiled Milk content.
-2. **Spoiled Milk is a consumer.** Foundation modules may expose capabilities to
-   Spoiled Milk; they must not depend on Spoiled Milk gameplay behavior.
+1. **Integration comes before extraction.** The complete stack must first work
+   reliably with Spoiled Milk before a universal or vanilla package becomes a
+   release gate.
+2. **Future boundaries remain explicit.** Core capability contracts should not
+   encode Spoiled Milk definition IDs, coordinates, or gameplay rules when a
+   distribution-owned manifest or adapter can own them. Full neutrality is a
+   later extraction gate, not a claim made prematurely.
 3. **Compatibility is explicit.** Every package identifies supported target
    profiles, capability versions, definition expectations, and known
    incompatibilities.
@@ -953,7 +968,7 @@ lines. Focused diagnostic tests, the authoritative 865-core/488-plugin server
 build, and the final private visual invocation pass. The client displayed all
 seven lines, including `spatialCarrier=packed-region`. The presentation
 correction, checkpoint 13, Milestone E, and the Phase 5 engine exit gate are
-closed. The next active product gate is deterministic parity-first
+closed. The then-selected product gate was deterministic parity-first
 normalization of the frozen Preservation baseline into a reviewable native
 layered package.
 
@@ -1020,6 +1035,23 @@ Hobgoblin value correction it carries 14 receipts. The reviewed package is
 and package fingerprint
 `ea0af380d88d3f742abd9e8dea885101d98550471e9b6a7044bed7fb570e85e6`.
 
+Direction checkpoint, 2026-07-26: the audit proved that the selected inputs are
+not a self-contained vanilla distribution. Terrain, placements, definitions,
+scripts, shops, items, and visual effects have evolved together with Spoiled
+Milk. The Preservation package, receipts, and fail-closed profile remain
+available as research, but the vanilla distribution is now **on hold** and is
+not the active private runtime.
+
+The active target is
+`rsc-remastered.spoiled-milk-layered-world@0.1.0`. It retains all 32,364
+current placements—966 boundaries, 26,770 scenery objects, 3,612 NPCs, and
+1,016 ground items—and is pinned independently by manifest SHA-256
+`7ae049ba514261cd5a93a81529c84527938fd23e2a70936050ef09933a4e02ad`.
+The separately named `spoiled-milk-replacement` profile prevents the complete
+current game from being mistaken for a vanilla claim. Engine/package
+capability boundaries remain reusable; broad extraction resumes only after
+this complete integration is solid.
+
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
 from the accepted 12-file vanilla map baseline, covers the exact
@@ -1031,8 +1063,9 @@ bridge sources. No explicit edge is unresolved.
 The first complete-world parity runtime will therefore retain those scripted
 quest gates, random offsets, transport rules, and unconventional or
 long-distance transitions as compatibility behavior. They are not yet a
-complete declarative graph and must not be silently rewritten. The next
-implementation gate is a default-off full-world replacement profile: it must
+complete declarative graph and must not be silently rewritten. At that point,
+the next implementation gate was a default-off full-world replacement profile
+that would
 validate the exact Preservation package and suppress legacy base placement
 population so all 32,351 package placements load once, while leaving the
 existing bounded fixture profile unchanged.
@@ -1455,6 +1488,7 @@ The RSC Remastered product roadmap is complete when:
 | 2026-07-26 | Complete the second Preservation normalization milestone with exact v3 placement rectangles and deterministic four-level placement sets. | 32,363 of 32,364 base records convert exactly. One Hobgoblin has packed maximum Y `6549` outside the source coordinate model; likely `3549`, but the tool records and omits it pending owner-approved conversion repair, leaving source and runtime untouched |
 | 2026-07-26 | Approve a fingerprint-gated `6549 -> 3549` conversion repair for the anomalous vanilla Hobgoblin and distinguish vanilla corrections from creator expansion policy. | All 32,364 placements now convert with one explicit receipt and unchanged source. Reviewed vanilla repairs may define the concrete RSC Remastered baseline; expansion findings remain creator-controlled |
 | 2026-07-26 | Refine Preservation conversion ownership after a systematic residual-content audit found expansion records embedded in the frozen base placement inputs. | Package `0.4.0` excludes five exact custom scenery, two exact custom NPC, and six exact custom ground-item records without changing MyWorld sources. The report accounts for 32,351 vanilla outputs plus 13 exclusions from 32,364 inputs, carries 14 receipts including the Hobgoblin repair, and both conversion and replacement runtime fail closed against any unreviewed non-vanilla definition ID |
+| 2026-07-26 | Put the vanilla/Preservation distribution on hold and make the complete Spoiled Milk world the active integration target. | The subtractive audit proved the current repository is a coordinated hybrid, not a map-only vanilla swap. Preserve all audit/generator work, restore all 32,364 placements through independently named package `rsc-remastered.spoiled-milk-layered-world@0.1.0` and profile `spoiled-milk-replacement`, stabilize the full stack there, then extract broader RSC Remastered and vanilla/community distributions |
 | 2026-07-26 | Freeze Preservation transition compatibility as supplementary execution provenance. | All 20 explicit XML edges normalize with zero unresolved; 107 authentic script owners and the four runtime bridge sources are hash-pinned without claiming Java is a declarative graph. First parity runtime retains those scripts, and full-world replacement population is the next gate |
 | 2026-07-25 | Make the Universal Launcher own isolated, matched installation profiles and named fingerprinted import adapters; importing Cabbage or another supported distribution must never patch the default profile in place. | Confirmed |
 | 2026-07-25 | Begin modder drag-and-drop support with profile-local `content/walls` and `content/floors`, namespaced packs, stable registered identities, validation, and automatic World Builder discovery. | Confirmed architecture; implementation remains phased |

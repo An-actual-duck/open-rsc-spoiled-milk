@@ -29,6 +29,7 @@ public final class LayeredMapsCli {
 			&& !"baseline".equals(args[0])
 			&& !"preservation-transitions".equals(args[0])
 			&& !"preservation-package".equals(args[0])
+			&& !"spoiled-milk-package".equals(args[0])
 			&& !"package-check".equals(args[0])) {
 			System.err.println("[layered-maps] Unknown command: " + args[0]);
 			usage();
@@ -54,7 +55,15 @@ public final class LayeredMapsCli {
 			} else if ("preservation-transitions".equals(args[0])) {
 				runPreservationTransitions(root, workspace);
 			} else if ("preservation-package".equals(args[0])) {
-				runPreservationPackage(root, workspace);
+				runLayeredPackage(
+					root,
+					workspace,
+					PreservationTerrainPackageGenerator.ContentTarget.PRESERVATION);
+			} else if ("spoiled-milk-package".equals(args[0])) {
+				runLayeredPackage(
+					root,
+					workspace,
+					PreservationTerrainPackageGenerator.ContentTarget.SPOILED_MILK);
 			} else {
 				runPackageCheck(requiredPath(options, "--package"), workspace);
 			}
@@ -192,10 +201,14 @@ public final class LayeredMapsCli {
 			"markdown=" + markdownPath.toAbsolutePath().normalize());
 	}
 
-	private static void runPreservationPackage(Path root, Path workspace)
+	private static void runLayeredPackage(
+		Path root,
+		Path workspace,
+		PreservationTerrainPackageGenerator.ContentTarget target)
 		throws PreflightException, IOException {
 		PreservationTerrainPackageGenerator.Result result =
-			new PreservationTerrainPackageGenerator().generate(root, workspace);
+			new PreservationTerrainPackageGenerator(target).generate(
+				root, workspace);
 		Path reportJson = workspace.resolve("generation-report.json");
 		Path reportMarkdown = workspace.resolve("generation-report.md");
 		Path validationJson = workspace.resolve("package-validation.json");
@@ -203,7 +216,11 @@ public final class LayeredMapsCli {
 		writeAtomically(reportMarkdown, result.toMarkdown());
 		writeAtomically(validationJson, result.validationJson);
 
-		System.out.println("Preservation layered parity package generated");
+		System.out.println(
+			target
+				== PreservationTerrainPackageGenerator.ContentTarget.SPOILED_MILK
+				? "Spoiled Milk layered world package generated"
+				: "Preservation layered parity package generated");
 		System.out.println("reviewState=transitions-pending");
 		System.out.println("runtimePromotionApproved=false");
 		System.out.println("baselineSha256=" + result.baselineFingerprint);
@@ -282,7 +299,8 @@ public final class LayeredMapsCli {
 	private static void usage() {
 		System.err.println(
 			"Usage: layered-maps <preflight|normalize|baseline"
-				+ "|preservation-transitions|preservation-package|package-check>"
+				+ "|preservation-transitions|preservation-package"
+				+ "|spoiled-milk-package|package-check>"
 				+ " --root PATH --workspace PATH [--package PATH]");
 	}
 }

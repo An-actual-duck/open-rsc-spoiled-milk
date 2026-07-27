@@ -320,6 +320,22 @@ public final class NativeLayeredPreservationReviewFixture {
 }
 """
 
+SPOILED_MILK_REVIEW_HARNESS = (
+    PRESERVATION_REVIEW_HARNESS
+    .replace(
+        "NativeLayeredPreservationReviewFixture",
+        "NativeLayeredSpoiledMilkReviewFixture",
+    )
+    .replace(
+        "rsc-remastered.preservation-r64-parity-review",
+        "rsc-remastered.spoiled-milk-layered-world",
+    )
+    .replace('"0.4.0"', '"0.1.0"')
+    .replace("== 3610", "== 3612")
+    .replace("== 1010", "== 1016")
+    .replace("== 26765", "== 26770")
+)
+
 RUNTIME_PROFILE_HARNESS = r"""
 import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
 import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
@@ -651,6 +667,12 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
         preservation_fixture.write_text(
             PRESERVATION_REVIEW_HARNESS, encoding="utf-8"
         )
+        spoiled_milk_fixture = (
+            cls.classes / "NativeLayeredSpoiledMilkReviewFixture.java"
+        )
+        spoiled_milk_fixture.write_text(
+            SPOILED_MILK_REVIEW_HARNESS, encoding="utf-8"
+        )
         runtime_profile_fixture = (
             cls.classes / "NativeLayeredRuntimeProfileFixture.java"
         )
@@ -673,6 +695,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 str(fixture),
                 str(terrain_only_fixture),
                 str(preservation_fixture),
+                str(spoiled_milk_fixture),
                 str(runtime_profile_fixture),
                 str(wire_fixture),
             ],
@@ -933,7 +956,89 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 0, wrong_profile.returncode, wrong_profile.stderr
             )
 
-    def test_fixture_and_preservation_runtime_profiles_do_not_cross_accept(self):
+    def test_server_accepts_complete_spoiled_milk_replacement_package(self):
+        subprocess.run(
+            [str(ROOT / "tools/layered-maps/layered-maps.sh"), "--help"],
+            cwd=ROOT,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        with tempfile.TemporaryDirectory(
+            prefix="native-server-spoiled-milk-"
+        ) as temp:
+            workspace = Path(temp) / "workspace"
+            generated = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    str(ROOT / "tools/layered-maps/build/classes"),
+                    "com.openrsc.layeredmaps.LayeredMapsCli",
+                    "spoiled-milk-package",
+                    "--root",
+                    str(ROOT),
+                    "--workspace",
+                    str(workspace),
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(0, generated.returncode, generated.stderr)
+
+            loaded = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredSpoiledMilkReviewFixture",
+                    str(workspace / "package"),
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(0, loaded.returncode, loaded.stderr)
+
+            accepted = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredRuntimeProfileFixture",
+                    "spoiled-milk-replacement",
+                    str(workspace / "package"),
+                    "true",
+                    "true",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(0, accepted.returncode, accepted.stderr)
+
+            preservation_refused = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredRuntimeProfileFixture",
+                    "preservation-r64-replacement",
+                    str(workspace / "package"),
+                    "false",
+                    "true",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(
+                0,
+                preservation_refused.returncode,
+                preservation_refused.stderr,
+            )
+
+    def test_fixture_and_replacement_runtime_profiles_do_not_cross_accept(self):
         accepted = subprocess.run(
             [
                 "java",
@@ -967,6 +1072,25 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             capture_output=True,
         )
         self.assertEqual(0, refused.returncode, refused.stderr)
+
+        spoiled_milk_refused = subprocess.run(
+            [
+                "java",
+                "-cp",
+                f"{self.classes}:{CORE_JAR}",
+                "NativeLayeredRuntimeProfileFixture",
+                "spoiled-milk-replacement",
+                str(PACKAGE),
+                "false",
+                "true",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(
+            0, spoiled_milk_refused.returncode, spoiled_milk_refused.stderr
+        )
 
     def test_server_loader_refuses_inverted_v3_npc_roam_bounds(self):
         with tempfile.TemporaryDirectory(
@@ -1174,7 +1298,13 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "PRESERVATION_R64_REPLACEMENT", runtime_profile
         )
         self.assertIn(
+            "SPOILED_MILK_REPLACEMENT", runtime_profile
+        )
+        self.assertIn(
             "PRESERVATION_MANIFEST_SHA256", runtime_profile
+        )
+        self.assertIn(
+            "SPOILED_MILK_MANIFEST_SHA256", runtime_profile
         )
         self.assertIn(
             "validatePreservationDefinitionIds(loaded)", runtime_profile

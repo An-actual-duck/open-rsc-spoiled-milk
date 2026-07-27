@@ -32,8 +32,13 @@ final class PreservationTerrainPackageGenerator {
 	static final String PACKAGE_ID =
 		"rsc-remastered.preservation-r64-parity-review";
 	static final String PACKAGE_VERSION = "0.4.0";
-	static final String REPORT_TYPE =
+	static final String SPOILED_MILK_PACKAGE_ID =
+		"rsc-remastered.spoiled-milk-layered-world";
+	static final String SPOILED_MILK_PACKAGE_VERSION = "0.1.0";
+	static final String PRESERVATION_REPORT_TYPE =
 		"preservation-layered-parity-generation";
+	static final String SPOILED_MILK_REPORT_TYPE =
+		"spoiled-milk-layered-world-generation";
 	static final int REPORT_SCHEMA_VERSION = 2;
 
 	private static final String FROZEN_BASELINE =
@@ -54,6 +59,51 @@ final class PreservationTerrainPackageGenerator {
 	private static final int HOBGOBLIN_REPAIR_MAX_X = 662;
 	private static final int HOBGOBLIN_REPAIR_SOURCE_MAX_Y = 6549;
 	private static final int HOBGOBLIN_REPAIR_TARGET_MAX_Y = 3549;
+
+	enum ContentTarget {
+		PRESERVATION(
+			PACKAGE_ID,
+			PACKAGE_VERSION,
+			PRESERVATION_REPORT_TYPE,
+			"Preservation Layered Parity Review Package",
+			true),
+		SPOILED_MILK(
+			SPOILED_MILK_PACKAGE_ID,
+			SPOILED_MILK_PACKAGE_VERSION,
+			SPOILED_MILK_REPORT_TYPE,
+			"Spoiled Milk Layered World Package",
+			false);
+
+		final String packageId;
+		final String packageVersion;
+		final String reportType;
+		final String reportTitle;
+		final boolean excludesNonVanillaPlacements;
+
+		ContentTarget(
+			String packageId,
+			String packageVersion,
+			String reportType,
+			String reportTitle,
+			boolean excludesNonVanillaPlacements) {
+			this.packageId = packageId;
+			this.packageVersion = packageVersion;
+			this.reportType = reportType;
+			this.reportTitle = reportTitle;
+			this.excludesNonVanillaPlacements =
+				excludesNonVanillaPlacements;
+		}
+	}
+
+	private final ContentTarget target;
+
+	PreservationTerrainPackageGenerator() {
+		this(ContentTarget.PRESERVATION);
+	}
+
+	PreservationTerrainPackageGenerator(ContentTarget target) {
+		this.target = target;
+	}
 
 	Result generate(Path requestedRoot, Path requestedWorkspace)
 		throws IOException, PreflightException {
@@ -91,10 +141,10 @@ final class PreservationTerrainPackageGenerator {
 				"Generated terrain count differs from the accepted baseline.");
 		}
 		PlacementConversion placements =
-			writePlacements(root, baseline, stagingRoot);
+			writePlacements(root, baseline, stagingRoot, target);
 
 		Map<String, Object> manifest =
-			manifest(sectors, placements.sets);
+			manifest(sectors, placements.sets, target);
 		Path manifestPath = stagingRoot.resolve("manifest.json");
 		writeNew(
 			manifestPath,
@@ -168,7 +218,8 @@ final class PreservationTerrainPackageGenerator {
 			placements.unresolved,
 			manifestSha256,
 			loaded.getPackageFingerprint(),
-			validationJson);
+			validationJson,
+			target);
 	}
 
 	private static Map<String, Integer> loadedPlacementCounts(
@@ -317,7 +368,8 @@ final class PreservationTerrainPackageGenerator {
 	private static PlacementConversion writePlacements(
 		Path root,
 		PreservationBaselineInventory.Baseline baseline,
-		Path stagingRoot) throws IOException, PreflightException {
+		Path stagingRoot,
+		ContentTarget target) throws IOException, PreflightException {
 		Map<Integer, PlacementBucket> buckets =
 			new LinkedHashMap<Integer, PlacementBucket>();
 		for (int level : new int[] {0, 1, 2, -1}) {
@@ -340,26 +392,30 @@ final class PreservationTerrainPackageGenerator {
 			root,
 			baselineFile(baseline, "base-boundaries"),
 			buckets,
-			converted);
+			converted,
+			target.excludesNonVanillaPlacements);
 		convertScenery(
 			root,
 			baselineFile(baseline, "base-scenery"),
 			buckets,
 			converted,
-			repairs);
+			repairs,
+			target.excludesNonVanillaPlacements);
 		convertNpcs(
 			root,
 			baselineFile(baseline, "base-npcs"),
 			buckets,
 			converted,
 			repairs,
-			unresolved);
+			unresolved,
+			target.excludesNonVanillaPlacements);
 		convertGroundItems(
 			root,
 			baselineFile(baseline, "base-ground-items"),
 			buckets,
 			converted,
-			repairs);
+			repairs,
+			target.excludesNonVanillaPlacements);
 
 		List<PlacementSetRecord> sets =
 			new ArrayList<PlacementSetRecord>();
@@ -402,7 +458,8 @@ final class PreservationTerrainPackageGenerator {
 		Path root,
 		PreservationBaselineInventory.FileRecord source,
 		Map<Integer, PlacementBucket> buckets,
-		Map<String, Integer> converted)
+		Map<String, Integer> converted,
+		boolean vanillaOnly)
 		throws IOException, PreflightException {
 		List<Object> values = sourceRecords(root, source, "boundaries");
 		for (int index = 0; index < values.size(); index++) {
@@ -418,8 +475,13 @@ final class PreservationTerrainPackageGenerator {
 				value.get("pos"),
 				"boundaries[" + index + "].pos");
 			int definitionId = sourceNonNegativeInt(value, "id");
-			requireVanillaDefinition(
-				"boundary", index, definitionId, VANILLA_MAX_BOUNDARY_ID);
+			if (vanillaOnly) {
+				requireVanillaDefinition(
+					"boundary",
+					index,
+					definitionId,
+					VANILLA_MAX_BOUNDARY_ID);
+			}
 			Map<String, Object> record = map();
 			record.put(
 				"placementId",
@@ -439,7 +501,8 @@ final class PreservationTerrainPackageGenerator {
 		PreservationBaselineInventory.FileRecord source,
 		Map<Integer, PlacementBucket> buckets,
 		Map<String, Integer> converted,
-		List<ConversionRepair> repairs)
+		List<ConversionRepair> repairs,
+		boolean vanillaOnly)
 		throws IOException, PreflightException {
 		List<Object> values = sourceRecords(root, source, "sceneries");
 		for (int index = 0; index < values.size(); index++) {
@@ -456,7 +519,7 @@ final class PreservationTerrainPackageGenerator {
 				value.get("pos"),
 				"sceneries[" + index + "].pos");
 			int direction = sourceDirection(value, "direction");
-			if (definitionId > VANILLA_MAX_SCENERY_ID) {
+			if (vanillaOnly && definitionId > VANILLA_MAX_SCENERY_ID) {
 				if (!approvedNonVanillaSceneryRemoval(
 						index, definitionId, packedPosition, direction)) {
 					throw unapprovedNonVanillaDefinition(
@@ -487,7 +550,8 @@ final class PreservationTerrainPackageGenerator {
 		Map<Integer, PlacementBucket> buckets,
 		Map<String, Integer> converted,
 		List<ConversionRepair> repairs,
-		List<UnresolvedPlacement> unresolved)
+		List<UnresolvedPlacement> unresolved,
+		boolean vanillaOnly)
 		throws IOException, PreflightException {
 		List<Object> values = sourceRecords(root, source, "npclocs");
 		for (int index = 0; index < values.size(); index++) {
@@ -510,7 +574,7 @@ final class PreservationTerrainPackageGenerator {
 				value.get("max"),
 				"npclocs[" + index + "].max");
 			int definitionId = sourceNonNegativeInt(value, "id");
-			if (definitionId > VANILLA_MAX_NPC_ID) {
+			if (vanillaOnly && definitionId > VANILLA_MAX_NPC_ID) {
 				if (!approvedNonVanillaNpcRemoval(
 						index, definitionId, start, minimum, maximum)) {
 					throw unapprovedNonVanillaDefinition(
@@ -747,7 +811,8 @@ final class PreservationTerrainPackageGenerator {
 		PreservationBaselineInventory.FileRecord source,
 		Map<Integer, PlacementBucket> buckets,
 		Map<String, Integer> converted,
-		List<ConversionRepair> repairs)
+		List<ConversionRepair> repairs,
+		boolean vanillaOnly)
 		throws IOException, PreflightException {
 		List<Object> values = sourceRecords(root, source, "grounditems");
 		for (int index = 0; index < values.size(); index++) {
@@ -766,7 +831,7 @@ final class PreservationTerrainPackageGenerator {
 				"grounditems[" + index + "].pos");
 			int amount = sourcePositiveInt(value, "amount");
 			int respawnSeconds = sourcePositiveInt(value, "respawn");
-			if (definitionId > VANILLA_MAX_ITEM_ID) {
+			if (vanillaOnly && definitionId > VANILLA_MAX_ITEM_ID) {
 				if (!approvedNonVanillaGroundItemRemoval(
 						index,
 						definitionId,
@@ -1018,12 +1083,13 @@ final class PreservationTerrainPackageGenerator {
 
 	private static Map<String, Object> manifest(
 		List<SectorRecord> sectors,
-		List<PlacementSetRecord> placementSets) {
+		List<PlacementSetRecord> placementSets,
+		ContentTarget target) {
 		Map<String, Object> document = map();
 		document.put("schemaVersion", Long.valueOf(1));
 		document.put("packageType", "layered-world");
-		document.put("packageId", PACKAGE_ID);
-		document.put("packageVersion", PACKAGE_VERSION);
+		document.put("packageId", target.packageId);
+		document.put("packageVersion", target.packageVersion);
 		document.put("coordinateModel", "signed-layered-v1");
 		Map<String, Object> storage = map();
 		storage.put("sectorSize", Long.valueOf(48));
@@ -1142,6 +1208,7 @@ final class PreservationTerrainPackageGenerator {
 		final String manifestSha256;
 		final String packageFingerprint;
 		final String validationJson;
+		final ContentTarget target;
 
 		Result(
 			Path packageRoot,
@@ -1159,7 +1226,8 @@ final class PreservationTerrainPackageGenerator {
 			List<UnresolvedPlacement> unresolvedPlacements,
 			String manifestSha256,
 			String packageFingerprint,
-			String validationJson) {
+			String validationJson,
+			ContentTarget target) {
 			this.packageRoot = packageRoot;
 			this.baselineFingerprint = baselineFingerprint;
 			this.sourceTerrainPath = sourceTerrainPath;
@@ -1184,12 +1252,17 @@ final class PreservationTerrainPackageGenerator {
 			this.manifestSha256 = manifestSha256;
 			this.packageFingerprint = packageFingerprint;
 			this.validationJson = validationJson;
+			this.target = target;
 		}
 
 		String toJson() {
 			Map<String, Object> document = map();
 			document.put("schemaVersion", Long.valueOf(REPORT_SCHEMA_VERSION));
-			document.put("reportType", REPORT_TYPE);
+			document.put("reportType", target.reportType);
+			document.put(
+				"contentTarget",
+				target == ContentTarget.SPOILED_MILK
+					? "spoiled-milk" : "preservation");
 			document.put("reviewState", "transitions-pending");
 			document.put("runtimePromotionApproved", Boolean.FALSE);
 			document.put(
@@ -1252,8 +1325,8 @@ final class PreservationTerrainPackageGenerator {
 				unresolved.add(placement.toDocument());
 			}
 			document.put("unresolvedPlacements", unresolved);
-			document.put("packageId", PACKAGE_ID);
-			document.put("packageVersion", PACKAGE_VERSION);
+			document.put("packageId", target.packageId);
+			document.put("packageVersion", target.packageVersion);
 			document.put("manifestSha256", manifestSha256);
 			document.put("packageFingerprintSha256", packageFingerprint);
 			return JsonDocuments.pretty(document);
@@ -1261,16 +1334,20 @@ final class PreservationTerrainPackageGenerator {
 
 		String toMarkdown() {
 			StringBuilder out = new StringBuilder();
-			out.append("# Preservation Layered Parity Review Package\n\n");
+			out.append("# ").append(target.reportTitle).append("\n\n");
 			out.append("- Review state: `transitions-pending`\n");
 			out.append("- Runtime promotion approved: `false`\n");
+			out.append("- Content target: `")
+				.append(target == ContentTarget.SPOILED_MILK
+					? "spoiled-milk" : "preservation")
+				.append("`\n");
 			out.append("- Baseline: `")
 				.append(PreservationBaselineInventory.BASELINE_ID)
 				.append("`\n");
 			out.append("- Baseline SHA-256: `")
 				.append(baselineFingerprint).append("`\n");
-			out.append("- Package: `").append(PACKAGE_ID).append("@")
-				.append(PACKAGE_VERSION).append("`\n");
+			out.append("- Package: `").append(target.packageId).append("@")
+				.append(target.packageVersion).append("`\n");
 			out.append("- Terrain encoding: `")
 				.append(RawLayeredTerrainSector.ENCODING).append("`\n");
 			out.append("- Terrain sectors: ").append(terrainSectorCount)

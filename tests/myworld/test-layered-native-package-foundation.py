@@ -18,6 +18,21 @@ TRANSITION_LOCK = (
     TOOL_ROOT / "baselines/preservation-transition-compatibility-v1.json"
 )
 PACKAGE = TOOL_ROOT / "fixtures/native-package-v1"
+PRESERVATION_EXCLUDED_PLACEMENT_IDS = frozenset({
+    "preservation-r64.scenery.004639",
+    "preservation-r64.scenery.008728",
+    "preservation-r64.scenery.022097",
+    "preservation-r64.scenery.022752",
+    "preservation-r64.scenery.023573",
+    "preservation-r64.npc.000572",
+    "preservation-r64.npc.002416",
+    "preservation-r64.ground-item.000176",
+    "preservation-r64.ground-item.000237",
+    "preservation-r64.ground-item.000253",
+    "preservation-r64.ground-item.000496",
+    "preservation-r64.ground-item.000539",
+    "preservation-r64.ground-item.000689",
+})
 
 
 class LayeredNativePackageFoundationTest(unittest.TestCase):
@@ -410,6 +425,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 )
             )
             self.assertEqual(2, report["schemaVersion"])
+            self.assertEqual("preservation", report["contentTarget"])
             self.assertEqual("transitions-pending", report["reviewState"])
             self.assertFalse(report["runtimePromotionApproved"])
             self.assertTrue(report["legacyRoundTripVerified"])
@@ -521,7 +537,10 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 source_archive, package, manifest
             )
             self.assert_preservation_placement_round_trip(
-                package, manifest
+                package,
+                manifest,
+                PRESERVATION_EXCLUDED_PLACEMENT_IDS,
+                vanilla_only=True,
             )
 
             validation_workspace = Path(temp) / "validation"
@@ -568,6 +587,72 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             self.assertEqual(
                 npc_source_sha,
                 hashlib.sha256(npc_source.read_bytes()).hexdigest(),
+            )
+
+    def test_spoiled_milk_package_retains_complete_current_world_content(self):
+        source_archive = ROOT / "server/conf/server/data/Authentic_Landscape.orsc"
+        with tempfile.TemporaryDirectory(
+            prefix="spoiled-milk-layered-package-"
+        ) as temp:
+            workspace = Path(temp) / "first"
+            repeat_workspace = Path(temp) / "second"
+
+            generated = self.run_command(
+                "spoiled-milk-package", workspace
+            )
+
+            self.assertEqual(0, generated.returncode, generated.stderr)
+            report = json.loads(
+                (workspace / "generation-report.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                "spoiled-milk-layered-world-generation",
+                report["reportType"],
+            )
+            self.assertEqual("spoiled-milk", report["contentTarget"])
+            self.assertEqual(32364, report["sourcePlacementRecords"])
+            self.assertEqual(32364, report["convertedPlacementRecords"])
+            self.assertEqual(0, report["excludedSourcePlacementRecords"])
+            self.assertEqual(0, report["unconvertedPlacementRecords"])
+            self.assertEqual(
+                {
+                    "boundaries": 966,
+                    "groundItems": 1016,
+                    "npcs": 3612,
+                    "scenery": 26770,
+                },
+                report["convertedPlacementRecordsByFamily"],
+            )
+            self.assertEqual(1, len(report["conversionRepairs"]))
+
+            package = workspace / "package"
+            manifest = json.loads(
+                (package / "manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                "rsc-remastered.spoiled-milk-layered-world",
+                manifest["packageId"],
+            )
+            self.assertEqual("0.1.0", manifest["packageVersion"])
+            self.assert_preservation_terrain_round_trip(
+                source_archive, package, manifest
+            )
+            self.assert_preservation_placement_round_trip(
+                package,
+                manifest,
+                frozenset(),
+                vanilla_only=False,
+            )
+
+            repeated = self.run_command(
+                "spoiled-milk-package", repeat_workspace
+            )
+            self.assertEqual(0, repeated.returncode, repeated.stderr)
+            self.assertEqual(
+                self.package_tree_hash(package),
+                self.package_tree_hash(repeat_workspace / "package"),
             )
 
     def test_new_schemas_are_valid_and_keep_level_signed(self):
@@ -952,22 +1037,13 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                     )
                 self.assertEqual(legacy, native, entry)
 
-    def assert_preservation_placement_round_trip(self, package, manifest):
-        excluded_placement_ids = {
-            "preservation-r64.scenery.004639",
-            "preservation-r64.scenery.008728",
-            "preservation-r64.scenery.022097",
-            "preservation-r64.scenery.022752",
-            "preservation-r64.scenery.023573",
-            "preservation-r64.npc.000572",
-            "preservation-r64.npc.002416",
-            "preservation-r64.ground-item.000176",
-            "preservation-r64.ground-item.000237",
-            "preservation-r64.ground-item.000253",
-            "preservation-r64.ground-item.000496",
-            "preservation-r64.ground-item.000539",
-            "preservation-r64.ground-item.000689",
-        }
+    def assert_preservation_placement_round_trip(
+        self,
+        package,
+        manifest,
+        excluded_placement_ids,
+        vanilla_only,
+    ):
         generated = {
             "npcs": {},
             "groundItems": {},
@@ -1059,17 +1135,18 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 record["roamBounds"]["maximum"],
             )
 
-        maximum_definition_ids = {
-            "npcs": ("npcId", 793),
-            "groundItems": ("itemId", 1289),
-            "scenery": ("sceneryId", 1189),
-            "boundaries": ("boundaryId", 213),
-        }
-        for family, (field, maximum) in maximum_definition_ids.items():
-            self.assertTrue(all(
-                record[field] <= maximum
-                for record in generated[family].values()
-            ))
+        if vanilla_only:
+            maximum_definition_ids = {
+                "npcs": ("npcId", 793),
+                "groundItems": ("itemId", 1289),
+                "scenery": ("sceneryId", 1189),
+                "boundaries": ("boundaryId", 213),
+            }
+            for family, (field, maximum) in maximum_definition_ids.items():
+                self.assertTrue(all(
+                    record[field] <= maximum
+                    for record in generated[family].values()
+                ))
 
     @staticmethod
     def decode_packed_position(position):

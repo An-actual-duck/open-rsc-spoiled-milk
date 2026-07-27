@@ -17,11 +17,40 @@ capability. It currently provides:
   spaces, arbitrary signed levels, hash-addressed terrain and entity-placement
   payloads, and presentation chunks smaller than the 48-tile storage page.
 
-It does **not** convert maps, edit archives, modify player data, launch a
-server, or export into a game. A separately gated private runtime can now load
-the native fixture; ordinary and public defaults remain unchanged.
+It does **not** edit source archives, modify player data, or export into a
+game. Conversion writes isolated review packages only. A separately gated
+private runtime can load an exact selected package; ordinary and public
+defaults remain unchanged.
 
-## RSC Remastered Preservation baseline
+## Active Spoiled Milk layered world
+
+The active integration target is the complete current Spoiled Milk world:
+
+```bash
+./tools/layered-maps/layered-maps.sh spoiled-milk-package
+```
+
+This command requires the same frozen coordinated source fingerprint used by
+the earlier audit, but it does not classify later Spoiled Milk definitions as
+vanilla contamination. It converts all 32,364 placement records into four
+level-qualified sets: 966 boundaries, 26,770 scenery objects, 3,612 NPCs, and
+1,016 ground items. The one existing Hobgoblin maximum-Y correction remains
+necessary for the legacy record to decode and retains its explicit receipt.
+
+The active package is
+`rsc-remastered.spoiled-milk-layered-world@0.1.0`, manifest SHA-256
+`7ae049ba514261cd5a93a81529c84527938fd23e2a70936050ef09933a4e02ad`.
+It is consumed only by the default-off `spoiled-milk-replacement` private
+runtime profile. This complete distribution is the reference integration
+target while the layered engine and authoring path stabilize.
+
+## RSC Remastered Preservation baseline (on hold)
+
+The vanilla/Preservation distribution is on hold. Its baseline, audit,
+generator, and receipts remain available so the work is not lost, but it is
+not the active runtime or content target. A broadly reusable vanilla package
+will resume after the complete Spoiled Milk layered stack is stable and its
+content boundaries can be extracted deliberately.
 
 From the repository root:
 

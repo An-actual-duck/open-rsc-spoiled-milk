@@ -54,20 +54,20 @@ validates Region-free entity membership inside native package terrain through
 automated and private-owner routes. The final route's clipped single-line
 diagnostic presentation is corrected and owner-confirmed as seven readable
 logical lines. Milestone E and the Phase 5 layered-world engine capability are
-complete. The active product boundary is now deterministic parity-first
-normalization of the frozen Preservation baseline into a reviewable native
-layered package.
+complete. The active product boundary is now complete Spoiled Milk integration
+on the native layered package/runtime, retaining every current placement and
+behavior while the foundational seams stabilize.
 
-The enclosing product direction is now **RSC Remastered**: a definitive
-vanilla-content remaster with an integrated launcher, layered World Builder,
-and simple modder content workflow. The earlier general one-way converter work
-remains useful as deterministic internal normalization, reporting, and
-provenance infrastructure, but a polished standalone converter is no longer a
-prerequisite. The concrete priority is to convert and complete the selected
-vanilla world, then let later named launcher adapters import supported external
-distributions into isolated profiles.
+The enclosing long-term direction remains a broadly reusable **RSC
+Remastered** platform with an integrated launcher, layered World Builder, and
+simple modder content workflow. The implementation sequence has changed:
+Spoiled Milk is the first complete reference distribution, and broader
+packaging is extracted only after that full stack is solid. Vanilla/
+Preservation conversion is on hold because the audited repository inputs are
+intertwined across terrain, placements, definitions, scripts, shops, items,
+and visual effects rather than being a map-only substitution.
 
-### Preservation/vanilla source candidate located
+### Preservation/vanilla source candidate audit (on hold)
 
 The repository contains the required Preservation source candidate; a fresh
 download is not currently needed. It is a coordinated baseline set, not one
@@ -121,20 +121,19 @@ status together.
 
 ### Current implementation sequence
 
-1. Freeze the complete Preservation source manifest and a deterministic
-   layered-world package schema.
-2. Implement **Authority Milestone E: Native Layered Terrain and Package
-   Loader**, initially behind a private gate.
-3. Load a real package-owned level `-2` sector plus terrain collision and
-   placements without the synthetic plane-0 compatibility room.
-4. Prove adjacent sector loading, smaller presentation chunks, movement,
-   collision, scenery/NPC/item interaction, transition, reconnect, exit, and
-   recovery on the private server/client.
-5. Convert the exact vanilla baseline first without relocation and prove
-   parity; only then apply reviewed geographic alignment and deeper-level
-   moves.
-6. Add the layered Builder review/content workflow and promote the reviewed
-   vanilla output into the definitive RSC Remastered profile.
+1. Generate the independently identified Spoiled Milk layered package with all
+   32,364 current placements and its exact source fingerprint.
+2. Run the complete Spoiled Milk world through the replacement runtime and
+   preserve terrain, collision, scenery, NPCs, items, transitions, reconnect,
+   recovery, and current custom behavior.
+3. Continue resolving native layered-loader, presentation, transition, and
+   expandable-depth issues against that complete integration target.
+4. Add the layered Builder review/content workflow for the complete Spoiled
+   Milk package.
+5. Once stable, extract reusable engine/package/launcher boundaries and define
+   supported community distribution adapters.
+6. Resume vanilla/Preservation only with a complete coordinated content set;
+   do not infer vanilla by subtracting IDs from Spoiled Milk.
 
 ### Authority Milestone E foundation checkpoint 1
 
@@ -18099,14 +18098,15 @@ repairs into silent changes to third-party expansions. Imported creator content
 reports its own incompatible or ambiguous records, and its creator chooses how
 to adapt them.
 
-The next gate is transition discovery and exact unchanged-world population
+The next gate at that point was transition discovery and exact unchanged-world population
 replacement. The review package must not be added beside legacy population
 because that would duplicate all 32,364 placements.
 
 ## Preservation Residual Content Audit
 
-Status: implemented and automated-validated on 2026-07-26; focused private
-owner validation remains.
+Status: implemented and automated-validated on 2026-07-26, then placed on hold
+as a distribution target. No focused private owner route is required while
+Preservation is paused.
 
 A systematic audit of world-visible ownership found two distinct residual
 content classes. First, the client drew rune-altar glyph/orb billboards at
@@ -18141,6 +18141,12 @@ exclusions plus the existing Hobgoblin maximum-Y repair. Package identity is
 `560dae205d13c2034b38f52d8bb6841ee56c245fadc8e9d18361ace1346cd73f`;
 package fingerprint is
 `ea0af380d88d3f742abd9e8dea885101d98550471e9b6a7044bed7fb570e85e6`.
+
+The audit is preserved because it accurately demonstrates why a later vanilla
+distribution needs a coordinated source set. The active Spoiled Milk package
+does not apply these exclusions: it restores all 13 records, produces all
+32,364 placements, and uses the independently pinned package/profile identity
+recorded in the Current Product Gate.
 
 ## Semantic Area Inventory: Pending Later Analysis
 
@@ -18236,7 +18242,8 @@ private environment should validate at least:
 | 2026-07-26 | Reject the corrected full route on remaining NPC collision and movement smoothness defects. | Owner retest accepts interactions and signed layer transitions, but NPCs still cross walls and ordinary walking stutter-steps. Runtime evidence identifies two independent omissions: native tiles copied raw wall/overlay values without deriving the reciprocal server traversal product built by `WorldLoader`, and a signed-level scene reset near X `120` moved the client local base from `96` to `48` while the server movement filter retained base `96`. The latter sent out-of-window NPC targets and triggered an unbounded movement-cache mismatch log storm. Native collision derivation, scene-scope movement-window realignment, and bounded diagnostic emission are implemented and compile; focused private owner retest is pending |
 | 2026-07-26 | Accept the corrected Preservation terrain window, bridge metadata, NPC collision, and movement-performance route. | Protocol v5 restores the complete client 3-by-3 48-tile active window; native archive tiles no longer inherit editor-only overlay metadata; signed NPC collision and scene-scope movement admission align; and level-qualified Player/game-object projections remove repeated mixed-entity snapshot allocation. Private measurements fell to 31-36 ms average active ticks and 2-3 ms movement-poll work, while the owner confirms normal terrain, bridge faces, collisions/interactions, and no remaining movement stutter |
 | 2026-07-26 | Classify and remove surviving rune-altar glyphs in the Preservation endpoint as orphan custom visualization, not missing vanilla scenery. | The Preservation placement baseline correctly excludes the custom MyWorld Runecraft altars and obelisks. The client independently drew glyph/orb billboards from fixed coordinates, so those effects survived without owners. Rendering now requires the exact matching loaded altar or obelisk scenery identity and caches ownership by scene-object revision; custom worlds retain their effects while vanilla scenes omit them. Focused guards, the authoritative 262-source client build, and private owner visual confirmation pass |
-| 2026-07-26 | Remove the remaining embedded expansion placements from the definitive Preservation output without deleting their MyWorld sources. | Package `0.4.0` excludes five exact scenery, two exact NPC, and six exact ground-item tuples; reports 32,351 vanilla outputs plus 13 exclusions from all 32,364 frozen inputs; retains zero unresolved; and carries 14 receipts including the Hobgoblin correction. Exact conversion allowlists and an independent runtime definition boundary refuse unreviewed non-vanilla placements. Automated validation passes; focused private owner validation remains |
+| 2026-07-26 | Remove the remaining embedded expansion placements from the definitive Preservation output without deleting their MyWorld sources. | Package `0.4.0` excludes five exact scenery, two exact NPC, and six exact ground-item tuples; reports 32,351 vanilla outputs plus 13 exclusions from all 32,364 frozen inputs; retains zero unresolved; and carries 14 receipts including the Hobgoblin correction. Exact conversion allowlists and an independent runtime definition boundary refuse unreviewed non-vanilla placements. Automated validation passes; its owner route was superseded when Preservation was paused |
+| 2026-07-26 | Pause vanilla/Preservation as a distribution target and continue layered-world integration against complete Spoiled Milk content. | Preserve the audit and clean generator for later; add independently named `rsc-remastered.spoiled-milk-layered-world@0.1.0` plus `spoiled-milk-replacement`, restoring all 32,364 placements. Stabilize renderer/server/layered/Builder integration here before extracting broadly reusable and coordinated vanilla/community packages |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
@@ -18633,7 +18640,16 @@ presentation, persistence, cross-package transitions, and Region-free native
 entity membership have completed their focused automated and private-owner
 routes.
 
-The active gate is now the parity-first Preservation conversion. Its first
+The active gate is the complete Spoiled Milk layered distribution:
+`rsc-remastered.spoiled-milk-layered-world@0.1.0`, selected only by the
+default-off `spoiled-milk-replacement` profile. It retains all 32,364 current
+placements and uses the accepted terrain, runtime, protocol, collision,
+transition, persistence, and Region-free entity work without making a vanilla
+content claim. The next work should finish and harden this full integration,
+then proceed to Builder/content authoring and later extraction.
+
+The parity-first Preservation conversion described below is retained research
+but is now on hold. Its first
 milestone produces the exact terrain-only native review package described
 above: all 1,764 authentic sectors convert deterministically and reverse to
 their original bytes, while all 32,364 base placement records remain honestly
@@ -18657,12 +18673,15 @@ offsets, and unusual or long-distance topology deliberately remain
 misrepresent Java control flow as a complete graph, modify the accepted
 12-file map baseline, or impose a topology policy on creator expansions.
 
-Complete-world population replacement is now implemented behind the separately
+The paused Preservation population replacement remains implemented behind the
+separately
 named, default-off `preservation-r64-replacement` runtime profile. The profile
 validates the exact Preservation package and uses its 32,351 placements
 *instead of* legacy `WorldPopulator` base placements; the existing fixture
-profile retains its bounded additive checks. Legacy scripted transition
-consumers remain active for first parity runtime.
+profile retains its bounded additive checks. It is not the active private
+runtime. The parallel `spoiled-milk-replacement` profile restores all 13
+audited Spoiled Milk placements and validates the complete 32,364-record
+package independently. Legacy scripted transition consumers remain active.
 
 The first owner route correctly rejected parity. Its deterministic findings
 are now guarded: generic aligned stairs change signed level directly, native
@@ -18676,7 +18695,7 @@ sub-route is now owner-accepted: the client restored the saved `(120,648,L-1)`
 state, then recorded a new native scene context at `(120,648,L0)` immediately
 after `::kill devduck`; `::layerloc` independently reported global level `0`.
 Explicit and long-distance scripted teleports remain unchanged. Corrected
-private visual/gameplay acceptance is the active gate. Geographic realignment
+private visual/gameplay acceptance was the gate at that point. Geographic realignment
 and additional depths follow acceptance of this complete unchanged-world
 conversion; a generic standalone converter is not on the critical path. The
 historical retirement findings below remain retained reference material for

@@ -13,13 +13,14 @@ import java.util.Set;
 /**
  * Explicit startup ownership policy for a native layered package catalog.
  *
- * <p>The fixture profile supplements the ordinary legacy population. The
- * Preservation profile is a pinned complete-world replacement and must never
- * be selected by package shape alone.</p>
+ * <p>The fixture profile supplements the ordinary legacy population. Complete
+ * Preservation and Spoiled Milk profiles are independently pinned replacement
+ * distributions and must never be selected by package shape alone.</p>
  */
 public enum NativeLayeredWorldRuntimeProfile {
 	FIXTURE_ADDITIVE("fixture-additive", false),
-	PRESERVATION_R64_REPLACEMENT("preservation-r64-replacement", true);
+	PRESERVATION_R64_REPLACEMENT("preservation-r64-replacement", true),
+	SPOILED_MILK_REPLACEMENT("spoiled-milk-replacement", true);
 
 	public static final String DEFAULT_ID = "fixture-additive";
 	public static final String PRESERVATION_PACKAGE_ID =
@@ -27,6 +28,11 @@ public enum NativeLayeredWorldRuntimeProfile {
 	public static final String PRESERVATION_PACKAGE_VERSION = "0.4.0";
 	public static final String PRESERVATION_MANIFEST_SHA256 =
 		"560dae205d13c2034b38f52d8bb6841ee56c245fadc8e9d18361ace1346cd73f";
+	public static final String SPOILED_MILK_PACKAGE_ID =
+		"rsc-remastered.spoiled-milk-layered-world";
+	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.1.0";
+	public static final String SPOILED_MILK_MANIFEST_SHA256 =
+		"7ae049ba514261cd5a93a81529c84527938fd23e2a70936050ef09933a4e02ad";
 	private static final int VANILLA_MAX_BOUNDARY_ID = 213;
 	private static final int VANILLA_MAX_SCENERY_ID = 1189;
 	private static final int VANILLA_MAX_NPC_ID = 793;
@@ -80,6 +86,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 				return;
 			case PRESERVATION_R64_REPLACEMENT:
 				validatePreservation(catalog);
+				return;
+			case SPOILED_MILK_REPLACEMENT:
+				validateSpoiledMilk(catalog);
 				return;
 			default:
 				throw new IllegalStateException(
@@ -138,35 +147,73 @@ public enum NativeLayeredWorldRuntimeProfile {
 
 	private static void validatePreservation(
 		final NativeLayeredWorldPackageCatalog catalog) {
+		validateCompleteWorld(
+			catalog,
+			"preservation-r64-replacement",
+			PRESERVATION_PACKAGE_ID,
+			PRESERVATION_PACKAGE_VERSION,
+			PRESERVATION_MANIFEST_SHA256,
+			3610,
+			1010,
+			26765,
+			true);
+	}
+
+	private static void validateSpoiledMilk(
+		final NativeLayeredWorldPackageCatalog catalog) {
+		validateCompleteWorld(
+			catalog,
+			"spoiled-milk-replacement",
+			SPOILED_MILK_PACKAGE_ID,
+			SPOILED_MILK_PACKAGE_VERSION,
+			SPOILED_MILK_MANIFEST_SHA256,
+			3612,
+			1016,
+			26770,
+			false);
+	}
+
+	private static void validateCompleteWorld(
+		final NativeLayeredWorldPackageCatalog catalog,
+		final String profileId,
+		final String packageId,
+		final String packageVersion,
+		final String manifestSha256,
+		final int npcCount,
+		final int groundItemCount,
+		final int sceneryCount,
+		final boolean vanillaOnly) {
 		if (catalog.size() != 1) {
 			throw new IllegalStateException(
-				"The preservation-r64-replacement profile requires exactly "
+				"The " + profileId + " profile requires exactly "
 					+ "one package");
 		}
 		final NativeLayeredWorldPackage loaded = catalog.getPrimaryPackage();
-		if (!PRESERVATION_PACKAGE_ID.equals(loaded.getPackageId())
-			|| !PRESERVATION_PACKAGE_VERSION.equals(
+		if (!packageId.equals(loaded.getPackageId())
+			|| !packageVersion.equals(
 				loaded.getPackageVersion())
-			|| !PRESERVATION_MANIFEST_SHA256.equals(
+			|| !manifestSha256.equals(
 				loaded.getManifestSha256())) {
 			throw new IllegalStateException(
-				"The preservation-r64-replacement profile requires the exact "
-					+ "reviewed Preservation package identity, version, and "
+				"The " + profileId + " profile requires the exact "
+					+ "reviewed package identity, version, and "
 					+ "manifest");
 		}
 		if (loaded.getWorldSpaceCount() != 1
 			|| loaded.getLevelCount() != 4
 			|| loaded.getTerrainSectorCount() != 1764
 			|| loaded.getPlacementSetCount() != 4
-			|| loaded.getNpcPlacementCount() != 3610
-			|| loaded.getGroundItemPlacementCount() != 1010
-			|| loaded.getSceneryPlacementCount() != 26765
+			|| loaded.getNpcPlacementCount() != npcCount
+			|| loaded.getGroundItemPlacementCount() != groundItemCount
+			|| loaded.getSceneryPlacementCount() != sceneryCount
 			|| loaded.getBoundaryPlacementCount() != 966) {
 			throw new IllegalStateException(
-				"The preservation-r64-replacement profile package counts do "
+				"The " + profileId + " profile package counts do "
 					+ "not match the accepted complete-world review");
 		}
-		validatePreservationDefinitionIds(loaded);
+		if (vanillaOnly) {
+			validatePreservationDefinitionIds(loaded);
+		}
 		final Set<Integer> expectedLevels = new HashSet<Integer>(
 			Arrays.asList(
 				Integer.valueOf(-1),
@@ -177,7 +224,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 			if (!loaded.declaresLevel(
 					WorldSpaceId.GLOBAL, level.intValue())) {
 				throw new IllegalStateException(
-					"The preservation-r64-replacement profile is missing "
+					"The " + profileId + " profile is missing "
 						+ "global level " + level);
 			}
 		}
@@ -189,13 +236,13 @@ public enum NativeLayeredWorldRuntimeProfile {
 					set.getSourceEncoding())
 				|| !placementLevels.add(Integer.valueOf(set.getLevel()))) {
 				throw new IllegalStateException(
-					"The preservation-r64-replacement profile requires one "
+					"The " + profileId + " profile requires one "
 						+ "global v3 placement set per accepted level");
 			}
 		}
 		if (!expectedLevels.equals(placementLevels)) {
 			throw new IllegalStateException(
-				"The preservation-r64-replacement placement levels do not "
+				"The " + profileId + " placement levels do not "
 					+ "match the accepted complete-world review");
 		}
 	}
