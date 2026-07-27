@@ -18820,6 +18820,15 @@ presentation plane from signed Player authority: levels `0`, `1`, `2`, and
 levels continue to use the isolated plane-0 carrier. This makes repeated
 same-level teleports agree with the scene-context selector.
 
+Owner acceptance completed on 2026-07-27 after the corrected private Builder
+was relaunched. Explicit `::tp x y 1` and retained-level `::tp x y` both
+presented level-1 terrain while preserving signed authority; the return to
+level 0, visible read-only refusals, and undeclared-level refusal also behaved
+as designed. The owner reported the complete route working without another
+presentation, navigation, or interaction fault. The read-only package adapter
+is therefore accepted, and the active boundary advances to the isolated
+native-draft writer described below.
+
 Arbitrary depth remains a package capability rather than a teleport loophole.
 The engine, manifest, runtime loaders, and signed coordinate model already
 accept declared levels beyond `-2`; the current Spoiled Milk package truthfully

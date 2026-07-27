@@ -1102,6 +1102,15 @@ now uses signed authority for the four authentic presentation planes and the
 plane-0 carrier for later arbitrary levels, matching the native scene-context
 contract across repeated same-level teleports.
 
+Focused owner acceptance completed on 2026-07-27. Explicit and retained-level
+teleports now present terrain from the same signed level as server authority;
+return navigation, visible mutation refusal, and refusal of undeclared levels
+also behaved as designed, with no remaining issue reported in the route. The
+read-only Builder adapter is accepted. The next active slice is the first
+copy-on-write native draft and its transactional Create Level operation; broad
+editing and export remain disabled until that narrower writer boundary is
+validated.
+
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
 from the accepted 12-file vanilla map baseline, covers the exact
