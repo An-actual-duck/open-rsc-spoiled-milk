@@ -18288,7 +18288,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
-| 2026-07-27 | Replace narrow family-by-family Builder review with one free-form generated-level authoring workbench. | Implemented for owner review: logical non-source levels expose terrain surfaces, terrain structures/walls, scenery, and NPCs together; one backward-compatible v3 journal atomically persists all enabled families; NPC identity and roaming bounds survive clean close/reopen; source levels, ground items, standalone boundaries, export, and target files remain locked. Generated levels no longer compose unrelated legacy upper-plane models, correcting the reported long-zoom player occlusion and void-selection interference |
+| 2026-07-27 | Replace narrow family-by-family Builder review with one free-form generated-level authoring workbench. | Owner-accepted: logical non-source levels expose terrain surfaces, terrain structures/walls, scenery, and NPCs together; one backward-compatible v3 journal atomically persists all enabled families; NPC identity and roaming bounds survive clean close/reopen; source levels, ground items, standalone boundaries, export, and target files remain locked. Generated levels no longer compose unrelated legacy upper-plane models, and the owner confirmed correct long-zoom player visibility and void authoring on level `-3` |
 | 2026-07-25 | Reframe the enclosing product as RSC Remastered: one definitive vanilla-content remaster with integrated launcher, layered Builder, and modder workflow, while retaining modular technical boundaries internally. | Confirmed; recorded in the product roadmap |
 | 2026-07-25 | Use the locally present Preservation revision-64 server terrain, matching authentic ORSC, base placements, configuration, definitions, and copied seed as the first vanilla source candidate; freeze them as one provenance set before conversion. | Confirmed; inputs and current hashes inventoried |
 | 2026-07-25 | Remove a polished generic standalone converter from the critical path. Complete the exact vanilla conversion with deterministic internal tooling first; later external distributions use named launcher import adapters. | Confirmed; refines the 2026-07-18 conversion-product decision without discarding its safety contracts |
@@ -18961,7 +18961,7 @@ navigation to unallocated `(240,640,-3)` visibly refused and retained the
 prior location. The additional owner-painted tiles were intentional.
 
 The scenery-only checkpoint has now been absorbed into a broader
-**Builder-created-level workbench** and is awaiting free-form owner
+**Builder-created-level workbench** and has completed free-form owner
 acceptance. Terrain Surface and Structure controls, Scenery
 Place/Rotate/Remove, and NPC Place/Remove are enabled together on an additional
 signed level. The server independently requires an active isolated Builder
@@ -19005,6 +19005,42 @@ logical level `0`; generated signed levels render solely from their native
 package snapshot. Overlay-8 void still emits no visible/depth terrain face, and
 the editor-only camera-to-ground fallback remains responsible for selecting it
 so the first terrain tile can be painted.
+
+The owner then exercised terrain, structures, scenery, NPCs, void painting,
+camera zoom, and mixed authoring without another visual, collision,
+interaction, or persistence issue. In particular, the player remained visible
+while zooming on level `-3`; the unrelated-upper-plane composition defect is
+owner-accepted.
+
+That broad route exposed the next usability boundary rather than another
+authoring defect: only allocated 48-by-48 storage sectors are editable. The
+existing `::buildergrow` primitive can queue one edge-adjacent void sector, but
+it is a command-level proof that requires Save, close, and reopen before the
+new canvas is usable. The recommended next milestone is an
+**intent-driven sparse canvas allocator**:
+
+- passive camera loading, walking, or approaching an edge never creates map
+  data;
+- an explicit Navigate action to an undeclared signed level creates its level
+  record, empty placement set, and void-backed starter canvas around the
+  requested `(x,y)`, then enters it;
+- an explicit Navigate action to unallocated coordinates on a created level
+  can create a new void-backed work area there, including a deliberately
+  detached component, rather than forcing every dungeon to be contiguous;
+- painting immediately beyond an allocated edge may allocate only the touched
+  adjacent sector and apply the terrain stroke as one atomic authoring action;
+- the Builder must make the exact new level/sectors visible and usable without
+  a manual command or launcher restart, while Save/discard and clean-close
+  recovery retain the existing bounded journal guarantees; and
+- ladder/stair testing may create a missing destination only after the editor
+  stores explicit transition semantics. A scenery definition alone must not
+  imply `level + 1` or `level - 1`, because decorative, long-distance,
+  same-level, one-way, and scripted transitions remain valid designs.
+
+This keeps 48-by-48 pages as an internal sparse storage unit while presenting
+an effectively expandable canvas to creators. The exact live package-refresh
+and journal-version design remains to be implemented and validated before
+transition authoring is widened.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first

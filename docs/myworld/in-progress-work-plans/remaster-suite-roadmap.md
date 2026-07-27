@@ -1123,8 +1123,8 @@ presentation boundaries, tile inspection, surface return, and the complete
 route again after a clean client/server restart of the unchanged workspace.
 The source package remained immutable.
 
-The next Builder milestone is implemented as a broad free-form workbench and
-awaiting owner acceptance. Existing terrain Surface and Structure controls,
+The next Builder milestone is implemented and owner-accepted as a broad
+free-form workbench. Existing terrain Surface and Structure controls,
 Scenery Place/Rotate/Remove, and NPC Place/Remove are enabled together only on
 Builder-created levels; accepted source levels remain immutable. Painting
 updates the active native presentation/collision overlay, while **Save** writes
@@ -1157,6 +1157,25 @@ water presentation disappeared, void remained blocked and inspectable, painted
 tiles appeared and became walkable immediately, saved paints survived restart,
 an allocated void sector accepted navigation and authoring, and the next
 unallocated sector refused navigation without moving the player.
+
+The final free-form route exercised terrain surfaces, structure walls/roofs,
+scenery, NPCs, void painting, and camera zoom together without another
+reported fault. The player remained visible at long zoom on level `-3`, so the
+generated-level upper-plane isolation is accepted. The remaining limitation is
+allocation UX: the creator cannot yet expand beyond allocated sectors without
+the proof-level `::buildergrow` command and a restart.
+
+The recommended next Builder milestone is an intent-driven sparse canvas.
+Passive camera/movement activity must remain read-only. Navigate to an absent
+level should explicitly create its void-backed starter canvas and enter it;
+Navigate to unallocated coordinates on a created level should explicitly
+create a work area there; and a terrain stroke immediately over an allocated
+edge should be able to allocate the touched neighbor sector atomically. These
+operations should refresh the running Builder without requiring a manual
+command or close/reopen cycle. Ladder/stair-driven creation follows only after
+the editor can author an explicit transition record; object appearance alone
+must not erase valid decorative, same-level, distant, one-way, or scripted
+topology.
 
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
@@ -1588,7 +1607,7 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
-| 2026-07-27 | Broaden generated-level review into one terrain/structure/scenery/NPC workbench and isolate arbitrary signed levels from surface upper-plane composition. | Implemented for free-form owner review. A v3 atomic journal persists NPCs with exact roaming bounds alongside the accepted terrain/scenery operations while older journals remain readable; generated levels render only their native snapshot; accepted source levels, ground items, standalone boundaries, export, and target files remain locked |
+| 2026-07-27 | Broaden generated-level review into one terrain/structure/scenery/NPC workbench and isolate arbitrary signed levels from surface upper-plane composition. | Owner-accepted. A v3 atomic journal persists NPCs with exact roaming bounds alongside the accepted terrain/scenery operations while older journals remain readable; the owner verified mixed editing and correct long-zoom visibility on level `-3`; generated levels render only their native snapshot; accepted source levels, ground items, standalone boundaries, export, and target files remain locked |
 | 2026-07-27 | Make scenery the first native placement family authored on Builder-created levels and commit it atomically with terrain. | Implemented for focused owner review: Place/Rotate/Remove reuse native layered membership/collision transactions, deterministic slot identities survive rotation and replacement, the v2 bounded journal combines terrain and scenery in one clean-close copy-on-write swap, and accepted source placements plus NPC/ground-item/boundary families remain locked |
 | 2026-07-27 | Make unallocated and newly allocated Builder space explicit void, retaining only a minimal walkable Create Level anchor. | Owner-accepted. Missing sectors and new sector payloads use blocking/invisible overlay `8` over Floor Color `1`; Create Level clears only a centered 3-by-3 tile pad. No water appeared, void inspection/collision were correct, live-painted floor became walkable, paints persisted, allocated void accepted navigation/editing, and unallocated terrain refused without location mutation |
 | 2026-07-27 | Keep the first live layered terrain writer restricted to Builder-created levels and commit through the isolated working package only. | Implemented for focused owner review: terrain paint is immediately visible in the Builder, Save writes a deterministic bounded journal, normal close/reopen performs a validated copy-on-write package commit, and explicit edge-adjacent sector growth is available through `::buildergrow`; source levels, placements, export, and target files remain locked |
