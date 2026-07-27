@@ -1139,9 +1139,13 @@ restart identity, source-level refusal, placement locks, and walking across a
 new sector boundary. It also exposed a design-quality issue: absent native
 sectors still appeared as distant water, while pre-filling every allocated
 sector with walkable floor would force creators to erase unwanted terrain.
-The active correction presents absent space as blocking/invisible overlay `8`,
+The correction presents absent space as blocking/invisible overlay `8`,
 initializes new sectors with the same void, and retains only a small walkable
-anchor pad on Create Level.
+anchor pad on Create Level. Focused owner review accepted the result: the
+water presentation disappeared, void remained blocked and inspectable, painted
+tiles appeared and became walkable immediately, saved paints survived restart,
+an allocated void sector accepted navigation and authoring, and the next
+unallocated sector refused navigation without moving the player.
 
 Preservation normalization milestone 3 now freezes the transition execution
 boundary without guessing at Java semantics. A supplementary lock, separate
@@ -1573,7 +1577,7 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
-| 2026-07-27 | Make unallocated and newly allocated Builder space explicit void, retaining only a minimal walkable Create Level anchor. | Owner persistence and growth behavior passed, but the allocation edge appeared as water and broad flat fill is undesirable authoring debt. Missing sectors and new sector payloads now use blocking/invisible overlay `8` over Floor Color `1`; Create Level clears only a centered 3-by-3 tile pad for safe entry. Focused visual acceptance is pending |
+| 2026-07-27 | Make unallocated and newly allocated Builder space explicit void, retaining only a minimal walkable Create Level anchor. | Owner-accepted. Missing sectors and new sector payloads use blocking/invisible overlay `8` over Floor Color `1`; Create Level clears only a centered 3-by-3 tile pad. No water appeared, void inspection/collision were correct, live-painted floor became walkable, paints persisted, allocated void accepted navigation/editing, and unallocated terrain refused without location mutation |
 | 2026-07-27 | Keep the first live layered terrain writer restricted to Builder-created levels and commit through the isolated working package only. | Implemented for focused owner review: terrain paint is immediately visible in the Builder, Save writes a deterministic bounded journal, normal close/reopen performs a validated copy-on-write package commit, and explicit edge-adjacent sector growth is available through `::buildergrow`; source levels, placements, export, and target files remain locked |
 | 2026-07-27 | Make arbitrary signed depth a transactional Builder authoring action, not an implicit teleport into absent terrain. | The engine/package format already accepts data-declared `-3`, `+3`, and later levels. The next native-writer slice creates level metadata, safe initial terrain, and an empty placement set atomically in the isolated workspace; undeclared destinations continue to refuse |
 | 2026-07-27 | Prevent native presentation preloads from publishing terrain built under a different receipt scope. | Native package windows no longer schedule speculative terrain/model builds, every relevant cache fences publication by its complete scope key, and the rapid-navigation water-edge route is queued for owner retest |

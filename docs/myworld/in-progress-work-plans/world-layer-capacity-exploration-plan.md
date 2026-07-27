@@ -18600,7 +18600,7 @@ private environment should validate at least:
 | 2026-07-26 | Begin the signed-layer World Builder adapter with logical coordinate presentation. | Implemented the first review-only slice: strict discovery accepts only the exact Spoiled Milk `0.2.0` package and profile, copies and fingerprints all 1,776 package files into isolated working/source trees, launches the package under complete layered authority, exposes signed `(x,y,level)` navigation and native terrain inspection, changes the ordinary HUD to logical coordinates, and blocks editing, saving, and export in both client and server boundaries. The private Builder auto-login and exact package load pass; focused owner visual/navigation acceptance remains pending before the native writer slice |
 | 2026-07-27 | Implement and accept the first workspace-owned native draft transaction. | Offline `create-level` takes the Builder workspace lock, revalidates the immutable accepted source, stages a complete descendant, adds arbitrary signed level metadata, nine raw sectors around the geographic anchor, and one empty v3 placement set, then verifies all paths, hashes, counts, source ancestry, and restart identity before a rollback-protected package swap. The first flat starter proved the transaction and was later refined to overlay-8 void plus a 3-by-3 tile anchor pad. A Builder-only runtime profile accepts the additive terrain-only descendant while ordinary Spoiled Milk remains pinned to its exact reviewed manifest and non-Builder servers refuse the draft profile |
 | 2026-07-27 | Make the first live layered terrain writer a bounded working-copy transaction restricted to Builder-created levels. | Implemented and owner-validated for live paint, deterministic Save/clean-close commit, restart persistence, source-level refusal, placement locks, and edge-sector crossing. Accepted source levels, export, target files, and ordinary servers remain unchanged. The route exposed one follow-up: absent terrain still looked like distant water and broad flat-filled allocations are undesirable authoring defaults |
-| 2026-07-27 | Represent unallocated and newly allocated Builder terrain as explicit overlay-8 void, with only a minimal Create Level anchor pad. | Implemented for focused retest: the 3-by-3 starter sector allocation and later edge-growth sectors use Floor Color `1` plus blocking/invisible Floor Texture `8`; Create Level clears a centered 3-by-3 tile pad so the creator can enter safely; native missing-sector presentation uses the same void instead of special water overlay `250` |
+| 2026-07-27 | Represent unallocated and newly allocated Builder terrain as explicit overlay-8 void, with only a minimal Create Level anchor pad. | Owner-accepted: the 3-by-3 starter sector allocation and later edge-growth sectors use Floor Color `1` plus blocking/invisible Floor Texture `8`; Create Level clears a centered 3-by-3 tile pad; no water appeared, void remained blocked and inspectable, painting revealed immediately walkable floor, saved paints survived restart, allocated void accepted navigation/editing, and unallocated terrain refused without moving the player |
 
 ## Phase 5 Authority Milestone A: Player Session and Persistence
 
@@ -18938,6 +18938,21 @@ The refinement now uses one consistent sparse-authoring vocabulary:
 - Create Level allocates the same void-backed 3-by-3 sector window but clears
   only the centered 3-by-3 **tile** pad around the requested anchor. This is
   enough for safe arrival while leaving the rest of the level authoring-clean.
+
+Owner acceptance completed on 2026-07-27. The refined initial package has
+manifest
+`c9b673b2495e71329bf2a4878670574b06f5cbaebeb3f38113f5b0e0fc79d7dc`;
+after three intentional tile edits and one void-backed sector allocation, the
+working manifest is
+`336523b7def52e1fa99326415651a80d86978d287071299df7a60e450eed970d`.
+The source manifest remained
+`fab8d7d1a51e948a7d8b18769eb0b3e9f5abf9e30538abfedba4d90374b1447b`.
+The owner observed no water, verified the small entry pad and blocked
+inspectable void, revealed walkable terrain through live overlay painting,
+and confirmed the saved tiles after restart. Navigation to allocated
+`(200,640,-3)` succeeded and its void could be painted and traversed;
+navigation to unallocated `(240,640,-3)` visibly refused and retained the
+prior location. The additional owner-painted tiles were intentional.
 
 The parity-first Preservation conversion described below is retained research
 but is now on hold. Its first
