@@ -1547,7 +1547,16 @@ public final class GameStateUpdater {
 				midpointY = clientLocalMidpointForTile(viewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT);
 			}
 		}
-		if (viewer.getX() <= midpointX - CLIENT_LOCAL_REGION_RELOAD_RADIUS
+		// A teleport forces the client to recenter even when its destination
+		// remains inside the ordinary walking reload radius. Recenter the
+		// server mirror in the same tick so terrain receipts and movement
+		// coordinates describe the client's newly active section window.
+		if (viewer.isTeleporting()) {
+			midpointX = clientLocalMidpointForTile(
+				viewer.getX(), CLIENT_LOCAL_PLANE_WIDTH);
+			midpointY = clientLocalMidpointForTile(
+				viewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT);
+		} else if (viewer.getX() <= midpointX - CLIENT_LOCAL_REGION_RELOAD_RADIUS
 			|| viewer.getX() >= midpointX + CLIENT_LOCAL_REGION_RELOAD_RADIUS
 			|| viewer.getY() <= midpointY - CLIENT_LOCAL_REGION_RELOAD_RADIUS
 			|| viewer.getY() >= midpointY + CLIENT_LOCAL_REGION_RELOAD_RADIUS) {

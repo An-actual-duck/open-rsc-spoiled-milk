@@ -366,6 +366,24 @@ class NativeTerrainResidencyTest(unittest.TestCase):
             "activePacketHandler.getLayeredTerrainDeliveryDebugSummaryLine()",
             applet,
         )
+        region_refresh = updater.split(
+            "private static void updateCustomMovementClientRegion", 1
+        )[1].split("private static int currentClientLocalBaseX", 1)[0]
+        self.assertIn("if (viewer.isTeleporting()) {", region_refresh)
+        self.assertIn(
+            "midpointX = clientLocalMidpointForTile(\n"
+            "\t\t\t\tviewer.getX(), CLIENT_LOCAL_PLANE_WIDTH);",
+            region_refresh,
+        )
+        self.assertIn(
+            "midpointY = clientLocalMidpointForTile(\n"
+            "\t\t\t\tviewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT);",
+            region_refresh,
+        )
+        self.assertLess(
+            region_refresh.index("if (viewer.isTeleporting()) {"),
+            region_refresh.index("CLIENT_LOCAL_REGION_RELOAD_RADIUS"),
+        )
 
     def _compile_and_run(self, class_name, harness, sources):
         with tempfile.TemporaryDirectory() as temporary:
