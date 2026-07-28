@@ -2101,10 +2101,7 @@ public final class mudclient implements Runnable {
 
 			ORSCharacter player = this.players[index];
 			String name = player.getStaffName();
-			int var5 = 2203 - this.midRegionBaseZ - this.playerLocalZ - this.worldOffsetZ;
-			if (this.midRegionBaseX + this.playerLocalX + this.worldOffsetX >= 2640) {
-				var5 = -50;
-			}
+			int var5 = getLocalPlayerWildernessDepth();
 
 			String level = "";
 			int levelDelta = 0;
@@ -2162,7 +2159,7 @@ public final class mudclient implements Runnable {
 			} else {
 
 				if (var5 > 0
-					&& (player.currentZ - 64) / this.tileSize - (-this.worldOffsetZ - this.midRegionBaseZ) < 2203) {
+					&& getCharacterWildernessDepth(player) > 0) {
 					this.menuCommon.addCharacterItem(player.serverIndex, levelDelta >= 0 && levelDelta < 5
 							? MenuItemAction.PLAYER_ATTACK_SIMILAR : MenuItemAction.PLAYER_ATTACK_DIVERGENT, "Attack",
 						"@whi@" + name + level);
@@ -3849,6 +3846,22 @@ public final class mudclient implements Runnable {
 			return this.midRegionBaseZ + this.localPlayer.currentZ / this.tileSize;
 		}
 		return this.midRegionBaseZ + this.playerLocalZ;
+	}
+
+	private int getLocalPlayerWildernessDepth() {
+		int compatibilityX = this.midRegionBaseX + this.playerLocalX;
+		int compatibilityY = this.midRegionBaseZ + this.playerLocalZ;
+		return this.packetHandler.getPlayerWildernessDepth(
+			compatibilityX, compatibilityY);
+	}
+
+	private int getCharacterWildernessDepth(ORSCharacter player) {
+		int compatibilityX = this.midRegionBaseX
+			+ (player.currentX - 64) / this.tileSize;
+		int compatibilityY = this.midRegionBaseZ
+			+ (player.currentZ - 64) / this.tileSize;
+		return this.packetHandler.getWorldWildernessDepth(
+			compatibilityX, compatibilityY);
 	}
 
 	private boolean shouldDebugSceneGameObject(int objectId, int worldTileX, int worldTileZ) {
@@ -7216,10 +7229,7 @@ public final class mudclient implements Runnable {
 						}
 					}
 					if (!this.loadingArea) {
-						centerX = -this.playerLocalZ - this.worldOffsetZ - (this.midRegionBaseZ - 2203);
-						if (this.worldOffsetX + this.playerLocalX + this.midRegionBaseX >= 2640) {
-							centerX = -50;
-						}
+						centerX = getLocalPlayerWildernessDepth();
 
 						if (centerX > 0) {
 							inWild = true;

@@ -12,6 +12,18 @@ CACHE = (
     ROOT
     / "server/src/com/openrsc/server/net/rsc/NativeLayeredTerrainWireCache.java"
 )
+CLIENT_TILE = ROOT / "Client_Base/src/com/openrsc/client/model/Tile.java"
+CLIENT_CHUNK = ROOT / "Client_Base/src/orsc/NativeLayeredTerrainChunk.java"
+CLIENT_SNAPSHOT = ROOT / "Client_Base/src/orsc/NativeLayeredTerrainSnapshot.java"
+CLIENT_RESIDENCY = (
+    ROOT / "Client_Base/src/orsc/NativeLayeredTerrainResidentCache.java"
+)
+CLIENT_DECODER = (
+    ROOT / "Client_Base/src/orsc/NativeLayeredTerrainPacketDecoder.java"
+)
+SPOILED_MILK_PACKAGE = (
+    ROOT / "tools/layered-maps/workspace/spoiled-milk-package-v2/package"
+)
 UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
 SERVER = ROOT / "server/src/com/openrsc/server/Server.java"
 PROFILER = (
@@ -142,6 +154,208 @@ class NativeTerrainWireCacheTest(unittest.TestCase):
             )
             subprocess.run(
                 ["java", "-cp", str(work), "NativeTerrainWireCacheHarness"],
+                check=True,
+                cwd=ROOT,
+            )
+
+    def test_mining_guild_real_package_window_survives_cache_and_v5_decode(self):
+        harness = textwrap.dedent(
+            """
+            import com.openrsc.client.model.Tile;
+            import com.openrsc.server.net.rsc.NativeLayeredTerrainWireCache;
+            import java.io.ByteArrayOutputStream;
+            import java.io.DataOutputStream;
+            import java.nio.charset.StandardCharsets;
+            import java.nio.file.Files;
+            import java.nio.file.Path;
+            import java.nio.file.Paths;
+            import java.security.MessageDigest;
+            import orsc.NativeLayeredTerrainPacketDecoder;
+            import orsc.NativeLayeredTerrainSnapshot;
+
+            public final class NativeTerrainMiningGuildWireHarness {
+                private static final int SIZE = 48;
+                private static final int TILE_BYTES = 10;
+
+                public static void main(String[] arguments) throws Exception {
+                    Path packageRoot = Paths.get(arguments[0]);
+                    NativeLayeredTerrainWireCache cache =
+                        new NativeLayeredTerrainWireCache();
+                    byte[][] source = new byte[9][];
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    DataOutputStream output = new DataOutputStream(bytes);
+                    line(output, "rsc-remastered.spoiled-milk-layered-world");
+                    line(output, "0.2.0");
+                    line(output,
+                        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                            + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                    output.writeByte(SIZE);
+                    output.writeInt(6);
+                    output.writeInt(12);
+                    output.writeByte(1);
+                    output.writeByte(9);
+                    int index = 0;
+                    for (int deltaX = -1; deltaX <= 1; deltaX++) {
+                        for (int deltaY = -1; deltaY <= 1; deltaY++) {
+                            int sectorX = 6 + deltaX;
+                            int sectorY = 12 + deltaY;
+                            Path sectorPath = packageRoot.resolve(
+                                "terrain/global/lm1/xp" + sectorX
+                                    + "-yp" + sectorY + ".raw");
+                            byte[] raw = Files.readAllBytes(sectorPath);
+                            require(raw.length == SIZE * SIZE * TILE_BYTES,
+                                "source byte count " + sectorX + ","
+                                    + sectorY);
+                            source[index++] = raw;
+                            String contentSha = sha256(raw);
+                            NativeLayeredTerrainWireCache.Lookup lookup =
+                                cache.getOrCompress(
+                                    "package:global:-1:" + sectorX
+                                        + ":" + sectorY,
+                                    contentSha,
+                                    raw.length,
+                                    () -> raw);
+                            output.writeInt(sectorX);
+                            output.writeInt(sectorY);
+                            output.writeByte(1);
+                            output.writeInt(sectorX);
+                            output.writeInt(sectorY);
+                            line(output, "raw-layered-sector-v1");
+                            line(output, contentSha);
+                            output.writeShort(
+                                lookup.getCompressedByteCount());
+                            output.write(lookup.getCompressedBytes());
+                        }
+                    }
+                    output.close();
+
+                    NativeLayeredTerrainSnapshot snapshot =
+                        NativeLayeredTerrainPacketDecoder.decodeV5(
+                            bytes.toByteArray(), "global", -1);
+                    require(snapshot.getAvailableChunkCount() == 9,
+                        "decoded readiness");
+                    index = 0;
+                    for (int deltaX = -1; deltaX <= 1; deltaX++) {
+                        for (int deltaY = -1; deltaY <= 1; deltaY++) {
+                            int sectorX = 6 + deltaX;
+                            int sectorY = 12 + deltaY;
+                            byte[] raw = source[index++];
+                            for (int localX = 0; localX < SIZE; localX++) {
+                                for (int localY = 0;
+                                        localY < SIZE; localY++) {
+                                    int offset =
+                                        (localX * SIZE + localY) * TILE_BYTES;
+                                    Tile tile = snapshot.createTile(
+                                        sectorX * SIZE + localX,
+                                        sectorY * SIZE + localY);
+                                    require(
+                                        (tile.groundElevation & 0xff)
+                                            == (raw[offset] & 0xff),
+                                        "elevation");
+                                    require(
+                                        (tile.groundTexture & 0xff)
+                                            == (raw[offset + 1] & 0xff),
+                                        "texture");
+                                    require(
+                                        (tile.groundOverlay & 0xff)
+                                            == (raw[offset + 2] & 0xff),
+                                        "overlay");
+                                    require(
+                                        (tile.roofTexture & 0xff)
+                                            == (raw[offset + 3] & 0xff),
+                                        "roof");
+                                    require(
+                                        (tile.verticalWall & 0xff)
+                                            == (raw[offset + 4] & 0xff),
+                                        "vertical wall");
+                                    require(
+                                        (tile.horizontalWall & 0xff)
+                                            == (raw[offset + 5] & 0xff),
+                                        "horizontal wall");
+                                    int diagonal =
+                                        (raw[offset + 6] & 0xff) << 24
+                                            | (raw[offset + 7] & 0xff) << 16
+                                            | (raw[offset + 8] & 0xff) << 8
+                                            | raw[offset + 9] & 0xff;
+                                    require(
+                                        tile.diagonalWalls == diagonal,
+                                        "diagonal wall");
+                                }
+                            }
+                        }
+                    }
+                    Tile login = snapshot.createTile(274, 565);
+                    require((login.groundOverlay & 0xff) == 0,
+                        "Mining Guild login tile became void");
+                    require((login.groundTexture & 0xff) == 182,
+                        "Mining Guild login texture changed");
+                    require((login.groundElevation & 0xff) == 20,
+                        "Mining Guild login elevation changed");
+                    require(cache.size() == 9, "cache window size");
+                }
+
+                private static String sha256(byte[] bytes) throws Exception {
+                    MessageDigest digest =
+                        MessageDigest.getInstance("SHA-256");
+                    byte[] hash = digest.digest(bytes);
+                    StringBuilder result = new StringBuilder(64);
+                    for (byte value : hash) {
+                        result.append(String.format(
+                            "%02x", value & 0xff));
+                    }
+                    return result.toString();
+                }
+
+                private static void line(
+                        DataOutputStream output, String value)
+                        throws Exception {
+                    output.write(
+                        value.getBytes(StandardCharsets.US_ASCII));
+                    output.writeByte(10);
+                }
+
+                private static void require(
+                        boolean condition, String label) {
+                    if (!condition) {
+                        throw new AssertionError(label);
+                    }
+                }
+            }
+            """
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary)
+            harness_path = work / "NativeTerrainMiningGuildWireHarness.java"
+            harness_path.write_text(harness, encoding="utf-8")
+            subprocess.run(
+                [
+                    "javac",
+                    "-Xlint:all",
+                    "-source",
+                    "8",
+                    "-target",
+                    "8",
+                    "-d",
+                    str(work),
+                    str(CACHE),
+                    str(CLIENT_TILE),
+                    str(CLIENT_CHUNK),
+                    str(CLIENT_SNAPSHOT),
+                    str(CLIENT_RESIDENCY),
+                    str(CLIENT_DECODER),
+                    str(harness_path),
+                ],
+                check=True,
+                cwd=ROOT,
+            )
+            subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    str(work),
+                    "NativeTerrainMiningGuildWireHarness",
+                    str(SPOILED_MILK_PACKAGE),
+                ],
                 check=True,
                 cwd=ROOT,
             )

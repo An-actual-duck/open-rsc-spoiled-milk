@@ -83,6 +83,15 @@ public final class LayeredProtocolClientAuthorityFixture {
             "logical surface display");
         check(state.logicalYForCompatibilityPosition(101, 401) == 401,
             "surface display Y");
+        check(LayeredSceneContextState.wildernessDepthAtLogical(101, 401)
+                == 26,
+            "surface wilderness uses geographic Y");
+        check(LayeredSceneContextState.wildernessDepthAtLogical(274, 565)
+                == -138,
+            "Mining Guild geography is outside wilderness");
+        check(LayeredSceneContextState.wildernessDepthAtLogical(336, 100)
+                == -50,
+            "members-side X boundary remains outside wilderness");
 
         expectState(() -> state.accept(
             1, 1, 101, "global", 101, 401, 0, 101, 401));
@@ -260,6 +269,9 @@ public final class LayeredProtocolClientAuthorityFixture {
         check(state.logicalYForCompatibilityPosition(138, 666) == 666
                 && state.getLogicalLevel() == -1,
             "native underground coordinates remain geographic");
+        check(LayeredSceneContextState.wildernessDepthAtLogical(
+                state.getLogicalX(), state.getLogicalY()) == -239,
+            "native underground wilderness ignores render offsets");
     }
 
     private static NativeLayeredTerrainSnapshot chunkTerrain(

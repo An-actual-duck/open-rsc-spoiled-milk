@@ -86,6 +86,11 @@ public final class World {
 	private volatile int syntheticDeepFixtureOffsetX;
 	private volatile int syntheticDeepFixtureOffsetZ;
 	private volatile NativeLayeredTerrainSnapshot nativeLayeredTerrainSnapshot;
+	private volatile int nativeLayeredTerrainAppliedTiles;
+	private volatile int nativeLayeredTerrainNonVoidTiles;
+	private volatile int nativeLayeredTerrainAppliedSectionX;
+	private volatile int nativeLayeredTerrainAppliedSectionY;
+	private volatile String nativeLayeredTerrainActivationSummary = "";
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
 		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
 			@Override
@@ -242,6 +247,7 @@ public final class World {
 			nativeLayeredTerrainSnapshot = nativeTerrainSnapshot;
 			syntheticDeepFixtureOffsetX = worldOffsetX;
 			syntheticDeepFixtureOffsetZ = worldOffsetZ;
+			nativeLayeredTerrainActivationSummary = "";
 			worldEditorTerrainRevision++;
 		}
 	}
@@ -266,7 +272,7 @@ public final class World {
 	}
 
 	public static int worldTileToSection(int worldTile) {
-		return (SECTION_SIZE / 2 + worldTile) / SECTION_SIZE;
+		return Math.floorDiv(SECTION_SIZE / 2 + worldTile, SECTION_SIZE);
 	}
 
 	public static int sectionToLocalBaseTile(int section) {
@@ -2528,6 +2534,7 @@ public final class World {
 				chunkFrameNanos,
 				preloadNanos);
 			RenderTelemetry.recordWorldSectionLoad(RenderTelemetry.elapsedSince(telemetryLoadStart));
+			logNativeLayeredTerrainActivation(worldX, worldZ, plane, x, z);
 
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "k.L(" + worldX + ',' + "dummy" + ',' + worldZ + ',' + plane + ')');
@@ -2863,6 +2870,8 @@ public final class World {
 			(sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
 		int originZ =
 			(sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
+		int appliedTiles = 0;
+		int nonVoidTiles = 0;
 		for (int localX = 0; localX < LOCAL_TILE_COUNT; localX++) {
 			for (int localZ = 0; localZ < LOCAL_TILE_COUNT; localZ++) {
 				int worldX = Math.addExact(originX, localX);
@@ -2885,6 +2894,10 @@ public final class World {
 						"Native layered tile escaped its active section window");
 				}
 				Tile tile = snapshot.createTile(logicalX, logicalZ);
+				appliedTiles++;
+				if ((tile.groundOverlay & 0xff) != 8) {
+					nonVoidTiles++;
+				}
 				if (isBuilderCreatedLevel(snapshot.getLevel())
 					&& (tile.groundOverlay & 0xff) == 8) {
 					tile.editorPaintedOverlay = true;
@@ -2895,6 +2908,84 @@ public final class World {
 					tile);
 			}
 		}
+		nativeLayeredTerrainAppliedTiles = appliedTiles;
+		nativeLayeredTerrainNonVoidTiles = nonVoidTiles;
+		nativeLayeredTerrainAppliedSectionX = sectionX;
+		nativeLayeredTerrainAppliedSectionY = sectionY;
+	}
+
+	private void logNativeLayeredTerrainActivation(
+		int worldX,
+		int worldZ,
+		int plane,
+		int sectionX,
+		int sectionY) {
+		NativeLayeredTerrainSnapshot snapshot =
+			nativeLayeredTerrainSnapshot;
+		if (snapshot == null || plane != nativeLayeredPresentationPlane()) {
+			return;
+		}
+		int logicalX = Math.subtractExact(
+			worldX, syntheticDeepFixtureOffsetX);
+		int logicalZ = Math.subtractExact(
+			worldZ, syntheticDeepFixtureOffsetZ);
+		int originX =
+			(sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
+		int originZ =
+			(sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
+		int localX = worldX - originX;
+		int localZ = worldZ - originZ;
+		Tile packetTile = snapshot.covers(
+				snapshot.getWorldSpace(),
+				snapshot.getLevel(),
+				logicalX,
+				logicalZ)
+			? snapshot.createTile(logicalX, logicalZ)
+			: null;
+		Sector activeSector = sectorForLocalTile(localX, localZ);
+		Tile activeTile = activeSector == null
+			? null
+			: activeSector.getTile(
+				tileInSector(localX),
+				tileInSector(localZ));
+		int collision = isLocalTile(localX, localZ)
+			? collisionFlags[localX][localZ]
+			: -1;
+		String summary =
+			"NATIVE_TERRAIN_ACTIVATION"
+				+ " protocol=" + snapshot.getProtocolVersion()
+				+ " level=" + snapshot.getLevel()
+				+ " plane=" + plane
+				+ " world=" + worldX + "," + worldZ
+				+ " logical=" + logicalX + "," + logicalZ
+				+ " window=" + sectionX + "," + sectionY
+				+ " appliedWindow="
+					+ nativeLayeredTerrainAppliedSectionX + ","
+					+ nativeLayeredTerrainAppliedSectionY
+				+ " appliedTiles=" + nativeLayeredTerrainAppliedTiles
+				+ " nonVoidTiles=" + nativeLayeredTerrainNonVoidTiles
+				+ " local=" + localX + "," + localZ
+				+ " packetTile=" + tileSummary(packetTile)
+				+ " activeTile=" + tileSummary(activeTile)
+				+ " collision=" + collision;
+		if (summary.equals(nativeLayeredTerrainActivationSummary)) {
+			return;
+		}
+		nativeLayeredTerrainActivationSummary = summary;
+		System.out.println(summary);
+	}
+
+	private static String tileSummary(Tile tile) {
+		if (tile == null) {
+			return "missing";
+		}
+		return "e" + (tile.groundElevation & 0xff)
+			+ "/t" + (tile.groundTexture & 0xff)
+			+ "/o" + (tile.groundOverlay & 0xff)
+			+ "/r" + (tile.roofTexture & 0xff)
+			+ "/v" + (tile.verticalWall & 0xff)
+			+ "/h" + (tile.horizontalWall & 0xff)
+			+ "/d" + tile.diagonalWalls;
 	}
 
 	private static boolean isBuilderCreatedLevel(int level) {

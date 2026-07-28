@@ -5,7 +5,9 @@ package/runtime, and first layered Builder generation are implemented and
 owner-accepted. Further editor capability work is paused after automatic
 generic ladder/stair pairing. The active implementation focus is native loader
 performance: measurable sector-product reuse and protocol-v6 resident-sector
-delivery are implemented; private visual/transfer review comes next.
+delivery are implemented. The first private loader diagnostic found and fixed
+one signed negative-section activation defect; current-source package refresh
+and protocol-v6 visual/transfer review come next.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -128,6 +130,43 @@ Implementation sequence:
      overlap, three incoming payloads, reconnect refusal, cache clear,
      malformed-packet atomicity, bounded LRU eviction, transaction conflicts,
      and v4/v5 compatibility.
+   - The first private Mining Guild diagnostic deliberately reproduced the
+     failure under protocol v5, proving resident references were not its cause.
+     Native level `-1` projected geographic `(274,565)` to compatibility scene
+     tile `(2578,-491)`. Java truncating division selected section `-9` instead
+     of floor section `-10`, placed the active terrain window one complete
+     48-tile sector away, applied only six of nine sectors, left the local tile
+     outside the 96-tile window, and drove repeated rebuild/FPS collapse.
+     `World.worldTileToSection` now uses mathematical floor division. Exact
+     boundary guards and a real Spoiled Milk 3-by-3 wire/decode regression
+     prove the Mining Guild tile remains inside local `(34,37)` with matching
+     packet/active terrain. Owner review confirmed terrain, clickability, and
+     performance recovered.
+   - The same route exposed a client-only legacy render-offset leak in the
+     wilderness HUD and player-attack menu. Wilderness depth now derives from
+     geographic logical X/Y, so every signed layer follows its corresponding
+     level-0 wilderness coordinate rather than interpreting negative render
+     space as level 450. Automated coordinate/client builds pass; private
+     visual confirmation is pending on the freshly restarted client.
+
+### Current-source refresh discovered during private review
+
+The accepted `0.2.0` package was generated from terrain SHA-256 `d50089...`.
+Clean manager `main` now carries a newer byte-identical client/server pair,
+SHA-256 `c48f97...`, from two later reviewed content changes. Both archives
+still contain the same 1,771 sectors. Exact normalization shows only two
+changed terrain identities:
+
+- global level `-1`, sector `(5,12)`: the later World Builder preparation near
+  the Mining Guild; and
+- global level `0`, sector `(8,17)`: the permanent Shilo furnace terrain edit.
+
+The Shilo sector is coupled to a boundary removal and gameplay/configuration
+change, so copying only the binary terrain archive is invalid. Promote the
+complete current Spoiled Milk source as a new reviewed package revision,
+regenerate placement counts and fingerprints, update pinned runtime/Builder
+identities, and repeat private loader validation before protocol-v6 acceptance.
+The earlier package remains reproducible evidence, not the content endpoint.
 
 3. **Readiness acknowledgement, predictive delivery, and atomic activation**
    - Stage required sectors before a window boundary using authoritative
@@ -18483,6 +18522,8 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-27 | Refresh the active Spoiled Milk package from current clean manager terrain and its coupled content rather than continuing visual acceptance against stale `0.2.0` inputs. | In progress; exact audit found only `L-1 (5,12)` and `L0 (8,17)` changed across the unchanged 1,771-sector inventory. The Shilo change requires its matching boundary/plugin/configuration update; package revision, counts, hashes, and private acceptance remain pending |
+| 2026-07-27 | Correct signed negative client section activation and logical wilderness presentation found by the first Mining Guild loader diagnostic. | Terrain fix owner-accepted: floor section `-10`, all nine sectors/20,736 tiles applied, local tile `(34,37)` matches the packet, and visuals/clickability/FPS recovered. Geographic wilderness calculation and HUD/attack integration pass automated validation; owner visual confirmation remains pending after client restart |
 | 2026-07-27 | Implement loader-v2 resident-sector delivery as a default-off protocol-v6 milestone with protocol-v5 rollback. | Automated-validated; exact 64-entry connection-local LRU identities, transactional server/client updates, outbound-queue commit fencing, full nine-slot inventories with payload/reference discrimination, reconnect/reset full refill, malformed/missing-reference refusal, and payload/reference telemetry pass focused tests plus client/server builds. Private visual and transfer acceptance remains |
 | 2026-07-27 | Select native loader performance as the active showcase workstream and begin with behavior-preserving sector-product reuse. | Slice 1 lazily caches immutable protocol-v5 sector wire products by exact package/manifest, signed slot, and content hash; Builder revisions retain their uncached safety path. AI-readable profiling/benchmark metrics now expose contexts, slots, available sectors, raw/wire bytes, cache hits/misses, build time, and entries. The wire protocol and client presentation remain unchanged while resident delta delivery is designed next |
 | 2026-07-27 | Accept automatic adjacent-level pairing as a narrow authoring convention for generic ladders and wooden/stone stairs, then pause further editor capability work. | Owner-accepted. IDs `5/6`, `41/42`, and `43/44` alone create the inverse object and safe landing on a missing non-source adjacent level. The accepted route round-tripped and reused the pair; v4 clean close committed level `-5`, nine sectors, nine landing tiles, and two scenery edits in manifest `d8fc45941e93`. Specialized and exceptional transitions remain explicit |

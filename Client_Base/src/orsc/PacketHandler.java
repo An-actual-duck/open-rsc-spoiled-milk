@@ -127,6 +127,20 @@ public class PacketHandler {
 		}
 	}
 
+	public int getPlayerWildernessDepth(
+		int compatibilityX, int compatibilityY) {
+		return LayeredSceneContextState.wildernessDepthAtLogical(
+			getLogicalPlayerX(compatibilityX),
+			getLogicalPlayerY(compatibilityX, compatibilityY));
+	}
+
+	public int getWorldWildernessDepth(
+		int compatibilityX, int compatibilityY) {
+		return LayeredSceneContextState.wildernessDepthAtLogical(
+			getLogicalWorldX(compatibilityX),
+			getLogicalWorldY(compatibilityX, compatibilityY));
+	}
+
 	public String getLogicalWorldSpace() {
 		return layeredSceneContextState.hasContext()
 			? layeredSceneContextState.getWorldSpace() : "global";

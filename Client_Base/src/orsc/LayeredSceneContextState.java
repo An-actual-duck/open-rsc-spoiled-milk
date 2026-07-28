@@ -317,6 +317,13 @@ final class LayeredSceneContextState {
 			nativeTerrainSnapshot).y;
 	}
 
+	static int wildernessDepthAtLogical(int logicalX, int logicalY) {
+		if (logicalX >= 336) {
+			return -50;
+		}
+		return 427 - logicalY;
+	}
+
 	String scopeIdentity() {
 		if (!established) {
 			return "none";
