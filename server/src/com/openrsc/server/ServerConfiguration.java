@@ -95,6 +95,7 @@ public class ServerConfiguration {
 	public boolean WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
 	public boolean WANT_LAYERED_NATIVE_TERRAIN_PACKAGE;
 	public boolean WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY;
+	public boolean WANT_LAYERED_NATIVE_TERRAIN_READINESS;
 	public String LAYERED_NATIVE_TERRAIN_PACKAGE_PATH;
 	public String LAYERED_NATIVE_WORLD_RUNTIME_PROFILE;
 	public int MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS;
@@ -549,6 +550,11 @@ public class ServerConfiguration {
 			"openrsc.layeredNativeTerrainResidency",
 			"OPENRSC_LAYERED_NATIVE_TERRAIN_RESIDENCY",
 			"want_layered_native_terrain_residency",
+			false);
+		WANT_LAYERED_NATIVE_TERRAIN_READINESS = readBoolSystemEnvConfig(
+			"openrsc.layeredNativeTerrainReadiness",
+			"OPENRSC_LAYERED_NATIVE_TERRAIN_READINESS",
+			"want_layered_native_terrain_readiness",
 			false);
 		LAYERED_NATIVE_TERRAIN_PACKAGE_PATH = readStringSystemEnvConfig(
 			"openrsc.layeredNativeTerrainPackagePath",

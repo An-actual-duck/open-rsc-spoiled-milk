@@ -33,8 +33,10 @@ import com.openrsc.server.model.world.coordinate.WorldMapSectorId;
 import com.openrsc.server.model.world.region.VisibilitySnapshot;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.NativeLayeredTerrainClientResidency;
+import com.openrsc.server.net.rsc.NativeLayeredTerrainReadiness;
 import com.openrsc.server.net.rsc.NativeLayeredTerrainWireCache;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
+import com.openrsc.server.net.rsc.struct.incoming.LayeredTerrainReadyStruct;
 import com.openrsc.server.net.rsc.struct.outgoing.*;
 import com.openrsc.server.plugins.triggers.TimedEventTrigger;
 import com.openrsc.server.util.EntityList;
@@ -82,6 +84,8 @@ public final class GameStateUpdater {
 	private static final int SYNTHETIC_DEEP_SCENE_CONTEXT_PROTOCOL_VERSION = 2;
 	private static final int NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 5;
 	private static final int RESIDENT_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 6;
+	private static final int READY_RESIDENT_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 7;
+	private static final int LAYERED_TERRAIN_READY_PROTOCOL_VERSION = 1;
 	private static final int NATIVE_LAYERED_CHUNK_RADIUS = 1;
 	private static final int NATIVE_LAYERED_WIRE_CHUNK_SIZE =
 		NativeLayeredTerrainSector.SIZE;
@@ -104,6 +108,12 @@ public final class GameStateUpdater {
 		"layered_scene_context_sequence";
 	private static final String NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE =
 		"native_terrain_client_residency";
+	private static final String NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE =
+		"native_terrain_pending_readiness";
+	private static final String NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE =
+		"native_terrain_accepted_readiness";
+	private static final String NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE =
+		"native_terrain_self_appearance_pending";
 	private static final long WORLD_TIME_SYNC_INTERVAL_MILLIS = 15000L;
 	private static final long WORLD_TIME_FAST_SYNC_INTERVAL_MILLIS = 250L;
 	private static final int RECENT_VISIBILITY_SHADOW_LOG_LIMIT = 5;
@@ -235,7 +245,9 @@ public final class GameStateUpdater {
 		final LayeredProtocolSceneScope previousScope =
 			player.getAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, null);
 		if (nextScope.equals(previousScope)) {
-			return true;
+			return nativeTerrain == null
+				|| !nativeTerrain.requiresReadiness()
+				|| hasAcceptedNativeTerrainReadiness(player);
 		}
 
 		final Integer previousSequence = player.getAttribute(
@@ -270,7 +282,50 @@ public final class GameStateUpdater {
 		}
 		player.setAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, nextScope);
 		player.setAttribute(LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, sequence);
+		if (nativeTerrain != null && nativeTerrain.requiresReadiness()) {
+			player.setAttribute(
+				NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE,
+				NativeLayeredTerrainReadiness.from(context));
+			player.setAttribute(
+				NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE,
+				Boolean.TRUE);
+			player.removeAttribute(
+				NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
+			return false;
+		}
+		player.removeAttribute(NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE);
+		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
 		return true;
+	}
+
+	public void acceptLayeredTerrainReady(
+		final Player player,
+		final LayeredTerrainReadyStruct receipt) {
+		if (!getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS
+			|| !player.isUsingCustomClient()
+			|| receipt == null
+			|| receipt.protocolVersion
+				!= LAYERED_TERRAIN_READY_PROTOCOL_VERSION) {
+			return;
+		}
+		final NativeLayeredTerrainReadiness pending =
+			player.getAttribute(
+				NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE, null);
+		if (pending == null || !pending.matches(receipt)) {
+			return;
+		}
+		player.setAttribute(
+			NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE, pending);
+	}
+
+	private boolean hasAcceptedNativeTerrainReadiness(final Player player) {
+		final NativeLayeredTerrainReadiness pending =
+			player.getAttribute(
+				NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE, null);
+		final NativeLayeredTerrainReadiness accepted =
+			player.getAttribute(
+				NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE, null);
+		return pending != null && pending.equals(accepted);
 	}
 
 	private NativeLayeredSceneTerrain nativeLayeredSceneTerrain(
@@ -1064,13 +1119,25 @@ public final class GameStateUpdater {
 					+server.getWorldEditorSessions()
 						.nativeTerrainSceneRevision()
 				:identity
-					+(residency == null ? ":snapshot-v5" : ":resident-v6");
+					+(residency == null
+						? ":snapshot-v5"
+						: requiresReadiness()
+							? ":ready-resident-v7"
+							: ":resident-v6");
 		}
 
 		private int protocolVersion() {
 			return residency == null
 				? NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION
-				: RESIDENT_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION;
+				: requiresReadiness()
+					? READY_RESIDENT_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION
+					: RESIDENT_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION;
+		}
+
+		private boolean requiresReadiness() {
+			return residency != null
+				&& server.getConfig()
+					.WANT_LAYERED_NATIVE_TERRAIN_READINESS;
 		}
 
 		private void commitResidency() {
@@ -2310,7 +2377,10 @@ public final class GameStateUpdater {
 		if (viewerUsesCustomClient && player.getUpdateFlags().hasHitSplats()) {
 			hitSplatsNeedingDisplayed.addAll(player.getUpdateFlags().getHitSplats());
 		}
-		if (player.getUpdateFlags().hasAppearanceChanged()) {
+		final boolean selfAppearancePending = player.getAttribute(
+			NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE, false);
+		if (player.getUpdateFlags().hasAppearanceChanged()
+			|| selfAppearancePending) {
 			playersNeedingAppearanceUpdate.add(player);
 		}
 		for (final Player otherPlayer : player.getLocalPlayers()) {
@@ -2358,6 +2428,10 @@ public final class GameStateUpdater {
 		issuePlayerAppearanceUpdatePacket(player, bubblesNeedingDisplayed, chatMessagesNeedingDisplayed,
 			projectilesNeedingDisplayed, playersNeedingDamageUpdate, playersNeedingHpUpdate, playersNeedingAppearanceUpdate,
 			combatEffectsNeedingDisplayed, hitSplatsNeedingDisplayed);
+		if (selfAppearancePending) {
+			player.removeAttribute(
+				NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE);
+		}
 	}
 
 	private void issuePlayerAppearanceUpdatePacket(final Player player, final Queue<Bubble> bubblesNeedingDisplayed,

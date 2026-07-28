@@ -15,6 +15,7 @@ public final class NativeLayeredTerrainSnapshot {
 	public static final int LEGACY_CHUNKED_PROTOCOL_VERSION = 4;
 	public static final int PROTOCOL_VERSION = 5;
 	public static final int RESIDENT_PROTOCOL_VERSION = 6;
+	public static final int READINESS_PROTOCOL_VERSION = 7;
 	public static final int SECTOR_SIZE = 48;
 	public static final String PROJECTION_ID = "native-layered-package-v1";
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
@@ -153,7 +154,8 @@ public final class NativeLayeredTerrainSnapshot {
 		NativeLayeredTerrainChunk[] chunks) {
 		if (protocolVersion != LEGACY_CHUNKED_PROTOCOL_VERSION
 			&& protocolVersion != PROTOCOL_VERSION
-			&& protocolVersion != RESIDENT_PROTOCOL_VERSION) {
+			&& protocolVersion != RESIDENT_PROTOCOL_VERSION
+			&& protocolVersion != READINESS_PROTOCOL_VERSION) {
 			throw new IllegalArgumentException(
 				"Unsupported chunked native terrain protocol: "
 					+ protocolVersion);
@@ -327,6 +329,10 @@ public final class NativeLayeredTerrainSnapshot {
 		return worldSpace;
 	}
 
+	public String getManifestSha256() {
+		return manifestSha256;
+	}
+
 	public int getSectorX() {
 		return sectorX;
 	}
@@ -403,7 +409,8 @@ public final class NativeLayeredTerrainSnapshot {
 	private boolean isChunkedProtocol() {
 		return protocolVersion == LEGACY_CHUNKED_PROTOCOL_VERSION
 			|| protocolVersion == PROTOCOL_VERSION
-			|| protocolVersion == RESIDENT_PROTOCOL_VERSION;
+			|| protocolVersion == RESIDENT_PROTOCOL_VERSION
+			|| protocolVersion == READINESS_PROTOCOL_VERSION;
 	}
 
 	private static void requireSafeChunkCoordinate(

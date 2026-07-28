@@ -110,6 +110,7 @@ public class Opcodes {
 		ON_BLACK_HOLE(86),
 		NPC_DEFINITION_REQUEST(89),
 		WORLD_EDITOR_REQUEST(152),
+		LAYERED_TERRAIN_READY(154),
 		;
 
 		private int opcode;

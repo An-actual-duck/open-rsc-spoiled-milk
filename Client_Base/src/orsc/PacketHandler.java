@@ -14,6 +14,7 @@ import orsc.graphics.gui.SocialLists;
 import orsc.graphics.three.RSModel;
 import orsc.multiclient.ClientPort;
 import orsc.net.Network_Socket;
+import orsc.net.Opcodes;
 import orsc.util.FastMath;
 import orsc.util.GenUtil;
 import orsc.util.StringUtil;
@@ -53,6 +54,8 @@ public class PacketHandler {
 		nativeLayeredTerrainResidentCache =
 			new NativeLayeredTerrainResidentCache();
 	private int appliedSceneBaselineKey = 0;
+	private int layeredTerrainReadySequence = 0;
+	private int layeredTerrainReadyReceipts = 0;
 
 	public String getSceneBaselineDebugSummary() {
 		return sceneBaselineState.summary();
@@ -81,10 +84,15 @@ public class PacketHandler {
 	}
 
 	public String getLayeredTerrainDeliveryDebugSummaryLine() {
-		return layeredSceneContextState.terrainDeliverySummary(
+		String summary = layeredSceneContextState.terrainDeliverySummary(
 			nativeLayeredTerrainResidentCache.size(),
 			nativeLayeredTerrainResidentCache.getLastPayloads(),
 			nativeLayeredTerrainResidentCache.getLastReferences());
+		return layeredTerrainReadySequence <= 0
+			? summary
+			: summary + " | ack "
+				+ layeredTerrainReadySequence + "/"
+				+ layeredTerrainReadyReceipts;
 	}
 
 	public boolean hasLayeredSceneContext() {
@@ -159,6 +167,8 @@ public class PacketHandler {
 		sceneBaselineState.resetForScopeChange("none");
 		movementSnapshotStage.reset();
 		appliedSceneBaselineKey = 0;
+		layeredTerrainReadySequence = 0;
+		layeredTerrainReadyReceipts = 0;
 	}
 
 	private SpriteDef getProjectileDefForUpdate(int sprite, String targetType, int targetServerIndex, int shooterServerIndex) {
@@ -495,7 +505,10 @@ public class PacketHandler {
 					== LayeredSceneContextState.NATIVE_LAYERED_PROTOCOL_VERSION
 				|| protocolVersion
 					== LayeredSceneContextState
-						.RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION) {
+						.RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION
+				|| protocolVersion
+					== LayeredSceneContextState
+						.READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION) {
 			int bodyLength = length - packetsIncoming.packetEnd;
 			if (bodyLength <= 0) {
 				throw new IllegalArgumentException(
@@ -513,8 +526,16 @@ public class PacketHandler {
 						.NATIVE_LAYERED_PROTOCOL_VERSION) {
 				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV5(
 					body, worldSpace, logicalLevel);
-			} else {
+			} else if (protocolVersion
+					== LayeredSceneContextState
+						.RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION) {
 				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV6(
+					body,
+					worldSpace,
+					logicalLevel,
+					nativeLayeredTerrainResidentCache);
+			} else {
+				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV7(
 					body,
 					worldSpace,
 					logicalLevel,
@@ -556,10 +577,39 @@ public class PacketHandler {
 			result.isScopeChanged(),
 			result.isSyntheticDeepFixture(),
 			result.getNativeTerrainSnapshot());
+		if (protocolVersion
+				== LayeredSceneContextState
+					.READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION) {
+			sendLayeredTerrainReady(
+				sequence, worldSpace, logicalLevel, nativeTerrain);
+		}
 		String summary = getLayeredSceneContextDebugSummary();
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
 		packetsIncoming.packetEnd = length;
+	}
+
+	private void sendLayeredTerrainReady(
+		final int contextSequence,
+		final String worldSpace,
+		final int logicalLevel,
+		final NativeLayeredTerrainSnapshot terrain) {
+		if (terrain == null || clientStream == null) {
+			throw new IllegalStateException(
+				"Protocol-v7 terrain receipt has no installed terrain");
+		}
+		clientStream.newPacket(
+			Opcodes.Out.LAYERED_TERRAIN_READY.getOpcode());
+		clientStream.bufferBits.putByte(1);
+		clientStream.bufferBits.putInt(contextSequence);
+		clientStream.bufferBits.putString(worldSpace);
+		clientStream.bufferBits.putInt(logicalLevel);
+		clientStream.bufferBits.putInt(terrain.getCurrentChunkX());
+		clientStream.bufferBits.putInt(terrain.getCurrentChunkY());
+		clientStream.bufferBits.putString(terrain.getManifestSha256());
+		clientStream.finishPacket();
+		layeredTerrainReadySequence = contextSequence;
+		layeredTerrainReadyReceipts++;
 	}
 
 	private void updateWorldEditor() {

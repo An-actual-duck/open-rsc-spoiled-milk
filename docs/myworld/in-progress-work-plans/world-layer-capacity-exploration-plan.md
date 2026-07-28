@@ -9,8 +9,9 @@ delivery are implemented. The first private loader diagnostic found and fixed
 one signed negative-section activation defect, and the first resident-v6 route
 found and fixed a hard-teleport client-window mirror defect. Current-source
 package `0.3.0` and protocol-v6 visual/transfer behavior are automated- and
-owner-accepted. Stage 3 readiness acknowledgement, predictive delivery, and
-atomic activation are next.
+owner-accepted. Stage 3 cut 1 exact readiness acknowledgement and scene gating
+are also implemented and owner-accepted. Predictive delivery and final atomic
+activation are next.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -198,6 +199,67 @@ not the content endpoint.
      generation as ready.
    - Bind terrain readiness, static-scene baseline, and dynamic scene identity
      so teleports, reconnects, and deaths cannot expose a half-applied scene.
+   - Implement this as three independently reversible cuts:
+     1. An opt-in protocol-v7 terrain receipt reuses the accepted protocol-v6
+        resident-sector body. After strict decode, complete resident-cache
+        commit, context acceptance, and terrain-scope installation, the client
+        acknowledges the exact context sequence, world space, signed level,
+        center sector, and manifest SHA-256. The server releases movement,
+        visibility, and baseline packets only when that complete identity
+        matches its pending receipt. A stale, duplicated, cross-level,
+        cross-center, or cross-manifest acknowledgement cannot open the gate.
+     2. A separate predictive-stage envelope carries a future radius-one
+        sector inventory without changing Player location or active scene
+        context. Authoritative queued movement selects at most one adjacent
+        center, bounded lead distance and connection-local LRU semantics
+        prevent speculative fan-out, and a stage acknowledgement proves the
+        future generation is resident before it is eligible for activation.
+     3. Actual boundary activation consumes the acknowledged staged
+        generation, while the existing context sequence on movement snapshots
+        and static-scene baselines binds terrain, dynamic identity, and
+        complete static pages. The load cover remains active until that
+        generation's first Player receipt and complete baseline apply.
+   - The readiness gate defaults off through
+     `want_layered_native_terrain_readiness`. Protocol v6 remains the immediate
+     rollback path and protocol v5 remains available by disabling residency.
+     The client sends no new packet to a v5/v6 server.
+   - TCP ordering is necessary but not treated as proof of application: the
+     acknowledgement is emitted only after the client has transactionally
+     validated and installed the complete terrain receipt. A later scope
+     supersedes an earlier pending receipt, and reconnect begins with neither
+     resident sectors nor accepted readiness.
+   - Initial implementation stops after cut 1 for focused automated and
+     private route acceptance. Predictive delivery must not be combined with
+     the first acknowledgement checkpoint; keeping the active center unchanged
+     is the control that proves the gate itself.
+   - **Cut 1 implemented and owner-accepted.** Optional protocol v7 retains the
+     exact v6 resident-sector body and adds client-to-server opcode `154`.
+     The client sends the receipt only after strict packet decode, transactional
+     resident-cache commit, layered-context acceptance, and terrain-scope
+     installation. The server compares the full context sequence, world space,
+     signed level, center sector, and manifest identity; until it matches, both
+     ordinary movement updates and the normal visibility/static-scene stream
+     remain closed. Protocol v5/v6 clients emit no receipt, and the new
+     `want_layered_native_terrain_readiness` gate defaults off.
+   - The focused private route accepted fresh login `9/0`, hard teleport,
+     return teleport, level up/down, ordinary movement/interactions, and
+     reconnect reset. Expanded F6 exposed `layer terrain p7`, resident and
+     payload/reference counts, plus monotonically advancing acknowledgement
+     sequence/count. No blank, frozen, partial, or mismatched scene appeared.
+   - First review found one narrow ordering defect: a connection could be
+     invisible until movement because the closed first tick consumed the
+     server's transient initial appearance flag. Terrain, acknowledgement, and
+     position were correct. A v7 context now records a connection-local pending
+     self-appearance receipt; the first open scene update sends and clears that
+     receipt without broadcasting a false appearance change to other players.
+     Owner login and reconnect retest confirmed the local character is visible
+     before movement.
+   - Compiled identity coverage changes every acknowledgement component
+     independently and proves it is rejected. Focused residency, protocol
+     authority, wire-cache, and movement guards pass, as do complete bundled-
+     Ant server and desktop-client builds. The private database was cold-copied
+     and hash-verified before both v7 restart rounds; no public process or data
+     was touched.
 
 4. **Incremental client CPU/model products**
    - Preserve the six overlapping sector products during an adjacent shift and
@@ -258,10 +320,11 @@ accepting that complexity.
 
 ### Recommended order from this checkpoint
 
-Loader-v2 stage 2 is privately accepted across ordinary travel, return travel,
-teleport, level changes, interaction, and reconnect with exact
-payload/reference evidence. Implement stage 3 readiness acknowledgement,
-predictive delivery, and atomic activation next, then measure whether
+Loader-v2 stage 2 and Stage 3 cut 1 are privately accepted across ordinary
+travel, return travel, teleport, level changes, interaction, reconnect, exact
+payload/reference evidence, and exact readiness acknowledgement. Implement
+Stage 3 cut 2 predictive delivery next, then bind acknowledged staged
+generation consumption to the final activation cover before measuring whether
 incremental model products are necessary for the showcase target.
 Resume production package promotion and durable transition ownership before a
 private release candidate. Server eviction follows only measured need;

@@ -198,6 +198,9 @@ public class PayloadProcessorManager {
 
 		bind(OpcodeIn.KNOWN_PLAYERS, KnownPlayersHandler.class);
 		bind(OpcodeIn.WORLD_EDITOR_REQUEST, WorldEditorHandler.class);
+		bind(
+			OpcodeIn.LAYERED_TERRAIN_READY,
+			LayeredTerrainReadyHandler.class);
 	}
 
 	private static void bind(OpcodeIn opcode, Class<?> clazz) {
@@ -252,6 +255,7 @@ public class PayloadProcessorManager {
 		if (!OpcodeIn.QUESTION_DIALOG_ANSWER.equals(opcode)
 			&& !OpcodeIn.HEARTBEAT.equals(opcode)
 			&& !OpcodeIn.KNOWN_PLAYERS.equals(opcode)
+			&& !OpcodeIn.LAYERED_TERRAIN_READY.equals(opcode)
 			&& !OpcodeIn.CHAT_MESSAGE.equals(opcode)
 			&& !OpcodeIn.SOCIAL_SEND_PRIVATE_MESSAGE.equals(opcode)
 			&& !OpcodeIn.COMBAT_STYLE_CHANGED.equals(opcode)

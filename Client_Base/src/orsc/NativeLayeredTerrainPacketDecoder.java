@@ -52,6 +52,23 @@ public final class NativeLayeredTerrainPacketDecoder {
 			residentCache);
 	}
 
+	public static NativeLayeredTerrainSnapshot decodeV7(
+		byte[] payload,
+		String worldSpace,
+		int level,
+		NativeLayeredTerrainResidentCache residentCache) {
+		if (residentCache == null) {
+			throw new IllegalArgumentException(
+				"Protocol-v7 native terrain requires a resident cache");
+		}
+		return decodeChunked(
+			payload,
+			worldSpace,
+			level,
+			NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION,
+			residentCache);
+	}
+
 	private static NativeLayeredTerrainSnapshot decodeChunked(
 		byte[] payload,
 		String worldSpace,
@@ -112,9 +129,7 @@ public final class NativeLayeredTerrainPacketDecoder {
 					String sourcePayloadSha256 =
 						readString(input, SHA256_BYTES, "source SHA-256");
 					boolean payloadPresent = true;
-					if (protocolVersion
-							== NativeLayeredTerrainSnapshot
-								.RESIDENT_PROTOCOL_VERSION) {
+					if (isResidentProtocol(protocolVersion)) {
 						int payloadPresence = unsignedByte(input);
 						if (payloadPresence > 1) {
 							throw new IllegalArgumentException(
@@ -223,6 +238,13 @@ public final class NativeLayeredTerrainPacketDecoder {
 				"Native terrain packet ended before its declared content",
 				failure);
 		}
+	}
+
+	private static boolean isResidentProtocol(final int protocolVersion) {
+		return protocolVersion
+				== NativeLayeredTerrainSnapshot.RESIDENT_PROTOCOL_VERSION
+			|| protocolVersion
+				== NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION;
 	}
 
 	private static String residentContentIdentity(
