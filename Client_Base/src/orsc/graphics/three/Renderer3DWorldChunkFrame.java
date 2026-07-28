@@ -98,6 +98,8 @@ public final class Renderer3DWorldChunkFrame {
 		private final int originWorldX;
 		private final int originWorldZ;
 		private final int[] vertexCoords;
+		private final int vertexOffsetX;
+		private final int vertexOffsetZ;
 		private final float[] vertexTextureU;
 		private final float[] vertexTextureV;
 		private final int[] vertexLights;
@@ -327,6 +329,8 @@ public final class Renderer3DWorldChunkFrame {
 			this.originWorldX = originWorldX;
 			this.originWorldZ = originWorldZ;
 			this.vertexCoords = vertexCoords == null ? new int[0] : vertexCoords.clone();
+			this.vertexOffsetX = 0;
+			this.vertexOffsetZ = 0;
 			int vertexCount = this.vertexCoords.length / 3;
 			this.vertexTextureU = normalizeFloatArray(vertexTextureU, vertexCount, 0.0f);
 			this.vertexTextureV = normalizeFloatArray(vertexTextureV, vertexCount, 0.0f);
@@ -621,6 +625,8 @@ public final class Renderer3DWorldChunkFrame {
 			this.originWorldX = originWorldX;
 			this.originWorldZ = originWorldZ;
 			this.vertexCoords = vertexCoords == null ? new int[0] : vertexCoords.clone();
+			this.vertexOffsetX = 0;
+			this.vertexOffsetZ = 0;
 			int vertexCount = this.vertexCoords.length / 3;
 			this.vertexTextureU = normalizeFloatArray(vertexTextureU, vertexCount, 0.0f);
 			this.vertexTextureV = normalizeFloatArray(vertexTextureV, vertexCount, 0.0f);
@@ -722,6 +728,88 @@ public final class Renderer3DWorldChunkFrame {
 				this.triangleModelKinds,
 				this.triangleTextures.length);
 			this.materialFamilyTriangleCounts = countFamilies(this.triangleMaterialFamilies);
+		}
+
+		private ChunkMesh(
+			ChunkMesh source,
+			int additionalOffsetX,
+			int additionalOffsetZ) {
+			this.plane = source.plane;
+			this.centerSectionX = source.centerSectionX;
+			this.centerSectionY = source.centerSectionY;
+			this.originWorldX = source.originWorldX;
+			this.originWorldZ = source.originWorldZ;
+			this.vertexCoords = source.vertexCoords;
+			this.vertexOffsetX = Math.addExact(
+				source.vertexOffsetX, additionalOffsetX);
+			this.vertexOffsetZ = Math.addExact(
+				source.vertexOffsetZ, additionalOffsetZ);
+			this.vertexTextureU = source.vertexTextureU;
+			this.vertexTextureV = source.vertexTextureV;
+			this.vertexLights = source.vertexLights;
+			this.vertexNormalX = source.vertexNormalX;
+			this.vertexNormalY = source.vertexNormalY;
+			this.vertexNormalZ = source.vertexNormalZ;
+			this.vertexTerrainBlendColors =
+				source.vertexTerrainBlendColors;
+			this.vertexTerrainBlendStrengths =
+				source.vertexTerrainBlendStrengths;
+			this.indices = source.indices;
+			this.triangleTextures = source.triangleTextures;
+			this.triangleFallbackColors = source.triangleFallbackColors;
+			this.triangleModelKinds = source.triangleModelKinds;
+			this.triangleMaterialFamilies =
+				source.triangleMaterialFamilies;
+			this.materialFamilyTriangleCounts =
+				source.materialFamilyTriangleCounts;
+			this.triangleTerrainVariationMasks =
+				source.triangleTerrainVariationMasks;
+			this.shadowCasters = source.shadowCasters;
+			this.glowEmitters = source.glowEmitters;
+			this.roofCoverageBits = source.roofCoverageBits;
+			this.roofCoverageAxis = source.roofCoverageAxis;
+			this.roofCoveredTileCount = source.roofCoveredTileCount;
+			this.terrainTriangles = source.terrainTriangles;
+			this.wallTriangles = source.wallTriangles;
+			this.roofTriangles = source.roofTriangles;
+			this.objectChunk = source.objectChunk;
+			this.chunkRole = source.chunkRole;
+			long translatedSignature = source.signature;
+			translatedSignature =
+				(translatedSignature ^ this.vertexOffsetX)
+					* 1099511628211L;
+			translatedSignature =
+				(translatedSignature ^ this.vertexOffsetZ)
+					* 1099511628211L;
+			this.signature = translatedSignature;
+			this.worldEditorTerrainGridAxis =
+				source.worldEditorTerrainGridAxis;
+			this.worldEditorTerrainGridHeights =
+				source.worldEditorTerrainGridHeights;
+			this.worldEditorTerrainGridSignature =
+				source.worldEditorTerrainGridSignature;
+		}
+
+		/**
+		 * Re-expresses one immutable presentation-only mesh in a new client
+		 * section origin without copying its large source arrays. Gameplay and
+		 * editor meshes intentionally cannot use this transient render offset.
+		 */
+		public ChunkMesh rebasePresentation(
+			int additionalOffsetX,
+			int additionalOffsetZ) {
+			if (additionalOffsetX == 0 && additionalOffsetZ == 0) {
+				return this;
+			}
+			if (objectChunk
+				|| shadowCasters.length != 0
+				|| glowEmitters.length != 0
+				|| roofCoverageAxis != 0) {
+				throw new IllegalStateException(
+					"Only effect-free presentation meshes may be rebased");
+			}
+			return new ChunkMesh(
+				this, additionalOffsetX, additionalOffsetZ);
 		}
 
 		private static int normalizeChunkRole(boolean objectChunk, int chunkRole) {
@@ -1117,7 +1205,13 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		public int getVertexCoord(int coordIndex) {
-			return vertexCoords[coordIndex];
+			int value = vertexCoords[coordIndex];
+			int axis = coordIndex % 3;
+			return axis == 0
+				? Math.addExact(value, vertexOffsetX)
+				: axis == 2
+					? Math.addExact(value, vertexOffsetZ)
+					: value;
 		}
 
 		public float getVertexTextureU(int vertexIndex) {
@@ -1192,7 +1286,13 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		public int[] copyVertexCoords() {
-			return vertexCoords.clone();
+			int[] copy = vertexCoords.clone();
+			for (int coord = 0; coord < copy.length; coord += 3) {
+				copy[coord] = Math.addExact(copy[coord], vertexOffsetX);
+				copy[coord + 2] = Math.addExact(
+					copy[coord + 2], vertexOffsetZ);
+			}
+			return copy;
 		}
 
 		public float[] copyVertexTextureU() {

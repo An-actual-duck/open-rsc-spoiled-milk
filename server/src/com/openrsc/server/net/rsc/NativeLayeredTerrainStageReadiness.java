@@ -11,6 +11,7 @@ import java.util.Objects;
  * client proof.
  */
 public final class NativeLayeredTerrainStageReadiness {
+	private final int protocolVersion;
 	private final int stageSequence;
 	private final int contextSequence;
 	private final String worldSpace;
@@ -20,6 +21,7 @@ public final class NativeLayeredTerrainStageReadiness {
 	private final String manifestSha256;
 
 	private NativeLayeredTerrainStageReadiness(
+		final int protocolVersion,
 		final int stageSequence,
 		final int contextSequence,
 		final String worldSpace,
@@ -27,6 +29,7 @@ public final class NativeLayeredTerrainStageReadiness {
 		final int centerSectorX,
 		final int centerSectorY,
 		final String manifestSha256) {
+		this.protocolVersion = protocolVersion;
 		this.stageSequence = stageSequence;
 		this.contextSequence = contextSequence;
 		this.worldSpace = Objects.requireNonNull(worldSpace, "worldSpace");
@@ -41,6 +44,7 @@ public final class NativeLayeredTerrainStageReadiness {
 		final LayeredTerrainStageStruct stage) {
 		Objects.requireNonNull(stage, "stage");
 		return new NativeLayeredTerrainStageReadiness(
+			stage.protocolVersion,
 			stage.sequence,
 			stage.contextSequence,
 			stage.worldSpace,
@@ -53,6 +57,7 @@ public final class NativeLayeredTerrainStageReadiness {
 	public boolean matches(
 		final LayeredTerrainStageReadyStruct receipt) {
 		return receipt != null
+			&& receipt.protocolVersion == protocolVersion
 			&& receipt.stageSequence == stageSequence
 			&& receipt.contextSequence == contextSequence
 			&& receipt.logicalLevel == logicalLevel
@@ -86,6 +91,7 @@ public final class NativeLayeredTerrainStageReadiness {
 		final NativeLayeredTerrainStageReadiness receipt =
 			(NativeLayeredTerrainStageReadiness) other;
 		return stageSequence == receipt.stageSequence
+			&& protocolVersion == receipt.protocolVersion
 			&& contextSequence == receipt.contextSequence
 			&& logicalLevel == receipt.logicalLevel
 			&& centerSectorX == receipt.centerSectorX
@@ -97,6 +103,7 @@ public final class NativeLayeredTerrainStageReadiness {
 	@Override
 	public int hashCode() {
 		return Objects.hash(
+			protocolVersion,
 			stageSequence,
 			contextSequence,
 			worldSpace,

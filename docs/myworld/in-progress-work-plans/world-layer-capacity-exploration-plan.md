@@ -11,8 +11,15 @@ found and fixed a hard-teleport client-window mirror defect. Current-source
 package `0.3.0` and protocol-v6 visual/transfer behavior are automated- and
 owner-accepted. Stage 3 cut 1 exact readiness acknowledgement and scene gating
 are also implemented and owner-accepted. Stage 3 cut 2's bounded predictive
-delivery and activation-anchor hold are implemented and owner-accepted; final
-atomic cover completion remains next.
+delivery and activation-anchor hold are implemented and owner-accepted.
+Stage 3 cut 3's exact-context atomic presentation barrier is implemented and
+automated-validated. The corrected exact scene fence is owner-accepted for
+correctness and removal of black/loading screens. Whole-window prediction and
+late directional fringe experiments were owner-rejected because they did not
+remove the visible edge or approximately 0.7-second boundary freeze. The
+current private cut begins the selected replacement: a symmetric player-
+centered 5-by-5 visual residency field around the retained authoritative
+3-by-3 gameplay window.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -297,10 +304,246 @@ not the content endpoint.
      anchor `(143,640)`. The retained path continued beyond each anchor; no
      disconnect, position mismatch, missing scene, or interaction regression
      was observed.
+   - **Cut 3 implemented; private acceptance pending.** Independently
+     default-off protocol v8 retains the exact protocol-v7 terrain body and
+     activates only when residency, readiness, prediction, and the existing
+     scene-baseline capability are all enabled. Terrain installs before an
+     opaque presentation barrier begins. The client then requires both the
+     first exact Player receipt and a complete static scenery/wall baseline
+     for that same context sequence; only a baseline actually materialized
+     against the loaded client origin can release the barrier. Renderer world
+     submission remains closed while the barrier is pending.
+   - Every protocol-v8 context resets static baseline aggregation even when
+     the package scope is otherwise unchanged. Server baseline page cursors
+     are reusable only within the same location-context sequence, and the
+     client includes that sequence in static identity. This prevents a
+     prior complete baseline or identical record counts/hashes from satisfying
+     a later terrain activation. Empty static scenes complete explicitly.
+     Baselines received before a deferred region load retain their context
+     identity and can release only after the existing replay path materializes
+     them at the new origin.
+   - A compiled state-machine guard proves mismatched/stale receipts cannot
+     release the barrier, either exact receipt order is accepted, duplicate
+     context sequences refuse, and reset removes all session authority.
+     Focused prediction, readiness, residency, protocol-authority, movement,
+     and wire-cache guards pass; complete bundled-Ant client and server builds
+     pass. Protocol v7 remains the immediate rollback by disabling atomic
+     activation; protocol v6/v5 rollback remains unchanged.
+   - The first private cut-3 route accepted correctness but rejected latency:
+     login and transitions remained covered for several seconds before
+     complete scenes appeared. Captured expanded F6 evidence identified the
+     exact bound: the Lumbridge context legitimately contained 3,160 scenery
+     records and 142 walls across 53 pages. The configured object distance
+     `16` uses legacy 8-by-8 grid units (roughly a 128-tile radius), so this was
+     not a cross-range candidate leak. The ordinary four-page-per-640-ms-tick
+     background throttle required fourteen updates—about nine seconds—to
+     complete the presentation-blocking baseline.
+   - A protocol-v8-only 64-page catch-up experiment reduced the page schedule
+     but was owner-rejected: teleports still felt slow and a normal terrain
+     threshold crossing returned the client to login. The server recorded no
+     update exception; it saw the client reset the connection after the large
+     scene transfer. That burst has been removed completely. Every protocol
+     again retains the bounded four-page background throttle.
+   - The current private refinement separates presentation readiness from
+     exhaustive background consistency. After the ordinary ordered
+     scenery/wall update, the server emits one exact-context protocol-v7 scene
+     fence containing wire-visible counts and order-independent identity
+     hashes. Protocol-v8 presentation releases only when the client has both
+     its exact first Player receipt and locally validates that fence against
+     the already materialized legacy scene. A mismatch remains covered and
+     falls back to the complete paced baseline repair. The later full baseline
+     now verifies an already matching scene without clearing and rebuilding
+     thousands of models; a true mismatch still performs the existing repair.
+     `ATOMIC_SCENE_FENCE` and `ATOMIC_SCENE_ACTIVATION` logs expose exact
+     result and elapsed milliseconds. Focused atomic, protocol-authority,
+     packet-ownership, and instance-store guards pass; complete bundled-Ant
+     builds compile 264 client, 880 core, and 489 plugin sources. A
+     hash-matched cold private database backup preceded the fence-enabled
+     restart.
+   - The next owner route proved the fence design and rejected the remaining
+     legacy presentation cost. Initial login was instant. Exact fence-window
+     pruning removed 434 stale scenery and 27 stale wall identities from the
+     failing threshold case, after which both directions matched rather than
+     taking the 7.7-second full-baseline fallback. Retaining the prior complete
+     frame also removed every visible loading/black screen. Interactions
+     remained correct, but a roughly 0.7-second synchronous freeze and a
+     direction-dependent visual edge remain plainly visible.
+   - Inspection identifies that freeze as the retained legacy
+     `World.loadSections` lifecycle: it resets scene models, reconstructs the
+     full 144-by-144 terrain/wall/roof products (including upper planes),
+     rebuilds collision/minimap state, and dematerializes/rematerializes
+     scenery on the packet thread. The new predictive protocol already has
+     the next signed native snapshot and six of nine overlapping 48-tile
+     sectors, but native snapshots still explicitly bypass the existing
+     detached model-product preload path. The recommended next cut is to
+     consume the staged snapshot in a detached build, atomically publish the
+     ready product, then evolve that whole-window bridge into a rolling
+     sector-delta scene that retains the six overlapping products.
+   - **Predictive world-product bridge implemented and owner-rejected as a
+     presentation solution.** Receipt of an exact adjacent native snapshot
+     schedules a
+     detached CPU section window plus terrain/wall/roof and renderer-v2 GPU
+     mesh product under the cache identity that the next context will install.
+     The client no longer acknowledges the stage merely because its bytes
+     decoded: the client loop publishes readiness only after the detached
+     product finishes and revalidates the active/staged scope, carrier offsets,
+     terrain revision, and roof mode. A changed build context retries rather
+     than publishing stale readiness; reset cancels pending authority.
+     The first live diagnostic caught and corrected a second half-section bias
+     in the logical-center-to-carrier mapping. The corrected stage for center
+     `(3,14)` built the actual upcoming renderer window `(51,51)` in `22.213`
+     ms off-thread. Focused prediction, atomic-activation, protocol-authority,
+     packet-diagnostic, scene-store, and predictive-preload guards pass, as
+     does the complete 264-source client build. Owner comparison found no
+     perceptible reduction in the freeze or world edge despite the detached
+     product completing in roughly 18-31 ms. This proves product construction
+     is not the dominant presentation bound; legacy teardown, publication,
+     rebasing, and static-scene ownership remain coupled.
+   - A follow-up directional fringe experiment published the predicted
+     incoming terrain immediately before activation. Its first build exposed
+     and fixed a compact-indexing crash, but the corrected route was also
+     owner-rejected: the server learns direction from queued movement too late,
+     so terrain appeared only immediately before the same freeze and the
+     approach still exposed a hard world edge. Do not continue tuning
+     direction-only lead distance as the loader architecture.
+   - **Symmetric visual residency cut implemented and owner-accepted as the
+     terrain foundation.** Keep 48-by-48 as the package/editor storage unit,
+     not as the renderer lifetime or visible-world boundary. Optional
+     protocol-v9 now
+     delivers a radius-two 5-by-5 inventory centered on the active sector only
+     after the authoritative radius-one context is acknowledged. The inner
+     nine remain full-fidelity gameplay terrain; the sixteen-sector outer ring
+     carries a presentation-only elevation/ground-texture/overlay image.
+     Terrain-only outer identities use a distinct encoding and resident-cache
+     key, so they can never satisfy a later full-fidelity collision/wall/roof
+     reference.
+   - The client builds the sixteen outer sector meshes off-thread and
+     atomically composes them around the current authoritative frame. The field
+     is symmetric and direction-independent: no queued path, click prediction,
+     or guessed heading selects what remains visible. Static objects, walls,
+     roofs, collision, minimap state, and interactions still belong to the
+     inner 3-by-3 during this first proof.
+   - The reduced outer representation is a protocol requirement rather than a
+     cosmetic optimization. A complete full-fidelity ring can exceed the
+     65,535-byte legacy packet frame in dense Spoiled Milk sectors. Exhaustive
+     package measurement puts the worst compressed terrain-only outer ring at
+     51,276 bytes; a conservative 5 KiB envelope allowance remains below the
+     frame ceiling. Focused regression coverage proves radius, same-center
+     identity, transaction rollback, visual-field expansion, default-off
+     gating, renderer composition, and the package-wide size bound. Both
+     complete client and server builds pass.
+   - Owner comparison confirms that the symmetric terrain field materially
+     improves distance continuity. It also confirms that terrain alone is not
+     the endpoint: absent walls, roofs, bridges, and scenery still expose the
+     3-by-3 presentation boundary through obvious pop-in.
+   - **The concrete loader endpoint is now fixed.** The centered radius-two
+     5-by-5 field is the supported visual range. Its inner radius-one 3-by-3
+     remains the complete authoritative gameplay scene: terrain, collision,
+     pathfinding, interactions, players, NPCs, ground items, and full visual
+     effects. Its sixteen-sector outer ring is static presentation only:
+     terrain, walls, roofs, bridges, and scenery. The outer ring must never
+     materialize collision, pathfinding authority, interactions, players,
+     NPCs, ground items, or other dynamic world state. In particular, NPC
+     visibility ends with the collision-authoritative field.
+   - Fog remains a player-selectable visual preference. It may soften the
+     finite 5-by-5 horizon, but correctness and residency cannot depend on fog
+     concealing an unloaded boundary.
+   - Expanding the legacy fixed 3-by-3 arrays is explicitly rejected as the
+     implementation mechanism. Static outer products need their own immutable,
+     world-coordinate sector identities, bounded or fragmented transfer,
+     detached construction, and renderer residency. Retain and rebase
+     overlapping products across center changes; replace only the newly
+     exposed radius-two strip. This separation is the path to removing legacy
+     synchronous teardown from visible presentation without widening gameplay
+     authority.
+   - **Outer structural cut implemented; private visual acceptance pending.**
+     The accepted visual terrain image remains one bounded protocol-v9 packet.
+     A second acknowledged stage carries only the seven structural bytes per
+     tile (roof, vertical/horizontal wall, and diagonal wall) under a distinct
+     resident encoding. Package-wide exhaustive measurement puts the worst
+     compressed sixteen-sector structural ring at 10,297 bytes plus envelope,
+     safely below the 65,535-byte frame limit. The client validates same
+     package/world/level/center/source identity, merges visual and structural
+     images off-thread, and atomically replaces the terrain-only outer product
+     with terrain/wall/roof geometry.
+   - Structural residency remains presentation-only: it never enters legacy
+     collision, pathfinding, minimap, interaction, NPC, player, or ground-item
+     state. Outer wall shadow casters and terrain glow emitters are suppressed;
+     full effects stay in the inner authoritative scene. Focused symmetric,
+     prediction, atomic activation, readiness, protocol-authority, and packet
+     diagnostic guards pass, as do the complete 264-source client and
+     880-core/489-plugin server builds. Static scenery remains the next
+     bounded presentation payload after owner comparison of this cut.
+   - The first structural login exposed one fail-closed merge error: the
+   terrain halo legitimately retained resident inner-nine references while
+   the structural image left those authoritative slots empty, but the merge
+   compared availability across all 25 slots. The corrected validator
+   requires matching source availability only for the sixteen outer cells,
+   explicitly refuses structural content inside radius one, and discards
+   inner halo geometry from the presentation output. It retains the resident
+   inner tile image only as a non-authoritative mesh source for the positive
+   boundary stitch described below. Regression coverage now includes this
+   real mixed-shape receipt. The corrected private login publishes terrain and
+   structure stages consecutively without a crash.
+   - Initial structural visual review found three distinct gaps rather than
+     one failed terrain transfer: a true-looking seam, walls briefly
+     disappearing and returning, and absent static scenery such as harvestable
+     cabbages. Stable `NATIVE_TERRAIN_SYMMETRIC_FIELD` diagnostics now publish
+     source and mesh coverage for every outer cell, zero-terrain cells, and
+     terrain/wall/roof triangle counts; expanded F6 retains the compact
+     coverage summary. Two live centers each proved `16/16` source sectors,
+     `16/16` meshes, and zero empty terrain cells, ruling out missing package
+     sectors.
+   - Terrain and structure remain separate bounded wire stages, but terrain
+     receipt now caches its decoded image without replacing the visible outer
+     frame. Only the complete merged structural product publishes. A scene
+     activation between those stages preserves a matching cached visual image,
+     preventing both the previous login crash and a terrain-only frame from
+     making outer walls blink.
+   - The remaining seam was an exact renderer join defect. The retained legacy
+     144-tile active window emits only 143 face rows, while its positive outer
+     neighbor correctly begins at tile 144. Presentation extraction now
+     includes the preceding source row only on positive outer joins, filling
+     that one-tile gap without widening collision, pathfinding, minimap, or
+     interaction authority. Automated guards and the complete client build
+     pass; focused owner visual confirmation is pending.
+   - Static scenery has not been smuggled into the structural terrain payload.
+     It remains the next dedicated bounded presentation family and must use
+     current server state so harvested/replaced objects cannot reappear as
+     stale package-baseline scenery.
+   - A monitored owner traversal then reproduced the wall/terrain
+     disappear/reappear on every center change while all source and mesh
+     counters remained complete. The active scene changed first; the complete
+     structural outer product published 128-146 ms later. The first retention
+     pass kept only eight old outer-ring cells and still blinked because three
+     old inner-boundary cells become outer presentation cells after an
+     adjacent shift. The corrected complete product keeps 24 reusable
+     presentation cells: the visible outer sixteen plus eight dormant inner-
+     boundary cells. Adjacent center changes now retain all eleven previously
+     visible cells that remain in the new outer ring, rebase those immutable
+     effect-free meshes to the new client origin without copying their source
+     arrays, discard outgoing/non-ring cells, and compose them with the new
+     authoritative frame until the complete sixteen-cell product replaces
+     them. Hard teleports, level changes, package changes, and invalid deltas
+     still clear rather than retain. `NATIVE_TERRAIN_SYMMETRIC_RETAIN` records
+     old/new centers, delta, retained count, and render rebase for diagnostics.
+     Focused guards and the complete 264-source client build pass. Monitored
+     owner traversal then proved `retained=11/16` in both directions with no
+     terrain or wall disappearance; this visual lifecycle fix is accepted.
+   - The remaining adjacent transition hitch is now the priority before static
+     scenery. The accepted outer frame remains visible, but the authoritative
+     inner 3-by-3 still runs the legacy `World.loadSections` model reset,
+     terrain/wall/roof reconstruction, collision/minimap update, and scene-
+     instance rebasing on the client thread. Instrument and detach that exact
+     publication boundary before increasing presentation workload. Static
+     scenery then completes ranged visual content using current server state,
+     followed by incoming-strip-only outer replacement.
 
 4. **Incremental client CPU/model products**
-   - Preserve the six overlapping sector products during an adjacent shift and
-     build only incoming terrain/wall/roof edges.
+   - Preserve overlapping sector products during an adjacent shift and build
+     only the newly exposed radius-two strip. The accepted target is a
+     player-centered resident field, not another direction-predicted complete
+     3-by-3 window.
    - Fence bridges, reciprocal walls, roof joins, elevation normals, renderer
      settings, and dynamic scenery by sector/content revision.
 
@@ -361,9 +604,16 @@ Loader-v2 stage 2 and Stage 3 cut 1 are privately accepted across ordinary
 travel, return travel, teleport, level changes, interaction, reconnect, exact
 payload/reference evidence, and exact readiness acknowledgement. Stage 3 cut 2
 predictive delivery and its activation-anchor hold are privately accepted.
-Next, bind acknowledged staged generation consumption to the final activation
-cover before measuring whether incremental model products are necessary for
-the showcase target.
+Stage 3 cut 3's exact-context activation cover is privately accepted for
+correctness. Its whole-window predictive product bridge and late directional
+fringe are measured and owner-rejected as presentation solutions. The
+symmetric 5-by-5 terrain foundation is privately accepted. Complete its outer
+static-presentation ring in bounded pieces: structural terrain
+(walls/roofs/bridges), then scenery, followed by overlap retention and
+incoming-strip replacement. Keep all dynamic entities and collision authority
+inside the existing 3-by-3 gameplay field. Measure the accepted 5-by-5 field
+with shadows and other expensive effects limited to the inner field; optional
+fog may soften its horizon but is not a loading requirement.
 Resume production package promotion and durable transition ownership before a
 private release candidate. Server eviction follows only measured need;
 distribution-neutral extraction follows the proven Spoiled Milk runtime.

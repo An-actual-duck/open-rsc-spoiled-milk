@@ -24,8 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -178,7 +180,26 @@ public final class World {
 	private ZipFile tileArchive;
 	private Sector[] sectors;
 	private final WorldStreamManager worldStreamManager = new WorldStreamManager();
-	private Renderer3DWorldChunkFrame renderer3DWorldChunkFrame = Renderer3DWorldChunkFrame.EMPTY;
+	private volatile Renderer3DWorldChunkFrame renderer3DWorldChunkFrame =
+		Renderer3DWorldChunkFrame.EMPTY;
+	private volatile Renderer3DWorldChunkFrame
+		predictiveRenderer3DWorldChunkFrame;
+	private volatile String predictiveRenderer3DWorldScopeIdentity;
+	private volatile Renderer3DWorldChunkFrame
+		symmetricRenderer3DWorldChunkFrame;
+	private volatile Renderer3DWorldChunkFrame
+		symmetricOuterRenderer3DWorldChunkFrame;
+	private volatile Renderer3DWorldChunkFrame
+		symmetricRetainableRenderer3DWorldChunkFrame;
+	private volatile String symmetricRenderer3DWorldScopeIdentity;
+	private volatile int symmetricRenderer3DWorldCenterSectionX =
+		Integer.MIN_VALUE;
+	private volatile int symmetricRenderer3DWorldCenterSectionY =
+		Integer.MIN_VALUE;
+	private volatile NativeLayeredTerrainSnapshot
+		symmetricNativeLayeredTerrainVisualSnapshot;
+	private volatile String nativeLayeredTerrainHaloDebugSummary =
+		"halo inactive";
 	public String mapHash;
 
 	public World(Scene var1, GraphicsController var2) {
@@ -243,6 +264,22 @@ public final class World {
 			|| layeredTerrain
 				&& (syntheticDeepFixtureOffsetX != worldOffsetX
 					|| syntheticDeepFixtureOffsetZ != worldOffsetZ)) {
+			if (nativeTerrainSnapshot == null
+				|| predictiveRenderer3DWorldScopeIdentity == null
+				|| !predictiveRenderer3DWorldScopeIdentity.equals(
+					nativeTerrainSnapshot.scopeIdentity())) {
+				clearPredictiveRenderer3DWorldChunkFrame();
+			}
+				if (nativeTerrainSnapshot == null
+					|| symmetricRenderer3DWorldScopeIdentity == null
+					|| !symmetricRenderer3DWorldScopeIdentity.equals(
+						nativeTerrainSnapshot.scopeIdentity())) {
+					transitionSymmetricRenderer3DWorldChunkFrame(
+						nativeLayeredTerrainSnapshot,
+						nativeTerrainSnapshot,
+						worldOffsetX,
+						worldOffsetZ);
+				}
 			syntheticDeepFixtureTerrain = layeredTerrain;
 			nativeLayeredTerrainSnapshot = nativeTerrainSnapshot;
 			syntheticDeepFixtureOffsetX = worldOffsetX;
@@ -250,6 +287,744 @@ public final class World {
 			nativeLayeredTerrainActivationSummary = "";
 			worldEditorTerrainRevision++;
 		}
+	}
+
+	/**
+	 * Builds the radius-two visual terrain field around the active radius-one
+	 * gameplay window. The result owns only the sixteen outer storage sectors;
+	 * the current authoritative frame remains the center nine sectors.
+	 */
+	public Future<NativeLayeredTerrainHaloPrebuildResult>
+		preloadNativeLayeredTerrainHalo(
+			final NativeLayeredTerrainSnapshot haloTerrain,
+			final int worldOffsetX,
+			final int worldOffsetZ) {
+		if (haloTerrain == null
+			|| (haloTerrain.getProtocolVersion()
+					!= NativeLayeredTerrainSnapshot
+						.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+				&& haloTerrain.getProtocolVersion()
+					!= NativeLayeredTerrainSnapshot
+						.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION)
+			|| haloTerrain.getChunkRadius()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			throw new IllegalArgumentException(
+				"Native terrain halo requires a radius-two snapshot");
+		}
+		final NativeLayeredTerrainSnapshot activeTerrain =
+			nativeLayeredTerrainSnapshot;
+		if (!matchesActiveHalo(activeTerrain, haloTerrain)
+			|| syntheticDeepFixtureOffsetX != worldOffsetX
+			|| syntheticDeepFixtureOffsetZ != worldOffsetZ) {
+			throw new IllegalStateException(
+				"Native terrain halo does not match the active scope");
+		}
+		final long sourceRevision = worldEditorTerrainRevision;
+		final String activeScopeIdentity = activeTerrain.scopeIdentity();
+		final boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
+		final NativeLayeredTerrainSnapshot renderTerrain;
+		if (haloTerrain.getProtocolVersion()
+				== NativeLayeredTerrainSnapshot
+					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
+			renderTerrain = NativeLayeredTerrainSnapshot.mergePresentation(
+				symmetricNativeLayeredTerrainVisualSnapshot,
+				haloTerrain);
+		} else {
+			renderTerrain = haloTerrain;
+		}
+		return sectorPreloadExecutor.submit(
+			new Callable<NativeLayeredTerrainHaloPrebuildResult>() {
+				@Override
+				public NativeLayeredTerrainHaloPrebuildResult call() {
+					return buildNativeLayeredTerrainHalo(
+						renderTerrain,
+						haloTerrain.scopeIdentity(),
+						haloTerrain.getProtocolVersion(),
+						activeScopeIdentity,
+						worldOffsetX,
+						worldOffsetZ,
+						sourceRevision,
+						includeRoofGeometry);
+				}
+			});
+	}
+
+	public boolean publishNativeLayeredTerrainHalo(
+		NativeLayeredTerrainHaloPrebuildResult result,
+		NativeLayeredTerrainSnapshot haloTerrain,
+		int worldOffsetX,
+		int worldOffsetZ) {
+		NativeLayeredTerrainSnapshot activeTerrain =
+			nativeLayeredTerrainSnapshot;
+		if (result == null
+			|| !matchesActiveHalo(activeTerrain, haloTerrain)
+			|| !result.activeScopeIdentity.equals(
+				activeTerrain.scopeIdentity())
+			|| !result.haloScopeIdentity.equals(
+				haloTerrain.scopeIdentity())
+			|| result.haloProtocolVersion
+				!= haloTerrain.getProtocolVersion()
+			|| result.sourceRevision != worldEditorTerrainRevision
+			|| result.worldOffsetX != worldOffsetX
+			|| result.worldOffsetZ != worldOffsetZ
+			|| syntheticDeepFixtureOffsetX != worldOffsetX
+			|| syntheticDeepFixtureOffsetZ != worldOffsetZ
+			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) {
+			return false;
+		}
+		if (haloTerrain.getProtocolVersion()
+				== NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION) {
+			symmetricNativeLayeredTerrainVisualSnapshot = haloTerrain;
+			nativeLayeredTerrainHaloDebugSummary =
+				result.compactDiagnosticSummary;
+			clearPredictiveRenderer3DWorldChunkFrame();
+			return true;
+		}
+		symmetricOuterRenderer3DWorldChunkFrame =
+			Renderer3DWorldChunkFrame.fromChunks(result.outerChunks);
+		symmetricRetainableRenderer3DWorldChunkFrame =
+			Renderer3DWorldChunkFrame.fromChunks(result.retentionChunks);
+		symmetricRenderer3DWorldCenterSectionX =
+			worldTileToSection(Math.addExact(
+				Math.multiplyExact(
+					activeTerrain.getCurrentChunkX(), SECTION_SIZE),
+				worldOffsetX));
+		symmetricRenderer3DWorldCenterSectionY =
+			worldTileToSection(Math.addExact(
+				Math.multiplyExact(
+					activeTerrain.getCurrentChunkY(), SECTION_SIZE),
+				worldOffsetZ));
+		symmetricRenderer3DWorldScopeIdentity =
+			activeTerrain.scopeIdentity();
+		composeSymmetricRenderer3DWorldChunkFrame(
+			symmetricRenderer3DWorldCenterSectionX,
+			symmetricRenderer3DWorldCenterSectionY);
+		nativeLayeredTerrainHaloDebugSummary =
+			result.compactDiagnosticSummary;
+		clearPredictiveRenderer3DWorldChunkFrame();
+		return true;
+	}
+
+	public String getNativeLayeredTerrainHaloDebugSummary() {
+		return nativeLayeredTerrainHaloDebugSummary;
+	}
+
+	private NativeLayeredTerrainHaloPrebuildResult
+		buildNativeLayeredTerrainHalo(
+			NativeLayeredTerrainSnapshot haloTerrain,
+			String receivedHaloScopeIdentity,
+			int receivedProtocolVersion,
+			String activeScopeIdentity,
+			int worldOffsetX,
+			int worldOffsetZ,
+			long sourceRevision,
+			boolean includeRoofGeometry) {
+		long buildStart = System.nanoTime();
+		int logicalCenterX = Math.multiplyExact(
+			haloTerrain.getCurrentChunkX(), SECTION_SIZE);
+		int logicalCenterZ = Math.multiplyExact(
+			haloTerrain.getCurrentChunkY(), SECTION_SIZE);
+		int activeSectionX = worldTileToSection(
+			Math.addExact(logicalCenterX, worldOffsetX));
+		int activeSectionY = worldTileToSection(
+			Math.addExact(logicalCenterZ, worldOffsetZ));
+		int plane = nativeLayeredPresentationPlane(haloTerrain);
+		int sourceOuterSectors = 0;
+		StringBuilder cellDiagnostics = new StringBuilder();
+		for (int deltaX = -2; deltaX <= 2; deltaX++) {
+			for (int deltaY = -2; deltaY <= 2; deltaY++) {
+				if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) != 2) {
+					continue;
+				}
+				boolean available = haloTerrain.isChunkAvailable(
+					haloTerrain.getCurrentChunkX() + deltaX,
+					haloTerrain.getCurrentChunkY() + deltaY);
+				if (available) {
+					sourceOuterSectors++;
+				}
+				cellDiagnostics.append(
+					cellDiagnostics.length() == 0 ? "" : ";")
+					.append(deltaX).append(',').append(deltaY)
+					.append(":src=").append(available ? 1 : 0);
+			}
+		}
+		if (receivedProtocolVersion
+				== NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION) {
+			long elapsed = System.nanoTime() - buildStart;
+			return new NativeLayeredTerrainHaloPrebuildResult(
+				activeScopeIdentity,
+				receivedHaloScopeIdentity,
+				receivedProtocolVersion,
+				sourceRevision,
+				worldOffsetX,
+				worldOffsetZ,
+				plane,
+				activeSectionX,
+				activeSectionY,
+				includeRoofGeometry,
+					Collections.<Renderer3DWorldChunkFrame.ChunkMesh>emptyList(),
+					Collections.<Renderer3DWorldChunkFrame.ChunkMesh>emptyList(),
+					0,
+				"halo detail=terrain-cache src=" + sourceOuterSectors
+					+ "/16 mesh=deferred",
+				cellDiagnostics.toString(),
+				elapsed);
+		}
+			List<Renderer3DWorldChunkFrame.ChunkMesh> outerChunks =
+				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(16);
+			List<Renderer3DWorldChunkFrame.ChunkMesh> retentionChunks =
+				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(24);
+		int triangles = 0;
+		int terrainTriangles = 0;
+		int wallTriangles = 0;
+		int roofTriangles = 0;
+		int zeroTerrainCells = 0;
+		StringBuilder meshDiagnostics = new StringBuilder();
+		for (int deltaX = -2; deltaX <= 2; deltaX++) {
+			for (int deltaY = -2; deltaY <= 2; deltaY++) {
+					int radius = Math.max(
+						Math.abs(deltaX), Math.abs(deltaY));
+					if (radius == 0) {
+						continue;
+					}
+				int sectionX = Math.addExact(activeSectionX, deltaX);
+				int sectionY = Math.addExact(activeSectionY, deltaY);
+				CpuSectionWindow window =
+					buildNativeLayeredCpuSectionWindow(
+						plane,
+						sectionX,
+						sectionY,
+						haloTerrain,
+						worldOffsetX,
+						worldOffsetZ);
+				TerrainModelInput terrainInput =
+					buildTerrainModelInput(plane, window.sectors);
+				WallModelInput wallInput =
+					buildWallModelInput(window.sectors);
+				terrainInput =
+					applyWallEndpointShadows(terrainInput, wallInput);
+				RoofModelInput roofInput =
+					buildRoofModelInput(window.sectors);
+				WorldGpuChunkMesh mesh = buildWorldGpuChunkMesh(
+					plane,
+					sectionX,
+					sectionY,
+					terrainInput,
+					wallInput,
+					roofInput,
+					includeRoofGeometry,
+					false);
+					Renderer3DWorldChunkFrame.ChunkMesh presentation =
+						mesh.toRenderer3DWorldPresentationCell(
+							deltaX, deltaY);
+					if (presentation != null) {
+						retentionChunks.add(presentation);
+					}
+					if (radius != 2) {
+						continue;
+					}
+					meshDiagnostics.append(
+						meshDiagnostics.length() == 0 ? "" : ";")
+						.append(deltaX).append(',').append(deltaY);
+					if (presentation != null) {
+						outerChunks.add(presentation);
+						triangles += presentation.getTriangleCount();
+						terrainTriangles +=
+							presentation.getTerrainTriangles();
+						wallTriangles += presentation.getWallTriangles();
+						roofTriangles += presentation.getRoofTriangles();
+						if (presentation.getTerrainTriangles() == 0) {
+							zeroTerrainCells++;
+						}
+						meshDiagnostics.append(":mesh=1:t=")
+							.append(presentation.getTerrainTriangles())
+							.append(":w=")
+							.append(presentation.getWallTriangles())
+							.append(":r=")
+							.append(presentation.getRoofTriangles());
+				} else {
+					zeroTerrainCells++;
+					meshDiagnostics.append(":mesh=0:t=0:w=0:r=0");
+				}
+			}
+		}
+		return new NativeLayeredTerrainHaloPrebuildResult(
+			activeScopeIdentity,
+			receivedHaloScopeIdentity,
+			receivedProtocolVersion,
+			sourceRevision,
+			worldOffsetX,
+			worldOffsetZ,
+			plane,
+			activeSectionX,
+			activeSectionY,
+				includeRoofGeometry,
+				outerChunks,
+				retentionChunks,
+				triangles,
+			"halo detail=structure src=" + sourceOuterSectors
+				+ "/16 mesh=" + outerChunks.size() + "/16 zeroTerrain="
+				+ zeroTerrainCells + " triangles=" + terrainTriangles
+				+ "/" + wallTriangles + "/" + roofTriangles,
+			cellDiagnostics.append('|').append(meshDiagnostics).toString(),
+			System.nanoTime() - buildStart);
+	}
+
+	private static boolean matchesActiveHalo(
+		NativeLayeredTerrainSnapshot activeTerrain,
+		NativeLayeredTerrainSnapshot haloTerrain) {
+		return activeTerrain != null
+			&& haloTerrain != null
+			&& activeTerrain.packageIdentity().equals(
+				haloTerrain.packageIdentity())
+			&& activeTerrain.getWorldSpace().equals(
+				haloTerrain.getWorldSpace())
+			&& activeTerrain.getLevel() == haloTerrain.getLevel()
+			&& activeTerrain.getCurrentChunkX()
+				== haloTerrain.getCurrentChunkX()
+			&& activeTerrain.getCurrentChunkY()
+				== haloTerrain.getCurrentChunkY();
+	}
+
+	/**
+	 * Builds the exact server-predicted native terrain product without
+	 * disturbing the currently presented world. The result is cached under the
+	 * revision and scope identity that the next context receipt will install.
+	 */
+	public Future<NativeLayeredTerrainPrebuildResult>
+		preloadNativeLayeredTerrainSnapshot(
+			final NativeLayeredTerrainSnapshot stagedTerrain,
+			final int worldOffsetX,
+			final int worldOffsetZ) {
+		if (stagedTerrain == null) {
+			throw new IllegalArgumentException(
+				"Native terrain prebuild requires a staged snapshot");
+		}
+		final NativeLayeredTerrainSnapshot activeTerrain =
+			nativeLayeredTerrainSnapshot;
+		if (activeTerrain == null
+			|| !activeTerrain.getWorldSpace().equals(
+				stagedTerrain.getWorldSpace())
+			|| activeTerrain.getLevel() != stagedTerrain.getLevel()) {
+			throw new IllegalStateException(
+				"Native terrain prebuild does not match the active scope");
+		}
+		if (syntheticDeepFixtureOffsetX != worldOffsetX
+			|| syntheticDeepFixtureOffsetZ != worldOffsetZ) {
+			throw new IllegalStateException(
+				"Native terrain prebuild carrier offsets are stale");
+		}
+		final long sourceRevision = worldEditorTerrainRevision;
+		final long targetRevision = Math.addExact(sourceRevision, 1L);
+		final String activeScopeIdentity = activeTerrain.scopeIdentity();
+		final boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
+		return sectorPreloadExecutor.submit(
+			new Callable<NativeLayeredTerrainPrebuildResult>() {
+				@Override
+				public NativeLayeredTerrainPrebuildResult call() {
+					return buildNativeLayeredTerrainPreload(
+						stagedTerrain,
+						activeScopeIdentity,
+						worldOffsetX,
+						worldOffsetZ,
+						sourceRevision,
+						targetRevision,
+						includeRoofGeometry);
+				}
+			});
+	}
+
+	public boolean canActivateNativeLayeredTerrainPrebuild(
+		NativeLayeredTerrainPrebuildResult result,
+		NativeLayeredTerrainSnapshot stagedTerrain,
+		int worldOffsetX,
+		int worldOffsetZ) {
+		NativeLayeredTerrainSnapshot activeTerrain =
+			nativeLayeredTerrainSnapshot;
+		return result != null
+			&& stagedTerrain != null
+			&& activeTerrain != null
+			&& result.stagedScopeIdentity.equals(
+				stagedTerrain.scopeIdentity())
+			&& result.activeScopeIdentity.equals(
+				activeTerrain.scopeIdentity())
+			&& result.sourceRevision == worldEditorTerrainRevision
+			&& result.targetRevision
+				== Math.addExact(worldEditorTerrainRevision, 1L)
+			&& result.worldOffsetX == worldOffsetX
+			&& result.worldOffsetZ == worldOffsetZ
+			&& syntheticDeepFixtureOffsetX == worldOffsetX
+			&& syntheticDeepFixtureOffsetZ == worldOffsetZ
+			&& result.includeRoofGeometry == !Config.C_HIDE_ROOFS;
+	}
+
+	private NativeLayeredTerrainPrebuildResult
+		buildNativeLayeredTerrainPreload(
+			NativeLayeredTerrainSnapshot stagedTerrain,
+			String activeScopeIdentity,
+			int worldOffsetX,
+			int worldOffsetZ,
+			long sourceRevision,
+			long targetRevision,
+			boolean includeRoofGeometry) {
+		long buildStart = System.nanoTime();
+		int logicalCenterX = Math.multiplyExact(
+			stagedTerrain.getCurrentChunkX(), SECTION_SIZE);
+		int logicalCenterZ = Math.multiplyExact(
+			stagedTerrain.getCurrentChunkY(), SECTION_SIZE);
+		int sectionX = worldTileToSection(
+			Math.addExact(logicalCenterX, worldOffsetX));
+		int sectionY = worldTileToSection(
+			Math.addExact(logicalCenterZ, worldOffsetZ));
+		int plane = nativeLayeredPresentationPlane(stagedTerrain);
+		String windowKey = sectionWindowKey(
+			plane,
+			sectionX,
+			sectionY,
+			targetRevision,
+			stagedTerrain,
+			false);
+		CpuSectionWindow window;
+		boolean cpuCacheHit;
+		synchronized (cpuSectionWindowCacheLock) {
+			window = cpuSectionWindowCache.get(windowKey);
+		}
+		cpuCacheHit = window != null;
+		if (window == null) {
+			window = buildNativeLayeredCpuSectionWindow(
+				plane,
+				sectionX,
+				sectionY,
+				stagedTerrain,
+				worldOffsetX,
+				worldOffsetZ);
+			synchronized (cpuSectionWindowCacheLock) {
+				CpuSectionWindow cached =
+					cpuSectionWindowCache.get(windowKey);
+				if (cached == null) {
+					cpuSectionWindowCache.put(windowKey, window);
+				} else {
+					window = cached;
+					cpuCacheHit = true;
+				}
+			}
+		}
+
+		String productKey = worldModelProductKey(
+			plane,
+			sectionX,
+			sectionY,
+			includeRoofGeometry,
+			targetRevision,
+			stagedTerrain,
+			false);
+		WorldModelProduct product;
+		boolean productCacheHit;
+		synchronized (worldModelProductCacheLock) {
+			product = worldModelProductCache.get(productKey);
+		}
+		productCacheHit = product != null
+			&& product.hasTerrainIfNeeded(true);
+		if (!productCacheHit) {
+			TerrainModelInput terrainInput =
+				buildTerrainModelInput(plane, window.sectors);
+			WallModelInput wallInput =
+				buildWallModelInput(window.sectors);
+			terrainInput =
+				applyWallEndpointShadows(terrainInput, wallInput);
+			RoofModelInput roofInput =
+				buildRoofModelInput(window.sectors);
+			WorldModelProduct built = new WorldModelProduct(
+				terrainInput,
+				wallInput,
+				roofInput,
+				buildWorldGpuChunkMesh(
+					plane,
+					sectionX,
+					sectionY,
+					terrainInput,
+					wallInput,
+					roofInput,
+					includeRoofGeometry));
+			synchronized (worldModelProductCacheLock) {
+				WorldModelProduct cached =
+					worldModelProductCache.get(productKey);
+				if (cached == null
+					|| !cached.hasTerrainIfNeeded(true)) {
+					worldModelProductCache.put(productKey, built);
+					product = built;
+				} else {
+					product = cached;
+					productCacheHit = true;
+				}
+			}
+		}
+		long elapsedNanos = System.nanoTime() - buildStart;
+		NativeLayeredTerrainPrebuildResult result =
+			new NativeLayeredTerrainPrebuildResult(
+				activeScopeIdentity,
+				stagedTerrain.scopeIdentity(),
+				sourceRevision,
+				targetRevision,
+				worldOffsetX,
+				worldOffsetZ,
+				plane,
+				sectionX,
+				sectionY,
+				includeRoofGeometry,
+				cpuCacheHit,
+				productCacheHit,
+				elapsedNanos);
+		publishPredictiveRenderer3DWorldFringe(
+			result,
+			stagedTerrain,
+			product);
+		System.out.println(result.summary());
+		return result;
+	}
+
+	private void publishPredictiveRenderer3DWorldFringe(
+		NativeLayeredTerrainPrebuildResult result,
+		NativeLayeredTerrainSnapshot stagedTerrain,
+		WorldModelProduct product) {
+		NativeLayeredTerrainSnapshot activeTerrain =
+			nativeLayeredTerrainSnapshot;
+		if (activeTerrain == null
+			|| product == null
+			|| product.gpuChunkMesh == null
+			|| result.sourceRevision != worldEditorTerrainRevision
+			|| !result.activeScopeIdentity.equals(
+				activeTerrain.scopeIdentity())
+			|| syntheticDeepFixtureOffsetX != result.worldOffsetX
+			|| syntheticDeepFixtureOffsetZ != result.worldOffsetZ) {
+			return;
+		}
+		int activeSectionX = worldTileToSection(Math.addExact(
+			Math.multiplyExact(
+				activeTerrain.getCurrentChunkX(), SECTION_SIZE),
+			result.worldOffsetX));
+		int activeSectionY = worldTileToSection(Math.addExact(
+			Math.multiplyExact(
+				activeTerrain.getCurrentChunkY(), SECTION_SIZE),
+			result.worldOffsetZ));
+		int deltaX = result.sectionX - activeSectionX;
+		int deltaY = result.sectionY - activeSectionY;
+		if (deltaX < -1 || deltaX > 1
+			|| deltaY < -1 || deltaY > 1
+			|| deltaX == 0 && deltaY == 0) {
+			return;
+		}
+		Renderer3DWorldChunkFrame.ChunkMesh fringe =
+			product.gpuChunkMesh.toRenderer3DWorldChunkFringe(
+				deltaX, deltaY);
+		if (fringe == null) {
+			return;
+		}
+		Renderer3DWorldChunkFrame activeFrame =
+			renderer3DWorldChunkFrame;
+		List<Renderer3DWorldChunkFrame.ChunkMesh> chunks =
+			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
+				activeFrame.getChunkCount() + 1);
+		chunks.addAll(activeFrame.getChunks());
+		chunks.add(fringe);
+		predictiveRenderer3DWorldChunkFrame =
+			Renderer3DWorldChunkFrame.fromChunks(chunks);
+		predictiveRenderer3DWorldScopeIdentity =
+			stagedTerrain.scopeIdentity();
+		System.out.println(
+			"NATIVE_TERRAIN_FRINGE"
+				+ " active=" + activeSectionX + "," + activeSectionY
+				+ " staged=" + result.sectionX + "," + result.sectionY
+				+ " delta=" + deltaX + "," + deltaY
+				+ " triangles=" + fringe.getTriangleCount());
+	}
+
+	private void clearPredictiveRenderer3DWorldChunkFrame() {
+		predictiveRenderer3DWorldChunkFrame = null;
+		predictiveRenderer3DWorldScopeIdentity = null;
+	}
+
+	private void transitionSymmetricRenderer3DWorldChunkFrame(
+		NativeLayeredTerrainSnapshot previousActiveTerrain,
+		NativeLayeredTerrainSnapshot expectedActiveTerrain,
+		int expectedWorldOffsetX,
+		int expectedWorldOffsetZ) {
+		if (!canRetainSymmetricRenderer3DWorldChunkFrame(
+				previousActiveTerrain,
+				expectedActiveTerrain)) {
+			clearSymmetricRenderer3DWorldChunkFrame(
+				expectedActiveTerrain);
+			return;
+		}
+		int nextCenterSectionX = worldTileToSection(Math.addExact(
+			Math.multiplyExact(
+				expectedActiveTerrain.getCurrentChunkX(), SECTION_SIZE),
+			expectedWorldOffsetX));
+		int nextCenterSectionY = worldTileToSection(Math.addExact(
+			Math.multiplyExact(
+				expectedActiveTerrain.getCurrentChunkY(), SECTION_SIZE),
+			expectedWorldOffsetZ));
+		int deltaX = nextCenterSectionX
+			- symmetricRenderer3DWorldCenterSectionX;
+		int deltaY = nextCenterSectionY
+			- symmetricRenderer3DWorldCenterSectionY;
+		if ((deltaX == 0 && deltaY == 0)
+			|| Math.abs(deltaX) > 1
+			|| Math.abs(deltaY) > 1) {
+			clearSymmetricRenderer3DWorldChunkFrame(
+				expectedActiveTerrain);
+			return;
+		}
+		int rebaseX = Math.multiplyExact(
+			-deltaX, SECTION_SIZE * 128);
+		int rebaseZ = Math.multiplyExact(
+			-deltaY, SECTION_SIZE * 128);
+		List<Renderer3DWorldChunkFrame.ChunkMesh> retained =
+			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>();
+		for (Renderer3DWorldChunkFrame.ChunkMesh chunk
+				: symmetricRetainableRenderer3DWorldChunkFrame
+					.getChunks()) {
+			int relativeX =
+				chunk.getCenterSectionX() - nextCenterSectionX;
+			int relativeY =
+				chunk.getCenterSectionY() - nextCenterSectionY;
+			if (Math.max(Math.abs(relativeX), Math.abs(relativeY))
+					!= NativeLayeredTerrainSnapshot
+						.SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+				continue;
+			}
+			retained.add(chunk.rebasePresentation(rebaseX, rebaseZ));
+		}
+		if (retained.isEmpty()) {
+			clearSymmetricRenderer3DWorldChunkFrame(
+				expectedActiveTerrain);
+			return;
+		}
+		symmetricOuterRenderer3DWorldChunkFrame =
+			Renderer3DWorldChunkFrame.fromChunks(retained);
+		symmetricRetainableRenderer3DWorldChunkFrame =
+			symmetricOuterRenderer3DWorldChunkFrame;
+		symmetricRenderer3DWorldChunkFrame = null;
+		symmetricRenderer3DWorldCenterSectionX = nextCenterSectionX;
+		symmetricRenderer3DWorldCenterSectionY = nextCenterSectionY;
+		symmetricRenderer3DWorldScopeIdentity =
+			expectedActiveTerrain.scopeIdentity();
+		if (!matchesActiveHalo(
+				expectedActiveTerrain,
+				symmetricNativeLayeredTerrainVisualSnapshot)) {
+			symmetricNativeLayeredTerrainVisualSnapshot = null;
+		}
+		nativeLayeredTerrainHaloDebugSummary =
+			"halo retained=" + retained.size()
+				+ "/16 awaiting-complete";
+		System.out.println(
+			"NATIVE_TERRAIN_SYMMETRIC_RETAIN"
+				+ " previous="
+				+ (nextCenterSectionX - deltaX) + ","
+				+ (nextCenterSectionY - deltaY)
+				+ " next=" + nextCenterSectionX + ","
+				+ nextCenterSectionY
+				+ " delta=" + deltaX + "," + deltaY
+				+ " retained=" + retained.size() + "/16"
+				+ " rebase=" + rebaseX + "," + rebaseZ);
+	}
+
+	private boolean canRetainSymmetricRenderer3DWorldChunkFrame(
+		NativeLayeredTerrainSnapshot previousActiveTerrain,
+		NativeLayeredTerrainSnapshot expectedActiveTerrain) {
+		return previousActiveTerrain != null
+			&& expectedActiveTerrain != null
+			&& symmetricRetainableRenderer3DWorldChunkFrame != null
+			&& symmetricRenderer3DWorldCenterSectionX
+				!= Integer.MIN_VALUE
+			&& symmetricRenderer3DWorldCenterSectionY
+				!= Integer.MIN_VALUE
+			&& previousActiveTerrain.packageIdentity().equals(
+				expectedActiveTerrain.packageIdentity())
+			&& previousActiveTerrain.getWorldSpace().equals(
+				expectedActiveTerrain.getWorldSpace())
+			&& previousActiveTerrain.getLevel()
+				== expectedActiveTerrain.getLevel();
+	}
+
+	private void composeSymmetricRenderer3DWorldChunkFrame(
+		int activeSectionX,
+		int activeSectionY) {
+		Renderer3DWorldChunkFrame outerFrame =
+			symmetricOuterRenderer3DWorldChunkFrame;
+		if (outerFrame == null
+			|| activeSectionX
+				!= symmetricRenderer3DWorldCenterSectionX
+			|| activeSectionY
+				!= symmetricRenderer3DWorldCenterSectionY) {
+			symmetricRenderer3DWorldChunkFrame = null;
+			return;
+		}
+		Renderer3DWorldChunkFrame activeFrame =
+			renderer3DWorldChunkFrame;
+		List<Renderer3DWorldChunkFrame.ChunkMesh> chunks =
+			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
+				activeFrame.getChunkCount() + outerFrame.getChunkCount());
+		chunks.addAll(activeFrame.getChunks());
+		chunks.addAll(outerFrame.getChunks());
+		symmetricRenderer3DWorldChunkFrame =
+			Renderer3DWorldChunkFrame.fromChunks(chunks);
+	}
+
+	private void clearSymmetricRenderer3DWorldChunkFrame(
+		NativeLayeredTerrainSnapshot expectedActiveTerrain) {
+		symmetricRenderer3DWorldChunkFrame = null;
+		symmetricOuterRenderer3DWorldChunkFrame = null;
+		symmetricRetainableRenderer3DWorldChunkFrame = null;
+		symmetricRenderer3DWorldScopeIdentity = null;
+		symmetricRenderer3DWorldCenterSectionX = Integer.MIN_VALUE;
+		symmetricRenderer3DWorldCenterSectionY = Integer.MIN_VALUE;
+		if (!matchesActiveHalo(
+				expectedActiveTerrain,
+				symmetricNativeLayeredTerrainVisualSnapshot)) {
+			symmetricNativeLayeredTerrainVisualSnapshot = null;
+			nativeLayeredTerrainHaloDebugSummary = "halo pending";
+		}
+	}
+
+	private CpuSectionWindow buildNativeLayeredCpuSectionWindow(
+		int height,
+		int sectionX,
+		int sectionY,
+		NativeLayeredTerrainSnapshot snapshot,
+		int worldOffsetX,
+		int worldOffsetZ) {
+		if (height != nativeLayeredPresentationPlane(snapshot)) {
+			throw new IllegalArgumentException(
+				"Native prebuild plane does not match its snapshot");
+		}
+		Sector[] window = new Sector[ACTIVE_SECTION_COUNT];
+		for (int index = 0; index < window.length; index++) {
+			window[index] = nativeLayeredVoidSector();
+		}
+		applyNativeLayeredTerrain(
+			window,
+			sectionX,
+			sectionY,
+			snapshot,
+			worldOffsetX,
+			worldOffsetZ);
+		int originX = sectionX - ACTIVE_SECTION_ORIGIN_OFFSET;
+		int originY = sectionY - ACTIVE_SECTION_ORIGIN_OFFSET;
+		for (int y = 0; y < ACTIVE_SECTION_GRID; y++) {
+			for (int x = 0; x < ACTIVE_SECTION_GRID; x++) {
+				applyWorldEditorTerrainPatches(
+					window[y * ACTIVE_SECTION_GRID + x],
+					snapshot.getLevel(),
+					originX + x,
+					originY + y);
+			}
+		}
+		applyBridgeDecorations(window);
+		return new CpuSectionWindow(window, true);
 	}
 
 	private static void tagRenderer3DModels(RSModel[] models, Renderer3DModelKind kind) {
@@ -858,7 +1633,16 @@ public final class World {
 	}
 
 	public Renderer3DWorldChunkFrame getRenderer3DWorldChunkFrame() {
-		return renderer3DWorldChunkFrame;
+		Renderer3DWorldChunkFrame symmetricFrame =
+			symmetricRenderer3DWorldChunkFrame;
+		if (symmetricFrame != null) {
+			return symmetricFrame;
+		}
+		Renderer3DWorldChunkFrame predictiveFrame =
+			predictiveRenderer3DWorldChunkFrame;
+		return predictiveFrame == null
+			? renderer3DWorldChunkFrame
+			: predictiveFrame;
 	}
 
 	private Renderer3DWorldChunkFrame buildRenderer3DWorldChunkFrame(int plane, int sectionX, int sectionY) {
@@ -912,6 +1696,26 @@ public final class World {
 		WallModelInput wallInput,
 		RoofModelInput roofInput,
 		boolean includeRoofGeometry) {
+		return buildWorldGpuChunkMesh(
+			plane,
+			sectionX,
+			sectionY,
+			terrainInput,
+			wallInput,
+			roofInput,
+			includeRoofGeometry,
+			true);
+	}
+
+	private static WorldGpuChunkMesh buildWorldGpuChunkMesh(
+		int plane,
+		int sectionX,
+		int sectionY,
+		TerrainModelInput terrainInput,
+		WallModelInput wallInput,
+		RoofModelInput roofInput,
+		boolean includeRoofGeometry,
+		boolean includePresentationEffects) {
 		int originWorldX = (sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE * 128;
 		int originWorldZ = (sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE * 128;
 		WorldGpuChunkMeshBuilder builder = new WorldGpuChunkMeshBuilder(
@@ -919,7 +1723,8 @@ public final class World {
 			sectionX,
 			sectionY,
 			originWorldX,
-			originWorldZ);
+			originWorldZ,
+			includePresentationEffects);
 		if (roofInput != null) {
 			builder.setRoofCoverage(
 				roofInput.roofCoverageBits,
@@ -2511,6 +3316,8 @@ public final class World {
 			}
 			phaseStart = RenderTelemetry.now();
 			this.renderer3DWorldChunkFrame = this.buildRenderer3DWorldChunkFrame(plane, x, z);
+			this.clearPredictiveRenderer3DWorldChunkFrame();
+			this.composeSymmetricRenderer3DWorldChunkFrame(x, z);
 			long chunkFrameNanos = RenderTelemetry.elapsedSince(phaseStart);
 			phaseStart = RenderTelemetry.now();
 			this.preloadSections(worldX, worldZ, plane);
@@ -2826,10 +3633,16 @@ public final class World {
 	}
 
 	private int nativeLayeredPresentationPlane() {
-		if (nativeLayeredTerrainSnapshot == null) {
+		return nativeLayeredPresentationPlane(
+			nativeLayeredTerrainSnapshot);
+	}
+
+	private static int nativeLayeredPresentationPlane(
+		NativeLayeredTerrainSnapshot snapshot) {
+		if (snapshot == null) {
 			return -1;
 		}
-		switch (nativeLayeredTerrainSnapshot.getLevel()) {
+		switch (snapshot.getLevel()) {
 			case 0:
 				return 0;
 			case 1:
@@ -2866,6 +3679,28 @@ public final class World {
 			throw new IllegalStateException(
 				"Native layered terrain scope lost its packet snapshot");
 		}
+		NativeLayeredTerrainApplyResult result =
+			applyNativeLayeredTerrain(
+				window,
+				sectionX,
+				sectionY,
+				snapshot,
+				syntheticDeepFixtureOffsetX,
+				syntheticDeepFixtureOffsetZ);
+		nativeLayeredTerrainAppliedTiles = result.appliedTiles;
+		nativeLayeredTerrainNonVoidTiles = result.nonVoidTiles;
+		nativeLayeredTerrainAppliedSectionX = sectionX;
+		nativeLayeredTerrainAppliedSectionY = sectionY;
+	}
+
+	private static NativeLayeredTerrainApplyResult
+		applyNativeLayeredTerrain(
+			Sector[] window,
+			int sectionX,
+			int sectionY,
+			NativeLayeredTerrainSnapshot snapshot,
+			int worldOffsetX,
+			int worldOffsetZ) {
 		int originX =
 			(sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
 		int originZ =
@@ -2877,9 +3712,9 @@ public final class World {
 				int worldX = Math.addExact(originX, localX);
 				int worldZ = Math.addExact(originZ, localZ);
 				int logicalX = Math.subtractExact(
-					worldX, syntheticDeepFixtureOffsetX);
+					worldX, worldOffsetX);
 				int logicalZ = Math.subtractExact(
-					worldZ, syntheticDeepFixtureOffsetZ);
+					worldZ, worldOffsetZ);
 				if (!snapshot.covers(
 						snapshot.getWorldSpace(),
 						snapshot.getLevel(),
@@ -2908,10 +3743,8 @@ public final class World {
 					tile);
 			}
 		}
-		nativeLayeredTerrainAppliedTiles = appliedTiles;
-		nativeLayeredTerrainNonVoidTiles = nonVoidTiles;
-		nativeLayeredTerrainAppliedSectionX = sectionX;
-		nativeLayeredTerrainAppliedSectionY = sectionY;
+		return new NativeLayeredTerrainApplyResult(
+			appliedTiles, nonVoidTiles);
 	}
 
 	private void logNativeLayeredTerrainActivation(
@@ -3109,8 +3942,26 @@ public final class World {
 		return sectorFilename(height, sectionX, sectionY)
 			+ "-editor-" + worldEditorTerrainRevision
 			+ (nativeLayeredTerrainSnapshot != null
-				? "-native-" + nativeLayeredTerrainSnapshot.scopeIdentity()
+				? "-native-"
+					+ nativeLayeredTerrainSnapshot.scopeIdentity()
 				: syntheticDeepFixtureTerrain
+					? "-synthetic-deep-room-v1"
+					: "-legacy-terrain")
+			+ "-window";
+	}
+
+	private String sectionWindowKey(
+		int height,
+		int sectionX,
+		int sectionY,
+		long terrainRevision,
+		NativeLayeredTerrainSnapshot nativeTerrain,
+		boolean syntheticDeepFixture) {
+		return sectorFilename(height, sectionX, sectionY)
+			+ "-editor-" + terrainRevision
+			+ (nativeTerrain != null
+				? "-native-" + nativeTerrain.scopeIdentity()
+				: syntheticDeepFixture
 					? "-synthetic-deep-room-v1"
 					: "-legacy-terrain")
 			+ "-window";
@@ -3131,6 +3982,26 @@ public final class World {
 	private String worldModelProductKey(int height, int sectionX, int sectionY, boolean includeRoofGeometry) {
 		return sectionWindowKey(height, sectionX, sectionY)
 			+ (includeRoofGeometry ? "-world-product-roofs" : "-world-product-no-roofs");
+	}
+
+	private String worldModelProductKey(
+		int height,
+		int sectionX,
+		int sectionY,
+		boolean includeRoofGeometry,
+		long terrainRevision,
+		NativeLayeredTerrainSnapshot nativeTerrain,
+		boolean syntheticDeepFixture) {
+		return sectionWindowKey(
+			height,
+			sectionX,
+			sectionY,
+			terrainRevision,
+			nativeTerrain,
+			syntheticDeepFixture)
+			+ (includeRoofGeometry
+				? "-world-product-roofs"
+				: "-world-product-no-roofs");
 	}
 
 	public final void removeGameObject_CollisonFlags(int id, int x, int z) {
@@ -3606,6 +4477,161 @@ public final class World {
 		return "h" + height + "x" + sectionX + "y" + sectionY;
 	}
 
+	public static final class NativeLayeredTerrainPrebuildResult {
+		private final String activeScopeIdentity;
+		private final String stagedScopeIdentity;
+		private final long sourceRevision;
+		private final long targetRevision;
+		private final int worldOffsetX;
+		private final int worldOffsetZ;
+		private final int plane;
+		private final int sectionX;
+		private final int sectionY;
+		private final boolean includeRoofGeometry;
+		private final boolean cpuCacheHit;
+		private final boolean productCacheHit;
+		private final long elapsedNanos;
+
+		private NativeLayeredTerrainPrebuildResult(
+			String activeScopeIdentity,
+			String stagedScopeIdentity,
+			long sourceRevision,
+			long targetRevision,
+			int worldOffsetX,
+			int worldOffsetZ,
+			int plane,
+			int sectionX,
+			int sectionY,
+			boolean includeRoofGeometry,
+			boolean cpuCacheHit,
+			boolean productCacheHit,
+			long elapsedNanos) {
+			this.activeScopeIdentity = activeScopeIdentity;
+			this.stagedScopeIdentity = stagedScopeIdentity;
+			this.sourceRevision = sourceRevision;
+			this.targetRevision = targetRevision;
+			this.worldOffsetX = worldOffsetX;
+			this.worldOffsetZ = worldOffsetZ;
+			this.plane = plane;
+			this.sectionX = sectionX;
+			this.sectionY = sectionY;
+			this.includeRoofGeometry = includeRoofGeometry;
+			this.cpuCacheHit = cpuCacheHit;
+			this.productCacheHit = productCacheHit;
+			this.elapsedNanos = elapsedNanos;
+		}
+
+		public String summary() {
+			return "NATIVE_TERRAIN_PREBUILD"
+				+ " plane=" + plane
+				+ " window=" + sectionX + "," + sectionY
+				+ " sourceRevision=" + sourceRevision
+				+ " targetRevision=" + targetRevision
+				+ " cpu=" + (cpuCacheHit ? "hit" : "built")
+				+ " product="
+					+ (productCacheHit ? "hit" : "built")
+				+ " elapsedMs="
+					+ String.format(
+						java.util.Locale.ROOT,
+						"%.3f",
+						elapsedNanos / 1_000_000.0D);
+		}
+	}
+
+	public static final class NativeLayeredTerrainHaloPrebuildResult {
+		private final String activeScopeIdentity;
+		private final String haloScopeIdentity;
+		private final int haloProtocolVersion;
+		private final long sourceRevision;
+		private final int worldOffsetX;
+		private final int worldOffsetZ;
+		private final int plane;
+		private final int sectionX;
+		private final int sectionY;
+		private final boolean includeRoofGeometry;
+		private final List<Renderer3DWorldChunkFrame.ChunkMesh> outerChunks;
+		private final List<Renderer3DWorldChunkFrame.ChunkMesh>
+			retentionChunks;
+		private final int triangleCount;
+		private final String compactDiagnosticSummary;
+		private final String cellDiagnostics;
+		private final long elapsedNanos;
+
+		private NativeLayeredTerrainHaloPrebuildResult(
+			String activeScopeIdentity,
+			String haloScopeIdentity,
+			int haloProtocolVersion,
+			long sourceRevision,
+			int worldOffsetX,
+			int worldOffsetZ,
+			int plane,
+			int sectionX,
+			int sectionY,
+			boolean includeRoofGeometry,
+			List<Renderer3DWorldChunkFrame.ChunkMesh> outerChunks,
+			List<Renderer3DWorldChunkFrame.ChunkMesh> retentionChunks,
+			int triangleCount,
+			String compactDiagnosticSummary,
+			String cellDiagnostics,
+			long elapsedNanos) {
+			this.activeScopeIdentity = activeScopeIdentity;
+			this.haloScopeIdentity = haloScopeIdentity;
+			this.haloProtocolVersion = haloProtocolVersion;
+			this.sourceRevision = sourceRevision;
+			this.worldOffsetX = worldOffsetX;
+			this.worldOffsetZ = worldOffsetZ;
+			this.plane = plane;
+			this.sectionX = sectionX;
+			this.sectionY = sectionY;
+			this.includeRoofGeometry = includeRoofGeometry;
+			this.outerChunks = Collections.unmodifiableList(
+				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
+					outerChunks));
+			this.retentionChunks = Collections.unmodifiableList(
+				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
+					retentionChunks));
+			this.triangleCount = triangleCount;
+			this.compactDiagnosticSummary = compactDiagnosticSummary;
+			this.cellDiagnostics = cellDiagnostics;
+			this.elapsedNanos = elapsedNanos;
+		}
+
+		public String summary() {
+			return "NATIVE_TERRAIN_SYMMETRIC_FIELD"
+				+ " detail="
+					+ (haloProtocolVersion
+							== NativeLayeredTerrainSnapshot
+								.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
+						? "structure"
+						: "terrain")
+				+ " plane=" + plane
+				+ " center=" + sectionX + "," + sectionY
+				+ " radius=2"
+				+ " outerSectors=" + outerChunks.size() + "/16"
+				+ " triangles=" + triangleCount
+				+ " coverage={" + compactDiagnosticSummary + "}"
+				+ " cells={" + cellDiagnostics + "}"
+				+ " sourceRevision=" + sourceRevision
+				+ " elapsedMs="
+					+ String.format(
+						java.util.Locale.ROOT,
+						"%.3f",
+						elapsedNanos / 1_000_000.0D);
+		}
+	}
+
+	private static final class NativeLayeredTerrainApplyResult {
+		private final int appliedTiles;
+		private final int nonVoidTiles;
+
+		private NativeLayeredTerrainApplyResult(
+			int appliedTiles,
+			int nonVoidTiles) {
+			this.appliedTiles = appliedTiles;
+			this.nonVoidTiles = nonVoidTiles;
+		}
+	}
+
 	private static final class WorldModelProduct {
 		private final TerrainModelInput terrainInput;
 		private final WallModelInput wallInput;
@@ -3746,6 +4772,363 @@ public final class World {
 				Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD,
 				signature);
 		}
+
+		private Renderer3DWorldChunkFrame.ChunkMesh
+			toRenderer3DWorldChunkFringe(int deltaX, int deltaY) {
+			if (deltaX < -1 || deltaX > 1
+				|| deltaY < -1 || deltaY > 1
+				|| deltaX == 0 && deltaY == 0
+				|| indices.length != triangleTextures.length * 3) {
+				return null;
+			}
+			boolean[] included =
+				new boolean[triangleTextures.length];
+			int includedTriangles = 0;
+			int lowEdge = SECTION_SIZE * 128;
+			int highEdge =
+				SECTION_SIZE * (ACTIVE_SECTION_GRID - 1) * 128;
+			for (int triangle = 0;
+					triangle < triangleTextures.length;
+					triangle++) {
+				int minX = Integer.MAX_VALUE;
+				int maxX = Integer.MIN_VALUE;
+				int minZ = Integer.MAX_VALUE;
+				int maxZ = Integer.MIN_VALUE;
+				for (int corner = 0; corner < 3; corner++) {
+					int vertex = indices[triangle * 3 + corner];
+					int coord = vertex * 3;
+					if (coord < 0
+						|| coord + 2 >= vertexCoords.length) {
+						return null;
+					}
+					int x = vertexCoords[coord];
+					int z = vertexCoords[coord + 2];
+					minX = Math.min(minX, x);
+					maxX = Math.max(maxX, x);
+					minZ = Math.min(minZ, z);
+					maxZ = Math.max(maxZ, z);
+				}
+				boolean incomingX = deltaX < 0
+					? minX <= lowEdge
+					: deltaX > 0 && maxX >= highEdge;
+				boolean incomingZ = deltaY < 0
+					? minZ <= lowEdge
+					: deltaY > 0 && maxZ >= highEdge;
+				if (incomingX || incomingZ) {
+					included[triangle] = true;
+					includedTriangles++;
+				}
+			}
+			if (includedTriangles == 0) {
+				return null;
+			}
+
+			int shiftX = deltaX * SECTION_SIZE * 128;
+			int shiftZ = deltaY * SECTION_SIZE * 128;
+			int fringeVertexCount = includedTriangles * 3;
+			int[] fringeVertexCoords =
+				new int[fringeVertexCount * 3];
+			float[] fringeTextureU =
+				new float[fringeVertexCount];
+			float[] fringeTextureV =
+				new float[fringeVertexCount];
+			int[] fringeLights =
+				new int[fringeVertexCount];
+			int[] fringeBlendColors =
+				new int[fringeVertexCount];
+			int[] fringeBlendStrengths =
+				new int[fringeVertexCount];
+			int[] fringeIndices =
+				new int[includedTriangles * 3];
+			int[] fringeTextures =
+				new int[includedTriangles];
+			int[] fringeFallbackColors =
+				new int[includedTriangles];
+			Renderer3DModelKind[] fringeKinds =
+				new Renderer3DModelKind[includedTriangles];
+			Renderer3DMaterialFamily[] fringeFamilies =
+				new Renderer3DMaterialFamily[includedTriangles];
+			int[] fringeVariationMasks =
+				new int[includedTriangles];
+			int targetTriangle = 0;
+			int terrainCount = 0;
+			int wallCount = 0;
+			int roofCount = 0;
+			for (int triangle = 0;
+					triangle < included.length;
+					triangle++) {
+				if (!included[triangle]) {
+					continue;
+				}
+				for (int corner = 0; corner < 3; corner++) {
+					int sourceVertex =
+						indices[triangle * 3 + corner];
+					int targetVertex =
+						targetTriangle * 3 + corner;
+					int sourceCoord = sourceVertex * 3;
+					int targetCoord = targetVertex * 3;
+					fringeVertexCoords[targetCoord] =
+						Math.addExact(
+							vertexCoords[sourceCoord],
+							shiftX);
+					fringeVertexCoords[targetCoord + 1] =
+						vertexCoords[sourceCoord + 1];
+					fringeVertexCoords[targetCoord + 2] =
+						Math.addExact(
+							vertexCoords[sourceCoord + 2],
+							shiftZ);
+					fringeTextureU[targetVertex] =
+						vertexTextureU[sourceVertex];
+					fringeTextureV[targetVertex] =
+						vertexTextureV[sourceVertex];
+					fringeLights[targetVertex] =
+						vertexLights[sourceVertex];
+					fringeBlendColors[targetVertex] =
+						vertexTerrainBlendColors[sourceVertex];
+					fringeBlendStrengths[targetVertex] =
+						vertexTerrainBlendStrengths[sourceVertex];
+					fringeIndices[targetVertex] = targetVertex;
+				}
+				fringeTextures[targetTriangle] =
+					triangleTextures[triangle];
+				fringeFallbackColors[targetTriangle] =
+					triangleFallbackColors[triangle];
+				Renderer3DModelKind kind =
+					triangleModelKinds[triangle];
+				fringeKinds[targetTriangle] = kind;
+				fringeFamilies[targetTriangle] =
+					triangleMaterialFamilies[triangle];
+				fringeVariationMasks[targetTriangle] =
+					triangleTerrainVariationMasks[triangle];
+				if (kind == Renderer3DModelKind.TERRAIN) {
+					terrainCount++;
+				} else if (kind == Renderer3DModelKind.WALL) {
+					wallCount++;
+				} else if (kind == Renderer3DModelKind.ROOF) {
+					roofCount++;
+				}
+				targetTriangle++;
+			}
+			long fringeSignature = signature;
+			fringeSignature =
+				(fringeSignature ^ deltaX) * 1099511628211L;
+			fringeSignature =
+				(fringeSignature ^ deltaY) * 1099511628211L;
+			fringeSignature =
+				(fringeSignature ^ includedTriangles)
+					* 1099511628211L;
+			return new Renderer3DWorldChunkFrame.ChunkMesh(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				fringeVertexCoords,
+				fringeTextureU,
+				fringeTextureV,
+				fringeLights,
+				fringeBlendColors,
+				fringeBlendStrengths,
+				fringeIndices,
+				fringeTextures,
+				fringeFallbackColors,
+				fringeKinds,
+				fringeFamilies,
+				null,
+				null,
+				fringeVariationMasks,
+				new long[0],
+				0,
+				0,
+				terrainCount,
+				wallCount,
+				roofCount,
+				false,
+				Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD,
+				fringeSignature);
+		}
+
+		private Renderer3DWorldChunkFrame.ChunkMesh
+			toRenderer3DWorldPresentationCell(
+				int relativeSectionX,
+				int relativeSectionY) {
+			int radius = Math.max(
+				Math.abs(relativeSectionX),
+				Math.abs(relativeSectionY));
+			if (radius < 1 || radius > 2
+				|| indices.length != triangleTextures.length * 3) {
+				return null;
+			}
+			/*
+			 * The legacy active 3x3 mesh has 144 tile vertices but 143 face
+			 * rows. Its positive edges therefore end at face 142, while an
+			 * ordinary outer-sector crop starts at tile 144. Include the
+			 * preceding source row for positive outer cells to stitch that
+			 * otherwise empty one-tile strip. Negative joins already meet at
+			 * tile zero and need no overlap.
+			 */
+			final int lowEdgeX =
+				(relativeSectionX > 0
+					? SECTION_SIZE - 1
+					: SECTION_SIZE) * 128;
+			final int lowEdgeZ =
+				(relativeSectionY > 0
+					? SECTION_SIZE - 1
+					: SECTION_SIZE) * 128;
+			final int highEdge = SECTION_SIZE * 2 * 128;
+			boolean[] included =
+				new boolean[triangleTextures.length];
+			int includedTriangles = 0;
+			for (int triangle = 0;
+					triangle < triangleTextures.length;
+					triangle++) {
+				long sumX = 0L;
+				long sumZ = 0L;
+				for (int corner = 0; corner < 3; corner++) {
+					int vertex = indices[triangle * 3 + corner];
+					int coord = vertex * 3;
+					if (coord < 0
+						|| coord + 2 >= vertexCoords.length) {
+						return null;
+					}
+					sumX += vertexCoords[coord];
+					sumZ += vertexCoords[coord + 2];
+				}
+				if (sumX >= (long)lowEdgeX * 3L
+					&& sumX < (long)highEdge * 3L
+					&& sumZ >= (long)lowEdgeZ * 3L
+					&& sumZ < (long)highEdge * 3L) {
+					included[triangle] = true;
+					includedTriangles++;
+				}
+			}
+			if (includedTriangles == 0) {
+				return null;
+			}
+
+			int shiftX =
+				relativeSectionX * SECTION_SIZE * 128;
+			int shiftZ =
+				relativeSectionY * SECTION_SIZE * 128;
+			int vertexCount = includedTriangles * 3;
+			int[] sectorVertexCoords =
+				new int[vertexCount * 3];
+			float[] sectorTextureU = new float[vertexCount];
+			float[] sectorTextureV = new float[vertexCount];
+			int[] sectorLights = new int[vertexCount];
+			int[] sectorBlendColors = new int[vertexCount];
+			int[] sectorBlendStrengths = new int[vertexCount];
+			int[] sectorIndices =
+				new int[includedTriangles * 3];
+			int[] sectorTextures =
+				new int[includedTriangles];
+			int[] sectorFallbackColors =
+				new int[includedTriangles];
+			Renderer3DModelKind[] sectorKinds =
+				new Renderer3DModelKind[includedTriangles];
+			Renderer3DMaterialFamily[] sectorFamilies =
+				new Renderer3DMaterialFamily[includedTriangles];
+			int[] sectorVariationMasks =
+				new int[includedTriangles];
+			int targetTriangle = 0;
+			int terrainCount = 0;
+			int wallCount = 0;
+			int roofCount = 0;
+			for (int triangle = 0;
+					triangle < included.length;
+					triangle++) {
+				if (!included[triangle]) {
+					continue;
+				}
+				for (int corner = 0; corner < 3; corner++) {
+					int sourceVertex =
+						indices[triangle * 3 + corner];
+					int targetVertex =
+						targetTriangle * 3 + corner;
+					int sourceCoord = sourceVertex * 3;
+					int targetCoord = targetVertex * 3;
+					sectorVertexCoords[targetCoord] =
+						Math.addExact(
+							vertexCoords[sourceCoord],
+							shiftX);
+					sectorVertexCoords[targetCoord + 1] =
+						vertexCoords[sourceCoord + 1];
+					sectorVertexCoords[targetCoord + 2] =
+						Math.addExact(
+							vertexCoords[sourceCoord + 2],
+							shiftZ);
+					sectorTextureU[targetVertex] =
+						vertexTextureU[sourceVertex];
+					sectorTextureV[targetVertex] =
+						vertexTextureV[sourceVertex];
+					sectorLights[targetVertex] =
+						vertexLights[sourceVertex];
+					sectorBlendColors[targetVertex] =
+						vertexTerrainBlendColors[sourceVertex];
+					sectorBlendStrengths[targetVertex] =
+						vertexTerrainBlendStrengths[sourceVertex];
+					sectorIndices[targetVertex] = targetVertex;
+				}
+				sectorTextures[targetTriangle] =
+					triangleTextures[triangle];
+				sectorFallbackColors[targetTriangle] =
+					triangleFallbackColors[triangle];
+				Renderer3DModelKind kind =
+					triangleModelKinds[triangle];
+				sectorKinds[targetTriangle] = kind;
+				sectorFamilies[targetTriangle] =
+					triangleMaterialFamilies[triangle];
+				sectorVariationMasks[targetTriangle] =
+					triangleTerrainVariationMasks[triangle];
+				if (kind == Renderer3DModelKind.TERRAIN) {
+					terrainCount++;
+				} else if (kind == Renderer3DModelKind.WALL) {
+					wallCount++;
+				} else if (kind == Renderer3DModelKind.ROOF) {
+					roofCount++;
+				}
+				targetTriangle++;
+			}
+			long sectorSignature = signature;
+			sectorSignature =
+				(sectorSignature ^ relativeSectionX)
+					* 1099511628211L;
+			sectorSignature =
+				(sectorSignature ^ relativeSectionY)
+					* 1099511628211L;
+			sectorSignature =
+				(sectorSignature ^ includedTriangles)
+					* 1099511628211L;
+			return new Renderer3DWorldChunkFrame.ChunkMesh(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				sectorVertexCoords,
+				sectorTextureU,
+				sectorTextureV,
+				sectorLights,
+				sectorBlendColors,
+				sectorBlendStrengths,
+				sectorIndices,
+				sectorTextures,
+				sectorFallbackColors,
+				sectorKinds,
+				sectorFamilies,
+				null,
+				null,
+				sectorVariationMasks,
+				new long[0],
+				0,
+				0,
+				terrainCount,
+				wallCount,
+				roofCount,
+				false,
+				Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD,
+				sectorSignature);
+		}
 	}
 
 	private static final class WorldGpuChunkMeshBuilder {
@@ -3757,6 +5140,7 @@ public final class World {
 		private final int centerSectionY;
 		private final int originWorldX;
 		private final int originWorldZ;
+		private final boolean includePresentationEffects;
 		private final List<Integer> vertexCoords = new ArrayList<Integer>();
 		private final List<Float> vertexTextureU = new ArrayList<Float>();
 		private final List<Float> vertexTextureV = new ArrayList<Float>();
@@ -3786,12 +5170,14 @@ public final class World {
 			int centerSectionX,
 			int centerSectionY,
 			int originWorldX,
-			int originWorldZ) {
+			int originWorldZ,
+			boolean includePresentationEffects) {
 			this.plane = plane;
 			this.centerSectionX = centerSectionX;
 			this.centerSectionY = centerSectionY;
 			this.originWorldX = originWorldX;
 			this.originWorldZ = originWorldZ;
+			this.includePresentationEffects = includePresentationEffects;
 		}
 
 		private void setRoofCoverage(long[] bits, int axis, int coveredTileCount) {
@@ -3921,7 +5307,10 @@ public final class World {
 		}
 
 		private void addWallShadowCaster(Renderer3DModelKind kind, int[] faceVertexCoords) {
-			if (kind != Renderer3DModelKind.WALL || faceVertexCoords == null || faceVertexCoords.length < 9) {
+			if (!includePresentationEffects
+				|| kind != Renderer3DModelKind.WALL
+				|| faceVertexCoords == null
+				|| faceVertexCoords.length < 9) {
 				return;
 			}
 			int vertexCount = faceVertexCoords.length / 3;
@@ -3977,6 +5366,9 @@ public final class World {
 			int radius,
 			int color,
 			int intensity) {
+			if (!includePresentationEffects) {
+				return;
+			}
 			glowEmitters.add(new Renderer3DWorldChunkFrame.GlowEmitter(
 				kind,
 				centerX,

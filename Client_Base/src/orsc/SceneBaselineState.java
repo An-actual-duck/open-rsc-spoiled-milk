@@ -15,6 +15,8 @@ final class SceneBaselineState {
 	private static final int PAGE_NONE = 0;
 	private static final int PAGE_SCENERY = 1;
 	private static final int PAGE_WALLS = 2;
+	static final int ATOMIC_FENCE_PROTOCOL_VERSION = 7;
+	static final int PAGE_ATOMIC_FENCE = 3;
 	private static final long PARITY_REFRESH_MILLIS = 500L;
 	private static final long SCENE_BASELINE_STALE_MILLIS = 15000L;
 	private static final int RECENT_SCENE_SYNC_LOG_LIMIT = 5;
@@ -40,6 +42,7 @@ final class SceneBaselineState {
 	private String lastParityLine = "sceneBase parity waiting";
 	private int protocolVersion = 0;
 	private int serverTick = 0;
+	private int locationContextSequence = 0;
 	private int localX = 0;
 	private int localY = 0;
 	private int scenery = 0;
@@ -53,11 +56,50 @@ final class SceneBaselineState {
 	private int legacyPrunedScenery = 0;
 	private int legacyPrunedWalls = 0;
 	private int appliedLegacyBaselines = 0;
+	private int verifiedLegacyBaselines = 0;
 	private final String[] recentSceneSyncLines = new String[RECENT_SCENE_SYNC_LOG_LIMIT];
 	private int recentSceneSyncNext = 0;
 	private int recentSceneSyncCount = 0;
 	private int lastLoggedSceneIssueSignature = 0;
 	private String scopeIdentity = "legacy";
+
+	void recordPacket(
+		int protocolVersion,
+		int serverTick,
+		int localX,
+		int localY,
+		int scenery,
+		int walls,
+		int groundItems,
+		int objectViewDistance,
+		int sceneryHash,
+		int wallsHash,
+		int groundItemsHash,
+		int pageCategory,
+		int pageIndex,
+		int pageTotal,
+		int recordsRead,
+		List<Record> pageRecords) {
+		recordPacket(
+			protocolVersion,
+			serverTick,
+			0,
+			"legacy",
+			localX,
+			localY,
+			scenery,
+			walls,
+			groundItems,
+			objectViewDistance,
+			sceneryHash,
+			wallsHash,
+			groundItemsHash,
+			pageCategory,
+			pageIndex,
+			pageTotal,
+			recordsRead,
+			pageRecords);
+	}
 
 	void recordPacket(
 		int protocolVersion,
@@ -77,9 +119,50 @@ final class SceneBaselineState {
 		int pageTotal,
 		int recordsRead,
 		List<Record> pageRecords) {
+		recordPacket(
+			protocolVersion,
+			serverTick,
+			0,
+			scopeIdentity,
+			localX,
+			localY,
+			scenery,
+			walls,
+			groundItems,
+			objectViewDistance,
+			sceneryHash,
+			wallsHash,
+			groundItemsHash,
+			pageCategory,
+			pageIndex,
+			pageTotal,
+			recordsRead,
+			pageRecords);
+	}
+
+	void recordPacket(
+		int protocolVersion,
+		int serverTick,
+		int locationContextSequence,
+		String scopeIdentity,
+		int localX,
+		int localY,
+		int scenery,
+		int walls,
+		int groundItems,
+		int objectViewDistance,
+		int sceneryHash,
+		int wallsHash,
+		int groundItemsHash,
+		int pageCategory,
+		int pageIndex,
+		int pageTotal,
+		int recordsRead,
+		List<Record> pageRecords) {
 		long now = System.currentTimeMillis();
 		int nextStaticSceneKey = staticSceneKey(
 			protocolVersion,
+			locationContextSequence,
 			scopeIdentity,
 			scenery,
 			walls,
@@ -103,6 +186,7 @@ final class SceneBaselineState {
 
 		this.protocolVersion = protocolVersion;
 		this.serverTick = serverTick;
+		this.locationContextSequence = locationContextSequence;
 		this.scopeIdentity = scopeIdentity;
 		this.localX = localX;
 		this.localY = localY;
@@ -115,6 +199,9 @@ final class SceneBaselineState {
 		expectedPages.put(PAGE_WALLS, pageTotal(walls));
 
 		if (!isStaticCategory(pageCategory) || pageTotal <= 0) {
+			if (hasCompleteBaseline()) {
+				rebuildStoredBaseline();
+			}
 			return;
 		}
 
@@ -153,6 +240,7 @@ final class SceneBaselineState {
 		staticSceneKey = 0;
 		storedStaticSceneKey = 0;
 		resetPageState();
+		locationContextSequence = 0;
 		scopeIdentity = nextScopeIdentity == null ? "none" : nextScopeIdentity;
 		lastParityCheckMillis = 0L;
 		lastParityLegacySignature = 0;
@@ -176,7 +264,8 @@ final class SceneBaselineState {
 				+ " | duplicate pages " + duplicatePageTotal()
 				+ " | reset/done " + incompleteSceneResets + "/" + completedBaselines
 				+ " | pruned objects/walls " + legacyPrunedScenery + "/" + legacyPrunedWalls
-				+ " | applied " + appliedLegacyBaselines,
+				+ " | applied " + appliedLegacyBaselines
+				+ " | verified " + verifiedLegacyBaselines,
 			parityLine(mc)
 		};
 	}
@@ -215,6 +304,28 @@ final class SceneBaselineState {
 		lastParityLegacySignature = 0;
 	}
 
+	void pruneLegacyListsOutsideAtomicFenceRange(
+		final mudclient mc,
+		final int fenceLocalX,
+		final int fenceLocalY,
+		final int fenceObjectViewDistance) {
+		if (mc == null || fenceObjectViewDistance <= 0) {
+			return;
+		}
+		legacyPrunedScenery += pruneGameObjectsOutsideSyncRange(
+			mc,
+			fenceLocalX,
+			fenceLocalY,
+			fenceObjectViewDistance);
+		legacyPrunedWalls += pruneWallObjectsOutsideSyncRange(
+			mc,
+			fenceLocalX,
+			fenceLocalY,
+			fenceObjectViewDistance);
+		lastParityCheckMillis = 0L;
+		lastParityLegacySignature = 0;
+	}
+
 	List<Record> snapshotStoredSceneryRecords() {
 		return new ArrayList<Record>(storedSceneryRecords);
 	}
@@ -238,6 +349,75 @@ final class SceneBaselineState {
 		lastParityLegacySignature = 0;
 	}
 
+	void recordLegacyBaselineVerified() {
+		verifiedLegacyBaselines++;
+		lastParityCheckMillis = 0L;
+		lastParityLegacySignature = 0;
+	}
+
+	boolean storedBaselineMatchesLegacy(final mudclient mc) {
+		if (mc == null || !hasStoredCompleteBaseline()) {
+			return false;
+		}
+		return compareStoredToLegacy(storedSceneryRecords, mc, true).matches()
+			&& compareStoredToLegacy(storedWallRecords, mc, false).matches();
+	}
+
+	AtomicFenceResult matchAtomicFence(
+		final mudclient mc,
+		final int expectedScenery,
+		final int expectedWalls,
+		final int expectedSceneryHash,
+		final int expectedWallsHash) {
+		if (mc == null) {
+			return new AtomicFenceResult(
+				expectedScenery,
+				expectedWalls,
+				expectedSceneryHash,
+				expectedWallsHash,
+				0,
+				0,
+				0,
+				0);
+		}
+		int actualSceneryHash = 0;
+		for (int i = 0; i < mc.getGameObjectInstanceCount(); i++) {
+			actualSceneryHash = addSceneIdentity(
+				actualSceneryHash,
+				sceneIdentity(
+					mc.getGameObjectInstanceID(i),
+					mc.getGameObjectInstanceDir(i) & 0xFF,
+					mc.getGameObjectInstanceX(i)
+						+ mc.getMidRegionBaseX(),
+					mc.getGameObjectInstanceZ(i)
+						+ mc.getMidRegionBaseZ(),
+					0));
+		}
+		int actualWallsHash = 0;
+		for (int i = 0; i < mc.getWallObjectInstanceCount(); i++) {
+			actualWallsHash = addSceneIdentity(
+				actualWallsHash,
+				sceneIdentity(
+					mc.getWallObjectInstanceID(i),
+					(1 << 8)
+						| (mc.getWallObjectInstanceDir(i) & 0xFF),
+					mc.getWallObjectInstanceX(i)
+						+ mc.getMidRegionBaseX(),
+					mc.getWallObjectInstanceZ(i)
+						+ mc.getMidRegionBaseZ(),
+					0));
+		}
+		return new AtomicFenceResult(
+			expectedScenery,
+			expectedWalls,
+			expectedSceneryHash,
+			expectedWallsHash,
+			mc.getGameObjectInstanceCount(),
+			mc.getWallObjectInstanceCount(),
+			actualSceneryHash,
+			actualWallsHash);
+	}
+
 	boolean hasStoredCompleteBaseline() {
 		return storedStaticSceneKey == staticSceneKey
 			&& storedSceneryRecords.size() == scenery
@@ -248,6 +428,16 @@ final class SceneBaselineState {
 		return World.isLocalTile(
 			localX - mc.getMidRegionBaseX(),
 			localY - mc.getMidRegionBaseZ());
+	}
+
+	boolean isCompleteAndOriginLoaded(final mudclient mc) {
+		return mc != null
+			&& hasStoredCompleteBaseline()
+			&& isBaselineOriginLoaded(mc);
+	}
+
+	int getLocationContextSequence() {
+		return locationContextSequence;
 	}
 
 	private void resetPageState() {
@@ -321,6 +511,7 @@ final class SceneBaselineState {
 
 	private int staticSceneKey(
 		int protocolVersion,
+		int locationContextSequence,
 		String scopeIdentity,
 		int scenery,
 		int walls,
@@ -330,6 +521,7 @@ final class SceneBaselineState {
 		int wallsHash,
 		int groundItemsHash) {
 		int hash = protocolVersion;
+		hash = hash * 31 + locationContextSequence;
 		hash = hash * 31 + (scopeIdentity == null ? 0 : scopeIdentity.hashCode());
 		hash = hash * 31 + scenery;
 		hash = hash * 31 + walls;
@@ -374,6 +566,7 @@ final class SceneBaselineState {
 			+ " reset/done " + incompleteSceneResets + "/" + completedBaselines
 			+ " pruned " + legacyPrunedScenery + "/" + legacyPrunedWalls
 			+ " applied " + appliedLegacyBaselines
+			+ " verified " + verifiedLegacyBaselines
 			+ " | " + parity;
 	}
 
@@ -418,12 +611,26 @@ final class SceneBaselineState {
 	}
 
 	private int pruneGameObjectsOutsideSyncRange(mudclient mc) {
+		return pruneGameObjectsOutsideSyncRange(
+			mc, localX, localY, objectViewDistance);
+	}
+
+	private int pruneGameObjectsOutsideSyncRange(
+		final mudclient mc,
+		final int syncLocalX,
+		final int syncLocalY,
+		final int syncObjectViewDistance) {
 		int writeIndex = 0;
 		int pruned = 0;
 		for (int readIndex = 0; readIndex < mc.getGameObjectInstanceCount(); readIndex++) {
 			int worldX = mc.getGameObjectInstanceX(readIndex) + mc.getMidRegionBaseX();
 			int worldY = mc.getGameObjectInstanceZ(readIndex) + mc.getMidRegionBaseZ();
-			if (!insideObjectSyncRange(worldX, worldY)) {
+			if (!insideObjectSyncRange(
+					syncLocalX,
+					syncLocalY,
+					syncObjectViewDistance,
+					worldX,
+					worldY)) {
 				mc.dematerializeGameObjectInstance(readIndex);
 				pruned++;
 				continue;
@@ -445,12 +652,26 @@ final class SceneBaselineState {
 	}
 
 	private int pruneWallObjectsOutsideSyncRange(mudclient mc) {
+		return pruneWallObjectsOutsideSyncRange(
+			mc, localX, localY, objectViewDistance);
+	}
+
+	private int pruneWallObjectsOutsideSyncRange(
+		final mudclient mc,
+		final int syncLocalX,
+		final int syncLocalY,
+		final int syncObjectViewDistance) {
 		int writeIndex = 0;
 		int pruned = 0;
 		for (int readIndex = 0; readIndex < mc.getWallObjectInstanceCount(); readIndex++) {
 			int worldX = mc.getWallObjectInstanceX(readIndex) + mc.getMidRegionBaseX();
 			int worldY = mc.getWallObjectInstanceZ(readIndex) + mc.getMidRegionBaseZ();
-			if (!insideObjectSyncRange(worldX, worldY)) {
+			if (!insideObjectSyncRange(
+					syncLocalX,
+					syncLocalY,
+					syncObjectViewDistance,
+					worldX,
+					worldY)) {
 				mc.dematerializeWallObjectInstance(readIndex);
 				pruned++;
 				continue;
@@ -576,15 +797,25 @@ final class SceneBaselineState {
 	}
 
 	private boolean insideObjectSyncRange(int x, int y) {
-		if (objectViewDistance <= 0) {
+		return insideObjectSyncRange(
+			localX, localY, objectViewDistance, x, y);
+	}
+
+	private boolean insideObjectSyncRange(
+		final int syncLocalX,
+		final int syncLocalY,
+		final int syncObjectViewDistance,
+		final int x,
+		final int y) {
+		if (syncObjectViewDistance <= 0) {
 			return true;
 		}
-		int xDiff = (localX >> 3) - (x >> 3);
-		int yDiff = (localY >> 3) - (y >> 3);
-		return xDiff <= objectViewDistance
-			&& xDiff >= -objectViewDistance
-			&& yDiff <= objectViewDistance
-			&& yDiff >= -objectViewDistance;
+		int xDiff = (syncLocalX >> 3) - (x >> 3);
+		int yDiff = (syncLocalY >> 3) - (y >> 3);
+		return xDiff <= syncObjectViewDistance
+			&& xDiff >= -syncObjectViewDistance
+			&& yDiff <= syncObjectViewDistance
+			&& yDiff >= -syncObjectViewDistance;
 	}
 
 	private void incrementKey(Map<Long, Integer> counts, long key) {
@@ -648,6 +879,53 @@ final class SceneBaselineState {
 			this.y = y;
 			this.direction = direction;
 			this.type = type;
+		}
+	}
+
+	static final class AtomicFenceResult {
+		private final int expectedScenery;
+		private final int expectedWalls;
+		private final int expectedSceneryHash;
+		private final int expectedWallsHash;
+		private final int actualScenery;
+		private final int actualWalls;
+		private final int actualSceneryHash;
+		private final int actualWallsHash;
+
+		private AtomicFenceResult(
+			final int expectedScenery,
+			final int expectedWalls,
+			final int expectedSceneryHash,
+			final int expectedWallsHash,
+			final int actualScenery,
+			final int actualWalls,
+			final int actualSceneryHash,
+			final int actualWallsHash) {
+			this.expectedScenery = expectedScenery;
+			this.expectedWalls = expectedWalls;
+			this.expectedSceneryHash = expectedSceneryHash;
+			this.expectedWallsHash = expectedWallsHash;
+			this.actualScenery = actualScenery;
+			this.actualWalls = actualWalls;
+			this.actualSceneryHash = actualSceneryHash;
+			this.actualWallsHash = actualWallsHash;
+		}
+
+		boolean matches() {
+			return expectedScenery == actualScenery
+				&& expectedWalls == actualWalls
+				&& expectedSceneryHash == actualSceneryHash
+				&& expectedWallsHash == actualWallsHash;
+		}
+
+		String summary() {
+			return (matches() ? "match" : "mismatch")
+				+ " expected/actual objects "
+				+ expectedScenery + "/" + actualScenery
+				+ " walls " + expectedWalls + "/" + actualWalls
+				+ " hashes "
+				+ expectedSceneryHash + "/" + actualSceneryHash
+				+ "," + expectedWallsHash + "/" + actualWallsHash;
 		}
 	}
 

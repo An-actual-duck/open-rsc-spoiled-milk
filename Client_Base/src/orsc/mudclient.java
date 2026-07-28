@@ -847,6 +847,8 @@ public final class mudclient implements Runnable {
 	private int lastObjectAnimationNumberCosmicSparkles = -1;
 	private int lastObjectAnimatonNumberClaw = -1;
 	private boolean loadingArea = false;
+	private boolean layeredSceneActivationPending = false;
+	private boolean layeredSceneActivationRetainsPresentedFrame = false;
 	private boolean regionLoadNeedsHardPlayerReset = false;
 	private boolean hasCompletedInitialRegionLoad = false;
 	private final Map<Integer, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
@@ -2367,6 +2369,7 @@ public final class mudclient implements Runnable {
 	private void checkConnection() {
 		try {
 
+			this.packetHandler.pollLayeredTerrainStageReady();
 			long var2 = GenUtil.currentTimeMillis();
 			if (this.packetHandler.getClientStream().hasFinishedPackets()) {
 				this.lastWrite = var2;
@@ -6610,6 +6613,20 @@ public final class mudclient implements Runnable {
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
 					// 256, this.screenOffsetY);
 					clientPort.draw();
+					} else if (this.layeredSceneActivationPending
+							&& this.layeredSceneActivationRetainsPresentedFrame) {
+						clientPort.draw();
+					} else if (this.layeredSceneActivationPending) {
+						this.getSurface().blackScreen(true);
+						this.getSurface().drawColoredStringCentered(
+							this.halfGameWidth(),
+							"Loading... Please wait",
+							0xFFFFFF,
+							0,
+							1,
+							this.halfGameHeight());
+						this.drawChatMessageTabs(5);
+						clientPort.draw();
 					} else if (this.world.playerAlive) {
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
@@ -22938,6 +22955,7 @@ public final class mudclient implements Runnable {
 		return this.currentViewMode == GameMode.GAME
 			&& this.hasCompletedInitialRegionLoad
 			&& !this.loadingArea
+			&& !this.layeredSceneActivationPending
 			&& !this.isFullScreenModalUiActive();
 	}
 
@@ -23048,6 +23066,26 @@ public final class mudclient implements Runnable {
 		this.sceneInstanceStore.clearPendingAreaLoadMarks();
 	}
 
+	public void setLayeredSceneActivationPending(
+		final boolean pending) {
+		this.layeredSceneActivationPending = pending;
+		if (!pending) {
+			this.layeredSceneActivationRetainsPresentedFrame = false;
+		}
+	}
+
+	public void beginLayeredSceneActivation(
+		final boolean retainPresentedFrame) {
+		this.layeredSceneActivationPending = true;
+		this.layeredSceneActivationRetainsPresentedFrame =
+			retainPresentedFrame;
+	}
+
+	public boolean shouldRetainLastPresentedFrame() {
+		return this.layeredSceneActivationPending
+			&& this.layeredSceneActivationRetainsPresentedFrame;
+	}
+
 	public void applyLayeredSceneScope(
 		int legacyPlane,
 		boolean scopeChanged,
@@ -23117,6 +23155,10 @@ public final class mudclient implements Runnable {
 
 	public void setWorldOffsetX(int i) {
 		this.worldOffsetX = i;
+	}
+
+	public int getWorldOffsetX() {
+		return this.worldOffsetX;
 	}
 
 	public int getWorldOffsetZ() {

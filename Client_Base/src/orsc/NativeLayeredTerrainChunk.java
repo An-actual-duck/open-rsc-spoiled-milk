@@ -10,6 +10,12 @@ public final class NativeLayeredTerrainChunk {
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
 	public static final String RLE_ENCODING = "rle-layered-sector-v1";
 	public static final String RAW_ENCODING = "raw-layered-sector-v1";
+	public static final String VISUAL_ENCODING =
+		"visual-layered-sector-v1";
+	public static final String STRUCTURAL_ENCODING =
+		"structural-layered-sector-v1";
+	public static final String PRESENTATION_ENCODING =
+		"presentation-layered-sector-v1";
 
 	private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
 
@@ -49,7 +55,10 @@ public final class NativeLayeredTerrainChunk {
 		if (available) {
 			if (!UNIFORM_ENCODING.equals(sourceEncoding)
 				&& !RLE_ENCODING.equals(sourceEncoding)
-				&& !RAW_ENCODING.equals(sourceEncoding)) {
+				&& !RAW_ENCODING.equals(sourceEncoding)
+				&& !VISUAL_ENCODING.equals(sourceEncoding)
+				&& !STRUCTURAL_ENCODING.equals(sourceEncoding)
+				&& !PRESENTATION_ENCODING.equals(sourceEncoding)) {
 				throw new IllegalArgumentException(
 					"Unsupported terrain source encoding: " + sourceEncoding);
 			}
@@ -114,6 +123,46 @@ public final class NativeLayeredTerrainChunk {
 		int size, int chunkX, int chunkY) {
 		return new NativeLayeredTerrainChunk(
 			size, chunkX, chunkY, false, 0, 0, null, null, null);
+	}
+
+	public static NativeLayeredTerrainChunk mergePresentation(
+		NativeLayeredTerrainChunk visual,
+		NativeLayeredTerrainChunk structural) {
+		if (visual == null || structural == null
+			|| !visual.available || !structural.available
+			|| visual.size != structural.size
+			|| visual.chunkX != structural.chunkX
+			|| visual.chunkY != structural.chunkY
+			|| visual.sourceSectorX != structural.sourceSectorX
+			|| visual.sourceSectorY != structural.sourceSectorY
+			|| !VISUAL_ENCODING.equals(visual.sourceEncoding)
+			|| !STRUCTURAL_ENCODING.equals(structural.sourceEncoding)
+			|| !visual.sourcePayloadSha256.equals(
+				structural.sourcePayloadSha256)) {
+			throw new IllegalArgumentException(
+				"Visual and structural terrain chunks do not match");
+		}
+		byte[] merged = new byte[visual.tileBytes.length];
+		for (int offset = 0;
+			offset < merged.length;
+			offset += TILE_WIRE_BYTES) {
+			System.arraycopy(visual.tileBytes, offset, merged, offset, 3);
+			System.arraycopy(
+				structural.tileBytes,
+				offset + 3,
+				merged,
+				offset + 3,
+				TILE_WIRE_BYTES - 3);
+		}
+		return available(
+			visual.size,
+			visual.chunkX,
+			visual.chunkY,
+			visual.sourceSectorX,
+			visual.sourceSectorY,
+			PRESENTATION_ENCODING,
+			visual.sourcePayloadSha256,
+			merged);
 	}
 
 	public boolean covers(int worldX, int worldY) {

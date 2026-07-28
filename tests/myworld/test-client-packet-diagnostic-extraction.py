@@ -173,9 +173,17 @@ def verify_source_ownership_and_order() -> None:
             "sceneBaselineState.pruneLegacyListsOutsideSyncRange(mc);",
             "applyCompleteSceneBaselineToLegacyLists();",
             "sceneBaselineState.recordSceneDiagnostics(mc);",
-            "packetsIncoming.packetEnd = length;",
         ),
         "scene-baseline decode/apply order changed",
+    )
+    require(
+        scene_packet.index("sceneBaselineState.matchAtomicFence(")
+        < scene_packet.index("sceneBaselineState.recordPacket("),
+        "atomic scene fence must be intercepted before baseline aggregation",
+    )
+    require(
+        scene_packet.count("packetsIncoming.packetEnd = length;") == 2,
+        "atomic fence and normal baseline paths must both consume the packet",
     )
 
 
@@ -429,6 +437,20 @@ def verify_scene_baseline_state() -> None:
                 if (!condition) throw new AssertionError(message);
             }
 
+            private static int sceneIdentity(
+                    int a, int b, int c, int d, int e) {
+                int hash = 0x811C9DC5;
+                hash = (hash ^ a) * 0x01000193;
+                hash = (hash ^ b) * 0x01000193;
+                hash = (hash ^ c) * 0x01000193;
+                hash = (hash ^ d) * 0x01000193;
+                return (hash ^ e) * 0x01000193;
+            }
+
+            private static int addIdentity(int summary, int identity) {
+                return summary + identity + Integer.rotateLeft(identity, 16);
+            }
+
             private static void record(
                     SceneBaselineState state, int category,
                     List<SceneBaselineState.Record> records) {
@@ -467,14 +489,35 @@ def verify_scene_baseline_state() -> None:
                 client.setWallObjectInstanceCount(1);
                 require(state.summaryLines(client)[2].contains("scene sync match ok"), "matching legacy parity");
                 require(state.isBaselineOriginLoaded(client), "baseline origin check");
+                require(state.storedBaselineMatchesLegacy(client),
+                    "stored baseline exact-match shortcut");
+
+                int sceneryFenceHash = addIdentity(
+                    0, sceneIdentity(10, 2, 100, 200, 0));
+                int wallFenceHash = addIdentity(
+                    0, sceneIdentity(20, (1 << 8) | 3, 101, 200, 0));
+                SceneBaselineState.AtomicFenceResult fence =
+                    state.matchAtomicFence(
+                        client, 1, 1, sceneryFenceHash, wallFenceHash);
+                require(fence.matches(), "matching atomic fence");
+                require(fence.summary().contains("match expected/actual"),
+                    "atomic fence diagnostic");
+                require(!state.matchAtomicFence(
+                    client, 1, 1, sceneryFenceHash + 1, wallFenceHash
+                ).matches(), "atomic fence hash mismatch");
 
                 client.setGameObjectInstanceID(1, 99);
                 client.setGameObjectInstanceX(1, 300);
                 client.setGameObjectInstanceZ(1, 400);
                 client.setGameObjectInstanceDir(1, 0);
                 client.setGameObjectInstanceCount(2);
-                state.pruneLegacyListsOutsideSyncRange(client);
-                require(client.getGameObjectInstanceCount() == 1, "out-of-range object pruning");
+                state.pruneLegacyListsOutsideAtomicFenceRange(
+                    client, 100, 200, 1);
+                require(client.getGameObjectInstanceCount() == 1,
+                    "atomic-fence out-of-range object pruning");
+                require(state.matchAtomicFence(
+                    client, 1, 1, sceneryFenceHash, wallFenceHash
+                ).matches(), "atomic fence after stale-window pruning");
 
                 record(state, 2, walls);
                 state.recordLegacyBaselineApplied();

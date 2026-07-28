@@ -21,6 +21,8 @@ final class LayeredSceneContextState {
 		NativeLayeredTerrainSnapshot.RESIDENT_PROTOCOL_VERSION;
 	static final int READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION =
 		NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION;
+	static final int ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION =
+		NativeLayeredTerrainSnapshot.ATOMIC_ACTIVATION_PROTOCOL_VERSION;
 	static final int LEVEL_STRIDE = 944;
 	static final int LEGACY_PLANE_COUNT = 4;
 	static final int MAX_LEGACY_X = Short.MAX_VALUE;
@@ -154,7 +156,9 @@ final class LayeredSceneContextState {
 			&& incomingProtocolVersion
 				!= RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION
 			&& incomingProtocolVersion
-				!= READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION) {
+				!= READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION
+			&& incomingProtocolVersion
+				!= ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION) {
 			throw new IllegalArgumentException(
 				"Unsupported layered scene-context protocol: "
 					+ incomingProtocolVersion);
@@ -286,6 +290,10 @@ final class LayeredSceneContextState {
 		return established;
 	}
 
+	boolean isAwaitingInitialReceipt() {
+		return established && awaitingInitialReceipt;
+	}
+
 	int getSequence() {
 		return established ? sequence : 0;
 	}
@@ -398,14 +406,16 @@ final class LayeredSceneContextState {
 			|| version == LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
 			|| version == NATIVE_LAYERED_PROTOCOL_VERSION
 			|| version == RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION
-			|| version == READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION;
+			|| version == READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION
+			|| version == ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION;
 	}
 
 	private static boolean isChunkedNativeProtocol(int version) {
 		return version == LEGACY_NATIVE_LAYERED_PROTOCOL_VERSION
 			|| version == NATIVE_LAYERED_PROTOCOL_VERSION
 			|| version == RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION
-			|| version == READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION;
+			|| version == READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION
+			|| version == ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION;
 	}
 
 	void reset() {

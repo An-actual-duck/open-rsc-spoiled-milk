@@ -16,12 +16,16 @@ public final class NativeLayeredTerrainSnapshot {
 	public static final int PROTOCOL_VERSION = 5;
 	public static final int RESIDENT_PROTOCOL_VERSION = 6;
 	public static final int READINESS_PROTOCOL_VERSION = 7;
+	public static final int ATOMIC_ACTIVATION_PROTOCOL_VERSION = 8;
+	public static final int SYMMETRIC_RESIDENCY_PROTOCOL_VERSION = 9;
+	public static final int SYMMETRIC_STRUCTURE_PROTOCOL_VERSION = 10;
 	public static final int SECTOR_SIZE = 48;
 	public static final String PROJECTION_ID = "native-layered-package-v1";
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
 	public static final int LEGACY_STREAMING_CHUNK_SIZE = 24;
 	public static final int STREAMING_CHUNK_SIZE = SECTOR_SIZE;
 	public static final int STREAMING_CHUNK_RADIUS = 1;
+	public static final int SYMMETRIC_RESIDENCY_CHUNK_RADIUS = 2;
 
 	private static final Pattern ID =
 		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
@@ -155,7 +159,12 @@ public final class NativeLayeredTerrainSnapshot {
 		if (protocolVersion != LEGACY_CHUNKED_PROTOCOL_VERSION
 			&& protocolVersion != PROTOCOL_VERSION
 			&& protocolVersion != RESIDENT_PROTOCOL_VERSION
-			&& protocolVersion != READINESS_PROTOCOL_VERSION) {
+			&& protocolVersion != READINESS_PROTOCOL_VERSION
+			&& protocolVersion != ATOMIC_ACTIVATION_PROTOCOL_VERSION
+			&& protocolVersion
+				!= SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			&& protocolVersion
+				!= SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
 			throw new IllegalArgumentException(
 				"Unsupported chunked native terrain protocol: "
 					+ protocolVersion);
@@ -181,9 +190,15 @@ public final class NativeLayeredTerrainSnapshot {
 			currentChunkY, presentationChunkSize, "current chunk Y");
 		this.currentChunkX = currentChunkX;
 		this.currentChunkY = currentChunkY;
-		if (chunkRadius != STREAMING_CHUNK_RADIUS) {
+		int expectedChunkRadius =
+			protocolVersion == SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+					|| protocolVersion
+						== SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
+				? SYMMETRIC_RESIDENCY_CHUNK_RADIUS
+				: STREAMING_CHUNK_RADIUS;
+		if (chunkRadius != expectedChunkRadius) {
 			throw new IllegalArgumentException(
-				"Chunked native terrain requires radius-one readiness");
+				"Chunked native terrain has an invalid residency radius");
 		}
 		this.chunkRadius = chunkRadius;
 		int width = chunkRadius * 2 + 1;
@@ -357,6 +372,10 @@ public final class NativeLayeredTerrainSnapshot {
 		return currentChunkY;
 	}
 
+	public int getChunkRadius() {
+		return chunkRadius;
+	}
+
 	public int getAvailableChunkCount() {
 		int result = 0;
 		for (NativeLayeredTerrainChunk chunk : chunks) {
@@ -369,6 +388,89 @@ public final class NativeLayeredTerrainSnapshot {
 
 	public int getChunkSlotCount() {
 		return isChunkedProtocol() ? chunks.length : 1;
+	}
+
+	public boolean isChunkAvailable(int chunkX, int chunkY) {
+		for (NativeLayeredTerrainChunk chunk : chunks) {
+			if (chunk.getChunkX() == chunkX
+				&& chunk.getChunkY() == chunkY) {
+				return chunk.isAvailable();
+			}
+		}
+		return false;
+	}
+
+	public static NativeLayeredTerrainSnapshot mergePresentation(
+		NativeLayeredTerrainSnapshot visual,
+		NativeLayeredTerrainSnapshot structural) {
+		if (visual == null || structural == null
+			|| visual.protocolVersion != SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| structural.protocolVersion
+				!= SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
+			|| !visual.packageIdentity().equals(
+				structural.packageIdentity())
+			|| !visual.worldSpace.equals(structural.worldSpace)
+			|| visual.level != structural.level
+			|| visual.presentationChunkSize
+				!= structural.presentationChunkSize
+			|| visual.currentChunkX != structural.currentChunkX
+			|| visual.currentChunkY != structural.currentChunkY
+			|| visual.chunkRadius != structural.chunkRadius
+			|| visual.chunks.length != structural.chunks.length) {
+			throw new IllegalArgumentException(
+				"Symmetric visual and structural snapshots do not match");
+		}
+		NativeLayeredTerrainChunk[] merged =
+			new NativeLayeredTerrainChunk[visual.chunks.length];
+		for (int index = 0; index < merged.length; index++) {
+			NativeLayeredTerrainChunk visualChunk = visual.chunks[index];
+			NativeLayeredTerrainChunk structuralChunk =
+				structural.chunks[index];
+			int deltaX =
+				visualChunk.getChunkX() - visual.currentChunkX;
+			int deltaY =
+				visualChunk.getChunkY() - visual.currentChunkY;
+			if (Math.max(Math.abs(deltaX), Math.abs(deltaY))
+						< SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+				if (structuralChunk.isAvailable()) {
+					throw new IllegalArgumentException(
+						"Structural snapshot entered the authoritative inner field");
+				}
+				/*
+				 * The merged snapshot is consumed only while extracting the
+				 * outer presentation meshes. Retain the already-resident inner
+				 * source image so a positive-edge outer mesh can stitch the
+				 * legacy active window's intentionally omitted final face row.
+				 * No inner mesh, collision, or interaction authority is created.
+				 */
+				merged[index] = visualChunk;
+				continue;
+			}
+			if (visualChunk.isAvailable()
+					!= structuralChunk.isAvailable()) {
+				throw new IllegalArgumentException(
+					"Symmetric visual and structural availability differs");
+			}
+			merged[index] = visualChunk.isAvailable()
+				? NativeLayeredTerrainChunk.mergePresentation(
+					visualChunk, structuralChunk)
+				: NativeLayeredTerrainChunk.voidChunk(
+					visual.presentationChunkSize,
+					visualChunk.getChunkX(),
+					visualChunk.getChunkY());
+		}
+		return new NativeLayeredTerrainSnapshot(
+			SYMMETRIC_STRUCTURE_PROTOCOL_VERSION,
+			visual.packageId,
+			visual.packageVersion,
+			visual.manifestSha256,
+			visual.presentationChunkSize,
+			visual.worldSpace,
+			visual.level,
+			visual.currentChunkX,
+			visual.currentChunkY,
+			visual.chunkRadius,
+			merged);
 	}
 
 	private NativeLayeredTerrainChunk findAvailableChunk(
@@ -410,7 +512,12 @@ public final class NativeLayeredTerrainSnapshot {
 		return protocolVersion == LEGACY_CHUNKED_PROTOCOL_VERSION
 			|| protocolVersion == PROTOCOL_VERSION
 			|| protocolVersion == RESIDENT_PROTOCOL_VERSION
-			|| protocolVersion == READINESS_PROTOCOL_VERSION;
+			|| protocolVersion == READINESS_PROTOCOL_VERSION
+			|| protocolVersion == ATOMIC_ACTIVATION_PROTOCOL_VERSION
+			|| protocolVersion
+				== SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| protocolVersion
+				== SYMMETRIC_STRUCTURE_PROTOCOL_VERSION;
 	}
 
 	private static void requireSafeChunkCoordinate(

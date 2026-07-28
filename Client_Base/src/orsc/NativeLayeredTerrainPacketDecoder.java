@@ -73,6 +73,25 @@ public final class NativeLayeredTerrainPacketDecoder {
 			null);
 	}
 
+	public static NativeLayeredTerrainSnapshot decodeV8(
+		byte[] payload,
+		String worldSpace,
+		int level,
+		NativeLayeredTerrainResidentCache residentCache) {
+		if (residentCache == null) {
+			throw new IllegalArgumentException(
+				"Protocol-v8 native terrain requires a resident cache");
+		}
+		return decodeChunked(
+			payload,
+			worldSpace,
+			level,
+			NativeLayeredTerrainSnapshot
+				.ATOMIC_ACTIVATION_PROTOCOL_VERSION,
+			residentCache,
+			null);
+	}
+
 	public static NativeLayeredTerrainSnapshot decodeV7Stage(
 		byte[] payload,
 		String worldSpace,
@@ -88,6 +107,46 @@ public final class NativeLayeredTerrainPacketDecoder {
 			worldSpace,
 			level,
 			NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION,
+			residentCache,
+			activeTerrain);
+	}
+
+	public static NativeLayeredTerrainSnapshot decodeV9Halo(
+		byte[] payload,
+		String worldSpace,
+		int level,
+		NativeLayeredTerrainResidentCache residentCache,
+		NativeLayeredTerrainSnapshot activeTerrain) {
+		if (residentCache == null || activeTerrain == null) {
+			throw new IllegalArgumentException(
+				"Protocol-v9 terrain halo requires resident and active terrain");
+		}
+		return decodeChunked(
+			payload,
+			worldSpace,
+			level,
+			NativeLayeredTerrainSnapshot
+				.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION,
+			residentCache,
+			activeTerrain);
+	}
+
+	public static NativeLayeredTerrainSnapshot decodeV10Structure(
+		byte[] payload,
+		String worldSpace,
+		int level,
+		NativeLayeredTerrainResidentCache residentCache,
+		NativeLayeredTerrainSnapshot activeTerrain) {
+		if (residentCache == null || activeTerrain == null) {
+			throw new IllegalArgumentException(
+				"Protocol-v10 terrain structure requires resident and active terrain");
+		}
+		return decodeChunked(
+			payload,
+			worldSpace,
+			level,
+			NativeLayeredTerrainSnapshot
+				.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION,
 			residentCache,
 			activeTerrain);
 	}
@@ -129,8 +188,18 @@ public final class NativeLayeredTerrainPacketDecoder {
 					"Native terrain packet has an invalid chunk size");
 			}
 			int width = chunkRadius * 2 + 1;
-			if (chunkRadius
-					!= NativeLayeredTerrainSnapshot.STREAMING_CHUNK_RADIUS
+			int expectedChunkRadius =
+				protocolVersion
+						== NativeLayeredTerrainSnapshot
+							.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+					|| protocolVersion
+						== NativeLayeredTerrainSnapshot
+							.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
+					? NativeLayeredTerrainSnapshot
+						.SYMMETRIC_RESIDENCY_CHUNK_RADIUS
+					: NativeLayeredTerrainSnapshot
+						.STREAMING_CHUNK_RADIUS;
+			if (chunkRadius != expectedChunkRadius
 				|| chunkCount != width * width) {
 				throw new IllegalArgumentException(
 					"Native terrain packet has an invalid readiness window");
@@ -161,9 +230,24 @@ public final class NativeLayeredTerrainPacketDecoder {
 						}
 						payloadPresent = payloadPresence == 1;
 					}
-					int expectedTileBytes = Math.multiplyExact(
+					int expandedTileBytes = Math.multiplyExact(
 						Math.multiplyExact(chunkSize, chunkSize),
 						NativeLayeredTerrainChunk.TILE_WIRE_BYTES);
+					boolean visualPayload =
+						NativeLayeredTerrainChunk.VISUAL_ENCODING.equals(
+							sourceEncoding);
+					boolean structuralPayload =
+						NativeLayeredTerrainChunk.STRUCTURAL_ENCODING.equals(
+							sourceEncoding);
+					int expectedTileBytes = structuralPayload
+						? Math.multiplyExact(
+							Math.multiplyExact(chunkSize, chunkSize),
+							7)
+						: visualPayload
+						? Math.multiplyExact(
+							Math.multiplyExact(chunkSize, chunkSize),
+							3)
+						: expandedTileBytes;
 					NativeLayeredTerrainChunk chunk;
 					if (payloadPresent) {
 						int wireByteCount = input.getShort() & 0xffff;
@@ -184,6 +268,25 @@ public final class NativeLayeredTerrainPacketDecoder {
 										.LEGACY_CHUNKED_PROTOCOL_VERSION
 								? wireBytes
 								: inflateSector(wireBytes, expectedTileBytes);
+						if (visualPayload) {
+							if (protocolVersion
+									!= NativeLayeredTerrainSnapshot
+										.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION) {
+								throw new IllegalArgumentException(
+									"Visual terrain payload requires protocol v9");
+							}
+							tileBytes = expandVisualTerrain(
+								tileBytes, expandedTileBytes);
+						} else if (structuralPayload) {
+							if (protocolVersion
+									!= NativeLayeredTerrainSnapshot
+										.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
+								throw new IllegalArgumentException(
+									"Structural terrain payload requires protocol v10");
+							}
+							tileBytes = expandStructuralTerrain(
+								tileBytes, expandedTileBytes);
+						}
 						chunk = NativeLayeredTerrainChunk.available(
 							chunkSize,
 							chunkX,
@@ -251,10 +354,19 @@ public final class NativeLayeredTerrainPacketDecoder {
 				level,
 				currentChunkX,
 				currentChunkY,
-				chunkRadius,
-				chunks);
+					chunkRadius,
+					chunks);
 			if (activeTerrain != null) {
-				requireAdjacentStage(activeTerrain, result);
+				if (protocolVersion
+						== NativeLayeredTerrainSnapshot
+							.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+					|| protocolVersion
+						== NativeLayeredTerrainSnapshot
+							.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
+					requireSymmetricHalo(activeTerrain, result);
+				} else {
+					requireAdjacentStage(activeTerrain, result);
+				}
 			}
 			if (residentTransaction != null) {
 				residentTransaction.commit();
@@ -270,8 +382,11 @@ public final class NativeLayeredTerrainPacketDecoder {
 	private static void requireAdjacentStage(
 		NativeLayeredTerrainSnapshot active,
 		NativeLayeredTerrainSnapshot staged) {
-		if (active.getProtocolVersion()
-				!= NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION
+		if ((active.getProtocolVersion()
+					!= NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION
+				&& active.getProtocolVersion()
+					!= NativeLayeredTerrainSnapshot
+						.ATOMIC_ACTIVATION_PROTOCOL_VERSION)
 			|| !active.packageIdentity().equals(staged.packageIdentity())
 			|| !active.getWorldSpace().equals(staged.getWorldSpace())
 			|| active.getLevel() != staged.getLevel()) {
@@ -290,11 +405,89 @@ public final class NativeLayeredTerrainPacketDecoder {
 		}
 	}
 
+	private static void requireSymmetricHalo(
+		NativeLayeredTerrainSnapshot active,
+		NativeLayeredTerrainSnapshot halo) {
+		if ((active.getProtocolVersion()
+					!= NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION
+				&& active.getProtocolVersion()
+					!= NativeLayeredTerrainSnapshot
+						.ATOMIC_ACTIVATION_PROTOCOL_VERSION)
+			|| !active.packageIdentity().equals(halo.packageIdentity())
+			|| !active.getWorldSpace().equals(halo.getWorldSpace())
+			|| active.getLevel() != halo.getLevel()
+			|| active.getCurrentChunkX() != halo.getCurrentChunkX()
+			|| active.getCurrentChunkY() != halo.getCurrentChunkY()
+			|| halo.getChunkRadius()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			throw new IllegalArgumentException(
+				"Native terrain halo does not match the active center");
+		}
+	}
+
+	private static byte[] expandVisualTerrain(
+		byte[] visualBytes, int expandedLength) {
+		if (visualBytes == null
+			|| visualBytes.length % 3 != 0
+			|| expandedLength
+				!= visualBytes.length / 3
+					* NativeLayeredTerrainChunk.TILE_WIRE_BYTES) {
+			throw new IllegalArgumentException(
+				"Visual native terrain has an invalid tile image");
+		}
+		byte[] expanded = new byte[expandedLength];
+		int source = 0;
+		int target = 0;
+		while (source < visualBytes.length) {
+			expanded[target] = visualBytes[source++];
+			expanded[target + 1] = visualBytes[source++];
+			expanded[target + 2] = visualBytes[source++];
+			target += NativeLayeredTerrainChunk.TILE_WIRE_BYTES;
+		}
+		return expanded;
+	}
+
+	private static byte[] expandStructuralTerrain(
+		byte[] structuralBytes, int expandedLength) {
+		if (structuralBytes == null
+			|| structuralBytes.length % 7 != 0
+			|| expandedLength
+				!= structuralBytes.length / 7
+					* NativeLayeredTerrainChunk.TILE_WIRE_BYTES) {
+			throw new IllegalArgumentException(
+				"Structural native terrain has an invalid tile image");
+		}
+		byte[] expanded = new byte[expandedLength];
+		int source = 0;
+		int target = 0;
+		while (source < structuralBytes.length) {
+			System.arraycopy(
+				structuralBytes,
+				source,
+				expanded,
+				target + 3,
+				7);
+			source += 7;
+			target += NativeLayeredTerrainChunk.TILE_WIRE_BYTES;
+		}
+		return expanded;
+	}
+
 	private static boolean isResidentProtocol(final int protocolVersion) {
 		return protocolVersion
 				== NativeLayeredTerrainSnapshot.RESIDENT_PROTOCOL_VERSION
 			|| protocolVersion
-				== NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION;
+				== NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION
+			|| protocolVersion
+				== NativeLayeredTerrainSnapshot
+					.ATOMIC_ACTIVATION_PROTOCOL_VERSION
+			|| protocolVersion
+				== NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| protocolVersion
+				== NativeLayeredTerrainSnapshot
+					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION;
 	}
 
 	private static String residentContentIdentity(

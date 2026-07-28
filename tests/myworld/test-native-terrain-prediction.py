@@ -29,6 +29,7 @@ class NativeTerrainPredictionTest(unittest.TestCase):
                 public static void main(String[] arguments) {
                     LayeredTerrainStageStruct stage =
                         new LayeredTerrainStageStruct();
+                    stage.protocolVersion = 1;
                     stage.sequence = 8;
                     stage.contextSequence = 17;
                     stage.worldSpace = "global";
@@ -47,6 +48,9 @@ class NativeTerrainPredictionTest(unittest.TestCase):
 
                     receipt.stageSequence++;
                     require(!expected.matches(receipt), "stage sequence");
+                    receipt = receipt();
+                    receipt.protocolVersion++;
+                    require(!expected.matches(receipt), "protocol version");
                     receipt = receipt();
                     receipt.contextSequence++;
                     require(!expected.matches(receipt), "context sequence");
