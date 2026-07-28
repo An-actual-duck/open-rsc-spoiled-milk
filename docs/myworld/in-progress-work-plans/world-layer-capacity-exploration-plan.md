@@ -6,8 +6,9 @@ owner-accepted. Further editor capability work is paused after automatic
 generic ladder/stair pairing. The active implementation focus is native loader
 performance: measurable sector-product reuse and protocol-v6 resident-sector
 delivery are implemented. The first private loader diagnostic found and fixed
-one signed negative-section activation defect; current-source package refresh
-and protocol-v6 visual/transfer review come next.
+one signed negative-section activation defect. Current-source package `0.3.0`
+is automated- and owner-accepted; protocol-v6 visual/transfer review comes
+next.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -39,8 +40,9 @@ estimates and “next slice” language below are historical unless repeated her
   and 33,514 effective placements. It retains the accepted `0.2.0` composition
   while adding the later Mining Guild preparation and permanent Shilo furnace
   terrain/content change. Deterministic package, server/runtime, Builder,
-  Shilo, landscape, client, and authoritative builds pass; renewed private
-  runtime review is pending.
+  Shilo, landscape, client, and authoritative builds pass. Renewed private
+  review confirmed the expected current map, terrain, collision, transitions,
+  wilderness presentation, and performance.
 - Signed levels are data-declared and expandable. The loader, protocol,
   renderer, collision, persistence, and Builder have exercised depths beyond
   `-2` without adding another level constant or coordinate codec.
@@ -149,8 +151,8 @@ Implementation sequence:
      wilderness HUD and player-attack menu. Wilderness depth now derives from
      geographic logical X/Y, so every signed layer follows its corresponding
      level-0 wilderness coordinate rather than interpreting negative render
-     space as level 450. Automated coordinate/client builds pass; private
-     visual confirmation is pending on the freshly restarted client.
+     space as level 450. Automated coordinate/client builds pass, and owner
+     review confirmed the false level-450 indicator is gone on level `-1`.
 
 ### Current-source refresh discovered during private review
 
@@ -174,8 +176,10 @@ is `c9fa9c823558...`. Runtime and Builder pins target this exact revision.
 The mutable Spoiled Milk boundary source now differs from frozen Preservation
 by exactly the reviewed Shilo barrier record. Preservation package and
 transition generation refuse fail-closed; the frozen baseline is not rewritten.
-Repeat private loader validation before protocol-v6 acceptance. The earlier
-package remains reproducible evidence, not the content endpoint.
+Private loader review now confirms the expected current Mining Guild terrain,
+normal collision/transition behavior, stable performance, and logical
+wilderness presentation. The earlier package remains reproducible evidence,
+not the content endpoint.
 
 3. **Readiness acknowledgement, predictive delivery, and atomic activation**
    - Stage required sectors before a window boundary using authoritative
@@ -18533,8 +18537,8 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
-| 2026-07-27 | Refresh the active Spoiled Milk package from current clean manager terrain and its coupled content rather than continuing visual acceptance against stale `0.2.0` inputs. | Implemented and automated-validated as pinned package `0.3.0`: exact audit found only `L-1 (5,12)` and `L0 (8,17)` changed across the unchanged 1,771-sector inventory; the complete Shilo boundary/plugin/configuration change accompanies the terrain. The package contains 33,514 effective placements (`3775n/882i/27886s/971b`), manifest `9fbb45a9cd7b...`, and package fingerprint `c9fa9c823558...`. Frozen Preservation generation refuses the one known base-boundary drift instead of rewriting vanilla. Renewed private acceptance remains pending |
-| 2026-07-27 | Correct signed negative client section activation and logical wilderness presentation found by the first Mining Guild loader diagnostic. | Terrain fix owner-accepted: floor section `-10`, all nine sectors/20,736 tiles applied, local tile `(34,37)` matches the packet, and visuals/clickability/FPS recovered. Geographic wilderness calculation and HUD/attack integration pass automated validation; owner visual confirmation remains pending after client restart |
+| 2026-07-27 | Refresh the active Spoiled Milk package from current clean manager terrain and its coupled content rather than continuing visual acceptance against stale `0.2.0` inputs. | Implemented, automated-validated, and owner-accepted as pinned package `0.3.0`: exact audit found only `L-1 (5,12)` and `L0 (8,17)` changed across the unchanged 1,771-sector inventory; the complete Shilo boundary/plugin/configuration change accompanies the terrain. The package contains 33,514 effective placements (`3775n/882i/27886s/971b`), manifest `9fbb45a9cd7b...`, and package fingerprint `c9fa9c823558...`. Frozen Preservation generation refuses the one known base-boundary drift instead of rewriting vanilla. Private review confirmed current terrain, collision, transitions, wilderness presentation, and performance |
+| 2026-07-27 | Correct signed negative client section activation and logical wilderness presentation found by the first Mining Guild loader diagnostic. | Owner-accepted: floor section `-10`, all nine sectors/20,736 tiles applied, local tile `(34,37)` matches the packet, and visuals/clickability/FPS recovered. Geographic wilderness calculation keeps every signed layer aligned to its level-0 X/Y; the false level-450 indicator is gone on level `-1` |
 | 2026-07-27 | Implement loader-v2 resident-sector delivery as a default-off protocol-v6 milestone with protocol-v5 rollback. | Automated-validated; exact 64-entry connection-local LRU identities, transactional server/client updates, outbound-queue commit fencing, full nine-slot inventories with payload/reference discrimination, reconnect/reset full refill, malformed/missing-reference refusal, and payload/reference telemetry pass focused tests plus client/server builds. Private visual and transfer acceptance remains |
 | 2026-07-27 | Select native loader performance as the active showcase workstream and begin with behavior-preserving sector-product reuse. | Slice 1 lazily caches immutable protocol-v5 sector wire products by exact package/manifest, signed slot, and content hash; Builder revisions retain their uncached safety path. AI-readable profiling/benchmark metrics now expose contexts, slots, available sectors, raw/wire bytes, cache hits/misses, build time, and entries. The wire protocol and client presentation remain unchanged while resident delta delivery is designed next |
 | 2026-07-27 | Accept automatic adjacent-level pairing as a narrow authoring convention for generic ladders and wooden/stone stairs, then pause further editor capability work. | Owner-accepted. IDs `5/6`, `41/42`, and `43/44` alone create the inverse object and safe landing on a missing non-source adjacent level. The accepted route round-tripped and reused the pair; v4 clean close committed level `-5`, nine sectors, nine landing tiles, and two scenery edits in manifest `d8fc45941e93`. Specialized and exceptional transitions remain explicit |
