@@ -1084,6 +1084,36 @@ public final class World {
 		return Math.floorDiv(SECTION_SIZE / 2 + worldTile, SECTION_SIZE);
 	}
 
+	public int activeSectionXForWorldTile(int worldTile) {
+		NativeLayeredTerrainSnapshot snapshot =
+			nativeLayeredTerrainSnapshot;
+		return snapshot == null
+			? worldTileToSection(worldTile)
+			: nativeSnapshotRuntimeSection(
+				snapshot.getCurrentChunkX(),
+				syntheticDeepFixtureOffsetX);
+	}
+
+	public int activeSectionYForWorldTile(int worldTile) {
+		NativeLayeredTerrainSnapshot snapshot =
+			nativeLayeredTerrainSnapshot;
+		return snapshot == null
+			? worldTileToSection(worldTile)
+			: nativeSnapshotRuntimeSection(
+				snapshot.getCurrentChunkY(),
+				syntheticDeepFixtureOffsetZ);
+	}
+
+	private static int nativeSnapshotRuntimeSection(
+		int logicalSection,
+		int worldOffset) {
+		return Math.floorDiv(
+			Math.addExact(
+				Math.multiplyExact(logicalSection, SECTION_SIZE),
+				worldOffset),
+			SECTION_SIZE);
+	}
+
 	public static int sectionToLocalBaseTile(int section) {
 		return (section - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
 	}
@@ -1271,8 +1301,14 @@ public final class World {
 							zSize = Objects.requireNonNull(EntityHandler.getObjectDef(objectID)).getWidth();
 						}
 
-						for (int x = xTile; x < xSize + xTile; ++x)
-							for (int z = zTile; zTile + zSize > z; ++z)
+							for (int x = Math.max(0, xTile);
+								x < Math.min(
+									LOCAL_TILE_COUNT, xSize + xTile);
+								++x)
+								for (int z = Math.max(0, zTile);
+									z < Math.min(
+										LOCAL_TILE_COUNT, zTile + zSize);
+									++z)
 								if (Objects.requireNonNull(EntityHandler.getObjectDef(objectID)).getType() == 1)
 									this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
 										CollisionFlag.FULL_BLOCK_C);
@@ -1658,8 +1694,8 @@ public final class World {
 		try {
 			long transitionStartNanos = System.nanoTime();
 			long phaseStartNanos = transitionStartNanos;
-			int chunkX = worldTileToSection(var1);
-			int chunkZ = worldTileToSection(var5);
+			int chunkX = activeSectionXForWorldTile(var1);
+			int chunkZ = activeSectionYForWorldTile(var5);
 			boolean bridgeDecorationsApplied = this.loadSectionWindow(sectors, plane, chunkX, chunkZ);
 			long sectionWindowNanos =
 				System.nanoTime() - phaseStartNanos;
@@ -3516,8 +3552,8 @@ public final class World {
 				this.shouldUseNativeTerrainAuthorityOnly();
 			long resetNanos = System.nanoTime() - phaseStart;
 
-			int x = worldTileToSection(worldX);
-			int z = worldTileToSection(worldZ);
+			int x = activeSectionXForWorldTile(worldX);
+			int z = activeSectionYForWorldTile(worldZ);
 
 			phaseStart = System.nanoTime();
 			this.generateLandscapeModel(worldX, 122, true, plane, worldZ);
@@ -4256,8 +4292,14 @@ public final class World {
 						var6 = Objects.requireNonNull(EntityHandler.getObjectDef(id)).getHeight();
 					}
 
-					for (int var8 = x; x + var6 > var8; ++var8)
-						for (int var9 = z; var7 + z > var9; ++var9)
+						for (int var8 = Math.max(0, x);
+							var8 < Math.min(
+								LOCAL_TILE_COUNT, x + var6);
+							++var8)
+							for (int var9 = Math.max(0, z);
+								var9 < Math.min(
+									LOCAL_TILE_COUNT, z + var7);
+								++var9)
 							if (Objects.requireNonNull(EntityHandler.getObjectDef(id)).getType() != 1) {
 								if (var5 == 0) {
 									this.collisionFlags[var8][var9] = FastMath

@@ -23,6 +23,14 @@ public class SceneBaselineStruct extends AbstractStruct<OpcodeOut> {
 	public int sceneryHash;
 	public int wallsHash;
 	public int groundItemsHash;
+	public int presentationCenterSectorX;
+	public int presentationCenterSectorY;
+	public int presentationOuterRadius;
+	public int presentationInnerRadius;
+	public int presentationScenery;
+	public int presentationWalls;
+	public int presentationSceneryHash;
+	public int presentationWallsHash;
 	public int pageCategory;
 	public int pageIndex;
 	public int pageTotal;

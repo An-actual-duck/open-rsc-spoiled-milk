@@ -44,6 +44,11 @@ public class PacketHandler {
 	private static final int AUTHENTIC_LOCAL_MOB_COUNT_BITS = 8;
 	private static final int CUSTOM_LOCAL_MOB_COUNT_BITS = 16;
 	private static final int INCOMING_PACKET_BUFFER_INITIAL_SIZE = 30000;
+	private static final int SCENE_BASELINE_PRESENTATION_HEADER_BYTES = 22;
+	private static final int SCENE_BASELINE_PAGE_HEADER_BYTES = 7;
+	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
+	private static final int SCENE_BASELINE_PRESENTATION_PAGE_SIZE = 512;
+	private static final int SCENE_BASELINE_SECTOR_SIZE = 48;
 
 	private final RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
 	private Network_Socket clientStream;
@@ -59,6 +64,7 @@ public class PacketHandler {
 		nativeLayeredTerrainResidentCache =
 			new NativeLayeredTerrainResidentCache();
 	private int appliedSceneBaselineKey = 0;
+	private int appliedScenePresentationKey = 0;
 	private int layeredTerrainReadySequence = 0;
 	private int layeredTerrainReadyReceipts = 0;
 	private int layeredTerrainStageSequence = 0;
@@ -220,11 +226,13 @@ public class PacketHandler {
 		layeredSceneActivationState.reset();
 		if (mc != null) {
 			mc.setLayeredSceneActivationPending(false);
+			mc.clearStaticScenePresentation();
 		}
 		nativeLayeredTerrainResidentCache.clear();
 		sceneBaselineState.resetForScopeChange("none");
 		movementSnapshotStage.reset();
 		appliedSceneBaselineKey = 0;
+		appliedScenePresentationKey = 0;
 		layeredTerrainReadySequence = 0;
 		layeredTerrainReadyReceipts = 0;
 		layeredTerrainStageSequence = 0;
@@ -674,6 +682,18 @@ public class PacketHandler {
 				layeredSceneContextState.scopeIdentity());
 			movementSnapshotStage.reset();
 			appliedSceneBaselineKey = 0;
+			appliedScenePresentationKey = 0;
+			/*
+			 * A same-scope region shift has a large overlap between its old
+			 * and new radius-two static rings. Keep that last complete visual
+			 * product until the replacement is complete, then swap it in one
+			 * operation. Clearing here exposed a deliberate empty frame for
+			 * the context-to-baseline interval. A real scope change cannot
+			 * safely retain records from another level or world space.
+			 */
+			if (result.isScopeChanged()) {
+				mc.clearStaticScenePresentation();
+			}
 		}
 		mc.applyLayeredSceneScope(
 			result.getLegacyPlane(),
@@ -2384,6 +2404,14 @@ public class PacketHandler {
 		int sceneryHash = 0;
 		int wallsHash = 0;
 		int groundItemsHash = 0;
+		int presentationCenterSectorX = 0;
+		int presentationCenterSectorY = 0;
+		int presentationOuterRadius = 0;
+		int presentationInnerRadius = 0;
+		int presentationScenery = 0;
+		int presentationWalls = 0;
+		int presentationSceneryHash = 0;
+		int presentationWallsHash = 0;
 		int pageCategory = 0;
 		int pageIndex = 0;
 		int pageTotal = 0;
@@ -2421,17 +2449,85 @@ public class PacketHandler {
 			wallsHash = packetsIncoming.get32();
 			groundItemsHash = packetsIncoming.get32();
 		}
-		if (packetsIncoming.packetEnd + 7 <= length) {
+		if (protocolVersion
+				>= SceneBaselineState.PRESENTATION_PROTOCOL_VERSION) {
+			if (packetsIncoming.packetEnd
+					+ SCENE_BASELINE_PRESENTATION_HEADER_BYTES
+				> length) {
+				throw new IllegalArgumentException(
+					"Presentation scene baseline header is truncated");
+			}
+			presentationCenterSectorX = packetsIncoming.get32();
+			presentationCenterSectorY = packetsIncoming.get32();
+			presentationOuterRadius =
+				packetsIncoming.getUnsignedByte();
+			presentationInnerRadius =
+				packetsIncoming.getUnsignedByte();
+			presentationScenery = packetsIncoming.getShort();
+			presentationWalls = packetsIncoming.getShort();
+			presentationSceneryHash = packetsIncoming.get32();
+			presentationWallsHash = packetsIncoming.get32();
+			if (presentationOuterRadius <= presentationInnerRadius
+				|| presentationOuterRadius > 16) {
+				throw new IllegalArgumentException(
+					"Presentation scene baseline has invalid radii");
+			}
+		}
+		if (protocolVersion
+				>= SceneBaselineState.PRESENTATION_PROTOCOL_VERSION
+			&& packetsIncoming.packetEnd
+					+ SCENE_BASELINE_PAGE_HEADER_BYTES
+				> length) {
+			throw new IllegalArgumentException(
+				"Presentation scene baseline page header is truncated");
+		}
+		if (packetsIncoming.packetEnd
+				+ SCENE_BASELINE_PAGE_HEADER_BYTES
+			<= length) {
 			pageCategory = packetsIncoming.getUnsignedByte();
 			pageIndex = packetsIncoming.getShort();
 			pageTotal = packetsIncoming.getShort();
 			int recordCount = packetsIncoming.getShort();
-			for (int i = 0; i < recordCount && packetsIncoming.packetEnd + 8 <= length; i++) {
+			validateSceneBaselinePageHeader(
+				protocolVersion,
+				pageCategory,
+				pageIndex,
+				pageTotal,
+				recordCount);
+			final boolean presentationRecords =
+				protocolVersion
+						>= SceneBaselineState.PRESENTATION_PROTOCOL_VERSION
+					&& (pageCategory
+							== SceneBaselineState.PAGE_PRESENTATION_SCENERY
+						|| pageCategory
+							== SceneBaselineState.PAGE_PRESENTATION_WALLS);
+			final int recordBytes = presentationRecords ? 12 : 8;
+			if ((long) packetsIncoming.packetEnd
+					+ (long) recordCount * recordBytes
+				!= length) {
+				throw new IllegalArgumentException(
+					"Scene baseline page payload length disagrees with its record count");
+			}
+			for (int i = 0; i < recordCount; i++) {
 				int id = packetsIncoming.getShort();
-				int x = packetsIncoming.getShort();
-				int y = packetsIncoming.getShort();
+				int x = presentationRecords
+					? packetsIncoming.get32()
+					: packetsIncoming.getShort();
+				int y = presentationRecords
+					? packetsIncoming.get32()
+					: packetsIncoming.getShort();
 				int direction = packetsIncoming.getUnsignedByte();
 				int type = packetsIncoming.getUnsignedByte();
+				validateSceneBaselineRecord(
+					protocolVersion,
+					pageCategory,
+					x,
+					y,
+					type,
+					presentationCenterSectorX,
+					presentationCenterSectorY,
+					presentationOuterRadius,
+					presentationInnerRadius);
 				pageRecords.add(new SceneBaselineState.Record(id, x, y, direction, type));
 				recordsRead++;
 			}
@@ -2461,11 +2557,14 @@ public class PacketHandler {
 					+ fenceResult.summary();
 			System.out.println(fenceSummary);
 			ClientRuntimeLogger.log(fenceSummary);
-			if (fenceResult.matches()) {
-				recordLayeredSceneActivationProgress(
-					layeredSceneActivationState.acceptStaticBaseline(
-						locationContextSequence));
-			}
+			/*
+			 * The fence proves that the gameplay-owned inner scene agrees
+			 * with the server. It is not the complete protocol-v8 visual
+			 * product: the outer presentation-only ring follows in paged
+			 * baseline packets. Releasing the atomic cover here briefly
+			 * rendered the retained previous ring against the new region
+			 * base before its replacement arrived.
+			 */
 			packetsIncoming.packetEnd = length;
 			return;
 		}
@@ -2483,6 +2582,14 @@ public class PacketHandler {
 			sceneryHash,
 			wallsHash,
 			groundItemsHash,
+			presentationCenterSectorX,
+			presentationCenterSectorY,
+			presentationOuterRadius,
+			presentationInnerRadius,
+			presentationScenery,
+			presentationWalls,
+			presentationSceneryHash,
+			presentationWallsHash,
 			pageCategory,
 			pageIndex,
 			pageTotal,
@@ -2490,9 +2597,131 @@ public class PacketHandler {
 			pageRecords);
 		sceneBaselineState.pruneLegacyListsOutsideSyncRange(mc);
 		applyCompleteSceneBaselineToLegacyLists();
+		applyCompleteStaticPresentation();
 		acceptCompleteAtomicSceneBaseline();
 		sceneBaselineState.recordSceneDiagnostics(mc);
 		packetsIncoming.packetEnd = length;
+	}
+
+	private static void validateSceneBaselinePageHeader(
+		final int protocolVersion,
+		final int pageCategory,
+		final int pageIndex,
+		final int pageTotal,
+		final int recordCount) {
+		final int recordLimit = protocolVersion
+				>= SceneBaselineState.PRESENTATION_PROTOCOL_VERSION
+			? SCENE_BASELINE_PRESENTATION_PAGE_SIZE
+			: SCENE_BASELINE_PAGE_SIZE;
+		if (recordCount < 0 || recordCount > recordLimit) {
+			throw new IllegalArgumentException(
+				"Scene baseline page exceeds its record limit");
+		}
+		if (pageCategory == 0) {
+			if (pageIndex != 0 || pageTotal != 0 || recordCount != 0) {
+				throw new IllegalArgumentException(
+					"Empty scene baseline page carried paging state");
+			}
+			return;
+		}
+		if (pageCategory == SceneBaselineState.PAGE_ATOMIC_FENCE) {
+			if (protocolVersion
+					!= SceneBaselineState.ATOMIC_FENCE_PROTOCOL_VERSION
+				|| pageIndex != 0
+				|| pageTotal != 0
+				|| recordCount != 0) {
+				throw new IllegalArgumentException(
+					"Invalid atomic scene baseline fence page");
+			}
+			return;
+		}
+		final boolean authoritative =
+			pageCategory == 1 || pageCategory == 2;
+		final boolean presentation =
+			pageCategory
+					== SceneBaselineState.PAGE_PRESENTATION_SCENERY
+				|| pageCategory
+					== SceneBaselineState.PAGE_PRESENTATION_WALLS;
+		if (!authoritative
+			&& (!presentation
+				|| protocolVersion
+					< SceneBaselineState.PRESENTATION_PROTOCOL_VERSION)) {
+			throw new IllegalArgumentException(
+				"Unsupported scene baseline page category");
+		}
+		if (pageTotal <= 0 || pageIndex < 0 || pageIndex >= pageTotal) {
+			throw new IllegalArgumentException(
+				"Scene baseline page index/total is invalid");
+		}
+	}
+
+	private static void validateSceneBaselineRecord(
+		final int protocolVersion,
+		final int pageCategory,
+		final int x,
+		final int y,
+		final int type,
+		final int centerSectorX,
+		final int centerSectorY,
+		final int outerRadius,
+		final int innerRadius) {
+		final boolean scenery =
+			pageCategory == 1
+				|| pageCategory
+					== SceneBaselineState.PAGE_PRESENTATION_SCENERY;
+		final boolean walls =
+			pageCategory == 2
+				|| pageCategory
+					== SceneBaselineState.PAGE_PRESENTATION_WALLS;
+		if (!scenery && !walls || type != (scenery ? 0 : 1)) {
+			throw new IllegalArgumentException(
+				"Scene baseline record type disagrees with its page");
+		}
+		if (protocolVersion
+				< SceneBaselineState.PRESENTATION_PROTOCOL_VERSION) {
+			return;
+		}
+		final long outerMinX =
+			((long) centerSectorX - outerRadius)
+				* SCENE_BASELINE_SECTOR_SIZE;
+		final long outerMinY =
+			((long) centerSectorY - outerRadius)
+				* SCENE_BASELINE_SECTOR_SIZE;
+		final long outerMaxXExclusive =
+			((long) centerSectorX + outerRadius + 1L)
+				* SCENE_BASELINE_SECTOR_SIZE;
+		final long outerMaxYExclusive =
+			((long) centerSectorY + outerRadius + 1L)
+				* SCENE_BASELINE_SECTOR_SIZE;
+		final long innerMinX =
+			((long) centerSectorX - innerRadius)
+				* SCENE_BASELINE_SECTOR_SIZE;
+		final long innerMinY =
+			((long) centerSectorY - innerRadius)
+				* SCENE_BASELINE_SECTOR_SIZE;
+		final long innerMaxXExclusive =
+			((long) centerSectorX + innerRadius + 1L)
+				* SCENE_BASELINE_SECTOR_SIZE;
+		final long innerMaxYExclusive =
+			((long) centerSectorY + innerRadius + 1L)
+				* SCENE_BASELINE_SECTOR_SIZE;
+		final boolean inOuter = x >= outerMinX
+			&& x < outerMaxXExclusive
+			&& y >= outerMinY
+			&& y < outerMaxYExclusive;
+		final boolean inInner = x >= innerMinX
+			&& x < innerMaxXExclusive
+			&& y >= innerMinY
+			&& y < innerMaxYExclusive;
+		final boolean presentation =
+			pageCategory
+					== SceneBaselineState.PAGE_PRESENTATION_SCENERY
+				|| pageCategory
+					== SceneBaselineState.PAGE_PRESENTATION_WALLS;
+		if (!inOuter || presentation == inInner) {
+			throw new IllegalArgumentException(
+				"Scene baseline record is outside its ownership ring");
+		}
 	}
 
 	private void applyCompleteSceneBaselineToLegacyLists() {
@@ -2504,6 +2733,7 @@ public class PacketHandler {
 		// already arrived. Replay it against the new origin instead of waiting
 		// for a server-side scenery change that may never occur.
 		applyCompleteSceneBaselineToLegacyLists(true);
+		applyCompleteStaticPresentation(true);
 		acceptCompleteAtomicSceneBaseline();
 	}
 
@@ -2543,11 +2773,35 @@ public class PacketHandler {
 		sceneBaselineState.recordLegacyBaselineApplied();
 	}
 
+	private void applyCompleteStaticPresentation() {
+		applyCompleteStaticPresentation(false);
+	}
+
+	private void applyCompleteStaticPresentation(boolean force) {
+		if (mc == null
+			|| !sceneBaselineState.hasStoredCompletePresentation()) {
+			return;
+		}
+		int applyKey = sceneBaselineState.presentationApplyKey(mc);
+		if (!force && applyKey == appliedScenePresentationKey) {
+			return;
+		}
+		mc.replaceStaticScenePresentation(
+			sceneBaselineState
+				.snapshotStoredPresentationSceneryRecords(),
+			sceneBaselineState
+				.snapshotStoredPresentationWallRecords());
+		appliedScenePresentationKey = applyKey;
+	}
+
 	private void acceptCompleteAtomicSceneBaseline() {
 		if (mc == null
 			|| !sceneBaselineState.isCompleteAndOriginLoaded(mc)
 			|| appliedSceneBaselineKey
-				!= sceneBaselineState.legacyApplyKey(mc)) {
+				!= sceneBaselineState.legacyApplyKey(mc)
+			|| sceneBaselineState.hasStoredCompletePresentation()
+				&& appliedScenePresentationKey
+					!= sceneBaselineState.presentationApplyKey(mc)) {
 			return;
 		}
 		recordLayeredSceneActivationProgress(

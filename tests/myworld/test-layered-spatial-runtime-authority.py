@@ -180,6 +180,29 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
             "surface cache level");
         check(upperKey.getRegionWindow().getLevel() == 1,
             "upper cache level");
+        LayeredSpatialWindowKey exactKey =
+            LayeredSpatialWindowKey.exact(
+                location(100, 400, -2), 48, 576, 192, 720);
+        check(exactKey.hasExactTileBounds(), "exact key marker");
+        check(exactKey.getMinTileX() == 48
+                && exactKey.getMinTileY() == 576
+                && exactKey.getMaxTileXExclusive() == 192
+                && exactKey.getMaxTileYExclusive() == 720,
+            "exact half-open tile bounds");
+        check(exactKey.getRegionWindow().getMinRegionX() == 1
+                && exactKey.getRegionWindow().getMaxRegionX() == 3
+                && exactKey.getRegionWindow().getMinRegionY() == 12
+                && exactKey.getRegionWindow().getMaxRegionY() == 14,
+            "exact three-by-three region window");
+        check(!exactKey.equals(
+                LayeredSpatialWindowKey.exact(
+                    location(100, 400, -2), 49, 576, 193, 720)),
+            "exact tile bounds qualify cache identity");
+        check(!surfaceKey.hasExactTileBounds(),
+            "radius key retains legacy identity mode");
+        check(surfaceKey.getMinTileX() == 68
+                && surfaceKey.getMaxTileXExclusive() == 133,
+            "radius key retains inclusive radius semantics");
 
         GameObject object = new GameObject();
         index.synchronize(object, null, boundaryTarget);

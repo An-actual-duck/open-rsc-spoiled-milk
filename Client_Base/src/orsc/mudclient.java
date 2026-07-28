@@ -582,6 +582,9 @@ public final class mudclient implements Runnable {
 	public boolean m_N = false;
 	public int mouseX = 0;
 	public int mouseY = 0;
+	private String pendingTerrainNavigationRejectReason;
+	private int pendingTerrainNavigationRejectMouseX;
+	private int pendingTerrainNavigationRejectMouseY;
 	public int mouseLastProcessedX = 0;
 	public int mouseLastProcessedY = 0;
 	public int screenOffsetX;
@@ -861,6 +864,19 @@ public final class mudclient implements Runnable {
 	private boolean hasCompletedInitialRegionLoad = false;
 	private final Map<Integer, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
 		new HashMap<Integer, ResidentObjectChunkCacheEntry>();
+	private List<SceneBaselineState.Record>
+		staticPresentationSceneryRecords =
+			Collections.emptyList();
+	private List<SceneBaselineState.Record>
+		staticPresentationWallRecords =
+			Collections.emptyList();
+	private final List<StaticPresentationModel>
+		staticPresentationModels =
+			new ArrayList<StaticPresentationModel>();
+	private long staticPresentationRevision = 0L;
+	private long builtStaticPresentationRevision = -1L;
+	private int builtStaticPresentationBaseX = Integer.MIN_VALUE;
+	private int builtStaticPresentationBaseZ = Integer.MIN_VALUE;
 	private int logoutTimeout = 0;
 	private int controlButtonAppearanceBottom2;
 	private int m_be;
@@ -3431,11 +3447,21 @@ public final class mudclient implements Runnable {
 		int z1 = y * this.tileSize;
 		x2 *= this.tileSize;
 		y2 *= this.tileSize;
-		int v1 = model.insertVertex(x1, -this.world.getElevation(x1, z1), z1);
-		int v2 = model.insertVertex(x1, -this.world.getElevation(x1, z1) - height, z1);
+			int elevation1 =
+				this.world.getPresentationTerrainElevation(x1, z1);
+			int elevation2 =
+				this.world.getPresentationTerrainElevation(x2, y2);
+			if (elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+				elevation1 = this.world.getElevation(x1, z1);
+			}
+			if (elevation2 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+				elevation2 = this.world.getElevation(x2, y2);
+			}
+			int v1 = model.insertVertex(x1, -elevation1, z1);
+			int v2 = model.insertVertex(x1, -elevation1 - height, z1);
 
-		int v3 = model.insertVertex(x2, -height - this.world.getElevation(x2, y2), y2);
-		int v4 = model.insertVertex(x2, -this.world.getElevation(x2, y2), y2);
+			int v3 = model.insertVertex(x2, -height - elevation2, y2);
+			int v4 = model.insertVertex(x2, -elevation2, y2);
 		int[] indices = new int[]{v1, v2, v3, v4};
 		model.insertFace(4, indices, texFront, texBack, false);
 		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
@@ -3475,11 +3501,17 @@ public final class mudclient implements Runnable {
 			zSize = EntityHandler.getObjectDef(objectID).getWidth();
 		}
 
-		int x = (2 * xTile + xSize) * this.tileSize / 2;
-		int z = this.tileSize * (2 * zTile + zSize) / 2;
-		applyExpandedGameObjectPickBounds(objectID, model);
-		this.scene.addModel(model);
-		model.setTranslate(x, -this.world.getElevation(x, z), z);
+			int x = (2 * xTile + xSize) * this.tileSize / 2;
+			int z = this.tileSize * (2 * zTile + zSize) / 2;
+			int elevation =
+				this.world.getPresentationTerrainElevation(x, z);
+			if (elevation == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+				debugSceneGameObjectEvent("defer-elevation", index, "");
+				return;
+			}
+			applyExpandedGameObjectPickBounds(objectID, model);
+			this.scene.addModel(model);
+			model.setTranslate(x, -elevation, z);
 		this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, false);
 		if (objectID == 74) {
 			model.translate2(0, -480, 0);
@@ -3624,6 +3656,220 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	public void replaceStaticScenePresentation(
+		List<SceneBaselineState.Record> scenery,
+		List<SceneBaselineState.Record> walls) {
+		this.staticPresentationSceneryRecords =
+			Collections.unmodifiableList(
+				new ArrayList<SceneBaselineState.Record>(
+					scenery == null
+						? Collections.<SceneBaselineState.Record>emptyList()
+						: scenery));
+		this.staticPresentationWallRecords =
+			Collections.unmodifiableList(
+				new ArrayList<SceneBaselineState.Record>(
+					walls == null
+						? Collections.<SceneBaselineState.Record>emptyList()
+						: walls));
+		this.staticPresentationRevision++;
+		invalidateStaticScenePresentationModels();
+	}
+
+	public void clearStaticScenePresentation() {
+		if (this.staticPresentationSceneryRecords.isEmpty()
+			&& this.staticPresentationWallRecords.isEmpty()
+			&& this.staticPresentationModels.isEmpty()) {
+			return;
+		}
+		this.staticPresentationSceneryRecords =
+			Collections.emptyList();
+		this.staticPresentationWallRecords =
+			Collections.emptyList();
+		this.staticPresentationRevision++;
+		invalidateStaticScenePresentationModels();
+	}
+
+	private void invalidateStaticScenePresentationModels() {
+		this.staticPresentationModels.clear();
+		this.builtStaticPresentationRevision = -1L;
+		this.builtStaticPresentationBaseX = Integer.MIN_VALUE;
+		this.builtStaticPresentationBaseZ = Integer.MIN_VALUE;
+		clearResidentObjectChunkCache();
+	}
+
+	private void ensureStaticScenePresentationModels() {
+		if (this.builtStaticPresentationRevision
+				== this.staticPresentationRevision
+			&& this.builtStaticPresentationBaseX == this.midRegionBaseX
+			&& this.builtStaticPresentationBaseZ == this.midRegionBaseZ) {
+			return;
+		}
+		this.staticPresentationModels.clear();
+		int skipped = 0;
+		int index = 0;
+		for (SceneBaselineState.Record record
+				: this.staticPresentationSceneryRecords) {
+			RSModel model = createStaticPresentationGameObjectModel(
+				record, index);
+			if (model == null) {
+				skipped++;
+			} else {
+				this.staticPresentationModels.add(
+					new StaticPresentationModel(
+						Renderer3DModelKind.GAME_OBJECT,
+						index,
+						record.x - this.midRegionBaseX,
+						record.y - this.midRegionBaseZ,
+						record.id,
+						record.direction,
+						model));
+			}
+			index++;
+		}
+		for (SceneBaselineState.Record record
+				: this.staticPresentationWallRecords) {
+			RSModel model = createStaticPresentationWallObjectModel(
+				record, index);
+			if (model == null) {
+				skipped++;
+			} else {
+				this.staticPresentationModels.add(
+					new StaticPresentationModel(
+						Renderer3DModelKind.WALL_OBJECT,
+						index,
+						record.x - this.midRegionBaseX,
+						record.y - this.midRegionBaseZ,
+						record.id,
+						record.direction,
+						model));
+			}
+			index++;
+		}
+		this.builtStaticPresentationRevision =
+			this.staticPresentationRevision;
+		this.builtStaticPresentationBaseX = this.midRegionBaseX;
+		this.builtStaticPresentationBaseZ = this.midRegionBaseZ;
+		clearResidentObjectChunkCache();
+		String summary = "STATIC_SCENE_PRESENTATION"
+			+ " records="
+			+ (this.staticPresentationSceneryRecords.size()
+				+ this.staticPresentationWallRecords.size())
+			+ " models=" + this.staticPresentationModels.size()
+			+ " skipped=" + skipped
+			+ " base=" + this.midRegionBaseX + ","
+				+ this.midRegionBaseZ;
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+	}
+
+	private RSModel createStaticPresentationGameObjectModel(
+		SceneBaselineState.Record record,
+		int index) {
+		GameObjectDef def = EntityHandler.getObjectDef(record.id);
+		if (def == null || def.modelID < 0) {
+			return null;
+		}
+		int localX = record.x - this.midRegionBaseX;
+		int localZ = record.y - this.midRegionBaseZ;
+		int xSize;
+		int zSize;
+		if (record.direction == 0 || record.direction == 4) {
+			xSize = def.getWidth();
+			zSize = def.getHeight();
+		} else {
+			xSize = def.getHeight();
+			zSize = def.getWidth();
+		}
+		int x = (2 * localX + xSize) * this.tileSize / 2;
+		int z = (2 * localZ + zSize) * this.tileSize / 2;
+		int elevation =
+			this.world.getPresentationTerrainElevation(x, z);
+		if (elevation == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+			return null;
+		}
+		RSModel model = this.getModelCacheItem(def.modelID).clone();
+		model.key = -1 - index;
+		model.addRotation(0, record.direction * 32, 0);
+		model.setDiffuseLightAndColor(
+			-50, -10, -50, 48, 48, true, 117);
+		model.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
+		model.setTranslate(x, -elevation, z);
+		if (record.id == 74) {
+			model.translate2(0, -480, 0);
+		}
+		applyRenderer3DMaterialMetadata(
+			Renderer3DModelKind.GAME_OBJECT,
+			record.id,
+			model);
+		return model;
+	}
+
+	private RSModel createStaticPresentationWallObjectModel(
+		SceneBaselineState.Record record,
+		int index) {
+		DoorDef definition = EntityHandler.getDoorDef(record.id);
+		if (definition == null) {
+			return null;
+		}
+		int x1 = record.x - this.midRegionBaseX;
+		int x2 = x1;
+		int y1 = record.y - this.midRegionBaseZ;
+		int y2 = y1;
+		if (record.direction == 1) {
+			y2++;
+		}
+		if (record.direction == 0) {
+			x2++;
+		}
+		if (record.direction == 2) {
+			x1++;
+			y2++;
+		}
+		if (record.direction == 3) {
+			x2++;
+			y2++;
+		}
+		int x1World = x1 * this.tileSize;
+		int y1World = y1 * this.tileSize;
+		int x2World = x2 * this.tileSize;
+		int y2World = y2 * this.tileSize;
+		int elevation1 = this.world.getPresentationTerrainElevation(
+			x1World, y1World);
+		int elevation2 = this.world.getPresentationTerrainElevation(
+			x2World, y2World);
+		if (elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE
+			|| elevation2
+				== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+			return null;
+		}
+		int height = definition.getWallObjectHeight();
+		RSModel model = new RSModel(4, 1);
+		int v1 = model.insertVertex(
+			x1World, -elevation1, y1World);
+		int v2 = model.insertVertex(
+			x1World, -elevation1 - height, y1World);
+		int v3 = model.insertVertex(
+			x2World, -height - elevation2, y2World);
+		int v4 = model.insertVertex(
+			x2World, -elevation2, y2World);
+		model.insertFace(
+			4,
+			new int[] {v1, v2, v3, v4},
+			definition.getModelVar2(),
+			definition.getModelVar3(),
+			false);
+		model.setRenderer3DModelKind(
+			Renderer3DModelKind.WALL_OBJECT);
+		model.setDiffuseLightAndColor(
+			-50, -10, -50, 60, 24, false, -95);
+		model.key = -1 - index;
+		applyRenderer3DMaterialMetadata(
+			Renderer3DModelKind.WALL_OBJECT,
+			record.id,
+			model);
+		return model;
+	}
+
 	private Renderer3DWorldChunkFrame appendResidentObjectChunkFrame(Renderer3DWorldChunkFrame baseFrame) {
 		if (!Renderer3DSettings.canUseResidentObjectChunks()) {
 			clearResidentObjectChunkCache();
@@ -3669,6 +3915,7 @@ public final class mudclient implements Runnable {
 		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
 		Map<Integer, ResidentObjectChunkInputBuilder> builders =
 			new TreeMap<Integer, ResidentObjectChunkInputBuilder>();
+		ensureStaticScenePresentationModels();
 		for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {
 			if (this.isGameObjectInstanceMaterialized(i) && this.getGameObjectInstanceModel(i) != null) {
 				addResidentObjectChunkModel(
@@ -3696,6 +3943,19 @@ public final class mudclient implements Runnable {
 					this.getWallObjectInstanceDir(i),
 					this.getWallObjectInstanceModel(i));
 			}
+		}
+		for (StaticPresentationModel presentation
+				: this.staticPresentationModels) {
+			addResidentObjectChunkModel(
+				builders,
+				anchor,
+				presentation.tileX,
+				presentation.tileZ,
+				presentation.kind,
+				presentation.instanceIndex,
+				presentation.objectId,
+				presentation.direction,
+				presentation.model);
 		}
 		List<ResidentObjectChunkInput> inputs = new ArrayList<ResidentObjectChunkInput>(builders.size());
 		for (ResidentObjectChunkInputBuilder builder : builders.values()) {
@@ -3826,6 +4086,33 @@ public final class mudclient implements Runnable {
 			this.color = color;
 			this.radius = radius;
 			this.intensity = intensity;
+		}
+	}
+
+	private static final class StaticPresentationModel {
+		private final Renderer3DModelKind kind;
+		private final int instanceIndex;
+		private final int tileX;
+		private final int tileZ;
+		private final int objectId;
+		private final int direction;
+		private final RSModel model;
+
+		private StaticPresentationModel(
+			Renderer3DModelKind kind,
+			int instanceIndex,
+			int tileX,
+			int tileZ,
+			int objectId,
+			int direction,
+			RSModel model) {
+			this.kind = kind;
+			this.instanceIndex = instanceIndex;
+			this.tileX = tileX;
+			this.tileZ = tileZ;
+			this.objectId = objectId;
+			this.direction = direction;
+			this.model = model;
 		}
 	}
 
@@ -4265,7 +4552,8 @@ public final class mudclient implements Runnable {
 	private boolean hasLoadedTerrainForWorldPoint(int xWorld, int zWorld) {
 		int xTile = xWorld >> 7;
 		int zTile = zWorld >> 7;
-		return World.isLocalFaceTile(xTile, zTile);
+		return this.world != null
+			&& this.world.isPresentationTerrainFaceTile(xTile, zTile);
 	}
 
 	final void draw() {
@@ -10251,12 +10539,35 @@ public final class mudclient implements Runnable {
 		boolean editorOpen=worldEditorInterface!=null&&worldEditorInterface.isEditorOpen();
 		boolean nativeTerrainPicking =
 			world != null && world.isNativeTerrainAuthorityOnlyActive();
-		if(!editorOpen&&!isClickTeleportActiveForCurrentContext()&&!nativeTerrainPicking)return false;
-		if(this.selectedItemInventoryIndex>=0)return false;
-		if(this.selectedSpell>=0&&EntityHandler.getSpellDef(this.selectedSpell).getSpellType()!=6)return false;
-		if(mouseY>=getGameHeight()-70||mouseInTabArea_CUSTOM()||scene==null)return false;
+		if(!editorOpen&&!isClickTeleportActiveForCurrentContext()&&!nativeTerrainPicking){
+			clearTerrainNavigationReject();
+			return false;
+		}
+		if(this.selectedItemInventoryIndex>=0){
+			clearTerrainNavigationReject();
+			return false;
+		}
+		if(this.selectedSpell>=0&&EntityHandler.getSpellDef(this.selectedSpell).getSpellType()!=6){
+			clearTerrainNavigationReject();
+			return false;
+		}
+		if(isMouseOverMessageUi(this.mouseX,this.mouseY)
+			|| mouseInTabArea_CUSTOM() || scene==null){
+			clearTerrainNavigationReject();
+			return false;
+		}
 		int[] tile=projectScreenToCurrentTerrainTile();
-		if(tile==null||!world.isPresentationTerrainFaceTile(tile[0],tile[1]))return false;
+		if(tile==null){
+			rememberTerrainNavigationReject(
+				"projection-"+scene.getTerrainProjectionDiagnostic());
+			return false;
+		}
+		if(!world.isPresentationTerrainFaceTile(tile[0],tile[1])){
+			rememberTerrainNavigationReject(
+				"tile-outside-field tile="+tile[0]+","+tile[1]);
+			return false;
+		}
+		clearTerrainNavigationReject();
 		boolean presentationOnly=!World.isLocalFaceTile(tile[0],tile[1]);
 		if(presentationOnly&&(editorOpen||this.selectedSpell>=0))return false;
 		this.menuVisible=true;this.m_rf=midRegionBaseX+tile[0];this.m_Cg=midRegionBaseZ+tile[1];
@@ -10281,6 +10592,12 @@ public final class mudclient implements Runnable {
 			if(!presentationOnly)addWorldEditorTileActions(tile[0],tile[1]);
 		}
 		return true;
+	}
+	private boolean isMouseOverMessageUi(int x,int y){
+		int panelTop=this.messageTabSelected==MessageTab.ALL
+			?getGameHeight()-10:getGameHeight()-65;
+		return x>=0&&x<getGameWidth()
+			&& y>=panelTop&&y<getGameHeight()+12;
 	}
 	private int[] activeGameplayTargetToward(int targetX,int targetZ){
 		if(World.isLocalFaceTile(targetX,targetZ))return new int[]{targetX,targetZ};
@@ -10324,6 +10641,41 @@ public final class mudclient implements Runnable {
 			event.bool("boundedToGameplayWindow",bounded);
 			RendererDiagnosticSession.writeEventRecord(event);
 		}
+	}
+	private void rememberTerrainNavigationReject(String reason){
+		this.pendingTerrainNavigationRejectReason=reason;
+		this.pendingTerrainNavigationRejectMouseX=this.mouseX;
+		this.pendingTerrainNavigationRejectMouseY=this.mouseY;
+	}
+	private void clearTerrainNavigationReject(){
+		this.pendingTerrainNavigationRejectReason=null;
+	}
+	private void emitTerrainNavigationRejectForClick(){
+		if(this.pendingTerrainNavigationRejectReason==null
+			|| this.mouseButtonClick==0
+				&& this.currentMouseButtonDown==0)return;
+		String summary="TERRAIN_NAVIGATION_REJECT mouse="
+			+this.pendingTerrainNavigationRejectMouseX+","
+				+this.pendingTerrainNavigationRejectMouseY
+			+" viewport="+getGameWidth()+"x"+getGameHeight()
+			+" reason="+this.pendingTerrainNavigationRejectReason;
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+		RendererDiagnosticSession.Record event=
+			RendererDiagnosticSession.newEventRecord(
+				"renderer.terrain-navigation-reject");
+		if(event!=null){
+			event.number(
+				"mouseX",this.pendingTerrainNavigationRejectMouseX);
+			event.number(
+				"mouseY",this.pendingTerrainNavigationRejectMouseY);
+			event.number("viewportWidth",getGameWidth());
+			event.number("viewportHeight",getGameHeight());
+			event.string(
+				"reason",this.pendingTerrainNavigationRejectReason);
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
+		this.pendingTerrainNavigationRejectReason=null;
 	}
 	private int[] projectScreenToCurrentTerrainTile(){
 		return scene.projectScreenToTerrainTile(
@@ -10716,7 +11068,10 @@ public final class mudclient implements Runnable {
 					"Cast " + EntityHandler.getSpellDef(selectedSpell).getName() + " on self", "");
 			}
 
-			if (~var2 != 0) {
+			boolean nativeTerrainPicking =
+				this.world != null
+					&& this.world.isNativeTerrainAuthorityOnlyActive();
+			if (~var2 != 0 && !nativeTerrainPicking) {
 				this.menuVisible = true;
 				this.m_rf = this.midRegionBaseX + this.world.faceTileX[var2];
 				this.m_Cg = this.midRegionBaseZ + this.world.faceTileZ[var2];
@@ -10749,7 +11104,10 @@ public final class mudclient implements Runnable {
 					}
 					addWorldEditorTileActions(this.world.faceTileX[var2],this.world.faceTileZ[var2]);
 				}
-				} else addProjectedEditorTileFallback();
+			} else {
+				addProjectedEditorTileFallback();
+			}
+			emitTerrainNavigationRejectForClick();
 
 			} catch (RuntimeException var16) {
 			throw GenUtil.makeThrowable(var16, "client.TA(" + var1 + ')');
@@ -18542,6 +18900,9 @@ public final class mudclient implements Runnable {
 
 	private boolean mouseInTabArea_CUSTOM() {
 		try {
+			if (!C_CUSTOM_UI) {
+				return false;
+			}
 			if (this.isMouseOverCustomTabBar(this.mouseX, this.mouseY)
 				|| this.isMouseOverCustomOpenTabPanel(this.mouseX, this.mouseY)) {
 				return true;
@@ -18922,15 +19283,23 @@ public final class mudclient implements Runnable {
 						// 256, this.screenOffsetY);
 						clientPort.draw();
 					}
-					int midRegionX = World.worldTileToSection(wantX);
+					boolean centeredNativeWindow =
+						this.world.hasNativeLayeredTerrain();
+					int midRegionX =
+						this.world.activeSectionXForWorldTile(wantX);
 					this.midRegionBaseX = World.sectionToLocalBaseTile(midRegionX);
-					int midRegionZ = World.worldTileToSection(wantZ);
+					int midRegionZ =
+						this.world.activeSectionYForWorldTile(wantZ);
 					this.lastHeightOffset = this.requestedPlane;
-					this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE + 32;
-					this.currentRegionMaxX = midRegionX * World.SECTION_SIZE + 32;
-					this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE - 32;
+					this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE
+						+ (centeredNativeWindow ? World.SECTION_SIZE : 32);
+					this.currentRegionMaxX = midRegionX * World.SECTION_SIZE
+						+ (centeredNativeWindow ? World.SECTION_SIZE : 32);
+					this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE
+						- (centeredNativeWindow ? 1 : 32);
 					this.midRegionBaseZ = World.sectionToLocalBaseTile(midRegionZ);
-					this.currentRegionMinX = midRegionX * World.SECTION_SIZE - 32;
+					this.currentRegionMinX = midRegionX * World.SECTION_SIZE
+						- (centeredNativeWindow ? 1 : 32);
 					long phaseStartNanos = System.nanoTime();
 					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
 						this.dematerializeGameObjectInstance(i);

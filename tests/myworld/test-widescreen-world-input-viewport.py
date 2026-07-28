@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+SCENE = ROOT / "Client_Base/src/orsc/graphics/three/Scene.java"
 
 
 def fail(message: str) -> None:
@@ -51,11 +52,19 @@ def contains(bounds: tuple[int, int, int, int] | None, x: int, y: int) -> bool:
 
 def main() -> None:
     client = CLIENT.read_text(encoding="utf-8")
+    scene = SCENE.read_text(encoding="utf-8")
 
     require(
         client,
         "private boolean isMouseOverCustomOpenTabPanel(int x, int y)",
         "one custom-tab occlusion owner",
+    )
+    require(
+        client,
+        "if (!C_CUSTOM_UI) {\n"
+        "\t\t\t\treturn false;\n"
+        "\t\t\t}",
+        "custom tab occlusion disabled for the authentic top-right UI",
     )
     require(
         client,
@@ -80,6 +89,48 @@ def main() -> None:
     )
     if "getUITabsY() - 340" in client:
         fail("legacy blanket 340-pixel tab exclusion remains")
+    require(
+        client,
+        "TERRAIN_NAVIGATION_REJECT mouse=",
+        "click-correlated terrain projection rejection diagnostic",
+    )
+    require(
+        client,
+        "projection-\"+scene.getTerrainProjectionDiagnostic()",
+        "terrain rejection carrying the projection result",
+    )
+    require(
+        client,
+        "emitTerrainNavigationRejectForClick();",
+        "hover rejection emitted when its following click arrives",
+    )
+    require(
+        client,
+        "if (~var2 != 0 && !nativeTerrainPicking)",
+        "legacy terrain faces limited to legacy terrain authority",
+    )
+    require(
+        client,
+        "this.world.isNativeTerrainAuthorityOnlyActive();",
+        "native layered terrain selecting the full-width projection path",
+    )
+    require(
+        client,
+        "isMouseOverMessageUi(this.mouseX,this.mouseY)",
+        "terrain fallback using visible message UI bounds",
+    )
+    if "mouseY>=getGameHeight()-70" in client:
+        fail("legacy blanket 70-pixel message exclusion remains")
+    require(
+        scene,
+        "public String getTerrainProjectionDiagnostic()",
+        "allocation-free projection state exposed on rejected clicks",
+    )
+    require(
+        scene,
+        'return "march-left-field";',
+        "presentation-field exit reason",
+    )
 
     inventory = custom_panel_bounds("inventory")
     if not contains(inventory, 800, 300):

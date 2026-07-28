@@ -19,6 +19,7 @@ import com.openrsc.server.model.RSCString;
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.UnregisterForcefulness;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -30,6 +31,7 @@ import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapte
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldMapSectorId;
+import com.openrsc.server.model.world.region.StaticScenePresentationSnapshot;
 import com.openrsc.server.model.world.region.VisibilitySnapshot;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.NativeLayeredTerrainClientResidency;
@@ -83,6 +85,7 @@ public final class GameStateUpdater {
 	private static final int MOVEMENT_SNAPSHOT_MOB_RECORD_BYTES = 7;
 	private static final int SCENE_BASELINE_PROTOCOL_VERSION = 5;
 	private static final int LAYERED_SCENE_BASELINE_PROTOCOL_VERSION = 6;
+	private static final int LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION = 8;
 	private static final int ATOMIC_SCENE_FENCE_PROTOCOL_VERSION = 7;
 	private static final int LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 1;
 	private static final int SYNTHETIC_DEEP_SCENE_CONTEXT_PROTOCOL_VERSION = 2;
@@ -107,12 +110,18 @@ public final class GameStateUpdater {
 		"structural-layered-sector-v1";
 	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
 	private static final int SCENE_BASELINE_PAGE_BURST_LIMIT = 4;
+	private static final int LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_SIZE = 512;
+	private static final int LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_BURST_LIMIT = 8;
 	private static final int SCENE_BASELINE_FIXED_PAYLOAD_BYTES = 48;
 	private static final int SCENE_BASELINE_OBJECT_RECORD_BYTES = 8;
+	private static final int SCENE_BASELINE_PRESENTATION_HEADER_BYTES = 22;
+	private static final int SCENE_BASELINE_PRESENTATION_OBJECT_RECORD_BYTES = 12;
 	private static final int SCENE_BASELINE_PAGE_NONE = 0;
 	private static final int SCENE_BASELINE_PAGE_SCENERY = 1;
 	private static final int SCENE_BASELINE_PAGE_WALLS = 2;
 	private static final int SCENE_BASELINE_PAGE_ATOMIC_FENCE = 3;
+	private static final int SCENE_BASELINE_PAGE_PRESENTATION_SCENERY = 4;
+	private static final int SCENE_BASELINE_PAGE_PRESENTATION_WALLS = 5;
 	private static final String NPC_DEATH_VISUAL_SENT_TICK_PREFIX = "npc_death_visual_sent_tick_";
 	private static final String SCENE_BASELINE_SUMMARY_ATTRIBUTE = "scene_baseline_summary";
 	private static final String STATIC_SCENE_SCAN_KEY_ATTRIBUTE = "static_scene_scan_key";
@@ -214,6 +223,8 @@ public final class GameStateUpdater {
 		final Collection<GameObject> visibleSceneryObjects = packetVisibility.getSceneryObjects();
 		final Collection<GameObject> visibleWallObjects = packetVisibility.getWallObjects();
 		final Collection<GroundItem> visibleGroundItems = packetVisibility.getGroundItems();
+		final StaticScenePresentationSnapshot staticPresentation =
+			buildStaticScenePresentationSnapshot(player);
 		recordVisibilityShadowSnapshot(player, packetVisibility, allowTickSnapshotCache);
 
 		recordUpdatePlayers(() -> updatePlayers(player, visiblePlayers));
@@ -237,12 +248,28 @@ public final class GameStateUpdater {
 		}
 		recordUpdateGroundItems(() -> groundItemsChanged[0] = updateGroundItems(player, visibleGroundItems));
 		sendAtomicSceneActivationFenceIfNeeded(player);
-		sendSceneBaselineIfEnabled(player, sceneryChanged[0], wallsChanged[0], groundItemsChanged[0]);
+		sendSceneBaselineIfEnabled(
+			player,
+			sceneryChanged[0],
+			wallsChanged[0],
+			groundItemsChanged[0],
+			staticPresentation);
 		recordUpdateTimeouts(() -> updateTimeouts(player));
 		sendWorldTimeIfNeeded(player);
 	}
 
 	private boolean ensureLayeredSceneContext(final Player player) {
+		return ensureLayeredSceneContext(player, true);
+	}
+
+	private boolean hasEstablishedLayeredSceneContext(
+		final Player player) {
+		return ensureLayeredSceneContext(player, false);
+	}
+
+	private boolean ensureLayeredSceneContext(
+		final Player player,
+		final boolean allowContextCreation) {
 		if (!getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY) {
 			return true;
 		}
@@ -292,6 +319,17 @@ public final class GameStateUpdater {
 				}
 			}
 			return ready;
+		}
+		/*
+		 * High-frequency movement streams must not originate a new context.
+		 * Doing so starts the client's atomic presentation hold up to one
+		 * 640 ms game tick before the complete Player/static-scene update can
+		 * follow. The normal game-state update establishes the context and
+		 * emits its baseline in the same ordered batch; movement resumes once
+		 * that context is current.
+		 */
+		if (!allowContextCreation) {
+			return false;
 		}
 		if (previousScope == null) {
 			clearNativeTerrainStage(player);
@@ -621,6 +659,8 @@ public final class GameStateUpdater {
 			activeTerrain.currentChunkX * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
 		final int currentMidpointY =
 			activeTerrain.currentChunkY * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+		final boolean centeredSectionWindow =
+			usesCenteredClientSceneWindow(player);
 		for (final Point waypoint
 			: player.getWalkingQueue().path.getWaypoints()) {
 			final int distance = Math.max(
@@ -629,23 +669,42 @@ public final class GameStateUpdater {
 			if (distance > NATIVE_LAYERED_PREDICTIVE_LEAD_TILES) {
 				return null;
 			}
-			if (waypoint.getX()
-					> currentMidpointX - CLIENT_LOCAL_REGION_RELOAD_RADIUS
-				&& waypoint.getX()
-					< currentMidpointX + CLIENT_LOCAL_REGION_RELOAD_RADIUS
-				&& waypoint.getY()
-					> currentMidpointY - CLIENT_LOCAL_REGION_RELOAD_RADIUS
-				&& waypoint.getY()
-					< currentMidpointY + CLIENT_LOCAL_REGION_RELOAD_RADIUS) {
+			if (centeredSectionWindow
+					? waypoint.getX() >= currentMidpointX
+						&& waypoint.getX()
+							< currentMidpointX
+								+ NATIVE_LAYERED_WIRE_CHUNK_SIZE
+						&& waypoint.getY() >= currentMidpointY
+						&& waypoint.getY()
+							< currentMidpointY
+								+ NATIVE_LAYERED_WIRE_CHUNK_SIZE
+					: waypoint.getX()
+							> currentMidpointX
+								- CLIENT_LOCAL_REGION_RELOAD_RADIUS
+						&& waypoint.getX()
+							< currentMidpointX
+								+ CLIENT_LOCAL_REGION_RELOAD_RADIUS
+						&& waypoint.getY()
+							> currentMidpointY
+								- CLIENT_LOCAL_REGION_RELOAD_RADIUS
+						&& waypoint.getY()
+							< currentMidpointY
+								+ CLIENT_LOCAL_REGION_RELOAD_RADIUS) {
 				continue;
 			}
 			final int targetCenterX = Math.floorDiv(
-				clientLocalMidpointForTile(
-					waypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH),
+				centeredSectionWindow
+					? clientLocalCenteredSectionAnchorForTile(
+						waypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH)
+					: clientLocalMidpointForTile(
+						waypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH),
 				NATIVE_LAYERED_WIRE_CHUNK_SIZE);
 			final int targetCenterY = Math.floorDiv(
-				clientLocalMidpointForTile(
-					waypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT),
+				centeredSectionWindow
+					? clientLocalCenteredSectionAnchorForTile(
+						waypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT)
+					: clientLocalMidpointForTile(
+						waypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT),
 				NATIVE_LAYERED_WIRE_CHUNK_SIZE);
 			final int deltaX =
 				targetCenterX - activeTerrain.currentChunkX;
@@ -824,9 +883,23 @@ public final class GameStateUpdater {
 	}
 
 	private VisibilitySnapshot buildUncachedVisibilitySnapshot(final Player player, final VisibilitySnapshotMode mode) {
-		return mode == VisibilitySnapshotMode.SNAPSHOT
-			? getServer().getWorld().getRegionManager().buildVisibilitySnapshot(player)
-			: buildLegacyVisibilitySnapshot(player);
+		if (mode != VisibilitySnapshotMode.SNAPSHOT) {
+			return buildLegacyVisibilitySnapshot(player);
+		}
+		final com.openrsc.server.model.world.region.RegionManager
+			regionManager = getServer().getWorld().getRegionManager();
+		if (player.isUsingCustomClient()
+			&& regionManager.isLayeredSpatialRuntimeAuthorityEnabled()) {
+			final int minX = currentClientLocalBaseX(player);
+			final int minY = currentClientLocalBaseY(player);
+			return regionManager.buildClientSceneVisibilitySnapshot(
+				player,
+				minX,
+				minY,
+				Math.addExact(minX, CLIENT_LOCAL_TILE_COUNT),
+				Math.addExact(minY, CLIENT_LOCAL_TILE_COUNT));
+		}
+		return regionManager.buildVisibilitySnapshot(player);
 	}
 
 	private VisibilitySnapshot buildLegacyVisibilitySnapshot(final Player player) {
@@ -840,7 +913,55 @@ public final class GameStateUpdater {
 	}
 
 	private boolean useVisibilitySnapshotInput(final Player player) {
-		return player.isUsingCustomClient() && getServer().getConfig().WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT;
+		return player.isUsingCustomClient()
+			&& (getServer().getConfig().WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT
+				|| getServer().getConfig().WANT_SYNC_SCENE_BASELINE
+					&& nativeTerrainSymmetricResidencyEnabled());
+	}
+
+	private StaticScenePresentationSnapshot
+		buildStaticScenePresentationSnapshot(final Player player) {
+		final com.openrsc.server.model.world.region.RegionManager
+			regionManager = getServer().getWorld().getRegionManager();
+		final WorldLocation location = player.getWorldLocation();
+		if (!player.isUsingCustomClient()
+			|| !getServer().getConfig().WANT_SYNC_SCENE_BASELINE
+			|| !nativeTerrainSymmetricResidencyEnabled()
+			|| !regionManager.isLayeredSpatialRuntimeAuthorityEnabled()
+			|| !regionManager.hasNativeLayeredTerrain(location)) {
+			return null;
+		}
+		final Point runtimeReceipt =
+			regionManager.toRuntimeCompatibilityPoint(location);
+		final int runtimeOffsetX = Math.subtractExact(
+			runtimeReceipt.getX(),
+			location.getCoordinate().getX());
+		final int runtimeOffsetY = Math.subtractExact(
+			runtimeReceipt.getY(),
+			location.getCoordinate().getY());
+		final int centerSectorX = Math.floorDiv(
+			Math.subtractExact(
+				currentClientLocalMidpoint(
+					player,
+					CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
+					CLIENT_LOCAL_PLANE_WIDTH),
+				runtimeOffsetX),
+			CLIENT_LOCAL_SECTION_SIZE);
+		final int centerSectorY = Math.floorDiv(
+			Math.subtractExact(
+				currentClientLocalMidpoint(
+					player,
+					CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
+					CLIENT_LOCAL_PLANE_HEIGHT),
+				runtimeOffsetY),
+			CLIENT_LOCAL_SECTION_SIZE);
+		return regionManager
+			.buildStaticScenePresentationSnapshot(
+				player,
+				centerSectorX,
+				centerSectorY,
+				NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS,
+				NATIVE_LAYERED_CHUNK_RADIUS);
 	}
 
 	private boolean canSkipStaticSceneScan(final Player player, final VisibilitySnapshot packetVisibility) {
@@ -894,17 +1015,26 @@ public final class GameStateUpdater {
 		final Player player,
 		final boolean sceneryChanged,
 		final boolean wallsChanged,
-		final boolean groundItemsChanged) {
+		final boolean groundItemsChanged,
+		final StaticScenePresentationSnapshot staticPresentation) {
 		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_SCENE_BASELINE) {
 			return;
 		}
 
 		final SceneBaselineSummary previous = player.getAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE);
 		final SceneBaselineSummary current = buildSceneBaselineSummary(
-			player, previous, sceneryChanged, wallsChanged, groundItemsChanged);
+			player,
+			previous,
+			sceneryChanged,
+			wallsChanged,
+			groundItemsChanged,
+			staticPresentation);
 		int sentPages = 0;
-		while (sentPages < SCENE_BASELINE_PAGE_BURST_LIMIT) {
-			final SceneBaselinePage page = buildNextSceneBaselinePage(player, current);
+		final int pageBurstLimit =
+			sceneBaselinePageBurstLimit(current.protocolVersion);
+		while (sentPages < pageBurstLimit) {
+			final SceneBaselinePage page = buildNextSceneBaselinePage(
+				player, current, staticPresentation);
 			if (page.isEmpty()) {
 				break;
 			}
@@ -987,11 +1117,14 @@ public final class GameStateUpdater {
 		final SceneBaselineSummary previous,
 		final boolean sceneryChanged,
 		final boolean wallsChanged,
-		final boolean groundItemsChanged) {
+		final boolean groundItemsChanged,
+		final StaticScenePresentationSnapshot staticPresentation) {
 		final SceneBaselineSummary summary = new SceneBaselineSummary();
 		final boolean layeredProtocol =
 			getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
-		summary.protocolVersion = layeredProtocol
+		summary.protocolVersion = staticPresentation != null
+			? LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+			: layeredProtocol
 			? LAYERED_SCENE_BASELINE_PROTOCOL_VERSION
 			: SCENE_BASELINE_PROTOCOL_VERSION;
 		summary.locationContextSequence = layeredProtocol
@@ -1013,59 +1146,145 @@ public final class GameStateUpdater {
 		summary.groundItemsHash = previous != null && !groundItemsChanged && previous.groundItems == summary.groundItems
 			? previous.groundItemsHash
 			: summarizeSceneGroundItems(player.getLocalGroundItems());
-		final boolean sameContext = previous != null
-			&& previous.protocolVersion == summary.protocolVersion
-			&& previous.locationContextSequence
-				== summary.locationContextSequence;
-		summary.sceneryPageCursor = sameContext
-			&& previous.scenery == summary.scenery
-			&& previous.sceneryHash == summary.sceneryHash
-			? previous.sceneryPageCursor
-			: 0;
-		summary.wallsPageCursor = sameContext
-			&& previous.walls == summary.walls
-			&& previous.wallsHash == summary.wallsHash
-			? previous.wallsPageCursor
-			: 0;
+		if (staticPresentation != null) {
+			summary.presentationCenterSectorX =
+				staticPresentation.getCenterSectorX();
+			summary.presentationCenterSectorY =
+				staticPresentation.getCenterSectorY();
+			summary.presentationOuterRadius =
+				staticPresentation.getOuterRadius();
+			summary.presentationInnerRadius =
+				staticPresentation.getInnerRadius();
+			summary.presentationScenery =
+				staticPresentation.getScenery().size();
+			summary.presentationWalls =
+				staticPresentation.getWalls().size();
+			summary.presentationSceneryHash =
+				summarizeStaticPresentationRecords(
+					staticPresentation.getScenery());
+			summary.presentationWallsHash =
+				summarizeStaticPresentationRecords(
+					staticPresentation.getWalls());
+		}
+		/*
+		 * The client stores all four page categories under one scene key. If
+		 * any paged category changes, it resets that whole product. Preserve
+		 * cursors only when the complete paged identity is unchanged; retaining
+		 * an unchanged category's cursor would otherwise strand the client with
+		 * an unfinishable mix of old and new pages.
+		 */
+		final boolean samePagedScene = previous != null
+			&& summary.samePagedScenePayload(previous);
+		summary.sceneryPageCursor = samePagedScene
+			? previous.sceneryPageCursor : 0;
+		summary.wallsPageCursor = samePagedScene
+			? previous.wallsPageCursor : 0;
+		summary.presentationSceneryPageCursor = samePagedScene
+			? previous.presentationSceneryPageCursor : 0;
+		summary.presentationWallsPageCursor = samePagedScene
+			? previous.presentationWallsPageCursor : 0;
 		return summary;
 	}
 
-	private SceneBaselinePage buildNextSceneBaselinePage(final Player player, final SceneBaselineSummary summary) {
-		final int sceneryPageTotal = pageTotal(player.getLocalGameObjects().size());
+	private SceneBaselinePage buildNextSceneBaselinePage(
+		final Player player,
+		final SceneBaselineSummary summary,
+		final StaticScenePresentationSnapshot staticPresentation) {
+		final int sceneryPageTotal = pageTotal(
+			player.getLocalGameObjects().size(),
+			summary.protocolVersion);
 		if (summary.sceneryPageCursor < sceneryPageTotal) {
 			final int pageIndex = summary.sceneryPageCursor++;
 			return buildSceneBaselineObjectPage(
 				SCENE_BASELINE_PAGE_SCENERY,
 				pageIndex,
 				sceneryPageTotal,
-				player.getLocalGameObjects());
+				player.getLocalGameObjects(),
+				summary.protocolVersion);
 		}
 
-		final int wallPageTotal = pageTotal(player.getLocalWallObjects().size());
+		final int wallPageTotal = pageTotal(
+			player.getLocalWallObjects().size(),
+			summary.protocolVersion);
 		if (summary.wallsPageCursor < wallPageTotal) {
 			final int pageIndex = summary.wallsPageCursor++;
 			return buildSceneBaselineObjectPage(
 				SCENE_BASELINE_PAGE_WALLS,
 				pageIndex,
 				wallPageTotal,
-				player.getLocalWallObjects());
+				player.getLocalWallObjects(),
+				summary.protocolVersion);
+		}
+
+		if (staticPresentation != null) {
+			final int presentationSceneryPageTotal =
+				pageTotal(
+					staticPresentation.getScenery().size(),
+					summary.protocolVersion);
+			if (summary.presentationSceneryPageCursor
+					< presentationSceneryPageTotal) {
+				final int pageIndex =
+					summary.presentationSceneryPageCursor++;
+				return buildSceneBaselinePresentationPage(
+					SCENE_BASELINE_PAGE_PRESENTATION_SCENERY,
+					pageIndex,
+					presentationSceneryPageTotal,
+					staticPresentation.getScenery(),
+					summary.protocolVersion);
+			}
+
+			final int presentationWallPageTotal =
+				pageTotal(
+					staticPresentation.getWalls().size(),
+					summary.protocolVersion);
+			if (summary.presentationWallsPageCursor
+					< presentationWallPageTotal) {
+				final int pageIndex =
+					summary.presentationWallsPageCursor++;
+				return buildSceneBaselinePresentationPage(
+					SCENE_BASELINE_PAGE_PRESENTATION_WALLS,
+					pageIndex,
+					presentationWallPageTotal,
+					staticPresentation.getWalls(),
+					summary.protocolVersion);
+			}
 		}
 
 		return SceneBaselinePage.empty();
 	}
 
-	private int pageTotal(final int recordCount) {
-		return (recordCount + SCENE_BASELINE_PAGE_SIZE - 1) / SCENE_BASELINE_PAGE_SIZE;
+	private static int sceneBaselinePageSize(final int protocolVersion) {
+		return protocolVersion
+				>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+			? LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_SIZE
+			: SCENE_BASELINE_PAGE_SIZE;
+	}
+
+	private static int sceneBaselinePageBurstLimit(
+		final int protocolVersion) {
+		return protocolVersion
+				>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+			? LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_BURST_LIMIT
+			: SCENE_BASELINE_PAGE_BURST_LIMIT;
+	}
+
+	private int pageTotal(
+		final int recordCount,
+		final int protocolVersion) {
+		final int pageSize = sceneBaselinePageSize(protocolVersion);
+		return (recordCount + pageSize - 1) / pageSize;
 	}
 
 	private SceneBaselinePage buildSceneBaselineObjectPage(
 		final int category,
 		final int pageIndex,
 		final int pageTotal,
-		final Collection<GameObject> gameObjects) {
+		final Collection<GameObject> gameObjects,
+		final int protocolVersion) {
 		final SceneBaselinePage page = new SceneBaselinePage(category, pageIndex, pageTotal);
-		final int start = pageIndex * SCENE_BASELINE_PAGE_SIZE;
-		final int end = start + SCENE_BASELINE_PAGE_SIZE;
+		final int pageSize = sceneBaselinePageSize(protocolVersion);
+		final int start = pageIndex * pageSize;
+		final int end = start + pageSize;
 		int index = 0;
 		for (final GameObject gameObject : gameObjects) {
 			if (index >= end) {
@@ -1084,6 +1303,32 @@ public final class GameStateUpdater {
 		return page;
 	}
 
+	private SceneBaselinePage buildSceneBaselinePresentationPage(
+		final int category,
+		final int pageIndex,
+		final int pageTotal,
+		final List<StaticScenePresentationSnapshot.Record> records,
+		final int protocolVersion) {
+		final SceneBaselinePage page =
+			new SceneBaselinePage(category, pageIndex, pageTotal);
+		final int pageSize = sceneBaselinePageSize(protocolVersion);
+		final int start = pageIndex * pageSize;
+		final int end = Math.min(
+			records.size(), start + pageSize);
+		for (int index = start; index < end; index++) {
+			final StaticScenePresentationSnapshot.Record record =
+				records.get(index);
+			page.objectRecords.add(
+				new SceneBaselineStruct.ObjectRecord(
+					record.getId(),
+					record.getX(),
+					record.getY(),
+					record.getDirection(),
+					record.getType()));
+		}
+		return page;
+	}
+
 	private int summarizeSceneGameObjects(final Collection<GameObject> gameObjects) {
 		int summary = 0;
 		for (final GameObject gameObject : gameObjects) {
@@ -1093,6 +1338,21 @@ public final class GameStateUpdater {
 				gameObject.getX(),
 				gameObject.getY(),
 				gameObject.getLoc().getId()));
+		}
+		return summary;
+	}
+
+	private int summarizeStaticPresentationRecords(
+		final Collection<StaticScenePresentationSnapshot.Record> records) {
+		int summary = 0;
+		for (final StaticScenePresentationSnapshot.Record record : records) {
+			summary = addSceneIdentity(summary, sceneIdentity(
+				record.getId(),
+				(record.getType() << 8)
+					| (record.getDirection() & 0xFF),
+				record.getX(),
+				record.getY(),
+				0));
 		}
 		return summary;
 	}
@@ -1162,8 +1422,18 @@ public final class GameStateUpdater {
 		private int sceneryHash;
 		private int wallsHash;
 		private int groundItemsHash;
+		private int presentationCenterSectorX;
+		private int presentationCenterSectorY;
+		private int presentationOuterRadius;
+		private int presentationInnerRadius;
+		private int presentationScenery;
+		private int presentationWalls;
+		private int presentationSceneryHash;
+		private int presentationWallsHash;
 		private int sceneryPageCursor;
 		private int wallsPageCursor;
+		private int presentationSceneryPageCursor;
+		private int presentationWallsPageCursor;
 
 		private boolean sameStaticPayload(final SceneBaselineSummary other) {
 			return protocolVersion == other.protocolVersion
@@ -1174,16 +1444,68 @@ public final class GameStateUpdater {
 				&& objectViewDistance == other.objectViewDistance
 				&& sceneryHash == other.sceneryHash
 				&& wallsHash == other.wallsHash
-				&& groundItemsHash == other.groundItemsHash;
+				&& groundItemsHash == other.groundItemsHash
+				&& presentationCenterSectorX
+					== other.presentationCenterSectorX
+				&& presentationCenterSectorY
+					== other.presentationCenterSectorY
+				&& presentationOuterRadius
+					== other.presentationOuterRadius
+				&& presentationInnerRadius
+					== other.presentationInnerRadius
+				&& presentationScenery == other.presentationScenery
+				&& presentationWalls == other.presentationWalls
+				&& presentationSceneryHash
+					== other.presentationSceneryHash
+				&& presentationWallsHash
+					== other.presentationWallsHash;
+		}
+
+		private boolean samePagedScenePayload(
+			final SceneBaselineSummary other) {
+			return protocolVersion == other.protocolVersion
+				&& locationContextSequence
+					== other.locationContextSequence
+				&& scenery == other.scenery
+				&& walls == other.walls
+				&& sceneryHash == other.sceneryHash
+				&& wallsHash == other.wallsHash
+				&& presentationCenterSectorX
+					== other.presentationCenterSectorX
+				&& presentationCenterSectorY
+					== other.presentationCenterSectorY
+				&& presentationOuterRadius
+					== other.presentationOuterRadius
+				&& presentationInnerRadius
+					== other.presentationInnerRadius
+				&& presentationScenery
+					== other.presentationScenery
+				&& presentationWalls == other.presentationWalls
+				&& presentationSceneryHash
+					== other.presentationSceneryHash
+				&& presentationWallsHash
+					== other.presentationWallsHash;
 		}
 
 		private boolean hasSentCompleteStaticBaseline() {
-			return sceneryPageCursor >= pageTotalFor(scenery)
-				&& wallsPageCursor >= pageTotalFor(walls);
+			return sceneryPageCursor >= pageTotalFor(
+					scenery, protocolVersion)
+				&& wallsPageCursor >= pageTotalFor(
+					walls, protocolVersion)
+				&& presentationSceneryPageCursor
+					>= pageTotalFor(
+						presentationScenery, protocolVersion)
+				&& presentationWallsPageCursor
+					>= pageTotalFor(
+						presentationWalls, protocolVersion);
 		}
 
-		private static int pageTotalFor(final int recordCount) {
-			return (recordCount + SCENE_BASELINE_PAGE_SIZE - 1) / SCENE_BASELINE_PAGE_SIZE;
+		private static int pageTotalFor(
+			final int recordCount,
+			final int protocolVersion) {
+			final int pageSize =
+				sceneBaselinePageSize(protocolVersion);
+			return (recordCount + pageSize - 1) / pageSize;
 		}
 
 		private SceneBaselineStruct toStruct() {
@@ -1200,6 +1522,20 @@ public final class GameStateUpdater {
 			struct.sceneryHash = sceneryHash;
 			struct.wallsHash = wallsHash;
 			struct.groundItemsHash = groundItemsHash;
+			struct.presentationCenterSectorX =
+				presentationCenterSectorX;
+			struct.presentationCenterSectorY =
+				presentationCenterSectorY;
+			struct.presentationOuterRadius =
+				presentationOuterRadius;
+			struct.presentationInnerRadius =
+				presentationInnerRadius;
+			struct.presentationScenery = presentationScenery;
+			struct.presentationWalls = presentationWalls;
+			struct.presentationSceneryHash =
+				presentationSceneryHash;
+			struct.presentationWallsHash =
+				presentationWallsHash;
 			return struct;
 		}
 	}
@@ -1233,7 +1569,19 @@ public final class GameStateUpdater {
 				+ (protocolVersion >= LAYERED_SCENE_BASELINE_PROTOCOL_VERSION
 					? LAYERED_CONTEXT_SEQUENCE_BYTES
 					: 0)
-				+ recordCount() * SCENE_BASELINE_OBJECT_RECORD_BYTES;
+				+ (protocolVersion
+						>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+					? SCENE_BASELINE_PRESENTATION_HEADER_BYTES
+					: 0)
+				+ recordCount()
+					* (protocolVersion
+							>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+						&& (category
+								== SCENE_BASELINE_PAGE_PRESENTATION_SCENERY
+							|| category
+								== SCENE_BASELINE_PAGE_PRESENTATION_WALLS)
+						? SCENE_BASELINE_PRESENTATION_OBJECT_RECORD_BYTES
+						: SCENE_BASELINE_OBJECT_RECORD_BYTES);
 		}
 
 		private void applyTo(final SceneBaselineStruct struct) {
@@ -2103,7 +2451,7 @@ public final class GameStateUpdater {
 		if (!player.isUsingCustomClient()) {
 			return false;
 		}
-		if (!ensureLayeredSceneContext(player)) {
+		if (!hasEstablishedLayeredSceneContext(player)) {
 			return false;
 		}
 		updateCustomMovementClientRegion(player);
@@ -2120,10 +2468,7 @@ public final class GameStateUpdater {
 			if (movedPlayer.equals(player) || !player.getLocalPlayers().contains(movedPlayer)) {
 				continue;
 			}
-			if (!movedPlayer.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedPlayer)) {
-				continue;
-			}
-			if (!isWithinClientLocalTileWindow(player, movedPlayer.getX(), movedPlayer.getY())) {
+			if (!isWithinMobPacketRange(player, movedPlayer)) {
 				continue;
 			}
 			struct.players.add(new MovementUpdateStruct.MobMovement(
@@ -2137,10 +2482,7 @@ public final class GameStateUpdater {
 			if (!player.getLocalNpcs().contains(movedNpc)) {
 				continue;
 			}
-			if (!movedNpc.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedNpc)) {
-				continue;
-			}
-			if (!isWithinClientLocalTileWindow(player, movedNpc.getX(), movedNpc.getY())) {
+			if (!isWithinMobPacketRange(player, movedNpc)) {
 				continue;
 			}
 			struct.npcs.add(new MovementUpdateStruct.MobMovement(
@@ -2159,7 +2501,7 @@ public final class GameStateUpdater {
 		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT) {
 			return false;
 		}
-		if (!ensureLayeredSceneContext(player)) {
+		if (!hasEstablishedLayeredSceneContext(player)) {
 			return false;
 		}
 		updateCustomMovementClientRegion(player);
@@ -2186,10 +2528,7 @@ public final class GameStateUpdater {
 			if (movedPlayer.equals(player) || !player.getLocalPlayers().contains(movedPlayer)) {
 				continue;
 			}
-			if (!movedPlayer.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedPlayer)) {
-				continue;
-			}
-			if (!isWithinClientLocalTileWindow(player, movedPlayer.getX(), movedPlayer.getY())) {
+			if (!isWithinMobPacketRange(player, movedPlayer)) {
 				continue;
 			}
 			struct.players.add(new MovementSnapshotStruct.MobMovement(
@@ -2203,10 +2542,7 @@ public final class GameStateUpdater {
 			if (!player.getLocalNpcs().contains(movedNpc)) {
 				continue;
 			}
-			if (!movedNpc.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedNpc)) {
-				continue;
-			}
-			if (!isWithinClientLocalTileWindow(player, movedNpc.getX(), movedNpc.getY())) {
+			if (!isWithinMobPacketRange(player, movedNpc)) {
 				continue;
 			}
 			struct.npcs.add(new MovementSnapshotStruct.MobMovement(
@@ -2238,8 +2574,63 @@ public final class GameStateUpdater {
 			&& worldY < baseY + CLIENT_LOCAL_TILE_COUNT;
 	}
 
+	/**
+	 * Exact packet/render ownership for one mob in the custom client's active
+	 * three-by-three sector square. Legacy clients retain their circular
+	 * distance contract.
+	 */
+	private static boolean isWithinMobPacketRange(
+		final Player viewer,
+		final Entity candidate) {
+		if (candidate == null || !candidate.sharesSpatialDomain(viewer)) {
+			return false;
+		}
+		if (viewer.isUsingCustomClient()) {
+			return isWithinClientLocalTileWindow(
+				viewer, candidate.getX(), candidate.getY());
+		}
+		return candidate instanceof Mob
+			&& ((Mob) candidate).withinAuthenticRangeAdditionally(viewer)
+			&& viewer.withinRange(candidate);
+	}
+
+	/**
+	 * Static entities and ground items inside the exact active square retain
+	 * gameplay authority. The surrounding resident ring is presentation-only.
+	 */
+	private static boolean isWithinAuthoritativeSceneWindow(
+		final Player viewer,
+		final Entity candidate) {
+		if (candidate == null || !candidate.sharesSpatialDomain(viewer)) {
+			return false;
+		}
+		return viewer.isUsingCustomClient()
+			? isWithinClientLocalTileWindow(
+				viewer, candidate.getX(), candidate.getY())
+			: viewer.withinObjectGridRange(candidate);
+	}
+
 	private static void updateCustomMovementClientRegion(final Player viewer) {
 		if (!viewer.isUsingCustomClient()) {
+			return;
+		}
+		if (usesCenteredClientSceneWindow(viewer)) {
+			/*
+			 * A native 3x3 scene owns the storage sector containing the
+			 * player plus one complete sector on every side. The old rounded
+			 * midpoint and +/-32 reload band belonged to the 2x2/96-tile
+			 * client scene; retaining it after the 144-tile expansion left
+			 * the player in the trailing sector and exposed a nearby strip
+			 * where roaming NPCs could fall into presentation-only space.
+			 */
+			viewer.setAttribute(
+				CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
+				clientLocalCenteredSectionAnchorForTile(
+					viewer.getX(), CLIENT_LOCAL_PLANE_WIDTH));
+			viewer.setAttribute(
+				CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
+				clientLocalCenteredSectionAnchorForTile(
+					viewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT));
 			return;
 		}
 		Integer midpointX = viewer.getAttribute(CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE, null);
@@ -2289,6 +2680,13 @@ public final class GameStateUpdater {
 		final String attribute,
 		final int planeOffset
 	) {
+		if (usesCenteredClientSceneWindow(viewer)) {
+			return clientLocalCenteredSectionAnchorForTile(
+				planeOffset == CLIENT_LOCAL_PLANE_WIDTH
+					? viewer.getX()
+					: viewer.getY(),
+				planeOffset);
+		}
 		final Integer midpoint = viewer.getAttribute(attribute, null);
 		if (midpoint != null) {
 			return midpoint;
@@ -2304,6 +2702,25 @@ public final class GameStateUpdater {
 		final int section = (worldTile + planeOffset + (CLIENT_LOCAL_SECTION_SIZE / 2))
 			/ CLIENT_LOCAL_SECTION_SIZE;
 		return (section * CLIENT_LOCAL_SECTION_SIZE) - planeOffset;
+	}
+
+	private static int clientLocalCenteredSectionAnchorForTile(
+		final int worldTile,
+		final int planeOffset) {
+		final int projectedTile = Math.addExact(worldTile, planeOffset);
+		final int section = Math.floorDiv(
+			projectedTile, CLIENT_LOCAL_SECTION_SIZE);
+		return Math.subtractExact(
+			Math.multiplyExact(section, CLIENT_LOCAL_SECTION_SIZE),
+			planeOffset);
+	}
+
+	private static boolean usesCenteredClientSceneWindow(
+		final Player viewer) {
+		return viewer.isUsingCustomClient()
+			&& viewer.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			&& viewer.getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(viewer.getWorldLocation());
 	}
 
 	private int safeNPCIndex(final Player player, final int npcIndex) {
@@ -2348,10 +2765,7 @@ public final class GameStateUpdater {
 		}
 		return !npc.isRemoved()
 			&& !npc.isRespawning()
-			&& npc.withinAuthenticRangeAdditionally(player)
-			&& player.withinRange(npc)
-			&& isWithinClientLocalTileWindow(
-				player, npc.getX(), npc.getY());
+			&& isWithinMobPacketRange(player, npc);
 	}
 
 	private static List<Npc> prioritizeVisibleNpcs(final Player player, final Collection<Npc> visibleNpcs) {
@@ -2480,8 +2894,7 @@ public final class GameStateUpdater {
 				final long deathVisualSentTick = localNpc.getAttribute(deathVisualViewerKey, Long.MIN_VALUE);
 				final boolean hasPendingDeathVisual = playerToUpdate.isUsingCustomClient()
 					&& (localNpc.isRemoved() || localNpc.isRespawning())
-					&& playerToUpdate.withinRange(localNpc)
-					&& localNpc.withinAuthenticRangeAdditionally(playerToUpdate)
+					&& isWithinMobPacketRange(playerToUpdate, localNpc)
 					&& deathVisualTick >= 0
 					&& deathVisualSentTick != deathVisualTick
 					&& (updateFlags.hasCombatEffect() || updateFlags.hasHitSplats() || updateFlags.hasTakenDamage());
@@ -2503,8 +2916,7 @@ public final class GameStateUpdater {
 					continue;
 				}
 
-				if (!localNpc.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(localNpc) || // remove because they are out of range
-					!isWithinClientLocalTileWindow(playerToUpdate, localNpc.getX(), localNpc.getY()) ||
+				if (!isWithinMobPacketRange(playerToUpdate, localNpc) || // remove because it left the exact client scene
 					(localNpc.isRemoved() && !hasPendingDeathVisual) || // remove because they are removed
 					localNpc.isTeleporting() || // if they've teleported, then they may have moved more than one square, and thus require a full coordinate refresh
 					(localNpc.inCombat() && !hasPendingDeathVisual && !useCustomMovementStream) || // remove because when FIRST entering combat, they may have advanced towards the player, then their sprite is incompatible with a movement update (no direction, and > 7) TODO: should be inCombatChanged(), since it's only necessary on the first round of combat.
@@ -2609,7 +3021,7 @@ public final class GameStateUpdater {
 				for (final Iterator<Player> it$ = playerToUpdate.getLocalPlayers().iterator(); it$.hasNext(); ) {
 					final Player otherPlayer = it$.next();
 
-					if (!otherPlayer.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(otherPlayer) || !otherPlayer.loggedIn() || otherPlayer.isRemoved()
+					if (!isWithinMobPacketRange(playerToUpdate, otherPlayer) || !otherPlayer.loggedIn() || otherPlayer.isRemoved()
 						|| otherPlayer.isTeleporting() || otherPlayer.isInvisibleTo(playerToUpdate)
 						|| otherPlayer.inCombat() || otherPlayer.hasMoved() || otherPlayer.isUnregistering()) {
 						if ((!otherPlayer.hasMoved() || !otherPlayer.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(otherPlayer)) && !otherPlayer.inCombat()) {
@@ -2691,7 +3103,7 @@ public final class GameStateUpdater {
 				for (final Iterator<Player> it$ = playerToUpdate.getLocalPlayers().iterator(); it$.hasNext(); ) {
 					final Player otherPlayer = it$.next();
 
-					if (!otherPlayer.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(otherPlayer) || !otherPlayer.loggedIn() || otherPlayer.isRemoved()
+					if (!isWithinMobPacketRange(playerToUpdate, otherPlayer) || !otherPlayer.loggedIn() || otherPlayer.isRemoved()
 						|| otherPlayer.isTeleporting() || otherPlayer.isInvisibleTo(playerToUpdate)
 						|| otherPlayer.inCombat() || otherPlayer.hasMoved())
 					{
@@ -2720,7 +3132,7 @@ public final class GameStateUpdater {
 
 				for (final Player otherPlayer : visiblePlayers) {
 					if (playerToUpdate.getLocalPlayers().contains(otherPlayer) || otherPlayer.equals(playerToUpdate)
-						|| !otherPlayer.withinAuthenticRangeAdditionally(playerToUpdate) || !otherPlayer.withinRange(playerToUpdate) || !otherPlayer.loggedIn()
+						|| !isWithinMobPacketRange(playerToUpdate, otherPlayer) || !otherPlayer.loggedIn()
 						|| otherPlayer.isRemoved() || otherPlayer.isInvisibleTo(playerToUpdate)
 						|| (otherPlayer.isTeleporting() && !otherPlayer.inCombat())) {
 						continue;
@@ -3491,7 +3903,7 @@ public final class GameStateUpdater {
 			final GameObject o = it$.next();
 			final int offsetX = o.getX() - playerToUpdate.getX();
 			final int offsetY = o.getY() - playerToUpdate.getY();
-			if (!playerToUpdate.withinObjectGridRange(o)
+			if (!isWithinAuthoritativeSceneWindow(playerToUpdate, o)
 				|| !isSceneDeltaSafeOffset(offsetX, offsetY)
 				|| o.isRemoved()
 				|| o.isInvisibleTo(playerToUpdate)) {
@@ -3514,7 +3926,8 @@ public final class GameStateUpdater {
 				// TODO: funny behaviour where if a rock is mined > 16 tiles from you, it can be removed but not replaced until you get closer.
 				skipAdd |= !playerToUpdate.within4GridRange(newObject);
 			} else {
-				skipAdd |= !playerToUpdate.withinObjectGridRange(newObject);
+				skipAdd |= !isWithinAuthoritativeSceneWindow(
+					playerToUpdate, newObject);
 			}
 			if (skipAdd) {
 				continue;
@@ -3568,7 +3981,8 @@ public final class GameStateUpdater {
 			final int offsetX = (groundItem.getX() - playerToUpdate.getX());
 			final int offsetY = (groundItem.getY() - playerToUpdate.getY());
 
-			if (!playerToUpdate.withinObjectGridRange(groundItem)
+			if (!isWithinAuthoritativeSceneWindow(
+					playerToUpdate, groundItem)
 				|| !isSceneDeltaSafeOffset(offsetX, offsetY)
 				|| groundItem.isRemoved()
 				|| groundItem.isInvisibleTo(playerToUpdate)) {
@@ -3582,7 +3996,8 @@ public final class GameStateUpdater {
 		}
 
 		for (final GroundItem groundItem : visibleGroundItems) {
-			if (!playerToUpdate.withinObjectGridRange(groundItem) || groundItem.isRemoved()
+			if (!isWithinAuthoritativeSceneWindow(
+					playerToUpdate, groundItem) || groundItem.isRemoved()
 				|| groundItem.isInvisibleTo(playerToUpdate)
 				|| playerToUpdate.getLocalGroundItems().contains(groundItem)) {
 				continue;
@@ -3618,7 +4033,7 @@ public final class GameStateUpdater {
 			final GameObject o = it$.next();
 			final int offsetX = o.getX() - playerToUpdate.getX();
 			final int offsetY = o.getY() - playerToUpdate.getY();
-			if (!playerToUpdate.withinObjectGridRange(o)
+			if (!isWithinAuthoritativeSceneWindow(playerToUpdate, o)
 				|| !isSceneDeltaSafeOffset(offsetX, offsetY)
 				|| o.isRemoved()
 				|| o.isInvisibleTo(playerToUpdate)) {
@@ -3670,7 +4085,8 @@ public final class GameStateUpdater {
 
 		// add all new boundaries to be added
 		for (final GameObject newObject : visibleWallObjects) {
-			if (!playerToUpdate.withinObjectGridRange(newObject) || newObject.isRemoved()
+			if (!isWithinAuthoritativeSceneWindow(
+					playerToUpdate, newObject) || newObject.isRemoved()
 				|| newObject.isInvisibleTo(playerToUpdate) || newObject.getType() != 1
 				|| playerToUpdate.getLocalWallObjects().contains(newObject)) {
 				continue;

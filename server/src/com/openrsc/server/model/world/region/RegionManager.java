@@ -467,6 +467,235 @@ public class RegionManager {
 			visibleObjects.version);
 	}
 
+	/**
+	 * Builds the custom client's exact authoritative scene window.
+	 *
+	 * <p>The supplied bounds use the client's temporary runtime-coordinate
+	 * carrier. They are translated back to logical coordinates before querying
+	 * the layered index, then filtered as one half-open rectangle. This avoids
+	 * both the legacy player-centered radius and accidental packed-Y lookups on
+	 * non-surface levels.</p>
+	 */
+	public VisibilitySnapshot buildClientSceneVisibilitySnapshot(
+		final Player observer,
+		final int minRuntimeX,
+		final int minRuntimeY,
+		final int maxRuntimeXExclusive,
+		final int maxRuntimeYExclusive) {
+		final Player checked = Objects.requireNonNull(observer, "observer");
+		if (!isLayeredSpatialRuntimeAuthorityEnabled()) {
+			throw new IllegalStateException(
+				"Exact client scene visibility requires layered spatial authority");
+		}
+		if (minRuntimeX >= maxRuntimeXExclusive
+			|| minRuntimeY >= maxRuntimeYExclusive) {
+			throw new IllegalArgumentException(
+				"Exact client scene bounds must be non-empty");
+		}
+		final WorldLocation observerLocation = checked.getWorldLocation();
+		layeredSpatialEntityIndex.requireMembership(
+			checked, observerLocation);
+		final Point runtimeObserver =
+			toRuntimeCompatibilityPoint(observerLocation);
+		if (runtimeObserver.getX() != checked.getX()
+			|| runtimeObserver.getY() != checked.getY()) {
+			throw new IllegalStateException(
+				"Exact client scene runtime receipt disagrees with observer");
+		}
+		final WorldCoordinate logicalObserver =
+			observerLocation.getCoordinate();
+		final int runtimeOffsetX = Math.subtractExact(
+			runtimeObserver.getX(), logicalObserver.getX());
+		final int runtimeOffsetY = Math.subtractExact(
+			runtimeObserver.getY(), logicalObserver.getY());
+		final int minLogicalX = Math.subtractExact(
+			minRuntimeX, runtimeOffsetX);
+		final int minLogicalY = Math.subtractExact(
+			minRuntimeY, runtimeOffsetY);
+		final int maxLogicalXExclusive = Math.subtractExact(
+			maxRuntimeXExclusive, runtimeOffsetX);
+		final int maxLogicalYExclusive = Math.subtractExact(
+			maxRuntimeYExclusive, runtimeOffsetY);
+		final WorldRegionWindow window = new WorldRegionWindow(
+			observerLocation.getWorldSpace(),
+			logicalObserver.getLevel(),
+			Math.floorDiv(minLogicalX, WorldRegionKey.REGION_SIZE),
+			Math.floorDiv(minLogicalY, WorldRegionKey.REGION_SIZE),
+			Math.floorDiv(
+				Math.subtractExact(maxLogicalXExclusive, 1),
+				WorldRegionKey.REGION_SIZE),
+			Math.floorDiv(
+				Math.subtractExact(maxLogicalYExclusive, 1),
+				WorldRegionKey.REGION_SIZE));
+		final LayeredSpatialEntityIndex.Snapshot snapshot =
+			layeredSpatialEntityIndex.snapshot(window);
+		final LinkedHashSet<Player> players =
+			new LinkedHashSet<Player>();
+		final LinkedHashSet<Npc> npcs =
+			new LinkedHashSet<Npc>();
+		final LinkedHashSet<GameObject> objects =
+			new LinkedHashSet<GameObject>();
+		final ArrayList<GameObject> scenery =
+			new ArrayList<GameObject>();
+		final ArrayList<GameObject> walls =
+			new ArrayList<GameObject>();
+		final LinkedHashSet<GroundItem> items =
+			new LinkedHashSet<GroundItem>();
+		for (final Entity candidate : snapshot.getEntities()) {
+			if (!candidate.sharesSpatialDomain(checked)) {
+				continue;
+			}
+			final WorldCoordinate coordinate =
+				candidate.getWorldLocation().getCoordinate();
+			if (coordinate.getX() < minLogicalX
+				|| coordinate.getX() >= maxLogicalXExclusive
+				|| coordinate.getY() < minLogicalY
+				|| coordinate.getY() >= maxLogicalYExclusive) {
+				continue;
+			}
+			if (candidate instanceof Player) {
+				players.add((Player) candidate);
+			} else if (candidate instanceof Npc) {
+				npcs.add((Npc) candidate);
+			} else if (candidate instanceof GameObject) {
+				final GameObject object = (GameObject) candidate;
+				if (objects.add(object)) {
+					if (object.getType() == 0) {
+						scenery.add(object);
+					} else if (object.getType() == 1) {
+						walls.add(object);
+					}
+				}
+			} else if (candidate instanceof GroundItem) {
+				items.add((GroundItem) candidate);
+			}
+		}
+		final LayeredSpatialWindowKey key =
+			LayeredSpatialWindowKey.exact(
+				observerLocation,
+				minLogicalX,
+				minLogicalY,
+				maxLogicalXExclusive,
+				maxLogicalYExclusive);
+		final int regionCount =
+			Math.toIntExact(window.getRegionCount());
+		return new VisibilitySnapshot(
+			players,
+			npcs,
+			objects,
+			scenery,
+			walls,
+			items,
+			regionCount,
+			regionCount,
+			key,
+			snapshot.getObjectVersion());
+	}
+
+	/**
+	 * Copies the current static world state in the visual-only sector ring
+	 * surrounding the custom client's authoritative scene.
+	 */
+	public StaticScenePresentationSnapshot
+		buildStaticScenePresentationSnapshot(
+			final Player observer,
+			final int centerSectorX,
+			final int centerSectorY,
+			final int outerRadius,
+			final int innerRadius) {
+		Player checked = Objects.requireNonNull(observer, "observer");
+		if (!isLayeredSpatialRuntimeAuthorityEnabled()) {
+			throw new IllegalStateException(
+				"Static presentation requires layered spatial authority");
+		}
+		if (innerRadius < 0 || outerRadius <= innerRadius) {
+			throw new IllegalArgumentException(
+				"Static presentation radii must define a non-empty outer ring");
+		}
+		WorldLocation observerLocation = checked.getWorldLocation();
+		layeredSpatialEntityIndex.requireMembership(
+			checked, observerLocation);
+		WorldRegionWindow window = new WorldRegionWindow(
+			observerLocation.getWorldSpace(),
+			observerLocation.getCoordinate().getLevel(),
+			Math.subtractExact(centerSectorX, outerRadius),
+			Math.subtractExact(centerSectorY, outerRadius),
+			Math.addExact(centerSectorX, outerRadius),
+			Math.addExact(centerSectorY, outerRadius));
+		LayeredSpatialEntityIndex.GameObjectSnapshot snapshot =
+			layeredSpatialEntityIndex.snapshotGameObjects(window);
+		final int sectorSize = WorldRegionKey.REGION_SIZE;
+		final int outerMinX = Math.multiplyExact(
+			Math.subtractExact(centerSectorX, outerRadius), sectorSize);
+		final int outerMinY = Math.multiplyExact(
+			Math.subtractExact(centerSectorY, outerRadius), sectorSize);
+		final int outerMaxX = Math.multiplyExact(
+			Math.addExact(centerSectorX, outerRadius + 1), sectorSize);
+		final int outerMaxY = Math.multiplyExact(
+			Math.addExact(centerSectorY, outerRadius + 1), sectorSize);
+		final int innerMinX = Math.multiplyExact(
+			Math.subtractExact(centerSectorX, innerRadius), sectorSize);
+		final int innerMinY = Math.multiplyExact(
+			Math.subtractExact(centerSectorY, innerRadius), sectorSize);
+		final int innerMaxX = Math.multiplyExact(
+			Math.addExact(centerSectorX, innerRadius + 1), sectorSize);
+		final int innerMaxY = Math.multiplyExact(
+			Math.addExact(centerSectorY, innerRadius + 1), sectorSize);
+		ArrayList<StaticScenePresentationSnapshot.Record> scenery =
+			new ArrayList<StaticScenePresentationSnapshot.Record>();
+		ArrayList<StaticScenePresentationSnapshot.Record> walls =
+			new ArrayList<StaticScenePresentationSnapshot.Record>();
+		for (GameObject object : snapshot.getGameObjects()) {
+			final int x = object.getX();
+			final int y = object.getY();
+			if (object.isRemoved()
+				|| object.isInvisibleTo(checked)
+				|| x < outerMinX || x >= outerMaxX
+				|| y < outerMinY || y >= outerMaxY
+				|| x >= innerMinX && x < innerMaxX
+					&& y >= innerMinY && y < innerMaxY) {
+				continue;
+			}
+			if (object.getType() == 0) {
+				scenery.add(toStaticScenePresentationRecord(object));
+			} else if (object.getType() == 1) {
+				walls.add(toStaticScenePresentationRecord(object));
+			}
+		}
+		Comparator<StaticScenePresentationSnapshot.Record> order =
+			Comparator
+				.comparingInt(
+					StaticScenePresentationSnapshot.Record::getX)
+				.thenComparingInt(
+					StaticScenePresentationSnapshot.Record::getY)
+				.thenComparingInt(
+					StaticScenePresentationSnapshot.Record::getType)
+				.thenComparingInt(
+					StaticScenePresentationSnapshot.Record::getDirection)
+				.thenComparingInt(
+					StaticScenePresentationSnapshot.Record::getId);
+		scenery.sort(order);
+		walls.sort(order);
+		return new StaticScenePresentationSnapshot(
+			centerSectorX,
+			centerSectorY,
+			outerRadius,
+			innerRadius,
+			snapshot.getObjectVersion(),
+			scenery,
+			walls);
+	}
+
+	private static StaticScenePresentationSnapshot.Record
+		toStaticScenePresentationRecord(final GameObject object) {
+		return new StaticScenePresentationSnapshot.Record(
+			object.getID(),
+			object.getX(),
+			object.getY(),
+			object.getDirection(),
+			object.getType());
+	}
+
 	public boolean isLayeredSpatialRuntimeAuthorityEnabled() {
 		return getWorld().getServer().getConfig()
 			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;

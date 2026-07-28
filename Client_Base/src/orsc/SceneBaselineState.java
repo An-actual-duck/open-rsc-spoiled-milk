@@ -15,8 +15,13 @@ final class SceneBaselineState {
 	private static final int PAGE_NONE = 0;
 	private static final int PAGE_SCENERY = 1;
 	private static final int PAGE_WALLS = 2;
+	private static final int PAGE_SIZE = 64;
+	private static final int PRESENTATION_PAGE_SIZE = 512;
 	static final int ATOMIC_FENCE_PROTOCOL_VERSION = 7;
 	static final int PAGE_ATOMIC_FENCE = 3;
+	static final int PRESENTATION_PROTOCOL_VERSION = 8;
+	static final int PAGE_PRESENTATION_SCENERY = 4;
+	static final int PAGE_PRESENTATION_WALLS = 5;
 	private static final long PARITY_REFRESH_MILLIS = 500L;
 	private static final long SCENE_BASELINE_STALE_MILLIS = 15000L;
 	private static final int RECENT_SCENE_SYNC_LOG_LIMIT = 5;
@@ -31,8 +36,13 @@ final class SceneBaselineState {
 		new HashMap<Integer, Map<Integer, List<Record>>>();
 	private List<Record> storedSceneryRecords = new ArrayList<Record>();
 	private List<Record> storedWallRecords = new ArrayList<Record>();
+	private List<Record> storedPresentationSceneryRecords =
+		new ArrayList<Record>();
+	private List<Record> storedPresentationWallRecords =
+		new ArrayList<Record>();
 	private int staticSceneKey = 0;
 	private int storedStaticSceneKey = 0;
+	private int storedPresentationSceneKey = 0;
 	private int incompleteSceneResets = 0;
 	private int completedBaselines = 0;
 	private long baselineStartedMillis = 0L;
@@ -49,6 +59,14 @@ final class SceneBaselineState {
 	private int walls = 0;
 	private int groundItems = 0;
 	private int objectViewDistance = 0;
+	private int presentationCenterSectorX = 0;
+	private int presentationCenterSectorY = 0;
+	private int presentationOuterRadius = 0;
+	private int presentationInnerRadius = 0;
+	private int presentationScenery = 0;
+	private int presentationWalls = 0;
+	private int presentationSceneryHash = 0;
+	private int presentationWallsHash = 0;
 	private int packets = 0;
 	private int pages = 0;
 	private int records = 0;
@@ -94,6 +112,14 @@ final class SceneBaselineState {
 			sceneryHash,
 			wallsHash,
 			groundItemsHash,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
 			pageCategory,
 			pageIndex,
 			pageTotal,
@@ -133,6 +159,14 @@ final class SceneBaselineState {
 			sceneryHash,
 			wallsHash,
 			groundItemsHash,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
 			pageCategory,
 			pageIndex,
 			pageTotal,
@@ -154,11 +188,31 @@ final class SceneBaselineState {
 		int sceneryHash,
 		int wallsHash,
 		int groundItemsHash,
+		int presentationCenterSectorX,
+		int presentationCenterSectorY,
+		int presentationOuterRadius,
+		int presentationInnerRadius,
+		int presentationScenery,
+		int presentationWalls,
+		int presentationSceneryHash,
+		int presentationWallsHash,
 		int pageCategory,
 		int pageIndex,
 		int pageTotal,
 		int recordsRead,
 		List<Record> pageRecords) {
+		if (scenery < 0 || walls < 0 || groundItems < 0
+			|| presentationScenery < 0 || presentationWalls < 0) {
+			throw new IllegalArgumentException(
+				"Scene baseline counts must not be negative");
+		}
+		if (protocolVersion >= PRESENTATION_PROTOCOL_VERSION
+			&& (presentationOuterRadius <= presentationInnerRadius
+				|| presentationInnerRadius < 0
+				|| presentationOuterRadius > 16)) {
+			throw new IllegalArgumentException(
+				"Scene baseline presentation radii are invalid");
+		}
 		long now = System.currentTimeMillis();
 		int nextStaticSceneKey = staticSceneKey(
 			protocolVersion,
@@ -170,7 +224,15 @@ final class SceneBaselineState {
 			objectViewDistance,
 			sceneryHash,
 			wallsHash,
-			groundItemsHash);
+			groundItemsHash,
+			presentationCenterSectorX,
+			presentationCenterSectorY,
+			presentationOuterRadius,
+			presentationInnerRadius,
+			presentationScenery,
+			presentationWalls,
+			presentationSceneryHash,
+			presentationWallsHash);
 		if (nextStaticSceneKey != staticSceneKey) {
 			if (staticSceneKey != 0 && packets > 0 && !hasCompleteBaseline()) {
 				incompleteSceneResets++;
@@ -194,20 +256,74 @@ final class SceneBaselineState {
 		this.walls = walls;
 		this.groundItems = groundItems;
 		this.objectViewDistance = objectViewDistance;
+		this.presentationCenterSectorX = presentationCenterSectorX;
+		this.presentationCenterSectorY = presentationCenterSectorY;
+		this.presentationOuterRadius = presentationOuterRadius;
+		this.presentationInnerRadius = presentationInnerRadius;
+		this.presentationScenery = presentationScenery;
+		this.presentationWalls = presentationWalls;
+		this.presentationSceneryHash = presentationSceneryHash;
+		this.presentationWallsHash = presentationWallsHash;
 		this.packets++;
 		expectedPages.put(PAGE_SCENERY, pageTotal(scenery));
 		expectedPages.put(PAGE_WALLS, pageTotal(walls));
+		expectedPages.put(
+			PAGE_PRESENTATION_SCENERY,
+			protocolVersion >= PRESENTATION_PROTOCOL_VERSION
+				? pageTotal(presentationScenery) : 0);
+		expectedPages.put(
+			PAGE_PRESENTATION_WALLS,
+			protocolVersion >= PRESENTATION_PROTOCOL_VERSION
+				? pageTotal(presentationWalls) : 0);
 
-		if (!isStaticCategory(pageCategory) || pageTotal <= 0) {
-			if (hasCompleteBaseline()) {
-				rebuildStoredBaseline();
-			}
+		if (!isStaticCategory(pageCategory)) {
+			rebuildCompleteStoredProducts();
 			return;
+		}
+		if (pageTotal <= 0) {
+			throw new IllegalArgumentException(
+				"Static scene baseline category has no pages");
+		}
+		if (protocolVersion < PRESENTATION_PROTOCOL_VERSION
+			&& (pageCategory == PAGE_PRESENTATION_SCENERY
+				|| pageCategory == PAGE_PRESENTATION_WALLS)) {
+			throw new IllegalArgumentException(
+				"Legacy scene baseline carried a presentation page");
+		}
+		final int categoryRecordCount =
+			recordCountForCategory(pageCategory);
+		final int expectedPageTotal = pageTotal(categoryRecordCount);
+		if (pageTotal != expectedPageTotal) {
+			throw new IllegalArgumentException(
+				"Scene baseline page total disagrees with its category count");
+		}
+		if (pageIndex < 0 || pageIndex >= pageTotal) {
+			throw new IllegalArgumentException(
+				"Scene baseline page index is outside its category");
+		}
+		final int pageSize = pageSize();
+		final int expectedRecordCount = Math.min(
+			pageSize,
+			categoryRecordCount - pageIndex * pageSize);
+		if (recordsRead != expectedRecordCount
+			|| pageRecords == null
+			|| pageRecords.size() != expectedRecordCount) {
+			throw new IllegalArgumentException(
+				"Scene baseline page record count is incomplete");
+		}
+		final int expectedType =
+			pageCategory == PAGE_SCENERY
+					|| pageCategory == PAGE_PRESENTATION_SCENERY
+				? 0 : 1;
+		for (final Record record : pageRecords) {
+			if (record == null || record.type != expectedType) {
+				throw new IllegalArgumentException(
+					"Scene baseline record type disagrees with its page");
+			}
 		}
 
 		this.pages++;
 		this.records += recordsRead;
-		expectedPages.put(pageCategory, pageTotal);
 		receivedRecords.put(pageCategory, receivedRecords.getOrDefault(pageCategory, 0) + recordsRead);
 
 		boolean[] categoryPages = receivedPageIndexes.get(pageCategory);
@@ -218,11 +334,6 @@ final class SceneBaselineState {
 			duplicatePages.put(pageCategory, 0);
 		}
 
-		if (pageIndex < 0 || pageIndex >= categoryPages.length) {
-			duplicatePages.put(pageCategory, duplicatePages.getOrDefault(pageCategory, 0) + 1);
-			return;
-		}
-
 		if (categoryPages[pageIndex]) {
 			duplicatePages.put(pageCategory, duplicatePages.getOrDefault(pageCategory, 0) + 1);
 			return;
@@ -231,14 +342,13 @@ final class SceneBaselineState {
 		categoryPages[pageIndex] = true;
 		receivedPages.put(pageCategory, receivedPages.getOrDefault(pageCategory, 0) + 1);
 		storePageRecords(pageCategory, pageIndex, pageRecords);
-		if (hasCompleteBaseline()) {
-			rebuildStoredBaseline();
-		}
+		rebuildCompleteStoredProducts();
 	}
 
 	void resetForScopeChange(String nextScopeIdentity) {
 		staticSceneKey = 0;
 		storedStaticSceneKey = 0;
+		storedPresentationSceneKey = 0;
 		resetPageState();
 		locationContextSequence = 0;
 		scopeIdentity = nextScopeIdentity == null ? "none" : nextScopeIdentity;
@@ -261,6 +371,9 @@ final class SceneBaselineState {
 				+ " | transfer pages " + pages + "/" + expectedStaticPages()
 				+ " | records " + records,
 			"scene sync stored objects/walls " + storedSceneryRecords.size() + "/" + storedWallRecords.size()
+				+ " | outer objects/walls "
+				+ storedPresentationSceneryRecords.size() + "/"
+				+ storedPresentationWallRecords.size()
 				+ " | duplicate pages " + duplicatePageTotal()
 				+ " | reset/done " + incompleteSceneResets + "/" + completedBaselines
 				+ " | pruned objects/walls " + legacyPrunedScenery + "/" + legacyPrunedWalls
@@ -334,12 +447,33 @@ final class SceneBaselineState {
 		return new ArrayList<Record>(storedWallRecords);
 	}
 
+	List<Record> snapshotStoredPresentationSceneryRecords() {
+		return new ArrayList<Record>(
+			storedPresentationSceneryRecords);
+	}
+
+	List<Record> snapshotStoredPresentationWallRecords() {
+		return new ArrayList<Record>(
+			storedPresentationWallRecords);
+	}
+
 	int legacyApplyKey(mudclient mc) {
 		int hash = staticSceneKey;
 		hash = hash * 31 + mc.getMidRegionBaseX();
 		hash = hash * 31 + mc.getMidRegionBaseZ();
 		hash = hash * 31 + storedSceneryRecords.size();
 		hash = hash * 31 + storedWallRecords.size();
+		return hash;
+	}
+
+	int presentationApplyKey(mudclient mc) {
+		int hash = storedPresentationSceneKey;
+		hash = hash * 31 + mc.getMidRegionBaseX();
+		hash = hash * 31 + mc.getMidRegionBaseZ();
+		hash = hash * 31
+			+ storedPresentationSceneryRecords.size();
+		hash = hash * 31
+			+ storedPresentationWallRecords.size();
 		return hash;
 	}
 
@@ -424,6 +558,15 @@ final class SceneBaselineState {
 			&& storedWallRecords.size() == walls;
 	}
 
+	boolean hasStoredCompletePresentation() {
+		return protocolVersion >= PRESENTATION_PROTOCOL_VERSION
+			&& storedPresentationSceneKey == staticSceneKey
+			&& storedPresentationSceneryRecords.size()
+				== presentationScenery
+			&& storedPresentationWallRecords.size()
+				== presentationWalls;
+	}
+
 	boolean isBaselineOriginLoaded(mudclient mc) {
 		return World.isLocalTile(
 			localX - mc.getMidRegionBaseX(),
@@ -433,6 +576,8 @@ final class SceneBaselineState {
 	boolean isCompleteAndOriginLoaded(final mudclient mc) {
 		return mc != null
 			&& hasStoredCompleteBaseline()
+			&& (protocolVersion < PRESENTATION_PROTOCOL_VERSION
+				|| hasStoredCompletePresentation())
 			&& isBaselineOriginLoaded(mc);
 	}
 
@@ -449,7 +594,12 @@ final class SceneBaselineState {
 		receivedPageRecords.clear();
 		storedSceneryRecords = new ArrayList<Record>();
 		storedWallRecords = new ArrayList<Record>();
+		storedPresentationSceneryRecords =
+			new ArrayList<Record>();
+		storedPresentationWallRecords =
+			new ArrayList<Record>();
 		storedStaticSceneKey = 0;
+		storedPresentationSceneKey = 0;
 		lastPacketMillis = 0L;
 		lastPruneKey = 0;
 		packets = 0;
@@ -470,9 +620,26 @@ final class SceneBaselineState {
 		return categoryComplete(PAGE_SCENERY) && categoryComplete(PAGE_WALLS);
 	}
 
+	private boolean hasCompletePresentation() {
+		return protocolVersion >= PRESENTATION_PROTOCOL_VERSION
+			&& categoryComplete(PAGE_PRESENTATION_SCENERY)
+			&& categoryComplete(PAGE_PRESENTATION_WALLS);
+	}
+
 	private boolean categoryComplete(int pageCategory) {
 		int expected = expectedPages.getOrDefault(pageCategory, 0);
 		return receivedPages.getOrDefault(pageCategory, 0) >= expected;
+	}
+
+	private void rebuildCompleteStoredProducts() {
+		if (hasCompleteBaseline()
+			&& !hasStoredCompleteBaseline()) {
+			rebuildStoredBaseline();
+		}
+		if (hasCompletePresentation()
+			&& !hasStoredCompletePresentation()) {
+			rebuildStoredPresentation();
+		}
 	}
 
 	private void rebuildStoredBaseline() {
@@ -483,6 +650,14 @@ final class SceneBaselineState {
 		if (!wasComplete && hasStoredCompleteBaseline()) {
 			completedBaselines++;
 		}
+	}
+
+	private void rebuildStoredPresentation() {
+		storedPresentationSceneryRecords =
+			flattenRecords(PAGE_PRESENTATION_SCENERY);
+		storedPresentationWallRecords =
+			flattenRecords(PAGE_PRESENTATION_WALLS);
+		storedPresentationSceneKey = staticSceneKey;
 	}
 
 	private List<Record> flattenRecords(int pageCategory) {
@@ -502,11 +677,38 @@ final class SceneBaselineState {
 	}
 
 	private boolean isStaticCategory(int pageCategory) {
-		return pageCategory == PAGE_SCENERY || pageCategory == PAGE_WALLS;
+		return pageCategory == PAGE_SCENERY
+			|| pageCategory == PAGE_WALLS
+			|| pageCategory == PAGE_PRESENTATION_SCENERY
+			|| pageCategory == PAGE_PRESENTATION_WALLS;
 	}
 
 	private int pageTotal(int recordCount) {
-		return (recordCount + 63) / 64;
+		final int pageSize = pageSize();
+		return (recordCount + pageSize - 1) / pageSize;
+	}
+
+	private int pageSize() {
+		return protocolVersion >= PRESENTATION_PROTOCOL_VERSION
+			? PRESENTATION_PAGE_SIZE
+			: PAGE_SIZE;
+	}
+
+	private int recordCountForCategory(int pageCategory) {
+		switch (pageCategory) {
+			case PAGE_SCENERY:
+				return scenery;
+			case PAGE_WALLS:
+				return walls;
+			case PAGE_PRESENTATION_SCENERY:
+				return presentationScenery;
+			case PAGE_PRESENTATION_WALLS:
+				return presentationWalls;
+			default:
+				throw new IllegalArgumentException(
+					"Unsupported static scene page category: "
+						+ pageCategory);
+		}
 	}
 
 	private int staticSceneKey(
@@ -519,17 +721,31 @@ final class SceneBaselineState {
 		int objectViewDistance,
 		int sceneryHash,
 		int wallsHash,
-		int groundItemsHash) {
+		int groundItemsHash,
+		int presentationCenterSectorX,
+		int presentationCenterSectorY,
+		int presentationOuterRadius,
+		int presentationInnerRadius,
+		int presentationScenery,
+		int presentationWalls,
+		int presentationSceneryHash,
+		int presentationWallsHash) {
 		int hash = protocolVersion;
 		hash = hash * 31 + locationContextSequence;
 		hash = hash * 31 + (scopeIdentity == null ? 0 : scopeIdentity.hashCode());
 		hash = hash * 31 + scenery;
 		hash = hash * 31 + walls;
-		hash = hash * 31 + groundItems;
 		hash = hash * 31 + objectViewDistance;
 		hash = hash * 31 + sceneryHash;
 		hash = hash * 31 + wallsHash;
-		hash = hash * 31 + groundItemsHash;
+		hash = hash * 31 + presentationCenterSectorX;
+		hash = hash * 31 + presentationCenterSectorY;
+		hash = hash * 31 + presentationOuterRadius;
+		hash = hash * 31 + presentationInnerRadius;
+		hash = hash * 31 + presentationScenery;
+		hash = hash * 31 + presentationWalls;
+		hash = hash * 31 + presentationSceneryHash;
+		hash = hash * 31 + presentationWallsHash;
 		return hash;
 	}
 
@@ -559,10 +775,16 @@ final class SceneBaselineState {
 			+ " state " + baselineState()
 			+ " static " + scenery + "/" + walls + "/" + groundItems
 			+ " stored " + storedSceneryRecords.size() + "/" + storedWallRecords.size()
+			+ " outer " + storedPresentationSceneryRecords.size()
+				+ "/" + storedPresentationWallRecords.size()
 			+ " pages " + pages + "/" + expectedStaticPages()
 			+ " records " + records
 			+ " scenery " + compactPageSummary(PAGE_SCENERY)
 			+ " walls " + compactPageSummary(PAGE_WALLS)
+			+ " outerScenery "
+				+ compactPageSummary(PAGE_PRESENTATION_SCENERY)
+			+ " outerWalls "
+				+ compactPageSummary(PAGE_PRESENTATION_WALLS)
 			+ " reset/done " + incompleteSceneResets + "/" + completedBaselines
 			+ " pruned " + legacyPrunedScenery + "/" + legacyPrunedWalls
 			+ " applied " + appliedLegacyBaselines
@@ -721,11 +943,21 @@ final class SceneBaselineState {
 	}
 
 	private int expectedStaticPages() {
-		return expectedPages.getOrDefault(PAGE_SCENERY, 0) + expectedPages.getOrDefault(PAGE_WALLS, 0);
+		return expectedPages.getOrDefault(PAGE_SCENERY, 0)
+			+ expectedPages.getOrDefault(PAGE_WALLS, 0)
+			+ expectedPages.getOrDefault(
+				PAGE_PRESENTATION_SCENERY, 0)
+			+ expectedPages.getOrDefault(
+				PAGE_PRESENTATION_WALLS, 0);
 	}
 
 	private int duplicatePageTotal() {
-		return duplicatePages.getOrDefault(PAGE_SCENERY, 0) + duplicatePages.getOrDefault(PAGE_WALLS, 0);
+		return duplicatePages.getOrDefault(PAGE_SCENERY, 0)
+			+ duplicatePages.getOrDefault(PAGE_WALLS, 0)
+			+ duplicatePages.getOrDefault(
+				PAGE_PRESENTATION_SCENERY, 0)
+			+ duplicatePages.getOrDefault(
+				PAGE_PRESENTATION_WALLS, 0);
 	}
 
 	private int legacySceneSignature(mudclient mc) {
@@ -843,8 +1075,13 @@ final class SceneBaselineState {
 	}
 
 	private String baselineState() {
-		if (hasStoredCompleteBaseline()) {
+		if (hasStoredCompleteBaseline()
+			&& (protocolVersion < PRESENTATION_PROTOCOL_VERSION
+				|| hasStoredCompletePresentation())) {
 			return "complete";
+		}
+		if (hasStoredCompleteBaseline()) {
+			return "outer-loading";
 		}
 		long started = baselineStartedMillis;
 		if (started > 0L && System.currentTimeMillis() - started > SCENE_BASELINE_STALE_MILLIS) {
@@ -862,7 +1099,11 @@ final class SceneBaselineState {
 			+ " pages=" + pages
 			+ " records=" + records
 			+ " sceneryPages=" + pageSummary(PAGE_SCENERY)
-			+ " wallPages=" + pageSummary(PAGE_WALLS);
+			+ " wallPages=" + pageSummary(PAGE_WALLS)
+			+ " outerSceneryPages="
+				+ pageSummary(PAGE_PRESENTATION_SCENERY)
+			+ " outerWallPages="
+				+ pageSummary(PAGE_PRESENTATION_WALLS);
 	}
 
 	private String compactPageSummary(int pageCategory) {

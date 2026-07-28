@@ -933,14 +933,39 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					builder.writeInt(baseline.sceneryHash);
 					builder.writeInt(baseline.wallsHash);
 					builder.writeInt(baseline.groundItemsHash);
+					if (baseline.protocolVersion >= 8) {
+						builder.writeInt(
+							baseline.presentationCenterSectorX);
+						builder.writeInt(
+							baseline.presentationCenterSectorY);
+						builder.writeByte(
+							(byte) baseline.presentationOuterRadius);
+						builder.writeByte(
+							(byte) baseline.presentationInnerRadius);
+						builder.writeShort(
+							baseline.presentationScenery);
+						builder.writeShort(
+							baseline.presentationWalls);
+						builder.writeInt(
+							baseline.presentationSceneryHash);
+						builder.writeInt(
+							baseline.presentationWallsHash);
+					}
 					builder.writeByte((byte) baseline.pageCategory);
 					builder.writeShort(baseline.pageIndex);
 					builder.writeShort(baseline.pageTotal);
 					builder.writeShort(baseline.objectRecords.size());
 					for (SceneBaselineStruct.ObjectRecord objectRecord : baseline.objectRecords) {
 						builder.writeShort(objectRecord.id);
-						builder.writeShort(objectRecord.x);
-						builder.writeShort(objectRecord.y);
+						if (baseline.protocolVersion >= 8
+							&& (baseline.pageCategory == 4
+								|| baseline.pageCategory == 5)) {
+							builder.writeInt(objectRecord.x);
+							builder.writeInt(objectRecord.y);
+						} else {
+							builder.writeShort(objectRecord.x);
+							builder.writeShort(objectRecord.y);
+						}
 						builder.writeByte((byte) objectRecord.direction);
 						builder.writeByte((byte) objectRecord.type);
 					}

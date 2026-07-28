@@ -156,7 +156,7 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
             "ATOMIC_ACTIVATION_PROTOCOL_VERSION = 8", snapshot
         )
 
-    def test_cover_accepts_validated_fence_with_full_baseline_fallback(self):
+    def test_cover_waits_for_complete_v8_scene_after_validated_fence(self):
         handler = (
             ROOT / "Client_Base/src/orsc/PacketHandler.java"
         ).read_text(encoding="utf-8")
@@ -206,6 +206,18 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
         self.assertIn(
             "sceneBaselineState.matchAtomicFence(", handler
         )
+        fence_block = handler.split(
+            "if (protocolVersion\n"
+            "\t\t\t\t== SceneBaselineState.ATOMIC_FENCE_PROTOCOL_VERSION",
+            1,
+        )[1].split(
+            "sceneBaselineState.recordPacket(", 1
+        )[0]
+        self.assertNotIn(
+            "acceptStaticBaseline(", fence_block,
+            "the inner-scene fence must not publish before the outer "
+            "presentation ring arrives",
+        )
         self.assertLess(
             handler.index(
                 "sceneBaselineState.pruneLegacyListsOutsideAtomicFenceRange("
@@ -223,6 +235,13 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
             "appliedSceneBaselineKey\n"
             "\t\t\t\t!= sceneBaselineState.legacyApplyKey(mc)",
             handler,
+        )
+        self.assertIn(
+            "appliedScenePresentationKey\n"
+            "\t\t\t\t\t!= sceneBaselineState.presentationApplyKey(mc)",
+            handler,
+            "atomic publication must wait until the complete presentation "
+            "product is installed",
         )
         self.assertEqual(
             handler.count("acceptCompleteAtomicSceneBaseline();"),
@@ -266,8 +285,12 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
             "&& !this.layeredSceneActivationPending", client
         )
         self.assertIn(
-            "previous.locationContextSequence\n"
-            "\t\t\t\t== summary.locationContextSequence",
+            "summary.samePagedScenePayload(previous)",
+            updater,
+        )
+        self.assertIn(
+            "locationContextSequence\n"
+            "\t\t\t\t\t== other.locationContextSequence",
             updater,
         )
         self.assertIn(
@@ -282,9 +305,33 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
             updater,
         )
         self.assertIn(
+            "private boolean hasEstablishedLayeredSceneContext(",
+            updater,
+        )
+        self.assertIn(
+            "return ensureLayeredSceneContext(player, false);",
+            updater,
+        )
+        self.assertGreaterEqual(
+            updater.count(
+                "if (!hasEstablishedLayeredSceneContext(player))"
+            ),
+            2,
+            "high-frequency movement streams must not originate "
+            "an atomic scene context",
+        )
+        self.assertIn(
             "maybeSendNativeTerrainSymmetricResidency(\n"
             "\t\t\t\t\tplayer, location, nativeTerrain);",
             updater,
+        )
+        self.assertIn(
+            "if (result.isScopeChanged()) {\n"
+            "\t\t\t\tmc.clearStaticScenePresentation();\n"
+            "\t\t\t}",
+            handler,
+            "same-scope atomic shifts must retain the old static ring "
+            "until its replacement is complete",
         )
         self.assertIn(
             "protocolVersion == 2\n"
@@ -402,7 +449,7 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
             "summarizeWireSceneGameObjects(", updater
         )
         self.assertIn(
-            "while (sentPages < SCENE_BASELINE_PAGE_BURST_LIMIT)",
+            "while (sentPages < pageBurstLimit)",
             updater,
         )
         self.assertNotIn(
@@ -412,7 +459,9 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
         self.assertLess(
             updater.index("sendAtomicSceneActivationFenceIfNeeded(player);"),
             updater.index(
-                "sendSceneBaselineIfEnabled(player, sceneryChanged[0]"
+                "sendSceneBaselineIfEnabled(\n"
+                "\t\t\tplayer,\n"
+                "\t\t\tsceneryChanged[0]"
             ),
             "validated fence must be ordered before background baseline pages",
         )

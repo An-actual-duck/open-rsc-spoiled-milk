@@ -33,8 +33,19 @@ activation released, adjacent authoritative rebuilds remained approximately
 17–24 ms, and the full 64-sector resident field remained populated. The
 remaining hitch is now a bounded tuning target. A separately observed world-
 interaction defect constrains scene picking to a legacy 4:3 area inside the
-16:9 client even though 2D interface input is correct; viewport/picker
-alignment is the next focused correction.
+16:9 client even though 2D interface input is correct. The corrected
+viewport/picker alignment is owner-accepted and checkpointed. The active
+refinement now makes scene-content ownership match the resident terrain
+contract: all Player/NPC/item/scenery/wall content belongs to the exact
+3-by-3 authoritative sector square, while the surrounding sixteen sectors of
+the resident 5-by-5 square carry visual-only walls and scenery. Protocol and
+client separation are implemented. Private review accepted continuous static
+scenery and corrected widescreen terrain picking, then exposed a narrow
+trailing-edge NPC/shadow seam. Diagnostics traced that seam to legacy
+96-tile recenter arithmetic still positioning the Player in the first sector
+of the new 144-tile authoritative square. A native-only floor-aligned
+center-sector correction is implemented, automated-validated, and
+owner-accepted after broad private traversal.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -100,6 +111,75 @@ estimates and “next slice” language below are historical unless repeated her
 - The long packed-Region retirement/reconstruction proof chain remains frozen
   evidence. Native scopes are already Region-free; no new diagnostic slice is
   justified without a concrete loader requirement.
+
+### Active scene-content residency refinement
+
+The accepted symmetric terrain field exposed two separate content problems.
+First, the custom client still sourced Players, NPCs, items, scenery, and walls
+from the old player-centered view radii, so content inside the nominal 3-by-3
+gameplay square could appear inconsistently. Second, the outer resident terrain
+had no matching static silhouettes, making its sector boundary obvious even
+when terrain itself remained present.
+
+The selected ownership contract is:
+
+- The exact half-open 144-by-144 client scene—the center sector plus one sector
+  in every direction—is authoritative. Players, NPCs, ground items, scenery,
+  walls, collision, interaction, and lifecycle packets are admitted throughout
+  those nine sectors.
+- The remaining sixteen sectors in the resident 5-by-5 square are
+  presentation-only. They carry current scenery and wall records, but never
+  Players, NPCs, ground items, collision, picking, menus, or lifecycle
+  authority.
+- The server translates the client runtime rectangle to logical coordinates
+  before one level-qualified layered-index query. Its cache identity records
+  the exact half-open tile bounds rather than approximating them as a
+  player-centered radius.
+- Custom mob additions retain their existing signed 8-bit offsets. The client
+  now centers a native scene on the exact 48-tile storage sector containing
+  the Player, rather than retaining the legacy 96-tile scene's rounded
+  midpoint and plus/minus-32 reload band. The Player therefore remains at
+  local tile `48..95`; every coordinate in the active 3-by-3 square remains
+  within signed 8-bit offsets (`-95..95` at the extremes). Non-native and
+  legacy paths keep their established midpoint behavior.
+- Scene-baseline protocol v8 retains compact inner records and adds separately
+  paged, 32-bit-coordinate outer scenery/wall categories. Inner pages are sent
+  first and may complete the authoritative activation barrier without waiting
+  for the visual-only product.
+- The client stores outer records separately and materializes them only into
+  renderer-v2 resident object chunks. They never enter the interactive scene or
+  mutate collision. Inner edge objects may sample already-resident
+  presentation terrain, with collision writes clamped to the authoritative
+  local grid.
+- Ground-item-only changes do not reset static page assembly. If any paged
+  scene identity changes while a transfer is in progress, all server cursors
+  restart together so the client cannot be stranded with mixed generations.
+
+Focused guards now cover the exact rectangle key, nine-plus-sixteen sector
+partition, floor-aligned native center, signed-offset limits, static-only outer
+DTO, protocol-v8 envelope, page ordering and reset behavior,
+renderer/collision separation, and existing atomic activation, residency,
+scene-instance, deferred-scenery, and widescreen input contracts.
+
+The first 2026-07-28 private burst at Player `(143,655,0)` showed all sixteen outer
+terrain sectors resident while visible sheep changed between six and eight.
+Those sheep occupied local Z `0..7`, exactly the old active window's trailing
+edge. The corrected native center is logical sector `(2,13)`, moving world
+Y `624..631` to local Z `48..55`; the next recenter occurs at the true Y `672`
+storage boundary and advances exactly one sector. Server/client builds and ten
+focused tests pass.
+
+Owner validation then crossed the corrected boundary repeatedly, looked back
+through the reported sheep/shadow area, traversed several different
+environments, and teleported back. No sheep, shadow, terrain, scenery, or other
+detail gap remained; every environment loaded, and the return teleport
+repopulated quickly. Runtime evidence recorded seven matched native
+activations with complete static fences, sixteen-of-sixteen outer structural
+sectors, and authoritative rebuilds around `13..23 ms` after warm-up. The
+attempted final Ctrl+F9 did not create a new capture (it toggled the debug
+overlay instead), so the accepted visual route and ordinary structured runtime
+logs are the milestone evidence. A separate outer shadow-caster refinement is
+not justified by the now-correct result.
 
 ### Selected loader-v2 performance milestone
 
