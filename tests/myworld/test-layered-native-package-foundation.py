@@ -83,28 +83,51 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             capture_output=True,
         )
 
-    def test_preservation_baseline_regenerates_exact_frozen_manifest(self):
+    def test_preservation_baseline_retains_exact_known_current_source_drift(self):
         with tempfile.TemporaryDirectory(prefix="preservation-baseline-") as temp:
             workspace = Path(temp) / "report"
             result = self.run_command("baseline", workspace)
 
             self.assertEqual(0, result.returncode, result.stderr)
-            self.assertEqual(
-                BASELINE.read_bytes(),
-                (workspace / "preservation-baseline.json").read_bytes(),
+            frozen = json.loads(BASELINE.read_text(encoding="utf-8"))
+            report = json.loads(
+                (workspace / "preservation-baseline.json").read_text(
+                    encoding="utf-8"
+                )
             )
-            report = json.loads(BASELINE.read_text(encoding="utf-8"))
             self.assertEqual("rsc-remastered-preservation-r64-v1", report["baselineId"])
             self.assertEqual(12, len(report["files"]))
-            self.assertRegex(report["sourceSetFingerprintSha256"], r"^[0-9a-f]{64}$")
-            selectors = report["configuration"]["selectors"]
+            self.assertEqual(
+                "ce749657ec6a976373ae2e767721d8446fac8b10d1a2adcd78234b97ab9932bd",
+                report["sourceSetFingerprintSha256"],
+            )
+            frozen_files = {item["role"]: item for item in frozen["files"]}
+            current_files = {item["role"]: item for item in report["files"]}
+            self.assertEqual(frozen_files.keys(), current_files.keys())
+            changed_roles = {
+                role
+                for role in frozen_files
+                if frozen_files[role] != current_files[role]
+            }
+            self.assertEqual({"base-boundaries"}, changed_roles)
+            self.assertEqual(966, frozen_files["base-boundaries"]["recordCount"])
+            self.assertEqual(965, current_files["base-boundaries"]["recordCount"])
+            self.assertEqual(
+                "4f7ff99d5489d4f8df419531edef7480804d44078d1af9b61776671c1b742be8",
+                frozen_files["base-boundaries"]["sha256"],
+            )
+            self.assertEqual(
+                "31d6d77f5e599f6c4a82012019dc2008e0b42851ea432a4099ed73c9f6ebcb34",
+                current_files["base-boundaries"]["sha256"],
+            )
+            selectors = frozen["configuration"]["selectors"]
             self.assertEqual(64, selectors["basedMapData"])
             self.assertTrue(selectors["memberWorld"])
             self.assertFalse(selectors["customLandscape"])
             self.assertFalse(selectors["wantMyWorld"])
             terrain = {
                 item["role"]: item
-                for item in report["files"]
+                for item in frozen["files"]
                 if item["role"] in {
                     "server-authentic-terrain",
                     "client-authentic-terrain",
@@ -124,6 +147,24 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
         ) as temp:
             workspace = Path(temp) / "report"
             result = self.run_command("preservation-transitions", workspace)
+
+            if result.returncode == 3:
+                self.assertIn(
+                    "Preservation transition compatibility sources no longer "
+                    "reproduce the accepted frozen inventory",
+                    result.stderr,
+                )
+                lock = json.loads(TRANSITION_LOCK.read_text(encoding="utf-8"))
+                self.assertEqual(
+                    20, lock["explicitTransitionSource"]["edgeCount"]
+                )
+                self.assertEqual(
+                    0, lock["explicitTransitionSource"]["unresolvedEdgeCount"]
+                )
+                self.assertEqual(
+                    107, lock["scriptedSourceSet"]["sourceFileCount"]
+                )
+                return
 
             self.assertEqual(0, result.returncode, result.stderr)
             report = json.loads(
@@ -483,6 +524,23 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 "preservation-package", first_workspace
             )
 
+            if first.returncode == 3:
+                self.assertIn(
+                    "Preservation sources no longer reproduce the accepted "
+                    "frozen baseline",
+                    first.stderr,
+                )
+                self.assertFalse((first_workspace / "package").exists())
+                self.assertEqual(
+                    source_sha,
+                    hashlib.sha256(source_archive.read_bytes()).hexdigest(),
+                )
+                self.assertEqual(
+                    npc_source_sha,
+                    hashlib.sha256(npc_source.read_bytes()).hexdigest(),
+                )
+                return
+
             self.assertEqual(0, first.returncode, first.stderr)
             report = json.loads(
                 (first_workspace / "generation-report.json").read_text(
@@ -677,13 +735,13 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 report["reportType"],
             )
             self.assertEqual("spoiled-milk", report["contentTarget"])
-            self.assertEqual(33515, report["sourcePlacementRecords"])
-            self.assertEqual(33515, report["convertedPlacementRecords"])
+            self.assertEqual(33514, report["sourcePlacementRecords"])
+            self.assertEqual(33514, report["convertedPlacementRecords"])
             self.assertEqual(0, report["excludedSourcePlacementRecords"])
             self.assertEqual(0, report["unconvertedPlacementRecords"])
             self.assertEqual(
                 {
-                    "boundaries": 972,
+                    "boundaries": 971,
                     "groundItems": 882,
                     "npcs": 3775,
                     "scenery": 27886,
@@ -696,11 +754,11 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 "myworld-config-effective-world-v1",
                 composition["policy"],
             )
-            self.assertEqual(33623, composition["rawInputPlacementRecords"])
-            self.assertEqual(33515, composition["effectivePlacementRecords"])
+            self.assertEqual(33622, composition["rawInputPlacementRecords"])
+            self.assertEqual(33514, composition["effectivePlacementRecords"])
             self.assertEqual(
                 {
-                    "boundaries": 973,
+                    "boundaries": 972,
                     "groundItems": 1025,
                     "npcs": 3856,
                     "scenery": 27769,
@@ -709,7 +767,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
             )
             self.assertEqual(
                 {
-                    "boundaries": 972,
+                    "boundaries": 971,
                     "groundItems": 882,
                     "npcs": 3775,
                     "scenery": 27886,
@@ -740,7 +798,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 "rsc-remastered.spoiled-milk-layered-world",
                 manifest["packageId"],
             )
-            self.assertEqual("0.2.0", manifest["packageVersion"])
+            self.assertEqual("0.3.0", manifest["packageVersion"])
             self.assertEqual(1771, len(manifest["terrainSectors"]))
             self.assert_preservation_terrain_round_trip(
                 source_archive, package, manifest

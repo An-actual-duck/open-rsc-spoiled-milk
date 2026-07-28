@@ -22,7 +22,7 @@ CLIENT_DECODER = (
     ROOT / "Client_Base/src/orsc/NativeLayeredTerrainPacketDecoder.java"
 )
 SPOILED_MILK_PACKAGE = (
-    ROOT / "tools/layered-maps/workspace/spoiled-milk-package-v2/package"
+    ROOT / "tools/layered-maps/workspace/spoiled-milk-package-v3/package"
 )
 UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
 SERVER = ROOT / "server/src/com/openrsc/server/Server.java"
@@ -185,7 +185,7 @@ class NativeTerrainWireCacheTest(unittest.TestCase):
                     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                     DataOutputStream output = new DataOutputStream(bytes);
                     line(output, "rsc-remastered.spoiled-milk-layered-world");
-                    line(output, "0.2.0");
+                    line(output, "0.3.0");
                     line(output,
                         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                             + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");

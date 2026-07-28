@@ -30,16 +30,19 @@ The active integration target is the complete current Spoiled Milk world:
 ./tools/layered-maps/layered-maps.sh spoiled-milk-package
 ```
 
-This command preserves the frozen Preservation audit as an independent
-prerequisite, then validates the active `server/myworld.conf` selectors and
-reproduces the configured Spoiled Milk world. It converts the exact matching
+This command preserves the frozen Preservation audit independently, then
+validates the active `server/myworld.conf` selectors and reproduces the
+configured Spoiled Milk world. Preservation package generation still requires
+the repository to reproduce its frozen source set; active Spoiled Milk
+generation uses its separately pinned current terrain and content composition.
+It converts the exact matching
 server/client `Custom_Landscape.orsc` pair (1,771 sectors), inventories all
-33,623 placement inputs selected from base, feature, and MyWorld sources, and
+33,622 placement inputs selected from base, feature, and MyWorld sources, and
 applies the same removal, cleanup, same-slot replacement, and Harvesting rules
 as legacy population.
 
-The resulting four level-qualified sets contain 33,515 effective placements:
-972 boundaries, 27,886 scenery objects, 3,775 NPCs, and 882 ordinary ground
+The resulting four level-qualified sets contain 33,514 effective placements:
+971 boundaries, 27,886 scenery objects, 3,775 NPCs, and 882 ordinary ground
 items. The scenery count includes 143 ground-item locations reclassified as
 their configured harvestable scenery. The one existing Hobgoblin maximum-Y
 correction remains necessary for the legacy record to decode and retains its
@@ -47,8 +50,10 @@ explicit receipt. Scenery direction `8` is preserved for the travel cart;
 boundaries remain restricted to directions `0..7`.
 
 The active package is
-`rsc-remastered.spoiled-milk-layered-world@0.2.0`, manifest SHA-256
-`fab8d7d1a51e948a7d8b18769eb0b3e9f5abf9e30538abfedba4d90374b1447b`.
+`rsc-remastered.spoiled-milk-layered-world@0.3.0`, manifest SHA-256
+`9fbb45a9cd7b649577dd9dc00acfd925aa4aae28300ceef34ab3a558771797a8`
+and package fingerprint
+`c9fa9c823558dc697dba8cf4488cc070cc65feda7ab82ca818601a6d64048688`.
 It is consumed only by the default-off `spoiled-milk-replacement` private
 runtime profile. This complete distribution is the reference integration
 target while the layered engine and authoring path stabilize.

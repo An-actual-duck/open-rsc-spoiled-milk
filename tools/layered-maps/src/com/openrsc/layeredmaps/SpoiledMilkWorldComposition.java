@@ -29,11 +29,11 @@ import java.util.regex.Pattern;
  */
 final class SpoiledMilkWorldComposition {
 	static final String CONFIG_PATH = "server/myworld.conf";
-	static final int EXPECTED_RAW_INPUT_COUNT = 33623;
+	static final int EXPECTED_RAW_INPUT_COUNT = 33622;
 	static final int EXPECTED_NPC_COUNT = 3775;
 	static final int EXPECTED_GROUND_ITEM_COUNT = 882;
 	static final int EXPECTED_SCENERY_COUNT = 27886;
-	static final int EXPECTED_BOUNDARY_COUNT = 972;
+	static final int EXPECTED_BOUNDARY_COUNT = 971;
 	static final int EXPECTED_HARVESTING_RECLASSIFICATIONS = 143;
 
 	private static final Pattern CONFIG_VALUE = Pattern.compile(

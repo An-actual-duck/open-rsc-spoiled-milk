@@ -31,9 +31,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 		"560dae205d13c2034b38f52d8bb6841ee56c245fadc8e9d18361ace1346cd73f";
 	public static final String SPOILED_MILK_PACKAGE_ID =
 		"rsc-remastered.spoiled-milk-layered-world";
-	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.2.0";
+	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.3.0";
 	public static final String SPOILED_MILK_MANIFEST_SHA256 =
-		"fab8d7d1a51e948a7d8b18769eb0b3e9f5abf9e30538abfedba4d90374b1447b";
+		"9fbb45a9cd7b649577dd9dc00acfd925aa4aae28300ceef34ab3a558771797a8";
 	private static final int VANILLA_MAX_BOUNDARY_ID = 213;
 	private static final int VANILLA_MAX_SCENERY_ID = 1189;
 	private static final int VANILLA_MAX_NPC_ID = 793;
@@ -177,7 +177,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 			3775,
 			882,
 			27886,
-			972,
+			971,
 			false);
 	}
 
@@ -197,7 +197,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 			|| loaded.getNpcPlacementCount() < 3775
 			|| loaded.getGroundItemPlacementCount() != 882
 			|| loaded.getSceneryPlacementCount() < 27886
-			|| loaded.getBoundaryPlacementCount() != 972) {
+			|| loaded.getBoundaryPlacementCount() != 971) {
 			throw new IllegalStateException(
 				"The spoiled-milk-builder-draft profile requires an additive "
 				+ "terrain/NPC/scenery descendant of the accepted Spoiled Milk package");
@@ -221,7 +221,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 			if (set.getLevel() == -1) {
 				requireBuilderSourcePlacementCounts(set, 1188, 262, 4374, 165);
 			} else if (set.getLevel() == 0) {
-				requireBuilderSourcePlacementCounts(set, 2386, 535, 22234, 677);
+				requireBuilderSourcePlacementCounts(set, 2386, 535, 22234, 676);
 			} else if (set.getLevel() == 1) {
 				requireBuilderSourcePlacementCounts(set, 164, 63, 1079, 94);
 			} else if (set.getLevel() == 2) {

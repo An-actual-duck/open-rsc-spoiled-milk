@@ -34,7 +34,7 @@ final class PreservationTerrainPackageGenerator {
 	static final String PACKAGE_VERSION = "0.4.0";
 	static final String SPOILED_MILK_PACKAGE_ID =
 		"rsc-remastered.spoiled-milk-layered-world";
-	static final String SPOILED_MILK_PACKAGE_VERSION = "0.2.0";
+	static final String SPOILED_MILK_PACKAGE_VERSION = "0.3.0";
 	static final String PRESERVATION_REPORT_TYPE =
 		"preservation-layered-parity-generation";
 	static final String SPOILED_MILK_REPORT_TYPE =
@@ -55,7 +55,7 @@ final class PreservationTerrainPackageGenerator {
 	private static final String SPOILED_MILK_CLIENT_TERRAIN =
 		"Client_Base/Cache/video/Custom_Landscape.orsc";
 	private static final String SPOILED_MILK_TERRAIN_SHA256 =
-		"d50089fcc81d51aa461567f4416a8f1a329ed439bcf64606ca1441c600e7229b";
+		"c48f9734f8faf027b9128c28dfcece468d3e84a5c1ed4b9a4452c2481392b6ee";
 	private static final int SPOILED_MILK_TERRAIN_SECTOR_COUNT = 1771;
 	private static final int HOBGOBLIN_REPAIR_SOURCE_INDEX = 3376;
 	private static final int HOBGOBLIN_REPAIR_DEFINITION_ID = 67;
@@ -117,7 +117,9 @@ final class PreservationTerrainPackageGenerator {
 		Path root = requestedRoot.toAbsolutePath().normalize().toRealPath();
 		PreservationBaselineInventory.Baseline baseline =
 			new PreservationBaselineInventory().inspect(root);
-		requireFrozenBaseline(root, baseline);
+		if (target == ContentTarget.PRESERVATION) {
+			requireFrozenBaseline(root, baseline);
+		}
 
 		Path workspace = requestedWorkspace.toAbsolutePath().normalize();
 		Files.createDirectories(workspace);

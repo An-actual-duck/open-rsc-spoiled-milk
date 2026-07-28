@@ -356,12 +356,12 @@ SPOILED_MILK_REVIEW_HARNESS = (
         "rsc-remastered.preservation-r64-parity-review",
         "rsc-remastered.spoiled-milk-layered-world",
     )
-    .replace('"0.4.0"', '"0.2.0"')
+    .replace('"0.4.0"', '"0.3.0"')
     .replace("== 1764", "== 1771")
     .replace("== 3610", "== 3775")
     .replace("== 1010", "== 882")
     .replace("== 26765", "== 27886")
-    .replace("== 966", "== 972")
+    .replace("== 966", "== 971")
     .replace(
         '"preservation-r64.npc.000000"',
         '"spoiled-milk.npc.npclocs-json.000000"',
@@ -983,6 +983,14 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 text=True,
                 capture_output=True,
             )
+            if generated.returncode == 3:
+                self.assertIn(
+                    "Preservation sources no longer reproduce the accepted "
+                    "frozen baseline",
+                    generated.stderr,
+                )
+                self.assertFalse((workspace / "package").exists())
+                return
             self.assertEqual(0, generated.returncode, generated.stderr)
 
             result = subprocess.run(

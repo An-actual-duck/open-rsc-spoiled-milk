@@ -35,9 +35,12 @@ estimates and “next slice” language below are historical unless repeated her
   Treat references below to current 24-tile delivery as historical v4 evidence,
   not the active v5 wire shape.
 - The complete configured Spoiled Milk world is reproducible as
-  `rsc-remastered.spoiled-milk-layered-world@0.2.0`, with 1,771 terrain sectors
-  and 33,515 effective placements, and has passed focused private runtime
-  review.
+  `rsc-remastered.spoiled-milk-layered-world@0.3.0`, with 1,771 terrain sectors
+  and 33,514 effective placements. It retains the accepted `0.2.0` composition
+  while adding the later Mining Guild preparation and permanent Shilo furnace
+  terrain/content change. Deterministic package, server/runtime, Builder,
+  Shilo, landscape, client, and authoritative builds pass; renewed private
+  runtime review is pending.
 - Signed levels are data-declared and expandable. The loader, protocol,
   renderer, collision, persistence, and Builder have exercised depths beyond
   `-2` without adding another level constant or coordinate codec.
@@ -162,11 +165,17 @@ changed terrain identities:
 - global level `0`, sector `(8,17)`: the permanent Shilo furnace terrain edit.
 
 The Shilo sector is coupled to a boundary removal and gameplay/configuration
-change, so copying only the binary terrain archive is invalid. Promote the
-complete current Spoiled Milk source as a new reviewed package revision,
-regenerate placement counts and fingerprints, update pinned runtime/Builder
-identities, and repeat private loader validation before protocol-v6 acceptance.
-The earlier package remains reproducible evidence, not the content endpoint.
+change, so copying only the binary terrain archive is invalid. Both complete
+upstream commits are now preserved on this branch. Package `0.3.0` pins the
+`c48f97...` terrain pair, all 1,771 sectors, and 33,514 effective placements:
+3,775 NPCs, 882 ordinary ground items, 27,886 scenery objects, and 971
+boundaries. Its manifest SHA-256 is `9fbb45a9cd7b...` and package fingerprint
+is `c9fa9c823558...`. Runtime and Builder pins target this exact revision.
+The mutable Spoiled Milk boundary source now differs from frozen Preservation
+by exactly the reviewed Shilo barrier record. Preservation package and
+transition generation refuse fail-closed; the frozen baseline is not rewritten.
+Repeat private loader validation before protocol-v6 acceptance. The earlier
+package remains reproducible evidence, not the content endpoint.
 
 3. **Readiness acknowledgement, predictive delivery, and atomic activation**
    - Stage required sectors before a window boundary using authoritative
@@ -196,7 +205,7 @@ accepting that complexity.
 ### Remaining loader work after the selected optimization milestone
 
 1. **Production package acceptance and promotion**
-   - Replace the normal runtime's code-pinned exact `0.2.0` manifest/count
+   - Replace the normal runtime's code-pinned exact `0.3.0` manifest/count
      policy with a reviewed, configuration-bound production package contract.
    - Let a normal non-Builder private server consume an explicitly selected
      Spoiled Milk descendant containing additional signed levels.
@@ -18439,14 +18448,16 @@ The first package did not contain `SceneryLocsRunecraft.json` anchors or
 owner-gated glyphs and orbs. Regression coverage now proves all 14 configured
 altar anchors and all 56 corresponding obelisk owners survive conversion.
 
-The pinned active identity is
+The accepted historical identity is
 `rsc-remastered.spoiled-milk-layered-world@0.2.0`; manifest SHA-256 is
 `fab8d7d1a51e948a7d8b18769eb0b3e9f5abf9e30538abfedba4d90374b1447b`;
 package fingerprint is
 `9a7939b7608bb0cb441ffbf81113681155d29a2a96c1fd1ab4b0344d85c8c377`.
-The independently named, default-off `spoiled-milk-replacement` profile pins
-those exact counts and identity. Preservation `0.4.0` remains unchanged and
-continues to use its authentic 1,764-sector source.
+The independently named, default-off `spoiled-milk-replacement` profile pinned
+those exact counts and identity at that checkpoint. Package `0.3.0` now
+supersedes it with the current `c48f97...` terrain pair and coupled Shilo
+content as recorded in the active roadmap. Preservation `0.4.0` remains
+unchanged and continues to use its authentic 1,764-sector source.
 
 Focused private acceptance used that exact pinned package and profile. The
 owner confirmed that the familiar Spoiled Milk custom terrain and configured
@@ -18522,7 +18533,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
-| 2026-07-27 | Refresh the active Spoiled Milk package from current clean manager terrain and its coupled content rather than continuing visual acceptance against stale `0.2.0` inputs. | In progress; exact audit found only `L-1 (5,12)` and `L0 (8,17)` changed across the unchanged 1,771-sector inventory. The Shilo change requires its matching boundary/plugin/configuration update; package revision, counts, hashes, and private acceptance remain pending |
+| 2026-07-27 | Refresh the active Spoiled Milk package from current clean manager terrain and its coupled content rather than continuing visual acceptance against stale `0.2.0` inputs. | Implemented and automated-validated as pinned package `0.3.0`: exact audit found only `L-1 (5,12)` and `L0 (8,17)` changed across the unchanged 1,771-sector inventory; the complete Shilo boundary/plugin/configuration change accompanies the terrain. The package contains 33,514 effective placements (`3775n/882i/27886s/971b`), manifest `9fbb45a9cd7b...`, and package fingerprint `c9fa9c823558...`. Frozen Preservation generation refuses the one known base-boundary drift instead of rewriting vanilla. Renewed private acceptance remains pending |
 | 2026-07-27 | Correct signed negative client section activation and logical wilderness presentation found by the first Mining Guild loader diagnostic. | Terrain fix owner-accepted: floor section `-10`, all nine sectors/20,736 tiles applied, local tile `(34,37)` matches the packet, and visuals/clickability/FPS recovered. Geographic wilderness calculation and HUD/attack integration pass automated validation; owner visual confirmation remains pending after client restart |
 | 2026-07-27 | Implement loader-v2 resident-sector delivery as a default-off protocol-v6 milestone with protocol-v5 rollback. | Automated-validated; exact 64-entry connection-local LRU identities, transactional server/client updates, outbound-queue commit fencing, full nine-slot inventories with payload/reference discrimination, reconnect/reset full refill, malformed/missing-reference refusal, and payload/reference telemetry pass focused tests plus client/server builds. Private visual and transfer acceptance remains |
 | 2026-07-27 | Select native loader performance as the active showcase workstream and begin with behavior-preserving sector-product reuse. | Slice 1 lazily caches immutable protocol-v5 sector wire products by exact package/manifest, signed slot, and content hash; Builder revisions retain their uncached safety path. AI-readable profiling/benchmark metrics now expose contexts, slots, available sectors, raw/wire bytes, cache hits/misses, build time, and entries. The wire protocol and client presentation remain unchanged while resident delta delivery is designed next |

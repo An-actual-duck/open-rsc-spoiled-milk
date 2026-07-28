@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOT = ROOT / "tools/world-builder/src"
 PACKAGE_ROOT = (
     ROOT
-    / "tools/layered-maps/workspace/spoiled-milk-package-v2/package"
+    / "tools/layered-maps/workspace/spoiled-milk-package-v3/package"
 )
 
 

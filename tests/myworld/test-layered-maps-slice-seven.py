@@ -14,7 +14,7 @@ SERVER_PACKAGE = ROOT / "server/src/com/openrsc/server/model/world/coordinate"
 TERRAIN_ARCHIVE_SOURCE = ROOT / "server/src/com/openrsc/server/io/WorldEditorTerrainArchive.java"
 SERVER_TERRAIN = ROOT / "server/conf/server/data/Custom_Landscape.orsc"
 CLIENT_TERRAIN = ROOT / "Client_Base/Cache/video/Custom_Landscape.orsc"
-TERRAIN_SHA256 = "d50089fcc81d51aa461567f4416a8f1a329ed439bcf64606ca1441c600e7229b"
+TERRAIN_SHA256 = "c48f9734f8faf027b9128c28dfcece468d3e84a5c1ed4b9a4452c2481392b6ee"
 ENTRY = re.compile(r"h([0-3])x([0-9]+)y([0-9]+)")
 
 

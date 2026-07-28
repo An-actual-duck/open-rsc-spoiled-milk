@@ -233,9 +233,9 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         System.setProperty(WorldBuilderClientProfile.LAYERED_REVIEW_PROPERTY, "true");
                         System.setProperty(WorldBuilderClientProfile.LAYERED_PACKAGE_ID_PROPERTY,
                             "rsc-remastered.spoiled-milk-layered-world");
-                        System.setProperty(WorldBuilderClientProfile.LAYERED_PACKAGE_VERSION_PROPERTY, "0.2.0");
+                        System.setProperty(WorldBuilderClientProfile.LAYERED_PACKAGE_VERSION_PROPERTY, "0.3.0");
                         System.setProperty(WorldBuilderClientProfile.LAYERED_MANIFEST_SHA256_PROPERTY,
-                            "fab8d7d1a51e948a7d8b18769eb0b3e9f5abf9e30538abfedba4d90374b1447b");
+                            "9fbb45a9cd7b649577dd9dc00acfd925aa4aae28300ceef34ab3a558771797a8");
                         System.setProperty(WorldBuilderClientProfile.LAYERED_WORLD_SPACE_PROPERTY, "global");
                         System.setProperty(WorldBuilderClientProfile.LAYERED_LEVELS_PROPERTY, "-1,0,1,2");
                         profile = WorldBuilderClientProfile.initializeFromSystemProperties();
@@ -244,7 +244,7 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         require(profile.declaresLayer(-1) && profile.declaresLayer(2)
                             && !profile.declaresLayer(-2), "declared signed levels");
                         require("-1,0,1,2".equals(profile.layeredLevelsLabel()), "level label");
-                        require("fab8d7d1a51e".equals(profile.layeredManifestShort()), "manifest identity");
+                        require("9fbb45a9cd7b".equals(profile.layeredManifestShort()), "manifest identity");
                         System.setProperty(
                             WorldBuilderClientProfile.LAYERED_TERRAIN_DRAFT_PROPERTY, "true");
                         profile = WorldBuilderClientProfile.initializeFromSystemProperties();
