@@ -646,6 +646,21 @@ not the content endpoint.
      global UI input or conflate this with residency. Add a focused aspect-
      ratio guard, rebuild the client, and obtain owner acceptance at both
      horizontal edges before continuing presentation expansion.
+   - The widescreen input root cause is now isolated and corrected for private
+     review. The GLFW/AWT bridge, source surface, scene midpoint, and terrain
+     projection all carry the complete `960x540` coordinate space. The custom
+     UI gate instead discarded all world-menu construction inside one legacy
+     blanket rectangle: on the accepted surface an open tab reserved
+     `x >= 710, y >= 146`, even where no UI was drawn, leaving an effective
+     left-anchored 4:3 world interaction area. One shared occlusion owner now
+     follows the actual tab bar and per-panel bounds for inventory/equipment,
+     player information, Magic/Prayer/Summoning, social/clan, options, and the
+     existing exact minimap rectangle. World input remains suppressed over
+     visible controls but is restored over exposed terrain surrounding them.
+     Focused widescreen, OpenGL modifier, and terrain-picking guards plus the
+     complete 264-source Java 8 client build pass. Private owner review
+     accepted full-width world targeting around open panels and confirmed that
+     panel controls still retain their own clicks.
 
 4. **Incremental client CPU/model products**
    - Preserve overlapping sector products during an adjacent shift and build

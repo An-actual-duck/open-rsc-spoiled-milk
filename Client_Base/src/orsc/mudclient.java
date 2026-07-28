@@ -320,6 +320,14 @@ public final class mudclient implements Runnable {
 	private static final int AUTO_ATTACK_HUD_SIZE = 16;
 	private static final int AUTO_ATTACK_HUD_GAP = 4;
 	private static final int TOP_MENU_BAR_WIDTH = 199;
+	private static final int CUSTOM_UI_INVENTORY_PANEL_WIDTH = 248;
+	private static final int CUSTOM_UI_INVENTORY_PANEL_HEIGHT = 228;
+	private static final int CUSTOM_UI_EQUIPMENT_PANEL_HEIGHT = 273;
+	private static final int CUSTOM_UI_PLAYER_INFO_PANEL_OFFSET = 287;
+	private static final int CUSTOM_UI_MAGIC_PANEL_HEIGHT = 182;
+	private static final int CUSTOM_UI_SOCIAL_PANEL_HEIGHT = 182;
+	private static final int CUSTOM_UI_CLAN_PANEL_EXTRA_HEIGHT = 19;
+	private static final int CUSTOM_UI_OPTIONS_PANEL_HEIGHT = 265;
 	private static final String[] MINIMAP_POSITION_LABELS = new String[] {
 		"Top right", "Bottom right", "Top left", "Bottom left"
 	};
@@ -18197,10 +18205,59 @@ public final class mudclient implements Runnable {
 
 		int width = this.getSurface().width2;
 		if (C_CUSTOM_UI) {
-			int panelTop = Math.max(0, getUITabsY() - 340);
-			return x >= width - 250 && x < width && y >= panelTop && y < getGameHeight();
+			return this.isMouseOverCustomOpenTabPanel(x, y);
 		}
 		return x >= width - 250 && x < width && y >= 0 && y < getGameHeight();
+	}
+
+	private boolean isMouseOverCustomOpenTabPanel(int x, int y) {
+		if (this.showUiTab == 0 || this.getSurface() == null) {
+			return false;
+		}
+
+		int panelRight = this.getSurface().width2;
+		int tabBarY = getUITabsY();
+		int panelLeft = panelRight - TOP_MENU_BAR_WIDTH;
+		int panelTop;
+		int panelBottom = tabBarY;
+		switch (this.showUiTab) {
+			case Config.INVENTORY_TAB:
+				panelLeft = panelRight - CUSTOM_UI_INVENTORY_PANEL_WIDTH;
+				panelTop = tabBarY - (this.tabEquipmentIndex == 1
+					? CUSTOM_UI_EQUIPMENT_PANEL_HEIGHT
+					: CUSTOM_UI_INVENTORY_PANEL_HEIGHT);
+				break;
+			case Config.SKILLS_AND_QUESTS_TAB:
+				panelTop = tabBarY - CUSTOM_UI_PLAYER_INFO_PANEL_OFFSET;
+				int playerInfoHeight = Config.S_WANT_OPENPK_POINTS
+					? 186
+					: S_WANT_EXP_INFO ? 275 : 262;
+				panelBottom = Math.min(tabBarY, panelTop + playerInfoHeight + 12);
+				break;
+			case Config.MAGIC_AND_PRAYER_TAB:
+				panelTop = tabBarY - CUSTOM_UI_MAGIC_PANEL_HEIGHT;
+				break;
+			case Config.FRIENDS_TAB:
+				panelTop = tabBarY - CUSTOM_UI_SOCIAL_PANEL_HEIGHT
+					- (this.panelSocialTab == 1 ? CUSTOM_UI_CLAN_PANEL_EXTRA_HEIGHT : 0);
+				break;
+			case Config.OPTIONS_TAB:
+				panelTop = tabBarY - CUSTOM_UI_OPTIONS_PANEL_HEIGHT;
+				break;
+			case Config.MINIMAP_AND_COMPASS_TAB:
+			default:
+				return false;
+		}
+		return x >= panelLeft && x < panelRight
+			&& y >= Math.max(0, panelTop) && y < panelBottom;
+	}
+
+	private boolean isMouseOverCustomTabBar(int x, int y) {
+		return this.getSurface() != null
+			&& x >= this.getSurface().width2 - TOP_MENU_BAR_WIDTH
+			&& x < this.getSurface().width2
+			&& y >= getUITabsY()
+			&& y < getGameHeight();
 	}
 
 	private boolean handleTabUIClick() {
@@ -18485,14 +18542,8 @@ public final class mudclient implements Runnable {
 
 	private boolean mouseInTabArea_CUSTOM() {
 		try {
-			//tab area
-			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 199 && this.mouseY >= getUITabsY()
-				&& this.mouseX < this.getSurface().width2 && this.mouseY < getGameHeight()) {
-				return true;
-			}
-			//tab interface
-			if (this.showUiTab != 0 && this.mouseX >= this.getSurface().width2 - 250 && this.mouseY >= getUITabsY() - 340
-				&& this.mouseX < this.getSurface().width2 && this.mouseY < getGameHeight()) {
+			if (this.isMouseOverCustomTabBar(this.mouseX, this.mouseY)
+				|| this.isMouseOverCustomOpenTabPanel(this.mouseX, this.mouseY)) {
 				return true;
 			}
 			if (this.shouldDrawMinimapPanel()) {
