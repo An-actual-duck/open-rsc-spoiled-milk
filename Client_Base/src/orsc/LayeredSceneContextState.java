@@ -310,6 +310,11 @@ final class LayeredSceneContextState {
 		return worldSpace;
 	}
 
+	NativeLayeredTerrainSnapshot getNativeTerrainSnapshot() {
+		requireEstablished();
+		return nativeTerrainSnapshot;
+	}
+
 	int logicalYForCompatibilityPosition(int packedX, int packedY) {
 		requireEstablished();
 		return decodeCompatibilityPosition(

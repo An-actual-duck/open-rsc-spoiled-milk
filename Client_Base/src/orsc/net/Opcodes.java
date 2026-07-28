@@ -111,6 +111,7 @@ public class Opcodes {
 		NPC_DEFINITION_REQUEST(89),
 		WORLD_EDITOR_REQUEST(152),
 		LAYERED_TERRAIN_READY(154),
+		LAYERED_TERRAIN_STAGE_READY(155),
 		;
 
 		private int opcode;

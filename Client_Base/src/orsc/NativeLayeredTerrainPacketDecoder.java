@@ -22,6 +22,7 @@ public final class NativeLayeredTerrainPacketDecoder {
 			worldSpace,
 			level,
 			NativeLayeredTerrainSnapshot.LEGACY_CHUNKED_PROTOCOL_VERSION,
+			null,
 			null);
 	}
 
@@ -32,6 +33,7 @@ public final class NativeLayeredTerrainPacketDecoder {
 			worldSpace,
 			level,
 			NativeLayeredTerrainSnapshot.PROTOCOL_VERSION,
+			null,
 			null);
 	}
 
@@ -49,7 +51,8 @@ public final class NativeLayeredTerrainPacketDecoder {
 			worldSpace,
 			level,
 			NativeLayeredTerrainSnapshot.RESIDENT_PROTOCOL_VERSION,
-			residentCache);
+			residentCache,
+			null);
 	}
 
 	public static NativeLayeredTerrainSnapshot decodeV7(
@@ -66,7 +69,27 @@ public final class NativeLayeredTerrainPacketDecoder {
 			worldSpace,
 			level,
 			NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION,
-			residentCache);
+			residentCache,
+			null);
+	}
+
+	public static NativeLayeredTerrainSnapshot decodeV7Stage(
+		byte[] payload,
+		String worldSpace,
+		int level,
+		NativeLayeredTerrainResidentCache residentCache,
+		NativeLayeredTerrainSnapshot activeTerrain) {
+		if (residentCache == null || activeTerrain == null) {
+			throw new IllegalArgumentException(
+				"Protocol-v7 terrain stage requires resident and active terrain");
+		}
+		return decodeChunked(
+			payload,
+			worldSpace,
+			level,
+			NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION,
+			residentCache,
+			activeTerrain);
 	}
 
 	private static NativeLayeredTerrainSnapshot decodeChunked(
@@ -74,7 +97,8 @@ public final class NativeLayeredTerrainPacketDecoder {
 		String worldSpace,
 		int level,
 		int protocolVersion,
-		NativeLayeredTerrainResidentCache residentCache) {
+		NativeLayeredTerrainResidentCache residentCache,
+		NativeLayeredTerrainSnapshot activeTerrain) {
 		if (payload == null) {
 			throw new IllegalArgumentException(
 				"Native terrain packet body is required");
@@ -229,6 +253,9 @@ public final class NativeLayeredTerrainPacketDecoder {
 				currentChunkY,
 				chunkRadius,
 				chunks);
+			if (activeTerrain != null) {
+				requireAdjacentStage(activeTerrain, result);
+			}
 			if (residentTransaction != null) {
 				residentTransaction.commit();
 			}
@@ -237,6 +264,29 @@ public final class NativeLayeredTerrainPacketDecoder {
 			throw new IllegalArgumentException(
 				"Native terrain packet ended before its declared content",
 				failure);
+		}
+	}
+
+	private static void requireAdjacentStage(
+		NativeLayeredTerrainSnapshot active,
+		NativeLayeredTerrainSnapshot staged) {
+		if (active.getProtocolVersion()
+				!= NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION
+			|| !active.packageIdentity().equals(staged.packageIdentity())
+			|| !active.getWorldSpace().equals(staged.getWorldSpace())
+			|| active.getLevel() != staged.getLevel()) {
+			throw new IllegalArgumentException(
+				"Native terrain stage does not match the active generation");
+		}
+		int deltaX = staged.getCurrentChunkX()
+			- active.getCurrentChunkX();
+		int deltaY = staged.getCurrentChunkY()
+			- active.getCurrentChunkY();
+		if ((deltaX == 0 && deltaY == 0)
+			|| Math.abs(deltaX) > 1
+			|| Math.abs(deltaY) > 1) {
+			throw new IllegalArgumentException(
+				"Native terrain stage must be one adjacent center");
 		}
 	}
 

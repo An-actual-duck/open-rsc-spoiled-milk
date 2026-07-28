@@ -201,6 +201,9 @@ public class PayloadProcessorManager {
 		bind(
 			OpcodeIn.LAYERED_TERRAIN_READY,
 			LayeredTerrainReadyHandler.class);
+		bind(
+			OpcodeIn.LAYERED_TERRAIN_STAGE_READY,
+			LayeredTerrainStageReadyHandler.class);
 	}
 
 	private static void bind(OpcodeIn opcode, Class<?> clazz) {
@@ -256,6 +259,7 @@ public class PayloadProcessorManager {
 			&& !OpcodeIn.HEARTBEAT.equals(opcode)
 			&& !OpcodeIn.KNOWN_PLAYERS.equals(opcode)
 			&& !OpcodeIn.LAYERED_TERRAIN_READY.equals(opcode)
+			&& !OpcodeIn.LAYERED_TERRAIN_STAGE_READY.equals(opcode)
 			&& !OpcodeIn.CHAT_MESSAGE.equals(opcode)
 			&& !OpcodeIn.SOCIAL_SEND_PRIVATE_MESSAGE.equals(opcode)
 			&& !OpcodeIn.COMBAT_STYLE_CHANGED.equals(opcode)

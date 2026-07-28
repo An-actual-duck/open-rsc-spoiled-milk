@@ -112,4 +112,5 @@ public enum OpcodeOut {
     SEND_UNLOCKED_APPEARANCES, // custom
 	SEND_WORLD_EDITOR, // custom, versioned editor envelope
 	SEND_LAYERED_SCENE_CONTEXT, // custom, versioned layered scene scope
+	SEND_LAYERED_TERRAIN_STAGE, // custom, cache-only predicted terrain
 }

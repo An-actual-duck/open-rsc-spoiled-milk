@@ -93,6 +93,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_WORLD_EDITOR, 151); // custom, versioned editor envelope
 		put(OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, 152); // custom, versioned layered scene scope
 		put(OpcodeOut.SEND_EQUIPMENT_STATS, 153);
+		put(OpcodeOut.SEND_LAYERED_TERRAIN_STAGE, 154); // custom, cache-only predicted terrain
 		put(OpcodeOut.SEND_STATS, 156);
 		put(OpcodeOut.SEND_STAT, 159);
 		put(OpcodeOut.SEND_TRADE_OTHER_ACCEPTED, 162);
@@ -203,6 +204,46 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 									builder.writeShort(chunk.tileBytes.length);
 									builder.write(chunk.tileBytes);
 								}
+							}
+						}
+					}
+					break;
+
+				case SEND_LAYERED_TERRAIN_STAGE:
+					LayeredTerrainStageStruct stage =
+						(LayeredTerrainStageStruct) payload;
+					builder.writeByte((byte) stage.protocolVersion);
+					builder.writeInt(stage.sequence);
+					builder.writeInt(stage.contextSequence);
+					builder.writeInt(stage.serverTick);
+					builder.writeString(stage.worldSpace);
+					builder.writeInt(stage.logicalLevel);
+					builder.writeString(stage.nativePackageId);
+					builder.writeString(stage.nativePackageVersion);
+					builder.writeString(stage.nativeManifestSha256);
+					builder.writeByte(
+						(byte) stage.nativePresentationChunkSize);
+					builder.writeInt(stage.nativeCurrentChunkX);
+					builder.writeInt(stage.nativeCurrentChunkY);
+					builder.writeByte((byte) stage.nativeChunkRadius);
+					builder.writeByte((byte) stage.nativeChunks.size());
+					for (LayeredSceneTerrainChunkStruct chunk
+						: stage.nativeChunks) {
+						builder.writeInt(chunk.chunkX);
+						builder.writeInt(chunk.chunkY);
+						builder.writeByte(chunk.available ? 1 : 0);
+						if (chunk.available) {
+							builder.writeInt(chunk.sourceSectorX);
+							builder.writeInt(chunk.sourceSectorY);
+							builder.writeString(chunk.sourceEncoding);
+							builder.writeString(
+								chunk.sourcePayloadSha256);
+							builder.writeByte(
+								chunk.payloadPresent ? 1 : 0);
+							if (chunk.payloadPresent) {
+								builder.writeShort(
+									chunk.tileBytes.length);
+								builder.write(chunk.tileBytes);
 							}
 						}
 					}

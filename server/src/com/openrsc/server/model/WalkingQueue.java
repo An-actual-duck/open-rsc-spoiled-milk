@@ -75,6 +75,11 @@ public class WalkingQueue {
 			reset();
 			return;
 		}
+		if (mob.isPlayer()
+			&& mob.getWorld().getServer().getGameUpdater()
+				.isNativeTerrainActivationMovementHeld((Player) mob)) {
+			return;
+		}
 
 		// Player is walking if path is not null or empty.
 		playerWasWalking = true;

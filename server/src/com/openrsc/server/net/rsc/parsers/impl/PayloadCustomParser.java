@@ -269,6 +269,9 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case 154:
 				opcode = OpcodeIn.LAYERED_TERRAIN_READY;
 				break;
+			case 155:
+				opcode = OpcodeIn.LAYERED_TERRAIN_STAGE_READY;
+				break;
 			case 0:
 				opcode = OpcodeIn.LOGIN;
 				break;
@@ -476,6 +479,8 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				return isWorldEditorPacketLength(packet.getLength());
 			case LAYERED_TERRAIN_READY:
 				return packet.getLength() >= 24 && packet.getLength() <= 218;
+			case LAYERED_TERRAIN_STAGE_READY:
+				return packet.getLength() >= 28 && packet.getLength() <= 222;
 		}
 		return true;
 	}
@@ -511,6 +516,20 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				ready.manifestSha256 = packet.readString();
 				if (packet.getReadableBytes() != 0) return null;
 				result = ready;
+				break;
+			case LAYERED_TERRAIN_STAGE_READY:
+				LayeredTerrainStageReadyStruct stageReady =
+					new LayeredTerrainStageReadyStruct();
+				stageReady.protocolVersion = packet.readByte() & 0xff;
+				stageReady.stageSequence = packet.readInt();
+				stageReady.contextSequence = packet.readInt();
+				stageReady.worldSpace = packet.readString();
+				stageReady.logicalLevel = packet.readInt();
+				stageReady.centerSectorX = packet.readInt();
+				stageReady.centerSectorY = packet.readInt();
+				stageReady.manifestSha256 = packet.readString();
+				if (packet.getReadableBytes() != 0) return null;
+				result = stageReady;
 				break;
 			case WORLD_EDITOR_REQUEST:
 				WorldEditorRequestStruct editor = new WorldEditorRequestStruct();

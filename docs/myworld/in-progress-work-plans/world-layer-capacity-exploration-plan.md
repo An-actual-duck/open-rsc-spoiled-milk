@@ -10,8 +10,9 @@ one signed negative-section activation defect, and the first resident-v6 route
 found and fixed a hard-teleport client-window mirror defect. Current-source
 package `0.3.0` and protocol-v6 visual/transfer behavior are automated- and
 owner-accepted. Stage 3 cut 1 exact readiness acknowledgement and scene gating
-are also implemented and owner-accepted. Predictive delivery and final atomic
-activation are next.
+are also implemented and owner-accepted. Stage 3 cut 2's bounded predictive
+delivery and activation-anchor hold are implemented and owner-accepted; final
+atomic cover completion remains next.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -260,6 +261,42 @@ not the content endpoint.
      Ant server and desktop-client builds. The private database was cold-copied
      and hash-verified before both v7 restart rounds; no public process or data
      was touched.
+   - **Cut 2 implemented and owner-accepted.** A separate outbound
+     opcode `154` stages at most one authoritative queued-movement-selected
+     adjacent radius-one center, and inbound opcode `155` acknowledges its
+     exact stage sequence, active context sequence, world space, signed level,
+     center, and manifest. Prediction is independently default-off through
+     `want_layered_native_terrain_prediction`, requires both residency and
+     readiness, ignores hard teleports, and examines no more than 48 tiles of
+     the existing server walking queue.
+   - The client strictly decodes the stage into its connection-local resident
+     LRU without accepting a scene context, changing logical position,
+     installing terrain, resetting a baseline, or touching the active World.
+     Same-center, non-adjacent, cross-package, cross-level, and stale-context
+     stages fail before cache commit. The server likewise defers its mirrored
+     LRU commit until the exact stage acknowledgement arrives; a superseding
+     teleport or scope therefore cannot reference an unproven stage.
+   - Focused compiled guards prove the exact stage identity, three-new/six-
+     overlap adjacent cache result, cache rollback on every invalid stage,
+     unchanged active snapshot, default-off configuration, and absence of
+     client scene activation. Both complete bundled-Ant builds and the cut-1
+     readiness/residency/protocol/movement/wire-cache guards pass. A cold,
+     hash-verified private database copy preceded the prediction-enabled
+     restart; no public process or data was touched.
+   - The first boundary route proved staging itself (`3` incoming payloads,
+     `6` overlaps, then active `0/9`) but exposed an activation-order defect:
+     context `142,656` was followed by first Player receipt `142,658` because
+     the still-queued walk advanced during the acknowledgement interval. The
+     client correctly rejected that mismatch. The server now retains and holds
+     the queued path at the activation anchor until the first Player/appearance
+     scene receipt is emitted, then resumes it on the next movement tick.
+     Focused prediction, readiness, and movement guards plus the complete
+     server build pass. The repeated private route accepted forward stage
+     `1/1` at center `(3,14)`, active `0/9` at exact anchor `(142,656)`,
+     return stage `2/2` at center `(3,13)`, and active `0/9` at exact return
+     anchor `(143,640)`. The retained path continued beyond each anchor; no
+     disconnect, position mismatch, missing scene, or interaction regression
+     was observed.
 
 4. **Incremental client CPU/model products**
    - Preserve the six overlapping sector products during an adjacent shift and
@@ -322,10 +359,11 @@ accepting that complexity.
 
 Loader-v2 stage 2 and Stage 3 cut 1 are privately accepted across ordinary
 travel, return travel, teleport, level changes, interaction, reconnect, exact
-payload/reference evidence, and exact readiness acknowledgement. Implement
-Stage 3 cut 2 predictive delivery next, then bind acknowledged staged
-generation consumption to the final activation cover before measuring whether
-incremental model products are necessary for the showcase target.
+payload/reference evidence, and exact readiness acknowledgement. Stage 3 cut 2
+predictive delivery and its activation-anchor hold are privately accepted.
+Next, bind acknowledged staged generation consumption to the final activation
+cover before measuring whether incremental model products are necessary for
+the showcase target.
 Resume production package promotion and durable transition ownership before a
 private release candidate. Server eviction follows only measured need;
 distribution-neutral extraction follows the proven Spoiled Milk runtime.

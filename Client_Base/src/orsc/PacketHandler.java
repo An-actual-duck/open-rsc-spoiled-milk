@@ -56,6 +56,10 @@ public class PacketHandler {
 	private int appliedSceneBaselineKey = 0;
 	private int layeredTerrainReadySequence = 0;
 	private int layeredTerrainReadyReceipts = 0;
+	private int layeredTerrainStageSequence = 0;
+	private int layeredTerrainStageReceipts = 0;
+	private int layeredTerrainStageCenterX = 0;
+	private int layeredTerrainStageCenterY = 0;
 
 	public String getSceneBaselineDebugSummary() {
 		return sceneBaselineState.summary();
@@ -88,11 +92,19 @@ public class PacketHandler {
 			nativeLayeredTerrainResidentCache.size(),
 			nativeLayeredTerrainResidentCache.getLastPayloads(),
 			nativeLayeredTerrainResidentCache.getLastReferences());
-		return layeredTerrainReadySequence <= 0
-			? summary
-			: summary + " | ack "
+		if (layeredTerrainReadySequence > 0) {
+			summary += " | ack "
 				+ layeredTerrainReadySequence + "/"
 				+ layeredTerrainReadyReceipts;
+		}
+		if (layeredTerrainStageSequence > 0) {
+			summary += " | stage "
+				+ layeredTerrainStageSequence + "/"
+				+ layeredTerrainStageReceipts
+				+ "@" + layeredTerrainStageCenterX
+				+ "," + layeredTerrainStageCenterY;
+		}
+		return summary;
 	}
 
 	public boolean hasLayeredSceneContext() {
@@ -169,6 +181,10 @@ public class PacketHandler {
 		appliedSceneBaselineKey = 0;
 		layeredTerrainReadySequence = 0;
 		layeredTerrainReadyReceipts = 0;
+		layeredTerrainStageSequence = 0;
+		layeredTerrainStageReceipts = 0;
+		layeredTerrainStageCenterX = 0;
+		layeredTerrainStageCenterY = 0;
 	}
 
 	private SpriteDef getProjectileDefForUpdate(int sprite, String targetType, int targetServerIndex, int shooterServerIndex) {
@@ -285,6 +301,7 @@ public class PacketHandler {
 		put(150, "UPDATE_PRESET");
 		put(151, "WORLD_EDITOR");
 		put(152, "LAYERED_SCENE_CONTEXT");
+		put(154, "LAYERED_TERRAIN_STAGE");
 		put(250, "UPDATE_UNLOCKED_APPEARANCES");
 		put(254, "UPDATE_EQUIPMENT");
 		put(255, "UPDATE_EQUIPMENT_SLOT");
@@ -454,6 +471,8 @@ public class PacketHandler {
 
 			else if (opcode == 152) updateLayeredSceneContext(length);
 
+			else if (opcode == 154) updateLayeredTerrainStage(length);
+
 				// Set Server Configs
 			else if (opcode == 19) setServerConfiguration();
 
@@ -610,6 +629,87 @@ public class PacketHandler {
 		clientStream.finishPacket();
 		layeredTerrainReadySequence = contextSequence;
 		layeredTerrainReadyReceipts++;
+	}
+
+	private void updateLayeredTerrainStage(final int length) {
+		final int protocolVersion = packetsIncoming.getUnsignedByte();
+		final int stageSequence = packetsIncoming.get32();
+		final int contextSequence = packetsIncoming.get32();
+		final int serverTick = packetsIncoming.get32();
+		final String worldSpace = packetsIncoming.readString();
+		final int logicalLevel = packetsIncoming.get32();
+		if (protocolVersion != 1
+			|| stageSequence <= layeredTerrainStageSequence
+			|| !layeredSceneContextState.matchesSequence(contextSequence)
+			|| !worldSpace.equals(
+				layeredSceneContextState.getWorldSpace())
+			|| logicalLevel
+				!= layeredSceneContextState.getLogicalLevel()) {
+			throw new IllegalStateException(
+				"Native terrain stage does not match the active context");
+		}
+		final int bodyLength = length - packetsIncoming.packetEnd;
+		if (bodyLength <= 0) {
+			throw new IllegalArgumentException(
+				"Native terrain stage body is missing");
+		}
+		final byte[] body = new byte[bodyLength];
+		packetsIncoming.readBytes(bodyLength, body);
+		final NativeLayeredTerrainSnapshot stagedTerrain =
+			NativeLayeredTerrainPacketDecoder.decodeV7Stage(
+				body,
+				worldSpace,
+				logicalLevel,
+				nativeLayeredTerrainResidentCache,
+				layeredSceneContextState
+					.getNativeTerrainSnapshot());
+		sendLayeredTerrainStageReady(
+			stageSequence,
+			contextSequence,
+			worldSpace,
+			logicalLevel,
+			stagedTerrain);
+		layeredTerrainStageSequence = stageSequence;
+		layeredTerrainStageReceipts++;
+		layeredTerrainStageCenterX =
+			stagedTerrain.getCurrentChunkX();
+		layeredTerrainStageCenterY =
+			stagedTerrain.getCurrentChunkY();
+		final String summary =
+			"layer terrain stage seq " + stageSequence
+				+ " context " + contextSequence
+				+ " tick " + serverTick
+				+ " " + worldSpace + " L" + logicalLevel
+				+ " center " + layeredTerrainStageCenterX
+				+ "," + layeredTerrainStageCenterY
+				+ " resident "
+				+ nativeLayeredTerrainResidentCache.size();
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+		packetsIncoming.packetEnd = length;
+	}
+
+	private void sendLayeredTerrainStageReady(
+		final int stageSequence,
+		final int contextSequence,
+		final String worldSpace,
+		final int logicalLevel,
+		final NativeLayeredTerrainSnapshot terrain) {
+		if (terrain == null || clientStream == null) {
+			throw new IllegalStateException(
+				"Terrain stage receipt has no resident terrain");
+		}
+		clientStream.newPacket(
+			Opcodes.Out.LAYERED_TERRAIN_STAGE_READY.getOpcode());
+		clientStream.bufferBits.putByte(1);
+		clientStream.bufferBits.putInt(stageSequence);
+		clientStream.bufferBits.putInt(contextSequence);
+		clientStream.bufferBits.putString(worldSpace);
+		clientStream.bufferBits.putInt(logicalLevel);
+		clientStream.bufferBits.putInt(terrain.getCurrentChunkX());
+		clientStream.bufferBits.putInt(terrain.getCurrentChunkY());
+		clientStream.bufferBits.putString(terrain.getManifestSha256());
+		clientStream.finishPacket();
 	}
 
 	private void updateWorldEditor() {
