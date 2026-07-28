@@ -6,9 +6,11 @@ owner-accepted. Further editor capability work is paused after automatic
 generic ladder/stair pairing. The active implementation focus is native loader
 performance: measurable sector-product reuse and protocol-v6 resident-sector
 delivery are implemented. The first private loader diagnostic found and fixed
-one signed negative-section activation defect. Current-source package `0.3.0`
-is automated- and owner-accepted; protocol-v6 visual/transfer review comes
-next.
+one signed negative-section activation defect, and the first resident-v6 route
+found and fixed a hard-teleport client-window mirror defect. Current-source
+package `0.3.0` and protocol-v6 visual/transfer behavior are automated- and
+owner-accepted. Stage 3 readiness acknowledgement, predictive delivery, and
+atomic activation are next.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -106,8 +108,8 @@ Implementation sequence:
      available sectors, raw/wire bytes, cache requests/hits/misses, build time,
      and maximum cache entries. Protocol v5 and client behavior are unchanged.
 
-2. **Resident-sector protocol and in-memory client cache — implemented,
-   private acceptance pending**
+2. **Resident-sector protocol and in-memory client cache — implemented and
+   owner-accepted**
    - Optional protocol v6 retains exact decoded 48-by-48 sectors in a bounded
      64-entry, connection-local access-order cache keyed by package/version/
      manifest, world space, signed level, logical sector, source sector,
@@ -148,11 +150,19 @@ Implementation sequence:
      packet/active terrain. Owner review confirmed terrain, clickability, and
      performance recovered.
    - The same route exposed a client-only legacy render-offset leak in the
-     wilderness HUD and player-attack menu. Wilderness depth now derives from
-     geographic logical X/Y, so every signed layer follows its corresponding
-     level-0 wilderness coordinate rather than interpreting negative render
-     space as level 450. Automated coordinate/client builds pass, and owner
-     review confirmed the false level-450 indicator is gone on level `-1`.
+   wilderness HUD and player-attack menu. Wilderness depth now derives from
+   geographic logical X/Y, so every signed layer follows its corresponding
+   level-0 wilderness coordinate rather than interpreting negative render
+   space as level 450. Automated coordinate/client builds pass, and owner
+   review confirmed the false level-450 indicator is gone on level `-1`.
+   - Private protocol-v6 acceptance proved fresh `9/0`, adjacent mixed `3/6`,
+     fully referenced `0/9` revisits, Mining Guild level changes, normal
+     terrain/collision/harvesting/movement, and reconnect reset to resident
+     `9` with `9/0`. Expanded F6 now exposes the compact delivery summary.
+     The route also found that hard teleports can recenter the client inside
+     the normal walking threshold; the server now mirrors that recenter in the
+     same tick, preventing partial six-sector activation and stale movement
+     coordinates.
 
 ### Current-source refresh discovered during private review
 
@@ -248,11 +258,11 @@ accepting that complexity.
 
 ### Recommended order from this checkpoint
 
-Privately validate implemented loader-v2 stage 2 across ordinary travel,
-return travel, teleport, death, and reconnect while reviewing payload/reference
-metrics. Then implement stage 3 readiness acknowledgement and predictive
-activation before deciding whether incremental model products are necessary
-for the showcase target.
+Loader-v2 stage 2 is privately accepted across ordinary travel, return travel,
+teleport, level changes, interaction, and reconnect with exact
+payload/reference evidence. Implement stage 3 readiness acknowledgement,
+predictive delivery, and atomic activation next, then measure whether
+incremental model products are necessary for the showcase target.
 Resume production package promotion and durable transition ownership before a
 private release candidate. Server eviction follows only measured need;
 distribution-neutral extraction follows the proven Spoiled Milk runtime.
