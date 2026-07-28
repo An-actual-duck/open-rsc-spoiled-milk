@@ -798,8 +798,12 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 "rsc-remastered.spoiled-milk-layered-world",
                 manifest["packageId"],
             )
-            self.assertEqual("0.4.0", manifest["packageVersion"])
-            self.assertEqual(1775, len(manifest["terrainSectors"]))
+            self.assertEqual("0.5.0", manifest["packageVersion"])
+            self.assertEqual(1782, len(manifest["terrainSectors"]))
+            relocations = {
+                relocation["id"]: relocation
+                for relocation in report["terrainRelocations"]
+            }
             self.assertEqual(
                 {
                     "bounds": {
@@ -832,7 +836,66 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                     ],
                     "xAndYPreserved": True,
                 },
-                report["terrainRelocation"],
+                relocations["spoiled-milk-zanaris-to-level-10-v1"],
+            )
+            self.assertEqual(
+                {
+                    "bounds": {
+                        "maximumX": 335,
+                        "maximumY": 623,
+                        "minimumX": 288,
+                        "minimumY": 576,
+                    },
+                    "componentSeed": {"x": 329, "y": 587},
+                    "connectedNonVoidTiles": 2170,
+                    "copiedTilesIncludingPresentationRing": 2374,
+                    "id": "spoiled-milk-lava-forge-to-level-minus-2-v1",
+                    "protectedNeighbor": {
+                        "bounds": {
+                            "maximumX": 423,
+                            "maximumY": 604,
+                            "minimumX": 325,
+                            "minimumY": 480,
+                        },
+                        "componentSeed": {"x": 341, "y": 587},
+                        "connectedNonVoidTiles": 2955,
+                        "label": "Taverley blue-dragon dungeon",
+                        "minimumChebyshevSeparationTiles": 6,
+                        "placementsRemainingOnSourceLevelByFamily": {
+                            "boundaries": 11,
+                            "groundItems": 10,
+                            "npcs": 83,
+                            "scenery": 217,
+                        },
+                        "terrainByteExactAfterRelocation": True,
+                        "terrainRemainsOnSourceLevel": True,
+                    },
+                    "relocatedPlacementsByFamily": {
+                        "boundaries": 0,
+                        "groundItems": 1,
+                        "npcs": 20,
+                        "scenery": 3,
+                    },
+                    "sourceClearedStructuralRingTiles": 0,
+                    "sourceClearedTiles": 2374,
+                    "sourceClearedVoidRingTiles": 204,
+                    "sourceCopiedFootprintClearedToVoid": True,
+                    "sourceLevel": -1,
+                    "targetLevel": -2,
+                    "targetSectors": [
+                        {"sectorX": 5, "sectorY": 12},
+                        {"sectorX": 5, "sectorY": 13},
+                        {"sectorX": 6, "sectorY": 11},
+                        {"sectorX": 6, "sectorY": 12},
+                        {"sectorX": 6, "sectorY": 13},
+                        {"sectorX": 7, "sectorY": 12},
+                        {"sectorX": 7, "sectorY": 13},
+                    ],
+                    "xAndYPreserved": True,
+                },
+                relocations[
+                    "spoiled-milk-lava-forge-to-level-minus-2-v1"
+                ],
             )
             self.assertEqual(
                 "fairy-dimension",
@@ -840,6 +903,14 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                     level["role"]
                     for level in manifest["levels"]
                     if level["level"] == 10
+                ),
+            )
+            self.assertEqual(
+                "deep-underground-lava-forge",
+                next(
+                    level["role"]
+                    for level in manifest["levels"]
+                    if level["level"] == -2
                 ),
             )
             terrain_paths = {
@@ -890,6 +961,99 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 ),
                 "relocated source footprint retained terrain metadata",
             )
+
+            lava_component = {
+                (x, y)
+                for x in range(288, 336)
+                for y in range(576, 624)
+                if terrain_tile(-2, x, y)[2] != 8
+            }
+            lava_footprint = {
+                (x + delta_x, y + delta_y)
+                for x, y in lava_component
+                for delta_x in (-1, 0, 1)
+                for delta_y in (-1, 0, 1)
+                if terrain_tile(
+                    -2, x + delta_x, y + delta_y
+                )
+                is not None
+            }
+            self.assertEqual(2170, len(lava_component))
+            self.assertEqual(2374, len(lava_footprint))
+            self.assertTrue(
+                all(
+                    terrain_tile(-1, x, y) == canonical_void
+                    for x, y in lava_footprint
+                ),
+                "relocated lava-forge source footprint retained terrain",
+            )
+
+            with zipfile.ZipFile(source_archive) as source:
+                source_sectors = {}
+
+                def source_native_tile(x, y):
+                    sector_x, local_x = divmod(x, 48)
+                    sector_y, local_y = divmod(y, 48)
+                    identity = (sector_x, sector_y)
+                    payload = source_sectors.get(identity)
+                    if payload is None:
+                        entry = "h3x{}y{}".format(
+                            sector_x + 48,
+                            sector_y + 37,
+                        )
+                        payload = source.read(entry)
+                        source_sectors[identity] = payload
+                    offset = (local_x * 48 + local_y) * 10
+                    value = bytearray(payload[offset : offset + 10])
+                    value[4], value[5] = value[5], value[4]
+                    return bytes(value)
+
+                self.assertTrue(
+                    all(
+                        terrain_tile(-2, x, y)
+                        == source_native_tile(x, y)
+                        for x, y in lava_footprint
+                    ),
+                    "lava-forge destination differs from authored source",
+                )
+
+                dragon_component = {(341, 587)}
+                pending = [(341, 587)]
+                while pending:
+                    x, y = pending.pop()
+                    for neighbor in (
+                        (x - 1, y),
+                        (x + 1, y),
+                        (x, y - 1),
+                        (x, y + 1),
+                    ):
+                        value = terrain_tile(-1, *neighbor)
+                        if (
+                            neighbor not in dragon_component
+                            and value is not None
+                            and value[2] != 8
+                        ):
+                            dragon_component.add(neighbor)
+                            pending.append(neighbor)
+                self.assertEqual(2955, len(dragon_component))
+                self.assertEqual(
+                    (325, 480, 423, 604),
+                    (
+                        min(x for x, _ in dragon_component),
+                        min(y for _, y in dragon_component),
+                        max(x for x, _ in dragon_component),
+                        max(y for _, y in dragon_component),
+                    ),
+                )
+                self.assertTrue(
+                    all(
+                        terrain_tile(-1, x, y)
+                        == source_native_tile(x, y)
+                        for x, y in dragon_component
+                    ),
+                    "protected blue-dragon terrain changed",
+                )
+
             generated_records = {
                 "npcs": [],
                 "groundItems": [],
@@ -931,6 +1095,45 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                     for family, records in generated_records.items()
                 },
             )
+            self.assertEqual(
+                {
+                    "npcs": 20,
+                    "groundItems": 1,
+                    "scenery": 3,
+                    "boundaries": 0,
+                },
+                {
+                    family: sum(
+                        record["_level"] == -2
+                        for record in records
+                    )
+                    for family, records in generated_records.items()
+                },
+            )
+            self.assertEqual(
+                {
+                    "npcs": 83,
+                    "groundItems": 10,
+                    "scenery": 217,
+                    "boundaries": 11,
+                },
+                {
+                    family: sum(
+                        record["_level"] == -1
+                        and (
+                            record.get(
+                                "start", record.get("position")
+                            )["x"],
+                            record.get(
+                                "start", record.get("position")
+                            )["y"],
+                        )
+                        in dragon_component
+                        for record in records
+                    )
+                    for family, records in generated_records.items()
+                },
+            )
             for family, records in generated_records.items():
                 for record in records:
                     position = record.get(
@@ -941,6 +1144,13 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                         and 96 <= position["x"] <= 181
                         and 678 <= position["y"] <= 728,
                         f"{family} remained in the relocated footprint: "
+                        f"{record['placementId']}",
+                    )
+                    self.assertFalse(
+                        record["_level"] == -1
+                        and (position["x"], position["y"])
+                        in lava_footprint,
+                        f"{family} remained in the relocated lava forge: "
                         f"{record['placementId']}",
                     )
             scenery_by_slot = {

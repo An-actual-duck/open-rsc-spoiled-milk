@@ -40,9 +40,10 @@ server/client `Custom_Landscape.orsc` pair (1,771 source sectors), inventories a
 33,622 placement inputs selected from base, feature, and MyWorld sources, and
 applies the same removal, cleanup, same-slot replacement, and Harvesting rules
 as legacy population. The current conversion then applies the reviewed
-Zanaris relocation described below, producing 1,775 native terrain sectors.
+Zanaris and lava-forge relocations described below, producing 1,782 native
+terrain sectors.
 
-The resulting five level-qualified sets contain 33,514 effective placements:
+The resulting six level-qualified sets contain 33,514 effective placements:
 971 boundaries, 27,886 scenery objects, 3,775 NPCs, and 882 ordinary ground
 items. The scenery count includes 143 ground-item locations reclassified as
 their configured harvestable scenery. The one existing Hobgoblin maximum-Y
@@ -60,11 +61,21 @@ The cleanup includes 567 source ring tiles, 214 of which carry wall structure
 despite their void overlay. Unexpected terrain connectivity, ring structure,
 destination overlap, or placement-count drift refuses package generation.
 
+Package `0.5.0` additionally moves the isolated lava-forge/demon miniquest
+component from global level `-1` to level `-2`, preserving authored X/Y. Its
+fail-closed transform requires 2,170 connected non-void tiles at
+`(329,587,-1)`, copies the exact 204-tile presentation ring, clears all 2,374
+source-footprint tiles to canonical void, and relocates exactly 20 NPCs, one
+ground item, and three scenery objects. The neighboring Taverley blue-dragon
+dungeon is a separate protected component: all 2,955 of its terrain tiles and
+its exact 83 NPC, 10 item, 217 scenery, and 11 boundary placements must remain
+unchanged on level `-1`, or generation refuses.
+
 The active package is
-`rsc-remastered.spoiled-milk-layered-world@0.4.0`, manifest SHA-256
-`ed93e345a93c88cd22bcf694b5ac121b7117faa213a77af27bc90bd7faead789`
+`rsc-remastered.spoiled-milk-layered-world@0.5.0`, manifest SHA-256
+`350349f2a24923c3ac291d0df6df7ada63255f2d4528b33ec39b500b3e61c74c`
 and package fingerprint
-`f644a7c5e12f1f0e733917125b1e650ddaffe87b204543389c525f0e1c61318a`.
+`f95950b7a178c865b0844055fe474acdfb770bcec91b66190a28844e8578efd4`.
 It is consumed only by the default-off `spoiled-milk-replacement` private
 runtime profile. This complete distribution is the reference integration
 target while the layered engine and authoring path stabilize.

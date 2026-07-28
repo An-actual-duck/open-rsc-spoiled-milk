@@ -20,6 +20,7 @@ import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LegacyPlayerLocationPersistenceSnapshot;
 import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationPersistence;
+import com.openrsc.server.model.world.coordinate.LavaForgeLocation;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.model.world.region.TileValue;
@@ -204,6 +205,32 @@ public class PlayerService implements IPlayerService {
 			restoredLocation = migratedLocation;
 			restoredOrigin =
 				ZanarisLocation.PERSISTENCE_MIGRATION_ORIGIN;
+			rewriteRequired = true;
+		}
+		WorldLocation relocatedLavaForge =
+			LavaForgeLocation.relocateLegacyComponentCandidate(
+				restoredLocation);
+		boolean hasRelocatedLavaForgeTerrain =
+			!relocatedLavaForge.equals(restoredLocation)
+				&& player.getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(relocatedLavaForge);
+		TileValue relocatedLavaForgeTile =
+			hasRelocatedLavaForgeTerrain
+				? player.getWorld().getRegionManager()
+					.getTile(relocatedLavaForge)
+				: null;
+		migratedLocation =
+			LavaForgeLocation.migratePersistedLocation(
+				restoredLocation,
+				hasRelocatedLavaForgeTerrain
+					&& relocatedLavaForgeTile != null,
+				relocatedLavaForgeTile == null
+					? 8
+					: relocatedLavaForgeTile.overlay & 0xff);
+		if (!migratedLocation.equals(restoredLocation)) {
+			restoredLocation = migratedLocation;
+			restoredOrigin =
+				LavaForgeLocation.PERSISTENCE_MIGRATION_ORIGIN;
 			rewriteRequired = true;
 		}
 		player.setInitialLayeredLocation(restoredLocation);

@@ -233,19 +233,23 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         System.setProperty(WorldBuilderClientProfile.LAYERED_REVIEW_PROPERTY, "true");
                         System.setProperty(WorldBuilderClientProfile.LAYERED_PACKAGE_ID_PROPERTY,
                             "rsc-remastered.spoiled-milk-layered-world");
-                        System.setProperty(WorldBuilderClientProfile.LAYERED_PACKAGE_VERSION_PROPERTY, "0.4.0");
+                        System.setProperty(WorldBuilderClientProfile.LAYERED_PACKAGE_VERSION_PROPERTY, "0.5.0");
                         System.setProperty(WorldBuilderClientProfile.LAYERED_MANIFEST_SHA256_PROPERTY,
-                            "ed93e345a93c88cd22bcf694b5ac121b7117faa213a77af27bc90bd7faead789");
+                            "350349f2a24923c3ac291d0df6df7ada63255f2d4528b33ec39b500b3e61c74c");
                         System.setProperty(WorldBuilderClientProfile.LAYERED_WORLD_SPACE_PROPERTY, "global");
-                        System.setProperty(WorldBuilderClientProfile.LAYERED_LEVELS_PROPERTY, "-1,0,1,2,10");
+                        System.setProperty(WorldBuilderClientProfile.LAYERED_LEVELS_PROPERTY, "-2,-1,0,1,2,10");
                         profile = WorldBuilderClientProfile.initializeFromSystemProperties();
                         require(profile.isLayeredReview(), "layered review enabled");
                         require(!profile.isLayeredTerrainDraft(), "review is not writable by default");
-                        require(profile.declaresLayer(-1) && profile.declaresLayer(2)
+                        require(profile.declaresLayer(-2)
+                            && profile.declaresLayer(-1)
+                            && profile.declaresLayer(2)
                             && profile.declaresLayer(10)
-                            && !profile.declaresLayer(-2), "declared signed levels");
-                        require("-1,0,1,2,10".equals(profile.layeredLevelsLabel()), "level label");
-                        require("ed93e345a93c".equals(profile.layeredManifestShort()), "manifest identity");
+                            && !profile.declaresLayer(-3), "declared signed levels");
+                        require("-2,-1,0,1,2,10".equals(
+                            profile.layeredLevelsLabel()), "level label");
+                        require("350349f2a249".equals(
+                            profile.layeredManifestShort()), "manifest identity");
                         System.setProperty(
                             WorldBuilderClientProfile.LAYERED_TERRAIN_DRAFT_PROPERTY, "true");
                         profile = WorldBuilderClientProfile.initializeFromSystemProperties();

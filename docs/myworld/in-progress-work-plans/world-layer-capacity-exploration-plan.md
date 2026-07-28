@@ -13,7 +13,12 @@ owner-accepted. A fail-closed candidate package `0.4.0` now relocates the
 complete Zanaris/Fairy Dimension island from underground level `-1` to
 dedicated global level `+10`; its package, runtime, persistence, script, and
 Builder guards are automated-validated and its corrected private owner route
-is accepted.
+is accepted. Candidate package `0.5.0` adds the second manual relocation:
+the isolated lava-forge/demon miniquest component moves from level `-1` to
+level `-2` at unchanged X/Y, while an exact negative guard keeps the nearby
+Taverley blue-dragon dungeon on level `-1`. Package, transition, persistence,
+runtime, and Builder guards pass; the private visual/content, protected-
+neighbor, transition, and reconnect route is owner-accepted.
 Stage 3 cut 1 exact readiness acknowledgement and scene gating
 are also implemented and owner-accepted. Stage 3 cut 2's bounded predictive
 delivery and activation-anchor hold are implemented and owner-accepted.
@@ -105,6 +110,12 @@ estimates and “next slice” language below are historical unless repeated her
   totals. Generation and runtime/Builder guards pass; focused private visual,
   gameplay, persistence, transition, and old-footprint cleanup acceptance is
   complete.
+- Candidate package `0.5.0` is the automated-validated second manual
+  relocation. It moves the isolated lava-forge/demon miniquest component to
+  global level `-2` at unchanged X/Y, retains the connected Taverley
+  blue-dragon dungeon on `-1`, and preserves all effective placement totals.
+  Its focused private visual/gameplay/persistence and bidirectional-ladder
+  route is owner-accepted.
 - Signed levels are data-declared and expandable. The loader, protocol,
   renderer, collision, persistence, and Builder have exercised depths beyond
   `-2` without adding another level constant or coordinate codec.
@@ -430,6 +441,74 @@ server build passes. Private owner review confirms portal entry, complete
 island visuals/content, bank and marketplace behavior, ladder exit,
 logout/login persistence, and a clean former level-`-1` footprint after the
 567-tile ring cleanup. Package `0.4.0` is owner-accepted.
+
+### Manual deep-underground relocation candidate: Lava Forge at level -2
+
+Package `rsc-remastered.spoiled-milk-layered-world@0.5.0` adds the first
+authored deep-underground content at global level `-2`. Its manifest SHA-256 is
+`350349f2a24923c3ac291d0df6df7ada63255f2d4528b33ec39b500b3e61c74c`
+and its package fingerprint is
+`f95950b7a178c865b0844055fe474acdfb770bcec91b66190a28844e8578efd4`.
+The two accepted manual transforms add 11 target sectors to the unchanged
+1,771-sector authored source, producing 1,782 native sectors and six placement
+sets while retaining all 33,514 effective placements.
+
+The converter derives the lava-forge/demon miniquest area from seed
+`(329,587,-1)` using exact non-void connectivity. The reviewed positive
+signature is:
+
+- 2,170 connected non-void tiles with bounds `x=288..335`, `y=576..623`;
+- 2,374 copied tiles after adding the exact 204-tile overlay-8 presentation
+  ring, none of whose tiles carries structure metadata;
+- seven target sectors `(5,12)`, `(5,13)`, `(6,11)`, `(6,12)`, `(6,13)`,
+  `(7,12)`, and `(7,13)` on level `-2`;
+- exactly 20 NPCs (Black/Greater Demons, spiders, Balrog, Dwarven Smithy, and
+  Dwarven Youth), one Teddy Body ground item, and three scenery objects,
+  including the return ladder and lava-forge objects; and
+- unchanged logical X/Y for every terrain tile, placement, and NPC roaming
+  bound.
+
+The nearby component is not inferred from a rectangular crop. A second
+independent flood-fill at `(341,587,-1)` protects the connected Taverley
+blue-dragon dungeon as an explicit negative signature:
+
+- 2,955 non-void terrain tiles with bounds `x=325..423`, `y=480..604`;
+- a minimum six-tile Chebyshev separation from the lava-forge component;
+- byte-exact level-`-1` terrain before and after relocation; and
+- exactly 83 NPCs, 10 ground items (including four Blue dragon scales and the
+  Dusty Key), 217 scenery objects, and 11 boundaries retained on level `-1`.
+
+Generation refuses either component's topology/bounds drift, a changed
+separation, any non-void presentation-ring contact, target-sector overlap, or
+positive/negative placement-count drift. After copying, all 2,374 old
+lava-forge component/ring tiles are canonical overlay-8 void. The legacy
+terrain and placement sources remain unchanged and reproducible.
+
+Runtime ownership is level-qualified while retaining the ordinary legacy
+fallback:
+
+- the quest-gated down ladder at `(271,508,-1)` arrives at
+  `(329,587,-2)` when the native destination exists;
+- the up ladder at `(329,586,-2)` returns to `(271,507,-1)`;
+- non-layered profiles retain the established packed-Y route;
+- a Player persisted inside the former level-`-1` lava-forge footprint
+  migrates to the same X/Y at level `-2` only when that exact destination tile
+  exists and is non-void, recording origin
+  `lava-forge-level-minus-2-relocation-v1`; and
+- level `-2` is now part of the accepted source package and is protected from
+  ordinary Builder-created-level editing.
+
+Automated status: the 15-test native-package foundation independently compares
+the moved footprint and protected dragon component against the authored ORSC
+bytes; the 14-test native server/package/profile suite passes; focused
+lava-forge, Zanaris, player-persistence, Builder draft/runtime, and vertical-
+pairing guards pass; World Builder tooling and the authoritative server/plugin
+build succeed. Private owner review accepts the relocated demon/lava-forge
+terrain and content, the protected neighboring dragon area, the Dwarven Mine
+down-ladder arrival on level `-2`, the level-`-2` up-ladder return to level
+`-1`, and reconnect behavior. The ordinary gameplay restrictions remain
+unchanged; the dedicated private `devduck` account was given completed quest
+and miniquest state solely to exercise the restricted transitions.
 
 3. **Readiness acknowledgement, predictive delivery, and atomic activation**
    - Stage required sectors before a window boundary using authoritative
@@ -19243,6 +19322,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-28 | Move the isolated lava-forge/demon miniquest component reached from the Dwarven Mine down one true layer, while retaining the adjacent dragon dungeon on level `-1`. | Implemented, automated-validated, and owner-accepted as fail-closed package `0.5.0`. Exact connectivity moves 2,170 non-void tiles plus a 204-tile void ring, 20 NPCs, one item, and three scenery objects from `-1` to `-2` with X/Y preserved. An independent negative guard keeps all 2,955 Taverley blue-dragon terrain tiles and its exact 83/10/217/11 placement census byte-identical on `-1`. Private review accepts relocated visuals/content, protected dragon content, bidirectional Dwarven Mine ladder travel, and reconnect behavior. The quest gate, saved-player migration, runtime profile, and Builder protected-source contract are level-qualified; legacy fallback remains |
 | 2026-07-28 | Relocate the complete Zanaris/Fairy Dimension content island from shared underground level `-1` to dedicated global level `+10`, preserving X/Y and all content ownership. | Implemented, automated-validated, and owner-accepted as fail-closed package `0.4.0`: exact flood-fill and placement signatures move 1,639 non-void tiles plus their presentation ring, 28 NPCs, four items, 194 scenery objects, and six boundaries into four level-`+10` sectors; portal, ladder, marketplace, bank, hopper, aliases, and old saved-player migration are level-qualified; Builder protects `+10` as accepted source. The first private route accepted destination content and behavior but exposed 214 wall-bearing tiles retained on the nominally void source ring. The corrected package clears all 2,206 source component/ring tiles, passes byte-exact guards, and the owner confirms the former location is clean |
 | 2026-07-28 | Close the accepted loader visual milestone with one measured server fast path, and keep renderer glow-mask caching, canonical incoming-strip mesh products, static collision pages, and server eviction in their proper later workstreams. | Implemented, automated-validated, and owner-accepted. Native NPC destination checks use exact level-qualified scenery occupancy staged atomically with package-object collision and replacement state instead of scanning the configured multi-region object window. Focused full-block, directional, collisionless, layer-isolation, replacement, removal, and reset guards pass. The private route preserved NPC wall/scenery blocking, Player collision/interactions, and loader travel while processing 5,446 NPC moves at 1 ms poll p95, zero Player backpressure, and 26 ms average active ticks |
 | 2026-07-27 | Keep the server's custom-client midpoint mirror aligned when a hard teleport recenters the client inside the ordinary walking reload radius. | Implemented, automated-validated, and owner-accepted. The first resident-v6 boundary route exposed a client shift from window `(51,50)` to `(51,51)` without a new scene receipt, leaving only six of nine terrain sectors applied and stale movement coordinates. Teleports now recenter the server mirror in the same tick. The corrected `(120,650,L0) -> (120,620,L0)` receipt produced exactly three payloads and six references; return and repeat visits produced nine references with no payload. An initial mistyped `(12,620)` detour explains the observed resident total of 18 without invalidating the exact transfer evidence. The completed route also proved normal terrain, harvesting, collision, movement, Mining Guild level changes (`9/0`, `9/0`, then `0/9`), and reconnect cache reset to resident `9` with `9/0` |

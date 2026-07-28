@@ -160,7 +160,7 @@ class ZanarisLayerRelocationTest(unittest.TestCase):
             ),
             "server/src/com/openrsc/server/content/worldedit/"
             "WorldEditorSessionManager.java": (
-                "level==-1||level==0||level==1||level==2||level==10",
+                "level==-2||level==-1||level==0||level==1||level==2||level==10",
             ),
         }
         for relative, needles in expected.items():

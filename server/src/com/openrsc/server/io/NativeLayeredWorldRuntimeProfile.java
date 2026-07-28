@@ -31,9 +31,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 		"560dae205d13c2034b38f52d8bb6841ee56c245fadc8e9d18361ace1346cd73f";
 	public static final String SPOILED_MILK_PACKAGE_ID =
 		"rsc-remastered.spoiled-milk-layered-world";
-	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.4.0";
+	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.5.0";
 	public static final String SPOILED_MILK_MANIFEST_SHA256 =
-		"ed93e345a93c88cd22bcf694b5ac121b7117faa213a77af27bc90bd7faead789";
+		"350349f2a24923c3ac291d0df6df7ada63255f2d4528b33ec39b500b3e61c74c";
 	private static final int VANILLA_MAX_BOUNDARY_ID = 213;
 	private static final int VANILLA_MAX_SCENERY_ID = 1189;
 	private static final int VANILLA_MAX_NPC_ID = 793;
@@ -173,7 +173,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 			SPOILED_MILK_PACKAGE_ID,
 			SPOILED_MILK_PACKAGE_VERSION,
 			SPOILED_MILK_MANIFEST_SHA256,
-			1775,
+			1782,
 			3775,
 			882,
 			27886,
@@ -191,8 +191,8 @@ public enum NativeLayeredWorldRuntimeProfile {
 		if (!SPOILED_MILK_PACKAGE_ID.equals(loaded.getPackageId())
 			|| !SPOILED_MILK_PACKAGE_VERSION.equals(loaded.getPackageVersion())
 			|| loaded.getWorldSpaceCount() != 1
-			|| loaded.getLevelCount() < 5
-			|| loaded.getTerrainSectorCount() < 1775
+			|| loaded.getLevelCount() < 6
+			|| loaded.getTerrainSectorCount() < 1782
 			|| loaded.getPlacementSetCount() != loaded.getLevelCount()
 			|| loaded.getNpcPlacementCount() < 3775
 			|| loaded.getGroundItemPlacementCount() != 882
@@ -202,7 +202,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 				"The spoiled-milk-builder-draft profile requires an additive "
 				+ "terrain/NPC/scenery descendant of the accepted Spoiled Milk package");
 		}
-		for (int level : new int[] {-1, 0, 1, 2, 10}) {
+		for (int level : new int[] {-2, -1, 0, 1, 2, 10}) {
 			if (!loaded.declaresLevel(WorldSpaceId.GLOBAL, level)) {
 				throw new IllegalStateException(
 					"The Spoiled Milk Builder draft is missing global level " + level);
@@ -219,7 +219,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 						+ "placement set per declared level");
 			}
 			if (set.getLevel() == -1) {
-				requireBuilderSourcePlacementCounts(set, 1160, 258, 4180, 159);
+				requireBuilderSourcePlacementCounts(set, 1140, 257, 4177, 159);
+			} else if (set.getLevel() == -2) {
+				requireBuilderSourcePlacementCounts(set, 20, 1, 3, 0);
 			} else if (set.getLevel() == 0) {
 				requireBuilderSourcePlacementCounts(set, 2386, 535, 22234, 676);
 			} else if (set.getLevel() == 1) {
@@ -292,6 +294,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 					Integer.valueOf(1),
 					Integer.valueOf(2))
 				: Arrays.asList(
+					Integer.valueOf(-2),
 					Integer.valueOf(-1),
 					Integer.valueOf(0),
 					Integer.valueOf(1),

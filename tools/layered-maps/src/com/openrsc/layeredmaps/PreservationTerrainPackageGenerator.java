@@ -34,7 +34,7 @@ final class PreservationTerrainPackageGenerator {
 	static final String PACKAGE_VERSION = "0.4.0";
 	static final String SPOILED_MILK_PACKAGE_ID =
 		"rsc-remastered.spoiled-milk-layered-world";
-	static final String SPOILED_MILK_PACKAGE_VERSION = "0.4.0";
+	static final String SPOILED_MILK_PACKAGE_VERSION = "0.5.0";
 	static final String PRESERVATION_REPORT_TYPE =
 		"preservation-layered-parity-generation";
 	static final String SPOILED_MILK_REPORT_TYPE =
@@ -157,7 +157,8 @@ final class PreservationTerrainPackageGenerator {
 				baseline,
 				stagingRoot,
 				target,
-				terrain.zanarisRelocation);
+				terrain.zanarisRelocation,
+				terrain.lavaForgeRelocation);
 
 		Map<String, Object> manifest =
 			manifest(sectors, placements.sets, target);
@@ -245,7 +246,8 @@ final class PreservationTerrainPackageGenerator {
 			validationJson,
 			target,
 			placements.sourceComposition,
-			terrain.zanarisRelocation);
+			terrain.zanarisRelocation,
+			terrain.lavaForgeRelocation);
 	}
 
 	private static TerrainSource terrainSource(
@@ -431,12 +433,18 @@ final class PreservationTerrainPackageGenerator {
 		}
 
 		int sourceSectorCount = payloads.size();
-		SpoiledMilkZanarisRelocation.Plan relocation =
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation =
 			target == ContentTarget.SPOILED_MILK
 				? SpoiledMilkZanarisRelocation.apply(payloads)
 				: null;
+		SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation =
+			target == ContentTarget.SPOILED_MILK
+				? SpoiledMilkLavaForgeRelocation.apply(
+					zanarisRelocation.getTerrain())
+				: null;
 		Map<WorldMapSectorId, byte[]> generated =
-			relocation == null ? payloads : relocation.getTerrain();
+			lavaForgeRelocation == null
+				? payloads : lavaForgeRelocation.getTerrain();
 		List<WorldMapSectorId> identities =
 			new ArrayList<WorldMapSectorId>(generated.keySet());
 		Collections.sort(
@@ -469,7 +477,8 @@ final class PreservationTerrainPackageGenerator {
 		return new TerrainConversion(
 			sourceSectorCount,
 			result,
-			relocation);
+			zanarisRelocation,
+			lavaForgeRelocation);
 	}
 
 	private static PlacementConversion writePlacements(
@@ -477,16 +486,20 @@ final class PreservationTerrainPackageGenerator {
 		PreservationBaselineInventory.Baseline baseline,
 		Path stagingRoot,
 		ContentTarget target,
-		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation,
+		SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation)
 		throws IOException, PreflightException {
 		if (target == ContentTarget.SPOILED_MILK) {
-			if (zanarisRelocation == null) {
+			if (zanarisRelocation == null || lavaForgeRelocation == null) {
 				throw new PreflightException(
-					"Spoiled Milk placement conversion lost its Zanaris "
+					"Spoiled Milk placement conversion lost a reviewed "
 						+ "terrain relocation plan.");
 			}
 			return writeSpoiledMilkPlacements(
-				root, stagingRoot, zanarisRelocation);
+				root,
+				stagingRoot,
+				zanarisRelocation,
+				lavaForgeRelocation);
 		}
 		Map<Integer, PlacementBucket> buckets =
 			new LinkedHashMap<Integer, PlacementBucket>();
@@ -576,14 +589,16 @@ final class PreservationTerrainPackageGenerator {
 	private static PlacementConversion writeSpoiledMilkPlacements(
 		Path root,
 		Path stagingRoot,
-		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation,
+		SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation)
 		throws IOException, PreflightException {
 		SpoiledMilkWorldComposition.Result composition =
 			new SpoiledMilkWorldComposition().inspect(root);
 		Map<Integer, PlacementBucket> buckets =
 			new LinkedHashMap<Integer, PlacementBucket>();
 		for (int level : new int[] {
-			0, 1, 2, SpoiledMilkZanarisRelocation.TARGET_LEVEL, -1
+			0, 1, 2, SpoiledMilkZanarisRelocation.TARGET_LEVEL,
+			SpoiledMilkLavaForgeRelocation.TARGET_LEVEL, -1
 		}) {
 			buckets.put(
 				Integer.valueOf(level),
@@ -604,25 +619,30 @@ final class PreservationTerrainPackageGenerator {
 			composition.boundaries,
 			buckets,
 			converted,
-			zanarisRelocation);
+			zanarisRelocation,
+			lavaForgeRelocation);
 		convertSpoiledMilkScenery(
 			composition.scenery,
 			buckets,
 			converted,
-			zanarisRelocation);
+			zanarisRelocation,
+			lavaForgeRelocation);
 		convertSpoiledMilkNpcs(
 			composition.npcs,
 			buckets,
 			converted,
 			repairs,
 			unresolved,
-			zanarisRelocation);
+			zanarisRelocation,
+			lavaForgeRelocation);
 		convertSpoiledMilkGroundItems(
 			composition.groundItems,
 			buckets,
 			converted,
-			zanarisRelocation);
+			zanarisRelocation,
+			lavaForgeRelocation);
 		zanarisRelocation.verifyPlacementCounts();
+		lavaForgeRelocation.verifyPlacementCounts();
 
 		List<PlacementSetRecord> sets =
 			writePlacementSets(
@@ -678,7 +698,8 @@ final class PreservationTerrainPackageGenerator {
 		List<SpoiledMilkWorldComposition.Record> values,
 		Map<Integer, PlacementBucket> buckets,
 		Map<String, Integer> converted,
-		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation,
+		SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation)
 		throws PreflightException {
 		for (SpoiledMilkWorldComposition.Record source : values) {
 			Map<String, Object> value = source.value;
@@ -691,8 +712,11 @@ final class PreservationTerrainPackageGenerator {
 			WorldCoordinate position = sourcePosition(
 				value.get("pos"),
 				source.path + " boundaries[" + source.sourceIndex + "].pos");
-			position = zanarisRelocation.relocatePlacement(
-				"boundaries", position);
+			position = relocateSpoiledMilkPlacement(
+				"boundaries",
+				position,
+				zanarisRelocation,
+				lavaForgeRelocation);
 			Map<String, Object> record = map();
 			record.put(
 				"placementId",
@@ -713,7 +737,8 @@ final class PreservationTerrainPackageGenerator {
 		List<SpoiledMilkWorldComposition.Record> values,
 		Map<Integer, PlacementBucket> buckets,
 		Map<String, Integer> converted,
-		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation,
+		SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation)
 		throws PreflightException {
 		for (SpoiledMilkWorldComposition.Record source : values) {
 			Map<String, Object> value = source.value;
@@ -726,8 +751,11 @@ final class PreservationTerrainPackageGenerator {
 			WorldCoordinate position = sourcePosition(
 				value.get("pos"),
 				source.path + " sceneries[" + source.sourceIndex + "].pos");
-			position = zanarisRelocation.relocatePlacement(
-				"scenery", position);
+			position = relocateSpoiledMilkPlacement(
+				"scenery",
+				position,
+				zanarisRelocation,
+				lavaForgeRelocation);
 			Map<String, Object> record = map();
 			record.put(
 				"placementId",
@@ -750,7 +778,8 @@ final class PreservationTerrainPackageGenerator {
 		Map<String, Integer> converted,
 		List<ConversionRepair> repairs,
 		List<UnresolvedPlacement> unresolved,
-		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation,
+		SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation)
 		throws PreflightException {
 		for (SpoiledMilkWorldComposition.Record source : values) {
 			Map<String, Object> value = source.value;
@@ -819,8 +848,11 @@ final class PreservationTerrainPackageGenerator {
 						+ source.path + " index " + source.sourceIndex + ".");
 			}
 			WorldCoordinate relocatedStart =
-				zanarisRelocation.relocatePlacement(
-					"npcs", startCoordinate);
+				relocateSpoiledMilkPlacement(
+					"npcs",
+					startCoordinate,
+					zanarisRelocation,
+					lavaForgeRelocation);
 			if (relocatedStart.getLevel() != startCoordinate.getLevel()) {
 				minimumCoordinate =
 					minimumCoordinate.atLevel(relocatedStart.getLevel());
@@ -845,7 +877,8 @@ final class PreservationTerrainPackageGenerator {
 		List<SpoiledMilkWorldComposition.Record> values,
 		Map<Integer, PlacementBucket> buckets,
 		Map<String, Integer> converted,
-		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation,
+		SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation)
 		throws PreflightException {
 		for (SpoiledMilkWorldComposition.Record source : values) {
 			Map<String, Object> value = source.value;
@@ -855,8 +888,11 @@ final class PreservationTerrainPackageGenerator {
 				value, label, "id", "pos", "amount", "respawn");
 			WorldCoordinate position = sourcePosition(
 				value.get("pos"), label + ".pos");
-			position = zanarisRelocation.relocatePlacement(
-				"groundItems", position);
+			position = relocateSpoiledMilkPlacement(
+				"groundItems",
+				position,
+				zanarisRelocation,
+				lavaForgeRelocation);
 			Map<String, Object> record = map();
 			record.put(
 				"placementId",
@@ -874,6 +910,17 @@ final class PreservationTerrainPackageGenerator {
 			bucket(buckets, position.getLevel()).groundItems.add(record);
 			increment(converted, "groundItems");
 		}
+	}
+
+	private static WorldCoordinate relocateSpoiledMilkPlacement(
+		String family,
+		WorldCoordinate source,
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation,
+		SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation)
+		throws PreflightException {
+		return lavaForgeRelocation.relocatePlacement(
+			family,
+			zanarisRelocation.relocatePlacement(family, source));
 	}
 
 	private static void convertBoundaries(
@@ -1589,6 +1636,8 @@ final class PreservationTerrainPackageGenerator {
 				return "Upper level 2";
 			case SpoiledMilkZanarisRelocation.TARGET_LEVEL:
 				return "Zanaris (Fairy Dimension)";
+			case SpoiledMilkLavaForgeRelocation.TARGET_LEVEL:
+				return "Deep underground: Lava Forge";
 			case -1:
 				return "Underground";
 			default:
@@ -1606,6 +1655,8 @@ final class PreservationTerrainPackageGenerator {
 				return "upper-level-2";
 			case SpoiledMilkZanarisRelocation.TARGET_LEVEL:
 				return "fairy-dimension";
+			case SpoiledMilkLavaForgeRelocation.TARGET_LEVEL:
+				return "deep-underground-lava-forge";
 			case -1:
 				return "underground";
 			default:
@@ -1647,6 +1698,7 @@ final class PreservationTerrainPackageGenerator {
 		final ContentTarget target;
 		final SpoiledMilkWorldComposition.Result sourceComposition;
 		final SpoiledMilkZanarisRelocation.Plan zanarisRelocation;
+		final SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation;
 
 		Result(
 			Path packageRoot,
@@ -1667,7 +1719,8 @@ final class PreservationTerrainPackageGenerator {
 			String validationJson,
 			ContentTarget target,
 			SpoiledMilkWorldComposition.Result sourceComposition,
-			SpoiledMilkZanarisRelocation.Plan zanarisRelocation) {
+			SpoiledMilkZanarisRelocation.Plan zanarisRelocation,
+			SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation) {
 			this.packageRoot = packageRoot;
 			this.baselineFingerprint = baselineFingerprint;
 			this.sourceTerrainPath = sourceTerrainPath;
@@ -1695,6 +1748,7 @@ final class PreservationTerrainPackageGenerator {
 			this.target = target;
 			this.sourceComposition = sourceComposition;
 			this.zanarisRelocation = zanarisRelocation;
+			this.lavaForgeRelocation = lavaForgeRelocation;
 		}
 
 		String toJson() {
@@ -1740,10 +1794,17 @@ final class PreservationTerrainPackageGenerator {
 					"sourceComposition",
 					sourceComposition.toDocument());
 			}
-			if (zanarisRelocation != null) {
+			if (zanarisRelocation != null || lavaForgeRelocation != null) {
+				List<Object> relocations = new ArrayList<Object>();
+				if (zanarisRelocation != null) {
+					relocations.add(zanarisRelocation.toDocument());
+				}
+				if (lavaForgeRelocation != null) {
+					relocations.add(lavaForgeRelocation.toDocument());
+				}
 				document.put(
-					"terrainRelocation",
-					zanarisRelocation.toDocument());
+					"terrainRelocations",
+					relocations);
 			}
 			Map<String, Object> placementCounts = map();
 			for (Map.Entry<String, Integer> entry
@@ -1837,6 +1898,18 @@ final class PreservationTerrainPackageGenerator {
 							.EXPECTED_COMPONENT_TILES)
 					.append(" connected non-void tiles\n");
 			}
+			if (lavaForgeRelocation != null) {
+				out.append("- Lava Forge relocation: level `")
+					.append(SpoiledMilkLavaForgeRelocation.SOURCE_LEVEL)
+					.append("` -> `")
+					.append(SpoiledMilkLavaForgeRelocation.TARGET_LEVEL)
+					.append("`, ")
+					.append(
+						SpoiledMilkLavaForgeRelocation
+							.EXPECTED_COMPONENT_TILES)
+					.append(" connected non-void tiles; adjacent blue-dragon "
+						+ "dungeon guarded unchanged\n");
+			}
 			out.append("- Excluded non-vanilla source placements: ")
 				.append(excludedSourcePlacementCount).append("\n");
 			out.append("- Approved conversion repairs: ")
@@ -1928,15 +2001,18 @@ final class PreservationTerrainPackageGenerator {
 		final int sourceSectorCount;
 		final List<SectorRecord> sectors;
 		final SpoiledMilkZanarisRelocation.Plan zanarisRelocation;
+		final SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation;
 
 		TerrainConversion(
 			int sourceSectorCount,
 			List<SectorRecord> sectors,
-			SpoiledMilkZanarisRelocation.Plan zanarisRelocation) {
+			SpoiledMilkZanarisRelocation.Plan zanarisRelocation,
+			SpoiledMilkLavaForgeRelocation.Plan lavaForgeRelocation) {
 			this.sourceSectorCount = sourceSectorCount;
 			this.sectors = Collections.unmodifiableList(
 				new ArrayList<SectorRecord>(sectors));
 			this.zanarisRelocation = zanarisRelocation;
+			this.lavaForgeRelocation = lavaForgeRelocation;
 		}
 	}
 

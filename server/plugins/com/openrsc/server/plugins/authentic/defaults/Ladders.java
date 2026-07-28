@@ -9,6 +9,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.LavaForgeLocation;
 import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.custom.minigames.ALumbridgeCarol;
@@ -64,16 +65,35 @@ public class Ladders {
 			player.teleport(606, 3556);
 			player.message("You go up the stairs");
 			return;
-		} else if (obj.getID() == 223 && obj.getX() == 271 && obj.getY() == 3340) {
+		} else if (obj.getID() == 223
+			&& (LavaForgeLocation.isDwarvenMineDownLadder(
+					obj.getWorldLocation())
+				|| (obj.getX() == 271 && obj.getY() == 3340))) {
 			//Ladder from dwarven mine to lava forge
 			if (player.getCache().hasKey("miniquest_dwarf_youth_rescue")) {
-				player.teleport(329,3419,false);
+				if (player.getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(
+						LavaForgeLocation.entrance())) {
+					player.teleportLayered(
+						LavaForgeLocation.entrance(), false);
+				} else {
+					player.teleport(329, 3419, false);
+				}
 			} else
 				player.message("you don't have access to this area");
 			return;
-		} else if (obj.getID() == 5 && obj.getX() == 329 && obj.getY() == 3418) {
+		} else if (obj.getID() == 5
+			&& ((obj.getX() == 329 && obj.getY() == 3418)
+				|| LavaForgeLocation.isExitLadder(
+					obj.getWorldLocation()))) {
 			//Ladder from lava forge to dwarven mine
-			player.teleport(271, 3339, false);
+			if (LavaForgeLocation.isExitLadder(
+					obj.getWorldLocation())) {
+				player.teleportLayered(
+					LavaForgeLocation.dwarvenMineReturn(), false);
+			} else {
+				player.teleport(271, 3339, false);
+			}
 			return;
 		} else if (obj.getID() == 42 && obj.getX() == 368 && obj.getY() == 438) {
 			player.message("You go down the stairs");

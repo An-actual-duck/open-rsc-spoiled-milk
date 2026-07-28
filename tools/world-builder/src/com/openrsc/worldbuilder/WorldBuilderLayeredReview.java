@@ -66,11 +66,12 @@ final class WorldBuilderLayeredReview {
 		String fingerprint = hash(root, "packageFingerprintSha256");
 		List<Integer> levels = integerArray(root, "levels");
 		if (!levels.equals(Arrays.asList(
-				Integer.valueOf(-1), Integer.valueOf(0),
+				Integer.valueOf(-2), Integer.valueOf(-1),
+				Integer.valueOf(0),
 				Integer.valueOf(1), Integer.valueOf(2),
 				Integer.valueOf(10)))
-			|| integer(root, "terrainSectorCount") != 1775
-			|| integer(root, "placementSetCount") != 5) {
+			|| integer(root, "terrainSectorCount") != 1782
+			|| integer(root, "placementSetCount") != 6) {
 			throw new WorldBuilderDiscoveryException(
 				"Prepared layered review metadata counts or levels are invalid.");
 		}
