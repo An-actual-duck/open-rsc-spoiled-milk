@@ -19,7 +19,22 @@ late directional fringe experiments were owner-rejected because they did not
 remove the visible edge or approximately 0.7-second boundary freeze. The
 current private cut begins the selected replacement: a symmetric player-
 centered 5-by-5 visual residency field around the retained authoritative
-3-by-3 gameplay window.
+3-by-3 gameplay window. Its terrain and structural retention are visually
+accepted. The current stability refinement replaces the duplicate active
+terrain mesh with an authority-only publication path, records exact transition
+phase timings, fixes an atomic-activation receipt race, and restores picking
+across the broader presentation field without granting that field gameplay
+authority. A second content-dependent stall is now traced to static-scene
+records admitted beyond the signed-byte packet envelope and has a matched
+server/client ownership correction. Automated validation and an instrumented
+private smoke route pass. Focused owner traversal then accepted the complete
+stability refinement: all observed static-scene fences matched, every atomic
+activation released, adjacent authoritative rebuilds remained approximately
+17–24 ms, and the full 64-sector resident field remained populated. The
+remaining hitch is now a bounded tuning target. A separately observed world-
+interaction defect constrains scene picking to a legacy 4:3 area inside the
+16:9 client even though 2D interface input is correct; viewport/picker
+alignment is the next focused correction.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -538,6 +553,99 @@ not the content endpoint.
      publication boundary before increasing presentation workload. Static
      scenery then completes ranged visual content using current server state,
      followed by incoming-strip-only outer replacement.
+   - **The first measured authoritative-publication reduction is implemented.**
+     Renderer-v2 already draws the immutable native chunk frame, but the
+     legacy transition also emitted, partitioned, and installed a duplicate
+     software terrain mesh. Native renderer-v2 runtime now publishes only the
+     legacy terrain authority products that remain required—collision flags,
+     minimap pixels, and elevation cache—while retaining the existing wall,
+     roof, scenery, actor, and baseline lifecycles. Legacy rendering and the
+     Builder keep the complete old product. Stable diagnostics split
+     `World.loadSections` and its enclosing client transition into reset,
+     section/product, terrain-authority, wall, roof, frame, scenery, entity,
+     and baseline phases. The private run reports adjacent authoritative
+     rebuilds of 17–24 ms rather than an unexplained render stall; this is a
+     bounded compatibility reduction, not yet the final rolling scene.
+   - **A reproduced “boundary freeze” was an activation-state race, not a slow
+     rebuild or JVM deadlock.** The client completed terrain publication and
+     received a matching static-scene fence, but its retained-frame cover
+     remained indefinitely because `updateMovement` consumed the new context's
+     first authoritative Player position before `showOtherPlayers` tested the
+     `awaitingInitialReceipt` flag. The state API now returns a one-shot
+     first-receipt result, and one shared position gate covers the Player
+     packet, custom movement packet, and protocol-v2 movement snapshot. The
+     first ordered position-bearing packet releases the Player half of the
+     exact-context barrier; later duplicates cannot release it again.
+     Compiled state guards exercise all three packet paths. The rebuilt private
+     client then crossed the same boundary in both directions through context
+     sequences 2–4: every fence matched and every activation completed, with
+     no retained-frame hang. The subsequent complete owner route accepted the
+     correction across context sequences 2–16.
+   - **Terrain picking now follows the intentional two-window architecture.**
+     The legacy face picker knows only local face coordinates `0..142`, while
+     the accepted radius-two renderer field extends approximately one sector
+     beyond that range on every side. Clipping projected clicks through the
+     legacy face bounds therefore made visible outer terrain unclickable and,
+     after the duplicate active mesh was removed, could remove ordinary ground
+     picks altogether. `World` now exposes an allocation-free, read-only
+     bilinear elevation sampler over the exact matching active/visual native
+     snapshots. `Scene` intersects the camera ray with that height field using
+     a bounded fixed-point pass plus a bidirectional sign-change fallback.
+     Active-field hits retain normal actions. Outer-ring hits are explicitly
+     labelled **Walk toward** and are clipped along the player-to-hit ray to
+     the nearest tile inside the authoritative 3-by-3 gameplay field before
+     invoking normal collision-aware pathfinding. Editor mutations and
+     ground-target spells remain inside the active field; click teleport keeps
+     its explicit developer behavior. No outer collision, NPC, item, or
+     interaction authority is introduced.
+   - Stable `TERRAIN_NAVIGATION_CLICK` console/runtime and
+     `renderer.terrain-navigation-click` JSON records now capture requested,
+     resolved, and player-local coordinates plus whether the request was
+     bounded. This separates projection failure, authority clipping, ordinary
+     pathfinding refusal, and context transition failure in future reports.
+     Focused client-authority, atomic-activation, product-split, symmetric-
+     residency, editor-picking, prediction, and readiness guards pass, as does
+     the complete 264-source Java 8 client build.
+   - **The location-specific long return stall is not a bad terrain chunk.**
+     Captured transitions at `(143,640)` and `(128,625)` rebuilt the native
+     terrain in approximately 18 ms with complete `16/16` halo coverage. The
+     retained-frame barrier instead waited 9.5 and 17.4 seconds after exact
+     static-scene fence mismatches. The legacy scenery, boundary, and
+     ground-item packets encode player-relative X/Y as signed bytes, while the
+     configured 16-grid object radius can select records more than 127 tiles
+     away. At `(128,625)`, two exact Spoiled Milk scenery placements at
+     `(235,759)` and `(247,758)` remained grid-visible but had Y offsets
+     `+134/+133`; their identity contributions uniquely reconstruct the
+     captured two-record fence mismatch. The visible retained frame then
+     disagreed with the already-advanced terrain picker, explaining why click
+     reach appeared broken only in that area.
+   - Server static-scene admission and retirement now share an explicit
+     signed-byte-safe envelope for scenery, boundaries, and ground items.
+     Ordinary movement keeps one encodable tile of removal headroom; large
+     jumps are reconciled by the exact-context atomic fence. Local-set changes
+     still refresh the authoritative baseline even when no legacy delta is
+     encodable, while empty legacy packets are suppressed. Client fence and
+     baseline pruning use the identical envelope, so both sides hash the same
+     ownership set without reducing the broader terrain presentation radius.
+     A focused regression pins the captured fringe records and all three
+     static-scene families. Server/client builds and the relevant authority,
+     prediction, readiness, symmetric-residency, product-split, and picking
+     guards pass. The exact west-and-return owner route is accepted: every
+     captured fence matched, all activations released, adjacent client
+     transitions remained approximately 17–24 ms, `residentSectors` reached
+     and retained the expected 64, and visible outer requests produced bounded
+     navigation records without a freeze. The first attempted repeat had
+     accidentally omitted the symmetric-residency gate and is not acceptance
+     evidence; relaunching the complete profile produced the accepted result.
+   - **The accepted loader milestone exposes one independent widescreen input
+     defect.** In a 16:9 window, world picking is constrained to an apparent
+     legacy 4:3 rectangle while inventory and other 2D interface controls use
+     the complete surface correctly. Trace the scene projection midpoint,
+     viewport dimensions, OpenGL aspect-fit transform, and native terrain
+     fallback from one authoritative viewport description. Do not rescale
+     global UI input or conflate this with residency. Add a focused aspect-
+     ratio guard, rebuild the client, and obtain owner acceptance at both
+     horizontal edges before continuing presentation expansion.
 
 4. **Incremental client CPU/model products**
    - Preserve overlapping sector products during an adjacent shift and build
@@ -614,6 +722,13 @@ incoming-strip replacement. Keep all dynamic entities and collision authority
 inside the existing 3-by-3 gameplay field. Measure the accepted 5-by-5 field
 with shadows and other expensive effects limited to the inner field; optional
 fog may soften its horizon but is not a loading requirement.
+The measured authority-only publication, first-receipt race correction,
+height-aware outer picking, and static-scene wire-envelope correction are
+owner-accepted and should be checkpointed together as the stable loader
+milestone. Next correct the isolated 4:3 world-interaction constraint in the
+16:9 client and validate ground, scenery, NPC, and menu targeting near both
+horizontal edges. Then tune the remaining bounded transition hitch before
+adding static scenery or attempting incoming-strip-only replacement.
 Resume production package promotion and durable transition ownership before a
 private release candidate. Server eviction follows only measured need;
 distribution-neutral extraction follows the proven Spoiled Milk runtime.

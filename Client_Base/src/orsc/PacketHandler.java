@@ -245,6 +245,16 @@ public class PacketHandler {
 		pendingLayeredTerrainLogicalLevel = 0;
 	}
 
+	private void cancelPendingLayeredTerrainPrebuild() {
+		if (pendingLayeredTerrainPrebuild != null) {
+			pendingLayeredTerrainPrebuild.cancel(true);
+		}
+		if (pendingLayeredTerrainHaloPrebuild != null) {
+			pendingLayeredTerrainHaloPrebuild.cancel(true);
+		}
+		clearPendingLayeredTerrainPrebuild();
+	}
+
 	private SpriteDef getProjectileDefForUpdate(int sprite, String targetType, int targetServerIndex, int shooterServerIndex) {
 		if (sprite < 0 || sprite >= EntityHandler.projectiles.size()) {
 			return null;
@@ -671,6 +681,7 @@ public class PacketHandler {
 			result.isSyntheticDeepFixture(),
 			result.getNativeTerrainSnapshot());
 		if (atomicActivation) {
+			cancelPendingLayeredTerrainPrebuild();
 			layeredSceneActivationState.begin(sequence);
 			mc.beginLayeredSceneActivation(
 				hadLayeredSceneContext && !result.isScopeChanged());
@@ -795,6 +806,15 @@ public class PacketHandler {
 					stagedTerrain,
 					mc.getWorldOffsetX(),
 					mc.getWorldOffsetZ());
+			if (protocolVersion == 2
+				&& layeredSceneActivationState.isPending()) {
+				/*
+				 * The server orders this terrain-only halo between the atomic
+				 * context and its Player/static-scene packets. Publish it now
+				 * so the activation cover cannot reveal the radius-one edge.
+				 */
+				pollLayeredTerrainHaloReady();
+			}
 		}
 		final String summary =
 			"layer terrain stage seq " + stageSequence
@@ -2127,17 +2147,8 @@ public class PacketHandler {
 
 		int packedLocalPlayerX = packetsIncoming.getBitMask(11);
 		int packedLocalPlayerY = packetsIncoming.getBitMask(13);
-		if (layeredSceneContextState.hasContext()) {
-			final boolean firstContextReceipt =
-				layeredSceneContextState.isAwaitingInitialReceipt();
-			layeredSceneContextState.acceptLegacyPlayerPosition(
-				packedLocalPlayerX, packedLocalPlayerY);
-			if (firstContextReceipt) {
-				recordLayeredSceneActivationProgress(
-					layeredSceneActivationState.acceptPlayerReceipt(
-						layeredSceneContextState.getSequence()));
-			}
-		}
+		acceptLayeredPlayerPosition(
+			packedLocalPlayerX, packedLocalPlayerY);
 		mc.setLocalPlayerX(packedLocalPlayerX);
 		mc.setLocalPlayerZ(packedLocalPlayerY);
 
@@ -2222,13 +2233,25 @@ public class PacketHandler {
 		packetsIncoming.endBitAccess();
 	}
 
+	private void acceptLayeredPlayerPosition(
+		final int packedX,
+		final int packedY) {
+		if (!layeredSceneContextState.hasContext()) {
+			return;
+		}
+		if (layeredSceneContextState.acceptLegacyPlayerPosition(
+				packedX, packedY)) {
+			recordLayeredSceneActivationProgress(
+				layeredSceneActivationState.acceptPlayerReceipt(
+					layeredSceneContextState.getSequence()));
+		}
+	}
+
 	private void updateMovement() {
 		int localX = packetsIncoming.getShort();
 		int localZ = packetsIncoming.getShort();
 		int localDirection = packetsIncoming.getUnsignedByte();
-		if (layeredSceneContextState.hasContext()) {
-			layeredSceneContextState.acceptLegacyPlayerPosition(localX, localZ);
-		}
+		acceptLayeredPlayerPosition(localX, localZ);
 		MovementSnapshotDiagnostics.Fingerprint fingerprint =
 			movementSnapshotDiagnostics.createFingerprint(localX, localZ, localDirection);
 		mc.applyCustomMovementUpdate(localX, localZ, localDirection);
@@ -2285,6 +2308,9 @@ public class PacketHandler {
 			localX = packetsIncoming.getShort();
 			localZ = packetsIncoming.getShort();
 			localDirection = packetsIncoming.getUnsignedByte();
+			if (protocolVersion >= 2) {
+				acceptLayeredPlayerPosition(localX, localZ);
+			}
 			snapshotFingerprint = movementSnapshotDiagnostics.createFingerprint(localX, localZ, localDirection);
 			stageFrame = new MovementSnapshotStage.Frame(protocolVersion, serverTick, sequence);
 			stageFrame.setLocal(localX, localZ, localDirection);

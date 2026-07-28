@@ -177,9 +177,7 @@ public final class NativeLayeredTerrainChunk {
 			throw new IllegalArgumentException(
 				"Terrain chunk cannot supply tile " + worldX + "," + worldY);
 		}
-		int localX = Math.floorMod(worldX, size);
-		int localY = Math.floorMod(worldY, size);
-		int offset = (localX * size + localY) * TILE_WIRE_BYTES;
+		int offset = tileOffset(worldX, worldY);
 		Tile tile = new Tile();
 		tile.groundElevation = tileBytes[offset++];
 		tile.groundTexture = tileBytes[offset++];
@@ -193,6 +191,24 @@ public final class NativeLayeredTerrainChunk {
 				| (tileBytes[offset++] & 0xff) << 8
 				| tileBytes[offset] & 0xff;
 		return tile;
+	}
+
+	int groundElevation(int worldX, int worldY) {
+		return tileBytes[tileOffset(worldX, worldY)] & 0xff;
+	}
+
+	int groundOverlay(int worldX, int worldY) {
+		return tileBytes[tileOffset(worldX, worldY) + 2] & 0xff;
+	}
+
+	private int tileOffset(int worldX, int worldY) {
+		if (!available || !covers(worldX, worldY)) {
+			throw new IllegalArgumentException(
+				"Terrain chunk cannot supply tile " + worldX + "," + worldY);
+		}
+		int localX = Math.floorMod(worldX, size);
+		int localY = Math.floorMod(worldY, size);
+		return (localX * size + localY) * TILE_WIRE_BYTES;
 	}
 
 	public String identity() {

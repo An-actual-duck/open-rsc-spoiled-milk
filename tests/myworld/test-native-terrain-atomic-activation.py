@@ -188,6 +188,19 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
             "layeredSceneActivationState.acceptPlayerReceipt(", handler
         )
         self.assertIn(
+            "private void acceptLayeredPlayerPosition(", handler
+        )
+        self.assertEqual(
+            handler.count("acceptLayeredPlayerPosition("),
+            4,
+            "Player, movement-update, and movement-snapshot paths must share "
+            "one position-receipt gate",
+        )
+        self.assertIn(
+            "if (layeredSceneContextState.acceptLegacyPlayerPosition(",
+            handler,
+        )
+        self.assertIn(
             "layeredSceneActivationState.acceptStaticBaseline(", handler
         )
         self.assertIn(
@@ -256,6 +269,27 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
             "previous.locationContextSequence\n"
             "\t\t\t\t== summary.locationContextSequence",
             updater,
+        )
+        self.assertIn(
+            "private boolean requiresBlockingReadiness()", updater
+        )
+        self.assertIn(
+            "return requiresReadiness() && !usesAtomicActivation();",
+            updater,
+        )
+        self.assertIn(
+            "return !nativeTerrain.requiresBlockingReadiness();",
+            updater,
+        )
+        self.assertIn(
+            "maybeSendNativeTerrainSymmetricResidency(\n"
+            "\t\t\t\t\tplayer, location, nativeTerrain);",
+            updater,
+        )
+        self.assertIn(
+            "protocolVersion == 2\n"
+            "\t\t\t\t&& layeredSceneActivationState.isPending()",
+            handler,
         )
 
     def test_predicted_native_window_is_built_before_readiness_ack(self):

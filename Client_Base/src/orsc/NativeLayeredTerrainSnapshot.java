@@ -289,6 +289,24 @@ public final class NativeLayeredTerrainSnapshot {
 		return chunk.createTile(worldX, worldY);
 	}
 
+	public int getGroundElevation(int worldX, int worldY) {
+		if (protocolVersion == UNIFORM_PAGE_PROTOCOL_VERSION) {
+			requireCoveredTile(worldX, worldY);
+			return elevation;
+		}
+		return requireAvailableChunk(worldX, worldY)
+			.groundElevation(worldX, worldY);
+	}
+
+	public int getGroundOverlay(int worldX, int worldY) {
+		if (protocolVersion == UNIFORM_PAGE_PROTOCOL_VERSION) {
+			requireCoveredTile(worldX, worldY);
+			return overlay;
+		}
+		return requireAvailableChunk(worldX, worldY)
+			.groundOverlay(worldX, worldY);
+	}
+
 	public String scopeIdentity() {
 		String identity = packageIdentity()
 			+ ":" + worldSpace + ":" + level;
@@ -481,6 +499,25 @@ public final class NativeLayeredTerrainSnapshot {
 			}
 		}
 		return null;
+	}
+
+	private NativeLayeredTerrainChunk requireAvailableChunk(
+		int worldX, int worldY) {
+		NativeLayeredTerrainChunk chunk =
+			findAvailableChunk(worldX, worldY);
+		if (chunk == null) {
+			throw new IllegalArgumentException(
+				"Native readiness window has no terrain for "
+					+ worldX + "," + worldY);
+		}
+		return chunk;
+	}
+
+	private void requireCoveredTile(int worldX, int worldY) {
+		if (!covers(worldSpace, level, worldX, worldY)) {
+			throw new IllegalArgumentException(
+				"Uniform native page does not cover the requested tile");
+		}
 	}
 
 	private static String matched(

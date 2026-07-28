@@ -8,6 +8,7 @@ import orsc.Config;
 import orsc.NativeLayeredTerrainSnapshot;
 import orsc.RenderTelemetry;
 import orsc.WorldBuilderClientProfile;
+import orsc.WorldEditorBuildSettings;
 import orsc.graphics.two.GraphicsController;
 import orsc.util.FastMath;
 import orsc.util.GenUtil;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -41,6 +43,8 @@ public final class World {
 	public static final int LOCAL_TILE_COUNT = SECTION_SIZE * ACTIVE_SECTION_GRID;
 	public static final int LOCAL_TILE_MAX = LOCAL_TILE_COUNT - 1;
 	public static final int LOCAL_FACE_TILE_COUNT = LOCAL_TILE_COUNT - 1;
+	public static final int PRESENTATION_ELEVATION_UNAVAILABLE =
+		Integer.MIN_VALUE;
 	public static final int LEGACY_MINIMAP_TILE_COUNT = SECTION_SIZE * 2;
 	public static final int LEGACY_MINIMAP_FACE_TILE_COUNT = LEGACY_MINIMAP_TILE_COUNT - 1;
 	private static final int ACTIVE_SECTION_ORIGIN_OFFSET = ACTIVE_SECTION_GRID / 2;
@@ -93,6 +97,7 @@ public final class World {
 	private volatile int nativeLayeredTerrainAppliedSectionX;
 	private volatile int nativeLayeredTerrainAppliedSectionY;
 	private volatile String nativeLayeredTerrainActivationSummary = "";
+	private volatile boolean nativeTerrainAuthorityOnlyActive;
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
 		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
 			@Override
@@ -333,6 +338,27 @@ public final class World {
 		} else {
 			renderTerrain = haloTerrain;
 		}
+		if (haloTerrain.getProtocolVersion()
+				== NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION) {
+			/*
+			 * The visual-only stage just publishes cached sector payloads; it
+			 * does not build meshes. Complete it inline so an atomic context
+			 * can expose a continuous 5x5 terrain field without waiting for
+			 * either the executor or the next client frame. Structural
+			 * enrichment remains on the preload worker below.
+			 */
+			return CompletableFuture.completedFuture(
+				buildNativeLayeredTerrainHalo(
+					renderTerrain,
+					haloTerrain.scopeIdentity(),
+					haloTerrain.getProtocolVersion(),
+					activeScopeIdentity,
+					worldOffsetX,
+					worldOffsetZ,
+					sourceRevision,
+					includeRoofGeometry));
+		}
 		return sectorPreloadExecutor.submit(
 			new Callable<NativeLayeredTerrainHaloPrebuildResult>() {
 				@Override
@@ -409,6 +435,14 @@ public final class World {
 
 	public String getNativeLayeredTerrainHaloDebugSummary() {
 		return nativeLayeredTerrainHaloDebugSummary;
+	}
+
+	public boolean hasNativeLayeredTerrain() {
+		return nativeLayeredTerrainSnapshot != null;
+	}
+
+	public boolean isNativeTerrainAuthorityOnlyActive() {
+		return nativeTerrainAuthorityOnlyActive;
 	}
 
 	private NativeLayeredTerrainHaloPrebuildResult
@@ -1087,6 +1121,128 @@ public final class World {
 		return isTerrainLoadedAtLocalTile(pixelX >> 7, pixelZ >> 7);
 	}
 
+	/**
+	 * Returns whether the native radius-two presentation field owns a terrain
+	 * face. This is deliberately broader than the radius-one gameplay window:
+	 * it supplies picking geometry only, never collision or entity authority.
+	 */
+	public boolean isPresentationTerrainFaceTile(
+		int tileX,
+		int tileZ) {
+		if (nativeLayeredTerrainSnapshot == null) {
+			return isLocalFaceTile(tileX, tileZ)
+				&& isTerrainLoadedAtLocalTile(tileX, tileZ);
+		}
+		NativeLayeredTerrainSnapshot active =
+			nativeLayeredTerrainSnapshot;
+		NativeLayeredTerrainSnapshot visual =
+			symmetricNativeLayeredTerrainVisualSnapshot;
+		return presentationVertexElevation(
+				tileX, tileZ, active, visual)
+					!= PRESENTATION_ELEVATION_UNAVAILABLE
+			&& presentationVertexElevation(
+				tileX + 1, tileZ, active, visual)
+					!= PRESENTATION_ELEVATION_UNAVAILABLE
+			&& presentationVertexElevation(
+				tileX, tileZ + 1, active, visual)
+					!= PRESENTATION_ELEVATION_UNAVAILABLE
+			&& presentationVertexElevation(
+				tileX + 1, tileZ + 1, active, visual)
+					!= PRESENTATION_ELEVATION_UNAVAILABLE;
+	}
+
+	/**
+	 * Bilinearly samples the terrain mesh's native source height in current
+	 * local pixel coordinates. The sentinel is returned outside the resident
+	 * presentation field.
+	 */
+	public int getPresentationTerrainElevation(
+		int pixelX,
+		int pixelZ) {
+		if (nativeLayeredTerrainSnapshot == null) {
+			int tileX = pixelX >> 7;
+			int tileZ = pixelZ >> 7;
+			return isLocalFaceTile(tileX, tileZ)
+				? getElevation(pixelX, pixelZ)
+				: PRESENTATION_ELEVATION_UNAVAILABLE;
+		}
+		int tileX = pixelX >> 7;
+		int tileZ = pixelZ >> 7;
+		int xLerp = pixelX & 127;
+		int zLerp = pixelZ & 127;
+		NativeLayeredTerrainSnapshot active =
+			nativeLayeredTerrainSnapshot;
+		NativeLayeredTerrainSnapshot visual =
+			symmetricNativeLayeredTerrainVisualSnapshot;
+		int southwest = presentationVertexElevation(
+			tileX, tileZ, active, visual);
+		int southeast = presentationVertexElevation(
+			tileX + 1, tileZ, active, visual);
+		int northwest = presentationVertexElevation(
+			tileX, tileZ + 1, active, visual);
+		int northeast = presentationVertexElevation(
+			tileX + 1, tileZ + 1, active, visual);
+		if (southwest == PRESENTATION_ELEVATION_UNAVAILABLE
+			|| southeast == PRESENTATION_ELEVATION_UNAVAILABLE
+			|| northwest == PRESENTATION_ELEVATION_UNAVAILABLE
+			|| northeast == PRESENTATION_ELEVATION_UNAVAILABLE) {
+			return PRESENTATION_ELEVATION_UNAVAILABLE;
+		}
+		if (xLerp <= 128 - zLerp) {
+			return southwest
+				+ (southeast - southwest) * xLerp / 128
+				+ (northwest - southwest) * zLerp / 128;
+		}
+		int reverseX = 128 - xLerp;
+		int reverseZ = 128 - zLerp;
+		return northeast
+			+ (northwest - northeast) * reverseX / 128
+			+ (southeast - northeast) * reverseZ / 128;
+	}
+
+	private int presentationVertexElevation(
+		int localTileX,
+		int localTileZ,
+		NativeLayeredTerrainSnapshot active,
+		NativeLayeredTerrainSnapshot visual) {
+		int worldTileX = Math.addExact(
+			Math.multiplyExact(
+				nativeLayeredTerrainAppliedSectionX
+					- ACTIVE_SECTION_ORIGIN_OFFSET,
+				SECTION_SIZE),
+			localTileX);
+		int worldTileZ = Math.addExact(
+			Math.multiplyExact(
+				nativeLayeredTerrainAppliedSectionY
+					- ACTIVE_SECTION_ORIGIN_OFFSET,
+				SECTION_SIZE),
+			localTileZ);
+		int logicalTileX = Math.subtractExact(
+			worldTileX, syntheticDeepFixtureOffsetX);
+		int logicalTileZ = Math.subtractExact(
+			worldTileZ, syntheticDeepFixtureOffsetZ);
+		NativeLayeredTerrainSnapshot source = null;
+		if (matchesActiveHalo(active, visual)
+			&& visual.covers(
+				visual.getWorldSpace(),
+				visual.getLevel(),
+				logicalTileX,
+				logicalTileZ)) {
+			source = visual;
+		} else if (active != null
+			&& active.covers(
+				active.getWorldSpace(),
+				active.getLevel(),
+				logicalTileX,
+				logicalTileZ)) {
+			source = active;
+		}
+		return source == null
+			? PRESENTATION_ELEVATION_UNAVAILABLE
+			: source.getGroundElevation(
+				logicalTileX, logicalTileZ) * 3;
+	}
+
 	private static int tileInSector(int tile) {
 		return tile % SECTION_SIZE;
 	}
@@ -1500,10 +1656,19 @@ public final class World {
 
 	private void generateLandscapeModel(int var1, int var2, boolean showWallOnMinimap, int plane, int var5) {
 		try {
-
+			long transitionStartNanos = System.nanoTime();
+			long phaseStartNanos = transitionStartNanos;
 			int chunkX = worldTileToSection(var1);
 			int chunkZ = worldTileToSection(var5);
 			boolean bridgeDecorationsApplied = this.loadSectionWindow(sectors, plane, chunkX, chunkZ);
+			long sectionWindowNanos =
+				System.nanoTime() - phaseStartNanos;
+			long productNanos = 0L;
+			long terrainNanos = 0L;
+			long wallNanos = 0L;
+			long roofNanos = 0L;
+			boolean nativeTerrainAuthorityOnly =
+				this.shouldUseNativeTerrainAuthorityOnly();
 			if (var2 >= 66) {
 				if (!bridgeDecorationsApplied) {
 					this.setTileDecorationOnBridge();
@@ -1512,13 +1677,16 @@ public final class World {
 					this.modelAccumulate = new RSModel(MODEL_BUFFER_CAPACITY, MODEL_BUFFER_CAPACITY, true, true, false, false, true);
 
 				boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
+				phaseStartNanos = System.nanoTime();
 				WorldModelProduct worldProduct = this.loadWorldModelProduct(
 					plane,
 					chunkX,
 					chunkZ,
 					showWallOnMinimap,
 					includeRoofGeometry);
+				productNanos = System.nanoTime() - phaseStartNanos;
 				if (showWallOnMinimap) {
+					phaseStartNanos = System.nanoTime();
 					this.minimapGraphics.blackScreen(true);
 
 					for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
@@ -1528,21 +1696,46 @@ public final class World {
 					RSModel worldMod = this.modelAccumulate;
 					worldMod.resetFaceVertHead((int) 1);
 
-					this.emitTerrainProduct(worldProduct.terrainInput, worldMod);
-
-					this.publishTerrainProduct(worldMod);
+					if (nativeTerrainAuthorityOnly) {
+						this.publishTerrainAuthorityProduct(
+							worldProduct.terrainInput);
+					} else {
+						this.emitTerrainProduct(worldProduct.terrainInput, worldMod);
+						this.publishTerrainProduct(worldMod);
+					}
+					terrainNanos = System.nanoTime() - phaseStartNanos;
 				}
+				phaseStartNanos = System.nanoTime();
 				this.modelAccumulate.resetFaceVertHead((int) 1);
 				this.emitWallProduct(worldProduct.wallInput, showWallOnMinimap);
 				this.publishWallProduct(plane);
+				wallNanos = System.nanoTime() - phaseStartNanos;
 
+				phaseStartNanos = System.nanoTime();
 				if (includeRoofGeometry) {
 					this.emitRoofFaceProduct(worldProduct.roofInput);
 					this.publishRoofProduct(plane, worldProduct.roofInput);
 				} else {
 					this.publishHiddenRoofProduct(plane, worldProduct.roofInput);
 				}
+				roofNanos = System.nanoTime() - phaseStartNanos;
 			}
+			RenderTelemetry.recordWorldModelTransition(
+				nativeTerrainAuthorityOnly
+					? "native-authority-only"
+					: nativeLayeredTerrainSnapshot == null
+						? "legacy-model-rebuild"
+						: "native-model-rebuild",
+				plane,
+				chunkX,
+				chunkZ,
+				showWallOnMinimap,
+				System.nanoTime() - transitionStartNanos,
+				sectionWindowNanos,
+				productNanos,
+				terrainNanos,
+				wallNanos,
+				roofNanos);
 		} catch (RuntimeException var37) {
 			throw GenUtil.makeThrowable(var37,
 				"k.I(" + var1 + ',' + var2 + ',' + showWallOnMinimap + ',' + plane + ',' + var5 + ')');
@@ -2333,8 +2526,41 @@ public final class World {
 	}
 
 	private void emitTerrainProduct(TerrainModelInput input, RSModel worldMod) {
+		publishTerrainAuthorityProduct(input);
 		emitTerrainVertices(input, worldMod);
 		emitTerrainFaceProduct(input, worldMod);
+	}
+
+	private void publishTerrainAuthorityProduct(TerrainModelInput input) {
+		for (TerrainTileFaceInput face : input.tileFaces) {
+			if (face.collisionFullBlock) {
+				this.collisionFlags[face.x][face.z] =
+					FastMath.bitwiseOr(
+						this.collisionFlags[face.x][face.z],
+						CollisionFlag.FULL_BLOCK_C);
+			}
+			if (face.collisionObject) {
+				this.collisionFlags[face.x][face.z] =
+					FastMath.bitwiseOr(
+						this.collisionFlags[face.x][face.z],
+						CollisionFlag.OBJECT);
+			}
+			this.drawMinimapTile(
+				face.x,
+				face.z,
+				face.bridge00_11,
+				face.res01,
+				face.colorResource);
+		}
+		for (TerrainOverlayFaceInput overlay : input.overlayFaces) {
+			this.drawMinimapTile(
+				overlay.x,
+				overlay.z,
+				0,
+				overlay.texture,
+				overlay.texture);
+		}
+		this.publishTerrainElevationProduct();
 	}
 
 	private void emitTerrainVertices(TerrainModelInput input, RSModel worldMod) {
@@ -2346,15 +2572,6 @@ public final class World {
 
 	private void emitTerrainFaceProduct(TerrainModelInput input, RSModel worldMod) {
 		for (TerrainTileFaceInput face : input.tileFaces) {
-			if (face.collisionFullBlock) {
-				this.collisionFlags[face.x][face.z] = FastMath.bitwiseOr(this.collisionFlags[face.x][face.z],
-					CollisionFlag.FULL_BLOCK_C);
-			}
-			if (face.collisionObject) {
-				this.collisionFlags[face.x][face.z] = FastMath.bitwiseOr(this.collisionFlags[face.x][face.z],
-					CollisionFlag.OBJECT);
-			}
-			this.drawMinimapTile(face.x, face.z, face.bridge00_11, face.res01, face.colorResource);
 			emitTerrainTileFace(worldMod, face);
 		}
 
@@ -2371,7 +2588,6 @@ public final class World {
 			this.faceTileX[faceID] = overlay.x;
 			this.faceTileZ[faceID] = overlay.z;
 			worldMod.facePickIndex[faceID] = faceID + 200000;
-			this.drawMinimapTile(overlay.x, overlay.z, 0, overlay.texture, overlay.texture);
 		}
 	}
 
@@ -2446,6 +2662,10 @@ public final class World {
 			this.scene.addModel(this.modelLandscapeGrid[x]);
 		}
 
+		this.publishTerrainElevationProduct();
+	}
+
+	private void publishTerrainElevationProduct() {
 		for (int x = 0; x < LOCAL_TILE_COUNT; ++x) {
 			for (int z = 0; z < LOCAL_TILE_COUNT; ++z) {
 				this.tileElevationCache[x][z] = this.getTileElevation(x, z);
@@ -3289,39 +3509,41 @@ public final class World {
 	public final void loadSections(int worldX, int worldZ, int plane) {
 		try {
 			long loadStart = WorldStreamManager.now();
-			long telemetryLoadStart = RenderTelemetry.now();
-			long phaseStart = RenderTelemetry.now();
+			long transitionStart = System.nanoTime();
+			long phaseStart = System.nanoTime();
 			this.resetModels();
-			long resetNanos = RenderTelemetry.elapsedSince(phaseStart);
+			this.nativeTerrainAuthorityOnlyActive =
+				this.shouldUseNativeTerrainAuthorityOnly();
+			long resetNanos = System.nanoTime() - phaseStart;
 
 			int x = worldTileToSection(worldX);
 			int z = worldTileToSection(worldZ);
 
-			phaseStart = RenderTelemetry.now();
+			phaseStart = System.nanoTime();
 			this.generateLandscapeModel(worldX, 122, true, plane, worldZ);
-			long activePlaneNanos = RenderTelemetry.elapsedSince(phaseStart);
+			long activePlaneNanos = System.nanoTime() - phaseStart;
 			long upperPlanesNanos = 0L;
 			long bridgeNanos = 0L;
 			if (shouldLoadUpperPlaneModels(plane)) {
-				phaseStart = RenderTelemetry.now();
+				phaseStart = System.nanoTime();
 				this.generateLandscapeModel(worldX, 112, false, 1, worldZ);
 				this.generateLandscapeModel(worldX, 69, false, 2, worldZ);
-				upperPlanesNanos = RenderTelemetry.elapsedSince(phaseStart);
-				phaseStart = RenderTelemetry.now();
+				upperPlanesNanos = System.nanoTime() - phaseStart;
+				phaseStart = System.nanoTime();
 				boolean bridgeDecorationsApplied = this.loadSectionWindow(sectors, plane, x, z);
 				if (!bridgeDecorationsApplied) {
 					this.setTileDecorationOnBridge();
 				}
-				bridgeNanos = RenderTelemetry.elapsedSince(phaseStart);
+				bridgeNanos = System.nanoTime() - phaseStart;
 			}
-			phaseStart = RenderTelemetry.now();
+			phaseStart = System.nanoTime();
 			this.renderer3DWorldChunkFrame = this.buildRenderer3DWorldChunkFrame(plane, x, z);
 			this.clearPredictiveRenderer3DWorldChunkFrame();
 			this.composeSymmetricRenderer3DWorldChunkFrame(x, z);
-			long chunkFrameNanos = RenderTelemetry.elapsedSince(phaseStart);
-			phaseStart = RenderTelemetry.now();
+			long chunkFrameNanos = System.nanoTime() - phaseStart;
+			phaseStart = System.nanoTime();
 			this.preloadSections(worldX, worldZ, plane);
-			long preloadNanos = RenderTelemetry.elapsedSince(phaseStart);
+			long preloadNanos = System.nanoTime() - phaseStart;
 			this.worldStreamManager.markActiveWindow(
 				plane,
 				x,
@@ -3333,19 +3555,33 @@ public final class World {
 				x,
 				z,
 				WorldStreamManager.elapsedSince(loadStart));
-			RenderTelemetry.recordWorldSectionLoadPhases(
+			RenderTelemetry.recordWorldSectionTransition(
+				nativeTerrainAuthorityOnlyActive
+					? "native-authority-only"
+					: nativeLayeredTerrainSnapshot == null
+						? "legacy-model-rebuild"
+						: "native-model-rebuild",
+				plane,
+				x,
+				z,
+				System.nanoTime() - transitionStart,
 				resetNanos,
 				activePlaneNanos,
 				upperPlanesNanos,
 				bridgeNanos,
 				chunkFrameNanos,
 				preloadNanos);
-			RenderTelemetry.recordWorldSectionLoad(RenderTelemetry.elapsedSince(telemetryLoadStart));
 			logNativeLayeredTerrainActivation(worldX, worldZ, plane, x, z);
 
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "k.L(" + worldX + ',' + "dummy" + ',' + worldZ + ',' + plane + ')');
 		}
+	}
+
+	private boolean shouldUseNativeTerrainAuthorityOnly() {
+		return nativeLayeredTerrainSnapshot != null
+			&& Renderer3DSettings.canSkipProjectedWorldCapture()
+			&& !WorldEditorBuildSettings.isEnabled();
 	}
 
 	public void preloadSections(int worldX, int worldZ, int plane) {

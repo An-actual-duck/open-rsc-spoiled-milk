@@ -280,7 +280,7 @@ public final class GameStateUpdater {
 			player.getAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, null);
 		if (nextScope.equals(previousScope)) {
 			final boolean ready = nativeTerrain == null
-				|| !nativeTerrain.requiresReadiness()
+				|| !nativeTerrain.requiresBlockingReadiness()
 				|| hasAcceptedNativeTerrainReadiness(player);
 			if (ready && nativeTerrain != null) {
 				if (nativeTerrainSymmetricResidencyEnabled()) {
@@ -347,7 +347,19 @@ public final class GameStateUpdater {
 				Boolean.TRUE);
 			player.removeAttribute(
 				NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
-			return false;
+			/*
+			 * Protocol-v8 activation may send Player/static-scene packets in
+			 * this same update. Put the cheap visual-only radius-two stage on
+			 * the wire first so the client can publish the full terrain field
+			 * before it uncovers that atomic scene. The structural halo stays
+			 * asynchronous and follows its normal acknowledgement.
+			 */
+			if (nativeTerrain.usesAtomicActivation()
+				&& nativeTerrainSymmetricResidencyEnabled()) {
+				maybeSendNativeTerrainSymmetricResidency(
+					player, location, nativeTerrain);
+			}
+			return !nativeTerrain.requiresBlockingReadiness();
 		}
 		player.removeAttribute(NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE);
 		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
@@ -1565,6 +1577,19 @@ public final class GameStateUpdater {
 			return residency != null
 				&& server.getConfig()
 					.WANT_LAYERED_NATIVE_TERRAIN_READINESS;
+		}
+
+		private boolean requiresBlockingReadiness() {
+			/*
+			 * Protocol-v8 context packets are installed synchronously by the
+			 * client and are followed by an atomic Player/static-scene
+			 * presentation barrier. Their readiness receipt remains useful
+			 * for residency accounting, but delaying the already ordered
+			 * Player/static packets until the next 640 ms server tick only
+			 * adds visible latency. Protocol v7 retains the original blocking
+			 * acknowledgement rollback.
+			 */
+			return requiresReadiness() && !usesAtomicActivation();
 		}
 
 		private void commitResidency() {
@@ -3464,14 +3489,17 @@ public final class GameStateUpdater {
 
 		for (final Iterator<GameObject> it$ = playerToUpdate.getLocalGameObjects().iterator(); it$.hasNext(); ) {
 			final GameObject o = it$.next();
-			if (!playerToUpdate.withinObjectGridRange(o) || o.isRemoved() || o.isInvisibleTo(playerToUpdate)) {
-				final int offsetX = o.getX() - playerToUpdate.getX();
-				final int offsetY = o.getY() - playerToUpdate.getY();
+			final int offsetX = o.getX() - playerToUpdate.getX();
+			final int offsetY = o.getY() - playerToUpdate.getY();
+			if (!playerToUpdate.withinObjectGridRange(o)
+				|| !isSceneDeltaSafeOffset(offsetX, offsetY)
+				|| o.isRemoved()
+				|| o.isInvisibleTo(playerToUpdate)) {
 				if (isSignedByteOffset(offsetX, offsetY)) {
 					objectLocs.add(new GameObjectLoc(60000, offsetX, offsetY, o.getDirection(), 0));
-					changed = true;
 				}
 				it$.remove();
+				changed = true;
 			}
 		}
 
@@ -3494,7 +3522,7 @@ public final class GameStateUpdater {
 
 			final int offsetX = newObject.getX() - playerToUpdate.getX();
 			final int offsetY = newObject.getY() - playerToUpdate.getY();
-			if (!isSignedByteOffset(offsetX, offsetY)) {
+			if (!isSceneDeltaSafeOffset(offsetX, offsetY)) {
 				continue;
 			}
 
@@ -3505,7 +3533,7 @@ public final class GameStateUpdater {
 			changed = true;
 		}
 		struct.objects = objectLocs;
-		if (changed) {
+		if (!objectLocs.isEmpty()) {
 			if (sendLegacyStaticScenePackets) {
 				tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENERY_HANDLER, struct, playerToUpdate);
 			} else {
@@ -3541,13 +3569,15 @@ public final class GameStateUpdater {
 			final int offsetY = (groundItem.getY() - playerToUpdate.getY());
 
 			if (!playerToUpdate.withinObjectGridRange(groundItem)
-				|| groundItem.isRemoved() || groundItem.isInvisibleTo(playerToUpdate)) {
+				|| !isSceneDeltaSafeOffset(offsetX, offsetY)
+				|| groundItem.isRemoved()
+				|| groundItem.isInvisibleTo(playerToUpdate)) {
 				if (isSignedByteOffset(offsetX, offsetY)) {
 					itemLocs.add(new ItemLoc(groundItem.getID() + 32768, offsetX, offsetY, groundItem.getAmount(), 0,
 						groundItem.getNoted() && getServer().getConfig().WANT_BANK_NOTES ? 1 : 0));
-					changed = true;
 				}
 				it$.remove();
+				changed = true;
 			}
 		}
 
@@ -3559,7 +3589,7 @@ public final class GameStateUpdater {
 			}
 			final int offsetX = groundItem.getX() - playerToUpdate.getX();
 			final int offsetY = groundItem.getY() - playerToUpdate.getY();
-			if (!isSignedByteOffset(offsetX, offsetY)) {
+			if (!isSceneDeltaSafeOffset(offsetX, offsetY)) {
 				continue;
 			}
 			itemLocs.add(new ItemLoc(groundItem.getID(), offsetX, offsetY, groundItem.getAmount(), 0,
@@ -3568,7 +3598,7 @@ public final class GameStateUpdater {
 			changed = true;
 		}
 		struct.objects = itemLocs;
-		if (changed) {
+		if (!itemLocs.isEmpty()) {
 			tryFinalizeAndSendPacket(OpcodeOut.SEND_GROUND_ITEM_HANDLER, struct, playerToUpdate);
 		}
 		return changed;
@@ -3586,9 +3616,12 @@ public final class GameStateUpdater {
 		// remove all boundaries that need to be removed
 		for (final Iterator<GameObject> it$ = playerToUpdate.getLocalWallObjects().iterator(); it$.hasNext(); ) {
 			final GameObject o = it$.next();
-			if (!playerToUpdate.withinObjectGridRange(o) || (o.isRemoved() || o.isInvisibleTo(playerToUpdate))) {
-				final int offsetX = o.getX() - playerToUpdate.getX();
-				final int offsetY = o.getY() - playerToUpdate.getY();
+			final int offsetX = o.getX() - playerToUpdate.getX();
+			final int offsetY = o.getY() - playerToUpdate.getY();
+			if (!playerToUpdate.withinObjectGridRange(o)
+				|| !isSceneDeltaSafeOffset(offsetX, offsetY)
+				|| o.isRemoved()
+				|| o.isInvisibleTo(playerToUpdate)) {
 				if (isSignedByteOffset(offsetX, offsetY)) {
 					if (!playerToUpdate.isUsingCustomClient()) {
 						// The authentic server does not really send removals for boundaries.
@@ -3628,12 +3661,10 @@ public final class GameStateUpdater {
 
 					} else {
 						objectLocs.add(new GameObjectLoc(60000, offsetX, offsetY, o.getDirection(), 1));
-						changed = true;
 					}
-					it$.remove();
-				} else {
-					it$.remove();
 				}
+				it$.remove();
+				changed = true;
 			}
 		}
 
@@ -3647,7 +3678,7 @@ public final class GameStateUpdater {
 
 			final int offsetX = newObject.getX() - playerToUpdate.getX();
 			final int offsetY = newObject.getY() - playerToUpdate.getY();
-			if (!isSignedByteOffset(offsetX, offsetY)) {
+			if (!isSceneDeltaSafeOffset(offsetX, offsetY)) {
 				continue;
 			}
 			objectLocs.add(new GameObjectLoc(newObject.getID(), offsetX, offsetY, newObject.getDirection(), 1));
@@ -3655,7 +3686,7 @@ public final class GameStateUpdater {
 			changed = true;
 		}
 		struct.objects = objectLocs;
-		if (changed) {
+		if (!objectLocs.isEmpty()) {
 			if (sendLegacyStaticScenePackets) {
 				tryFinalizeAndSendPacket(OpcodeOut.SEND_BOUNDARY_HANDLER, struct, playerToUpdate);
 			} else {
@@ -3680,6 +3711,19 @@ public final class GameStateUpdater {
 	private boolean isSignedByteOffset(final int offsetX, final int offsetY) {
 		return offsetX >= Byte.MIN_VALUE && offsetX <= Byte.MAX_VALUE
 			&& offsetY >= Byte.MIN_VALUE && offsetY <= Byte.MAX_VALUE;
+	}
+
+	/**
+	 * Keeps one encodable tile of headroom at every legacy scene edge. Ordinary
+	 * one-tile movement can therefore retire an object with a final signed-byte
+	 * delta instead of silently losing removal authority at +128 or -129.
+	 * Larger jumps are reconciled by the exact-context scene fence.
+	 */
+	private boolean isSceneDeltaSafeOffset(
+		final int offsetX,
+		final int offsetY) {
+		return offsetX > Byte.MIN_VALUE && offsetX < Byte.MAX_VALUE
+			&& offsetY > Byte.MIN_VALUE && offsetY < Byte.MAX_VALUE;
 	}
 
 	public final long updateWorld() {

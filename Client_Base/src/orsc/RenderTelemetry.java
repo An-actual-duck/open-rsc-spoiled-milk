@@ -461,6 +461,177 @@ public final class RenderTelemetry {
 		}
 	}
 
+	public static void recordWorldSectionTransition(
+		String path,
+		int plane,
+		int sectionX,
+		int sectionY,
+		long totalNanos,
+		long resetNanos,
+		long activePlaneNanos,
+		long upperPlanesNanos,
+		long bridgeNanos,
+		long chunkFrameNanos,
+		long preloadNanos) {
+		if (isCollectionEnabled()) {
+			synchronized (RenderTelemetry.class) {
+				worldSectionLoadStats.record(totalNanos);
+				worldSectionLoadResetStats.record(resetNanos);
+				worldSectionLoadActivePlaneStats.record(activePlaneNanos);
+				worldSectionLoadUpperPlanesStats.record(upperPlanesNanos);
+				worldSectionLoadBridgeStats.record(bridgeNanos);
+				worldSectionLoadChunkFrameStats.record(chunkFrameNanos);
+				worldSectionLoadPreloadStats.record(preloadNanos);
+			}
+			RendererDiagnosticSession.Record event =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.world-section-transition");
+			if (event != null) {
+				event.string("path", path);
+				event.number("plane", plane);
+				event.number("sectionX", sectionX);
+				event.number("sectionY", sectionY);
+				event.number("totalNanos", totalNanos);
+				event.number("resetNanos", resetNanos);
+				event.number("activePlaneNanos", activePlaneNanos);
+				event.number("upperPlanesNanos", upperPlanesNanos);
+				event.number("bridgeNanos", bridgeNanos);
+				event.number("chunkFrameNanos", chunkFrameNanos);
+				event.number("preloadNanos", preloadNanos);
+				RendererDiagnosticSession.writeEventRecord(event);
+			}
+		}
+		String summary =
+			"WORLD_SECTION_TRANSITION"
+				+ " path=" + path
+				+ " plane=" + plane
+				+ " center=" + sectionX + "," + sectionY
+				+ " totalMs=" + formatMillisRoot(totalNanos)
+				+ " resetMs=" + formatMillisRoot(resetNanos)
+				+ " activeMs=" + formatMillisRoot(activePlaneNanos)
+				+ " upperMs=" + formatMillisRoot(upperPlanesNanos)
+				+ " bridgeMs=" + formatMillisRoot(bridgeNanos)
+				+ " frameMs=" + formatMillisRoot(chunkFrameNanos)
+				+ " preloadMs=" + formatMillisRoot(preloadNanos);
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+	}
+
+	public static void recordWorldModelTransition(
+		String path,
+		int plane,
+		int sectionX,
+		int sectionY,
+		boolean activePlane,
+		long totalNanos,
+		long sectionWindowNanos,
+		long productNanos,
+		long terrainNanos,
+		long wallNanos,
+		long roofNanos) {
+		if (isCollectionEnabled()) {
+			RendererDiagnosticSession.Record event =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.world-model-transition");
+			if (event != null) {
+				event.string("path", path);
+				event.number("plane", plane);
+				event.number("sectionX", sectionX);
+				event.number("sectionY", sectionY);
+				event.bool("activePlane", activePlane);
+				event.number("totalNanos", totalNanos);
+				event.number("sectionWindowNanos", sectionWindowNanos);
+				event.number("productNanos", productNanos);
+				event.number("terrainNanos", terrainNanos);
+				event.number("wallNanos", wallNanos);
+				event.number("roofNanos", roofNanos);
+				RendererDiagnosticSession.writeEventRecord(event);
+			}
+		}
+		String summary =
+			"WORLD_MODEL_TRANSITION"
+				+ " path=" + path
+				+ " plane=" + plane
+				+ " center=" + sectionX + "," + sectionY
+				+ " active=" + (activePlane ? 1 : 0)
+				+ " totalMs=" + formatMillisRoot(totalNanos)
+				+ " windowMs=" + formatMillisRoot(sectionWindowNanos)
+				+ " productMs=" + formatMillisRoot(productNanos)
+				+ " terrainMs=" + formatMillisRoot(terrainNanos)
+				+ " wallMs=" + formatMillisRoot(wallNanos)
+				+ " roofMs=" + formatMillisRoot(roofNanos);
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+	}
+
+	public static void recordClientRegionTransition(
+		String path,
+		boolean hardAreaLoad,
+		boolean planeChanged,
+		int baseDeltaX,
+		int baseDeltaZ,
+		int sceneryCount,
+		int wallCount,
+		int playerCount,
+		int npcCount,
+		long totalNanos,
+		long dematerializeNanos,
+		long worldLoadNanos,
+		long staticRebaseNanos,
+		long staticMaterializeNanos,
+		long groundItemsNanos,
+		long actorRebaseNanos,
+		long finalizeNanos,
+		long baselineNanos) {
+		if (isCollectionEnabled()) {
+			RendererDiagnosticSession.Record event =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.client-region-transition");
+			if (event != null) {
+				event.string("path", path);
+				event.bool("hardAreaLoad", hardAreaLoad);
+				event.bool("planeChanged", planeChanged);
+				event.number("baseDeltaX", baseDeltaX);
+				event.number("baseDeltaZ", baseDeltaZ);
+				event.number("sceneryCount", sceneryCount);
+				event.number("wallCount", wallCount);
+				event.number("playerCount", playerCount);
+				event.number("npcCount", npcCount);
+				event.number("totalNanos", totalNanos);
+				event.number("dematerializeNanos", dematerializeNanos);
+				event.number("worldLoadNanos", worldLoadNanos);
+				event.number("staticRebaseNanos", staticRebaseNanos);
+				event.number("staticMaterializeNanos", staticMaterializeNanos);
+				event.number("groundItemsNanos", groundItemsNanos);
+				event.number("actorRebaseNanos", actorRebaseNanos);
+				event.number("finalizeNanos", finalizeNanos);
+				event.number("baselineNanos", baselineNanos);
+				RendererDiagnosticSession.writeEventRecord(event);
+			}
+		}
+		String summary =
+			"CLIENT_REGION_TRANSITION"
+				+ " path=" + path
+				+ " hard=" + (hardAreaLoad ? 1 : 0)
+				+ " planeChanged=" + (planeChanged ? 1 : 0)
+				+ " delta=" + baseDeltaX + "," + baseDeltaZ
+				+ " entities=" + sceneryCount + "/" + wallCount
+					+ "/" + playerCount + "/" + npcCount
+				+ " totalMs=" + formatMillisRoot(totalNanos)
+				+ " dematerializeMs="
+					+ formatMillisRoot(dematerializeNanos)
+				+ " worldMs=" + formatMillisRoot(worldLoadNanos)
+				+ " staticRebaseMs=" + formatMillisRoot(staticRebaseNanos)
+				+ " staticMaterializeMs="
+					+ formatMillisRoot(staticMaterializeNanos)
+				+ " groundMs=" + formatMillisRoot(groundItemsNanos)
+				+ " actorsMs=" + formatMillisRoot(actorRebaseNanos)
+				+ " finalizeMs=" + formatMillisRoot(finalizeNanos)
+				+ " baselineMs=" + formatMillisRoot(baselineNanos);
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+	}
+
 	public static String worldSectionLoadSummary() {
 		synchronized (RenderTelemetry.class) {
 			return formatMillis(worldSectionLoadStats.average())
@@ -2416,6 +2587,13 @@ public final class RenderTelemetry {
 
 	private static String formatMillis(long nanos) {
 		return String.format("%.3f", nanos / 1_000_000.0);
+	}
+
+	private static String formatMillisRoot(long nanos) {
+		return String.format(
+			java.util.Locale.ROOT,
+			"%.3f",
+			nanos / 1_000_000.0D);
 	}
 
 	private static String formatMegabytes(long bytes) {

@@ -810,6 +810,19 @@ final class SceneBaselineState {
 		if (syncObjectViewDistance <= 0) {
 			return true;
 		}
+		int offsetX = x - syncLocalX;
+		int offsetY = y - syncLocalY;
+		/*
+		 * The legacy scenery/wall packets carry signed-byte tile offsets.
+		 * Match the server's one-tile safety margin so an object cannot survive
+		 * locally after the server has lost the ability to encode its removal.
+		 */
+		if (offsetX <= Byte.MIN_VALUE
+			|| offsetX >= Byte.MAX_VALUE
+			|| offsetY <= Byte.MIN_VALUE
+			|| offsetY >= Byte.MAX_VALUE) {
+			return false;
+		}
 		int xDiff = (syncLocalX >> 3) - (x >> 3);
 		int yDiff = (syncLocalY >> 3) - (y >> 3);
 		return xDiff <= syncObjectViewDistance

@@ -3720,6 +3720,211 @@ public final class Scene {
 		return new int[] {tileX, tileZ};
 	}
 
+	public int[] projectScreenToTerrainTile(
+		int screenX,
+		int screenY,
+		int tileSize,
+		World world) {
+		if (tileSize <= 0 || world == null) {
+			return null;
+		}
+
+		double scale = 1 << this.rot1024_vp_src;
+		double rayX = (screenX - this.m_Zb) / scale;
+		double rayY = (screenY - this.m_Nb) / scale;
+		double rayZ = 1.0D;
+		double[] ray = rotateCameraRay(
+			rayX,
+			rayY,
+			rayZ,
+			1024 - this.cameraProjX & 1023,
+			Axis.X);
+		ray = rotateCameraRay(
+			ray[0],
+			ray[1],
+			ray[2],
+			1024 - this.cameraProjY & 1023,
+			Axis.Y);
+		ray = rotateCameraRay(
+			ray[0],
+			ray[1],
+			ray[2],
+			1024 - this.cameraProjZ & 1023,
+			Axis.Z);
+		rayX = ray[0];
+		rayY = ray[1];
+		rayZ = ray[2];
+
+		int[] fixedPointHit = projectScreenToTerrainTileIterative(
+			rayX, rayY, rayZ, tileSize, world);
+		if (fixedPointHit != null) {
+			return fixedPointHit;
+		}
+
+		double horizontalLength =
+			Math.sqrt(rayX * rayX + rayZ * rayZ);
+		if (horizontalLength < 0.000001D) {
+			return null;
+		}
+		double stepT =
+			Math.max(4.0D, tileSize / 4.0D) / horizontalLength;
+		double maxT =
+			(World.SECTION_SIZE * 5.0D + 32.0D)
+				* tileSize
+				/ horizontalLength;
+		double previousT = 0.0D;
+		double previousDifference = Double.NaN;
+		boolean enteredTerrainWindow = false;
+		for (double t = 0.0D; t <= maxT; t += stepT) {
+			double worldX = this.rot1024_off_x + rayX * t;
+			double worldY = this.rot1024_off_y + rayY * t;
+			double worldZ = this.rot1024_off_z + rayZ * t;
+			int tileX = Math.floorDiv(
+				(int)Math.floor(worldX),
+				tileSize);
+			int tileZ = Math.floorDiv(
+				(int)Math.floor(worldZ),
+				tileSize);
+			int elevation = world.getPresentationTerrainElevation(
+				(int)Math.floor(worldX),
+				(int)Math.floor(worldZ));
+			if (!world.isPresentationTerrainFaceTile(tileX, tileZ)
+				|| elevation
+					== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+				if (enteredTerrainWindow) {
+					return null;
+				}
+				continue;
+			}
+			enteredTerrainWindow = true;
+			double terrainY = -elevation;
+			double difference = worldY - terrainY;
+			if (!Double.isNaN(previousDifference)
+				&& crossedTerrain(
+					previousDifference, difference)) {
+				double low = previousT;
+				double high = t;
+				double lowDifference = previousDifference;
+				for (int pass = 0; pass < 10; pass++) {
+					double middle = (low + high) * 0.5D;
+					double middleX =
+						this.rot1024_off_x + rayX * middle;
+					double middleY =
+						this.rot1024_off_y + rayY * middle;
+					double middleZ =
+						this.rot1024_off_z + rayZ * middle;
+					int middleElevation =
+						world.getPresentationTerrainElevation(
+						(int)Math.floor(middleX),
+						(int)Math.floor(middleZ));
+					if (middleElevation
+							== World
+								.PRESENTATION_ELEVATION_UNAVAILABLE) {
+						return null;
+					}
+					double middleDifference =
+						middleY + middleElevation;
+					if (crossedTerrain(
+							lowDifference,
+							middleDifference)) {
+						high = middle;
+					} else {
+						low = middle;
+						lowDifference = middleDifference;
+					}
+				}
+				int hitX = Math.floorDiv(
+					(int)Math.floor(
+						this.rot1024_off_x + rayX * high),
+					tileSize);
+				int hitZ = Math.floorDiv(
+					(int)Math.floor(
+						this.rot1024_off_z + rayZ * high),
+					tileSize);
+				return world.isPresentationTerrainFaceTile(
+						hitX, hitZ)
+					? new int[] {hitX, hitZ}
+					: null;
+			}
+			previousT = t;
+			previousDifference = difference;
+		}
+		return null;
+	}
+
+	private int[] projectScreenToTerrainTileIterative(
+		double rayX,
+		double rayY,
+		double rayZ,
+		int tileSize,
+		World world) {
+		if (Math.abs(rayY) < 0.000001D) {
+			return null;
+		}
+		/*
+		 * Most terrain is smooth enough for a fixed-point height intersection,
+		 * which keeps ordinary mouse movement O(1). A sign-change march in the
+		 * caller handles discontinuities without changing the resident field.
+		 */
+		int cameraElevation =
+			world.getPresentationTerrainElevation(
+			this.rot1024_off_x,
+			this.rot1024_off_z);
+		if (cameraElevation
+				== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+			return null;
+		}
+		double terrainY = -cameraElevation;
+		double t = (terrainY - this.rot1024_off_y) / rayY;
+		if (t <= 0.0D) {
+			return null;
+		}
+		for (int pass = 0; pass < 16; pass++) {
+			double worldX = this.rot1024_off_x + rayX * t;
+			double worldZ = this.rot1024_off_z + rayZ * t;
+			int tileX = Math.floorDiv(
+				(int)Math.floor(worldX),
+				tileSize);
+			int tileZ = Math.floorDiv(
+				(int)Math.floor(worldZ),
+				tileSize);
+			if (!world.isPresentationTerrainFaceTile(
+					tileX, tileZ)) {
+				return null;
+			}
+			int candidateElevation =
+				world.getPresentationTerrainElevation(
+				(int)Math.floor(worldX),
+				(int)Math.floor(worldZ));
+			if (candidateElevation
+					== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+				return null;
+			}
+			double nextTerrainY = -candidateElevation;
+			double nextT =
+				(nextTerrainY - this.rot1024_off_y) / rayY;
+			if (nextT <= 0.0D) {
+				return null;
+			}
+			if (Math.abs(nextT - t) < 0.01D) {
+				return new int[] {tileX, tileZ};
+			}
+			t = nextT;
+		}
+		return null;
+	}
+
+	private static boolean crossedTerrain(
+		double firstDifference,
+		double secondDifference) {
+		return firstDifference == 0.0D
+			|| secondDifference == 0.0D
+			|| firstDifference < 0.0D
+				&& secondDifference > 0.0D
+			|| firstDifference > 0.0D
+				&& secondDifference < 0.0D;
+	}
+
 	private enum Axis {
 		X,
 		Y,

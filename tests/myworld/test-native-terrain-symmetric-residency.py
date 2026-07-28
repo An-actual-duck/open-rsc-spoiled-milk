@@ -477,6 +477,7 @@ class NativeTerrainSymmetricResidencyTest(unittest.TestCase):
         self.assertIn("decodeV9Halo(", handler)
         self.assertIn("decodeV10Structure(", handler)
         self.assertIn("preloadNativeLayeredTerrainHalo(", handler)
+        self.assertIn("CompletableFuture.completedFuture(", world)
         self.assertIn(
             "activeFrame.getChunkCount() + outerFrame.getChunkCount()",
             world,

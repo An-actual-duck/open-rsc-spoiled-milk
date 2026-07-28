@@ -246,8 +246,15 @@ final class LayeredSceneContextState {
 			nativeTerrainSnapshot);
 	}
 
-	void acceptLegacyPlayerPosition(int packedX, int packedY) {
+	/**
+	 * Accepts one authoritative compatibility position.
+	 *
+	 * @return true only when this position consumed the first receipt for the
+	 * current scene context
+	 */
+	boolean acceptLegacyPlayerPosition(int packedX, int packedY) {
 		requireEstablished();
+		final boolean initialReceipt = awaitingInitialReceipt;
 		if (!GLOBAL_WORLD_SPACE.equals(worldSpace)) {
 			throw new IllegalStateException(
 				"Legacy Player position cannot represent world space: "
@@ -280,6 +287,7 @@ final class LayeredSceneContextState {
 		legacyY = packedY;
 		awaitingInitialReceipt = false;
 		acceptedPlayerPositions++;
+		return initialReceipt;
 	}
 
 	boolean matchesSequence(int expectedSequence) {

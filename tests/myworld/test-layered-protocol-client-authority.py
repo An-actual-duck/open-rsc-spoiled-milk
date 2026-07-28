@@ -74,8 +74,10 @@ public final class LayeredProtocolClientAuthorityFixture {
         check(!surface.isSyntheticDeepFixture(), "surface terrain mode");
         check(state.matchesSequence(1), "surface sequence");
         check("global:0:1".equals(state.scopeIdentity()), "surface scope");
-        state.acceptLegacyPlayerPosition(100, 400);
-        state.acceptLegacyPlayerPosition(101, 401);
+        check(state.acceptLegacyPlayerPosition(100, 400),
+            "first position consumes context receipt");
+        check(!state.acceptLegacyPlayerPosition(101, 401),
+            "later movement is not a context receipt");
         check(state.summary().contains("101,401,L0"), "surface movement");
         check(state.getLogicalX() == 101 && state.getLogicalY() == 401
                 && state.getLogicalLevel() == 0
@@ -199,6 +201,10 @@ public final class LayeredProtocolClientAuthorityFixture {
         check((chunked.createTile(448, 600).groundElevation & 0xff) == 4
                 && (chunked.createTile(448, 600).groundTexture & 0xff) == 2,
             "second non-uniform chunk band");
+        check(chunked.getGroundElevation(448, 600) == 4,
+            "allocation-free native elevation lookup");
+        check(chunked.getGroundOverlay(448, 600) == 0,
+            "allocation-free native overlay lookup");
         check((chunked.createTile(456, 600).groundTexture & 0xff) == 1,
             "neighbor chunk band");
         LayeredSceneContextState.ApplyResult chunkedDeep = state.acceptNative(

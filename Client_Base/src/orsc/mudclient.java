@@ -10241,13 +10241,88 @@ public final class mudclient implements Runnable {
 	}
 	private boolean addProjectedEditorTileFallback(){
 		boolean editorOpen=worldEditorInterface!=null&&worldEditorInterface.isEditorOpen();
-		if((!editorOpen&&!isClickTeleportActiveForCurrentContext())||this.selectedSpell>=0||this.selectedItemInventoryIndex>=0)return false;
+		boolean nativeTerrainPicking =
+			world != null && world.isNativeTerrainAuthorityOnlyActive();
+		if(!editorOpen&&!isClickTeleportActiveForCurrentContext()&&!nativeTerrainPicking)return false;
+		if(this.selectedItemInventoryIndex>=0)return false;
+		if(this.selectedSpell>=0&&EntityHandler.getSpellDef(this.selectedSpell).getSpellType()!=6)return false;
 		if(mouseY>=getGameHeight()-70||mouseInTabArea_CUSTOM()||scene==null)return false;
-		int[] tile=scene.projectScreenToGroundTile(mouseX,mouseY,tileSize,getClickTeleportGroundPlaneY());
-		if(tile==null||tile[0]<0||tile[1]<0||tile[0]>=World.LOCAL_FACE_TILE_COUNT||tile[1]>=World.LOCAL_FACE_TILE_COUNT)return false;
+		int[] tile=projectScreenToCurrentTerrainTile();
+		if(tile==null||!world.isPresentationTerrainFaceTile(tile[0],tile[1]))return false;
+		boolean presentationOnly=!World.isLocalFaceTile(tile[0],tile[1]);
+		if(presentationOnly&&(editorOpen||this.selectedSpell>=0))return false;
 		this.menuVisible=true;this.m_rf=midRegionBaseX+tile[0];this.m_Cg=midRegionBaseZ+tile[1];
-		this.menuCommon.addCharacterItem_WithID(tile[0],"",MenuItemAction.LANDSCAPE_WALK_HERE,isClickTeleportActiveForCurrentContext()?"Teleport here":"Walk here",tile[1]);
-		addWorldEditorTileActions(tile[0],tile[1]);return true;
+		if(this.selectedSpell>=0){
+			this.menuCommon.addTileItem(
+				tile[0],
+				(byte)22,
+				MenuItemAction.LANDSCAPE_CAST_SPELL,
+				"Cast "+EntityHandler.getSpellDef(this.selectedSpell).getName()+" on ground",
+				"",
+				this.selectedSpell,
+				tile[1]);
+		}else{
+			this.menuCommon.addCharacterItem_WithID(
+				tile[0],
+				"",
+				MenuItemAction.LANDSCAPE_WALK_HERE,
+				isClickTeleportActiveForCurrentContext()
+					?"Teleport here"
+					:presentationOnly?"Walk toward":"Walk here",
+				tile[1]);
+			if(!presentationOnly)addWorldEditorTileActions(tile[0],tile[1]);
+		}
+		return true;
+	}
+	private int[] activeGameplayTargetToward(int targetX,int targetZ){
+		if(World.isLocalFaceTile(targetX,targetZ))return new int[]{targetX,targetZ};
+		if(!World.isLocalFaceTile(this.playerLocalX,this.playerLocalZ))return null;
+		int maximum=World.LOCAL_FACE_TILE_COUNT-1;
+		int deltaX=targetX-this.playerLocalX;
+		int deltaZ=targetZ-this.playerLocalZ;
+		double scale=1.0D;
+		if(targetX<0&&deltaX<0)scale=Math.min(scale,(double)this.playerLocalX/-deltaX);
+		else if(targetX>maximum&&deltaX>0)scale=Math.min(scale,(double)(maximum-this.playerLocalX)/deltaX);
+		if(targetZ<0&&deltaZ<0)scale=Math.min(scale,(double)this.playerLocalZ/-deltaZ);
+		else if(targetZ>maximum&&deltaZ>0)scale=Math.min(scale,(double)(maximum-this.playerLocalZ)/deltaZ);
+		int activeX=Math.max(0,Math.min(maximum,this.playerLocalX+(int)Math.round(deltaX*scale)));
+		int activeZ=Math.max(0,Math.min(maximum,this.playerLocalZ+(int)Math.round(deltaZ*scale)));
+		return activeX==this.playerLocalX&&activeZ==this.playerLocalZ
+			?null:new int[]{activeX,activeZ};
+	}
+	private void recordTerrainNavigationClick(
+		int requestedX,
+		int requestedZ,
+		int activeX,
+		int activeZ){
+		boolean bounded=requestedX!=activeX||requestedZ!=activeZ;
+		String summary="TERRAIN_NAVIGATION_CLICK requestedLocal="
+			+requestedX+","+requestedZ
+			+" activeLocal="+activeX+","+activeZ
+			+" playerLocal="+this.playerLocalX+","+this.playerLocalZ
+			+" bounded="+(bounded?1:0);
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+		RendererDiagnosticSession.Record event=
+			RendererDiagnosticSession.newEventRecord(
+				"renderer.terrain-navigation-click");
+		if(event!=null){
+			event.number("requestedLocalX",requestedX);
+			event.number("requestedLocalZ",requestedZ);
+			event.number("activeLocalX",activeX);
+			event.number("activeLocalZ",activeZ);
+			event.number("playerLocalX",this.playerLocalX);
+			event.number("playerLocalZ",this.playerLocalZ);
+			event.bool("boundedToGameplayWindow",bounded);
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
+	}
+	private int[] projectScreenToCurrentTerrainTile(){
+		return scene.projectScreenToTerrainTile(
+			mouseX,
+			mouseY,
+			tileSize,
+			world);
 	}
 	private void drawUiTab0(int var1) {
 		try {
@@ -17508,8 +17583,23 @@ public final class mudclient implements Runnable {
 					if (isClickTeleportActiveForCurrentContext()) {
 						this.sendBlinkToTile(indexOrX, idOrZ);
 					} else {
+						int[] activeTarget = activeGameplayTargetToward(
+							indexOrX, idOrZ);
+						if (activeTarget == null) {
+							break;
+						}
+						recordTerrainNavigationClick(
+							indexOrX,
+							idOrZ,
+							activeTarget[0],
+							activeTarget[1]);
 						//System.out.println("LANDSCAPE_WALK_HERE: playerLocalX=" + this.playerLocalX + ", playerLocalZ= " + this.playerLocalZ + ", indexOrX=" + indexOrX + ", idOrZ=" + idOrZ);
-						this.walkToActionSource(this.playerLocalX, this.playerLocalZ, indexOrX, idOrZ, false);
+						this.walkToActionSource(
+							this.playerLocalX,
+							this.playerLocalZ,
+							activeTarget[0],
+							activeTarget[1],
+							false);
 						if (this.mouseClickXStep == -24) {
 							this.mouseClickXStep = 24;
 						}
@@ -18770,6 +18860,7 @@ public final class mudclient implements Runnable {
 					this.world.playerAlive = true;
 					return false;
 				} else {
+					long transitionStartNanos = System.nanoTime();
 					int oldBaseX = this.midRegionBaseX;
 					int oldBaseZ = this.midRegionBaseZ;
 					boolean heightOffsetChanged = this.lastHeightOffset != this.requestedPlane;
@@ -18789,6 +18880,7 @@ public final class mudclient implements Runnable {
 					this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE - 32;
 					this.midRegionBaseZ = World.sectionToLocalBaseTile(midRegionZ);
 					this.currentRegionMinX = midRegionX * World.SECTION_SIZE - 32;
+					long phaseStartNanos = System.nanoTime();
 					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
 						this.dematerializeGameObjectInstance(i);
 					}
@@ -18796,7 +18888,12 @@ public final class mudclient implements Runnable {
 						this.dematerializeWallObjectInstance(i);
 					}
 					this.clearResidentObjectChunkCache();
+					long dematerializeNanos =
+						System.nanoTime() - phaseStartNanos;
+					phaseStartNanos = System.nanoTime();
 					this.world.loadSections(wantX, wantZ, this.lastHeightOffset);
+					long worldLoadNanos =
+						System.nanoTime() - phaseStartNanos;
 					this.midRegionBaseZ -= this.worldOffsetZ;
 					this.midRegionBaseX -= this.worldOffsetX;
 					int baseDX = this.midRegionBaseX - oldBaseX;
@@ -18806,6 +18903,7 @@ public final class mudclient implements Runnable {
 						this.retainPendingAreaLoadStaticScene();
 					}
 
+					phaseStartNanos = System.nanoTime();
 					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
 						this.setGameObjectInstanceX(i, this.getGameObjectInstanceX(i) - baseDX);
 						this.setGameObjectInstanceZ(i, this.getGameObjectInstanceZ(i) - baseDZ);
@@ -18837,9 +18935,15 @@ public final class mudclient implements Runnable {
 							var20.printStackTrace();
 						}
 					}
+					long staticRebaseNanos =
+						System.nanoTime() - phaseStartNanos;
+					phaseStartNanos = System.nanoTime();
 					this.clearResidentObjectChunkCache();
 					this.materializeLoadedTerrainScenery();
+					long staticMaterializeNanos =
+						System.nanoTime() - phaseStartNanos;
 
+					phaseStartNanos = System.nanoTime();
 					if (hardAreaLoad || heightOffsetChanged) {
 						this.resetGroundItemsForHardAreaLoad();
 					} else {
@@ -18861,6 +18965,9 @@ public final class mudclient implements Runnable {
 						}
 						this.groundItemCount = newGroundItemCount;
 					}
+					long groundItemsNanos =
+						System.nanoTime() - phaseStartNanos;
+					phaseStartNanos = System.nanoTime();
 					for (int i = 0; i < this.playerCount; ++i) {
 						ORSCharacter var23 = this.players[i];
 						var23.currentX -= this.tileSize * baseDX;
@@ -18882,7 +18989,10 @@ public final class mudclient implements Runnable {
 							var23.waypointsZ[j] -= baseDZ * this.tileSize;
 						}
 					}
+					long actorRebaseNanos =
+						System.nanoTime() - phaseStartNanos;
 
+					phaseStartNanos = System.nanoTime();
 					int baseOffsetX = this.tileSize * baseDX;
 					int baseOffsetZ = this.tileSize * baseDZ;
 					this.cameraPositionX -= baseOffsetX;
@@ -18890,7 +19000,33 @@ public final class mudclient implements Runnable {
 
 					this.hasCompletedInitialRegionLoad = true;
 					this.world.playerAlive = true;
+					long finalizeNanos =
+						System.nanoTime() - phaseStartNanos;
+					phaseStartNanos = System.nanoTime();
 					this.packetHandler.reapplyCompleteSceneBaselineAfterRegionLoad();
+					long baselineNanos =
+						System.nanoTime() - phaseStartNanos;
+					RenderTelemetry.recordClientRegionTransition(
+						this.world.hasNativeLayeredTerrain()
+							? "native-authoritative"
+							: "legacy",
+						hardAreaLoad,
+						heightOffsetChanged,
+						baseDX,
+						baseDZ,
+						this.getGameObjectInstanceCount(),
+						this.getWallObjectInstanceCount(),
+						this.playerCount,
+						this.npcCount,
+						System.nanoTime() - transitionStartNanos,
+						dematerializeNanos,
+						worldLoadNanos,
+						staticRebaseNanos,
+						staticMaterializeNanos,
+						groundItemsNanos,
+						actorRebaseNanos,
+						finalizeNanos,
+						baselineNanos);
 					return true;
 				}
 			}
