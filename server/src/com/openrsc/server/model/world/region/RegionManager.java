@@ -390,6 +390,15 @@ public class RegionManager {
 			Npc checked = Objects.requireNonNull(npc, "npc");
 			WorldLocation location = checked.getWorldLocation();
 			layeredSpatialEntityIndex.requireMembership(checked, location);
+			if (usesNativeLayeredRegionlessMembership(location)) {
+				return nativeLayeredGameObjects.hasNpcBlockingSceneryAt(
+					new WorldLocation(
+						location.getWorldSpace(),
+						new WorldCoordinate(
+							tileX,
+							tileY,
+							location.getCoordinate().getLevel())));
+			}
 			return layeredSpatialEntityIndex.hasGameObjectAt(
 				getLayeredVisibleRegionWindow(
 					location,
@@ -4342,7 +4351,9 @@ public class RegionManager {
 			type.getId(),
 			direction,
 			object,
-			footprint) == null) {
+			footprint,
+			nativeLayeredNpcBlockingSceneryFootprint(
+				object, location, placementId)) == null) {
 			throw new IllegalStateException(
 				"Native layered object population generation became stale");
 		}
@@ -4375,6 +4386,56 @@ public class RegionManager {
 				"Native layered object collision leaves its package terrain for "
 					+ placementId + ": " + collisionLocation);
 		}
+	}
+
+	private List<WorldLocation> nativeLayeredNpcBlockingSceneryFootprint(
+		final GameObject object,
+		final WorldLocation origin,
+		final String placementId) {
+		GameObject checkedObject = Objects.requireNonNull(object, "object");
+		WorldLocation checkedOrigin = Objects.requireNonNull(origin, "origin");
+		if (!checkedObject.isScenery()
+			|| checkedObject.getGameObjectDef().getType() == 0) {
+			return Collections.emptyList();
+		}
+		int width;
+		int height;
+		if (checkedObject.getDirection() == 0
+			|| checkedObject.getDirection() == 4) {
+			width = checkedObject.getGameObjectDef().getWidth();
+			height = checkedObject.getGameObjectDef().getHeight();
+		} else {
+			width = checkedObject.getGameObjectDef().getHeight();
+			height = checkedObject.getGameObjectDef().getWidth();
+		}
+		NativeLayeredWorldPackage owner =
+			findNativeLayeredWorldPackage(checkedOrigin).orElse(null);
+		if (owner == null) {
+			throw new IllegalStateException(
+				"Native layered NPC-blocking scenery has no package owner: "
+					+ placementId);
+		}
+		List<WorldLocation> footprint =
+			new ArrayList<WorldLocation>(Math.multiplyExact(width, height));
+		WorldCoordinate coordinate = checkedOrigin.getCoordinate();
+		for (int offsetX = 0; offsetX < width; offsetX++) {
+			for (int offsetY = 0; offsetY < height; offsetY++) {
+				WorldLocation tile = new WorldLocation(
+					checkedOrigin.getWorldSpace(),
+					new WorldCoordinate(
+						Math.addExact(coordinate.getX(), offsetX),
+						Math.addExact(coordinate.getY(), offsetY),
+						coordinate.getLevel()));
+				if (findNativeLayeredWorldPackage(tile).orElse(null) != owner) {
+					throw new IllegalStateException(
+						"Native layered NPC-blocking scenery leaves its "
+							+ "package terrain for " + placementId
+							+ " at " + tile);
+				}
+				footprint.add(tile);
+			}
+		}
+		return footprint;
 	}
 
 	public boolean hasNativeLayeredGameObjectIdentity(
@@ -4551,13 +4612,28 @@ public class RegionManager {
 				newObject, newRegisterFootprint);
 		}
 
+		List<WorldLocation> oldNpcBlockingScenery =
+			oldObject == null
+				? Collections.<WorldLocation>emptyList()
+				: nativeLayeredNpcBlockingSceneryFootprint(
+					oldObject,
+					identity.getLocation(),
+					identity.getPlacementId());
+		List<WorldLocation> newNpcBlockingScenery =
+			newObject == null
+				? Collections.<WorldLocation>emptyList()
+				: nativeLayeredNpcBlockingSceneryFootprint(
+					newObject,
+					identity.getLocation(),
+					identity.getPlacementId());
 		long generation = identity.getGeneration();
 		if (oldObject == null) {
 			if (nativeLayeredGameObjects.register(
 					generation, nativePlacementKey(identity),
 					identity.getLocation(), newObject.getType(),
 					newObject.getDirection(), newObject,
-					newRegisterFootprint) == null) {
+					newRegisterFootprint,
+					newNpcBlockingScenery) == null) {
 				return;
 			}
 			try {
@@ -4582,7 +4658,8 @@ public class RegionManager {
 					generation, nativePlacementKey(identity),
 					identity.getLocation(), oldObject.getType(),
 					oldObject.getDirection(), oldObject,
-					oldRollbackRegisterFootprint);
+					oldRollbackRegisterFootprint,
+					oldNpcBlockingScenery);
 				throw failure;
 			}
 		} else {
@@ -4590,7 +4667,8 @@ public class RegionManager {
 					generation, nativePlacementKey(identity), oldObject,
 					identity.getLocation(), newObject.getType(),
 					newObject.getDirection(), newObject,
-					newRegisterFootprint) == null) {
+					newRegisterFootprint,
+					newNpcBlockingScenery) == null) {
 				return;
 			}
 			try {
@@ -4601,7 +4679,8 @@ public class RegionManager {
 					generation, nativePlacementKey(identity), newObject,
 					identity.getLocation(), oldObject.getType(),
 					oldObject.getDirection(), oldObject,
-					oldRollbackRegisterFootprint);
+					oldRollbackRegisterFootprint,
+					oldNpcBlockingScenery);
 				throw failure;
 			}
 		}

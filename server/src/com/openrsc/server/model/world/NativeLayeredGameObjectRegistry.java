@@ -7,6 +7,8 @@ import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -29,6 +31,8 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		new HashMap<Slot, Entry<T>>();
 	private final Map<WorldLocation, CollisionAggregate> collision =
 		new HashMap<WorldLocation, CollisionAggregate>();
+	private final Map<WorldLocation, Integer> npcBlockingScenery =
+		new HashMap<WorldLocation, Integer>();
 	private long generation = 1L;
 
 	public long getGeneration() {
@@ -45,9 +49,11 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		final int direction,
 		final T instance,
 		final GameTickEventRestorationCollisionFootprintPlanner.Result
-			footprint) {
+			footprint,
+		final Collection<WorldLocation> npcBlockingSceneryTiles) {
 		Entry<T> proposed = entry(
-			placementId, location, type, direction, instance, footprint);
+			placementId, location, type, direction, instance, footprint,
+			npcBlockingSceneryTiles);
 		synchronized (lock) {
 			if (expectedGeneration != generation) {
 				return null;
@@ -64,9 +70,12 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			}
 			Map<WorldLocation, CollisionAggregate> staged =
 				stageCollision(null, proposed);
+			Map<WorldLocation, Integer> stagedNpcBlockingScenery =
+				stageNpcBlockingScenery(null, proposed);
 			placements.put(proposed.placementId, proposed);
 			slots.put(proposed.slot, proposed);
 			commitCollision(staged);
+			commitNpcBlockingScenery(stagedNpcBlockingScenery);
 			return proposed.instance;
 		}
 	}
@@ -80,9 +89,11 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		final int direction,
 		final T replacement,
 		final GameTickEventRestorationCollisionFootprintPlanner.Result
-			footprint) {
+			footprint,
+		final Collection<WorldLocation> npcBlockingSceneryTiles) {
 		Entry<T> proposed = entry(
-			placementId, location, type, direction, replacement, footprint);
+			placementId, location, type, direction, replacement, footprint,
+			npcBlockingSceneryTiles);
 		T checkedExpected = Objects.requireNonNull(
 			expectedInstance, "expectedInstance");
 		synchronized (lock) {
@@ -103,10 +114,13 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			}
 			Map<WorldLocation, CollisionAggregate> staged =
 				stageCollision(current, proposed);
+			Map<WorldLocation, Integer> stagedNpcBlockingScenery =
+				stageNpcBlockingScenery(current, proposed);
 			placements.put(proposed.placementId, proposed);
 			slots.remove(current.slot);
 			slots.put(proposed.slot, proposed);
 			commitCollision(staged);
+			commitNpcBlockingScenery(stagedNpcBlockingScenery);
 			return proposed.instance;
 		}
 	}
@@ -131,9 +145,12 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			}
 			Map<WorldLocation, CollisionAggregate> staged =
 				stageCollision(current, null);
+			Map<WorldLocation, Integer> stagedNpcBlockingScenery =
+				stageNpcBlockingScenery(current, null);
 			placements.remove(checkedId);
 			slots.remove(current.slot);
 			commitCollision(staged);
+			commitNpcBlockingScenery(stagedNpcBlockingScenery);
 			return current.instance;
 		}
 	}
@@ -150,6 +167,23 @@ public final class NativeLayeredGameObjectRegistry<T> {
 				aggregate.apply(checkedTile);
 			}
 			return checkedTile;
+		}
+	}
+
+	/**
+	 * Returns whether an NPC-blocking scenery footprint occupies one exact
+	 * world-space/level-qualified tile.
+	 *
+	 * <p>The footprint is staged atomically with placement and collision state,
+	 * so movement checks do not need to scan a broad region window or
+	 * reconstruct object dimensions.</p>
+	 */
+	public boolean hasNpcBlockingSceneryAt(final WorldLocation location) {
+		WorldLocation checkedLocation = Objects.requireNonNull(
+			location, "location");
+		synchronized (lock) {
+			Integer count = npcBlockingScenery.get(checkedLocation);
+			return count != null && count.intValue() > 0;
 		}
 	}
 
@@ -206,6 +240,7 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			placements.clear();
 			slots.clear();
 			collision.clear();
+			npcBlockingScenery.clear();
 			generation = Math.addExact(generation, 1L);
 		}
 	}
@@ -217,7 +252,8 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		final int direction,
 		final T instance,
 		final GameTickEventRestorationCollisionFootprintPlanner.Result
-			footprint) {
+			footprint,
+		final Collection<WorldLocation> npcBlockingSceneryTiles) {
 		String checkedId = Objects.requireNonNull(
 			placementId, "placementId");
 		WorldLocation checkedLocation = Objects.requireNonNull(
@@ -234,9 +270,26 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			throw new IllegalArgumentException(
 				"Native layered object registration is invalid");
 		}
+		Set<WorldLocation> checkedNpcBlockingSceneryTiles =
+			new LinkedHashSet<WorldLocation>();
+		for (WorldLocation tile : Objects.requireNonNull(
+				npcBlockingSceneryTiles, "npcBlockingSceneryTiles")) {
+			WorldLocation checkedTile = Objects.requireNonNull(
+				tile, "npcBlockingSceneryTile");
+			if (type != 0
+				|| !checkedLocation.getWorldSpace().equals(
+					checkedTile.getWorldSpace())
+				|| checkedLocation.getCoordinate().getLevel()
+					!= checkedTile.getCoordinate().getLevel()) {
+				throw new IllegalArgumentException(
+					"Native layered NPC-blocking scenery footprint is invalid");
+			}
+			checkedNpcBlockingSceneryTiles.add(checkedTile);
+		}
 		return new Entry<T>(
 			checkedId, checkedLocation, type, direction,
-			checkedInstance, checkedFootprint);
+			checkedInstance, checkedFootprint,
+			checkedNpcBlockingSceneryTiles);
 	}
 
 	private Map<WorldLocation, CollisionAggregate> stageCollision(
@@ -327,6 +380,67 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		}
 	}
 
+	private Map<WorldLocation, Integer> stageNpcBlockingScenery(
+		final Entry<T> removed,
+		final Entry<T> added) {
+		Set<WorldLocation> touched = new LinkedHashSet<WorldLocation>();
+		if (removed != null) {
+			touched.addAll(removed.npcBlockingSceneryTiles);
+		}
+		if (added != null) {
+			touched.addAll(added.npcBlockingSceneryTiles);
+		}
+		Map<WorldLocation, Integer> staged =
+			new HashMap<WorldLocation, Integer>();
+		for (WorldLocation location : touched) {
+			Integer count = npcBlockingScenery.get(location);
+			staged.put(
+				location,
+				Integer.valueOf(count == null ? 0 : count.intValue()));
+		}
+		if (removed != null) {
+			mutateNpcBlockingScenery(
+				removed.npcBlockingSceneryTiles, staged, false);
+		}
+		if (added != null) {
+			mutateNpcBlockingScenery(
+				added.npcBlockingSceneryTiles, staged, true);
+		}
+		return staged;
+	}
+
+	private static void mutateNpcBlockingScenery(
+		final Set<WorldLocation> footprint,
+		final Map<WorldLocation, Integer> staged,
+		final boolean add) {
+		for (WorldLocation location : footprint) {
+			Integer current = staged.get(location);
+			if (current == null) {
+				throw new IllegalStateException(
+					"Native layered NPC-blocking scenery staging is incomplete");
+			}
+			int count = add
+				? Math.addExact(current.intValue(), 1)
+				: Math.subtractExact(current.intValue(), 1);
+			if (count < 0) {
+				throw new IllegalStateException(
+					"Native layered NPC-blocking scenery contribution underflow");
+			}
+			staged.put(location, Integer.valueOf(count));
+		}
+	}
+
+	private void commitNpcBlockingScenery(
+		final Map<WorldLocation, Integer> staged) {
+		for (Map.Entry<WorldLocation, Integer> value : staged.entrySet()) {
+			if (value.getValue().intValue() == 0) {
+				npcBlockingScenery.remove(value.getKey());
+			} else {
+				npcBlockingScenery.put(value.getKey(), value.getValue());
+			}
+		}
+	}
+
 	private static final class Entry<T> {
 		private final String placementId;
 		private final WorldLocation location;
@@ -335,6 +449,7 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		private final Slot slot;
 		private final GameTickEventRestorationCollisionFootprintPlanner.Result
 			footprint;
+		private final Set<WorldLocation> npcBlockingSceneryTiles;
 
 		private Entry(
 			final String placementId,
@@ -343,13 +458,17 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			final int direction,
 			final T instance,
 			final GameTickEventRestorationCollisionFootprintPlanner.Result
-				footprint) {
+				footprint,
+			final Set<WorldLocation> npcBlockingSceneryTiles) {
 			this.placementId = placementId;
 			this.location = location;
 			this.type = type;
 			this.instance = instance;
 			this.slot = new Slot(location, type, direction);
 			this.footprint = footprint;
+			this.npcBlockingSceneryTiles = Collections.unmodifiableSet(
+				new LinkedHashSet<WorldLocation>(
+					npcBlockingSceneryTiles));
 		}
 	}
 

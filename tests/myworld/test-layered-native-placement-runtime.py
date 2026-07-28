@@ -93,9 +93,12 @@ public final class NativeLayeredPlacementRegistryFixture {
         Object tableObject = new Object();
         check(objects.register(
                 objectGeneration, "deep-table", tableLocation,
-                0, 0, tableObject, table)
+                0, 0, tableObject, table,
+                java.util.Collections.singleton(tableLocation))
                 == tableObject,
             "register layered scenery");
+        check(objects.hasNpcBlockingSceneryAt(tableLocation),
+            "exact NPC-blocking scenery lookup");
         TileValue deepTableTile = emptyTile();
         objects.applyCollision(tableLocation, deepTableTile);
         check((deepTableTile.traversalMask & CollisionFlag.FULL_BLOCK_C) != 0,
@@ -107,6 +110,47 @@ public final class NativeLayeredPlacementRegistryFixture {
             surfaceTableTile);
         check((surfaceTableTile.traversalMask & CollisionFlag.FULL_BLOCK) == 0,
             "same XY surface collision remains isolated");
+        check(!objects.hasNpcBlockingSceneryAt(
+                new WorldLocation(
+                    WorldSpaceId.GLOBAL, new WorldCoordinate(446, 604, 0))),
+            "NPC-blocking scenery lookup remains level isolated");
+
+        NativeLayeredGameObjectRegistry<Object> directionalObjects =
+            new NativeLayeredGameObjectRegistry<Object>();
+        long directionalGeneration = directionalObjects.getGeneration();
+        WorldLocation directionalOrigin = new WorldLocation(
+            WorldSpaceId.GLOBAL, new WorldCoordinate(470, 604, -2));
+        WorldLocation directionalSecond = new WorldLocation(
+            WorldSpaceId.GLOBAL, new WorldCoordinate(471, 604, -2));
+        GameTickEventRestorationCollisionFootprintPlanner.Result directional =
+            GameTickEventRestorationCollisionFootprintPlanner.plan(
+                Operation.REGISTER,
+                ConstructorState.of(5, 470, 604, 0, 0),
+                Definition.scenery(
+                    2, 2, 1, "Directional scenery", new String[0]),
+                false,
+                WorldBounds.of(1000, 1000));
+        Object directionalObject = new Object();
+        check(directionalObjects.register(
+                directionalGeneration, "directional", directionalOrigin,
+                0, 0, directionalObject, directional,
+                java.util.Arrays.asList(
+                    directionalOrigin, directionalSecond))
+                == directionalObject,
+            "register directional scenery occupancy");
+        check(directionalObjects.hasNpcBlockingSceneryAt(directionalOrigin)
+                && directionalObjects.hasNpcBlockingSceneryAt(
+                    directionalSecond),
+            "directional scenery exact footprint blocks NPCs");
+        check(!directionalObjects.hasNpcBlockingSceneryAt(
+                new WorldLocation(
+                    WorldSpaceId.GLOBAL,
+                    new WorldCoordinate(469, 604, -2))),
+            "directional collision neighbor is not scenery occupancy");
+        directionalObjects.unregister(
+            directionalGeneration, "directional", directionalObject);
+        check(!directionalObjects.hasNpcBlockingSceneryAt(directionalOrigin),
+            "directional scenery removal clears exact occupancy");
 
         WorldLocation cartLocation = new WorldLocation(
             WorldSpaceId.GLOBAL, new WorldCoordinate(465, 663, 0));
@@ -120,8 +164,12 @@ public final class NativeLayeredPlacementRegistryFixture {
         Object cartObject = new Object();
         check(objects.register(
                 objectGeneration, "spoiled-milk-cart", cartLocation,
-                0, 8, cartObject, cart) == cartObject,
+                0, 8, cartObject, cart,
+                java.util.Collections.<WorldLocation>emptyList())
+                == cartObject,
             "register authored direction-eight scenery");
+        check(!objects.hasNpcBlockingSceneryAt(cartLocation),
+            "collisionless scenery does not block NPCs");
         check(objects.unregister(
                 objectGeneration, "spoiled-milk-cart", cartObject)
                 == cartObject,
@@ -140,7 +188,8 @@ public final class NativeLayeredPlacementRegistryFixture {
         Object fenceObject = new Object();
         objects.register(
             objectGeneration, "deep-fence", fenceLocation,
-            1, 0, fenceObject, fence);
+            1, 0, fenceObject, fence,
+            java.util.Collections.<WorldLocation>emptyList());
         TileValue fenceNorth = emptyTile();
         objects.applyCollision(fenceLocation, fenceNorth);
         check((fenceNorth.traversalMask & CollisionFlag.WALL_NORTH) != 0,
@@ -178,7 +227,9 @@ public final class NativeLayeredPlacementRegistryFixture {
         Object closedDoor = new Object();
         check(objects.register(
                 objectGeneration, "deep-door", doorLocation,
-                1, 0, closedDoor, door) == closedDoor,
+                1, 0, closedDoor, door,
+                java.util.Collections.<WorldLocation>emptyList())
+                == closedDoor,
             "register package door");
         check(objects.size() == 3 && objects.countType(0) == 1
                 && objects.countType(1) == 2,
@@ -196,7 +247,8 @@ public final class NativeLayeredPlacementRegistryFixture {
         Object openDoorframe = new Object();
         check(objects.replace(
                 objectGeneration, "deep-door", closedDoor,
-                doorLocation, 1, 0, openDoorframe, doorframe)
+                doorLocation, 1, 0, openDoorframe, doorframe,
+                java.util.Collections.<WorldLocation>emptyList())
                 == openDoorframe,
             "replace package boundary");
         check(objects.find("deep-door") == openDoorframe
@@ -224,7 +276,9 @@ public final class NativeLayeredPlacementRegistryFixture {
             "removal releases placement identity");
         check(objects.register(
                 objectGeneration, "deep-door", doorLocation,
-                1, 0, closedDoor, door) == closedDoor,
+                1, 0, closedDoor, door,
+                java.util.Collections.<WorldLocation>emptyList())
+                == closedDoor,
             "same-generation delayed restoration");
         check(objects.getCollisionTileCount() == 6,
             "restoration reinstates exact collision");
@@ -252,8 +306,12 @@ public final class NativeLayeredPlacementRegistryFixture {
         Object liveTree = new Object();
         check(objects.register(
                 objectGeneration, "deep-tree", treeLocation,
-                0, 0, liveTree, tree) == liveTree,
+                0, 0, liveTree, tree,
+                java.util.Collections.singleton(treeLocation))
+                == liveTree,
             "register package tree");
+        check(objects.hasNpcBlockingSceneryAt(treeLocation),
+            "tree occupies exact NPC-blocking tile");
         check(objects.size() == 4 && objects.countType(0) == 2
                 && objects.countType(1) == 2
                 && objects.getCollisionTileCount() == 7,
@@ -261,15 +319,20 @@ public final class NativeLayeredPlacementRegistryFixture {
         Object liveStump = new Object();
         check(objects.replace(
                 objectGeneration, "deep-tree", liveTree,
-                treeLocation, 0, 0, liveStump, stump) == liveStump,
+                treeLocation, 0, 0, liveStump, stump,
+                java.util.Collections.singleton(treeLocation))
+                == liveStump,
             "tree becomes stump");
         check(objects.find("deep-tree") == liveStump
-                && objects.getCollisionTileCount() == 7,
+                && objects.getCollisionTileCount() == 7
+                && objects.hasNpcBlockingSceneryAt(treeLocation),
             "stump retains placement and collision identity");
         Object restoredTree = new Object();
         check(objects.replace(
                 objectGeneration, "deep-tree", liveStump,
-                treeLocation, 0, 0, restoredTree, tree) == restoredTree,
+                treeLocation, 0, 0, restoredTree, tree,
+                java.util.Collections.singleton(treeLocation))
+                == restoredTree,
             "delayed callback restores tree");
         check(objects.find("deep-tree") == restoredTree
                 && objects.size() == 4
@@ -278,10 +341,12 @@ public final class NativeLayeredPlacementRegistryFixture {
 
         expectIllegal(() -> objects.register(
             objectGeneration, "deep-table", tableLocation,
-            0, 0, new Object(), table));
+            0, 0, new Object(), table,
+            java.util.Collections.singleton(tableLocation)));
         expectIllegal(() -> objects.register(
             objectGeneration, "other-table", tableLocation,
-            0, 4, new Object(), table));
+            0, 4, new Object(), table,
+            java.util.Collections.singleton(tableLocation)));
 
         NativeLayeredGameObjectIdentity identity =
             new NativeLayeredGameObjectIdentity(
@@ -301,9 +366,12 @@ public final class NativeLayeredPlacementRegistryFixture {
         objects.reset();
         check(objects.size() == 0 && objects.getCollisionTileCount() == 0,
             "object registry reset");
+        check(!objects.hasNpcBlockingSceneryAt(tableLocation),
+            "object registry reset clears NPC scenery occupancy");
         check(objects.register(
                 objectGeneration, "stale-table", tableLocation,
-                0, 0, new Object(), table) == null,
+                0, 0, new Object(), table,
+                java.util.Collections.singleton(tableLocation)) == null,
             "stale delayed object callback refused");
     }
 
@@ -423,6 +491,14 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
         self.assertIn("populateNativeLayeredGameObject(", manager)
         self.assertIn(
             "nativeLayeredGameObjects.applyCollision(location, tile)",
+            manager,
+        )
+        self.assertIn(
+            "nativeLayeredGameObjects.hasNpcBlockingSceneryAt(",
+            manager,
+        )
+        self.assertIn(
+            "if (usesNativeLayeredRegionlessMembership(location))",
             manager,
         )
         self.assertIn("applyNativeLayeredGameObjectTransaction(", manager)

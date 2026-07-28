@@ -46,6 +46,20 @@ trailing-edge NPC/shadow seam. Diagnostics traced that seam to legacy
 of the new 144-tile authoritative square. A native-only floor-aligned
 center-sector correction is implemented, automated-validated, and
 owner-accepted after broad private traversal.
+Final profiling now separates the remaining costs by owner. Warm native client
+shifts are bounded to roughly 13–27 ms, resident-sector transfer is no longer
+the bottleneck, and the retained outer field hides its asynchronous structural
+completion. The one measured server-side loader/pathing waste—broad
+multi-region scenery scans for each native NPC destination tile—is replaced by
+an exact, level-qualified occupancy lookup. Static collision pages,
+incoming-strip-only mesh replacement, server eviction, and renderer glow-mask
+caching remain deliberately separate follow-up work rather than prerequisites
+for closing this loader milestone.
+The exact NPC-blocking lookup is now owner-accepted: a private Lumbridge route
+covered roaming NPCs around walls/scenery, Player collision, interactions, and
+loader-boundary travel without a behavioral regression. During the complete
+sample the server processed 5,446 NPC moves with 1 ms movement-poll p95, zero
+backpressured Player samples, and 26 ms average ticks.
 
 The numbered Slice 1-214 material below is retained as the detailed validation
 and architectural record. It is no longer the active execution queue.
@@ -180,6 +194,60 @@ attempted final Ctrl+F9 did not create a new capture (it toggled the debug
 overlay instead), so the accepted visual route and ordinary structured runtime
 logs are the milestone evidence. A separate outer shadow-caster refinement is
 not justified by the now-correct result.
+
+### Final loader performance audit: 2026-07-28
+
+The accepted visual route was profiled before selecting any final optimization.
+The audit distinguishes visible-transition work, asynchronous presentation
+work, server gameplay queries, and renderer-only frame cost:
+
+- Warm adjacent native context changes complete the client region transition
+  in approximately `21.6..27.3 ms`; `World.loadSections` accounts for
+  approximately `19.2..24.1 ms`, and the renderer world-model transition is
+  approximately `13.4..18.0 ms`. A same-center, fully resident transition was
+  approximately `22.4 ms` total. These are bounded one-frame publications, not
+  the former multi-second fence wait or legacy 0.7-second redraw.
+- Resident delivery already removes redundant wire work: fresh windows use
+  `9/0` payload/reference sectors, adjacent shifts use `3/6`, and revisits can
+  use `0/9`. No additional packet or compression redesign is justified by the
+  accepted route.
+- The complete outer structural product currently finishes asynchronously in
+  approximately `237..388 ms`. Eleven overlapping visible cells are retained
+  across an adjacent shift, so that work no longer blanks the accepted frame.
+  A naive incoming-strip-only replacement would reuse products whose roof,
+  wall, normal, and positive-edge dependencies may have changed. Defer that
+  optimization until sector products have canonical neighbor/content revision
+  identities; do not trade the accepted seams and static continuity for an
+  unproven cache shortcut.
+- Client thread sampling attributes the remaining high idle CPU to per-frame
+  renderer-v2 glow-mask bounds construction, not terrain receipt, scene
+  activation, or native window publication. Cache/version that mask in the
+  renderer-v2 workstream, where its visual invalidation rules can be tested.
+- The private server remains well inside its tick budget: observed active
+  ticks were approximately `30..34 ms` against the existing 640 ms cadence,
+  with low garbage-collection pressure. Precomputed immutable static collision
+  pages and lazy package eviction therefore remain measured-future
+  optimizations rather than required loader changes.
+- Repeated GameThread samples did identify one avoidable native pathing cost.
+  `isNpcBlockedByScenery` asked about one destination tile but rebuilt the
+  configured object-view window and scanned many logical regions. Native
+  package registration already owns exact object footprints and replacement
+  transactions. The registry now stages a separate NPC-blocking scenery
+  occupancy count atomically with placement and collision state, including
+  type-1 full-block and type-2/directional scenery. Native NPC path checks use
+  one exact `(worldSpace,x,y,level)` lookup; legacy/non-native scopes preserve
+  their established spatial-index query.
+
+Focused coverage proves exact occupancy for full-block and directional
+scenery, exclusion of auxiliary directional-collision neighbor tiles,
+collisionless scenery, same-X/Y level isolation, replacement, removal, reset,
+and the RegionManager native fast-path selection. Owner smoke validation then
+confirmed ordinary NPC movement remained constrained by scenery and walls,
+Player movement/collision and interactions remained normal, and the accepted
+loader transition did not regress. The complete post-login minute recorded
+5,446 NPC moves, 1 ms movement-poll p95, no Player backpressure, and 26 ms
+average active ticks; the prior comparable baseline was approximately
+31–34 ms.
 
 ### Selected loader-v2 performance milestone
 
@@ -742,19 +810,30 @@ not the content endpoint.
      accepted full-width world targeting around open panels and confirmed that
      panel controls still retain their own clicks.
 
-4. **Incremental client CPU/model products**
+4. **Incremental client CPU/model products — overlap retention accepted;
+   canonical strip replacement deferred**
    - Preserve overlapping sector products during an adjacent shift and build
      only the newly exposed radius-two strip. The accepted target is a
      player-centered resident field, not another direction-predicted complete
      3-by-3 window.
    - Fence bridges, reciprocal walls, roof joins, elevation normals, renderer
      settings, and dynamic scenery by sector/content revision.
+   - Eleven visible overlapping cells are already retained during adjacent
+     shifts, eliminating terrain/wall disappearance. Final products are still
+     rebuilt off-thread because their 3-by-3 source neighborhoods and edge
+     joins are context-dependent. Require canonical dependency identities
+     before replacing only the incoming strip.
 
-5. **Compact server collision pages and path-query fast path**
+5. **Compact server collision pages and path-query fast path — exact native
+   NPC scenery lookup implemented; static pages deferred**
    - Measure and then replace repeated per-query static collision derivation
      with immutable precomputed sector masks plus a versioned dynamic overlay.
    - Modernize bounded pathfinding only after the allocation-free collision
      query passes movement, projectile, scenery, and NPC parity.
+   - Sampling selected the narrower first cut: native NPC scenery occupancy is
+     now an exact registry lookup rather than a broad logical-region scan.
+     Server tick and GC evidence do not yet justify precomputing every static
+     terrain collision tile.
 
 Do not adopt lazy server terrain/placement eviction in this milestone. Global
 NPCs, respawns, dynamic objects, and scheduled events need a separate residency
@@ -803,30 +882,18 @@ accepting that complexity.
 
 ### Recommended order from this checkpoint
 
-Loader-v2 stage 2 and Stage 3 cut 1 are privately accepted across ordinary
-travel, return travel, teleport, level changes, interaction, reconnect, exact
-payload/reference evidence, and exact readiness acknowledgement. Stage 3 cut 2
-predictive delivery and its activation-anchor hold are privately accepted.
-Stage 3 cut 3's exact-context activation cover is privately accepted for
-correctness. Its whole-window predictive product bridge and late directional
-fringe are measured and owner-rejected as presentation solutions. The
-symmetric 5-by-5 terrain foundation is privately accepted. Complete its outer
-static-presentation ring in bounded pieces: structural terrain
-(walls/roofs/bridges), then scenery, followed by overlap retention and
-incoming-strip replacement. Keep all dynamic entities and collision authority
-inside the existing 3-by-3 gameplay field. Measure the accepted 5-by-5 field
-with shadows and other expensive effects limited to the inner field; optional
-fog may soften its horizon but is not a loading requirement.
-The measured authority-only publication, first-receipt race correction,
-height-aware outer picking, and static-scene wire-envelope correction are
-owner-accepted and should be checkpointed together as the stable loader
-milestone. Next correct the isolated 4:3 world-interaction constraint in the
-16:9 client and validate ground, scenery, NPC, and menu targeting near both
-horizontal edges. Then tune the remaining bounded transition hitch before
-adding static scenery or attempting incoming-strip-only replacement.
-Resume production package promotion and durable transition ownership before a
-private release candidate. Server eviction follows only measured need;
-distribution-neutral extraction follows the proven Spoiled Milk runtime.
+The symmetric 5-by-5 presentation field, exact 3-by-3 gameplay field, static
+outer scenery/walls, overlap retention, native center alignment, full-width
+picking, bounded warm transition, and exact native NPC-blocking lookup are now
+owner-accepted. Checkpoint the completed loader performance milestone. Do not
+add another visual-loader experiment without a newly measured regression.
+
+After that checkpoint, resume production package promotion and durable
+transition ownership before a private release candidate. Treat canonical
+incoming-strip products as a later renderer/loader integration milestone,
+cache the per-frame glow mask under renderer-v2, and add compact static
+collision pages or server eviction only when profiling establishes need.
+Distribution-neutral extraction follows the proven Spoiled Milk runtime.
 
 No public/live configuration or map data is part of this work.
 
@@ -19108,6 +19175,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-28 | Close the accepted loader visual milestone with one measured server fast path, and keep renderer glow-mask caching, canonical incoming-strip mesh products, static collision pages, and server eviction in their proper later workstreams. | Implemented, automated-validated, and owner-accepted. Native NPC destination checks use exact level-qualified scenery occupancy staged atomically with package-object collision and replacement state instead of scanning the configured multi-region object window. Focused full-block, directional, collisionless, layer-isolation, replacement, removal, and reset guards pass. The private route preserved NPC wall/scenery blocking, Player collision/interactions, and loader travel while processing 5,446 NPC moves at 1 ms poll p95, zero Player backpressure, and 26 ms average active ticks |
 | 2026-07-27 | Keep the server's custom-client midpoint mirror aligned when a hard teleport recenters the client inside the ordinary walking reload radius. | Implemented, automated-validated, and owner-accepted. The first resident-v6 boundary route exposed a client shift from window `(51,50)` to `(51,51)` without a new scene receipt, leaving only six of nine terrain sectors applied and stale movement coordinates. Teleports now recenter the server mirror in the same tick. The corrected `(120,650,L0) -> (120,620,L0)` receipt produced exactly three payloads and six references; return and repeat visits produced nine references with no payload. An initial mistyped `(12,620)` detour explains the observed resident total of 18 without invalidating the exact transfer evidence. The completed route also proved normal terrain, harvesting, collision, movement, Mining Guild level changes (`9/0`, `9/0`, then `0/9`), and reconnect cache reset to resident `9` with `9/0` |
 | 2026-07-27 | Refresh the active Spoiled Milk package from current clean manager terrain and its coupled content rather than continuing visual acceptance against stale `0.2.0` inputs. | Implemented, automated-validated, and owner-accepted as pinned package `0.3.0`: exact audit found only `L-1 (5,12)` and `L0 (8,17)` changed across the unchanged 1,771-sector inventory; the complete Shilo boundary/plugin/configuration change accompanies the terrain. The package contains 33,514 effective placements (`3775n/882i/27886s/971b`), manifest `9fbb45a9cd7b...`, and package fingerprint `c9fa9c823558...`. Frozen Preservation generation refuses the one known base-boundary drift instead of rewriting vanilla. Private review confirmed current terrain, collision, transitions, wilderness presentation, and performance |
 | 2026-07-27 | Correct signed negative client section activation and logical wilderness presentation found by the first Mining Guild loader diagnostic. | Owner-accepted: floor section `-10`, all nine sectors/20,736 tiles applied, local tile `(34,37)` matches the packet, and visuals/clickability/FPS recovered. Geographic wilderness calculation keeps every signed layer aligned to its level-0 X/Y; the false level-450 indicator is gone on level `-1` |
