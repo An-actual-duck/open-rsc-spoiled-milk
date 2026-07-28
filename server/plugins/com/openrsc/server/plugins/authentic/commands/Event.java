@@ -17,6 +17,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.ChatMessage;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.CommandTrigger;
 import com.openrsc.server.util.PidShuffler;
@@ -337,6 +338,10 @@ public final class Event implements CommandTrigger {
 			player.message(badSyntaxPrefix + command.toUpperCase() + " [player] [x] [y]");
 			return;
 		}
+		if (tryRelocatedZanarisTownTeleport(
+				player, command, args)) {
+			return;
+		}
 		if (tryLayeredCoordinateTeleport(player, command, args)) {
 			return;
 		}
@@ -487,6 +492,50 @@ public final class Event implements CommandTrigger {
 		}
 
 		player.getWorld().getServer().getGameLogger().addQuery(new StaffLog(player, 15, player.getUsername() + " has teleported " + targetPlayer.getUsername() + " to " + targetPlayer.getLocation() + " from " + originalLocation));
+	}
+
+	private boolean tryRelocatedZanarisTownTeleport(
+		Player player,
+		String command,
+		String[] args) {
+		if (args.length != 1
+			|| !ZanarisLocation.isTownAlias(args[0])
+			|| !player.isLayeredLocationAuthorityEnabled()) {
+			return false;
+		}
+		WorldLocation destination = ZanarisLocation.entrance();
+		if (!player.getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(destination)) {
+			return false;
+		}
+		if (player.isJailed() && !player.isAdmin()) {
+			player.message(messagePrefix
+				+ "You can not teleport while you are jailed.");
+			return true;
+		}
+		WorldLocation original = player.getLayeredLocation();
+		if (command.equalsIgnoreCase("goto")
+			|| command.equalsIgnoreCase("tpto")) {
+			player.setSummonReturnPoint();
+		}
+		player.teleportLayered(destination, true);
+		player.resetFollowing();
+		player.message(messagePrefix + "You have teleported "
+			+ player.getUsername() + " to "
+			+ ZanarisLocation.ENTRY_X + ","
+			+ ZanarisLocation.ENTRY_Y + ",L"
+			+ ZanarisLocation.LEVEL + " from "
+			+ original.getCoordinate().getX() + ","
+			+ original.getCoordinate().getY() + ",L"
+			+ original.getCoordinate().getLevel() + ".");
+		player.getWorld().getServer().getGameLogger().addQuery(
+			new StaffLog(
+				player,
+				15,
+				player.getUsername()
+					+ " has layered-teleported to "
+					+ destination + " from " + original));
+		return true;
 	}
 
 	private boolean tryLayeredCoordinateTeleport(

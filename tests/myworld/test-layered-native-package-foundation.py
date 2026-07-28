@@ -798,10 +798,97 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 "rsc-remastered.spoiled-milk-layered-world",
                 manifest["packageId"],
             )
-            self.assertEqual("0.3.0", manifest["packageVersion"])
-            self.assertEqual(1771, len(manifest["terrainSectors"]))
-            self.assert_preservation_terrain_round_trip(
-                source_archive, package, manifest
+            self.assertEqual("0.4.0", manifest["packageVersion"])
+            self.assertEqual(1775, len(manifest["terrainSectors"]))
+            self.assertEqual(
+                {
+                    "bounds": {
+                        "maximumX": 180,
+                        "maximumY": 727,
+                        "minimumX": 97,
+                        "minimumY": 679,
+                    },
+                    "componentSeed": {"x": 126, "y": 686},
+                    "connectedNonVoidTiles": 1639,
+                    "copiedTilesIncludingPresentationRing": 2206,
+                    "id": "spoiled-milk-zanaris-to-level-10-v1",
+                    "relocatedPlacementsByFamily": {
+                        "boundaries": 6,
+                        "groundItems": 4,
+                        "npcs": 28,
+                        "scenery": 194,
+                    },
+                    "sourceCopiedFootprintClearedToVoid": True,
+                    "sourceClearedStructuralRingTiles": 214,
+                    "sourceClearedTiles": 2206,
+                    "sourceClearedVoidRingTiles": 567,
+                    "sourceLevel": -1,
+                    "targetLevel": 10,
+                    "targetSectors": [
+                        {"sectorX": 2, "sectorY": 14},
+                        {"sectorX": 2, "sectorY": 15},
+                        {"sectorX": 3, "sectorY": 14},
+                        {"sectorX": 3, "sectorY": 15},
+                    ],
+                    "xAndYPreserved": True,
+                },
+                report["terrainRelocation"],
+            )
+            self.assertEqual(
+                "fairy-dimension",
+                next(
+                    level["role"]
+                    for level in manifest["levels"]
+                    if level["level"] == 10
+                ),
+            )
+            terrain_paths = {
+                (
+                    sector["level"],
+                    sector["sectorX"],
+                    sector["sectorY"],
+                ): package / sector["path"]
+                for sector in manifest["terrainSectors"]
+            }
+            terrain_payloads = {
+                identity: path.read_bytes()
+                for identity, path in terrain_paths.items()
+            }
+
+            def terrain_tile(level, x, y):
+                payload = terrain_payloads.get(
+                    (level, x // 48, y // 48)
+                )
+                if payload is None:
+                    return None
+                offset = ((x % 48) * 48 + (y % 48)) * 10
+                return payload[offset : offset + 10]
+
+            zanaris_component = {
+                (x, y)
+                for x in range(97, 181)
+                for y in range(679, 728)
+                if terrain_tile(10, x, y)[2] != 8
+            }
+            zanaris_footprint = {
+                (x + delta_x, y + delta_y)
+                for x, y in zanaris_component
+                for delta_x in (-1, 0, 1)
+                for delta_y in (-1, 0, 1)
+                if terrain_tile(
+                    10, x + delta_x, y + delta_y
+                )
+                is not None
+            }
+            self.assertEqual(1639, len(zanaris_component))
+            self.assertEqual(2206, len(zanaris_footprint))
+            canonical_void = bytes((0, 1, 8, 0, 0, 0, 0, 0, 0, 0))
+            self.assertTrue(
+                all(
+                    terrain_tile(-1, x, y) == canonical_void
+                    for x, y in zanaris_footprint
+                ),
+                "relocated source footprint retained terrain metadata",
             )
             generated_records = {
                 "npcs": [],
@@ -829,6 +916,33 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 for record in records
             ]
             self.assertEqual(len(all_ids), len(set(all_ids)))
+            self.assertEqual(
+                {
+                    "npcs": 28,
+                    "groundItems": 4,
+                    "scenery": 194,
+                    "boundaries": 6,
+                },
+                {
+                    family: sum(
+                        record["_level"] == 10
+                        for record in records
+                    )
+                    for family, records in generated_records.items()
+                },
+            )
+            for family, records in generated_records.items():
+                for record in records:
+                    position = record.get(
+                        "start", record.get("position")
+                    )
+                    self.assertFalse(
+                        record["_level"] == -1
+                        and 96 <= position["x"] <= 181
+                        and 678 <= position["y"] <= 728,
+                        f"{family} remained in the relocated footprint: "
+                        f"{record['placementId']}",
+                    )
             scenery_by_slot = {
                 (
                     record["position"]["x"],
@@ -877,6 +991,8 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                     {"X": x, "Y": packed_y}
                 )
                 level = {0: 0, 1: 1, 2: 2, 3: -1}[packed_y // 944]
+                if altar_id == 1203:
+                    level = 10
                 expected_altar_owners.add(
                     (
                         decoded["x"],
@@ -900,6 +1016,8 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                         2: 2,
                         3: -1,
                     }[orb_y // 944]
+                    if altar_id == 1203:
+                        orb_level = 10
                     expected_orb_owners.add(
                         (
                             decoded_orb["x"],

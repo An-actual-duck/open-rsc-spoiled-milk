@@ -34,12 +34,12 @@ final class PreservationTerrainPackageGenerator {
 	static final String PACKAGE_VERSION = "0.4.0";
 	static final String SPOILED_MILK_PACKAGE_ID =
 		"rsc-remastered.spoiled-milk-layered-world";
-	static final String SPOILED_MILK_PACKAGE_VERSION = "0.3.0";
+	static final String SPOILED_MILK_PACKAGE_VERSION = "0.4.0";
 	static final String PRESERVATION_REPORT_TYPE =
 		"preservation-layered-parity-generation";
 	static final String SPOILED_MILK_REPORT_TYPE =
 		"spoiled-milk-layered-world-generation";
-	static final int REPORT_SCHEMA_VERSION = 2;
+	static final int REPORT_SCHEMA_VERSION = 3;
 
 	private static final String FROZEN_BASELINE =
 		"tools/layered-maps/baselines/"
@@ -142,16 +142,22 @@ final class PreservationTerrainPackageGenerator {
 		TerrainSource terrainSource =
 			terrainSource(root, baseline, target);
 		Path archivePath = root.resolve(terrainSource.serverPath).normalize();
-		List<SectorRecord> sectors =
-			writeTerrain(archivePath, stagingRoot);
-		if (sectors.size() != terrainSource.archiveEntryCount) {
+		TerrainConversion terrain =
+			writeTerrain(archivePath, stagingRoot, target);
+		List<SectorRecord> sectors = terrain.sectors;
+		if (terrain.sourceSectorCount != terrainSource.archiveEntryCount) {
 			throw new PreflightException(
-				"Generated terrain count differs from the accepted "
+				"Source terrain count differs from the accepted "
 					+ target.name().toLowerCase(Locale.ROOT)
 					+ " source.");
 		}
 		PlacementConversion placements =
-			writePlacements(root, baseline, stagingRoot, target);
+			writePlacements(
+				root,
+				baseline,
+				stagingRoot,
+				target,
+				terrain.zanarisRelocation);
 
 		Map<String, Object> manifest =
 			manifest(sectors, placements.sets, target);
@@ -238,7 +244,8 @@ final class PreservationTerrainPackageGenerator {
 			loaded.getPackageFingerprint(),
 			validationJson,
 			target,
-			placements.sourceComposition);
+			placements.sourceComposition,
+			terrain.zanarisRelocation);
 	}
 
 	private static TerrainSource terrainSource(
@@ -358,11 +365,14 @@ final class PreservationTerrainPackageGenerator {
 			"Accepted baseline is missing required role: " + role);
 	}
 
-	private static List<SectorRecord> writeTerrain(
+	private static TerrainConversion writeTerrain(
 		Path archivePath,
-		Path stagingRoot) throws IOException, PreflightException {
+		Path stagingRoot,
+		ContentTarget target) throws IOException, PreflightException {
 		List<String> names = new ArrayList<String>();
 		Set<String> uniqueNames = new HashSet<String>();
+		Map<WorldMapSectorId, byte[]> payloads =
+			new LinkedHashMap<WorldMapSectorId, byte[]>();
 		try (ZipFile archive = new ZipFile(archivePath.toFile())) {
 			Enumeration<? extends ZipEntry> entries = archive.entries();
 			while (entries.hasMoreElements()) {
@@ -391,7 +401,6 @@ final class PreservationTerrainPackageGenerator {
 				}
 			});
 
-			List<SectorRecord> result = new ArrayList<SectorRecord>();
 			Set<WorldMapSectorId> identities = new HashSet<WorldMapSectorId>();
 			for (String name : names) {
 				WorldMapSectorId identity =
@@ -417,31 +426,67 @@ final class PreservationTerrainPackageGenerator {
 						"Native terrain transform failed exact reverse verification: "
 							+ name);
 				}
-				String relativePath = terrainPath(identity);
-				Path destination = stagingRoot.resolve(relativePath).normalize();
-				if (!destination.startsWith(stagingRoot)) {
-					throw new PreflightException(
-						"Generated terrain path escaped its package root.");
-				}
-				Files.createDirectories(destination.getParent());
-				writeNew(destination, nativePayload);
-				result.add(new SectorRecord(
-					identity,
-					relativePath,
-					Hashes.sha256(nativePayload),
-					nativePayload.length));
+				payloads.put(identity, nativePayload);
 			}
-			return result;
 		}
+
+		int sourceSectorCount = payloads.size();
+		SpoiledMilkZanarisRelocation.Plan relocation =
+			target == ContentTarget.SPOILED_MILK
+				? SpoiledMilkZanarisRelocation.apply(payloads)
+				: null;
+		Map<WorldMapSectorId, byte[]> generated =
+			relocation == null ? payloads : relocation.getTerrain();
+		List<WorldMapSectorId> identities =
+			new ArrayList<WorldMapSectorId>(generated.keySet());
+		Collections.sort(
+			identities,
+			new Comparator<WorldMapSectorId>() {
+				@Override
+				public int compare(
+					WorldMapSectorId left,
+					WorldMapSectorId right) {
+					return compareIdentity(left, right);
+				}
+			});
+		List<SectorRecord> result = new ArrayList<SectorRecord>();
+		for (WorldMapSectorId identity : identities) {
+			byte[] nativePayload = generated.get(identity);
+			String relativePath = terrainPath(identity);
+			Path destination = stagingRoot.resolve(relativePath).normalize();
+			if (!destination.startsWith(stagingRoot)) {
+				throw new PreflightException(
+					"Generated terrain path escaped its package root.");
+			}
+			Files.createDirectories(destination.getParent());
+			writeNew(destination, nativePayload);
+			result.add(new SectorRecord(
+				identity,
+				relativePath,
+				Hashes.sha256(nativePayload),
+				nativePayload.length));
+		}
+		return new TerrainConversion(
+			sourceSectorCount,
+			result,
+			relocation);
 	}
 
 	private static PlacementConversion writePlacements(
 		Path root,
 		PreservationBaselineInventory.Baseline baseline,
 		Path stagingRoot,
-		ContentTarget target) throws IOException, PreflightException {
+		ContentTarget target,
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		throws IOException, PreflightException {
 		if (target == ContentTarget.SPOILED_MILK) {
-			return writeSpoiledMilkPlacements(root, stagingRoot);
+			if (zanarisRelocation == null) {
+				throw new PreflightException(
+					"Spoiled Milk placement conversion lost its Zanaris "
+						+ "terrain relocation plan.");
+			}
+			return writeSpoiledMilkPlacements(
+				root, stagingRoot, zanarisRelocation);
 		}
 		Map<Integer, PlacementBucket> buckets =
 			new LinkedHashMap<Integer, PlacementBucket>();
@@ -530,12 +575,16 @@ final class PreservationTerrainPackageGenerator {
 
 	private static PlacementConversion writeSpoiledMilkPlacements(
 		Path root,
-		Path stagingRoot) throws IOException, PreflightException {
+		Path stagingRoot,
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		throws IOException, PreflightException {
 		SpoiledMilkWorldComposition.Result composition =
 			new SpoiledMilkWorldComposition().inspect(root);
 		Map<Integer, PlacementBucket> buckets =
 			new LinkedHashMap<Integer, PlacementBucket>();
-		for (int level : new int[] {0, 1, 2, -1}) {
+		for (int level : new int[] {
+			0, 1, 2, SpoiledMilkZanarisRelocation.TARGET_LEVEL, -1
+		}) {
 			buckets.put(
 				Integer.valueOf(level),
 				new PlacementBucket(level));
@@ -552,13 +601,28 @@ final class PreservationTerrainPackageGenerator {
 			new ArrayList<UnresolvedPlacement>();
 
 		convertSpoiledMilkBoundaries(
-			composition.boundaries, buckets, converted);
+			composition.boundaries,
+			buckets,
+			converted,
+			zanarisRelocation);
 		convertSpoiledMilkScenery(
-			composition.scenery, buckets, converted);
+			composition.scenery,
+			buckets,
+			converted,
+			zanarisRelocation);
 		convertSpoiledMilkNpcs(
-			composition.npcs, buckets, converted, repairs, unresolved);
+			composition.npcs,
+			buckets,
+			converted,
+			repairs,
+			unresolved,
+			zanarisRelocation);
 		convertSpoiledMilkGroundItems(
-			composition.groundItems, buckets, converted);
+			composition.groundItems,
+			buckets,
+			converted,
+			zanarisRelocation);
+		zanarisRelocation.verifyPlacementCounts();
 
 		List<PlacementSetRecord> sets =
 			writePlacementSets(
@@ -613,7 +677,9 @@ final class PreservationTerrainPackageGenerator {
 	private static void convertSpoiledMilkBoundaries(
 		List<SpoiledMilkWorldComposition.Record> values,
 		Map<Integer, PlacementBucket> buckets,
-		Map<String, Integer> converted) throws PreflightException {
+		Map<String, Integer> converted,
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		throws PreflightException {
 		for (SpoiledMilkWorldComposition.Record source : values) {
 			Map<String, Object> value = source.value;
 			requireSourceKeys(
@@ -625,6 +691,8 @@ final class PreservationTerrainPackageGenerator {
 			WorldCoordinate position = sourcePosition(
 				value.get("pos"),
 				source.path + " boundaries[" + source.sourceIndex + "].pos");
+			position = zanarisRelocation.relocatePlacement(
+				"boundaries", position);
 			Map<String, Object> record = map();
 			record.put(
 				"placementId",
@@ -644,7 +712,9 @@ final class PreservationTerrainPackageGenerator {
 	private static void convertSpoiledMilkScenery(
 		List<SpoiledMilkWorldComposition.Record> values,
 		Map<Integer, PlacementBucket> buckets,
-		Map<String, Integer> converted) throws PreflightException {
+		Map<String, Integer> converted,
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		throws PreflightException {
 		for (SpoiledMilkWorldComposition.Record source : values) {
 			Map<String, Object> value = source.value;
 			requireSourceKeys(
@@ -656,6 +726,8 @@ final class PreservationTerrainPackageGenerator {
 			WorldCoordinate position = sourcePosition(
 				value.get("pos"),
 				source.path + " sceneries[" + source.sourceIndex + "].pos");
+			position = zanarisRelocation.relocatePlacement(
+				"scenery", position);
 			Map<String, Object> record = map();
 			record.put(
 				"placementId",
@@ -677,7 +749,8 @@ final class PreservationTerrainPackageGenerator {
 		Map<Integer, PlacementBucket> buckets,
 		Map<String, Integer> converted,
 		List<ConversionRepair> repairs,
-		List<UnresolvedPlacement> unresolved)
+		List<UnresolvedPlacement> unresolved,
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
 		throws PreflightException {
 		for (SpoiledMilkWorldComposition.Record source : values) {
 			Map<String, Object> value = source.value;
@@ -745,6 +818,16 @@ final class PreservationTerrainPackageGenerator {
 					"Legacy Spoiled Milk NPC bounds are ordered incorrectly at "
 						+ source.path + " index " + source.sourceIndex + ".");
 			}
+			WorldCoordinate relocatedStart =
+				zanarisRelocation.relocatePlacement(
+					"npcs", startCoordinate);
+			if (relocatedStart.getLevel() != startCoordinate.getLevel()) {
+				minimumCoordinate =
+					minimumCoordinate.atLevel(relocatedStart.getLevel());
+				maximumCoordinate =
+					maximumCoordinate.atLevel(relocatedStart.getLevel());
+			}
+			startCoordinate = relocatedStart;
 			Map<String, Object> bounds = map();
 			bounds.put("minimum", position(minimumCoordinate));
 			bounds.put("maximum", position(maximumCoordinate));
@@ -761,7 +844,9 @@ final class PreservationTerrainPackageGenerator {
 	private static void convertSpoiledMilkGroundItems(
 		List<SpoiledMilkWorldComposition.Record> values,
 		Map<Integer, PlacementBucket> buckets,
-		Map<String, Integer> converted) throws PreflightException {
+		Map<String, Integer> converted,
+		SpoiledMilkZanarisRelocation.Plan zanarisRelocation)
+		throws PreflightException {
 		for (SpoiledMilkWorldComposition.Record source : values) {
 			Map<String, Object> value = source.value;
 			String label =
@@ -770,6 +855,8 @@ final class PreservationTerrainPackageGenerator {
 				value, label, "id", "pos", "amount", "respawn");
 			WorldCoordinate position = sourcePosition(
 				value.get("pos"), label + ".pos");
+			position = zanarisRelocation.relocatePlacement(
+				"groundItems", position);
 			Map<String, Object> record = map();
 			record.put(
 				"placementId",
@@ -1500,6 +1587,8 @@ final class PreservationTerrainPackageGenerator {
 				return "Upper level 1";
 			case 2:
 				return "Upper level 2";
+			case SpoiledMilkZanarisRelocation.TARGET_LEVEL:
+				return "Zanaris (Fairy Dimension)";
 			case -1:
 				return "Underground";
 			default:
@@ -1515,6 +1604,8 @@ final class PreservationTerrainPackageGenerator {
 				return "upper-level-1";
 			case 2:
 				return "upper-level-2";
+			case SpoiledMilkZanarisRelocation.TARGET_LEVEL:
+				return "fairy-dimension";
 			case -1:
 				return "underground";
 			default:
@@ -1555,6 +1646,7 @@ final class PreservationTerrainPackageGenerator {
 		final String validationJson;
 		final ContentTarget target;
 		final SpoiledMilkWorldComposition.Result sourceComposition;
+		final SpoiledMilkZanarisRelocation.Plan zanarisRelocation;
 
 		Result(
 			Path packageRoot,
@@ -1574,7 +1666,8 @@ final class PreservationTerrainPackageGenerator {
 			String packageFingerprint,
 			String validationJson,
 			ContentTarget target,
-			SpoiledMilkWorldComposition.Result sourceComposition) {
+			SpoiledMilkWorldComposition.Result sourceComposition,
+			SpoiledMilkZanarisRelocation.Plan zanarisRelocation) {
 			this.packageRoot = packageRoot;
 			this.baselineFingerprint = baselineFingerprint;
 			this.sourceTerrainPath = sourceTerrainPath;
@@ -1601,6 +1694,7 @@ final class PreservationTerrainPackageGenerator {
 			this.validationJson = validationJson;
 			this.target = target;
 			this.sourceComposition = sourceComposition;
+			this.zanarisRelocation = zanarisRelocation;
 		}
 
 		String toJson() {
@@ -1645,6 +1739,11 @@ final class PreservationTerrainPackageGenerator {
 				document.put(
 					"sourceComposition",
 					sourceComposition.toDocument());
+			}
+			if (zanarisRelocation != null) {
+				document.put(
+					"terrainRelocation",
+					zanarisRelocation.toDocument());
 			}
 			Map<String, Object> placementCounts = map();
 			for (Map.Entry<String, Integer> entry
@@ -1726,6 +1825,17 @@ final class PreservationTerrainPackageGenerator {
 						sourceComposition.transformations.get(
 							"harvestingGroundItemsReclassified"))
 					.append("\n");
+			}
+			if (zanarisRelocation != null) {
+				out.append("- Zanaris relocation: level `")
+					.append(SpoiledMilkZanarisRelocation.SOURCE_LEVEL)
+					.append("` -> `")
+					.append(SpoiledMilkZanarisRelocation.TARGET_LEVEL)
+					.append("`, ")
+					.append(
+						SpoiledMilkZanarisRelocation
+							.EXPECTED_COMPONENT_TILES)
+					.append(" connected non-void tiles\n");
 			}
 			out.append("- Excluded non-vanilla source placements: ")
 				.append(excludedSourcePlacementCount).append("\n");
@@ -1811,6 +1921,22 @@ final class PreservationTerrainPackageGenerator {
 			this.clientPath = clientPath;
 			this.sha256 = sha256;
 			this.archiveEntryCount = archiveEntryCount;
+		}
+	}
+
+	private static final class TerrainConversion {
+		final int sourceSectorCount;
+		final List<SectorRecord> sectors;
+		final SpoiledMilkZanarisRelocation.Plan zanarisRelocation;
+
+		TerrainConversion(
+			int sourceSectorCount,
+			List<SectorRecord> sectors,
+			SpoiledMilkZanarisRelocation.Plan zanarisRelocation) {
+			this.sourceSectorCount = sourceSectorCount;
+			this.sectors = Collections.unmodifiableList(
+				new ArrayList<SectorRecord>(sectors));
+			this.zanarisRelocation = zanarisRelocation;
 		}
 	}
 

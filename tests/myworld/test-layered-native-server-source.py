@@ -356,8 +356,10 @@ SPOILED_MILK_REVIEW_HARNESS = (
         "rsc-remastered.preservation-r64-parity-review",
         "rsc-remastered.spoiled-milk-layered-world",
     )
-    .replace('"0.4.0"', '"0.3.0"')
-    .replace("== 1764", "== 1771")
+    .replace("== 1764", "== 1775")
+    .replace("world.getLevelCount() == 4", "world.getLevelCount() == 5")
+    .replace("world.getPlacementSetCount() == 4",
+             "world.getPlacementSetCount() == 5")
     .replace("== 3610", "== 3775")
     .replace("== 1010", "== 882")
     .replace("== 26765", "== 27886")

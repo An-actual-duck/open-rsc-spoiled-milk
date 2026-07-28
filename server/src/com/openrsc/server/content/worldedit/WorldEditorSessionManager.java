@@ -786,7 +786,7 @@ public final class WorldEditorSessionManager {
 		}
 	}
 	private static boolean isSourceLevel(int level){
-		return level==-1||level==0||level==1||level==2;
+		return level==-1||level==0||level==1||level==2||level==10;
 	}
 	private static void requireBuilderCoordinate(int x,int y){
 		if(x<0||x>32767||y<0||y>32767){

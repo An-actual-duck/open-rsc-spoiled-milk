@@ -36,12 +36,13 @@ configured Spoiled Milk world. Preservation package generation still requires
 the repository to reproduce its frozen source set; active Spoiled Milk
 generation uses its separately pinned current terrain and content composition.
 It converts the exact matching
-server/client `Custom_Landscape.orsc` pair (1,771 sectors), inventories all
+server/client `Custom_Landscape.orsc` pair (1,771 source sectors), inventories all
 33,622 placement inputs selected from base, feature, and MyWorld sources, and
 applies the same removal, cleanup, same-slot replacement, and Harvesting rules
-as legacy population.
+as legacy population. The current conversion then applies the reviewed
+Zanaris relocation described below, producing 1,775 native terrain sectors.
 
-The resulting four level-qualified sets contain 33,514 effective placements:
+The resulting five level-qualified sets contain 33,514 effective placements:
 971 boundaries, 27,886 scenery objects, 3,775 NPCs, and 882 ordinary ground
 items. The scenery count includes 143 ground-item locations reclassified as
 their configured harvestable scenery. The one existing Hobgoblin maximum-Y
@@ -49,11 +50,21 @@ correction remains necessary for the legacy record to decode and retains its
 explicit receipt. Scenery direction `8` is preserved for the travel cart;
 boundaries remain restricted to directions `0..7`.
 
+Package `0.4.0` moves the complete connected Zanaris/Fairy Dimension island
+from global level `-1` to global level `+10`, preserving authored X/Y. The
+fail-closed transform requires the reviewed 1,639-tile component at
+`(126,686,-1)`, copies its exact one-tile presentation ring, clears the old
+2,206-tile component-plus-ring footprint to canonical void, and relocates
+exactly 28 NPCs, four ground items, 194 scenery objects, and six boundaries.
+The cleanup includes 567 source ring tiles, 214 of which carry wall structure
+despite their void overlay. Unexpected terrain connectivity, ring structure,
+destination overlap, or placement-count drift refuses package generation.
+
 The active package is
-`rsc-remastered.spoiled-milk-layered-world@0.3.0`, manifest SHA-256
-`9fbb45a9cd7b649577dd9dc00acfd925aa4aae28300ceef34ab3a558771797a8`
+`rsc-remastered.spoiled-milk-layered-world@0.4.0`, manifest SHA-256
+`ed93e345a93c88cd22bcf694b5ac121b7117faa213a77af27bc90bd7faead789`
 and package fingerprint
-`c9fa9c823558dc697dba8cf4488cc070cc65feda7ab82ca818601a6d64048688`.
+`f644a7c5e12f1f0e733917125b1e650ddaffe87b204543389c525f0e1c61318a`.
 It is consumed only by the default-off `spoiled-milk-replacement` private
 runtime profile. This complete distribution is the reference integration
 target while the layered engine and authoring path stabilize.

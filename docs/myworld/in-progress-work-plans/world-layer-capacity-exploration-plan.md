@@ -9,7 +9,12 @@ delivery are implemented. The first private loader diagnostic found and fixed
 one signed negative-section activation defect, and the first resident-v6 route
 found and fixed a hard-teleport client-window mirror defect. Current-source
 package `0.3.0` and protocol-v6 visual/transfer behavior are automated- and
-owner-accepted. Stage 3 cut 1 exact readiness acknowledgement and scene gating
+owner-accepted. A fail-closed candidate package `0.4.0` now relocates the
+complete Zanaris/Fairy Dimension island from underground level `-1` to
+dedicated global level `+10`; its package, runtime, persistence, script, and
+Builder guards are automated-validated and its corrected private owner route
+is accepted.
+Stage 3 cut 1 exact readiness acknowledgement and scene gating
 are also implemented and owner-accepted. Stage 3 cut 2's bounded predictive
 delivery and activation-anchor hold are implemented and owner-accepted.
 Stage 3 cut 3's exact-context atomic presentation barrier is implemented and
@@ -94,6 +99,12 @@ estimates and “next slice” language below are historical unless repeated her
   Shilo, landscape, client, and authoritative builds pass. Renewed private
   review confirmed the expected current map, terrain, collision, transitions,
   wilderness presentation, and performance.
+- Candidate package `0.4.0` is the first reviewed manual special-area
+  relocation. It adds global level `+10` as `Zanaris (Fairy Dimension)`,
+  preserves the island's X/Y geography, and retains all effective placement
+  totals. Generation and runtime/Builder guards pass; focused private visual,
+  gameplay, persistence, transition, and old-footprint cleanup acceptance is
+  complete.
 - Signed levels are data-declared and expandable. The loader, protocol,
   renderer, collision, persistence, and Builder have exercised depths beyond
   `-2` without adding another level constant or coordinate codec.
@@ -362,6 +373,63 @@ Private loader review now confirms the expected current Mining Guild terrain,
 normal collision/transition behavior, stable performance, and logical
 wilderness presentation. The earlier package remains reproducible evidence,
 not the content endpoint.
+
+### Manual special-area relocation candidate: Zanaris at level +10
+
+The first approved manual map change uses the layered package as the source of
+truth rather than editing the legacy archive or placement files. Package
+`rsc-remastered.spoiled-milk-layered-world@0.4.0` declares
+`Zanaris (Fairy Dimension)` as global static level `+10`. Its manifest SHA-256
+is `ed93e345a93c88cd22bcf694b5ac121b7117faa213a77af27bc90bd7faead789`
+and its complete package fingerprint is
+`f644a7c5e12f1f0e733917125b1e650ddaffe87b204543389c525f0e1c61318a`.
+The source remains the accepted 1,771-sector `0.3.0` landscape; relocation adds
+four target sectors and produces 1,775 native sectors without changing the
+33,514 effective placement total.
+
+The converter derives the island from seed `(126,686,-1)` using exact
+non-void connectivity. The reviewed signature is:
+
+- 1,639 connected non-void tiles with bounds `x=97..180`, `y=679..727`;
+- 2,206 copied tiles after adding the exact one-tile void presentation ring;
+- target sectors `(2,14)`, `(2,15)`, `(3,14)`, and `(3,15)` on level `+10`;
+- exactly 28 NPCs, four ground items, 194 scenery objects, and six boundaries;
+  and
+- unchanged logical X/Y for every terrain tile and placement.
+
+Generation refuses topology growth, shrinkage, another connected component in
+the reviewed envelope, a change from the exact 214 structural ring tiles,
+non-void target overlap, a changed target-sector set, or any placement-family
+count drift. After copying, all 2,206 old level-`-1` component and presentation-
+ring tiles are canonical overlay-8 void. This includes the 567 nominally void
+ring tiles whose retained elevation/texture and 214 wall-bearing records were
+visible during the first owner review. No structural tile lies immediately
+outside the cleared footprint. The legacy source archives and JSON placement
+files remain unchanged and continue to be reproducible inputs.
+
+Runtime ownership is level-qualified:
+
+- the Lost City shed portal enters `(126,686,+10)` when the native package is
+  active, with the established packed-coordinate route retained for legacy
+  profiles;
+- the ladder at `(98,705,+10)` resolves its attendant only in the same spatial
+  domain and exits to `(98,706,0)`;
+- the marketplace door/tax interaction, irregular bank footprint, flour
+  hopper/chute, and `lostcity`/`zanaris` staff aliases use the dedicated level;
+- a Player persisted inside the reviewed former level-`-1` envelope migrates
+  on login to the same X/Y at level `+10` only when the destination package
+  tile exists and is non-void, and records origin
+  `zanaris-level-10-relocation-v1`; and
+- the accepted source package and its level `+10` content remain protected
+  from ordinary Builder-created-level editing.
+
+Automated status: focused coordinate/script guards pass; all 15 native-package
+foundation tests pass; all 14 native server/package/profile tests pass; the
+transactional layered Builder and runtime suites pass; and the authoritative
+server build passes. Private owner review confirms portal entry, complete
+island visuals/content, bank and marketplace behavior, ladder exit,
+logout/login persistence, and a clean former level-`-1` footprint after the
+567-tile ring cleanup. Package `0.4.0` is owner-accepted.
 
 3. **Readiness acknowledgement, predictive delivery, and atomic activation**
    - Stage required sectors before a window boundary using authoritative
@@ -19175,6 +19243,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-28 | Relocate the complete Zanaris/Fairy Dimension content island from shared underground level `-1` to dedicated global level `+10`, preserving X/Y and all content ownership. | Implemented, automated-validated, and owner-accepted as fail-closed package `0.4.0`: exact flood-fill and placement signatures move 1,639 non-void tiles plus their presentation ring, 28 NPCs, four items, 194 scenery objects, and six boundaries into four level-`+10` sectors; portal, ladder, marketplace, bank, hopper, aliases, and old saved-player migration are level-qualified; Builder protects `+10` as accepted source. The first private route accepted destination content and behavior but exposed 214 wall-bearing tiles retained on the nominally void source ring. The corrected package clears all 2,206 source component/ring tiles, passes byte-exact guards, and the owner confirms the former location is clean |
 | 2026-07-28 | Close the accepted loader visual milestone with one measured server fast path, and keep renderer glow-mask caching, canonical incoming-strip mesh products, static collision pages, and server eviction in their proper later workstreams. | Implemented, automated-validated, and owner-accepted. Native NPC destination checks use exact level-qualified scenery occupancy staged atomically with package-object collision and replacement state instead of scanning the configured multi-region object window. Focused full-block, directional, collisionless, layer-isolation, replacement, removal, and reset guards pass. The private route preserved NPC wall/scenery blocking, Player collision/interactions, and loader travel while processing 5,446 NPC moves at 1 ms poll p95, zero Player backpressure, and 26 ms average active ticks |
 | 2026-07-27 | Keep the server's custom-client midpoint mirror aligned when a hard teleport recenters the client inside the ordinary walking reload radius. | Implemented, automated-validated, and owner-accepted. The first resident-v6 boundary route exposed a client shift from window `(51,50)` to `(51,51)` without a new scene receipt, leaving only six of nine terrain sectors applied and stale movement coordinates. Teleports now recenter the server mirror in the same tick. The corrected `(120,650,L0) -> (120,620,L0)` receipt produced exactly three payloads and six references; return and repeat visits produced nine references with no payload. An initial mistyped `(12,620)` detour explains the observed resident total of 18 without invalidating the exact transfer evidence. The completed route also proved normal terrain, harvesting, collision, movement, Mining Guild level changes (`9/0`, `9/0`, then `0/9`), and reconnect cache reset to resident `9` with `9/0` |
 | 2026-07-27 | Refresh the active Spoiled Milk package from current clean manager terrain and its coupled content rather than continuing visual acceptance against stale `0.2.0` inputs. | Implemented, automated-validated, and owner-accepted as pinned package `0.3.0`: exact audit found only `L-1 (5,12)` and `L0 (8,17)` changed across the unchanged 1,771-sector inventory; the complete Shilo boundary/plugin/configuration change accompanies the terrain. The package contains 33,514 effective placements (`3775n/882i/27886s/971b`), manifest `9fbb45a9cd7b...`, and package fingerprint `c9fa9c823558...`. Frozen Preservation generation refuses the one known base-boundary drift instead of rewriting vanilla. Private review confirmed current terrain, collision, transitions, wilderness presentation, and performance |

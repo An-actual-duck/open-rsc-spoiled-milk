@@ -67,9 +67,10 @@ final class WorldBuilderLayeredReview {
 		List<Integer> levels = integerArray(root, "levels");
 		if (!levels.equals(Arrays.asList(
 				Integer.valueOf(-1), Integer.valueOf(0),
-				Integer.valueOf(1), Integer.valueOf(2)))
-			|| integer(root, "terrainSectorCount") != 1771
-			|| integer(root, "placementSetCount") != 4) {
+				Integer.valueOf(1), Integer.valueOf(2),
+				Integer.valueOf(10)))
+			|| integer(root, "terrainSectorCount") != 1775
+			|| integer(root, "placementSetCount") != 5) {
 			throw new WorldBuilderDiscoveryException(
 				"Prepared layered review metadata counts or levels are invalid.");
 		}
@@ -124,7 +125,8 @@ final class WorldBuilderLayeredReview {
 	boolean hasBuilderCreatedLevels() {
 		for (Integer level : levels) {
 			int value = level.intValue();
-			if (value != -1 && value != 0 && value != 1 && value != 2) {
+			if (value != -1 && value != 0 && value != 1
+				&& value != 2 && value != 10) {
 				return true;
 			}
 		}

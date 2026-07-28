@@ -100,8 +100,8 @@ public final class WorldBuilderLayeredDraftHarness {
         String sourceManifestHash = WorldBuilderHashes.sha256(sourceManifest);
         WorldBuilderLayeredReview before =
             WorldBuilderLayeredReview.readIfPresent(workspace);
-        require(before.levels.size() == 4, "initial levels");
-        require(before.terrainSectorCount == 1771, "initial terrain count");
+        require(before.levels.size() == 5, "initial levels");
+        require(before.terrainSectorCount == 1775, "initial terrain count");
 
         WorldBuilderLayeredDraftWriter writer =
             new WorldBuilderLayeredDraftWriter();
@@ -118,8 +118,8 @@ public final class WorldBuilderLayeredDraftHarness {
             "starter sector X bounds");
         require(created.minimumSectorY == 12 && created.maximumSectorY == 14,
             "starter sector Y bounds");
-        require(created.terrainSectorCount == 1780, "created terrain count");
-        require(created.placementSetCount == 5, "created placement count");
+        require(created.terrainSectorCount == 1784, "created terrain count");
+        require(created.placementSetCount == 6, "created placement count");
         require(sourceManifestHash.equals(WorldBuilderHashes.sha256(sourceManifest)),
             "source manifest changed");
         WorldBuilderSourceSnapshot.verify(workspace);
@@ -202,7 +202,7 @@ public final class WorldBuilderLayeredDraftHarness {
         require(!Files.exists(journal), "committed journal retained");
         draft = WorldBuilderLayeredPackage.discoverDraft(working);
         draft.requireTerrainDraftDescendant(accepted);
-        require(draft.terrainSectorCount == 1781, "grown terrain count");
+        require(draft.terrainSectorCount == 1785, "grown terrain count");
         Path changed = working.resolve("terrain/global/lm3/xp2-yp13.raw");
         byte[] changedBytes = Files.readAllBytes(changed);
         int changedOffset = (Math.floorMod(140, 48) * 48

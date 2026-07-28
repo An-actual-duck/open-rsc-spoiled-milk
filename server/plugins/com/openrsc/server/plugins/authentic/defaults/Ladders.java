@@ -9,6 +9,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.custom.minigames.ALumbridgeCarol;
 import com.openrsc.server.plugins.custom.minigames.CombatOdyssey;
@@ -256,8 +257,23 @@ public class Ladders {
 			player.message(
 				"You " + command.replace("-", " ") + " the "
 					+ obj.getGameObjectDef().getName().toLowerCase());
-		} else if (obj.getID() == 249 && obj.getX() == 98 && obj.getY() == 3537) { // lost city (Zanaris) ladder
-			Npc ladderAttendant = player.getWorld().getNpc(NpcId.FAIRY_LADDER_ATTENDANT.id(), 99, 99, 3537, 3537);
+		} else if (isZanarisExitLadder(obj)) {
+			boolean relocated =
+				ZanarisLocation.isAt(
+					obj.getWorldLocation(),
+					ZanarisLocation.EXIT_LADDER_X,
+					ZanarisLocation.EXIT_LADDER_Y);
+			int attendantY = relocated
+				? ZanarisLocation.EXIT_LADDER_Y
+				: 3537;
+			Npc ladderAttendant =
+				findNpcInPlayerDomain(
+					player,
+					NpcId.FAIRY_LADDER_ATTENDANT.id(),
+					99,
+					99,
+					attendantY,
+					attendantY);
 			if (ladderAttendant != null) {
 				npcsay(player, ladderAttendant, "This ladder leaves Zanaris",
 					"It leads to near Al Kharid in your mortal realm",
@@ -266,7 +282,14 @@ public class Ladders {
 				int m = multi(player, ladderAttendant, "I think I'll stay down here a bit longer", "Yes, I'm ready to leave");
 				if (m == 1) {
 					player.message("You climb up the ladder");
-					player.teleport(98, 706, false);
+					if (relocated
+						&& player.isLayeredLocationAuthorityEnabled()) {
+						player.teleportLayered(
+							ZanarisLocation.surfaceExit(),
+							false);
+					} else {
+						player.teleport(98, 706, false);
+					}
 				}
 			}
 		} else if (obj.getID() == 1187 && obj.getX() == 446 && obj.getY() == 3367) {
@@ -290,6 +313,37 @@ public class Ladders {
 				"You " + command.replace("-", " ") + " the "
 					+ obj.getGameObjectDef().getName().toLowerCase());
 		}
+	}
+
+	private static boolean isZanarisExitLadder(GameObject object) {
+		return object.getID() == 249
+			&& ((object.getX() == 98 && object.getY() == 3537)
+				|| ZanarisLocation.isAt(
+					object.getWorldLocation(),
+					ZanarisLocation.EXIT_LADDER_X,
+					ZanarisLocation.EXIT_LADDER_Y));
+	}
+
+	private static Npc findNpcInPlayerDomain(
+		Player player,
+		int npcId,
+		int minimumX,
+		int maximumX,
+		int minimumY,
+		int maximumY) {
+		for (Npc npc : player.getWorld().getNpcs()) {
+			if (!npc.isRemoved()
+				&& !npc.isRespawning()
+				&& npc.getID() == npcId
+				&& npc.getX() >= minimumX
+				&& npc.getX() <= maximumX
+				&& npc.getY() >= minimumY
+				&& npc.getY() <= maximumY
+				&& npc.sharesSpatialDomain(player)) {
+				return npc;
+			}
+		}
+		return null;
 	}
 
 	private boolean tryWorldBuilderVerticalPair(

@@ -20,6 +20,9 @@ import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LegacyPlayerLocationPersistenceSnapshot;
 import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationPersistence;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.ZanarisLocation;
+import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.languages.PreferredLanguage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -175,21 +178,49 @@ public class PlayerService implements IPlayerService {
 				configuration.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
 				player.getWorld().getRegionManager()
 					::hasNativeLayeredTerrain);
-		player.setInitialLayeredLocation(restored.getLocation());
+		WorldLocation restoredLocation = restored.getLocation();
+		String restoredOrigin = restored.getOrigin();
+		boolean rewriteRequired = restored.isRewriteRequired();
+		WorldLocation relocatedZanaris =
+			ZanarisLocation.relocateLegacyComponent(restoredLocation);
+		boolean hasRelocatedZanarisTerrain =
+			!relocatedZanaris.equals(restoredLocation)
+				&& player.getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(relocatedZanaris);
+		TileValue relocatedZanarisTile =
+			hasRelocatedZanarisTerrain
+				? player.getWorld().getRegionManager()
+					.getTile(relocatedZanaris)
+				: null;
+		WorldLocation migratedLocation =
+			ZanarisLocation.migratePersistedLocation(
+				restoredLocation,
+				hasRelocatedZanarisTerrain
+					&& relocatedZanarisTile != null,
+				relocatedZanarisTile == null
+					? 8
+					: relocatedZanarisTile.overlay & 0xff);
+		if (!migratedLocation.equals(restoredLocation)) {
+			restoredLocation = migratedLocation;
+			restoredOrigin =
+				ZanarisLocation.PERSISTENCE_MIGRATION_ORIGIN;
+			rewriteRequired = true;
+		}
+		player.setInitialLayeredLocation(restoredLocation);
 		boolean nativeLayered = player.getWorld().getRegionManager()
 			.hasNativeLayeredTerrain(player.getLayeredLocation());
 		LayeredPlayerLocationPersistence.write(
 			player.getCache().getCacheMap(),
 			player.getLayeredLocation(),
 			player.getLocation(),
-			restored.getOrigin(),
+			restoredOrigin,
 			configuration.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
 			nativeLayered);
 		LOGGER.info(
 			"layered-player-location restore playerId={} origin={} rewriteRequired={} location={}",
 			player.getDatabaseID(),
-			restored.getOrigin(),
-			restored.isRewriteRequired(),
+			restoredOrigin,
+			rewriteRequired,
 			player.getLayeredLocation());
 	}
 

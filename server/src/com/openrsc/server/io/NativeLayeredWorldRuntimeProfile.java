@@ -31,9 +31,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 		"560dae205d13c2034b38f52d8bb6841ee56c245fadc8e9d18361ace1346cd73f";
 	public static final String SPOILED_MILK_PACKAGE_ID =
 		"rsc-remastered.spoiled-milk-layered-world";
-	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.3.0";
+	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.4.0";
 	public static final String SPOILED_MILK_MANIFEST_SHA256 =
-		"9fbb45a9cd7b649577dd9dc00acfd925aa4aae28300ceef34ab3a558771797a8";
+		"ed93e345a93c88cd22bcf694b5ac121b7117faa213a77af27bc90bd7faead789";
 	private static final int VANILLA_MAX_BOUNDARY_ID = 213;
 	private static final int VANILLA_MAX_SCENERY_ID = 1189;
 	private static final int VANILLA_MAX_NPC_ID = 793;
@@ -173,7 +173,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 			SPOILED_MILK_PACKAGE_ID,
 			SPOILED_MILK_PACKAGE_VERSION,
 			SPOILED_MILK_MANIFEST_SHA256,
-			1771,
+			1775,
 			3775,
 			882,
 			27886,
@@ -191,8 +191,8 @@ public enum NativeLayeredWorldRuntimeProfile {
 		if (!SPOILED_MILK_PACKAGE_ID.equals(loaded.getPackageId())
 			|| !SPOILED_MILK_PACKAGE_VERSION.equals(loaded.getPackageVersion())
 			|| loaded.getWorldSpaceCount() != 1
-			|| loaded.getLevelCount() < 4
-			|| loaded.getTerrainSectorCount() < 1771
+			|| loaded.getLevelCount() < 5
+			|| loaded.getTerrainSectorCount() < 1775
 			|| loaded.getPlacementSetCount() != loaded.getLevelCount()
 			|| loaded.getNpcPlacementCount() < 3775
 			|| loaded.getGroundItemPlacementCount() != 882
@@ -202,7 +202,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 				"The spoiled-milk-builder-draft profile requires an additive "
 				+ "terrain/NPC/scenery descendant of the accepted Spoiled Milk package");
 		}
-		for (int level : new int[] {-1, 0, 1, 2}) {
+		for (int level : new int[] {-1, 0, 1, 2, 10}) {
 			if (!loaded.declaresLevel(WorldSpaceId.GLOBAL, level)) {
 				throw new IllegalStateException(
 					"The Spoiled Milk Builder draft is missing global level " + level);
@@ -219,13 +219,15 @@ public enum NativeLayeredWorldRuntimeProfile {
 						+ "placement set per declared level");
 			}
 			if (set.getLevel() == -1) {
-				requireBuilderSourcePlacementCounts(set, 1188, 262, 4374, 165);
+				requireBuilderSourcePlacementCounts(set, 1160, 258, 4180, 159);
 			} else if (set.getLevel() == 0) {
 				requireBuilderSourcePlacementCounts(set, 2386, 535, 22234, 676);
 			} else if (set.getLevel() == 1) {
 				requireBuilderSourcePlacementCounts(set, 164, 63, 1079, 94);
 			} else if (set.getLevel() == 2) {
 				requireBuilderSourcePlacementCounts(set, 37, 22, 199, 36);
+			} else if (set.getLevel() == 10) {
+				requireBuilderSourcePlacementCounts(set, 28, 4, 194, 6);
 			} else if (!set.getGroundItems().isEmpty()
 				|| !set.getBoundaries().isEmpty()) {
 				throw new IllegalStateException(
@@ -282,10 +284,23 @@ public enum NativeLayeredWorldRuntimeProfile {
 					+ "reviewed package identity, version, and "
 					+ "manifest");
 		}
+		final Set<Integer> expectedLevels = new HashSet<Integer>(
+			vanillaOnly
+				? Arrays.asList(
+					Integer.valueOf(-1),
+					Integer.valueOf(0),
+					Integer.valueOf(1),
+					Integer.valueOf(2))
+				: Arrays.asList(
+					Integer.valueOf(-1),
+					Integer.valueOf(0),
+					Integer.valueOf(1),
+					Integer.valueOf(2),
+					Integer.valueOf(10)));
 		if (loaded.getWorldSpaceCount() != 1
-			|| loaded.getLevelCount() != 4
+			|| loaded.getLevelCount() != expectedLevels.size()
 			|| loaded.getTerrainSectorCount() != terrainSectorCount
-			|| loaded.getPlacementSetCount() != 4
+			|| loaded.getPlacementSetCount() != expectedLevels.size()
 			|| loaded.getNpcPlacementCount() != npcCount
 			|| loaded.getGroundItemPlacementCount() != groundItemCount
 			|| loaded.getSceneryPlacementCount() != sceneryCount
@@ -297,12 +312,6 @@ public enum NativeLayeredWorldRuntimeProfile {
 		if (vanillaOnly) {
 			validatePreservationDefinitionIds(loaded);
 		}
-		final Set<Integer> expectedLevels = new HashSet<Integer>(
-			Arrays.asList(
-				Integer.valueOf(-1),
-				Integer.valueOf(0),
-				Integer.valueOf(1),
-				Integer.valueOf(2)));
 		for (Integer level : expectedLevels) {
 			if (!loaded.declaresLevel(
 					WorldSpaceId.GLOBAL, level.intValue())) {

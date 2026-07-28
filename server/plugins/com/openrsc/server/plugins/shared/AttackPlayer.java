@@ -19,7 +19,9 @@ public class AttackPlayer {
 			return true;
 		}
 		if (player.getConfig().USES_PK_MODE) {
-			if (affectedMob.getLocation().isInBank(player.getConfig().BASED_MAP_DATA)) {
+			if (affectedMob.getLocation().isInBank(
+					player.getConfig().BASED_MAP_DATA,
+					affectedMob.getWorldLocation())) {
 				player.message("You cannot attack other players inside the bank");
 				prevented = true;
 			}

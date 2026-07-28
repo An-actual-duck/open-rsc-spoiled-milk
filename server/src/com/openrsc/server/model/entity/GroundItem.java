@@ -75,6 +75,21 @@ public class GroundItem extends Entity {
 		}
 	}
 
+	public GroundItem(
+		final World world,
+		final int id,
+		final WorldLocation location,
+		final int amount) {
+		super(world, EntityType.GROUND_ITEM);
+		setID(id);
+		setNoted(false);
+		setAmount(amount);
+		ownerUsernameHash = 0;
+		spawnedTime = System.currentTimeMillis();
+		setInitialWorldLocation(location);
+		updateRegion();
+	}
+
 	public GroundItem(final World world, final ItemLoc loc) {
 		super(world, EntityType.GROUND_ITEM);
 		if (loc.getAuthoredPlacementIdentity() != null) {

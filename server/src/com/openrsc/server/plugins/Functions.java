@@ -21,6 +21,7 @@ import com.openrsc.server.model.entity.player.ScriptContext;
 import com.openrsc.server.model.entity.update.Bubble;
 import com.openrsc.server.model.entity.update.ChatMessage;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -480,6 +481,15 @@ public class Functions {
 	 */
 	public static void addobject(World world, int id, int amount, int x, int y) {
 		world.registerItem(new GroundItem(world, id, x, y, amount, (Player) null));
+	}
+
+	public static void addobject(
+		World world,
+		int id,
+		int amount,
+		WorldLocation location) {
+		world.registerItem(
+			new GroundItem(world, id, location, amount));
 	}
 
 	public static Npc addnpc(int id, int x, int y, final int time, final Player spawnedFor) {

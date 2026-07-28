@@ -45,7 +45,7 @@ public class PotFlour implements UseObjTrigger, TakeObjTrigger {
 	}
 
 	private void takeFlour(Player player, GroundItem item) {
-		if (item.getLocation().fromHopper()) {
+		if (item.getLocation().fromHopper(item.getWorldLocation())) {
 			player.message("You put the flour in the pot");
 			player.getWorld().unregisterItem(item);
 			player.getCarriedItems().getInventory().add(new Item(ItemId.POT_OF_FLOUR.id()));

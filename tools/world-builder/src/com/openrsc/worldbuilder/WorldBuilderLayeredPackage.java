@@ -24,9 +24,9 @@ final class WorldBuilderLayeredPackage {
 	static final String ADAPTER_ID = "spoiled-milk-layered-package-v1";
 	static final String PROFILE_ID = "spoiled-milk-replacement";
 	static final String PACKAGE_ID = "rsc-remastered.spoiled-milk-layered-world";
-	static final String PACKAGE_VERSION = "0.3.0";
+	static final String PACKAGE_VERSION = "0.4.0";
 	static final String MANIFEST_SHA256 =
-		"9fbb45a9cd7b649577dd9dc00acfd925aa4aae28300ceef34ab3a558771797a8";
+		"ed93e345a93c88cd22bcf694b5ac121b7117faa213a77af27bc90bd7faead789";
 	static final String BUILDER_DRAFT_PROFILE_ID = "spoiled-milk-builder-draft";
 	private static final int RAW_SECTOR_BYTES = 48 * 48 * 10;
 	private static final int MAX_LEVELS = 4096;
@@ -90,11 +90,12 @@ final class WorldBuilderLayeredPackage {
 		if (!MANIFEST_SHA256.equals(source.manifestSha256)
 			|| !source.levels.equals(Arrays.asList(
 				Integer.valueOf(-1), Integer.valueOf(0),
-				Integer.valueOf(1), Integer.valueOf(2)))
-			|| source.terrainSectorCount != 1771
-			|| source.placementSetCount != 4) {
+				Integer.valueOf(1), Integer.valueOf(2),
+				Integer.valueOf(10)))
+			|| source.terrainSectorCount != 1775
+			|| source.placementSetCount != 5) {
 			throw new WorldBuilderDiscoveryException(
-				"Layered package does not match the accepted Spoiled Milk 0.3.0 source.");
+				"Layered package does not match the accepted Spoiled Milk 0.4.0 source.");
 		}
 		return source;
 	}
