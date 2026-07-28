@@ -80,6 +80,13 @@ public class PacketHandler {
 			+ nativeLayeredTerrainResidentCache.getLastReferences();
 	}
 
+	public String getLayeredTerrainDeliveryDebugSummaryLine() {
+		return layeredSceneContextState.terrainDeliverySummary(
+			nativeLayeredTerrainResidentCache.size(),
+			nativeLayeredTerrainResidentCache.getLastPayloads(),
+			nativeLayeredTerrainResidentCache.getLastReferences());
+	}
+
 	public boolean hasLayeredSceneContext() {
 		return layeredSceneContextState.hasContext();
 	}

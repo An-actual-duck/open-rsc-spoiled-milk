@@ -1063,6 +1063,9 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		String[] movementSnapshotLines = activePacketHandler == null
 			? new String[] { "move snap unavailable", "move cache unavailable" }
 			: activePacketHandler.getMovementSnapshotDebugSummaryLines();
+		String layeredTerrainDeliveryLine = activePacketHandler == null
+			? "layer terrain unavailable"
+			: activePacketHandler.getLayeredTerrainDeliveryDebugSummaryLine();
 		if (RendererDebugSettings.getMode() == RendererDebugSettings.Mode.SIMPLE) {
 			return new String[] {
 				"Renderer v2 Perf HUD",
@@ -1138,6 +1141,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.spriteOverlayStaticReplayAverage
 					+ "/" + telemetry.spriteOverlayVisibleReplayAverage
 				: "",
+			layeredTerrainDeliveryLine,
 			sceneBaselineLines[0],
 			movementSnapshotLines[0],
 			telemetry.enabled

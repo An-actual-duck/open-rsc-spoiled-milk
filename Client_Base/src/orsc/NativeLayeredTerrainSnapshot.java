@@ -361,6 +361,10 @@ public final class NativeLayeredTerrainSnapshot {
 		return result;
 	}
 
+	public int getChunkSlotCount() {
+		return isChunkedProtocol() ? chunks.length : 1;
+	}
+
 	private NativeLayeredTerrainChunk findAvailableChunk(
 		int worldX, int worldY) {
 		for (NativeLayeredTerrainChunk chunk : chunks) {

@@ -357,6 +357,20 @@ final class LayeredSceneContextState {
 			+ acceptedContexts + "/" + acceptedPlayerPositions + "/" + scopeChanges;
 	}
 
+	String terrainDeliverySummary(
+		int residentSectors,
+		int lastPayloads,
+		int lastReferences) {
+		if (!established || nativeTerrainSnapshot == null) {
+			return "layer terrain waiting";
+		}
+		return "layer terrain p" + protocolVersion
+			+ " ready " + nativeTerrainSnapshot.getAvailableChunkCount()
+			+ "/" + nativeTerrainSnapshot.getChunkSlotCount()
+			+ " | resident " + residentSectors
+			+ " | payload/ref " + lastPayloads + "/" + lastReferences;
+	}
+
 	private static boolean sameNativeTerrainScope(
 		NativeLayeredTerrainSnapshot left,
 		NativeLayeredTerrainSnapshot right) {

@@ -329,6 +329,9 @@ class NativeTerrainResidencyTest(unittest.TestCase):
         packet_handler = (
             ROOT / "Client_Base/src/orsc/PacketHandler.java"
         ).read_text(encoding="utf-8")
+        applet = (
+            ROOT / "PC_Client/src/orsc/ORSCApplet.java"
+        ).read_text(encoding="utf-8")
 
         self.assertIn("WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY", configuration)
         self.assertIn('"want_layered_native_terrain_residency",', configuration)
@@ -356,6 +359,13 @@ class NativeTerrainResidencyTest(unittest.TestCase):
         self.assertIn('" residentSectors="', packet_handler)
         self.assertIn('" lastPayloads="', packet_handler)
         self.assertIn('" lastReferences="', packet_handler)
+        self.assertIn(
+            "getLayeredTerrainDeliveryDebugSummaryLine()", packet_handler
+        )
+        self.assertIn(
+            "activePacketHandler.getLayeredTerrainDeliveryDebugSummaryLine()",
+            applet,
+        )
 
     def _compile_and_run(self, class_name, harness, sources):
         with tempfile.TemporaryDirectory() as temporary:
