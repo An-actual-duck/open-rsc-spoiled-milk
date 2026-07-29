@@ -571,16 +571,43 @@ This gives the 794.54 MiB group a complete and already exercised lifetime,
 unlike object-chunk mesh construction, whose boxed growth and immutable output
 conversion need a broader builder rewrite.
 
-The selected tenth experiment therefore pools only sprite-clip mask and row
-arrays. It uses a separate synchronized three-entry pool, selects the smallest
-storage that satisfies both pixel and row capacity, retains the three largest
-combined capacities, clears every active mask pixel and row bound before use,
-and allocates no storage for full/empty fallback masks. Construction failures
-return acquired storage, while depth-frame release remains idempotent. A
-focused Java 8 fixture covers array reuse, stale pixel and row removal,
-different-size selection, the retention bound, empty-frame behavior, and
-idempotent release. Performance and visual acceptance remain pending a fresh
-maximum-distance phase.
+Checkpoint `6b8cd1fd0` implements the tenth experiment by pooling only
+sprite-clip mask and row arrays. It uses a separate synchronized three-entry
+pool, selects the smallest storage that satisfies both pixel and row capacity,
+retains the three largest combined capacities, clears every active mask pixel
+and row bound before use, and allocates no storage for full/empty fallback
+masks. Construction failures return acquired storage, while depth-frame
+release remains idempotent. A focused Java 8 fixture covers array reuse, stale
+pixel and row removal, different-size selection, the retention bound,
+empty-frame behavior, and idempotent release.
+
+`session-20260729-131938-1443031` / `clippool` captured a homogeneous 94.2
+seconds at the verified maximum camera state and passed owner review of entity
+occlusion around walls, trees, and scenery. Against the initial fixed-view
+`glowscratch` window, it retained the same 34 requested chunks and 2,202
+considered batches; world faces, drawn triangles, and sprite commands were all
+within 1%. Client-loop allocation fell from 48.33 to 27.21 MiB/s (-43.7%) and
+total allocation from 62.75 to 41.89 MiB/s (-33.2%), while presenter
+allocation stayed close at 14.68 versus 14.42 MiB/s. Client CPU stayed close
+at 0.199 versus 0.203 cores. The earlier glow window was only 16.9 seconds, so
+these isolated percentages are supported by the exact thread ownership and
+matched workload but are not treated as a new precision threshold.
+
+The longer `animkey` phase provides a second cumulative control with the same
+34 chunks, 209,162 resident triangles, and 2,202 batches. Across the glow and
+clip cycles together, total allocation fell from 76.28 to 41.89 MiB/s
+(-45.1%), client-loop allocation from 49.70 to 27.21 MiB/s (-45.3%), and
+presenter allocation from 26.57 to 14.68 MiB/s (-44.7%). Process use remained
+close at 0.789 versus 0.780 cores, client/presenter use at 0.199/0.463 versus
+0.199/0.465 cores, GL render p95/p99 at 8.747/9.419 versus 8.732/9.742 ms,
+and world p95/p99 at 6.738/7.344 versus 6.750/7.272 ms. There is no CPU or
+frame-tail regression.
+
+Relative to the original same-geometry maximum-distance baseline, ten accepted
+cycles have reduced total allocation from 871.16 to 41.89 MiB/s (-95.2%) and
+client-loop allocation from 604.97 to 27.21 MiB/s (-95.5%). GL render
+p95/p99 improved from 9.535/11.539 to 8.747/9.419 ms without an accepted
+visual tradeoff.
 
 ## Controlled Workload Matrix
 
@@ -663,7 +690,8 @@ them:
    fixed-view window and removed the measured three-array rebuild path.
    Sprite-clip arrays have the same proven frame-release lifetime as the
    accepted depth pool and account for 794.54 MiB in the reduced profile, so
-   bounded clip-storage reuse is the selected tenth experiment. Keep
+   bounded clip-storage reuse became the tenth accepted experiment and reduced
+   client-loop allocation by 43.7% in its matched comparison. Keep
    object-chunk array growth separate.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
@@ -757,7 +785,7 @@ Implementation checkpoint:
       definition/frame keys while preserving source-mutation invalidation.
 - [x] Complete the ninth focused cycle: reuse presenter-owned glow-mask color
       accumulation arrays with complete per-rebuild channel reset.
-- [ ] Complete the tenth focused cycle: reuse bounded sprite-clip mask and row
+- [x] Complete the tenth focused cycle: reuse bounded sprite-clip mask and row
       storage through the depth-frame release boundary.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
@@ -801,3 +829,4 @@ Implementation checkpoint:
 | 2026-07-29 | `bb0ec1618` | `reducejfr` | Re-profile the seven-cycle reduced maximum-distance workload and split the remaining sprite-key group by definition type. | Complete 132.3-second JFR and visual pass at exact 34-chunk/209,162-triangle/2,202-batch geometry. JFR measured 84.12 MiB/s against telemetry's 85.32 MiB/s. Sprite-key composition leads at 19.97% of all allocation, and animation definitions own 99.3% of that group. Resident chunk access and texture-signature scanning lead project-thread CPU samples. | Cache only animation definition/frame keys as the next isolated allocation experiment; retain texture-signature CPU work as a later separate audit. |
 | 2026-07-29 | `c8105af6e` | `animkey` | Cache normalized remastered animation keys by definition identity and frame, with bounded growth, oversized fallback, and public source-field invalidation. | Visual pass and exact 34-chunk/209,162-resident-triangle/2,202-batch scene. Client allocation fell 17.3% and client CPU stayed flat; total allocation fell 9.8%. The phase had 6.5% more sprite commands, so higher presenter CPU/allocation and GL tails are recorded as an entity-workload difference rather than attributed to the client-only change. Focused Java 8 coverage proves key reuse and all cache bounds/invalidation paths. | Accept and checkpoint; audit the newly leading mesh-growth, clip-mask, glow-mask, and texture-signature candidates separately before selecting the ninth experiment. |
 | 2026-07-29 | `5d314c8b2` | `glowscratch` | Reuse three presenter-owned fixed-size glow-mask accumulation arrays, clearing every color channel before each rebuild. | Fires remained visually stable. The complete 108.3-second phase varied zoom and scene, but its initial matched 16.9-second maximum-distance window retained 34 chunks and 2,202 batches while presenter allocation fell 45.7%, total allocation 17.7%, and GL/world p95 and p99 improved. Focused Java 8 coverage proves storage reuse and absence of stale channel state. | Accept and checkpoint the documented result; audit sprite-clip storage lifetime before choosing the tenth experiment. |
+| 2026-07-29 | `6b8cd1fd0` | `clippool` | Reuse bounded sprite-clip mask and row arrays through the depth-frame release boundary, with complete active-range reset and full/empty fallback preservation. | Homogeneous 94.2-second maximum-distance phase and visual occlusion pass. Against the matched post-glow window, client allocation fell 43.7%, total allocation 33.2%, and presenter allocation stayed flat; exact runtime coverage proves reuse, stale-state clearing, capacity selection, bounded retention, empty frames, and idempotent release. The longer cumulative control shows CPU and GL/world tails remained flat. | Accept and checkpoint the documented result; re-rank the remaining reduced workload before another implementation. |
