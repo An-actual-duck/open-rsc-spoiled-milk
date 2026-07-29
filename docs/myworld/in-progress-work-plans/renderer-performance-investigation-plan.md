@@ -2,10 +2,10 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first thirteen focused optimizations have been
-accepted. Primitive object-chunk mesh construction has now been accepted as
-the thirteenth optimization; diagnostic shadow-inventory overhead is the next
-isolated audit.
+attribution are underway, and the first fourteen focused optimizations have
+been accepted. Diagnostic shadow-inventory caching has now been accepted as the
+fourteenth optimization; the next maximum-distance profile will re-rank the
+remaining reduced workload before another implementation is selected.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -831,8 +831,31 @@ The client compiles and the full renderer guardrail suite passes. Focused Java
 8 coverage proves same-frame hits, hits across animation-only mesh-signature
 changes, invalidation for caster kind, plane, world signature, and session
 clear, preservation of inventory counts, and lazy signature construction.
-Cycle 14 now requires a fresh maximum-distance diagnostic phase; expected
-visual output and all reported inventory counts are unchanged.
+
+`session-20260729-184935-1516959` / `shadowcache14` captured 106.3 seconds on
+checkpoint `6159beb7e` and passed owner visual review. It is an exact control
+match for `primitive13`: both used zoom `900` / effective `2400`, 34 chunks,
+209,162 resident triangles, 2,202 considered batches, 1,245 models, 2,700
+shadow casters, and 40,934 shadow-receiver triangles. Drawn triangles differed
+by 0.4% and sprite commands by 0.2%.
+
+Presenter CPU fell from 0.162 to 0.110 cores (-32.4%) and process use from
+0.467 to 0.405 cores (-13.4%). GL render p95/p99 fell from 3.500/4.040 to
+2.598/2.897 ms (-25.8%/-28.3%), while world p95/p99 fell from 1.759/1.938 to
+0.871/0.979 ms (-50.5%/-49.5%). Total allocation stayed flat at 37.61 versus
+37.58 MiB/s; client and presenter allocation each differed by less than 1%.
+The control came from an older session, but the 32.4% presenter reduction
+closely matches the telemetry-only classification share identified by JFR,
+while invariant inventory counts and flat allocation separate this change
+from visible shadow-mask rendering. Accept cycle 14.
+
+Relative to the original same-geometry maximum-distance baseline, fourteen
+accepted cycles have reduced total allocation from 871.16 to 37.61 MiB/s
+(-95.7%), client-loop allocation from 604.97 to 23.58 MiB/s (-96.1%), process
+use from 0.928 to 0.405 cores (-56.4%), GL render p95/p99 from 9.535/11.539 to
+2.598/2.897 ms (-72.8%/-74.9%), and world p95/p99 from 7.207/8.440 to
+0.871/0.979 ms (-87.9%/-88.4%), without an accepted visual tradeoff. Re-profile
+this reduced endpoint before selecting cycle 15.
 
 ## Controlled Workload Matrix
 
@@ -916,8 +939,10 @@ them:
    Sprite-clip arrays have the same proven frame-release lifetime as the
    accepted depth pool and account for 794.54 MiB in the reduced profile, so
    bounded clip-storage reuse became the tenth accepted experiment and reduced
-   client-loop allocation by 43.7% in its matched comparison. Keep
-   object-chunk array growth separate.
+   client-loop allocation by 43.7% in its matched comparison. Replacing only
+   the seven boxed numeric object-chunk accumulators then reduced client-loop
+   allocation another 13.5% in the accepted thirteenth experiment. Re-profile
+   before choosing another allocation target.
 2. The tenth-cycle JFR profile attributes 46.8% of sampled presenter CPU to
    repeated glow-bound vertex scans before cache lookup. Exact immutable
    chunk/frame bounds removed that scan without changing cache or visual
@@ -926,9 +951,12 @@ them:
    upload-reference scans then accounted for 33.3% of sampled presenter CPU.
    Replacing those full-triangle scans with immutable catalog and chunk-
    reference metadata reduced presenter CPU another 48.4% and GL/world p95
-   another 43.1%/52.4% in the accepted twelfth experiment. The remaining CPU
-   ranking now requires a fresh profile; primitive object-chunk storage
-   remains the leading attributable allocation audit from the prior profile.
+   another 43.1%/52.4% in the accepted twelfth experiment. The post-cycle-12
+   profile then found telemetry-only shadow-inventory classification in at
+   least 258 of 760 presenter samples. Exact lazy inventory caching reduced
+   presenter CPU another 32.4% and GL/world p95 25.8%/50.5% in the accepted
+   fourteenth experiment. The remaining CPU ranking now requires a fresh
+   profile.
 3. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -1028,6 +1056,10 @@ Implementation checkpoint:
 - [x] Complete the twelfth focused cycle: replace repeated texture-signature
       and upload-reference triangle scans with immutable catalog and chunk
       reference metadata.
+- [x] Complete the thirteenth focused cycle: replace boxed numeric object-chunk
+      mesh accumulators with growable primitive storage.
+- [x] Complete the fourteenth focused cycle: cache telemetry-only shadow
+      inventory by exact lazy world and object-caster signatures.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -1077,3 +1109,4 @@ Implementation checkpoint:
 | 2026-07-29 | `ba9827bba` | `texrefs12r2` | Repeat the immutable texture-reference experiment in a fresh maximum-distance session. | Complete 89.3-second capture and prior visual pass at exact 34-chunk/209,162-triangle/2,202-batch control geometry. Presenter CPU fell 48.4%, process use 23.2%, GL p95/p99 43.1%/44.3%, and world p95/p99 52.4%/53.2%; allocation stayed flat. Focused runtime coverage proves catalog snapshotting, fallback capture, deduplication, and exact invalidation. | Accept and checkpoint; re-profile the reduced endpoint before selecting cycle 13. |
 | 2026-07-29 | `0b5cb5465` | `post12jfr` | Re-profile the cycle-12 endpoint and rank remaining CPU/allocation ownership. | Complete 103.5-second marked profile; JFR measured 35.38 MiB/s against telemetry's 36.14 MiB/s. The operator remained at zoom `255` / effective `1110`, so this is a ranking profile rather than a maximum-distance comparison. Explicit object-chunk builders own 22.9% of weighted allocation, with another 17.9% in separately retained client `ArrayList` growth; shadow classification leads presenter CPU but mixes diagnostic and render consumers. | Convert only the seven boxed numeric object-chunk accumulators to primitive storage for cycle 13; defer shadow classification until its consumers are separated. |
 | 2026-07-29 | `2db2f3f6b` | `primitive13` | Replace the seven boxed numeric object-chunk accumulators with growable primitive arrays while retaining immutable output normalization and all mesh semantics. | Exact 93.3-second maximum-distance workload and owner visual pass. Client allocation fell 13.5% and total allocation 9.7%; process/client CPU and world p95/p99 stayed flat. The older session incurred more GC and higher presenter/GL tails even though the changed path is client-only, so that difference is recorded without attribution. Focused Java 8 coverage proves exact geometry, material, lighting metadata, signatures, and empty behavior. | Accept cycle 13; isolate telemetry-only shadow inventory from normal shadow rendering before changing classification. |
+| 2026-07-29 | `6159beb7e` | `shadowcache14` | Cache only telemetry-requested shadow inventory using the existing world signature plus a lazy exact object-caster signature; leave normal shadow-mask building and drawing unchanged. | Exact 106.3-second maximum-distance workload and owner visual pass. Presenter CPU fell 32.4%, process use 13.4%, GL p95/p99 25.8%/28.3%, and world p95/p99 50.5%/49.5%; total/client/presenter allocation stayed within 1%. Focused Java 8 coverage proves cache hits, animation-only stability, exact invalidation, preserved counts, and lazy construction. | Accept cycle 14; re-profile the reduced endpoint before selecting cycle 15. |
