@@ -293,6 +293,20 @@ public final class RenderTelemetry {
 	private static float diagnosticLastScalar;
 	private static String diagnosticLastScalingType = "unknown";
 	private static String diagnosticLastFramePath = "unknown";
+	private static boolean diagnosticCameraStateKnown;
+	private static int diagnosticCameraZoomSetting;
+	private static int diagnosticCameraZoomSettingMin;
+	private static int diagnosticCameraZoomSettingMax;
+	private static int diagnosticCameraBaseZoom;
+	private static int diagnosticCameraEffectiveZoom;
+	private static int diagnosticCameraPitch;
+	private static int diagnosticCameraRotation;
+	private static boolean diagnosticCameraFirstPerson;
+	private static String diagnosticCameraFogMode = "unknown";
+	private static int diagnosticCameraDrawDistanceWorldUnits;
+	private static int diagnosticCameraFogStartDistanceWorldUnits;
+	private static int diagnosticCameraDrawDistanceTiles;
+	private static int diagnosticCameraFogStartDistanceTiles;
 	private static final DiagnosticMetric[] DIAGNOSTIC_METRICS = buildDiagnosticMetrics();
 	private static long diagnosticLastGcCount = -1L;
 	private static long diagnosticLastGcTimeMillis = -1L;
@@ -731,6 +745,43 @@ public final class RenderTelemetry {
 		return formatCount(attempted.average())
 			+ "/" + formatCount(accepted.average())
 			+ "/" + formatCount(dropped.average());
+	}
+
+	static void recordCameraState(
+		int zoomSetting,
+		int zoomSettingMin,
+		int zoomSettingMax,
+		int baseZoom,
+		int effectiveZoom,
+		int pitch,
+		int rotation,
+		boolean firstPerson,
+		String fogMode,
+		int drawDistanceWorldUnits,
+		int fogStartDistanceWorldUnits,
+		int drawDistanceTiles,
+		int fogStartDistanceTiles) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			diagnosticCameraStateKnown = true;
+			diagnosticCameraZoomSetting = zoomSetting;
+			diagnosticCameraZoomSettingMin = zoomSettingMin;
+			diagnosticCameraZoomSettingMax = zoomSettingMax;
+			diagnosticCameraBaseZoom = baseZoom;
+			diagnosticCameraEffectiveZoom = effectiveZoom;
+			diagnosticCameraPitch = pitch;
+			diagnosticCameraRotation = rotation;
+			diagnosticCameraFirstPerson = firstPerson;
+			diagnosticCameraFogMode =
+				fogMode == null || fogMode.isEmpty() ? "unknown" : fogMode;
+			diagnosticCameraDrawDistanceWorldUnits = drawDistanceWorldUnits;
+			diagnosticCameraFogStartDistanceWorldUnits = fogStartDistanceWorldUnits;
+			diagnosticCameraDrawDistanceTiles = drawDistanceTiles;
+			diagnosticCameraFogStartDistanceTiles = fogStartDistanceTiles;
+		}
 	}
 
 	static void recordWorldGeometryFrame(
@@ -2022,6 +2073,24 @@ public final class RenderTelemetry {
 		record.number("frame.scalar", scalar);
 		record.string("frame.scalingType", String.valueOf(scalingType));
 		record.string("frame.path", framePath);
+		record.bool("camera.stateKnown", diagnosticCameraStateKnown);
+		record.number("camera.zoomSetting", diagnosticCameraZoomSetting);
+		record.number("camera.zoomSettingMin", diagnosticCameraZoomSettingMin);
+		record.number("camera.zoomSettingMax", diagnosticCameraZoomSettingMax);
+		record.number("camera.baseZoom", diagnosticCameraBaseZoom);
+		record.number("camera.effectiveZoom", diagnosticCameraEffectiveZoom);
+		record.number("camera.pitch", diagnosticCameraPitch);
+		record.number("camera.rotation", diagnosticCameraRotation);
+		record.bool("camera.firstPerson", diagnosticCameraFirstPerson);
+		record.string("camera.fogMode", diagnosticCameraFogMode);
+		record.number(
+			"camera.drawDistanceWorldUnits",
+			diagnosticCameraDrawDistanceWorldUnits);
+		record.number(
+			"camera.fogStartDistanceWorldUnits",
+			diagnosticCameraFogStartDistanceWorldUnits);
+		record.number("camera.drawDistanceTiles", diagnosticCameraDrawDistanceTiles);
+		record.number("camera.fogStartDistanceTiles", diagnosticCameraFogStartDistanceTiles);
 		record.number("config.reportIntervalFrames", REPORT_INTERVAL);
 		record.number("config.slowFrameNanos", SLOW_FRAME_NANOS);
 		record.number("config.recentSampleLimit", RECENT_SAMPLE_LIMIT);

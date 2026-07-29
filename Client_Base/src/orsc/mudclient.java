@@ -17019,6 +17019,20 @@ public final class mudclient implements Runnable {
 		this.scene.fogSmoothingStartDistance = fogStartDistance;
 		int fadeDistance = Math.max(0, drawDistance - fogStartDistance);
 		this.scene.fogZFalloff = Math.max(1, (fadeDistance + 254) / 255);
+		RenderTelemetry.recordCameraState(
+			osConfig.C_LAST_ZOOM,
+			getCameraZoomSettingMin(),
+			getCameraZoomSettingMax(),
+			this.cameraZoom,
+			scaledCameraZoom,
+			getCameraPitch(),
+			this.cameraRotation * 4,
+			this.isInFirstPersonView(),
+			fogMode.id,
+			drawDistance,
+			fogStartDistance,
+			Math.max(0, (drawDistance - cameraDepthOffset) / this.tileSize),
+			Math.max(0, (fogStartDistance - cameraDepthOffset) / this.tileSize));
 	}
 
 	private int getCameraHeightCompensatedCenterY(int baseCenterY, int baseZoom, int scaledZoom) {

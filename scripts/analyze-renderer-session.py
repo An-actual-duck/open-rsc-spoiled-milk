@@ -193,6 +193,21 @@ def metric_values(records: list[dict[str, Any]], key: str | None) -> list[float]
     return values
 
 
+def integer_span(records: list[dict[str, Any]], key: str) -> str:
+    values = [
+        float(record[key])
+        for record in records
+        if key in record
+        and not isinstance(record[key], bool)
+        and isinstance(record[key], (int, float))
+    ]
+    if not values:
+        return "unavailable"
+    low = int(min(values))
+    high = int(max(values))
+    return str(low) if low == high else f"{low}..{high}"
+
+
 def early_late_floor(values: list[float]) -> tuple[float, float]:
     quarter = max(1, len(values) // 4)
     return min(values[:quarter]), min(values[-quarter:])
@@ -674,6 +689,39 @@ def build_summary(
             f"- `{label}` (#{int(numeric(start_event, 'phaseId'))}): "
             f"{duration / 1_000_000_000.0:.1f}s; {frame_text}; {cpu_text}."
         )
+        camera_records = [
+            record for record in phase_records if record.get("camera.stateKnown") is True
+        ]
+        if camera_records:
+            fog_modes = sorted(
+                {
+                    str(record.get("camera.fogMode"))
+                    for record in camera_records
+                    if isinstance(record.get("camera.fogMode"), str)
+                }
+            )
+            first_person_modes = sorted(
+                {
+                    "on" if record.get("camera.firstPerson") is True else "off"
+                    for record in camera_records
+                }
+            )
+            lines.append(
+                "  Camera: zoom setting "
+                f"{integer_span(camera_records, 'camera.zoomSetting')} "
+                f"(allowed {integer_span(camera_records, 'camera.zoomSettingMin')}"
+                f"..{integer_span(camera_records, 'camera.zoomSettingMax')}), "
+                f"base/effective {integer_span(camera_records, 'camera.baseZoom')}/"
+                f"{integer_span(camera_records, 'camera.effectiveZoom')}, "
+                f"pitch {integer_span(camera_records, 'camera.pitch')}, "
+                f"rotation {integer_span(camera_records, 'camera.rotation')}, "
+                f"fog {','.join(fog_modes) or 'unknown'}, "
+                f"draw {integer_span(camera_records, 'camera.drawDistanceTiles')} tiles/"
+                f"{integer_span(camera_records, 'camera.drawDistanceWorldUnits')} world units, "
+                f"fog start {integer_span(camera_records, 'camera.fogStartDistanceTiles')} tiles/"
+                f"{integer_span(camera_records, 'camera.fogStartDistanceWorldUnits')} world units, "
+                f"first-person {','.join(first_person_modes)}."
+            )
 
     lines.extend(["", "## Memory Retention", ""])
     if old_generation_values:

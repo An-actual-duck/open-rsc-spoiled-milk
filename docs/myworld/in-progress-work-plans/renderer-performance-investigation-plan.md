@@ -75,6 +75,10 @@ Remaining limitations:
 - The diagnostic measurements themselves have overhead, especially allocation
   sampling and serialization. JFR and ordinary diagnostic runs must remain
   separate comparisons.
+- Camera zoom, pitch, rotation, allowed zoom range, first-person state, fog
+  mode, and effective fog/draw distance are now structured at each diagnostic
+  report and summarized per named phase. This was added after a user-observed
+  zoom mismatch showed that geometry alone cannot prove test configuration.
 - The original 64 MiB structured-log budget was exhausted after roughly
   11.5 minutes once true per-frame samples were added. The bounded diagnostic
   default is now 256 MiB, sufficient for the intended 30-minute profiling
@@ -109,15 +113,18 @@ presumed root cause.
 
 The first controlled current-branch phase,
 `session-20260728-205513-1276663` / `dense-idle`, ran for 109.5 seconds in
-Seers under the Remaster preset. Visual review passed. True OpenGL render
-p95/p99 was 9.952/10.901 ms and OpenGL world p95/p99 was 7.417/7.895 ms across
-6,550 frames. The process averaged 0.826 CPU cores and diagnostic Java-thread
-allocation averaged 653.16 MiB/s. The renderer requested 34 resident chunks
-per frame, reused about 33.28, and reuploaded about 0.72; the reuploads were
-associated with `animated-object-signature`. Even at rest, the chunk-upload
-phase was about 1.5 ms p95. GC remained secondary at roughly 0.42% of elapsed
-time. This makes animated resident-object rebuilds, chunk enumeration/draw
-submission, and allocation-stack attribution the first profile targets.
+Seers under the Remaster preset and the explicit F3 zoom reset. F3 selects
+zoom setting `75`, an effective camera zoom of roughly `750`; this is a
+repeatable normal/default-view baseline, not a maximum-distance stress test.
+Visual review passed. True OpenGL render p95/p99 was 9.952/10.901 ms and
+OpenGL world p95/p99 was 7.417/7.895 ms across 6,550 frames. The process
+averaged 0.826 CPU cores and diagnostic Java-thread allocation averaged
+653.16 MiB/s. The renderer requested 34 resident chunks per frame, reused
+about 33.28, and reuploaded about 0.72; the reuploads were associated with
+`animated-object-signature`. Even at rest, the chunk-upload phase was about
+1.5 ms p95. GC remained secondary at roughly 0.42% of elapsed time. This
+makes animated resident-object rebuilds, chunk enumeration/draw submission,
+and allocation-stack attribution the first profile targets.
 
 No visual issue was reported during the first `dense-camera` attempt, but it is
 not a valid timing comparison: its phase began after the original structured
@@ -126,11 +133,28 @@ CPU, and allocation samples are unavailable. Repeat it in a fresh session
 after the budget correction rather than inferring performance from the
 incomplete capture.
 
+The corrected `dense-camera-r2` phase on checkpoint `8b14d42c4` ran for
+91.3 seconds with complete telemetry and no reported visual issue. The owner
+then noted that this view was substantially zoomed in. Because the session did
+not structure camera zoom, it cannot prove exact zoom equality with
+`dense-idle`; do not treat the apparent frame-time improvement as a
+heavy-scene camera comparison. Within the captured view, OpenGL render
+p95/p99 was 8.776/10.325 ms and OpenGL world p95/p99 was 7.238/7.818 ms.
+Average drawn chunks, batches, draw calls, and triangles were 28.38,
+1,532.71, 362.56, and 167,707. Requested, reuploaded, and reused chunks
+nevertheless remained effectively identical to idle at
+34.0/0.716/33.284 per frame. That narrow result still supports animated
+object reuploads being independent of camera movement, but maximum-distance
+idle and camera phases are required before ranking heavy-view draw cost.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
-roof/fog state, zoom, viewport, camera heading, and server/database. Each
-scenario gets a warm-up pass followed by at least two measured passes.
+roof/fog state, zoom, viewport, camera heading, and server/database. Record the
+actual camera state rather than relying only on operator memory. Each scenario
+gets a warm-up pass followed by at least two measured passes. F3/default zoom
+and maximum supported zoom are separate rows: the former represents ordinary
+play and the latter is the renderer stress case.
 
 1. **Dense steady scene** — stand still for 90 seconds in a repeatable dense
    area with NPCs, scenery, walls, shadows, and animations.
@@ -236,12 +260,16 @@ Implementation checkpoint:
 
 - [ ] Run the controlled workload matrix without `Ctrl+F9`.
   - [x] Dense steady scene.
-  - [ ] Dense camera motion; repeat after the first attempt exposed the old
-        structured-log duration limit.
+  - [x] Dense camera motion at a close/default-style view; useful for isolating
+        animated chunk reuploads, but not accepted as the heavy-view row.
+  - [ ] Maximum-distance dense idle and camera motion.
   - [ ] Boundary traversal.
   - [ ] Hard relocation.
   - [ ] Entity/effect pressure.
 - [ ] Run one visual capture after timing runs to prove parity separately.
+- [x] Structure camera zoom, pitch, rotation, allowed range, first-person
+      state, and effective draw/fog distance before collecting the remaining
+      comparison rows.
 - [ ] Record a CPU/allocation profile for the dense steady and boundary
       workloads.
 - [ ] Rank actual hotspots by inclusive CPU, allocation rate, frame-tail
@@ -274,3 +302,5 @@ Implementation checkpoint:
 | 2026-07-28 | pending checkpoint | diagnostic fixtures | Added bounded raw frame samples, process/thread CPU and allocations, named phases, structured GPU identity, analyzer support, and optional bounded JFR launch. | Client compiles and renderer diagnostic/analyzer/frame-capture/release-hotkey guards pass. | Checkpoint the measurement foundation, then collect a clean current-branch baseline. |
 | 2026-07-28 | `a0488f013` | `dense-idle` | Controlled 109.5-second Remaster idle in dense Seers scene. | Visual pass; GL render p95/p99 9.952/10.901 ms, world 7.417/7.895 ms, 0.826 CPU cores, 653.16 MiB/s diagnostic allocation; 0.72 of 34 requested chunks reuploaded per frame from animated-object signatures. | Profile animated resident rebuilds, renderer allocation, and draw submission before changing behavior. |
 | 2026-07-28 | `a0488f013` | `dense-camera` attempt 1 | Rotated camera for 271.8 seconds. | Markers captured, but the original 64 MiB structured-log budget had already stopped periodic telemetry; no valid frame/CPU comparison. | Increase the bounded full-session budget, expose truncation clearly, and repeat in a fresh session. |
+| 2026-07-28 | `8b14d42c4` | `dense-camera-r2` | Controlled 91.3-second camera rotation in dense Seers. | Complete capture and visual pass, but the owner identified a substantially zoomed-in view and camera zoom was not structured. The phase is not a valid heavy-view comparison. Chunk request/reupload/reuse still remained 34.0/0.716/33.284 per frame, effectively identical to idle. | Retain only the narrow animated-reupload finding; add camera-state telemetry and collect maximum-distance idle/camera phases before boundary work. |
+| 2026-07-28 | pending checkpoint | camera-state diagnostic guard | Added structured current/allowed zoom, base/effective zoom, pitch, rotation, first-person, fog mode, and effective draw/fog distances, with stable per-phase analyzer summaries. | Client compiles and diagnostic runtime/analyzer guards pass. | Checkpoint and collect the maximum-distance stress baseline before any boundary workload. |

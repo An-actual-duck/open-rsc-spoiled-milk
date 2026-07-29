@@ -218,6 +218,11 @@ def validate_runtime_session(tmp: Path) -> None:
         "runtime.thread.cpuSupported": bool,
         "runtime.thread.allocationSupported": bool,
         "runtime.allocation.javaThreadBytesDelta": int,
+        "camera.stateKnown": bool,
+        "camera.zoomSetting": int,
+        "camera.zoomSettingMax": int,
+        "camera.effectiveZoom": int,
+        "camera.drawDistanceWorldUnits": int,
         "counter.openGLWorldMaterialUnclassified.window.average": 0.0,
         "counter.renderer2DSpriteCommandDropped.window.average": 0.0,
         "config.renderer2D.rotatedSpriteCommandLimit": 256,
@@ -376,6 +381,8 @@ def validate_source_contract() -> None:
         fail("diagnostic sessions do not mark account-free login epochs")
     if 'RendererDiagnosticSession.recordEvent("client.logout", null);' not in mudclient:
         fail("diagnostic sessions do not mark account-free logout epochs")
+    if "RenderTelemetry.recordCameraState(" not in mudclient:
+        fail("camera state is not connected to renderer telemetry")
     if 'SPOILED_MILK_RENDERER_DIAGNOSTIC_MAX_LOG_MB:-256' not in launcher:
         fail("diagnostic launcher does not provide the full-session structured-log budget")
     for needle in (
