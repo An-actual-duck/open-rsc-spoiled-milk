@@ -75,8 +75,8 @@ final class LwjglBindings {
 	private final Method glClearColor;
 	private final Method glClear;
 	private final Method glViewport;
-	private final Method glEnable;
-	private final Method glDisable;
+	private final MethodHandle glEnable;
+	private final MethodHandle glDisable;
 	private final Method glScissor;
 	private final Method glPushAttrib;
 	private final Method glPopAttrib;
@@ -88,12 +88,12 @@ final class LwjglBindings {
 	private final Method glGenTextures;
 	private final Method glDeleteTextures;
 	private final Method glActiveTexture;
-	private final Method glBindTexture;
-	private final Method glTexParameteri;
+	private final MethodHandle glBindTexture;
+	private final MethodHandle glTexParameteri;
 	private final Method glTexImage2D;
 	private final Method glTexSubImage2D;
 	private final Method glReadPixels;
-	private final Method glBlendFunc;
+	private final MethodHandle glBlendFunc;
 	private final Method glAlphaFunc;
 	private final Method glDepthMask;
 	private final Method glColorMask;
@@ -108,15 +108,15 @@ final class LwjglBindings {
 	private final Method glOrtho;
 	private final Method glGenBuffers;
 	private final Method glDeleteBuffers;
-	private final Method glBindBuffer;
-	private final Method glBufferDataFloat;
-	private final Method glBufferDataInt;
-	private final Method glEnableClientState;
-	private final Method glDisableClientState;
-	private final Method glVertexPointer;
-	private final Method glColorPointer;
-	private final Method glTexCoordPointer;
-	private final Method glDrawElements;
+	private final MethodHandle glBindBuffer;
+	private final MethodHandle glBufferDataFloat;
+	private final MethodHandle glBufferDataInt;
+	private final MethodHandle glEnableClientState;
+	private final MethodHandle glDisableClientState;
+	private final MethodHandle glVertexPointer;
+	private final MethodHandle glColorPointer;
+	private final MethodHandle glTexCoordPointer;
+	private final MethodHandle glDrawElements;
 	private final Method glBegin;
 	private final Method glEnd;
 	private final Method glTexCoord2f;
@@ -139,9 +139,9 @@ final class LwjglBindings {
 	private final Method glUniform1i;
 	private final Method glUniform1f;
 	private final Method glUniformMatrix4fv;
-	private final Method glEnableVertexAttribArray;
-	private final Method glDisableVertexAttribArray;
-	private final Method glVertexAttribPointer;
+	private final MethodHandle glEnableVertexAttribArray;
+	private final MethodHandle glDisableVertexAttribArray;
+	private final MethodHandle glVertexAttribPointer;
 	private final Method glDeleteProgram;
 
 	final int GLFW_FALSE;
@@ -307,8 +307,8 @@ final class LwjglBindings {
 		glClearColor = method(gl11Class, "glClearColor", float.class, float.class, float.class, float.class);
 		glClear = method(gl11Class, "glClear", int.class);
 		glViewport = method(gl11Class, "glViewport", int.class, int.class, int.class, int.class);
-		glEnable = method(gl11Class, "glEnable", int.class);
-		glDisable = method(gl11Class, "glDisable", int.class);
+		glEnable = methodHandle(gl11Class, "glEnable", int.class);
+		glDisable = methodHandle(gl11Class, "glDisable", int.class);
 		glScissor = method(gl11Class, "glScissor", int.class, int.class, int.class, int.class);
 		glPushAttrib = method(gl11Class, "glPushAttrib", int.class);
 		glPopAttrib = method(gl11Class, "glPopAttrib");
@@ -320,8 +320,8 @@ final class LwjglBindings {
 		glGenTextures = method(gl11Class, "glGenTextures");
 		glDeleteTextures = method(gl11Class, "glDeleteTextures", int.class);
 		glActiveTexture = method(gl13Class, "glActiveTexture", int.class);
-		glBindTexture = method(gl11Class, "glBindTexture", int.class, int.class);
-		glTexParameteri = method(gl11Class, "glTexParameteri", int.class, int.class, int.class);
+		glBindTexture = methodHandle(gl11Class, "glBindTexture", int.class, int.class);
+		glTexParameteri = methodHandle(gl11Class, "glTexParameteri", int.class, int.class, int.class);
 		glTexImage2D = method(
 			gl11Class,
 			"glTexImage2D",
@@ -356,7 +356,7 @@ final class LwjglBindings {
 			int.class,
 			int.class,
 			ByteBuffer.class);
-		glBlendFunc = method(gl11Class, "glBlendFunc", int.class, int.class);
+		glBlendFunc = methodHandle(gl11Class, "glBlendFunc", int.class, int.class);
 		glAlphaFunc = method(gl11Class, "glAlphaFunc", int.class, float.class);
 		glDepthMask = method(gl11Class, "glDepthMask", boolean.class);
 		glColorMask = method(gl11Class, "glColorMask", boolean.class, boolean.class, boolean.class, boolean.class);
@@ -380,15 +380,21 @@ final class LwjglBindings {
 			double.class);
 		glGenBuffers = method(gl15Class, "glGenBuffers");
 		glDeleteBuffers = method(gl15Class, "glDeleteBuffers", int.class);
-		glBindBuffer = method(gl15Class, "glBindBuffer", int.class, int.class);
-		glBufferDataFloat = method(gl15Class, "glBufferData", int.class, FloatBuffer.class, int.class);
-		glBufferDataInt = method(gl15Class, "glBufferData", int.class, IntBuffer.class, int.class);
-		glEnableClientState = method(gl11Class, "glEnableClientState", int.class);
-		glDisableClientState = method(gl11Class, "glDisableClientState", int.class);
-		glVertexPointer = method(gl11Class, "glVertexPointer", int.class, int.class, int.class, long.class);
-		glColorPointer = method(gl11Class, "glColorPointer", int.class, int.class, int.class, long.class);
-		glTexCoordPointer = method(gl11Class, "glTexCoordPointer", int.class, int.class, int.class, long.class);
-		glDrawElements = method(gl11Class, "glDrawElements", int.class, int.class, int.class, long.class);
+		glBindBuffer = methodHandle(gl15Class, "glBindBuffer", int.class, int.class);
+		glBufferDataFloat =
+			methodHandle(gl15Class, "glBufferData", int.class, FloatBuffer.class, int.class);
+		glBufferDataInt =
+			methodHandle(gl15Class, "glBufferData", int.class, IntBuffer.class, int.class);
+		glEnableClientState = methodHandle(gl11Class, "glEnableClientState", int.class);
+		glDisableClientState = methodHandle(gl11Class, "glDisableClientState", int.class);
+		glVertexPointer =
+			methodHandle(gl11Class, "glVertexPointer", int.class, int.class, int.class, long.class);
+		glColorPointer =
+			methodHandle(gl11Class, "glColorPointer", int.class, int.class, int.class, long.class);
+		glTexCoordPointer =
+			methodHandle(gl11Class, "glTexCoordPointer", int.class, int.class, int.class, long.class);
+		glDrawElements =
+			methodHandle(gl11Class, "glDrawElements", int.class, int.class, int.class, long.class);
 		glBegin = method(gl11Class, "glBegin", int.class);
 		glEnd = method(gl11Class, "glEnd");
 		glTexCoord2f = method(gl11Class, "glTexCoord2f", float.class, float.class);
@@ -411,10 +417,18 @@ final class LwjglBindings {
 		glUniform1i = method(gl20Class, "glUniform1i", int.class, int.class);
 		glUniform1f = method(gl20Class, "glUniform1f", int.class, float.class);
 		glUniformMatrix4fv = method(gl20Class, "glUniformMatrix4fv", int.class, boolean.class, FloatBuffer.class);
-		glEnableVertexAttribArray = method(gl20Class, "glEnableVertexAttribArray", int.class);
-		glDisableVertexAttribArray = method(gl20Class, "glDisableVertexAttribArray", int.class);
+		glEnableVertexAttribArray = methodHandle(gl20Class, "glEnableVertexAttribArray", int.class);
+		glDisableVertexAttribArray = methodHandle(gl20Class, "glDisableVertexAttribArray", int.class);
 		glVertexAttribPointer =
-			method(gl20Class, "glVertexAttribPointer", int.class, int.class, int.class, boolean.class, int.class, long.class);
+			methodHandle(
+				gl20Class,
+				"glVertexAttribPointer",
+				int.class,
+				int.class,
+				int.class,
+				boolean.class,
+				int.class,
+				long.class);
 		glDeleteProgram = method(gl20Class, "glDeleteProgram", int.class);
 
 		GLFW_FALSE = constant(glfwClass, "GLFW_FALSE");
@@ -719,11 +733,19 @@ final class LwjglBindings {
 	}
 
 	void glEnable(int capability) throws Exception {
-		invoke(glEnable, capability);
+		try {
+			glEnable.invokeExact(capability);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glDisable(int capability) throws Exception {
-		invoke(glDisable, capability);
+		try {
+			glDisable.invokeExact(capability);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glScissor(int x, int y, int width, int height) throws Exception {
@@ -773,11 +795,19 @@ final class LwjglBindings {
 	}
 
 	void glBindTexture(int target, int texture) throws Exception {
-		invoke(glBindTexture, target, texture);
+		try {
+			glBindTexture.invokeExact(target, texture);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glTexParameteri(int target, int name, int value) throws Exception {
-		invoke(glTexParameteri, target, name, value);
+		try {
+			glTexParameteri.invokeExact(target, name, value);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glTexImage2D(
@@ -818,7 +848,11 @@ final class LwjglBindings {
 	}
 
 	void glBlendFunc(int sourceFactor, int destinationFactor) throws Exception {
-		invoke(glBlendFunc, sourceFactor, destinationFactor);
+		try {
+			glBlendFunc.invokeExact(sourceFactor, destinationFactor);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glAlphaFunc(int function, float reference) throws Exception {
@@ -885,39 +919,75 @@ final class LwjglBindings {
 	}
 
 	void glBindBuffer(int target, int buffer) throws Exception {
-		invoke(glBindBuffer, target, buffer);
+		try {
+			glBindBuffer.invokeExact(target, buffer);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glBufferData(int target, FloatBuffer data, int usage) throws Exception {
-		invoke(glBufferDataFloat, target, data, usage);
+		try {
+			glBufferDataFloat.invokeExact(target, data, usage);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glBufferData(int target, IntBuffer data, int usage) throws Exception {
-		invoke(glBufferDataInt, target, data, usage);
+		try {
+			glBufferDataInt.invokeExact(target, data, usage);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glEnableClientState(int array) throws Exception {
-		invoke(glEnableClientState, array);
+		try {
+			glEnableClientState.invokeExact(array);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glDisableClientState(int array) throws Exception {
-		invoke(glDisableClientState, array);
+		try {
+			glDisableClientState.invokeExact(array);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glVertexPointer(int size, int type, int stride, long pointer) throws Exception {
-		invoke(glVertexPointer, size, type, stride, pointer);
+		try {
+			glVertexPointer.invokeExact(size, type, stride, pointer);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glColorPointer(int size, int type, int stride, long pointer) throws Exception {
-		invoke(glColorPointer, size, type, stride, pointer);
+		try {
+			glColorPointer.invokeExact(size, type, stride, pointer);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glTexCoordPointer(int size, int type, int stride, long pointer) throws Exception {
-		invoke(glTexCoordPointer, size, type, stride, pointer);
+		try {
+			glTexCoordPointer.invokeExact(size, type, stride, pointer);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glDrawElements(int mode, int count, int type, long indices) throws Exception {
-		invoke(glDrawElements, mode, count, type, indices);
+		try {
+			glDrawElements.invokeExact(mode, count, type, indices);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glBegin(int mode) throws Exception {
@@ -1015,11 +1085,19 @@ final class LwjglBindings {
 	}
 
 	void glEnableVertexAttribArray(int index) throws Exception {
-		invoke(glEnableVertexAttribArray, index);
+		try {
+			glEnableVertexAttribArray.invokeExact(index);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glDisableVertexAttribArray(int index) throws Exception {
-		invoke(glDisableVertexAttribArray, index);
+		try {
+			glDisableVertexAttribArray.invokeExact(index);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glVertexAttribPointer(
@@ -1029,7 +1107,17 @@ final class LwjglBindings {
 		boolean normalized,
 		int stride,
 		long pointer) throws Exception {
-		invoke(glVertexAttribPointer, index, size, type, normalized, stride, pointer);
+		try {
+			glVertexAttribPointer.invokeExact(
+				index,
+				size,
+				type,
+				normalized,
+				stride,
+				pointer);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glDeleteProgram(int program) throws Exception {

@@ -358,6 +358,41 @@ def main() -> None:
     require(opengl_presenter, "glVertex3f.invokeExact(x, y, z);", "OpenGL vertices avoid reflection argument allocation")
     forbid(opengl_presenter, "invoke(glColor4f, red, green, blue, alpha);", "OpenGL color reflection allocation")
     forbid(opengl_presenter, "invoke(glVertex3f, x, y, z);", "OpenGL vertex reflection allocation")
+    hot_opengl_handles = (
+        ("glEnable", "glEnable.invokeExact(capability);", "invoke(glEnable, capability);"),
+        ("glDisable", "glDisable.invokeExact(capability);", "invoke(glDisable, capability);"),
+        ("glBindTexture", "glBindTexture.invokeExact(target, texture);", "invoke(glBindTexture, target, texture);"),
+        ("glTexParameteri", "glTexParameteri.invokeExact(target, name, value);", "invoke(glTexParameteri, target, name, value);"),
+        ("glBlendFunc", "glBlendFunc.invokeExact(sourceFactor, destinationFactor);", "invoke(glBlendFunc, sourceFactor, destinationFactor);"),
+        ("glBindBuffer", "glBindBuffer.invokeExact(target, buffer);", "invoke(glBindBuffer, target, buffer);"),
+        ("glBufferDataFloat", "glBufferDataFloat.invokeExact(target, data, usage);", "invoke(glBufferDataFloat, target, data, usage);"),
+        ("glBufferDataInt", "glBufferDataInt.invokeExact(target, data, usage);", "invoke(glBufferDataInt, target, data, usage);"),
+        ("glEnableClientState", "glEnableClientState.invokeExact(array);", "invoke(glEnableClientState, array);"),
+        ("glDisableClientState", "glDisableClientState.invokeExact(array);", "invoke(glDisableClientState, array);"),
+        ("glVertexPointer", "glVertexPointer.invokeExact(size, type, stride, pointer);", "invoke(glVertexPointer, size, type, stride, pointer);"),
+        ("glColorPointer", "glColorPointer.invokeExact(size, type, stride, pointer);", "invoke(glColorPointer, size, type, stride, pointer);"),
+        ("glTexCoordPointer", "glTexCoordPointer.invokeExact(size, type, stride, pointer);", "invoke(glTexCoordPointer, size, type, stride, pointer);"),
+        ("glDrawElements", "glDrawElements.invokeExact(mode, count, type, indices);", "invoke(glDrawElements, mode, count, type, indices);"),
+        ("glEnableVertexAttribArray", "glEnableVertexAttribArray.invokeExact(index);", "invoke(glEnableVertexAttribArray, index);"),
+        ("glDisableVertexAttribArray", "glDisableVertexAttribArray.invokeExact(index);", "invoke(glDisableVertexAttribArray, index);"),
+        ("glVertexAttribPointer", "glVertexAttribPointer.invokeExact(", "invoke(glVertexAttribPointer, index, size, type, normalized, stride, pointer);"),
+    )
+    for field_name, exact_call, reflective_call in hot_opengl_handles:
+        require(
+            opengl_presenter,
+            f"private final MethodHandle {field_name};",
+            f"hot OpenGL {field_name} call uses a typed method handle",
+        )
+        require(
+            opengl_presenter,
+            exact_call,
+            f"hot OpenGL {field_name} call avoids reflection argument allocation",
+        )
+        forbid(
+            opengl_presenter,
+            reflective_call,
+            f"hot OpenGL {field_name} reflection allocation",
+        )
     require(depth_frame, "depth[pixel] = z;", "depth write")
     require(depth_frame, "color[pixel] = shadeColor(face.getColor(), z, face.getModelKind());", "depth-tested color write")
     require(depth_frame, "pixelWriteCount++;", "depth pixel write counter")
@@ -714,9 +749,9 @@ def main() -> None:
     require(opengl_presenter, "glUniform1i = method(gl20Class, \"glUniform1i\", int.class, int.class);", "OpenGL shader integer uniform binding")
     require(opengl_presenter, "glUniformMatrix4fv = method(gl20Class, \"glUniformMatrix4fv\", int.class, boolean.class, FloatBuffer.class);", "OpenGL shader matrix uniform binding")
     require(opengl_presenter, "glBindAttribLocation = method(gl20Class, \"glBindAttribLocation\", int.class, int.class, CharSequence.class);", "OpenGL shader attribute location binding")
-    require(opengl_presenter, "glEnableVertexAttribArray = method(gl20Class, \"glEnableVertexAttribArray\", int.class);", "OpenGL shader enable attribute array binding")
-    require(opengl_presenter, "glDisableVertexAttribArray = method(gl20Class, \"glDisableVertexAttribArray\", int.class);", "OpenGL shader disable attribute array binding")
-    require(opengl_presenter, "glVertexAttribPointer =\n\t\t\tmethod(gl20Class, \"glVertexAttribPointer\", int.class, int.class, int.class, boolean.class, int.class, long.class);", "OpenGL shader attribute pointer binding")
+    require(opengl_presenter, "glEnableVertexAttribArray = methodHandle(gl20Class, \"glEnableVertexAttribArray\", int.class);", "OpenGL shader enable attribute array binding")
+    require(opengl_presenter, "glDisableVertexAttribArray = methodHandle(gl20Class, \"glDisableVertexAttribArray\", int.class);", "OpenGL shader disable attribute array binding")
+    require(opengl_presenter, "glVertexAttribPointer =\n\t\t\tmethodHandle(", "OpenGL shader attribute pointer binding")
     require(opengl_presenter, "void glUseProgram(int program) throws Exception", "OpenGL shader program bind wrapper")
     require(opengl_presenter, "import orsc.graphics.three.Renderer3DModelKind;", "OpenGL model kind import")
     require(opengl_presenter, "import orsc.graphics.three.Renderer3DTextureData;", "OpenGL renderer-v2 texture import")
@@ -1020,11 +1055,11 @@ def main() -> None:
     upload_only_block = opengl_presenter.split("if (!wireframeVisible && !texturedVisible) {", 1)[1].split("}\n\n\t\tgl.glEnable(gl.GL_DEPTH_TEST);", 1)[0]
     if "gl.glDisable(gl.GL_TEXTURE_2D)" in upload_only_block or "gl.glEnable(gl.GL_DEPTH_TEST)" in upload_only_block:
         raise AssertionError("OpenGL mesh upload-only path must not mutate visible GL texture/depth state")
-    require(opengl_presenter, "glBufferDataFloat = method(gl15Class, \"glBufferData\", int.class, FloatBuffer.class, int.class);", "LWJGL float buffer binding")
+    require(opengl_presenter, "glBufferDataFloat =\n\t\t\tmethodHandle(gl15Class, \"glBufferData\", int.class, FloatBuffer.class, int.class);", "LWJGL float buffer binding")
     require(opengl_presenter, "glPushAttrib = method(gl11Class, \"glPushAttrib\", int.class);", "LWJGL pass server-state binding")
     require(opengl_presenter, "glPushClientAttrib = method(gl11Class, \"glPushClientAttrib\", int.class);", "LWJGL pass client-state binding")
     require(opengl_presenter, "glPolygonMode = method(gl11Class, \"glPolygonMode\", int.class, int.class);", "LWJGL polygon mode binding")
-    require(opengl_presenter, "glTexCoordPointer = method(gl11Class, \"glTexCoordPointer\", int.class, int.class, int.class, long.class);", "LWJGL texture coordinate pointer binding")
+    require(opengl_presenter, "glTexCoordPointer =\n\t\t\tmethodHandle(gl11Class, \"glTexCoordPointer\", int.class, int.class, int.class, long.class);", "LWJGL texture coordinate pointer binding")
     require(opengl_presenter, 'glDepthMask = method(gl11Class, "glDepthMask", boolean.class);', "LWJGL depth-mask binding")
     require(opengl_presenter, "void glDepthMask(boolean flag) throws Exception", "LWJGL depth-mask wrapper")
     require(opengl_presenter, 'glColorMask = method(gl11Class, "glColorMask", boolean.class, boolean.class, boolean.class, boolean.class);', "LWJGL color-mask binding")

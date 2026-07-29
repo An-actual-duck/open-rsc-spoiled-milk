@@ -2,7 +2,7 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first three focused allocation optimizations
+attribution are underway, and the first four focused allocation optimizations
 have been accepted.
 
 This is the living measurement and optimization ledger for the ongoing
@@ -286,6 +286,52 @@ GL render p95/p99 was 9.622/10.309 ms and world p95/p99 was 8.197/8.775 ms;
 the mixed p95 movement and improved p99 do not indicate a meaningful tail
 regression.
 
+After those three changes, the fresh bounded JFR phase
+`session-20260729-111830-1387005` / `currentjfr` re-ranked the reduced
+workload rather than relying on the now-stale original profile. It captured
+126.2 seconds at the verified maximum camera configuration with the original
+34-chunk, 209,162-resident-triangle geometry and normal owner-observed
+behavior. JFR attributed 25,350.17 MiB across the phase, agreeing with
+telemetry's expected profiling-overhead rate of about 200 MiB/s. The OpenGL
+presenter owned 65.21% of sampled bytes and the client loop 34.78%.
+
+The remaining reflection-bound `LwjglBindings` methods formed the largest
+group at 8,297.75 MiB (32.73% of all sampled allocation). Indoor-shadow flood
+workspace construction followed at 5,752.58 MiB (22.69%), remastered sprite
+key composition at 2,138.86 MiB (8.44%), world-face command construction at
+1,260.44 MiB (4.97%), and sprite clip masks at 930.47 MiB (3.67%). A bounded
+set of 16 per-frame state, buffer, pointer, and draw methods—17 handles because
+`glBufferData` has float- and integer-buffer overloads—accounted for 96.75% of
+the reflection group and 31.67% of all samples. Infrequent GLFW, initialization,
+shader setup, and lifecycle reflection therefore remained unchanged while
+only that measured hot group moved to typed Java 8 method handles.
+
+`session-20260729-113024-1390901` contains an accidental `ghost` phase followed
+by the intended 105.4-second `glhot` phase; only `glhot` is used for the
+accepted comparison. It passed visual review and recorded the verified maximum
+camera state with no exception. Against `gl-handles-r2`, it is an unusually
+close scene match: both requested 34 chunks, held 209,162 resident triangles,
+considered 2,202 batches, and reported identical material-family counts;
+drawn triangles differed by less than 0.9%.
+
+Across that comparison, presenter allocation fell from 131.97 to
+85.02 MiB/s (-35.6%), total allocation from 221.59 to 154.56 MiB/s (-30.2%),
+collection frequency from 1.355 to 0.379 per second (-72.0%), and sampled GC
+pause share from 0.314% to 0.093%. Process use fell from 0.830 to 0.778 cores
+(-6.3%) while presenter CPU remained effectively flat. Client allocation also
+fell from 89.62 to 69.54 MiB/s; the one-time material-metadata change between
+these two revisions owns that separate client-side reduction, while the
+presenter-owned reduction aligns with the hot bindings changed here. GL render
+p95/p99 improved from 9.047/10.760 to 8.995/9.609 ms, and world p95/p99 was
+7.168/7.638 ms.
+
+Relative to the original same-geometry maximum-distance baseline, the four
+accepted cycles together reduced total allocation from 871.16 to
+154.56 MiB/s (-82.3%), client-loop allocation from 604.97 to 69.54 MiB/s
+(-88.5%), collection frequency from about 4.20 to 0.38 per second (-91.0%),
+and process use from 0.928 to 0.778 cores (-16.2%). GL render p95/p99 improved
+from 9.535/11.539 to 8.995/9.609 ms without an accepted visual tradeoff.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -351,8 +397,10 @@ them:
    for the two hottest reflection-bound OpenGL calls then reduced presenter
    allocation by another 40.7%. Assigning immutable renderer material metadata
    once then reduced client-loop allocation by 17.7% in a matched 40-chunk
-   comparison. Remaining reflection bindings and client-side temporaries are
-   individually smaller and should be ranked before broad conversion.
+   comparison. A fresh profile then attributed 32.73% of remaining allocation
+   to the reflection-bound per-frame state/buffer/draw group; typed handles for
+   that measured set reduced presenter allocation by 35.6%. Indoor-shadow
+   flood workspace construction is now the largest known allocation target.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -432,6 +480,8 @@ Implementation checkpoint:
       the two hottest dynamically loaded OpenGL calls.
 - [x] Complete the third focused cycle: classify immutable game-object and
       wall-object renderer material metadata once at model preparation.
+- [x] Complete the fourth focused cycle: typed dispatch for the measured
+      per-frame OpenGL state, buffer, pointer, and draw group.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -466,3 +516,5 @@ Implementation checkpoint:
 | 2026-07-29 | method-handle worktree, attempt 1 | `gl-handles-wide` | Route `glVertex3f` and `glColor4f` through typed Java 8 method handles while retaining dynamic LWJGL loading. | Visual pass, but the client had remained open overnight and exhausted bounded telemetry before the phase; no valid performance samples exist. | Retain the visual result only and repeat in a fresh session. |
 | 2026-07-29 | `af1ff41b3` | `gl-handles-r2` | Repeat the two-call typed-dispatch experiment in a fresh maximum-distance session. | Complete capture and visual pass. Total allocation fell another 35.1%, presenter allocation 40.7%, and GC frequency 34.8%; CPU remained effectively flat and frame tails did not regress. | Accept and checkpoint; re-rank the remaining profile before expanding typed dispatch. |
 | 2026-07-29 | `848a6d01d` | `matmeta` | Assign immutable material-family and glow metadata when game/wall models are prepared instead of reclassifying every resident-object frame. | Visual pass and complete maximum-distance capture. Against the nearly identical 40-chunk depth-pool workload, client allocation fell 17.7%, client CPU 5.1%, total allocation 9.4%, and process use 1.3%; zero resident triangles were unclassified. | Accept and checkpoint; profile the reduced client loop before selecting another temporary-allocation target. |
+| 2026-07-29 | `0d545c359` | `currentjfr` | Re-profile the reduced 34-chunk maximum-distance workload after the first three accepted cycles. | Complete JFR and visual pass. Remaining reflection wrappers owned 32.73% of allocation, indoor-shadow flood workspaces 22.69%, sprite keys 8.44%, world-face commands 4.97%, and sprite clip masks 3.67%. | Convert only the 16 measured per-frame OpenGL methods that account for 96.75% of the reflection group. |
+| 2026-07-29 | hot-bindings worktree | `glhot` | Route the measured per-frame state, buffer, pointer, and draw wrappers through typed Java 8 method handles while retaining dynamic LWJGL discovery. | Complete maximum-distance capture and visual pass against matching 34-chunk geometry. Presenter allocation fell 35.6%, total allocation 30.2%, GC frequency 72.0%, and process use 6.3%; GL frame tails did not regress. | Accept and checkpoint; inspect indoor-shadow flood lifetime and reuse boundaries as the next ranked target. |
