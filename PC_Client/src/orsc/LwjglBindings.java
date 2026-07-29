@@ -1,5 +1,7 @@
 package orsc;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -95,7 +97,7 @@ final class LwjglBindings {
 	private final Method glAlphaFunc;
 	private final Method glDepthMask;
 	private final Method glColorMask;
-	private final Method glColor4f;
+	private final MethodHandle glColor4f;
 	private final Method glFogi;
 	private final Method glFogf;
 	private final Method glFogfv;
@@ -118,7 +120,7 @@ final class LwjglBindings {
 	private final Method glBegin;
 	private final Method glEnd;
 	private final Method glTexCoord2f;
-	private final Method glVertex3f;
+	private final MethodHandle glVertex3f;
 	private final Method glLineWidth;
 	private final Method glCreateShader;
 	private final Method glShaderSource;
@@ -358,7 +360,8 @@ final class LwjglBindings {
 		glAlphaFunc = method(gl11Class, "glAlphaFunc", int.class, float.class);
 		glDepthMask = method(gl11Class, "glDepthMask", boolean.class);
 		glColorMask = method(gl11Class, "glColorMask", boolean.class, boolean.class, boolean.class, boolean.class);
-		glColor4f = method(gl11Class, "glColor4f", float.class, float.class, float.class, float.class);
+		glColor4f =
+			methodHandle(gl11Class, "glColor4f", float.class, float.class, float.class, float.class);
 		glFogi = method(gl11Class, "glFogi", int.class, int.class);
 		glFogf = method(gl11Class, "glFogf", int.class, float.class);
 		glFogfv = method(gl11Class, "glFogfv", int.class, FloatBuffer.class);
@@ -389,7 +392,7 @@ final class LwjglBindings {
 		glBegin = method(gl11Class, "glBegin", int.class);
 		glEnd = method(gl11Class, "glEnd");
 		glTexCoord2f = method(gl11Class, "glTexCoord2f", float.class, float.class);
-		glVertex3f = method(gl11Class, "glVertex3f", float.class, float.class, float.class);
+		glVertex3f = methodHandle(gl11Class, "glVertex3f", float.class, float.class, float.class);
 		glLineWidth = method(gl11Class, "glLineWidth", float.class);
 		glCreateShader = method(gl20Class, "glCreateShader", int.class);
 		glShaderSource = method(gl20Class, "glShaderSource", int.class, CharSequence.class);
@@ -831,7 +834,11 @@ final class LwjglBindings {
 	}
 
 	void glColor4f(float red, float green, float blue, float alpha) throws Exception {
-		invoke(glColor4f, red, green, blue, alpha);
+		try {
+			glColor4f.invokeExact(red, green, blue, alpha);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glFogi(int name, int value) throws Exception {
@@ -926,7 +933,11 @@ final class LwjglBindings {
 	}
 
 	void glVertex3f(float x, float y, float z) throws Exception {
-		invoke(glVertex3f, x, y, z);
+		try {
+			glVertex3f.invokeExact(x, y, z);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glLineWidth(float width) throws Exception {
@@ -1225,6 +1236,13 @@ final class LwjglBindings {
 		return method;
 	}
 
+	private static MethodHandle methodHandle(
+		Class<?> type,
+		String name,
+		Class<?>... parameterTypes) throws Exception {
+		return MethodHandles.publicLookup().unreflect(method(type, name, parameterTypes));
+	}
+
 	private static int constant(Class<?> type, String name) throws Exception {
 		Field field = type.getField(name);
 		field.setAccessible(true);
@@ -1253,14 +1271,18 @@ final class LwjglBindings {
 		try {
 			return method.invoke(null, arguments);
 		} catch (InvocationTargetException e) {
-			Throwable cause = e.getCause();
-			if (cause instanceof Exception) {
-				throw (Exception) cause;
-			}
-			if (cause instanceof Error) {
-				throw (Error) cause;
-			}
-			throw new RuntimeException(cause);
+			rethrow(e.getCause());
+			return null;
 		}
+	}
+
+	private static void rethrow(Throwable cause) throws Exception {
+		if (cause instanceof Exception) {
+			throw (Exception) cause;
+		}
+		if (cause instanceof Error) {
+			throw (Error) cause;
+		}
+		throw new RuntimeException(cause);
 	}
 }

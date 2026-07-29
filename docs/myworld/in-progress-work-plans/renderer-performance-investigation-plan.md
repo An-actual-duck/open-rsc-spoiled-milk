@@ -2,8 +2,8 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first focused allocation optimization has
-been accepted.
+attribution are underway, and the first two focused allocation optimizations
+have been accepted.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -221,6 +221,39 @@ active array range and releases storage on presented, dropped, disabled, and
 failed frame paths; the pool remains bounded to three capacity-selected
 entries.
 
+The same JFR profile attributed another 7,215.69 MiB to allocations whose
+first project frame was `LwjglBindings.glVertex3f` and 6,680.57 MiB to
+`LwjglBindings.glColor4f`. Together those two reflection wrappers represented
+14.54% of the original stress-phase allocation, primarily through argument
+arrays and boxed primitives in the immediate-mode sky path. The second
+experiment retained dynamic LWJGL discovery but used typed Java 8 method
+handles for only these two calls. It did not change the call sites, submitted
+vertices, colors, rendering order, or fallback boundary.
+
+The first visual run,
+`session-20260728-221126-1317175` / `gl-handles-wide`, passed owner review but
+is not a performance result: the client had remained open overnight and its
+bounded telemetry budget ended many hours before the named phase. The fresh
+`session-20260729-104614-1372358` / `gl-handles-r2` phase captured 112.9
+seconds with complete telemetry, the verified maximum camera configuration,
+no renderer exception, and normal owner-observed behavior. Against the
+accepted depth-pool run, total allocation fell from 341.32 to 221.59 MiB/s
+(-35.1%), presenter allocation from 222.40 to 131.97 MiB/s (-40.7%), and
+collection frequency from 2.08 to 1.36 per second. Process use was effectively
+flat at 0.824 versus 0.830 cores. GL render p95/p99 was 9.047/10.760 ms and
+world p95/p99 was 7.091/8.173 ms, with no frame-tail regression.
+
+As with the depth-pool comparison, this is not an exact scene A/B: the method-
+handle run returned to the original 34-chunk, 209,162-resident-triangle scene,
+whereas the depth-pool run held 40 chunks and 229,928 triangles. The allocation
+drop remains persuasive because it closely matches JFR's predicted removal
+and is concentrated on the presenter thread that owns the changed wrappers.
+Relative to the original same-geometry wide baseline, the two accepted changes
+together reduced total allocation from 871.16 to 221.59 MiB/s (-74.6%), GC
+frequency from 4.20 to 1.36 per second (-67.8%), and process use from 0.928 to
+0.830 cores (-10.5%), while GL render p95/p99 improved from 9.535/11.539 to
+9.047/10.760 ms.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -282,9 +315,10 @@ them:
    culling, and allocation substantially more than resident OpenGL drawing.
    JFR attributed 53.04% of stress-phase allocation to six per-frame
    `Renderer3DDepthFrame` arrays, and bounded lifetime-aware reuse reduced
-   client-loop allocation by 80.3% in the accepted follow-up. Reflection-bound
-   OpenGL calls now form the largest known broad allocation group and require
-   a separately scoped profile/experiment.
+   client-loop allocation by 80.3% in the accepted follow-up. Typed handles
+   for the two hottest reflection-bound OpenGL calls then reduced presenter
+   allocation by another 40.7%. Remaining reflection bindings are individually
+   smaller and should be ranked before broad conversion.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -360,6 +394,8 @@ Implementation checkpoint:
 ### Milestone 3: Focused Optimization Cycles
 
 - [x] Complete the first focused cycle: bounded depth-frame storage reuse.
+- [x] Complete the second focused cycle: allocation-free typed dispatch for
+      the two hottest dynamically loaded OpenGL calls.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -390,4 +426,6 @@ Implementation checkpoint:
 | 2026-07-28 | `cbfe7ece3` | `dense-wide-idle`, `dense-wide-camera` | Captured maximum-distance dense idle and camera motion with structured proof of zoom `900`, effective zoom `2400`, and 40-tile draw distance. | Visual pass with negligible stutter. OpenGL world p95 stayed near 7.2 ms, but wide idle client scene/cull p95 rose to 3.316/0.859 ms and client allocation to 604.97 MiB/s. Camera motion was not more expensive than idle. | Profile allocation stacks in maximum-distance idle before changing behavior; retain animated-object reuploads as a separate target. |
 | 2026-07-28 | `d89c0cb66` | `jfr-wide-idle` | Captured a bounded 107.0-second JFR profile at verified maximum distance. | JFR and telemetry agree at roughly 891 MiB/s; 69.87% of sampled bytes belonged to the client loop, and six `Renderer3DDepthFrame` arrays alone accounted for 53.04% of all allocation. Reflection-bound OpenGL calls form the next broad allocation group. | Recycle depth arrays through completed/dropped presentation-frame lifetimes, then repeat the ordinary maximum-distance baseline before touching reflection bindings. |
 | 2026-07-28 | depth-pool worktree, attempt 1 | `depth-pool-wide` | Reused depth arrays through a bounded three-entry pool. | Visual pass, but allocation regressed to 926.14 MiB/s and process use to 0.981 cores. The pool retained small login buffers and discarded larger world buffers once full. | Reject the measurement and correct capacity retention before checkpointing. |
-| 2026-07-28 | depth-pool checkpoint | `depth-pool-wide-r2` | Acquire the smallest adequate depth buffer, retain the three largest released capacities, reset active ranges, and release on every presentation-frame exit path. | No reported visual issue. Against original wide idle, total allocation fell 60.8%, client-loop allocation 80.3%, GC frequency 50.6%, and process CPU 11.2%, despite 17.6% more requested chunks and 15.3% more drawn triangles. | Accept and checkpoint; use the remaining allocation profile to choose the next isolated target. |
+| 2026-07-28 | `58198f2b5` | `depth-pool-wide-r2` | Acquire the smallest adequate depth buffer, retain the three largest released capacities, reset active ranges, and release on every presentation-frame exit path. | No reported visual issue. Against original wide idle, total allocation fell 60.8%, client-loop allocation 80.3%, GC frequency 50.6%, and process CPU 11.2%, despite 17.6% more requested chunks and 15.3% more drawn triangles. | Accept and checkpoint; use the remaining allocation profile to choose the next isolated target. |
+| 2026-07-29 | method-handle worktree, attempt 1 | `gl-handles-wide` | Route `glVertex3f` and `glColor4f` through typed Java 8 method handles while retaining dynamic LWJGL loading. | Visual pass, but the client had remained open overnight and exhausted bounded telemetry before the phase; no valid performance samples exist. | Retain the visual result only and repeat in a fresh session. |
+| 2026-07-29 | method-handle checkpoint | `gl-handles-r2` | Repeat the two-call typed-dispatch experiment in a fresh maximum-distance session. | Complete capture and visual pass. Total allocation fell another 35.1%, presenter allocation 40.7%, and GC frequency 34.8%; CPU remained effectively flat and frame tails did not regress. | Accept and checkpoint; re-rank the remaining profile before expanding typed dispatch. |
