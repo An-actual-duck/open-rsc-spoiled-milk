@@ -1477,6 +1477,14 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, filter);
 	}
 
+	private RemasterShadowInventory inspectRemasterShadowInventory(
+		Renderer3DWorldChunkFrame worldChunkFrame) {
+		if (worldChunkRenderer != null) {
+			return worldChunkRenderer.inspectRemasterShadowInventory(worldChunkFrame);
+		}
+		return RemasterShadowClassifier.inspectInventory(worldChunkFrame);
+	}
+
 	private void drawWorldMesh(Frame frame, boolean worldReplacementComposite) throws Exception {
 		long chunkUploadPhaseNanos = 0L;
 		long projectedMeshPhaseNanos = 0L;
@@ -1493,7 +1501,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		RenderTelemetry.recordOpenGLWorldMaterialFamilies(
 			worldChunkFrame);
 		RemasterShadowInventory shadowInventory = RenderTelemetry.isEnabled()
-			? RemasterShadowClassifier.inspectInventory(worldChunkFrame)
+			? inspectRemasterShadowInventory(worldChunkFrame)
 			: RemasterShadowInventory.EMPTY;
 		RenderTelemetry.recordOpenGLRemasterShadowInventory(
 			shadowInventory.receiverChunks,

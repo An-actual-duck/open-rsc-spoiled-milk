@@ -11,6 +11,14 @@ final class RemasterShadowClassifier {
 
 	static RemasterShadowInventory inspectInventory(
 		Renderer3DWorldChunkFrame worldChunkFrame) {
+		return inspectInventory(
+			worldChunkFrame,
+			RemasterShadowRoofCoverage.from(worldChunkFrame));
+	}
+
+	static RemasterShadowInventory inspectInventory(
+		Renderer3DWorldChunkFrame worldChunkFrame,
+		RemasterShadowRoofCoverage roofCoverage) {
 		if (worldChunkFrame == null || worldChunkFrame.getChunkCount() <= 0) {
 			return RemasterShadowInventory.EMPTY;
 		}
@@ -32,7 +40,6 @@ final class RemasterShadowClassifier {
 		int sunlightEligibleCasters = 0;
 		int sunlightSuppressedRoofedCasters = 0;
 		int sunlightSuppressedUnknownCasters = 0;
-		RemasterShadowRoofCoverage roofCoverage = RemasterShadowRoofCoverage.from(worldChunkFrame);
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : worldChunkFrame.getChunks()) {
 			int terrainTriangles = Math.max(0, chunk.getTerrainTriangles());
 			if (terrainTriangles > 0) {

@@ -1118,6 +1118,17 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return useResidentChunkShader(textured) && remasterLightingShaderEnabled;
 	}
 
+	RemasterShadowInventory inspectRemasterShadowInventory(
+		Renderer3DWorldChunkFrame chunkFrame) {
+		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
+			return RemasterShadowInventory.EMPTY;
+		}
+		long worldSignature = RemasterShadowMaskBuilder.remasterShadowWorldSignature(chunkFrame);
+		return RemasterShadowClassifier.inspectInventory(
+			chunkFrame,
+			remasterShadowRoofCoverage(chunkFrame, worldSignature));
+	}
+
 	void drawRemasterShadowInventoryDebug(Renderer3DFrame frame) throws Exception {
 		Renderer3DWorldChunkFrame chunkFrame = frame == null ? null : frame.getWorldChunkFrame();
 		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
@@ -1139,7 +1150,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
 		gl.glDepthMask(false);
 		try {
-			RemasterShadowRoofCoverage roofCoverage = RemasterShadowRoofCoverage.from(chunkFrame);
+			long worldSignature = RemasterShadowMaskBuilder.remasterShadowWorldSignature(chunkFrame);
+			RemasterShadowRoofCoverage roofCoverage =
+				remasterShadowRoofCoverage(chunkFrame, worldSignature);
 			drawRemasterShadowReceiverDebug(chunkFrame, roofCoverage);
 			drawRemasterShadowCasterDebug(chunkFrame, roofCoverage);
 		} finally {

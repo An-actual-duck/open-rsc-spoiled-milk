@@ -27,6 +27,7 @@ SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 OPENGL_PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
 PRESENTATION_FRAME = ROOT / "PC_Client/src/orsc/Frame.java"
 OPENGL_WORLD_CHUNK_RENDERER = ROOT / "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java"
+REMASTER_SHADOW_CLASSIFIER = ROOT / "PC_Client/src/orsc/RemasterShadowClassifier.java"
 RESIDENT_CHUNK_READINESS = ROOT / "PC_Client/src/orsc/ResidentChunkReadiness.java"
 OPENGL_WORLD_SUBSYSTEM = (
     ROOT / "PC_Client/src/orsc/LwjglBindings.java",
@@ -107,6 +108,7 @@ def main() -> None:
     opengl_presenter = OPENGL_PRESENTER.read_text(encoding="utf-8")
     frame = PRESENTATION_FRAME.read_text(encoding="utf-8")
     opengl_world_chunk_renderer = OPENGL_WORLD_CHUNK_RENDERER.read_text(encoding="utf-8")
+    remaster_shadow_classifier = REMASTER_SHADOW_CLASSIFIER.read_text(encoding="utf-8")
     opengl_world_chunk_renderer += "\n" + RESIDENT_CHUNK_READINESS.read_text(encoding="utf-8")
     opengl_presenter += "\n" + opengl_world_chunk_renderer
     opengl_presenter += "\n" + "\n".join(
@@ -837,6 +839,35 @@ def main() -> None:
             "Resident object chunks should use captured legacy object light directly")
     require(opengl_presenter, "wireGeometry || (!filled && !textured) ? gl.GL_LINE : gl.GL_FILL", "OpenGL wire geometry should use line polygon mode")
     require(opengl_presenter, "private static final float SHADOW_PROOF_DIRECTION_X", "OpenGL directional shadow proof should have a projected light direction")
+    require(
+        remaster_shadow_classifier,
+        "Renderer3DWorldChunkFrame worldChunkFrame,\n\t\tRemasterShadowRoofCoverage roofCoverage)",
+        "remaster shadow inventory should accept reusable roof coverage",
+    )
+    require(
+        opengl_world_chunk_renderer,
+        "RemasterShadowInventory inspectRemasterShadowInventory(",
+        "OpenGL chunk renderer should own cached shadow inventory coverage",
+    )
+    require(
+        opengl_world_chunk_renderer,
+        "remasterShadowRoofCoverage(chunkFrame, worldSignature))",
+        "OpenGL shadow inventory should reuse renderer roof coverage",
+    )
+    shadow_inventory_call = opengl_presenter.split(
+        "RemasterShadowInventory shadowInventory = RenderTelemetry.isEnabled()",
+        1,
+    )[1].split("RenderTelemetry.recordOpenGLRemasterShadowInventory(", 1)[0]
+    require(
+        shadow_inventory_call,
+        "? inspectRemasterShadowInventory(worldChunkFrame)",
+        "OpenGL per-frame telemetry should use cached shadow coverage",
+    )
+    require_absent(
+        shadow_inventory_call,
+        "? RemasterShadowClassifier.inspectInventory(worldChunkFrame)",
+        "OpenGL per-frame telemetry should not rebuild shadow coverage",
+    )
     require(opengl_presenter, "SPOILED_MILK_OPENGL_WORLD_CHUNK_SHADOW_PROOF", "OpenGL directional shadow proof should have an A/B runtime gate")
     require(opengl_presenter, "readBoolean(WORLD_CHUNKS_SHADOW_PROOF_PROPERTY, WORLD_CHUNKS_SHADOW_PROOF_ENV, false)", "OpenGL directional shadow proof should default off after FPS validation")
     require_absent(opengl_presenter, "drawProjectedShadowProof(", "OpenGL directional shadows should be baked into cached terrain lighting, not drawn as an overlay")
