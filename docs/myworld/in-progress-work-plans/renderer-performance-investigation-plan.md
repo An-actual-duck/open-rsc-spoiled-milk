@@ -2,8 +2,9 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first seven focused allocation optimizations
-have been accepted.
+attribution are underway, the first seven focused allocation optimizations
+have been accepted, and the reduced-workload profile has selected the eighth
+candidate.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -456,6 +457,43 @@ the next steady-scene action is a reduced-workload JFR pass before choosing
 between residual face-map keys/nodes, sprite keys, glow masks, sprite clip
 masks, or another allocation owner.
 
+The follow-up JFR phase,
+`session-20260729-121914-1413173` / `reducejfr`, captured 132.3 seconds on
+checkpoint `bb0ec1618` at the same verified maximum camera configuration. The
+shortened phase label was intentional only in the sense that labels are
+arbitrary; it did not change or invalidate the capture. Visual behavior was
+normal, geometry remained at 34 resident chunks, 209,162 triangles, and 2,202
+batches, and there was no old-generation retention signal. Ordinary telemetry
+reported 85.32 MiB/s of Java-thread allocation while JFR attributed 11,128.56
+weighted MiB within the phase, or 84.12 MiB/s. That agreement makes the
+reduced ranking suitable for selecting the next isolated change.
+
+Repeated `RemasteredSpriteKey.compose` work is now the largest first-project-
+frame allocation group at 2,222.07 MiB (19.97% of the phase). The next groups
+are object-chunk vertex-array growth at 1,036.03 MiB (9.31%), sprite clip masks
+at 794.54 MiB (7.14%), glow-mask construction at 692.55 MiB (6.22%),
+residual world-face lookup-map entries at 347.26 MiB (3.12%), and
+object-chunk triangle-array growth at 320.02 MiB (2.88%). The sprite-key group
+is unusually well isolated: animation definitions account for 2,206.81 MiB
+of it, UI/world sprite definitions for 15.26 MiB, and items for no sampled
+bytes. Key normalization, two regular-expression matchers, substrings, and
+string composition currently repeat for each selected animation layer on
+each client frame even though the definition and frame number are stable.
+The eighth experiment will therefore cache only animation-definition/frame
+keys, retain mutation-safe invalidation for the definition's public name and
+category, and leave catalog validation and the negligible item/sprite paths
+unchanged.
+
+The same profile also changes the CPU follow-up ranking. After excluding the
+AWT event-wait thread, resident chunk access and texture-signature work lead:
+`ChunkMesh.getVertexCoord` owns 1,872 samples,
+`OpenGLWorldTextureCache.mixTextureSignature` 984,
+`RemasterShadowRoofCoverage.classify` 628, and
+`OpenGLWorldTextureCache.uploadReferencedTextures` 501. These are not bundled
+with the animation-key experiment. Texture/chunk signature scanning should be
+audited separately after the measured allocation change, because altering
+both would make CPU and allocation results impossible to attribute.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -528,9 +566,11 @@ them:
    all sampled indoor-flood construction and reduced presenter allocation by
    another 35.7%. Reusing direct-overlay coverage scratch storage then reduced
    presenter allocation by another 51.4%. Bounded world-face command and array
-   reuse then reduced client-loop allocation by another 11.6%. Re-profile the
-   reduced workload before ranking the remaining face-map, sprite, glow, and
-   clip-mask allocations.
+   reuse then reduced client-loop allocation by another 11.6%. The reduced
+   profile now attributes 19.97% of all remaining allocation to repeated
+   remastered sprite-key composition, with 99.3% of that group owned by
+   animation definition/frame lookups. Cache only those stable animation keys
+   before considering broader sprite, glow, or clip-mask lifetime changes.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -619,6 +659,8 @@ Implementation checkpoint:
       coverage mask across frames.
 - [x] Complete the seventh focused cycle: reuse bounded world-face command and
       vertex-array storage through the presentation-frame release boundary.
+- [ ] Complete the eighth focused cycle: cache stable remastered animation
+      definition/frame keys while preserving source-mutation invalidation.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -658,3 +700,4 @@ Implementation checkpoint:
 | 2026-07-29 | `cac788267` | `shadowcache` | Reuse renderer-owned roof coverage for diagnostic shadow inventory and the optional inventory overlay instead of reconstructing the indoor flood workspace per frame. | Exact 34-chunk geometry and shadow classifications; visual pass. Presenter allocation fell 35.7%, total allocation 19.9%, presenter CPU 9.5%, and world p95 10.6%. JFR sampled zero indoor-flood or roof-coverage construction bytes versus 5,752.58 MiB previously. | Accept and checkpoint; audit direct-overlay coverage-mask lifetime before changing its representation. |
 | 2026-07-29 | `fae0cf296` | `overlaymask` | Reuse one grow-only presenter-owned direct-overlay coverage array, clearing the active source range before each synchronous scene-restore pass. | Exact maximum-distance geometry and complete sprite replay accounting; visual pass. Presenter allocation fell 51.4% and total allocation 23.7%, matching the 29.66 MiB/s predicted cost of a 960x540 boolean mask at 60 FPS. CPU and frame tails remained flat. | Accept and checkpoint; audit world-face capture lifetime and consumers as the next ranked target. |
 | 2026-07-29 | `10d951ee1` | `facepool` | Reuse bounded world-face commands and their coordinate, light, texture, and clipped arrays through the presentation-frame release boundary. | Exact 34-chunk/209,162-triangle/2,202-batch workload and visual pass. Total allocation fell 10.5%, client-loop allocation 11.6%, and process use 5.5%; GL/world tails did not regress. Focused runtime coverage proves reuse, complete state reset, exact vertex-size separation, idempotent lifecycle, and a three-storage bound. | Accept and checkpoint; re-profile the now-reduced maximum-distance workload before selecting another allocation target. |
+| 2026-07-29 | `bb0ec1618` | `reducejfr` | Re-profile the seven-cycle reduced maximum-distance workload and split the remaining sprite-key group by definition type. | Complete 132.3-second JFR and visual pass at exact 34-chunk/209,162-triangle/2,202-batch geometry. JFR measured 84.12 MiB/s against telemetry's 85.32 MiB/s. Sprite-key composition leads at 19.97% of all allocation, and animation definitions own 99.3% of that group. Resident chunk access and texture-signature scanning lead project-thread CPU samples. | Cache only animation definition/frame keys as the next isolated allocation experiment; retain texture-signature CPU work as a later separate audit. |
