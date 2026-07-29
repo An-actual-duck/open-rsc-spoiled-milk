@@ -2,7 +2,7 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first four focused allocation optimizations
+attribution are underway, and the first five focused allocation optimizations
 have been accepted.
 
 This is the living measurement and optimization ledger for the ongoing
@@ -332,6 +332,51 @@ accepted cycles together reduced total allocation from 871.16 to
 and process use from 0.928 to 0.778 cores (-16.2%). GL render p95/p99 improved
 from 9.535/11.539 to 8.995/9.609 ms without an accepted visual tradeoff.
 
+The fifth audit found that the largest remaining sampled allocation was not a
+normal shadow rebuild. `OpenGLFramePresenter` asked
+`RemasterShadowClassifier` for diagnostic inventory counts on every telemetry
+frame, and that call reconstructed `RemasterShadowRoofCoverage` and its indoor
+flood workspace even though `OpenGLWorldChunkRenderer` already cached the same
+coverage by the stable shadow-world signature. The accepted change keeps
+inventory scanning and every reported classification current, but passes it
+the renderer-owned cached coverage. The optional visual shadow-inventory
+overlay now shares the same cache as well. Normal non-diagnostic behavior and
+shadow-mask construction are unchanged.
+
+`session-20260729-114323-1397725` / `shadowcache` captured 99.4 seconds at the
+verified maximum camera configuration and passed indoor/outdoor, roof-toggle,
+terrain, object, and shadow review. It is an exact geometry comparison with
+`glhot`: both phases requested 34 chunks, held 209,162 resident triangles, and
+considered 2,202 batches; drawn triangles differed by 0.85%. The diagnostic
+inventory also remained exact at 40,934 receiver triangles, 2,700 casters,
+1,800 roofed receivers, 39,134 outdoor receivers, and zero unknown receivers.
+
+Presenter allocation fell from 85.02 to 54.66 MiB/s (-35.7%), total allocation
+from 154.56 to 123.78 MiB/s (-19.9%), and presenter CPU from 0.484 to 0.438
+cores (-9.5%). Client allocation remained effectively flat at 69.54 versus
+69.11 MiB/s, which isolates the result to the changed presenter path. GL
+render p95/p99 improved from 8.995/9.609 to 8.289/9.090 ms and world p95/p99
+from 7.168/7.638 to 6.406/6.814 ms. GC frequency is not used for this isolated
+comparison because `shadowcache` was an opt-in JFR run near the beginning of a
+fresh process while `glhot` followed an earlier warm phase.
+
+JFR directly confirms the mechanism: the earlier reduced profile attributed
+5,752.58 MiB (22.69%) to `RemasterShadowIndoorFlood`, while the new phase
+sampled zero bytes through either indoor-flood or roof-coverage construction.
+The new profile agrees with ordinary telemetry at 12,251.30 weighted MiB over
+the phase. Its next largest first-project-frame groups are direct-overlay
+coverage-mask construction (12.62%), world-face capture (11.14%), remastered
+sprite-key composition (7.29%), glow-mask construction (4.56%), sprite clip
+masks (4.54%), and composite character-sprite texture construction (3.99%).
+These are now the ranked candidates for separate lifetime audits rather than
+reasons to optimize the flood implementation itself.
+
+Relative to the original same-geometry maximum-distance baseline, the five
+accepted cycles have reduced total allocation from 871.16 to 123.78 MiB/s
+(-85.8%), client-loop allocation from 604.97 to 69.11 MiB/s (-88.6%), and
+process use from 0.928 to 0.770 cores (-17.0%). GL render p95/p99 improved from
+9.535/11.539 to 8.289/9.090 ms with no accepted visual tradeoff.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -399,8 +444,11 @@ them:
    once then reduced client-loop allocation by 17.7% in a matched 40-chunk
    comparison. A fresh profile then attributed 32.73% of remaining allocation
    to the reflection-bound per-frame state/buffer/draw group; typed handles for
-   that measured set reduced presenter allocation by 35.6%. Indoor-shadow
-   flood workspace construction is now the largest known allocation target.
+   that measured set reduced presenter allocation by 35.6%. Reusing the
+   renderer's stable roof-coverage cache for diagnostic inventory then removed
+   all sampled indoor-flood construction and reduced presenter allocation by
+   another 35.7%. Direct-overlay coverage masks and world-face capture are now
+   the two largest measured project-owned allocation groups.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -482,6 +530,9 @@ Implementation checkpoint:
       wall-object renderer material metadata once at model preparation.
 - [x] Complete the fourth focused cycle: typed dispatch for the measured
       per-frame OpenGL state, buffer, pointer, and draw group.
+- [x] Complete the fifth focused cycle: reuse renderer-owned roof coverage for
+      per-frame diagnostic shadow inventory instead of rebuilding its indoor
+      flood workspace.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -518,3 +569,4 @@ Implementation checkpoint:
 | 2026-07-29 | `848a6d01d` | `matmeta` | Assign immutable material-family and glow metadata when game/wall models are prepared instead of reclassifying every resident-object frame. | Visual pass and complete maximum-distance capture. Against the nearly identical 40-chunk depth-pool workload, client allocation fell 17.7%, client CPU 5.1%, total allocation 9.4%, and process use 1.3%; zero resident triangles were unclassified. | Accept and checkpoint; profile the reduced client loop before selecting another temporary-allocation target. |
 | 2026-07-29 | `0d545c359` | `currentjfr` | Re-profile the reduced 34-chunk maximum-distance workload after the first three accepted cycles. | Complete JFR and visual pass. Remaining reflection wrappers owned 32.73% of allocation, indoor-shadow flood workspaces 22.69%, sprite keys 8.44%, world-face commands 4.97%, and sprite clip masks 3.67%. | Convert only the 16 measured per-frame OpenGL methods that account for 96.75% of the reflection group. |
 | 2026-07-29 | `98e3c278d` | `glhot` | Route the measured per-frame state, buffer, pointer, and draw wrappers through typed Java 8 method handles while retaining dynamic LWJGL discovery. | Complete maximum-distance capture and visual pass against matching 34-chunk geometry. Presenter allocation fell 35.6%, total allocation 30.2%, GC frequency 72.0%, and process use 6.3%; GL frame tails did not regress. | Accept and checkpoint; inspect indoor-shadow flood lifetime and reuse boundaries as the next ranked target. |
+| 2026-07-29 | `cac788267` | `shadowcache` | Reuse renderer-owned roof coverage for diagnostic shadow inventory and the optional inventory overlay instead of reconstructing the indoor flood workspace per frame. | Exact 34-chunk geometry and shadow classifications; visual pass. Presenter allocation fell 35.7%, total allocation 19.9%, presenter CPU 9.5%, and world p95 10.6%. JFR sampled zero indoor-flood or roof-coverage construction bytes versus 5,752.58 MiB previously. | Accept and checkpoint; audit direct-overlay coverage-mask lifetime before changing its representation. |
