@@ -1,7 +1,8 @@
 # Renderer Performance Investigation Plan
 
 Status: active investigation. Baseline instrumentation is implemented and
-guard-tested; controlled current-branch baseline collection is underway.
+guard-tested; controlled current-branch baseline collection and profile
+attribution are underway.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -147,6 +148,31 @@ nevertheless remained effectively identical to idle at
 object reuploads being independent of camera movement, but maximum-distance
 idle and camera phases are required before ranking heavy-view draw cost.
 
+The maximum-distance pair in
+`session-20260728-213204-1286508`, checkpoint `cbfe7ece3b`, removes that
+configuration ambiguity. Both `dense-wide-idle` and `dense-wide-camera`
+recorded zoom setting `900` (the allowed maximum), effective zoom `2400`,
+40-tile draw distance, 28-tile fog start, and fog enabled. The owner considered
+any visible stutter negligible. Wide idle ran for 153.0 seconds: OpenGL render
+p95/p99 was 9.535/11.539 ms, OpenGL world was 7.207/8.440 ms, process use was
+0.928 cores, and Java-thread allocation was 871.16 MiB/s. Wide camera motion
+ran for 80.4 seconds: OpenGL render was 9.364/11.277 ms, OpenGL world was
+7.161/7.568 ms, process use was 0.893 cores, and allocation was
+865.99 MiB/s.
+
+Compared with default-view `dense-idle`, maximum-distance idle did not
+materially increase resident OpenGL work: upload remained about 1.47 ms p95,
+the renderer still requested 34 chunks and reuploaded about 0.72
+animated-object chunks per frame, and OpenGL world p95 was slightly lower.
+Instead, client-side scene p95 rose from 1.592 to 3.316 ms, culling p95 from
+0.356 to 0.859 ms, client-loop CPU from 0.150 to 0.231 cores, client-loop
+allocation from 341.72 to 604.97 MiB/s, and total sampled allocation from
+653.16 to 871.16 MiB/s. Wide camera motion was marginally cheaper than wide
+idle because it culled more of the resident scene; there is no measured
+rotation-specific penalty. This ranks allocation-heavy scene preparation and
+culling ahead of GPU/world drawing for the next profile, while the steady
+animated-object reupload remains an independent secondary target.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -204,16 +230,18 @@ when they simplify ownership or remove known pathological tails.
 These remain hypotheses until controlled measurements and profiles confirm
 them:
 
-1. The expanded resident scene introduced by the layered loader increases
-   per-frame chunk enumeration, triangle submission, and draw-call pressure.
+1. Maximum-distance rendering increases client-side scene preparation,
+   culling, and allocation substantially more than resident OpenGL drawing.
+   Allocation-stack attribution is required before selecting a code change.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
 3. Resident draw submission may be CPU-bound, GPU-bound, or both. Wall-clock
    Java timing alone cannot distinguish submission overhead from driver/GPU
    waiting.
-4. Per-frame temporary allocations may explain frequent young collections
-   even though measured GC pause share is currently small.
+4. Per-frame temporary allocations drive frequent young collections. GC pause
+   share remained tolerable in the accepted stress pass, but wide idle reached
+   roughly 871 MiB/s sampled allocation and about 4.2 collections/second.
 5. Region/layer changes can still create tail latency through synchronous
    world-product construction and buffer uploads, but should be optimized
    separately from steady rendering.
@@ -262,7 +290,7 @@ Implementation checkpoint:
   - [x] Dense steady scene.
   - [x] Dense camera motion at a close/default-style view; useful for isolating
         animated chunk reuploads, but not accepted as the heavy-view row.
-  - [ ] Maximum-distance dense idle and camera motion.
+  - [x] Maximum-distance dense idle and camera motion.
   - [ ] Boundary traversal.
   - [ ] Hard relocation.
   - [ ] Entity/effect pressure.
@@ -299,8 +327,9 @@ Implementation checkpoint:
 | Date | Revision | Workload | Change | Result | Decision |
 | --- | --- | --- | --- | --- | --- |
 | 2026-07-28 | `0c8cecafc` | evidence audit | Compared existing renderer-only and layered-map diagnostic sessions; identified missing true frame tails, CPU ownership, allocation rates, GPU timing, and benchmark phases. | Measurement gaps prevent safe hotspot attribution. | Build Milestone 1 before renderer behavior changes. |
-| 2026-07-28 | pending checkpoint | diagnostic fixtures | Added bounded raw frame samples, process/thread CPU and allocations, named phases, structured GPU identity, analyzer support, and optional bounded JFR launch. | Client compiles and renderer diagnostic/analyzer/frame-capture/release-hotkey guards pass. | Checkpoint the measurement foundation, then collect a clean current-branch baseline. |
+| 2026-07-28 | `a0488f013` | diagnostic fixtures | Added bounded raw frame samples, process/thread CPU and allocations, named phases, structured GPU identity, analyzer support, and optional bounded JFR launch. | Client compiles and renderer diagnostic/analyzer/frame-capture/release-hotkey guards pass. | Collect a clean current-branch baseline. |
 | 2026-07-28 | `a0488f013` | `dense-idle` | Controlled 109.5-second Remaster idle in dense Seers scene. | Visual pass; GL render p95/p99 9.952/10.901 ms, world 7.417/7.895 ms, 0.826 CPU cores, 653.16 MiB/s diagnostic allocation; 0.72 of 34 requested chunks reuploaded per frame from animated-object signatures. | Profile animated resident rebuilds, renderer allocation, and draw submission before changing behavior. |
 | 2026-07-28 | `a0488f013` | `dense-camera` attempt 1 | Rotated camera for 271.8 seconds. | Markers captured, but the original 64 MiB structured-log budget had already stopped periodic telemetry; no valid frame/CPU comparison. | Increase the bounded full-session budget, expose truncation clearly, and repeat in a fresh session. |
 | 2026-07-28 | `8b14d42c4` | `dense-camera-r2` | Controlled 91.3-second camera rotation in dense Seers. | Complete capture and visual pass, but the owner identified a substantially zoomed-in view and camera zoom was not structured. The phase is not a valid heavy-view comparison. Chunk request/reupload/reuse still remained 34.0/0.716/33.284 per frame, effectively identical to idle. | Retain only the narrow animated-reupload finding; add camera-state telemetry and collect maximum-distance idle/camera phases before boundary work. |
-| 2026-07-28 | pending checkpoint | camera-state diagnostic guard | Added structured current/allowed zoom, base/effective zoom, pitch, rotation, first-person, fog mode, and effective draw/fog distances, with stable per-phase analyzer summaries. | Client compiles and diagnostic runtime/analyzer guards pass. | Checkpoint and collect the maximum-distance stress baseline before any boundary workload. |
+| 2026-07-28 | `cbfe7ece3` | camera-state diagnostic guard | Added structured current/allowed zoom, base/effective zoom, pitch, rotation, first-person, fog mode, and effective draw/fog distances, with stable per-phase analyzer summaries. | Client compiles and diagnostic runtime/analyzer guards pass. | Collect the maximum-distance stress baseline before any boundary workload. |
+| 2026-07-28 | `cbfe7ece3` | `dense-wide-idle`, `dense-wide-camera` | Captured maximum-distance dense idle and camera motion with structured proof of zoom `900`, effective zoom `2400`, and 40-tile draw distance. | Visual pass with negligible stutter. OpenGL world p95 stayed near 7.2 ms, but wide idle client scene/cull p95 rose to 3.316/0.859 ms and client allocation to 604.97 MiB/s. Camera motion was not more expensive than idle. | Profile allocation stacks in maximum-distance idle before changing behavior; retain animated-object reuploads as a separate target. |
