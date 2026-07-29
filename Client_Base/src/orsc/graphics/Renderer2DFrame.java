@@ -614,6 +614,8 @@ public final class Renderer2DFrame {
 		private final boolean mirrorX;
 		private final boolean requiresOrderedReplay;
 		private final int legacySpriteId;
+		private final int sceneSpriteAnchorIndex;
+		private final int sceneSpriteDrawOrder;
 		private final Phase phase;
 		private final int sequence;
 
@@ -793,6 +795,8 @@ public final class Renderer2DFrame {
 				mirrorX,
 				requiresOrderedReplay,
 				-1,
+				-1,
+				-1,
 				phase,
 				sequence);
 		}
@@ -818,6 +822,58 @@ public final class Renderer2DFrame {
 			boolean mirrorX,
 			boolean requiresOrderedReplay,
 			int legacySpriteId,
+			Phase phase,
+			int sequence) {
+			this(
+				sprite,
+				x,
+				y,
+				width,
+				height,
+				sourceX,
+				sourceY,
+				sourceWidth,
+				sourceHeight,
+				sourceStartX16,
+				sourceStartY16,
+				sourceScaleX16,
+				sourceScaleY16,
+				alpha,
+				transform,
+				topX16,
+				bottomX16,
+				mirrorX,
+				requiresOrderedReplay,
+				legacySpriteId,
+				-1,
+				-1,
+				phase,
+				sequence);
+		}
+
+		public SpriteCommand(
+			Sprite sprite,
+			int x,
+			int y,
+			int width,
+			int height,
+			int sourceX,
+			int sourceY,
+			int sourceWidth,
+			int sourceHeight,
+			int sourceStartX16,
+			int sourceStartY16,
+			int sourceScaleX16,
+			int sourceScaleY16,
+			int alpha,
+			RendererSpriteTransform transform,
+			int topX16,
+			int bottomX16,
+			boolean mirrorX,
+			boolean requiresOrderedReplay,
+			int legacySpriteId,
+			int sceneSpriteAnchorIndex,
+			int sceneSpriteDrawOrder,
 			Phase phase,
 			int sequence) {
 			if (sprite == null) {
@@ -854,6 +910,8 @@ public final class Renderer2DFrame {
 			this.mirrorX = mirrorX;
 			this.requiresOrderedReplay = requiresOrderedReplay;
 			this.legacySpriteId = legacySpriteId;
+			this.sceneSpriteAnchorIndex = sceneSpriteAnchorIndex;
+			this.sceneSpriteDrawOrder = sceneSpriteDrawOrder;
 			this.phase = phase == null ? Phase.UNKNOWN : phase;
 			this.sequence = sequence;
 		}
@@ -936,6 +994,14 @@ public final class Renderer2DFrame {
 
 		public int getLegacySpriteId() {
 			return legacySpriteId;
+		}
+
+		public int getSceneSpriteAnchorIndex() {
+			return sceneSpriteAnchorIndex;
+		}
+
+		public int getSceneSpriteDrawOrder() {
+			return sceneSpriteDrawOrder;
 		}
 
 		public Phase getPhase() {

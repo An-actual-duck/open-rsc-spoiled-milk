@@ -19,7 +19,11 @@ final class WorldSpriteCommand {
 		this.command = command;
 		this.anchor = anchor;
 		this.anchorMatch = anchorMatch == null ? WorldSpriteAnchorMatch.unmatched() : anchorMatch;
-		this.legacyDrawOrder = anchor == null ? Integer.MAX_VALUE : anchor.getLegacyDrawOrder();
+		this.legacyDrawOrder = anchor != null
+			? anchor.getLegacyDrawOrder()
+			: command != null && command.getSceneSpriteDrawOrder() >= 0
+				? command.getSceneSpriteDrawOrder()
+				: Integer.MAX_VALUE;
 		Sprite sprite = command == null ? null : command.getSprite();
 		this.sourceCropped = command != null
 			&& sprite != null

@@ -144,7 +144,7 @@ public final class Renderer3DFrame {
 		}
 	}
 
-	void addSpriteAnchor(
+	int addSpriteAnchor(
 		int faceId,
 		int spriteId,
 		int pickIndex,
@@ -162,6 +162,7 @@ public final class Renderer3DFrame {
 		int scale,
 		int horizontalSkew,
 		boolean pickable) {
+		int anchorIndex = this.spriteAnchors.size();
 		this.spriteAnchors.add(new SpriteAnchor(
 			faceId,
 			spriteId,
@@ -180,6 +181,7 @@ public final class Renderer3DFrame {
 			scale,
 			horizontalSkew,
 			pickable));
+		return anchorIndex;
 	}
 
 	void addSpriteSubmission(

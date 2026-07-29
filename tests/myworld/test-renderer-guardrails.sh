@@ -38,6 +38,7 @@ renderer_tests=(
   test-renderer-v2-options-cleanup.py
   test-renderer-v2-phased-overlay.py
   test-renderer-v2-shadow-inventory-cache.py
+  test-renderer-v2-sprite-ownership.py
   test-renderer-v2-world-geometry.py
 )
 

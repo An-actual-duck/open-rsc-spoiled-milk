@@ -3082,12 +3082,14 @@ public final class Scene {
 						if (var2.facePickIndex != null && var3 >= 0 && var3 < var2.facePickIndex.length) {
 							spritePickIndex = var2.facePickIndex[var3];
 						}
+						int spriteDrawOrder = legacySceneDrawOrder++;
+						int spriteAnchorIndex = -1;
 						if (geometryFrame != null) {
-							geometryFrame.addSpriteAnchor(
+							spriteAnchorIndex = geometryFrame.addSpriteAnchor(
 								var3,
 								this.m_gb[var3],
 								spritePickIndex,
-								legacySceneDrawOrder,
+								spriteDrawOrder,
 								var25.m_t,
 								var2.vertXRot[var12],
 								var2.vertYRot[var12],
@@ -3102,9 +3104,17 @@ public final class Scene {
 								var19,
 								!var2.m_db && var2.m_zb[var3] == 0);
 						}
-						legacySceneDrawOrder++;
-						this.graphics.drawEntity(this.m_gb[var3], var20 + this.m_Zb, var21, var28, var17,
-							spriteScale, var19, spritePickIndex);
+						this.graphics.drawSceneEntity(
+							this.m_gb[var3],
+							var20 + this.m_Zb,
+							var21,
+							var28,
+							var17,
+							spriteScale,
+							var19,
+							spritePickIndex,
+							spriteAnchorIndex,
+							spriteDrawOrder);
 						if (this.m_K) {
 							var20 += (this.m_Q[var3] << this.rot1024_vp_src) / var15;
 							if (var21 <= this.m_Wb && var21 + var17 >= this.m_Wb && var20 <= this.m_j

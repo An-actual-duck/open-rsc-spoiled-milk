@@ -544,7 +544,8 @@ final class OpenGLFrameCapture {
 		PrintWriter writer = new PrintWriter(new File(directory, "sprite-commands.tsv"));
 		try {
 			writer.println(
-				"index\tsequence\tphase\tlegacySpriteId\tlegacyEntity\trequiresOrderedReplay"
+				"index\tsequence\tphase\tlegacySpriteId\tsceneSpriteAnchorIndex\tsceneSpriteDrawOrder"
+					+ "\tlegacyEntity\trequiresOrderedReplay"
 					+ "\tx\ty\twidth\theight\ttopX16\tbottomX16\talpha"
 					+ "\tsourceX\tsourceY\tsourceWidth\tsourceHeight"
 					+ "\tspriteWidth\tspriteHeight\tmirrorX");
@@ -559,6 +560,8 @@ final class OpenGLFrameCapture {
 					+ "\t" + command.getSequence()
 					+ "\t" + command.getPhase()
 					+ "\t" + command.getLegacySpriteId()
+					+ "\t" + command.getSceneSpriteAnchorIndex()
+					+ "\t" + command.getSceneSpriteDrawOrder()
 					+ "\t" + isLegacyEntitySpriteId(command.getLegacySpriteId())
 					+ "\t" + command.requiresOrderedReplay()
 					+ "\t" + command.getX()
@@ -585,7 +588,8 @@ final class OpenGLFrameCapture {
 		PrintWriter writer = new PrintWriter(new File(directory, "world-sprite-commands.tsv"));
 		try {
 			writer.println(
-				"index\tsequence\tphase\tlegacySpriteId\tworldSpriteKind\tanchorMatchMode\tanchorMatchScore"
+				"index\tsequence\tphase\tlegacySpriteId\tsceneSpriteAnchorIndex\tsceneSpriteDrawOrder"
+					+ "\tworldSpriteKind\tanchorMatchMode\tanchorMatchScore"
 					+ "\tanchorFaceId\tanchorLegacyDrawOrder\tanchorAverageDepth\tanchorCameraZ\tdepthOwned"
 					+ "\tx\ty\twidth\theight\ttopX16\tbottomX16\talpha"
 					+ "\tsourceX\tsourceY\tsourceWidth\tsourceHeight\tspriteWidth\tspriteHeight"
@@ -605,6 +609,8 @@ final class OpenGLFrameCapture {
 					+ "\t" + command.getSequence()
 					+ "\t" + command.getPhase()
 					+ "\t" + command.getLegacySpriteId()
+					+ "\t" + command.getSceneSpriteAnchorIndex()
+					+ "\t" + command.getSceneSpriteDrawOrder()
 					+ "\t" + worldSpriteKind(command)
 					+ "\t" + worldCommand.anchorMatch.mode
 					+ "\t" + worldCommand.anchorMatch.score
@@ -640,7 +646,8 @@ final class OpenGLFrameCapture {
 		try {
 			writer.println(
 				"index\tkind\tlegacyDrawOrder\tsequence\tminExclusiveOrder\tmaxExclusiveOrder"
-					+ "\tfrontOccluderFaces\tlegacySpriteId\tworldSpriteKind\tanchorMatchMode\tanchorFaceId"
+					+ "\tfrontOccluderFaces\tlegacySpriteId\tsceneSpriteAnchorIndex\tsceneSpriteDrawOrder"
+					+ "\tworldSpriteKind\tanchorMatchMode\tanchorFaceId"
 					+ "\tsourceCropped\tmirrorX\tskewed");
 			if (frame.renderer2DFrame == null || presenter == null) {
 				return;
@@ -662,6 +669,8 @@ final class OpenGLFrameCapture {
 					+ "\t" + emptyIfUnset(sceneCommand.maxExclusiveOrder, Integer.MAX_VALUE)
 					+ "\t" + sceneCommand.frontOccluderFaceKeys.size()
 					+ "\t" + (spriteCommand == null ? "" : String.valueOf(spriteCommand.getLegacySpriteId()))
+					+ "\t" + (spriteCommand == null ? "" : String.valueOf(spriteCommand.getSceneSpriteAnchorIndex()))
+					+ "\t" + (spriteCommand == null ? "" : String.valueOf(spriteCommand.getSceneSpriteDrawOrder()))
 					+ "\t" + (spriteCommand == null ? "" : worldSpriteKind(spriteCommand))
 					+ "\t" + (worldCommand == null ? "" : worldCommand.anchorMatch.mode)
 					+ "\t" + (anchor == null ? "" : String.valueOf(anchor.getFaceId()))

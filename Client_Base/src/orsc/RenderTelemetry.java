@@ -265,6 +265,9 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldSpriteAnchorStats = new CounterStats();
 	private static final CounterStats openGLWorldSpriteMatchedStats = new CounterStats();
 	private static final CounterStats openGLWorldSpriteDrawnStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteOwnerAnchorStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteLegacyFallbackStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteUnmatchedStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityConsideredStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityDrawnStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityCulledStats = new CounterStats();
@@ -703,6 +706,14 @@ public final class RenderTelemetry {
 				+ formatCount(openGLWorldMaterialOreStats.recentAverage()) + "/"
 				+ formatCount(openGLWorldMaterialEmissiveStats.recentAverage()) + "/"
 				+ formatCount(openGLWorldMaterialEffectStats.recentAverage());
+		}
+	}
+
+	public static String worldSpriteOwnershipSummary() {
+		synchronized (RenderTelemetry.class) {
+			return formatCount(openGLWorldSpriteOwnerAnchorStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldSpriteLegacyFallbackStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldSpriteUnmatchedStats.recentAverage());
 		}
 	}
 
@@ -1145,6 +1156,21 @@ public final class RenderTelemetry {
 			openGLWorldEntityConsideredStats.record(anchors);
 			openGLWorldEntityDrawnStats.record(drawn);
 			openGLWorldEntityCulledStats.record(Math.max(0, anchors - drawn));
+		}
+	}
+
+	static void recordOpenGLWorldSpriteOwnershipFrame(
+		int ownerAnchors,
+		int legacyFallbacks,
+		int unmatched) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			openGLWorldSpriteOwnerAnchorStats.record(ownerAnchors);
+			openGLWorldSpriteLegacyFallbackStats.record(legacyFallbacks);
+			openGLWorldSpriteUnmatchedStats.record(unmatched);
 		}
 	}
 
@@ -1895,6 +1921,12 @@ public final class RenderTelemetry {
 					openGLWorldEntityDrawnStats,
 					openGLWorldEntityCulledStats,
 					false));
+
+		System.out.println(
+			"[renderer-v2 telemetry] composite sprite ownership avg: exact="
+				+ formatCount(openGLWorldSpriteOwnerAnchorStats.average())
+				+ " fallback=" + formatCount(openGLWorldSpriteLegacyFallbackStats.average())
+				+ " unmatched=" + formatCount(openGLWorldSpriteUnmatchedStats.average()));
 
 		System.out.println(
 			"[renderer-v2 telemetry] presentation avg ms: setImage=" + formatMillis(setGameImageStats.average())
@@ -2910,6 +2942,9 @@ public final class RenderTelemetry {
 			openGLWorldSpriteAnchorStats,
 			openGLWorldSpriteMatchedStats,
 			openGLWorldSpriteDrawnStats,
+			openGLWorldSpriteOwnerAnchorStats,
+			openGLWorldSpriteLegacyFallbackStats,
+			openGLWorldSpriteUnmatchedStats,
 			openGLWorldEntityConsideredStats,
 			openGLWorldEntityDrawnStats,
 			openGLWorldEntityCulledStats

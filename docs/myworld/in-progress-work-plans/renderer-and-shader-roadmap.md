@@ -509,7 +509,14 @@ come from one of these areas unless a concrete shadow regression appears:
   metadata, cheaper rebuilds, and broader receivers only after a deliberate
   decision to reopen shadows.
 - Entity sprites: visually much better than earlier alpha work, but still an
-  important modernization target because sprites are central to Classic.
+  important modernization target because sprites are central to Classic. The
+  first scene/entity ownership slice now carries each captured multipart layer's
+  exact frame-local anchor index and legacy draw order into the composite
+  renderer. Constant-time validated ownership is preferred, the old
+  screen-bound matcher remains only as a compatibility fallback, and F6 /
+  structured captures report exact/fallback/unmatched counts. Private visual
+  and entity-pressure validation is still required before this slice is
+  accepted.
 - Quality settings: presets exist, but settings do not yet consistently reduce
   underlying renderer work.
 - Tooling: F6 telemetry is good for live diagnosis, but capture replay and
@@ -518,8 +525,9 @@ come from one of these areas unless a concrete shadow regression appears:
   `LEGACY BRIDGE` / `RENDERER-V2 OWNER` labels are in place. Pure composite
   scene-command building, camera-space world-sprite quad submission,
   world-sprite draw orchestration, and command-sized sprite texture building
-  now live outside the presenter. This is a good stopping point for the first
-  refactor pass before returning to renderer optimization.
+  now live outside the presenter. The exact sprite-owner link is the first
+  concrete seam across that split; later slices can replace legacy capture
+  inputs without changing the proven depth-owned draw path all at once.
 
 ## Recommended Near-Term Order
 
@@ -541,12 +549,14 @@ come from one of these areas unless a concrete shadow regression appears:
 5. Treat the 16-cycle steady-state allocation campaign as complete. Preserve
    its exact maximum-distance control and re-profile only when selecting a new
    architecture target or investigating a real regression.
-6. Make the next broad renderer-performance swing the explicit renderer-v2
-   scene/entity boundary. Move players, NPCs, ground items, projectiles, and
-   effects from legacy screen-space command reconstruction toward direct
-   world-space inputs, persistent texture ownership, ordered batching, and
-   culling. Retire matching legacy scene sort/rotation/removal and capture work
-   incrementally as parity is proven.
+6. Continue the explicit renderer-v2 scene/entity boundary. The first slice
+   now preserves exact anchor ownership through the legacy capture stream;
+   validate zero fallback/unmatched commands under dense actors, combat,
+   ground items, and effects. Then move players, NPCs, ground items,
+   projectiles, and effects from legacy screen-space command reconstruction
+   toward direct world-space inputs, parity-complete persistent texture
+   ownership, ordered batching, and culling. Retire matching legacy scene
+   sort/rotation/removal and capture work incrementally as parity is proven.
 7. Turn quality settings into real work culling: entity distance, draw distance,
    roof visibility, sprite/effect distance, and weak-hardware presets should
    reduce built/submitted/drawn work.

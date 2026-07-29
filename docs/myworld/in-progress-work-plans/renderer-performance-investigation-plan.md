@@ -6,9 +6,11 @@ attribution are underway, and the first sixteen focused optimizations have
 been accepted. Exact object-chunk builder sizing is the fifteenth accepted
 optimization, and exact typed dispatch for the remaining measured OpenGL
 reflection wrappers is the sixteenth. The steady maximum-distance endpoint is
-now at the diminishing-returns gate for allocation-only cleanup; the next
-default direction is a larger renderer ownership swing, not an unprofiled
-seventeenth micro-optimization.
+now at the diminishing-returns gate for allocation-only cleanup. The first
+scene/entity ownership slice is implemented and guard-tested: captured sprite
+layers retain their exact renderer anchor and draw order instead of
+rediscovering them through screen-bound heuristics. It awaits private visual
+and diagnostic comparison before acceptance.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -1000,6 +1002,68 @@ route as the steady-state control and add a repeatable entity/effect-pressure
 row. Boundary traversal and hard relocation remain separate world-streaming
 workloads; they should not be mixed into steady renderer comparisons.
 
+### Scene/Entity Ownership Audit And First Slice
+
+The current entity path is renderer-owned only at its final draw:
+
+1. The client adds players, NPCs, ground items, projectiles, and effects to
+   the legacy sprite model and parallel metadata arrays.
+2. `Scene` rotates that sprite model, exports renderer-v2 sprite submissions,
+   participates in the legacy scene sort, and creates a projected
+   `SpriteAnchor` for each sorted sprite face.
+3. `GraphicsController.drawEntity` calls the legacy player/NPC/item drawing
+   routines. Multipart characters become several captured 2D sprite commands.
+4. Until this slice, each command retained the broad legacy sprite ID but lost
+   the exact sprite face that produced it. The composite builder scanned all
+   anchors and scored ID, screen bounds, center, and size to recover an owner.
+5. The presenter groups commands that resolve to the same anchor, composites
+   character layers into a command-sized CPU texture, uploads it to the
+   dynamic atlas, and draws a camera-space depth-tested quad.
+
+That dependency graph identifies several different costs which must not be
+conflated: legacy sprite-model rotation/sort, 2D animation-layer command
+generation, owner recovery, composite pixel construction, dynamic texture
+upload, and quad submission. The post-cycle-14 JFR profile measured composite
+scene construction and composite character textures as material allocation
+groups, but it did not prove that either should be cached blindly. A previous
+persistent transformed-sprite experiment produced incorrect combat/body
+layers, so texture reuse must wait for a parity-complete key and lifecycle.
+
+The first safe slice preserves ownership without changing pixels, animation,
+ordering, depth, or fallback behavior:
+
+- `Renderer3DFrame.addSpriteAnchor` returns its frame-local anchor index.
+- `Scene` passes that index and the exact legacy draw order through a scoped
+  `drawSceneEntity` boundary.
+- Every captured character/item layer retains the same owner index and draw
+  order.
+- Composite assembly resolves the owner with one indexed lookup and validates
+  sprite ID plus draw order. Invalid or older commands still use the retained
+  legacy screen-bound heuristic.
+- F6 reports recent `owner exact/fallback/unmatched`; structured telemetry
+  records the three counters independently; `sprite-commands.tsv`,
+  `world-sprite-commands.tsv`, and `scene-commands.tsv` expose owner index and
+  draw order. Exact matches use the stable mode `owner-anchor`.
+- Focused Java 8 coverage uses two intentionally identical and overlapping
+  anchors to prove the explicit owner wins, then corrupts the owner metadata
+  to prove the compatibility fallback remains available.
+
+This is an ownership foundation, not yet direct simulation-to-renderer entity
+submission. The intended next slices are:
+
+1. prove exact ownership under real dense entity, combat, ground-item, and
+   teleport-bubble workloads;
+2. make one renderer entity snapshot the source for anchor, animation-frame,
+   alpha, mirror, skew, pick, and effect metadata while legacy capture remains
+   the pixel/parity fallback;
+3. remove the corresponding legacy owner-recovery and sprite-model work only
+   after captures prove the new contract;
+4. introduce persistent sprite-frame/character texture ownership only with
+   keys that include every appearance, animation, combat, direction, color,
+   skew, crop, and alpha input;
+5. split entity bodies, front occluders, effects/hit splats/nameplates, and UI
+   into explicit renderer passes.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -1018,7 +1082,13 @@ play and the latter is the renderer stress case.
 4. **Hard relocation** — repeat a fixed teleport and layer-transition route
    three times, including a return to the original scene.
 5. **Entity/effect pressure** — exercise a repeatable area or fixture with
-   many visible actors, world sprites, projectiles, and UI overlays.
+   many visible actors, multipart player/NPC animations, ground items,
+   projectiles or combat effects, and UI overlays. Record the exact route,
+   actor count, action sequence, and camera state. For the first ownership
+   slice, every eligible captured world-sprite command should report
+   `owner-anchor`; `fallback` and `unmatched` should remain zero. A separate
+   `Ctrl+F9` burst should verify owner index/draw order agreement and character
+   layer composition after the non-capture timing phase.
 
 The initial controlled baseline should use Remaster defaults because that path
 exercises the full accepted visual stack. Classic and Custom become separate
@@ -1117,6 +1187,12 @@ them:
 6. Region/layer changes can still create tail latency through synchronous
    world-product construction and buffer uploads, but should be optimized
    separately from steady rendering.
+7. Exact frame-local sprite ownership should eliminate the default composite
+   path's repeated anchor scans without affecting visuals. Its likely
+   steady-state win is smaller than the later removal of legacy sprite-model,
+   capture, composite-texture, and upload work; the owner/fallback counters and
+   entity-pressure profile will determine the next boundary rather than an
+   assumed speedup.
 
 ## Milestones
 
@@ -1217,6 +1293,27 @@ Implementation checkpoint:
 - [ ] Record accepted and rejected experiments in the ledger below.
 - [ ] Create pushed checkpoints at useful accepted milestones while keeping
       this investigation active.
+
+### Milestone 3A: Scene/Entity Ownership Migration
+
+- [x] Audit the complete simulation-to-legacy-scene-to-OpenGL entity and
+      effect dependency graph.
+- [x] Preserve the exact frame-local sprite-anchor owner and legacy draw order
+      through multipart 2D command capture.
+- [x] Prefer validated constant-time owner lookup while retaining the legacy
+      heuristic only as a compatibility fallback.
+- [x] Add stable F6, structured telemetry, and capture fields for
+      exact/fallback/unmatched ownership.
+- [x] Add focused runtime coverage for ambiguous overlapping anchors, exact
+      ownership, ordering, and compatibility fallback.
+- [ ] Run the maximum-distance steady control and the entity/effect-pressure
+      visual/capture workload; require zero fallback/unmatched commands before
+      accepting this slice.
+- [ ] Profile the entity/effect-pressure row and attribute legacy sprite-model,
+      2D capture, composite texture, atlas upload, and draw submission
+      separately.
+- [ ] Select and implement the next narrow direct entity-snapshot boundary
+      from that profile.
 
 ### Milestone 4: Broader Performance Matrix
 

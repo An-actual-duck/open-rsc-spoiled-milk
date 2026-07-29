@@ -2181,6 +2181,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 		List<OpenGLCompositeSceneCommand> compositeSceneCommands =
 			buildOpenGLCompositeSceneCommands(frame, commands);
+		recordOpenGLCompositeSpriteOwnership(compositeSceneCommands);
 		for (OpenGLCompositeSceneCommand sceneCommand : compositeSceneCommands) {
 			WorldSpriteCommand worldSpriteCommand = sceneCommand.worldSpriteCommand;
 			Renderer2DFrame.SpriteCommand command = worldSpriteCommand.command;
@@ -3251,6 +3252,30 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		Frame frame,
 		Renderer2DFrame.SpriteCommand[] commands) {
 		return OpenGLCompositeSceneBuilder.buildSceneCommands(frame, commands);
+	}
+
+	private void recordOpenGLCompositeSpriteOwnership(
+		List<OpenGLCompositeSceneCommand> sceneCommands) {
+		int ownerAnchors = 0;
+		int legacyFallbacks = 0;
+		int unmatched = 0;
+		if (sceneCommands != null) {
+			for (OpenGLCompositeSceneCommand sceneCommand : sceneCommands) {
+				WorldSpriteCommand command =
+					sceneCommand == null ? null : sceneCommand.worldSpriteCommand;
+				if (command == null || command.anchor == null) {
+					unmatched++;
+				} else if ("owner-anchor".equals(command.anchorMatch.mode)) {
+					ownerAnchors++;
+				} else {
+					legacyFallbacks++;
+				}
+			}
+		}
+		RenderTelemetry.recordOpenGLWorldSpriteOwnershipFrame(
+			ownerAnchors,
+			legacyFallbacks,
+			unmatched);
 	}
 
 	private WorldSpriteCommand buildOpenGLCompositeWorldSpriteCommand(

@@ -294,7 +294,7 @@ def main() -> None:
     require(geometry_frame, "void recordLegacyClippedGeometry(", "face clipped geometry writer")
     require(geometry_frame, "public int getLegacyDrawOrder()", "face legacy draw-order accessor")
     require(geometry_frame, "public static final class SpriteAnchor", "sprite anchor command")
-    require(geometry_frame, "void addSpriteAnchor(", "sprite anchor writer")
+    require(geometry_frame, "int addSpriteAnchor(", "indexed sprite anchor writer")
     require(geometry_frame, "public int getSpriteAnchorCount()", "sprite anchor count accessor")
     require(geometry_frame, "public List<SpriteAnchor> getSpriteAnchors()", "sprite anchor list accessor")
     require(geometry_frame, "private final int legacyDrawOrder;", "sprite anchor legacy draw-order storage")

@@ -87,6 +87,8 @@ public class GraphicsController {
 	private Renderer2DFrame.Phase renderer2DPhase = Renderer2DFrame.Phase.UI_OVERLAY;
 	private int renderer2DCommandSequence;
 	private int renderer2DLegacySpriteId = -1;
+	private int renderer2DSceneSpriteAnchorIndex = -1;
+	private int renderer2DSceneSpriteDrawOrder = -1;
 	private boolean renderer2DCommandOverflowLogged;
 	private int renderer2DCaptureAttempts;
 	private int renderer2DCaptureAccepted;
@@ -846,6 +848,8 @@ public class GraphicsController {
 				false,
 				false,
 				renderer2DLegacySpriteId,
+				renderer2DSceneSpriteAnchorIndex,
+				renderer2DSceneSpriteDrawOrder,
 				renderer2DPhase,
 				renderer2DCommandSequence++));
 		renderer2DCaptureAccepted++;
@@ -1027,6 +1031,8 @@ public class GraphicsController {
 				mirrorX,
 				mirrorX || destColumnSkewPerRow != 0,
 				renderer2DLegacySpriteId,
+				renderer2DSceneSpriteAnchorIndex,
+				renderer2DSceneSpriteDrawOrder,
 				renderer2DPhase,
 				renderer2DCommandSequence++));
 		renderer2DCaptureAccepted++;
@@ -1540,6 +1546,37 @@ public class GraphicsController {
 
 	public void drawEntity(int index, int x, int y, int width, int height, int var1, int var8) {
 		drawEntity(index, x, y, width, height, var1, var8, -1);
+	}
+
+	public final void drawSceneEntity(
+		int index,
+		int x,
+		int y,
+		int width,
+		int height,
+		int overlayMovement,
+		int topPixelSkew,
+		int scenePickIndex,
+		int sceneSpriteAnchorIndex,
+		int sceneSpriteDrawOrder) {
+		int previousAnchorIndex = renderer2DSceneSpriteAnchorIndex;
+		int previousDrawOrder = renderer2DSceneSpriteDrawOrder;
+		renderer2DSceneSpriteAnchorIndex = sceneSpriteAnchorIndex;
+		renderer2DSceneSpriteDrawOrder = sceneSpriteDrawOrder;
+		try {
+			drawEntity(
+				index,
+				x,
+				y,
+				width,
+				height,
+				overlayMovement,
+				topPixelSkew,
+				scenePickIndex);
+		} finally {
+			renderer2DSceneSpriteAnchorIndex = previousAnchorIndex;
+			renderer2DSceneSpriteDrawOrder = previousDrawOrder;
+		}
 	}
 
 	public void drawEntity(int index, int x, int y, int width, int height, int var1, int var8, int scenePickIndex) {

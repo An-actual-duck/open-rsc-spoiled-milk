@@ -104,6 +104,9 @@ final class OpenGLCompositeSceneBuilder {
 		if (frame == null || frame.renderer3DFrame == null || command == null || anchor == null) {
 			return WorldSpriteAnchorMatch.unmatched();
 		}
+		if (findOwnedSpriteAnchor(frame, command) == anchor) {
+			return new WorldSpriteAnchorMatch("owner-anchor", 0);
+		}
 		int strictScore = worldSpriteMatchScore(anchor, command, true);
 		if (strictScore != Integer.MAX_VALUE) {
 			return new WorldSpriteAnchorMatch("strict-id-bounds", strictScore);
@@ -308,6 +311,10 @@ final class OpenGLCompositeSceneBuilder {
 		if (frame == null || frame.renderer3DFrame == null || command == null) {
 			return null;
 		}
+		Renderer3DFrame.SpriteAnchor ownedAnchor = findOwnedSpriteAnchor(frame, command);
+		if (ownedAnchor != null) {
+			return ownedAnchor;
+		}
 		int legacySpriteId = command.getLegacySpriteId();
 		List<Renderer3DFrame.SpriteAnchor> anchors = frame.renderer3DFrame.getSpriteAnchors();
 		Renderer3DFrame.SpriteAnchor bestAnchor = null;
@@ -345,6 +352,28 @@ final class OpenGLCompositeSceneBuilder {
 			}
 		}
 		return null;
+	}
+
+	static Renderer3DFrame.SpriteAnchor findOwnedSpriteAnchor(
+		Frame frame,
+		Renderer2DFrame.SpriteCommand command) {
+		if (frame == null || frame.renderer3DFrame == null || command == null) {
+			return null;
+		}
+		int anchorIndex = command.getSceneSpriteAnchorIndex();
+		List<Renderer3DFrame.SpriteAnchor> anchors = frame.renderer3DFrame.getSpriteAnchors();
+		if (anchorIndex < 0 || anchorIndex >= anchors.size()) {
+			return null;
+		}
+		Renderer3DFrame.SpriteAnchor anchor = anchors.get(anchorIndex);
+		if (anchor == null
+			|| (command.getLegacySpriteId() >= 0
+				&& command.getLegacySpriteId() != anchor.getSpriteId())
+			|| (command.getSceneSpriteDrawOrder() >= 0
+				&& command.getSceneSpriteDrawOrder() != anchor.getLegacyDrawOrder())) {
+			return null;
+		}
+		return anchor;
 	}
 
 	private static boolean isFrontOccluderKind(Renderer3DModelKind kind) {

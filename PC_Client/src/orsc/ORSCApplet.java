@@ -1144,6 +1144,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ " | sprite cap/static/vis " + telemetry.spriteOverlayCapturedAverage
 					+ "/" + telemetry.spriteOverlayStaticReplayAverage
 					+ "/" + telemetry.spriteOverlayVisibleReplayAverage
+					+ " | owner exact/fallback/unmatched " + RenderTelemetry.worldSpriteOwnershipSummary()
 				: "",
 			layeredTerrainDeliveryLine,
 			sceneBaselineLines[0],

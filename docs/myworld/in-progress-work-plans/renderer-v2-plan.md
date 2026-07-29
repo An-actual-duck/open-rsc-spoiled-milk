@@ -1320,6 +1320,13 @@ they are not visual requirements for the baseline.
       that bind each entity/item sprite command to its renderer-v2 anchor,
       anchor-match diagnosis, legacy draw order, source crop, mirror, and skew
       state, and by capturing those commands in `world-sprite-commands.tsv`.
+- [x] Preserve the exact frame-local sprite-anchor index and legacy draw order
+      while `Scene` expands one entity into multipart 2D commands. Composite
+      assembly now uses a validated constant-time owner lookup and reports
+      `owner-anchor`; the older ID/screen-bounds matcher remains only for
+      invalid or compatibility commands. F6, structured telemetry, and all
+      sprite/scene capture tables expose exact/fallback/unmatched ownership for
+      the entity-pressure validation gate.
 - [x] Add the first live camera-space world-sprite depth path. It back-projects
       each existing command rectangle at the legacy sprite face's interpolated
       top/bottom camera depth, preserving exact screen framing and skew while
