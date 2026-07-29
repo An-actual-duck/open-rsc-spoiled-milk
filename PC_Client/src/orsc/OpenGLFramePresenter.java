@@ -20,6 +20,7 @@ import java.awt.Graphics2D;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -271,6 +272,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private int unitQuadIndexBufferId;
 	private int screenQuadVertexBufferId;
 	private FloatBuffer screenQuadUploadBuffer;
+	private boolean[] directOverlayCoverageMask;
 	private int legacySceneSpriteRestoreCommands;
 	private int legacySceneSpriteRestoreFallbacks;
 	private int legacySceneSpriteRestoreFallbackPixels;
@@ -3616,7 +3618,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				}
 
 				if (mask == null) {
-					mask = new boolean[sourceWidth * sourceHeight];
+					mask = acquireDirectOverlayCoverageMask(sourceWidth, sourceHeight);
 				}
 				long xDelta16 = (long) command.getBottomX16() - command.getTopX16();
 				for (int row = 0; row < height; row++) {
@@ -3670,6 +3672,17 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		return mask;
 	}
 
+	private boolean[] acquireDirectOverlayCoverageMask(int sourceWidth, int sourceHeight) {
+		int requiredPixels = sourceWidth * sourceHeight;
+		if (directOverlayCoverageMask == null
+			|| directOverlayCoverageMask.length < requiredPixels) {
+			directOverlayCoverageMask = new boolean[requiredPixels];
+		} else {
+			Arrays.fill(directOverlayCoverageMask, 0, requiredPixels, false);
+		}
+		return directOverlayCoverageMask;
+	}
+
 	private boolean[] markOverlayRectangle(
 		boolean[] mask,
 		int sourceWidth,
@@ -3689,7 +3702,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return mask;
 		}
 		if (mask == null) {
-			mask = new boolean[sourceWidth * sourceHeight];
+			mask = acquireDirectOverlayCoverageMask(sourceWidth, sourceHeight);
 		}
 		for (int row = top; row < bottom; row++) {
 			int offset = row * sourceWidth;

@@ -213,6 +213,35 @@ def main() -> None:
     )
     require(
         presenter,
+        "private boolean[] directOverlayCoverageMask;",
+        "OpenGL direct-overlay coverage owns reusable presenter scratch storage",
+    )
+    require(
+        presenter,
+        "private boolean[] acquireDirectOverlayCoverageMask(int sourceWidth, int sourceHeight)",
+        "OpenGL direct-overlay coverage has an explicit scratch acquisition boundary",
+    )
+    require(
+        presenter,
+        "Arrays.fill(directOverlayCoverageMask, 0, requiredPixels, false);",
+        "OpenGL direct-overlay coverage clears the active scratch range before reuse",
+    )
+    coverage_builder = presenter.split(
+        "private boolean[] buildOpenGLCompositeDirectOverlayCoverageMask(",
+        1,
+    )[1].split("\n\tprivate boolean[] markOverlayRectangle(", 1)[0]
+    require(
+        coverage_builder,
+        "acquireDirectOverlayCoverageMask(sourceWidth, sourceHeight)",
+        "OpenGL direct-overlay coverage reuses presenter scratch storage",
+    )
+    forbid(
+        coverage_builder,
+        "new boolean[sourceWidth * sourceHeight]",
+        "OpenGL direct-overlay coverage should not allocate a full-frame mask per frame",
+    )
+    require(
+        presenter,
         "|| isOpenGLCompositeWorldSpriteCommand(command)\n\t\t\t\t|| isOpenGLCompositeDirectSpriteCommand(command))",
         "OpenGL replacement composite keeps world sprites out of software-visible scene restore",
     )
