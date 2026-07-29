@@ -3,9 +3,10 @@
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
 attribution are underway, and the first fifteen focused optimizations have
-been accepted. Exact object-chunk builder sizing has now been accepted as the
-fifteenth optimization; remaining reflection wrappers and reduced
-object-chunk construction are the next independent allocation audits.
+been accepted. Exact object-chunk builder sizing is the fifteenth accepted
+optimization. A sixteenth candidate now routes the remaining reflection
+wrappers measured by the post-cycle-14 JFR profile through exact typed
+dispatch and is awaiting a fresh maximum-distance comparison.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -929,6 +930,23 @@ use from 0.928 to 0.414 cores (-55.3%), GL render p95/p99 from 9.535/11.539 to
 2.381/2.624 ms (-75.0%/-77.3%), and world p95/p99 from 7.207/8.440 to
 0.896/1.021 ms (-87.6%/-87.9%), without an accepted visual tradeoff.
 
+The cycle-16 candidate targets the independent reflection group retained by
+`post14jfr`: 344.78 weighted MiB, or 8.6% of all sampled allocation. The 16
+measured wrappers cover event polling, clear/state/matrix setup, texture
+activation and sub-image upload, immediate begin/end, and integer shader
+uniform dispatch. Each now uses the existing dynamically discovered Java 8
+`MethodHandle` path and an exact `invokeExact` signature. LWJGL remains
+dynamically loaded, call sites and render state are unchanged, and the
+existing exception propagation remains intact.
+
+The client compiles and the full renderer guardrail suite passes. A focused
+Java 8 fixture checks all 16 packaged LWJGL methods without creating an OpenGL
+context, proving the exact parameter and void-return types that each
+`invokeExact` call requires. Source guards also prevent these measured
+wrappers from silently returning to reflective varargs dispatch. This
+candidate requires a fresh `capacity15`-matched maximum-distance phase and
+owner visual pass before it can be accepted as cycle 16.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -1134,6 +1152,8 @@ Implementation checkpoint:
       inventory by exact lazy world and object-caster signatures.
 - [x] Complete the fifteenth focused cycle: pre-size all parallel object-chunk
       builders from exact face topology and visible material sides.
+- [ ] Complete the sixteenth focused cycle: route the remaining JFR-measured
+      OpenGL reflection wrappers through exact typed dispatch.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.

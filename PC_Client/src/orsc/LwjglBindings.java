@@ -38,7 +38,7 @@ final class LwjglBindings {
 	private final Method glfwShowWindow;
 	private final Method glfwHideWindow;
 	private final Method glfwWindowShouldClose;
-	private final Method glfwPollEvents;
+	private final MethodHandle glfwPollEvents;
 	private final Method glfwSwapBuffers;
 	private final Method glfwDestroyWindow;
 	private final Method glfwSetWindowSize;
@@ -72,40 +72,40 @@ final class LwjglBindings {
 	private final Method glfwGetMouseButton;
 	private final Method glfwGetKey;
 	private final Method createCapabilities;
-	private final Method glClearColor;
-	private final Method glClear;
+	private final MethodHandle glClearColor;
+	private final MethodHandle glClear;
 	private final Method glViewport;
 	private final MethodHandle glEnable;
 	private final MethodHandle glDisable;
 	private final Method glScissor;
 	private final Method glPushAttrib;
-	private final Method glPopAttrib;
+	private final MethodHandle glPopAttrib;
 	private final Method glPushClientAttrib;
 	private final Method glPopClientAttrib;
-	private final Method glPolygonOffset;
+	private final MethodHandle glPolygonOffset;
 	private final Method glPolygonMode;
 	private final Method glCullFace;
 	private final Method glGenTextures;
 	private final Method glDeleteTextures;
-	private final Method glActiveTexture;
+	private final MethodHandle glActiveTexture;
 	private final MethodHandle glBindTexture;
 	private final MethodHandle glTexParameteri;
 	private final Method glTexImage2D;
-	private final Method glTexSubImage2D;
+	private final MethodHandle glTexSubImage2D;
 	private final Method glReadPixels;
 	private final MethodHandle glBlendFunc;
-	private final Method glAlphaFunc;
-	private final Method glDepthMask;
+	private final MethodHandle glAlphaFunc;
+	private final MethodHandle glDepthMask;
 	private final Method glColorMask;
 	private final MethodHandle glColor4f;
 	private final Method glFogi;
 	private final Method glFogf;
 	private final Method glFogfv;
 	private final Method glGetString;
-	private final Method glMatrixMode;
-	private final Method glLoadIdentity;
-	private final Method glLoadMatrixf;
-	private final Method glOrtho;
+	private final MethodHandle glMatrixMode;
+	private final MethodHandle glLoadIdentity;
+	private final MethodHandle glLoadMatrixf;
+	private final MethodHandle glOrtho;
 	private final Method glGenBuffers;
 	private final Method glDeleteBuffers;
 	private final MethodHandle glBindBuffer;
@@ -117,8 +117,8 @@ final class LwjglBindings {
 	private final MethodHandle glColorPointer;
 	private final MethodHandle glTexCoordPointer;
 	private final MethodHandle glDrawElements;
-	private final Method glBegin;
-	private final Method glEnd;
+	private final MethodHandle glBegin;
+	private final MethodHandle glEnd;
 	private final Method glTexCoord2f;
 	private final MethodHandle glVertex3f;
 	private final Method glLineWidth;
@@ -136,7 +136,7 @@ final class LwjglBindings {
 	private final Method glGetProgramInfoLog;
 	private final Method glUseProgram;
 	private final Method glGetUniformLocation;
-	private final Method glUniform1i;
+	private final MethodHandle glUniform1i;
 	private final Method glUniform1f;
 	private final Method glUniformMatrix4fv;
 	private final MethodHandle glEnableVertexAttribArray;
@@ -266,7 +266,7 @@ final class LwjglBindings {
 		glfwShowWindow = method(glfwClass, "glfwShowWindow", long.class);
 		glfwHideWindow = method(glfwClass, "glfwHideWindow", long.class);
 		glfwWindowShouldClose = method(glfwClass, "glfwWindowShouldClose", long.class);
-		glfwPollEvents = method(glfwClass, "glfwPollEvents");
+		glfwPollEvents = methodHandle(glfwClass, "glfwPollEvents");
 		glfwSwapBuffers = method(glfwClass, "glfwSwapBuffers", long.class);
 		glfwDestroyWindow = method(glfwClass, "glfwDestroyWindow", long.class);
 		glfwSetWindowSize = method(glfwClass, "glfwSetWindowSize", long.class, int.class, int.class);
@@ -304,22 +304,23 @@ final class LwjglBindings {
 		glfwGetKey = method(glfwClass, "glfwGetKey", long.class, int.class);
 		createCapabilities = method(glClass, "createCapabilities");
 
-		glClearColor = method(gl11Class, "glClearColor", float.class, float.class, float.class, float.class);
-		glClear = method(gl11Class, "glClear", int.class);
+		glClearColor =
+			methodHandle(gl11Class, "glClearColor", float.class, float.class, float.class, float.class);
+		glClear = methodHandle(gl11Class, "glClear", int.class);
 		glViewport = method(gl11Class, "glViewport", int.class, int.class, int.class, int.class);
 		glEnable = methodHandle(gl11Class, "glEnable", int.class);
 		glDisable = methodHandle(gl11Class, "glDisable", int.class);
 		glScissor = method(gl11Class, "glScissor", int.class, int.class, int.class, int.class);
 		glPushAttrib = method(gl11Class, "glPushAttrib", int.class);
-		glPopAttrib = method(gl11Class, "glPopAttrib");
+		glPopAttrib = methodHandle(gl11Class, "glPopAttrib");
 		glPushClientAttrib = method(gl11Class, "glPushClientAttrib", int.class);
 		glPopClientAttrib = method(gl11Class, "glPopClientAttrib");
-		glPolygonOffset = method(gl11Class, "glPolygonOffset", float.class, float.class);
+		glPolygonOffset = methodHandle(gl11Class, "glPolygonOffset", float.class, float.class);
 		glPolygonMode = method(gl11Class, "glPolygonMode", int.class, int.class);
 		glCullFace = method(gl11Class, "glCullFace", int.class);
 		glGenTextures = method(gl11Class, "glGenTextures");
 		glDeleteTextures = method(gl11Class, "glDeleteTextures", int.class);
-		glActiveTexture = method(gl13Class, "glActiveTexture", int.class);
+		glActiveTexture = methodHandle(gl13Class, "glActiveTexture", int.class);
 		glBindTexture = methodHandle(gl11Class, "glBindTexture", int.class, int.class);
 		glTexParameteri = methodHandle(gl11Class, "glTexParameteri", int.class, int.class, int.class);
 		glTexImage2D = method(
@@ -334,7 +335,7 @@ final class LwjglBindings {
 			int.class,
 			int.class,
 			ByteBuffer.class);
-		glTexSubImage2D = method(
+		glTexSubImage2D = methodHandle(
 			gl11Class,
 			"glTexSubImage2D",
 			int.class,
@@ -357,8 +358,8 @@ final class LwjglBindings {
 			int.class,
 			ByteBuffer.class);
 		glBlendFunc = methodHandle(gl11Class, "glBlendFunc", int.class, int.class);
-		glAlphaFunc = method(gl11Class, "glAlphaFunc", int.class, float.class);
-		glDepthMask = method(gl11Class, "glDepthMask", boolean.class);
+		glAlphaFunc = methodHandle(gl11Class, "glAlphaFunc", int.class, float.class);
+		glDepthMask = methodHandle(gl11Class, "glDepthMask", boolean.class);
 		glColorMask = method(gl11Class, "glColorMask", boolean.class, boolean.class, boolean.class, boolean.class);
 		glColor4f =
 			methodHandle(gl11Class, "glColor4f", float.class, float.class, float.class, float.class);
@@ -366,10 +367,10 @@ final class LwjglBindings {
 		glFogf = method(gl11Class, "glFogf", int.class, float.class);
 		glFogfv = method(gl11Class, "glFogfv", int.class, FloatBuffer.class);
 		glGetString = method(gl11Class, "glGetString", int.class);
-		glMatrixMode = method(gl11Class, "glMatrixMode", int.class);
-		glLoadIdentity = method(gl11Class, "glLoadIdentity");
-		glLoadMatrixf = method(gl11Class, "glLoadMatrixf", FloatBuffer.class);
-		glOrtho = method(
+		glMatrixMode = methodHandle(gl11Class, "glMatrixMode", int.class);
+		glLoadIdentity = methodHandle(gl11Class, "glLoadIdentity");
+		glLoadMatrixf = methodHandle(gl11Class, "glLoadMatrixf", FloatBuffer.class);
+		glOrtho = methodHandle(
 			gl11Class,
 			"glOrtho",
 			double.class,
@@ -395,8 +396,8 @@ final class LwjglBindings {
 			methodHandle(gl11Class, "glTexCoordPointer", int.class, int.class, int.class, long.class);
 		glDrawElements =
 			methodHandle(gl11Class, "glDrawElements", int.class, int.class, int.class, long.class);
-		glBegin = method(gl11Class, "glBegin", int.class);
-		glEnd = method(gl11Class, "glEnd");
+		glBegin = methodHandle(gl11Class, "glBegin", int.class);
+		glEnd = methodHandle(gl11Class, "glEnd");
 		glTexCoord2f = method(gl11Class, "glTexCoord2f", float.class, float.class);
 		glVertex3f = methodHandle(gl11Class, "glVertex3f", float.class, float.class, float.class);
 		glLineWidth = method(gl11Class, "glLineWidth", float.class);
@@ -414,7 +415,7 @@ final class LwjglBindings {
 		glGetProgramInfoLog = method(gl20Class, "glGetProgramInfoLog", int.class);
 		glUseProgram = method(gl20Class, "glUseProgram", int.class);
 		glGetUniformLocation = method(gl20Class, "glGetUniformLocation", int.class, CharSequence.class);
-		glUniform1i = method(gl20Class, "glUniform1i", int.class, int.class);
+		glUniform1i = methodHandle(gl20Class, "glUniform1i", int.class, int.class);
 		glUniform1f = method(gl20Class, "glUniform1f", int.class, float.class);
 		glUniformMatrix4fv = method(gl20Class, "glUniformMatrix4fv", int.class, boolean.class, FloatBuffer.class);
 		glEnableVertexAttribArray = methodHandle(gl20Class, "glEnableVertexAttribArray", int.class);
@@ -552,7 +553,11 @@ final class LwjglBindings {
 	}
 
 	void glfwPollEvents() throws Exception {
-		invoke(glfwPollEvents);
+		try {
+			glfwPollEvents.invokeExact();
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glfwSwapBuffers(long window) throws Exception {
@@ -721,11 +726,19 @@ final class LwjglBindings {
 	}
 
 	void glClearColor(float red, float green, float blue, float alpha) throws Exception {
-		invoke(glClearColor, red, green, blue, alpha);
+		try {
+			glClearColor.invokeExact(red, green, blue, alpha);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glClear(int mask) throws Exception {
-		invoke(glClear, mask);
+		try {
+			glClear.invokeExact(mask);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glViewport(int x, int y, int width, int height) throws Exception {
@@ -757,7 +770,11 @@ final class LwjglBindings {
 	}
 
 	void glPopAttrib() throws Exception {
-		invoke(glPopAttrib);
+		try {
+			glPopAttrib.invokeExact();
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glPushClientAttrib(int mask) throws Exception {
@@ -769,7 +786,11 @@ final class LwjglBindings {
 	}
 
 	void glPolygonOffset(float factor, float units) throws Exception {
-		invoke(glPolygonOffset, factor, units);
+		try {
+			glPolygonOffset.invokeExact(factor, units);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glPolygonMode(int face, int mode) throws Exception {
@@ -791,7 +812,11 @@ final class LwjglBindings {
 	}
 
 	void glActiveTexture(int textureUnit) throws Exception {
-		invoke(glActiveTexture, textureUnit);
+		try {
+			glActiveTexture.invokeExact(textureUnit);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glBindTexture(int target, int texture) throws Exception {
@@ -833,7 +858,20 @@ final class LwjglBindings {
 		int format,
 		int type,
 		ByteBuffer pixels) throws Exception {
-		invoke(glTexSubImage2D, target, level, xOffset, yOffset, width, height, format, type, pixels);
+		try {
+			glTexSubImage2D.invokeExact(
+				target,
+				level,
+				xOffset,
+				yOffset,
+				width,
+				height,
+				format,
+				type,
+				pixels);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glReadPixels(
@@ -856,11 +894,19 @@ final class LwjglBindings {
 	}
 
 	void glAlphaFunc(int function, float reference) throws Exception {
-		invoke(glAlphaFunc, function, reference);
+		try {
+			glAlphaFunc.invokeExact(function, reference);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glDepthMask(boolean flag) throws Exception {
-		invoke(glDepthMask, flag);
+		try {
+			glDepthMask.invokeExact(flag);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glColorMask(boolean red, boolean green, boolean blue, boolean alpha) throws Exception {
@@ -892,20 +938,36 @@ final class LwjglBindings {
 	}
 
 	void glMatrixMode(int mode) throws Exception {
-		invoke(glMatrixMode, mode);
+		try {
+			glMatrixMode.invokeExact(mode);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glLoadIdentity() throws Exception {
-		invoke(glLoadIdentity);
+		try {
+			glLoadIdentity.invokeExact();
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glLoadMatrixf(FloatBuffer matrix) throws Exception {
-		invoke(glLoadMatrixf, matrix);
+		try {
+			glLoadMatrixf.invokeExact(matrix);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glOrtho(double left, double right, double bottom, double top, double near, double far)
 		throws Exception {
-		invoke(glOrtho, left, right, bottom, top, near, far);
+		try {
+			glOrtho.invokeExact(left, right, bottom, top, near, far);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	int glGenBuffers() throws Exception {
@@ -991,11 +1053,19 @@ final class LwjglBindings {
 	}
 
 	void glBegin(int mode) throws Exception {
-		invoke(glBegin, mode);
+		try {
+			glBegin.invokeExact(mode);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glEnd() throws Exception {
-		invoke(glEnd);
+		try {
+			glEnd.invokeExact();
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glTexCoord2f(float s, float t) throws Exception {
@@ -1073,7 +1143,11 @@ final class LwjglBindings {
 	}
 
 	void glUniform1i(int location, int value) throws Exception {
-		invoke(glUniform1i, location, value);
+		try {
+			glUniform1i.invokeExact(location, value);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glUniform1f(int location, float value) throws Exception {

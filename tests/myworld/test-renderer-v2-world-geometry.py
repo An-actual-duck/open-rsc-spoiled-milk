@@ -380,11 +380,24 @@ def main() -> None:
     forbid(opengl_presenter, "invoke(glColor4f, red, green, blue, alpha);", "OpenGL color reflection allocation")
     forbid(opengl_presenter, "invoke(glVertex3f, x, y, z);", "OpenGL vertex reflection allocation")
     hot_opengl_handles = (
+        ("glfwPollEvents", "glfwPollEvents.invokeExact();", "invoke(glfwPollEvents);"),
+        ("glClearColor", "glClearColor.invokeExact(red, green, blue, alpha);", "invoke(glClearColor, red, green, blue, alpha);"),
+        ("glClear", "glClear.invokeExact(mask);", "invoke(glClear, mask);"),
         ("glEnable", "glEnable.invokeExact(capability);", "invoke(glEnable, capability);"),
         ("glDisable", "glDisable.invokeExact(capability);", "invoke(glDisable, capability);"),
+        ("glPopAttrib", "glPopAttrib.invokeExact();", "invoke(glPopAttrib);"),
+        ("glPolygonOffset", "glPolygonOffset.invokeExact(factor, units);", "invoke(glPolygonOffset, factor, units);"),
+        ("glActiveTexture", "glActiveTexture.invokeExact(textureUnit);", "invoke(glActiveTexture, textureUnit);"),
         ("glBindTexture", "glBindTexture.invokeExact(target, texture);", "invoke(glBindTexture, target, texture);"),
         ("glTexParameteri", "glTexParameteri.invokeExact(target, name, value);", "invoke(glTexParameteri, target, name, value);"),
+        ("glTexSubImage2D", "glTexSubImage2D.invokeExact(", "invoke(glTexSubImage2D, target, level, xOffset, yOffset, width, height, format, type, pixels);"),
         ("glBlendFunc", "glBlendFunc.invokeExact(sourceFactor, destinationFactor);", "invoke(glBlendFunc, sourceFactor, destinationFactor);"),
+        ("glAlphaFunc", "glAlphaFunc.invokeExact(function, reference);", "invoke(glAlphaFunc, function, reference);"),
+        ("glDepthMask", "glDepthMask.invokeExact(flag);", "invoke(glDepthMask, flag);"),
+        ("glMatrixMode", "glMatrixMode.invokeExact(mode);", "invoke(glMatrixMode, mode);"),
+        ("glLoadIdentity", "glLoadIdentity.invokeExact();", "invoke(glLoadIdentity);"),
+        ("glLoadMatrixf", "glLoadMatrixf.invokeExact(matrix);", "invoke(glLoadMatrixf, matrix);"),
+        ("glOrtho", "glOrtho.invokeExact(left, right, bottom, top, near, far);", "invoke(glOrtho, left, right, bottom, top, near, far);"),
         ("glBindBuffer", "glBindBuffer.invokeExact(target, buffer);", "invoke(glBindBuffer, target, buffer);"),
         ("glBufferDataFloat", "glBufferDataFloat.invokeExact(target, data, usage);", "invoke(glBufferDataFloat, target, data, usage);"),
         ("glBufferDataInt", "glBufferDataInt.invokeExact(target, data, usage);", "invoke(glBufferDataInt, target, data, usage);"),
@@ -394,6 +407,9 @@ def main() -> None:
         ("glColorPointer", "glColorPointer.invokeExact(size, type, stride, pointer);", "invoke(glColorPointer, size, type, stride, pointer);"),
         ("glTexCoordPointer", "glTexCoordPointer.invokeExact(size, type, stride, pointer);", "invoke(glTexCoordPointer, size, type, stride, pointer);"),
         ("glDrawElements", "glDrawElements.invokeExact(mode, count, type, indices);", "invoke(glDrawElements, mode, count, type, indices);"),
+        ("glBegin", "glBegin.invokeExact(mode);", "invoke(glBegin, mode);"),
+        ("glEnd", "glEnd.invokeExact();", "invoke(glEnd);"),
+        ("glUniform1i", "glUniform1i.invokeExact(location, value);", "invoke(glUniform1i, location, value);"),
         ("glEnableVertexAttribArray", "glEnableVertexAttribArray.invokeExact(index);", "invoke(glEnableVertexAttribArray, index);"),
         ("glDisableVertexAttribArray", "glDisableVertexAttribArray.invokeExact(index);", "invoke(glDisableVertexAttribArray, index);"),
         ("glVertexAttribPointer", "glVertexAttribPointer.invokeExact(", "invoke(glVertexAttribPointer, index, size, type, normalized, stride, pointer);"),
@@ -695,7 +711,7 @@ def main() -> None:
     require(opengl_presenter, "private boolean isReasonableProjectedTriangle(", "OpenGL projected triangle guard")
     require(opengl_presenter, "buildPaddedRgbaPixels(", "OpenGL atlas border padding")
     require(opengl_presenter, "texelCenterU(placement.x)", "OpenGL atlas texel-center sampling")
-    require(opengl_presenter, 'glAlphaFunc = method(gl11Class, "glAlphaFunc", int.class, float.class);', "OpenGL alpha function binding")
+    require(opengl_presenter, 'glAlphaFunc = methodHandle(gl11Class, "glAlphaFunc", int.class, float.class);', "OpenGL alpha function binding")
     require(opengl_presenter, 'WORLD_SPRITES_VISIBLE_ENV = "SPOILED_MILK_OPENGL_WORLD_SPRITES_VISIBLE"', "OpenGL visible world sprites flag")
     require(opengl_presenter, 'log("OpenGL world sprite diagnostic active.");', "OpenGL world sprite startup log")
     require(opengl_presenter, "private OpenGLWorldTextureCache worldTextureCache;", "OpenGL shared world texture cache field")
@@ -767,7 +783,7 @@ def main() -> None:
     require(opengl_presenter, "glCreateShader = method(gl20Class, \"glCreateShader\", int.class);", "OpenGL shader creation binding")
     require(opengl_presenter, "glLinkProgram = method(gl20Class, \"glLinkProgram\", int.class);", "OpenGL shader program link binding")
     require(opengl_presenter, "glGetUniformLocation = method(gl20Class, \"glGetUniformLocation\", int.class, CharSequence.class);", "OpenGL shader uniform lookup binding")
-    require(opengl_presenter, "glUniform1i = method(gl20Class, \"glUniform1i\", int.class, int.class);", "OpenGL shader integer uniform binding")
+    require(opengl_presenter, "glUniform1i = methodHandle(gl20Class, \"glUniform1i\", int.class, int.class);", "OpenGL shader integer uniform binding")
     require(opengl_presenter, "glUniformMatrix4fv = method(gl20Class, \"glUniformMatrix4fv\", int.class, boolean.class, FloatBuffer.class);", "OpenGL shader matrix uniform binding")
     require(opengl_presenter, "glBindAttribLocation = method(gl20Class, \"glBindAttribLocation\", int.class, int.class, CharSequence.class);", "OpenGL shader attribute location binding")
     require(opengl_presenter, "glEnableVertexAttribArray = methodHandle(gl20Class, \"glEnableVertexAttribArray\", int.class);", "OpenGL shader enable attribute array binding")
@@ -992,7 +1008,7 @@ def main() -> None:
     require(opengl_presenter, "private boolean shouldDrawChunkModelKind(\n\t\tRenderer3DFrame frame,", "OpenGL chunk roof visibility helper")
     require(opengl_presenter, "frame.isWorldChunkModelKindVisible(modelKind, chunk.getPlane())", "OpenGL chunk roof state source")
     require(opengl_presenter, "GL_STATIC_DRAW = constant(gl15Class, \"GL_STATIC_DRAW\");", "OpenGL static draw binding")
-    require(opengl_presenter, 'glLoadMatrixf = method(gl11Class, "glLoadMatrixf", FloatBuffer.class);', "OpenGL matrix load binding")
+    require(opengl_presenter, 'glLoadMatrixf = methodHandle(gl11Class, "glLoadMatrixf", FloatBuffer.class);', "OpenGL matrix load binding")
     require(opengl_presenter, "final class WorldMeshUploadSignature", "OpenGL upload signature class")
     require(opengl_presenter, "enum WorldMeshTriangleFilter", "OpenGL world mesh triangle filter")
     require(opengl_presenter, "STATIC_OBJECTS", "OpenGL object-only projected mesh filter")
@@ -1112,7 +1128,7 @@ def main() -> None:
     require(opengl_presenter, "glPushClientAttrib = method(gl11Class, \"glPushClientAttrib\", int.class);", "LWJGL pass client-state binding")
     require(opengl_presenter, "glPolygonMode = method(gl11Class, \"glPolygonMode\", int.class, int.class);", "LWJGL polygon mode binding")
     require(opengl_presenter, "glTexCoordPointer =\n\t\t\tmethodHandle(gl11Class, \"glTexCoordPointer\", int.class, int.class, int.class, long.class);", "LWJGL texture coordinate pointer binding")
-    require(opengl_presenter, 'glDepthMask = method(gl11Class, "glDepthMask", boolean.class);', "LWJGL depth-mask binding")
+    require(opengl_presenter, 'glDepthMask = methodHandle(gl11Class, "glDepthMask", boolean.class);', "LWJGL depth-mask binding")
     require(opengl_presenter, "void glDepthMask(boolean flag) throws Exception", "LWJGL depth-mask wrapper")
     require(opengl_presenter, 'glColorMask = method(gl11Class, "glColorMask", boolean.class, boolean.class, boolean.class, boolean.class);', "LWJGL color-mask binding")
     require(opengl_presenter, "void glColorMask(boolean red, boolean green, boolean blue, boolean alpha) throws Exception", "LWJGL color-mask wrapper")
