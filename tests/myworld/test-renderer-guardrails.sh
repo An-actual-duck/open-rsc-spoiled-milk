@@ -33,6 +33,7 @@ renderer_tests=(
   test-renderer-v2-capture-analyzer.py
   test-renderer-v2-font-policy.py
   test-renderer-v2-frame-capture.py
+  test-renderer-v2-object-chunk-primitive-builder.py
   test-renderer-v2-options-cleanup.py
   test-renderer-v2-phased-overlay.py
   test-renderer-v2-world-geometry.py

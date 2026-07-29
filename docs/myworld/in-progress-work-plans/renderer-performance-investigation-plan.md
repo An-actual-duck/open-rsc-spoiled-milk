@@ -3,8 +3,8 @@
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
 attribution are underway, and the first twelve focused optimizations have been
-accepted. The reduced steady-scene workload now needs a fresh profile before
-selecting another implementation target.
+accepted. A fresh reduced-workload profile now ranks primitive object-chunk
+mesh construction as the leading isolated allocation target for cycle 13.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -738,6 +738,49 @@ tradeoff. The tenth-cycle JFR ranking is now stale; re-profile this reduced
 endpoint before choosing between primitive object-chunk construction,
 remaining OpenGL wrappers, composite sprite texture work, or another target.
 
+The fresh `session-20260729-182507-1490998` / `post12jfr` profile captured
+103.5 marked seconds on checkpoint `0b5cb5465`. JFR attributed 3,660.85
+weighted MiB within the exact phase, or 35.38 MiB/s, against telemetry's
+36.14 MiB/s. The 2.1% difference is close enough to rank allocation ownership.
+This is not the requested maximum-distance control: structured camera data
+records zoom setting `255` and effective zoom `1110`, rather than the
+maximum-distance `900` / `2400` state. Its resident world still held 34 chunks
+and 209,162 triangles, but it drew fewer world triangles and substantially
+fewer sprites. Results from this capture are therefore used only to rank
+current-code paths, not as a before/after comparison with `texrefs12r2`.
+
+Explicit `ObjectChunkMeshBuilder` stacks own 837.91 MiB, or 22.9% of all
+weighted allocation. Another 656.10 MiB, or 17.9%, is client-loop
+`ArrayList.add` growth whose five-frame stack stops immediately before the
+project caller; this remains separate attribution even though the builder's
+eleven boxed lists are the strongest candidate. Within explicit builder
+stacks, boxed `Integer` and `Float` values alone own 357.82 MiB, with final
+array conversion and immutable chunk normalization accounting for much of the
+remaining measured storage. The first cycle-13 slice will replace only the
+seven boxed numeric lists with growable primitive arrays while retaining the
+same triangulation, immutable `ChunkMesh` normalization, signatures, material
+metadata, shadow casters, and glow emitters.
+
+CPU sampling also reveals a separate shadow-classification target:
+`RemasterShadowRoofCoverage.classify` appears in 440 of 760 presenter-thread
+samples. At least 258 samples are directly attributable to the telemetry-only
+shadow inventory scan, while other truncated stacks may belong to either that
+scan or normal terrain-shadow drawing. This target is deliberately deferred
+until those consumers can be separated; disabling inventory detail or changing
+roof classification as part of the allocation experiment would confound both
+measurement and visual behavior.
+
+The cycle-13 candidate now accumulates vertex coordinates, texture U/V,
+lights, indices, triangle textures, and fallback colors in growable primitive
+arrays. It deliberately leaves enum/object metadata lists, per-face temporary
+arrays, immutable `ChunkMesh` cloning and normalization, and signature
+calculation unchanged. A focused Java 8 fixture proves exact two-sided quad
+triangulation, sequential indices, material and fallback mapping, finite UVs,
+shadow/glow metadata, stable signatures, non-object exclusion, and empty
+output. The client compiles and the full renderer guardrail suite passes. The
+candidate still requires an exact maximum-distance visual and telemetry
+comparison before acceptance.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -979,3 +1022,4 @@ Implementation checkpoint:
 | 2026-07-29 | `bb5e6ba5c` | `bounds11` | Precompute exact immutable X/Z bounds for chunk meshes and aggregate frames, then consume them in glow-mask lookup instead of rescanning every resident vertex. | Exact 89.8-second maximum-distance comparison and visual fire-glow pass. Presenter CPU fell 38.1%, process use 23.3%, GL p95/p99 35.8%/32.0%, and world p95/p99 45.3%/43.6%; allocation stayed flat. Focused Java 8 coverage proves exact aggregation, rebase translation, empty frames, unchanged glow coordinates, and emitter-only behavior. | Accept and checkpoint; audit texture-signature scans separately before another CPU change. |
 | 2026-07-29 | `ba9827bba` | `texrefs12` | Snapshot frame texture-catalog signatures and precompute sorted unique chunk/frame texture references, including transparent fallbacks, so cache checks and uploads no longer traverse every resident triangle. | Fires, water, other textures, and movement passed visual review, but the four-hour-old client had exhausted structured bulk telemetry roughly three hours before the 114.7-second phase. Console geometry was exact, but phase CPU/allocation/tails were unavailable. | Retain the visual result only and repeat in a fresh client. |
 | 2026-07-29 | `ba9827bba` | `texrefs12r2` | Repeat the immutable texture-reference experiment in a fresh maximum-distance session. | Complete 89.3-second capture and prior visual pass at exact 34-chunk/209,162-triangle/2,202-batch control geometry. Presenter CPU fell 48.4%, process use 23.2%, GL p95/p99 43.1%/44.3%, and world p95/p99 52.4%/53.2%; allocation stayed flat. Focused runtime coverage proves catalog snapshotting, fallback capture, deduplication, and exact invalidation. | Accept and checkpoint; re-profile the reduced endpoint before selecting cycle 13. |
+| 2026-07-29 | `0b5cb5465` | `post12jfr` | Re-profile the cycle-12 endpoint and rank remaining CPU/allocation ownership. | Complete 103.5-second marked profile; JFR measured 35.38 MiB/s against telemetry's 36.14 MiB/s. The operator remained at zoom `255` / effective `1110`, so this is a ranking profile rather than a maximum-distance comparison. Explicit object-chunk builders own 22.9% of weighted allocation, with another 17.9% in separately retained client `ArrayList` growth; shadow classification leads presenter CPU but mixes diagnostic and render consumers. | Convert only the seven boxed numeric object-chunk accumulators to primitive storage for cycle 13; defer shadow classification until its consumers are separated. |

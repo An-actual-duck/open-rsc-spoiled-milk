@@ -1549,19 +1549,28 @@ public final class RSModel {
 	}
 
 	private static final class ObjectChunkMeshBuilder {
+		private static final int INITIAL_NUMERIC_CAPACITY = 64;
+
 		private final int plane;
 		private final int centerSectionX;
 		private final int centerSectionY;
 		private final int originWorldX;
 		private final int originWorldZ;
 		private final int chunkRole;
-		private final List<Integer> vertexCoords = new ArrayList<Integer>();
-		private final List<Float> vertexTextureU = new ArrayList<Float>();
-		private final List<Float> vertexTextureV = new ArrayList<Float>();
-		private final List<Integer> vertexLights = new ArrayList<Integer>();
-		private final List<Integer> indices = new ArrayList<Integer>();
-		private final List<Integer> triangleTextures = new ArrayList<Integer>();
-		private final List<Integer> triangleFallbackColors = new ArrayList<Integer>();
+		private final IntArrayBuilder vertexCoords =
+			new IntArrayBuilder(INITIAL_NUMERIC_CAPACITY * 3);
+		private final FloatArrayBuilder vertexTextureU =
+			new FloatArrayBuilder(INITIAL_NUMERIC_CAPACITY);
+		private final FloatArrayBuilder vertexTextureV =
+			new FloatArrayBuilder(INITIAL_NUMERIC_CAPACITY);
+		private final IntArrayBuilder vertexLights =
+			new IntArrayBuilder(INITIAL_NUMERIC_CAPACITY);
+		private final IntArrayBuilder indices =
+			new IntArrayBuilder(INITIAL_NUMERIC_CAPACITY);
+		private final IntArrayBuilder triangleTextures =
+			new IntArrayBuilder(INITIAL_NUMERIC_CAPACITY / 3);
+		private final IntArrayBuilder triangleFallbackColors =
+			new IntArrayBuilder(INITIAL_NUMERIC_CAPACITY / 3);
 		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
 		private final List<Renderer3DMaterialFamily> triangleMaterialFamilies =
 			new ArrayList<Renderer3DMaterialFamily>();
@@ -1739,11 +1748,11 @@ public final class RSModel {
 			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, a);
 			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, b);
 			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, c);
-			indices.add(Integer.valueOf(baseVertex));
-			indices.add(Integer.valueOf(baseVertex + 1));
-			indices.add(Integer.valueOf(baseVertex + 2));
-			triangleTextures.add(Integer.valueOf(texture));
-			triangleFallbackColors.add(Integer.valueOf(fallbackColor));
+			indices.add(baseVertex);
+			indices.add(baseVertex + 1);
+			indices.add(baseVertex + 2);
+			triangleTextures.add(texture);
+			triangleFallbackColors.add(fallbackColor);
 			triangleModelKinds.add(kind);
 			triangleMaterialFamilies.add(family == null
 				? Renderer3DMaterialClassifier.fallbackFor(kind)
@@ -1864,13 +1873,13 @@ public final class RSModel {
 			float[] textureV,
 			int vertex) {
 			int coord = vertex * 3;
-			vertexCoords.add(Integer.valueOf(faceVertexCoords[coord]));
-			vertexCoords.add(Integer.valueOf(faceVertexCoords[coord + 1]));
-			vertexCoords.add(Integer.valueOf(faceVertexCoords[coord + 2]));
-			vertexTextureU.add(Float.valueOf(textureU[vertex]));
-			vertexTextureV.add(Float.valueOf(textureV[vertex]));
-			vertexLights.add(Integer.valueOf(
-				faceVertexLights == null || vertex >= faceVertexLights.length ? 0 : faceVertexLights[vertex]));
+			vertexCoords.add(faceVertexCoords[coord]);
+			vertexCoords.add(faceVertexCoords[coord + 1]);
+			vertexCoords.add(faceVertexCoords[coord + 2]);
+			vertexTextureU.add(textureU[vertex]);
+			vertexTextureV.add(textureV[vertex]);
+			vertexLights.add(
+				faceVertexLights == null || vertex >= faceVertexLights.length ? 0 : faceVertexLights[vertex]);
 		}
 
 		private ResolvedMaterial resolveMaterial(int material) {
@@ -1949,13 +1958,13 @@ public final class RSModel {
 		}
 
 		private Renderer3DWorldChunkFrame.ChunkMesh build() {
-			int[] vertexArray = toIntArray(vertexCoords);
-			float[] textureUArray = toFloatArray(vertexTextureU);
-			float[] textureVArray = toFloatArray(vertexTextureV);
-			int[] lightArray = toIntArray(vertexLights);
-			int[] indexArray = toIntArray(indices);
-			int[] textureArray = toIntArray(triangleTextures);
-			int[] fallbackArray = toIntArray(triangleFallbackColors);
+			int[] vertexArray = vertexCoords.toArray();
+			float[] textureUArray = vertexTextureU.toArray();
+			float[] textureVArray = vertexTextureV.toArray();
+			int[] lightArray = vertexLights.toArray();
+			int[] indexArray = indices.toArray();
+			int[] textureArray = triangleTextures.toArray();
+			int[] fallbackArray = triangleFallbackColors.toArray();
 			Renderer3DModelKind[] kindArray =
 				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
 			Renderer3DMaterialFamily[] familyArray = triangleMaterialFamilies.toArray(
@@ -2007,20 +2016,70 @@ public final class RSModel {
 				signature);
 		}
 
-		private static int[] toIntArray(List<Integer> values) {
-			int[] array = new int[values.size()];
-			for (int i = 0; i < values.size(); i++) {
-				array[i] = values.get(i).intValue();
+		private static final class IntArrayBuilder {
+			private int[] values;
+			private int size;
+
+			private IntArrayBuilder(int initialCapacity) {
+				values = new int[Math.max(0, initialCapacity)];
 			}
-			return array;
+
+			private void add(int value) {
+				ensureCapacity(size + 1);
+				values[size++] = value;
+			}
+
+			private int size() {
+				return size;
+			}
+
+			private int[] toArray() {
+				return size == 0 ? new int[0] : Arrays.copyOf(values, size);
+			}
+
+			private void ensureCapacity(int requiredCapacity) {
+				if (requiredCapacity <= values.length) {
+					return;
+				}
+				int grownCapacity = values.length <= 0
+					? 1
+					: values.length + (values.length >> 1) + 1;
+				if (grownCapacity < requiredCapacity) {
+					grownCapacity = requiredCapacity;
+				}
+				values = Arrays.copyOf(values, grownCapacity);
+			}
 		}
 
-		private static float[] toFloatArray(List<Float> values) {
-			float[] array = new float[values.size()];
-			for (int i = 0; i < values.size(); i++) {
-				array[i] = values.get(i).floatValue();
+		private static final class FloatArrayBuilder {
+			private float[] values;
+			private int size;
+
+			private FloatArrayBuilder(int initialCapacity) {
+				values = new float[Math.max(0, initialCapacity)];
 			}
-			return array;
+
+			private void add(float value) {
+				ensureCapacity(size + 1);
+				values[size++] = value;
+			}
+
+			private float[] toArray() {
+				return size == 0 ? new float[0] : Arrays.copyOf(values, size);
+			}
+
+			private void ensureCapacity(int requiredCapacity) {
+				if (requiredCapacity <= values.length) {
+					return;
+				}
+				int grownCapacity = values.length <= 0
+					? 1
+					: values.length + (values.length >> 1) + 1;
+				if (grownCapacity < requiredCapacity) {
+					grownCapacity = requiredCapacity;
+				}
+				values = Arrays.copyOf(values, grownCapacity);
+			}
 		}
 
 		private long signature(
