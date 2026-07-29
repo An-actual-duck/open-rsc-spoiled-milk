@@ -4,6 +4,7 @@ import orsc.graphics.three.Renderer3DWorldChunkFrame;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,13 @@ final class RemasterGlowMaskBuilder {
 
 	private final LinkedHashMap<Long, RemasterGlowMask> cacheBySignature =
 		new LinkedHashMap<Long, RemasterGlowMask>(16, 0.75f, true);
+	/*
+	 * This builder is owned by the OpenGL presenter thread. These fixed-size
+	 * accumulation arrays are synchronous scratch and never escape buildMask.
+	 */
+	private final float[] scratchRed = new float[TEXTURE_SIZE * TEXTURE_SIZE];
+	private final float[] scratchGreen = new float[TEXTURE_SIZE * TEXTURE_SIZE];
+	private final float[] scratchBlue = new float[TEXTURE_SIZE * TEXTURE_SIZE];
 
 	RemasterGlowMaskBuild build(Renderer3DWorldChunkFrame chunkFrame) {
 		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
@@ -76,21 +84,28 @@ final class RemasterGlowMaskBuilder {
 		RemasterGlowMaskBounds bounds,
 		List<Renderer3DWorldChunkFrame.GlowEmitter> emitters) {
 		int pixelCount = TEXTURE_SIZE * TEXTURE_SIZE;
-		float[] red = new float[pixelCount];
-		float[] green = new float[pixelCount];
-		float[] blue = new float[pixelCount];
+		Arrays.fill(scratchRed, 0.0f);
+		Arrays.fill(scratchGreen, 0.0f);
+		Arrays.fill(scratchBlue, 0.0f);
 		float pixelWidth = bounds.spanX() / TEXTURE_SIZE;
 		float pixelHeight = bounds.spanZ() / TEXTURE_SIZE;
 		for (Renderer3DWorldChunkFrame.GlowEmitter emitter : emitters) {
-			accumulateEmitter(bounds, pixelWidth, pixelHeight, emitter, red, green, blue);
+			accumulateEmitter(
+				bounds,
+				pixelWidth,
+				pixelHeight,
+				emitter,
+				scratchRed,
+				scratchGreen,
+				scratchBlue);
 		}
 
 		ByteBuffer pixels = ByteBuffer.allocateDirect(pixelCount * 4);
 		int visiblePixels = 0;
 		for (int pixel = 0; pixel < pixelCount; pixel++) {
-			int r = toByte(red[pixel]);
-			int g = toByte(green[pixel]);
-			int b = toByte(blue[pixel]);
+			int r = toByte(scratchRed[pixel]);
+			int g = toByte(scratchGreen[pixel]);
+			int b = toByte(scratchBlue[pixel]);
 			int a = Math.max(r, Math.max(g, b));
 			if (a > 0) {
 				visiblePixels++;
