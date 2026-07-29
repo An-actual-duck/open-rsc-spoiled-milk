@@ -29,6 +29,7 @@ public final class Renderer3DFrame {
 	private final int perspectiveShift;
 	private final int nearPlane;
 	private final Renderer3DTextureData[] textures;
+	private final long textureCatalogSignature;
 	private final WorldFaceStorage worldFaceStorage;
 	private final List<FaceCommand> worldFaces;
 	private final List<FaceCommand> worldFacesView;
@@ -81,7 +82,10 @@ public final class Renderer3DFrame {
 		this.cameraRotationZ = cameraRotationZ;
 		this.perspectiveShift = perspectiveShift;
 		this.nearPlane = nearPlane;
-		this.textures = textures == null ? new Renderer3DTextureData[0] : textures;
+		this.textures = textures == null
+			? new Renderer3DTextureData[0]
+			: textures.clone();
+		this.textureCatalogSignature = textureCatalogSignature(this.textures);
 	}
 
 	void addWorldFace(
@@ -394,11 +398,37 @@ public final class Renderer3DFrame {
 		return textures;
 	}
 
+	public int getTextureCount() {
+		return textures.length;
+	}
+
+	public long getTextureCatalogSignature() {
+		return textureCatalogSignature;
+	}
+
 	public Renderer3DTextureData getTexture(int textureId) {
 		if (textureId < 0 || textureId >= textures.length) {
 			return null;
 		}
 		return textures[textureId];
+	}
+
+	private static long textureCatalogSignature(Renderer3DTextureData[] textures) {
+		long signature = 1469598103934665603L;
+		signature = mixSignature(signature, textures.length);
+		for (int textureId = 0; textureId < textures.length; textureId++) {
+			Renderer3DTextureData texture = textures[textureId];
+			signature = mixSignature(signature, textureId);
+			signature = mixSignature(
+				signature,
+				texture == null ? 0L : texture.getSignature());
+		}
+		return signature;
+	}
+
+	private static long mixSignature(long signature, long value) {
+		signature ^= value;
+		return signature * 1099511628211L;
 	}
 
 	public int getWorldFaceCount() {

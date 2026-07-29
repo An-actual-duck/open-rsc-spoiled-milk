@@ -14,6 +14,7 @@ public final class Renderer3DWorldChunkFrame {
 	public static final int CHUNK_ROLE_STATIC_OBJECTS = 1;
 	public static final int CHUNK_ROLE_ANIMATED_OBJECTS = 2;
 	private static final int TILE_SIZE = 128;
+	private static final int LEGACY_TRANSPARENT_TEXTURE = 12345678;
 
 	private final List<ChunkMesh> chunks;
 	private final int totalVertexCount;
@@ -25,6 +26,8 @@ public final class Renderer3DWorldChunkFrame {
 	private final int maxVertexX;
 	private final int minVertexZ;
 	private final int maxVertexZ;
+	private final int[] referencedTextureIds;
+	private final long textureReferenceSignature;
 
 	private Renderer3DWorldChunkFrame(
 		List<ChunkMesh> chunks,
@@ -41,10 +44,18 @@ public final class Renderer3DWorldChunkFrame {
 		int maximumVertexX = Integer.MIN_VALUE;
 		int minimumVertexZ = Integer.MAX_VALUE;
 		int maximumVertexZ = Integer.MIN_VALUE;
+		TextureReferenceSet textureReferences = new TextureReferenceSet();
+		long referenceSignature = 1469598103934665603L;
+		referenceSignature = mixSignature(referenceSignature, chunks.size());
 		for (ChunkMesh chunk : chunks) {
+			referenceSignature = mixSignature(referenceSignature, chunk.getSignature());
+			referenceSignature = mixSignature(referenceSignature, chunk.getTriangleCount());
 			for (Renderer3DMaterialFamily family : Renderer3DMaterialFamily.values()) {
 				this.materialFamilyTriangleCounts[family.ordinal()] +=
 					chunk.getMaterialFamilyTriangleCount(family);
+			}
+			for (int index = 0; index < chunk.getReferencedTextureCount(); index++) {
+				textureReferences.add(chunk.getReferencedTextureId(index));
 			}
 			if (chunk.hasVertexBounds()) {
 				foundVertexBounds = true;
@@ -59,6 +70,12 @@ public final class Renderer3DWorldChunkFrame {
 		this.maxVertexX = foundVertexBounds ? maximumVertexX : 0;
 		this.minVertexZ = foundVertexBounds ? minimumVertexZ : 0;
 		this.maxVertexZ = foundVertexBounds ? maximumVertexZ : 0;
+		this.referencedTextureIds = textureReferences.toSortedArray();
+		referenceSignature = mixSignature(referenceSignature, this.referencedTextureIds.length);
+		for (int textureId : this.referencedTextureIds) {
+			referenceSignature = mixSignature(referenceSignature, textureId);
+		}
+		this.textureReferenceSignature = referenceSignature;
 	}
 
 	public static Renderer3DWorldChunkFrame fromChunks(List<ChunkMesh> chunks) {
@@ -122,6 +139,18 @@ public final class Renderer3DWorldChunkFrame {
 		return maxVertexZ;
 	}
 
+	public int getReferencedTextureCount() {
+		return referencedTextureIds.length;
+	}
+
+	public int getReferencedTextureId(int index) {
+		return referencedTextureIds[index];
+	}
+
+	public long getTextureReferenceSignature() {
+		return textureReferenceSignature;
+	}
+
 	public int getMaterialFamilyTriangleCount(Renderer3DMaterialFamily family) {
 		Renderer3DMaterialFamily safeFamily = family == null
 			? Renderer3DMaterialFamily.UNCLASSIFIED
@@ -158,6 +187,7 @@ public final class Renderer3DWorldChunkFrame {
 		private final int[] indices;
 		private final int[] triangleTextures;
 		private final int[] triangleFallbackColors;
+		private final int[] referencedTextureIds;
 		private final Renderer3DModelKind[] triangleModelKinds;
 		private Renderer3DMaterialFamily[] triangleMaterialFamilies;
 		private int[] materialFamilyTriangleCounts;
@@ -389,6 +419,9 @@ public final class Renderer3DWorldChunkFrame {
 			this.triangleTextures = triangleTextures == null ? new int[0] : triangleTextures.clone();
 			this.triangleFallbackColors =
 				triangleFallbackColors == null ? new int[0] : triangleFallbackColors.clone();
+			this.referencedTextureIds = collectReferencedTextureIds(
+				this.triangleTextures,
+				this.triangleFallbackColors);
 			this.triangleModelKinds = normalizeKinds(triangleModelKinds, this.triangleTextures.length);
 			this.triangleMaterialFamilies = normalizeFamilies(
 				null,
@@ -686,6 +719,9 @@ public final class Renderer3DWorldChunkFrame {
 			this.triangleTextures = triangleTextures == null ? new int[0] : triangleTextures.clone();
 			this.triangleFallbackColors =
 				triangleFallbackColors == null ? new int[0] : triangleFallbackColors.clone();
+			this.referencedTextureIds = collectReferencedTextureIds(
+				this.triangleTextures,
+				this.triangleFallbackColors);
 			this.triangleModelKinds = normalizeKinds(triangleModelKinds, this.triangleTextures.length);
 			this.triangleMaterialFamilies = normalizeFamilies(
 				null,
@@ -819,6 +855,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.indices = source.indices;
 			this.triangleTextures = source.triangleTextures;
 			this.triangleFallbackColors = source.triangleFallbackColors;
+			this.referencedTextureIds = source.referencedTextureIds;
 			this.triangleModelKinds = source.triangleModelKinds;
 			this.triangleMaterialFamilies =
 				source.triangleMaterialFamilies;
@@ -881,6 +918,21 @@ public final class Renderer3DWorldChunkFrame {
 			return chunkRole == CHUNK_ROLE_ANIMATED_OBJECTS
 				? CHUNK_ROLE_ANIMATED_OBJECTS
 				: CHUNK_ROLE_STATIC_OBJECTS;
+		}
+
+		private static int[] collectReferencedTextureIds(
+			int[] triangleTextures,
+			int[] triangleFallbackColors) {
+			TextureReferenceSet references = new TextureReferenceSet();
+			for (int triangle = 0; triangle < triangleTextures.length; triangle++) {
+				int textureId = triangleTextures[triangle];
+				references.add(textureId);
+				if (textureId == LEGACY_TRANSPARENT_TEXTURE
+					&& triangle < triangleFallbackColors.length) {
+					references.add(triangleFallbackColors[triangle]);
+				}
+			}
+			return references.toSortedArray();
 		}
 
 		private void initializeVertexBounds() {
@@ -1210,6 +1262,14 @@ public final class Renderer3DWorldChunkFrame {
 			return triangleTextures.length;
 		}
 
+		public int getReferencedTextureCount() {
+			return referencedTextureIds.length;
+		}
+
+		public int getReferencedTextureId(int index) {
+			return referencedTextureIds[index];
+		}
+
 		public int getTerrainTriangles() {
 			return terrainTriangles;
 		}
@@ -1459,6 +1519,74 @@ public final class Renderer3DWorldChunkFrame {
 
 		public int[] copyTriangleTerrainVariationMasks() {
 			return triangleTerrainVariationMasks.clone();
+		}
+	}
+
+	private static long mixSignature(long signature, long value) {
+		signature ^= value;
+		return signature * 1099511628211L;
+	}
+
+	private static final class TextureReferenceSet {
+		private static final int EMPTY = -1;
+		private int[] table = emptyTable(16);
+		private int size;
+
+		private void add(int textureId) {
+			if (textureId < 0) {
+				return;
+			}
+			if ((size + 1) * 3 >= table.length * 2) {
+				grow();
+			}
+			int slot = slot(textureId, table.length);
+			while (table[slot] != EMPTY) {
+				if (table[slot] == textureId) {
+					return;
+				}
+				slot = slot + 1 & table.length - 1;
+			}
+			table[slot] = textureId;
+			size++;
+		}
+
+		private int[] toSortedArray() {
+			int[] values = new int[size];
+			int index = 0;
+			for (int value : table) {
+				if (value != EMPTY) {
+					values[index++] = value;
+				}
+			}
+			Arrays.sort(values);
+			return values;
+		}
+
+		private void grow() {
+			int[] previous = table;
+			table = emptyTable(previous.length << 1);
+			for (int value : previous) {
+				if (value == EMPTY) {
+					continue;
+				}
+				int slot = slot(value, table.length);
+				while (table[slot] != EMPTY) {
+					slot = slot + 1 & table.length - 1;
+				}
+				table[slot] = value;
+			}
+		}
+
+		private static int[] emptyTable(int capacity) {
+			int[] table = new int[capacity];
+			Arrays.fill(table, EMPTY);
+			return table;
+		}
+
+		private static int slot(int value, int capacity) {
+			int hash = value * -1640531527;
+			hash ^= hash >>> 16;
+			return hash & capacity - 1;
 		}
 	}
 

@@ -2440,7 +2440,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	private boolean isFrameTextureReference(Renderer3DFrame frame, int textureId) {
-		return frame != null && textureId >= 0 && textureId < frame.getTextures().length;
+		return frame != null && textureId >= 0 && textureId < frame.getTextureCount();
 	}
 
 	private int averageTextureColor(Renderer3DFrame frame, int textureId) {

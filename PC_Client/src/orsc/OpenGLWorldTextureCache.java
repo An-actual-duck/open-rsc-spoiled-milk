@@ -14,7 +14,6 @@ import java.util.Set;
 
 final class OpenGLWorldTextureCache implements AutoCloseable {
 	private static final int DEFAULT_ATLAS_SIZE = 2048;
-	private static final int LEGACY_TRANSPARENT_TEXTURE = 12345678;
 
 	private final LwjglBindings gl;
 	private final Map<Integer, OpenGLTextureRegion> textureRegionsById = new HashMap<>();
@@ -80,37 +79,20 @@ final class OpenGLWorldTextureCache implements AutoCloseable {
 		int cachedTextures = 0;
 		int uploadedTextures = 0;
 		int missingTextures = 0;
-		Set<Integer> seenTextureIds = new HashSet<>();
 
-		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
-			int triangleCount = chunk.getTriangleCount();
-			for (int triangle = 0; triangle < triangleCount; triangle++) {
-				int textureId = chunk.getTriangleTexture(triangle);
-				int fallbackTextureId = chunk.getTriangleFallbackColor(triangle);
-				if (isTextureBacked(frame, textureId) && seenTextureIds.add(textureId)) {
-					referencedTextures++;
-					Renderer3DTextureData textureData = frame.getTexture(textureId);
-					if (textureData == null) {
-						missingTextures++;
-					} else if (uploadIfNeeded(textureData)) {
-						uploadedTextures++;
-					} else {
-						cachedTextures++;
-					}
-				}
-				if (textureId == LEGACY_TRANSPARENT_TEXTURE
-					&& isTextureBacked(frame, fallbackTextureId)
-					&& seenTextureIds.add(fallbackTextureId)) {
-					referencedTextures++;
-					Renderer3DTextureData textureData = frame.getTexture(fallbackTextureId);
-					if (textureData == null) {
-						missingTextures++;
-					} else if (uploadIfNeeded(textureData)) {
-						uploadedTextures++;
-					} else {
-						cachedTextures++;
-					}
-				}
+		for (int index = 0; index < chunkFrame.getReferencedTextureCount(); index++) {
+			int textureId = chunkFrame.getReferencedTextureId(index);
+			if (!isTextureBacked(frame, textureId)) {
+				continue;
+			}
+			referencedTextures++;
+			Renderer3DTextureData textureData = frame.getTexture(textureId);
+			if (textureData == null) {
+				missingTextures++;
+			} else if (uploadIfNeeded(textureData)) {
+				uploadedTextures++;
+			} else {
+				cachedTextures++;
 			}
 		}
 
@@ -127,40 +109,12 @@ final class OpenGLWorldTextureCache implements AutoCloseable {
 
 	private long chunkTextureUploadSignature(Renderer3DFrame frame, Renderer3DWorldChunkFrame chunkFrame) {
 		long signature = 1469598103934665603L;
-		signature = mixSignature(signature, frame == null ? 0 : frame.getTextures().length);
-		signature = mixSignature(signature, chunkFrame == null ? 0 : chunkFrame.getChunkCount());
-		if (chunkFrame != null) {
-			Set<Integer> seenTextureIds = new HashSet<>();
-			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
-				signature = mixSignature(signature, chunk.getSignature());
-				signature = mixSignature(signature, chunk.getTriangleCount());
-				int triangleCount = chunk.getTriangleCount();
-				for (int triangle = 0; triangle < triangleCount; triangle++) {
-					signature = mixTextureSignature(frame, signature, seenTextureIds, chunk.getTriangleTexture(triangle));
-					if (chunk.getTriangleTexture(triangle) == LEGACY_TRANSPARENT_TEXTURE) {
-						signature = mixTextureSignature(
-							frame,
-							signature,
-							seenTextureIds,
-							chunk.getTriangleFallbackColor(triangle));
-					}
-				}
-			}
-		}
-		return signature;
-	}
-
-	private long mixTextureSignature(
-		Renderer3DFrame frame,
-		long signature,
-		Set<Integer> seenTextureIds,
-		int textureId) {
-		if (!isTextureBacked(frame, textureId) || !seenTextureIds.add(textureId)) {
-			return signature;
-		}
-		Renderer3DTextureData textureData = frame.getTexture(textureId);
-		signature = mixSignature(signature, textureId);
-		return mixSignature(signature, textureData == null ? 0L : textureData.getSignature());
+		signature = mixSignature(
+			signature,
+			frame == null ? 0L : frame.getTextureCatalogSignature());
+		return mixSignature(
+			signature,
+			chunkFrame == null ? 0L : chunkFrame.getTextureReferenceSignature());
 	}
 
 	private long mixSignature(long signature, long value) {
@@ -189,7 +143,7 @@ final class OpenGLWorldTextureCache implements AutoCloseable {
 	}
 
 	private boolean isTextureBacked(Renderer3DFrame frame, int textureId) {
-		return frame != null && textureId >= 0 && textureId < frame.getTextures().length;
+		return frame != null && textureId >= 0 && textureId < frame.getTextureCount();
 	}
 
 	private boolean uploadIfNeeded(Renderer3DTextureData textureData) throws Exception {

@@ -2,8 +2,9 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first eight focused allocation optimizations
-have been accepted.
+attribution are underway, the first eleven focused optimizations have been
+accepted, and the twelfth evidence-backed experiment awaits its controlled
+private-client comparison.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -674,6 +675,37 @@ use from 0.928 to 0.605 cores (-34.8%), and GL render p95/p99 from
 9.535/11.539 to 5.618/6.409 ms (-41.1%/-44.5%), without an accepted visual
 tradeoff.
 
+The next presenter CPU audit resolves the 1,091 texture-cache samples from the
+same `jfrll` profile. `OpenGLWorldTextureCache.mixTextureSignature` owned 681
+samples and `uploadReferencedTextures` another 410, or 33.3% of sampled
+presenter CPU. Before checking its one-entry cache, the presenter traversed
+every triangle in all resident chunks to rediscover unique primary and legacy
+transparent-fallback texture IDs and mix their texture signatures. A cache
+miss then repeated the full triangle traversal to upload those same unique
+textures. The upload entry point is also reached during both chunk upload and
+diagnostic drawing.
+
+The twelfth experiment keeps all invalidation conservative while moving that
+discovery to immutable ownership boundaries. Each `Renderer3DFrame` snapshots
+the texture catalog array and computes one catalog signature from the already
+immutable texture-data signatures. Each immutable chunk computes its sorted
+unique primary/fallback texture IDs when it clones the triangle arrays, and
+each lightweight chunk frame aggregates those small reference sets and mixes
+their chunk identities. The presenter cache check is therefore constant-time,
+and an actual upload iterates only precomputed unique IDs rather than roughly
+209,000 resident triangles. A change to any catalog texture invalidates the
+cache even when that texture is not currently referenced, which is more
+conservative than the old behavior and preserves animated fire/water updates.
+The legacy transparent sentinel remains non-uploadable while its real fallback
+texture remains discoverable.
+
+The client compiles and the full renderer guardrail suite passes. Focused Java
+8 coverage proves source-array snapshotting, stable and changing catalog
+signatures, sorted cross-chunk deduplication, transparent fallback capture,
+stable world signatures, and cache invalidation for both catalog and chunk
+changes. A matched maximum-distance run and visual review of animated
+textures are still required before accepting this experiment.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -762,9 +794,12 @@ them:
    repeated glow-bound vertex scans before cache lookup. Exact immutable
    chunk/frame bounds removed that scan without changing cache or visual
    semantics, reducing presenter CPU by 38.1% and GL/world p95 by
-   35.8%/45.3% in the accepted eleventh experiment. Texture-signature scanning
-   is now the next measured presenter CPU audit; primitive object-chunk
-   storage remains the leading attributable allocation audit.
+   35.8%/45.3% in the accepted eleventh experiment. Texture signature and
+   upload-reference scans then account for 33.3% of sampled presenter CPU.
+   The twelfth experiment replaces those full-triangle scans with immutable
+   catalog and chunk-reference metadata; it is guard-tested but awaits the
+   controlled comparison. Primitive object-chunk storage remains the leading
+   attributable allocation audit.
 3. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -861,6 +896,10 @@ Implementation checkpoint:
       storage through the depth-frame release boundary.
 - [x] Complete the eleventh focused cycle: replace repeated glow-bound
       full-vertex scans with exact immutable chunk/frame bounds.
+- [ ] Complete the twelfth focused cycle: replace repeated texture-signature
+      and upload-reference triangle scans with immutable catalog and chunk
+      reference metadata. Implementation and guards pass; controlled timing
+      and animated-texture review remain.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -906,3 +945,4 @@ Implementation checkpoint:
 | 2026-07-29 | `6b8cd1fd0` | `clippool` | Reuse bounded sprite-clip mask and row arrays through the depth-frame release boundary, with complete active-range reset and full/empty fallback preservation. | Homogeneous 94.2-second maximum-distance phase and visual occlusion pass. Against the matched post-glow window, client allocation fell 43.7%, total allocation 33.2%, and presenter allocation stayed flat; exact runtime coverage proves reuse, stale-state clearing, capacity selection, bounded retention, empty frames, and idempotent release. The longer cumulative control shows CPU and GL/world tails remained flat. | Accept and checkpoint the documented result; re-rank the remaining reduced workload before another implementation. |
 | 2026-07-29 | `e7216af51` | `jfrll` | Re-profile the ten-cycle maximum-distance workload and rank remaining CPU and allocation stacks. | Complete 98.0-second JFR phase at exact control geometry. JFR measured 41.16 MiB/s against telemetry's 41.40 MiB/s. Glow-bound full-vertex scans own 46.8% of sampled presenter CPU; explicit object-chunk builders lead attributable allocation at 16.9%, with additional stack-truncated list growth kept separate. | Precompute exact immutable chunk/frame bounds as the eleventh experiment; retain texture-signature, object-builder, and remaining GL-wrapper work as separate candidates. |
 | 2026-07-29 | `bb5e6ba5c` | `bounds11` | Precompute exact immutable X/Z bounds for chunk meshes and aggregate frames, then consume them in glow-mask lookup instead of rescanning every resident vertex. | Exact 89.8-second maximum-distance comparison and visual fire-glow pass. Presenter CPU fell 38.1%, process use 23.3%, GL p95/p99 35.8%/32.0%, and world p95/p99 45.3%/43.6%; allocation stayed flat. Focused Java 8 coverage proves exact aggregation, rebase translation, empty frames, unchanged glow coordinates, and emitter-only behavior. | Accept and checkpoint; audit texture-signature scans separately before another CPU change. |
+| 2026-07-29 | texture-reference worktree | pending `texrefs12` | Snapshot frame texture-catalog signatures and precompute sorted unique chunk/frame texture references, including transparent fallbacks, so cache checks and uploads no longer traverse every resident triangle. | Client compiles; focused runtime coverage and the complete renderer guardrail suite pass. The prior profile attributes 1,091 samples, or 33.3% of presenter CPU, to the targeted signature/upload scans. | Launch a fresh matched maximum-distance phase and review animated fires/water before acceptance. |
