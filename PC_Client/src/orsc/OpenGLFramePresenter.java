@@ -344,6 +344,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		Renderer3DFrame renderer3DFrame,
 		String[] rendererDebugOverlayLines) {
 		if (image == null || closed || disabled) {
+			if (renderer3DFrame != null) {
+				renderer3DFrame.releaseDepthFrame();
+			}
 			return;
 		}
 		if (renderer2DFrame == null) {
@@ -352,6 +355,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 		ensureStarted();
 		if (disabled) {
+			if (renderer3DFrame != null) {
+				renderer3DFrame.releaseDepthFrame();
+			}
 			return;
 		}
 

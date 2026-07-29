@@ -91,6 +91,9 @@ final class Frame {
 				frameBuffer);
 		} catch (RuntimeException e) {
 			frameBufferPool.release(frameBuffer);
+			if (renderer3DFrame != null) {
+				renderer3DFrame.releaseDepthFrame();
+			}
 			throw e;
 		}
 	}
@@ -107,6 +110,9 @@ final class Frame {
 			return;
 		}
 		released = true;
+		if (renderer3DFrame != null) {
+			renderer3DFrame.releaseDepthFrame();
+		}
 		frameBufferPool.release(frameBuffer);
 	}
 

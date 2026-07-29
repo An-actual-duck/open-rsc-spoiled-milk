@@ -1,11 +1,15 @@
 package orsc.graphics.three;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
 public final class Renderer3DDepthFrame {
 	private static final int SPRITE_DEPTH_PADDING_PIXELS = 4;
+	private static final int MAX_RETAINED_DEPTH_BUFFERS = 3;
+	private static final ArrayDeque<DepthBuffers> AVAILABLE_DEPTH_BUFFERS =
+		new ArrayDeque<DepthBuffers>();
 	private final int width;
 	private final int height;
 	private final int bufferWidth;
@@ -18,6 +22,7 @@ public final class Renderer3DDepthFrame {
 	private final int[] legacyDrawOrder;
 	private final int[] faceId;
 	private final int[] modelIndex;
+	private final DepthBuffers buffers;
 	private final boolean[] spriteClipMask;
 	private final int[] spriteClipRowMinX;
 	private final int[] spriteClipRowMaxX;
@@ -30,6 +35,7 @@ public final class Renderer3DDepthFrame {
 	private int rejectedFaceCount;
 	private int triangleCount;
 	private int pixelWriteCount;
+	private boolean released;
 
 	private Renderer3DDepthFrame(
 		int width,
@@ -49,17 +55,19 @@ public final class Renderer3DDepthFrame {
 		this.bufferOriginX = spriteClipMask.originX;
 		this.bufferOriginY = spriteClipMask.originY;
 		int bufferSize = Math.max(0, this.bufferWidth * this.bufferHeight);
-		this.depth = new int[bufferSize];
-		this.color = new int[bufferSize];
-		this.kind = new Renderer3DModelKind[bufferSize];
-		this.legacyDrawOrder = new int[bufferSize];
-		this.faceId = new int[bufferSize];
-		this.modelIndex = new int[bufferSize];
-		Arrays.fill(this.depth, Integer.MAX_VALUE);
-		Arrays.fill(this.kind, Renderer3DModelKind.UNCLASSIFIED);
-		Arrays.fill(this.legacyDrawOrder, -1);
-		Arrays.fill(this.faceId, -1);
-		Arrays.fill(this.modelIndex, -1);
+		this.buffers = acquireDepthBuffers(bufferSize);
+		this.depth = buffers.depth;
+		this.color = buffers.color;
+		this.kind = buffers.kind;
+		this.legacyDrawOrder = buffers.legacyDrawOrder;
+		this.faceId = buffers.faceId;
+		this.modelIndex = buffers.modelIndex;
+		Arrays.fill(this.depth, 0, bufferSize, Integer.MAX_VALUE);
+		Arrays.fill(this.color, 0, bufferSize, 0);
+		Arrays.fill(this.kind, 0, bufferSize, Renderer3DModelKind.UNCLASSIFIED);
+		Arrays.fill(this.legacyDrawOrder, 0, bufferSize, -1);
+		Arrays.fill(this.faceId, 0, bufferSize, -1);
+		Arrays.fill(this.modelIndex, 0, bufferSize, -1);
 	}
 
 	static Renderer3DDepthFrame render(Renderer3DFrame frame, EnumSet<Renderer3DModelKind> includedKinds) {
@@ -68,25 +76,75 @@ public final class Renderer3DDepthFrame {
 			frame.getViewportWidth(),
 			frame.getViewportHeight(),
 			spriteClipMask);
-		List<Renderer3DFrame.FaceCommand> faces = frame.getWorldFaces();
-		for (Renderer3DFrame.FaceCommand face : faces) {
-			if (!includedKinds.contains(face.getModelKind())) {
-				continue;
+		boolean complete = false;
+		try {
+			List<Renderer3DFrame.FaceCommand> faces = frame.getWorldFaces();
+			for (Renderer3DFrame.FaceCommand face : faces) {
+				if (!includedKinds.contains(face.getModelKind())) {
+					continue;
+				}
+				if (face.getRenderVertexCount() < 3) {
+					continue;
+				}
+				depthFrame.consideredFaceCount++;
+				if (!depthFrame.faceIntersectsClip(frame, face)) {
+					depthFrame.rejectedFaceCount++;
+					continue;
+				}
+				depthFrame.acceptedFaceCount++;
+				for (int vertex = 1; vertex < face.getRenderVertexCount() - 1; vertex++) {
+					depthFrame.rasterizeTriangle(frame, face, 0, vertex, vertex + 1);
+				}
 			}
-			if (face.getRenderVertexCount() < 3) {
-				continue;
-			}
-			depthFrame.consideredFaceCount++;
-			if (!depthFrame.faceIntersectsClip(frame, face)) {
-				depthFrame.rejectedFaceCount++;
-				continue;
-			}
-			depthFrame.acceptedFaceCount++;
-			for (int vertex = 1; vertex < face.getRenderVertexCount() - 1; vertex++) {
-				depthFrame.rasterizeTriangle(frame, face, 0, vertex, vertex + 1);
+			complete = true;
+			return depthFrame;
+		} finally {
+			if (!complete) {
+				depthFrame.release();
 			}
 		}
-		return depthFrame;
+	}
+
+	synchronized void release() {
+		if (released) {
+			return;
+		}
+		released = true;
+		releaseDepthBuffers(buffers);
+	}
+
+	private static synchronized DepthBuffers acquireDepthBuffers(int requiredPixels) {
+		DepthBuffers selected = null;
+		for (DepthBuffers candidate : AVAILABLE_DEPTH_BUFFERS) {
+			if (candidate.capacity() >= requiredPixels
+				&& (selected == null || candidate.capacity() < selected.capacity())) {
+				selected = candidate;
+			}
+		}
+		if (selected != null) {
+			AVAILABLE_DEPTH_BUFFERS.remove(selected);
+			return selected;
+		}
+		return new DepthBuffers(requiredPixels);
+	}
+
+	private static synchronized void releaseDepthBuffers(DepthBuffers buffers) {
+		if (buffers == null) {
+			return;
+		}
+		if (AVAILABLE_DEPTH_BUFFERS.size() >= MAX_RETAINED_DEPTH_BUFFERS) {
+			DepthBuffers smallestRetained = null;
+			for (DepthBuffers candidate : AVAILABLE_DEPTH_BUFFERS) {
+				if (smallestRetained == null || candidate.capacity() < smallestRetained.capacity()) {
+					smallestRetained = candidate;
+				}
+			}
+			if (smallestRetained != null && smallestRetained.capacity() >= buffers.capacity()) {
+				return;
+			}
+			AVAILABLE_DEPTH_BUFFERS.remove(smallestRetained);
+		}
+		AVAILABLE_DEPTH_BUFFERS.addFirst(buffers);
 	}
 
 	private boolean faceIntersectsClip(Renderer3DFrame frame, Renderer3DFrame.FaceCommand face) {
@@ -447,6 +505,29 @@ public final class Renderer3DDepthFrame {
 			return -1;
 		}
 		return pixel;
+	}
+
+	private static final class DepthBuffers {
+		private final int[] depth;
+		private final int[] color;
+		private final Renderer3DModelKind[] kind;
+		private final int[] legacyDrawOrder;
+		private final int[] faceId;
+		private final int[] modelIndex;
+
+		private DepthBuffers(int capacity) {
+			int safeCapacity = Math.max(0, capacity);
+			this.depth = new int[safeCapacity];
+			this.color = new int[safeCapacity];
+			this.kind = new Renderer3DModelKind[safeCapacity];
+			this.legacyDrawOrder = new int[safeCapacity];
+			this.faceId = new int[safeCapacity];
+			this.modelIndex = new int[safeCapacity];
+		}
+
+		private int capacity() {
+			return depth.length;
+		}
 	}
 
 	private static final class SpriteClipMask {

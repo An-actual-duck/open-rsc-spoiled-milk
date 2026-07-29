@@ -2,7 +2,8 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway.
+attribution are underway, and the first focused allocation optimization has
+been accepted.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -173,6 +174,53 @@ rotation-specific penalty. This ranks allocation-heavy scene preparation and
 culling ahead of GPU/world drawing for the next profile, while the steady
 animated-object reupload remains an independent secondary target.
 
+The opt-in JFR run
+`session-20260728-214546-1289288` / `jfr-wide-idle` then captured 107.0
+seconds at the same verified maximum camera state. JFR's weighted allocation
+samples agreed with ordinary telemetry: 95,590.70 MiB was attributed across
+the phase, while telemetry measured 890.70 MiB/s. The client loop owned 69.87%
+of sampled bytes and the OpenGL presenter 30.12%. Six newly allocated
+per-pixel arrays in `Renderer3DDepthFrame` accounted for 50,700.33 MiB, or
+53.04% of the total. The next broad group contains reflection-bound OpenGL
+calls that allocate boxed primitives and argument arrays; material-name
+classification, sprite clip masks, 2D command snapshots, shadow inventory,
+and texture-signature collections are smaller independently measurable
+sources. The first optimization experiment therefore recycles the six depth
+arrays through the presentation-frame lifetime. This preserves the immutable
+depth-frame view until the presenter finishes or drops that frame while
+testing the largest allocation source in isolation.
+
+The first depth-buffer reuse attempt,
+`session-20260728-215534-1310310` / `depth-pool-wide`, was correctly rejected
+despite passing visual review. Allocation increased to 926.14 MiB/s and
+process use to 0.981 cores. A code audit found that the bounded pool could fill
+with smaller login-screen buffers and then discard every larger in-world
+buffer. This is an important negative result: bounding a pool is insufficient
+unless its retention policy preserves the capacities needed by the steady
+workload.
+
+The corrected run,
+`session-20260728-220021-1312009` / `depth-pool-wide-r2`, retains the three
+largest released buffers while acquiring the smallest adequate one. It ran
+for 131.9 seconds at the same verified maximum camera configuration with no
+reported visual issue. Total allocation fell from the original wide-idle
+baseline's 871.16 to 341.32 MiB/s (-60.8%), and client-loop allocation fell
+from 604.97 to 118.92 MiB/s (-80.3%). Collections fell from 4.20 to 2.08 per
+second and sampled GC pause share from 0.95% to 0.40%. Process use also fell
+from 0.928 to 0.824 cores. GL render p95/p99 improved from 9.535/11.539 to
+9.251/10.894 ms.
+
+This was a stronger geometry workload rather than an exact scene match:
+requested chunks increased from 34 to 40, draw calls from 397.48 to 465,
+drawn triangles from 157,531 to 181,602, and resident triangles from 209,162
+to 229,928. Therefore the frame-time comparison is directional rather than a
+strict isolated benchmark. The allocation and GC result is nevertheless
+strong evidence for acceptance because the corrected run removed roughly
+530 MiB/s while processing more geometry. The implementation resets only the
+active array range and releases storage on presented, dropped, disabled, and
+failed frame paths; the pool remains bounded to three capacity-selected
+entries.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -232,16 +280,21 @@ them:
 
 1. Maximum-distance rendering increases client-side scene preparation,
    culling, and allocation substantially more than resident OpenGL drawing.
-   Allocation-stack attribution is required before selecting a code change.
+   JFR attributed 53.04% of stress-phase allocation to six per-frame
+   `Renderer3DDepthFrame` arrays, and bounded lifetime-aware reuse reduced
+   client-loop allocation by 80.3% in the accepted follow-up. Reflection-bound
+   OpenGL calls now form the largest known broad allocation group and require
+   a separately scoped profile/experiment.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
 3. Resident draw submission may be CPU-bound, GPU-bound, or both. Wall-clock
    Java timing alone cannot distinguish submission overhead from driver/GPU
    waiting.
-4. Per-frame temporary allocations drive frequent young collections. GC pause
-   share remained tolerable in the accepted stress pass, but wide idle reached
-   roughly 871 MiB/s sampled allocation and about 4.2 collections/second.
+4. Per-frame temporary allocations drive frequent young collections. Depth
+   storage reuse reduced collection frequency from 4.20 to 2.08 per second
+   and pause share from 0.95% to 0.40%, confirming the relationship even
+   though GC was not the leading source of visible stutter.
 5. Region/layer changes can still create tail latency through synchronous
    world-product construction and buffer uploads, but should be optimized
    separately from steady rendering.
@@ -298,13 +351,15 @@ Implementation checkpoint:
 - [x] Structure camera zoom, pitch, rotation, allowed range, first-person
       state, and effective draw/fog distance before collecting the remaining
       comparison rows.
-- [ ] Record a CPU/allocation profile for the dense steady and boundary
-      workloads.
+- [x] Record a CPU/allocation profile for the maximum-distance dense steady
+      workload.
+- [ ] Record a CPU/allocation profile for the boundary workload.
 - [ ] Rank actual hotspots by inclusive CPU, allocation rate, frame-tail
       correlation, and estimated payoff.
 
 ### Milestone 3: Focused Optimization Cycles
 
+- [x] Complete the first focused cycle: bounded depth-frame storage reuse.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -333,3 +388,6 @@ Implementation checkpoint:
 | 2026-07-28 | `8b14d42c4` | `dense-camera-r2` | Controlled 91.3-second camera rotation in dense Seers. | Complete capture and visual pass, but the owner identified a substantially zoomed-in view and camera zoom was not structured. The phase is not a valid heavy-view comparison. Chunk request/reupload/reuse still remained 34.0/0.716/33.284 per frame, effectively identical to idle. | Retain only the narrow animated-reupload finding; add camera-state telemetry and collect maximum-distance idle/camera phases before boundary work. |
 | 2026-07-28 | `cbfe7ece3` | camera-state diagnostic guard | Added structured current/allowed zoom, base/effective zoom, pitch, rotation, first-person, fog mode, and effective draw/fog distances, with stable per-phase analyzer summaries. | Client compiles and diagnostic runtime/analyzer guards pass. | Collect the maximum-distance stress baseline before any boundary workload. |
 | 2026-07-28 | `cbfe7ece3` | `dense-wide-idle`, `dense-wide-camera` | Captured maximum-distance dense idle and camera motion with structured proof of zoom `900`, effective zoom `2400`, and 40-tile draw distance. | Visual pass with negligible stutter. OpenGL world p95 stayed near 7.2 ms, but wide idle client scene/cull p95 rose to 3.316/0.859 ms and client allocation to 604.97 MiB/s. Camera motion was not more expensive than idle. | Profile allocation stacks in maximum-distance idle before changing behavior; retain animated-object reuploads as a separate target. |
+| 2026-07-28 | `d89c0cb66` | `jfr-wide-idle` | Captured a bounded 107.0-second JFR profile at verified maximum distance. | JFR and telemetry agree at roughly 891 MiB/s; 69.87% of sampled bytes belonged to the client loop, and six `Renderer3DDepthFrame` arrays alone accounted for 53.04% of all allocation. Reflection-bound OpenGL calls form the next broad allocation group. | Recycle depth arrays through completed/dropped presentation-frame lifetimes, then repeat the ordinary maximum-distance baseline before touching reflection bindings. |
+| 2026-07-28 | depth-pool worktree, attempt 1 | `depth-pool-wide` | Reused depth arrays through a bounded three-entry pool. | Visual pass, but allocation regressed to 926.14 MiB/s and process use to 0.981 cores. The pool retained small login buffers and discarded larger world buffers once full. | Reject the measurement and correct capacity retention before checkpointing. |
+| 2026-07-28 | depth-pool checkpoint | `depth-pool-wide-r2` | Acquire the smallest adequate depth buffer, retain the three largest released capacities, reset active ranges, and release on every presentation-frame exit path. | No reported visual issue. Against original wide idle, total allocation fell 60.8%, client-loop allocation 80.3%, GC frequency 50.6%, and process CPU 11.2%, despite 17.6% more requested chunks and 15.3% more drawn triangles. | Accept and checkpoint; use the remaining allocation profile to choose the next isolated target. |

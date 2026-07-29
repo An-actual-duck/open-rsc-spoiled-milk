@@ -25,6 +25,7 @@ APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 RUNTIME_DEFAULTS = ROOT / "PC_Client/src/orsc/RendererRuntimeDefaults.java"
 SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 OPENGL_PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
+PRESENTATION_FRAME = ROOT / "PC_Client/src/orsc/Frame.java"
 OPENGL_WORLD_CHUNK_RENDERER = ROOT / "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java"
 RESIDENT_CHUNK_READINESS = ROOT / "PC_Client/src/orsc/ResidentChunkReadiness.java"
 OPENGL_WORLD_SUBSYSTEM = (
@@ -104,6 +105,7 @@ def main() -> None:
     runtime_defaults = RUNTIME_DEFAULTS.read_text(encoding="utf-8")
     scaled_window = SCALED_WINDOW.read_text(encoding="utf-8")
     opengl_presenter = OPENGL_PRESENTER.read_text(encoding="utf-8")
+    frame = PRESENTATION_FRAME.read_text(encoding="utf-8")
     opengl_world_chunk_renderer = OPENGL_WORLD_CHUNK_RENDERER.read_text(encoding="utf-8")
     opengl_world_chunk_renderer += "\n" + RESIDENT_CHUNK_READINESS.read_text(encoding="utf-8")
     opengl_presenter += "\n" + opengl_world_chunk_renderer
@@ -340,6 +342,16 @@ def main() -> None:
     require(depth_frame, "private final int[] spriteClipRowMaxX;", "depth sprite clip stores per-row maximum coverage")
     require(depth_frame, "rowMinX = Math.max(rowMinX, bufferOriginX + maskRowMinX);", "depth raster clamps rows to sprite coverage")
     require(depth_frame, "Arrays.fill(\n\t\t\t\t\t\tmask,", "sprite clip mask is built in window-local coordinates")
+    require(depth_frame, "private static final int MAX_RETAINED_DEPTH_BUFFERS = 3;", "depth buffer pool remains bounded")
+    require(depth_frame, "private static synchronized DepthBuffers acquireDepthBuffers(", "depth buffer pool acquisition is thread-safe")
+    require(depth_frame, "candidate.capacity() < selected.capacity()", "depth buffer pool chooses the smallest adequate buffer")
+    require(depth_frame, "smallestRetained.capacity() >= buffers.capacity()", "depth buffer pool retains larger world buffers over login buffers")
+    require(depth_frame, "Arrays.fill(this.depth, 0, bufferSize, Integer.MAX_VALUE);", "reused depth range is reset")
+    require(depth_frame, "Arrays.fill(this.color, 0, bufferSize, 0);", "reused depth color range is reset")
+    require(depth_frame, "synchronized void release()", "depth buffers have idempotent release")
+    require(geometry_frame, "public void releaseDepthFrame()", "geometry frame releases client depth storage")
+    require(frame, "renderer3DFrame.releaseDepthFrame();", "presented and dropped frames recycle depth storage")
+    require(opengl_presenter, "if (image == null || closed || disabled) {\n\t\t\tif (renderer3DFrame != null) {\n\t\t\t\trenderer3DFrame.releaseDepthFrame();", "unpresented frames recycle depth storage")
     require(depth_frame, "depth[pixel] = z;", "depth write")
     require(depth_frame, "color[pixel] = shadeColor(face.getColor(), z, face.getModelKind());", "depth-tested color write")
     require(depth_frame, "pixelWriteCount++;", "depth pixel write counter")

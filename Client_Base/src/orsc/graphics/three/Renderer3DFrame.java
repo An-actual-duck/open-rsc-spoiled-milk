@@ -415,6 +415,17 @@ public final class Renderer3DFrame {
 		return depthFrame;
 	}
 
+	public void releaseDepthFrame() {
+		Renderer3DDepthFrame releasedDepthFrame;
+		synchronized (this) {
+			releasedDepthFrame = depthFrame;
+			depthFrame = null;
+		}
+		if (releasedDepthFrame != null) {
+			releasedDepthFrame.release();
+		}
+	}
+
 	void setMeshFrame(Renderer3DMeshFrame meshFrame) {
 		this.meshFrame = meshFrame;
 	}
