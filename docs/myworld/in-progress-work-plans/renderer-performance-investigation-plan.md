@@ -2,9 +2,9 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, the first eleven focused optimizations have been
-accepted, and the twelfth evidence-backed experiment awaits its controlled
-private-client comparison.
+attribution are underway, and the first twelve focused optimizations have been
+accepted. The reduced steady-scene workload now needs a fresh profile before
+selecting another implementation target.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -703,8 +703,40 @@ The client compiles and the full renderer guardrail suite passes. Focused Java
 8 coverage proves source-array snapshotting, stable and changing catalog
 signatures, sorted cross-chunk deduplication, transparent fallback capture,
 stable world signatures, and cache invalidation for both catalog and chunk
-changes. A matched maximum-distance run and visual review of animated
-textures are still required before accepting this experiment.
+changes.
+
+The first private `texrefs12` phase on checkpoint `ba9827bba` ran for 114.7
+seconds and passed visual review of fires, water, other textures, and movement,
+but it is not a timing result. That client had remained open for about four
+hours and exhausted the bounded bulk-telemetry budget roughly three hours
+before the phase began. Its console retained exact control geometry and
+directionally lower world-window averages, but not the phase CPU, allocation,
+or raw frame distributions required for acceptance.
+
+The fresh `session-20260729-182039-1488463` / `texrefs12r2` phase then captured
+89.3 seconds with complete telemetry at the verified maximum camera state.
+It is an exceptionally close comparison with `bounds11`: both held 34 chunks,
+209,162 resident triangles, and 2,202 considered batches. The new phase drew
+0.4% more triangles, captured 0.2% more projected faces, and differed by less
+than 0.1% in sprite commands.
+
+Presenter CPU fell from 0.286 to 0.148 cores (-48.4%) and process use from
+0.605 to 0.464 cores (-23.2%), while client CPU remained flat at 0.195 cores.
+GL render p95/p99 fell from 5.618/6.409 to 3.195/3.573 ms
+(-43.1%/-44.3%), and world p95/p99 from 3.684/4.142 to 1.753/1.940 ms
+(-52.4%/-53.2%). Total allocation remained effectively flat at 41.59 versus
+42.54 MiB/s; presenter allocation was 10.0% lower and client allocation 2.4%
+higher. No exception, material loss, or accepted visual regression occurred.
+This matches the eliminated presenter scans and accepts the twelfth cycle.
+
+Relative to the original same-geometry maximum-distance baseline, twelve
+accepted cycles have reduced total allocation from 871.16 to 41.59 MiB/s
+(-95.2%), client-loop allocation from 604.97 to 27.38 MiB/s (-95.5%), process
+use from 0.928 to 0.464 cores (-50.0%), and GL render p95/p99 from
+9.535/11.539 to 3.195/3.573 ms (-66.5%/-69.0%), without an accepted visual
+tradeoff. The tenth-cycle JFR ranking is now stale; re-profile this reduced
+endpoint before choosing between primitive object-chunk construction,
+remaining OpenGL wrappers, composite sprite texture work, or another target.
 
 ## Controlled Workload Matrix
 
@@ -795,11 +827,12 @@ them:
    chunk/frame bounds removed that scan without changing cache or visual
    semantics, reducing presenter CPU by 38.1% and GL/world p95 by
    35.8%/45.3% in the accepted eleventh experiment. Texture signature and
-   upload-reference scans then account for 33.3% of sampled presenter CPU.
-   The twelfth experiment replaces those full-triangle scans with immutable
-   catalog and chunk-reference metadata; it is guard-tested but awaits the
-   controlled comparison. Primitive object-chunk storage remains the leading
-   attributable allocation audit.
+   upload-reference scans then accounted for 33.3% of sampled presenter CPU.
+   Replacing those full-triangle scans with immutable catalog and chunk-
+   reference metadata reduced presenter CPU another 48.4% and GL/world p95
+   another 43.1%/52.4% in the accepted twelfth experiment. The remaining CPU
+   ranking now requires a fresh profile; primitive object-chunk storage
+   remains the leading attributable allocation audit from the prior profile.
 3. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -896,10 +929,9 @@ Implementation checkpoint:
       storage through the depth-frame release boundary.
 - [x] Complete the eleventh focused cycle: replace repeated glow-bound
       full-vertex scans with exact immutable chunk/frame bounds.
-- [ ] Complete the twelfth focused cycle: replace repeated texture-signature
+- [x] Complete the twelfth focused cycle: replace repeated texture-signature
       and upload-reference triangle scans with immutable catalog and chunk
-      reference metadata. Implementation and guards pass; controlled timing
-      and animated-texture review remain.
+      reference metadata.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -945,4 +977,5 @@ Implementation checkpoint:
 | 2026-07-29 | `6b8cd1fd0` | `clippool` | Reuse bounded sprite-clip mask and row arrays through the depth-frame release boundary, with complete active-range reset and full/empty fallback preservation. | Homogeneous 94.2-second maximum-distance phase and visual occlusion pass. Against the matched post-glow window, client allocation fell 43.7%, total allocation 33.2%, and presenter allocation stayed flat; exact runtime coverage proves reuse, stale-state clearing, capacity selection, bounded retention, empty frames, and idempotent release. The longer cumulative control shows CPU and GL/world tails remained flat. | Accept and checkpoint the documented result; re-rank the remaining reduced workload before another implementation. |
 | 2026-07-29 | `e7216af51` | `jfrll` | Re-profile the ten-cycle maximum-distance workload and rank remaining CPU and allocation stacks. | Complete 98.0-second JFR phase at exact control geometry. JFR measured 41.16 MiB/s against telemetry's 41.40 MiB/s. Glow-bound full-vertex scans own 46.8% of sampled presenter CPU; explicit object-chunk builders lead attributable allocation at 16.9%, with additional stack-truncated list growth kept separate. | Precompute exact immutable chunk/frame bounds as the eleventh experiment; retain texture-signature, object-builder, and remaining GL-wrapper work as separate candidates. |
 | 2026-07-29 | `bb5e6ba5c` | `bounds11` | Precompute exact immutable X/Z bounds for chunk meshes and aggregate frames, then consume them in glow-mask lookup instead of rescanning every resident vertex. | Exact 89.8-second maximum-distance comparison and visual fire-glow pass. Presenter CPU fell 38.1%, process use 23.3%, GL p95/p99 35.8%/32.0%, and world p95/p99 45.3%/43.6%; allocation stayed flat. Focused Java 8 coverage proves exact aggregation, rebase translation, empty frames, unchanged glow coordinates, and emitter-only behavior. | Accept and checkpoint; audit texture-signature scans separately before another CPU change. |
-| 2026-07-29 | texture-reference worktree | pending `texrefs12` | Snapshot frame texture-catalog signatures and precompute sorted unique chunk/frame texture references, including transparent fallbacks, so cache checks and uploads no longer traverse every resident triangle. | Client compiles; focused runtime coverage and the complete renderer guardrail suite pass. The prior profile attributes 1,091 samples, or 33.3% of presenter CPU, to the targeted signature/upload scans. | Launch a fresh matched maximum-distance phase and review animated fires/water before acceptance. |
+| 2026-07-29 | `ba9827bba` | `texrefs12` | Snapshot frame texture-catalog signatures and precompute sorted unique chunk/frame texture references, including transparent fallbacks, so cache checks and uploads no longer traverse every resident triangle. | Fires, water, other textures, and movement passed visual review, but the four-hour-old client had exhausted structured bulk telemetry roughly three hours before the 114.7-second phase. Console geometry was exact, but phase CPU/allocation/tails were unavailable. | Retain the visual result only and repeat in a fresh client. |
+| 2026-07-29 | `ba9827bba` | `texrefs12r2` | Repeat the immutable texture-reference experiment in a fresh maximum-distance session. | Complete 89.3-second capture and prior visual pass at exact 34-chunk/209,162-triangle/2,202-batch control geometry. Presenter CPU fell 48.4%, process use 23.2%, GL p95/p99 43.1%/44.3%, and world p95/p99 52.4%/53.2%; allocation stayed flat. Focused runtime coverage proves catalog snapshotting, fallback capture, deduplication, and exact invalidation. | Accept and checkpoint; re-profile the reduced endpoint before selecting cycle 13. |
