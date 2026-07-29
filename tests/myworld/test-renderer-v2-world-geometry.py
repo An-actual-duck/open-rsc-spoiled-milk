@@ -359,7 +359,7 @@ def main() -> None:
     require(depth_frame, "private final int[] spriteClipRowMinX;", "depth sprite clip stores per-row minimum coverage")
     require(depth_frame, "private final int[] spriteClipRowMaxX;", "depth sprite clip stores per-row maximum coverage")
     require(depth_frame, "rowMinX = Math.max(rowMinX, bufferOriginX + maskRowMinX);", "depth raster clamps rows to sprite coverage")
-    require(depth_frame, "Arrays.fill(\n\t\t\t\t\t\tmask,", "sprite clip mask is built in window-local coordinates")
+    require(depth_frame, "row * maskWidth + localLeft,", "sprite clip mask is built in window-local coordinates")
     require(depth_frame, "private static final int MAX_RETAINED_DEPTH_BUFFERS = 3;", "depth buffer pool remains bounded")
     require(depth_frame, "private static synchronized DepthBuffers acquireDepthBuffers(", "depth buffer pool acquisition is thread-safe")
     require(depth_frame, "candidate.capacity() < selected.capacity()", "depth buffer pool chooses the smallest adequate buffer")

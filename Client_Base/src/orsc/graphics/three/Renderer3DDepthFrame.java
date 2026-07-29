@@ -8,8 +8,11 @@ import java.util.List;
 public final class Renderer3DDepthFrame {
 	private static final int SPRITE_DEPTH_PADDING_PIXELS = 4;
 	private static final int MAX_RETAINED_DEPTH_BUFFERS = 3;
+	private static final int MAX_RETAINED_SPRITE_CLIP_BUFFERS = 3;
 	private static final ArrayDeque<DepthBuffers> AVAILABLE_DEPTH_BUFFERS =
 		new ArrayDeque<DepthBuffers>();
+	private static final ArrayDeque<SpriteClipBuffers> AVAILABLE_SPRITE_CLIP_BUFFERS =
+		new ArrayDeque<SpriteClipBuffers>();
 	private final int width;
 	private final int height;
 	private final int bufferWidth;
@@ -23,6 +26,7 @@ public final class Renderer3DDepthFrame {
 	private final int[] faceId;
 	private final int[] modelIndex;
 	private final DepthBuffers buffers;
+	private final SpriteClipMask spriteClipStorage;
 	private final boolean[] spriteClipMask;
 	private final int[] spriteClipRowMinX;
 	private final int[] spriteClipRowMaxX;
@@ -43,6 +47,7 @@ public final class Renderer3DDepthFrame {
 		SpriteClipMask spriteClipMask) {
 		this.width = width;
 		this.height = height;
+		this.spriteClipStorage = spriteClipMask;
 		this.spriteClipMask = spriteClipMask.mask;
 		this.spriteClipRowMinX = spriteClipMask.rowMinX;
 		this.spriteClipRowMaxX = spriteClipMask.rowMaxX;
@@ -72,12 +77,13 @@ public final class Renderer3DDepthFrame {
 
 	static Renderer3DDepthFrame render(Renderer3DFrame frame, EnumSet<Renderer3DModelKind> includedKinds) {
 		SpriteClipMask spriteClipMask = SpriteClipMask.from(frame, Renderer3DSettings.isVisibleWorldEnabled());
-		Renderer3DDepthFrame depthFrame = new Renderer3DDepthFrame(
-			frame.getViewportWidth(),
-			frame.getViewportHeight(),
-			spriteClipMask);
+		Renderer3DDepthFrame depthFrame = null;
 		boolean complete = false;
 		try {
+			depthFrame = new Renderer3DDepthFrame(
+				frame.getViewportWidth(),
+				frame.getViewportHeight(),
+				spriteClipMask);
 			List<Renderer3DFrame.FaceCommand> faces = frame.getWorldFaces();
 			for (Renderer3DFrame.FaceCommand face : faces) {
 				if (!includedKinds.contains(face.getModelKind())) {
@@ -100,7 +106,11 @@ public final class Renderer3DDepthFrame {
 			return depthFrame;
 		} finally {
 			if (!complete) {
-				depthFrame.release();
+				if (depthFrame != null) {
+					depthFrame.release();
+				} else {
+					spriteClipMask.release();
+				}
 			}
 		}
 	}
@@ -111,6 +121,7 @@ public final class Renderer3DDepthFrame {
 		}
 		released = true;
 		releaseDepthBuffers(buffers);
+		spriteClipStorage.release();
 	}
 
 	private static synchronized DepthBuffers acquireDepthBuffers(int requiredPixels) {
@@ -145,6 +156,44 @@ public final class Renderer3DDepthFrame {
 			AVAILABLE_DEPTH_BUFFERS.remove(smallestRetained);
 		}
 		AVAILABLE_DEPTH_BUFFERS.addFirst(buffers);
+	}
+
+	private static synchronized SpriteClipBuffers acquireSpriteClipBuffers(
+		int requiredPixels,
+		int requiredRows) {
+		SpriteClipBuffers selected = null;
+		for (SpriteClipBuffers candidate : AVAILABLE_SPRITE_CLIP_BUFFERS) {
+			if (candidate.canHold(requiredPixels, requiredRows)
+				&& (selected == null || candidate.retainedBytes() < selected.retainedBytes())) {
+				selected = candidate;
+			}
+		}
+		if (selected != null) {
+			AVAILABLE_SPRITE_CLIP_BUFFERS.remove(selected);
+			return selected;
+		}
+		return new SpriteClipBuffers(requiredPixels, requiredRows);
+	}
+
+	private static synchronized void releaseSpriteClipBuffers(SpriteClipBuffers buffers) {
+		if (buffers == null) {
+			return;
+		}
+		if (AVAILABLE_SPRITE_CLIP_BUFFERS.size() >= MAX_RETAINED_SPRITE_CLIP_BUFFERS) {
+			SpriteClipBuffers smallestRetained = null;
+			for (SpriteClipBuffers candidate : AVAILABLE_SPRITE_CLIP_BUFFERS) {
+				if (smallestRetained == null
+					|| candidate.retainedBytes() < smallestRetained.retainedBytes()) {
+					smallestRetained = candidate;
+				}
+			}
+			if (smallestRetained != null
+				&& smallestRetained.retainedBytes() >= buffers.retainedBytes()) {
+				return;
+			}
+			AVAILABLE_SPRITE_CLIP_BUFFERS.remove(smallestRetained);
+		}
+		AVAILABLE_SPRITE_CLIP_BUFFERS.addFirst(buffers);
 	}
 
 	private boolean faceIntersectsClip(Renderer3DFrame frame, Renderer3DFrame.FaceCommand face) {
@@ -530,7 +579,30 @@ public final class Renderer3DDepthFrame {
 		}
 	}
 
+	private static final class SpriteClipBuffers {
+		private final boolean[] mask;
+		private final int[] rowMinX;
+		private final int[] rowMaxX;
+
+		private SpriteClipBuffers(int pixelCapacity, int rowCapacity) {
+			int safePixelCapacity = Math.max(0, pixelCapacity);
+			int safeRowCapacity = Math.max(0, rowCapacity);
+			this.mask = new boolean[safePixelCapacity];
+			this.rowMinX = new int[safeRowCapacity];
+			this.rowMaxX = new int[safeRowCapacity];
+		}
+
+		private boolean canHold(int requiredPixels, int requiredRows) {
+			return mask.length >= requiredPixels && rowMinX.length >= requiredRows;
+		}
+
+		private long retainedBytes() {
+			return mask.length + (long) rowMinX.length * Integer.BYTES * 2L;
+		}
+	}
+
 	private static final class SpriteClipMask {
+		private final SpriteClipBuffers buffers;
 		private final boolean[] mask;
 		private final int minX;
 		private final int minY;
@@ -542,8 +614,10 @@ public final class Renderer3DDepthFrame {
 		private final int height;
 		private final int[] rowMinX;
 		private final int[] rowMaxX;
+		private boolean released;
 
 		private SpriteClipMask(
+			SpriteClipBuffers buffers,
 			boolean[] mask,
 			int minX,
 			int minY,
@@ -555,6 +629,7 @@ public final class Renderer3DDepthFrame {
 			int height,
 			int[] rowMinX,
 			int[] rowMaxX) {
+			this.buffers = buffers;
 			this.mask = mask;
 			this.minX = minX;
 			this.minY = minY;
@@ -600,57 +675,77 @@ public final class Renderer3DDepthFrame {
 			}
 			int maskWidth = maxX - minX + 1;
 			int maskHeight = maxY - minY + 1;
-			boolean[] mask = new boolean[maskWidth * maskHeight];
-			int[] rowMinX = new int[maskHeight];
-			int[] rowMaxX = new int[maskHeight];
-			Arrays.fill(rowMinX, -1);
-			Arrays.fill(rowMaxX, -1);
-			for (Renderer3DFrame.SpriteAnchor anchor : anchors) {
-				int left = Math.max(0, anchor.getDrawX() - SPRITE_DEPTH_PADDING_PIXELS);
-				int top = Math.max(0, anchor.getDrawY() - SPRITE_DEPTH_PADDING_PIXELS);
-				int right = Math.min(width - 1, anchor.getDrawX() + Math.max(0, anchor.getDrawWidth()) + SPRITE_DEPTH_PADDING_PIXELS);
-				int bottom = Math.min(height - 1, anchor.getDrawY() + Math.max(0, anchor.getDrawHeight()) + SPRITE_DEPTH_PADDING_PIXELS);
-				if (left > right || top > bottom) {
-					continue;
-				}
-				for (int y = top; y <= bottom; y++) {
-					int row = y - minY;
-					int localLeft = left - minX;
-					int localRight = right - minX;
-					if (rowMinX[row] < 0) {
-						rowMinX[row] = localLeft;
-						rowMaxX[row] = localRight;
-					} else {
-						rowMinX[row] = Math.min(rowMinX[row], localLeft);
-						rowMaxX[row] = Math.max(rowMaxX[row], localRight);
+			int maskPixels = maskWidth * maskHeight;
+			SpriteClipBuffers buffers = acquireSpriteClipBuffers(maskPixels, maskHeight);
+			boolean[] mask = buffers.mask;
+			int[] rowMinX = buffers.rowMinX;
+			int[] rowMaxX = buffers.rowMaxX;
+			boolean complete = false;
+			try {
+				Arrays.fill(mask, 0, maskPixels, false);
+				Arrays.fill(rowMinX, 0, maskHeight, -1);
+				Arrays.fill(rowMaxX, 0, maskHeight, -1);
+				for (Renderer3DFrame.SpriteAnchor anchor : anchors) {
+					int left = Math.max(0, anchor.getDrawX() - SPRITE_DEPTH_PADDING_PIXELS);
+					int top = Math.max(0, anchor.getDrawY() - SPRITE_DEPTH_PADDING_PIXELS);
+					int right = Math.min(width - 1, anchor.getDrawX() + Math.max(0, anchor.getDrawWidth()) + SPRITE_DEPTH_PADDING_PIXELS);
+					int bottom = Math.min(height - 1, anchor.getDrawY() + Math.max(0, anchor.getDrawHeight()) + SPRITE_DEPTH_PADDING_PIXELS);
+					if (left > right || top > bottom) {
+						continue;
 					}
-					Arrays.fill(
-						mask,
-						row * maskWidth + localLeft,
-						row * maskWidth + localRight + 1,
-						true);
+					for (int y = top; y <= bottom; y++) {
+						int row = y - minY;
+						int localLeft = left - minX;
+						int localRight = right - minX;
+						if (rowMinX[row] < 0) {
+							rowMinX[row] = localLeft;
+							rowMaxX[row] = localRight;
+						} else {
+							rowMinX[row] = Math.min(rowMinX[row], localLeft);
+							rowMaxX[row] = Math.max(rowMaxX[row], localRight);
+						}
+						Arrays.fill(
+							mask,
+							row * maskWidth + localLeft,
+							row * maskWidth + localRight + 1,
+							true);
+					}
+				}
+				complete = true;
+				return new SpriteClipMask(
+					buffers,
+					mask,
+					minX,
+					minY,
+					maxX,
+					maxY,
+					minX,
+					minY,
+					maskWidth,
+					maskHeight,
+					rowMinX,
+					rowMaxX);
+			} finally {
+				if (!complete) {
+					releaseSpriteClipBuffers(buffers);
 				}
 			}
-			return new SpriteClipMask(
-				mask,
-				minX,
-				minY,
-				maxX,
-				maxY,
-				minX,
-				minY,
-				maskWidth,
-				maskHeight,
-				rowMinX,
-				rowMaxX);
 		}
 
 		private static SpriteClipMask full(int width, int height) {
-			return new SpriteClipMask(null, 0, 0, width - 1, height - 1, 0, 0, width, height, null, null);
+			return new SpriteClipMask(null, null, 0, 0, width - 1, height - 1, 0, 0, width, height, null, null);
 		}
 
 		private static SpriteClipMask empty() {
-			return new SpriteClipMask(null, 0, 0, -1, -1, 0, 0, 0, 0, null, null);
+			return new SpriteClipMask(null, null, 0, 0, -1, -1, 0, 0, 0, 0, null, null);
+		}
+
+		private synchronized void release() {
+			if (released) {
+				return;
+			}
+			released = true;
+			releaseSpriteClipBuffers(buffers);
 		}
 	}
 }

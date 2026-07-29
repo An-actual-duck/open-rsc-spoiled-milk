@@ -562,6 +562,26 @@ change agrees with the eliminated three-array allocation path and the
 executable lifecycle guard. Accept the isolated change; use a full fixed-view
 phase if a later cumulative baseline needs a longer ninth-cycle endpoint.
 
+The tenth-candidate audit splits the reduced JFR sprite-clip group into
+761.47 MiB of per-frame boolean-mask arrays and 33.08 MiB of per-row integer
+arrays. Those arrays are created on the client loop, remain exclusively owned
+by their `Renderer3DDepthFrame`, and cease to be observable at the same
+presented/dropped-frame release boundary already used by the depth-array pool.
+This gives the 794.54 MiB group a complete and already exercised lifetime,
+unlike object-chunk mesh construction, whose boxed growth and immutable output
+conversion need a broader builder rewrite.
+
+The selected tenth experiment therefore pools only sprite-clip mask and row
+arrays. It uses a separate synchronized three-entry pool, selects the smallest
+storage that satisfies both pixel and row capacity, retains the three largest
+combined capacities, clears every active mask pixel and row bound before use,
+and allocates no storage for full/empty fallback masks. Construction failures
+return acquired storage, while depth-frame release remains idempotent. A
+focused Java 8 fixture covers array reuse, stale pixel and row removal,
+different-size selection, the retention bound, empty-frame behavior, and
+idempotent release. Performance and visual acceptance remain pending a fresh
+maximum-distance phase.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -641,8 +661,10 @@ them:
    client-loop allocation by 17.3%. Reusing presenter-owned glow-mask scratch
    arrays then reduced presenter allocation by 45.7% in the comparable
    fixed-view window and removed the measured three-array rebuild path.
-   Audit object-chunk array growth and sprite clip masks before selecting the
-   next isolated allocation target.
+   Sprite-clip arrays have the same proven frame-release lifetime as the
+   accepted depth pool and account for 794.54 MiB in the reduced profile, so
+   bounded clip-storage reuse is the selected tenth experiment. Keep
+   object-chunk array growth separate.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -735,6 +757,8 @@ Implementation checkpoint:
       definition/frame keys while preserving source-mutation invalidation.
 - [x] Complete the ninth focused cycle: reuse presenter-owned glow-mask color
       accumulation arrays with complete per-rebuild channel reset.
+- [ ] Complete the tenth focused cycle: reuse bounded sprite-clip mask and row
+      storage through the depth-frame release boundary.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
