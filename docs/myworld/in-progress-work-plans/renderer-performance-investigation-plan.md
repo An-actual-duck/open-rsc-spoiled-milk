@@ -2,10 +2,10 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first fourteen focused optimizations have
-been accepted. Diagnostic shadow-inventory caching has now been accepted as the
-fourteenth optimization. A fresh maximum-distance profile now ranks exact
-object-chunk builder capacity as the first cycle-15 slice.
+attribution are underway, and the first fifteen focused optimizations have
+been accepted. Exact object-chunk builder sizing has now been accepted as the
+fifteenth optimization; remaining reflection wrappers and reduced
+object-chunk construction are the next independent allocation audits.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -898,8 +898,36 @@ The client compiles and the full renderer guardrail suite passes. Focused Java
 capacity, verifies the exact two-sided triangle estimate, inspects all seven
 builder capacities after construction to prove no growth occurred, and then
 rechecks output geometry and the existing material, lighting, signature,
-shadow, glow, ignored-model, and empty-frame invariants. Cycle 15 now requires
-a fresh maximum-distance diagnostic comparison and owner visual review.
+shadow, glow, ignored-model, and empty-frame invariants. This established the
+implementation checkpoint for the following maximum-distance comparison.
+
+`session-20260729-190521-1536445` / `capacity15` captured 102.1 seconds on
+checkpoint `c57df7186` and completed owner testing without a reported visual
+abnormality. It closely matches `shadowcache14`: both retained 34 chunks,
+209,162 resident triangles, 2,202 considered batches, 1,245 models, about
+0.715 animated chunk uploads per frame, 2,700 shadow casters, and 40,934
+shadow-receiver triangles. Drawn triangles differed by 0.2% and sprite
+commands by 0.4%. The camera briefly moved from rotation `512` to `496`, and
+world-face capture was 2.7% higher, so small scene-tail differences are
+recorded rather than attributed.
+
+Client-loop allocation fell from 23.58 to 20.59 MiB/s (-12.7%), while
+presenter allocation stayed flat at 13.99 versus 14.03 MiB/s. Total allocation
+fell from 37.61 to 35.70 MiB/s (-5.1%) despite a background world preload
+contributing 1.11 MiB/s only in the new phase. Process/client CPU stayed within
+run variance at 0.414/0.188 versus 0.405/0.183 cores. Client-loop p95 stayed
+flat at 17.032 versus 17.049 ms; GL p95/p99 improved from 2.598/2.897 to
+2.381/2.624 ms, and world p95/p99 remained near one millisecond at
+0.896/1.021 versus 0.871/0.979 ms. The direct client allocation reduction,
+exact object-chunk rebuild rate, full capacity fixture, compile/guard pass, and
+visual pass accept cycle 15.
+
+Relative to the original same-geometry maximum-distance baseline, fifteen
+accepted cycles have reduced total allocation from 871.16 to 35.70 MiB/s
+(-95.9%), client-loop allocation from 604.97 to 20.59 MiB/s (-96.6%), process
+use from 0.928 to 0.414 cores (-55.3%), GL render p95/p99 from 9.535/11.539 to
+2.381/2.624 ms (-75.0%/-77.3%), and world p95/p99 from 7.207/8.440 to
+0.896/1.021 ms (-87.6%/-87.9%), without an accepted visual tradeoff.
 
 ## Controlled Workload Matrix
 
@@ -1104,6 +1132,8 @@ Implementation checkpoint:
       mesh accumulators with growable primitive storage.
 - [x] Complete the fourteenth focused cycle: cache telemetry-only shadow
       inventory by exact lazy world and object-caster signatures.
+- [x] Complete the fifteenth focused cycle: pre-size all parallel object-chunk
+      builders from exact face topology and visible material sides.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -1155,3 +1185,4 @@ Implementation checkpoint:
 | 2026-07-29 | `2db2f3f6b` | `primitive13` | Replace the seven boxed numeric object-chunk accumulators with growable primitive arrays while retaining immutable output normalization and all mesh semantics. | Exact 93.3-second maximum-distance workload and owner visual pass. Client allocation fell 13.5% and total allocation 9.7%; process/client CPU and world p95/p99 stayed flat. The older session incurred more GC and higher presenter/GL tails even though the changed path is client-only, so that difference is recorded without attribution. Focused Java 8 coverage proves exact geometry, material, lighting metadata, signatures, and empty behavior. | Accept cycle 13; isolate telemetry-only shadow inventory from normal shadow rendering before changing classification. |
 | 2026-07-29 | `6159beb7e` | `shadowcache14` | Cache only telemetry-requested shadow inventory using the existing world signature plus a lazy exact object-caster signature; leave normal shadow-mask building and drawing unchanged. | Exact 106.3-second maximum-distance workload and owner visual pass. Presenter CPU fell 32.4%, process use 13.4%, GL p95/p99 25.8%/28.3%, and world p95/p99 50.5%/49.5%; total/client/presenter allocation stayed within 1%. Focused Java 8 coverage proves cache hits, animation-only stability, exact invalidation, preserved counts, and lazy construction. | Accept cycle 14; re-profile the reduced endpoint before selecting cycle 15. |
 | 2026-07-29 | `2ba397913` | `post14jfr` | Re-profile the fourteen-cycle maximum-distance endpoint and separate remaining CPU and allocation ownership. | Complete 104.7-second phase at exact control geometry. JFR measured 38.18 MiB/s against telemetry's 39.74 MiB/s. Object-chunk builders lead attributable allocation at 19.5%, including 10.2% from fixed-start primitive-array growth; reflection wrappers, frame/command capture, composite scenes, and composite character textures follow. Client and presenter CPU now divide across distinct legacy scene, handoff, upload, glow, and shadow paths. | Pre-size the parallel object-chunk builders from exact face topology for cycle 15; retain the CPU and other allocation groups as separate audits. |
+| 2026-07-29 | `c57df7186` | `capacity15` | Pre-size all object-chunk numeric and per-triangle collections from exact visible face topology, retaining growth fallback and immutable output ownership. | Matched 102.1-second maximum-distance workload and owner visual pass. Client allocation fell 12.7% and total allocation 5.1% despite 1.11 MiB/s of new background-preload allocation; presenter allocation stayed flat, CPU/world tails remained within variance, and GL p95/p99 improved. Focused Java 8 coverage proves exact capacity without growth and preserves geometry, materials, lighting, signatures, shadows, glows, and empty behavior. | Accept cycle 15; audit the independently ranked reflection wrappers and remaining object-builder ownership before cycle 16. |
