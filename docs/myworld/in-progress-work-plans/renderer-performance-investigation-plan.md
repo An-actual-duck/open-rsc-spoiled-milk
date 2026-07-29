@@ -2,7 +2,7 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first six focused allocation optimizations
+attribution are underway, and the first seven focused allocation optimizations
 have been accepted.
 
 This is the living measurement and optimization ledger for the ongoing
@@ -412,6 +412,50 @@ process use from 0.928 to 0.777 cores (-16.2%). GL render p95/p99 improved from
 coverage-mask group removed, world-face capture is the largest known
 project-owned allocation target in the current maximum-distance workload.
 
+The seventh audit traced world-face capture through both threads and every
+consumer. Each visible projected face previously created a `FaceCommand`,
+seven integer arrays, and two floating-point texture-coordinate arrays on
+every client frame. The immutable snapshot must survive until the OpenGL
+presenter finishes or drops its corresponding presentation frame, but none of
+that storage escapes the existing frame-release boundary.
+
+Checkpoint `10d951ee1` therefore retains up to three complete world-face
+storages, preferring the largest steady-world capacities over smaller login
+frames. Commands are pooled by exact vertex count through 64 vertices so their
+public array lengths remain unchanged; larger unusual polygons keep the
+allocation fallback. Reused commands reset coordinates, lighting, texture
+coordinates, clipped geometry, draw order, kind counters, and the model/face
+lookup. Presented, dropped, disabled, failed, null-image, and software-only
+paths all release the storage. A focused executable fixture proves same-size
+reuse, different-size separation, stale-state removal, idempotent release,
+unmodifiable views, and the three-storage bound.
+
+`session-20260729-120928-1409020` / `facepool` captured 101.4 seconds at the
+same verified maximum camera state and passed owner review of movement,
+near-wall clipping, textures, lighting, and entity occlusion. It is a close
+comparison with `overlaymask`: both phases requested 34 chunks, held 209,162
+resident triangles, and considered 2,202 batches. Projected face capture was
+1.3% lower (356.64 versus 361.20 faces per frame) and sprite anchors were 1.8%
+lower, small workload differences that do not explain the measured result.
+
+Total allocation fell from 94.47 to 84.52 MiB/s (-10.5%) and client-loop
+allocation from 67.92 to 60.07 MiB/s (-11.6%). Process use fell from 0.777 to
+0.734 cores, while client and presenter use remained close at 0.201 and 0.416
+cores. GL render p95/p99 was 7.914/8.583 ms and world p95/p99 was
+6.386/6.881 ms, with no frame-tail regression. The remaining presenter
+allocation difference is not assigned to this client-owned mechanism because
+the two runs had slightly different entity counts.
+
+Relative to the original same-geometry maximum-distance baseline, the seven
+accepted cycles have reduced total allocation from 871.16 to 84.52 MiB/s
+(-90.3%), client-loop allocation from 604.97 to 60.07 MiB/s (-90.1%), and
+process use from 0.928 to 0.734 cores (-20.9%). GL render p95/p99 improved from
+9.535/11.539 to 7.914/8.583 ms without an accepted visual tradeoff. The
+earlier profile ranking is now stale after removing another measured group;
+the next steady-scene action is a reduced-workload JFR pass before choosing
+between residual face-map keys/nodes, sprite keys, glow masks, sprite clip
+masks, or another allocation owner.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -483,8 +527,10 @@ them:
    renderer's stable roof-coverage cache for diagnostic inventory then removed
    all sampled indoor-flood construction and reduced presenter allocation by
    another 35.7%. Reusing direct-overlay coverage scratch storage then reduced
-   presenter allocation by another 51.4%. World-face capture is now the largest
-   measured project-owned allocation group.
+   presenter allocation by another 51.4%. Bounded world-face command and array
+   reuse then reduced client-loop allocation by another 11.6%. Re-profile the
+   reduced workload before ranking the remaining face-map, sprite, glow, and
+   clip-mask allocations.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -571,6 +617,8 @@ Implementation checkpoint:
       flood workspace.
 - [x] Complete the sixth focused cycle: reuse the presenter-owned direct-overlay
       coverage mask across frames.
+- [x] Complete the seventh focused cycle: reuse bounded world-face command and
+      vertex-array storage through the presentation-frame release boundary.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -609,3 +657,4 @@ Implementation checkpoint:
 | 2026-07-29 | `98e3c278d` | `glhot` | Route the measured per-frame state, buffer, pointer, and draw wrappers through typed Java 8 method handles while retaining dynamic LWJGL discovery. | Complete maximum-distance capture and visual pass against matching 34-chunk geometry. Presenter allocation fell 35.6%, total allocation 30.2%, GC frequency 72.0%, and process use 6.3%; GL frame tails did not regress. | Accept and checkpoint; inspect indoor-shadow flood lifetime and reuse boundaries as the next ranked target. |
 | 2026-07-29 | `cac788267` | `shadowcache` | Reuse renderer-owned roof coverage for diagnostic shadow inventory and the optional inventory overlay instead of reconstructing the indoor flood workspace per frame. | Exact 34-chunk geometry and shadow classifications; visual pass. Presenter allocation fell 35.7%, total allocation 19.9%, presenter CPU 9.5%, and world p95 10.6%. JFR sampled zero indoor-flood or roof-coverage construction bytes versus 5,752.58 MiB previously. | Accept and checkpoint; audit direct-overlay coverage-mask lifetime before changing its representation. |
 | 2026-07-29 | `fae0cf296` | `overlaymask` | Reuse one grow-only presenter-owned direct-overlay coverage array, clearing the active source range before each synchronous scene-restore pass. | Exact maximum-distance geometry and complete sprite replay accounting; visual pass. Presenter allocation fell 51.4% and total allocation 23.7%, matching the 29.66 MiB/s predicted cost of a 960x540 boolean mask at 60 FPS. CPU and frame tails remained flat. | Accept and checkpoint; audit world-face capture lifetime and consumers as the next ranked target. |
+| 2026-07-29 | `10d951ee1` | `facepool` | Reuse bounded world-face commands and their coordinate, light, texture, and clipped arrays through the presentation-frame release boundary. | Exact 34-chunk/209,162-triangle/2,202-batch workload and visual pass. Total allocation fell 10.5%, client-loop allocation 11.6%, and process use 5.5%; GL/world tails did not regress. Focused runtime coverage proves reuse, complete state reset, exact vertex-size separation, idempotent lifecycle, and a three-storage bound. | Accept and checkpoint; re-profile the now-reduced maximum-distance workload before selecting another allocation target. |
