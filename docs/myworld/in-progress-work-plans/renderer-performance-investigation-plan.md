@@ -2,9 +2,8 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, the first seven focused allocation optimizations
-have been accepted, and the reduced-workload profile has selected the eighth
-candidate.
+attribution are underway, and the first eight focused allocation optimizations
+have been accepted.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -494,6 +493,45 @@ with the animation-key experiment. Texture/chunk signature scanning should be
 audited separately after the measured allocation change, because altering
 both would make CPU and allocation results impossible to attribute.
 
+Checkpoint `c8105af6e` implements the eighth experiment with a resolver-owned
+identity cache. It creates a normalized key only once for each animation
+definition/frame pair, starts with the legacy 18-frame capacity, grows only
+when a real larger frame is requested, and retains no frame above 255. The
+uncached fallback preserves unusual larger offsets. Because legacy animation
+name and category fields are public, each lookup verifies both source values
+and replaces all cached frames for that definition if either changes. Item and
+UI/world-sprite key paths remain unchanged. An executable Java 8 fixture proves
+stable key identity, capacity growth, the 255-frame retention bound, oversized
+fallback, name/category invalidation, null/invalid-key caching, and definition
+identity separation.
+
+`session-20260729-123817-1421299` / `animkey` captured 107.3 seconds at the
+same verified maximum camera state and passed owner review of player and NPC
+sprites and animations. It retained the exact 34 requested chunks, 209,162
+resident triangles, and 2,202 considered batches. Against `facepool`, client-
+loop allocation fell from 60.07 to 49.70 MiB/s (-17.3%), while client CPU
+remained flat at 0.201 versus 0.199 cores. Total allocation fell from 84.52 to
+76.28 MiB/s (-9.8%).
+
+The aggregate presenter comparison is not attributed to this client-only
+change. The new phase captured 6.5% more sprite commands per frame (242.33
+versus 227.58), and presenter allocation/CPU rose from 24.44 MiB/s and 0.416
+cores to 26.57 MiB/s and 0.465 cores. GL render p95/p99 consequently moved
+from 7.914/8.583 to 8.732/9.742 ms and world p95/p99 from 6.386/6.881 to
+6.750/7.272 ms. Drawn triangles were 0.6% lower and projected faces 0.9%
+lower, so this is a close resident-geometry comparison but not an exact entity
+workload. The changed client thread improved in its targeted metric without a
+CPU or visual regression; the unrelated presenter variance remains explicit
+rather than being claimed as either a benefit or cost of key caching.
+
+Relative to the original same-geometry maximum-distance baseline, the eight
+accepted cycles have reduced total allocation from 871.16 to 76.28 MiB/s
+(-91.2%) and client-loop allocation from 604.97 to 49.70 MiB/s (-91.8%).
+The reduced JFR ranking now places object-chunk mesh array growth, sprite clip
+masks, and glow masks ahead of residual face-map and 2D-command allocation.
+Choose the next experiment only after auditing those lifetimes and the
+separate texture-signature CPU opportunity.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -567,10 +605,12 @@ them:
    another 35.7%. Reusing direct-overlay coverage scratch storage then reduced
    presenter allocation by another 51.4%. Bounded world-face command and array
    reuse then reduced client-loop allocation by another 11.6%. The reduced
-   profile now attributes 19.97% of all remaining allocation to repeated
+   profile attributed 19.97% of all remaining allocation to repeated
    remastered sprite-key composition, with 99.3% of that group owned by
-   animation definition/frame lookups. Cache only those stable animation keys
-   before considering broader sprite, glow, or clip-mask lifetime changes.
+   animation definition/frame lookups. Caching those stable keys then reduced
+   client-loop allocation by 17.3%. Audit object-chunk array growth, sprite
+   clip masks, and glow masks before selecting the next isolated allocation
+   target.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -659,7 +699,7 @@ Implementation checkpoint:
       coverage mask across frames.
 - [x] Complete the seventh focused cycle: reuse bounded world-face command and
       vertex-array storage through the presentation-frame release boundary.
-- [ ] Complete the eighth focused cycle: cache stable remastered animation
+- [x] Complete the eighth focused cycle: cache stable remastered animation
       definition/frame keys while preserving source-mutation invalidation.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
@@ -701,3 +741,4 @@ Implementation checkpoint:
 | 2026-07-29 | `fae0cf296` | `overlaymask` | Reuse one grow-only presenter-owned direct-overlay coverage array, clearing the active source range before each synchronous scene-restore pass. | Exact maximum-distance geometry and complete sprite replay accounting; visual pass. Presenter allocation fell 51.4% and total allocation 23.7%, matching the 29.66 MiB/s predicted cost of a 960x540 boolean mask at 60 FPS. CPU and frame tails remained flat. | Accept and checkpoint; audit world-face capture lifetime and consumers as the next ranked target. |
 | 2026-07-29 | `10d951ee1` | `facepool` | Reuse bounded world-face commands and their coordinate, light, texture, and clipped arrays through the presentation-frame release boundary. | Exact 34-chunk/209,162-triangle/2,202-batch workload and visual pass. Total allocation fell 10.5%, client-loop allocation 11.6%, and process use 5.5%; GL/world tails did not regress. Focused runtime coverage proves reuse, complete state reset, exact vertex-size separation, idempotent lifecycle, and a three-storage bound. | Accept and checkpoint; re-profile the now-reduced maximum-distance workload before selecting another allocation target. |
 | 2026-07-29 | `bb0ec1618` | `reducejfr` | Re-profile the seven-cycle reduced maximum-distance workload and split the remaining sprite-key group by definition type. | Complete 132.3-second JFR and visual pass at exact 34-chunk/209,162-triangle/2,202-batch geometry. JFR measured 84.12 MiB/s against telemetry's 85.32 MiB/s. Sprite-key composition leads at 19.97% of all allocation, and animation definitions own 99.3% of that group. Resident chunk access and texture-signature scanning lead project-thread CPU samples. | Cache only animation definition/frame keys as the next isolated allocation experiment; retain texture-signature CPU work as a later separate audit. |
+| 2026-07-29 | `c8105af6e` | `animkey` | Cache normalized remastered animation keys by definition identity and frame, with bounded growth, oversized fallback, and public source-field invalidation. | Visual pass and exact 34-chunk/209,162-resident-triangle/2,202-batch scene. Client allocation fell 17.3% and client CPU stayed flat; total allocation fell 9.8%. The phase had 6.5% more sprite commands, so higher presenter CPU/allocation and GL tails are recorded as an entity-workload difference rather than attributed to the client-only change. Focused Java 8 coverage proves key reuse and all cache bounds/invalidation paths. | Accept and checkpoint; audit the newly leading mesh-growth, clip-mask, glow-mask, and texture-signature candidates separately before selecting the ninth experiment. |
