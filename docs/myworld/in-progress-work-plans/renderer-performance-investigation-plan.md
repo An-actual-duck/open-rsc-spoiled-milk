@@ -2,7 +2,7 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first five focused allocation optimizations
+attribution are underway, and the first six focused allocation optimizations
 have been accepted.
 
 This is the living measurement and optimization ledger for the ongoing
@@ -377,6 +377,41 @@ accepted cycles have reduced total allocation from 871.16 to 123.78 MiB/s
 process use from 0.928 to 0.770 cores (-17.0%). GL render p95/p99 improved from
 9.535/11.539 to 8.289/9.090 ms with no accepted visual tradeoff.
 
+The sixth audit found that direct-overlay clipping allocated one
+`boolean[sourceWidth * sourceHeight]` on every active composite frame. The
+mask is mutable scratch storage: it is built, consumed synchronously while
+restoring scene sprites, and never escapes the single OpenGL presenter thread.
+The accepted change retains one grow-only presenter-owned array and clears only
+the active source-pixel range before reuse. It does not alter mask generation,
+clipping tests, replay order, or any captured command.
+
+`session-20260729-115209-1402717` / `overlaymask` captured 91.7 seconds at the
+same verified maximum camera state and passed owner review of movement, UI
+tabs, text, right-click menus, scene sprites, and overlay ordering. It again
+requested 34 chunks, held 209,162 resident triangles, considered 2,202
+batches, classified 40,934 shadow receivers and 2,700 casters, and reproduced
+the earlier `glhot` drawn-triangle count within 0.001%. Sprite accounting
+remained internally complete: all 233.80 captured commands per frame were
+replayed, with no invisible or atlas-full drops; the small difference from
+236.09 in `shadowcache` is changing entity count rather than lost work.
+
+Presenter allocation fell from 54.66 to 26.55 MiB/s (-51.4%) and total
+allocation from 123.78 to 94.47 MiB/s (-23.7%). Client allocation was
+effectively flat at 69.11 versus 67.93 MiB/s. A 960x540 boolean mask at 60
+frames per second predicts 29.66 MiB/s of allocation; the observed total
+reduction was 29.30 MiB/s and the presenter-owned reduction was 28.12 MiB/s,
+closely isolating the mechanism. Process and presenter CPU remained flat at
+0.777 and 0.440 cores. GL render p95/p99 was 8.230/9.202 ms and world p95/p99
+was 6.287/7.104 ms, with no meaningful tail regression.
+
+Relative to the original same-geometry maximum-distance baseline, the six
+accepted cycles have reduced total allocation from 871.16 to 94.47 MiB/s
+(-89.2%), client-loop allocation from 604.97 to 67.93 MiB/s (-88.8%), and
+process use from 0.928 to 0.777 cores (-16.2%). GL render p95/p99 improved from
+9.535/11.539 to 8.230/9.202 ms without an accepted visual tradeoff. With the
+coverage-mask group removed, world-face capture is the largest known
+project-owned allocation target in the current maximum-distance workload.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -447,8 +482,9 @@ them:
    that measured set reduced presenter allocation by 35.6%. Reusing the
    renderer's stable roof-coverage cache for diagnostic inventory then removed
    all sampled indoor-flood construction and reduced presenter allocation by
-   another 35.7%. Direct-overlay coverage masks and world-face capture are now
-   the two largest measured project-owned allocation groups.
+   another 35.7%. Reusing direct-overlay coverage scratch storage then reduced
+   presenter allocation by another 51.4%. World-face capture is now the largest
+   measured project-owned allocation group.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -533,6 +569,8 @@ Implementation checkpoint:
 - [x] Complete the fifth focused cycle: reuse renderer-owned roof coverage for
       per-frame diagnostic shadow inventory instead of rebuilding its indoor
       flood workspace.
+- [x] Complete the sixth focused cycle: reuse the presenter-owned direct-overlay
+      coverage mask across frames.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -570,3 +608,4 @@ Implementation checkpoint:
 | 2026-07-29 | `0d545c359` | `currentjfr` | Re-profile the reduced 34-chunk maximum-distance workload after the first three accepted cycles. | Complete JFR and visual pass. Remaining reflection wrappers owned 32.73% of allocation, indoor-shadow flood workspaces 22.69%, sprite keys 8.44%, world-face commands 4.97%, and sprite clip masks 3.67%. | Convert only the 16 measured per-frame OpenGL methods that account for 96.75% of the reflection group. |
 | 2026-07-29 | `98e3c278d` | `glhot` | Route the measured per-frame state, buffer, pointer, and draw wrappers through typed Java 8 method handles while retaining dynamic LWJGL discovery. | Complete maximum-distance capture and visual pass against matching 34-chunk geometry. Presenter allocation fell 35.6%, total allocation 30.2%, GC frequency 72.0%, and process use 6.3%; GL frame tails did not regress. | Accept and checkpoint; inspect indoor-shadow flood lifetime and reuse boundaries as the next ranked target. |
 | 2026-07-29 | `cac788267` | `shadowcache` | Reuse renderer-owned roof coverage for diagnostic shadow inventory and the optional inventory overlay instead of reconstructing the indoor flood workspace per frame. | Exact 34-chunk geometry and shadow classifications; visual pass. Presenter allocation fell 35.7%, total allocation 19.9%, presenter CPU 9.5%, and world p95 10.6%. JFR sampled zero indoor-flood or roof-coverage construction bytes versus 5,752.58 MiB previously. | Accept and checkpoint; audit direct-overlay coverage-mask lifetime before changing its representation. |
+| 2026-07-29 | `fae0cf296` | `overlaymask` | Reuse one grow-only presenter-owned direct-overlay coverage array, clearing the active source range before each synchronous scene-restore pass. | Exact maximum-distance geometry and complete sprite replay accounting; visual pass. Presenter allocation fell 51.4% and total allocation 23.7%, matching the 29.66 MiB/s predicted cost of a 960x540 boolean mask at 60 FPS. CPU and frame tails remained flat. | Accept and checkpoint; audit world-face capture lifetime and consumers as the next ranked target. |
