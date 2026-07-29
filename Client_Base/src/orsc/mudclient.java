@@ -16654,6 +16654,14 @@ public final class mudclient implements Runnable {
 									MessageType.GAME,
 									0,
 									null);
+							} else if (RendererPerformanceDiagnostics.isCommand(var11)) {
+								this.showMessage(
+									false,
+									null,
+									RendererPerformanceDiagnostics.handleCommand(var11),
+									MessageType.GAME,
+									0,
+									null);
 							} else if (var11.startsWith("::n ") && localPlayer.isDev()) {
 								devMenuNpcID = Integer.parseInt(var11.split(" ")[1]);
 							} else if (var11.equalsIgnoreCase("::overlay") && S_SIDE_MENU_TOGGLE) {

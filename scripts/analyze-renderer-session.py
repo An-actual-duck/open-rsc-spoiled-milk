@@ -100,6 +100,25 @@ def numeric(record: dict[str, Any], key: str, default: float = 0.0) -> float:
     return float(value)
 
 
+def numeric_array(record: dict[str, Any], key: str) -> list[float]:
+    value = record.get(key)
+    if not isinstance(value, list):
+        return []
+    return [
+        float(item)
+        for item in value
+        if not isinstance(item, bool) and isinstance(item, (int, float)) and item >= 0
+    ]
+
+
+def stage_samples(records: list[dict[str, Any]], stage: str) -> list[float]:
+    key = f"stage.{stage}.window.samplesNanos"
+    samples: list[float] = []
+    for record in records:
+        samples.extend(numeric_array(record, key))
+    return samples
+
+
 def percentile(values: list[float], percent: float) -> float:
     if not values:
         return 0.0
@@ -197,6 +216,75 @@ def login_epochs(
     if start is not None:
         epochs.append((start, session_end_nanos))
     return epochs
+
+
+def performance_phases(
+    events: list[dict[str, Any]],
+) -> list[tuple[dict[str, Any], dict[str, Any]]]:
+    active: dict[int, dict[str, Any]] = {}
+    completed: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    for event in sorted(events, key=lambda item: numeric(item, "sessionElapsedNanos")):
+        if event.get("eventType") != "renderer.performance-phase":
+            continue
+        phase_id = int(numeric(event, "phaseId", -1))
+        action = event.get("action")
+        if action == "start":
+            active[phase_id] = event
+        elif action == "stop" and phase_id in active:
+            completed.append((active.pop(phase_id), event))
+    return completed
+
+
+def cpu_totals(records: list[dict[str, Any]]) -> dict[str, float]:
+    result = {
+        "wallNanos": 0.0,
+        "processNanos": 0.0,
+        "javaThreadNanos": 0.0,
+        "unattributedNanos": 0.0,
+        "allocatedBytes": 0.0,
+    }
+    for record in records:
+        wall = numeric(record, "runtime.cpu.sampleWallNanos", -1)
+        if wall <= 0:
+            continue
+        result["wallNanos"] += wall
+        result["processNanos"] += max(
+            0.0, numeric(record, "runtime.cpu.processTimeDeltaNanos")
+        )
+        result["javaThreadNanos"] += max(
+            0.0, numeric(record, "runtime.cpu.javaThreadTimeDeltaNanos")
+        )
+        result["unattributedNanos"] += max(
+            0.0, numeric(record, "runtime.cpu.unattributedTimeDeltaNanos")
+        )
+        result["allocatedBytes"] += max(
+            0.0, numeric(record, "runtime.allocation.javaThreadBytesDelta")
+        )
+    return result
+
+
+def named_thread_totals(
+    records: list[dict[str, Any]], key_name: str
+) -> tuple[float, float]:
+    prefix = f"runtime.thread.named.{key_name}"
+    cpu_nanos = 0.0
+    allocated_bytes = 0.0
+    for record in records:
+        if not record.get(prefix + ".present"):
+            continue
+        cpu_nanos += max(0.0, numeric(record, prefix + ".cpuTimeDeltaNanos"))
+        allocated_bytes += max(0.0, numeric(record, prefix + ".allocatedBytesDelta"))
+    return cpu_nanos, allocated_bytes
+
+
+def cores(nanos: float, wall_nanos: float) -> float:
+    return nanos / wall_nanos if wall_nanos > 0 else 0.0
+
+
+def mebibytes_per_second(byte_count: float, wall_nanos: float) -> float:
+    if wall_nanos <= 0:
+        return 0.0
+    return byte_count * 1_000_000_000.0 / wall_nanos / (1024.0 * 1024.0)
 
 
 def final_capture_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -312,9 +400,20 @@ def build_summary(
     normal_report_records = [
         record for record in report_records if not within_capture_range(record, capture_ranges)
     ]
-    timing_records = normal_report_records or report_records or telemetry
     normal_telemetry = [
         record for record in telemetry if not within_capture_range(record, capture_ranges)
+    ]
+    timing_records = normal_report_records or report_records or telemetry
+    distribution_triggers = {
+        "periodic",
+        "slow-frame",
+        "performance-phase-start",
+        "performance-phase-stop",
+    }
+    distribution_records = [
+        record
+        for record in normal_telemetry
+        if record.get("trigger") in distribution_triggers
     ]
     client_loop_nanos = [
         numeric(record, "stage.clientLoop.window.averageNanos") for record in timing_records
@@ -328,6 +427,12 @@ def build_summary(
     open_gl_world_nanos = [
         numeric(record, "stage.openGLWorld.window.averageNanos") for record in timing_records
     ]
+    true_client_loop_nanos = stage_samples(distribution_records, "clientLoop")
+    true_scene_nanos = stage_samples(distribution_records, "sceneRender")
+    true_open_gl_render_nanos = stage_samples(distribution_records, "openGLRender")
+    true_open_gl_world_nanos = stage_samples(distribution_records, "openGLWorld")
+    runtime_totals = cpu_totals(normal_telemetry)
+    completed_performance_phases = performance_phases(events)
     worst_records = sorted(
         timing_records,
         key=lambda record: numeric(record, "stage.openGLRender.window.averageNanos"),
@@ -429,6 +534,25 @@ def build_summary(
         f"- GC delta across report windows: {int(total_gc_count)} collections / {int(total_gc_time)}ms "
         f"({gc_average_millis:.2f}ms average, {gc_time_percent:.2f}% of sampled duration)",
     ]
+    true_distributions = (
+        ("Client loop", true_client_loop_nanos),
+        ("Scene", true_scene_nanos),
+        ("OpenGL render", true_open_gl_render_nanos),
+        ("OpenGL world", true_open_gl_world_nanos),
+    )
+    if any(values for _, values in true_distributions):
+        lines.extend(["", "### True per-frame distributions", ""])
+        for label, values in true_distributions:
+            if not values:
+                lines.append(f"- {label}: raw frame samples unavailable.")
+                continue
+            lines.append(
+                f"- {label} p50/p95/p99/max: "
+                f"{milliseconds(percentile(values, 0.50))} / "
+                f"{milliseconds(percentile(values, 0.95))} / "
+                f"{milliseconds(percentile(values, 0.99))} / "
+                f"{milliseconds(max(values))} ({len(values)} samples)."
+            )
     if heap_values:
         lines.append(
             f"- Heap used range: {int(min(heap_values))}..{int(max(heap_values))} bytes"
@@ -439,6 +563,116 @@ def build_summary(
         lines.append(
             f"- Early/late sampled heap floor: {int(early_floor)} / {int(late_floor)} bytes "
             f"(delta {int(late_floor - early_floor):+d}); this is a retention signal, not leak proof."
+        )
+
+    lines.extend(["", "## CPU And Allocation", ""])
+    runtime_wall = runtime_totals["wallNanos"]
+    if runtime_wall > 0:
+        lines.append(
+            "- Process/Java-thread/unattributed CPU: "
+            f"{cores(runtime_totals['processNanos'], runtime_wall):.3f} / "
+            f"{cores(runtime_totals['javaThreadNanos'], runtime_wall):.3f} / "
+            f"{cores(runtime_totals['unattributedNanos'], runtime_wall):.3f} "
+            f"average cores across {runtime_wall / 1_000_000_000.0:.1f}s."
+        )
+        lines.append(
+            "- Java-thread allocation rate: "
+            f"{mebibytes_per_second(runtime_totals['allocatedBytes'], runtime_wall):.2f} MiB/s."
+        )
+        named_threads = (
+            ("client loop", "clientLoop"),
+            ("OpenGL presenter", "openGLPresenter"),
+            ("world preload", "worldPreload"),
+            ("AWT event queue", "awtEventQueue"),
+        )
+        thread_parts = []
+        for label, key_name in named_threads:
+            thread_cpu, thread_allocated = named_thread_totals(normal_telemetry, key_name)
+            if thread_cpu <= 0 and thread_allocated <= 0:
+                continue
+            thread_parts.append(
+                f"{label}={cores(thread_cpu, runtime_wall):.3f} cores/"
+                f"{mebibytes_per_second(thread_allocated, runtime_wall):.2f} MiB/s"
+            )
+        if thread_parts:
+            lines.append("- Named CPU/allocation ownership: " + ", ".join(thread_parts) + ".")
+    else:
+        lines.append("- Process/thread CPU and allocation telemetry is unavailable in this session.")
+
+    latest_thread_record = next(
+        (
+            record
+            for record in reversed(normal_telemetry)
+            if numeric(record, "runtime.thread.topCpu.count") > 0
+        ),
+        None,
+    )
+    if latest_thread_record is not None:
+        top_parts = []
+        top_count = int(numeric(latest_thread_record, "runtime.thread.topCpu.count"))
+        wall = numeric(latest_thread_record, "runtime.cpu.sampleWallNanos")
+        for index in range(min(5, top_count)):
+            prefix = f"runtime.thread.topCpu.{index}"
+            name = latest_thread_record.get(prefix + ".name")
+            if not isinstance(name, str):
+                continue
+            top_parts.append(
+                f"{name}={cores(numeric(latest_thread_record, prefix + '.cpuTimeDeltaNanos'), wall):.3f}"
+            )
+        if top_parts:
+            lines.append("- Latest top Java threads by average cores: " + ", ".join(top_parts) + ".")
+    jfr_relative = manifest.get("files.jfr")
+    if isinstance(jfr_relative, str) and jfr_relative:
+        jfr_path = session_dir / jfr_relative
+        if jfr_path.is_file():
+            lines.append(
+                f"- JFR profile: `{jfr_relative}` ({jfr_path.stat().st_size} bytes); "
+                "use `jfr summary` and `jfr print` for stack-level attribution."
+            )
+        else:
+            lines.append(f"- JFR profile is indexed but not present: `{jfr_relative}`.")
+
+    lines.extend(["", "## Named Performance Phases", ""])
+    if not completed_performance_phases:
+        lines.append("- No completed `::pf` performance phases were recorded.")
+    for start_event, stop_event in completed_performance_phases:
+        start_nanos = numeric(start_event, "sessionElapsedNanos")
+        stop_nanos = numeric(stop_event, "sessionElapsedNanos")
+        phase_records = [
+            record
+            for record in normal_telemetry
+            if start_nanos <= numeric(record, "sessionElapsedNanos") <= stop_nanos
+        ]
+        phase_distribution_records = [
+            record
+            for record in phase_records
+            if record.get("trigger") in {"periodic", "slow-frame", "performance-phase-stop"}
+        ]
+        phase_render = stage_samples(phase_distribution_records, "openGLRender")
+        phase_world = stage_samples(phase_distribution_records, "openGLWorld")
+        phase_runtime = cpu_totals(phase_records)
+        phase_wall = phase_runtime["wallNanos"]
+        label = str(start_event.get("label", "unnamed"))
+        duration = max(0.0, stop_nanos - start_nanos)
+        if phase_render:
+            frame_text = (
+                f"GL render p95/p99 {milliseconds(percentile(phase_render, 0.95))}/"
+                f"{milliseconds(percentile(phase_render, 0.99))}, "
+                f"world p95/p99 {milliseconds(percentile(phase_world, 0.95))}/"
+                f"{milliseconds(percentile(phase_world, 0.99))}, "
+                f"{len(phase_render)} frames"
+            )
+        else:
+            frame_text = "raw frame samples unavailable"
+        cpu_text = (
+            f"{cores(phase_runtime['processNanos'], phase_wall):.3f} CPU cores, "
+            f"{mebibytes_per_second(phase_runtime['allocatedBytes'], phase_wall):.2f} MiB/s allocated"
+            if phase_wall > 0
+            else "CPU/allocation unavailable"
+        )
+        lines.append(
+            f"- `{label}` (#{int(numeric(start_event, 'phaseId'))}): "
+            f"{duration / 1_000_000_000.0:.1f}s; {frame_text}; {cpu_text}."
         )
 
     lines.extend(["", "## Memory Retention", ""])
@@ -578,6 +812,31 @@ def build_summary(
             )
         else:
             lines.append(f"- `{event_type}`: {event_counts.get(event_type, 0)}")
+
+    lines.extend(["", "### Transition timing distributions", ""])
+    transition_types = (
+        ("world model", "renderer.world-model-transition"),
+        ("world section", "renderer.world-section-transition"),
+        ("client region", "renderer.client-region-transition"),
+    )
+    transition_found = False
+    for label, event_type in transition_types:
+        values = [
+            numeric(event, "totalNanos")
+            for event in events
+            if event.get("eventType") == event_type and numeric(event, "totalNanos", -1) >= 0
+        ]
+        if not values:
+            continue
+        transition_found = True
+        lines.append(
+            f"- {label}: p50/p95/max "
+            f"{milliseconds(percentile(values, 0.50))} / "
+            f"{milliseconds(percentile(values, 0.95))} / "
+            f"{milliseconds(max(values))} ({len(values)} transitions)."
+        )
+    if not transition_found:
+        lines.append("- No structured transition timing events were recorded.")
 
     latest = telemetry[-1] if telemetry else {}
     lines.extend(["", "## Resident Material Families", ""])

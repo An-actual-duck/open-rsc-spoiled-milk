@@ -7,6 +7,10 @@ active state from `renderer-v2-plan.md` and
 
 Use this file first when deciding what renderer work to do next. The older
 documents remain detailed implementation ledgers and historical checklists.
+Use
+[renderer-performance-investigation-plan.md](renderer-performance-investigation-plan.md)
+for controlled workloads, current measurements, instrumentation gaps, and the
+profile-tweak-compare experiment ledger.
 For structural cleanup, file splitting, and stale-option quarantine work, use
 `code-cleanup-and-modularization-plan.md`.
 

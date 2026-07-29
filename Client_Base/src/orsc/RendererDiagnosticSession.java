@@ -45,6 +45,9 @@ final class RendererDiagnosticSession {
 	private static String startedAt;
 	private static String endedAt;
 	private static String sessionId;
+	private static String openGLRenderer = "unknown";
+	private static String openGLVersion = "unknown";
+	private static String openGLVendor = "unknown";
 	private static File sessionDirectory;
 	private static PrintWriter telemetryWriter;
 	private static PrintWriter eventWriter;
@@ -161,6 +164,30 @@ final class RendererDiagnosticSession {
 				event.string("detail", detail);
 			}
 			writeEvent(event);
+		}
+	}
+
+	static void recordOpenGLDevice(String renderer, String version, String vendor) {
+		if (!ensureStarted()) {
+			return;
+		}
+		synchronized (LOCK) {
+			openGLRenderer = safeDiagnosticValue(renderer);
+			openGLVersion = safeDiagnosticValue(version);
+			openGLVendor = safeDiagnosticValue(vendor);
+			Record event = newRecord("event");
+			event.string("eventType", "renderer.opengl.device");
+			event.string("renderer", openGLRenderer);
+			event.string("version", openGLVersion);
+			event.string("vendor", openGLVendor);
+			writeEvent(event);
+			try {
+				writeManifest("open");
+			} catch (IOException e) {
+				System.err.println(
+					"[renderer diagnostics] could not update OpenGL manifest fields: "
+						+ e.getMessage());
+			}
 		}
 	}
 
@@ -408,11 +435,18 @@ final class RendererDiagnosticSession {
 		record.string("runtime.osArch", System.getProperty("os.arch", "unknown"));
 		record.number("runtime.availableProcessors", Runtime.getRuntime().availableProcessors());
 		record.number("runtime.processStartMillis", ManagementFactory.getRuntimeMXBean().getStartTime());
+		record.string("openGL.renderer", openGLRenderer);
+		record.string("openGL.version", openGLVersion);
+		record.string("openGL.vendor", openGLVendor);
 		record.string("files.telemetry", "telemetry.jsonl");
 		record.string("files.events", "events.jsonl");
 		record.string("files.console", "console.log");
 		record.string("files.captureRoot", "captures");
 		record.string("files.captureIndex", "captures/capture-index.jsonl");
+		String jfrPath = readEnvironment("SPOILED_MILK_CLIENT_JFR_PATH", "");
+		if (!jfrPath.isEmpty()) {
+			record.string("files.jfr", relativeSessionPath(new File(jfrPath)));
+		}
 		appendRendererSettings(record);
 		try (PrintWriter writer = openWriter(pending)) {
 			writer.println(record.toJson());
@@ -458,6 +492,10 @@ final class RendererDiagnosticSession {
 			|| normalized.contains("secret")
 			|| normalized.contains("token")
 			|| normalized.contains("auth");
+	}
+
+	private static String safeDiagnosticValue(String value) {
+		return value == null || value.trim().isEmpty() ? "unknown" : value.trim();
 	}
 
 	private static File resolveSessionDirectory() {
@@ -583,6 +621,21 @@ final class RendererDiagnosticSession {
 						json.append(',');
 					}
 					appendQuoted(values[i] == null ? "" : values[i]);
+				}
+			}
+			json.append(']');
+			return this;
+		}
+
+		Record numbers(String name, long[] values) {
+			appendName(name);
+			json.append('[');
+			if (values != null) {
+				for (int i = 0; i < values.length; i++) {
+					if (i > 0) {
+						json.append(',');
+					}
+					json.append(values[i]);
 				}
 			}
 			json.append(']');

@@ -661,12 +661,16 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 	private void logOpenGLDevice() {
 		try {
+			String renderer = gl.glGetString(gl.GL_RENDERER);
+			String version = gl.glGetString(gl.GL_VERSION);
+			String vendor = gl.glGetString(gl.GL_VENDOR);
+			RendererDiagnosticSession.recordOpenGLDevice(renderer, version, vendor);
 			log("OpenGL device: "
-				+ gl.glGetString(gl.GL_RENDERER)
+				+ renderer
 				+ " | "
-				+ gl.glGetString(gl.GL_VERSION)
+				+ version
 				+ " | "
-				+ gl.glGetString(gl.GL_VENDOR));
+				+ vendor);
 		} catch (Throwable t) {
 			log("OpenGL device info unavailable: " + t.getMessage());
 		}

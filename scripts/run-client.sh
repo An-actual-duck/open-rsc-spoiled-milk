@@ -14,6 +14,7 @@ CLIENT_TARGET_HOST="localhost"
 CLIENT_TARGET_PORT="$MYWORLD_PUBLIC_PORT"
 RENDERER_DIAGNOSTICS=false
 FRAME_CAPTURE_ENABLED=true
+JFR_PROFILE_ENABLED=false
 
 while (($#)); do
   case "$1" in
@@ -36,6 +37,11 @@ while (($#)); do
       RENDERER_DIAGNOSTICS=true
       ;;
     --no-frame-capture)
+      FRAME_CAPTURE_ENABLED=false
+      ;;
+    --jfr)
+      JFR_PROFILE_ENABLED=true
+      RENDERER_DIAGNOSTICS=true
       FRAME_CAPTURE_ENABLED=false
       ;;
     --target)
@@ -88,6 +94,13 @@ if [[ "$RENDERER_DIAGNOSTICS" == true ]]; then
   export SPOILED_MILK_CLIENT_BRANCH="$(myworld_git_branch)"
   export SPOILED_MILK_CLIENT_COMMIT="$(myworld_git_commit)"
   export SPOILED_MILK_CLIENT_TARGET_MODE="$CLIENT_TARGET_MODE"
+  if [[ "$JFR_PROFILE_ENABLED" == true ]]; then
+    CLIENT_JFR_PATH="$RENDERER_DIAGNOSTIC_SESSION_DIR/client-profile.jfr"
+    export SPOILED_MILK_CLIENT_JFR_PATH="$CLIENT_JFR_PATH"
+    CLIENT_JVM_ARGS="-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=settings=profile,filename=$CLIENT_JFR_PATH,dumponexit=true,maxsize=128m,maxage=30m"
+  else
+    CLIENT_JVM_ARGS=""
+  fi
 fi
 
 printf '\n============================================================\n' >&2
@@ -112,13 +125,15 @@ printf 'Endpoint: %s:%s\n' "${CLIENT_TARGET_HOST:-unknown}" "${CLIENT_TARGET_POR
 if [[ "$RENDERER_DIAGNOSTICS" == true ]]; then
   printf 'Diagnostics: %s\n' "$RENDERER_DIAGNOSTIC_SESSION_DIR" >&2
   printf 'Frame capture: %s\n' "$FRAME_CAPTURE_ENABLED" >&2
+  printf 'JFR profile: %s\n' "$JFR_PROFILE_ENABLED" >&2
 fi
 printf '============================================================\n\n' >&2
 
 run_client() {
   (
     cd "$ROOT_DIR/Client_Base"
-    ANT_HOME="$ANT_HOME" sh "$ANT_BIN" compile-and-run
+    ANT_HOME="$ANT_HOME" sh "$ANT_BIN" compile-and-run \
+      -Dclient.jvmargs="${CLIENT_JVM_ARGS:-}"
   )
 }
 
