@@ -212,6 +212,12 @@ def main() -> None:
             "Resident object chunk should only include materialized game-object instances")
     require(mudclient, "this.isWallObjectInstanceMaterialized(i) && this.getWallObjectInstanceModel(i) != null",
             "Resident object chunk should only include materialized wall-object instances")
+    require(mudclient, "applyRenderer3DMaterialMetadata(\n\t\t\tRenderer3DModelKind.GAME_OBJECT,\n\t\t\tobjectId,\n\t\t\tmodel);",
+            "Game-object material metadata should be attached once when assigning the live model")
+    require(mudclient, "applyRenderer3DMaterialMetadata(\n\t\t\tRenderer3DModelKind.WALL_OBJECT,\n\t\t\ttype,\n\t\t\tmodel);",
+            "Wall-object material metadata should be attached once when constructing the live model")
+    forbid(mudclient, "applyRenderer3DMaterialMetadata(kind, objectId, model);",
+           "Resident object enumeration should not repeat immutable material classification every frame")
     require(mudclient, "this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame())",
             "Renderer frames should receive resident world chunks plus dynamic object chunks")
     require(world_chunk_frame, "public final class Renderer3DWorldChunkFrame",

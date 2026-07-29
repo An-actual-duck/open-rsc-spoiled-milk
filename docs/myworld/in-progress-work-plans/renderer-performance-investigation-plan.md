@@ -2,7 +2,7 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first two focused allocation optimizations
+attribution are underway, and the first three focused allocation optimizations
 have been accepted.
 
 This is the living measurement and optimization ledger for the ongoing
@@ -254,6 +254,38 @@ frequency from 4.20 to 1.36 per second (-67.8%), and process use from 0.928 to
 0.830 cores (-10.5%), while GL render p95/p99 improved from 9.535/11.539 to
 9.047/10.760 ms.
 
+The third experiment moved immutable renderer material-family and glow
+classification from every resident-object frame to the existing game-object
+assignment and wall-object construction boundaries. Static presentation
+models already classified themselves at construction. This preserves
+classification on initial materialization, array compaction, and animated
+model replacement while eliminating repeated definition-string normalization
+for every materialized model in every client frame.
+
+`session-20260729-105544-1381138` / `matmeta` ran for 92.5 seconds with the
+verified maximum camera configuration and passed owner visual review. Although
+the camera details were not visible in the owner's F6 layout, the structured
+phase records prove zoom setting `900`, effective zoom `2400`, 40-tile draw
+distance, 28-tile fog start, and fog enabled. Material coverage remained
+complete: 231,637 resident triangles, zero unclassified triangles, and
+populated foliage, scenery, ore, and emissive families.
+
+The best comparison is the earlier `depth-pool-wide-r2` phase rather than the
+immediately preceding 34-chunk method-handle phase. Both 40-chunk phases
+processed effectively identical work: 1.475 versus 1.476 chunk uploads per
+frame, 181,602 versus 181,600 drawn triangles, and identical foliage
+(`79,868`), scenery (`99,724`), and emissive (`3,536`) triangle counts. The
+new phase had 231,637 resident triangles versus 229,928 and slightly more
+batches and draw calls. Across those matched workloads, client-loop allocation
+fell from 118.92 to 97.82 MiB/s (-17.7%) and client-loop CPU from 0.190 to
+0.181 cores (-5.1%). Typed OpenGL dispatch accounts for the separate presenter
+change between these revisions; the client-owned reduction aligns with the
+material-classification code moved in this experiment. Total allocation fell
+from 341.32 to 309.25 MiB/s (-9.4%) and process use from 0.824 to 0.813 cores.
+GL render p95/p99 was 9.622/10.309 ms and world p95/p99 was 8.197/8.775 ms;
+the mixed p95 movement and improved p99 do not indicate a meaningful tail
+regression.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -317,8 +349,10 @@ them:
    `Renderer3DDepthFrame` arrays, and bounded lifetime-aware reuse reduced
    client-loop allocation by 80.3% in the accepted follow-up. Typed handles
    for the two hottest reflection-bound OpenGL calls then reduced presenter
-   allocation by another 40.7%. Remaining reflection bindings are individually
-   smaller and should be ranked before broad conversion.
+   allocation by another 40.7%. Assigning immutable renderer material metadata
+   once then reduced client-loop allocation by 17.7% in a matched 40-chunk
+   comparison. Remaining reflection bindings and client-side temporaries are
+   individually smaller and should be ranked before broad conversion.
 2. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -396,6 +430,8 @@ Implementation checkpoint:
 - [x] Complete the first focused cycle: bounded depth-frame storage reuse.
 - [x] Complete the second focused cycle: allocation-free typed dispatch for
       the two hottest dynamically loaded OpenGL calls.
+- [x] Complete the third focused cycle: classify immutable game-object and
+      wall-object renderer material metadata once at model preparation.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
 - [ ] Repeat the affected workload with identical settings.
@@ -428,4 +464,5 @@ Implementation checkpoint:
 | 2026-07-28 | depth-pool worktree, attempt 1 | `depth-pool-wide` | Reused depth arrays through a bounded three-entry pool. | Visual pass, but allocation regressed to 926.14 MiB/s and process use to 0.981 cores. The pool retained small login buffers and discarded larger world buffers once full. | Reject the measurement and correct capacity retention before checkpointing. |
 | 2026-07-28 | `58198f2b5` | `depth-pool-wide-r2` | Acquire the smallest adequate depth buffer, retain the three largest released capacities, reset active ranges, and release on every presentation-frame exit path. | No reported visual issue. Against original wide idle, total allocation fell 60.8%, client-loop allocation 80.3%, GC frequency 50.6%, and process CPU 11.2%, despite 17.6% more requested chunks and 15.3% more drawn triangles. | Accept and checkpoint; use the remaining allocation profile to choose the next isolated target. |
 | 2026-07-29 | method-handle worktree, attempt 1 | `gl-handles-wide` | Route `glVertex3f` and `glColor4f` through typed Java 8 method handles while retaining dynamic LWJGL loading. | Visual pass, but the client had remained open overnight and exhausted bounded telemetry before the phase; no valid performance samples exist. | Retain the visual result only and repeat in a fresh session. |
-| 2026-07-29 | method-handle checkpoint | `gl-handles-r2` | Repeat the two-call typed-dispatch experiment in a fresh maximum-distance session. | Complete capture and visual pass. Total allocation fell another 35.1%, presenter allocation 40.7%, and GC frequency 34.8%; CPU remained effectively flat and frame tails did not regress. | Accept and checkpoint; re-rank the remaining profile before expanding typed dispatch. |
+| 2026-07-29 | `af1ff41b3` | `gl-handles-r2` | Repeat the two-call typed-dispatch experiment in a fresh maximum-distance session. | Complete capture and visual pass. Total allocation fell another 35.1%, presenter allocation 40.7%, and GC frequency 34.8%; CPU remained effectively flat and frame tails did not regress. | Accept and checkpoint; re-rank the remaining profile before expanding typed dispatch. |
+| 2026-07-29 | material-metadata worktree | `matmeta` | Assign immutable material-family and glow metadata when game/wall models are prepared instead of reclassifying every resident-object frame. | Visual pass and complete maximum-distance capture. Against the nearly identical 40-chunk depth-pool workload, client allocation fell 17.7%, client CPU 5.1%, total allocation 9.4%, and process use 1.3%; zero resident triangles were unclassified. | Accept and checkpoint; profile the reduced client loop before selecting another temporary-allocation target. |

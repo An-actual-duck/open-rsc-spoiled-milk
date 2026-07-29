@@ -135,8 +135,9 @@ def main() -> None:
     )
     require(
         "applyGameObjectVisualOverrides(objectId, model);" not in client_mudclient
-        and "applyRenderer3DMaterialMetadata(kind, objectId, model);" in client_mudclient,
-        "Resident object chunks should attach renderer metadata without recoloring live object models during export",
+        and "applyRenderer3DMaterialMetadata(\n\t\t\tRenderer3DModelKind.GAME_OBJECT,\n\t\t\tobjectId,\n\t\t\tmodel);" in client_mudclient
+        and "applyRenderer3DMaterialMetadata(kind, objectId, model);" not in client_mudclient,
+        "Object model assignment should attach renderer metadata without recoloring or reclassifying live models during export",
     )
     require_game_object_compaction_copies_id_before_model(packet_handler)
     sulfur_mining_entry = """<entry>

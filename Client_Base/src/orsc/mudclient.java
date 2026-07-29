@@ -3493,6 +3493,10 @@ public final class mudclient implements Runnable {
 		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
 		model.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, -95);
 		model.key = index + ClientSceneInstanceStore.WALL_OBJECT_KEY_BASE;
+		applyRenderer3DMaterialMetadata(
+			Renderer3DModelKind.WALL_OBJECT,
+			type,
+			model);
 		return model;
 	}
 
@@ -4012,7 +4016,6 @@ public final class mudclient implements Runnable {
 			builder = new ResidentObjectChunkInputBuilder(anchor, cellKey, cellX, cellZ, chunkRole, cellTileSize);
 			builders.put(cellKey, builder);
 		}
-		applyRenderer3DMaterialMetadata(kind, objectId, model);
 		boolean debugMatched = shouldDebugResidentObjectChunkModel(kind, tileX, tileZ, objectId);
 		builder.add(
 			kind,
@@ -23622,6 +23625,10 @@ public final class mudclient implements Runnable {
 		if (objectId == DRAGON_SULFUR_ROCK_OBJECT_ID) {
 			model.tintVisibleFaces(DRAGON_SULFUR_ROCK_COLOR_RESOURCE);
 		}
+		applyRenderer3DMaterialMetadata(
+			Renderer3DModelKind.GAME_OBJECT,
+			objectId,
+			model);
 		return model;
 	}
 
