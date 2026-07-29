@@ -20,6 +20,11 @@ public final class Renderer3DWorldChunkFrame {
 	private final int totalIndexCount;
 	private final int totalTriangleCount;
 	private final int[] materialFamilyTriangleCounts;
+	private final boolean hasVertexBounds;
+	private final int minVertexX;
+	private final int maxVertexX;
+	private final int minVertexZ;
+	private final int maxVertexZ;
 
 	private Renderer3DWorldChunkFrame(
 		List<ChunkMesh> chunks,
@@ -31,12 +36,29 @@ public final class Renderer3DWorldChunkFrame {
 		this.totalIndexCount = totalIndexCount;
 		this.totalTriangleCount = totalTriangleCount;
 		this.materialFamilyTriangleCounts = new int[Renderer3DMaterialFamily.values().length];
+		boolean foundVertexBounds = false;
+		int minimumVertexX = Integer.MAX_VALUE;
+		int maximumVertexX = Integer.MIN_VALUE;
+		int minimumVertexZ = Integer.MAX_VALUE;
+		int maximumVertexZ = Integer.MIN_VALUE;
 		for (ChunkMesh chunk : chunks) {
 			for (Renderer3DMaterialFamily family : Renderer3DMaterialFamily.values()) {
 				this.materialFamilyTriangleCounts[family.ordinal()] +=
 					chunk.getMaterialFamilyTriangleCount(family);
 			}
+			if (chunk.hasVertexBounds()) {
+				foundVertexBounds = true;
+				minimumVertexX = Math.min(minimumVertexX, chunk.getMinVertexX());
+				maximumVertexX = Math.max(maximumVertexX, chunk.getMaxVertexX());
+				minimumVertexZ = Math.min(minimumVertexZ, chunk.getMinVertexZ());
+				maximumVertexZ = Math.max(maximumVertexZ, chunk.getMaxVertexZ());
+			}
 		}
+		this.hasVertexBounds = foundVertexBounds;
+		this.minVertexX = foundVertexBounds ? minimumVertexX : 0;
+		this.maxVertexX = foundVertexBounds ? maximumVertexX : 0;
+		this.minVertexZ = foundVertexBounds ? minimumVertexZ : 0;
+		this.maxVertexZ = foundVertexBounds ? maximumVertexZ : 0;
 	}
 
 	public static Renderer3DWorldChunkFrame fromChunks(List<ChunkMesh> chunks) {
@@ -80,6 +102,26 @@ public final class Renderer3DWorldChunkFrame {
 		return totalTriangleCount;
 	}
 
+	public boolean hasVertexBounds() {
+		return hasVertexBounds;
+	}
+
+	public int getMinVertexX() {
+		return minVertexX;
+	}
+
+	public int getMaxVertexX() {
+		return maxVertexX;
+	}
+
+	public int getMinVertexZ() {
+		return minVertexZ;
+	}
+
+	public int getMaxVertexZ() {
+		return maxVertexZ;
+	}
+
 	public int getMaterialFamilyTriangleCount(Renderer3DMaterialFamily family) {
 		Renderer3DMaterialFamily safeFamily = family == null
 			? Renderer3DMaterialFamily.UNCLASSIFIED
@@ -100,6 +142,11 @@ public final class Renderer3DWorldChunkFrame {
 		private final int[] vertexCoords;
 		private final int vertexOffsetX;
 		private final int vertexOffsetZ;
+		private boolean hasVertexBounds;
+		private int minVertexX;
+		private int maxVertexX;
+		private int minVertexZ;
+		private int maxVertexZ;
 		private final float[] vertexTextureU;
 		private final float[] vertexTextureV;
 		private final int[] vertexLights;
@@ -331,6 +378,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.vertexCoords = vertexCoords == null ? new int[0] : vertexCoords.clone();
 			this.vertexOffsetX = 0;
 			this.vertexOffsetZ = 0;
+			initializeVertexBounds();
 			int vertexCount = this.vertexCoords.length / 3;
 			this.vertexTextureU = normalizeFloatArray(vertexTextureU, vertexCount, 0.0f);
 			this.vertexTextureV = normalizeFloatArray(vertexTextureV, vertexCount, 0.0f);
@@ -627,6 +675,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.vertexCoords = vertexCoords == null ? new int[0] : vertexCoords.clone();
 			this.vertexOffsetX = 0;
 			this.vertexOffsetZ = 0;
+			initializeVertexBounds();
 			int vertexCount = this.vertexCoords.length / 3;
 			this.vertexTextureU = normalizeFloatArray(vertexTextureU, vertexCount, 0.0f);
 			this.vertexTextureV = normalizeFloatArray(vertexTextureV, vertexCount, 0.0f);
@@ -744,6 +793,19 @@ public final class Renderer3DWorldChunkFrame {
 				source.vertexOffsetX, additionalOffsetX);
 			this.vertexOffsetZ = Math.addExact(
 				source.vertexOffsetZ, additionalOffsetZ);
+			this.hasVertexBounds = source.hasVertexBounds;
+			this.minVertexX = source.hasVertexBounds
+				? Math.addExact(source.minVertexX, additionalOffsetX)
+				: 0;
+			this.maxVertexX = source.hasVertexBounds
+				? Math.addExact(source.maxVertexX, additionalOffsetX)
+				: 0;
+			this.minVertexZ = source.hasVertexBounds
+				? Math.addExact(source.minVertexZ, additionalOffsetZ)
+				: 0;
+			this.maxVertexZ = source.hasVertexBounds
+				? Math.addExact(source.maxVertexZ, additionalOffsetZ)
+				: 0;
 			this.vertexTextureU = source.vertexTextureU;
 			this.vertexTextureV = source.vertexTextureV;
 			this.vertexLights = source.vertexLights;
@@ -819,6 +881,34 @@ public final class Renderer3DWorldChunkFrame {
 			return chunkRole == CHUNK_ROLE_ANIMATED_OBJECTS
 				? CHUNK_ROLE_ANIMATED_OBJECTS
 				: CHUNK_ROLE_STATIC_OBJECTS;
+		}
+
+		private void initializeVertexBounds() {
+			if (vertexCoords.length < 3) {
+				hasVertexBounds = false;
+				minVertexX = 0;
+				maxVertexX = 0;
+				minVertexZ = 0;
+				maxVertexZ = 0;
+				return;
+			}
+			int minimumVertexX = Integer.MAX_VALUE;
+			int maximumVertexX = Integer.MIN_VALUE;
+			int minimumVertexZ = Integer.MAX_VALUE;
+			int maximumVertexZ = Integer.MIN_VALUE;
+			for (int coord = 0; coord + 2 < vertexCoords.length; coord += 3) {
+				int x = Math.addExact(vertexCoords[coord], vertexOffsetX);
+				int z = Math.addExact(vertexCoords[coord + 2], vertexOffsetZ);
+				minimumVertexX = Math.min(minimumVertexX, x);
+				maximumVertexX = Math.max(maximumVertexX, x);
+				minimumVertexZ = Math.min(minimumVertexZ, z);
+				maximumVertexZ = Math.max(maximumVertexZ, z);
+			}
+			hasVertexBounds = true;
+			minVertexX = minimumVertexX;
+			maxVertexX = maximumVertexX;
+			minVertexZ = minimumVertexZ;
+			maxVertexZ = maximumVertexZ;
 		}
 
 		private static float[] normalizeFloatArray(float[] values, int count, float defaultValue) {
@@ -1090,6 +1180,26 @@ public final class Renderer3DWorldChunkFrame {
 
 		public int getVertexCount() {
 			return vertexCoords.length / 3;
+		}
+
+		public boolean hasVertexBounds() {
+			return hasVertexBounds;
+		}
+
+		public int getMinVertexX() {
+			return minVertexX;
+		}
+
+		public int getMaxVertexX() {
+			return maxVertexX;
+		}
+
+		public int getMinVertexZ() {
+			return minVertexZ;
+		}
+
+		public int getMaxVertexZ() {
+			return maxVertexZ;
 		}
 
 		public int getIndexCount() {

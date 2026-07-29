@@ -267,16 +267,11 @@ final class RemasterGlowMaskBuilder {
 			float maxX = -Float.MAX_VALUE;
 			float minZ = Float.MAX_VALUE;
 			float maxZ = -Float.MAX_VALUE;
-			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
-				for (int vertex = 0; vertex < chunk.getVertexCount(); vertex++) {
-					int coord = vertex * OpenGLWorldChunkRenderer.POSITION_COMPONENT_COUNT;
-					float x = chunk.getVertexCoord(coord);
-					float z = chunk.getVertexCoord(coord + 2);
-					minX = Math.min(minX, x);
-					maxX = Math.max(maxX, x);
-					minZ = Math.min(minZ, z);
-					maxZ = Math.max(maxZ, z);
-				}
+			if (chunkFrame.hasVertexBounds()) {
+				minX = chunkFrame.getMinVertexX();
+				maxX = chunkFrame.getMaxVertexX();
+				minZ = chunkFrame.getMinVertexZ();
+				maxZ = chunkFrame.getMaxVertexZ();
 			}
 			for (Renderer3DWorldChunkFrame.GlowEmitter emitter : emitters) {
 				float radius = emitter.getRadius() + TEXTURE_PADDING;
