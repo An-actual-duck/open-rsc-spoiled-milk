@@ -14,6 +14,10 @@ is an AI seat; it is not a category of work.
 Three workers plus the manager match the usual four concurrent AI sessions.
 Use fewer slots if fewer sessions are needed.
 
+For a single end-to-end explanation of the model, including why it works and
+how a remote co-developer fits into it, read
+[manager-worker-overview.md](manager-worker-overview.md).
+
 ## First-Time Setup
 
 From the manager checkout:
