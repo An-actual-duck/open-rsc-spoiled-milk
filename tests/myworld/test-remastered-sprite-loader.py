@@ -64,7 +64,7 @@ def main():
     graphics = (ROOT / "Client_Base/src/orsc/graphics/two/GraphicsController.java").read_text()
     require(graphics, [
         "resolveRemastered(ItemDef item, Sprite canonical)",
-        "RemasteredSpriteKey.forAnimation(animation, offset)",
+        "remasteredSpriteResolver.resolve(animation, offset, canonical)",
         "RemasteredSpriteKey.forSprite(sprite)",
     ], "GraphicsController.java")
 

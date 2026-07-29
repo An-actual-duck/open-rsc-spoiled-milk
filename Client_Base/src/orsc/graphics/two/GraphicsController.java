@@ -1321,7 +1321,7 @@ public class GraphicsController {
 				return Sprite.getUnknownSprite(18, 18);
 			}
 			canonical = sprites[animation.getNumber() + offset];
-			return remasteredSpriteResolver.resolve(RemasteredSpriteKey.forAnimation(animation, offset), canonical);
+			return remasteredSpriteResolver.resolve(animation, offset, canonical);
 		}
 
 		try {
@@ -1332,7 +1332,7 @@ public class GraphicsController {
 		} catch (NullPointerException ignored) {
 			canonical = Sprite.getUnknownSprite(18, 18);
 		}
-		return remasteredSpriteResolver.resolve(RemasteredSpriteKey.forAnimation(animation, offset), canonical);
+		return remasteredSpriteResolver.resolve(animation, offset, canonical);
 	}
 
 	public Sprite spriteSelect(SpriteDef sprite) {
