@@ -167,6 +167,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private RemasterShadowRoofCoverage cachedRemasterShadowRoofCoverage;
 	private long cachedRemasterShadowRoofCoverageSignature;
 	private boolean cachedRemasterShadowRoofCoverageKnown;
+	private RemasterShadowInventory cachedRemasterShadowInventory;
+	private long cachedRemasterShadowInventoryWorldSignature;
+	private long cachedRemasterShadowInventoryObjectCasterSignature;
+	private boolean cachedRemasterShadowInventoryKnown;
 	private boolean remasterShadowMaskLastUpload;
 	private boolean remasterShadowMaskLastUploadSkip;
 	private boolean closed;
@@ -1124,9 +1128,20 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			return RemasterShadowInventory.EMPTY;
 		}
 		long worldSignature = RemasterShadowMaskBuilder.remasterShadowWorldSignature(chunkFrame);
-		return RemasterShadowClassifier.inspectInventory(
+		long objectCasterSignature = chunkFrame.getObjectShadowCasterSignature();
+		if (cachedRemasterShadowInventoryKnown
+			&& cachedRemasterShadowInventoryWorldSignature == worldSignature
+			&& cachedRemasterShadowInventoryObjectCasterSignature == objectCasterSignature
+			&& cachedRemasterShadowInventory != null) {
+			return cachedRemasterShadowInventory;
+		}
+		cachedRemasterShadowInventory = RemasterShadowClassifier.inspectInventory(
 			chunkFrame,
 			remasterShadowRoofCoverage(chunkFrame, worldSignature));
+		cachedRemasterShadowInventoryWorldSignature = worldSignature;
+		cachedRemasterShadowInventoryObjectCasterSignature = objectCasterSignature;
+		cachedRemasterShadowInventoryKnown = true;
+		return cachedRemasterShadowInventory;
 	}
 
 	void drawRemasterShadowInventoryDebug(Renderer3DFrame frame) throws Exception {
@@ -3451,6 +3466,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		cachedRemasterShadowRoofCoverage = null;
 		cachedRemasterShadowRoofCoverageSignature = 0L;
 		cachedRemasterShadowRoofCoverageKnown = false;
+		cachedRemasterShadowInventory = null;
+		cachedRemasterShadowInventoryWorldSignature = 0L;
+		cachedRemasterShadowInventoryObjectCasterSignature = 0L;
+		cachedRemasterShadowInventoryKnown = false;
 		remasterShadowMaskLastUpload = false;
 		remasterShadowMaskLastUploadSkip = false;
 	}

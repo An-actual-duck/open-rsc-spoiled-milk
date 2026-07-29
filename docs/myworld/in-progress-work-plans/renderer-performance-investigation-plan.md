@@ -808,6 +808,32 @@ process use from 0.928 to 0.467 cores (-49.6%). GL p95/p99 remain
 3.500/4.040 ms versus the original 9.535/11.539 ms despite the older-session
 collection noise.
 
+The cycle-14 audit separates the dominant shadow-classification samples by
+consumer. `OpenGLFramePresenter` requests `RemasterShadowInventory` only while
+renderer telemetry is enabled, but the current implementation reconstructs
+that diagnostic inventory on every presented frame. It scans every terrain
+triangle and caster even when the existing shadow-world signature and
+roof-coverage cache prove that the world inputs are unchanged. Normal terrain
+shadow-mask building and drawing are distinct consumers and must remain
+untouched.
+
+The candidate caches only `RemasterShadowInventory`. Its key combines the
+existing world/roof signature with an exact object-caster signature covering
+plane, section/origin, chunk role, caster kind, base, footprint, height,
+width, opacity, and outdoor policy. Unlike the full animated object mesh
+signature, this key stays stable when animation geometry changes without
+changing shadow inventory. Both chunk and frame caster signatures are computed
+lazily on the first telemetry request, so clients with renderer telemetry
+disabled pay no caster-scan cost. Session/resource clear invalidates both the
+inventory and signature keys.
+
+The client compiles and the full renderer guardrail suite passes. Focused Java
+8 coverage proves same-frame hits, hits across animation-only mesh-signature
+changes, invalidation for caster kind, plane, world signature, and session
+clear, preservation of inventory counts, and lazy signature construction.
+Cycle 14 now requires a fresh maximum-distance diagnostic phase; expected
+visual output and all reported inventory counts are unchanged.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,

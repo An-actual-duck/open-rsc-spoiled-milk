@@ -28,6 +28,8 @@ public final class Renderer3DWorldChunkFrame {
 	private final int maxVertexZ;
 	private final int[] referencedTextureIds;
 	private final long textureReferenceSignature;
+	private long objectShadowCasterSignature;
+	private boolean objectShadowCasterSignatureKnown;
 
 	private Renderer3DWorldChunkFrame(
 		List<ChunkMesh> chunks,
@@ -151,6 +153,35 @@ public final class Renderer3DWorldChunkFrame {
 		return textureReferenceSignature;
 	}
 
+	public long getObjectShadowCasterSignature() {
+		if (!objectShadowCasterSignatureKnown) {
+			long shadowCasterSignature = 1469598103934665603L;
+			shadowCasterSignature = mixSignature(shadowCasterSignature, chunks.size());
+			for (ChunkMesh chunk : chunks) {
+				if (!chunk.isObjectChunk()) {
+					continue;
+				}
+				shadowCasterSignature = mixSignature(shadowCasterSignature, chunk.getPlane());
+				shadowCasterSignature =
+					mixSignature(shadowCasterSignature, chunk.getCenterSectionX());
+				shadowCasterSignature =
+					mixSignature(shadowCasterSignature, chunk.getCenterSectionY());
+				shadowCasterSignature =
+					mixSignature(shadowCasterSignature, chunk.getOriginWorldX());
+				shadowCasterSignature =
+					mixSignature(shadowCasterSignature, chunk.getOriginWorldZ());
+				shadowCasterSignature =
+					mixSignature(shadowCasterSignature, chunk.getChunkRole());
+				shadowCasterSignature = mixSignature(
+					shadowCasterSignature,
+					chunk.getShadowCasterInventorySignature());
+			}
+			this.objectShadowCasterSignature = shadowCasterSignature;
+			this.objectShadowCasterSignatureKnown = true;
+		}
+		return objectShadowCasterSignature;
+	}
+
 	public int getMaterialFamilyTriangleCount(Renderer3DMaterialFamily family) {
 		Renderer3DMaterialFamily safeFamily = family == null
 			? Renderer3DMaterialFamily.UNCLASSIFIED
@@ -193,6 +224,8 @@ public final class Renderer3DWorldChunkFrame {
 		private int[] materialFamilyTriangleCounts;
 		private final int[] triangleTerrainVariationMasks;
 		private final ShadowCaster[] shadowCasters;
+		private long shadowCasterInventorySignature;
+		private boolean shadowCasterInventorySignatureKnown;
 		private final GlowEmitter[] glowEmitters;
 		private final long[] roofCoverageBits;
 		private final int roofCoverageAxis;
@@ -864,6 +897,10 @@ public final class Renderer3DWorldChunkFrame {
 			this.triangleTerrainVariationMasks =
 				source.triangleTerrainVariationMasks;
 			this.shadowCasters = source.shadowCasters;
+			this.shadowCasterInventorySignature =
+				source.shadowCasterInventorySignature;
+			this.shadowCasterInventorySignatureKnown =
+				source.shadowCasterInventorySignatureKnown;
 			this.glowEmitters = source.glowEmitters;
 			this.roofCoverageBits = source.roofCoverageBits;
 			this.roofCoverageAxis = source.roofCoverageAxis;
@@ -933,6 +970,32 @@ public final class Renderer3DWorldChunkFrame {
 				}
 			}
 			return references.toSortedArray();
+		}
+
+		private static long shadowCasterInventorySignature(ShadowCaster[] casters) {
+			long hash = 1469598103934665603L;
+			hash = mixSignature(hash, casters.length);
+			for (ShadowCaster caster : casters) {
+				if (caster == null) {
+					hash = mixSignature(hash, 0);
+					continue;
+				}
+				hash = mixSignature(hash, caster.getModelKind().ordinal() + 1);
+				hash = mixSignature(hash, caster.getBaseX0());
+				hash = mixSignature(hash, caster.getBaseY());
+				hash = mixSignature(hash, caster.getBaseZ0());
+				hash = mixSignature(hash, caster.getBaseX1());
+				hash = mixSignature(hash, caster.getBaseZ1());
+				hash = mixSignature(hash, caster.getHeight());
+				hash = mixSignature(hash, caster.getWidth());
+				hash = mixSignature(hash, caster.getOpacity());
+				hash = mixSignature(hash, caster.isOutdoorOnly() ? 1 : 0);
+				hash = mixSignature(hash, caster.getFootprintMinX());
+				hash = mixSignature(hash, caster.getFootprintMaxX());
+				hash = mixSignature(hash, caster.getFootprintMinZ());
+				hash = mixSignature(hash, caster.getFootprintMaxZ());
+			}
+			return hash;
 		}
 
 		private void initializeVertexBounds() {
@@ -1360,6 +1423,15 @@ public final class Renderer3DWorldChunkFrame {
 
 		public ShadowCaster getShadowCaster(int index) {
 			return shadowCasters[index];
+		}
+
+		public long getShadowCasterInventorySignature() {
+			if (!shadowCasterInventorySignatureKnown) {
+				this.shadowCasterInventorySignature =
+					shadowCasterInventorySignature(shadowCasters);
+				this.shadowCasterInventorySignatureKnown = true;
+			}
+			return shadowCasterInventorySignature;
 		}
 
 		public int getGlowEmitterCount() {
