@@ -946,6 +946,30 @@ def build_summary(
         )
 
     lines.extend(["", "## Data Quality", ""])
+    if manifest.get("bulkLogTruncated"):
+        lines.append(
+            "- WARNING: the structured bulk-telemetry budget was exhausted; "
+            "later report windows may be missing."
+        )
+    if manifest.get("eventLogTruncated"):
+        lines.append(
+            "- WARNING: the structured event-log budget was exhausted; later events may be missing."
+        )
+    latest_telemetry_elapsed = max(
+        (numeric(record, "sessionElapsedNanos") for record in telemetry),
+        default=0.0,
+    )
+    latest_event_elapsed = max(
+        (numeric(record, "sessionElapsedNanos") for record in events),
+        default=0.0,
+    )
+    telemetry_event_gap = latest_event_elapsed - latest_telemetry_elapsed
+    if latest_telemetry_elapsed > 0.0 and telemetry_event_gap > 15_000_000_000.0:
+        lines.append(
+            "- WARNING: periodic telemetry ends "
+            f"{telemetry_event_gap / 1_000_000_000.0:.1f}s before the latest event; "
+            "later named phases may lack frame, CPU, and allocation samples."
+        )
     if partial_files:
         lines.append(
             "- Ignored an incomplete final JSONL record in: " + ", ".join(partial_files)

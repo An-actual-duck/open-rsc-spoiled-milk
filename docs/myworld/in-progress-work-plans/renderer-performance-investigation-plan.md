@@ -1,7 +1,7 @@
 # Renderer Performance Investigation Plan
 
 Status: active investigation. Baseline instrumentation is implemented and
-guard-tested; a controlled current-branch comparison is the next milestone.
+guard-tested; controlled current-branch baseline collection is underway.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -66,27 +66,19 @@ The diagnostic bundle already records:
   structured exceptions;
 - `Ctrl+F9` visual/parity artifacts and `Ctrl+F8` observed-stutter markers.
 
-Important current limitations:
+Remaining limitations:
 
-- Reported analyzer p50/p95/p99 timings are percentiles of approximately
-  five-second report-window averages, not percentiles of individual frames.
-  They describe sustained load but can conceal short hitches.
-- Lifetime and window maxima show that a hitch happened, but do not provide a
-  useful per-frame distribution or enough correlation to attribute it.
-- Runtime records do not yet contain process CPU utilization, per-thread CPU
-  ownership, or general allocated bytes/rates. The current allocation counters
-  cover only selected large image allocations.
 - CPU-side OpenGL submission time is not separated from GPU completion/wait
   time. There are no GPU timer-query measurements.
 - Broad `openGL.world` time contains work not fully represented by the current
   upload/projected-mesh/chunk-draw split.
-- Sessions have login and capture boundaries but no general-purpose named
-  benchmark phase marker.
-- The manifest does not yet carry the OpenGL device string; it currently
-  exists only in the console log.
-
-These gaps make targeted diagnostic instrumentation the first implementation
-milestone, before changing renderer behavior.
+- The diagnostic measurements themselves have overhead, especially allocation
+  sampling and serialization. JFR and ordinary diagnostic runs must remain
+  separate comparisons.
+- The original 64 MiB structured-log budget was exhausted after roughly
+  11.5 minutes once true per-frame samples were added. The bounded diagnostic
+  default is now 256 MiB, sufficient for the intended 30-minute profiling
+  window, and live truncation is surfaced in both the manifest and analyzer.
 
 ## Baseline Ledger
 
@@ -114,6 +106,25 @@ GC is not presently the leading explanation: the same July 28 session spent
 about 0.37% of sampled time in collection. Allocation churn may still affect
 frame tails and CPU use, so it remains an instrumentation target rather than a
 presumed root cause.
+
+The first controlled current-branch phase,
+`session-20260728-205513-1276663` / `dense-idle`, ran for 109.5 seconds in
+Seers under the Remaster preset. Visual review passed. True OpenGL render
+p95/p99 was 9.952/10.901 ms and OpenGL world p95/p99 was 7.417/7.895 ms across
+6,550 frames. The process averaged 0.826 CPU cores and diagnostic Java-thread
+allocation averaged 653.16 MiB/s. The renderer requested 34 resident chunks
+per frame, reused about 33.28, and reuploaded about 0.72; the reuploads were
+associated with `animated-object-signature`. Even at rest, the chunk-upload
+phase was about 1.5 ms p95. GC remained secondary at roughly 0.42% of elapsed
+time. This makes animated resident-object rebuilds, chunk enumeration/draw
+submission, and allocation-stack attribution the first profile targets.
+
+No visual issue was reported during the first `dense-camera` attempt, but it is
+not a valid timing comparison: its phase began after the original structured
+telemetry budget had been exhausted. Its markers remain intact, but frame,
+CPU, and allocation samples are unavailable. Repeat it in a fresh session
+after the budget correction rather than inferring performance from the
+incomplete capture.
 
 ## Controlled Workload Matrix
 
@@ -224,6 +235,12 @@ Implementation checkpoint:
 ### Milestone 2: Current-Branch Baseline
 
 - [ ] Run the controlled workload matrix without `Ctrl+F9`.
+  - [x] Dense steady scene.
+  - [ ] Dense camera motion; repeat after the first attempt exposed the old
+        structured-log duration limit.
+  - [ ] Boundary traversal.
+  - [ ] Hard relocation.
+  - [ ] Entity/effect pressure.
 - [ ] Run one visual capture after timing runs to prove parity separately.
 - [ ] Record a CPU/allocation profile for the dense steady and boundary
       workloads.
@@ -255,3 +272,5 @@ Implementation checkpoint:
 | --- | --- | --- | --- | --- | --- |
 | 2026-07-28 | `0c8cecafc` | evidence audit | Compared existing renderer-only and layered-map diagnostic sessions; identified missing true frame tails, CPU ownership, allocation rates, GPU timing, and benchmark phases. | Measurement gaps prevent safe hotspot attribution. | Build Milestone 1 before renderer behavior changes. |
 | 2026-07-28 | pending checkpoint | diagnostic fixtures | Added bounded raw frame samples, process/thread CPU and allocations, named phases, structured GPU identity, analyzer support, and optional bounded JFR launch. | Client compiles and renderer diagnostic/analyzer/frame-capture/release-hotkey guards pass. | Checkpoint the measurement foundation, then collect a clean current-branch baseline. |
+| 2026-07-28 | `a0488f013` | `dense-idle` | Controlled 109.5-second Remaster idle in dense Seers scene. | Visual pass; GL render p95/p99 9.952/10.901 ms, world 7.417/7.895 ms, 0.826 CPU cores, 653.16 MiB/s diagnostic allocation; 0.72 of 34 requested chunks reuploaded per frame from animated-object signatures. | Profile animated resident rebuilds, renderer allocation, and draw submission before changing behavior. |
+| 2026-07-28 | `a0488f013` | `dense-camera` attempt 1 | Rotated camera for 271.8 seconds. | Markers captured, but the original 64 MiB structured-log budget had already stopped periodic telemetry; no valid frame/CPU comparison. | Increase the bounded full-session budget, expose truncation clearly, and repeat in a fresh session. |

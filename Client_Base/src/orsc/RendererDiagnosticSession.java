@@ -25,7 +25,7 @@ final class RendererDiagnosticSession {
 	private static final String SESSION_DIR_ENV = "SPOILED_MILK_RENDERER_DIAGNOSTIC_SESSION_DIR";
 	private static final String MAX_LOG_BYTES_PROPERTY = "spoiledmilk.rendererDiagnosticMaxLogBytes";
 	private static final String MAX_LOG_BYTES_ENV = "SPOILED_MILK_RENDERER_DIAGNOSTIC_MAX_LOG_BYTES";
-	private static final long DEFAULT_MAX_LOG_BYTES = 64L * 1024L * 1024L;
+	private static final long DEFAULT_MAX_LOG_BYTES = 256L * 1024L * 1024L;
 	private static final long REASON_EVENT_INTERVAL_NANOS = 1_000_000_000L;
 	private static final boolean ENABLED = readBoolean(ENABLED_PROPERTY, ENABLED_ENV);
 	private static final long MAX_LOG_BYTES = Math.max(
@@ -394,6 +394,13 @@ final class RendererDiagnosticSession {
 				eventTruncated = true;
 			} else {
 				bulkTruncated = true;
+			}
+			try {
+				writeManifest("open");
+			} catch (IOException e) {
+				System.err.println(
+					"[renderer diagnostics] could not record log truncation in manifest: "
+						+ e.getMessage());
 			}
 			System.err.println(
 				"[renderer diagnostics] "

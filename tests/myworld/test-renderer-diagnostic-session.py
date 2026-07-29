@@ -352,6 +352,8 @@ def validate_source_contract() -> None:
         "manifest publication": 'writeManifest("open")',
         "privacy filter": 'normalized.contains("credential")',
         "structured byte budget": "MAX_LOG_BYTES",
+        "full-session default budget": "256L * 1024L * 1024L",
+        "live truncation manifest update": 'writeManifest("open");',
     }
     for description, needle in required.items():
         if needle not in session:
@@ -374,6 +376,8 @@ def validate_source_contract() -> None:
         fail("diagnostic sessions do not mark account-free login epochs")
     if 'RendererDiagnosticSession.recordEvent("client.logout", null);' not in mudclient:
         fail("diagnostic sessions do not mark account-free logout epochs")
+    if 'SPOILED_MILK_RENDERER_DIAGNOSTIC_MAX_LOG_MB:-256' not in launcher:
+        fail("diagnostic launcher does not provide the full-session structured-log budget")
     for needle in (
         '"renderer.performance-phase"',
         'RenderTelemetry.recordPerformancePhaseBoundary("start")',

@@ -337,6 +337,19 @@ def main() -> None:
             raise AssertionError(result.stderr)
 
         make_session(session_dir)
+        manifest = json.loads((session_dir / "manifest.json").read_text(encoding="utf-8"))
+        manifest["bulkLogTruncated"] = True
+        manifest["eventLogTruncated"] = True
+        (session_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        result = run_analyzer(session_dir, "--no-write")
+        if result.returncode != 0:
+            raise AssertionError(result.stderr)
+        if "structured bulk-telemetry budget was exhausted" not in result.stdout:
+            raise AssertionError(result.stdout)
+        if "structured event-log budget was exhausted" not in result.stdout:
+            raise AssertionError(result.stdout)
+
+        make_session(session_dir)
         lines = (session_dir / "telemetry.jsonl").read_text(encoding="utf-8").splitlines()
         (session_dir / "telemetry.jsonl").write_text(
             lines[0] + "\n{" + "\n" + lines[1] + "\n",
