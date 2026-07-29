@@ -2,9 +2,10 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first twelve focused optimizations have been
-accepted. A fresh reduced-workload profile now ranks primitive object-chunk
-mesh construction as the leading isolated allocation target for cycle 13.
+attribution are underway, and the first thirteen focused optimizations have been
+accepted. Primitive object-chunk mesh construction has now been accepted as
+the thirteenth optimization; diagnostic shadow-inventory overhead is the next
+isolated audit.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -777,9 +778,35 @@ arrays, immutable `ChunkMesh` cloning and normalization, and signature
 calculation unchanged. A focused Java 8 fixture proves exact two-sided quad
 triangulation, sequential indices, material and fallback mapping, finite UVs,
 shadow/glow metadata, stable signatures, non-object exclusion, and empty
-output. The client compiles and the full renderer guardrail suite passes. The
-candidate still requires an exact maximum-distance visual and telemetry
-comparison before acceptance.
+output. The client compiles and the full renderer guardrail suite passes.
+
+`session-20260729-183434-1504352` / `primitive13` captured 93.3 seconds on
+checkpoint `2db2f3f6b` and passed owner testing without a reported visual or
+behavioral issue. It is an exact workload match for `texrefs12r2`: both used
+zoom `900` / effective `2400`, 34 chunks, 209,162 resident triangles, 2,202
+considered batches, and 1,245 models. Drawn triangles differed by 0.16%, world
+faces by 0.08%, and sprite commands by 0.004%.
+
+Client-loop allocation fell from 27.38 to 23.67 MiB/s (-13.5%), total
+allocation from 41.59 to 37.58 MiB/s (-9.7%), and presenter allocation from
+14.21 to 13.90 MiB/s (-2.2%). Process and client CPU stayed effectively flat
+at 0.467 versus 0.464 cores and 0.198 versus 0.195 cores. World p95/p99 stayed
+flat at 1.759/1.938 versus 1.753/1.940 ms. GL render p95/p99 rose from
+3.195/3.573 to 3.500/4.040 ms while presenter CPU rose from 0.148 to 0.162
+cores. The changed code is client-loop-only, and this phase began 198 seconds
+into its session versus 42 seconds for the control; it also included 21
+collections and one full collection versus 12 young collections in the
+control. Record the presenter difference rather than assigning it to the
+primitive builder. The directly owned allocation reduction, exact workload,
+flat client CPU/world tails, focused parity fixture, and visual pass accept
+cycle 13.
+
+Relative to the original same-geometry maximum-distance baseline, thirteen
+accepted cycles have reduced total allocation from 871.16 to 37.58 MiB/s
+(-95.7%), client-loop allocation from 604.97 to 23.67 MiB/s (-96.1%), and
+process use from 0.928 to 0.467 cores (-49.6%). GL p95/p99 remain
+3.500/4.040 ms versus the original 9.535/11.539 ms despite the older-session
+collection noise.
 
 ## Controlled Workload Matrix
 
@@ -1023,3 +1050,4 @@ Implementation checkpoint:
 | 2026-07-29 | `ba9827bba` | `texrefs12` | Snapshot frame texture-catalog signatures and precompute sorted unique chunk/frame texture references, including transparent fallbacks, so cache checks and uploads no longer traverse every resident triangle. | Fires, water, other textures, and movement passed visual review, but the four-hour-old client had exhausted structured bulk telemetry roughly three hours before the 114.7-second phase. Console geometry was exact, but phase CPU/allocation/tails were unavailable. | Retain the visual result only and repeat in a fresh client. |
 | 2026-07-29 | `ba9827bba` | `texrefs12r2` | Repeat the immutable texture-reference experiment in a fresh maximum-distance session. | Complete 89.3-second capture and prior visual pass at exact 34-chunk/209,162-triangle/2,202-batch control geometry. Presenter CPU fell 48.4%, process use 23.2%, GL p95/p99 43.1%/44.3%, and world p95/p99 52.4%/53.2%; allocation stayed flat. Focused runtime coverage proves catalog snapshotting, fallback capture, deduplication, and exact invalidation. | Accept and checkpoint; re-profile the reduced endpoint before selecting cycle 13. |
 | 2026-07-29 | `0b5cb5465` | `post12jfr` | Re-profile the cycle-12 endpoint and rank remaining CPU/allocation ownership. | Complete 103.5-second marked profile; JFR measured 35.38 MiB/s against telemetry's 36.14 MiB/s. The operator remained at zoom `255` / effective `1110`, so this is a ranking profile rather than a maximum-distance comparison. Explicit object-chunk builders own 22.9% of weighted allocation, with another 17.9% in separately retained client `ArrayList` growth; shadow classification leads presenter CPU but mixes diagnostic and render consumers. | Convert only the seven boxed numeric object-chunk accumulators to primitive storage for cycle 13; defer shadow classification until its consumers are separated. |
+| 2026-07-29 | `2db2f3f6b` | `primitive13` | Replace the seven boxed numeric object-chunk accumulators with growable primitive arrays while retaining immutable output normalization and all mesh semantics. | Exact 93.3-second maximum-distance workload and owner visual pass. Client allocation fell 13.5% and total allocation 9.7%; process/client CPU and world p95/p99 stayed flat. The older session incurred more GC and higher presenter/GL tails even though the changed path is client-only, so that difference is recorded without attribution. Focused Java 8 coverage proves exact geometry, material, lighting metadata, signatures, and empty behavior. | Accept cycle 13; isolate telemetry-only shadow inventory from normal shadow rendering before changing classification. |
