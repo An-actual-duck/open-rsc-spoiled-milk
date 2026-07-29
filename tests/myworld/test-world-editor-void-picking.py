@@ -17,10 +17,12 @@ require("private boolean addProjectedEditorTileFallback()",
         "editor void projection fallback is missing")
 require("worldEditorInterface!=null&&worldEditorInterface.isEditorOpen()",
         "void projection is not gated by an open editor")
-require("scene.projectScreenToGroundTile(mouseX,mouseY,tileSize,getClickTeleportGroundPlaneY())",
-        "void projection does not reuse the established ground projection")
-require("tile[0]>=World.LOCAL_FACE_TILE_COUNT||tile[1]>=World.LOCAL_FACE_TILE_COUNT",
-        "projected void coordinates are not bounded to loaded face tiles")
+require("projectScreenToCurrentTerrainTile()",
+        "void projection does not reuse the height-aware terrain projection")
+require("scene.projectScreenToTerrainTile(",
+        "void projection is not tied to the presented terrain surface")
+require("presentationOnly&&(editorOpen||this.selectedSpell>=0)",
+        "editor actions are not bounded to the active gameplay face window")
 require("mouseY>=getGameHeight()-70||mouseInTabArea_CUSTOM()",
         "void projection can leak under client UI")
 require("else addProjectedEditorTileFallback();",
@@ -42,5 +44,10 @@ if "return tileDecorationID(tileX, tileZ) == 26;" not in WORLD:
     raise AssertionError("normal transparent-terrain pick geometry was changed")
 if "tileDecorationID(tileX, tileZ) == 10" in WORLD:
     raise AssertionError("overlay 10 became globally pickable outside the editor")
+require_upper = "if (shouldLoadUpperPlaneModels(plane))"
+if WORLD.count(require_upper) != 2:
+    raise AssertionError("active loading and preloading do not share the upper-plane gate")
+if "nativeLayeredTerrainSnapshot.getLevel() == 0" not in WORLD:
+    raise AssertionError("generated signed levels can still compose unrelated upper-plane models")
 
-print("PASS: editor-only void tile projection and action parity are guarded")
+print("PASS: editor void picking and generated-level render isolation are guarded")

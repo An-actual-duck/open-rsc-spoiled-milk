@@ -21,6 +21,7 @@ import com.openrsc.server.model.entity.player.ScriptContext;
 import com.openrsc.server.model.entity.update.Bubble;
 import com.openrsc.server.model.entity.update.ChatMessage;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -482,6 +483,15 @@ public class Functions {
 		world.registerItem(new GroundItem(world, id, x, y, amount, (Player) null));
 	}
 
+	public static void addobject(
+		World world,
+		int id,
+		int amount,
+		WorldLocation location) {
+		world.registerItem(
+			new GroundItem(world, id, location, amount));
+	}
+
 	public static Npc addnpc(int id, int x, int y, final int time, final Player spawnedFor) {
 		final Npc npc = new Npc(spawnedFor.getWorld(), id, x, y);
 		npc.setShouldRespawn(false);
@@ -591,7 +601,7 @@ public class Functions {
 	public static void changeloc(GameObject obj, int delay, int replaceID) {
 		// Object to replace old
 		final GameObject replaceObj = new GameObject(obj.getWorld(), obj.getLocation(), replaceID, obj.getID(), obj.getDirection(), obj.getType());
-		addloc(replaceObj);
+		obj.getWorld().replaceGameObject(obj, replaceObj);
 		addloc(obj.getWorld(), obj.getLoc(), delay);
 	}
 
@@ -1540,7 +1550,9 @@ public class Functions {
 		if (i.getLoc() == null) {
 			i.getWorld().getServer().getGameEventHandler().add(new SingleEvent(i.getWorld(), null, time, "Spawn Ground Item Timed") {
 				public void action() {
-					i.getWorld().unregisterItem(i);
+					if (!i.isRemoved()) {
+						i.getWorld().unregisterItem(i);
+					}
 				}
 			});
 		}

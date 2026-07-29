@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.authentic.commands;
 
 import com.openrsc.server.constants.AppearanceId;
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.NpcDrops;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
@@ -10,6 +11,10 @@ import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.content.worldedit.WorldEditorAccessService;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionEventRecoveryNoOpMetadata;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionNpcOwnerPreservationNoOpMetadata;
+import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
@@ -18,11 +23,49 @@ import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerEventContinuityAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationBoundaryObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationRequirements;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredRegionInterestResidencyComparison;
+import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
+import com.openrsc.server.model.world.coordinate.LayeredRegionResidencyMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldRegionKey;
+import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
+import com.openrsc.server.model.world.coordinate.WorldSpaceId;
+import com.openrsc.server.model.world.region.LayeredAdjacentStepCollisionComparison;
+import com.openrsc.server.model.world.region.LayeredRegionTileSnapshot;
+import com.openrsc.server.model.world.region.LayeredTileNeighborhoodParityComparison;
+import com.openrsc.server.model.world.region.LayeredTileStateParityComparison;
+import com.openrsc.server.model.world.region.LayeredTraversalCollisionComparison;
+import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.authentic.quests.members.touristtrap.Tourist_Trap_Mechanism;
@@ -41,6 +84,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import static com.openrsc.server.plugins.Functions.*;
@@ -53,6 +97,21 @@ public final class Development implements CommandTrigger {
 		new LinkedHashMap<String, WorldNpcEditFiles.Edit>();
 	private static final HashMap<String, Integer> LAST_SCENERY_PLACEMENT_IDS =
 		new HashMap<String, Integer>();
+	private static final String SYNTHETIC_DEEP_NPC_ATTRIBUTE =
+		"layered-synthetic-deep-fixture-npc";
+	private static final String SYNTHETIC_DEEP_ITEM_ATTRIBUTE =
+		"layered-synthetic-deep-fixture-item";
+	private static final int SYNTHETIC_DEEP_NPC_ROAM_RADIUS = 2;
+	private static final String SYNTHETIC_DEEP_RETURN_SPACE_CACHE =
+		"layered_synthetic_deep_return_space";
+	private static final String SYNTHETIC_DEEP_RETURN_X_CACHE =
+		"layered_synthetic_deep_return_x";
+	private static final String SYNTHETIC_DEEP_RETURN_Y_CACHE =
+		"layered_synthetic_deep_return_y";
+	private static final String SYNTHETIC_DEEP_RETURN_LEVEL_CACHE =
+		"layered_synthetic_deep_return_level";
+	private static final String NATIVE_TRANSITION_FIXTURE_PACKAGE_ID =
+		"rsc-remastered.native-transition-lab";
 
 	public static String messagePrefix = null;
 	public static String badSyntaxPrefix = null;
@@ -74,6 +133,25 @@ public final class Development implements CommandTrigger {
 		}
 		if(badSyntaxPrefix == null) {
 			badSyntaxPrefix = config().BAD_SYNTAX_PREFIX;
+		}
+
+		if (command.equalsIgnoreCase("buildergoto")) {
+			layeredBuilderGoTo(player, command, args);
+			return;
+		}
+		if (command.equalsIgnoreCase("buildergrow")) {
+			layeredBuilderGrow(player, command, args);
+			return;
+		}
+		if (player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
+			&& isLayeredBuilderMutationCommand(command)
+			&& !("spoiled-milk-builder-draft".equals(
+					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)
+				&& (command.equalsIgnoreCase("saveworldedits")
+					|| isLayeredBuilderSceneryCommand(command)))) {
+			player.message(messagePrefix
+				+ "Layered package review is read-only; no world files were changed.");
+			return;
 		}
 
 		if (command.equalsIgnoreCase("worldeditormode")) {
@@ -117,6 +195,18 @@ public final class Development implements CommandTrigger {
 		}
 		else if (command.equalsIgnoreCase("coords")) {
 			currentCoordinates(player, args);
+		}
+		else if (command.equalsIgnoreCase("layerloc")
+			|| command.equalsIgnoreCase("layerlocation")) {
+			layeredLocationStatus(player, command, args);
+		}
+		else if (command.equalsIgnoreCase("deepfixture")) {
+			syntheticDeepFixture(player, command, args);
+		}
+		else if (command.equalsIgnoreCase("lp")
+			|| command.equalsIgnoreCase("layerparity")
+			|| command.equalsIgnoreCase("layeredparity")) {
+			layeredCoordinateParity(player, command, args);
 		}
 		else if (command.equalsIgnoreCase("serverstats")) {
 			serverStats(player, args);
@@ -200,6 +290,154 @@ public final class Development implements CommandTrigger {
 		}
 		else if (command.equalsIgnoreCase("killnearnpcs") || command.equalsIgnoreCase("killnearcombat") || command.equalsIgnoreCase("killcombatnear")) {
 			killNearbyCombatNpcs(player, command, args);
+		}
+	}
+
+	private static boolean isLayeredBuilderMutationCommand(String command) {
+		String normalized=command==null?"":command.toLowerCase(java.util.Locale.ROOT);
+		return normalized.equals("radiusnpc")||normalized.equals("createnpc")
+			||normalized.equals("cnpc")||normalized.equals("cpc")
+			||normalized.equals("rpc")||normalized.equals("rnpc")
+			||normalized.equals("removenpc")||normalized.equals("removeobject")
+			||normalized.equals("robject")||normalized.equals("removescenery")
+			||normalized.equals("rscenery")||normalized.equals("createobject")
+			||normalized.equals("cobject")||normalized.equals("addobject")
+			||normalized.equals("aobject")||normalized.equals("createscenery")
+			||normalized.equals("cscenery")||normalized.equals("addscenery")
+			||normalized.equals("ascenery")||normalized.equals("r")
+			||normalized.equals("repeatobject")||normalized.equals("repeatscenery")
+			||normalized.equals("createwallobject")||normalized.equals("cwallobject")
+			||normalized.equals("addwallobject")||normalized.equals("awallobject")
+			||normalized.equals("createboundary")||normalized.equals("cboundary")
+			||normalized.equals("addboundary")||normalized.equals("aboundary")
+			||normalized.equals("rotateobject")||normalized.equals("rotatescenery")
+			||normalized.equals("saveworldedits")
+			||normalized.equals("clearworldedits")
+			||normalized.equals("discardworldedits");
+	}
+
+	private static boolean isLayeredBuilderSceneryCommand(String command) {
+		String normalized=command==null?"":command.toLowerCase(java.util.Locale.ROOT);
+		return normalized.equals("radiusnpc")
+			||normalized.equals("createnpc")
+			||normalized.equals("cnpc")
+			||normalized.equals("cpc")
+			||normalized.equals("rpc")
+			||normalized.equals("rnpc")
+			||normalized.equals("removenpc")
+			||normalized.equals("removeobject")
+			||normalized.equals("robject")
+			||normalized.equals("removescenery")
+			||normalized.equals("rscenery")
+			||normalized.equals("createobject")
+			||normalized.equals("cobject")
+			||normalized.equals("addobject")
+			||normalized.equals("aobject")
+			||normalized.equals("createscenery")
+			||normalized.equals("cscenery")
+			||normalized.equals("addscenery")
+			||normalized.equals("ascenery")
+			||normalized.equals("rotateobject")
+			||normalized.equals("rotatescenery");
+	}
+
+	private static void layeredBuilderGoTo(
+		Player player, String command, String[] args) {
+		if (!player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
+			|| !player.getWorld().getServer().getWorldEditorSessions()
+				.ownsActiveSession(player)) {
+			player.message(messagePrefix
+				+ "Signed Builder navigation requires an active layered review session.");
+			return;
+		}
+		if (args.length != 3) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [x] [y] [level]");
+			return;
+		}
+		final int x;
+		final int y;
+		final int level;
+		try {
+			x=Integer.parseInt(args[0]);
+			y=Integer.parseInt(args[1]);
+			level=Integer.parseInt(args[2]);
+		} catch (NumberFormatException exception) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [x] [y] [level]");
+			return;
+		}
+		WorldLocation current=player.getLayeredLocation();
+		WorldLocation destination=new WorldLocation(
+			current.getWorldSpace(),new WorldCoordinate(x,y,level));
+		if (!player.getWorld().getRegionManager()
+			.hasNativeLayeredTerrain(destination)) {
+			if (!player.getConfig().WORLD_BUILDER_MODE
+				|| !"spoiled-milk-builder-draft".equals(
+					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)) {
+				player.message(messagePrefix
+					+ "The reviewed package has no terrain at "
+					+x+","+y+",L"+level+".");
+				return;
+			}
+			try {
+				WorldEditorSessionManager.NativeTerrainProvisionResult result =
+					player.getWorld().getServer().getWorldEditorSessions()
+						.provisionNativeNavigationTarget(player,x,y,level);
+				destination=result.destination;
+				player.message(messagePrefix
+					+(result.createdLevel?"Created layer ":"Expanded layer ")
+					+level+" with "+result.allocatedSectorCount
+					+" void-backed sector"
+					+(result.allocatedSectorCount==1?"":"s")
+					+" around "+x+","+y+".");
+			} catch (Exception failure) {
+				player.message(messagePrefix
+					+"Builder navigation refused: "+failure.getMessage());
+				return;
+			}
+		}
+		player.teleportLayered(destination,false);
+		player.message(messagePrefix+"Builder location: "
+			+x+","+y+",L"+level+".");
+	}
+
+	private static void layeredBuilderGrow(
+		Player player, String command, String[] args) {
+		if (!player.getConfig().WORLD_BUILDER_MODE
+			|| !player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
+			|| !"spoiled-milk-builder-draft".equals(
+				player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)
+			|| !player.getWorld().getServer().getWorldEditorSessions()
+				.ownsActiveSession(player)) {
+			player.message(messagePrefix
+				+ "Terrain allocation requires an active isolated Builder draft session.");
+			return;
+		}
+		if (args.length < 2 || args.length > 3) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [world-x] [world-y] (level)");
+			return;
+		}
+		try {
+			int x = Integer.parseInt(args[0]);
+			int y = Integer.parseInt(args[1]);
+			int level = args.length == 3
+				? Integer.parseInt(args[2])
+				: player.getLayeredLocation().getCoordinate().getLevel();
+			com.openrsc.server.model.world.coordinate.WorldMapSectorId sector =
+				player.getWorld().getServer().getWorldEditorSessions()
+					.queueNativeTerrainSectorGrowth(player, x, y, level);
+			player.message(messagePrefix + "Queued void-backed terrain sector "
+				+ sector.getSectorX() + "," + sector.getSectorY() + " on L"
+				+ sector.getLevel() + ". Save, close, and reopen the Builder "
+				+ "before navigating into it.");
+		} catch (NumberFormatException failure) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [world-x] [world-y] (level)");
+		} catch (Exception failure) {
+			player.message(messagePrefix
+				+ "Terrain allocation refused: " + failure.getMessage());
 		}
 	}
 
@@ -705,13 +943,27 @@ public final class Development implements CommandTrigger {
 			return;
 		}
 
-		Point npcLoc = new Point(x,y);
-		final Npc n = new Npc(player.getWorld(), id, x, y, x - radius, x + radius, y - radius, y + radius);
-
 		if (player.getWorld().getServer().getEntityHandler().getNpcDef(id) == null) {
 			player.message(messagePrefix + "Invalid npc id");
 			return;
 		}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				Npc npc=player.getWorld().getServer().getWorldEditorSessions()
+					.placeNativeNpc(player,id,radius,x,y);
+				player.message(messagePrefix+"Added layered NPC: "
+					+npc.getDef().getName()+" at "+npc.getWorldLocation()
+					+" with radius "+radius+" and instance ID "
+					+npc.getIndex()+". Save and close/reopen the Builder to commit.");
+			}catch(Exception failure){
+				player.message(messagePrefix+"Layered NPC placement refused: "
+					+failure.getMessage());
+			}
+			return;
+		}
+
+		Point npcLoc = new Point(x,y);
+		final Npc n = new Npc(player.getWorld(), id, x, y, x - radius, x + radius, y - radius, y + radius);
 
 		player.getWorld().registerNpc(n);
 		n.setShouldRespawn(true);
@@ -738,6 +990,19 @@ public final class Development implements CommandTrigger {
 
 		if(npc == null) {
 			player.message(messagePrefix + "Invalid npc instance id");
+			return;
+		}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				Npc removed=player.getWorld().getServer()
+					.getWorldEditorSessions().removeNativeNpc(player,npc);
+				player.message(messagePrefix+"Removed layered NPC: "
+					+removed.getDef().getName()+" with instance ID "+id
+					+". Save and close/reopen the Builder to commit.");
+			}catch(Exception failure){
+				player.message(messagePrefix+"Layered NPC removal refused: "
+					+failure.getMessage());
+			}
 			return;
 		}
 
@@ -793,6 +1058,22 @@ public final class Development implements CommandTrigger {
 
 		if (player.getWorld().getServer().getEntityHandler().getGameObjectDef(id) == null) {
 			player.message(messagePrefix + "Invalid scenery id");
+			return;
+		}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				GameObject newObject=player.getWorld().getServer()
+					.getWorldEditorSessions()
+					.placeNativeScenery(player,id,x,y);
+				rememberLastSceneryPlacement(player,id);
+				player.message(messagePrefix+"Added layered scenery: "
+					+newObject.getGameObjectDef().getName()+" with ID "
+					+newObject.getID()+" at "+newObject.getWorldLocation()
+					+". Save and close/reopen the Builder to commit.");
+			}catch(Exception failure){
+				player.message(messagePrefix+"Layered scenery placement refused: "
+					+failure.getMessage());
+			}
 			return;
 		}
 
@@ -936,6 +1217,20 @@ public final class Development implements CommandTrigger {
 			player.message(messagePrefix + "Invalid coordinates");
 			return;
 		}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				GameObject removed=player.getWorld().getServer()
+					.getWorldEditorSessions()
+					.removeNativeScenery(player,x,y);
+				player.message(messagePrefix+"Removed layered scenery: "
+					+removed.getGameObjectDef().getName()+" with ID "
+					+removed.getID()+". Save and close/reopen the Builder to commit.");
+			}catch(Exception failure){
+				player.message(messagePrefix+"Layered scenery removal refused: "
+					+failure.getMessage());
+			}
+			return;
+		}
 
 		final Point objectLocation = Point.location(x, y);
 		final GameObject object = player.getViewArea().getGameObject(objectLocation);
@@ -1058,15 +1353,6 @@ public final class Development implements CommandTrigger {
 			return;
 		}
 
-		final Point objectLocation = Point.location(x, y);
-		final GameObject object = player.getViewArea().getGameObject(objectLocation);
-
-		if(object == null)
-		{
-			player.message(messagePrefix + "There is no object at coordinates " + objectLocation);
-			return;
-		}
-
 		int direction = -1;
 		if(args.length >= 3) {
 			try {
@@ -1075,10 +1361,31 @@ public final class Development implements CommandTrigger {
 				player.message(badSyntaxPrefix + command.toUpperCase() + " (x) (y) (direction)");
 				return;
 			}
-		} else {
-			direction = object.getDirection() + 1;
+		}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				GameObject rotated=player.getWorld().getServer()
+					.getWorldEditorSessions().rotateNativeScenery(
+						player,x,y,direction<0?null:Integer.valueOf(direction));
+				player.message(messagePrefix+"Rotated layered scenery: "
+					+rotated.getGameObjectDef().getName()+" to rotation "
+					+rotated.getDirection()+". Save and close/reopen the Builder to commit.");
+			}catch(Exception failure){
+				player.message(messagePrefix+"Layered scenery rotation refused: "
+					+failure.getMessage());
+			}
+			return;
 		}
 
+		final Point objectLocation = Point.location(x, y);
+		final GameObject object = player.getViewArea().getGameObject(objectLocation);
+
+		if(object == null)
+		{
+			player.message(messagePrefix + "There is no object at coordinates " + objectLocation);
+			return;
+		}
+		if(direction<0)direction=object.getDirection()+1;
 		direction %= 8;
 		direction = Math.abs(direction);
 
@@ -1154,14 +1461,18 @@ public final class Development implements CommandTrigger {
 		}
 
 		int terrainEdits=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSize();
+		int levelCreations=player.getWorld().getServer().getWorldEditorSessions().nativeLevelCreationDraftSize();
+		int terrainGrowth=player.getWorld().getServer().getWorldEditorSessions().nativeTerrainGrowthDraftSize();
 		int terrainSectors=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSectorCount();
-		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0) {
+		int nativeScenery=player.getWorld().getServer().getWorldEditorSessions().nativeSceneryDraftSize();
+		int nativeNpcs=player.getWorld().getServer().getWorldEditorSessions().nativeNpcDraftSize();
+		if (edits.isEmpty() && npcEdits.isEmpty() && levelCreations==0&&terrainEdits==0&&terrainGrowth==0&&nativeScenery==0&&nativeNpcs==0) {
 			player.message(messagePrefix + "No pending world edits.");
 			return;
 		}
 
-		player.message(messagePrefix + "Pending world edits: terrain " + terrainEdits+" tiles / "+terrainSectors+" sectors, scenery " + edits.size()
-			+ ", NPCs " + npcEdits.size() + ".");
+		player.message(messagePrefix + "Pending world edits: "+levelCreations+" new levels / terrain " + terrainEdits+" tiles / "+terrainGrowth+" new sectors / "+terrainSectors+" affected sectors, scenery " + (edits.size()+nativeScenery)
+			+ ", NPCs " + (npcEdits.size()+nativeNpcs) + ".");
 		int shown = 0;
 		for (WorldSceneryEditFiles.Edit edit : edits) {
 			if (shown >= 8) {
@@ -1191,12 +1502,35 @@ public final class Development implements CommandTrigger {
 			npcEdits = new ArrayList<WorldNpcEditFiles.Edit>(PENDING_NPC_EDITS.values());
 		}
 
-		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int terrainEdits=editor.terrainDraftSize();
-		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0) {
+		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int levelCreations=editor.nativeLevelCreationDraftSize();int terrainEdits=editor.terrainDraftSize();int terrainGrowth=editor.nativeTerrainGrowthDraftSize();int nativeScenery=editor.nativeSceneryDraftSize();int nativeNpcs=editor.nativeNpcDraftSize();
+		if (edits.isEmpty() && npcEdits.isEmpty() && levelCreations==0&&terrainEdits==0&&terrainGrowth==0&&nativeScenery==0&&nativeNpcs==0) {
 			player.message(messagePrefix + "No pending world edits to save.");
 			return;
 		}
-		if(terrainEdits>0&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the terrain draft.");return;}
+		if((levelCreations>0||terrainEdits>0||terrainGrowth>0||nativeScenery>0||nativeNpcs>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the layered draft.");return;}
+		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			try{
+				com.openrsc.server.content.worldedit.WorldEditorLayeredTerrainJournal.SaveResult saved=
+					editor.saveNativeTerrainDraft(player);
+				int total=saved.levelCount+saved.tileCount+saved.sectorCount+saved.sceneryCount+saved.npcCount;
+				player.message(messagePrefix+"Saved "+total+" world edits.");
+				player.message(messagePrefix+"Layered draft journal: "+saved.levelCount
+					+" new levels, "+saved.tileCount+" tiles, "
+					+saved.sectorCount+" new sectors, "
+					+saved.sceneryCount+" scenery edits, "+saved.npcCount
+					+" NPC edits. Close and reopen "
+					+"the Builder to commit and reload the working package.");
+				LOGGER.info(player.getUsername()+" saved layered draft journal "
+					+saved.journal+" with "+saved.levelCount+" levels and "
+					+saved.tileCount+" tiles and "
+					+saved.sectorCount+" sectors and "+saved.sceneryCount
+					+" scenery edits and "+saved.npcCount+" NPC edits");
+			}catch(Exception failure){
+				LOGGER.error(failure);
+				player.message(messagePrefix+"Failed to save world edits: "+failure.getMessage());
+			}
+			return;
+		}
 
 		try {
 			WorldEditorTerrainSaveFiles.SaveResult terrainResult=terrainEdits==0?null:editor.saveTerrainDraft(player);
@@ -1321,8 +1655,19 @@ public final class Development implements CommandTrigger {
 			debugObjects = true;
 		}
 
-		ActionSender.sendBox(player, player.getRegion().toString(debugPlayers, debugNpcs, debugItems, debugObjects)
-			.replaceAll("\n", "%"), true);
+		if (player.getRegion() == null) {
+			player.message(messagePrefix
+				+ "Native layered scopes do not have a packed Region."
+				+ " Use ::layerloc and ::deepfixture status.");
+			return;
+		}
+		ActionSender.sendBox(
+			player,
+			player.getRegion()
+				.toString(
+					debugPlayers, debugNpcs, debugItems, debugObjects)
+				.replaceAll("\n", "%"),
+			true);
 	}
 
 	private void currentCoordinates(Player player, String[] args) {
@@ -1338,6 +1683,1202 @@ public final class Development implements CommandTrigger {
 			player.message(messagePrefix + targetPlayer.getStaffName() + " is at: " + targetPlayer.getLocation());
 		else
 			player.message(messagePrefix + "Invalid name or player is not online");
+	}
+
+	private void layeredLocationStatus(
+		final Player player,
+		final String command,
+		final String[] args) {
+		if (args.length != 0) {
+			player.message(badSyntaxPrefix + command.toUpperCase());
+			return;
+		}
+		WorldLocation location = player.getLayeredLocation();
+		WorldCoordinate coordinate = location.getCoordinate();
+		WorldRegionKey regionKey = player.getLayeredRegionKey();
+		boolean spatialAuthority =
+			player.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
+		boolean syntheticDeep =
+			player.getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
+		String projectionId = player.getWorld().getRegionManager()
+			.runtimeProjectionId(location);
+		player.getWorld().getRegionManager()
+			.requireEntitySpatialCarrier(player);
+		String spatialCarrier = player.getRegion() == null
+			? "layered-index"
+			: "packed-region";
+		player.message(
+			messagePrefix
+				+ "Layered authority="
+				+ (player.isLayeredLocationAuthorityEnabled()
+					? "enabled"
+					: "disabled")
+				+ "; spatialAuthority="
+				+ (spatialAuthority ? "enabled" : "disabled")
+				+ ".");
+		player.message(
+			messagePrefix
+				+ "protocolAuthority="
+				+ (player.getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
+					? "enabled"
+					: "disabled")
+				+ "; syntheticDeep="
+				+ (syntheticDeep ? "enabled" : "disabled")
+				+ ".");
+		player.message(
+			messagePrefix
+				+ "Location space=" + location.getWorldSpace().getValue()
+				+ " x=" + coordinate.getX()
+				+ " y=" + coordinate.getY()
+				+ " level=" + coordinate.getLevel()
+				+ ".");
+		player.message(
+			messagePrefix
+				+ "projection=" + projectionId
+				+ "; spatialCarrier=" + spatialCarrier
+				+ ".");
+		player.message(
+			messagePrefix
+				+ "region=(" + regionKey.getRegionX() + ","
+				+ regionKey.getRegionY() + ",L" + regionKey.getLevel() + ")"
+				+ "; legacy=(" + player.getX() + "," + player.getY() + ").");
+		if (spatialAuthority) {
+			player.message(
+				messagePrefix
+					+ "indexedEntities="
+					+ player.getWorld().getRegionManager()
+						.getLayeredSpatialMembershipCount()
+					+ ".");
+		}
+		player.message(
+			messagePrefix
+				+ "persistenceOrigin="
+				+ player.getLayeredLocationPersistenceOrigin()
+				+ ".");
+	}
+
+	private void syntheticDeepFixture(
+		final Player player,
+		final String command,
+		final String[] args) {
+		RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		boolean nativeRoute =
+			player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+				&& regionManager.getNativeLayeredWorldPackage() != null;
+		if (!player.getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE
+			&& !nativeRoute) {
+			player.message(messagePrefix
+				+ "Layered deep route is disabled on this server."
+				+ " Enable a private native package or synthetic fixture.");
+			return;
+		}
+		if (!player.getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+			|| !player.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+			|| !player.getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY) {
+			player.message(messagePrefix
+				+ "Layered deep route requires layered model, spatial,"
+				+ " and protocol authority.");
+			return;
+		}
+
+		String action = args.length == 0
+			? "status" : args[0].toLowerCase();
+		if (args.length > 1
+			|| (!"enter".equals(action)
+				&& !"status".equals(action)
+				&& !"package".equals(action)
+				&& !"exit".equals(action))) {
+			player.message(badSyntaxPrefix
+				+ command.toUpperCase()
+				+ " [enter|status|package|exit]");
+			return;
+		}
+
+		try {
+			if ("enter".equals(action)) {
+				enterSyntheticDeepFixture(player);
+			} else if ("package".equals(action)) {
+				switchNativeDeepFixturePackage(player);
+			} else if ("exit".equals(action)) {
+				exitSyntheticDeepFixture(player);
+			} else {
+				showSyntheticDeepFixtureStatus(player);
+			}
+		} catch (IllegalArgumentException failure) {
+			player.message(messagePrefix
+				+ "Synthetic deep fixture refused: "
+				+ failure.getMessage());
+		} catch (RuntimeException failure) {
+			LOGGER.error(
+				"Unexpected synthetic deep fixture failure for action {}",
+				action, failure);
+			player.message(messagePrefix
+				+ "Synthetic deep fixture failed; see the private server log.");
+		}
+	}
+
+	private void enterSyntheticDeepFixture(final Player player) {
+		WorldLocation current = player.getLayeredLocation();
+		if (!LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(current)) {
+			player.getCache().store(
+				SYNTHETIC_DEEP_RETURN_SPACE_CACHE,
+				current.getWorldSpace().getValue());
+			player.getCache().set(
+				SYNTHETIC_DEEP_RETURN_X_CACHE,
+				current.getCoordinate().getX());
+			player.getCache().set(
+				SYNTHETIC_DEEP_RETURN_Y_CACHE,
+				current.getCoordinate().getY());
+			player.getCache().set(
+				SYNTHETIC_DEEP_RETURN_LEVEL_CACHE,
+				current.getCoordinate().getLevel());
+			WorldLocation entry =
+				player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+					? WorldLocation.global(new WorldCoordinate(
+						LayeredCompatibilityPointAdapter
+							.SYNTHETIC_DEEP_ENTRY_X,
+						LayeredCompatibilityPointAdapter
+							.SYNTHETIC_DEEP_ENTRY_Y,
+						LayeredCompatibilityPointAdapter
+							.SYNTHETIC_DEEP_LEVEL))
+					: LayeredCompatibilityPointAdapter.syntheticDeepEntry();
+			player.setLayeredLocation(entry, true);
+			player.resetPath();
+			ActionSender.sendWorldInfo(player);
+		}
+		ensureSyntheticDeepFixtureEntities(player);
+		showSyntheticDeepFixtureStatus(player);
+		player.message(messagePrefix
+			+ (player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+				? "Native layered route entered. "
+				: "Synthetic deep fixture entered. ")
+			+ "Use ::deepfixture exit"
+			+ " to return.");
+	}
+
+	private void exitSyntheticDeepFixture(final Player player) {
+		if (!LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(
+				player.getLayeredLocation())
+			&& !player.getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(player.getLayeredLocation())) {
+			player.message(messagePrefix
+				+ "You are not inside the synthetic deep fixture.");
+			return;
+		}
+		WorldLocation destination = syntheticDeepReturnLocation(player);
+		player.getWorld().getRegionManager()
+			.toRuntimeCompatibilityPoint(destination);
+		player.setLayeredLocation(destination, true);
+		player.resetPath();
+		ActionSender.sendWorldInfo(player);
+		player.getCache().remove(
+			SYNTHETIC_DEEP_RETURN_SPACE_CACHE,
+			SYNTHETIC_DEEP_RETURN_X_CACHE,
+			SYNTHETIC_DEEP_RETURN_Y_CACHE,
+			SYNTHETIC_DEEP_RETURN_LEVEL_CACHE);
+		player.message(messagePrefix
+			+ "Exited synthetic deep fixture to "
+			+ destination.getWorldSpace().getValue()
+			+ " (" + destination.getCoordinate().getX()
+			+ "," + destination.getCoordinate().getY()
+			+ ",L" + destination.getCoordinate().getLevel() + ").");
+	}
+
+	private void switchNativeDeepFixturePackage(final Player player) {
+		RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		NativeLayeredWorldPackage transitionPackage =
+			regionManager.findNativeLayeredWorldPackage(
+				NATIVE_TRANSITION_FIXTURE_PACKAGE_ID).orElse(null);
+		if (transitionPackage == null) {
+			player.message(messagePrefix
+				+ "Cross-package transition fixture is not loaded.");
+			return;
+		}
+		NativeLayeredWorldPackage currentPackage =
+			regionManager.findNativeLayeredWorldPackage(
+				player.getLayeredLocation()).orElse(null);
+		NativeLayeredWorldPackage primary =
+			regionManager.getNativeLayeredWorldPackage();
+		if (currentPackage == null
+			|| (currentPackage != primary
+				&& currentPackage != transitionPackage)) {
+			player.message(messagePrefix
+				+ "Enter the native deep route before switching packages.");
+			return;
+		}
+		WorldLocation destination = WorldLocation.global(
+			new WorldCoordinate(
+				450,
+				600,
+				currentPackage == transitionPackage ? -2 : -4));
+		player.setLayeredLocation(destination, true);
+		player.resetPath();
+		ActionSender.sendWorldInfo(player);
+		showSyntheticDeepFixtureStatus(player);
+		player.message(messagePrefix
+			+ "Atomic package transition committed to "
+			+ regionManager.findNativeLayeredWorldPackage(destination)
+				.orElseThrow(() -> new IllegalStateException(
+					"Committed package transition lost destination ownership"))
+				.getPackageId()
+			+ ".");
+	}
+
+	private WorldLocation syntheticDeepReturnLocation(final Player player) {
+		try {
+			if (player.getCache().hasKey(SYNTHETIC_DEEP_RETURN_SPACE_CACHE)
+				&& player.getCache().hasKey(SYNTHETIC_DEEP_RETURN_X_CACHE)
+				&& player.getCache().hasKey(SYNTHETIC_DEEP_RETURN_Y_CACHE)
+				&& player.getCache().hasKey(
+					SYNTHETIC_DEEP_RETURN_LEVEL_CACHE)) {
+				WorldLocation candidate = new WorldLocation(
+					new WorldSpaceId(player.getCache().getString(
+						SYNTHETIC_DEEP_RETURN_SPACE_CACHE)),
+					new WorldCoordinate(
+						player.getCache().getInt(
+							SYNTHETIC_DEEP_RETURN_X_CACHE),
+						player.getCache().getInt(
+							SYNTHETIC_DEEP_RETURN_Y_CACHE),
+						player.getCache().getInt(
+							SYNTHETIC_DEEP_RETURN_LEVEL_CACHE)));
+				player.getWorld().getRegionManager()
+					.toRuntimeCompatibilityPoint(candidate);
+				return candidate;
+			}
+		} catch (RuntimeException invalidReturnRecord) {
+			LOGGER.warn(
+				"Ignoring invalid synthetic deep fixture return record"
+					+ " for playerId={}",
+				player.getDatabaseID(), invalidReturnRecord);
+		}
+		return WorldLocation.global(new WorldCoordinate(120, 648, 0));
+	}
+
+	private void ensureSyntheticDeepFixtureEntities(final Player player) {
+		RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		if (player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			&& regionManager.getNativeLayeredWorldPackage() != null) {
+			if (!regionManager.areNativeLayeredPlacementsPopulated()) {
+				throw new IllegalStateException(
+					"Native layered package placements are not populated");
+			}
+			return;
+		}
+		boolean npcFound = false;
+		for (Npc npc : player.getWorld().getNpcs()) {
+			if (!npc.isRemoved()
+				&& npc.getAttribute(
+					SYNTHETIC_DEEP_NPC_ATTRIBUTE, false)) {
+				npcFound = true;
+				break;
+			}
+		}
+		if (!npcFound) {
+			Npc npc = new Npc(
+				player.getWorld(), NpcId.MAN.id(), 452, 600,
+				SYNTHETIC_DEEP_NPC_ROAM_RADIUS);
+			npc.setAttribute(SYNTHETIC_DEEP_NPC_ATTRIBUTE, true);
+			npc.setWorldLocation(
+				LayeredCompatibilityPointAdapter.deepLocation(452, 600),
+				true);
+			player.getWorld().registerNpc(npc);
+		}
+
+		boolean itemFound = false;
+		for (GroundItem item : player.getWorld().getRegionManager()
+			.getLocalGroundItems(player)) {
+			if (!item.isRemoved()
+				&& item.getAttribute(
+					SYNTHETIC_DEEP_ITEM_ATTRIBUTE, false)) {
+				itemFound = true;
+				break;
+			}
+		}
+		if (!itemFound) {
+			GroundItem item = new GroundItem(
+				player.getWorld(), ItemId.COINS.id(), 448, 600, 5, player);
+			item.setAttribute(SYNTHETIC_DEEP_ITEM_ATTRIBUTE, true);
+			item.setWorldLocation(
+				LayeredCompatibilityPointAdapter.deepLocation(448, 600));
+			player.getWorld().registerItem(
+				item, player.getConfig().GAME_TICK * 2000);
+		}
+	}
+
+	private void showSyntheticDeepFixtureStatus(final Player player) {
+		WorldLocation location = player.getLayeredLocation();
+		WorldCoordinate coordinate = location.getCoordinate();
+		RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		Point receipt = regionManager.toRuntimeCompatibilityPoint(location);
+		NativeLayeredWorldPackage nativePackage =
+			regionManager.findNativeLayeredWorldPackage(location)
+				.orElse(null);
+		boolean nativeTerrain =
+			player.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			&& nativePackage != null
+			&& regionManager.hasNativeLayeredTerrain(location);
+		boolean inside = nativeTerrain
+			|| LayeredCompatibilityPointAdapter
+				.isSyntheticDeepLevel(location);
+		int nativeChunkX = 0;
+		int nativeChunkY = 0;
+		int nativeReadyChunks = 0;
+		if (nativeTerrain) {
+			int chunkSize = nativePackage.getPresentationChunkSize();
+			nativeChunkX = Math.floorDiv(coordinate.getX(), chunkSize);
+			nativeChunkY = Math.floorDiv(coordinate.getY(), chunkSize);
+			for (int deltaX = -1; deltaX <= 1; deltaX++) {
+				for (int deltaY = -1; deltaY <= 1; deltaY++) {
+					if (nativePackage.findPresentationChunk(
+							location.getWorldSpace(),
+							coordinate.getLevel(),
+							nativeChunkX + deltaX,
+							nativeChunkY + deltaY).isPresent()) {
+						nativeReadyChunks++;
+					}
+				}
+			}
+		}
+		int npcCount = 0;
+		for (Npc npc : player.getWorld().getNpcs()) {
+			if (!npc.isRemoved()
+				&& (nativeTerrain
+					? regionManager.isNativeLayeredPlacement(
+						npc, RegionManager.NATIVE_LAYERED_NPC_KIND)
+					: npc.getAttribute(
+						SYNTHETIC_DEEP_NPC_ATTRIBUTE, false))) {
+				npcCount++;
+			}
+		}
+		int itemCount = 0;
+		if (inside) {
+			for (GroundItem item : player.getWorld().getRegionManager()
+				.getLocalGroundItems(player)) {
+				if (!item.isRemoved()
+					&& (nativeTerrain
+						? regionManager.isNativeLayeredPlacement(
+							item,
+							RegionManager.NATIVE_LAYERED_GROUND_ITEM_KIND)
+						: item.getAttribute(
+							SYNTHETIC_DEEP_ITEM_ATTRIBUTE, false))) {
+					itemCount++;
+				}
+			}
+		}
+		int sceneryCount = 0;
+		int boundaryCount = 0;
+		if (inside && nativeTerrain) {
+			for (GameObject object : regionManager.getLocalObjects(player)) {
+				if (object.isRemoved()) {
+					continue;
+				}
+				if (regionManager.isNativeLayeredPlacement(
+						object,
+						RegionManager.NATIVE_LAYERED_SCENERY_KIND)) {
+					sceneryCount++;
+				} else if (regionManager.isNativeLayeredPlacement(
+						object,
+						RegionManager.NATIVE_LAYERED_BOUNDARY_KIND)) {
+					boundaryCount++;
+				}
+			}
+		}
+		String projection = regionManager.runtimeProjectionId(location);
+		regionManager.requireEntitySpatialCarrier(player);
+		player.message(messagePrefix
+			+ (nativeTerrain ? "Native layered deep "
+				: "Synthetic deep ")
+			+ (inside ? "ACTIVE" : "inactive")
+			+ (nativeTerrain ? "" : "; projection=" + projection)
+			+ (nativeTerrain
+				? "; page=(" + coordinate.getSectorX()
+					+ "," + coordinate.getSectorY() + ")"
+					+ "; center=(" + nativeChunkX
+					+ "," + nativeChunkY + ")"
+					+ "; ready=" + nativeReadyChunks + "/9"
+					+ "; chunk="
+					+ nativePackage.getPresentationChunkSize()
+				: ""));
+		if (nativeTerrain) {
+			player.message(messagePrefix
+				+ "Projection=" + projection
+				+ "; package=" + nativePackage.getPackageId()
+				+ "@" + nativePackage.getPackageVersion()
+				+ "; loadedPackages="
+				+ regionManager.getNativeLayeredWorldPackageCount()
+				+ "; placements="
+				+ nativePackage.getNpcPlacementCount() + "n/"
+				+ nativePackage.getGroundItemPlacementCount() + "i/"
+				+ nativePackage.getSceneryPlacementCount() + "s/"
+				+ nativePackage.getBoundaryPlacementCount() + "b"
+				+ "; manifest="
+				+ nativePackage.getManifestSha256().substring(0, 12));
+		}
+		player.message(messagePrefix
+			+ "Deep fixture logical=" + location.getWorldSpace().getValue()
+			+ "(" + coordinate.getX() + "," + coordinate.getY()
+			+ ",L" + coordinate.getLevel() + ")"
+			+ (nativeTerrain ? "; carrier=(" : "; receipt=(")
+			+ receipt.getX() + "," + receipt.getY()
+			+ ",P"
+			+ regionManager.runtimeCompatibilityPlane(location)
+			+ ")"
+			+ (nativeTerrain
+				? "; coverage=package; packedRegion=detached"
+				: "; bounds=("
+					+ LayeredCompatibilityPointAdapter
+						.SYNTHETIC_DEEP_MIN_X
+					+ ".."
+					+ LayeredCompatibilityPointAdapter
+						.SYNTHETIC_DEEP_MAX_X
+					+ ","
+					+ LayeredCompatibilityPointAdapter
+						.SYNTHETIC_DEEP_MIN_Y
+					+ ".."
+					+ LayeredCompatibilityPointAdapter
+						.SYNTHETIC_DEEP_MAX_Y
+					+ ",L"
+					+ LayeredCompatibilityPointAdapter
+						.SYNTHETIC_DEEP_LEVEL
+					+ ")")
+			+ "; live=" + npcCount + "n/" + itemCount + "i/"
+			+ sceneryCount + "s/" + boundaryCount + "b"
+			+ "; collision="
+			+ (nativeTerrain
+				? regionManager.getNativeLayeredObjectCollisionTileCount()
+				: 0)
+			+ ".");
+	}
+
+	private void layeredCoordinateParity(Player player, String command, String[] args) {
+		if (!player.getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
+			player.message(messagePrefix + "Layered parity capture is disabled on this server."
+				+ " Enable OPENRSC_LAYERED_MAP_PARITY_OBSERVER only for private/local testing.");
+			return;
+		}
+		try {
+			player.getLayeredVisibilityWindow();
+			player.getLayeredInterestOwnerSnapshot();
+		} catch (IllegalStateException failure) {
+			player.message(messagePrefix + "Layered player mirror mismatch: " + failure.getMessage());
+			return;
+		}
+
+		String action = args.length == 0 ? "status" : args[0].toLowerCase();
+		LayeredCoordinateParityObserver.Status status;
+		try {
+			if ("start".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.start(
+					player.getDatabaseID(), player.getUsernameHash(), player.getLocation(),
+					player.getConfig().VIEW_DISTANCE, layeredTileSnapshotSource(player),
+					layeredTileParitySource(player), layeredTileNeighborhoodSource(player),
+					layeredAdjacentCollisionSource(player),
+					layeredTraversalCollisionSource(player),
+					layeredRegionResidencySource(player),
+					layeredInterestOwnershipSource(player),
+					layeredRegionRetirementSource(player),
+					layeredRegionRetirementDecisionSource(player),
+					layeredPackedRegionRetirementSafetySource(player),
+					layeredPackedRegionAuthoredConstructionSource(player),
+					layeredPackedRegionAuthoredProvenanceSource(player),
+					layeredPackedRegionAuthoredReconstructionSource(player),
+					layeredPackedRegionAuthoredReconstructionCohortSource(player),
+					layeredPackedRegionAuthoredReconstructionCohortAttributionSource(
+						player),
+					layeredPackedRegionAuthoredReconstructionTopologySource(player),
+					layeredPackedRegionAuthoredReconstructionDependencySemanticsSource(
+						player),
+					layeredPackedRegionActiveNpcResidencySource(player),
+					layeredPackedRegionRetirementRefinementReassessmentSource(player),
+					layeredPackedRegionPreservationBurdenSource(player),
+					layeredPackedRegionDynamicObjectPreservationSource(player),
+					layeredPackedRegionEventOwnershipSource(player));
+			} else if ("snapshot".equals(action) || "capture".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.snapshot(
+					player.getDatabaseID(), player.getUsernameHash(), player.getLocation());
+			} else if ("mark".equals(action)) {
+				if (args.length != 2) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.mark(
+					player.getDatabaseID(), player.getUsernameHash(), player.getLocation(), args[1]);
+			} else if ("recover-noop".equals(action)
+				|| "recovernoop".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.recoverNoOp(
+					player.getDatabaseID(), player.getUsernameHash(),
+					player.getLocation());
+			} else if ("preserve-noop".equals(action)
+				|| "preservenoop".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.preserveNoOp(
+					player.getDatabaseID(), player.getUsernameHash(),
+					player.getLocation());
+			} else if ("stop".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.stop(
+					player.getDatabaseID(), player.getUsernameHash(), player.getLocation());
+			} else if ("status".equals(action)) {
+				if (args.length != 1) {
+					layeredParitySyntax(player, command);
+					return;
+				}
+				status = LayeredCoordinateParityObserver.status(
+					player.getDatabaseID(), player.getUsernameHash());
+			} else {
+				layeredParitySyntax(player, command);
+				return;
+			}
+		} catch (IllegalArgumentException failure) {
+			player.message(messagePrefix + "Layered parity request refused: " + failure.getMessage());
+			return;
+		} catch (RuntimeException failure) {
+			LOGGER.error(
+				"Unexpected layered parity capture failure for action {}",
+				action, failure);
+			player.message(messagePrefix
+				+ "Layered parity capture failed; see the private server log."
+				+ " The trace remains active.");
+			return;
+		} catch (StackOverflowError failure) {
+			LOGGER.error(
+				"Layered parity capture exhausted the thread stack for action {}",
+				action, failure);
+			player.message(messagePrefix
+				+ "Layered parity capture exceeded its safe depth;"
+				+ " see the private server log. The trace remains active.");
+			return;
+		}
+
+		player.message(messagePrefix + "Layered parity "
+			+ (status.isEnabled() ? "ACTIVE" : "inactive")
+			+ "; records=" + status.getRecordCount() + "; log=" + status.getPath());
+		if (status.getLastSnapshot() != null) {
+			player.message(messagePrefix + status.getLastSnapshot().toCompactString());
+		}
+		if (status.getError() != null) {
+			player.message(messagePrefix + "Capture error: " + status.getError());
+		}
+	}
+
+	private LayeredCoordinateParityObserver.TileSnapshotSource
+		layeredTileSnapshotSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.TileSnapshotSource() {
+			@Override
+			public LayeredCoordinateParityObserver.TileSnapshotMetadata capture(
+				final WorldRegionKey logicalRegionKey) {
+				LayeredRegionTileSnapshot snapshot =
+					regionManager.getLayeredRegionTileSnapshot(logicalRegionKey);
+				return LayeredCoordinateParityObserver.TileSnapshotMetadata.of(
+					snapshot.getLogicalRegionKey(),
+					snapshot.getSourceFragmentCount(),
+					snapshot.getMissingSourceRegionCount(),
+					snapshot.getSupportedTileCount(),
+					snapshot.getTargetTileCount(),
+					snapshot.isComplete(),
+					snapshot.getFingerprint());
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.TileParitySource
+		layeredTileParitySource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.TileParitySource() {
+			@Override
+			public LayeredCoordinateParityObserver.TileParityMetadata capture(
+				final Point current) {
+				LayeredTileStateParityComparison comparison =
+					regionManager.compareLayeredTileState(current);
+				return LayeredCoordinateParityObserver.TileParityMetadata.of(
+					comparison.getLogicalLocation(),
+					comparison.getAddress().getLegacyPoint(),
+					comparison.isPackedSourcePresent(),
+					comparison.isMissingPackedSource(),
+					comparison.isComparable(),
+					comparison.isExact());
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.TileNeighborhoodSource
+		layeredTileNeighborhoodSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.TileNeighborhoodSource() {
+			@Override
+			public LayeredCoordinateParityObserver.TileNeighborhoodMetadata capture(
+				final Point current) {
+				LayeredTileNeighborhoodParityComparison comparison =
+					regionManager.compareLayeredTileNeighborhood(current);
+				return LayeredCoordinateParityObserver.TileNeighborhoodMetadata.of(
+					comparison.getCenter(),
+					comparison.getLegacyRepresentableCount(),
+					comparison.getPackedSourcePresentCount(),
+					comparison.getMissingPackedSourceCount(),
+					comparison.getComparableCount(),
+					comparison.getExactCount(),
+					comparison.isComplete(),
+					comparison.isExact());
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.AdjacentCollisionSource
+		layeredAdjacentCollisionSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.AdjacentCollisionSource() {
+			@Override
+			public LayeredCoordinateParityObserver.AdjacentCollisionMetadata capture(
+				final Point current) {
+				List<LayeredAdjacentStepCollisionComparison> comparisons =
+					regionManager.compareLayeredAdjacentStepCollisions(current);
+				List<LayeredCoordinateParityObserver.AdjacentDirectionMetadata> directions =
+					new ArrayList<LayeredCoordinateParityObserver.AdjacentDirectionMetadata>(
+						comparisons.size());
+				for (LayeredAdjacentStepCollisionComparison comparison : comparisons) {
+					directions.add(
+						LayeredCoordinateParityObserver.AdjacentDirectionMetadata.of(
+							comparison.getOffsetX(),
+							comparison.getOffsetY(),
+							comparison.getDestination(),
+							comparison.getRequiredCellCount(),
+							comparison.getExactRequiredStateCount(),
+							comparison.getLogicalPassable(),
+							adjacentReason(comparison.getLogicalBlockingReason()),
+							comparison.getPackedPassable(),
+							adjacentReason(comparison.getPackedBlockingReason())));
+				}
+				return LayeredCoordinateParityObserver.AdjacentCollisionMetadata.of(
+					comparisons.get(0).getSource(), directions);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.AdjacentBlockingReason adjacentReason(
+		final LayeredAdjacentStepCollisionComparison.BlockingReason reason) {
+		return reason == null ? null
+			: LayeredCoordinateParityObserver.AdjacentBlockingReason.valueOf(
+				reason.name());
+	}
+
+	private LayeredCoordinateParityObserver.TraversalCollisionSource
+		layeredTraversalCollisionSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.TraversalCollisionSource() {
+			@Override
+			public LayeredCoordinateParityObserver.RecentTraversalMetadata capture(
+				final List<WorldLocation> route,
+				final int droppedStepCount,
+				final int discontinuityCount) {
+				LayeredTraversalCollisionComparison traversal =
+					regionManager.compareLayeredTraversalCollision(route);
+				List<LayeredCoordinateParityObserver.TraversalStepMetadata> steps =
+					new ArrayList<LayeredCoordinateParityObserver.TraversalStepMetadata>(
+						traversal.getStepCount());
+				int index = 0;
+				for (LayeredAdjacentStepCollisionComparison comparison
+					: traversal.getSteps()) {
+					steps.add(LayeredCoordinateParityObserver.TraversalStepMetadata.of(
+						index,
+						comparison.getSource(),
+						comparison.getOffsetX(),
+						comparison.getOffsetY(),
+						comparison.getDestination(),
+						comparison.getRequiredCellCount(),
+						comparison.getExactRequiredStateCount(),
+						comparison.getLogicalPassable(),
+						adjacentReason(comparison.getLogicalBlockingReason()),
+						comparison.getPackedPassable(),
+						adjacentReason(comparison.getPackedBlockingReason())));
+					index++;
+				}
+				return LayeredCoordinateParityObserver.RecentTraversalMetadata.of(
+					steps, droppedStepCount, discontinuityCount);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.RegionResidencySource
+		layeredRegionResidencySource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.RegionResidencySource() {
+			@Override
+			public LayeredCoordinateParityObserver.RegionResidencyMetadata capture(
+				final WorldRegionWindow previousWindow,
+				final WorldRegionWindow currentWindow,
+				final int maximumRegionsPerWindow) {
+				LayeredRegionInterestResidencyComparison comparison =
+					regionManager.compareLayeredRegionInterestResidency(
+						previousWindow, currentWindow, maximumRegionsPerWindow);
+				return LayeredCoordinateParityObserver.RegionResidencyMetadata.of(
+					comparison.getMirrorVersion(),
+					comparison.getInterestDelta().getRetained().size()
+						+ comparison.getInterestDelta().getExited().size(),
+					comparison.getInterestDelta().getEntered().size()
+						+ comparison.getInterestDelta().getRetained().size(),
+					comparison.getInterestDelta().getEntered().size(),
+					comparison.getInterestDelta().getRetained().size(),
+					comparison.getInterestDelta().getExited().size(),
+					comparison.getInterestDelta().changesWorldSpace(),
+					comparison.getInterestDelta().changesLevel(),
+					comparison.getInterestDelta().isNoOp(),
+					comparison.getResidentCurrentCount(),
+					comparison.getPartialCurrentCount(),
+					comparison.getMissingCurrentCount(),
+					layeredRegionResidencyCandidates(
+						comparison.getLoadCandidates()),
+					layeredRegionResidencyCandidates(
+						comparison.getReleaseCandidates()),
+					layeredRegionResidencyCandidates(
+						comparison.getUnsupportedCurrent()));
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.InterestOwnershipSource
+		layeredInterestOwnershipSource(final Player player) {
+		return new LayeredCoordinateParityObserver.InterestOwnershipSource() {
+			@Override
+			public LayeredCoordinateParityObserver.InterestOwnershipMetadata capture(
+				final WorldRegionWindow currentWindow,
+				final int maximumRegionsPerWindow) {
+				LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot =
+					player.getLayeredInterestOwnerSnapshot();
+				snapshot.requireWindow(currentWindow);
+				if (snapshot.getReferences().size() > maximumRegionsPerWindow) {
+					throw new IllegalArgumentException(
+						"Interest owner exceeds the diagnostic Region budget");
+				}
+				return LayeredCoordinateParityObserver.InterestOwnershipMetadata
+					.fromOwnerSnapshot(snapshot);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.RegionRetirementSource
+		layeredRegionRetirementSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.RegionRetirementSource() {
+			@Override
+			public LayeredCoordinateParityObserver.RegionRetirementMetadata capture(
+				final List<WorldRegionKey> transitionKeys,
+				final List<WorldRegionKey> trackedCandidateKeys,
+				final long droppedCandidateCount,
+				final int maximumRegions) {
+				LinkedHashSet<WorldRegionKey> observed =
+					new LinkedHashSet<WorldRegionKey>(transitionKeys);
+				observed.addAll(trackedCandidateKeys);
+				if (observed.size() > maximumRegions) {
+					throw new IllegalArgumentException(
+						"Region retirement evidence exceeds the diagnostic budget");
+				}
+				List<LayeredRegionRetirementEligibilityLedger.Snapshot> snapshots =
+					regionManager.getLayeredRegionRetirementEligibilitySnapshots(
+						new ArrayList<WorldRegionKey>(observed), maximumRegions);
+				return LayeredCoordinateParityObserver.RegionRetirementMetadata
+					.fromSnapshots(
+						snapshots, transitionKeys, trackedCandidateKeys,
+						droppedCandidateCount);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.RegionRetirementDecisionSource
+		layeredRegionRetirementDecisionSource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver.RegionRetirementDecisionSource() {
+			@Override
+			public LayeredCoordinateParityObserver.RegionRetirementDecisionMetadata
+				capture(
+					final List<LayeredRegionRetirementEligibilityLedger.Snapshot>
+						candidates,
+					final long droppedCandidateCount,
+					final int maximumRegions) {
+				List<LayeredRegionRetirementDecisionArbiter.Decision> decisions =
+					regionManager.evaluateLayeredRegionRetirementCandidates(
+						candidates, maximumRegions);
+				return LayeredCoordinateParityObserver
+					.RegionRetirementDecisionMetadata.fromDecisions(
+						decisions, droppedCandidateCount);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionRetirementSafetySource
+		layeredPackedRegionRetirementSafetySource(final Player player) {
+		final RegionManager regionManager = player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver
+			.PackedRegionRetirementSafetySource() {
+			@Override
+			public LayeredPackedRegionRetirementSafetyAssessment capture(
+				final LayeredPackedRegionRetirementReadiness readiness,
+				final int maximumPackedSources) {
+				return regionManager.assessLayeredPackedRegionRetirementSafety(
+					readiness, maximumPackedSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionAuthoredConstructionSource
+		layeredPackedRegionAuthoredConstructionSource(final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredConstructionSource() {
+			@Override
+			public LayeredPackedRegionAuthoredConstructionObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumPackedSources) {
+				return LayeredPackedRegionAuthoredConstructionObservation.observe(
+					player.getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredConstructionInventory(),
+					safety, maximumPackedSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionAuthoredProvenanceSource
+		layeredPackedRegionAuthoredProvenanceSource(final Player player) {
+		final RegionManager regionManager =
+			player.getWorld().getRegionManager();
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredProvenanceSource() {
+			@Override
+			public LayeredPackedRegionAuthoredProvenanceObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety) {
+				return regionManager.captureAuthoredProvenance(
+					player.getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredPlacementManifest(),
+					player.getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredPopulationOutcome(),
+					safety, player.getWorld().getServer().getCurrentTick());
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionAuthoredReconstructionSource
+		layeredPackedRegionAuthoredReconstructionSource(final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionSource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumSafetySources,
+				final int maximumRequirementSources) {
+				return LayeredPackedRegionAuthoredReconstructionObservation.observe(
+					player.getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredReconstructionRecipe(),
+					safety, maximumSafetySources, maximumRequirementSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionCohortSource
+			layeredPackedRegionAuthoredReconstructionCohortSource(
+				final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionCohortSource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionCohortAnalysis capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumCohortSources,
+				final int maximumRequirementSources) {
+				return LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+					.analyze(
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						safety, maximumCohortSources,
+						maximumRequirementSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionCohortAttributionSource
+			layeredPackedRegionAuthoredReconstructionCohortAttributionSource(
+				final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionCohortAttributionSource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionCohortAttribution
+				capture(
+					final LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+						cohort,
+					final int maximumEdges,
+					final int maximumBridgePlacements) {
+				return LayeredPackedRegionAuthoredReconstructionCohortAttribution
+					.analyze(
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						cohort, maximumEdges, maximumBridgePlacements);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionTopologySource
+			layeredPackedRegionAuthoredReconstructionTopologySource(
+				final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionTopologySource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionTopologyAnalysis
+				capture(
+					final LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+						cohort,
+					final int maximumSources,
+					final int maximumRelationships) {
+				return LayeredPackedRegionAuthoredReconstructionTopologyAnalysis
+					.analyze(
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						cohort, maximumSources, maximumRelationships);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionDependencySemanticsSource
+			layeredPackedRegionAuthoredReconstructionDependencySemanticsSource(
+				final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionDependencySemanticsSource() {
+			@Override
+			public
+				LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis
+					capture(
+						final LayeredPackedRegionRetirementSafetyAssessment safety,
+						final int maximumSelectedSources,
+						final int maximumSupportSources,
+						final int maximumIncomingOwners,
+						final int maximumIncomingPlacements) {
+				return
+					LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis
+						.analyze(
+							player.getWorld().getWorldLoader().getWorldPopulator()
+								.getAuthoredReconstructionRecipe(),
+							safety, maximumSelectedSources,
+							maximumSupportSources, maximumIncomingOwners,
+							maximumIncomingPlacements);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionActiveNpcResidencySource
+		layeredPackedRegionActiveNpcResidencySource(final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionActiveNpcResidencySource() {
+			@Override
+			public LayeredPackedRegionActiveNpcResidencyObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumInstances,
+				final int maximumRelevantDetails) {
+				return player.getWorld().getRegionManager()
+					.captureActiveNpcResidency(
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						safety, player.getWorld().getServer().getCurrentTick(),
+						maximumInstances, maximumRelevantDetails);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionRetirementRefinementReassessmentSource
+			layeredPackedRegionRetirementRefinementReassessmentSource(
+				final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionRetirementRefinementReassessmentSource() {
+			@Override
+			public LayeredPackedRegionRetirementRefinementReassessment
+				captureIfFresh(
+					final LayeredPackedRegionRetirementRefinementProposal
+						previousProposal,
+					final int maximumCandidateSources,
+					final int maximumSupportSources,
+					final int maximumNpcInstances,
+					final int maximumRelevantNpcDetails,
+					final int maximumActiveNpcRequirements) {
+				return player.getWorld().getRegionManager()
+					.captureLayeredPackedRegionRetirementRefinementReassessmentIfFresh(
+						previousProposal,
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						maximumCandidateSources, maximumSupportSources,
+						maximumNpcInstances, maximumRelevantNpcDetails,
+						maximumActiveNpcRequirements);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionPreservationBurdenSource
+		layeredPackedRegionPreservationBurdenSource(final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionPreservationBurdenSource() {
+			@Override
+			public LayeredPackedRegionPreservationBurdenAssessment capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumCandidateSources) {
+				return player.getWorld().getRegionManager()
+					.assessLayeredPackedRegionPreservationBurden(
+						proposal, maximumCandidateSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionDynamicObjectPreservationSource
+			layeredPackedRegionDynamicObjectPreservationSource(final Player player) {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionDynamicObjectPreservationSource() {
+			@Override
+			public LayeredPackedRegionDynamicObjectPreservationRecord capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumCandidateSources,
+				final int maximumDynamicObjects) {
+				return player.getWorld().getRegionManager()
+					.captureLayeredPackedRegionDynamicObjectPreservationRecord(
+						proposal, maximumCandidateSources, maximumDynamicObjects);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionEventOwnershipSource
+		layeredPackedRegionEventOwnershipSource(final Player player) {
+		return new LayeredCoordinateParityObserver.PackedRegionEventOwnershipSource() {
+			@Override
+			public LayeredPackedRegionEventOwnershipInventory capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumEvents,
+				final int maximumSpatialReferences) {
+				return player.getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionEventOwnershipInventory(
+						proposal, player.getWorld().getServer().getCurrentTick(),
+						maximumEvents, maximumSpatialReferences);
+			}
+
+			@Override
+			public LayeredPackedRegionEventTargetObservation captureTargets(
+				final LayeredPackedRegionEventOwnershipInventory inventory,
+				final int maximumTargetRecords) {
+				return player.getWorld().getRegionManager()
+					.captureLayeredPackedRegionEventTargetObservation(
+						inventory, maximumTargetRecords);
+			}
+
+			@Override
+			public LayeredPackedRegionEventAtomicTargetRevalidation
+				captureAtomicTargetRevalidation(
+					final LayeredPackedRegionEventOwnershipInventory inventory,
+					final int maximumTargetRecords) {
+				return player.getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionEventAtomicTargetRevalidation(
+						inventory, maximumTargetRecords);
+			}
+
+			@Override
+			public LayeredPackedRegionNpcOwnerEventContinuityAssessment
+				captureNpcOwnerContinuity(
+					final LayeredPackedRegionRetirementRefinementProposal proposal,
+					final LayeredPackedRegionEventOwnershipInventory inventory,
+					final int maximumCandidateSources,
+					final int maximumNpcInstances,
+					final int maximumRelevantNpcDetails,
+					final int maximumEventDetails) {
+				return player.getWorld().getRegionManager()
+					.captureLayeredPackedRegionNpcOwnerEventContinuity(
+						proposal, inventory,
+						player.getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						maximumCandidateSources, maximumNpcInstances,
+						maximumRelevantNpcDetails, maximumEventDetails);
+			}
+
+			@Override
+			public LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
+				captureNpcOwnerPreservationBoundary(
+					final LayeredPackedRegionNpcOwnerPreservationRequirements
+						requirements,
+					final int maximumOwners) {
+				return player.getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionNpcOwnerPreservationBoundary(
+						requirements, maximumOwners);
+			}
+
+			@Override
+			public PackedRegionNpcOwnerPreservationNoOpMetadata
+				captureNpcOwnerPreservationNoOp(
+					final LayeredPackedRegionEventOwnershipInventory inventory,
+					final LayeredPackedRegionNpcOwnerPreservationRequirements
+						requirements,
+					final int maximumOwners) {
+				return player.getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionNpcOwnerPreservationNoOpDiagnostic(
+						inventory, requirements, maximumOwners);
+			}
+
+			@Override
+			public PackedRegionEventRecoveryNoOpMetadata captureRecoveryNoOp(
+				final LayeredPackedRegionEventOwnershipInventory inventory,
+				final int maximumCandidates) {
+				return player.getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionEventRecoveryNoOpDiagnostic(
+						inventory, maximumCandidates);
+			}
+		};
+	}
+
+	private List<LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata>
+		layeredRegionResidencyCandidates(
+			final List<LayeredRegionInterestResidencyComparison.Entry> entries) {
+		List<LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata>
+			candidates = new ArrayList<
+				LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata>(
+					entries.size());
+		for (LayeredRegionInterestResidencyComparison.Entry entry : entries) {
+			LayeredRegionResidencyMirror.Snapshot snapshot =
+				entry.getResidencySnapshot();
+			candidates.add(
+				LayeredCoordinateParityObserver.RegionResidencyCandidateMetadata.of(
+					entry.getLogicalRegionKey(),
+					LayeredCoordinateParityObserver.RegionInterestState.valueOf(
+						entry.getInterestState().name()),
+					LayeredCoordinateParityObserver.RegionResidencyState.valueOf(
+						entry.getResidencyState().name()),
+					snapshot.getSourceCount(),
+					snapshot.getResidentSourceCount(),
+					snapshot.getLegacySupportedTileCount(),
+					snapshot.getResidentTileCount(),
+					snapshot.isLegacyCoverageComplete()));
+		}
+		return candidates;
+	}
+
+	private void layeredParitySyntax(Player player, String command) {
+		player.message(badSyntaxPrefix + command.toUpperCase()
+			+ " [start|status|snapshot|mark LABEL|recover-noop|preserve-noop|stop]");
 	}
 
 	private void testNpcDrops(Player player, String command, String[] args) {

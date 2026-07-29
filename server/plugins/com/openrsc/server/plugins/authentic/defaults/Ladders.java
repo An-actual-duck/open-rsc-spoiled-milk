@@ -3,11 +3,14 @@ package com.openrsc.server.plugins.authentic.defaults;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.model.TelePoint;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.LavaForgeLocation;
+import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.custom.minigames.ALumbridgeCarol;
 import com.openrsc.server.plugins.custom.minigames.CombatOdyssey;
@@ -32,6 +35,9 @@ public class Ladders {
 	}
 
 	public void onObjectAction(GameObject obj, String command, Player player) {
+		if (tryWorldBuilderVerticalPair(obj, command, player)) {
+			return;
+		}
 		if (obj.getID() == 487 && !config().MEMBER_WORLD) {
 			player.message(player.MEMBER_MESSAGE);
 			return;
@@ -59,16 +65,35 @@ public class Ladders {
 			player.teleport(606, 3556);
 			player.message("You go up the stairs");
 			return;
-		} else if (obj.getID() == 223 && obj.getX() == 271 && obj.getY() == 3340) {
+		} else if (obj.getID() == 223
+			&& (LavaForgeLocation.isDwarvenMineDownLadder(
+					obj.getWorldLocation())
+				|| (obj.getX() == 271 && obj.getY() == 3340))) {
 			//Ladder from dwarven mine to lava forge
 			if (player.getCache().hasKey("miniquest_dwarf_youth_rescue")) {
-				player.teleport(329,3419,false);
+				if (player.getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(
+						LavaForgeLocation.entrance())) {
+					player.teleportLayered(
+						LavaForgeLocation.entrance(), false);
+				} else {
+					player.teleport(329, 3419, false);
+				}
 			} else
 				player.message("you don't have access to this area");
 			return;
-		} else if (obj.getID() == 5 && obj.getX() == 329 && obj.getY() == 3418) {
+		} else if (obj.getID() == 5
+			&& ((obj.getX() == 329 && obj.getY() == 3418)
+				|| LavaForgeLocation.isExitLadder(
+					obj.getWorldLocation()))) {
 			//Ladder from lava forge to dwarven mine
-			player.teleport(271, 3339, false);
+			if (LavaForgeLocation.isExitLadder(
+					obj.getWorldLocation())) {
+				player.teleportLayered(
+					LavaForgeLocation.dwarvenMineReturn(), false);
+			} else {
+				player.teleport(271, 3339, false);
+			}
 			return;
 		} else if (obj.getID() == 42 && obj.getX() == 368 && obj.getY() == 438) {
 			player.message("You go down the stairs");
@@ -248,13 +273,27 @@ public class Ladders {
 					return;
 				}
 			}
-			int[] coords = coordModifier(player, true, obj);
-			player.teleport(coords[0], coords[1], false);
+			teleportVertical(player, true, obj);
 			player.message(
 				"You " + command.replace("-", " ") + " the "
 					+ obj.getGameObjectDef().getName().toLowerCase());
-		} else if (obj.getID() == 249 && obj.getX() == 98 && obj.getY() == 3537) { // lost city (Zanaris) ladder
-			Npc ladderAttendant = player.getWorld().getNpc(NpcId.FAIRY_LADDER_ATTENDANT.id(), 99, 99, 3537, 3537);
+		} else if (isZanarisExitLadder(obj)) {
+			boolean relocated =
+				ZanarisLocation.isAt(
+					obj.getWorldLocation(),
+					ZanarisLocation.EXIT_LADDER_X,
+					ZanarisLocation.EXIT_LADDER_Y);
+			int attendantY = relocated
+				? ZanarisLocation.EXIT_LADDER_Y
+				: 3537;
+			Npc ladderAttendant =
+				findNpcInPlayerDomain(
+					player,
+					NpcId.FAIRY_LADDER_ATTENDANT.id(),
+					99,
+					99,
+					attendantY,
+					attendantY);
 			if (ladderAttendant != null) {
 				npcsay(player, ladderAttendant, "This ladder leaves Zanaris",
 					"It leads to near Al Kharid in your mortal realm",
@@ -263,7 +302,14 @@ public class Ladders {
 				int m = multi(player, ladderAttendant, "I think I'll stay down here a bit longer", "Yes, I'm ready to leave");
 				if (m == 1) {
 					player.message("You climb up the ladder");
-					player.teleport(98, 706, false);
+					if (relocated
+						&& player.isLayeredLocationAuthorityEnabled()) {
+						player.teleportLayered(
+							ZanarisLocation.surfaceExit(),
+							false);
+					} else {
+						player.teleport(98, 706, false);
+					}
 				}
 			}
 		} else if (obj.getID() == 1187 && obj.getX() == 446 && obj.getY() == 3367) {
@@ -276,27 +322,134 @@ public class Ladders {
 			player.teleport(148, 563, false);
 		} else if (command.equals("climb-up") || command.equals("climb up")
 			|| command.equals("go up")) {
-			int[] coords = coordModifier(player, true, obj);
-			player.teleport(coords[0], coords[1], false);
+			teleportVertical(player, true, obj);
 			player.message(
 				"You " + command.replace("-", " ") + " the "
 					+ obj.getGameObjectDef().getName().toLowerCase());
 		} else if (command.equals("climb-down") || command.equals("climb down")
 			|| command.equals("go down")) {
-			int[] coords = coordModifier(player, false, obj);
-			player.teleport(coords[0], coords[1], false);
+			teleportVertical(player, false, obj);
 			player.message(
 				"You " + command.replace("-", " ") + " the "
 					+ obj.getGameObjectDef().getName().toLowerCase());
 		}
 	}
 
+	private static boolean isZanarisExitLadder(GameObject object) {
+		return object.getID() == 249
+			&& ((object.getX() == 98 && object.getY() == 3537)
+				|| ZanarisLocation.isAt(
+					object.getWorldLocation(),
+					ZanarisLocation.EXIT_LADDER_X,
+					ZanarisLocation.EXIT_LADDER_Y));
+	}
+
+	private static Npc findNpcInPlayerDomain(
+		Player player,
+		int npcId,
+		int minimumX,
+		int maximumX,
+		int minimumY,
+		int maximumY) {
+		for (Npc npc : player.getWorld().getNpcs()) {
+			if (!npc.isRemoved()
+				&& !npc.isRespawning()
+				&& npc.getID() == npcId
+				&& npc.getX() >= minimumX
+				&& npc.getX() <= maximumX
+				&& npc.getY() >= minimumY
+				&& npc.getY() <= maximumY
+				&& npc.sharesSpatialDomain(player)) {
+				return npc;
+			}
+		}
+		return null;
+	}
+
+	private boolean tryWorldBuilderVerticalPair(
+		GameObject object,
+		String command,
+		Player player) {
+		boolean up = command.equals("climb-up")
+			|| command.equals("climb up")
+			|| command.equals("go up");
+		boolean down = command.equals("climb-down")
+			|| command.equals("climb down")
+			|| command.equals("go down");
+		if (!up && !down) {
+			return false;
+		}
+		int[] coordinates = coordModifier(
+			player, up, object, false);
+		try {
+			WorldEditorSessionManager.NativeVerticalPairResult result =
+				player.getWorld().getServer().getWorldEditorSessions()
+					.prepareNativeVerticalPair(
+						player,
+						object,
+						coordinates[0],
+						coordinates[1],
+						up ? 1 : -1);
+			if (!result.applicable) {
+				return false;
+			}
+			player.teleportLayered(result.destination, false);
+			player.message(
+				"You " + command.replace("-", " ") + " the "
+					+ object.getGameObjectDef().getName().toLowerCase());
+			if (result.createdInverse) {
+				player.message(
+					"Builder: created the paired "
+						+ (up ? "down" : "up")
+						+ " object on level "
+						+ result.destination.getCoordinate().getLevel()
+						+ ".");
+			}
+			return true;
+		} catch (IllegalArgumentException | IllegalStateException failure) {
+			player.message(
+				"Builder vertical pairing: " + failure.getMessage());
+			return true;
+		}
+	}
+
+	private void teleportVertical(
+		Player player,
+		boolean up,
+		GameObject object) {
+		boolean nativeLayered = player.getConfig()
+				.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+			&& player.getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(player.getWorldLocation());
+		int[] coords = coordModifier(player, up, object, !nativeLayered);
+		if (nativeLayered) {
+			player.teleportRelativeLayer(
+				coords[0], coords[1], up ? 1 : -1, false);
+		} else {
+			player.teleport(coords[0], coords[1], false);
+		}
+	}
+
 	private int[] coordModifier(Player player, boolean up, GameObject object) {
+		return coordModifier(player, up, object, true);
+	}
+
+	private int[] coordModifier(
+		Player player,
+		boolean up,
+		GameObject object,
+		boolean encodeLegacyPlane) {
 		if (object.getGameObjectDef().getHeight() <= 1) {
 			return new int[]{player.getX(),
-				Formulae.getNewY(player.getY(), up)};
+				encodeLegacyPlane
+					? Formulae.getNewY(player.getY(), up)
+					: player.getY()};
 		}
-		int[] coords = {object.getX(), Formulae.getNewY(object.getY(), up)};
+		int[] coords = {
+			object.getX(),
+			encodeLegacyPlane
+				? Formulae.getNewY(object.getY(), up)
+				: object.getY()};
 		switch (object.getDirection()) {
 			case 0:
 				coords[1] -= (up ? -object.getGameObjectDef().getHeight() : 1);

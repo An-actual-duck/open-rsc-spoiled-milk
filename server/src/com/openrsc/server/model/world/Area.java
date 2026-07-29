@@ -1,6 +1,9 @@
 package com.openrsc.server.model.world;
 
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldArea;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 
 public class Area {
 
@@ -65,6 +68,25 @@ public class Area {
 		int y = p.getY();
 
 		return x > minX && x < maxX && y > minY && y < maxY;
+	}
+
+	/**
+	 * Tests a layered location against this legacy global area's open bounds.
+	 */
+	public boolean inBounds(WorldLocation location) {
+		return toWorldArea().contains(location);
+	}
+
+	/**
+	 * Returns a checked layered snapshot of the area's current packed bounds.
+	 *
+	 * <p>A legacy area whose boundaries cross packed planes cannot represent one
+	 * layered rectangle and is rejected instead of being silently flattened.</p>
+	 */
+	public WorldArea toWorldArea() {
+		return new WorldArea(
+			LegacyPackedPointAdapter.fromPackedValues(minX, minY),
+			LegacyPackedPointAdapter.fromPackedValues(maxX, maxY));
 	}
 
 	public String getName() {

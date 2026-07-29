@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/coordinate-owner-classification-v1.schema.json",
+  "title": "Layered Coordinate Owner Classification v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reportType",
+    "reportSchema",
+    "coordinateModel",
+    "legacyCodec",
+    "layoutAdapter",
+    "sourceFingerprintSha256",
+    "classificationFingerprintSha256",
+    "summary",
+    "owners",
+    "notes"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "reportType": {"const": "layered-coordinate-owner-classification"},
+    "reportSchema": {"const": "coordinate-owner-classification-v1"},
+    "coordinateModel": {"const": "signed-layered-v1"},
+    "legacyCodec": {"const": "legacy-packed-y-v1"},
+    "layoutAdapter": {"type": "string", "minLength": 1},
+    "sourceFingerprintSha256": {"$ref": "#/$defs/hash"},
+    "classificationFingerprintSha256": {"$ref": "#/$defs/hash"},
+    "summary": {"$ref": "#/$defs/summary"},
+    "owners": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/owner"}
+    },
+    "notes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "count": {"type": "integer", "minimum": 0},
+    "counts": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/count"}
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classifiedSourceOwnerCount",
+        "sourceOwnerCountByDisposition",
+        "sourceOwnerCountByFamily",
+        "sourceOwnerCountByRisk",
+        "sourceOwnerCountByRole"
+      ],
+      "properties": {
+        "classifiedSourceOwnerCount": {"$ref": "#/$defs/count"},
+        "sourceOwnerCountByDisposition": {"$ref": "#/$defs/counts"},
+        "sourceOwnerCountByFamily": {"$ref": "#/$defs/counts"},
+        "sourceOwnerCountByRisk": {"$ref": "#/$defs/counts"},
+        "sourceOwnerCountByRole": {"$ref": "#/$defs/counts"}
+      }
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classificationStatus",
+        "disposition",
+        "primaryFamily",
+        "migrationRisk",
+        "confidence",
+        "role",
+        "path",
+        "size",
+        "sha256",
+        "signals",
+        "reasons"
+      ],
+      "properties": {
+        "classificationStatus": {"const": "classified-unparsed"},
+        "disposition": {
+          "enum": ["migration-owner", "ambiguous-literal", "signal-collision"]
+        },
+        "primaryFamily": {
+          "enum": [
+            "ambiguous-literal-review",
+            "builder-authoring",
+            "client-world-presentation",
+            "content-topology",
+            "incidental-signal-review",
+            "manual-review",
+            "persistence-world-bootstrap",
+            "protocol-session-boundary",
+            "simulation-spatial-runtime",
+            "terrain-region-storage"
+          ]
+        },
+        "migrationRisk": {"enum": ["critical", "high", "medium", "review"]},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "role": {
+          "enum": [
+            "server-coordinate-source",
+            "client-coordinate-source",
+            "builder-coordinate-source"
+          ]
+        },
+        "path": {"type": "string", "minLength": 1},
+        "size": {"$ref": "#/$defs/count"},
+        "sha256": {"$ref": "#/$defs/hash"},
+        "signals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "reasons": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

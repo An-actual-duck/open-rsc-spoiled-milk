@@ -173,9 +173,17 @@ def verify_source_ownership_and_order() -> None:
             "sceneBaselineState.pruneLegacyListsOutsideSyncRange(mc);",
             "applyCompleteSceneBaselineToLegacyLists();",
             "sceneBaselineState.recordSceneDiagnostics(mc);",
-            "packetsIncoming.packetEnd = length;",
         ),
         "scene-baseline decode/apply order changed",
+    )
+    require(
+        scene_packet.index("sceneBaselineState.matchAtomicFence(")
+        < scene_packet.index("sceneBaselineState.recordPacket("),
+        "atomic scene fence must be intercepted before baseline aggregation",
+    )
+    require(
+        scene_packet.count("packetsIncoming.packetEnd = length;") == 2,
+        "atomic fence and normal baseline paths must both consume the packet",
     )
 
 
@@ -429,6 +437,20 @@ def verify_scene_baseline_state() -> None:
                 if (!condition) throw new AssertionError(message);
             }
 
+            private static int sceneIdentity(
+                    int a, int b, int c, int d, int e) {
+                int hash = 0x811C9DC5;
+                hash = (hash ^ a) * 0x01000193;
+                hash = (hash ^ b) * 0x01000193;
+                hash = (hash ^ c) * 0x01000193;
+                hash = (hash ^ d) * 0x01000193;
+                return (hash ^ e) * 0x01000193;
+            }
+
+            private static int addIdentity(int summary, int identity) {
+                return summary + identity + Integer.rotateLeft(identity, 16);
+            }
+
             private static void record(
                     SceneBaselineState state, int category,
                     List<SceneBaselineState.Record> records) {
@@ -444,7 +466,7 @@ def verify_scene_baseline_state() -> None:
                 List<SceneBaselineState.Record> scenery = new ArrayList<SceneBaselineState.Record>();
                 scenery.add(new SceneBaselineState.Record(10, 100, 200, 2, 0));
                 List<SceneBaselineState.Record> walls = new ArrayList<SceneBaselineState.Record>();
-                walls.add(new SceneBaselineState.Record(20, 101, 200, 3, 0));
+                walls.add(new SceneBaselineState.Record(20, 101, 200, 3, 1));
                 record(state, 1, scenery);
                 record(state, 2, walls);
                 require(state.hasStoredCompleteBaseline(), "completed baseline storage");
@@ -467,14 +489,35 @@ def verify_scene_baseline_state() -> None:
                 client.setWallObjectInstanceCount(1);
                 require(state.summaryLines(client)[2].contains("scene sync match ok"), "matching legacy parity");
                 require(state.isBaselineOriginLoaded(client), "baseline origin check");
+                require(state.storedBaselineMatchesLegacy(client),
+                    "stored baseline exact-match shortcut");
+
+                int sceneryFenceHash = addIdentity(
+                    0, sceneIdentity(10, 2, 100, 200, 0));
+                int wallFenceHash = addIdentity(
+                    0, sceneIdentity(20, (1 << 8) | 3, 101, 200, 0));
+                SceneBaselineState.AtomicFenceResult fence =
+                    state.matchAtomicFence(
+                        client, 1, 1, sceneryFenceHash, wallFenceHash);
+                require(fence.matches(), "matching atomic fence");
+                require(fence.summary().contains("match expected/actual"),
+                    "atomic fence diagnostic");
+                require(!state.matchAtomicFence(
+                    client, 1, 1, sceneryFenceHash + 1, wallFenceHash
+                ).matches(), "atomic fence hash mismatch");
 
                 client.setGameObjectInstanceID(1, 99);
                 client.setGameObjectInstanceX(1, 300);
                 client.setGameObjectInstanceZ(1, 400);
                 client.setGameObjectInstanceDir(1, 0);
                 client.setGameObjectInstanceCount(2);
-                state.pruneLegacyListsOutsideSyncRange(client);
-                require(client.getGameObjectInstanceCount() == 1, "out-of-range object pruning");
+                state.pruneLegacyListsOutsideAtomicFenceRange(
+                    client, 100, 200, 1);
+                require(client.getGameObjectInstanceCount() == 1,
+                    "atomic-fence out-of-range object pruning");
+                require(state.matchAtomicFence(
+                    client, 1, 1, sceneryFenceHash, wallFenceHash
+                ).matches(), "atomic fence after stale-window pruning");
 
                 record(state, 2, walls);
                 state.recordLegacyBaselineApplied();
@@ -484,6 +527,119 @@ def verify_scene_baseline_state() -> None:
                 require(summary[1].contains("pruned objects/walls 1/0"), "prune accounting");
                 require(summary[1].contains("applied 1"), "apply accounting");
                 require(summary[2].contains("scene sync match ok"), "post-prune parity");
+
+                SceneBaselineState presentation = new SceneBaselineState();
+                List<SceneBaselineState.Record> outerScenery =
+                    new ArrayList<SceneBaselineState.Record>();
+                outerScenery.add(
+                    new SceneBaselineState.Record(30, 48, 620, 0, 0));
+                List<SceneBaselineState.Record> outerWalls =
+                    new ArrayList<SceneBaselineState.Record>();
+                outerWalls.add(
+                    new SceneBaselineState.Record(40, 240, 620, 1, 1));
+                presentation.recordPacket(
+                    8, 20, 7, "global@0", 120, 620,
+                    1, 1, 0, 16, 101, 202, 303,
+                    3, 13, 2, 1, 1, 1, 404, 505,
+                    1, 0, 1, 1, scenery);
+                presentation.recordPacket(
+                    8, 20, 7, "global@0", 120, 620,
+                    1, 1, 0, 16, 101, 202, 303,
+                    3, 13, 2, 1, 1, 1, 404, 505,
+                    2, 0, 1, 1, walls);
+                require(
+                    presentation.hasStoredCompleteBaseline(),
+                    "authoritative product completes before outer product");
+                require(
+                    !presentation.isCompleteAndOriginLoaded(new mudclient()),
+                    "v8 atomic activation waits for the outer product");
+                require(
+                    !presentation.hasStoredCompletePresentation(),
+                    "outer product remains independently incomplete");
+                presentation.recordPacket(
+                    8, 20, 7, "global@0", 120, 620,
+                    1, 1, 0, 16, 101, 202, 303,
+                    3, 13, 2, 1, 1, 1, 404, 505,
+                    SceneBaselineState.PAGE_PRESENTATION_SCENERY,
+                    0, 1, 1, outerScenery);
+                presentation.recordPacket(
+                    8, 20, 7, "global@0", 120, 620,
+                    1, 1, 0, 16, 101, 202, 303,
+                    3, 13, 2, 1, 1, 1, 404, 505,
+                    SceneBaselineState.PAGE_PRESENTATION_WALLS,
+                    0, 1, 1, outerWalls);
+                require(
+                    presentation.hasStoredCompletePresentation(),
+                    "outer product completes after both static categories");
+                require(
+                    presentation.isCompleteAndOriginLoaded(new mudclient()),
+                    "v8 atomic activation opens after both products complete");
+                require(
+                    presentation.snapshotStoredPresentationSceneryRecords()
+                        .size() == 1,
+                    "stored outer scenery count");
+                require(
+                    presentation.snapshotStoredPresentationWallRecords()
+                        .size() == 1,
+                    "stored outer wall count");
+
+                presentation.recordPacket(
+                    8, 21, 7, "global@0", 120, 620,
+                    1, 1, 9, 16, 101, 202, 999,
+                    3, 13, 2, 1, 1, 1, 404, 505,
+                    0, 0, 0, 0,
+                    new ArrayList<SceneBaselineState.Record>());
+                require(
+                    presentation.hasStoredCompleteBaseline()
+                        && presentation.hasStoredCompletePresentation(),
+                    "ground-item telemetry must not reset static products");
+
+                presentation.recordPacket(
+                    8, 22, 7, "global@0", 120, 620,
+                    1, 1, 9, 16, 101, 202, 999,
+                    3, 13, 2, 1, 1, 1, 406, 505,
+                    1, 0, 1, 1, scenery);
+                require(
+                    !presentation.hasStoredCompleteBaseline()
+                        && !presentation.hasStoredCompletePresentation(),
+                    "changed outer identity resets the combined page product");
+
+                SceneBaselineState pagedPresentation =
+                    new SceneBaselineState();
+                List<SceneBaselineState.Record> outerPageZero =
+                    new ArrayList<SceneBaselineState.Record>();
+                for (int i = 0; i < 512; i++) {
+                    outerPageZero.add(
+                        new SceneBaselineState.Record(
+                            1000 + i, 48 + i, 620, 0, 0));
+                }
+                List<SceneBaselineState.Record> outerPageOne =
+                    new ArrayList<SceneBaselineState.Record>();
+                outerPageOne.add(
+                    new SceneBaselineState.Record(1512, 560, 620, 0, 0));
+                pagedPresentation.recordPacket(
+                    8, 30, 9, "global@0", 120, 620,
+                    0, 0, 0, 16, 0, 0, 0,
+                    3, 13, 2, 1, 513, 0, 606, 0,
+                    SceneBaselineState.PAGE_PRESENTATION_SCENERY,
+                    0, 2, 512, outerPageZero);
+                require(
+                    !pagedPresentation.hasStoredCompletePresentation(),
+                    "first 512-record v8 page remains incomplete");
+                pagedPresentation.recordPacket(
+                    8, 30, 9, "global@0", 120, 620,
+                    0, 0, 0, 16, 0, 0, 0,
+                    3, 13, 2, 1, 513, 0, 606, 0,
+                    SceneBaselineState.PAGE_PRESENTATION_SCENERY,
+                    1, 2, 1, outerPageOne);
+                require(
+                    pagedPresentation.hasStoredCompletePresentation(),
+                    "v8 presentation accepts a bounded 512-record page");
+                require(
+                    pagedPresentation
+                            .snapshotStoredPresentationSceneryRecords()
+                            .size() == 513,
+                    "v8 presentation reassembles both enlarged pages");
                 System.out.println("scene-baseline-ok");
             }
         }

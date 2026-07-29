@@ -121,7 +121,9 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "target = npc.getOpponent();")
     require_contains(NPC_BEHAVIOR, "tryProjectileAttack(now);")
     require_contains(NPC_BEHAVIOR, "!npc.withinRange(target, profile.getProjectileRange(npc))")
-    require_contains(NPC_BEHAVIOR, "PathValidation.checkHostileProjectilePath(npc.getWorld(), npc.getLocation(), target.getLocation())")
+    require_contains(NPC_BEHAVIOR, "PathValidation.checkHostileProjectilePath(")
+    require_contains(NPC_BEHAVIOR, "npc.getWorldLocation()")
+    require_contains(NPC_BEHAVIOR, "target.getWorldLocation()")
     require_contains(NPC_BEHAVIOR, "profile.getRangedProjectileVisual(npc)")
     require_contains(NPC_BEHAVIOR, "profile.getMagicProjectileVisual(npc, magicElement)")
     require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, fireDefenseDebuffPercent, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement")
@@ -155,7 +157,13 @@ def main() -> None:
     require_contains(MAGIC_COMBAT_EVENT, "MagicCombatEvent.this.setDelayTicks(0);")
     require_contains(WALK_TO_MOB_ACTION, "boolean projectilePathAttack = actionType == ActionType.ATTACKMAGIC;")
     require_contains(WALK_TO_MOB_ACTION, "((ignoreProjectileAllowed || projectilePathAttack) && !myworldCombatAttack)")
-    require_contains(WALK_TO_MOB_ACTION, "checkedPoint.getX(), checkedPoint.getY(), mob.getX(), mob.getY(),")
+    require_contains(
+        WALK_TO_MOB_ACTION,
+        "checkedPoint.getX(),\n"
+        "\t\t\t\tcheckedPoint.getY(),\n"
+        "\t\t\t\tmob.getX(),\n"
+        "\t\t\t\tmob.getY(),",
+    )
     require_contains(WALK_TO_MOB_ACTION, "ignoreProjectileAllowed, !ignoreProjectileAllowed")
     require_regex(
         MAGIC_COMBAT_EVENT,

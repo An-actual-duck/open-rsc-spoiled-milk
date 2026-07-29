@@ -46,8 +46,11 @@ public class GroundItemTake implements PayloadProcessor<TargetPositionStruct, Op
 			return;
 		}
 
-		int distance = item.getRegion().getGameObject(location, player) != null ? 1 : 0;
-		Player onTile = item.getRegion().getPlayer(location.getX(), location.getY(), player, true);
+		int distance = player.getWorld().getRegionManager()
+			.findInteractionScenery(location, player) != null ? 1 : 0;
+		Player onTile = player.getWorld().getRegionManager()
+			.findInteractionPlayer(
+				location.getX(), location.getY(), player, true);
 		if (onTile != null && onTile.inCombat()) {
 			distance = 1;
 		}

@@ -32,7 +32,8 @@ def main() -> None:
 
     require(regular, 'command.equalsIgnoreCase("b") || command.equalsIgnoreCase("bank")', "bank command aliases")
     require(regular, "openBankFromCommand(player);", "bank command dispatch")
-    require(regular, "player.getLocation().isInBank(config().BASED_MAP_DATA)", "bank area guard")
+    require(regular, "player.getLocation().isInBank(", "bank area guard")
+    require(regular, "player.getWorldLocation()", "layer-aware bank area guard")
     require(regular, "player.getBank().quickFeature(null, player, false);", "bank quick-open action")
     require(regular, "Quick banking is a QoL feature which you are opted out of.", "bank QoL opt-out message")
     forbid(regular, 'command.equalsIgnoreCase("b") && config().RIGHT_CLICK_BANK', "right-click-bank-gated bank command")

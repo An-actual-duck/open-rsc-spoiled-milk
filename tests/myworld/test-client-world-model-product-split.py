@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 RSMODEL = ROOT / "Client_Base/src/orsc/graphics/three/RSModel.java"
 WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
+SCENE = ROOT / "Client_Base/src/orsc/graphics/three/Scene.java"
 WORLD_CHUNK_FRAME = ROOT / "Client_Base/src/orsc/graphics/three/Renderer3DWorldChunkFrame.java"
 PLAN = ROOT / "docs/myworld/in-progress-work-plans/renderer-v2-plan.md"
 
@@ -24,6 +25,7 @@ def main() -> None:
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
     rsmodel = RSMODEL.read_text(encoding="utf-8")
     world = WORLD.read_text(encoding="utf-8")
+    scene = SCENE.read_text(encoding="utf-8")
     world_chunk_frame = WORLD_CHUNK_FRAME.read_text(encoding="utf-8")
     plan = PLAN.read_text(encoding="utf-8")
 
@@ -150,7 +152,7 @@ def main() -> None:
             "GPU-ready chunk meshes should carry per-triangle model kinds")
     require(world, "private final long signature;",
             "GPU-ready chunk meshes should expose deterministic upload signatures")
-    require(world, "private Renderer3DWorldChunkFrame renderer3DWorldChunkFrame = Renderer3DWorldChunkFrame.EMPTY;",
+    require(world, "private volatile Renderer3DWorldChunkFrame renderer3DWorldChunkFrame =",
             "World should cache the active renderer-v2 chunk snapshot")
     require(world, "public Renderer3DWorldChunkFrame getRenderer3DWorldChunkFrame()",
             "World should expose the active renderer-v2 chunk snapshot")
@@ -277,6 +279,38 @@ def main() -> None:
             "Landscape generation should replay terrain from the combined product")
     require(world, "this.publishTerrainProduct(worldMod);",
             "Landscape generation should call the terrain product boundary")
+    require(world, "private void publishTerrainAuthorityProduct(TerrainModelInput input)",
+            "Native terrain authority should publish collision, minimap, and elevation without legacy geometry")
+    require(world, "this.shouldUseNativeTerrainAuthorityOnly()",
+            "Landscape generation should explicitly gate the native authority-only terrain path")
+    require(world, "Renderer3DSettings.canSkipProjectedWorldCapture()",
+            "Native authority-only terrain must require trusted resident replacement")
+    require(world, "&& !WorldEditorBuildSettings.isEnabled();",
+            "World Builder must retain legacy terrain geometry for exact authoring picks")
+    require(mudclient, "world.isNativeTerrainAuthorityOnlyActive()",
+            "Native authority-only terrain must activate projected terrain picking")
+    require(mudclient, "private int[] projectScreenToCurrentTerrainTile()",
+            "Native projected terrain picking should converge against current terrain elevation")
+    require(mudclient, "scene.projectScreenToTerrainTile(",
+            "Native projected terrain picking should use the terrain-height raycast")
+    require(scene, "projectScreenToTerrainTileIterative(",
+            "Native projected terrain picking should retain a bounded height-aware fallback")
+    require(scene, "for (int pass = 0; pass < 16; pass++)",
+            "Terrain pick fallback should converge through bounded elevation sampling")
+    require(scene, "world.isPresentationTerrainFaceTile(",
+            "Native terrain picking should cover the radius-two presentation field")
+    require(scene, "crossedTerrain(",
+            "Terrain ray marching should accept either coordinate-space crossing direction")
+    require(world, "public int getPresentationTerrainElevation(",
+            "World should expose a read-only presentation-height sampler")
+    require(mudclient, "activeGameplayTargetToward(",
+            "Visual-only terrain clicks should route toward the active gameplay window")
+    require(mudclient, '"Walk toward"',
+            "Visual-only terrain clicks should state their bounded movement semantics")
+    require(world_chunk_frame, "public final class Renderer3DWorldChunkFrame",
+            "Native terrain raycast coverage should retain the resident world frame contract")
+    require(mudclient, "MenuItemAction.LANDSCAPE_CAST_SPELL",
+            "Projected native terrain picking should preserve ground-target spells")
     require(world, "this.emitWallProduct(worldProduct.wallInput, showWallOnMinimap);",
             "Landscape generation should replay walls from the combined product")
     require(world, "this.publishWallProduct(plane);",

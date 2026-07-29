@@ -50,8 +50,13 @@ def main() -> None:
     )
     require(
         updater,
-        "if (!playerToUpdate.withinObjectGridRange(o) || o.isRemoved() || o.isInvisibleTo(playerToUpdate))",
+        "if (!isWithinAuthoritativeSceneWindow(playerToUpdate, o)",
         "bounded scenery cache for all clients",
+    )
+    require(
+        updater,
+        "candidate == null || !candidate.sharesSpatialDomain(viewer)",
+        "layer-aware scene-domain boundary",
     )
     require(
         updater,

@@ -1,0 +1,421 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v56.schema.json",
+  "title": "Spoiled Milk layered map parity event v56",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency", "packedRegionActiveNpcContainment",
+    "packedRegionActiveNpcBoundaryRequirements",
+    "packedRegionRetirementRefinement",
+    "packedRegionRetirementRefinementReassessment",
+    "packedRegionPreservationBurden",
+    "packedRegionDynamicObjectPreservation", "packedRegionEventOwnership",
+    "packedRegionNpcOwnerEventContinuity",
+    "packedRegionNpcOwnerPreservationBoundary",
+    "packedRegionNpcOwnerPreservationNoOp", "packedRegionEventTargets",
+    "packedRegionEventAtomicTargetRevalidation",
+    "packedRegionEventRecoveryNoOp", "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v56"},
+    "eventType": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionAuthoredReconstructionTopology"},
+    "packedRegionAuthoredReconstructionDependencySemantics": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics"},
+    "packedRegionActiveNpcResidency": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionActiveNpcResidency"},
+    "packedRegionActiveNpcContainment": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionActiveNpcContainment"},
+    "packedRegionActiveNpcBoundaryRequirements": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionActiveNpcBoundaryRequirements"},
+    "packedRegionRetirementRefinement": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionRetirementRefinement"},
+    "packedRegionRetirementRefinementReassessment": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionRetirementRefinementReassessment"},
+    "packedRegionPreservationBurden": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionPreservationBurden"},
+    "packedRegionDynamicObjectPreservation": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionDynamicObjectPreservation"},
+    "packedRegionEventOwnership": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionEventOwnership"},
+    "packedRegionNpcOwnerEventContinuity": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionNpcOwnerEventContinuity"},
+    "packedRegionNpcOwnerPreservationBoundary": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionNpcOwnerPreservationBoundary"},
+    "packedRegionNpcOwnerPreservationNoOp": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/npcOwnerPreservationNoOp"}
+      ]
+    },
+    "packedRegionEventTargets": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionEventTargets"},
+    "packedRegionEventAtomicTargetRevalidation": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionEventAtomicTargetRevalidation"},
+    "packedRegionEventRecoveryNoOp": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/packedRegionEventRecoveryNoOp"},
+    "roundTripExact": {"$ref": "layered-map-parity-event-v55.schema.json#/properties/roundTripExact"}
+  },
+  "$defs": {
+    "nonNegativeInteger": {"type": "integer", "minimum": 0},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "npcOwnerPreservationNoOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason", "generation", "requirementsObservedAtTick",
+        "selectedSourceCount", "requiredEventLinkCount", "requiredOwnerCount",
+        "ownerScopeEntered", "sourceLifecycleInvoked", "absentSourceCount",
+        "reconstructedSourceCount", "preservedConsumerInvoked",
+        "sourceAbsencePreflight", "sourceReloadRecipe",
+        "sourceTerrainVerification", "sourceAuthoredCollisionVerification",
+        "sourceAuthoredCollisionApplicationVerification",
+        "sourceAuthoredStateVerification",
+        "sourceTransactionalAuthoredStateVerification",
+        "sourceRuntimeAuthoredObjectObservation",
+        "sourceRuntimeAuthoredObjectBaselineComparison",
+        "preservationEstablishedForConsumedWork", "preservationPerformed",
+        "sourceAbsencePerformed", "sourceReconstructionPerformed",
+        "regionMutationPerformed", "runtimeHandleRetained", "arrivalGate",
+        "visibilityReleased", "lifecycleAuthority"
+      ],
+      "properties": {
+        "reason": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/reason"},
+        "generation": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/generation"},
+        "requirementsObservedAtTick": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/requirementsObservedAtTick"},
+        "selectedSourceCount": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/selectedSourceCount"},
+        "requiredEventLinkCount": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/requiredEventLinkCount"},
+        "requiredOwnerCount": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/requiredOwnerCount"},
+        "ownerScopeEntered": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/ownerScopeEntered"},
+        "sourceLifecycleInvoked": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceLifecycleInvoked"},
+        "absentSourceCount": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/absentSourceCount"},
+        "reconstructedSourceCount": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/reconstructedSourceCount"},
+        "preservedConsumerInvoked": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/preservedConsumerInvoked"},
+        "sourceAbsencePreflight": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAbsencePreflight"},
+        "sourceReloadRecipe": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceReloadRecipe"},
+        "sourceTerrainVerification": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceTerrainVerification"},
+        "sourceAuthoredCollisionVerification": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredCollisionVerification"},
+        "sourceAuthoredCollisionApplicationVerification": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredCollisionApplicationVerification"},
+        "sourceAuthoredStateVerification": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredStateVerification"},
+        "sourceTransactionalAuthoredStateVerification": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceTransactionalAuthoredStateVerification"},
+        "sourceRuntimeAuthoredObjectObservation": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/runtimeAuthoredObjectObservation"}
+          ]
+        },
+        "sourceRuntimeAuthoredObjectBaselineComparison": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/runtimeAuthoredObjectBaselineComparison"}
+          ]
+        },
+        "preservationEstablishedForConsumedWork": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/preservationEstablishedForConsumedWork"},
+        "preservationPerformed": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/preservationPerformed"},
+        "sourceAbsencePerformed": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAbsencePerformed"},
+        "sourceReconstructionPerformed": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceReconstructionPerformed"},
+        "regionMutationPerformed": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/regionMutationPerformed"},
+        "runtimeHandleRetained": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/runtimeHandleRetained"},
+        "arrivalGate": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/arrivalGate"},
+        "visibilityReleased": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/visibilityReleased"},
+        "lifecycleAuthority": {"$ref": "layered-map-parity-event-v55.schema.json#/$defs/npcOwnerPreservationNoOp/properties/lifecycleAuthority"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"reason": {"const": "OWNER_SCOPE_REFUSED"}},
+            "required": ["reason"]
+          },
+          "then": {
+            "properties": {
+              "sourceRuntimeAuthoredObjectObservation": {"type": "null"},
+              "sourceRuntimeAuthoredObjectBaselineComparison": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "reason": {"const": "SOURCE_LIFECYCLE_UNAVAILABLE"}
+            },
+            "required": ["reason"]
+          },
+          "then": {
+            "properties": {
+              "sourceRuntimeAuthoredObjectObservation": {
+                "$ref": "#/$defs/runtimeAuthoredObjectObservation"
+              },
+              "sourceRuntimeAuthoredObjectBaselineComparison": {
+                "$ref": "#/$defs/runtimeAuthoredObjectBaselineComparison"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "runtimeAuthoredObjectObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "requirementsObservedAtTick", "recipeObservedAtTick",
+        "runtimeObservedAtTick", "residencyMirrorVersion", "sourceCount",
+        "expectedAuthoredObjectCount", "observedObjectCount",
+        "identitylessDynamicObjectCount", "authoredIdentityObjectCount",
+        "recognizedAuthoredInstanceCount",
+        "unrecognizedAuthoredInstanceCount",
+        "uniqueRecognizedIdentityCount",
+        "duplicateRecognizedIdentityInstanceCount",
+        "missingExpectedIdentityCount", "exactFinalLiveInstanceCount",
+        "authoredTransientInstanceCount",
+        "collisionRegistrationPresentCount",
+        "collisionRegistrationMissingCount",
+        "collisionRegistrationConstructorMismatchCount",
+        "collisionRegistrationContributionCount",
+        "collisionRegistrationRegionReferenceCount", "fingerprintSha256",
+        "allObjectBoundariesHeldDuringCapture", "pointInTimeOnly",
+        "detachedSummaryOnly", "sharedCollisionTileComparisonPerformed",
+        "runtimeHandleRetained", "sourceAbsencePerformed",
+        "sourceReconstructionPerformed", "runtimeMutationAuthorized",
+        "runtimeMutationPerformed", "runtimeCacheInvalidated",
+        "regionRegistryMutated", "residencyMirrorMutated",
+        "visibilityCacheMutated", "arrivalGate", "visibilityReleased",
+        "lifecycleAuthority", "sources"
+      ],
+      "properties": {
+        "generation": {"$ref": "#/$defs/nonNegativeInteger"},
+        "requirementsObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "recipeObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "runtimeObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "residencyMirrorVersion": {"$ref": "#/$defs/nonNegativeInteger"},
+        "sourceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "expectedAuthoredObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "observedObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "identitylessDynamicObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "authoredIdentityObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "recognizedAuthoredInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "unrecognizedAuthoredInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "uniqueRecognizedIdentityCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "duplicateRecognizedIdentityInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "missingExpectedIdentityCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "exactFinalLiveInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "authoredTransientInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationPresentCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationMissingCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationConstructorMismatchCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationContributionCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationRegionReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "fingerprintSha256": {"$ref": "#/$defs/fingerprint"},
+        "allObjectBoundariesHeldDuringCapture": {"const": true},
+        "pointInTimeOnly": {"const": true},
+        "detachedSummaryOnly": {"const": true},
+        "sharedCollisionTileComparisonPerformed": {"const": false},
+        "runtimeHandleRetained": {"const": false},
+        "sourceAbsencePerformed": {"const": false},
+        "sourceReconstructionPerformed": {"const": false},
+        "runtimeMutationAuthorized": {"const": false},
+        "runtimeMutationPerformed": {"const": false},
+        "runtimeCacheInvalidated": {"const": false},
+        "regionRegistryMutated": {"const": false},
+        "residencyMirrorMutated": {"const": false},
+        "visibilityCacheMutated": {"const": false},
+        "arrivalGate": {"const": false},
+        "visibilityReleased": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "sources": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/runtimeAuthoredObjectObservationSource"}
+        }
+      }
+    },
+    "runtimeAuthoredObjectObservationSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceOrdinal", "packedRegionX", "packedRegionY",
+        "expectedAuthoredObjectCount", "observedObjectCount",
+        "identitylessDynamicObjectCount", "authoredIdentityObjectCount",
+        "recognizedAuthoredInstanceCount",
+        "unrecognizedAuthoredInstanceCount", "staleGenerationInstanceCount",
+        "nonObjectIdentityInstanceCount", "unknownRecipeIdentityInstanceCount",
+        "uniqueRecognizedIdentityCount",
+        "duplicateRecognizedIdentityInstanceCount",
+        "missingExpectedIdentityCount", "exactFinalLiveInstanceCount",
+        "authoredTransientInstanceCount",
+        "collisionRegistrationPresentCount",
+        "collisionRegistrationMissingCount",
+        "collisionRegistrationConstructorMismatchCount",
+        "collisionRegistrationContributionCount",
+        "collisionRegistrationRegionReferenceCount",
+        "collisionRegistrationFingerprintSha256", "fingerprintSha256",
+        "finalLiveAuthoredSetPresent",
+        "recognizedRegistrationsConstructorMatched",
+        "objectBoundaryHeldDuringCapture"
+      ],
+      "properties": {
+        "sourceOrdinal": {"$ref": "#/$defs/nonNegativeInteger"},
+        "packedRegionX": {"$ref": "#/$defs/nonNegativeInteger"},
+        "packedRegionY": {"$ref": "#/$defs/nonNegativeInteger"},
+        "expectedAuthoredObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "observedObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "identitylessDynamicObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "authoredIdentityObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "recognizedAuthoredInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "unrecognizedAuthoredInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "staleGenerationInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "nonObjectIdentityInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "unknownRecipeIdentityInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "uniqueRecognizedIdentityCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "duplicateRecognizedIdentityInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "missingExpectedIdentityCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "exactFinalLiveInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "authoredTransientInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationPresentCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationMissingCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationConstructorMismatchCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationContributionCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationRegionReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationFingerprintSha256": {"$ref": "#/$defs/fingerprint"},
+        "fingerprintSha256": {"$ref": "#/$defs/fingerprint"},
+        "finalLiveAuthoredSetPresent": {"type": "boolean"},
+        "recognizedRegistrationsConstructorMatched": {"type": "boolean"},
+        "objectBoundaryHeldDuringCapture": {"const": true}
+      }
+    },
+    "runtimeAuthoredObjectBaselineComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "requirementsObservedAtTick", "recipeObservedAtTick",
+        "runtimeObservedAtTick", "residencyMirrorVersion", "sourceCount",
+        "exactBaselineMatchSourceCount", "nonFinalAuthoredStateSourceCount",
+        "identityConflictSourceCount",
+        "registrationProvenanceInvalidSourceCount",
+        "stableBaselineMismatchSourceCount", "expectedAuthoredObjectCount",
+        "identitylessDynamicObjectCount",
+        "runtimeObservationFingerprintSha256",
+        "transactionalBaselineFingerprintSha256", "fingerprintSha256",
+        "allSourcesExactBaselineMatches", "pointInTimeOnly",
+        "detachedSummaryOnly", "sharedCollisionTileComparisonPerformed",
+        "runtimeHandleRetained", "sourceAbsencePerformed",
+        "sourceReconstructionPerformed", "runtimeMutationAuthorized",
+        "runtimeMutationPerformed", "runtimeCacheInvalidated",
+        "regionRegistryMutated", "residencyMirrorMutated",
+        "visibilityCacheMutated", "schedulerCorrelationPerformed",
+        "arrivalGate", "visibilityReleased", "lifecycleAuthority", "sources"
+      ],
+      "properties": {
+        "generation": {"$ref": "#/$defs/nonNegativeInteger"},
+        "requirementsObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "recipeObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "runtimeObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "residencyMirrorVersion": {"$ref": "#/$defs/nonNegativeInteger"},
+        "sourceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "exactBaselineMatchSourceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "nonFinalAuthoredStateSourceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "identityConflictSourceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "registrationProvenanceInvalidSourceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "stableBaselineMismatchSourceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "expectedAuthoredObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "identitylessDynamicObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "runtimeObservationFingerprintSha256": {"$ref": "#/$defs/fingerprint"},
+        "transactionalBaselineFingerprintSha256": {"$ref": "#/$defs/fingerprint"},
+        "fingerprintSha256": {"$ref": "#/$defs/fingerprint"},
+        "allSourcesExactBaselineMatches": {"type": "boolean"},
+        "pointInTimeOnly": {"const": true},
+        "detachedSummaryOnly": {"const": true},
+        "sharedCollisionTileComparisonPerformed": {"const": false},
+        "runtimeHandleRetained": {"const": false},
+        "sourceAbsencePerformed": {"const": false},
+        "sourceReconstructionPerformed": {"const": false},
+        "runtimeMutationAuthorized": {"const": false},
+        "runtimeMutationPerformed": {"const": false},
+        "runtimeCacheInvalidated": {"const": false},
+        "regionRegistryMutated": {"const": false},
+        "residencyMirrorMutated": {"const": false},
+        "visibilityCacheMutated": {"const": false},
+        "schedulerCorrelationPerformed": {"const": false},
+        "arrivalGate": {"const": false},
+        "visibilityReleased": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/runtimeAuthoredObjectBaselineComparisonSource"
+          }
+        }
+      }
+    },
+    "runtimeAuthoredObjectBaselineComparisonSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceOrdinal", "packedRegionX", "packedRegionY",
+        "expectedAuthoredObjectCount", "identitylessDynamicObjectCount",
+        "exactFinalLiveInstanceCount", "authoredTransientInstanceCount",
+        "missingExpectedIdentityCount",
+        "duplicateRecognizedIdentityInstanceCount",
+        "unrecognizedAuthoredInstanceCount",
+        "collisionRegistrationPresentCount",
+        "collisionRegistrationMissingCount",
+        "collisionRegistrationConstructorMismatchCount",
+        "collisionRegistrationContributionCount",
+        "collisionRegistrationRegionReferenceCount",
+        "runtimeRegistrationFingerprintSha256",
+        "baselineRegistrationFingerprintSha256",
+        "registrationFingerprintMatched", "outcome"
+      ],
+      "properties": {
+        "sourceOrdinal": {"$ref": "#/$defs/nonNegativeInteger"},
+        "packedRegionX": {"$ref": "#/$defs/nonNegativeInteger"},
+        "packedRegionY": {"$ref": "#/$defs/nonNegativeInteger"},
+        "expectedAuthoredObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "identitylessDynamicObjectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "exactFinalLiveInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "authoredTransientInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "missingExpectedIdentityCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "duplicateRecognizedIdentityInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "unrecognizedAuthoredInstanceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationPresentCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationMissingCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationConstructorMismatchCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationContributionCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "collisionRegistrationRegionReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "runtimeRegistrationFingerprintSha256": {"$ref": "#/$defs/fingerprint"},
+        "baselineRegistrationFingerprintSha256": {"$ref": "#/$defs/fingerprint"},
+        "registrationFingerprintMatched": {"type": "boolean"},
+        "outcome": {
+          "enum": [
+            "EXACT_BASELINE_MATCH", "NON_FINAL_AUTHORED_STATE",
+            "IDENTITY_CONFLICT", "REGISTRATION_PROVENANCE_INVALID",
+            "STABLE_BASELINE_MISMATCH"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -34,9 +34,10 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [AI workspaces](../workspaces/README.md): separate worktree setup for
   multiple AI/contributor sessions.
 - [Hosting docs](../hosting/README.md): current private-server hosting notes.
-- [Remaster Suite roadmap](in-progress-work-plans/remaster-suite-roadmap.md):
-  master product roadmap for independently usable Renderer, Server, Layered
-  Maps, World Builder, and optional non-vanilla Content modules.
+- [RSC Remastered product roadmap](in-progress-work-plans/remaster-suite-roadmap.md):
+  master roadmap for the definitive vanilla remaster, Universal Launcher,
+  isolated imported profiles, layered World Builder, drag-and-drop modder
+  content, and internally modular technical foundations.
 - [Renderer and shader roadmap](in-progress-work-plans/renderer-and-shader-roadmap.md):
   current AI-facing source of truth for renderer-v2, remaster lighting, shadows,
   shader work, and major optimization direction.
@@ -100,9 +101,10 @@ into one of the category folders, not directly into `docs/myworld/`.
   safe worktree workflow and target folder/package ownership map for the
   repository restructure.
 - [remaster-suite-roadmap.md](in-progress-work-plans/remaster-suite-roadmap.md):
-  start-to-finish modular product roadmap for the reusable remaster foundation,
-  vanilla-compatible bundles, layered-world transition, tools, and optional
-  Spoiled Milk Content.
+  start-to-finish RSC Remastered product roadmap for the definitive vanilla
+  profile, Universal Launcher/imports, modder content workflow, layered-world
+  transition, internal capability boundaries, and optional Spoiled Milk
+  Content.
 - [remaster-lighting-and-shadow-plan.md](in-progress-work-plans/remaster-lighting-and-shadow-plan.md):
   detailed implementation ledger for clean-slate Remaster lighting and shadows.
 - [remastered-sprite-overrides-plan.md](in-progress-work-plans/remastered-sprite-overrides-plan.md):
@@ -132,7 +134,8 @@ into one of the category folders, not directly into `docs/myworld/`.
   current implementation queue and completed-state rollup.
 - [world-layer-capacity-exploration-plan.md](in-progress-work-plans/world-layer-capacity-exploration-plan.md):
   signed layered-coordinate architecture, map-format divergence, geographic
-  alignment questions, capacity audit, and migration constraints.
+  alignment, expandable signed levels, native loader direction, Preservation
+  baseline conversion, capacity audit, and migration constraints.
 
 ## Completed Work Plans
 

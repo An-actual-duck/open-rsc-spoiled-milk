@@ -4,6 +4,8 @@ import com.openrsc.server.model.entity.WildernessLocation;
 import com.openrsc.server.model.entity.WildernessLocation.WildState;
 import com.openrsc.server.model.world.Area;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
 
@@ -521,6 +523,13 @@ public class Point {
 		;
 	}
 
+	public boolean isInBank(
+		int mapData,
+		WorldLocation worldLocation) {
+		return isInBank(mapData)
+			|| ZanarisLocation.isBank(worldLocation);
+	}
+
 	public boolean isInSaradominMonksPlace() {
 		return inBounds(249, 452, 265, 468);
 	}
@@ -539,6 +548,11 @@ public class Point {
 			|| this.equals(new Point(179, 481)) // cooks guild chute
 			|| this.equals(new Point(565, 532)) // ardougne chute
 			|| this.equals(new Point(162, 3533)); // zanaris chute
+	}
+
+	public boolean fromHopper(WorldLocation worldLocation) {
+		return fromHopper()
+			|| ZanarisLocation.isFlourChute(worldLocation);
 	}
 
 	public boolean inArea(Area area) {

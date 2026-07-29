@@ -1,6 +1,15 @@
 package com.openrsc.server.external;
 
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentitySlot;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldTileBounds;
+
 public class NPCLoc {
+	private final LayeredAuthoredPlacementIdentitySlot
+		authoredPlacementIdentity =
+			new LayeredAuthoredPlacementIdentitySlot();
 	/**
 	 * The id of the Npc
 	 */
@@ -46,6 +55,16 @@ public class NPCLoc {
 		return id;
 	}
 
+	public LayeredAuthoredPlacementIdentity
+		getAuthoredPlacementIdentity() {
+		return authoredPlacementIdentity.get();
+	}
+
+	public void assignAuthoredPlacementIdentity(
+		final LayeredAuthoredPlacementIdentity identity) {
+		authoredPlacementIdentity.assign(identity);
+	}
+
 	public int maxX() {
 		return maxX;
 	}
@@ -68,5 +87,15 @@ public class NPCLoc {
 
 	public int startY() {
 		return startY;
+	}
+
+	public WorldLocation toWorldStartLocation() {
+		return LegacyPackedPointAdapter.fromPackedValues(startX, startY);
+	}
+
+	public WorldTileBounds toWorldRoamingBounds() {
+		return new WorldTileBounds(
+			LegacyPackedPointAdapter.fromPackedValues(minX, minY),
+			LegacyPackedPointAdapter.fromPackedValues(maxX, maxY));
 	}
 }

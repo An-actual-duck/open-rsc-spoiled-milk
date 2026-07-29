@@ -56,6 +56,69 @@ last-run receipt under `<workspace>/run`, and refuses a second process for the
 same workspace. Closing the client requests an orderly local server shutdown.
 Generated credentials are never printed or placed in manifests.
 
+## Layered draft: Create Level
+
+The first native layered writer is deliberately narrower than ordinary map
+editing. With the layered Builder closed, create a workspace-owned signed
+level around a geographic anchor:
+
+```bash
+java -jar output/world-builder-tools/world-builder-tools.jar create-level \
+  --workspace /path/to/world-builder-project \
+  --level -3 \
+  --anchor-x 140 \
+  --anchor-y 640
+```
+
+Optional `--name` and lowercase identifier `--role` values override the
+generated level metadata. The transaction takes the same per-workspace lock as
+the launcher, revalidates the immutable source package, stages a complete
+copy-on-write draft, creates a void-backed 3-by-3 sector window with a
+walkable 3-by-3 tile pad centered on the anchor plus an empty v3 placement
+set, rewrites all manifest hashes deterministically, validates the full
+descendant, and swaps it into `working` with rollback protection. The source
+snapshot and target game are reverified unchanged before success.
+
+Reopen the Builder to navigate to the new level. Repeating an existing level,
+running the operation while the Builder is open, malformed metadata, source
+drift, or a draft that changes accepted package content is refused. The
+Builder-only runtime profile cannot start an ordinary server. Terrain/entity
+editing on the accepted source levels and layered export remain disabled.
+
+### Layered draft: terrain editing
+
+Once at least one level has been created, the Builder enables its existing
+terrain tools only on Builder-created levels. Inspect or copy a tile, choose
+the checked elevation, floor-color, floor-texture, roof, wall, or diagonal
+fields, and paint with the 1-by-1 or 3-by-3 brush. The server applies the
+working overlay immediately to terrain presentation and collision. Painting
+on accepted source levels `-1`, `0`, `1`, or `2` is refused, and scenery/NPC
+editing remains locked.
+
+Select **Save** to write a bounded deterministic terrain journal. Saving does
+not modify the source snapshot, target private server, or exported game files.
+Close the Builder normally; while holding the workspace lock, the launcher
+materializes that journal through a copy-on-write package transaction, verifies
+the complete source descendant and hashes, then removes the journal. Reopen the
+same workspace to review the durable result.
+
+Allocate one new void-backed sector at an existing edge from an active
+Builder-created level with:
+
+```text
+::buildergrow 192 640 -3
+```
+
+The optional signed level defaults to the current level. Allocation must share
+an edge with existing or already queued terrain; gaps, duplicates, source
+levels, and more than 64 sectors per transaction are refused. New sector tiles
+use Floor Color `1` plus blocking/invisible Floor Texture `8`, so creators
+paint only the area they want instead of erasing a large floor or ocean.
+Unallocated sectors use the same explicit-void presentation. Save, close, and
+reopen before painting a new sector. Each transaction is also limited to 4,096
+distinct edited tiles. Placement authoring, terrain deletion, layered-package
+export, and target-game import remain separate future gates.
+
 After closing the Builder, export the saved working map with explicit release
 provenance:
 

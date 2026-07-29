@@ -5,6 +5,7 @@ import com.openrsc.server.external.GameObjectDef;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.region.Region;
 
 import java.util.ArrayList;
 
@@ -23,9 +24,15 @@ public class GameObject extends Entity {
 	 * Type 1: Wall Object
 	 */
 	private GameObjectType gameObjectType;
+	private volatile GameObjectCollisionRegistrationState
+		collisionRegistrationState;
 
 	public GameObject(final World world, final GameObjectLoc loc) {
 		super(world, EntityType.GAME_OBJECT);
+		if (loc.getAuthoredPlacementIdentity() != null) {
+			assignAuthoredPlacementIdentity(
+				loc.getAuthoredPlacementIdentity());
+		}
 
 		direction = loc.getDirection();
 		gameObjectType = GameObjectType.fromInt(loc.getType());
@@ -43,6 +50,77 @@ public class GameObject extends Entity {
 
 	public GameObject(World world, Point location, int id, int direction, int type, String owner) {
 		this(world, new GameObjectLoc(id, location.getX(), location.getY(), direction, type, owner));
+	}
+
+	/** Used only by RegionManager's ordered membership/collision transaction. */
+	public void attachOrderedTransactionState(
+		final Point point,
+		final Region region) {
+		attachGameObjectTransactionState(point, region);
+	}
+
+	/** Used only to reverse a refused ordered registration. */
+	public void detachOrderedTransactionState(
+		final Point expectedPoint,
+		final Region expectedRegion) {
+		detachGameObjectTransactionState(expectedPoint, expectedRegion);
+	}
+
+	/** Used only after exact membership removal under ordered boundaries. */
+	public void removeOrderedTransactionState(final Region expectedRegion) {
+		removeGameObjectTransactionState(expectedRegion);
+	}
+
+	/** Used only to reverse a refused ordered unregistration. */
+	public void restoreOrderedTransactionState(final Region expectedRegion) {
+		restoreGameObjectTransactionState(expectedRegion);
+	}
+
+	/** Records the exact footprint only after its ordered registration succeeds. */
+	public void attachOrderedCollisionRegistrationState(
+		final GameObjectCollisionRegistrationState state) {
+		attachCollisionRegistrationState(state);
+	}
+
+	/** Records exact collision provenance for native layered registration. */
+	public void attachNativeLayeredCollisionRegistrationState(
+		final GameObjectCollisionRegistrationState state) {
+		if (getRegion() != null) {
+			throw new IllegalStateException(
+				"Native layered GameObject must not occupy a packed Region");
+		}
+		attachCollisionRegistrationState(state);
+	}
+
+	/** Marks a native layered object removed without touching a packed Region. */
+	public void removeNativeLayeredTransactionState() {
+		if (getRegion() != null || getLocation() == null || isRemoved()) {
+			throw new IllegalStateException(
+				"Native layered GameObject is not ready for removal");
+		}
+		setRemoved(true);
+	}
+
+	private void attachCollisionRegistrationState(
+		final GameObjectCollisionRegistrationState state) {
+		GameObjectCollisionRegistrationState checked =
+			java.util.Objects.requireNonNull(state, "state");
+		if (!checked.matchesConstructor(this)) {
+			throw new IllegalArgumentException(
+				"Collision registration state does not match GameObject");
+		}
+		collisionRegistrationState = checked;
+	}
+
+	/** Clears exact footprint provenance after an ordered removal commits. */
+	public void clearOrderedCollisionRegistrationState() {
+		collisionRegistrationState = null;
+	}
+
+	/** Immutable detached evidence; callers must still hold their boundaries. */
+	public GameObjectCollisionRegistrationState
+		getCollisionRegistrationState() {
+		return collisionRegistrationState;
 	}
 
 	public final Point[] getObjectBoundary() {

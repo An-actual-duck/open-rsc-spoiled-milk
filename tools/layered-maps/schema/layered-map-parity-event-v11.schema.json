@@ -1,0 +1,598 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v11.schema.json",
+  "title": "Layered Map Parity Event v11",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v11"},
+    "eventType": {
+      "enum": ["start", "snapshot", "marker", "move", "teleport", "login", "logout", "stop"]
+    },
+    "sequence": {"type": "integer", "minimum": 1},
+    "timestampEpochMillis": {"type": "integer", "minimum": 0},
+    "player": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["databaseId", "usernameHash"],
+      "properties": {
+        "databaseId": {"type": "integer", "minimum": 0},
+        "usernameHash": {"type": "string", "pattern": "^[0-9]+$"}
+      }
+    },
+    "label": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9._-]{1,64}$"},
+    "teleported": {"type": ["boolean", "null"]},
+    "from": {"oneOf": [{"$ref": "#/$defs/snapshot"}, {"type": "null"}]},
+    "to": {"$ref": "#/$defs/snapshot"},
+    "delta": {"oneOf": [{"$ref": "#/$defs/delta"}, {"type": "null"}]},
+    "interestDelta": {
+      "oneOf": [{"$ref": "#/$defs/interestDelta"}, {"type": "null"}]
+    },
+    "packedCoverage": {"$ref": "#/$defs/packedCoverage"},
+    "tileSnapshot": {"$ref": "#/$defs/tileSnapshot"},
+    "tileParity": {
+      "oneOf": [{"$ref": "#/$defs/tileParity"}, {"type": "null"}]
+    },
+    "tileNeighborhood": {
+      "oneOf": [{"$ref": "#/$defs/tileNeighborhood"}, {"type": "null"}]
+    },
+    "adjacentCollision": {
+      "oneOf": [{"$ref": "#/$defs/adjacentCollision"}, {"type": "null"}]
+    },
+    "recentTraversal": {
+      "oneOf": [{"$ref": "#/$defs/recentTraversal"}, {"type": "null"}]
+    },
+    "regionResidency": {
+      "oneOf": [{"$ref": "#/$defs/regionResidency"}, {"type": "null"}]
+    },
+    "interestOwnership": {
+      "oneOf": [{"$ref": "#/$defs/interestOwnership"}, {"type": "null"}]
+    },
+    "roundTripExact": {"const": true}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "eventType": {"enum": ["start", "marker", "teleport", "stop"]}
+        }
+      },
+      "then": {
+        "properties": {
+          "tileParity": {"$ref": "#/$defs/tileParity"},
+          "tileNeighborhood": {"$ref": "#/$defs/tileNeighborhood"},
+          "adjacentCollision": {"$ref": "#/$defs/adjacentCollision"}
+        }
+      },
+      "else": {
+        "properties": {
+          "tileParity": {"type": "null"},
+          "tileNeighborhood": {"type": "null"},
+          "adjacentCollision": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "eventType": {"enum": ["marker", "stop"]}
+        }
+      },
+      "else": {
+        "properties": {
+          "recentTraversal": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "eventType": {
+            "enum": ["start", "snapshot", "marker", "teleport", "login", "logout", "stop"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "interestOwnership": {"$ref": "#/$defs/interestOwnership"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "xy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": {"type": "integer"},
+        "y": {"type": "integer"}
+      }
+    },
+    "layered": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worldSpace", "x", "y", "level"],
+      "properties": {
+        "worldSpace": {"const": "global"},
+        "x": {"type": "integer"},
+        "y": {"type": "integer"},
+        "level": {"enum": [-1, 0, 1, 2]}
+      }
+    },
+    "regionKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worldSpace", "level", "x", "y"],
+      "properties": {
+        "worldSpace": {"const": "global"},
+        "level": {"enum": [-1, 0, 1, 2]},
+        "x": {"type": "integer"},
+        "y": {"type": "integer"}
+      }
+    },
+    "visibilityWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worldSpace", "level", "gridDistance", "tileRadius", "minRegionX",
+        "minRegionY", "maxRegionX", "maxRegionY", "regionCount"
+      ],
+      "properties": {
+        "worldSpace": {"const": "global"},
+        "level": {"enum": [-1, 0, 1, 2]},
+        "gridDistance": {"type": "integer", "minimum": 0},
+        "tileRadius": {"type": "integer", "minimum": 0},
+        "minRegionX": {"type": "integer"},
+        "minRegionY": {"type": "integer"},
+        "maxRegionX": {"type": "integer"},
+        "maxRegionY": {"type": "integer"},
+        "regionCount": {"type": "integer", "minimum": 1}
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "legacy", "layered", "region", "terrainSector", "local",
+        "visibilityWindow", "roundTripExact"
+      ],
+      "properties": {
+        "legacy": {"$ref": "#/$defs/xy"},
+        "layered": {"$ref": "#/$defs/layered"},
+        "region": {"$ref": "#/$defs/xy"},
+        "terrainSector": {"$ref": "#/$defs/xy"},
+        "local": {"$ref": "#/$defs/xy"},
+        "visibilityWindow": {"$ref": "#/$defs/visibilityWindow"},
+        "roundTripExact": {"const": true}
+      }
+    },
+    "delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "level"],
+      "properties": {
+        "x": {"type": "integer"},
+        "y": {"type": "integer"},
+        "level": {"type": "integer"}
+      }
+    },
+    "interestDelta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "previousRegionCount", "currentRegionCount", "enteredCount",
+        "retainedCount", "exitedCount", "worldSpaceChanged", "levelChanged",
+        "noOp", "enteredKeys", "exitedKeys"
+      ],
+      "properties": {
+        "previousRegionCount": {"type": "integer", "minimum": 1},
+        "currentRegionCount": {"type": "integer", "minimum": 1},
+        "enteredCount": {"type": "integer", "minimum": 0},
+        "retainedCount": {"type": "integer", "minimum": 0},
+        "exitedCount": {"type": "integer", "minimum": 0},
+        "worldSpaceChanged": {"type": "boolean"},
+        "levelChanged": {"type": "boolean"},
+        "noOp": {"type": "boolean"},
+        "enteredKeys": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/regionKey"}
+        },
+        "exitedKeys": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/regionKey"}
+        }
+      }
+    },
+    "regionResidencyCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logicalRegion", "interestState", "residencyState", "sourceCount",
+        "residentSourceCount", "missingSourceCount", "supportedTileCount",
+        "residentTileCount", "legacyCoverageComplete"
+      ],
+      "properties": {
+        "logicalRegion": {"$ref": "#/$defs/regionKey"},
+        "interestState": {"enum": ["ENTERED", "RETAINED", "EXITED"]},
+        "residencyState": {
+          "enum": ["RESIDENT", "PARTIAL", "MISSING", "UNSUPPORTED"]
+        },
+        "sourceCount": {"type": "integer", "minimum": 0},
+        "residentSourceCount": {"type": "integer", "minimum": 0},
+        "missingSourceCount": {"type": "integer", "minimum": 0},
+        "supportedTileCount": {"type": "integer", "minimum": 0, "maximum": 2304},
+        "residentTileCount": {"type": "integer", "minimum": 0, "maximum": 2304},
+        "legacyCoverageComplete": {"type": "boolean"}
+      }
+    },
+    "regionResidency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mirrorVersion", "previousRegionCount", "currentRegionCount",
+        "enteredCount", "retainedCount", "exitedCount", "worldSpaceChanged",
+        "levelChanged", "noOp", "residentCurrentCount", "partialCurrentCount",
+        "missingCurrentCount", "unsupportedCurrentCount", "loadCandidateCount",
+        "releaseCandidateCount", "loadCandidates", "releaseCandidates",
+        "unsupportedCurrent"
+      ],
+      "properties": {
+        "mirrorVersion": {"type": "integer", "minimum": 0},
+        "previousRegionCount": {"type": "integer", "minimum": 1, "maximum": 4096},
+        "currentRegionCount": {"type": "integer", "minimum": 1, "maximum": 4096},
+        "enteredCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "retainedCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "exitedCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "worldSpaceChanged": {"type": "boolean"},
+        "levelChanged": {"type": "boolean"},
+        "noOp": {"type": "boolean"},
+        "residentCurrentCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "partialCurrentCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "missingCurrentCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "unsupportedCurrentCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "loadCandidateCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "releaseCandidateCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "loadCandidates": {
+          "type": "array", "maxItems": 4096,
+          "items": {"$ref": "#/$defs/regionResidencyCandidate"}
+        },
+        "releaseCandidates": {
+          "type": "array", "maxItems": 4096,
+          "items": {"$ref": "#/$defs/regionResidencyCandidate"}
+        },
+        "unsupportedCurrent": {
+          "type": "array", "maxItems": 4096,
+          "items": {"$ref": "#/$defs/regionResidencyCandidate"}
+        }
+      }
+    },
+    "interestOwnershipTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logicalRegion", "interestState", "previousReferenceCount",
+        "currentReferenceCount"
+      ],
+      "properties": {
+        "logicalRegion": {"$ref": "#/$defs/regionKey"},
+        "interestState": {"enum": ["ENTERED", "EXITED"]},
+        "previousReferenceCount": {
+          "type": "integer", "minimum": 0, "maximum": 2147483647
+        },
+        "currentReferenceCount": {
+          "type": "integer", "minimum": 0, "maximum": 2147483647
+        }
+      }
+    },
+    "interestOwnership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ledgerVersion", "ownerSequence", "ownerOpen", "openOwnerCount",
+        "referencedRegionCount", "ownedRegionCount",
+        "minimumReferenceCount", "maximumReferenceCount", "enteredCount",
+        "retainedCount", "exitedCount", "globallyAcquiredCount",
+        "sharedAcquisitionCount", "globallyReleasedCount",
+        "sharedReleaseCount", "noOp", "transitions"
+      ],
+      "properties": {
+        "ledgerVersion": {"type": "integer", "minimum": 0},
+        "ownerSequence": {"type": "integer", "minimum": 1},
+        "ownerOpen": {"type": "boolean"},
+        "openOwnerCount": {"type": "integer", "minimum": 0},
+        "referencedRegionCount": {"type": "integer", "minimum": 0},
+        "ownedRegionCount": {
+          "type": "integer", "minimum": 0, "maximum": 4096
+        },
+        "minimumReferenceCount": {
+          "oneOf": [
+            {"type": "integer", "minimum": 1, "maximum": 2147483647},
+            {"type": "null"}
+          ]
+        },
+        "maximumReferenceCount": {
+          "oneOf": [
+            {"type": "integer", "minimum": 1, "maximum": 2147483647},
+            {"type": "null"}
+          ]
+        },
+        "enteredCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "retainedCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "exitedCount": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "globallyAcquiredCount": {
+          "type": "integer", "minimum": 0, "maximum": 4096
+        },
+        "sharedAcquisitionCount": {
+          "type": "integer", "minimum": 0, "maximum": 4096
+        },
+        "globallyReleasedCount": {
+          "type": "integer", "minimum": 0, "maximum": 4096
+        },
+        "sharedReleaseCount": {
+          "type": "integer", "minimum": 0, "maximum": 4096
+        },
+        "noOp": {"type": "boolean"},
+        "transitions": {
+          "type": "array", "maxItems": 8192,
+          "items": {"$ref": "#/$defs/interestOwnershipTransition"}
+        }
+      }
+    },
+    "packedCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minPackedRegionX", "minPackedRegionY", "maxPackedRegionX",
+        "maxPackedRegionY", "packedCellCount", "unsupportedPackedCellCount",
+        "expectedKeyCount", "packedCoverageKeyCount", "missingKeyCount",
+        "extraKeyCount", "exact", "missingKeys", "extraKeys"
+      ],
+      "properties": {
+        "minPackedRegionX": {"type": "integer"},
+        "minPackedRegionY": {"type": "integer"},
+        "maxPackedRegionX": {"type": "integer"},
+        "maxPackedRegionY": {"type": "integer"},
+        "packedCellCount": {"type": "integer", "minimum": 1},
+        "unsupportedPackedCellCount": {"type": "integer", "minimum": 0},
+        "expectedKeyCount": {"type": "integer", "minimum": 1},
+        "packedCoverageKeyCount": {"type": "integer", "minimum": 0},
+        "missingKeyCount": {"type": "integer", "minimum": 0},
+        "extraKeyCount": {"type": "integer", "minimum": 0},
+        "exact": {"type": "boolean"},
+        "missingKeys": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/regionKey"}
+        },
+        "extraKeys": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/regionKey"}
+        }
+      }
+    },
+    "tileSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logicalRegion", "sourceFragmentCount", "missingSourceRegionCount",
+        "supportedTileCount", "targetTileCount", "complete", "fingerprint"
+      ],
+      "properties": {
+        "logicalRegion": {"$ref": "#/$defs/regionKey"},
+        "sourceFragmentCount": {"type": "integer", "minimum": 0},
+        "missingSourceRegionCount": {"type": "integer", "minimum": 0},
+        "supportedTileCount": {"type": "integer", "minimum": 0, "maximum": 2304},
+        "targetTileCount": {"const": 2304},
+        "complete": {"type": "boolean"},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "tileParity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logicalLocation", "legacyPackedAddress", "legacyRepresentable",
+        "packedSourcePresent", "missingPackedSource", "comparable", "exact"
+      ],
+      "properties": {
+        "logicalLocation": {"$ref": "#/$defs/layered"},
+        "legacyPackedAddress": {
+          "oneOf": [{"$ref": "#/$defs/xy"}, {"type": "null"}]
+        },
+        "legacyRepresentable": {"type": "boolean"},
+        "packedSourcePresent": {"type": "boolean"},
+        "missingPackedSource": {"type": "boolean"},
+        "comparable": {"type": "boolean"},
+        "exact": {"type": "boolean"}
+      }
+    },
+    "tileNeighborhood": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "center", "cellCount", "legacyRepresentableCount", "unsupportedCount",
+        "packedSourcePresentCount", "missingPackedSourceCount",
+        "comparableCount", "exactCount", "complete", "exact"
+      ],
+      "properties": {
+        "center": {"$ref": "#/$defs/layered"},
+        "cellCount": {"const": 9},
+        "legacyRepresentableCount": {"type": "integer", "minimum": 0, "maximum": 9},
+        "unsupportedCount": {"type": "integer", "minimum": 0, "maximum": 9},
+        "packedSourcePresentCount": {"type": "integer", "minimum": 0, "maximum": 9},
+        "missingPackedSourceCount": {"type": "integer", "minimum": 0, "maximum": 9},
+        "comparableCount": {"type": "integer", "minimum": 0, "maximum": 9},
+        "exactCount": {"type": "integer", "minimum": 0, "maximum": 9},
+        "complete": {"type": "boolean"},
+        "exact": {"type": "boolean"}
+      }
+    },
+    "blockingReason": {
+      "enum": [
+        "NONE", "CURRENT_AXES", "CURRENT_X", "CURRENT_Y",
+        "ADJACENT_AXES", "ADJACENT_X", "ADJACENT_Y",
+        "ADJACENT_X_CORRIDOR", "ADJACENT_Y_CORRIDOR",
+        "DESTINATION_AXES", "DESTINATION_X", "DESTINATION_Y",
+        "DESTINATION_X_CORRIDOR", "DESTINATION_Y_CORRIDOR",
+        "DESTINATION_DIAGONAL", "SIDE_DIAGONAL", "DIAGONAL_PASS_THROUGH"
+      ]
+    },
+    "adjacentDirection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "offset", "destination", "requiredCellCount",
+        "exactRequiredStateCount", "requiredStatesExact",
+        "logicalDecisionAvailable", "packedDecisionAvailable",
+        "logicalPassable", "packedPassable", "logicalBlockingReason",
+        "packedBlockingReason", "comparable", "passabilityExact",
+        "blockingReasonExact"
+      ],
+      "properties": {
+        "offset": {"$ref": "#/$defs/xy"},
+        "destination": {"$ref": "#/$defs/layered"},
+        "requiredCellCount": {"type": "integer", "minimum": 2, "maximum": 5},
+        "exactRequiredStateCount": {"type": "integer", "minimum": 0, "maximum": 5},
+        "requiredStatesExact": {"type": "boolean"},
+        "logicalDecisionAvailable": {"type": "boolean"},
+        "packedDecisionAvailable": {"type": "boolean"},
+        "logicalPassable": {"type": ["boolean", "null"]},
+        "packedPassable": {"type": ["boolean", "null"]},
+        "logicalBlockingReason": {
+          "oneOf": [{"$ref": "#/$defs/blockingReason"}, {"type": "null"}]
+        },
+        "packedBlockingReason": {
+          "oneOf": [{"$ref": "#/$defs/blockingReason"}, {"type": "null"}]
+        },
+        "comparable": {"type": "boolean"},
+        "passabilityExact": {"type": "boolean"},
+        "blockingReasonExact": {"type": "boolean"}
+      }
+    },
+    "adjacentCollision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "center", "directionCount", "logicalDecisionAvailableCount",
+        "packedDecisionAvailableCount", "comparableCount",
+        "passabilityExactCount", "blockingReasonExactCount",
+        "requiredStatesExactCount", "allComparable", "allPassabilityExact",
+        "allBlockingReasonsExact", "allRequiredStatesExact", "directions"
+      ],
+      "properties": {
+        "center": {"$ref": "#/$defs/layered"},
+        "directionCount": {"const": 8},
+        "logicalDecisionAvailableCount": {"type": "integer", "minimum": 0, "maximum": 8},
+        "packedDecisionAvailableCount": {"type": "integer", "minimum": 0, "maximum": 8},
+        "comparableCount": {"type": "integer", "minimum": 0, "maximum": 8},
+        "passabilityExactCount": {"type": "integer", "minimum": 0, "maximum": 8},
+        "blockingReasonExactCount": {"type": "integer", "minimum": 0, "maximum": 8},
+        "requiredStatesExactCount": {"type": "integer", "minimum": 0, "maximum": 8},
+        "allComparable": {"type": "boolean"},
+        "allPassabilityExact": {"type": "boolean"},
+        "allBlockingReasonsExact": {"type": "boolean"},
+        "allRequiredStatesExact": {"type": "boolean"},
+        "directions": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {"$ref": "#/$defs/adjacentDirection"}
+        }
+      }
+    },
+    "nullableStepIndex": {
+      "oneOf": [
+        {"type": "integer", "minimum": 0, "maximum": 15},
+        {"type": "null"}
+      ]
+    },
+    "traversalStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index", "source", "offset", "destination", "requiredCellCount",
+        "exactRequiredStateCount", "requiredStatesExact",
+        "logicalDecisionAvailable", "packedDecisionAvailable",
+        "logicalPassable", "packedPassable", "logicalBlockingReason",
+        "packedBlockingReason", "comparable", "passabilityExact",
+        "blockingReasonExact"
+      ],
+      "properties": {
+        "index": {"type": "integer", "minimum": 0, "maximum": 15},
+        "source": {"$ref": "#/$defs/layered"},
+        "offset": {"$ref": "#/$defs/xy"},
+        "destination": {"$ref": "#/$defs/layered"},
+        "requiredCellCount": {"type": "integer", "minimum": 2, "maximum": 5},
+        "exactRequiredStateCount": {"type": "integer", "minimum": 0, "maximum": 5},
+        "requiredStatesExact": {"type": "boolean"},
+        "logicalDecisionAvailable": {"type": "boolean"},
+        "packedDecisionAvailable": {"type": "boolean"},
+        "logicalPassable": {"type": ["boolean", "null"]},
+        "packedPassable": {"type": ["boolean", "null"]},
+        "logicalBlockingReason": {
+          "oneOf": [{"$ref": "#/$defs/blockingReason"}, {"type": "null"}]
+        },
+        "packedBlockingReason": {
+          "oneOf": [{"$ref": "#/$defs/blockingReason"}, {"type": "null"}]
+        },
+        "comparable": {"type": "boolean"},
+        "passabilityExact": {"type": "boolean"},
+        "blockingReasonExact": {"type": "boolean"}
+      }
+    },
+    "recentTraversal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source", "destination", "stepCount", "droppedStepCount",
+        "discontinuityCount", "logicalDecisionAvailableCount",
+        "packedDecisionAvailableCount", "comparableCount",
+        "passabilityExactCount", "blockingReasonExactCount",
+        "requiredStatesExactCount", "logicalPassable", "packedPassable",
+        "comparable", "passabilityExact", "allStepsComparable",
+        "allStepPassabilitiesExact", "allStepBlockingReasonsExact",
+        "allRequiredStatesExact", "firstLogicalBlockedStepIndex",
+        "firstPackedBlockedStepIndex", "firstPassabilityMismatchStepIndex",
+        "firstBlockingReasonMismatchStepIndex", "steps"
+      ],
+      "properties": {
+        "source": {"$ref": "#/$defs/layered"},
+        "destination": {"$ref": "#/$defs/layered"},
+        "stepCount": {"type": "integer", "minimum": 1, "maximum": 16},
+        "droppedStepCount": {"type": "integer", "minimum": 0},
+        "discontinuityCount": {"type": "integer", "minimum": 0},
+        "logicalDecisionAvailableCount": {"type": "integer", "minimum": 0, "maximum": 16},
+        "packedDecisionAvailableCount": {"type": "integer", "minimum": 0, "maximum": 16},
+        "comparableCount": {"type": "integer", "minimum": 0, "maximum": 16},
+        "passabilityExactCount": {"type": "integer", "minimum": 0, "maximum": 16},
+        "blockingReasonExactCount": {"type": "integer", "minimum": 0, "maximum": 16},
+        "requiredStatesExactCount": {"type": "integer", "minimum": 0, "maximum": 16},
+        "logicalPassable": {"type": ["boolean", "null"]},
+        "packedPassable": {"type": ["boolean", "null"]},
+        "comparable": {"type": "boolean"},
+        "passabilityExact": {"type": "boolean"},
+        "allStepsComparable": {"type": "boolean"},
+        "allStepPassabilitiesExact": {"type": "boolean"},
+        "allStepBlockingReasonsExact": {"type": "boolean"},
+        "allRequiredStatesExact": {"type": "boolean"},
+        "firstLogicalBlockedStepIndex": {"$ref": "#/$defs/nullableStepIndex"},
+        "firstPackedBlockedStepIndex": {"$ref": "#/$defs/nullableStepIndex"},
+        "firstPassabilityMismatchStepIndex": {"$ref": "#/$defs/nullableStepIndex"},
+        "firstBlockingReasonMismatchStepIndex": {"$ref": "#/$defs/nullableStepIndex"},
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {"$ref": "#/$defs/traversalStep"}
+        }
+      }
+    }
+  }
+}

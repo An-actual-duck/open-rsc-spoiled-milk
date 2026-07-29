@@ -48,7 +48,9 @@ public class Gundai implements TalkNpcTrigger, OpNpcTrigger {
 			}
 
 			// bankers outside of bank should not allow you to open bank.
-			if (!n.getLocation().isInBank(config().BASED_MAP_DATA)) {
+			if (!n.getLocation().isInBank(
+					config().BASED_MAP_DATA,
+					n.getWorldLocation())) {
 				n.walkToRespawn(); // not known to be authentic.
 				return;
 			}

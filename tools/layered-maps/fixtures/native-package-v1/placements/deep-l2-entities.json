@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "encoding": "layered-world-placements-v2",
+  "worldSpace": "global",
+  "level": -2,
+  "npcs": [
+    {
+      "placementId": "deep-fixture-man",
+      "npcId": 11,
+      "start": {
+        "x": 452,
+        "y": 600
+      },
+      "roamRadius": 2
+    }
+  ],
+  "groundItems": [
+    {
+      "placementId": "deep-fixture-coins",
+      "itemId": 10,
+      "position": {
+        "x": 448,
+        "y": 600
+      },
+      "amount": 5,
+      "respawnSeconds": 5
+    }
+  ],
+  "scenery": [
+    {
+      "placementId": "deep-fixture-table",
+      "sceneryId": 3,
+      "position": {
+        "x": 446,
+        "y": 604
+      },
+      "direction": 0
+    },
+    {
+      "placementId": "deep-fixture-tree",
+      "sceneryId": 1,
+      "position": {
+        "x": 456,
+        "y": 604
+      },
+      "direction": 0
+    }
+  ],
+  "boundaries": [
+    {
+      "placementId": "deep-fixture-fence",
+      "boundaryId": 4,
+      "position": {
+        "x": 448,
+        "y": 604
+      },
+      "direction": 0
+    },
+    {
+      "placementId": "deep-fixture-door",
+      "boundaryId": 2,
+      "position": {
+        "x": 452,
+        "y": 604
+      },
+      "direction": 0
+    }
+  ]
+}

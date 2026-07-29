@@ -201,6 +201,18 @@ public class Server implements Runnable {
 	private long lastMovementSnapshotPackets = 0;
 	private long lastMovementSnapshotRecords = 0;
 	private long lastMovementSnapshotPayloadBytes = 0;
+	private long lastNativeTerrainContextPackets = 0;
+	private long lastNativeTerrainSectorSlots = 0;
+	private long lastNativeTerrainAvailableSectors = 0;
+	private long lastNativeTerrainPayloadSectors = 0;
+	private long lastNativeTerrainReferencedSectors = 0;
+	private long lastNativeTerrainRawBytes = 0;
+	private long lastNativeTerrainWireBytes = 0;
+	private long lastNativeTerrainWireCacheRequests = 0;
+	private long lastNativeTerrainWireCacheHits = 0;
+	private long lastNativeTerrainWireCacheMisses = 0;
+	private long lastNativeTerrainWireBuildNanos = 0;
+	private int lastNativeTerrainWireCacheEntriesMax = 0;
 	private long lastSuppressedLegacySceneryPackets = 0;
 	private long lastSuppressedLegacySceneryRecords = 0;
 	private long lastSuppressedLegacyWallPackets = 0;
@@ -306,6 +318,18 @@ public class Server implements Runnable {
 	private long benchmarkMovementSnapshotPackets = 0;
 	private long benchmarkMovementSnapshotRecords = 0;
 	private long benchmarkMovementSnapshotPayloadBytes = 0;
+	private long benchmarkNativeTerrainContextPackets = 0;
+	private long benchmarkNativeTerrainSectorSlots = 0;
+	private long benchmarkNativeTerrainAvailableSectors = 0;
+	private long benchmarkNativeTerrainPayloadSectors = 0;
+	private long benchmarkNativeTerrainReferencedSectors = 0;
+	private long benchmarkNativeTerrainRawBytes = 0;
+	private long benchmarkNativeTerrainWireBytes = 0;
+	private long benchmarkNativeTerrainWireCacheRequests = 0;
+	private long benchmarkNativeTerrainWireCacheHits = 0;
+	private long benchmarkNativeTerrainWireCacheMisses = 0;
+	private long benchmarkNativeTerrainWireBuildNanos = 0;
+	private int benchmarkNativeTerrainWireCacheEntriesMax = 0;
 	private long benchmarkSuppressedLegacySceneryPackets = 0;
 	private long benchmarkSuppressedLegacySceneryRecords = 0;
 	private long benchmarkSuppressedLegacyWallPackets = 0;
@@ -1639,6 +1663,20 @@ public class Server implements Runnable {
 			+ " movementSnapshotPackets=" + benchmarkMovementSnapshotPackets
 			+ " movementSnapshotRecords=" + benchmarkMovementSnapshotRecords
 			+ " movementSnapshotPayloadBytes=" + benchmarkMovementSnapshotPayloadBytes
+			+ " nativeTerrainContextPackets=" + benchmarkNativeTerrainContextPackets
+			+ " nativeTerrainSectorSlots=" + benchmarkNativeTerrainSectorSlots
+			+ " nativeTerrainAvailableSectors=" + benchmarkNativeTerrainAvailableSectors
+			+ " nativeTerrainPayloadSectors=" + benchmarkNativeTerrainPayloadSectors
+			+ " nativeTerrainReferencedSectors=" + benchmarkNativeTerrainReferencedSectors
+			+ " nativeTerrainRawBytes=" + benchmarkNativeTerrainRawBytes
+			+ " nativeTerrainWireBytes=" + benchmarkNativeTerrainWireBytes
+			+ " nativeTerrainWireCacheRequests=" + benchmarkNativeTerrainWireCacheRequests
+			+ " nativeTerrainWireCacheHits=" + benchmarkNativeTerrainWireCacheHits
+			+ " nativeTerrainWireCacheMisses=" + benchmarkNativeTerrainWireCacheMisses
+			+ " nativeTerrainWireBuildMsPrecise="
+				+ nanosToMillisPrecise(benchmarkNativeTerrainWireBuildNanos)
+			+ " nativeTerrainWireCacheEntriesMax="
+				+ benchmarkNativeTerrainWireCacheEntriesMax
 			+ " suppressedLegacySceneryPackets=" + benchmarkSuppressedLegacySceneryPackets
 			+ " suppressedLegacySceneryRecords=" + benchmarkSuppressedLegacySceneryRecords
 			+ " suppressedLegacyWallPackets=" + benchmarkSuppressedLegacyWallPackets
@@ -2147,6 +2185,54 @@ public class Server implements Runnable {
 		return lastVisibilityShadowObjectRegionsMax;
 	}
 
+	public long getLastNativeTerrainContextPackets() {
+		return lastNativeTerrainContextPackets;
+	}
+
+	public long getLastNativeTerrainSectorSlots() {
+		return lastNativeTerrainSectorSlots;
+	}
+
+	public long getLastNativeTerrainAvailableSectors() {
+		return lastNativeTerrainAvailableSectors;
+	}
+
+	public long getLastNativeTerrainPayloadSectors() {
+		return lastNativeTerrainPayloadSectors;
+	}
+
+	public long getLastNativeTerrainReferencedSectors() {
+		return lastNativeTerrainReferencedSectors;
+	}
+
+	public long getLastNativeTerrainRawBytes() {
+		return lastNativeTerrainRawBytes;
+	}
+
+	public long getLastNativeTerrainWireBytes() {
+		return lastNativeTerrainWireBytes;
+	}
+
+	public long getLastNativeTerrainWireCacheRequests() {
+		return lastNativeTerrainWireCacheRequests;
+	}
+
+	public long getLastNativeTerrainWireCacheHits() {
+		return lastNativeTerrainWireCacheHits;
+	}
+
+	public long getLastNativeTerrainWireCacheMisses() {
+		return lastNativeTerrainWireCacheMisses;
+	}
+
+	public long getLastNativeTerrainWireBuildNanos() {
+		return lastNativeTerrainWireBuildNanos;
+	}
+
+	public int getLastNativeTerrainWireCacheEntriesMax() {
+		return lastNativeTerrainWireCacheEntriesMax;
+	}
+
 	public long getLastDoCleanupDuration() {
 		return lastDoCleanupDuration;
 	}
@@ -2543,6 +2629,51 @@ public class Server implements Runnable {
 		}
 	}
 
+	public synchronized void addNativeTerrainTransferMetrics(
+		final int contextPackets,
+		final int sectorSlots,
+		final int availableSectors,
+		final int payloadSectors,
+		final int referencedSectors,
+		final long rawBytes,
+		final long wireBytes,
+		final long cacheRequests,
+		final long cacheHits,
+		final long cacheMisses,
+		final long wireBuildNanos,
+		final int cacheEntries) {
+		this.lastNativeTerrainContextPackets += contextPackets;
+		this.lastNativeTerrainSectorSlots += sectorSlots;
+		this.lastNativeTerrainAvailableSectors += availableSectors;
+		this.lastNativeTerrainPayloadSectors += payloadSectors;
+		this.lastNativeTerrainReferencedSectors += referencedSectors;
+		this.lastNativeTerrainRawBytes += rawBytes;
+		this.lastNativeTerrainWireBytes += wireBytes;
+		this.lastNativeTerrainWireCacheRequests += cacheRequests;
+		this.lastNativeTerrainWireCacheHits += cacheHits;
+		this.lastNativeTerrainWireCacheMisses += cacheMisses;
+		this.lastNativeTerrainWireBuildNanos += wireBuildNanos;
+		this.lastNativeTerrainWireCacheEntriesMax = Math.max(
+			this.lastNativeTerrainWireCacheEntriesMax, cacheEntries);
+		if (benchmarkTargetTicks > 0
+			&& getCurrentTick() > benchmarkWarmupTicks) {
+			this.benchmarkNativeTerrainContextPackets += contextPackets;
+			this.benchmarkNativeTerrainSectorSlots += sectorSlots;
+			this.benchmarkNativeTerrainAvailableSectors += availableSectors;
+			this.benchmarkNativeTerrainPayloadSectors += payloadSectors;
+			this.benchmarkNativeTerrainReferencedSectors += referencedSectors;
+			this.benchmarkNativeTerrainRawBytes += rawBytes;
+			this.benchmarkNativeTerrainWireBytes += wireBytes;
+			this.benchmarkNativeTerrainWireCacheRequests += cacheRequests;
+			this.benchmarkNativeTerrainWireCacheHits += cacheHits;
+			this.benchmarkNativeTerrainWireCacheMisses += cacheMisses;
+			this.benchmarkNativeTerrainWireBuildNanos += wireBuildNanos;
+			this.benchmarkNativeTerrainWireCacheEntriesMax = Math.max(
+				this.benchmarkNativeTerrainWireCacheEntriesMax,
+				cacheEntries);
+		}
+	}
+
 	public synchronized void addSuppressedLegacyStaticSceneMetrics(final boolean wallPacket, final int records) {
 		if (wallPacket) {
 			this.lastSuppressedLegacyWallPackets++;
@@ -2634,6 +2765,18 @@ public class Server implements Runnable {
 		this.lastMovementSnapshotPackets = 0;
 		this.lastMovementSnapshotRecords = 0;
 		this.lastMovementSnapshotPayloadBytes = 0;
+		this.lastNativeTerrainContextPackets = 0;
+		this.lastNativeTerrainSectorSlots = 0;
+		this.lastNativeTerrainAvailableSectors = 0;
+		this.lastNativeTerrainPayloadSectors = 0;
+		this.lastNativeTerrainReferencedSectors = 0;
+		this.lastNativeTerrainRawBytes = 0;
+		this.lastNativeTerrainWireBytes = 0;
+		this.lastNativeTerrainWireCacheRequests = 0;
+		this.lastNativeTerrainWireCacheHits = 0;
+		this.lastNativeTerrainWireCacheMisses = 0;
+		this.lastNativeTerrainWireBuildNanos = 0;
+		this.lastNativeTerrainWireCacheEntriesMax = 0;
 		this.lastSuppressedLegacySceneryPackets = 0;
 		this.lastSuppressedLegacySceneryRecords = 0;
 		this.lastSuppressedLegacyWallPackets = 0;

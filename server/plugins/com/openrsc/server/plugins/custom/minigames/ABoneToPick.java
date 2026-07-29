@@ -591,7 +591,10 @@ public class ABoneToPick implements TimedEventTrigger, TalkNpcTrigger, KillNpcTr
 			return false;
 		}
 
-		if (player.isBusy() || player.isInBank() || player.getLocation().isInBank(player.getConfig().BASED_MAP_DATA)) {
+		if (player.isBusy() || player.isInBank()
+			|| player.getLocation().isInBank(
+				player.getConfig().BASED_MAP_DATA,
+				player.getWorldLocation())) {
 			return false;
 		}
 

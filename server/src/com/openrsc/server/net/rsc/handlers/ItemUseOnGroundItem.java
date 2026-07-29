@@ -45,7 +45,8 @@ public class ItemUseOnGroundItem implements PayloadProcessor<ItemOnGroundItemStr
 		if (myItem == null)
 			return;
 
-		final GroundItem gItem = player.getRegion().getItem(groundItemId, location, player);
+		final GroundItem gItem = player.getWorld().getRegionManager()
+			.findInteractionGroundItem(groundItemId, location, player);
 
 		if (gItem == null) {
 			player.setSuspiciousPlayer(true, "item use on ground item null item");
@@ -64,7 +65,9 @@ public class ItemUseOnGroundItem implements PayloadProcessor<ItemOnGroundItemStr
 			public void executeInternal() {
 				if (getPlayer().isBusy()
 					|| getPlayer().isRanging()
-					|| getPlayer().getRegion().getItem(groundItemId, getLocation(), getPlayer()) == null
+					|| getPlayer().getWorld().getRegionManager()
+						.findInteractionGroundItem(
+							groundItemId, getLocation(), getPlayer()) == null
 					|| !getPlayer().canReach(gItem) ) {
 					return;
 				}

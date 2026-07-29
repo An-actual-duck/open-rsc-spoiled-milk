@@ -16,6 +16,18 @@ final class MovementSnapshotStage {
 	private int records = 0;
 	private long lastPacketMillis = 0L;
 
+	void reset() {
+		localTarget = null;
+		playerTargets.clear();
+		npcTargets.clear();
+		protocolVersion = 0;
+		serverTick = 0;
+		sequence = 0;
+		packets = 0;
+		records = 0;
+		lastPacketMillis = 0L;
+	}
+
 	Result replaceFromSnapshot(Frame frame, mudclient mc) {
 		if (frame == null) {
 			return Result.waiting(packets);

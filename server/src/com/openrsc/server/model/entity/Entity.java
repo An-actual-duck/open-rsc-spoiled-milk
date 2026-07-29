@@ -3,9 +3,14 @@ package com.openrsc.server.model.entity;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentitySlot;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.Region;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -21,7 +26,14 @@ public abstract class Entity {
 
 	private final AtomicReference<Point> location = new AtomicReference<Point>();
 
+	private final AtomicReference<WorldLocation> worldLocation =
+		new AtomicReference<WorldLocation>();
+
 	private final AtomicReference<Region> region = new AtomicReference<Region>();
+
+	private final LayeredAuthoredPlacementIdentitySlot
+		authoredPlacementIdentity =
+			new LayeredAuthoredPlacementIdentitySlot();
 
 	private boolean removed = false;
 
@@ -36,27 +48,57 @@ public abstract class Entity {
 	}
 
 	public void updateRegion() {
-		updateRegion(null);
+		updateRegion(null, null);
 	}
 
 	public synchronized void updateRegion(Point oldLocation) {
-		if (getRegion() != null && oldLocation != null) {
-			region.get().removeEntity(oldLocation, this);
+		updateRegion(
+			oldLocation,
+			oldLocation == null ? null
+				: LegacyPackedPointAdapter.fromLegacyPoint(oldLocation));
+	}
+
+	private synchronized void updateRegion(
+		final Point oldLocation,
+		final WorldLocation oldWorldLocation) {
+		final Region oldRegion = region.get();
+		if (oldRegion != null && oldLocation != null) {
+			oldRegion.removeEntity(oldLocation, this);
 		}
 
-		final Region newRegion = getWorld().getRegionManager().getRegion(getLocation());
 		if (!isRemoved()) {
-			region.set(newRegion);
-			region.get().addEntity(this);
+			if (getWorld().getRegionManager()
+					.usesNativeLayeredRegionlessMembership(
+						getWorldLocation())) {
+				/*
+				 * Native package terrain is keyed by signed WorldLocation and
+				 * must not borrow the packed surface Region at the same X/Y.
+				 * Point remains only a compatibility coordinate carrier.
+				 */
+				region.set(null);
+			} else {
+				final Region newRegion = getWorld().getRegionManager()
+					.getRegion(getLocation());
+				region.set(newRegion);
+				newRegion.addEntity(this);
+			}
+			if (getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+				getWorld().getRegionManager().synchronizeLayeredSpatialMembership(
+					this, oldWorldLocation, getWorldLocation());
+			}
 		}
 	}
 
 	public boolean withinRange(final GameObject gameObject, final int radius) {
+		if (!sharesSpatialDomain(gameObject)) {
+			return false;
+		}
 		return withinRange(gameObject.closestBound(getLocation()), radius);
 	}
 
 	public boolean withinRange(final Entity e, final int radius) {
-		return withinRange(e.getLocation(), radius);
+		return sharesSpatialDomain(e)
+			&& withinRange(e.getLocation(), radius);
 	}
 
 	public boolean withinRange(final Point point, final int radius) {
@@ -66,7 +108,8 @@ public abstract class Entity {
 	}
 
 	public boolean withinRange90Deg(final Entity e, final int radius) {
-		return withinRange90Deg(e.getLocation(), radius);
+		return sharesSpatialDomain(e)
+			&& withinRange90Deg(e.getLocation(), radius);
 	}
 
 	public boolean withinRange90Deg(final Point point, final int radius) {
@@ -97,6 +140,15 @@ public abstract class Entity {
 		attributes.put(string, object);
 	}
 
+	/**
+	 * Reports how much opaque runtime metadata is attached without exposing its
+	 * keys, values, or backing collection. Region retirement diagnostics use
+	 * this only to refuse an incomplete entity-preservation claim.
+	 */
+	public final int getRuntimeAttributeCount() {
+		return attributes.size();
+	}
+
 	public final World getWorld() {
 		return world;
 	}
@@ -125,14 +177,152 @@ public abstract class Entity {
 		return location.get();
 	}
 
-	public void setLocation(final Point point) {
-		Point oldLocation = location.getAndSet(point);
-		updateRegion(oldLocation);
+	/**
+	 * Returns this entity's checked world-space/level-qualified location.
+	 *
+	 * <p>The legacy Point remains available as a compatibility projection. A
+	 * mismatch is always a state error, including while the private authority
+	 * gate is disabled.</p>
+	 */
+	public final WorldLocation getWorldLocation() {
+		Point legacy = location.get();
+		WorldLocation layered = worldLocation.get();
+		if (legacy == null || layered == null) {
+			throw new IllegalStateException(
+				"Entity world location has not been initialized");
+		}
+		Point expected = getWorld().getRegionManager()
+			.toRuntimeCompatibilityPoint(layered);
+		if (expected.getX() != legacy.getX()
+			|| expected.getY() != legacy.getY()) {
+			throw new IllegalStateException(
+				"Entity legacy Point differs from its WorldLocation");
+		}
+		return layered;
 	}
 
-	public void setInitialLocation(Point player) {
+	public final boolean sharesSpatialDomain(final Entity other) {
+		if (other == null) {
+			return false;
+		}
+		if (!getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			return true;
+		}
+		WorldLocation left = getWorldLocation();
+		WorldLocation right = other.getWorldLocation();
+		return left.getWorldSpace().equals(right.getWorldSpace())
+			&& left.getCoordinate().getLevel()
+				== right.getCoordinate().getLevel();
+	}
+
+	public final LayeredAuthoredPlacementIdentity
+		getAuthoredPlacementIdentity() {
+		return authoredPlacementIdentity.get();
+	}
+
+	public final void assignAuthoredPlacementIdentity(
+		final LayeredAuthoredPlacementIdentity identity) {
+		authoredPlacementIdentity.assign(identity);
+	}
+
+	public void setLocation(final Point point) {
+		WorldLocation current = worldLocation.get();
+		setWorldLocationInternal(
+			getWorld().getRegionManager().fromRuntimeCompatibilityPoint(
+				Objects.requireNonNull(point, "point"),
+				current,
+				false));
+	}
+
+	public final void setWorldLocation(final WorldLocation newLocation) {
+		if (!getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			throw new IllegalStateException(
+				"Layered spatial runtime authority is disabled");
+		}
+		setWorldLocationInternal(
+			Objects.requireNonNull(newLocation, "newLocation"));
+	}
+
+	private void setWorldLocationInternal(final WorldLocation newLocation) {
+		Point projection = getWorld().getRegionManager()
+			.toRuntimeCompatibilityPoint(newLocation);
+		Point oldLocation = location.getAndSet(projection);
+		WorldLocation oldWorldLocation = worldLocation.getAndSet(newLocation);
+		updateRegion(oldLocation, oldWorldLocation);
+	}
+
+	public void setInitialLocation(final Point point) {
 		// Used when logging in a player in order to not cause exceptions of missing locations while updating the region
-		location.set(player);
+		setInitialWorldLocationInternal(
+			LegacyPackedPointAdapter.fromLegacyPoint(
+				Objects.requireNonNull(point, "point")));
+	}
+
+	public final void setInitialWorldLocation(final WorldLocation newLocation) {
+		if (!getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			throw new IllegalStateException(
+				"Layered spatial runtime authority is disabled");
+		}
+		setInitialWorldLocationInternal(
+			Objects.requireNonNull(newLocation, "newLocation"));
+	}
+
+	private void setInitialWorldLocationInternal(
+		final WorldLocation newLocation) {
+		location.set(getWorld().getRegionManager()
+			.toRuntimeCompatibilityPoint(newLocation));
+		worldLocation.set(newLocation);
+	}
+
+	/** Internal state half of an ordered GameObject membership transaction. */
+	protected final synchronized void attachGameObjectTransactionState(
+		final Point point,
+		final Region targetRegion) {
+		if (entityType != EntityType.GAME_OBJECT || location.get() != null
+			|| region.get() != null || removed) {
+			throw new IllegalStateException(
+				"GameObject is not ready for ordered registration");
+		}
+		location.set(Objects.requireNonNull(point, "point"));
+		worldLocation.set(LegacyPackedPointAdapter.fromLegacyPoint(point));
+		region.set(Objects.requireNonNull(targetRegion, "targetRegion"));
+	}
+
+	/** Restores a failed ordered registration to its exact detached state. */
+	protected final synchronized void detachGameObjectTransactionState(
+		final Point expectedPoint,
+		final Region expectedRegion) {
+		if (entityType != EntityType.GAME_OBJECT || removed
+			|| !Objects.equals(location.get(), expectedPoint)
+			|| region.get() != expectedRegion) {
+			throw new IllegalStateException(
+				"GameObject registration rollback state is inconsistent");
+		}
+		location.set(null);
+		worldLocation.set(null);
+		region.set(null);
+	}
+
+	/** Marks membership removal while its ordered collision transaction is held. */
+	protected final synchronized void removeGameObjectTransactionState(
+		final Region expectedRegion) {
+		if (entityType != EntityType.GAME_OBJECT || location.get() == null
+			|| region.get() != expectedRegion || removed) {
+			throw new IllegalStateException(
+				"GameObject is not ready for ordered unregistration");
+		}
+		removed = true;
+	}
+
+	/** Reopens an object whose ordered unregistration was rolled back. */
+	protected final synchronized void restoreGameObjectTransactionState(
+		final Region expectedRegion) {
+		if (entityType != EntityType.GAME_OBJECT || location.get() == null
+			|| region.get() != expectedRegion || !removed) {
+			throw new IllegalStateException(
+				"GameObject unregistration rollback state is inconsistent");
+		}
+		removed = false;
 	}
 
 	public Region getRegion() {
@@ -169,8 +359,25 @@ public abstract class Entity {
 	}
 
 	public void remove() {
+		if (getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			final boolean nativeRegionless =
+				getWorld().getRegionManager()
+					.usesNativeLayeredRegionlessMembership(
+						getWorldLocation());
+			if (nativeRegionless && region.get() != null) {
+				throw new IllegalStateException(
+					"Native layered entity unexpectedly occupies a packed Region");
+			}
+			getWorld().getRegionManager().removeLayeredSpatialMembership(
+				this, getWorldLocation());
+			if (nativeRegionless) {
+				setRemoved(true);
+				return;
+			}
+		}
 		if (region.get() == null) {
-			throw new IllegalStateException("Region should not be null if remove() is called.");
+			throw new IllegalStateException(
+				"Packed Region should not be null if remove() is called");
 		}
 		getRegion().removeEntity(this);
 		setRemoved(true);
@@ -183,7 +390,8 @@ public abstract class Entity {
 	}
 
 	public boolean canSee(final Entity observed) {
-		return observed == null || !observed.isInvisibleTo(this);
+		return observed == null
+			|| (sharesSpatialDomain(observed) && !observed.isInvisibleTo(this));
 	}
 
 	public EntityType getEntityType() {

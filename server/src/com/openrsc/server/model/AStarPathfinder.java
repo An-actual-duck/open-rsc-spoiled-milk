@@ -1,6 +1,7 @@
 package com.openrsc.server.model;
 
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.CollisionFlag;
 
@@ -29,12 +30,12 @@ public class AStarPathfinder {
 	private ArrayList<Node> openNodes = new ArrayList<>();
 	private ArrayList<Node> closedNodes = new ArrayList<>();
 
-	public AStarPathfinder(World world, Point start, Point end, int depth) {
+	public AStarPathfinder(Mob owner, Point start, Point end, int depth) {
 		this.worldStart = start;
 		this.pointStart = new Point(depth,depth);
 		this.pointEnd = new Point((start.getX()+depth)-end.getX(), end.getY() - (start.getY() - depth));
 		this.depth = depth;
-		this.generateTraversalInfo(world, start, depth);
+		this.generateTraversalInfo(owner, start, depth);
 		/*
 		if (debug) {
 			panel.setLayout(layout);
@@ -48,7 +49,7 @@ public class AStarPathfinder {
 	public void feedPath(Path path) {
 		this.path = path;
 	}
-	public void generateTraversalInfo(World world, Point center, int depth) {
+	public void generateTraversalInfo(Mob owner, Point center, int depth) {
 		if (depth < 1)
 			return;
 
@@ -57,7 +58,8 @@ public class AStarPathfinder {
 		int curposx, curposy;
 		for (int x = -depth; x <= depth; x++) {
 			for (int y = -depth; y <= depth; y++) {
-				TileValue tile = world.getTile(center.getX() - x, center.getY() + y);
+				TileValue tile = owner.getTileAtCurrentLevel(
+					center.getX() - x, center.getY() + y);
 				if (tile == null) {
 					continue;
 				}

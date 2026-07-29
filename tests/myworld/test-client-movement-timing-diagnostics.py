@@ -7,10 +7,11 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
-SOURCE = ROOT / "Client_Base/src/orsc/MovementTimingDiagnostics.java"
-MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
-PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
+CLIENT = ROOT / "Client_Base"
+CLIENT_JAR = CLIENT / "Open_RSC_Client.jar"
+SOURCE = CLIENT / "src/orsc/MovementTimingDiagnostics.java"
+MUDCLIENT = CLIENT / "src/orsc/mudclient.java"
+PACKET_HANDLER = CLIENT / "src/orsc/PacketHandler.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 LAUNCHER = ROOT / "scripts/run-client.sh"
 
@@ -106,6 +107,7 @@ def main() -> None:
         (mudclient_text, "MovementTimingDiagnostics.observeLocalPlayer", "local idle/depth hook"),
         (mudclient_text, "MovementTimingDiagnostics.recordCorrectionSnap", "correction hook"),
         (mudclient_text, "MovementTimingDiagnostics.recordEndpointSnap", "endpoint snap hook"),
+        (mudclient_text, '"Movement stutter marker recorded."', "visible marker acknowledgement"),
         (applet_text, "mudclient.markMovementStutterObserved()", "Ctrl+F8 marker hotkey"),
     ):
         if snippet not in haystack:
@@ -116,6 +118,11 @@ def main() -> None:
         fail("disabled diagnostics still allocate accumulator storage")
     if "--no-frame-capture" not in launcher_text or 'SPOILED_MILK_OPENGL_FRAME_CAPTURE="$FRAME_CAPTURE_ENABLED"' not in launcher_text:
         fail("renderer diagnostics cannot explicitly disable frame capture")
+    diagnostic_session = (CLIENT / "src/orsc/RendererDiagnosticSession.java").read_text(
+        encoding="utf-8"
+    )
+    if "EVENT_RESERVED_BYTES" not in diagnostic_session:
+        fail("movement events have no reserved structured-log budget")
 
     with tempfile.TemporaryDirectory(prefix="client-movement-timing-") as raw_tmp:
         tmp = Path(raw_tmp)

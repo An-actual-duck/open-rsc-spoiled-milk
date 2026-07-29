@@ -28,6 +28,9 @@ import com.openrsc.server.model.entity.update.UpdateFlags;
 import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.model.states.HostileState;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.DropObjTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
@@ -433,7 +436,7 @@ public abstract class Mob extends Entity {
 	}
 
 	public boolean withinRange(final Entity e) {
-		if (e != null) {
+		if (e != null && sharesSpatialDomain(e)) {
 			return getLocation().withinRange(e.getLocation(), (getWorld().getServer().getConfig().VIEW_DISTANCE * 8) - 1);
 		}
 		return false;
@@ -443,7 +446,7 @@ public abstract class Mob extends Entity {
 	// determines if we will display something to a player or not, we potentially need to restrict distance further.
 	// This check can go before withinRange(Entity e) to shortcircuit & not have to check twice (unless View_distance is 1)
 	public boolean withinAuthenticRangeAdditionally(final Player playerToUpdate) {
-		if (playerToUpdate != null) {
+		if (playerToUpdate != null && sharesSpatialDomain(playerToUpdate)) {
 			if (playerToUpdate.isUsingCustomClient() || getWorld().getServer().getConfig().VIEW_DISTANCE <= 2)
 				return true; // don't need additional restraint in these cases
 
@@ -453,21 +456,21 @@ public abstract class Mob extends Entity {
 	}
 
 	public boolean withinGridRange(final Entity e) {
-		if (e != null) {
+		if (e != null && sharesSpatialDomain(e)) {
 			return getLocation().withinGridRange(e.getLocation(), getWorld().getServer().getConfig().VIEW_DISTANCE);
 		}
 		return false;
 	}
 
 	public boolean withinObjectGridRange(final Entity e) {
-		if (e != null) {
+		if (e != null && sharesSpatialDomain(e)) {
 			return getLocation().withinGridRange(e.getLocation(), getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE);
 		}
 		return false;
 	}
 
 	public boolean within4GridRange(final Entity e) {
-		if (e != null) {
+		if (e != null && sharesSpatialDomain(e)) {
 			return getLocation().withinGridRange(e.getLocation(), 4);
 		}
 		return false;
@@ -541,7 +544,8 @@ public abstract class Mob extends Entity {
 				boolean shouldInterrupt = canInterrupt && (!duelActive && isBusy());
 				//In range and adjacent, and we ran this event more than once.
 				boolean shouldStopWalking = withinRange(mob, radius)
-					&& PathValidation.checkAdjacentDistance(getWorld(), getX(), getY(), mob.getX(), mob.getY(), true, false)
+					&& PathValidation.checkAdjacentDistance(
+						Mob.this, mob, true, false)
 					&& getTimesRan() >= 1;
 
 				if (!withinRange(mob) || shouldInterrupt) {
@@ -761,6 +765,21 @@ public abstract class Mob extends Entity {
 		super.setLocation(point);
 	}
 
+	public void setWorldLocation(
+		final WorldLocation location,
+		final boolean teleported) {
+		Point projection = getWorld().getRegionManager()
+			.toRuntimeCompatibilityPoint(location);
+		if (!teleported && getLocation().isWithin1Tile(projection)) {
+			setHasMoved(true);
+		} else {
+			setTeleporting(true);
+		}
+		setLastMoved();
+		setWarnedToMove(false);
+		super.setWorldLocation(location);
+	}
+
 	public void updatePosition() {
 		final long now = System.currentTimeMillis();
 		final boolean useWalkingTick = getWorld().getServer().getConfig().WANT_CUSTOM_WALK_SPEED
@@ -771,6 +790,28 @@ public abstract class Mob extends Entity {
 			getWalkingQueue().processNextMovement();
 			lastMovementTime = now;
 		}
+	}
+
+	/**
+	 * Resolves an unqualified movement coordinate in this mob's current signed
+	 * native scope. Legacy callers still receive the packed Region tile.
+	 */
+	public final TileValue getTileAtCurrentLevel(
+		final int x,
+		final int y) {
+		WorldLocation owner = getWorldLocation();
+		if (getWorld().getRegionManager().hasNativeLayeredTerrain(owner)
+			|| LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(owner)) {
+			return getWorld().getTile(
+				new WorldLocation(
+					owner.getWorldSpace(),
+					new com.openrsc.server.model.world.coordinate
+						.WorldCoordinate(
+							x,
+							y,
+							owner.getCoordinate().getLevel())));
+		}
+		return getWorld().getTile(x, y);
 	}
 
 	public void walk(final int x, final int y) {
@@ -790,7 +831,8 @@ public abstract class Mob extends Entity {
 	public void walkToEntityAStar(final int x, final int y, final int depth) {
 		getWalkingQueue().reset();
 		final Point mobPos = new Point(this.getX(), this.getY());
-		final AStarPathfinder pathFinder = new AStarPathfinder(this.getWorld(), mobPos, new Point(x, y), depth);
+		final AStarPathfinder pathFinder =
+			new AStarPathfinder(this, mobPos, new Point(x, y), depth);
 		pathFinder.feedPath(new Path(this, PathType.WALK_TO_ENTITY));
 		Path newPath = pathFinder.findPath();
 		if (newPath == null)

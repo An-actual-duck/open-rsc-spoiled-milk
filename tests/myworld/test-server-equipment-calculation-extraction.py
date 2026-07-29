@@ -16,17 +16,17 @@ SLOT_RULES = ROOT / "server/src/com/openrsc/server/model/container/EquipmentSlot
 
 EXPECTED: dict[str, tuple[int, str]] = {
     "getGodEquipmentNaturalPrayerBonus": (4002, "751d228b94591005dd8b95fe0f92ac90ba6991b8eb918f7c86a86ca2b112daaf"),
-    "getGodEquipmentResourceCost": (4002, "ff9cf9ffc71060440081bc0d281aadf47f50d32130a319535a71492b1ed4e596"),
-    "getGodEquipmentTargetWeaponAim": (4002, "fd9eeeb13416eb41272eb2dba9584bc28a6b0b90e3e55b844e5da39e012c0717"),
-    "getGodEquipmentTargetWeaponPower": (4002, "e78ec69e292b47d2eccf19822e994281f4ba15f83d6367c3a65df9255b54ee83"),
+    "getGodEquipmentResourceCost": (4002, "2b4706cde2e881bd58ddfc32e4f4aaf734ab230473f8f676e66487cd8e40f276"),
+    "getGodEquipmentTargetWeaponAim": (4002, "555f20a1f84e426ef3e5e918fb5d53ea23891e6e50b8dcd9122b0a924ae3ab6e"),
+    "getGodEquipmentTargetWeaponPower": (4002, "2b413aa3ab97fec20a45d353b6556c1e6c7f8799da8e8a1ab3084340f1b224a2"),
     "getGodEquipmentTargetArmour": (4002, "adb7235b300627e2e29eaf5ff20b9e76f8b06298696cfa825dcf9126c9acb5af"),
-    "getGodEquipmentTargetMeleeOffense": (4002, "b066a7a76d764b2dd2ec9fb63dba56672980ddcf8813f3472a977790980f6067"),
+    "getGodEquipmentTargetMeleeOffense": (4002, "dc57f16f70ad47a9fdb8288957a20ca61dd6699a1a124dbf6ef0f76022054bea"),
     "getGodEquipmentTargetMeleeDefense": (4002, "85836837393b8a9fbbf831156ae02a96328312189910c8fb916532f88db55df0"),
     "getGodEquipmentTargetRangedDefense": (4002, "4c947308bdfbe0b945bbd48c68b1680bba89d1e8361cdc0e6d21fe1007ac0f18"),
     "getGodEquipmentTargetMagicDefense": (4002, "c5c1191ba4e98a0982f7f519c9b65069ef4ec0e6c2af6c497058e7fabe32ab7a"),
     "getGodEquipmentTargetMagic": (4002, "0867364c350ce6dc8914b26d66599601db02d95b3c6695bbc99aff90b8bfaa76"),
     "getBlessedWoolBaseMagicDefense": (4002, "c7783840877a575d0a8e9df84956b6c4f68d9ccaeeae04218633ddd8d2647ea9"),
-    "getBlessedWoolTargetMagicDefense": (4002, "1600d10a98c4929319ad010a3cd583f2307ec20a01bee120e50efa9ec47d2df4"),
+    "getBlessedWoolTargetMagicDefense": (4002, "b3c9d60a4b3160a1b3885d5cd64e807b6e16d6101befded0f7f6e3f5ca26976c"),
     "getLegacyRangedOffense": (2431, "e9f8f428252a0fc738c819e16721b314736fd4e4bac8b1a11e7e74dfc1633499"),
 }
 

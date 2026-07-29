@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v23.schema.json",
+  "title": "Layered Map Parity Event v23",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology", "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v23"},
+    "eventType": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/topology"}
+      ]
+    },
+    "roundTripExact": {"$ref": "layered-map-parity-event-v22.schema.json#/properties/roundTripExact"}
+  },
+  "$defs": {
+    "nonNegativeInteger": {"type": "integer", "minimum": 0},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packedRegionX", "packedRegionY", "reconstructionPlacementCount",
+        "weakComponentOrdinal", "strongComponentOrdinal",
+        "forwardCohortSource", "conservativeConnectedSource",
+        "incomingOnlySource"
+      ],
+      "properties": {
+        "packedRegionX": {"type": "integer"},
+        "packedRegionY": {"type": "integer"},
+        "reconstructionPlacementCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "weakComponentOrdinal": {"$ref": "#/$defs/nonNegativeInteger"},
+        "strongComponentOrdinal": {"$ref": "#/$defs/nonNegativeInteger"},
+        "forwardCohortSource": {"type": "boolean"},
+        "conservativeConnectedSource": {"type": "boolean"},
+        "incomingOnlySource": {"type": "boolean"}
+      }
+    },
+    "kind": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constructionKind", "dependencyKind",
+        "authoredDependencyReferenceCount",
+        "crossSourceAuthoredReferenceCount",
+        "externalSupportReferenceCount", "directIncomingReferenceCount",
+        "conservativeConnectedReferenceCount"
+      ],
+      "properties": {
+        "constructionKind": {"$ref": "layered-map-parity-event-v22.schema.json#/$defs/constructionKind"},
+        "dependencyKind": {"$ref": "layered-map-parity-event-v22.schema.json#/$defs/dependencyKind"},
+        "authoredDependencyReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "crossSourceAuthoredReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "externalSupportReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "directIncomingReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "conservativeConnectedReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"}
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal", "sourceCount", "edgeCount", "referenceCount",
+        "forwardCohort", "conservativeConnected"
+      ],
+      "properties": {
+        "ordinal": {"$ref": "#/$defs/nonNegativeInteger"},
+        "sourceCount": {"type": "integer", "minimum": 1},
+        "edgeCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "referenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "forwardCohort": {"type": "boolean"},
+        "conservativeConnected": {"type": "boolean"}
+      }
+    },
+    "topology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "safetyObservedAtTick", "recipeSourceCount",
+        "authoredSourceCount", "kindCount", "weakComponentCount",
+        "strongComponentCount", "directedEdgeCount", "selfEdgeCount",
+        "crossSourceDirectedEdgeCount", "authoredDependencyReferenceCount",
+        "crossSourceAuthoredReferenceCount", "externalSupportSourceCount",
+        "externalSupportEdgeCount", "externalSupportReferenceCount",
+        "forwardCohortSourceCount", "forwardAuthoredSourceCount",
+        "touchedWeakComponentCount", "conservativeConnectedSourceCount",
+        "incomingOnlySourceCount", "directIncomingEdgeCount",
+        "directIncomingReferenceCount", "conservativeConnectedEdgeCount",
+        "conservativeConnectedReferenceCount",
+        "largestWeakComponentSourceCount",
+        "largestStrongComponentSourceCount", "cyclicStrongComponentCount",
+        "forwardDependencyClosed", "forwardCohortWeaklyClosed",
+        "identityMetadataOnly", "entityRegistry", "lifecycleAuthority",
+        "sources", "kinds", "weakComponents", "strongComponents"
+      ],
+      "properties": {
+        "generation": {"type": "integer", "minimum": 1},
+        "safetyObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "recipeSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "authoredSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "kindCount": {"type": "integer", "minimum": 0, "maximum": 15},
+        "weakComponentCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "strongComponentCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "directedEdgeCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "selfEdgeCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "crossSourceDirectedEdgeCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "authoredDependencyReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "crossSourceAuthoredReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "externalSupportSourceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "externalSupportEdgeCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "externalSupportReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "forwardCohortSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "forwardAuthoredSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "touchedWeakComponentCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "conservativeConnectedSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "incomingOnlySourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "directIncomingEdgeCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "directIncomingReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "conservativeConnectedEdgeCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "conservativeConnectedReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "largestWeakComponentSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "largestStrongComponentSourceCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "cyclicStrongComponentCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+        "forwardDependencyClosed": {"const": true},
+        "forwardCohortWeaklyClosed": {"type": "boolean"},
+        "identityMetadataOnly": {"const": true},
+        "entityRegistry": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "sources": {
+          "type": "array", "maxItems": 8192,
+          "items": {"$ref": "#/$defs/source"}
+        },
+        "kinds": {
+          "type": "array", "maxItems": 15,
+          "items": {"$ref": "#/$defs/kind"}
+        },
+        "weakComponents": {
+          "type": "array", "maxItems": 8192,
+          "items": {"$ref": "#/$defs/component"}
+        },
+        "strongComponents": {
+          "type": "array", "maxItems": 8192,
+          "items": {"$ref": "#/$defs/component"}
+        }
+      }
+    }
+  }
+}

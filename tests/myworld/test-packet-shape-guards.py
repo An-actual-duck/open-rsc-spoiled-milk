@@ -94,7 +94,8 @@ def main() -> None:
     require(GAME_STATE_UPDATER, "WANT_SYNC_MOVEMENT_SNAPSHOT", "custom movement snapshot config gate")
     require(GAME_STATE_UPDATER, "tryFinalizeAndSendPacket(OpcodeOut.SEND_MOVEMENT_SNAPSHOT, struct, player);", "custom movement snapshot packet send")
     require(GAME_STATE_UPDATER, "private static boolean isWithinClientLocalTileWindow", "custom movement local tile window guard")
-    require(GAME_STATE_UPDATER, "if (!isWithinClientLocalTileWindow(player, movedNpc.getX(), movedNpc.getY()))", "custom movement NPC local window filter")
+    require(GAME_STATE_UPDATER, "if (!isWithinMobPacketRange(player, movedNpc))", "custom movement NPC local window filter")
+    require(GAME_STATE_UPDATER, "return isWithinClientLocalTileWindow(", "custom movement helper delegates to the local tile window")
     require(GAME_STATE_UPDATER, "final boolean useCustomMovementStream = playerToUpdate.isUsingCustomClient()\n\t\t\t\t&& getServer().getConfig().WANT_CUSTOM_WALK_SPEED;", "custom movement stream config gate")
     require(GAME_STATE_UPDATER, "mobCoordOffset(", "retro coordinate offset helper")
 

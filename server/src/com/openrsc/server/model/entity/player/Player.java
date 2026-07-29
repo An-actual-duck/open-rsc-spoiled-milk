@@ -15,6 +15,9 @@ import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.database.impl.mysql.queries.logging.GenericLog;
 import com.openrsc.server.database.impl.mysql.queries.logging.LiveFeedLog;
 import com.openrsc.server.database.struct.PlayerInventory;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionEventRecoveryNoOpMetadata;
+import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionNpcOwnerPreservationNoOpMetadata;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.PluginTask;
@@ -37,6 +40,40 @@ import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
+import com.openrsc.server.model.world.coordinate.LayeredLocationMirror;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationAuthority;
+import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationPersistence;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionActiveNpcResidencyObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredProvenanceObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionCohortAttribution;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionTopologyAnalysis;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionPreservationBurdenAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionDynamicObjectPreservationRecord;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventOwnershipInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerEventContinuityAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationBoundaryObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionNpcOwnerPreservationRequirements;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventAtomicTargetRevalidation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionEventTargetObservation;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementReadiness;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementProposal;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementRefinementReassessment;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionRetirementSafetyAssessment;
+import com.openrsc.server.model.world.coordinate.LayeredRegionInterestOwnershipLedger;
+import com.openrsc.server.model.world.coordinate.LayeredRegionMembershipMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecisionArbiter;
+import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
+import com.openrsc.server.model.world.coordinate.LayeredVisibilityWindowMirror;
+import com.openrsc.server.model.world.coordinate.LayeredRelativeTransition;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldRegionKey;
+import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
 import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.ClientLimitations;
@@ -189,6 +226,24 @@ public final class Player extends Mob {
 	 * Multiple threads access this and it never changes.
 	 */
 	private final AtomicReference<CarriedItems> carriedItems = new AtomicReference<>();
+	/** Checked packed projection mirror retained across both authority modes. */
+	private final LayeredLocationMirror layeredLocationMirror = new LayeredLocationMirror();
+	/**
+	 * Private-gated layered authority. The inherited Point is its compatibility
+	 * projection while the gate is enabled.
+	 */
+	private final LayeredPlayerLocationAuthority layeredLocationAuthority =
+		new LayeredPlayerLocationAuthority();
+	/** Shadow membership only; the inherited packed Region remains authoritative. */
+	private final LayeredRegionMembershipMirror layeredRegionMembershipMirror =
+		new LayeredRegionMembershipMirror();
+	/** Shadow interest bounds only; packed visibility lookup remains authoritative. */
+	private final LayeredVisibilityWindowMirror layeredVisibilityWindowMirror =
+		new LayeredVisibilityWindowMirror();
+	/** Process-local interest shadow only; packed visibility remains authoritative. */
+	private final Object layeredInterestOwnerLock = new Object();
+	private LayeredRegionInterestOwnershipLedger.OwnerToken layeredInterestOwner;
+	private WorldRegionWindow layeredInterestOwnerWindow;
 	/**
 	 * Players cache is used to store various objects into database
 	 */
@@ -3334,6 +3389,597 @@ public final class Player extends Mob {
 		return loggedIn;
 	}
 
+	@Override
+	public void setInitialLocation(final Point point) {
+		if (getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			setInitialLayeredLocation(
+				LegacyPackedPointAdapter.fromLegacyPoint(point));
+			return;
+		}
+		synchronizeLayeredMirrors(point);
+		super.setInitialLocation(point);
+	}
+
+	public void setInitialLayeredLocation(final WorldLocation location) {
+		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			throw new IllegalStateException(
+				"Layered Player location authority is disabled");
+		}
+		boolean allowSynthetic =
+			getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
+		boolean nativeLayered = getWorld().getRegionManager()
+			.hasNativeLayeredTerrain(location);
+		Point projection = layeredLocationAuthority.initialize(
+			location, allowSynthetic, nativeLayered);
+		synchronizeLayeredMirrors(projection, location);
+		if (getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			super.setInitialWorldLocation(location);
+		} else {
+			super.setInitialLocation(projection);
+		}
+	}
+
+	public WorldLocation getLayeredLocation() {
+		if (getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			WorldLocation entityLocation = getWorldLocation();
+			boolean nativeLayered = getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(entityLocation);
+			WorldLocation authoritative =
+				layeredLocationAuthority.requireCurrent(
+					getLocation(),
+					getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+					nativeLayered);
+			WorldLocation mirrored = layeredLocationMirror.requireCurrent(
+				getLocation(),
+				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				nativeLayered);
+			if (!authoritative.equals(mirrored)) {
+				throw new IllegalStateException(
+					"Layered Player authority differs from its compatibility mirror");
+			}
+			if (!authoritative.equals(entityLocation)) {
+				throw new IllegalStateException(
+					"Layered Player authority differs from Entity spatial authority");
+			}
+			return authoritative;
+		}
+		WorldLocation mirrored =
+			layeredLocationMirror.requireCurrent(
+				getLocation(),
+				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				getWorld().getRegionManager().hasNativeLayeredTerrain(
+					getWorldLocation()));
+		if (!mirrored.equals(getWorldLocation())) {
+			throw new IllegalStateException(
+				"Layered Player mirror differs from Entity spatial location");
+		}
+		return mirrored;
+	}
+
+	public boolean isLayeredLocationAuthorityEnabled() {
+		return getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY;
+	}
+
+	public String getLayeredLocationPersistenceOrigin() {
+		if (!getCache().hasKey(LayeredPlayerLocationPersistence.KEY_ORIGIN)) {
+			return "none";
+		}
+		return getCache().getString(LayeredPlayerLocationPersistence.KEY_ORIGIN);
+	}
+
+	public WorldRegionKey getLayeredRegionKey() {
+		WorldRegionKey mirrored =
+			layeredRegionMembershipMirror.requireCurrent(getLayeredLocation());
+		if (getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			WorldRegionKey authoritative = getWorld().getRegionManager()
+				.requireLayeredSpatialMembership(this);
+			if (!authoritative.equals(mirrored)) {
+				throw new IllegalStateException(
+					"Player spatial membership differs from compatibility mirror");
+			}
+			return authoritative;
+		}
+		return mirrored;
+	}
+
+	public WorldRegionWindow getLayeredVisibilityWindow() {
+		WorldLocation layeredLocation = getLayeredLocation();
+		layeredRegionMembershipMirror.requireCurrent(layeredLocation);
+		WorldRegionWindow projected = getWorld().getRegionManager()
+			.getLayeredVisibleRegionWindow(layeredLocation);
+		return layeredVisibilityWindowMirror.requireCurrent(projected);
+	}
+
+	public LayeredRegionInterestOwnershipLedger.OwnerSnapshot
+		getLayeredInterestOwnerSnapshot() {
+		synchronized (layeredInterestOwnerLock) {
+			if (layeredInterestOwner == null || layeredInterestOwner.isClosed()) {
+				throw new IllegalStateException(
+					"Layered interest owner is not open for this Player session");
+			}
+			LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot =
+				getWorld().getRegionManager().getLayeredRegionInterestOwnerSnapshot(
+					layeredInterestOwner);
+			snapshot.requireWindow(getLayeredVisibilityWindow());
+			if (snapshot.getOwnerSequence() != layeredInterestOwner.getSequence()) {
+				throw new IllegalStateException(
+					"Layered interest owner sequence differs from its handle");
+			}
+			return snapshot;
+		}
+	}
+
+	private LayeredCoordinateParityObserver.InterestOwnershipSource
+		layeredInterestOwnershipSource() {
+		return new LayeredCoordinateParityObserver.InterestOwnershipSource() {
+			@Override
+			public LayeredCoordinateParityObserver.InterestOwnershipMetadata capture(
+				final WorldRegionWindow currentWindow,
+				final int maximumRegionsPerWindow) {
+				LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot =
+					getLayeredInterestOwnerSnapshot();
+				snapshot.requireWindow(currentWindow);
+				if (snapshot.getReferences().size() > maximumRegionsPerWindow) {
+					throw new IllegalArgumentException(
+						"Interest owner exceeds the diagnostic Region budget");
+				}
+				return LayeredCoordinateParityObserver.InterestOwnershipMetadata
+					.fromOwnerSnapshot(snapshot);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.RegionRetirementSource
+		layeredRegionRetirementSource() {
+		return new LayeredCoordinateParityObserver.RegionRetirementSource() {
+			@Override
+			public LayeredCoordinateParityObserver.RegionRetirementMetadata capture(
+				final List<WorldRegionKey> transitionKeys,
+				final List<WorldRegionKey> trackedCandidateKeys,
+				final long droppedCandidateCount,
+				final int maximumRegions) {
+				LinkedHashSet<WorldRegionKey> observed =
+					new LinkedHashSet<WorldRegionKey>(transitionKeys);
+				observed.addAll(trackedCandidateKeys);
+				if (observed.size() > maximumRegions) {
+					throw new IllegalArgumentException(
+						"Region retirement evidence exceeds the diagnostic budget");
+				}
+				List<LayeredRegionRetirementEligibilityLedger.Snapshot> snapshots =
+					getWorld().getRegionManager()
+						.getLayeredRegionRetirementEligibilitySnapshots(
+							new ArrayList<WorldRegionKey>(observed), maximumRegions);
+				return LayeredCoordinateParityObserver.RegionRetirementMetadata
+					.fromSnapshots(
+						snapshots, transitionKeys, trackedCandidateKeys,
+						droppedCandidateCount);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.RegionRetirementDecisionSource
+		layeredRegionRetirementDecisionSource() {
+		return new LayeredCoordinateParityObserver.RegionRetirementDecisionSource() {
+			@Override
+			public LayeredCoordinateParityObserver.RegionRetirementDecisionMetadata
+				capture(
+					final List<LayeredRegionRetirementEligibilityLedger.Snapshot>
+						candidates,
+					final long droppedCandidateCount,
+					final int maximumRegions) {
+				List<LayeredRegionRetirementDecisionArbiter.Decision> decisions =
+					getWorld().getRegionManager()
+						.evaluateLayeredRegionRetirementCandidates(
+							candidates, maximumRegions);
+				return LayeredCoordinateParityObserver
+					.RegionRetirementDecisionMetadata.fromDecisions(
+						decisions, droppedCandidateCount);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionRetirementSafetySource
+		layeredPackedRegionRetirementSafetySource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionRetirementSafetySource() {
+			@Override
+			public LayeredPackedRegionRetirementSafetyAssessment capture(
+				final LayeredPackedRegionRetirementReadiness readiness,
+				final int maximumPackedSources) {
+				return getWorld().getRegionManager()
+					.assessLayeredPackedRegionRetirementSafety(
+						readiness, maximumPackedSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionAuthoredConstructionSource
+		layeredPackedRegionAuthoredConstructionSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredConstructionSource() {
+			@Override
+			public LayeredPackedRegionAuthoredConstructionObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumPackedSources) {
+				return LayeredPackedRegionAuthoredConstructionObservation.observe(
+					getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredConstructionInventory(),
+					safety, maximumPackedSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionAuthoredProvenanceSource
+		layeredPackedRegionAuthoredProvenanceSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredProvenanceSource() {
+			@Override
+			public LayeredPackedRegionAuthoredProvenanceObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety) {
+				return getWorld().getRegionManager().captureAuthoredProvenance(
+					getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredPlacementManifest(),
+					getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredPopulationOutcome(),
+					safety, getWorld().getServer().getCurrentTick());
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionAuthoredReconstructionSource
+		layeredPackedRegionAuthoredReconstructionSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionSource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumSafetySources,
+				final int maximumRequirementSources) {
+				return LayeredPackedRegionAuthoredReconstructionObservation.observe(
+					getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredReconstructionRecipe(),
+					safety, maximumSafetySources, maximumRequirementSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionCohortSource
+			layeredPackedRegionAuthoredReconstructionCohortSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionCohortSource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionCohortAnalysis capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumCohortSources,
+				final int maximumRequirementSources) {
+				return LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+					.analyze(
+						getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						safety, maximumCohortSources,
+						maximumRequirementSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionCohortAttributionSource
+			layeredPackedRegionAuthoredReconstructionCohortAttributionSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionCohortAttributionSource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionCohortAttribution
+				capture(
+					final LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+						cohort,
+					final int maximumEdges,
+					final int maximumBridgePlacements) {
+				return LayeredPackedRegionAuthoredReconstructionCohortAttribution
+					.analyze(
+						getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						cohort, maximumEdges, maximumBridgePlacements);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionTopologySource
+			layeredPackedRegionAuthoredReconstructionTopologySource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionTopologySource() {
+			@Override
+			public LayeredPackedRegionAuthoredReconstructionTopologyAnalysis
+				capture(
+					final LayeredPackedRegionAuthoredReconstructionCohortAnalysis
+						cohort,
+					final int maximumSources,
+					final int maximumRelationships) {
+				return LayeredPackedRegionAuthoredReconstructionTopologyAnalysis
+					.analyze(
+						getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						cohort, maximumSources, maximumRelationships);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionAuthoredReconstructionDependencySemanticsSource
+			layeredPackedRegionAuthoredReconstructionDependencySemanticsSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionAuthoredReconstructionDependencySemanticsSource() {
+			@Override
+			public
+				LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis
+					capture(
+						final LayeredPackedRegionRetirementSafetyAssessment safety,
+						final int maximumSelectedSources,
+						final int maximumSupportSources,
+						final int maximumIncomingOwners,
+						final int maximumIncomingPlacements) {
+				return
+					LayeredPackedRegionAuthoredReconstructionDependencySemanticsAnalysis
+						.analyze(
+							getWorld().getWorldLoader().getWorldPopulator()
+								.getAuthoredReconstructionRecipe(),
+							safety, maximumSelectedSources,
+							maximumSupportSources, maximumIncomingOwners,
+							maximumIncomingPlacements);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionActiveNpcResidencySource
+		layeredPackedRegionActiveNpcResidencySource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionActiveNpcResidencySource() {
+			@Override
+			public LayeredPackedRegionActiveNpcResidencyObservation capture(
+				final LayeredPackedRegionRetirementSafetyAssessment safety,
+				final int maximumInstances,
+				final int maximumRelevantDetails) {
+				return getWorld().getRegionManager().captureActiveNpcResidency(
+					getWorld().getWorldLoader().getWorldPopulator()
+						.getAuthoredReconstructionRecipe(),
+					safety, getWorld().getServer().getCurrentTick(),
+					maximumInstances, maximumRelevantDetails);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionRetirementRefinementReassessmentSource
+			layeredPackedRegionRetirementRefinementReassessmentSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionRetirementRefinementReassessmentSource() {
+			@Override
+			public LayeredPackedRegionRetirementRefinementReassessment
+				captureIfFresh(
+					final LayeredPackedRegionRetirementRefinementProposal
+						previousProposal,
+					final int maximumCandidateSources,
+					final int maximumSupportSources,
+					final int maximumNpcInstances,
+					final int maximumRelevantNpcDetails,
+					final int maximumActiveNpcRequirements) {
+				return getWorld().getRegionManager()
+					.captureLayeredPackedRegionRetirementRefinementReassessmentIfFresh(
+						previousProposal,
+						getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						maximumCandidateSources, maximumSupportSources,
+						maximumNpcInstances, maximumRelevantNpcDetails,
+						maximumActiveNpcRequirements);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionPreservationBurdenSource
+		layeredPackedRegionPreservationBurdenSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionPreservationBurdenSource() {
+			@Override
+			public LayeredPackedRegionPreservationBurdenAssessment capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumCandidateSources) {
+				return getWorld().getRegionManager()
+					.assessLayeredPackedRegionPreservationBurden(
+						proposal, maximumCandidateSources);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver
+		.PackedRegionDynamicObjectPreservationSource
+			layeredPackedRegionDynamicObjectPreservationSource() {
+		return new LayeredCoordinateParityObserver
+			.PackedRegionDynamicObjectPreservationSource() {
+			@Override
+			public LayeredPackedRegionDynamicObjectPreservationRecord capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumCandidateSources,
+				final int maximumDynamicObjects) {
+				return getWorld().getRegionManager()
+					.captureLayeredPackedRegionDynamicObjectPreservationRecord(
+						proposal, maximumCandidateSources, maximumDynamicObjects);
+			}
+		};
+	}
+
+	private LayeredCoordinateParityObserver.PackedRegionEventOwnershipSource
+		layeredPackedRegionEventOwnershipSource() {
+		return new LayeredCoordinateParityObserver.PackedRegionEventOwnershipSource() {
+			@Override
+			public LayeredPackedRegionEventOwnershipInventory capture(
+				final LayeredPackedRegionRetirementRefinementProposal proposal,
+				final int maximumEvents,
+				final int maximumSpatialReferences) {
+				return getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionEventOwnershipInventory(
+						proposal, getWorld().getServer().getCurrentTick(),
+						maximumEvents, maximumSpatialReferences);
+			}
+
+			@Override
+			public LayeredPackedRegionEventTargetObservation captureTargets(
+				final LayeredPackedRegionEventOwnershipInventory inventory,
+				final int maximumTargetRecords) {
+				return getWorld().getRegionManager()
+					.captureLayeredPackedRegionEventTargetObservation(
+						inventory, maximumTargetRecords);
+			}
+
+			@Override
+			public LayeredPackedRegionEventAtomicTargetRevalidation
+				captureAtomicTargetRevalidation(
+					final LayeredPackedRegionEventOwnershipInventory inventory,
+					final int maximumTargetRecords) {
+				return getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionEventAtomicTargetRevalidation(
+						inventory, maximumTargetRecords);
+			}
+
+			@Override
+			public LayeredPackedRegionNpcOwnerEventContinuityAssessment
+				captureNpcOwnerContinuity(
+					final LayeredPackedRegionRetirementRefinementProposal proposal,
+					final LayeredPackedRegionEventOwnershipInventory inventory,
+					final int maximumCandidateSources,
+					final int maximumNpcInstances,
+					final int maximumRelevantNpcDetails,
+					final int maximumEventDetails) {
+				return getWorld().getRegionManager()
+					.captureLayeredPackedRegionNpcOwnerEventContinuity(
+						proposal, inventory,
+						getWorld().getWorldLoader().getWorldPopulator()
+							.getAuthoredReconstructionRecipe(),
+						maximumCandidateSources, maximumNpcInstances,
+						maximumRelevantNpcDetails, maximumEventDetails);
+			}
+
+			@Override
+			public LayeredPackedRegionNpcOwnerPreservationBoundaryObservation
+				captureNpcOwnerPreservationBoundary(
+					final LayeredPackedRegionNpcOwnerPreservationRequirements
+						requirements,
+					final int maximumOwners) {
+				return getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionNpcOwnerPreservationBoundary(
+						requirements, maximumOwners);
+			}
+
+			@Override
+			public PackedRegionNpcOwnerPreservationNoOpMetadata
+				captureNpcOwnerPreservationNoOp(
+					final LayeredPackedRegionEventOwnershipInventory inventory,
+					final LayeredPackedRegionNpcOwnerPreservationRequirements
+						requirements,
+					final int maximumOwners) {
+				return getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionNpcOwnerPreservationNoOpDiagnostic(
+						inventory, requirements, maximumOwners);
+			}
+
+			@Override
+			public PackedRegionEventRecoveryNoOpMetadata captureRecoveryNoOp(
+				final LayeredPackedRegionEventOwnershipInventory inventory,
+				final int maximumCandidates) {
+				return getWorld().getServer().getGameEventHandler()
+					.captureLayeredPackedRegionEventRecoveryNoOpDiagnostic(
+						inventory, maximumCandidates);
+			}
+		};
+	}
+
+	private LayeredRegionInterestOwnershipLedger.Change
+		synchronizeLayeredMirrors(final Point point) {
+		return synchronizeLayeredMirrors(
+			point,
+			LegacyPackedPointAdapter.fromLegacyPoint(point));
+	}
+
+	private LayeredRegionInterestOwnershipLedger.Change
+		synchronizeLayeredMirrors(
+			final Point point,
+			final WorldLocation layeredTarget) {
+		WorldLocation layeredLocation = layeredLocationMirror.synchronize(
+			point,
+			layeredTarget,
+			getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+			getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(layeredTarget));
+		layeredRegionMembershipMirror.synchronize(layeredLocation);
+		WorldRegionWindow window = getWorld().getRegionManager()
+			.getLayeredVisibleRegionWindow(layeredLocation);
+		layeredVisibilityWindowMirror.synchronize(window);
+		return synchronizeLayeredInterestOwnerIfOpen(window);
+	}
+
+	private LayeredRegionInterestOwnershipLedger.Change
+		openOrSynchronizeLayeredInterestOwner(
+		final WorldRegionWindow currentWindow) {
+		synchronized (layeredInterestOwnerLock) {
+			LayeredRegionInterestOwnershipLedger.Change change = null;
+			if (layeredInterestOwner == null || layeredInterestOwner.isClosed()) {
+				LayeredRegionInterestOwnershipLedger.OpenedOwner opened =
+					getWorld().getRegionManager()
+					.openLayeredRegionInterestOwner(currentWindow);
+				layeredInterestOwner = opened.getOwnerToken();
+				change = opened.getChange();
+			} else if (!currentWindow.equals(layeredInterestOwnerWindow)) {
+				change =
+					getWorld().getRegionManager()
+						.synchronizeLayeredRegionInterestOwner(
+							layeredInterestOwner, currentWindow);
+				if (change.isOwnerClosed()
+					|| change.getOwnerSequence() != layeredInterestOwner.getSequence()
+					|| !currentWindow.equals(change.getCurrentWindow())) {
+					throw new IllegalStateException(
+						"Layered interest synchronization returned inconsistent identity");
+				}
+			}
+			LayeredRegionInterestOwnershipLedger.OwnerSnapshot snapshot =
+				getWorld().getRegionManager().getLayeredRegionInterestOwnerSnapshot(
+					layeredInterestOwner);
+			snapshot.requireWindow(currentWindow);
+			layeredInterestOwnerWindow = currentWindow;
+			return change;
+		}
+	}
+
+	private LayeredRegionInterestOwnershipLedger.Change
+		synchronizeLayeredInterestOwnerIfOpen(
+		final WorldRegionWindow currentWindow) {
+		synchronized (layeredInterestOwnerLock) {
+			if (layeredInterestOwner != null && !layeredInterestOwner.isClosed()
+				&& !currentWindow.equals(layeredInterestOwnerWindow)) {
+				return openOrSynchronizeLayeredInterestOwner(currentWindow);
+			}
+			return null;
+		}
+	}
+
+	private LayeredRegionInterestOwnershipLedger.Change closeLayeredInterestOwner() {
+		synchronized (layeredInterestOwnerLock) {
+			if (layeredInterestOwner == null) {
+				return null;
+			}
+			LayeredRegionInterestOwnershipLedger.Change change =
+				getWorld().getRegionManager().closeLayeredRegionInterestOwner(
+					layeredInterestOwner);
+			if (!change.isOwnerClosed()
+				|| change.getOwnerSequence() != layeredInterestOwner.getSequence()) {
+				throw new IllegalStateException(
+					"Layered interest close returned inconsistent identity");
+			}
+			layeredInterestOwner = null;
+			layeredInterestOwnerWindow = null;
+			return change;
+		}
+	}
+
 	public void setLoggedIn(final boolean loggedIn) {
 		if (loggedIn) {
 			currentLogin = System.currentTimeMillis();
@@ -3356,6 +4002,46 @@ public final class Player extends Mob {
 			getWorld().getServer().getGameEventHandler().add(getStatRestorationEvent());
 		}
 		this.loggedIn = loggedIn;
+		WorldRegionWindow currentWindow = getLayeredVisibilityWindow();
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange;
+		if (loggedIn) {
+			ownershipChange = openOrSynchronizeLayeredInterestOwner(currentWindow);
+		} else {
+			ownershipChange = closeLayeredInterestOwner();
+		}
+		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
+			LayeredCoordinateParityObserver.onSession(
+				getDatabaseID(), getUsernameHash(), getLocation(), loggedIn,
+				ownershipChange,
+				loggedIn ? layeredInterestOwnershipSource() : null,
+				loggedIn ? layeredRegionRetirementSource() : null,
+				loggedIn ? layeredRegionRetirementDecisionSource() : null,
+				loggedIn ? layeredPackedRegionRetirementSafetySource() : null,
+				loggedIn ? layeredPackedRegionAuthoredConstructionSource() : null,
+				loggedIn ? layeredPackedRegionAuthoredProvenanceSource() : null,
+				loggedIn ? layeredPackedRegionAuthoredReconstructionSource() : null,
+				loggedIn
+					? layeredPackedRegionAuthoredReconstructionCohortSource()
+					: null,
+				loggedIn
+					? layeredPackedRegionAuthoredReconstructionCohortAttributionSource()
+					: null,
+				loggedIn
+					? layeredPackedRegionAuthoredReconstructionTopologySource()
+					: null,
+				loggedIn
+					? layeredPackedRegionAuthoredReconstructionDependencySemanticsSource()
+					: null,
+				loggedIn ? layeredPackedRegionActiveNpcResidencySource() : null,
+				loggedIn
+					? layeredPackedRegionRetirementRefinementReassessmentSource()
+					: null,
+				loggedIn ? layeredPackedRegionPreservationBurdenSource() : null,
+				loggedIn
+					? layeredPackedRegionDynamicObjectPreservationSource()
+					: null,
+				loggedIn ? layeredPackedRegionEventOwnershipSource() : null);
+		}
 	}
 
 	public void toggleDenyAllLogoutRequests() {
@@ -3568,7 +4254,7 @@ public final class Player extends Mob {
 		if (getCache().hasKey("death_location_y")) {
 			getCache().remove("death_location_y");
 		}
-		teleport(getConfig().RESPAWN_LOCATION_X, getConfig().RESPAWN_LOCATION_Y, false);
+		teleportToConfiguredRespawn(false);
 		ActionSender.sendEquipmentStats(this);
 		ActionSender.sendInventory(this);
 
@@ -3716,7 +4402,8 @@ public final class Player extends Mob {
 			&& getEndFollowRadius() > -1
 			&& getFollowEvent().getTimesRan() >= 1
 			&& withinRange(getFollowing(), getEndFollowRadius())
-			&& PathValidation.checkAdjacentDistance(getWorld(), getX(), getY(), getFollowing().getX(), getFollowing().getY(), true, false)) {
+			&& PathValidation.checkAdjacentDistance(
+				this, getFollowing(), true, false)) {
 			resetFollowing();
 			resetPath();
 		}
@@ -4241,8 +4928,146 @@ public final class Player extends Mob {
 		ActionSender.sendWorldInfo(this);
 	}
 
+	/**
+	 * Teleports to the configured legacy respawn coordinate without allowing
+	 * the current native package level to reinterpret that destination.
+	 */
+	public void teleportToConfiguredRespawn(final boolean bubble) {
+		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			teleport(
+				getConfig().RESPAWN_LOCATION_X,
+				getConfig().RESPAWN_LOCATION_Y,
+				bubble);
+			return;
+		}
+		teleportLayered(
+			LegacyPackedPointAdapter.fromPackedValues(
+				getConfig().RESPAWN_LOCATION_X,
+				getConfig().RESPAWN_LOCATION_Y),
+			bubble);
+	}
+
+	/**
+	 * Teleports to an explicit signed world location.
+	 */
+	public void teleportLayered(
+		final WorldLocation destination,
+		final boolean bubble) {
+		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			throw new IllegalStateException(
+				"Explicit layered teleport requires layered Player authority");
+		}
+		if (inCombat()) {
+			this.setLastOpponent(null);
+			combatEvent.resetCombat();
+		}
+		if (bubble) {
+			for (Player player : getViewArea().getPlayersInView()) {
+				if (!isInvisibleTo(player)) {
+					ActionSender.sendTeleBubble(
+						player, getX(), getY(), false);
+				}
+			}
+			ActionSender.sendTeleBubble(this, getX(), getY(), false);
+		}
+		setLayeredLocation(destination, true);
+		resetPath();
+		ActionSender.sendWorldInfo(this);
+	}
+
+	/**
+	 * Performs one explicit, geographically aligned signed-level transition.
+	 *
+	 * <p>Legacy ladder arithmetic encodes a floor in the Y coordinate. Native
+	 * package coordinates deliberately do not, so relative vertical movement
+	 * must change the signed level without first manufacturing a packed Y.</p>
+	 */
+	public void teleportRelativeLayer(
+		final int x,
+		final int y,
+		final int levelDelta,
+		final boolean bubble) {
+		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			throw new IllegalStateException(
+				"Relative layered teleport requires layered Player authority");
+		}
+		WorldLocation current = getLayeredLocation();
+		if (!getWorld().getRegionManager().hasNativeLayeredTerrain(current)) {
+			throw new IllegalStateException(
+				"Relative layered teleport requires native package terrain");
+		}
+		if (levelDelta == 0) {
+			throw new IllegalArgumentException(
+				"Relative layered teleport requires a non-zero level delta");
+		}
+		teleportLayered(
+			LayeredRelativeTransition.destination(
+				current, x, y, levelDelta),
+			bubble);
+	}
+
 	@Override
 	public void setLocation(final Point point, final boolean teleported) {
+		if (getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			WorldLocation current = layeredLocationAuthority.isInitialized()
+				? getLayeredLocation()
+				: null;
+			setLayeredLocation(
+				getWorld().getRegionManager()
+					.fromRuntimeCompatibilityPoint(
+					point,
+					current,
+					teleported),
+				teleported);
+			return;
+		}
+		setLocationCompatibility(point, null, teleported);
+	}
+
+	public void setLayeredLocation(
+		final WorldLocation location,
+		final boolean teleported) {
+		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			throw new IllegalStateException(
+				"Layered Player location authority is disabled");
+		}
+		NativeLayeredWorldPackageCatalog.Transition transition =
+			getWorld().getRegionManager().prepareNativeLayeredTransition(
+				layeredLocationAuthority.isInitialized()
+					? getLayeredLocation() : null,
+				location,
+				teleported);
+		Point projection = getWorld().getRegionManager()
+			.toRuntimeCompatibilityPoint(location);
+		setLocationCompatibility(projection, location, teleported);
+		if (transition != null
+			&& transition.getKind()
+				!= NativeLayeredWorldPackageCatalog.TransitionKind
+					.WITHIN_PACKAGE
+			&& transition.getKind()
+				!= NativeLayeredWorldPackageCatalog.TransitionKind
+					.WITHIN_LEGACY) {
+			setAttribute(
+				"native-layered-last-transition",
+				transition.toString());
+			LOGGER.info(
+				"Native layered transition committed playerId={} kind={} "
+					+ "sourcePackage={} destinationPackage={} destination={}",
+				getDatabaseID(),
+				transition.getKind(),
+				transition.getSourcePackageId().isEmpty()
+					? "legacy" : transition.getSourcePackageId(),
+				transition.getDestinationPackageId().isEmpty()
+					? "legacy" : transition.getDestinationPackageId(),
+				transition.getDestination());
+		}
+	}
+
+	private void setLocationCompatibility(
+		final Point point,
+		final WorldLocation layeredTarget,
+		final boolean teleported) {
+		Point previousLocation = getLocation();
 		boolean reloadLocalObjects = teleported || !getLocation().isWithin1Tile(point);
 		if (teleported || getSkullType() == 2 || getSkullType() == 0) {
 			// Inappropriate place for this to be getting set at for skulls, to me.
@@ -4255,7 +5080,30 @@ public final class Player extends Mob {
 			doSceneryMorphWalk(point);
 		}
 
-		super.setLocation(point, teleported);
+		WorldLocation target = layeredTarget == null
+			? LegacyPackedPointAdapter.fromLegacyPoint(point)
+			: layeredTarget;
+		LayeredRegionInterestOwnershipLedger.Change ownershipChange =
+			synchronizeLayeredMirrors(point, target);
+		if (layeredTarget != null
+			&& getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			super.setWorldLocation(layeredTarget, teleported);
+		} else {
+			super.setLocation(point, teleported);
+		}
+		if (layeredTarget != null) {
+			layeredLocationAuthority.move(
+				layeredTarget,
+				getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(layeredTarget));
+		}
+		getLayeredVisibilityWindow();
+		if (getConfig().WANT_LAYERED_MAP_PARITY_OBSERVER) {
+			LayeredCoordinateParityObserver.onLocationChanged(
+				getDatabaseID(), getUsernameHash(), previousLocation, point, teleported,
+				ownershipChange);
+		}
 		if (reloadLocalObjects) {
 			resetLocalObjectState();
 		}
@@ -5344,7 +6192,9 @@ public final class Player extends Mob {
 		if (checkPlayerActionState && (isBusy() || isRanging())) {
 			return false;
 		}
-		if (item.isRemoved() || getRegion().getItem(item.getID(), item.getLocation(), this) == null
+		if (item.isRemoved() || getWorld().getRegionManager()
+				.findInteractionGroundItem(
+					item.getID(), item.getLocation(), this) == null
 			|| !canReach(item) || item.getAmount() < 1) {
 			return false;
 		}
@@ -5388,7 +6238,7 @@ public final class Player extends Mob {
 				if (hitter.isPlayer()) {
 					((Player) hitter).resetAll();
 				}
-				this.teleport(getConfig().RESPAWN_LOCATION_X, getConfig().RESPAWN_LOCATION_Y, false);
+				this.teleportToConfiguredRespawn(false);
 				this.message("Your ring of life shines brightly");
 				final double survivalChance = EnchantingItemEffects.getSoulRingSurvivalChance(wornRing.getCatalogId());
 				if (DataConversions.getRandom().nextDouble() >= survivalChance) {
@@ -5609,7 +6459,7 @@ public final class Player extends Mob {
 			if (getCache().hasKey("tutorial")) {
 				getCache().remove("tutorial");
 			}
-			teleport(getConfig().RESPAWN_LOCATION_X, getConfig().RESPAWN_LOCATION_Y, false);
+			teleportToConfiguredRespawn(false);
 
 			if (this.getWorld().getServer().getConfig().SKIP_TUTORIAL_GIVES_ITEMS) {
 				giveTutorialItems();

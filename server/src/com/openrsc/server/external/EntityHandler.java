@@ -11,6 +11,7 @@ import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.TelePoint;
 import com.openrsc.server.model.container.Equipment;
+import com.openrsc.server.model.world.coordinate.WorldObjectTransition;
 import com.openrsc.server.util.PersistenceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1289,6 +1290,19 @@ public final class EntityHandler {
 			return point;
 		}
 		return null;
+	}
+
+	/**
+	 * Projects an existing object telepoint into the directed layered contract.
+	 * Existing command matching and packed storage remain authoritative.
+	 */
+	public WorldObjectTransition getObjectWorldTransition(Point location, String command) {
+		TelePoint destination = getObjectTelePoint(location, command);
+		if (destination == null) {
+			return null;
+		}
+		return WorldObjectTransition.fromLegacyPoints(
+			location, destination, destination.getCommand());
 	}
 
 	public ObjectRunecraftDef getObjectRunecraftDef(int id) {

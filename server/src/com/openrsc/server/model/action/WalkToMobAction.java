@@ -5,6 +5,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Path;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 
 public abstract class WalkToMobAction extends WalkToAction {
 
@@ -45,9 +46,7 @@ public abstract class WalkToMobAction extends WalkToAction {
 			&& checkedPoint.getX() == mob.getX()
 			&& checkedPoint.getY() == mob.getY();
 		boolean pathingCheckPassed = !sameTileCombatAttack
-			&& PathValidation.checkAdjacentDistance(getPlayer().getWorld(),
-			checkedPoint.getX(), checkedPoint.getY(), mob.getX(), mob.getY(),
-			ignoreProjectileAllowed, !ignoreProjectileAllowed);
+			&& checkAdjacentDistance(checkedPoint);
 		boolean actionExecutedThisTick = checkedPoint.withinRange(mob.getLocation(), radius) && pathingCheckPassed;
 		if (actionType == ActionType.ATTACKMAGIC
 			&& !getPlayer().getConfig().WANT_MYWORLD
@@ -59,6 +58,36 @@ public abstract class WalkToMobAction extends WalkToAction {
 			repathMyWorldMeleeAttackIfNeeded();
 		}
 		return actionExecutedThisTick;
+	}
+
+	private boolean checkAdjacentDistance(final Point checkedPoint) {
+		if (!getPlayer().getConfig()
+				.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			return PathValidation.checkAdjacentDistance(
+				getPlayer().getWorld(),
+				checkedPoint.getX(),
+				checkedPoint.getY(),
+				mob.getX(),
+				mob.getY(),
+				ignoreProjectileAllowed,
+				!ignoreProjectileAllowed);
+		}
+		try {
+			WorldLocation checkedLocation =
+				getPlayer().getWorld().getRegionManager()
+					.fromRuntimeCompatibilityPoint(
+					checkedPoint,
+					getPlayer().getWorldLocation(),
+					false);
+			return PathValidation.checkAdjacentDistance(
+				getPlayer().getWorld(),
+				checkedLocation,
+				mob.getWorldLocation(),
+				ignoreProjectileAllowed,
+				!ignoreProjectileAllowed);
+		} catch (IllegalArgumentException outsideScope) {
+			return false;
+		}
 	}
 
 	private void repathMyWorldMeleeAttackIfNeeded() {

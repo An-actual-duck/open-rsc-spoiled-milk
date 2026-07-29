@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.util.rsc.Formulae;
@@ -52,7 +53,14 @@ public class Hopper implements UseLocTrigger, OpLocTrigger {
 			offY = -2;
 		}
 
-		if (obj.getID() == 246) {
+		if (obj.getID() == 246
+			&& ZanarisLocation.isRelocated(obj.getWorldLocation())) {
+			addobject(
+				player.getWorld(),
+				ItemId.FLOUR.id(),
+				1,
+				ZanarisLocation.at(162, 701));
+		} else if (obj.getID() == 246) {
 			addobject(player.getWorld(), ItemId.FLOUR.id(), 1, 162, 3533);
 		} else {
 			addobject(player.getWorld(), ItemId.FLOUR.id(), 1, obj.getX(), Formulae.getNewY(Formulae.getNewY(obj.getY(), false), false) + offY);

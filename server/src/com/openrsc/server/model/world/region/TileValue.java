@@ -24,6 +24,50 @@ public class TileValue {
 	private boolean terrainInitialized = false;
 	private final int[] hostileProjectileCollisionCounts = new int[7];
 
+	public TileValue() {
+	}
+
+	TileValue(
+		final byte traversalMask,
+		final short diagWallVal,
+		final byte horizontalWallVal,
+		final byte overlay,
+		final byte verticalWallVal,
+		final byte elevation,
+		final boolean projectileAllowed,
+		final boolean originalProjectileAllowed,
+		final boolean terrainBlocked,
+		final int blockingSceneryCount,
+		final int terrainCollisionMask,
+		final int[] dynamicCollisionCounts,
+		final boolean terrainOverlayProjectileBlocked,
+		final int terrainWallProjectileCount,
+		final int dynamicProjectileCount) {
+		if (dynamicCollisionCounts == null
+			|| dynamicCollisionCounts.length != this.dynamicCollisionCounts.length) {
+			throw new IllegalArgumentException(
+				"Dynamic collision state must contain exactly "
+					+ this.dynamicCollisionCounts.length + " counters");
+		}
+		this.traversalMask = traversalMask;
+		this.diagWallVal = diagWallVal;
+		this.horizontalWallVal = horizontalWallVal;
+		this.overlay = overlay;
+		this.verticalWallVal = verticalWallVal;
+		this.elevation = elevation;
+		this.projectileAllowed = projectileAllowed;
+		this.originalProjectileAllowed = originalProjectileAllowed;
+		this.terrainBlocked = terrainBlocked;
+		this.blockingSceneryCount = blockingSceneryCount;
+		this.terrainCollisionMask = terrainCollisionMask;
+		System.arraycopy(
+			dynamicCollisionCounts, 0, this.dynamicCollisionCounts, 0,
+			dynamicCollisionCounts.length);
+		this.terrainOverlayProjectileBlocked = terrainOverlayProjectileBlocked;
+		this.terrainWallProjectileCount = terrainWallProjectileCount;
+		this.dynamicProjectileCount = dynamicProjectileCount;
+	}
+
 	public TileValue copy() {
 		TileValue copy = new TileValue();
 		copy.traversalMask = traversalMask;
@@ -62,6 +106,24 @@ public class TileValue {
 	public void addBlockingScenery(){blockingSceneryCount++;refreshFullBlock();}
 	public void removeBlockingScenery(){if(blockingSceneryCount>0)blockingSceneryCount--;refreshFullBlock();}
 	public int getBlockingSceneryCount(){return blockingSceneryCount;}
+	public int getTerrainCollisionMask(){return terrainCollisionMask;}
+	public int[] getDynamicCollisionCounts(){return Arrays.copyOf(dynamicCollisionCounts,dynamicCollisionCounts.length);}
+	public boolean isTerrainOverlayProjectileBlocked(){return terrainOverlayProjectileBlocked;}
+	public int getTerrainWallProjectileCount(){return terrainWallProjectileCount;}
+	public int getDynamicProjectileCount(){return dynamicProjectileCount;}
+	boolean hasCollisionProductState() {
+		if (terrainBlocked || blockingSceneryCount > 0
+			|| terrainCollisionMask != 0 || terrainOverlayProjectileBlocked
+			|| terrainWallProjectileCount > 0 || dynamicProjectileCount > 0) {
+			return true;
+		}
+		for (int count : dynamicCollisionCounts) {
+			if (count > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
 	public void setTerrainOverlayProjectileBlocked(boolean blocked){terrainOverlayProjectileBlocked=blocked;refreshProjectile();}
 	public void addTerrainWallProjectileBlock(){terrainWallProjectileCount++;refreshProjectile();}
 	public void removeTerrainWallProjectileBlock(){if(terrainWallProjectileCount>0)terrainWallProjectileCount--;refreshProjectile();}

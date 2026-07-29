@@ -160,7 +160,13 @@ def main() -> None:
         "normal update should run shadow visibility comparison after packet visibility is built",
     )
     require(
-        "sendSceneBaselineIfEnabled(player, sceneryChanged[0], wallsChanged[0], groundItemsChanged[0]);" in normal_update_block,
+        "final StaticScenePresentationSnapshot staticPresentation =" in normal_update_block
+        and "sendSceneBaselineIfEnabled(\n"
+        "\t\t\tplayer,\n"
+        "\t\t\tsceneryChanged[0],\n"
+        "\t\t\twallsChanged[0],\n"
+        "\t\t\tgroundItemsChanged[0],\n"
+        "\t\t\tstaticPresentation);" in normal_update_block,
         "normal update should offer the default-off custom static-scene baseline consumer after object change checks",
     )
     require(
@@ -232,8 +238,11 @@ def main() -> None:
         "private void recordVisibilitySnapshotMetrics",
     )
     require(
-        "player.isUsingCustomClient() && getServer().getConfig().WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT" in visibility_input_gate,
-        "snapshot packet input should be custom-client and config gated",
+        "player.isUsingCustomClient()" in visibility_input_gate
+        and "WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT" in visibility_input_gate
+        and "WANT_SYNC_SCENE_BASELINE" in visibility_input_gate
+        and "nativeTerrainSymmetricResidencyEnabled()" in visibility_input_gate,
+        "snapshot packet input should be custom-client gated and mandatory for the resident scene contract",
     )
     visibility_metrics_block = extract_between(
         updater,
@@ -518,8 +527,8 @@ def main() -> None:
         require(snippet in region_manager, f"region manager missing shadow visibility snapshot: {snippet}")
 
     require(
-        "regionManager.invalidateVisibleObjectWindowCache(this);" in region,
-        "region game-object mutations should invalidate cached visible object windows for the changed region",
+        "invalidateVisibleObjectWindowCache(region);" in region_manager,
+        "ordered region game-object transactions should invalidate cached visible object windows",
     )
     require(
         "return other.regionX == regionX && other.regionY == regionY;" in region,
@@ -625,14 +634,14 @@ def main() -> None:
         "private int movementSnapshotSequence = 0;",
         "public boolean sendMovementSnapshotPacket(final Player player, final List<Player> movedPlayers, final List<Npc> movedNpcs)",
         "!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT",
-        "struct.protocolVersion = MOVEMENT_SNAPSHOT_PROTOCOL_VERSION;",
+        "struct.protocolVersion = layeredProtocol",
         "struct.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);",
         "struct.sequence = ++movementSnapshotSequence;",
         "tryFinalizeAndSendPacket(OpcodeOut.SEND_MOVEMENT_SNAPSHOT, struct, player);",
         "getServer().addMovementSnapshotMetrics(",
         "private static boolean isWithinClientLocalTileWindow",
         "CLIENT_LOCAL_TILE_COUNT",
-        "if (!isWithinClientLocalTileWindow(player, movedNpc.getX(), movedNpc.getY()))",
+        "if (!isWithinMobPacketRange(player, movedNpc))",
     ):
         require(snippet in updater, f"movement snapshot sender missing: {snippet}")
     movement_window_block = extract_between(
@@ -681,30 +690,38 @@ def main() -> None:
     )
     for snippet in (
         "private static final int SCENE_BASELINE_PROTOCOL_VERSION = 5;",
+        "private static final int LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION = 8;",
         "private static final int SCENE_BASELINE_PAGE_SIZE = 64;",
         "private static final int SCENE_BASELINE_PAGE_BURST_LIMIT = 4;",
+        "private static final int LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_SIZE = 512;",
+        "private static final int LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_BURST_LIMIT = 8;",
         "private static final int SCENE_BASELINE_FIXED_PAYLOAD_BYTES = 48;",
         "private static final int SCENE_BASELINE_OBJECT_RECORD_BYTES = 8;",
+        "private static final int SCENE_BASELINE_PRESENTATION_HEADER_BYTES = 22;",
+        "private static final int SCENE_BASELINE_PRESENTATION_OBJECT_RECORD_BYTES = 12;",
         "private static final int SCENE_BASELINE_PAGE_SCENERY = 1;",
         "private static final int SCENE_BASELINE_PAGE_WALLS = 2;",
+        "private static final int SCENE_BASELINE_PAGE_PRESENTATION_SCENERY = 4;",
+        "private static final int SCENE_BASELINE_PAGE_PRESENTATION_WALLS = 5;",
         "private static final String SCENE_BASELINE_SUMMARY_ATTRIBUTE = \"scene_baseline_summary\";",
         "private static final String STATIC_SCENE_SCAN_KEY_ATTRIBUTE = \"static_scene_scan_key\";",
         "private boolean canSkipStaticSceneScan(final Player player, final VisibilitySnapshot packetVisibility)",
-        "previousScanKey != null && previousScanKey.longValue() == scanKey",
+        "return scanKey.equals(previousScanKey);",
         "private void storeStaticSceneScanKey(final Player player, final VisibilitySnapshot packetVisibility)",
-        "private long staticSceneScanKey(final Player player, final VisibilitySnapshot packetVisibility)",
+        "private Object staticSceneScanKey(",
         "packetVisibility.getObjectSnapshotVersion() <= 0L",
         "packetVisibility.getObjectSnapshotKey()",
         "hash = hash * 31 + player.getX();",
         "hash = hash * 31 + player.getY();",
         "final SceneBaselineSummary previous = player.getAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE);",
-        "while (sentPages < SCENE_BASELINE_PAGE_BURST_LIMIT)",
+        "sceneBaselinePageBurstLimit(current.protocolVersion)",
+        "while (sentPages < pageBurstLimit)",
         "sendSceneBaselinePacket(player, current, page);",
         "if (sentPages == 0 && previous != null && current.sameStaticPayload(previous))",
         "sendSceneBaselinePacket(player, current, SceneBaselinePage.empty());",
         "private void sendSceneBaselinePacket(",
         "page.applyTo(baseline);",
-        "getServer().addSceneBaselineMetrics(page.recordCount(), page.payloadBytes());",
+        "page.payloadBytes(current.protocolVersion)",
         "player.setAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE, current);",
         "summary.scenery = player.getLocalGameObjects().size();",
         "summary.walls = player.getLocalWallObjects().size();",
@@ -713,20 +730,23 @@ def main() -> None:
         "previous != null && !sceneryChanged && previous.scenery == summary.scenery",
         "previous != null && !wallsChanged && previous.walls == summary.walls",
         "previous != null && !groundItemsChanged && previous.groundItems == summary.groundItems",
-        "private SceneBaselinePage buildNextSceneBaselinePage(final Player player, final SceneBaselineSummary summary)",
+        "private SceneBaselinePage buildNextSceneBaselinePage(",
+        "private SceneBaselinePage buildSceneBaselinePresentationPage(",
+        "summary.samePagedScenePayload(previous)",
         "private SceneBaselinePage buildSceneBaselineObjectPage(",
         "private static final class SceneBaselineSummary",
         "private boolean sameStaticPayload(final SceneBaselineSummary other)",
+        "private boolean samePagedScenePayload(",
         "objectViewDistance == other.objectViewDistance",
         "private boolean hasSentCompleteStaticBaseline()",
-        "private static int pageTotalFor(final int recordCount)",
+        "private static int pageTotalFor(",
         "private boolean shouldSendLegacyStaticScenePackets(final Player player, final boolean staticSceneScanSkipped)",
         "return !staticSceneScanSkipped;",
         "getServer().addSuppressedLegacyStaticSceneMetrics(false, objectLocs.size());",
         "getServer().addSuppressedLegacyStaticSceneMetrics(true, objectLocs.size());",
         "private static final class SceneBaselinePage",
         "private int recordCount()",
-        "private int payloadBytes()",
+        "private int payloadBytes(final int protocolVersion)",
         "private int sceneIdentity(final int a, final int b, final int c, final int d, final int e)",
         "private int addSceneIdentity(final int summary, final int identity)",
     ):
@@ -840,6 +860,14 @@ def main() -> None:
         "public int sceneryHash;",
         "public int wallsHash;",
         "public int groundItemsHash;",
+        "public int presentationCenterSectorX;",
+        "public int presentationCenterSectorY;",
+        "public int presentationOuterRadius;",
+        "public int presentationInnerRadius;",
+        "public int presentationScenery;",
+        "public int presentationWalls;",
+        "public int presentationSceneryHash;",
+        "public int presentationWallsHash;",
         "public int pageCategory;",
         "public int pageIndex;",
         "public int pageTotal;",
@@ -860,10 +888,12 @@ def main() -> None:
         "client should recognize scene baseline protocol v5 object-range metadata and checksum payload",
     )
     require(
-        "if (packetsIncoming.packetEnd + 7 <= length)" in client_packet_handler
+        "SCENE_BASELINE_PAGE_HEADER_BYTES" in client_packet_handler
         and "int recordCount = packetsIncoming.getShort();" in client_packet_handler
-        and "packetsIncoming.packetEnd + 8 <= length" in client_packet_handler,
-        "client should parse, record, and discard scene baseline page records safely",
+        and "final int recordBytes = presentationRecords ? 12 : 8;" in client_packet_handler
+        and "validateSceneBaselinePageHeader(" in client_packet_handler
+        and "validateSceneBaselineRecord(" in client_packet_handler,
+        "client should strictly parse and validate both baseline page products",
     )
     for snippet in (
         "private final SceneBaselineState sceneBaselineState = new SceneBaselineState();",
@@ -879,6 +909,9 @@ def main() -> None:
         "private void addBaselineWallObject(SceneBaselineState.Record record)",
         "snapshotStoredSceneryRecords()",
         "snapshotStoredWallRecords()",
+        "applyCompleteStaticPresentation();",
+        "snapshotStoredPresentationSceneryRecords()",
+        "snapshotStoredPresentationWallRecords()",
         "recordLegacyBaselineApplied()",
     ):
         require(snippet in client_packet_handler, f"client scene baseline parsing/apply path missing: {snippet}")
@@ -890,6 +923,8 @@ def main() -> None:
         "private final Map<Integer, Map<Integer, List<Record>>> receivedPageRecords",
         "private List<Record> storedSceneryRecords",
         "private List<Record> storedWallRecords",
+        "private List<Record> storedPresentationSceneryRecords",
+        "private List<Record> storedPresentationWallRecords",
         "private int objectViewDistance = 0;",
         "private int incompleteSceneResets = 0;",
         "private int completedBaselines = 0;",
@@ -899,7 +934,9 @@ def main() -> None:
         "private void resetPageState()",
         "private void storePageRecords(",
         "private boolean hasCompleteBaseline()",
+        "private boolean hasCompletePresentation()",
         "private void rebuildStoredBaseline()",
+        "private void rebuildStoredPresentation()",
         "completedBaselines++;",
         "private List<Record> flattenRecords(int pageCategory)",
         "private String parityLine(mudclient mc)",
@@ -921,6 +958,7 @@ def main() -> None:
         "private static final class ParityResult",
         "private String baselineState()",
         "boolean hasStoredCompleteBaseline()",
+        "boolean hasStoredCompletePresentation()",
         "private boolean isStaticCategory(int pageCategory)",
         "private int staticSceneKey(",
         "private String pageSummary(int pageCategory)",

@@ -1,0 +1,704 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v43.schema.json",
+  "title": "Layered Map Parity Event v43",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency", "packedRegionActiveNpcContainment",
+    "packedRegionActiveNpcBoundaryRequirements",
+    "packedRegionRetirementRefinement",
+    "packedRegionRetirementRefinementReassessment",
+    "packedRegionPreservationBurden",
+    "packedRegionDynamicObjectPreservation", "packedRegionEventOwnership",
+    "packedRegionEventTargets", "packedRegionEventAtomicTargetRevalidation",
+    "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v43"},
+    "eventType": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredReconstructionTopology"},
+    "packedRegionAuthoredReconstructionDependencySemantics": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics"},
+    "packedRegionActiveNpcResidency": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionActiveNpcResidency"},
+    "packedRegionActiveNpcContainment": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionActiveNpcContainment"},
+    "packedRegionActiveNpcBoundaryRequirements": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionActiveNpcBoundaryRequirements"},
+    "packedRegionRetirementRefinement": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionRetirementRefinement"},
+    "packedRegionRetirementRefinementReassessment": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionRetirementRefinementReassessment"},
+    "packedRegionPreservationBurden": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionPreservationBurden"},
+    "packedRegionDynamicObjectPreservation": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionDynamicObjectPreservation"},
+    "packedRegionEventOwnership": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/eventOwnership"}
+      ]
+    },
+    "packedRegionEventTargets": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/eventTargets"}
+      ]
+    },
+    "packedRegionEventAtomicTargetRevalidation": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/atomicTargetRevalidation"}
+      ]
+    },
+    "roundTripExact": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/roundTripExact"}
+  },
+  "$defs": {
+    "eventOwnership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposalGeneration", "observedAtTick", "sourceCount", "eventCount",
+        "spatialReferenceCount", "exactSpatialEventCount",
+        "ownerPositionHintEventCount", "nonSpatialGlobalEventCount",
+        "unattributedEventCount", "candidateRelatedEventCount",
+        "registrationIdentityCapturedEventCount",
+        "registrationIdentityCaptured", "registrationIdentityComplete",
+        "schedulerInstanceIdentityCaptured", "schedulerInstanceIdentity",
+        "restorationStateAvailableEventCount",
+        "detachedCallbackPayloadCompleteEventCount",
+        "executionSemanticsCapturedEventCount",
+        "executionSemanticsCaptured", "executionSemanticsComplete",
+        "atomicTimingCapturedEventCount", "atomicTimingCaptured",
+        "atomicTimingComplete", "targetBindingRequirementCapturedEventCount",
+        "targetBindingRequirementCaptured", "targetBindingRequirementComplete",
+        "targetBindingCompleteEventCount", "targetBindingComplete",
+        "arrivalOrderingCapturedEventCount", "arrivalOrderingCaptured",
+        "arrivalOrderingComplete",
+        "generationBindingRequirementCapturedEventCount",
+        "generationBindingRequirementCaptured",
+        "generationBindingRequirementComplete",
+        "generationBindingCompleteEventCount", "generationBindingComplete",
+        "idempotencyRequirementCapturedEventCount",
+        "idempotencyRequirementCaptured", "idempotencyRequirementComplete",
+        "candidateAttributionComplete", "restorationStateCompleteEventCount",
+        "pointInTimeOnly", "detachedPrimitiveCopy", "callbackStateCaptured",
+        "schedulerIdentityCaptured", "preservationPerformed", "reloadRequest",
+        "eventCancellation", "eventReschedule", "entityRegistry",
+        "arrivalGate", "teardownTransaction", "lifecycleAuthority",
+        "sources", "events"
+      ],
+      "properties": {
+        "proposalGeneration": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/proposalGeneration"},
+        "observedAtTick": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/observedAtTick"},
+        "sourceCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/sourceCount"},
+        "eventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/eventCount"},
+        "spatialReferenceCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/spatialReferenceCount"},
+        "exactSpatialEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/exactSpatialEventCount"},
+        "ownerPositionHintEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/ownerPositionHintEventCount"},
+        "nonSpatialGlobalEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/nonSpatialGlobalEventCount"},
+        "unattributedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/unattributedEventCount"},
+        "candidateRelatedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/candidateRelatedEventCount"},
+        "registrationIdentityCapturedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/registrationIdentityCapturedEventCount"},
+        "registrationIdentityCaptured": {"const": true},
+        "registrationIdentityComplete": {"const": true},
+        "schedulerInstanceIdentityCaptured": {"const": true},
+        "schedulerInstanceIdentity": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/schedulerInstanceIdentity"},
+        "restorationStateAvailableEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/restorationStateAvailableEventCount"},
+        "detachedCallbackPayloadCompleteEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/detachedCallbackPayloadCompleteEventCount"},
+        "executionSemanticsCapturedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/executionSemanticsCapturedEventCount"},
+        "executionSemanticsCaptured": {"type": "boolean"},
+        "executionSemanticsComplete": {"const": true},
+        "atomicTimingCapturedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/atomicTimingCapturedEventCount"},
+        "atomicTimingCaptured": {"type": "boolean"},
+        "atomicTimingComplete": {"const": true},
+        "targetBindingRequirementCapturedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/targetBindingRequirementCapturedEventCount"},
+        "targetBindingRequirementCaptured": {"type": "boolean"},
+        "targetBindingRequirementComplete": {"const": true},
+        "targetBindingCompleteEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/targetBindingCompleteEventCount"},
+        "targetBindingComplete": {"type": "boolean"},
+        "arrivalOrderingCapturedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/arrivalOrderingCapturedEventCount"},
+        "arrivalOrderingCaptured": {"type": "boolean"},
+        "arrivalOrderingComplete": {"const": true},
+        "generationBindingRequirementCapturedEventCount": {"$ref": "layered-map-parity-event-v34.schema.json#/$defs/boundedEventCount"},
+        "generationBindingRequirementCaptured": {"type": "boolean"},
+        "generationBindingRequirementComplete": {"const": true},
+        "generationBindingCompleteEventCount": {"$ref": "layered-map-parity-event-v34.schema.json#/$defs/boundedEventCount"},
+        "generationBindingComplete": {"type": "boolean"},
+        "idempotencyRequirementCapturedEventCount": {"$ref": "layered-map-parity-event-v34.schema.json#/$defs/boundedEventCount"},
+        "idempotencyRequirementCaptured": {"type": "boolean"},
+        "idempotencyRequirementComplete": {"const": true},
+        "candidateAttributionComplete": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/candidateAttributionComplete"},
+        "restorationStateCompleteEventCount": {"const": 0},
+        "pointInTimeOnly": {"const": true},
+        "detachedPrimitiveCopy": {"const": true},
+        "callbackStateCaptured": {"const": false},
+        "schedulerIdentityCaptured": {"const": false},
+        "preservationPerformed": {"const": false},
+        "reloadRequest": {"const": false},
+        "eventCancellation": {"const": false},
+        "eventReschedule": {"const": false},
+        "entityRegistry": {"const": false},
+        "arrivalGate": {"const": false},
+        "teardownTransaction": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "sources": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/sources"},
+        "events": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {"$ref": "#/$defs/eventRecord"}
+        }
+      }
+    },
+    "eventRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshotOrdinal", "registrationSequence", "ownerKind",
+        "attributionKind", "running", "ticksBeforeRun", "timesRan",
+        "atomicTimingCaptured", "candidateRelated", "attributionComplete",
+        "restorationStateComplete", "restorationState",
+        "candidateSourceOrdinals", "spatialReferences"
+      ],
+      "properties": {
+        "snapshotOrdinal": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/snapshotOrdinal"},
+        "registrationSequence": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/registrationSequence"},
+        "ownerKind": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/ownerKind"},
+        "attributionKind": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/attributionKind"},
+        "running": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/running"},
+        "ticksBeforeRun": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/ticksBeforeRun"},
+        "timesRan": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/timesRan"},
+        "atomicTimingCaptured": {"type": "boolean"},
+        "candidateRelated": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/candidateRelated"},
+        "attributionComplete": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/attributionComplete"},
+        "restorationStateComplete": {"const": false},
+        "restorationState": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/restorationState"}
+          ]
+        },
+        "candidateSourceOrdinals": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/candidateSourceOrdinals"},
+        "spatialReferences": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/spatialReferences"}
+      }
+    },
+    "restorationState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind", "forceFullBlock", "targetBindingEvidence",
+        "detachedCallbackPayloadComplete", "executionSemantics",
+        "timeProgressionPolicy", "executionSemanticsCaptured",
+        "atomicTimingCaptured", "targetSubject", "bindingEvidence",
+        "targetConflictPolicy", "targetBindingRequirementCaptured",
+        "targetBindingComplete", "arrivalOrderingRequirement",
+        "arrivalOrderingCaptured", "generationBindingRequirement",
+        "generationBindingRequirementCaptured", "generationBindingComplete",
+        "desiredState", "idempotencyPolicy", "mutationPrecondition",
+        "idempotencyRequirementCaptured", "schedulerIdentityCaptured",
+        "targetBindingLookupPerformed", "standaloneRestorationComplete",
+        "scenery"
+      ],
+      "properties": {
+        "kind": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/restorationState/properties/kind"},
+        "forceFullBlock": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/restorationState/properties/forceFullBlock"},
+        "targetBindingEvidence": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/restorationState/properties/targetBindingEvidence"},
+        "detachedCallbackPayloadComplete": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/restorationState/properties/detachedCallbackPayloadComplete"},
+        "executionSemantics": {"const": "ONE_SHOT"},
+        "timeProgressionPolicy": {"const": "CONTINUE_SERVER_TICKS"},
+        "executionSemanticsCaptured": {"const": true},
+        "atomicTimingCaptured": {"const": true},
+        "targetSubject": {"enum": ["AUTHORED_DESTINATION_SLOT", "AUTHORED_EXISTING_ENTITY"]},
+        "bindingEvidence": {"enum": ["AUTHORED_PLACEMENT_IDENTITY", "MISSING_AUTHORED_PLACEMENT_IDENTITY"]},
+        "targetConflictPolicy": {"const": "REFUSE_MISMATCH_OR_AMBIGUITY"},
+        "targetBindingRequirementCaptured": {"const": true},
+        "targetBindingComplete": {"type": "boolean"},
+        "arrivalOrderingRequirement": {"const": "RECONCILE_BEFORE_FIRST_VISIBILITY"},
+        "arrivalOrderingCaptured": {"const": true},
+        "generationBindingRequirement": {"const": "MATCH_RECONSTRUCTION_GENERATION"},
+        "generationBindingRequirementCaptured": {"const": true},
+        "generationBindingComplete": {"type": "boolean"},
+        "desiredState": {"enum": ["AUTHORED_SCENERY_PRESENT", "AUTHORED_SCENERY_ABSENT"]},
+        "idempotencyPolicy": {"const": "ALREADY_SATISFIED_IS_NO_OP_SUCCESS"},
+        "mutationPrecondition": {"enum": ["DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT", "EXACT_AUTHORED_ENTITY_PRESENT"]},
+        "idempotencyRequirementCaptured": {"const": true},
+        "schedulerIdentityCaptured": {"const": false},
+        "targetBindingLookupPerformed": {"const": false},
+        "standaloneRestorationComplete": {"const": false},
+        "scenery": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/restorationState/properties/scenery"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "SCENERY_SPAWN"}}},
+          "then": {"properties": {
+            "targetSubject": {"const": "AUTHORED_DESTINATION_SLOT"},
+            "desiredState": {"const": "AUTHORED_SCENERY_PRESENT"},
+            "mutationPrecondition": {"const": "DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT"}
+          }}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "SCENERY_REMOVE"}}},
+          "then": {"properties": {
+            "targetSubject": {"const": "AUTHORED_EXISTING_ENTITY"},
+            "desiredState": {"const": "AUTHORED_SCENERY_ABSENT"},
+            "mutationPrecondition": {"const": "EXACT_AUTHORED_ENTITY_PRESENT"}
+          }}
+        },
+        {
+          "if": {"properties": {"bindingEvidence": {"const": "AUTHORED_PLACEMENT_IDENTITY"}}},
+          "then": {"properties": {
+            "targetBindingComplete": {"const": true},
+            "scenery": {"properties": {"authoredPlacement": {"type": "object"}}}
+          }}
+        },
+        {
+          "if": {"properties": {"bindingEvidence": {"const": "MISSING_AUTHORED_PLACEMENT_IDENTITY"}}},
+          "then": {"properties": {
+            "targetBindingComplete": {"const": false},
+            "generationBindingComplete": {"const": false},
+            "scenery": {"properties": {"authoredPlacement": {"type": "null"}}}
+          }}
+        },
+        {
+          "if": {"properties": {"generationBindingComplete": {"const": true}}},
+          "then": {"properties": {
+            "bindingEvidence": {"const": "AUTHORED_PLACEMENT_IDENTITY"},
+            "targetBindingComplete": {"const": true},
+            "scenery": {"properties": {"authoredPlacement": {"type": "object"}}}
+          }}
+        }
+      ]
+    },
+    "eventTargets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposalGeneration", "eventInventoryObservedAtTick",
+        "targetObservedAtTick", "schedulerInstanceIdentity",
+        "targetCount", "availableTargetCount", "unavailableTargetCount",
+        "objectBoundaryClassifiedTargetCount",
+        "availableTargetObjectBoundaryClassificationComplete",
+        "noOpSuccessCount", "mutationPreconditionSatisfiedCount",
+        "refusedTargetCount", "outcomeCountComplete", "pointInTimeOnly",
+        "atomicWithEventInventory", "readOnlyTargetLookupPerformed",
+        "runtimeTargetClassificationPerformed", "atomicWithMutation",
+        "runtimeRevalidationPerformed",
+        "entityHandleRetained", "achievedStateClaimed", "commitToken",
+        "mutationPerformed", "executableRestoration", "arrivalGate",
+        "lifecycleAuthority", "targets"
+      ],
+      "properties": {
+        "proposalGeneration": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/proposalGeneration"},
+        "eventInventoryObservedAtTick": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/observedAtTick"},
+        "targetObservedAtTick": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/observedAtTick"},
+        "schedulerInstanceIdentity": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/schedulerInstanceIdentity"},
+        "targetCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "availableTargetCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "unavailableTargetCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "objectBoundaryClassifiedTargetCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "availableTargetObjectBoundaryClassificationComplete": {"const": true},
+        "noOpSuccessCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "mutationPreconditionSatisfiedCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "refusedTargetCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "outcomeCountComplete": {"const": true},
+        "pointInTimeOnly": {"const": true},
+        "atomicWithEventInventory": {"const": false},
+        "readOnlyTargetLookupPerformed": {"const": true},
+        "runtimeTargetClassificationPerformed": {"type": "boolean"},
+        "atomicWithMutation": {"const": false},
+        "runtimeRevalidationPerformed": {"const": false},
+        "entityHandleRetained": {"const": false},
+        "achievedStateClaimed": {"const": false},
+        "commitToken": {"const": false},
+        "mutationPerformed": {"const": false},
+        "executableRestoration": {"const": false},
+        "arrivalGate": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "targets": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {"$ref": "#/$defs/eventTarget"}
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"availableTargetCount": {"const": 0}}},
+          "then": {"properties": {
+            "objectBoundaryClassifiedTargetCount": {"const": 0},
+            "runtimeTargetClassificationPerformed": {"const": false}
+          }},
+          "else": {"properties": {
+            "objectBoundaryClassifiedTargetCount": {"type": "integer", "minimum": 1},
+            "runtimeTargetClassificationPerformed": {"const": true}
+          }}
+        }
+      ]
+    },
+    "eventTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshotOrdinal", "registrationSequence", "packedX", "packedY",
+        "regionAvailable", "slotObjectCount",
+        "exactRestorationSceneryCount", "exactAuthoredIdentityCount",
+        "objectBoundaryHeldDuringClassification",
+        "observedTargetState", "decisionOutcome", "decisionReason"
+      ],
+      "properties": {
+        "snapshotOrdinal": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "registrationSequence": {"type": "integer", "minimum": 1},
+        "packedX": {"type": "integer", "minimum": 0},
+        "packedY": {"type": "integer", "minimum": 0},
+        "regionAvailable": {"type": "boolean"},
+        "slotObjectCount": {"type": "integer", "minimum": 0},
+        "exactRestorationSceneryCount": {"type": "integer", "minimum": 0},
+        "exactAuthoredIdentityCount": {"type": "integer", "minimum": 0},
+        "objectBoundaryHeldDuringClassification": {"type": "boolean"},
+        "observedTargetState": {
+          "enum": [
+            "UNAVAILABLE", "EMPTY", "EXACT_RESTORATION_SCENERY_PRESENT",
+            "EXACT_AUTHORED_TRANSIENT_PRESENT",
+            "MISMATCHED_OR_IDENTITYLESS_OCCUPANT", "AMBIGUOUS_OCCUPANCY"
+          ]
+        },
+        "decisionOutcome": {
+          "enum": [
+            "REFUSED", "NO_OP_SUCCESS",
+            "MUTATION_PRECONDITION_SATISFIED"
+          ]
+        },
+        "decisionReason": {
+          "enum": [
+            "REQUIREMENT_UNAVAILABLE", "TARGET_BINDING_INCOMPLETE",
+            "GENERATION_MISMATCH", "TARGET_OBSERVATION_UNAVAILABLE",
+            "DESIRED_PRESENT_STATE_ALREADY_SATISFIED",
+            "DESIRED_ABSENT_STATE_ALREADY_SATISFIED",
+            "SPAWN_DESTINATION_EMPTY", "EXACT_AUTHORED_TRANSIENT_PRESENT",
+            "EXACT_REMOVAL_TARGET_PRESENT",
+            "REMOVAL_TARGET_CHANGED_TO_AUTHORED_TRANSIENT",
+            "MISMATCHED_OR_IDENTITYLESS_OCCUPANT", "AMBIGUOUS_OCCUPANCY"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"regionAvailable": {"const": false}}},
+          "then": {"properties": {
+            "slotObjectCount": {"const": 0},
+            "exactRestorationSceneryCount": {"const": 0},
+            "exactAuthoredIdentityCount": {"const": 0},
+            "objectBoundaryHeldDuringClassification": {"const": false},
+            "observedTargetState": {"const": "UNAVAILABLE"},
+            "decisionOutcome": {"const": "REFUSED"}
+          }}
+        },
+        {
+          "if": {"properties": {"regionAvailable": {"const": true}}},
+          "then": {"properties": {
+            "objectBoundaryHeldDuringClassification": {"const": true}
+          }}
+        },
+        {
+          "if": {"properties": {"observedTargetState": {"const": "EMPTY"}}},
+          "then": {"properties": {
+            "regionAvailable": {"const": true},
+            "slotObjectCount": {"const": 0},
+            "exactRestorationSceneryCount": {"const": 0},
+            "exactAuthoredIdentityCount": {"const": 0}
+          }}
+        },
+        {
+          "if": {"properties": {"observedTargetState": {"const": "EXACT_RESTORATION_SCENERY_PRESENT"}}},
+          "then": {"properties": {
+            "regionAvailable": {"const": true},
+            "slotObjectCount": {"const": 1},
+            "exactRestorationSceneryCount": {"const": 1},
+            "exactAuthoredIdentityCount": {"const": 1}
+          }}
+        },
+        {
+          "if": {"properties": {"observedTargetState": {"const": "EXACT_AUTHORED_TRANSIENT_PRESENT"}}},
+          "then": {"properties": {
+            "regionAvailable": {"const": true},
+            "slotObjectCount": {"const": 1},
+            "exactRestorationSceneryCount": {"const": 0},
+            "exactAuthoredIdentityCount": {"const": 1}
+          }}
+        },
+        {
+          "if": {"properties": {"observedTargetState": {"const": "MISMATCHED_OR_IDENTITYLESS_OCCUPANT"}}},
+          "then": {"properties": {
+            "regionAvailable": {"const": true},
+            "slotObjectCount": {"const": 1},
+            "exactAuthoredIdentityCount": {"const": 0}
+          }}
+        },
+        {
+          "if": {"properties": {"observedTargetState": {"const": "AMBIGUOUS_OCCUPANCY"}}},
+          "then": {"properties": {
+            "regionAvailable": {"const": true},
+            "slotObjectCount": {"type": "integer", "minimum": 2}
+          }}
+        },
+        {
+          "if": {"properties": {"decisionOutcome": {"const": "NO_OP_SUCCESS"}}},
+          "then": {"properties": {"decisionReason": {"enum": [
+            "DESIRED_PRESENT_STATE_ALREADY_SATISFIED",
+            "DESIRED_ABSENT_STATE_ALREADY_SATISFIED"
+          ]}}}
+        },
+        {
+          "if": {"properties": {"decisionOutcome": {"const": "MUTATION_PRECONDITION_SATISFIED"}}},
+          "then": {"properties": {"decisionReason": {"enum": [
+            "SPAWN_DESTINATION_EMPTY", "EXACT_AUTHORED_TRANSIENT_PRESENT",
+            "EXACT_REMOVAL_TARGET_PRESENT"
+          ]}}}
+        },
+        {
+          "if": {"properties": {"decisionOutcome": {"const": "REFUSED"}}},
+          "then": {"properties": {"decisionReason": {"enum": [
+            "REQUIREMENT_UNAVAILABLE", "TARGET_BINDING_INCOMPLETE",
+            "GENERATION_MISMATCH", "TARGET_OBSERVATION_UNAVAILABLE",
+            "REMOVAL_TARGET_CHANGED_TO_AUTHORED_TRANSIENT",
+            "MISMATCHED_OR_IDENTITYLESS_OCCUPANT", "AMBIGUOUS_OCCUPANCY"
+          ]}}}
+        }
+      ]
+    },
+    "atomicTargetRevalidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposalGeneration", "eventInventoryObservedAtTick",
+        "revalidationObservedAtTick", "schedulerInstanceIdentity",
+        "recordCount", "outerFenceAcceptedCount", "outerFenceRefusedCount",
+        "lifecycleChangeDetectedCount", "runtimeTargetLookupPerformedCount",
+        "runtimeRevalidationPerformedCount", "contractRefusedCount",
+        "noOpContractSatisfiedCount",
+        "mutationPreconditionContractSatisfiedCount",
+        "outerOutcomeCountComplete", "acceptedContractOutcomeCountComplete",
+        "pointInTimeOnly", "atomicWithEventInventory",
+        "runtimeTargetLookupPerformed", "runtimeRevalidationPerformed",
+        "atomicWithMutation", "entityHandleRetained", "achievedStateClaimed",
+        "commitToken", "mutationPerformed", "executableRestoration",
+        "arrivalGate", "lifecycleAuthority", "records"
+      ],
+      "properties": {
+        "proposalGeneration": {"type": "integer", "minimum": 1},
+        "eventInventoryObservedAtTick": {"type": "integer", "minimum": 0},
+        "revalidationObservedAtTick": {"type": "integer", "minimum": 0},
+        "schedulerInstanceIdentity": {"type": "string", "minLength": 1},
+        "recordCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "outerFenceAcceptedCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "outerFenceRefusedCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "lifecycleChangeDetectedCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "runtimeTargetLookupPerformedCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "runtimeRevalidationPerformedCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "contractRefusedCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "noOpContractSatisfiedCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "mutationPreconditionContractSatisfiedCount": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "outerOutcomeCountComplete": {"const": true},
+        "acceptedContractOutcomeCountComplete": {"const": true},
+        "pointInTimeOnly": {"const": true},
+        "atomicWithEventInventory": {"const": false},
+        "runtimeTargetLookupPerformed": {"type": "boolean"},
+        "runtimeRevalidationPerformed": {"type": "boolean"},
+        "atomicWithMutation": {"const": false},
+        "entityHandleRetained": {"const": false},
+        "achievedStateClaimed": {"const": false},
+        "commitToken": {"const": false},
+        "mutationPerformed": {"const": false},
+        "executableRestoration": {"const": false},
+        "arrivalGate": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "records": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {"$ref": "#/$defs/atomicTargetRevalidationRecord"}
+        }
+      }
+    },
+    "atomicTargetRevalidationRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshotOrdinal", "registrationSequence", "packedX", "packedY",
+        "outerFenceReason", "outerFenceAccepted", "operationInvoked",
+        "lifecycleVersionBeforeOperation", "lifecycleVersionAfterOperation",
+        "timingStableAcrossOperation", "lifecycleChangeDetected",
+        "runtimeTargetLookupPerformed", "runtimeRevalidationPerformed",
+        "target"
+      ],
+      "properties": {
+        "snapshotOrdinal": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "registrationSequence": {"type": "integer", "minimum": 1},
+        "packedX": {"type": "integer", "minimum": 0},
+        "packedY": {"type": "integer", "minimum": 0},
+        "outerFenceReason": {"enum": [
+          "SCHEDULER_INSTANCE_MISMATCH", "EVENT_NOT_REGISTERED",
+          "DUPLICATE_REGISTRATION_SEQUENCE", "REGISTRATION_SEQUENCE_MISMATCH",
+          "RESTORATION_STATE_UNAVAILABLE", "EVENT_NOT_RUNNING",
+          "EVENT_ALREADY_EXECUTED", "RESTORATION_PAYLOAD_INCOMPLETE",
+          "AUTHORED_IDENTITY_MISSING", "OWNER_BOUND_STATE_REFUSED",
+          "RUNTIME_ATTRIBUTE_STATE_INCOMPLETE",
+          "AUTHORED_CONSTRUCTION_KIND_MISMATCH", "SPATIAL_AFFINITY_MISMATCH",
+          "PROPOSAL_GENERATION_MISMATCH",
+          "EVENT_LIFECYCLE_CHANGED_DURING_OPERATION", "OPERATION_COMPLETED"
+        ]},
+        "outerFenceAccepted": {"type": "boolean"},
+        "operationInvoked": {"type": "boolean"},
+        "lifecycleVersionBeforeOperation": {
+          "oneOf": [{"type": "null"}, {"type": "integer", "minimum": 1}]
+        },
+        "lifecycleVersionAfterOperation": {
+          "oneOf": [{"type": "null"}, {"type": "integer", "minimum": 1}]
+        },
+        "timingStableAcrossOperation": {"type": "boolean"},
+        "lifecycleChangeDetected": {"type": "boolean"},
+        "runtimeTargetLookupPerformed": {"type": "boolean"},
+        "runtimeRevalidationPerformed": {"type": "boolean"},
+        "target": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/atomicTargetRevalidationTarget"}
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"outerFenceAccepted": {"const": true}}},
+          "then": {"properties": {
+            "outerFenceReason": {"const": "OPERATION_COMPLETED"},
+            "operationInvoked": {"const": true},
+            "lifecycleVersionBeforeOperation": {"type": "integer", "minimum": 1},
+            "lifecycleVersionAfterOperation": {"type": "integer", "minimum": 1},
+            "timingStableAcrossOperation": {"const": true},
+            "runtimeTargetLookupPerformed": {"const": true},
+            "target": {"$ref": "#/$defs/atomicTargetRevalidationTarget"}
+          }},
+          "else": {"properties": {
+            "timingStableAcrossOperation": {"const": false},
+            "target": {"type": "null"}
+          }}
+        },
+        {
+          "if": {"properties": {"operationInvoked": {"const": false}}},
+          "then": {"properties": {
+            "lifecycleVersionBeforeOperation": {"type": "null"},
+            "lifecycleVersionAfterOperation": {"type": "null"},
+            "runtimeTargetLookupPerformed": {"const": false},
+            "runtimeRevalidationPerformed": {"const": false}
+          }}
+        },
+        {
+          "if": {"properties": {"lifecycleChangeDetected": {"const": true}}},
+          "then": {"properties": {
+            "outerFenceReason": {"const": "EVENT_LIFECYCLE_CHANGED_DURING_OPERATION"},
+            "outerFenceAccepted": {"const": false},
+            "operationInvoked": {"const": true},
+            "runtimeTargetLookupPerformed": {"const": true},
+            "runtimeRevalidationPerformed": {"const": false},
+            "target": {"type": "null"}
+          }}
+        }
+      ]
+    },
+    "atomicTargetRevalidationTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "regionAvailable", "slotObjectCount",
+        "exactRestorationSceneryCount", "exactAuthoredIdentityCount",
+        "objectBoundaryHeldDuringClassification", "observedTargetState",
+        "targetOutcome", "targetReason", "contractOutcome", "contractReason"
+      ],
+      "properties": {
+        "regionAvailable": {"type": "boolean"},
+        "slotObjectCount": {"type": "integer", "minimum": 0},
+        "exactRestorationSceneryCount": {"type": "integer", "minimum": 0},
+        "exactAuthoredIdentityCount": {"type": "integer", "minimum": 0},
+        "objectBoundaryHeldDuringClassification": {"type": "boolean"},
+        "observedTargetState": {"enum": [
+          "UNAVAILABLE", "EMPTY", "EXACT_RESTORATION_SCENERY_PRESENT",
+          "EXACT_AUTHORED_TRANSIENT_PRESENT",
+          "MISMATCHED_OR_IDENTITYLESS_OCCUPANT", "AMBIGUOUS_OCCUPANCY"
+        ]},
+        "targetOutcome": {"enum": [
+          "REFUSED", "NO_OP_SUCCESS", "MUTATION_PRECONDITION_SATISFIED"
+        ]},
+        "targetReason": {"enum": [
+          "REQUIREMENT_UNAVAILABLE", "TARGET_BINDING_INCOMPLETE",
+          "GENERATION_MISMATCH", "TARGET_OBSERVATION_UNAVAILABLE",
+          "DESIRED_PRESENT_STATE_ALREADY_SATISFIED",
+          "DESIRED_ABSENT_STATE_ALREADY_SATISFIED",
+          "SPAWN_DESTINATION_EMPTY", "EXACT_AUTHORED_TRANSIENT_PRESENT",
+          "EXACT_REMOVAL_TARGET_PRESENT",
+          "REMOVAL_TARGET_CHANGED_TO_AUTHORED_TRANSIENT",
+          "MISMATCHED_OR_IDENTITYLESS_OCCUPANT", "AMBIGUOUS_OCCUPANCY"
+        ]},
+        "contractOutcome": {"enum": [
+          "REFUSED", "NO_OP_CONTRACT_SATISFIED",
+          "MUTATION_PRECONDITION_CONTRACT_SATISFIED"
+        ]},
+        "contractReason": {"enum": [
+          "EVENT_EXECUTION_BOUNDARY_MISSING", "SCHEDULER_STORE_BOUNDARY_HELD",
+          "REGISTRATION_NOT_VALIDATED_BEFORE_REGION_BOUNDARY",
+          "SCHEDULER_INSTANCE_MISMATCH", "REGISTRATION_SEQUENCE_MISMATCH",
+          "PROPOSAL_GENERATION_MISMATCH", "REGION_OBJECT_BOUNDARY_MISSING",
+          "TARGET_NOT_OBSERVED_INSIDE_REGION_BOUNDARY",
+          "TARGET_DECISION_REFUSED", "DESIRED_STATE_ALREADY_SATISFIED",
+          "MUTATION_PRECONDITION_REVALIDATED"
+        ]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"regionAvailable": {"const": false}}},
+          "then": {"properties": {
+            "slotObjectCount": {"const": 0},
+            "exactRestorationSceneryCount": {"const": 0},
+            "exactAuthoredIdentityCount": {"const": 0},
+            "objectBoundaryHeldDuringClassification": {"const": false},
+            "observedTargetState": {"const": "UNAVAILABLE"},
+            "targetOutcome": {"const": "REFUSED"},
+            "contractOutcome": {"const": "REFUSED"},
+            "contractReason": {"const": "REGION_OBJECT_BOUNDARY_MISSING"}
+          }},
+          "else": {"properties": {
+            "objectBoundaryHeldDuringClassification": {"const": true}
+          }}
+        }
+      ]
+    }
+  }
+}

@@ -196,7 +196,7 @@ def main() -> None:
     require(npc_behavior, "npc.withinRange(target, profile.getProjectileRange(npc))", "NPC firing-range gate")
     require(
         npc_behavior,
-        "PathValidation.checkHostileProjectilePath(npc.getWorld(), npc.getLocation(), target.getLocation())",
+        "PathValidation.checkHostileProjectilePath(",
         "modern hostile launch collision gate",
     )
     require(

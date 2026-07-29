@@ -34,9 +34,8 @@ public final class WorldBuilderProcessSupervisor {
 	public int runPrepared(Path requestedWorkspace, int port)
 		throws IOException, WorldBuilderDiscoveryException, InterruptedException {
 		Path workspace = validateWorkspace(requestedWorkspace, port);
-		return superviseWithCommands(workspace, port,
-			defaultServerCommand(workspace), defaultClientCommand(workspace, port),
-			DEFAULT_READY_TIMEOUT_MILLIS);
+		return superviseWithCommands(
+			workspace, port, null, null, DEFAULT_READY_TIMEOUT_MILLIS);
 	}
 
 	int superviseWithCommands(Path workspace, int port, List<String> serverCommand,
@@ -56,10 +55,48 @@ public final class WorldBuilderProcessSupervisor {
 					"This World Builder workspace is already running: " + workspace);
 			}
 			try {
-				return superviseLocked(workspace, port, serverCommand, clientCommand, readyTimeoutMillis);
+				boolean preparedCommands = serverCommand == null && clientCommand == null;
+				if ((serverCommand == null) != (clientCommand == null)) {
+					throw new IllegalArgumentException(
+						"World Builder server and client commands must both be supplied.");
+				}
+				if (preparedCommands) {
+					commitPendingLayeredTerrain(workspace);
+					validateWorkspace(workspace, port);
+					serverCommand = defaultServerCommand(workspace);
+					clientCommand = defaultClientCommand(workspace, port);
+				}
+				int exit = superviseLocked(
+					workspace, port, serverCommand, clientCommand, readyTimeoutMillis);
+				if (preparedCommands && exit == 0) {
+					commitPendingLayeredTerrain(workspace);
+					validateWorkspace(workspace, port);
+				} else if (preparedCommands) {
+					System.err.println(
+						"World Builder did not close cleanly; any saved layered "
+							+ "terrain journal was retained without committing.");
+				}
+				return exit;
 			} finally {
 				lock.release();
 			}
+		}
+	}
+
+	private static void commitPendingLayeredTerrain(Path workspace)
+		throws IOException, WorldBuilderDiscoveryException {
+		WorldBuilderLayeredTerrainDraftJournal.CommitResult committed =
+			new WorldBuilderLayeredTerrainDraftJournal()
+				.commitIfPresentLocked(workspace);
+		if (committed != null) {
+			System.out.println(
+				"Committed layered Builder draft: "
+					+ committed.levelCount + " levels, "
+					+ committed.tileCount + " tiles, "
+					+ committed.sectorCount + " sectors, "
+					+ committed.sceneryCount + " scenery edits, "
+					+ committed.npcCount + " NPC edits, manifest "
+					+ committed.manifestSha256.substring(0, 12));
 		}
 	}
 
@@ -130,7 +167,7 @@ public final class WorldBuilderProcessSupervisor {
 				}
 			}
 			serverExit = active[0].waitFor();
-			return serverFailedFirst ? 5 : clientExit;
+			return serverFailedFirst || serverExit != 0 ? 5 : clientExit;
 		} finally {
 			if (active[1] != null && active[1].isAlive()) {
 				active[1].destroy();
@@ -183,6 +220,7 @@ public final class WorldBuilderProcessSupervisor {
 			}
 		}
 		WorldBuilderSourceSnapshot.verify(workspace);
+		WorldBuilderLayeredReview.readIfPresent(workspace);
 		int preparedPort = readPreparedPort(workspace);
 		if (port != preparedPort) {
 			throw new WorldBuilderDiscoveryException(
@@ -215,7 +253,8 @@ public final class WorldBuilderProcessSupervisor {
 		String credential = workspace.resolve(WorldBuilderRuntimePreparer.BUILDER_CREDENTIAL).toString();
 		String projectName = workspace.getFileName().toString();
 		String sourceRevision = readSourceRevision(workspace);
-		return Arrays.asList(
+		WorldBuilderLayeredReview layered = readLayeredReview(workspace);
+		List<String> command = new ArrayList<String>(Arrays.asList(
 			javaExecutable(),
 			"-Xms512m",
 			"-Xmx2g",
@@ -231,9 +270,37 @@ public final class WorldBuilderProcessSupervisor {
 			"-Dopenrsc.worldBuilderPort=" + port,
 			"-Dopenrsc.worldBuilderCredentialFile=" + credential,
 			"-Dopenrsc.worldBuilderProjectName=" + projectName,
-			"-Dopenrsc.worldBuilderSourceRevision=" + sourceRevision,
+			"-Dopenrsc.worldBuilderSourceRevision=" + sourceRevision));
+		if (layered != null) {
+			command.add("-Dopenrsc.worldBuilderLayeredReview=true");
+			command.add("-Dopenrsc.worldBuilderLayeredTerrainDraft="
+				+ layered.hasBuilderCreatedLevels());
+			command.add("-Dopenrsc.worldBuilderLayeredPackageId=" + layered.packageId);
+			command.add("-Dopenrsc.worldBuilderLayeredPackageVersion="
+				+ layered.packageVersion);
+			command.add("-Dopenrsc.worldBuilderLayeredManifestSha256="
+				+ layered.manifestSha256);
+			command.add("-Dopenrsc.worldBuilderLayeredWorldSpace="
+				+ layered.worldSpace);
+			command.add("-Dopenrsc.worldBuilderLayeredLevels="
+				+ layered.levelsProperty());
+		}
+		command.addAll(Arrays.asList(
 			"-jar",
-			"Open_RSC_Client.jar");
+			"Open_RSC_Client.jar"));
+		return command;
+	}
+
+	private static WorldBuilderLayeredReview readLayeredReview(Path workspace) {
+		try {
+			return WorldBuilderLayeredReview.readIfPresent(workspace);
+		} catch (IOException failure) {
+			throw new IllegalStateException(
+				"Prepared World Builder layered review metadata is invalid", failure);
+		} catch (WorldBuilderDiscoveryException failure) {
+			throw new IllegalStateException(
+				"Prepared World Builder layered review metadata is invalid", failure);
+		}
 	}
 
 	private static String readSourceRevision(Path workspace) {

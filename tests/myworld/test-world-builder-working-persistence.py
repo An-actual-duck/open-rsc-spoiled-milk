@@ -9,14 +9,15 @@ ROOT = Path(__file__).resolve().parents[2]
 JSON_JAR = ROOT / "server/lib/json-20190722.jar"
 SOURCES = (
     ROOT / "server/src/com/openrsc/server/io/WorldEditorTerrainSaveFiles.java",
+    ROOT / "server/src/com/openrsc/server/content/worldedit/WorldEditorLayeredTerrainJournal.java",
     ROOT / "server/src/com/openrsc/server/util/WorldSceneryEditFiles.java",
     ROOT / "server/src/com/openrsc/server/util/WorldNpcEditFiles.java",
-    ROOT / "server/src/com/openrsc/server/external/NPCLoc.java",
 )
 
 
 HARNESS = r"""
 import com.openrsc.server.external.NPCLoc;
+import com.openrsc.server.content.worldedit.WorldEditorLayeredTerrainJournal;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.util.WorldNpcEditFiles;
 import com.openrsc.server.util.WorldSceneryEditFiles;
@@ -125,6 +126,108 @@ public final class WorldBuilderWorkingPersistenceHarness {
             "target terrain changed");
         require(Files.list(project.resolve("backups/terrain")).count() == 2,
             "terrain backups were not workspace-owned");
+
+        Path layeredJournal =
+            working.resolve("layered-world/terrain-draft-v1.tsv");
+        WorldEditorLayeredTerrainJournal.SaveResult layered =
+            WorldEditorLayeredTerrainJournal.save(
+                layeredJournal,
+                "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                Arrays.asList(
+                    new WorldEditorLayeredTerrainJournal.SectorGrowth(-3, 4, 13)),
+                Arrays.asList(
+                    new WorldEditorLayeredTerrainJournal.TileEdit(
+                        -3, 141, 640, 9, 10, 0, 0, 0, 0, 0),
+                    new WorldEditorLayeredTerrainJournal.TileEdit(
+                        -3, 140, 640, 7, 8, 0, 0, 0, 0, 0)));
+        require(layered.tileCount == 2 && layered.sectorCount == 1,
+            "layered journal counts");
+        String journalText = new String(
+            Files.readAllBytes(layeredJournal), "US-ASCII");
+        require(journalText.indexOf("tile\t-3\t140\t640")
+                < journalText.indexOf("tile\t-3\t141\t640"),
+            "layered journal tile order is not deterministic");
+        require(!Files.exists(
+            layeredJournal.resolveSibling("terrain-draft-v1.tsv.tmp")),
+            "layered journal staging file retained");
+        layered = WorldEditorLayeredTerrainJournal.save(
+            layeredJournal,
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.SectorGrowth(-3, 4, 13)),
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.TileEdit(
+                    -3, 140, 640, 7, 8, 0, 0, 0, 0, 0)),
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.SceneryEdit(
+                    false, -3, 142, 640,
+                    "spoiled-milk.builder.scenery.lm3.xp142.yp640",
+                    4, 1),
+                new WorldEditorLayeredTerrainJournal.SceneryEdit(
+                    false, -3, 141, 640,
+                    "spoiled-milk.builder.scenery.lm3.xp141.yp640",
+                    3, 0)),
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.NpcEdit(
+                    false, -3, 143, 640,
+                    "spoiled-milk.builder.npc.lm3.xp143.yp640.s0",
+                    0, 142, 639, 144, 641),
+                new WorldEditorLayeredTerrainJournal.NpcEdit(
+                    false, -3, 141, 640,
+                    "spoiled-milk.builder.npc.lm3.xp141.yp640.s0",
+                    1, 141, 640, 141, 640)));
+        require(layered.tileCount == 1 && layered.sectorCount == 1
+                && layered.sceneryCount == 2 && layered.npcCount == 2,
+            "combined layered journal counts");
+        journalText = new String(
+            Files.readAllBytes(layeredJournal), "US-ASCII");
+        require(journalText.startsWith("world-builder-layered-draft-v3\n")
+                && journalText.contains("scenery-count\t2\n")
+                && journalText.contains("npc-count\t2\n")
+                && journalText.indexOf("scenery\tupsert\t-3\t141\t640")
+                    < journalText.indexOf("scenery\tupsert\t-3\t142\t640")
+                && journalText.indexOf("npc\tupsert\t-3\t141\t640")
+                    < journalText.indexOf("npc\tupsert\t-3\t143\t640"),
+            "combined layered journal is not stable and deterministic");
+        layered = WorldEditorLayeredTerrainJournal.save(
+            layeredJournal,
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.LevelCreation(
+                    -4, 500, 700,
+                    "Underground level 4", "underground-level-4")),
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.SectorGrowth(-4, 11, 15),
+                new WorldEditorLayeredTerrainJournal.SectorGrowth(-4, 9, 13)),
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.TileEdit(
+                    -4, 500, 700, 0, 1, 0, 0, 0, 0, 0)),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.SceneryEdit>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.NpcEdit>emptyList());
+        require(layered.levelCount == 1 && layered.tileCount == 1
+                && layered.sectorCount == 2,
+            "allocation journal counts");
+        journalText = new String(
+            Files.readAllBytes(layeredJournal), "US-ASCII");
+        require(journalText.startsWith("world-builder-layered-draft-v4\n")
+                && journalText.contains("level-count\t1\n")
+                && journalText.contains(
+                    "level\t-4\t500\t700\tUnderground level 4\tunderground-level-4\n")
+                && journalText.indexOf("sector\t-4\t9\t13")
+                    < journalText.indexOf("sector\t-4\t11\t15"),
+            "allocation journal is not stable and deterministic");
+        layered = WorldEditorLayeredTerrainJournal.save(
+            layeredJournal,
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.SectorGrowth>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.TileEdit>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.SceneryEdit>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.NpcEdit>emptyList());
+        require(layered.tileCount == 0 && layered.sectorCount == 0
+                && layered.sceneryCount == 0 && layered.npcCount == 0
+                && layered.levelCount == 0
+                && !Files.exists(layeredJournal),
+            "fully reverted layered draft retained a stale journal");
         System.out.println("working-persistence-ok");
     }
 }
@@ -134,6 +237,22 @@ public final class WorldBuilderWorkingPersistenceHarness {
 def main() -> None:
     with tempfile.TemporaryDirectory(prefix="world-builder-persistence-") as temp:
         root = Path(temp)
+        npc_loc = root / "com/openrsc/server/external/NPCLoc.java"
+        npc_loc.parent.mkdir(parents=True)
+        npc_loc.write_text(
+            """
+package com.openrsc.server.external;
+public class NPCLoc {
+    public int id,startX,startY,minX,maxX,minY,maxY;
+    public NPCLoc() {}
+    public NPCLoc(int id,int startX,int startY,int minX,int maxX,int minY,int maxY) {
+        this.id=id;this.startX=startX;this.startY=startY;
+        this.minX=minX;this.maxX=maxX;this.minY=minY;this.maxY=maxY;
+    }
+}
+""".strip() + "\n",
+            encoding="utf-8",
+        )
         harness = root / "WorldBuilderWorkingPersistenceHarness.java"
         harness.write_text(textwrap.dedent(HARNESS), encoding="utf-8")
         classes = root / "classes"
@@ -142,7 +261,7 @@ def main() -> None:
             [
                 "javac", "-source", "8", "-target", "8",
                 "-cp", str(JSON_JAR), "-d", str(classes),
-                *map(str, SOURCES), str(harness),
+                str(npc_loc), *map(str, SOURCES), str(harness),
             ],
             cwd=ROOT,
             check=True,

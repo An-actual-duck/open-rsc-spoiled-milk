@@ -1,0 +1,433 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v47.schema.json",
+  "title": "Layered Map Parity Event v47",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "eventType",
+    "sequence",
+    "timestampEpochMillis",
+    "player",
+    "label",
+    "teleported",
+    "from",
+    "to",
+    "delta",
+    "interestDelta",
+    "packedCoverage",
+    "tileSnapshot",
+    "tileParity",
+    "tileNeighborhood",
+    "adjacentCollision",
+    "recentTraversal",
+    "regionResidency",
+    "interestOwnership",
+    "regionRetirement",
+    "regionRetirementDecisions",
+    "packedRegionRetirementReadiness",
+    "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction",
+    "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency",
+    "packedRegionActiveNpcContainment",
+    "packedRegionActiveNpcBoundaryRequirements",
+    "packedRegionRetirementRefinement",
+    "packedRegionRetirementRefinementReassessment",
+    "packedRegionPreservationBurden",
+    "packedRegionDynamicObjectPreservation",
+    "packedRegionEventOwnership",
+    "packedRegionNpcOwnerEventContinuity",
+    "packedRegionNpcOwnerPreservationBoundary",
+    "packedRegionEventTargets",
+    "packedRegionEventAtomicTargetRevalidation",
+    "packedRegionEventRecoveryNoOp",
+    "roundTripExact"
+  ],
+  "properties": {
+    "schema": {
+      "const": "layered-map-parity-event-v47"
+    },
+    "eventType": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/eventType"
+    },
+    "sequence": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/sequence"
+    },
+    "timestampEpochMillis": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/timestampEpochMillis"
+    },
+    "player": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/player"
+    },
+    "label": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/label"
+    },
+    "teleported": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/teleported"
+    },
+    "from": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/from"
+    },
+    "to": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/to"
+    },
+    "delta": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/delta"
+    },
+    "interestDelta": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/interestDelta"
+    },
+    "packedCoverage": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedCoverage"
+    },
+    "tileSnapshot": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/tileSnapshot"
+    },
+    "tileParity": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/tileParity"
+    },
+    "tileNeighborhood": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/tileNeighborhood"
+    },
+    "adjacentCollision": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/adjacentCollision"
+    },
+    "recentTraversal": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/recentTraversal"
+    },
+    "regionResidency": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/regionResidency"
+    },
+    "interestOwnership": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/interestOwnership"
+    },
+    "regionRetirement": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/regionRetirement"
+    },
+    "regionRetirementDecisions": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/regionRetirementDecisions"
+    },
+    "packedRegionRetirementReadiness": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionRetirementReadiness"
+    },
+    "packedRegionRetirementSafety": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionRetirementSafety"
+    },
+    "packedRegionAuthoredConstruction": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionAuthoredConstruction"
+    },
+    "packedRegionAuthoredProvenance": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionAuthoredProvenance"
+    },
+    "packedRegionAuthoredReconstruction": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionAuthoredReconstruction"
+    },
+    "packedRegionAuthoredReconstructionCohort": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionAuthoredReconstructionCohort"
+    },
+    "packedRegionAuthoredReconstructionCohortAttribution": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"
+    },
+    "packedRegionAuthoredReconstructionTopology": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionAuthoredReconstructionTopology"
+    },
+    "packedRegionAuthoredReconstructionDependencySemantics": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics"
+    },
+    "packedRegionActiveNpcResidency": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionActiveNpcResidency"
+    },
+    "packedRegionActiveNpcContainment": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionActiveNpcContainment"
+    },
+    "packedRegionActiveNpcBoundaryRequirements": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionActiveNpcBoundaryRequirements"
+    },
+    "packedRegionRetirementRefinement": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionRetirementRefinement"
+    },
+    "packedRegionRetirementRefinementReassessment": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionRetirementRefinementReassessment"
+    },
+    "packedRegionPreservationBurden": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionPreservationBurden"
+    },
+    "packedRegionDynamicObjectPreservation": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionDynamicObjectPreservation"
+    },
+    "packedRegionEventOwnership": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionEventOwnership"
+    },
+    "packedRegionNpcOwnerEventContinuity": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionNpcOwnerEventContinuity"
+    },
+    "packedRegionNpcOwnerPreservationBoundary": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/npcOwnerPreservationBoundary"
+        }
+      ]
+    },
+    "packedRegionEventTargets": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionEventTargets"
+    },
+    "packedRegionEventAtomicTargetRevalidation": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionEventAtomicTargetRevalidation"
+    },
+    "packedRegionEventRecoveryNoOp": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/packedRegionEventRecoveryNoOp"
+    },
+    "roundTripExact": {
+      "$ref": "layered-map-parity-event-v46.schema.json#/properties/roundTripExact"
+    }
+  },
+  "$defs": {
+    "npcOwnerPreservationBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation",
+        "requirementsObservedAtTick",
+        "boundaryObservedAtTick",
+        "schedulerInstanceIdentity",
+        "selectedSourceCount",
+        "proposalRelatedEventCount",
+        "relatedOwnerPositionHintEventCount",
+        "npcOwnerEventCount",
+        "separateNonNpcOwnerEventCount",
+        "preservationRequiredEventCount",
+        "previouslyEligibleEventCount",
+        "npcHardBlockerEventCount",
+        "requiredOwnerCount",
+        "relatedEventLinkCount",
+        "supportingEventLinkCount",
+        "requiredEventLinkCount",
+        "schedulerInstanceMatched",
+        "registrationSetComplete",
+        "eventExecutionBoundaryCount",
+        "eventTimingBoundaryCount",
+        "worldRegistrationBoundaryHeld",
+        "npcLifecycleBoundaryCount",
+        "regionAbsenceQuiescenceHeld",
+        "exactReferenceOwnerCount",
+        "reason",
+        "referenceBoundaryComplete",
+        "preservationScopeReadyAtBoundary",
+        "pointInTimeOnly",
+        "preservationFactEstablished",
+        "runtimeHandleRetained",
+        "preservationPerformed",
+        "eventReschedule",
+        "entityRegistry",
+        "arrivalGate",
+        "lifecycleAuthority",
+        "owners"
+      ],
+      "properties": {
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "requirementsObservedAtTick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "boundaryObservedAtTick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "schedulerInstanceIdentity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "selectedSourceCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8192
+        },
+        "proposalRelatedEventCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "relatedOwnerPositionHintEventCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "npcOwnerEventCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "separateNonNpcOwnerEventCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "preservationRequiredEventCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "previouslyEligibleEventCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "npcHardBlockerEventCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "requiredOwnerCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "relatedEventLinkCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "supportingEventLinkCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "requiredEventLinkCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "schedulerInstanceMatched": {
+          "type": "boolean"
+        },
+        "registrationSetComplete": {
+          "type": "boolean"
+        },
+        "eventExecutionBoundaryCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "eventTimingBoundaryCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "worldRegistrationBoundaryHeld": {
+          "type": "boolean"
+        },
+        "npcLifecycleBoundaryCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "regionAbsenceQuiescenceHeld": {
+          "type": "boolean"
+        },
+        "exactReferenceOwnerCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "reason": {
+          "enum": [
+            "REQUIREMENTS_INCOMPLETE",
+            "SCHEDULER_INSTANCE_MISMATCH",
+            "EVENT_REGISTRATION_INCOMPLETE",
+            "EVENT_EXECUTION_BOUNDARY_INCOMPLETE",
+            "EVENT_TIMING_BOUNDARY_INCOMPLETE",
+            "WORLD_REGISTRATION_BOUNDARY_MISSING",
+            "OWNER_REFERENCE_CORRELATION_INCOMPLETE",
+            "NPC_LIFECYCLE_BOUNDARY_INCOMPLETE",
+            "REGION_ABSENCE_QUIESCENCE_UNPROVED",
+            "PRESERVATION_SCOPE_READY"
+          ]
+        },
+        "referenceBoundaryComplete": {
+          "type": "boolean"
+        },
+        "preservationScopeReadyAtBoundary": {
+          "type": "boolean"
+        },
+        "pointInTimeOnly": {
+          "const": true
+        },
+        "preservationFactEstablished": {
+          "const": false
+        },
+        "runtimeHandleRetained": {
+          "const": false
+        },
+        "preservationPerformed": {
+          "const": false
+        },
+        "eventReschedule": {
+          "const": false
+        },
+        "entityRegistry": {
+          "const": false
+        },
+        "arrivalGate": {
+          "const": false
+        },
+        "lifecycleAuthority": {
+          "const": false
+        },
+        "owners": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {
+            "$ref": "#/$defs/npcOwnerPreservationRecord"
+          }
+        }
+      }
+    },
+    "npcOwnerPreservationRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation",
+        "packedRegionX",
+        "packedRegionY",
+        "sourceOrdinal",
+        "runtimeNpcId",
+        "requiredEventLinkCount",
+        "validatedEventLinkCount",
+        "worldIdentityMatchCount",
+        "outcome"
+      ],
+      "properties": {
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "packedRegionX": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "packedRegionY": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceOrdinal": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "runtimeNpcId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requiredEventLinkCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "validatedEventLinkCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "worldIdentityMatchCount": {
+          "$ref": "#/$defs/eventCount"
+        },
+        "outcome": {
+          "enum": [
+            "EXACT_REFERENCE_BOUNDARY",
+            "EVENT_LINK_COUNT_MISMATCH",
+            "EVENT_OWNER_IDENTITY_MISMATCH",
+            "EVENT_OWNER_INSTANCE_MISMATCH",
+            "WORLD_OWNER_NOT_FOUND",
+            "WORLD_OWNER_AMBIGUOUS",
+            "WORLD_OWNER_INSTANCE_MISMATCH",
+            "OWNER_INACTIVE"
+          ]
+        }
+      }
+    },
+    "eventCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65536
+    }
+  }
+}

@@ -339,6 +339,14 @@ public final class mudclient implements Runnable {
 	private static final int POTION_HUD_ICON_WIDTH = 22;
 	private static final int POTION_HUD_ICON_HEIGHT = 16;
 	private static final int TOP_MENU_BAR_WIDTH = 199;
+	private static final int CUSTOM_UI_INVENTORY_PANEL_WIDTH = 248;
+	private static final int CUSTOM_UI_INVENTORY_PANEL_HEIGHT = 228;
+	private static final int CUSTOM_UI_EQUIPMENT_PANEL_HEIGHT = 273;
+	private static final int CUSTOM_UI_PLAYER_INFO_PANEL_OFFSET = 287;
+	private static final int CUSTOM_UI_MAGIC_PANEL_HEIGHT = 182;
+	private static final int CUSTOM_UI_SOCIAL_PANEL_HEIGHT = 182;
+	private static final int CUSTOM_UI_CLAN_PANEL_EXTRA_HEIGHT = 19;
+	private static final int CUSTOM_UI_OPTIONS_PANEL_HEIGHT = 265;
 	private static final String[] MINIMAP_POSITION_LABELS = new String[] {
 		"Top right", "Bottom right", "Top left", "Bottom left"
 	};
@@ -355,6 +363,12 @@ public final class mudclient implements Runnable {
 	private static final int[] ALTAR_ELEMENT_COLORS = new int[] {
 		0xD8F7FF, 0x3D78FF, 0x7A4C28, 0xFF5A24, 0xDFA8FF, 0x7DD6B1, 0x6D48B8, 0x8B1E1E,
 		0x3FBF4A, 0xF1F1D0, 0x4C5666, 0xA31324, 0xA6D8FF, 0xF3DD59
+	};
+	private static final int[] ALTAR_OBJECT_IDS = new int[] {
+		1191, 1195, 1197, 1199, 1193, 1201, 1203, 1205, 1207, 1209, 1211, 1213, 1296, 1321
+	};
+	private static final int[] ALTAR_OBELISK_OBJECT_IDS = new int[] {
+		303, 300, 304, 301, 1298, 1299, 1300, 1301, 1302, 1303, 1304, 1305, 1306, 1322
 	};
 	private static final int[][] ALTAR_TILES = new int[][] {
 		{306, 593}, {147, 684}, {62, 464}, {50, 633}, {297, 438}, {259, 503}, {104, 3556},
@@ -587,6 +601,9 @@ public final class mudclient implements Runnable {
 	public boolean m_N = false;
 	public int mouseX = 0;
 	public int mouseY = 0;
+	private String pendingTerrainNavigationRejectReason;
+	private int pendingTerrainNavigationRejectMouseX;
+	private int pendingTerrainNavigationRejectMouseY;
 	public int mouseLastProcessedX = 0;
 	public int mouseLastProcessedY = 0;
 	public int screenOffsetX;
@@ -862,10 +879,25 @@ public final class mudclient implements Runnable {
 	private int lastObjectAnimationNumberCosmicSparkles = -1;
 	private int lastObjectAnimatonNumberClaw = -1;
 	private boolean loadingArea = false;
+	private boolean layeredSceneActivationPending = false;
+	private boolean layeredSceneActivationRetainsPresentedFrame = false;
 	private boolean regionLoadNeedsHardPlayerReset = false;
 	private boolean hasCompletedInitialRegionLoad = false;
 	private final Map<Integer, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
 		new HashMap<Integer, ResidentObjectChunkCacheEntry>();
+	private List<SceneBaselineState.Record>
+		staticPresentationSceneryRecords =
+			Collections.emptyList();
+	private List<SceneBaselineState.Record>
+		staticPresentationWallRecords =
+			Collections.emptyList();
+	private final List<StaticPresentationModel>
+		staticPresentationModels =
+			new ArrayList<StaticPresentationModel>();
+	private long staticPresentationRevision = 0L;
+	private long builtStaticPresentationRevision = -1L;
+	private int builtStaticPresentationBaseX = Integer.MIN_VALUE;
+	private int builtStaticPresentationBaseZ = Integer.MIN_VALUE;
 	private int logoutTimeout = 0;
 	private int controlButtonAppearanceBottom2;
 	private int m_be;
@@ -1060,6 +1092,11 @@ public final class mudclient implements Runnable {
 	private int spriteCount = 0;
 	private final Sprite[] worldGlyphSprites = new Sprite[ALTAR_VISUAL_COUNT];
 	private final Sprite[] worldOrbSprites = new Sprite[ALTAR_VISUAL_COUNT];
+	private final boolean[] altarGlyphOwnerPresent = new boolean[ALTAR_VISUAL_COUNT];
+	private final boolean[][] altarOrbOwnerPresent = new boolean[ALTAR_VISUAL_COUNT][4];
+	private long altarVisualOwnerRevision = Long.MIN_VALUE;
+	private int altarVisualOwnerBaseX = Integer.MIN_VALUE;
+	private int altarVisualOwnerBaseZ = Integer.MIN_VALUE;
 	private final Sprite[][] combatEffectSprites = new Sprite[COMBAT_EFFECT_COUNT + 1][COMBAT_EFFECT_FRAME_SLOTS];
 	private final int[] combatEffectFrameCounts = new int[COMBAT_EFFECT_COUNT + 1];
 	private final String[] combatEffectNames = new String[] {
@@ -2116,10 +2153,7 @@ public final class mudclient implements Runnable {
 
 			ORSCharacter player = this.players[index];
 			String name = player.getStaffName();
-			int var5 = 2203 - this.midRegionBaseZ - this.playerLocalZ - this.worldOffsetZ;
-			if (this.midRegionBaseX + this.playerLocalX + this.worldOffsetX >= 2640) {
-				var5 = -50;
-			}
+			int var5 = getLocalPlayerWildernessDepth();
 
 			String level = "";
 			int levelDelta = 0;
@@ -2177,7 +2211,7 @@ public final class mudclient implements Runnable {
 			} else {
 
 				if (var5 > 0
-					&& (player.currentZ - 64) / this.tileSize - (-this.worldOffsetZ - this.midRegionBaseZ) < 2203) {
+					&& getCharacterWildernessDepth(player) > 0) {
 					this.menuCommon.addCharacterItem(player.serverIndex, levelDelta >= 0 && levelDelta < 5
 							? MenuItemAction.PLAYER_ATTACK_SIMILAR : MenuItemAction.PLAYER_ATTACK_DIVERGENT, "Attack",
 						"@whi@" + name + level);
@@ -2385,6 +2419,7 @@ public final class mudclient implements Runnable {
 	private void checkConnection() {
 		try {
 
+			this.packetHandler.pollLayeredTerrainStageReady();
 			long var2 = GenUtil.currentTimeMillis();
 			if (this.packetHandler.getClientStream().hasFinishedPackets()) {
 				this.lastWrite = var2;
@@ -2447,6 +2482,7 @@ public final class mudclient implements Runnable {
 				}
 			}
 			this.closeClientStreamOnly();
+			this.packetHandler.resetLayeredSceneProtocolState();
 			this.stopSoundPlayback();
 
 			this.setUsername("");
@@ -3437,11 +3473,21 @@ public final class mudclient implements Runnable {
 		int z1 = y * this.tileSize;
 		x2 *= this.tileSize;
 		y2 *= this.tileSize;
-		int v1 = model.insertVertex(x1, -this.world.getElevation(x1, z1), z1);
-		int v2 = model.insertVertex(x1, -this.world.getElevation(x1, z1) - height, z1);
+			int elevation1 =
+				this.world.getPresentationTerrainElevation(x1, z1);
+			int elevation2 =
+				this.world.getPresentationTerrainElevation(x2, y2);
+			if (elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+				elevation1 = this.world.getElevation(x1, z1);
+			}
+			if (elevation2 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+				elevation2 = this.world.getElevation(x2, y2);
+			}
+			int v1 = model.insertVertex(x1, -elevation1, z1);
+			int v2 = model.insertVertex(x1, -elevation1 - height, z1);
 
-		int v3 = model.insertVertex(x2, -height - this.world.getElevation(x2, y2), y2);
-		int v4 = model.insertVertex(x2, -this.world.getElevation(x2, y2), y2);
+			int v3 = model.insertVertex(x2, -height - elevation2, y2);
+			int v4 = model.insertVertex(x2, -elevation2, y2);
 		int[] indices = new int[]{v1, v2, v3, v4};
 		model.insertFace(4, indices, texFront, texBack, false);
 		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
@@ -3481,11 +3527,17 @@ public final class mudclient implements Runnable {
 			zSize = EntityHandler.getObjectDef(objectID).getWidth();
 		}
 
-		int x = (2 * xTile + xSize) * this.tileSize / 2;
-		int z = this.tileSize * (2 * zTile + zSize) / 2;
-		applyExpandedGameObjectPickBounds(objectID, model);
-		this.scene.addModel(model);
-		model.setTranslate(x, -this.world.getElevation(x, z), z);
+			int x = (2 * xTile + xSize) * this.tileSize / 2;
+			int z = this.tileSize * (2 * zTile + zSize) / 2;
+			int elevation =
+				this.world.getPresentationTerrainElevation(x, z);
+			if (elevation == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+				debugSceneGameObjectEvent("defer-elevation", index, "");
+				return;
+			}
+			applyExpandedGameObjectPickBounds(objectID, model);
+			this.scene.addModel(model);
+			model.setTranslate(x, -elevation, z);
 		this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, false);
 		if (objectID == 74) {
 			model.translate2(0, -480, 0);
@@ -3630,6 +3682,220 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	public void replaceStaticScenePresentation(
+		List<SceneBaselineState.Record> scenery,
+		List<SceneBaselineState.Record> walls) {
+		this.staticPresentationSceneryRecords =
+			Collections.unmodifiableList(
+				new ArrayList<SceneBaselineState.Record>(
+					scenery == null
+						? Collections.<SceneBaselineState.Record>emptyList()
+						: scenery));
+		this.staticPresentationWallRecords =
+			Collections.unmodifiableList(
+				new ArrayList<SceneBaselineState.Record>(
+					walls == null
+						? Collections.<SceneBaselineState.Record>emptyList()
+						: walls));
+		this.staticPresentationRevision++;
+		invalidateStaticScenePresentationModels();
+	}
+
+	public void clearStaticScenePresentation() {
+		if (this.staticPresentationSceneryRecords.isEmpty()
+			&& this.staticPresentationWallRecords.isEmpty()
+			&& this.staticPresentationModels.isEmpty()) {
+			return;
+		}
+		this.staticPresentationSceneryRecords =
+			Collections.emptyList();
+		this.staticPresentationWallRecords =
+			Collections.emptyList();
+		this.staticPresentationRevision++;
+		invalidateStaticScenePresentationModels();
+	}
+
+	private void invalidateStaticScenePresentationModels() {
+		this.staticPresentationModels.clear();
+		this.builtStaticPresentationRevision = -1L;
+		this.builtStaticPresentationBaseX = Integer.MIN_VALUE;
+		this.builtStaticPresentationBaseZ = Integer.MIN_VALUE;
+		clearResidentObjectChunkCache();
+	}
+
+	private void ensureStaticScenePresentationModels() {
+		if (this.builtStaticPresentationRevision
+				== this.staticPresentationRevision
+			&& this.builtStaticPresentationBaseX == this.midRegionBaseX
+			&& this.builtStaticPresentationBaseZ == this.midRegionBaseZ) {
+			return;
+		}
+		this.staticPresentationModels.clear();
+		int skipped = 0;
+		int index = 0;
+		for (SceneBaselineState.Record record
+				: this.staticPresentationSceneryRecords) {
+			RSModel model = createStaticPresentationGameObjectModel(
+				record, index);
+			if (model == null) {
+				skipped++;
+			} else {
+				this.staticPresentationModels.add(
+					new StaticPresentationModel(
+						Renderer3DModelKind.GAME_OBJECT,
+						index,
+						record.x - this.midRegionBaseX,
+						record.y - this.midRegionBaseZ,
+						record.id,
+						record.direction,
+						model));
+			}
+			index++;
+		}
+		for (SceneBaselineState.Record record
+				: this.staticPresentationWallRecords) {
+			RSModel model = createStaticPresentationWallObjectModel(
+				record, index);
+			if (model == null) {
+				skipped++;
+			} else {
+				this.staticPresentationModels.add(
+					new StaticPresentationModel(
+						Renderer3DModelKind.WALL_OBJECT,
+						index,
+						record.x - this.midRegionBaseX,
+						record.y - this.midRegionBaseZ,
+						record.id,
+						record.direction,
+						model));
+			}
+			index++;
+		}
+		this.builtStaticPresentationRevision =
+			this.staticPresentationRevision;
+		this.builtStaticPresentationBaseX = this.midRegionBaseX;
+		this.builtStaticPresentationBaseZ = this.midRegionBaseZ;
+		clearResidentObjectChunkCache();
+		String summary = "STATIC_SCENE_PRESENTATION"
+			+ " records="
+			+ (this.staticPresentationSceneryRecords.size()
+				+ this.staticPresentationWallRecords.size())
+			+ " models=" + this.staticPresentationModels.size()
+			+ " skipped=" + skipped
+			+ " base=" + this.midRegionBaseX + ","
+				+ this.midRegionBaseZ;
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+	}
+
+	private RSModel createStaticPresentationGameObjectModel(
+		SceneBaselineState.Record record,
+		int index) {
+		GameObjectDef def = EntityHandler.getObjectDef(record.id);
+		if (def == null || def.modelID < 0) {
+			return null;
+		}
+		int localX = record.x - this.midRegionBaseX;
+		int localZ = record.y - this.midRegionBaseZ;
+		int xSize;
+		int zSize;
+		if (record.direction == 0 || record.direction == 4) {
+			xSize = def.getWidth();
+			zSize = def.getHeight();
+		} else {
+			xSize = def.getHeight();
+			zSize = def.getWidth();
+		}
+		int x = (2 * localX + xSize) * this.tileSize / 2;
+		int z = (2 * localZ + zSize) * this.tileSize / 2;
+		int elevation =
+			this.world.getPresentationTerrainElevation(x, z);
+		if (elevation == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+			return null;
+		}
+		RSModel model = this.getModelCacheItem(def.modelID).clone();
+		model.key = -1 - index;
+		model.addRotation(0, record.direction * 32, 0);
+		model.setDiffuseLightAndColor(
+			-50, -10, -50, 48, 48, true, 117);
+		model.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
+		model.setTranslate(x, -elevation, z);
+		if (record.id == 74) {
+			model.translate2(0, -480, 0);
+		}
+		applyRenderer3DMaterialMetadata(
+			Renderer3DModelKind.GAME_OBJECT,
+			record.id,
+			model);
+		return model;
+	}
+
+	private RSModel createStaticPresentationWallObjectModel(
+		SceneBaselineState.Record record,
+		int index) {
+		DoorDef definition = EntityHandler.getDoorDef(record.id);
+		if (definition == null) {
+			return null;
+		}
+		int x1 = record.x - this.midRegionBaseX;
+		int x2 = x1;
+		int y1 = record.y - this.midRegionBaseZ;
+		int y2 = y1;
+		if (record.direction == 1) {
+			y2++;
+		}
+		if (record.direction == 0) {
+			x2++;
+		}
+		if (record.direction == 2) {
+			x1++;
+			y2++;
+		}
+		if (record.direction == 3) {
+			x2++;
+			y2++;
+		}
+		int x1World = x1 * this.tileSize;
+		int y1World = y1 * this.tileSize;
+		int x2World = x2 * this.tileSize;
+		int y2World = y2 * this.tileSize;
+		int elevation1 = this.world.getPresentationTerrainElevation(
+			x1World, y1World);
+		int elevation2 = this.world.getPresentationTerrainElevation(
+			x2World, y2World);
+		if (elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE
+			|| elevation2
+				== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+			return null;
+		}
+		int height = definition.getWallObjectHeight();
+		RSModel model = new RSModel(4, 1);
+		int v1 = model.insertVertex(
+			x1World, -elevation1, y1World);
+		int v2 = model.insertVertex(
+			x1World, -elevation1 - height, y1World);
+		int v3 = model.insertVertex(
+			x2World, -height - elevation2, y2World);
+		int v4 = model.insertVertex(
+			x2World, -elevation2, y2World);
+		model.insertFace(
+			4,
+			new int[] {v1, v2, v3, v4},
+			definition.getModelVar2(),
+			definition.getModelVar3(),
+			false);
+		model.setRenderer3DModelKind(
+			Renderer3DModelKind.WALL_OBJECT);
+		model.setDiffuseLightAndColor(
+			-50, -10, -50, 60, 24, false, -95);
+		model.key = -1 - index;
+		applyRenderer3DMaterialMetadata(
+			Renderer3DModelKind.WALL_OBJECT,
+			record.id,
+			model);
+		return model;
+	}
+
 	private Renderer3DWorldChunkFrame appendResidentObjectChunkFrame(Renderer3DWorldChunkFrame baseFrame) {
 		if (!Renderer3DSettings.canUseResidentObjectChunks()) {
 			clearResidentObjectChunkCache();
@@ -3675,6 +3941,7 @@ public final class mudclient implements Runnable {
 		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
 		Map<Integer, ResidentObjectChunkInputBuilder> builders =
 			new TreeMap<Integer, ResidentObjectChunkInputBuilder>();
+		ensureStaticScenePresentationModels();
 		for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {
 			if (this.isGameObjectInstanceMaterialized(i) && this.getGameObjectInstanceModel(i) != null) {
 				addResidentObjectChunkModel(
@@ -3702,6 +3969,19 @@ public final class mudclient implements Runnable {
 					this.getWallObjectInstanceDir(i),
 					this.getWallObjectInstanceModel(i));
 			}
+		}
+		for (StaticPresentationModel presentation
+				: this.staticPresentationModels) {
+			addResidentObjectChunkModel(
+				builders,
+				anchor,
+				presentation.tileX,
+				presentation.tileZ,
+				presentation.kind,
+				presentation.instanceIndex,
+				presentation.objectId,
+				presentation.direction,
+				presentation.model);
 		}
 		List<ResidentObjectChunkInput> inputs = new ArrayList<ResidentObjectChunkInput>(builders.size());
 		for (ResidentObjectChunkInputBuilder builder : builders.values()) {
@@ -3835,6 +4115,33 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private static final class StaticPresentationModel {
+		private final Renderer3DModelKind kind;
+		private final int instanceIndex;
+		private final int tileX;
+		private final int tileZ;
+		private final int objectId;
+		private final int direction;
+		private final RSModel model;
+
+		private StaticPresentationModel(
+			Renderer3DModelKind kind,
+			int instanceIndex,
+			int tileX,
+			int tileZ,
+			int objectId,
+			int direction,
+			RSModel model) {
+			this.kind = kind;
+			this.instanceIndex = instanceIndex;
+			this.tileX = tileX;
+			this.tileZ = tileZ;
+			this.objectId = objectId;
+			this.direction = direction;
+			this.model = model;
+		}
+	}
+
 	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input) {
 		return RSModel.buildRenderer3DObjectChunkMesh(
 			input.anchor.getPlane(),
@@ -3863,6 +4170,22 @@ public final class mudclient implements Runnable {
 			return this.midRegionBaseZ + this.localPlayer.currentZ / this.tileSize;
 		}
 		return this.midRegionBaseZ + this.playerLocalZ;
+	}
+
+	private int getLocalPlayerWildernessDepth() {
+		int compatibilityX = this.midRegionBaseX + this.playerLocalX;
+		int compatibilityY = this.midRegionBaseZ + this.playerLocalZ;
+		return this.packetHandler.getPlayerWildernessDepth(
+			compatibilityX, compatibilityY);
+	}
+
+	private int getCharacterWildernessDepth(ORSCharacter player) {
+		int compatibilityX = this.midRegionBaseX
+			+ (player.currentX - 64) / this.tileSize;
+		int compatibilityY = this.midRegionBaseZ
+			+ (player.currentZ - 64) / this.tileSize;
+		return this.packetHandler.getWorldWildernessDepth(
+			compatibilityX, compatibilityY);
 	}
 
 	private boolean shouldDebugSceneGameObject(int objectId, int worldTileX, int worldTileZ) {
@@ -4255,7 +4578,8 @@ public final class mudclient implements Runnable {
 	private boolean hasLoadedTerrainForWorldPoint(int xWorld, int zWorld) {
 		int xTile = xWorld >> 7;
 		int zTile = zWorld >> 7;
-		return World.isLocalFaceTile(xTile, zTile);
+		return this.world != null
+			&& this.world.isPresentationTerrainFaceTile(xTile, zTile);
 	}
 
 	final void draw() {
@@ -6628,6 +6952,20 @@ public final class mudclient implements Runnable {
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
 					// 256, this.screenOffsetY);
 					clientPort.draw();
+					} else if (this.layeredSceneActivationPending
+							&& this.layeredSceneActivationRetainsPresentedFrame) {
+						clientPort.draw();
+					} else if (this.layeredSceneActivationPending) {
+						this.getSurface().blackScreen(true);
+						this.getSurface().drawColoredStringCentered(
+							this.halfGameWidth(),
+							"Loading... Please wait",
+							0xFFFFFF,
+							0,
+							1,
+							this.halfGameHeight());
+						this.drawChatMessageTabs(5);
+						clientPort.draw();
 					} else if (this.world.playerAlive) {
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
@@ -6981,8 +7319,10 @@ public final class mudclient implements Runnable {
 						}
 					}
 
+					refreshAltarVisualOwnerPresence();
 					for (int altarIndex = 0; altarIndex < ALTAR_ELEMENTS.length; altarIndex++) {
-						if (this.worldGlyphSprites[altarIndex] != null) {
+						if (this.worldGlyphSprites[altarIndex] != null
+							&& this.altarGlyphOwnerPresent[altarIndex]) {
 							int glyphTileX = ALTAR_TILES[altarIndex][0] - this.midRegionBaseX;
 							int glyphTileZ = ALTAR_TILES[altarIndex][1] - this.midRegionBaseZ;
 							if (canDrawWorldSpriteAtLocalTile(glyphTileX, glyphTileZ)) {
@@ -6997,6 +7337,9 @@ public final class mudclient implements Runnable {
 
 						if (this.worldOrbSprites[altarIndex] != null && ALTAR_OBELISK_TILES[altarIndex] != null) {
 							for (int orbIndex = 0; orbIndex < ALTAR_OBELISK_TILES[altarIndex].length; orbIndex++) {
+								if (!this.altarOrbOwnerPresent[altarIndex][orbIndex]) {
+									continue;
+								}
 								int orbTileX = ALTAR_OBELISK_TILES[altarIndex][orbIndex][0] - this.midRegionBaseX;
 								int orbTileZ = ALTAR_OBELISK_TILES[altarIndex][orbIndex][1] - this.midRegionBaseZ;
 								if (canDrawWorldSpriteAtLocalTile(orbTileX, orbTileZ)) {
@@ -7242,10 +7585,7 @@ public final class mudclient implements Runnable {
 						}
 					}
 					if (!this.loadingArea) {
-						centerX = -this.playerLocalZ - this.worldOffsetZ - (this.midRegionBaseZ - 2203);
-						if (this.worldOffsetX + this.playerLocalX + this.midRegionBaseX >= 2640) {
-							centerX = -50;
-						}
+						centerX = getLocalPlayerWildernessDepth();
 
 						if (centerX > 0) {
 							inWild = true;
@@ -10241,13 +10581,152 @@ public final class mudclient implements Runnable {
 	}
 	private boolean addProjectedEditorTileFallback(){
 		boolean editorOpen=worldEditorInterface!=null&&worldEditorInterface.isEditorOpen();
-		if((!editorOpen&&!isClickTeleportActiveForCurrentContext())||this.selectedSpell>=0||this.selectedItemInventoryIndex>=0)return false;
-		if(mouseY>=getGameHeight()-70||mouseInTabArea_CUSTOM()||scene==null)return false;
-		int[] tile=scene.projectScreenToGroundTile(mouseX,mouseY,tileSize,getClickTeleportGroundPlaneY());
-		if(tile==null||tile[0]<0||tile[1]<0||tile[0]>=World.LOCAL_FACE_TILE_COUNT||tile[1]>=World.LOCAL_FACE_TILE_COUNT)return false;
+		boolean nativeTerrainPicking =
+			world != null && world.isNativeTerrainAuthorityOnlyActive();
+		if(!editorOpen&&!isClickTeleportActiveForCurrentContext()&&!nativeTerrainPicking){
+			clearTerrainNavigationReject();
+			return false;
+		}
+		if(this.selectedItemInventoryIndex>=0){
+			clearTerrainNavigationReject();
+			return false;
+		}
+		if(this.selectedSpell>=0&&EntityHandler.getSpellDef(this.selectedSpell).getSpellType()!=6){
+			clearTerrainNavigationReject();
+			return false;
+		}
+		if(isMouseOverMessageUi(this.mouseX,this.mouseY)
+			|| mouseInTabArea_CUSTOM() || scene==null){
+			clearTerrainNavigationReject();
+			return false;
+		}
+		int[] tile=projectScreenToCurrentTerrainTile();
+		if(tile==null){
+			rememberTerrainNavigationReject(
+				"projection-"+scene.getTerrainProjectionDiagnostic());
+			return false;
+		}
+		if(!world.isPresentationTerrainFaceTile(tile[0],tile[1])){
+			rememberTerrainNavigationReject(
+				"tile-outside-field tile="+tile[0]+","+tile[1]);
+			return false;
+		}
+		clearTerrainNavigationReject();
+		boolean presentationOnly=!World.isLocalFaceTile(tile[0],tile[1]);
+		if(presentationOnly&&(editorOpen||this.selectedSpell>=0))return false;
 		this.menuVisible=true;this.m_rf=midRegionBaseX+tile[0];this.m_Cg=midRegionBaseZ+tile[1];
-		this.menuCommon.addCharacterItem_WithID(tile[0],"",MenuItemAction.LANDSCAPE_WALK_HERE,isClickTeleportActiveForCurrentContext()?"Teleport here":"Walk here",tile[1]);
-		addWorldEditorTileActions(tile[0],tile[1]);return true;
+		if(this.selectedSpell>=0){
+			this.menuCommon.addTileItem(
+				tile[0],
+				(byte)22,
+				MenuItemAction.LANDSCAPE_CAST_SPELL,
+				"Cast "+EntityHandler.getSpellDef(this.selectedSpell).getName()+" on ground",
+				"",
+				this.selectedSpell,
+				tile[1]);
+		}else{
+			this.menuCommon.addCharacterItem_WithID(
+				tile[0],
+				"",
+				MenuItemAction.LANDSCAPE_WALK_HERE,
+				isClickTeleportActiveForCurrentContext()
+					?"Teleport here"
+					:presentationOnly?"Walk toward":"Walk here",
+				tile[1]);
+			if(!presentationOnly)addWorldEditorTileActions(tile[0],tile[1]);
+		}
+		return true;
+	}
+	private boolean isMouseOverMessageUi(int x,int y){
+		int panelTop=this.messageTabSelected==MessageTab.ALL
+			?getGameHeight()-10:getGameHeight()-65;
+		return x>=0&&x<getGameWidth()
+			&& y>=panelTop&&y<getGameHeight()+12;
+	}
+	private int[] activeGameplayTargetToward(int targetX,int targetZ){
+		if(World.isLocalFaceTile(targetX,targetZ))return new int[]{targetX,targetZ};
+		if(!World.isLocalFaceTile(this.playerLocalX,this.playerLocalZ))return null;
+		int maximum=World.LOCAL_FACE_TILE_COUNT-1;
+		int deltaX=targetX-this.playerLocalX;
+		int deltaZ=targetZ-this.playerLocalZ;
+		double scale=1.0D;
+		if(targetX<0&&deltaX<0)scale=Math.min(scale,(double)this.playerLocalX/-deltaX);
+		else if(targetX>maximum&&deltaX>0)scale=Math.min(scale,(double)(maximum-this.playerLocalX)/deltaX);
+		if(targetZ<0&&deltaZ<0)scale=Math.min(scale,(double)this.playerLocalZ/-deltaZ);
+		else if(targetZ>maximum&&deltaZ>0)scale=Math.min(scale,(double)(maximum-this.playerLocalZ)/deltaZ);
+		int activeX=Math.max(0,Math.min(maximum,this.playerLocalX+(int)Math.round(deltaX*scale)));
+		int activeZ=Math.max(0,Math.min(maximum,this.playerLocalZ+(int)Math.round(deltaZ*scale)));
+		return activeX==this.playerLocalX&&activeZ==this.playerLocalZ
+			?null:new int[]{activeX,activeZ};
+	}
+	private void recordTerrainNavigationClick(
+		int requestedX,
+		int requestedZ,
+		int activeX,
+		int activeZ){
+		boolean bounded=requestedX!=activeX||requestedZ!=activeZ;
+		String summary="TERRAIN_NAVIGATION_CLICK requestedLocal="
+			+requestedX+","+requestedZ
+			+" activeLocal="+activeX+","+activeZ
+			+" playerLocal="+this.playerLocalX+","+this.playerLocalZ
+			+" bounded="+(bounded?1:0);
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+		RendererDiagnosticSession.Record event=
+			RendererDiagnosticSession.newEventRecord(
+				"renderer.terrain-navigation-click");
+		if(event!=null){
+			event.number("requestedLocalX",requestedX);
+			event.number("requestedLocalZ",requestedZ);
+			event.number("activeLocalX",activeX);
+			event.number("activeLocalZ",activeZ);
+			event.number("playerLocalX",this.playerLocalX);
+			event.number("playerLocalZ",this.playerLocalZ);
+			event.bool("boundedToGameplayWindow",bounded);
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
+	}
+	private void rememberTerrainNavigationReject(String reason){
+		this.pendingTerrainNavigationRejectReason=reason;
+		this.pendingTerrainNavigationRejectMouseX=this.mouseX;
+		this.pendingTerrainNavigationRejectMouseY=this.mouseY;
+	}
+	private void clearTerrainNavigationReject(){
+		this.pendingTerrainNavigationRejectReason=null;
+	}
+	private void emitTerrainNavigationRejectForClick(){
+		if(this.pendingTerrainNavigationRejectReason==null
+			|| this.mouseButtonClick==0
+				&& this.currentMouseButtonDown==0)return;
+		String summary="TERRAIN_NAVIGATION_REJECT mouse="
+			+this.pendingTerrainNavigationRejectMouseX+","
+				+this.pendingTerrainNavigationRejectMouseY
+			+" viewport="+getGameWidth()+"x"+getGameHeight()
+			+" reason="+this.pendingTerrainNavigationRejectReason;
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+		RendererDiagnosticSession.Record event=
+			RendererDiagnosticSession.newEventRecord(
+				"renderer.terrain-navigation-reject");
+		if(event!=null){
+			event.number(
+				"mouseX",this.pendingTerrainNavigationRejectMouseX);
+			event.number(
+				"mouseY",this.pendingTerrainNavigationRejectMouseY);
+			event.number("viewportWidth",getGameWidth());
+			event.number("viewportHeight",getGameHeight());
+			event.string(
+				"reason",this.pendingTerrainNavigationRejectReason);
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
+		this.pendingTerrainNavigationRejectReason=null;
+	}
+	private int[] projectScreenToCurrentTerrainTile(){
+		return scene.projectScreenToTerrainTile(
+			mouseX,
+			mouseY,
+			tileSize,
+			world);
 	}
 	private void drawUiTab0(int var1) {
 		try {
@@ -10633,7 +11112,10 @@ public final class mudclient implements Runnable {
 					"Cast " + EntityHandler.getSpellDef(selectedSpell).getName() + " on self", "");
 			}
 
-			if (~var2 != 0) {
+			boolean nativeTerrainPicking =
+				this.world != null
+					&& this.world.isNativeTerrainAuthorityOnlyActive();
+			if (~var2 != 0 && !nativeTerrainPicking) {
 				this.menuVisible = true;
 				this.m_rf = this.midRegionBaseX + this.world.faceTileX[var2];
 				this.m_Cg = this.midRegionBaseZ + this.world.faceTileZ[var2];
@@ -10666,7 +11148,10 @@ public final class mudclient implements Runnable {
 					}
 					addWorldEditorTileActions(this.world.faceTileX[var2],this.world.faceTileZ[var2]);
 				}
-				} else addProjectedEditorTileFallback();
+			} else {
+				addProjectedEditorTileFallback();
+			}
+			emitTerrainNavigationRejectForClick();
 
 			} catch (RuntimeException var16) {
 			throw GenUtil.makeThrowable(var16, "client.TA(" + var1 + ')');
@@ -12718,8 +13203,18 @@ public final class mudclient implements Runnable {
 		this.drawPlayerHealthBar(x, y);
 		y += HEALTH_HUD_HEIGHT + HEALTH_HUD_COORDINATE_GAP;
 		if (this.showCoordinatesOverlay) {
-			this.getSurface().drawString("Tile: @gre@(@whi@" + (this.playerLocalX + this.midRegionBaseX)
-				+ "@gre@,@whi@" + (this.playerLocalZ + this.midRegionBaseZ) + "@gre@)", x, y, 0xFFFFFF, 1);
+			int compatibilityX = this.playerLocalX + this.midRegionBaseX;
+			int compatibilityY = this.playerLocalZ + this.midRegionBaseZ;
+			int logicalX = this.packetHandler.getLogicalPlayerX(compatibilityX);
+			int logicalY = this.packetHandler.getLogicalPlayerY(
+				compatibilityX, compatibilityY);
+			int logicalLevel =
+				this.packetHandler.getLogicalWorldLevel(compatibilityY);
+			this.getSurface().drawString(
+				"Tile: @gre@(@whi@" + logicalX
+					+ "@gre@,@whi@" + logicalY
+					+ "@gre@,L@whi@" + logicalLevel + "@gre@)",
+				x, y, 0xFFFFFF, 1);
 		}
 	}
 
@@ -16149,6 +16644,16 @@ public final class mudclient implements Runnable {
 								|| var11.startsWith("::ct "))
 								&& canUseClickTeleport()) {
 								handleDevClickTeleportCommand(var11.substring(2));
+							} else if ((var11.equalsIgnoreCase("::cloc")
+								|| var11.equalsIgnoreCase("::clientlayer"))
+								&& localPlayer.isDev()) {
+								this.showMessage(
+									false,
+									null,
+									this.packetHandler.getLayeredSceneContextDebugSummary(),
+									MessageType.GAME,
+									0,
+									null);
 							} else if (var11.startsWith("::n ") && localPlayer.isDev()) {
 								devMenuNpcID = Integer.parseInt(var11.split(" ")[1]);
 							} else if (var11.equalsIgnoreCase("::overlay") && S_SIDE_MENU_TOGGLE) {
@@ -17590,8 +18095,23 @@ public final class mudclient implements Runnable {
 					if (isClickTeleportActiveForCurrentContext()) {
 						this.sendBlinkToTile(indexOrX, idOrZ);
 					} else {
+						int[] activeTarget = activeGameplayTargetToward(
+							indexOrX, idOrZ);
+						if (activeTarget == null) {
+							break;
+						}
+						recordTerrainNavigationClick(
+							indexOrX,
+							idOrZ,
+							activeTarget[0],
+							activeTarget[1]);
 						//System.out.println("LANDSCAPE_WALK_HERE: playerLocalX=" + this.playerLocalX + ", playerLocalZ= " + this.playerLocalZ + ", indexOrX=" + indexOrX + ", idOrZ=" + idOrZ);
-						this.walkToActionSource(this.playerLocalX, this.playerLocalZ, indexOrX, idOrZ, false);
+						this.walkToActionSource(
+							this.playerLocalX,
+							this.playerLocalZ,
+							activeTarget[0],
+							activeTarget[1],
+							false);
 						if (this.mouseClickXStep == -24) {
 							this.mouseClickXStep = 24;
 						}
@@ -18189,10 +18709,59 @@ public final class mudclient implements Runnable {
 
 		int width = this.getSurface().width2;
 		if (C_CUSTOM_UI) {
-			int panelTop = Math.max(0, getUITabsY() - 340);
-			return x >= width - 250 && x < width && y >= panelTop && y < getGameHeight();
+			return this.isMouseOverCustomOpenTabPanel(x, y);
 		}
 		return x >= width - 250 && x < width && y >= 0 && y < getGameHeight();
+	}
+
+	private boolean isMouseOverCustomOpenTabPanel(int x, int y) {
+		if (this.showUiTab == 0 || this.getSurface() == null) {
+			return false;
+		}
+
+		int panelRight = this.getSurface().width2;
+		int tabBarY = getUITabsY();
+		int panelLeft = panelRight - TOP_MENU_BAR_WIDTH;
+		int panelTop;
+		int panelBottom = tabBarY;
+		switch (this.showUiTab) {
+			case Config.INVENTORY_TAB:
+				panelLeft = panelRight - CUSTOM_UI_INVENTORY_PANEL_WIDTH;
+				panelTop = tabBarY - (this.tabEquipmentIndex == 1
+					? CUSTOM_UI_EQUIPMENT_PANEL_HEIGHT
+					: CUSTOM_UI_INVENTORY_PANEL_HEIGHT);
+				break;
+			case Config.SKILLS_AND_QUESTS_TAB:
+				panelTop = tabBarY - CUSTOM_UI_PLAYER_INFO_PANEL_OFFSET;
+				int playerInfoHeight = Config.S_WANT_OPENPK_POINTS
+					? 186
+					: S_WANT_EXP_INFO ? 275 : 262;
+				panelBottom = Math.min(tabBarY, panelTop + playerInfoHeight + 12);
+				break;
+			case Config.MAGIC_AND_PRAYER_TAB:
+				panelTop = tabBarY - CUSTOM_UI_MAGIC_PANEL_HEIGHT;
+				break;
+			case Config.FRIENDS_TAB:
+				panelTop = tabBarY - CUSTOM_UI_SOCIAL_PANEL_HEIGHT
+					- (this.panelSocialTab == 1 ? CUSTOM_UI_CLAN_PANEL_EXTRA_HEIGHT : 0);
+				break;
+			case Config.OPTIONS_TAB:
+				panelTop = tabBarY - CUSTOM_UI_OPTIONS_PANEL_HEIGHT;
+				break;
+			case Config.MINIMAP_AND_COMPASS_TAB:
+			default:
+				return false;
+		}
+		return x >= panelLeft && x < panelRight
+			&& y >= Math.max(0, panelTop) && y < panelBottom;
+	}
+
+	private boolean isMouseOverCustomTabBar(int x, int y) {
+		return this.getSurface() != null
+			&& x >= this.getSurface().width2 - TOP_MENU_BAR_WIDTH
+			&& x < this.getSurface().width2
+			&& y >= getUITabsY()
+			&& y < getGameHeight();
 	}
 
 	private boolean handleTabUIClick() {
@@ -18477,14 +19046,11 @@ public final class mudclient implements Runnable {
 
 	private boolean mouseInTabArea_CUSTOM() {
 		try {
-			//tab area
-			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 199 && this.mouseY >= getUITabsY()
-				&& this.mouseX < this.getSurface().width2 && this.mouseY < getGameHeight()) {
-				return true;
+			if (!C_CUSTOM_UI) {
+				return false;
 			}
-			//tab interface
-			if (this.showUiTab != 0 && this.mouseX >= this.getSurface().width2 - 250 && this.mouseY >= getUITabsY() - 340
-				&& this.mouseX < this.getSurface().width2 && this.mouseY < getGameHeight()) {
+			if (this.isMouseOverCustomTabBar(this.mouseX, this.mouseY)
+				|| this.isMouseOverCustomOpenTabPanel(this.mouseX, this.mouseY)) {
 				return true;
 			}
 			if (this.shouldDrawMinimapPanel()) {
@@ -18844,17 +19410,16 @@ public final class mudclient implements Runnable {
 				if (!hardAreaLoad && this.hasCompletedInitialRegionLoad) {
 					this.world.preloadSections(wantX, wantZ, this.requestedPlane);
 				}
-				if (this.hasCompletedInitialRegionLoad
+				if (!hardAreaLoad
+					&& this.hasCompletedInitialRegionLoad
 					&& this.lastHeightOffset == this.requestedPlane
 					&& this.currentRegionMinX < wantX
 					&& this.currentRegionMaxX > wantX && this.currentRegionMinZ < wantZ
 					&& wantZ < this.currentRegionMaxZ) {
-					if (hardAreaLoad) {
-						this.resetGroundItemsForHardAreaLoad();
-					}
 					this.world.playerAlive = true;
 					return false;
 				} else {
+					long transitionStartNanos = System.nanoTime();
 					int oldBaseX = this.midRegionBaseX;
 					int oldBaseZ = this.midRegionBaseZ;
 					boolean heightOffsetChanged = this.lastHeightOffset != this.requestedPlane;
@@ -18865,15 +19430,24 @@ public final class mudclient implements Runnable {
 						// 256, this.screenOffsetY);
 						clientPort.draw();
 					}
-					int midRegionX = World.worldTileToSection(wantX);
+					boolean centeredNativeWindow =
+						this.world.hasNativeLayeredTerrain();
+					int midRegionX =
+						this.world.activeSectionXForWorldTile(wantX);
 					this.midRegionBaseX = World.sectionToLocalBaseTile(midRegionX);
-					int midRegionZ = World.worldTileToSection(wantZ);
+					int midRegionZ =
+						this.world.activeSectionYForWorldTile(wantZ);
 					this.lastHeightOffset = this.requestedPlane;
-					this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE + 32;
-					this.currentRegionMaxX = midRegionX * World.SECTION_SIZE + 32;
-					this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE - 32;
+					this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE
+						+ (centeredNativeWindow ? World.SECTION_SIZE : 32);
+					this.currentRegionMaxX = midRegionX * World.SECTION_SIZE
+						+ (centeredNativeWindow ? World.SECTION_SIZE : 32);
+					this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE
+						- (centeredNativeWindow ? 1 : 32);
 					this.midRegionBaseZ = World.sectionToLocalBaseTile(midRegionZ);
-					this.currentRegionMinX = midRegionX * World.SECTION_SIZE - 32;
+					this.currentRegionMinX = midRegionX * World.SECTION_SIZE
+						- (centeredNativeWindow ? 1 : 32);
+					long phaseStartNanos = System.nanoTime();
 					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
 						this.dematerializeGameObjectInstance(i);
 					}
@@ -18881,7 +19455,12 @@ public final class mudclient implements Runnable {
 						this.dematerializeWallObjectInstance(i);
 					}
 					this.clearResidentObjectChunkCache();
+					long dematerializeNanos =
+						System.nanoTime() - phaseStartNanos;
+					phaseStartNanos = System.nanoTime();
 					this.world.loadSections(wantX, wantZ, this.lastHeightOffset);
+					long worldLoadNanos =
+						System.nanoTime() - phaseStartNanos;
 					this.midRegionBaseZ -= this.worldOffsetZ;
 					this.midRegionBaseX -= this.worldOffsetX;
 					int baseDX = this.midRegionBaseX - oldBaseX;
@@ -18891,6 +19470,7 @@ public final class mudclient implements Runnable {
 						this.retainPendingAreaLoadStaticScene();
 					}
 
+					phaseStartNanos = System.nanoTime();
 					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
 						this.setGameObjectInstanceX(i, this.getGameObjectInstanceX(i) - baseDX);
 						this.setGameObjectInstanceZ(i, this.getGameObjectInstanceZ(i) - baseDZ);
@@ -18922,9 +19502,15 @@ public final class mudclient implements Runnable {
 							var20.printStackTrace();
 						}
 					}
+					long staticRebaseNanos =
+						System.nanoTime() - phaseStartNanos;
+					phaseStartNanos = System.nanoTime();
 					this.clearResidentObjectChunkCache();
 					this.materializeLoadedTerrainScenery();
+					long staticMaterializeNanos =
+						System.nanoTime() - phaseStartNanos;
 
+					phaseStartNanos = System.nanoTime();
 					if (hardAreaLoad || heightOffsetChanged) {
 						this.resetGroundItemsForHardAreaLoad();
 					} else {
@@ -18946,6 +19532,9 @@ public final class mudclient implements Runnable {
 						}
 						this.groundItemCount = newGroundItemCount;
 					}
+					long groundItemsNanos =
+						System.nanoTime() - phaseStartNanos;
+					phaseStartNanos = System.nanoTime();
 					for (int i = 0; i < this.playerCount; ++i) {
 						ORSCharacter var23 = this.players[i];
 						var23.currentX -= this.tileSize * baseDX;
@@ -18967,7 +19556,10 @@ public final class mudclient implements Runnable {
 							var23.waypointsZ[j] -= baseDZ * this.tileSize;
 						}
 					}
+					long actorRebaseNanos =
+						System.nanoTime() - phaseStartNanos;
 
+					phaseStartNanos = System.nanoTime();
 					int baseOffsetX = this.tileSize * baseDX;
 					int baseOffsetZ = this.tileSize * baseDZ;
 					this.cameraPositionX -= baseOffsetX;
@@ -18975,7 +19567,33 @@ public final class mudclient implements Runnable {
 
 					this.hasCompletedInitialRegionLoad = true;
 					this.world.playerAlive = true;
+					long finalizeNanos =
+						System.nanoTime() - phaseStartNanos;
+					phaseStartNanos = System.nanoTime();
 					this.packetHandler.reapplyCompleteSceneBaselineAfterRegionLoad();
+					long baselineNanos =
+						System.nanoTime() - phaseStartNanos;
+					RenderTelemetry.recordClientRegionTransition(
+						this.world.hasNativeLayeredTerrain()
+							? "native-authoritative"
+							: "legacy",
+						hardAreaLoad,
+						heightOffsetChanged,
+						baseDX,
+						baseDZ,
+						this.getGameObjectInstanceCount(),
+						this.getWallObjectInstanceCount(),
+						this.playerCount,
+						this.npcCount,
+						System.nanoTime() - transitionStartNanos,
+						dematerializeNanos,
+						worldLoadNanos,
+						staticRebaseNanos,
+						staticMaterializeNanos,
+						groundItemsNanos,
+						actorRebaseNanos,
+						finalizeNanos,
+						baselineNanos);
 					return true;
 				}
 			}
@@ -21436,6 +22054,7 @@ public final class mudclient implements Runnable {
 
 	private void resetGame(int var1) {
 		try {
+			this.packetHandler.resetLayeredSceneProtocolState();
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
 			this.clearActivePotionEffects();
@@ -21692,7 +22311,15 @@ public final class mudclient implements Runnable {
 	}
 
 	public void worldEditorTeleport(int worldX, int worldY) {
+		worldEditorTeleport(worldX, worldY, getEditorPlayerWorldLevel());
+	}
+
+	public void worldEditorTeleport(int worldX, int worldY, int level) {
 		if (worldEditorInterface == null || !worldEditorInterface.isNavigating() || !canUseClickTeleport()) return;
+		if (WorldBuilderClientProfile.current().isLayeredReview()) {
+			sendCommandString("buildergoto " + worldX + " " + worldY + " " + level);
+			return;
+		}
 		preloadTerrainForLocalTarget(worldX - midRegionBaseX, worldY - midRegionBaseZ);
 		this.packetHandler.getClientStream().newPacket(Opcodes.Out.BLINK.getOpcode());
 		this.packetHandler.getClientStream().bufferBits.putShort(worldX);
@@ -21704,7 +22331,9 @@ public final class mudclient implements Runnable {
 		int roofTexture,int horizontalWall,int verticalWall,int diagonal,boolean overlayPainted,boolean rebuild){
 		if(world==null)return;
 		world.applyWorldEditorTerrainPatch(plane,worldX+worldOffsetX,worldY+worldOffsetZ,elevation,groundTexture,groundOverlay,roofTexture,horizontalWall,verticalWall,diagonal,overlayPainted);
-		if(rebuild&&plane==requestedPlane)reloadWorldEditorTerrain();
+		if(rebuild&&(plane==requestedPlane
+			|| (WorldBuilderClientProfile.current().isLayeredTerrainDraft()
+				&& plane==getEditorPlayerWorldLevel())))reloadWorldEditorTerrain();
 	}
 	public void reloadWorldEditorTerrain(){
 		if(!hasCompletedInitialRegionLoad||localPlayer==null)return;
@@ -21893,6 +22522,10 @@ public final class mudclient implements Runnable {
 
 	public final void showMessage(boolean crownEnabled, String sender, String message, MessageType type, int crownID, String formerName) {
 		showMessage(crownEnabled, sender, message, type, crownID, formerName, null);
+	}
+
+	public void showWorldEditorStatus(String message) {
+		this.showMessage(false, null, message, MessageType.GAME, 0, null);
 	}
 
 	public final void showMessage(boolean crownEnabled, String sender, String message, MessageType type, int crownID,
@@ -22465,6 +23098,58 @@ public final class mudclient implements Runnable {
 		return this.world != null && this.world.isTerrainLoadedAtLocalTile(tileX, tileZ);
 	}
 
+	private void refreshAltarVisualOwnerPresence() {
+		long gameObjectRevision = this.sceneInstanceStore.getGameObjectRevision();
+		if (this.altarVisualOwnerRevision == gameObjectRevision
+			&& this.altarVisualOwnerBaseX == this.midRegionBaseX
+			&& this.altarVisualOwnerBaseZ == this.midRegionBaseZ) {
+			return;
+		}
+
+		Arrays.fill(this.altarGlyphOwnerPresent, false);
+		for (boolean[] orbOwners : this.altarOrbOwnerPresent) {
+			Arrays.fill(orbOwners, false);
+		}
+
+		for (int objectIndex = 0; objectIndex < this.getGameObjectInstanceCount(); objectIndex++) {
+			int objectId = this.getGameObjectInstanceID(objectIndex);
+			int worldX = this.getGameObjectInstanceX(objectIndex) + this.midRegionBaseX;
+			int worldZ = this.getGameObjectInstanceZ(objectIndex) + this.midRegionBaseZ;
+
+			int altarIndex = indexOfAltarOwner(ALTAR_OBJECT_IDS, objectId);
+			if (altarIndex >= 0
+				&& ALTAR_TILES[altarIndex][0] == worldX
+				&& ALTAR_TILES[altarIndex][1] == worldZ) {
+				this.altarGlyphOwnerPresent[altarIndex] = true;
+			}
+
+			int obeliskIndex = indexOfAltarOwner(ALTAR_OBELISK_OBJECT_IDS, objectId);
+			if (obeliskIndex < 0) {
+				continue;
+			}
+			for (int orbIndex = 0; orbIndex < ALTAR_OBELISK_TILES[obeliskIndex].length; orbIndex++) {
+				int[] orbTile = ALTAR_OBELISK_TILES[obeliskIndex][orbIndex];
+				if (orbTile[0] == worldX && orbTile[1] == worldZ) {
+					this.altarOrbOwnerPresent[obeliskIndex][orbIndex] = true;
+					break;
+				}
+			}
+		}
+
+		this.altarVisualOwnerRevision = gameObjectRevision;
+		this.altarVisualOwnerBaseX = this.midRegionBaseX;
+		this.altarVisualOwnerBaseZ = this.midRegionBaseZ;
+	}
+
+	private static int indexOfAltarOwner(int[] ownerIds, int objectId) {
+		for (int index = 0; index < ownerIds.length; index++) {
+			if (ownerIds[index] == objectId) {
+				return index;
+			}
+		}
+		return -1;
+	}
+
 	private boolean canDrawWorldSpriteAtLocalPixel(int pixelX, int pixelZ) {
 		return this.world != null && this.world.isTerrainLoadedAtLocalPixel(pixelX, pixelZ);
 	}
@@ -22683,7 +23368,13 @@ public final class mudclient implements Runnable {
 	}
 
 	public void markMovementStutterObserved() {
+		boolean enabled = MovementTimingDiagnostics.isEnabled();
 		MovementTimingDiagnostics.markStutterObserved(this.localPlayer);
+		this.showMessage(false, null,
+			enabled
+				? "Movement stutter marker recorded."
+				: "Movement diagnostics are not enabled.",
+			MessageType.GAME, 0, null);
 	}
 
 	private boolean isValidCustomMovementDirection(int direction) {
@@ -23005,6 +23696,7 @@ public final class mudclient implements Runnable {
 		return this.currentViewMode == GameMode.GAME
 			&& this.hasCompletedInitialRegionLoad
 			&& !this.loadingArea
+			&& !this.layeredSceneActivationPending
 			&& !this.isFullScreenModalUiActive();
 	}
 
@@ -23115,6 +23807,83 @@ public final class mudclient implements Runnable {
 		this.sceneInstanceStore.clearPendingAreaLoadMarks();
 	}
 
+	public void setLayeredSceneActivationPending(
+		final boolean pending) {
+		this.layeredSceneActivationPending = pending;
+		if (!pending) {
+			this.layeredSceneActivationRetainsPresentedFrame = false;
+		}
+	}
+
+	public void beginLayeredSceneActivation(
+		final boolean retainPresentedFrame) {
+		this.layeredSceneActivationPending = true;
+		this.layeredSceneActivationRetainsPresentedFrame =
+			retainPresentedFrame;
+	}
+
+	public boolean shouldRetainLastPresentedFrame() {
+		return this.layeredSceneActivationPending
+			&& this.layeredSceneActivationRetainsPresentedFrame;
+	}
+
+	public void applyLayeredSceneScope(
+		int legacyPlane,
+		boolean scopeChanged,
+		boolean syntheticDeepFixture,
+		NativeLayeredTerrainSnapshot nativeTerrainSnapshot) {
+		if (legacyPlane < 0 || legacyPlane > 3) {
+			throw new IllegalArgumentException(
+				"Unsupported layered scene compatibility plane: " + legacyPlane);
+		}
+		if (scopeChanged) {
+			resetLayeredSceneIdentityCaches();
+		}
+		if (nativeTerrainSnapshot == null) {
+			this.world.setSyntheticDeepFixtureTerrain(
+				syntheticDeepFixture,
+				this.worldOffsetX,
+				this.worldOffsetZ);
+		} else {
+			this.world.setLayeredTerrainScope(
+				false,
+				nativeTerrainSnapshot,
+				this.worldOffsetX,
+				this.worldOffsetZ);
+		}
+		this.requestedPlane = legacyPlane;
+	}
+
+	private void resetLayeredSceneIdentityCaches() {
+		beginAreaLoad();
+		for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {
+			this.dematerializeGameObjectInstance(i);
+		}
+		for (int i = 0; i < this.getWallObjectInstanceCount(); i++) {
+			this.dematerializeWallObjectInstance(i);
+		}
+		this.setGameObjectInstanceCount(0);
+		this.setWallObjectInstanceCount(0);
+		this.groundItemCount = 0;
+		this.playerCount = 0;
+		this.knownPlayerCount = 0;
+		Arrays.fill(this.knownPlayers, null);
+		Arrays.fill(this.players, null);
+		Arrays.fill(this.playerServer, null);
+		this.npcCount = 0;
+		this.npcCacheCount = 0;
+		Arrays.fill(this.npcs, null);
+		Arrays.fill(this.npcsCache, null);
+		Arrays.fill(this.npcsServer, null);
+		Arrays.fill(this.customNpcMovementTargetValid, false);
+		Arrays.fill(this.customNpcMovementTargetResult, null);
+		this.teleportBubbleCount = 0;
+		this.detachedCombatEffectCount = 0;
+		this.detachedScreenCombatEffectCount = 0;
+		this.clearResidentObjectChunkCache();
+		this.resetPredictiveTerrainPreload();
+	}
+
 	public boolean isAreaLoadPending() {
 		return this.loadingArea;
 	}
@@ -23127,6 +23896,10 @@ public final class mudclient implements Runnable {
 
 	public void setWorldOffsetX(int i) {
 		this.worldOffsetX = i;
+	}
+
+	public int getWorldOffsetX() {
+		return this.worldOffsetX;
 	}
 
 	public int getWorldOffsetZ() {
@@ -25490,8 +26263,27 @@ public final class mudclient implements Runnable {
 		return localPlayer;
 	}
 
-	public int getEditorPlayerWorldX() { return midRegionBaseX + (localPlayer == null ? playerLocalX : localPlayer.currentX / tileSize); }
-	public int getEditorPlayerWorldY() { return midRegionBaseZ + (localPlayer == null ? playerLocalZ : localPlayer.currentZ / tileSize); }
+	public int getEditorPlayerWorldX() {
+		return midRegionBaseX
+			+ (localPlayer == null ? playerLocalX : localPlayer.currentX / tileSize);
+	}
+
+	public int getEditorPlayerWorldY() {
+		int compatibilityX = getEditorPlayerWorldX();
+		int compatibilityY = midRegionBaseZ
+			+ (localPlayer == null ? playerLocalZ : localPlayer.currentZ / tileSize);
+		return WorldBuilderClientProfile.current().isLayeredReview()
+			? packetHandler.getLogicalPlayerY(compatibilityX, compatibilityY)
+			: compatibilityY;
+	}
+
+	public int getEditorPlayerWorldLevel() {
+		int compatibilityY = midRegionBaseZ
+			+ (localPlayer == null ? playerLocalZ : localPlayer.currentZ / tileSize);
+		return WorldBuilderClientProfile.current().isLayeredReview()
+			? packetHandler.getLogicalWorldLevel(compatibilityY)
+			: Math.floorDiv(compatibilityY, 944);
+	}
 
 	public void setLocalPlayer(ORSCharacter p) {
 		this.localPlayer = p;

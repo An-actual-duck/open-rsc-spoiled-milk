@@ -23,6 +23,7 @@ import com.openrsc.server.model.entity.UnregisterForcefulness;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
+import com.openrsc.server.model.world.coordinate.LegacyPlayerLocationPersistenceSnapshot;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.checked.CheckedRunnable;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -793,11 +794,23 @@ public abstract class GameDatabase {
 
 	public void querySavePlayerData(Player player) throws GameDatabaseException {
 		final PlayerData playerData = new PlayerData();
+		final LegacyPlayerLocationPersistenceSnapshot locationSnapshot =
+			getServer().getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+				? LegacyPlayerLocationPersistenceSnapshot.capture(
+					player.getLocation(),
+					player.getLayeredLocation(),
+					getServer().getConfig()
+						.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+					player.getWorld().getRegionManager()
+						.hasNativeLayeredTerrain(
+							player.getLayeredLocation()))
+				: LegacyPlayerLocationPersistenceSnapshot.capture(
+					player.getLocation());
 
 		playerData.combatLevel = player.getCombatLevel();
 		playerData.totalLevel = player.getSkills().getTotalLevel();
-		playerData.xLocation = player.getX();
-		playerData.yLocation = player.getY();
+		playerData.xLocation = locationSnapshot.getPackedX();
+		playerData.yLocation = locationSnapshot.getPackedY();
 		playerData.fatigue = player.getFatigue();
 		playerData.kills = player.getKills();
 		playerData.deaths = player.getDeaths();
@@ -1128,7 +1141,9 @@ public abstract class GameDatabase {
 	}
 
 	public void updatePlayerLocation(final int playerId, final Point newLocation) throws GameDatabaseException {
-		queryUpdatePlayerLocation(playerId, newLocation);
+		final LegacyPlayerLocationPersistenceSnapshot locationSnapshot =
+			LegacyPlayerLocationPersistenceSnapshot.capture(newLocation);
+		queryUpdatePlayerLocation(playerId, locationSnapshot.toLegacyPoint());
 	}
 
 	protected void queryInventoryAdd(final Player player, final Item item, int slot) throws GameDatabaseException {

@@ -22,6 +22,9 @@ public final class WorldBuilderRuntimePreparer {
 	public static final String GENERATED_CONFIG = "working/server/world-builder.conf";
 	public static final String BUILDER_DATABASE = "working/server/inc/sqlite/world_builder.db";
 	public static final String BUILDER_CREDENTIAL = "working/server/inc/sqlite/world-builder.credential";
+	public static final String LAYERED_REVIEW_METADATA = "layered-review.json";
+	public static final String LAYERED_WORKING_PACKAGE = "working/layered-world/package";
+	public static final String LAYERED_SOURCE_PACKAGE = "source/layered-world/package";
 
 	private static final List<String> SERVER_FILES = Arrays.asList(
 		"server/core.jar",
@@ -46,6 +49,14 @@ public final class WorldBuilderRuntimePreparer {
 
 	public PreparedRuntime prepare(Path targetRoot, Path runtimeRoot, Path requestedWorkspace,
 		int port, WorldBuilderDiscoveryResult source, WorldBuilderDiscoveryResult runtime)
+		throws IOException, WorldBuilderDiscoveryException {
+		return prepare(
+			targetRoot, runtimeRoot, requestedWorkspace, port, source, runtime, null);
+	}
+
+	public PreparedRuntime prepare(Path targetRoot, Path runtimeRoot, Path requestedWorkspace,
+		int port, WorldBuilderDiscoveryResult source, WorldBuilderDiscoveryResult runtime,
+		WorldBuilderLayeredPackage layered)
 		throws IOException, WorldBuilderDiscoveryException {
 		if (port < 1 || port >= 65535) {
 			throw new WorldBuilderDiscoveryException("Builder port must be between 1 and 65534.");
@@ -129,6 +140,28 @@ public final class WorldBuilderRuntimePreparer {
 						"Source snapshot verification failed: " + file.relativePath);
 				}
 			}
+			if (layered != null) {
+				Path workingPackage = stage.resolve(LAYERED_WORKING_PACKAGE);
+				Path sourcePackage = stage.resolve(LAYERED_SOURCE_PACKAGE);
+				copyTree(layered.root, workingPackage);
+				copyTree(layered.root, sourcePackage);
+				for (WorldBuilderLayeredPackage.FileRecord file : layered.files) {
+					Path workingFile = requiredFile(workingPackage, file.relativePath);
+					Path sourceFile = requiredFile(sourcePackage, file.relativePath);
+					if (Files.size(workingFile) != file.size
+						|| Files.size(sourceFile) != file.size
+						|| !file.sha256.equals(WorldBuilderHashes.sha256(workingFile))
+						|| !file.sha256.equals(WorldBuilderHashes.sha256(sourceFile))) {
+						throw new WorldBuilderDiscoveryException(
+							"Layered package workspace copy verification failed: "
+								+ file.relativePath);
+					}
+				}
+				byte[] layeredMetadata =
+					layered.toMetadataJson().getBytes(StandardCharsets.UTF_8);
+				Files.write(stage.resolve(LAYERED_REVIEW_METADATA), layeredMetadata);
+				Files.write(sourceSnapshot.resolve(LAYERED_REVIEW_METADATA), layeredMetadata);
+			}
 
 			Path selectedConfig = requiredFile(target, source.selectedConfig);
 			if (!WorldBuilderHashes.sha256(selectedConfig).equals(source.selectedConfigSha256)) {
@@ -138,7 +171,8 @@ public final class WorldBuilderRuntimePreparer {
 			copyFile(selectedConfig, sourceSnapshot.resolve(source.selectedConfig));
 			Path generatedConfig = stage.resolve(GENERATED_CONFIG);
 			Files.createDirectories(generatedConfig.getParent());
-			WorldBuilderConfigWriter.write(selectedConfig, generatedConfig, overrides(port));
+			WorldBuilderConfigWriter.write(
+				selectedConfig, generatedConfig, overrides(port, workspace, layered));
 
 			Files.createDirectories(stage.resolve("logs"));
 			Files.createDirectories(stage.resolve("run"));
@@ -146,7 +180,8 @@ public final class WorldBuilderRuntimePreparer {
 			Files.write(stage.resolve("project-source.json"), projectManifest);
 			Files.write(sourceSnapshot.resolve("project-source.json"), projectManifest);
 			Files.write(stage.resolve(SOURCE_INVENTORY),
-				sourceInventory(source, projectManifest).getBytes(StandardCharsets.UTF_8));
+				sourceInventory(source, projectManifest, layered)
+					.getBytes(StandardCharsets.UTF_8));
 			Files.write(stage.resolve("runtime.json"), runtimeJson(port, source).getBytes(StandardCharsets.UTF_8));
 
 			try {
@@ -167,7 +202,8 @@ public final class WorldBuilderRuntimePreparer {
 		}
 	}
 
-	private static LinkedHashMap<String, String> overrides(int port) {
+	private static LinkedHashMap<String, String> overrides(
+		int port, Path workspace, WorldBuilderLayeredPackage layered) {
 		LinkedHashMap<String, String> values = new LinkedHashMap<String, String>();
 		values.put("world_builder_mode", "true");
 		values.put("server_name", "Spoiled Milk World Builder");
@@ -198,6 +234,21 @@ public final class WorldBuilderRuntimePreparer {
 		values.put("want_discord_general_logging", "false");
 		values.put("want_discord_bot", "false");
 		values.put("want_discord_downtime_reports", "false");
+		if (layered != null) {
+			values.put("world_builder_layered_review_mode", "true");
+			values.put("want_layered_player_location_authority", "true");
+			values.put("want_layered_spatial_runtime_authority", "true");
+			values.put("want_layered_protocol_client_authority", "true");
+			values.put("want_layered_synthetic_deep_fixture", "false");
+			values.put("want_layered_native_terrain_package", "true");
+			values.put(
+				"layered_native_terrain_package_path",
+				workspace.resolve(LAYERED_WORKING_PACKAGE)
+					.toAbsolutePath().normalize().toString());
+			values.put(
+				"layered_native_world_runtime_profile",
+				WorldBuilderLayeredPackage.BUILDER_DRAFT_PROFILE_ID);
+		}
 		return values;
 	}
 
@@ -226,7 +277,10 @@ public final class WorldBuilderRuntimePreparer {
 			+ "}\n";
 	}
 
-	private static String sourceInventory(WorldBuilderDiscoveryResult source, byte[] projectManifest) {
+	private static String sourceInventory(
+		WorldBuilderDiscoveryResult source,
+		byte[] projectManifest,
+		WorldBuilderLayeredPackage layered) {
 		StringBuilder inventory = new StringBuilder(1024);
 		inventory.append("world-builder-source-v1\n");
 		for (WorldBuilderDiscoveryResult.SourceFile file : source.files) {
@@ -237,6 +291,17 @@ public final class WorldBuilderRuntimePreparer {
 			.append(source.selectedConfig).append('\n');
 		inventory.append(WorldBuilderHashes.sha256(projectManifest)).append('\t')
 			.append("project-source.json\n");
+		if (layered != null) {
+			for (WorldBuilderLayeredPackage.FileRecord file : layered.files) {
+				inventory.append(file.sha256).append('\t')
+					.append("layered-world/package/")
+					.append(file.relativePath).append('\n');
+			}
+			byte[] metadata =
+				layered.toMetadataJson().getBytes(StandardCharsets.UTF_8);
+			inventory.append(WorldBuilderHashes.sha256(metadata)).append('\t')
+				.append(LAYERED_REVIEW_METADATA).append('\n');
+		}
 		return inventory.toString();
 	}
 

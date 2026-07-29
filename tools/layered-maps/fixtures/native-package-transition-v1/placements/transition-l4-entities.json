@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "encoding": "layered-world-placements-v2",
+  "worldSpace": "global",
+  "level": -4,
+  "npcs": [],
+  "groundItems": [
+    {
+      "placementId": "transition-fixture-coins",
+      "itemId": 10,
+      "position": {
+        "x": 448,
+        "y": 600
+      },
+      "amount": 3,
+      "respawnSeconds": 5
+    }
+  ],
+  "scenery": [],
+  "boundaries": []
+}

@@ -1,6 +1,12 @@
 package com.openrsc.server.external;
 
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentitySlot;
+import com.openrsc.server.model.world.coordinate.NativeLayeredGameObjectIdentity;
+import com.openrsc.server.model.world.coordinate.NativeLayeredGameObjectIdentitySlot;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 
 public class GameObjectLoc {
 	/**
@@ -25,6 +31,13 @@ public class GameObjectLoc {
 	public Point location;
 
 	private String owner = null;
+
+	private final LayeredAuthoredPlacementIdentitySlot
+		authoredPlacementIdentity =
+			new LayeredAuthoredPlacementIdentitySlot();
+	private final NativeLayeredGameObjectIdentitySlot
+		nativeLayeredGameObjectIdentity =
+			new NativeLayeredGameObjectIdentitySlot();
 
 	public GameObjectLoc() { }
 
@@ -61,6 +74,39 @@ public class GameObjectLoc {
 		return owner;
 	}
 
+	public final LayeredAuthoredPlacementIdentity
+		getAuthoredPlacementIdentity() {
+		return authoredPlacementIdentity.get();
+	}
+
+	public final void assignAuthoredPlacementIdentity(
+		final LayeredAuthoredPlacementIdentity identity) {
+		authoredPlacementIdentity.assign(identity);
+	}
+
+	public final NativeLayeredGameObjectIdentity
+		getNativeLayeredGameObjectIdentity() {
+		return nativeLayeredGameObjectIdentity.get();
+	}
+
+	public final void assignNativeLayeredGameObjectIdentity(
+		final NativeLayeredGameObjectIdentity identity) {
+		nativeLayeredGameObjectIdentity.assign(identity);
+	}
+
+	/** Assigns detached authored provenance without exposing its inventory type. */
+	public final void assignSerializedAuthoredPlacementIdentity(
+		final long generation,
+		final int packedRegionX,
+		final int packedRegionY,
+		final int sourceOrdinal,
+		final String constructionKind) {
+		assignAuthoredPlacementIdentity(
+			LayeredAuthoredPlacementIdentity.fromSerializedConstructionKind(
+				generation, packedRegionX, packedRegionY, sourceOrdinal,
+				constructionKind));
+	}
+
 	public final int getDirection() {
 		return direction;
 	}
@@ -79,6 +125,10 @@ public class GameObjectLoc {
 
 	public final Point getLocation() {
 		return location;
+	}
+
+	public final WorldLocation toWorldLocation() {
+		return LegacyPackedPointAdapter.fromLegacyPoint(location);
 	}
 
 	public final int getX() {

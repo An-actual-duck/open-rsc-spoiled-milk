@@ -6,6 +6,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.custom.misc.WoodcuttingGuild;
 import com.openrsc.server.plugins.authentic.npcs.lostcity.LostCityMarketAccess;
@@ -829,12 +830,41 @@ public class DoorAction {
 					doDoor(obj, player);
 					break;
 				}
-				if (player.getLocation().getX() == 115 || player.getLocation().getY() == 3539) {
-					handleLostCityMarketTax(obj, player, 105, 116, 3536, 3547);
+				boolean relocatedZanaris =
+					ZanarisLocation.isRelocated(
+						player.getWorldLocation());
+				int firstDoorY = relocatedZanaris
+					? ZanarisLocation.logicalY(3539)
+					: 3539;
+				int secondDoorY = relocatedZanaris
+					? ZanarisLocation.logicalY(3538)
+					: 3538;
+				if (player.getLocation().getX() == 115
+					|| player.getLocation().getY() == firstDoorY) {
+					handleLostCityMarketTax(
+						obj,
+						player,
+						105,
+						116,
+						relocatedZanaris
+							? ZanarisLocation.logicalY(3536)
+							: 3536,
+						relocatedZanaris
+							? ZanarisLocation.logicalY(3547)
+							: 3547);
 					break;
 				}
-				if (player.getLocation().getX() == 116 || player.getLocation().getY() == 3538) {
-					handleLostCityMarketTax(obj, player, 117, 125, 3531, 3538);
+				if (player.getLocation().getX() == 116
+					|| player.getLocation().getY() == secondDoorY) {
+					handleLostCityMarketTax(
+						obj,
+						player,
+						117,
+						125,
+						relocatedZanaris
+							? ZanarisLocation.logicalY(3531)
+							: 3531,
+						secondDoorY);
 				}
 				break;
 
@@ -1432,7 +1462,20 @@ public class DoorAction {
 
 	private void handleLostCityMarketTax(final GameObject obj, final Player player,
 										 final int x1, final int x2, final int y1, final int y2) {
-		Npc n = player.getWorld().getNpc(NpcId.DOORMAN.id(), x1, x2, y1, y2);
+		Npc n = null;
+		for (Npc candidate : player.getWorld().getNpcs()) {
+			if (!candidate.isRemoved()
+				&& !candidate.isRespawning()
+				&& candidate.getID() == NpcId.DOORMAN.id()
+				&& candidate.getX() >= x1
+				&& candidate.getX() <= x2
+				&& candidate.getY() >= y1
+				&& candidate.getY() <= y2
+				&& candidate.sharesSpatialDomain(player)) {
+				n = candidate;
+				break;
+			}
+		}
 		if (n == null) {
 			return;
 		}

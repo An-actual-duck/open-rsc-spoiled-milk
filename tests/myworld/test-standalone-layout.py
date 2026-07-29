@@ -243,6 +243,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "entrana-safety-deposit-box-plan.md",
             "fishing-rework-plan.md",
             "geode-and-gathering-spirit-plan.md",
+            "legacy-god-robe-retirement.md",
             "migration-regression-audit.md",
             "movement-stutter-investigation.md",
             "pvm-population-and-cluster-plan.md",

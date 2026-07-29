@@ -326,7 +326,7 @@ def main() -> None:
     require(world_chunk_frame, "public int getBaseX0()", "world chunk shadow caster base endpoint accessor")
     require(world_chunk_frame, "public boolean isOutdoorOnly()", "world chunk shadow caster outdoor filter flag")
     require(world_chunk_frame, "Renderer3DModelKind.UNCLASSIFIED", "world chunk kind normalization")
-    require(world_chunk_frame, "return vertexCoords.clone();", "world chunk immutable vertex copy")
+    require(world_chunk_frame, "int[] copy = vertexCoords.clone();", "world chunk immutable vertex copy")
     require(depth_frame, "public final class Renderer3DDepthFrame", "depth frame class")
     require(depth_frame, "private final int[] color;", "visible depth color buffer")
     require(depth_frame, "private final int bufferWidth;", "depth frame uses a windowed backing buffer")

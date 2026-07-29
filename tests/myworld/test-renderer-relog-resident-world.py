@@ -132,7 +132,7 @@ def main() -> None:
     )
     require(
         mudclient,
-        "if (this.hasCompletedInitialRegionLoad\n\t\t\t\t\t&& this.lastHeightOffset == this.requestedPlane",
+        "if (!hardAreaLoad\n\t\t\t\t\t&& this.hasCompletedInitialRegionLoad\n\t\t\t\t\t&& this.lastHeightOffset == this.requestedPlane",
         "relog region load cannot reuse stale bounds before the initial gameplay load completes",
     )
 

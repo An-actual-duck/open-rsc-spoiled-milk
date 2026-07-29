@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v40.schema.json",
+  "title": "Layered Map Parity Event v40",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency", "packedRegionActiveNpcContainment",
+    "packedRegionActiveNpcBoundaryRequirements",
+    "packedRegionRetirementRefinement",
+    "packedRegionRetirementRefinementReassessment",
+    "packedRegionPreservationBurden",
+    "packedRegionDynamicObjectPreservation", "packedRegionEventOwnership",
+    "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v40"},
+    "eventType": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredReconstructionTopology"},
+    "packedRegionAuthoredReconstructionDependencySemantics": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics"},
+    "packedRegionActiveNpcResidency": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionActiveNpcResidency"},
+    "packedRegionActiveNpcContainment": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionActiveNpcContainment"},
+    "packedRegionActiveNpcBoundaryRequirements": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionActiveNpcBoundaryRequirements"},
+    "packedRegionRetirementRefinement": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionRetirementRefinement"},
+    "packedRegionRetirementRefinementReassessment": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionRetirementRefinementReassessment"},
+    "packedRegionPreservationBurden": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionPreservationBurden"},
+    "packedRegionDynamicObjectPreservation": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/packedRegionDynamicObjectPreservation"},
+    "packedRegionEventOwnership": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/eventOwnership"}
+      ]
+    },
+    "roundTripExact": {"$ref": "layered-map-parity-event-v38.schema.json#/properties/roundTripExact"}
+  },
+  "$defs": {
+    "eventOwnership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposalGeneration", "observedAtTick", "sourceCount", "eventCount",
+        "spatialReferenceCount", "exactSpatialEventCount",
+        "ownerPositionHintEventCount", "nonSpatialGlobalEventCount",
+        "unattributedEventCount", "candidateRelatedEventCount",
+        "registrationIdentityCapturedEventCount",
+        "registrationIdentityCaptured", "registrationIdentityComplete",
+        "schedulerInstanceIdentityCaptured", "schedulerInstanceIdentity",
+        "restorationStateAvailableEventCount",
+        "detachedCallbackPayloadCompleteEventCount",
+        "executionSemanticsCapturedEventCount",
+        "executionSemanticsCaptured", "executionSemanticsComplete",
+        "atomicTimingCapturedEventCount", "atomicTimingCaptured",
+        "atomicTimingComplete", "targetBindingRequirementCapturedEventCount",
+        "targetBindingRequirementCaptured", "targetBindingRequirementComplete",
+        "targetBindingCompleteEventCount", "targetBindingComplete",
+        "arrivalOrderingCapturedEventCount", "arrivalOrderingCaptured",
+        "arrivalOrderingComplete",
+        "generationBindingRequirementCapturedEventCount",
+        "generationBindingRequirementCaptured",
+        "generationBindingRequirementComplete",
+        "generationBindingCompleteEventCount", "generationBindingComplete",
+        "idempotencyRequirementCapturedEventCount",
+        "idempotencyRequirementCaptured", "idempotencyRequirementComplete",
+        "candidateAttributionComplete", "restorationStateCompleteEventCount",
+        "pointInTimeOnly", "detachedPrimitiveCopy", "callbackStateCaptured",
+        "schedulerIdentityCaptured", "preservationPerformed", "reloadRequest",
+        "eventCancellation", "eventReschedule", "entityRegistry",
+        "arrivalGate", "teardownTransaction", "lifecycleAuthority",
+        "sources", "events"
+      ],
+      "properties": {
+        "proposalGeneration": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/proposalGeneration"},
+        "observedAtTick": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/observedAtTick"},
+        "sourceCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/sourceCount"},
+        "eventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/eventCount"},
+        "spatialReferenceCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/spatialReferenceCount"},
+        "exactSpatialEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/exactSpatialEventCount"},
+        "ownerPositionHintEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/ownerPositionHintEventCount"},
+        "nonSpatialGlobalEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/nonSpatialGlobalEventCount"},
+        "unattributedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/unattributedEventCount"},
+        "candidateRelatedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/candidateRelatedEventCount"},
+        "registrationIdentityCapturedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/registrationIdentityCapturedEventCount"},
+        "registrationIdentityCaptured": {"const": true},
+        "registrationIdentityComplete": {"const": true},
+        "schedulerInstanceIdentityCaptured": {"const": true},
+        "schedulerInstanceIdentity": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/schedulerInstanceIdentity"},
+        "restorationStateAvailableEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/restorationStateAvailableEventCount"},
+        "detachedCallbackPayloadCompleteEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/detachedCallbackPayloadCompleteEventCount"},
+        "executionSemanticsCapturedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/executionSemanticsCapturedEventCount"},
+        "executionSemanticsCaptured": {"type": "boolean"},
+        "executionSemanticsComplete": {"const": true},
+        "atomicTimingCapturedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/atomicTimingCapturedEventCount"},
+        "atomicTimingCaptured": {"type": "boolean"},
+        "atomicTimingComplete": {"const": true},
+        "targetBindingRequirementCapturedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/targetBindingRequirementCapturedEventCount"},
+        "targetBindingRequirementCaptured": {"type": "boolean"},
+        "targetBindingRequirementComplete": {"const": true},
+        "targetBindingCompleteEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/targetBindingCompleteEventCount"},
+        "targetBindingComplete": {"type": "boolean"},
+        "arrivalOrderingCapturedEventCount": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/arrivalOrderingCapturedEventCount"},
+        "arrivalOrderingCaptured": {"type": "boolean"},
+        "arrivalOrderingComplete": {"const": true},
+        "generationBindingRequirementCapturedEventCount": {"$ref": "layered-map-parity-event-v34.schema.json#/$defs/boundedEventCount"},
+        "generationBindingRequirementCaptured": {"type": "boolean"},
+        "generationBindingRequirementComplete": {"const": true},
+        "generationBindingCompleteEventCount": {"$ref": "layered-map-parity-event-v34.schema.json#/$defs/boundedEventCount"},
+        "generationBindingComplete": {"type": "boolean"},
+        "idempotencyRequirementCapturedEventCount": {"$ref": "layered-map-parity-event-v34.schema.json#/$defs/boundedEventCount"},
+        "idempotencyRequirementCaptured": {"type": "boolean"},
+        "idempotencyRequirementComplete": {"const": true},
+        "candidateAttributionComplete": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/candidateAttributionComplete"},
+        "restorationStateCompleteEventCount": {"const": 0},
+        "pointInTimeOnly": {"const": true},
+        "detachedPrimitiveCopy": {"const": true},
+        "callbackStateCaptured": {"const": false},
+        "schedulerIdentityCaptured": {"const": false},
+        "preservationPerformed": {"const": false},
+        "reloadRequest": {"const": false},
+        "eventCancellation": {"const": false},
+        "eventReschedule": {"const": false},
+        "entityRegistry": {"const": false},
+        "arrivalGate": {"const": false},
+        "teardownTransaction": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "sources": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventOwnership/properties/sources"},
+        "events": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {"$ref": "#/$defs/eventRecord"}
+        }
+      }
+    },
+    "eventRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshotOrdinal", "registrationSequence", "ownerKind",
+        "attributionKind", "running", "ticksBeforeRun", "timesRan",
+        "atomicTimingCaptured", "candidateRelated", "attributionComplete",
+        "restorationStateComplete", "restorationState",
+        "candidateSourceOrdinals", "spatialReferences"
+      ],
+      "properties": {
+        "snapshotOrdinal": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/snapshotOrdinal"},
+        "registrationSequence": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/registrationSequence"},
+        "ownerKind": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/ownerKind"},
+        "attributionKind": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/attributionKind"},
+        "running": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/running"},
+        "ticksBeforeRun": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/ticksBeforeRun"},
+        "timesRan": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/timesRan"},
+        "atomicTimingCaptured": {"type": "boolean"},
+        "candidateRelated": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/candidateRelated"},
+        "attributionComplete": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/attributionComplete"},
+        "restorationStateComplete": {"const": false},
+        "restorationState": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/restorationState"}
+          ]
+        },
+        "candidateSourceOrdinals": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/candidateSourceOrdinals"},
+        "spatialReferences": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/eventRecord/properties/spatialReferences"}
+      }
+    },
+    "restorationState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind", "forceFullBlock", "targetBindingEvidence",
+        "detachedCallbackPayloadComplete", "executionSemantics",
+        "timeProgressionPolicy", "executionSemanticsCaptured",
+        "atomicTimingCaptured", "targetSubject", "bindingEvidence",
+        "targetConflictPolicy", "targetBindingRequirementCaptured",
+        "targetBindingComplete", "arrivalOrderingRequirement",
+        "arrivalOrderingCaptured", "generationBindingRequirement",
+        "generationBindingRequirementCaptured", "generationBindingComplete",
+        "desiredState", "idempotencyPolicy", "mutationPrecondition",
+        "idempotencyRequirementCaptured", "schedulerIdentityCaptured",
+        "targetBindingLookupPerformed", "standaloneRestorationComplete",
+        "scenery"
+      ],
+      "properties": {
+        "kind": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/restorationState/properties/kind"},
+        "forceFullBlock": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/restorationState/properties/forceFullBlock"},
+        "targetBindingEvidence": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/restorationState/properties/targetBindingEvidence"},
+        "detachedCallbackPayloadComplete": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/restorationState/properties/detachedCallbackPayloadComplete"},
+        "executionSemantics": {"const": "ONE_SHOT"},
+        "timeProgressionPolicy": {"const": "CONTINUE_SERVER_TICKS"},
+        "executionSemanticsCaptured": {"const": true},
+        "atomicTimingCaptured": {"const": true},
+        "targetSubject": {"enum": ["AUTHORED_DESTINATION_SLOT", "AUTHORED_EXISTING_ENTITY"]},
+        "bindingEvidence": {"enum": ["AUTHORED_PLACEMENT_IDENTITY", "MISSING_AUTHORED_PLACEMENT_IDENTITY"]},
+        "targetConflictPolicy": {"const": "REFUSE_MISMATCH_OR_AMBIGUITY"},
+        "targetBindingRequirementCaptured": {"const": true},
+        "targetBindingComplete": {"type": "boolean"},
+        "arrivalOrderingRequirement": {"const": "RECONCILE_BEFORE_FIRST_VISIBILITY"},
+        "arrivalOrderingCaptured": {"const": true},
+        "generationBindingRequirement": {"const": "MATCH_RECONSTRUCTION_GENERATION"},
+        "generationBindingRequirementCaptured": {"const": true},
+        "generationBindingComplete": {"type": "boolean"},
+        "desiredState": {"enum": ["AUTHORED_SCENERY_PRESENT", "AUTHORED_SCENERY_ABSENT"]},
+        "idempotencyPolicy": {"const": "ALREADY_SATISFIED_IS_NO_OP_SUCCESS"},
+        "mutationPrecondition": {"enum": ["DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT", "EXACT_AUTHORED_ENTITY_PRESENT"]},
+        "idempotencyRequirementCaptured": {"const": true},
+        "schedulerIdentityCaptured": {"const": false},
+        "targetBindingLookupPerformed": {"const": false},
+        "standaloneRestorationComplete": {"const": false},
+        "scenery": {"$ref": "layered-map-parity-event-v38.schema.json#/$defs/restorationState/properties/scenery"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "SCENERY_SPAWN"}}},
+          "then": {"properties": {
+            "targetSubject": {"const": "AUTHORED_DESTINATION_SLOT"},
+            "desiredState": {"const": "AUTHORED_SCENERY_PRESENT"},
+            "mutationPrecondition": {"const": "DESTINATION_EMPTY_OR_EXACT_AUTHORED_TRANSIENT"}
+          }}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "SCENERY_REMOVE"}}},
+          "then": {"properties": {
+            "targetSubject": {"const": "AUTHORED_EXISTING_ENTITY"},
+            "desiredState": {"const": "AUTHORED_SCENERY_ABSENT"},
+            "mutationPrecondition": {"const": "EXACT_AUTHORED_ENTITY_PRESENT"}
+          }}
+        },
+        {
+          "if": {"properties": {"bindingEvidence": {"const": "AUTHORED_PLACEMENT_IDENTITY"}}},
+          "then": {"properties": {
+            "targetBindingComplete": {"const": true},
+            "scenery": {"properties": {"authoredPlacement": {"type": "object"}}}
+          }}
+        },
+        {
+          "if": {"properties": {"bindingEvidence": {"const": "MISSING_AUTHORED_PLACEMENT_IDENTITY"}}},
+          "then": {"properties": {
+            "targetBindingComplete": {"const": false},
+            "generationBindingComplete": {"const": false},
+            "scenery": {"properties": {"authoredPlacement": {"type": "null"}}}
+          }}
+        },
+        {
+          "if": {"properties": {"generationBindingComplete": {"const": true}}},
+          "then": {"properties": {
+            "bindingEvidence": {"const": "AUTHORED_PLACEMENT_IDENTITY"},
+            "targetBindingComplete": {"const": true},
+            "scenery": {"properties": {"authoredPlacement": {"type": "object"}}}
+          }}
+        }
+      ]
+    }
+  }
+}

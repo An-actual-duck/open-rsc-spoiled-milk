@@ -18,6 +18,40 @@ def main() -> None:
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
     sector = SECTOR.read_text(encoding="utf-8")
 
+    require(
+        "return Math.floorDiv(SECTION_SIZE / 2 + worldTile, SECTION_SIZE);"
+        in world,
+        "Signed layered coordinates must use floor division for section lookup",
+    )
+    signed_section_cases = {
+        -529: -11,
+        -528: -11,
+        -505: -11,
+        -504: -10,
+        -491: -10,
+        -481: -10,
+        -480: -10,
+        -457: -10,
+        -456: -9,
+        0: 0,
+        23: 0,
+        24: 1,
+        2342: 49,
+    }
+    for world_tile, expected_section in signed_section_cases.items():
+        actual_section = (24 + world_tile) // 48
+        require(
+            actual_section == expected_section,
+            f"signed section boundary {world_tile}: "
+            f"{actual_section} != {expected_section}",
+        )
+    mining_guild_section = (24 - 491) // 48
+    mining_guild_origin = (mining_guild_section - 1) * 48
+    require(
+        -491 - mining_guild_origin == 37,
+        "Mining Guild target must be inside the active 96-tile window",
+    )
+
     require("private void resetModels()" in world,
             "World region reset method should still exist")
     require("System.gc()" not in world,

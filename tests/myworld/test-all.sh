@@ -60,6 +60,23 @@ python3 ./tests/myworld/test-auto-attack-hud.py
 python3 ./tests/myworld/test-source-cleanup.py
 python3 ./tests/myworld/test-world-start.py
 python3 ./tests/myworld/test-world-npc-edit-persistence.py
+python3 ./tests/myworld/test-world-editor-vertical-pairing.py
+LAYERED_TEST_WORKSPACE="$(
+  mktemp -d "${TMPDIR:-/tmp}/spoiled-milk-layered-tests.XXXXXX"
+)"
+cleanup_layered_test_workspace() {
+  case "$LAYERED_TEST_WORKSPACE" in
+    "${TMPDIR:-/tmp}"/spoiled-milk-layered-tests.*)
+      rm -rf -- "$LAYERED_TEST_WORKSPACE"
+      ;;
+  esac
+}
+trap cleanup_layered_test_workspace EXIT
+LAYERED_MAPS_WORKSPACE="$LAYERED_TEST_WORKSPACE" \
+  ./tools/layered-maps/layered-maps.sh spoiled-milk-package
+export SPOILED_MILK_LAYERED_PACKAGE="$LAYERED_TEST_WORKSPACE/package"
+python3 ./tests/myworld/test-native-terrain-wire-cache.py
+python3 ./tests/myworld/test-native-terrain-residency.py
 python3 ./tests/myworld/test-fatigue-sleep-removal.py
 python3 ./tests/myworld/test-gathering-rework-plan.py
 python3 ./tests/myworld/test-dragon-hatchet-woodcutting.py

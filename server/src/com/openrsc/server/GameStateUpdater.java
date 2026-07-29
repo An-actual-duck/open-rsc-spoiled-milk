@@ -9,6 +9,9 @@ import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
+import com.openrsc.server.io.NativeLayeredTerrainChunk;
+import com.openrsc.server.io.NativeLayeredTerrainSector;
+import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.PlayerAppearance;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.PrivateMessage;
@@ -16,15 +19,29 @@ import com.openrsc.server.model.RSCString;
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.UnregisterForcefulness;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.entity.update.*;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldMapSectorId;
+import com.openrsc.server.model.world.region.StaticScenePresentationSnapshot;
 import com.openrsc.server.model.world.region.VisibilitySnapshot;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.net.rsc.NativeLayeredTerrainClientResidency;
+import com.openrsc.server.net.rsc.NativeLayeredTerrainReadiness;
+import com.openrsc.server.net.rsc.NativeLayeredTerrainStageReadiness;
+import com.openrsc.server.net.rsc.NativeLayeredTerrainWireCache;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
+import com.openrsc.server.net.rsc.struct.incoming.LayeredTerrainReadyStruct;
+import com.openrsc.server.net.rsc.struct.incoming
+	.LayeredTerrainStageReadyStruct;
 import com.openrsc.server.net.rsc.struct.outgoing.*;
 import com.openrsc.server.plugins.triggers.TimedEventTrigger;
 import com.openrsc.server.util.EntityList;
@@ -35,9 +52,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.zip.Deflater;
 
 import static com.openrsc.server.net.rsc.ActionSender.isRetroClient;
 import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacket;
+import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacketChecked;
 
 public final class GameStateUpdater {
 	private enum VisibilitySnapshotMode {
@@ -60,22 +79,83 @@ public final class GameStateUpdater {
 	private static final int AUTHENTIC_LOCAL_MOB_COUNT_BITS = 8;
 	private static final int CUSTOM_LOCAL_MOB_COUNT_BITS = 16;
 	private static final int MOVEMENT_SNAPSHOT_PROTOCOL_VERSION = 1;
+	private static final int LAYERED_MOVEMENT_SNAPSHOT_PROTOCOL_VERSION = 2;
 	private static final int MOVEMENT_SNAPSHOT_FIXED_PAYLOAD_BYTES = 18;
+	private static final int LAYERED_CONTEXT_SEQUENCE_BYTES = 4;
 	private static final int MOVEMENT_SNAPSHOT_MOB_RECORD_BYTES = 7;
 	private static final int SCENE_BASELINE_PROTOCOL_VERSION = 5;
+	private static final int LAYERED_SCENE_BASELINE_PROTOCOL_VERSION = 6;
+	private static final int LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION = 8;
+	private static final int ATOMIC_SCENE_FENCE_PROTOCOL_VERSION = 7;
+	private static final int LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 1;
+	private static final int SYNTHETIC_DEEP_SCENE_CONTEXT_PROTOCOL_VERSION = 2;
+	private static final int NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 5;
+	private static final int RESIDENT_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 6;
+	private static final int READY_RESIDENT_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 7;
+	private static final int ATOMIC_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION = 8;
+	private static final int LAYERED_TERRAIN_READY_PROTOCOL_VERSION = 1;
+	private static final int LAYERED_TERRAIN_STAGE_PROTOCOL_VERSION = 1;
+	private static final int LAYERED_TERRAIN_SYMMETRIC_RESIDENCY_PROTOCOL_VERSION = 2;
+	private static final int LAYERED_TERRAIN_SYMMETRIC_STRUCTURE_PROTOCOL_VERSION = 3;
+	private static final int NATIVE_LAYERED_PREDICTIVE_LEAD_TILES = 48;
+	private static final int NATIVE_LAYERED_CHUNK_RADIUS = 1;
+	private static final int NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS = 2;
+	private static final int NATIVE_LAYERED_WIRE_CHUNK_SIZE =
+		NativeLayeredTerrainSector.SIZE;
+	private static final int NATIVE_LAYERED_VISUAL_TILE_WIRE_BYTES = 3;
+	private static final int NATIVE_LAYERED_STRUCTURAL_TILE_WIRE_BYTES = 7;
+	private static final String NATIVE_LAYERED_VISUAL_ENCODING =
+		"visual-layered-sector-v1";
+	private static final String NATIVE_LAYERED_STRUCTURAL_ENCODING =
+		"structural-layered-sector-v1";
 	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
 	private static final int SCENE_BASELINE_PAGE_BURST_LIMIT = 4;
+	private static final int LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_SIZE = 512;
+	private static final int LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_BURST_LIMIT = 8;
 	private static final int SCENE_BASELINE_FIXED_PAYLOAD_BYTES = 48;
 	private static final int SCENE_BASELINE_OBJECT_RECORD_BYTES = 8;
+	private static final int SCENE_BASELINE_PRESENTATION_HEADER_BYTES = 22;
+	private static final int SCENE_BASELINE_PRESENTATION_OBJECT_RECORD_BYTES = 12;
 	private static final int SCENE_BASELINE_PAGE_NONE = 0;
 	private static final int SCENE_BASELINE_PAGE_SCENERY = 1;
 	private static final int SCENE_BASELINE_PAGE_WALLS = 2;
+	private static final int SCENE_BASELINE_PAGE_ATOMIC_FENCE = 3;
+	private static final int SCENE_BASELINE_PAGE_PRESENTATION_SCENERY = 4;
+	private static final int SCENE_BASELINE_PAGE_PRESENTATION_WALLS = 5;
 	private static final String NPC_DEATH_VISUAL_SENT_TICK_PREFIX = "npc_death_visual_sent_tick_";
 	private static final String SCENE_BASELINE_SUMMARY_ATTRIBUTE = "scene_baseline_summary";
 	private static final String STATIC_SCENE_SCAN_KEY_ATTRIBUTE = "static_scene_scan_key";
 	private static final String WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE = "world_time_last_sync_millis";
 	private static final String CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE = "custom_movement_client_mid_x";
 	private static final String CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE = "custom_movement_client_mid_y";
+	private static final String LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE =
+		"layered_scene_context_scope";
+	private static final String LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE =
+		"layered_scene_context_sequence";
+	private static final String LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE =
+		"layered_scene_context_protocol";
+	private static final String ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE =
+		"atomic_scene_fence_sequence";
+	private static final String NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE =
+		"native_terrain_client_residency";
+	private static final String NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE =
+		"native_terrain_pending_readiness";
+	private static final String NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE =
+		"native_terrain_accepted_readiness";
+	private static final String NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE =
+		"native_terrain_self_appearance_pending";
+	private static final String NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE =
+		"native_terrain_stage_sequence";
+	private static final String NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE =
+		"native_terrain_pending_stage";
+	private static final String NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE =
+		"native_terrain_accepted_stage";
+	private static final String NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE =
+		"native_terrain_stage_transaction";
+	private static final String NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE =
+		"native_terrain_symmetric_visual_context";
+	private static final String NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE =
+		"native_terrain_symmetric_structure_context";
 	private static final long WORLD_TIME_SYNC_INTERVAL_MILLIS = 15000L;
 	private static final long WORLD_TIME_FAST_SYNC_INTERVAL_MILLIS = 250L;
 	private static final int RECENT_VISIBILITY_SHADOW_LOG_LIMIT = 5;
@@ -87,6 +167,8 @@ public final class GameStateUpdater {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	private final Server server;
+	private final NativeLayeredTerrainWireCache nativeTerrainWireCache =
+		new NativeLayeredTerrainWireCache();
 	private final Map<Long, CachedVisibilitySnapshot> visibilityTickSnapshotCache = new HashMap<>();
 	private long visibilityTickSnapshotCacheTick = Long.MIN_VALUE;
 	private int movementSnapshotSequence = 0;
@@ -132,12 +214,17 @@ public final class GameStateUpdater {
 	}
 
 	private void sendNormalUpdatePackets(final Player player, final boolean allowTickSnapshotCache) {
+		if (!ensureLayeredSceneContext(player)) {
+			return;
+		}
 		final VisibilitySnapshot packetVisibility = buildPacketVisibilitySnapshot(player, allowTickSnapshotCache);
 		final Collection<Player> visiblePlayers = packetVisibility.getPlayers();
 		final Collection<Npc> visibleNpcs = packetVisibility.getNpcs();
 		final Collection<GameObject> visibleSceneryObjects = packetVisibility.getSceneryObjects();
 		final Collection<GameObject> visibleWallObjects = packetVisibility.getWallObjects();
 		final Collection<GroundItem> visibleGroundItems = packetVisibility.getGroundItems();
+		final StaticScenePresentationSnapshot staticPresentation =
+			buildStaticScenePresentationSnapshot(player);
 		recordVisibilityShadowSnapshot(player, packetVisibility, allowTickSnapshotCache);
 
 		recordUpdatePlayers(() -> updatePlayers(player, visiblePlayers));
@@ -160,9 +247,580 @@ public final class GameStateUpdater {
 			storeStaticSceneScanKey(player, packetVisibility);
 		}
 		recordUpdateGroundItems(() -> groundItemsChanged[0] = updateGroundItems(player, visibleGroundItems));
-		sendSceneBaselineIfEnabled(player, sceneryChanged[0], wallsChanged[0], groundItemsChanged[0]);
+		sendAtomicSceneActivationFenceIfNeeded(player);
+		sendSceneBaselineIfEnabled(
+			player,
+			sceneryChanged[0],
+			wallsChanged[0],
+			groundItemsChanged[0],
+			staticPresentation);
 		recordUpdateTimeouts(() -> updateTimeouts(player));
 		sendWorldTimeIfNeeded(player);
+	}
+
+	private boolean ensureLayeredSceneContext(final Player player) {
+		return ensureLayeredSceneContext(player, true);
+	}
+
+	private boolean hasEstablishedLayeredSceneContext(
+		final Player player) {
+		return ensureLayeredSceneContext(player, false);
+	}
+
+	private boolean ensureLayeredSceneContext(
+		final Player player,
+		final boolean allowContextCreation) {
+		if (!getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY) {
+			return true;
+		}
+		if (!player.isUsingCustomClient()
+			|| player.getClientVersion() != getServer().getConfig().CLIENT_VERSION) {
+			player.unregister(
+				UnregisterForcefulness.FORCED,
+				"Layered protocol/client authority requires the matched custom client");
+			return false;
+		}
+
+		updateCustomMovementClientRegion(player);
+		final WorldLocation location = player.getWorldLocation();
+		final com.openrsc.server.model.world.region.RegionManager regionManager =
+			getServer().getWorld().getRegionManager();
+		final Point expectedLegacy =
+			regionManager.toRuntimeCompatibilityPoint(location);
+		final NativeLayeredSceneTerrain nativeTerrain =
+			nativeLayeredSceneTerrain(player, location);
+		final String projectionId = nativeTerrain == null
+			? regionManager.runtimeProjectionId(location)
+			: NativeLayeredWorldPackage.RUNTIME_PROJECTION_ID;
+		if (expectedLegacy.getX() != player.getX()
+			|| expectedLegacy.getY() != player.getY()) {
+			throw new IllegalStateException(
+				"Layered scene context legacy receipt disagrees with Player location");
+		}
+
+		final LayeredProtocolSceneScope nextScope =
+			LayeredProtocolSceneScope.from(
+				location,
+				projectionId,
+				nativeTerrain == null ? "" : nativeTerrain.scopeIdentity());
+		final LayeredProtocolSceneScope previousScope =
+			player.getAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, null);
+		if (nextScope.equals(previousScope)) {
+			final boolean ready = nativeTerrain == null
+				|| !nativeTerrain.requiresBlockingReadiness()
+				|| hasAcceptedNativeTerrainReadiness(player);
+			if (ready && nativeTerrain != null) {
+				if (nativeTerrainSymmetricResidencyEnabled()) {
+					maybeSendNativeTerrainSymmetricResidency(
+						player, location, nativeTerrain);
+				} else {
+					maybeSendNativeTerrainStage(
+						player, location, nativeTerrain);
+				}
+			}
+			return ready;
+		}
+		/*
+		 * High-frequency movement streams must not originate a new context.
+		 * Doing so starts the client's atomic presentation hold up to one
+		 * 640 ms game tick before the complete Player/static-scene update can
+		 * follow. The normal game-state update establishes the context and
+		 * emits its baseline in the same ordered batch; movement resumes once
+		 * that context is current.
+		 */
+		if (!allowContextCreation) {
+			return false;
+		}
+		if (previousScope == null) {
+			clearNativeTerrainStage(player);
+		}
+		if (nativeTerrain != null
+			&& !canActivateNativeTerrainStage(
+				player, location, nativeTerrain)) {
+			return false;
+		}
+
+		final Integer previousSequence = player.getAttribute(
+			LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, Integer.valueOf(0));
+		final int sequence = Math.addExact(previousSequence.intValue(), 1);
+		final LayeredSceneContextStruct context = new LayeredSceneContextStruct();
+		context.protocolVersion =
+			nativeTerrain != null
+				? nativeTerrain.protocolVersion()
+				: LayeredCompatibilityPointAdapter.SYNTHETIC_DEEP_FIXTURE_ID
+					.equals(projectionId)
+				? SYNTHETIC_DEEP_SCENE_CONTEXT_PROTOCOL_VERSION
+				: LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION;
+		context.sequence = sequence;
+		context.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
+		context.worldSpace = location.getWorldSpace().getValue();
+		context.projectionId = projectionId;
+		context.logicalX = location.getCoordinate().getX();
+		context.logicalY = location.getCoordinate().getY();
+		context.logicalLevel = location.getCoordinate().getLevel();
+		context.legacyX = expectedLegacy.getX();
+		context.legacyY = expectedLegacy.getY();
+		if (nativeTerrain != null) {
+			nativeTerrain.populate(context);
+		}
+		if (!tryFinalizeAndSendPacketChecked(
+				OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, context, player)) {
+			return false;
+		}
+		if (nativeTerrain != null) {
+			nativeTerrain.commitResidency();
+		}
+		clearNativeTerrainStage(player);
+		player.setAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, nextScope);
+		player.setAttribute(LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, sequence);
+		player.setAttribute(
+			LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE,
+			Integer.valueOf(context.protocolVersion));
+		if (nativeTerrain != null && nativeTerrain.requiresReadiness()) {
+			player.setAttribute(
+				NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE,
+				NativeLayeredTerrainReadiness.from(context));
+			player.setAttribute(
+				NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE,
+				Boolean.TRUE);
+			player.removeAttribute(
+				NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
+			/*
+			 * Protocol-v8 activation may send Player/static-scene packets in
+			 * this same update. Put the cheap visual-only radius-two stage on
+			 * the wire first so the client can publish the full terrain field
+			 * before it uncovers that atomic scene. The structural halo stays
+			 * asynchronous and follows its normal acknowledgement.
+			 */
+			if (nativeTerrain.usesAtomicActivation()
+				&& nativeTerrainSymmetricResidencyEnabled()) {
+				maybeSendNativeTerrainSymmetricResidency(
+					player, location, nativeTerrain);
+			}
+			return !nativeTerrain.requiresBlockingReadiness();
+		}
+		player.removeAttribute(NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE);
+		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
+		return true;
+	}
+
+	public void acceptLayeredTerrainReady(
+		final Player player,
+		final LayeredTerrainReadyStruct receipt) {
+		if (!getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS
+			|| !player.isUsingCustomClient()
+			|| receipt == null
+			|| receipt.protocolVersion
+				!= LAYERED_TERRAIN_READY_PROTOCOL_VERSION) {
+			return;
+		}
+		final NativeLayeredTerrainReadiness pending =
+			player.getAttribute(
+				NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE, null);
+		if (pending == null || !pending.matches(receipt)) {
+			return;
+		}
+		player.setAttribute(
+			NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE, pending);
+	}
+
+	private boolean hasAcceptedNativeTerrainReadiness(final Player player) {
+		final NativeLayeredTerrainReadiness pending =
+			player.getAttribute(
+				NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE, null);
+		final NativeLayeredTerrainReadiness accepted =
+			player.getAttribute(
+				NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE, null);
+		return pending != null && pending.equals(accepted);
+	}
+
+	/**
+	 * Keeps the authoritative queued path at the context anchor until the
+	 * first Player-position/appearance scene receipt has been emitted. The
+	 * path remains queued and resumes on the following movement tick.
+	 */
+	public boolean isNativeTerrainActivationMovementHeld(
+		final Player player) {
+		return getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS
+			&& player.getAttribute(
+				NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE,
+				Boolean.FALSE).booleanValue();
+	}
+
+	public void acceptLayeredTerrainStageReady(
+		final Player player,
+		final LayeredTerrainStageReadyStruct receipt) {
+		if ((!nativeTerrainPredictionEnabled()
+				&& !nativeTerrainSymmetricResidencyEnabled())
+			|| !player.isUsingCustomClient()
+			|| receipt == null
+			|| receipt.protocolVersion
+					!= LAYERED_TERRAIN_STAGE_PROTOCOL_VERSION
+				&& receipt.protocolVersion
+					!= LAYERED_TERRAIN_SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+				&& receipt.protocolVersion
+					!= LAYERED_TERRAIN_SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
+			return;
+		}
+		final NativeLayeredTerrainStageReadiness pending =
+			player.getAttribute(
+				NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE, null);
+		if (pending == null || !pending.matches(receipt)) {
+			return;
+		}
+		final NativeLayeredSceneTerrain stagedTerrain =
+			player.getAttribute(
+				NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE, null);
+		if (stagedTerrain == null) {
+			return;
+		}
+		stagedTerrain.commitResidency();
+		player.removeAttribute(
+			NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE);
+		player.setAttribute(
+			NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE, pending);
+		if (receipt.protocolVersion
+				== LAYERED_TERRAIN_SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| receipt.protocolVersion
+				== LAYERED_TERRAIN_SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
+			player.setAttribute(
+				receipt.protocolVersion
+						== LAYERED_TERRAIN_SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+					? NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE
+					: NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE,
+				Integer.valueOf(receipt.contextSequence));
+			player.removeAttribute(NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE);
+			player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
+		}
+	}
+
+	private boolean canActivateNativeTerrainStage(
+		final Player player,
+		final WorldLocation location,
+		final NativeLayeredSceneTerrain nativeTerrain) {
+		if (!nativeTerrainPredictionEnabled()
+			|| nativeTerrainSymmetricResidencyEnabled()) {
+			return true;
+		}
+		final NativeLayeredTerrainStageReadiness pending =
+			player.getAttribute(
+				NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE, null);
+		if (pending == null
+			|| !pending.matchesTarget(
+				location.getWorldSpace().getValue(),
+				location.getCoordinate().getLevel(),
+				nativeTerrain.currentChunkX,
+				nativeTerrain.currentChunkY,
+				nativeTerrain.terrainPackage.getManifestSha256())) {
+			return true;
+		}
+		final NativeLayeredTerrainStageReadiness accepted =
+			player.getAttribute(
+				NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE, null);
+		return pending.equals(accepted);
+	}
+
+	private void maybeSendNativeTerrainStage(
+		final Player player,
+		final WorldLocation location,
+		final NativeLayeredSceneTerrain activeTerrain) {
+		if (!nativeTerrainPredictionEnabled()
+			|| player.isTeleporting()
+			|| player.getAttribute(
+				NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE, null) != null) {
+			return;
+		}
+		final int[] targetCenter =
+			predictNativeTerrainCenter(player, activeTerrain);
+		if (targetCenter == null) {
+			return;
+		}
+		final NativeLayeredSceneTerrain stagedTerrain =
+			new NativeLayeredSceneTerrain(
+				getServer(),
+				nativeTerrainWireCache,
+				activeTerrain.residency,
+				activeTerrain.terrainPackage,
+				location,
+				targetCenter[0],
+				targetCenter[1]);
+		final Integer previousSequence = player.getAttribute(
+			NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE,
+			Integer.valueOf(0));
+		final int sequence = Math.addExact(
+			previousSequence.intValue(), 1);
+		final LayeredTerrainStageStruct stage =
+			new LayeredTerrainStageStruct();
+		stage.protocolVersion = LAYERED_TERRAIN_STAGE_PROTOCOL_VERSION;
+		stage.sequence = sequence;
+		stage.contextSequence =
+			requireLayeredSceneContextSequence(player);
+		stage.serverTick =
+			(int)(getServer().getCurrentTick() & 0x7FFFFFFF);
+		stage.worldSpace = location.getWorldSpace().getValue();
+		stage.logicalLevel = location.getCoordinate().getLevel();
+		stagedTerrain.populate(stage);
+		if (!tryFinalizeAndSendPacketChecked(
+				OpcodeOut.SEND_LAYERED_TERRAIN_STAGE,
+				stage,
+				player)) {
+			return;
+		}
+		player.setAttribute(
+			NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE, sequence);
+		player.setAttribute(
+			NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE,
+			NativeLayeredTerrainStageReadiness.from(stage));
+		player.setAttribute(
+			NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE,
+			stagedTerrain);
+		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
+	}
+
+	private void maybeSendNativeTerrainSymmetricResidency(
+		final Player player,
+		final WorldLocation location,
+		final NativeLayeredSceneTerrain activeTerrain) {
+		if (!nativeTerrainSymmetricResidencyEnabled()
+			|| player.getAttribute(
+				NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE, null) != null) {
+			return;
+		}
+		final int contextSequence =
+			requireLayeredSceneContextSequence(player);
+		final Integer structuralContext = player.getAttribute(
+			NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE,
+			Integer.valueOf(0));
+		if (structuralContext.intValue() == contextSequence) {
+			return;
+		}
+		final Integer visualContext = player.getAttribute(
+			NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE,
+			Integer.valueOf(0));
+		final boolean structural =
+			visualContext.intValue() == contextSequence;
+		final NativeLayeredSceneTerrain haloTerrain =
+			new NativeLayeredSceneTerrain(
+				getServer(),
+				nativeTerrainWireCache,
+				activeTerrain.residency,
+				activeTerrain.terrainPackage,
+				location,
+				activeTerrain.currentChunkX,
+				activeTerrain.currentChunkY);
+		final Integer previousSequence = player.getAttribute(
+			NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE,
+			Integer.valueOf(0));
+		final int sequence = Math.addExact(
+			previousSequence.intValue(), 1);
+		final LayeredTerrainStageStruct halo =
+			new LayeredTerrainStageStruct();
+		halo.protocolVersion = structural
+			? LAYERED_TERRAIN_SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
+			: LAYERED_TERRAIN_SYMMETRIC_RESIDENCY_PROTOCOL_VERSION;
+		halo.sequence = sequence;
+		halo.contextSequence = contextSequence;
+		halo.serverTick =
+			(int)(getServer().getCurrentTick() & 0x7FFFFFFF);
+		halo.worldSpace = location.getWorldSpace().getValue();
+		halo.logicalLevel = location.getCoordinate().getLevel();
+		if (structural) {
+			haloTerrain.populateSymmetricStructure(halo);
+		} else {
+			haloTerrain.populate(
+				halo,
+				NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS);
+		}
+		if (!tryFinalizeAndSendPacketChecked(
+				OpcodeOut.SEND_LAYERED_TERRAIN_STAGE,
+				halo,
+				player)) {
+			return;
+		}
+		player.setAttribute(
+			NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE, sequence);
+		player.setAttribute(
+			NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE,
+			NativeLayeredTerrainStageReadiness.from(halo));
+		player.setAttribute(
+			NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE,
+			haloTerrain);
+		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
+	}
+
+	private int[] predictNativeTerrainCenter(
+		final Player player,
+		final NativeLayeredSceneTerrain activeTerrain) {
+		if (player.getWalkingQueue().path == null
+			|| player.getWalkingQueue().path.isEmpty()) {
+			return null;
+		}
+		final int currentMidpointX =
+			activeTerrain.currentChunkX * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+		final int currentMidpointY =
+			activeTerrain.currentChunkY * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+		final boolean centeredSectionWindow =
+			usesCenteredClientSceneWindow(player);
+		for (final Point waypoint
+			: player.getWalkingQueue().path.getWaypoints()) {
+			final int distance = Math.max(
+				Math.abs(waypoint.getX() - player.getX()),
+				Math.abs(waypoint.getY() - player.getY()));
+			if (distance > NATIVE_LAYERED_PREDICTIVE_LEAD_TILES) {
+				return null;
+			}
+			if (centeredSectionWindow
+					? waypoint.getX() >= currentMidpointX
+						&& waypoint.getX()
+							< currentMidpointX
+								+ NATIVE_LAYERED_WIRE_CHUNK_SIZE
+						&& waypoint.getY() >= currentMidpointY
+						&& waypoint.getY()
+							< currentMidpointY
+								+ NATIVE_LAYERED_WIRE_CHUNK_SIZE
+					: waypoint.getX()
+							> currentMidpointX
+								- CLIENT_LOCAL_REGION_RELOAD_RADIUS
+						&& waypoint.getX()
+							< currentMidpointX
+								+ CLIENT_LOCAL_REGION_RELOAD_RADIUS
+						&& waypoint.getY()
+							> currentMidpointY
+								- CLIENT_LOCAL_REGION_RELOAD_RADIUS
+						&& waypoint.getY()
+							< currentMidpointY
+								+ CLIENT_LOCAL_REGION_RELOAD_RADIUS) {
+				continue;
+			}
+			final int targetCenterX = Math.floorDiv(
+				centeredSectionWindow
+					? clientLocalCenteredSectionAnchorForTile(
+						waypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH)
+					: clientLocalMidpointForTile(
+						waypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH),
+				NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+			final int targetCenterY = Math.floorDiv(
+				centeredSectionWindow
+					? clientLocalCenteredSectionAnchorForTile(
+						waypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT)
+					: clientLocalMidpointForTile(
+						waypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT),
+				NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+			final int deltaX =
+				targetCenterX - activeTerrain.currentChunkX;
+			final int deltaY =
+				targetCenterY - activeTerrain.currentChunkY;
+			if ((deltaX == 0 && deltaY == 0)
+				|| Math.abs(deltaX) > 1
+				|| Math.abs(deltaY) > 1) {
+				return null;
+			}
+			return new int[] {targetCenterX, targetCenterY};
+		}
+		return null;
+	}
+
+	private boolean nativeTerrainPredictionEnabled() {
+		return getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_PREDICTION
+			&& getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS
+			&& getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY;
+	}
+
+	private boolean nativeTerrainSymmetricResidencyEnabled() {
+		return getServer().getConfig()
+				.WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY
+			&& nativeTerrainPredictionEnabled();
+	}
+
+	private static void clearNativeTerrainStage(final Player player) {
+		player.removeAttribute(NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE);
+		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
+		player.removeAttribute(NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE);
+		player.removeAttribute(
+			NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE);
+		player.removeAttribute(
+			NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE);
+	}
+
+	private NativeLayeredSceneTerrain nativeLayeredSceneTerrain(
+		final Player player,
+		final WorldLocation location) {
+		if (!getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			|| !getServer().getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(location)) {
+			return null;
+		}
+		final NativeLayeredWorldPackage terrainPackage =
+			getServer().getWorld().getRegionManager()
+				.findNativeLayeredWorldPackage(location)
+				.orElse(null);
+		if (terrainPackage == null) {
+			throw new IllegalStateException(
+				"Native layered terrain gate has no loaded package");
+		}
+		final WorldMapSectorId sectorId = WorldMapSectorId.from(location);
+		findNativeLayeredSceneSector(terrainPackage,sectorId)
+			.orElseThrow(() -> new IllegalStateException(
+				"Native layered scene has no terrain page at " + sectorId));
+		final int centerSectorX = Math.floorDiv(
+			currentClientLocalMidpoint(
+				player,
+				CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
+				CLIENT_LOCAL_PLANE_WIDTH),
+			NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		final int centerSectorY = Math.floorDiv(
+			currentClientLocalMidpoint(
+				player,
+				CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
+				CLIENT_LOCAL_PLANE_HEIGHT),
+			NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		if (Math.abs(sectorId.getSectorX() - centerSectorX)
+				> NATIVE_LAYERED_CHUNK_RADIUS
+			|| Math.abs(sectorId.getSectorY() - centerSectorY)
+				> NATIVE_LAYERED_CHUNK_RADIUS) {
+			throw new IllegalStateException(
+				"Native client-sector window does not cover the player");
+		}
+		NativeLayeredTerrainClientResidency residency = null;
+		if (getServer().getConfig()
+				.WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY) {
+			residency = player.getAttribute(
+				NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE, null);
+			if (residency == null) {
+				residency = new NativeLayeredTerrainClientResidency();
+				player.setAttribute(
+					NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE,
+					residency);
+			}
+		}
+		return new NativeLayeredSceneTerrain(
+			getServer(),
+			nativeTerrainWireCache,
+			residency,
+			terrainPackage,
+			location,
+			centerSectorX,
+			centerSectorY);
+	}
+
+	private Optional<NativeLayeredTerrainSector> findNativeLayeredSceneSector(
+		final NativeLayeredWorldPackage terrainPackage,
+		final WorldMapSectorId sectorId){
+		if(getServer().getConfig().WORLD_BUILDER_MODE){
+			return getServer().getWorldEditorSessions()
+				.findNativeTerrainSector(terrainPackage,sectorId);
+		}
+		return terrainPackage.findSector(sectorId);
+	}
+
+	private int requireLayeredSceneContextSequence(final Player player) {
+		final Integer sequence = player.getAttribute(
+			LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, null);
+		if (sequence == null || sequence.intValue() <= 0) {
+			throw new IllegalStateException(
+				"Layered protocol packet has no established scene context");
+		}
+		return sequence.intValue();
 	}
 
 	private VisibilitySnapshot buildPacketVisibilitySnapshot(final Player player, final boolean allowTickSnapshotCache) {
@@ -225,9 +883,23 @@ public final class GameStateUpdater {
 	}
 
 	private VisibilitySnapshot buildUncachedVisibilitySnapshot(final Player player, final VisibilitySnapshotMode mode) {
-		return mode == VisibilitySnapshotMode.SNAPSHOT
-			? getServer().getWorld().getRegionManager().buildVisibilitySnapshot(player)
-			: buildLegacyVisibilitySnapshot(player);
+		if (mode != VisibilitySnapshotMode.SNAPSHOT) {
+			return buildLegacyVisibilitySnapshot(player);
+		}
+		final com.openrsc.server.model.world.region.RegionManager
+			regionManager = getServer().getWorld().getRegionManager();
+		if (player.isUsingCustomClient()
+			&& regionManager.isLayeredSpatialRuntimeAuthorityEnabled()) {
+			final int minX = currentClientLocalBaseX(player);
+			final int minY = currentClientLocalBaseY(player);
+			return regionManager.buildClientSceneVisibilitySnapshot(
+				player,
+				minX,
+				minY,
+				Math.addExact(minX, CLIENT_LOCAL_TILE_COUNT),
+				Math.addExact(minY, CLIENT_LOCAL_TILE_COUNT));
+		}
+		return regionManager.buildVisibilitySnapshot(player);
 	}
 
 	private VisibilitySnapshot buildLegacyVisibilitySnapshot(final Player player) {
@@ -241,7 +913,55 @@ public final class GameStateUpdater {
 	}
 
 	private boolean useVisibilitySnapshotInput(final Player player) {
-		return player.isUsingCustomClient() && getServer().getConfig().WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT;
+		return player.isUsingCustomClient()
+			&& (getServer().getConfig().WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT
+				|| getServer().getConfig().WANT_SYNC_SCENE_BASELINE
+					&& nativeTerrainSymmetricResidencyEnabled());
+	}
+
+	private StaticScenePresentationSnapshot
+		buildStaticScenePresentationSnapshot(final Player player) {
+		final com.openrsc.server.model.world.region.RegionManager
+			regionManager = getServer().getWorld().getRegionManager();
+		final WorldLocation location = player.getWorldLocation();
+		if (!player.isUsingCustomClient()
+			|| !getServer().getConfig().WANT_SYNC_SCENE_BASELINE
+			|| !nativeTerrainSymmetricResidencyEnabled()
+			|| !regionManager.isLayeredSpatialRuntimeAuthorityEnabled()
+			|| !regionManager.hasNativeLayeredTerrain(location)) {
+			return null;
+		}
+		final Point runtimeReceipt =
+			regionManager.toRuntimeCompatibilityPoint(location);
+		final int runtimeOffsetX = Math.subtractExact(
+			runtimeReceipt.getX(),
+			location.getCoordinate().getX());
+		final int runtimeOffsetY = Math.subtractExact(
+			runtimeReceipt.getY(),
+			location.getCoordinate().getY());
+		final int centerSectorX = Math.floorDiv(
+			Math.subtractExact(
+				currentClientLocalMidpoint(
+					player,
+					CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
+					CLIENT_LOCAL_PLANE_WIDTH),
+				runtimeOffsetX),
+			CLIENT_LOCAL_SECTION_SIZE);
+		final int centerSectorY = Math.floorDiv(
+			Math.subtractExact(
+				currentClientLocalMidpoint(
+					player,
+					CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
+					CLIENT_LOCAL_PLANE_HEIGHT),
+				runtimeOffsetY),
+			CLIENT_LOCAL_SECTION_SIZE);
+		return regionManager
+			.buildStaticScenePresentationSnapshot(
+				player,
+				centerSectorX,
+				centerSectorY,
+				NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS,
+				NATIVE_LAYERED_CHUNK_RADIUS);
 	}
 
 	private boolean canSkipStaticSceneScan(final Player player, final VisibilitySnapshot packetVisibility) {
@@ -252,48 +972,69 @@ public final class GameStateUpdater {
 		if (summary == null || !summary.hasSentCompleteStaticBaseline()) {
 			return false;
 		}
-		final long scanKey = staticSceneScanKey(player, packetVisibility);
-		if (scanKey == 0L) {
+		final Object scanKey = staticSceneScanKey(player, packetVisibility);
+		if (scanKey == null) {
 			return false;
 		}
-		final Long previousScanKey = player.getAttribute(STATIC_SCENE_SCAN_KEY_ATTRIBUTE);
-		return previousScanKey != null && previousScanKey.longValue() == scanKey;
+		final Object previousScanKey =
+			player.getAttribute(STATIC_SCENE_SCAN_KEY_ATTRIBUTE);
+		return scanKey.equals(previousScanKey);
 	}
 
 	private void storeStaticSceneScanKey(final Player player, final VisibilitySnapshot packetVisibility) {
-		final long scanKey = staticSceneScanKey(player, packetVisibility);
-		if (scanKey != 0L) {
+		final Object scanKey = staticSceneScanKey(player, packetVisibility);
+		if (scanKey != null) {
 			player.setAttribute(STATIC_SCENE_SCAN_KEY_ATTRIBUTE, scanKey);
 		}
 	}
 
-	private long staticSceneScanKey(final Player player, final VisibilitySnapshot packetVisibility) {
+	private Object staticSceneScanKey(
+		final Player player,
+		final VisibilitySnapshot packetVisibility) {
 		if (packetVisibility.getObjectSnapshotVersion() <= 0L) {
-			return 0L;
+			return null;
+		}
+		LayeredSpatialWindowKey layeredKey =
+			packetVisibility.getLayeredObjectSnapshotKey();
+		if (layeredKey != null) {
+			return new LayeredStaticSceneScanKey(
+				layeredKey,
+				packetVisibility.getObjectSnapshotVersion(),
+				player.getWorldLocation(),
+				getServer().getConfig().OBJECT_VIEW_DISTANCE);
 		}
 		long hash = packetVisibility.getObjectSnapshotKey();
 		hash = hash * 31 + packetVisibility.getObjectSnapshotVersion();
 		hash = hash * 31 + player.getX();
 		hash = hash * 31 + player.getY();
 		hash = hash * 31 + getServer().getConfig().OBJECT_VIEW_DISTANCE;
-		return hash == 0L ? 1L : hash;
+		return Long.valueOf(hash == 0L ? 1L : hash);
 	}
 
 	private void sendSceneBaselineIfEnabled(
 		final Player player,
 		final boolean sceneryChanged,
 		final boolean wallsChanged,
-		final boolean groundItemsChanged) {
+		final boolean groundItemsChanged,
+		final StaticScenePresentationSnapshot staticPresentation) {
 		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_SCENE_BASELINE) {
 			return;
 		}
 
 		final SceneBaselineSummary previous = player.getAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE);
 		final SceneBaselineSummary current = buildSceneBaselineSummary(
-			player, previous, sceneryChanged, wallsChanged, groundItemsChanged);
+			player,
+			previous,
+			sceneryChanged,
+			wallsChanged,
+			groundItemsChanged,
+			staticPresentation);
 		int sentPages = 0;
-		while (sentPages < SCENE_BASELINE_PAGE_BURST_LIMIT) {
-			final SceneBaselinePage page = buildNextSceneBaselinePage(player, current);
+		final int pageBurstLimit =
+			sceneBaselinePageBurstLimit(current.protocolVersion);
+		while (sentPages < pageBurstLimit) {
+			final SceneBaselinePage page = buildNextSceneBaselinePage(
+				player, current, staticPresentation);
 			if (page.isEmpty()) {
 				break;
 			}
@@ -313,6 +1054,53 @@ public final class GameStateUpdater {
 		player.setAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE, current);
 	}
 
+	private void sendAtomicSceneActivationFenceIfNeeded(
+		final Player player) {
+		if (!player.isUsingCustomClient()
+			|| !getServer().getConfig().WANT_SYNC_SCENE_BASELINE) {
+			return;
+		}
+		final Integer contextProtocol = player.getAttribute(
+			LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE,
+			Integer.valueOf(0));
+		if (contextProtocol.intValue()
+				!= ATOMIC_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION) {
+			return;
+		}
+		final int contextSequence =
+			requireLayeredSceneContextSequence(player);
+		final Integer sentSequence = player.getAttribute(
+			ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE,
+			Integer.valueOf(0));
+		if (sentSequence.intValue() >= contextSequence) {
+			return;
+		}
+
+		final SceneBaselineStruct fence = new SceneBaselineStruct();
+		fence.protocolVersion = ATOMIC_SCENE_FENCE_PROTOCOL_VERSION;
+		fence.locationContextSequence = contextSequence;
+		fence.serverTick =
+			(int)(getServer().getCurrentTick() & 0x7FFFFFFF);
+		fence.localX = player.getX();
+		fence.localY = player.getY();
+		fence.scenery = player.getLocalGameObjects().size();
+		fence.walls = player.getLocalWallObjects().size();
+		fence.groundItems = player.getLocalGroundItems().size();
+		fence.objectViewDistance =
+			getServer().getConfig().OBJECT_VIEW_DISTANCE;
+		fence.sceneryHash = summarizeWireSceneGameObjects(
+			player, player.getLocalGameObjects(), true);
+		fence.wallsHash = summarizeWireSceneGameObjects(
+			player, player.getLocalWallObjects(), false);
+		fence.pageCategory = SCENE_BASELINE_PAGE_ATOMIC_FENCE;
+		if (tryFinalizeAndSendPacketChecked(
+				OpcodeOut.SEND_SCENE_BASELINE, fence, player)) {
+			player.setAttribute(
+				ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE,
+				Integer.valueOf(contextSequence));
+		}
+	}
+
 	private void sendSceneBaselinePacket(
 		final Player player,
 		final SceneBaselineSummary current,
@@ -320,7 +1108,8 @@ public final class GameStateUpdater {
 		final SceneBaselineStruct baseline = current.toStruct();
 		page.applyTo(baseline);
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENE_BASELINE, baseline, player);
-		getServer().addSceneBaselineMetrics(page.recordCount(), page.payloadBytes());
+		getServer().addSceneBaselineMetrics(
+			page.recordCount(), page.payloadBytes(current.protocolVersion));
 	}
 
 	private SceneBaselineSummary buildSceneBaselineSummary(
@@ -328,9 +1117,19 @@ public final class GameStateUpdater {
 		final SceneBaselineSummary previous,
 		final boolean sceneryChanged,
 		final boolean wallsChanged,
-		final boolean groundItemsChanged) {
+		final boolean groundItemsChanged,
+		final StaticScenePresentationSnapshot staticPresentation) {
 		final SceneBaselineSummary summary = new SceneBaselineSummary();
-		summary.protocolVersion = SCENE_BASELINE_PROTOCOL_VERSION;
+		final boolean layeredProtocol =
+			getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
+		summary.protocolVersion = staticPresentation != null
+			? LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+			: layeredProtocol
+			? LAYERED_SCENE_BASELINE_PROTOCOL_VERSION
+			: SCENE_BASELINE_PROTOCOL_VERSION;
+		summary.locationContextSequence = layeredProtocol
+			? requireLayeredSceneContextSequence(player)
+			: 0;
 		summary.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
 		summary.localX = player.getX();
 		summary.localY = player.getY();
@@ -347,55 +1146,145 @@ public final class GameStateUpdater {
 		summary.groundItemsHash = previous != null && !groundItemsChanged && previous.groundItems == summary.groundItems
 			? previous.groundItemsHash
 			: summarizeSceneGroundItems(player.getLocalGroundItems());
-		summary.sceneryPageCursor = previous != null
-			&& previous.scenery == summary.scenery
-			&& previous.sceneryHash == summary.sceneryHash
-			? previous.sceneryPageCursor
-			: 0;
-		summary.wallsPageCursor = previous != null
-			&& previous.walls == summary.walls
-			&& previous.wallsHash == summary.wallsHash
-			? previous.wallsPageCursor
-			: 0;
+		if (staticPresentation != null) {
+			summary.presentationCenterSectorX =
+				staticPresentation.getCenterSectorX();
+			summary.presentationCenterSectorY =
+				staticPresentation.getCenterSectorY();
+			summary.presentationOuterRadius =
+				staticPresentation.getOuterRadius();
+			summary.presentationInnerRadius =
+				staticPresentation.getInnerRadius();
+			summary.presentationScenery =
+				staticPresentation.getScenery().size();
+			summary.presentationWalls =
+				staticPresentation.getWalls().size();
+			summary.presentationSceneryHash =
+				summarizeStaticPresentationRecords(
+					staticPresentation.getScenery());
+			summary.presentationWallsHash =
+				summarizeStaticPresentationRecords(
+					staticPresentation.getWalls());
+		}
+		/*
+		 * The client stores all four page categories under one scene key. If
+		 * any paged category changes, it resets that whole product. Preserve
+		 * cursors only when the complete paged identity is unchanged; retaining
+		 * an unchanged category's cursor would otherwise strand the client with
+		 * an unfinishable mix of old and new pages.
+		 */
+		final boolean samePagedScene = previous != null
+			&& summary.samePagedScenePayload(previous);
+		summary.sceneryPageCursor = samePagedScene
+			? previous.sceneryPageCursor : 0;
+		summary.wallsPageCursor = samePagedScene
+			? previous.wallsPageCursor : 0;
+		summary.presentationSceneryPageCursor = samePagedScene
+			? previous.presentationSceneryPageCursor : 0;
+		summary.presentationWallsPageCursor = samePagedScene
+			? previous.presentationWallsPageCursor : 0;
 		return summary;
 	}
 
-	private SceneBaselinePage buildNextSceneBaselinePage(final Player player, final SceneBaselineSummary summary) {
-		final int sceneryPageTotal = pageTotal(player.getLocalGameObjects().size());
+	private SceneBaselinePage buildNextSceneBaselinePage(
+		final Player player,
+		final SceneBaselineSummary summary,
+		final StaticScenePresentationSnapshot staticPresentation) {
+		final int sceneryPageTotal = pageTotal(
+			player.getLocalGameObjects().size(),
+			summary.protocolVersion);
 		if (summary.sceneryPageCursor < sceneryPageTotal) {
 			final int pageIndex = summary.sceneryPageCursor++;
 			return buildSceneBaselineObjectPage(
 				SCENE_BASELINE_PAGE_SCENERY,
 				pageIndex,
 				sceneryPageTotal,
-				player.getLocalGameObjects());
+				player.getLocalGameObjects(),
+				summary.protocolVersion);
 		}
 
-		final int wallPageTotal = pageTotal(player.getLocalWallObjects().size());
+		final int wallPageTotal = pageTotal(
+			player.getLocalWallObjects().size(),
+			summary.protocolVersion);
 		if (summary.wallsPageCursor < wallPageTotal) {
 			final int pageIndex = summary.wallsPageCursor++;
 			return buildSceneBaselineObjectPage(
 				SCENE_BASELINE_PAGE_WALLS,
 				pageIndex,
 				wallPageTotal,
-				player.getLocalWallObjects());
+				player.getLocalWallObjects(),
+				summary.protocolVersion);
+		}
+
+		if (staticPresentation != null) {
+			final int presentationSceneryPageTotal =
+				pageTotal(
+					staticPresentation.getScenery().size(),
+					summary.protocolVersion);
+			if (summary.presentationSceneryPageCursor
+					< presentationSceneryPageTotal) {
+				final int pageIndex =
+					summary.presentationSceneryPageCursor++;
+				return buildSceneBaselinePresentationPage(
+					SCENE_BASELINE_PAGE_PRESENTATION_SCENERY,
+					pageIndex,
+					presentationSceneryPageTotal,
+					staticPresentation.getScenery(),
+					summary.protocolVersion);
+			}
+
+			final int presentationWallPageTotal =
+				pageTotal(
+					staticPresentation.getWalls().size(),
+					summary.protocolVersion);
+			if (summary.presentationWallsPageCursor
+					< presentationWallPageTotal) {
+				final int pageIndex =
+					summary.presentationWallsPageCursor++;
+				return buildSceneBaselinePresentationPage(
+					SCENE_BASELINE_PAGE_PRESENTATION_WALLS,
+					pageIndex,
+					presentationWallPageTotal,
+					staticPresentation.getWalls(),
+					summary.protocolVersion);
+			}
 		}
 
 		return SceneBaselinePage.empty();
 	}
 
-	private int pageTotal(final int recordCount) {
-		return (recordCount + SCENE_BASELINE_PAGE_SIZE - 1) / SCENE_BASELINE_PAGE_SIZE;
+	private static int sceneBaselinePageSize(final int protocolVersion) {
+		return protocolVersion
+				>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+			? LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_SIZE
+			: SCENE_BASELINE_PAGE_SIZE;
+	}
+
+	private static int sceneBaselinePageBurstLimit(
+		final int protocolVersion) {
+		return protocolVersion
+				>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+			? LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_BURST_LIMIT
+			: SCENE_BASELINE_PAGE_BURST_LIMIT;
+	}
+
+	private int pageTotal(
+		final int recordCount,
+		final int protocolVersion) {
+		final int pageSize = sceneBaselinePageSize(protocolVersion);
+		return (recordCount + pageSize - 1) / pageSize;
 	}
 
 	private SceneBaselinePage buildSceneBaselineObjectPage(
 		final int category,
 		final int pageIndex,
 		final int pageTotal,
-		final Collection<GameObject> gameObjects) {
+		final Collection<GameObject> gameObjects,
+		final int protocolVersion) {
 		final SceneBaselinePage page = new SceneBaselinePage(category, pageIndex, pageTotal);
-		final int start = pageIndex * SCENE_BASELINE_PAGE_SIZE;
-		final int end = start + SCENE_BASELINE_PAGE_SIZE;
+		final int pageSize = sceneBaselinePageSize(protocolVersion);
+		final int start = pageIndex * pageSize;
+		final int end = start + pageSize;
 		int index = 0;
 		for (final GameObject gameObject : gameObjects) {
 			if (index >= end) {
@@ -414,6 +1303,32 @@ public final class GameStateUpdater {
 		return page;
 	}
 
+	private SceneBaselinePage buildSceneBaselinePresentationPage(
+		final int category,
+		final int pageIndex,
+		final int pageTotal,
+		final List<StaticScenePresentationSnapshot.Record> records,
+		final int protocolVersion) {
+		final SceneBaselinePage page =
+			new SceneBaselinePage(category, pageIndex, pageTotal);
+		final int pageSize = sceneBaselinePageSize(protocolVersion);
+		final int start = pageIndex * pageSize;
+		final int end = Math.min(
+			records.size(), start + pageSize);
+		for (int index = start; index < end; index++) {
+			final StaticScenePresentationSnapshot.Record record =
+				records.get(index);
+			page.objectRecords.add(
+				new SceneBaselineStruct.ObjectRecord(
+					record.getId(),
+					record.getX(),
+					record.getY(),
+					record.getDirection(),
+					record.getType()));
+		}
+		return page;
+	}
+
 	private int summarizeSceneGameObjects(final Collection<GameObject> gameObjects) {
 		int summary = 0;
 		for (final GameObject gameObject : gameObjects) {
@@ -423,6 +1338,41 @@ public final class GameStateUpdater {
 				gameObject.getX(),
 				gameObject.getY(),
 				gameObject.getLoc().getId()));
+		}
+		return summary;
+	}
+
+	private int summarizeStaticPresentationRecords(
+		final Collection<StaticScenePresentationSnapshot.Record> records) {
+		int summary = 0;
+		for (final StaticScenePresentationSnapshot.Record record : records) {
+			summary = addSceneIdentity(summary, sceneIdentity(
+				record.getId(),
+				(record.getType() << 8)
+					| (record.getDirection() & 0xFF),
+				record.getX(),
+				record.getY(),
+				0));
+		}
+		return summary;
+	}
+
+	private int summarizeWireSceneGameObjects(
+		final Player player,
+		final Collection<GameObject> gameObjects,
+		final boolean scenery) {
+		int summary = 0;
+		for (final GameObject gameObject : gameObjects) {
+			final int id = scenery
+				? retroRockConverter(player, gameObject.getLoc())
+				: gameObject.getID();
+			summary = addSceneIdentity(summary, sceneIdentity(
+				id,
+				(gameObject.getType() << 8)
+					| (gameObject.getDirection() & 0xFF),
+				gameObject.getX(),
+				gameObject.getY(),
+				0));
 		}
 		return summary;
 	}
@@ -461,6 +1411,7 @@ public final class GameStateUpdater {
 
 	private static final class SceneBaselineSummary {
 		private int protocolVersion;
+		private int locationContextSequence;
 		private int serverTick;
 		private int localX;
 		private int localY;
@@ -471,32 +1422,96 @@ public final class GameStateUpdater {
 		private int sceneryHash;
 		private int wallsHash;
 		private int groundItemsHash;
+		private int presentationCenterSectorX;
+		private int presentationCenterSectorY;
+		private int presentationOuterRadius;
+		private int presentationInnerRadius;
+		private int presentationScenery;
+		private int presentationWalls;
+		private int presentationSceneryHash;
+		private int presentationWallsHash;
 		private int sceneryPageCursor;
 		private int wallsPageCursor;
+		private int presentationSceneryPageCursor;
+		private int presentationWallsPageCursor;
 
 		private boolean sameStaticPayload(final SceneBaselineSummary other) {
 			return protocolVersion == other.protocolVersion
+				&& locationContextSequence == other.locationContextSequence
 				&& scenery == other.scenery
 				&& walls == other.walls
 				&& groundItems == other.groundItems
 				&& objectViewDistance == other.objectViewDistance
 				&& sceneryHash == other.sceneryHash
 				&& wallsHash == other.wallsHash
-				&& groundItemsHash == other.groundItemsHash;
+				&& groundItemsHash == other.groundItemsHash
+				&& presentationCenterSectorX
+					== other.presentationCenterSectorX
+				&& presentationCenterSectorY
+					== other.presentationCenterSectorY
+				&& presentationOuterRadius
+					== other.presentationOuterRadius
+				&& presentationInnerRadius
+					== other.presentationInnerRadius
+				&& presentationScenery == other.presentationScenery
+				&& presentationWalls == other.presentationWalls
+				&& presentationSceneryHash
+					== other.presentationSceneryHash
+				&& presentationWallsHash
+					== other.presentationWallsHash;
+		}
+
+		private boolean samePagedScenePayload(
+			final SceneBaselineSummary other) {
+			return protocolVersion == other.protocolVersion
+				&& locationContextSequence
+					== other.locationContextSequence
+				&& scenery == other.scenery
+				&& walls == other.walls
+				&& sceneryHash == other.sceneryHash
+				&& wallsHash == other.wallsHash
+				&& presentationCenterSectorX
+					== other.presentationCenterSectorX
+				&& presentationCenterSectorY
+					== other.presentationCenterSectorY
+				&& presentationOuterRadius
+					== other.presentationOuterRadius
+				&& presentationInnerRadius
+					== other.presentationInnerRadius
+				&& presentationScenery
+					== other.presentationScenery
+				&& presentationWalls == other.presentationWalls
+				&& presentationSceneryHash
+					== other.presentationSceneryHash
+				&& presentationWallsHash
+					== other.presentationWallsHash;
 		}
 
 		private boolean hasSentCompleteStaticBaseline() {
-			return sceneryPageCursor >= pageTotalFor(scenery)
-				&& wallsPageCursor >= pageTotalFor(walls);
+			return sceneryPageCursor >= pageTotalFor(
+					scenery, protocolVersion)
+				&& wallsPageCursor >= pageTotalFor(
+					walls, protocolVersion)
+				&& presentationSceneryPageCursor
+					>= pageTotalFor(
+						presentationScenery, protocolVersion)
+				&& presentationWallsPageCursor
+					>= pageTotalFor(
+						presentationWalls, protocolVersion);
 		}
 
-		private static int pageTotalFor(final int recordCount) {
-			return (recordCount + SCENE_BASELINE_PAGE_SIZE - 1) / SCENE_BASELINE_PAGE_SIZE;
+		private static int pageTotalFor(
+			final int recordCount,
+			final int protocolVersion) {
+			final int pageSize =
+				sceneBaselinePageSize(protocolVersion);
+			return (recordCount + pageSize - 1) / pageSize;
 		}
 
 		private SceneBaselineStruct toStruct() {
 			final SceneBaselineStruct struct = new SceneBaselineStruct();
 			struct.protocolVersion = protocolVersion;
+			struct.locationContextSequence = locationContextSequence;
 			struct.serverTick = serverTick;
 			struct.localX = localX;
 			struct.localY = localY;
@@ -507,6 +1522,20 @@ public final class GameStateUpdater {
 			struct.sceneryHash = sceneryHash;
 			struct.wallsHash = wallsHash;
 			struct.groundItemsHash = groundItemsHash;
+			struct.presentationCenterSectorX =
+				presentationCenterSectorX;
+			struct.presentationCenterSectorY =
+				presentationCenterSectorY;
+			struct.presentationOuterRadius =
+				presentationOuterRadius;
+			struct.presentationInnerRadius =
+				presentationInnerRadius;
+			struct.presentationScenery = presentationScenery;
+			struct.presentationWalls = presentationWalls;
+			struct.presentationSceneryHash =
+				presentationSceneryHash;
+			struct.presentationWallsHash =
+				presentationWallsHash;
 			return struct;
 		}
 	}
@@ -535,8 +1564,24 @@ public final class GameStateUpdater {
 			return objectRecords.size();
 		}
 
-		private int payloadBytes() {
-			return SCENE_BASELINE_FIXED_PAYLOAD_BYTES + recordCount() * SCENE_BASELINE_OBJECT_RECORD_BYTES;
+		private int payloadBytes(final int protocolVersion) {
+			return SCENE_BASELINE_FIXED_PAYLOAD_BYTES
+				+ (protocolVersion >= LAYERED_SCENE_BASELINE_PROTOCOL_VERSION
+					? LAYERED_CONTEXT_SEQUENCE_BYTES
+					: 0)
+				+ (protocolVersion
+						>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+					? SCENE_BASELINE_PRESENTATION_HEADER_BYTES
+					: 0)
+				+ recordCount()
+					* (protocolVersion
+							>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+						&& (category
+								== SCENE_BASELINE_PAGE_PRESENTATION_SCENERY
+							|| category
+								== SCENE_BASELINE_PAGE_PRESENTATION_WALLS)
+						? SCENE_BASELINE_PRESENTATION_OBJECT_RECORD_BYTES
+						: SCENE_BASELINE_OBJECT_RECORD_BYTES);
 		}
 
 		private void applyTo(final SceneBaselineStruct struct) {
@@ -734,6 +1779,7 @@ public final class GameStateUpdater {
 	private static final class CachedVisibilitySnapshot {
 		private final int x;
 		private final int y;
+		private final WorldLocation worldLocation;
 		private final long tick;
 		private final VisibilitySnapshotMode mode;
 		private final VisibilitySnapshot snapshot;
@@ -745,6 +1791,7 @@ public final class GameStateUpdater {
 			final VisibilitySnapshot snapshot) {
 			this.x = player.getX();
 			this.y = player.getY();
+			this.worldLocation = player.getWorldLocation();
 			this.tick = tick;
 			this.mode = mode;
 			this.snapshot = snapshot;
@@ -754,7 +1801,550 @@ public final class GameStateUpdater {
 			return this.tick == tick
 				&& this.mode == mode
 				&& this.x == player.getX()
-				&& this.y == player.getY();
+				&& this.y == player.getY()
+				&& this.worldLocation.equals(player.getWorldLocation());
+		}
+	}
+
+	private static final class LayeredStaticSceneScanKey {
+		private final LayeredSpatialWindowKey windowKey;
+		private final long version;
+		private final WorldLocation playerLocation;
+		private final int objectViewDistance;
+
+		private LayeredStaticSceneScanKey(
+			final LayeredSpatialWindowKey windowKey,
+			final long version,
+			final WorldLocation playerLocation,
+			final int objectViewDistance) {
+			this.windowKey = Objects.requireNonNull(windowKey, "windowKey");
+			this.version = version;
+			this.playerLocation = Objects.requireNonNull(
+				playerLocation, "playerLocation");
+			this.objectViewDistance = objectViewDistance;
+		}
+
+		@Override
+		public boolean equals(final Object other) {
+			if (this == other) {
+				return true;
+			}
+			if (!(other instanceof LayeredStaticSceneScanKey)) {
+				return false;
+			}
+			LayeredStaticSceneScanKey key =
+				(LayeredStaticSceneScanKey) other;
+			return version == key.version
+				&& objectViewDistance == key.objectViewDistance
+				&& windowKey.equals(key.windowKey)
+				&& playerLocation.equals(key.playerLocation);
+		}
+
+		@Override
+		public int hashCode() {
+			int result = windowKey.hashCode();
+			result = 31 * result
+				+ (int) (version ^ (version >>> 32));
+			result = 31 * result + playerLocation.hashCode();
+			result = 31 * result + objectViewDistance;
+			return result;
+		}
+	}
+
+	private static final class NativeLayeredSceneTerrain {
+		private final Server server;
+		private final NativeLayeredTerrainWireCache wireCache;
+		private final NativeLayeredTerrainClientResidency residency;
+		private final NativeLayeredWorldPackage terrainPackage;
+		private final WorldLocation location;
+		private final int currentChunkX;
+		private final int currentChunkY;
+		private NativeLayeredTerrainClientResidency.Transaction
+			residencyTransaction;
+
+		private NativeLayeredSceneTerrain(
+			final Server server,
+			final NativeLayeredTerrainWireCache wireCache,
+			final NativeLayeredTerrainClientResidency residency,
+			final NativeLayeredWorldPackage terrainPackage,
+			final WorldLocation location,
+			final int currentChunkX,
+			final int currentChunkY) {
+			this.server = Objects.requireNonNull(server, "server");
+			this.wireCache = Objects.requireNonNull(wireCache, "wireCache");
+			this.residency = residency;
+			this.terrainPackage = Objects.requireNonNull(
+				terrainPackage, "terrainPackage");
+			this.location = Objects.requireNonNull(location, "location");
+			this.currentChunkX = currentChunkX;
+			this.currentChunkY = currentChunkY;
+		}
+
+		private String scopeIdentity() {
+			String identity=terrainPackage.getPackageId()
+				+ "@" + terrainPackage.getPackageVersion()
+				+ ":" + terrainPackage.getManifestSha256()
+				+ ":" + location.getWorldSpace().getValue()
+				+ ":" + location.getCoordinate().getLevel()
+				+ ":center-" + currentChunkX + "," + currentChunkY
+				+ ":chunk-" + NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+			return server.getConfig().WORLD_BUILDER_MODE
+				?identity+":draft-"
+					+server.getWorldEditorSessions()
+						.nativeTerrainSceneRevision()
+				:identity
+					+(residency == null
+						? ":snapshot-v5"
+						: usesAtomicActivation()
+							? ":atomic-resident-v8"
+							: requiresReadiness()
+								? ":ready-resident-v7"
+							: ":resident-v6");
+		}
+
+		private int protocolVersion() {
+			return residency == null
+				? NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION
+				: usesAtomicActivation()
+					? ATOMIC_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION
+					: requiresReadiness()
+						? READY_RESIDENT_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION
+					: RESIDENT_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION;
+		}
+
+		private boolean usesAtomicActivation() {
+			return residency != null
+				&& server.getConfig()
+					.WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION
+				&& server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PREDICTION
+				&& server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS
+				&& server.getConfig().WANT_SYNC_SCENE_BASELINE;
+		}
+
+		private boolean requiresReadiness() {
+			return residency != null
+				&& server.getConfig()
+					.WANT_LAYERED_NATIVE_TERRAIN_READINESS;
+		}
+
+		private boolean requiresBlockingReadiness() {
+			/*
+			 * Protocol-v8 context packets are installed synchronously by the
+			 * client and are followed by an atomic Player/static-scene
+			 * presentation barrier. Their readiness receipt remains useful
+			 * for residency accounting, but delaying the already ordered
+			 * Player/static packets until the next 640 ms server tick only
+			 * adds visible latency. Protocol v7 retains the original blocking
+			 * acknowledgement rollback.
+			 */
+			return requiresReadiness() && !usesAtomicActivation();
+		}
+
+		private void commitResidency() {
+			if (residencyTransaction != null) {
+				residencyTransaction.commit();
+				residencyTransaction = null;
+			}
+		}
+
+		private void populate(final LayeredSceneContextStruct context) {
+			context.nativePackageId = terrainPackage.getPackageId();
+			context.nativePackageVersion = terrainPackage.getPackageVersion();
+			context.nativeManifestSha256 =
+				terrainPackage.getManifestSha256();
+			context.nativePresentationChunkSize =
+				NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+			context.nativeCurrentChunkX = currentChunkX;
+			context.nativeCurrentChunkY = currentChunkY;
+			context.nativeChunkRadius = NATIVE_LAYERED_CHUNK_RADIUS;
+			populateChunks(
+				context.worldSpace,
+				context.logicalLevel,
+				context.nativePackageId,
+				context.nativePackageVersion,
+				context.nativeManifestSha256,
+				context.nativePresentationChunkSize,
+				context.nativeChunks);
+		}
+
+		private void populate(final LayeredTerrainStageStruct stage) {
+			populate(stage, NATIVE_LAYERED_CHUNK_RADIUS);
+		}
+
+		private void populate(
+			final LayeredTerrainStageStruct stage,
+			final int chunkRadius) {
+			populate(stage, chunkRadius, false);
+		}
+
+		private void populateSymmetricStructure(
+			final LayeredTerrainStageStruct stage) {
+			populate(
+				stage,
+				NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS,
+				true);
+		}
+
+		private void populate(
+			final LayeredTerrainStageStruct stage,
+			final int chunkRadius,
+			final boolean structuralOnly) {
+			if (chunkRadius < NATIVE_LAYERED_CHUNK_RADIUS
+				|| chunkRadius
+					> NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS) {
+				throw new IllegalArgumentException(
+					"Unsupported native terrain stage radius");
+			}
+			stage.nativePackageId = terrainPackage.getPackageId();
+			stage.nativePackageVersion = terrainPackage.getPackageVersion();
+			stage.nativeManifestSha256 =
+				terrainPackage.getManifestSha256();
+			stage.nativePresentationChunkSize =
+				NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+			stage.nativeCurrentChunkX = currentChunkX;
+			stage.nativeCurrentChunkY = currentChunkY;
+			stage.nativeChunkRadius = chunkRadius;
+			populateChunks(
+				stage.worldSpace,
+				stage.logicalLevel,
+				stage.nativePackageId,
+				stage.nativePackageVersion,
+				stage.nativeManifestSha256,
+				stage.nativePresentationChunkSize,
+				stage.nativeChunks,
+				chunkRadius,
+				structuralOnly);
+		}
+
+		private void populateChunks(
+			final String worldSpace,
+			final int logicalLevel,
+			final String packageId,
+			final String packageVersion,
+			final String manifestSha256,
+			final int presentationChunkSize,
+			final List<LayeredSceneTerrainChunkStruct> chunks) {
+			populateChunks(
+				worldSpace,
+				logicalLevel,
+				packageId,
+				packageVersion,
+				manifestSha256,
+				presentationChunkSize,
+				chunks,
+				NATIVE_LAYERED_CHUNK_RADIUS,
+				false);
+		}
+
+		private void populateChunks(
+			final String worldSpace,
+			final int logicalLevel,
+			final String packageId,
+			final String packageVersion,
+			final String manifestSha256,
+			final int presentationChunkSize,
+			final List<LayeredSceneTerrainChunkStruct> chunks,
+			final int chunkRadius,
+			final boolean structuralOnly) {
+			if (residencyTransaction != null) {
+				throw new IllegalStateException(
+					"Native terrain residency receipt was populated twice");
+			}
+			if (residency != null) {
+				residencyTransaction = residency.begin();
+			}
+			int availableSectors = 0;
+			int payloadSectors = 0;
+			int referencedSectors = 0;
+			long rawBytes = 0L;
+			long wireBytes = 0L;
+			long cacheRequests = 0L;
+			long cacheHits = 0L;
+			long cacheMisses = 0L;
+			long wireBuildNanos = 0L;
+			for (int deltaX = -chunkRadius;
+				deltaX <= chunkRadius;
+				deltaX++) {
+				for (int deltaY = -chunkRadius;
+					deltaY <= chunkRadius;
+					deltaY++) {
+					final int chunkX = Math.addExact(currentChunkX, deltaX);
+					final int chunkY = Math.addExact(currentChunkY, deltaY);
+					final LayeredSceneTerrainChunkStruct output =
+						new LayeredSceneTerrainChunkStruct();
+					output.chunkX = chunkX;
+					output.chunkY = chunkY;
+					final boolean symmetricOuter =
+						chunkRadius
+								== NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS
+							&& Math.max(
+								Math.abs(deltaX),
+								Math.abs(deltaY))
+								== NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS;
+					final WorldMapSectorId sectorId=new WorldMapSectorId(
+							location.getWorldSpace(),
+							location.getCoordinate().getLevel(),
+							chunkX,
+							chunkY);
+					final Optional<NativeLayeredTerrainSector> source =
+						server.getConfig().WORLD_BUILDER_MODE
+							?server.getWorldEditorSessions()
+								.findNativeTerrainSector(
+									terrainPackage,sectorId)
+							:terrainPackage.findSector(sectorId);
+					output.available =
+						source.isPresent()
+							&& (!structuralOnly || symmetricOuter);
+					if (output.available) {
+						availableSectors++;
+						final NativeLayeredTerrainSector chunk = source.get();
+						final boolean visualOnly =
+							symmetricOuter && !structuralOnly;
+						output.sourceSectorX =
+							chunk.getIdentity().getSectorX();
+						output.sourceSectorY =
+							chunk.getIdentity().getSectorY();
+						output.sourceEncoding = structuralOnly
+							? NATIVE_LAYERED_STRUCTURAL_ENCODING
+							: visualOnly
+								? NATIVE_LAYERED_VISUAL_ENCODING
+								: chunk.getSourceEncoding();
+						if(server.getConfig().WORLD_BUILDER_MODE){
+							output.sourcePayloadSha256 =
+								server.getWorldEditorSessions()
+									.nativeTerrainSectorSha256(chunk);
+						}else{
+							output.sourcePayloadSha256=chunk.getSourceSha256();
+						}
+						output.payloadPresent =
+							residencyTransaction == null
+								|| residencyTransaction.requiresPayload(
+									residentContentIdentity(
+										packageId,
+										packageVersion,
+										manifestSha256,
+										worldSpace,
+										logicalLevel,
+										presentationChunkSize,
+										output));
+						if (output.payloadPresent) {
+							payloadSectors++;
+							final int expectedRawBytes =
+								NativeLayeredTerrainSector.TILE_COUNT
+									* (structuralOnly
+										? NATIVE_LAYERED_STRUCTURAL_TILE_WIRE_BYTES
+										: visualOnly
+										? NATIVE_LAYERED_VISUAL_TILE_WIRE_BYTES
+										: NativeLayeredTerrainChunk
+											.TILE_WIRE_BYTES);
+							if(server.getConfig().WORLD_BUILDER_MODE){
+								long buildStart = System.nanoTime();
+								byte[] rawImage =
+									server.getWorldEditorSessions()
+										.copyNativeTerrainSectorWireBytes(chunk);
+								output.tileBytes =
+									compressNativeTerrain(
+										structuralOnly
+											? structuralTerrainWireBytes(rawImage)
+											: visualOnly
+											? visualTerrainWireBytes(rawImage)
+											: rawImage);
+								wireBuildNanos +=
+									System.nanoTime() - buildStart;
+							} else {
+								NativeLayeredTerrainWireCache.Lookup lookup =
+									wireCache.getOrCompress(
+										terrainPackage.getPackageId()
+											+ "@" + terrainPackage.getPackageVersion()
+											+ ":" + terrainPackage.getManifestSha256()
+											+ ":" + chunk.getIdentity()
+											+ ":" + output.sourceEncoding,
+										chunk.getSourceSha256()
+											+ ":" + output.sourceEncoding,
+										expectedRawBytes,
+										() -> structuralOnly
+											? structuralTerrainWireBytes(
+												chunk.copyWireBytes())
+											: visualOnly
+											? visualTerrainWireBytes(
+												chunk.copyWireBytes())
+											: chunk.copyWireBytes());
+								output.tileBytes = lookup.getCompressedBytes();
+								cacheRequests++;
+								if (lookup.isCacheHit()) {
+									cacheHits++;
+								} else {
+									cacheMisses++;
+								}
+								wireBuildNanos += lookup.getBuildNanos();
+							}
+							rawBytes += expectedRawBytes;
+							wireBytes += output.tileBytes.length;
+						} else {
+							referencedSectors++;
+						}
+					}
+					chunks.add(output);
+				}
+			}
+			server.addNativeTerrainTransferMetrics(
+				1,
+				chunks.size(),
+				availableSectors,
+				payloadSectors,
+				referencedSectors,
+				rawBytes,
+				wireBytes,
+				cacheRequests,
+				cacheHits,
+				cacheMisses,
+				wireBuildNanos,
+				wireCache.size());
+		}
+
+		private static String residentContentIdentity(
+			final String packageId,
+			final String packageVersion,
+			final String manifestSha256,
+			final String worldSpace,
+			final int logicalLevel,
+			final int presentationChunkSize,
+			final LayeredSceneTerrainChunkStruct chunk) {
+			return packageId
+				+ "@" + packageVersion
+				+ ":" + manifestSha256
+				+ ":" + worldSpace
+				+ ":" + logicalLevel
+				+ ":" + presentationChunkSize
+				+ ":" + chunk.chunkX + "," + chunk.chunkY
+				+ ":" + chunk.sourceSectorX + "," + chunk.sourceSectorY
+				+ ":" + chunk.sourceEncoding
+				+ ":" + chunk.sourcePayloadSha256;
+		}
+	}
+
+	private static byte[] visualTerrainWireBytes(
+		final byte[] fullTerrainBytes) {
+		final int fullTileBytes =
+			NativeLayeredTerrainChunk.TILE_WIRE_BYTES;
+		final int expectedFullBytes =
+			NativeLayeredTerrainSector.TILE_COUNT * fullTileBytes;
+		if (fullTerrainBytes == null
+			|| fullTerrainBytes.length != expectedFullBytes) {
+			throw new IllegalArgumentException(
+				"Full native terrain image is invalid");
+		}
+		final byte[] visual = new byte[
+			NativeLayeredTerrainSector.TILE_COUNT
+				* NATIVE_LAYERED_VISUAL_TILE_WIRE_BYTES];
+		int source = 0;
+		int target = 0;
+		while (source < fullTerrainBytes.length) {
+			visual[target++] = fullTerrainBytes[source];
+			visual[target++] = fullTerrainBytes[source + 1];
+			visual[target++] = fullTerrainBytes[source + 2];
+			source += fullTileBytes;
+		}
+		return visual;
+	}
+
+	private static byte[] structuralTerrainWireBytes(
+		final byte[] fullTerrainBytes) {
+		final int fullTileBytes =
+			NativeLayeredTerrainChunk.TILE_WIRE_BYTES;
+		final int expectedFullBytes =
+			NativeLayeredTerrainSector.TILE_COUNT * fullTileBytes;
+		if (fullTerrainBytes == null
+			|| fullTerrainBytes.length != expectedFullBytes) {
+			throw new IllegalArgumentException(
+				"Full native terrain image is invalid");
+		}
+		final byte[] structural = new byte[
+			NativeLayeredTerrainSector.TILE_COUNT
+				* NATIVE_LAYERED_STRUCTURAL_TILE_WIRE_BYTES];
+		int source = 0;
+		int target = 0;
+		while (source < fullTerrainBytes.length) {
+			System.arraycopy(
+				fullTerrainBytes,
+				source + NATIVE_LAYERED_VISUAL_TILE_WIRE_BYTES,
+				structural,
+				target,
+				NATIVE_LAYERED_STRUCTURAL_TILE_WIRE_BYTES);
+			source += fullTileBytes;
+			target += NATIVE_LAYERED_STRUCTURAL_TILE_WIRE_BYTES;
+		}
+		return structural;
+	}
+
+	private static byte[] compressNativeTerrain(final byte[] source) {
+		final Deflater compressor = new Deflater(Deflater.BEST_SPEED);
+		try {
+			compressor.setInput(source);
+			compressor.finish();
+			final byte[] buffer = new byte[source.length + 128];
+			final int length = compressor.deflate(buffer);
+			if (!compressor.finished() || length <= 0
+				|| length > 0xFFFF) {
+				throw new IllegalStateException(
+					"Native terrain sector compression exceeded one packet field");
+			}
+			return Arrays.copyOf(buffer, length);
+		} finally {
+			compressor.end();
+		}
+	}
+
+	private static final class LayeredProtocolSceneScope {
+		private final String worldSpace;
+		private final int level;
+		private final String projectionId;
+		private final String nativeTerrainScopeIdentity;
+
+		private LayeredProtocolSceneScope(
+			final String worldSpace,
+			final int level,
+			final String projectionId,
+			final String nativeTerrainScopeIdentity) {
+			this.worldSpace = worldSpace;
+			this.level = level;
+			this.projectionId = projectionId;
+			this.nativeTerrainScopeIdentity = nativeTerrainScopeIdentity;
+		}
+
+		private static LayeredProtocolSceneScope from(
+			final WorldLocation location,
+			final String projectionId,
+			final String nativeTerrainScopeIdentity) {
+			return new LayeredProtocolSceneScope(
+				location.getWorldSpace().getValue(),
+				location.getCoordinate().getLevel(),
+				projectionId,
+				nativeTerrainScopeIdentity);
+		}
+
+		@Override
+		public boolean equals(final Object other) {
+			if (this == other) {
+				return true;
+			}
+			if (!(other instanceof LayeredProtocolSceneScope)) {
+				return false;
+			}
+			final LayeredProtocolSceneScope scope =
+				(LayeredProtocolSceneScope) other;
+			return level == scope.level
+				&& worldSpace.equals(scope.worldSpace)
+				&& projectionId.equals(scope.projectionId)
+				&& nativeTerrainScopeIdentity.equals(
+					scope.nativeTerrainScopeIdentity);
+		}
+
+		@Override
+		public int hashCode() {
+			int result = 31 * worldSpace.hashCode() + level;
+			result = 31 * result + projectionId.hashCode();
+			return 31 * result + nativeTerrainScopeIdentity.hashCode();
 		}
 	}
 
@@ -861,6 +2451,9 @@ public final class GameStateUpdater {
 		if (!player.isUsingCustomClient()) {
 			return false;
 		}
+		if (!hasEstablishedLayeredSceneContext(player)) {
+			return false;
+		}
 		updateCustomMovementClientRegion(player);
 
 		MovementUpdateStruct struct = new MovementUpdateStruct();
@@ -875,10 +2468,7 @@ public final class GameStateUpdater {
 			if (movedPlayer.equals(player) || !player.getLocalPlayers().contains(movedPlayer)) {
 				continue;
 			}
-			if (!movedPlayer.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedPlayer)) {
-				continue;
-			}
-			if (!isWithinClientLocalTileWindow(player, movedPlayer.getX(), movedPlayer.getY())) {
+			if (!isWithinMobPacketRange(player, movedPlayer)) {
 				continue;
 			}
 			struct.players.add(new MovementUpdateStruct.MobMovement(
@@ -892,10 +2482,7 @@ public final class GameStateUpdater {
 			if (!player.getLocalNpcs().contains(movedNpc)) {
 				continue;
 			}
-			if (!movedNpc.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedNpc)) {
-				continue;
-			}
-			if (!isWithinClientLocalTileWindow(player, movedNpc.getX(), movedNpc.getY())) {
+			if (!isWithinMobPacketRange(player, movedNpc)) {
 				continue;
 			}
 			struct.npcs.add(new MovementUpdateStruct.MobMovement(
@@ -914,10 +2501,20 @@ public final class GameStateUpdater {
 		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT) {
 			return false;
 		}
+		if (!hasEstablishedLayeredSceneContext(player)) {
+			return false;
+		}
 		updateCustomMovementClientRegion(player);
 
 		MovementSnapshotStruct struct = new MovementSnapshotStruct();
-		struct.protocolVersion = MOVEMENT_SNAPSHOT_PROTOCOL_VERSION;
+		final boolean layeredProtocol =
+			getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
+		struct.protocolVersion = layeredProtocol
+			? LAYERED_MOVEMENT_SNAPSHOT_PROTOCOL_VERSION
+			: MOVEMENT_SNAPSHOT_PROTOCOL_VERSION;
+		struct.locationContextSequence = layeredProtocol
+			? requireLayeredSceneContextSequence(player)
+			: 0;
 		struct.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
 		struct.sequence = ++movementSnapshotSequence;
 		struct.localX = player.getX();
@@ -931,10 +2528,7 @@ public final class GameStateUpdater {
 			if (movedPlayer.equals(player) || !player.getLocalPlayers().contains(movedPlayer)) {
 				continue;
 			}
-			if (!movedPlayer.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedPlayer)) {
-				continue;
-			}
-			if (!isWithinClientLocalTileWindow(player, movedPlayer.getX(), movedPlayer.getY())) {
+			if (!isWithinMobPacketRange(player, movedPlayer)) {
 				continue;
 			}
 			struct.players.add(new MovementSnapshotStruct.MobMovement(
@@ -948,10 +2542,7 @@ public final class GameStateUpdater {
 			if (!player.getLocalNpcs().contains(movedNpc)) {
 				continue;
 			}
-			if (!movedNpc.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedNpc)) {
-				continue;
-			}
-			if (!isWithinClientLocalTileWindow(player, movedNpc.getX(), movedNpc.getY())) {
+			if (!isWithinMobPacketRange(player, movedNpc)) {
 				continue;
 			}
 			struct.npcs.add(new MovementSnapshotStruct.MobMovement(
@@ -966,6 +2557,7 @@ public final class GameStateUpdater {
 		getServer().addMovementSnapshotMetrics(
 			1 + struct.players.size() + struct.npcs.size(),
 			MOVEMENT_SNAPSHOT_FIXED_PAYLOAD_BYTES
+				+ (layeredProtocol ? LAYERED_CONTEXT_SEQUENCE_BYTES : 0)
 				+ ((struct.players.size() + struct.npcs.size()) * MOVEMENT_SNAPSHOT_MOB_RECORD_BYTES));
 		return true;
 	}
@@ -982,8 +2574,63 @@ public final class GameStateUpdater {
 			&& worldY < baseY + CLIENT_LOCAL_TILE_COUNT;
 	}
 
+	/**
+	 * Exact packet/render ownership for one mob in the custom client's active
+	 * three-by-three sector square. Legacy clients retain their circular
+	 * distance contract.
+	 */
+	private static boolean isWithinMobPacketRange(
+		final Player viewer,
+		final Entity candidate) {
+		if (candidate == null || !candidate.sharesSpatialDomain(viewer)) {
+			return false;
+		}
+		if (viewer.isUsingCustomClient()) {
+			return isWithinClientLocalTileWindow(
+				viewer, candidate.getX(), candidate.getY());
+		}
+		return candidate instanceof Mob
+			&& ((Mob) candidate).withinAuthenticRangeAdditionally(viewer)
+			&& viewer.withinRange(candidate);
+	}
+
+	/**
+	 * Static entities and ground items inside the exact active square retain
+	 * gameplay authority. The surrounding resident ring is presentation-only.
+	 */
+	private static boolean isWithinAuthoritativeSceneWindow(
+		final Player viewer,
+		final Entity candidate) {
+		if (candidate == null || !candidate.sharesSpatialDomain(viewer)) {
+			return false;
+		}
+		return viewer.isUsingCustomClient()
+			? isWithinClientLocalTileWindow(
+				viewer, candidate.getX(), candidate.getY())
+			: viewer.withinObjectGridRange(candidate);
+	}
+
 	private static void updateCustomMovementClientRegion(final Player viewer) {
 		if (!viewer.isUsingCustomClient()) {
+			return;
+		}
+		if (usesCenteredClientSceneWindow(viewer)) {
+			/*
+			 * A native 3x3 scene owns the storage sector containing the
+			 * player plus one complete sector on every side. The old rounded
+			 * midpoint and +/-32 reload band belonged to the 2x2/96-tile
+			 * client scene; retaining it after the 144-tile expansion left
+			 * the player in the trailing sector and exposed a nearby strip
+			 * where roaming NPCs could fall into presentation-only space.
+			 */
+			viewer.setAttribute(
+				CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
+				clientLocalCenteredSectionAnchorForTile(
+					viewer.getX(), CLIENT_LOCAL_PLANE_WIDTH));
+			viewer.setAttribute(
+				CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
+				clientLocalCenteredSectionAnchorForTile(
+					viewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT));
 			return;
 		}
 		Integer midpointX = viewer.getAttribute(CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE, null);
@@ -998,7 +2645,16 @@ public final class GameStateUpdater {
 				midpointY = clientLocalMidpointForTile(viewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT);
 			}
 		}
-		if (viewer.getX() <= midpointX - CLIENT_LOCAL_REGION_RELOAD_RADIUS
+		// A teleport forces the client to recenter even when its destination
+		// remains inside the ordinary walking reload radius. Recenter the
+		// server mirror in the same tick so terrain receipts and movement
+		// coordinates describe the client's newly active section window.
+		if (viewer.isTeleporting()) {
+			midpointX = clientLocalMidpointForTile(
+				viewer.getX(), CLIENT_LOCAL_PLANE_WIDTH);
+			midpointY = clientLocalMidpointForTile(
+				viewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT);
+		} else if (viewer.getX() <= midpointX - CLIENT_LOCAL_REGION_RELOAD_RADIUS
 			|| viewer.getX() >= midpointX + CLIENT_LOCAL_REGION_RELOAD_RADIUS
 			|| viewer.getY() <= midpointY - CLIENT_LOCAL_REGION_RELOAD_RADIUS
 			|| viewer.getY() >= midpointY + CLIENT_LOCAL_REGION_RELOAD_RADIUS) {
@@ -1024,6 +2680,13 @@ public final class GameStateUpdater {
 		final String attribute,
 		final int planeOffset
 	) {
+		if (usesCenteredClientSceneWindow(viewer)) {
+			return clientLocalCenteredSectionAnchorForTile(
+				planeOffset == CLIENT_LOCAL_PLANE_WIDTH
+					? viewer.getX()
+					: viewer.getY(),
+				planeOffset);
+		}
 		final Integer midpoint = viewer.getAttribute(attribute, null);
 		if (midpoint != null) {
 			return midpoint;
@@ -1039,6 +2702,25 @@ public final class GameStateUpdater {
 		final int section = (worldTile + planeOffset + (CLIENT_LOCAL_SECTION_SIZE / 2))
 			/ CLIENT_LOCAL_SECTION_SIZE;
 		return (section * CLIENT_LOCAL_SECTION_SIZE) - planeOffset;
+	}
+
+	private static int clientLocalCenteredSectionAnchorForTile(
+		final int worldTile,
+		final int planeOffset) {
+		final int projectedTile = Math.addExact(worldTile, planeOffset);
+		final int section = Math.floorDiv(
+			projectedTile, CLIENT_LOCAL_SECTION_SIZE);
+		return Math.subtractExact(
+			Math.multiplyExact(section, CLIENT_LOCAL_SECTION_SIZE),
+			planeOffset);
+	}
+
+	private static boolean usesCenteredClientSceneWindow(
+		final Player viewer) {
+		return viewer.isUsingCustomClient()
+			&& viewer.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			&& viewer.getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(viewer.getWorldLocation());
 	}
 
 	private int safeNPCIndex(final Player player, final int npcIndex) {
@@ -1083,8 +2765,7 @@ public final class GameStateUpdater {
 		}
 		return !npc.isRemoved()
 			&& !npc.isRespawning()
-			&& npc.withinAuthenticRangeAdditionally(player)
-			&& player.withinRange(npc);
+			&& isWithinMobPacketRange(player, npc);
 	}
 
 	private static List<Npc> prioritizeVisibleNpcs(final Player player, final Collection<Npc> visibleNpcs) {
@@ -1213,8 +2894,7 @@ public final class GameStateUpdater {
 				final long deathVisualSentTick = localNpc.getAttribute(deathVisualViewerKey, Long.MIN_VALUE);
 				final boolean hasPendingDeathVisual = playerToUpdate.isUsingCustomClient()
 					&& (localNpc.isRemoved() || localNpc.isRespawning())
-					&& playerToUpdate.withinRange(localNpc)
-					&& localNpc.withinAuthenticRangeAdditionally(playerToUpdate)
+					&& isWithinMobPacketRange(playerToUpdate, localNpc)
 					&& deathVisualTick >= 0
 					&& deathVisualSentTick != deathVisualTick
 					&& (updateFlags.hasCombatEffect() || updateFlags.hasHitSplats() || updateFlags.hasTakenDamage());
@@ -1236,7 +2916,7 @@ public final class GameStateUpdater {
 					continue;
 				}
 
-				if (!localNpc.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(localNpc) || // remove because they are out of range
+				if (!isWithinMobPacketRange(playerToUpdate, localNpc) || // remove because it left the exact client scene
 					(localNpc.isRemoved() && !hasPendingDeathVisual) || // remove because they are removed
 					localNpc.isTeleporting() || // if they've teleported, then they may have moved more than one square, and thus require a full coordinate refresh
 					(localNpc.inCombat() && !hasPendingDeathVisual && !useCustomMovementStream) || // remove because when FIRST entering combat, they may have advanced towards the player, then their sprite is incompatible with a movement update (no direction, and > 7) TODO: should be inCombatChanged(), since it's only necessary on the first round of combat.
@@ -1347,7 +3027,7 @@ public final class GameStateUpdater {
 				for (final Iterator<Player> it$ = playerToUpdate.getLocalPlayers().iterator(); it$.hasNext(); ) {
 					final Player otherPlayer = it$.next();
 
-					if (!otherPlayer.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(otherPlayer) || !otherPlayer.loggedIn() || otherPlayer.isRemoved()
+					if (!isWithinMobPacketRange(playerToUpdate, otherPlayer) || !otherPlayer.loggedIn() || otherPlayer.isRemoved()
 						|| otherPlayer.isTeleporting() || otherPlayer.isInvisibleTo(playerToUpdate)
 						|| otherPlayer.inCombat() || otherPlayer.hasMoved() || otherPlayer.isUnregistering()) {
 						if ((!otherPlayer.hasMoved() || !otherPlayer.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(otherPlayer)) && !otherPlayer.inCombat()) {
@@ -1429,7 +3109,7 @@ public final class GameStateUpdater {
 				for (final Iterator<Player> it$ = playerToUpdate.getLocalPlayers().iterator(); it$.hasNext(); ) {
 					final Player otherPlayer = it$.next();
 
-					if (!otherPlayer.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(otherPlayer) || !otherPlayer.loggedIn() || otherPlayer.isRemoved()
+					if (!isWithinMobPacketRange(playerToUpdate, otherPlayer) || !otherPlayer.loggedIn() || otherPlayer.isRemoved()
 						|| otherPlayer.isTeleporting() || otherPlayer.isInvisibleTo(playerToUpdate)
 						|| otherPlayer.inCombat() || otherPlayer.hasMoved())
 					{
@@ -1458,7 +3138,7 @@ public final class GameStateUpdater {
 
 				for (final Player otherPlayer : visiblePlayers) {
 					if (playerToUpdate.getLocalPlayers().contains(otherPlayer) || otherPlayer.equals(playerToUpdate)
-						|| !otherPlayer.withinAuthenticRangeAdditionally(playerToUpdate) || !otherPlayer.withinRange(playerToUpdate) || !otherPlayer.loggedIn()
+						|| !isWithinMobPacketRange(playerToUpdate, otherPlayer) || !otherPlayer.loggedIn()
 						|| otherPlayer.isRemoved() || otherPlayer.isInvisibleTo(playerToUpdate)
 						|| (otherPlayer.isTeleporting() && !otherPlayer.inCombat())) {
 						continue;
@@ -1755,7 +3435,10 @@ public final class GameStateUpdater {
 		if (viewerUsesCustomClient && player.getUpdateFlags().hasHitSplats()) {
 			hitSplatsNeedingDisplayed.addAll(player.getUpdateFlags().getHitSplats());
 		}
-		if (player.getUpdateFlags().hasAppearanceChanged()) {
+		final boolean selfAppearancePending = player.getAttribute(
+			NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE, false);
+		if (player.getUpdateFlags().hasAppearanceChanged()
+			|| selfAppearancePending) {
 			playersNeedingAppearanceUpdate.add(player);
 		}
 		for (final Player otherPlayer : player.getLocalPlayers()) {
@@ -1803,6 +3486,10 @@ public final class GameStateUpdater {
 		issuePlayerAppearanceUpdatePacket(player, bubblesNeedingDisplayed, chatMessagesNeedingDisplayed,
 			projectilesNeedingDisplayed, playersNeedingDamageUpdate, playersNeedingHpUpdate, playersNeedingAppearanceUpdate,
 			combatEffectsNeedingDisplayed, hitSplatsNeedingDisplayed);
+		if (selfAppearancePending) {
+			player.removeAttribute(
+				NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE);
+		}
 	}
 
 	private void issuePlayerAppearanceUpdatePacket(final Player player, final Queue<Bubble> bubblesNeedingDisplayed,
@@ -2220,14 +3907,17 @@ public final class GameStateUpdater {
 
 		for (final Iterator<GameObject> it$ = playerToUpdate.getLocalGameObjects().iterator(); it$.hasNext(); ) {
 			final GameObject o = it$.next();
-			if (!playerToUpdate.withinObjectGridRange(o) || o.isRemoved() || o.isInvisibleTo(playerToUpdate)) {
-				final int offsetX = o.getX() - playerToUpdate.getX();
-				final int offsetY = o.getY() - playerToUpdate.getY();
+			final int offsetX = o.getX() - playerToUpdate.getX();
+			final int offsetY = o.getY() - playerToUpdate.getY();
+			if (!isWithinAuthoritativeSceneWindow(playerToUpdate, o)
+				|| !isSceneDeltaSafeOffset(offsetX, offsetY)
+				|| o.isRemoved()
+				|| o.isInvisibleTo(playerToUpdate)) {
 				if (isSignedByteOffset(offsetX, offsetY)) {
 					objectLocs.add(new GameObjectLoc(60000, offsetX, offsetY, o.getDirection(), 0));
-					changed = true;
 				}
 				it$.remove();
+				changed = true;
 			}
 		}
 
@@ -2242,7 +3932,8 @@ public final class GameStateUpdater {
 				// TODO: funny behaviour where if a rock is mined > 16 tiles from you, it can be removed but not replaced until you get closer.
 				skipAdd |= !playerToUpdate.within4GridRange(newObject);
 			} else {
-				skipAdd |= !playerToUpdate.withinObjectGridRange(newObject);
+				skipAdd |= !isWithinAuthoritativeSceneWindow(
+					playerToUpdate, newObject);
 			}
 			if (skipAdd) {
 				continue;
@@ -2250,7 +3941,7 @@ public final class GameStateUpdater {
 
 			final int offsetX = newObject.getX() - playerToUpdate.getX();
 			final int offsetY = newObject.getY() - playerToUpdate.getY();
-			if (!isSignedByteOffset(offsetX, offsetY)) {
+			if (!isSceneDeltaSafeOffset(offsetX, offsetY)) {
 				continue;
 			}
 
@@ -2261,7 +3952,7 @@ public final class GameStateUpdater {
 			changed = true;
 		}
 		struct.objects = objectLocs;
-		if (changed) {
+		if (!objectLocs.isEmpty()) {
 			if (sendLegacyStaticScenePackets) {
 				tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENERY_HANDLER, struct, playerToUpdate);
 			} else {
@@ -2296,26 +3987,30 @@ public final class GameStateUpdater {
 			final int offsetX = (groundItem.getX() - playerToUpdate.getX());
 			final int offsetY = (groundItem.getY() - playerToUpdate.getY());
 
-			if (!playerToUpdate.withinObjectGridRange(groundItem)
-				|| groundItem.isRemoved() || groundItem.isInvisibleTo(playerToUpdate)) {
+			if (!isWithinAuthoritativeSceneWindow(
+					playerToUpdate, groundItem)
+				|| !isSceneDeltaSafeOffset(offsetX, offsetY)
+				|| groundItem.isRemoved()
+				|| groundItem.isInvisibleTo(playerToUpdate)) {
 				if (isSignedByteOffset(offsetX, offsetY)) {
 					itemLocs.add(new ItemLoc(groundItem.getID() + 32768, offsetX, offsetY, groundItem.getAmount(), 0,
 						groundItem.getNoted() && getServer().getConfig().WANT_BANK_NOTES ? 1 : 0));
-					changed = true;
 				}
 				it$.remove();
+				changed = true;
 			}
 		}
 
 		for (final GroundItem groundItem : visibleGroundItems) {
-			if (!playerToUpdate.withinObjectGridRange(groundItem) || groundItem.isRemoved()
+			if (!isWithinAuthoritativeSceneWindow(
+					playerToUpdate, groundItem) || groundItem.isRemoved()
 				|| groundItem.isInvisibleTo(playerToUpdate)
 				|| playerToUpdate.getLocalGroundItems().contains(groundItem)) {
 				continue;
 			}
 			final int offsetX = groundItem.getX() - playerToUpdate.getX();
 			final int offsetY = groundItem.getY() - playerToUpdate.getY();
-			if (!isSignedByteOffset(offsetX, offsetY)) {
+			if (!isSceneDeltaSafeOffset(offsetX, offsetY)) {
 				continue;
 			}
 			itemLocs.add(new ItemLoc(groundItem.getID(), offsetX, offsetY, groundItem.getAmount(), 0,
@@ -2324,7 +4019,7 @@ public final class GameStateUpdater {
 			changed = true;
 		}
 		struct.objects = itemLocs;
-		if (changed) {
+		if (!itemLocs.isEmpty()) {
 			tryFinalizeAndSendPacket(OpcodeOut.SEND_GROUND_ITEM_HANDLER, struct, playerToUpdate);
 		}
 		return changed;
@@ -2342,9 +4037,12 @@ public final class GameStateUpdater {
 		// remove all boundaries that need to be removed
 		for (final Iterator<GameObject> it$ = playerToUpdate.getLocalWallObjects().iterator(); it$.hasNext(); ) {
 			final GameObject o = it$.next();
-			if (!playerToUpdate.withinObjectGridRange(o) || (o.isRemoved() || o.isInvisibleTo(playerToUpdate))) {
-				final int offsetX = o.getX() - playerToUpdate.getX();
-				final int offsetY = o.getY() - playerToUpdate.getY();
+			final int offsetX = o.getX() - playerToUpdate.getX();
+			final int offsetY = o.getY() - playerToUpdate.getY();
+			if (!isWithinAuthoritativeSceneWindow(playerToUpdate, o)
+				|| !isSceneDeltaSafeOffset(offsetX, offsetY)
+				|| o.isRemoved()
+				|| o.isInvisibleTo(playerToUpdate)) {
 				if (isSignedByteOffset(offsetX, offsetY)) {
 					if (!playerToUpdate.isUsingCustomClient()) {
 						// The authentic server does not really send removals for boundaries.
@@ -2384,18 +4082,17 @@ public final class GameStateUpdater {
 
 					} else {
 						objectLocs.add(new GameObjectLoc(60000, offsetX, offsetY, o.getDirection(), 1));
-						changed = true;
 					}
-					it$.remove();
-				} else {
-					it$.remove();
 				}
+				it$.remove();
+				changed = true;
 			}
 		}
 
 		// add all new boundaries to be added
 		for (final GameObject newObject : visibleWallObjects) {
-			if (!playerToUpdate.withinObjectGridRange(newObject) || newObject.isRemoved()
+			if (!isWithinAuthoritativeSceneWindow(
+					playerToUpdate, newObject) || newObject.isRemoved()
 				|| newObject.isInvisibleTo(playerToUpdate) || newObject.getType() != 1
 				|| playerToUpdate.getLocalWallObjects().contains(newObject)) {
 				continue;
@@ -2403,7 +4100,7 @@ public final class GameStateUpdater {
 
 			final int offsetX = newObject.getX() - playerToUpdate.getX();
 			final int offsetY = newObject.getY() - playerToUpdate.getY();
-			if (!isSignedByteOffset(offsetX, offsetY)) {
+			if (!isSceneDeltaSafeOffset(offsetX, offsetY)) {
 				continue;
 			}
 			objectLocs.add(new GameObjectLoc(newObject.getID(), offsetX, offsetY, newObject.getDirection(), 1));
@@ -2411,7 +4108,7 @@ public final class GameStateUpdater {
 			changed = true;
 		}
 		struct.objects = objectLocs;
-		if (changed) {
+		if (!objectLocs.isEmpty()) {
 			if (sendLegacyStaticScenePackets) {
 				tryFinalizeAndSendPacket(OpcodeOut.SEND_BOUNDARY_HANDLER, struct, playerToUpdate);
 			} else {
@@ -2436,6 +4133,19 @@ public final class GameStateUpdater {
 	private boolean isSignedByteOffset(final int offsetX, final int offsetY) {
 		return offsetX >= Byte.MIN_VALUE && offsetX <= Byte.MAX_VALUE
 			&& offsetY >= Byte.MIN_VALUE && offsetY <= Byte.MAX_VALUE;
+	}
+
+	/**
+	 * Keeps one encodable tile of headroom at every legacy scene edge. Ordinary
+	 * one-tile movement can therefore retire an object with a final signed-byte
+	 * delta instead of silently losing removal authority at +128 or -129.
+	 * Larger jumps are reconciled by the exact-context scene fence.
+	 */
+	private boolean isSceneDeltaSafeOffset(
+		final int offsetX,
+		final int offsetY) {
+		return offsetX > Byte.MIN_VALUE && offsetX < Byte.MAX_VALUE
+			&& offsetY > Byte.MIN_VALUE && offsetY < Byte.MAX_VALUE;
 	}
 
 	public final long updateWorld() {

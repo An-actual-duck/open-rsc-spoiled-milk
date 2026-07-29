@@ -40,8 +40,10 @@ def main() -> None:
     require(take, "getPlayer().canTakeVisibleGroundItem(item)", "pickup rechecks captured ground item")
     require(player, "item == null || item.isInvisibleTo(this)", "shared pickup visibility validation")
     require(player, "checkPlayerActionState && (isBusy() || isRanging())", "shared pickup action-state validation")
-    require(player, "item.isRemoved() || getRegion().getItem(item.getID(), item.getLocation(), this) == null",
+    require(player, "item.isRemoved() || getWorld().getRegionManager()",
             "shared pickup removal validation")
+    require(player, ".findInteractionGroundItem(",
+            "layer-aware pickup registration validation")
 
     print("PASS: ground items keep object identity while lookups remain explicit")
 

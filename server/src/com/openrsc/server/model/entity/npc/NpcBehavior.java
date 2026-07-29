@@ -490,8 +490,11 @@ public class NpcBehavior {
 			return false;
 		}
 
-		if (!npc.withinRange(target, profile.getProjectileRange(npc))
-			|| !PathValidation.checkHostileProjectilePath(npc.getWorld(), npc.getLocation(), target.getLocation())
+			if (!npc.withinRange(target, profile.getProjectileRange(npc))
+				|| !PathValidation.checkHostileProjectilePath(
+					npc.getWorld(),
+					npc.getWorldLocation(),
+					target.getWorldLocation())
 			|| !checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor)) {
 			return false;
 		}

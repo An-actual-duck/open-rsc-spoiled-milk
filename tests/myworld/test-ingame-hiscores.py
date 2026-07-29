@@ -89,13 +89,13 @@ def main() -> None:
 
     require(
         custom_parser,
-        "case 154:\n\t\t\t\topcode = OpcodeIn.HISCORE_REQUEST;",
-        "custom inbound opcode 154 must remain the hiscore request",
+        "case 156:\n\t\t\t\topcode = OpcodeIn.HISCORE_REQUEST;",
+        "custom inbound opcode 156 must remain the hiscore request",
     )
     require(
         client_opcodes,
-        "HISCORE_REQUEST(154)",
-        "client and server must agree on hiscore request opcode 154",
+        "HISCORE_REQUEST(156)",
+        "client and server must agree on hiscore request opcode 156",
     )
     require(
         custom_generator,

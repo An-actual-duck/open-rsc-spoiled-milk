@@ -24,6 +24,7 @@ final class ClientSceneInstanceStore {
 	private int[] gameObjectX;
 	private int[] gameObjectZ;
 	private int gameObjectCount;
+	private long gameObjectRevision;
 
 	private boolean[] wallObjectFrameMarks;
 	private int[] wallObjectDirections;
@@ -73,7 +74,14 @@ final class ClientSceneInstanceStore {
 			gameObjectPendingAreaLoad[index] = false;
 			gameObjectModels[index] = null;
 		}
+		if (gameObjectCount != count) {
+			gameObjectRevision++;
+		}
 		gameObjectCount = count;
+	}
+
+	long getGameObjectRevision() {
+		return gameObjectRevision;
 	}
 
 	int getWallObjectCount() {
@@ -146,6 +154,9 @@ final class ClientSceneInstanceStore {
 
 	void setGameObjectX(int index, int value) {
 		ensureGameObjectCapacity(index + 1);
+		if (gameObjectX[index] != value) {
+			gameObjectRevision++;
+		}
 		gameObjectX[index] = value;
 	}
 
@@ -155,6 +166,9 @@ final class ClientSceneInstanceStore {
 
 	void setGameObjectZ(int index, int value) {
 		ensureGameObjectCapacity(index + 1);
+		if (gameObjectZ[index] != value) {
+			gameObjectRevision++;
+		}
 		gameObjectZ[index] = value;
 	}
 
@@ -164,6 +178,9 @@ final class ClientSceneInstanceStore {
 
 	void setGameObjectId(int index, int value) {
 		ensureGameObjectCapacity(index + 1);
+		if (gameObjectIds[index] != value) {
+			gameObjectRevision++;
+		}
 		gameObjectIds[index] = value;
 	}
 

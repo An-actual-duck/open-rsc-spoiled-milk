@@ -98,6 +98,8 @@ public enum OpcodeIn {
 	ON_BLACK_HOLE, // custom
 	NPC_DEFINITION_REQUEST, // custom
 	WORLD_EDITOR_REQUEST, // custom, versioned editor envelope
+	LAYERED_TERRAIN_READY, // custom, exact native terrain readiness receipt
+	LAYERED_TERRAIN_STAGE_READY, // custom, exact predicted terrain receipt
 	HISCORE_REQUEST, // custom
 
 	LOGIN,

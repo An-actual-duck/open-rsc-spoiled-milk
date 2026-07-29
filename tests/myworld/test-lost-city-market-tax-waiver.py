@@ -74,7 +74,7 @@ def main() -> None:
     )
     require(
         door,
-        "handleLostCityMarketTax(obj, player",
+        "handleLostCityMarketTax(",
         "Lost City market door toll dialogue should remain shared by both entrances",
     )
     require(

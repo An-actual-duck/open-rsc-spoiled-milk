@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/java-coordinate-occurrence-inventory-v1.schema.json",
+  "title": "Java Coordinate Occurrence Inventory v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reportType",
+    "reportSchema",
+    "coordinateModel",
+    "layoutAdapter",
+    "sourceFingerprintSha256",
+    "ownerClassificationFingerprintSha256",
+    "occurrenceFingerprintSha256",
+    "summary",
+    "sources",
+    "notes"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "reportType": {"const": "layered-java-coordinate-occurrence-inventory"},
+    "reportSchema": {"const": "java-coordinate-occurrence-inventory-v1"},
+    "coordinateModel": {"const": "signed-layered-v1"},
+    "layoutAdapter": {"type": "string", "minLength": 1},
+    "sourceFingerprintSha256": {"$ref": "#/$defs/hash"},
+    "ownerClassificationFingerprintSha256": {"$ref": "#/$defs/hash"},
+    "occurrenceFingerprintSha256": {"$ref": "#/$defs/hash"},
+    "summary": {"$ref": "#/$defs/summary"},
+    "sources": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/source"}
+    },
+    "notes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "count": {"type": "integer", "minimum": 0},
+    "counts": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/count"}
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contentTopologySourceCount",
+        "sourceWithOccurrenceCount",
+        "sourceWithoutOccurrenceCount",
+        "occurrenceCount",
+        "occurrenceCountByKind",
+        "occurrenceCountByArgumentShape"
+      ],
+      "properties": {
+        "contentTopologySourceCount": {"$ref": "#/$defs/count"},
+        "sourceWithOccurrenceCount": {"$ref": "#/$defs/count"},
+        "sourceWithoutOccurrenceCount": {"$ref": "#/$defs/count"},
+        "occurrenceCount": {"$ref": "#/$defs/count"},
+        "occurrenceCountByKind": {"$ref": "#/$defs/counts"},
+        "occurrenceCountByArgumentShape": {"$ref": "#/$defs/counts"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sourceSha256", "occurrenceCount", "occurrences"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sourceSha256": {"$ref": "#/$defs/hash"},
+        "occurrenceCount": {"$ref": "#/$defs/count"},
+        "occurrences": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/occurrence"}
+        }
+      }
+    },
+    "occurrence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sourceSha256",
+        "line",
+        "column",
+        "kind",
+        "form",
+        "argumentCount",
+        "argumentShape",
+        "arguments"
+      ],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sourceSha256": {"$ref": "#/$defs/hash"},
+        "line": {"type": "integer", "minimum": 1},
+        "column": {"type": "integer", "minimum": 1},
+        "kind": {
+          "enum": ["teleport", "point-construction", "area-construction", "area-check"]
+        },
+        "form": {"enum": ["teleport", "Point.location", "new Point", "new Area", ".inBounds"]},
+        "argumentCount": {"$ref": "#/$defs/count"},
+        "argumentShape": {
+          "enum": ["all-integer-literals", "expression-bearing", "no-arguments"]
+        },
+        "arguments": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/argument"}
+        }
+      }
+    },
+    "argument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "expression", "expressionKind"],
+      "properties": {
+        "index": {"$ref": "#/$defs/count"},
+        "expression": {"type": "string"},
+        "expressionKind": {
+          "enum": ["integer-literal", "identifier", "member-access", "call-expression", "other-expression"]
+        }
+      }
+    }
+  }
+}

@@ -122,6 +122,8 @@ server/logs/*.gz
 server/logs/*.log
 server/logs/pcaps/*.gz
 server/logs/pcaps/**/*.gz
+server/logs/layered-map-parity/*.jsonl
+server/logs/layered-map-parity/**/*.jsonl
 
 Client_Base/Open_RSC_Client.jar
 Client_Base/Cache/credentials.txt
@@ -168,6 +170,7 @@ server/create_db_error.log
 server/inc/sqlite/myworld_dev.db
 server/inc/sqlite/spoiled_milk_alpha.db
 server/inc/sqlite/*.db.pre_*
+server/inc/sqlite/backups/
 
 .idea/sqldialects.xml
 server/conf/server/data/specialsleepwords/

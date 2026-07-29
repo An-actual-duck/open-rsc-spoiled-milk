@@ -19,6 +19,12 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LegacyPlayerLocationPersistenceSnapshot;
+import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationPersistence;
+import com.openrsc.server.model.world.coordinate.LavaForgeLocation;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.ZanarisLocation;
+import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.languages.PreferredLanguage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,10 +68,11 @@ public class PlayerService implements IPlayerService {
                 loadPlayerBankPresets(loaded);
                 loadPlayerSocial(loaded);
                 loadPlayerQuests(loaded);
-	                //loadPlayerAchievements(loaded);
-	                loadPlayerCache(loaded);
-					loaded.getBank().loadPinnedSlotsFromCache();
-	                loadPlayerLastSpellCast(loaded);
+                //loadPlayerAchievements(loaded);
+                loadPlayerCache(loaded);
+                loaded.getBank().loadPinnedSlotsFromCache();
+                restorePlayerLayeredLocation(loaded);
+                loadPlayerLastSpellCast(loaded);
                 loadPlayerNpcKills(loaded);
             });
 
@@ -166,6 +173,89 @@ public class PlayerService implements IPlayerService {
         }
     }
 
+	private void restorePlayerLayeredLocation(final Player player) {
+		if (!configuration.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			return;
+		}
+		LayeredPlayerLocationPersistence.RestoreResult restored =
+			LayeredPlayerLocationPersistence.restore(
+				player.getCache().getCacheMap(),
+				player.getLocation(),
+				configuration.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				player.getWorld().getRegionManager()
+					::hasNativeLayeredTerrain);
+		WorldLocation restoredLocation = restored.getLocation();
+		String restoredOrigin = restored.getOrigin();
+		boolean rewriteRequired = restored.isRewriteRequired();
+		WorldLocation relocatedZanaris =
+			ZanarisLocation.relocateLegacyComponent(restoredLocation);
+		boolean hasRelocatedZanarisTerrain =
+			!relocatedZanaris.equals(restoredLocation)
+				&& player.getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(relocatedZanaris);
+		TileValue relocatedZanarisTile =
+			hasRelocatedZanarisTerrain
+				? player.getWorld().getRegionManager()
+					.getTile(relocatedZanaris)
+				: null;
+		WorldLocation migratedLocation =
+			ZanarisLocation.migratePersistedLocation(
+				restoredLocation,
+				hasRelocatedZanarisTerrain
+					&& relocatedZanarisTile != null,
+				relocatedZanarisTile == null
+					? 8
+					: relocatedZanarisTile.overlay & 0xff);
+		if (!migratedLocation.equals(restoredLocation)) {
+			restoredLocation = migratedLocation;
+			restoredOrigin =
+				ZanarisLocation.PERSISTENCE_MIGRATION_ORIGIN;
+			rewriteRequired = true;
+		}
+		WorldLocation relocatedLavaForge =
+			LavaForgeLocation.relocateLegacyComponentCandidate(
+				restoredLocation);
+		boolean hasRelocatedLavaForgeTerrain =
+			!relocatedLavaForge.equals(restoredLocation)
+				&& player.getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(relocatedLavaForge);
+		TileValue relocatedLavaForgeTile =
+			hasRelocatedLavaForgeTerrain
+				? player.getWorld().getRegionManager()
+					.getTile(relocatedLavaForge)
+				: null;
+		migratedLocation =
+			LavaForgeLocation.migratePersistedLocation(
+				restoredLocation,
+				hasRelocatedLavaForgeTerrain
+					&& relocatedLavaForgeTile != null,
+				relocatedLavaForgeTile == null
+					? 8
+					: relocatedLavaForgeTile.overlay & 0xff);
+		if (!migratedLocation.equals(restoredLocation)) {
+			restoredLocation = migratedLocation;
+			restoredOrigin =
+				LavaForgeLocation.PERSISTENCE_MIGRATION_ORIGIN;
+			rewriteRequired = true;
+		}
+		player.setInitialLayeredLocation(restoredLocation);
+		boolean nativeLayered = player.getWorld().getRegionManager()
+			.hasNativeLayeredTerrain(player.getLayeredLocation());
+		LayeredPlayerLocationPersistence.write(
+			player.getCache().getCacheMap(),
+			player.getLayeredLocation(),
+			player.getLocation(),
+			restoredOrigin,
+			configuration.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+			nativeLayered);
+		LOGGER.info(
+			"layered-player-location restore playerId={} origin={} rewriteRequired={} location={}",
+			player.getDatabaseID(),
+			restoredOrigin,
+			rewriteRequired,
+			player.getLayeredLocation());
+	}
+
     private void loadPlayerData(final Player player) throws GameDatabaseException {
         final PlayerData playerData = database.queryLoadPlayerData(player);
 
@@ -184,8 +274,12 @@ public class PlayerService implements IPlayerService {
 
         player.setLastLogin(playerData.loginDate);
         player.setLastIP(playerData.loginIp);
-        player.setInitialLocation(new Point(playerData.xLocation, playerData.yLocation));
-        player.setNextRegionLoad();
+		LegacyPlayerLocationPersistenceSnapshot locationSnapshot =
+			LegacyPlayerLocationPersistenceSnapshot.capture(
+				Point.location(playerData.xLocation, playerData.yLocation));
+		player.setInitialLocation(locationSnapshot.toLegacyPoint());
+		locationSnapshot.requireLayeredLocation(player.getLayeredLocation());
+		player.setNextRegionLoad();
 
         player.setFatigue(playerData.fatigue);
         player.setKills(playerData.kills);
@@ -468,6 +562,21 @@ public class PlayerService implements IPlayerService {
 
     @Override
     public void savePlayerCache(final Player player) throws GameDatabaseException {
+		if (configuration.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			String origin = player.getCache().hasKey(
+				LayeredPlayerLocationPersistence.KEY_ORIGIN)
+				? player.getLayeredLocationPersistenceOrigin()
+				: LayeredPlayerLocationPersistence.LEGACY_BOOTSTRAP;
+			LayeredPlayerLocationPersistence.write(
+				player.getCache().getCacheMap(),
+				player.getLayeredLocation(),
+				player.getLocation(),
+				origin,
+				configuration.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				player.getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(
+						player.getLayeredLocation()));
+		}
         if (player.getConfig().WANT_OPENPK_POINTS) {
             player.getCache().store("openpk_points", player.getOpenPkPoints());
         }

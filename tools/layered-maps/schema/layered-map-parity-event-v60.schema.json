@@ -1,0 +1,344 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v60.schema.json",
+  "title": "Spoiled Milk layered map parity event v60",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency", "packedRegionActiveNpcContainment",
+    "packedRegionActiveNpcBoundaryRequirements",
+    "packedRegionRetirementRefinement",
+    "packedRegionRetirementRefinementReassessment",
+    "packedRegionPreservationBurden",
+    "packedRegionDynamicObjectPreservation", "packedRegionEventOwnership",
+    "packedRegionNpcOwnerEventContinuity",
+    "packedRegionNpcOwnerPreservationBoundary",
+    "packedRegionNpcOwnerPreservationNoOp", "packedRegionEventTargets",
+    "packedRegionEventAtomicTargetRevalidation",
+    "packedRegionEventRecoveryNoOp", "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v60"},
+    "eventType": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionAuthoredReconstructionTopology"},
+    "packedRegionAuthoredReconstructionDependencySemantics": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics"},
+    "packedRegionActiveNpcResidency": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionActiveNpcResidency"},
+    "packedRegionActiveNpcContainment": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionActiveNpcContainment"},
+    "packedRegionActiveNpcBoundaryRequirements": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionActiveNpcBoundaryRequirements"},
+    "packedRegionRetirementRefinement": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionRetirementRefinement"},
+    "packedRegionRetirementRefinementReassessment": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionRetirementRefinementReassessment"},
+    "packedRegionPreservationBurden": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionPreservationBurden"},
+    "packedRegionDynamicObjectPreservation": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionDynamicObjectPreservation"},
+    "packedRegionEventOwnership": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionEventOwnership"},
+    "packedRegionNpcOwnerEventContinuity": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionNpcOwnerEventContinuity"},
+    "packedRegionNpcOwnerPreservationBoundary": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionNpcOwnerPreservationBoundary"},
+    "packedRegionNpcOwnerPreservationNoOp": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/npcOwnerPreservationNoOp"}
+      ]
+    },
+    "packedRegionEventTargets": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionEventTargets"},
+    "packedRegionEventAtomicTargetRevalidation": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionEventAtomicTargetRevalidation"},
+    "packedRegionEventRecoveryNoOp": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/packedRegionEventRecoveryNoOp"},
+    "roundTripExact": {"$ref": "layered-map-parity-event-v59.schema.json#/properties/roundTripExact"}
+  },
+  "$defs": {
+    "nonNegativeInteger": {"type": "integer", "minimum": 0},
+    "positiveInteger": {"type": "integer", "minimum": 1},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "typeName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "npcOwnerPreservationNoOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason", "generation", "requirementsObservedAtTick",
+        "selectedSourceCount", "requiredEventLinkCount", "requiredOwnerCount",
+        "ownerScopeEntered", "sourceLifecycleInvoked", "absentSourceCount",
+        "reconstructedSourceCount", "preservedConsumerInvoked",
+        "sourceAbsencePreflight", "sourceReloadRecipe",
+        "sourceTerrainVerification", "sourceAuthoredCollisionVerification",
+        "sourceAuthoredCollisionApplicationVerification",
+        "sourceAuthoredStateVerification",
+        "sourceTransactionalAuthoredStateVerification",
+        "sourceRuntimeAuthoredObjectObservation",
+        "sourceRuntimeAuthoredObjectBaselineComparison",
+        "sourceAuthoredObjectDetachmentVerification",
+        "sourceAuthoredDetachmentSchedulerCorrelation",
+        "sourceSchedulerBlockerFamilyInventory",
+        "preservationEstablishedForConsumedWork", "preservationPerformed",
+        "sourceAbsencePerformed", "sourceReconstructionPerformed",
+        "regionMutationPerformed", "runtimeHandleRetained", "arrivalGate",
+        "visibilityReleased", "lifecycleAuthority"
+      ],
+      "properties": {
+        "reason": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/reason"},
+        "generation": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/generation"},
+        "requirementsObservedAtTick": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/requirementsObservedAtTick"},
+        "selectedSourceCount": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/selectedSourceCount"},
+        "requiredEventLinkCount": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/requiredEventLinkCount"},
+        "requiredOwnerCount": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/requiredOwnerCount"},
+        "ownerScopeEntered": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/ownerScopeEntered"},
+        "sourceLifecycleInvoked": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceLifecycleInvoked"},
+        "absentSourceCount": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/absentSourceCount"},
+        "reconstructedSourceCount": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/reconstructedSourceCount"},
+        "preservedConsumerInvoked": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/preservedConsumerInvoked"},
+        "sourceAbsencePreflight": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAbsencePreflight"},
+        "sourceReloadRecipe": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceReloadRecipe"},
+        "sourceTerrainVerification": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceTerrainVerification"},
+        "sourceAuthoredCollisionVerification": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredCollisionVerification"},
+        "sourceAuthoredCollisionApplicationVerification": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredCollisionApplicationVerification"},
+        "sourceAuthoredStateVerification": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredStateVerification"},
+        "sourceTransactionalAuthoredStateVerification": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceTransactionalAuthoredStateVerification"},
+        "sourceRuntimeAuthoredObjectObservation": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceRuntimeAuthoredObjectObservation"},
+        "sourceRuntimeAuthoredObjectBaselineComparison": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceRuntimeAuthoredObjectBaselineComparison"},
+        "sourceAuthoredObjectDetachmentVerification": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredObjectDetachmentVerification"},
+        "sourceAuthoredDetachmentSchedulerCorrelation": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAuthoredDetachmentSchedulerCorrelation"},
+        "sourceSchedulerBlockerFamilyInventory": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/schedulerBlockerFamilyInventory"}
+          ]
+        },
+        "preservationEstablishedForConsumedWork": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/preservationEstablishedForConsumedWork"},
+        "preservationPerformed": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/preservationPerformed"},
+        "sourceAbsencePerformed": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceAbsencePerformed"},
+        "sourceReconstructionPerformed": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/sourceReconstructionPerformed"},
+        "regionMutationPerformed": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/regionMutationPerformed"},
+        "runtimeHandleRetained": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/runtimeHandleRetained"},
+        "arrivalGate": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/arrivalGate"},
+        "visibilityReleased": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/visibilityReleased"},
+        "lifecycleAuthority": {"$ref": "layered-map-parity-event-v59.schema.json#/$defs/npcOwnerPreservationNoOp/properties/lifecycleAuthority"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"reason": {"const": "OWNER_SCOPE_REFUSED"}},
+            "required": ["reason"]
+          },
+          "then": {
+            "properties": {
+              "sourceSchedulerBlockerFamilyInventory": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "reason": {"const": "SOURCE_LIFECYCLE_UNAVAILABLE"}
+            },
+            "required": ["reason"]
+          },
+          "then": {
+            "properties": {
+              "sourceSchedulerBlockerFamilyInventory": {
+                "$ref": "#/$defs/schedulerBlockerFamilyInventory"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "schedulerBlockerFamilyInventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "eventObservedAtTick", "schedulerInstanceIdentity",
+        "sourceCorrelationFingerprintSha256", "fingerprintSha256",
+        "familyCount", "blockerEventCount",
+        "candidateNpcOwnerUncorrelatedEventCount",
+        "candidateNonNpcOwnerEventCount",
+        "candidateExactRestorationIncompleteEventCount",
+        "unattributedEventCount", "runningEventCount",
+        "candidateRelatedEventCount", "selectedSourceReferenceCount",
+        "eventTypeIdentityComplete",
+        "eventExecutionContextIdentityComplete", "pointInTimeOnly",
+        "detachedSummaryOnly", "attributionChanged",
+        "runtimeHandleRetained", "eventCancellation", "eventReschedule",
+        "preservationPerformed", "sourceAbsencePerformed",
+        "sourceReconstructionPerformed", "runtimeMutationAuthorized",
+        "runtimeMutationPerformed", "arrivalGate", "visibilityReleased",
+        "lifecycleAuthority", "families"
+      ],
+      "properties": {
+        "generation": {"$ref": "#/$defs/nonNegativeInteger"},
+        "eventObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "schedulerInstanceIdentity": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sourceCorrelationFingerprintSha256": {"$ref": "#/$defs/fingerprint"},
+        "fingerprintSha256": {"$ref": "#/$defs/fingerprint"},
+        "familyCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "blockerEventCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "candidateNpcOwnerUncorrelatedEventCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "candidateNonNpcOwnerEventCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "candidateExactRestorationIncompleteEventCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "unattributedEventCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "runningEventCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "candidateRelatedEventCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "selectedSourceReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "eventTypeIdentityComplete": {"const": true},
+        "eventExecutionContextIdentityComplete": {"const": true},
+        "pointInTimeOnly": {"const": true},
+        "detachedSummaryOnly": {"const": true},
+        "attributionChanged": {"const": false},
+        "runtimeHandleRetained": {"const": false},
+        "eventCancellation": {"const": false},
+        "eventReschedule": {"const": false},
+        "preservationPerformed": {"const": false},
+        "sourceAbsencePerformed": {"const": false},
+        "sourceReconstructionPerformed": {"const": false},
+        "runtimeMutationAuthorized": {"const": false},
+        "runtimeMutationPerformed": {"const": false},
+        "arrivalGate": {"const": false},
+        "visibilityReleased": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "families": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/schedulerBlockerFamily"}
+        }
+      }
+    },
+    "schedulerBlockerFamily": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "familyOrdinal", "outcome", "runtimeTypeName", "familyTypeName",
+        "directSupertypeName", "anonymousType", "localType",
+        "syntheticType", "executionContextKind",
+        "executionContextName", "walkToActionBound",
+        "ownerKind", "attributionKind",
+        "restorationKind", "eventCount", "runningEventCount",
+        "candidateRelatedEventCount", "selectedSourceReferenceCount",
+        "firstSnapshotOrdinal", "lastSnapshotOrdinal",
+        "firstRegistrationSequence", "lastRegistrationSequence",
+        "minimumTicksBeforeRun", "maximumTicksBeforeRun",
+        "minimumTimesRan", "maximumTimesRan"
+      ],
+      "properties": {
+        "familyOrdinal": {"$ref": "#/$defs/nonNegativeInteger"},
+        "outcome": {
+          "enum": [
+            "CANDIDATE_NPC_OWNER_UNCORRELATED",
+            "CANDIDATE_NON_NPC_OWNER",
+            "CANDIDATE_EXACT_RESTORATION_INCOMPLETE",
+            "UNATTRIBUTED_BLOCKER"
+          ]
+        },
+        "runtimeTypeName": {"$ref": "#/$defs/typeName"},
+        "familyTypeName": {"$ref": "#/$defs/typeName"},
+        "directSupertypeName": {"$ref": "#/$defs/typeName"},
+        "anonymousType": {"type": "boolean"},
+        "localType": {"type": "boolean"},
+        "syntheticType": {"type": "boolean"},
+        "executionContextKind": {
+          "enum": ["NONE", "PLUGIN_ENTRY_POINT"]
+        },
+        "executionContextName": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/typeName"}
+          ]
+        },
+        "walkToActionBound": {"type": "boolean"},
+        "ownerKind": {"enum": ["NONE", "PLAYER", "NPC"]},
+        "attributionKind": {
+          "enum": [
+            "EXACT_SPATIAL", "OWNER_POSITION_HINT",
+            "NON_SPATIAL_GLOBAL", "UNATTRIBUTED"
+          ]
+        },
+        "restorationKind": {
+          "enum": ["UNAVAILABLE", "SCENERY_SPAWN", "SCENERY_REMOVE"]
+        },
+        "eventCount": {"$ref": "#/$defs/positiveInteger"},
+        "runningEventCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "candidateRelatedEventCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "selectedSourceReferenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "firstSnapshotOrdinal": {"$ref": "#/$defs/nonNegativeInteger"},
+        "lastSnapshotOrdinal": {"$ref": "#/$defs/nonNegativeInteger"},
+        "firstRegistrationSequence": {"$ref": "#/$defs/positiveInteger"},
+        "lastRegistrationSequence": {"$ref": "#/$defs/positiveInteger"},
+        "minimumTicksBeforeRun": {"type": "integer"},
+        "maximumTicksBeforeRun": {"type": "integer"},
+        "minimumTimesRan": {"$ref": "#/$defs/nonNegativeInteger"},
+        "maximumTimesRan": {"$ref": "#/$defs/nonNegativeInteger"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "executionContextKind": {"const": "NONE"}
+            },
+            "required": ["executionContextKind"]
+          },
+          "then": {
+            "properties": {
+              "executionContextName": {"type": "null"},
+              "walkToActionBound": {"const": false}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "executionContextKind": {
+                "const": "PLUGIN_ENTRY_POINT"
+              }
+            },
+            "required": ["executionContextKind"]
+          },
+          "then": {
+            "properties": {
+              "executionContextName": {"$ref": "#/$defs/typeName"}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

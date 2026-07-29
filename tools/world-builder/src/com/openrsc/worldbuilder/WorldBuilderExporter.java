@@ -60,6 +60,11 @@ public final class WorldBuilderExporter {
 			}
 		}
 		WorldBuilderSourceSnapshot.verify(workspace);
+		if (WorldBuilderLayeredReview.readIfPresent(workspace) != null) {
+			throw new WorldBuilderDiscoveryException(
+				"Layered World Builder review projects are read-only; "
+					+ "native package export is not implemented yet.");
+		}
 		WorldBuilderProjectSource project =
 			WorldBuilderProjectSource.read(workspace.resolve("source/project-source.json"));
 		Path working = requireDirectory(workspace, workspace.resolve("working"), "working tree");

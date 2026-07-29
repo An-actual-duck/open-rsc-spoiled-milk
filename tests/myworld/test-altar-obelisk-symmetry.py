@@ -41,7 +41,20 @@ def load_scenery(path: Path) -> list[dict]:
     return json.loads(path.read_text(encoding="utf-8"))["sceneries"]
 
 
-def parse_client_arrays() -> tuple[list[str], list[tuple[int, int]], list[list[tuple[int, int]]]]:
+def parse_int_array(text: str, name: str) -> list[int]:
+    match = re.search(rf'{name} = new int\[\] \{{(?P<body>.*?)\n\t\}};', text, re.S)
+    if not match:
+        fail(f"Could not parse client {name} array")
+    return [int(value) for value in re.findall(r'\d+', match.group("body"))]
+
+
+def parse_client_arrays() -> tuple[
+    list[str],
+    list[int],
+    list[int],
+    list[tuple[int, int]],
+    list[list[tuple[int, int]]],
+]:
     text = CLIENT.read_text(encoding="utf-8")
     elements_match = re.search(r'ALTAR_ELEMENTS = new String\[\] \{(?P<body>.*?)\n\t\};', text, re.S)
     tiles_match = re.search(r'ALTAR_TILES = new int\[\]\[\] \{(?P<body>.*?)\n\t\};', text, re.S)
@@ -50,6 +63,8 @@ def parse_client_arrays() -> tuple[list[str], list[tuple[int, int]], list[list[t
         fail("Could not parse client altar visual arrays")
 
     elements = re.findall(r'"([^"]+)"', elements_match.group("body"))
+    altar_ids = parse_int_array(text, "ALTAR_OBJECT_IDS")
+    obelisk_ids = parse_int_array(text, "ALTAR_OBELISK_OBJECT_IDS")
     anchors = [
         (int(x), int(y))
         for x, y in re.findall(r'\{(\d+),\s*(\d+)\}', tiles_match.group("body"))
@@ -63,13 +78,17 @@ def parse_client_arrays() -> tuple[list[str], list[tuple[int, int]], list[list[t
         if coords:
             obelisks.append(coords)
 
-    if not (len(elements) == len(anchors) == len(obelisks)):
-        fail(f"Client altar array lengths differ: {len(elements)}, {len(anchors)}, {len(obelisks)}")
-    return elements, anchors, obelisks
+    if not (len(elements) == len(altar_ids) == len(obelisk_ids) == len(anchors) == len(obelisks)):
+        fail(
+            "Client altar array lengths differ: "
+            f"{len(elements)}, {len(altar_ids)}, {len(obelisk_ids)}, "
+            f"{len(anchors)}, {len(obelisks)}"
+        )
+    return elements, altar_ids, obelisk_ids, anchors, obelisks
 
 
 def main() -> None:
-    elements, anchors, client_obelisks = parse_client_arrays()
+    elements, client_altar_ids, client_obelisk_ids, anchors, client_obelisks = parse_client_arrays()
     for element, anchor, obelisks in zip(elements, anchors, client_obelisks):
         actual = set(obelisks)
         expected = expected_corners(anchor)
@@ -92,6 +111,15 @@ def main() -> None:
         1296: "soul",
         1321: "life",
     }
+    expected_altar_ids = [next(object_id for object_id, name in altar_by_id.items() if name == element)
+                          for element in elements]
+    if client_altar_ids != expected_altar_ids:
+        fail(f"Client altar owner IDs were {client_altar_ids}, expected {expected_altar_ids}")
+
+    expected_obelisk_ids = [SERVER_OBELISK_IDS[element] for element in elements]
+    if client_obelisk_ids != expected_obelisk_ids:
+        fail(f"Client obelisk owner IDs were {client_obelisk_ids}, expected {expected_obelisk_ids}")
+
     overworld_anchors = {}
     for loc in load_scenery(RUNECRAFT_LOCS) + load_scenery(MYWORLD_LOCS):
         element = altar_by_id.get(int(loc["id"]))
@@ -115,7 +143,15 @@ def main() -> None:
         if actual != expected:
             fail(f"Server {element} obelisks were {sorted(actual)}, expected {sorted(expected)}")
 
-    print("PASS: altar obelisk placements are symmetric")
+    text = CLIENT.read_text(encoding="utf-8")
+    if "&& this.altarGlyphOwnerPresent[altarIndex]" not in text:
+        fail("Altar glyph rendering is not gated by its scenery owner")
+    if "if (!this.altarOrbOwnerPresent[altarIndex][orbIndex])" not in text:
+        fail("Altar orb rendering is not gated by its obelisk owner")
+    if "this.sceneInstanceStore.getGameObjectRevision()" not in text:
+        fail("Altar visual ownership does not use the cached scene revision")
+
+    print("PASS: altar visuals are symmetric and scenery-owner gated")
 
 
 if __name__ == "__main__":

@@ -54,6 +54,14 @@ def main() -> None:
         require(event, alias, "Event.java", failures)
     require(event, "enableLeftClickTeleport(player);", "Event.java", failures)
     require(event, "return player.isEvent();", "Event.java", failures)
+    require(event, "tryLayeredCoordinateTeleport(player, command, args)",
+            "Event.java", failures)
+    require(event, "args.length == 3\n\t\t\t\t? Integer.parseInt(args[2])",
+            "Event.java", failures)
+    require(event, "player.getLayeredLocation().getCoordinate().getLevel()",
+            "Event.java", failures)
+    require(event, "player.teleportLayered(destination, true);",
+            "Event.java", failures)
 
     require(client, 'var11.startsWith("::clickteleport ")', "mudclient.java", failures)
     require(client, 'var11.startsWith("::clicktele ")', "mudclient.java", failures)

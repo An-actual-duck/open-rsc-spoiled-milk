@@ -3,13 +3,23 @@ package com.openrsc.server.database;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.SceneryId;
+import com.openrsc.server.constants.Constants;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredConstructionInventory.ConstructionKind;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementManifest;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPlacementDependencyInventory.DependencyKind;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredPopulationOutcome;
+import com.openrsc.server.model.world.coordinate.LayeredPackedRegionAuthoredReconstructionRecipe;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.WorldNpcEditFiles;
 import com.openrsc.server.util.WorldSceneryEditFiles;
@@ -41,6 +51,22 @@ public final class WorldPopulator {
 
 	private final ArrayList<ItemLoc> itemlocs = new ArrayList<>();
 
+	private volatile LayeredPackedRegionAuthoredConstructionInventory
+		authoredConstructionInventory =
+			LayeredPackedRegionAuthoredConstructionInventory.empty();
+	private volatile LayeredPackedRegionAuthoredPlacementManifest
+		authoredPlacementManifest =
+			LayeredPackedRegionAuthoredPlacementManifest.empty();
+	private volatile LayeredPackedRegionAuthoredPlacementDependencyInventory
+		authoredPlacementDependencies =
+			LayeredPackedRegionAuthoredPlacementDependencyInventory.empty();
+	private volatile LayeredPackedRegionAuthoredPopulationOutcome
+		authoredPopulationOutcome =
+			LayeredPackedRegionAuthoredPopulationOutcome.empty();
+	private volatile LayeredPackedRegionAuthoredReconstructionRecipe
+		authoredReconstructionRecipe =
+			LayeredPackedRegionAuthoredReconstructionRecipe.empty();
+
 	public WorldPopulator(final World world) {
 		this.world = world;
 	}
@@ -50,7 +76,38 @@ public final class WorldPopulator {
 		gameobjlocs.clear();
 		npclocs.clear();
 		itemlocs.clear();
+		long constructionGeneration = Math.incrementExact(
+			authoredConstructionInventory.getGeneration());
+		LayeredPackedRegionAuthoredConstructionInventory.Builder
+			constructionInventory =
+				LayeredPackedRegionAuthoredConstructionInventory.builder(
+					constructionGeneration);
+		LayeredPackedRegionAuthoredPlacementManifest.Builder
+			placementManifest =
+				LayeredPackedRegionAuthoredPlacementManifest.builder(
+					constructionGeneration);
+		LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			placementDependencies =
+				LayeredPackedRegionAuthoredPlacementDependencyInventory.builder(
+					constructionGeneration);
+		LayeredPackedRegionAuthoredPopulationOutcome.Builder populationOutcome =
+			LayeredPackedRegionAuthoredPopulationOutcome.builder(
+				constructionGeneration);
 		try {
+			if (getWorld().getRegionManager()
+					.replacesLegacyBasePopulation()) {
+				LOGGER.info(
+					"Suppressing legacy base placement population for native "
+						+ "layered runtime profile {}",
+					getWorld().getRegionManager()
+						.getNativeLayeredWorldRuntimeProfileId());
+				completePopulation(
+					constructionInventory,
+					placementManifest,
+					placementDependencies,
+					populationOutcome);
+				return;
+			}
 			// LOAD OBJECTS //
 			int countOBJ = 0;
 			String authenticSceneryFile, authenticBoundaryFile, authenticGroundItemsFile, authenticMobFile;
@@ -90,7 +147,24 @@ public final class WorldPopulator {
 				GameObject obj = new GameObject(getWorld(), object.location, object.id,
 					object.direction, object.type);
 
+				LayeredAuthoredPlacementIdentity supersededIdentity =
+					collidingAuthoredObjectIdentity(obj);
 				getWorld().registerGameObject(obj);
+				recordConstruction(
+					constructionInventory,
+					obj.getType() == 0 ? ConstructionKind.SCENERY
+						: ConstructionKind.BOUNDARY,
+					obj.getX(), obj.getY());
+				recordObjectPlacement(placementManifest, obj);
+				LayeredAuthoredPlacementIdentity objectIdentity =
+					placementManifest.getLastRecordedIdentity();
+				object.assignAuthoredPlacementIdentity(objectIdentity);
+				assignObjectIdentity(obj, objectIdentity);
+				if (supersededIdentity != null) {
+					populationOutcome.recordSupersession(
+						supersededIdentity, objectIdentity);
+				}
+				recordObjectDependency(placementDependencies, obj);
 				if (obj.getType() == 0) { // no wall objects allowed
 					getWorld().addSceneryLoc(obj.getLocation(), obj.getID());
 				}
@@ -147,7 +221,17 @@ public final class WorldPopulator {
 					continue;
 				}
 
-				getWorld().registerNpc(new Npc(getWorld(), n));
+				Npc npc = new Npc(getWorld(), n);
+				getWorld().registerNpc(npc);
+				recordConstruction(
+					constructionInventory, ConstructionKind.NPC_SPAWN,
+					n.startX(), n.startY());
+				recordNpcPlacement(placementManifest, n);
+				LayeredAuthoredPlacementIdentity npcIdentity =
+					placementManifest.getLastRecordedIdentity();
+				n.assignAuthoredPlacementIdentity(npcIdentity);
+				npc.assignAuthoredPlacementIdentity(npcIdentity);
+				recordNpcDependency(placementDependencies, n);
 			}
 			LOGGER.info("Loaded {}", box(getWorld().countNpcs()) + " NPC spawns");
 
@@ -178,27 +262,338 @@ public final class WorldPopulator {
 				int harvestingSceneryId = harvestingSceneryForGroundItem(i.id);
 				if (getWorld().getServer().getConfig().WANT_HARVESTING && harvestingSceneryId >= 0) {
 					Point location = Point.location(i.x, i.y);
-					getWorld().registerGameObject(new GameObject(getWorld(), location, harvestingSceneryId, 0, 0));
+					GameObject harvestingScenery = new GameObject(
+						getWorld(), location, harvestingSceneryId, 0, 0);
+					LayeredAuthoredPlacementIdentity supersededIdentity =
+						collidingAuthoredObjectIdentity(harvestingScenery);
+					getWorld().registerGameObject(harvestingScenery);
+					recordConstruction(
+						constructionInventory,
+						ConstructionKind.HARVESTING_SCENERY,
+						i.x, i.y);
+					recordHarvestingPlacement(
+						placementManifest, i, harvestingScenery);
+					LayeredAuthoredPlacementIdentity harvestingIdentity =
+						placementManifest.getLastRecordedIdentity();
+					i.assignAuthoredPlacementIdentity(harvestingIdentity);
+					assignObjectIdentity(
+						harvestingScenery, harvestingIdentity);
+					if (supersededIdentity != null) {
+						populationOutcome.recordSupersession(
+							supersededIdentity, harvestingIdentity);
+					}
+					recordObjectDependency(
+						placementDependencies, harvestingScenery,
+						ConstructionKind.HARVESTING_SCENERY);
 					getWorld().addSceneryLoc(location, harvestingSceneryId);
 					continue;
 				}
 
-				getWorld().registerAuthoredGroundItem(i);
+				GroundItem authoredItem =
+					getWorld().registerAuthoredGroundItem(i);
+				if (authoredItem != null) {
+					recordConstruction(
+						constructionInventory,
+						ConstructionKind.GROUND_ITEM_SPAWN,
+						i.x, i.y);
+					recordGroundItemPlacement(placementManifest, i);
+					LayeredAuthoredPlacementIdentity itemIdentity =
+						placementManifest.getLastRecordedIdentity();
+					i.assignAuthoredPlacementIdentity(itemIdentity);
+					authoredItem.assignAuthoredPlacementIdentity(itemIdentity);
+					recordGroundItemDependency(placementDependencies, i);
+				}
 				countGI++;
 			}
 			LOGGER.info("Loaded {}", box(countGI) + " grounditems.");
 
-			//Load the in-use ItemID's from the database
-			Long inUseItemIds[] = getWorld().getServer().getDatabase().getInUseItemIds();
-			for (Long itemId : inUseItemIds)
-				getWorld().getServer().getDatabase().getItemIDList().add(itemId);
-
-			LOGGER.info("Loaded {}", box(getWorld().getServer().getDatabase().getItemIDList().size()) + " itemIDs.");
+			completePopulation(
+				constructionInventory,
+				placementManifest,
+				placementDependencies,
+				populationOutcome);
 
 		} catch (Exception e) {
 			LOGGER.catching(e);
 			SystemUtil.exit(1);
 		}
+	}
+
+	private void completePopulation(
+		final LayeredPackedRegionAuthoredConstructionInventory.Builder
+			constructionInventory,
+		final LayeredPackedRegionAuthoredPlacementManifest.Builder
+			placementManifest,
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			placementDependencies,
+		final LayeredPackedRegionAuthoredPopulationOutcome.Builder
+			populationOutcome) {
+		// Item-instance IDs are database state, not map placement population.
+		Long[] inUseItemIds =
+			getWorld().getServer().getDatabase().getInUseItemIds();
+		for (Long itemId : inUseItemIds) {
+			getWorld().getServer().getDatabase().getItemIDList().add(itemId);
+		}
+		LOGGER.info(
+			"Loaded {} itemIDs.",
+			box(getWorld().getServer().getDatabase().getItemIDList().size()));
+
+		LayeredPackedRegionAuthoredConstructionInventory completedInventory =
+			constructionInventory.build();
+		LayeredPackedRegionAuthoredPlacementManifest completedManifest =
+			placementManifest.build();
+		LayeredPackedRegionAuthoredPlacementDependencyInventory
+			completedDependencies = placementDependencies.build();
+		LayeredPackedRegionAuthoredPopulationOutcome completedOutcome =
+			populationOutcome.build(completedManifest);
+		LayeredPackedRegionAuthoredReconstructionRecipe completedRecipe =
+			LayeredPackedRegionAuthoredReconstructionRecipe.derive(
+				completedManifest, completedDependencies, completedOutcome);
+		if (!completedManifest.isCountEquivalentTo(completedInventory)) {
+			throw new IllegalStateException(
+				"Authored placement manifest does not match construction inventory");
+		}
+		if (!completedDependencies.isAlignedWith(completedManifest)) {
+			throw new IllegalStateException(
+				"Authored placement dependencies do not align with manifest");
+		}
+		LOGGER.info(
+			"Recorded {} authored population supersessions; {} of {} manifest "
+				+ "placements remain final-live expectations.",
+			box(completedOutcome.getSupersessionCount()),
+			box(completedOutcome.getFinalExpectedPlacementCount()),
+			box(completedOutcome.getManifestPlacementCount()));
+		LOGGER.info(
+			"Prepared {} inert authored reconstruction recipe entries across {} "
+				+ "packed sources; {} entries cross source boundaries ({} source "
+				+ "references, maximum {} per entry).",
+			box(completedRecipe.getReconstructionPlacementCount()),
+			box(completedRecipe.getSourceCount()),
+			box(completedRecipe.getCrossSourcePlacementCount()),
+			box(completedRecipe.getAffectedSourceReferenceCount()),
+			box(completedRecipe.getMaximumAffectedSourceCount()));
+		LOGGER.info(
+			"Indexed {} authored placement dependency envelopes; "
+				+ "{} cross packed-source boundaries ({} source references, "
+				+ "maximum {} per placement). Object footprints: {} total, "
+				+ "{} cross-source, {} references, maximum {}. NPC roaming: "
+				+ "{} total, {} cross-source, {} references, maximum {}. "
+				+ "Anchor-only: {} total, {} references.",
+			box(completedDependencies.getDependencyCount()),
+			box(completedDependencies.getCrossSourceDependencyCount()),
+			box(completedDependencies.getAffectedSourceReferenceCount()),
+			box(completedDependencies.getMaximumAffectedSourceCount()),
+			box(completedDependencies.getObjectFootprintDependencyCount()),
+			box(completedDependencies.getCrossSourceObjectFootprintCount()),
+			box(completedDependencies.getObjectFootprintSourceReferenceCount()),
+			box(completedDependencies.getMaximumObjectFootprintSourceCount()),
+			box(completedDependencies.getNpcRoamingDependencyCount()),
+			box(completedDependencies.getCrossSourceNpcRoamingCount()),
+			box(completedDependencies.getNpcRoamingSourceReferenceCount()),
+			box(completedDependencies.getMaximumNpcRoamingSourceCount()),
+			box(completedDependencies.getAnchorOnlyDependencyCount()),
+			box(completedDependencies.getAnchorOnlySourceReferenceCount()));
+		authoredPlacementDependencies = completedDependencies;
+		authoredPopulationOutcome = completedOutcome;
+		authoredReconstructionRecipe = completedRecipe;
+		authoredPlacementManifest = completedManifest;
+		authoredConstructionInventory = completedInventory;
+	}
+
+	private void recordConstruction(
+		final LayeredPackedRegionAuthoredConstructionInventory.Builder inventory,
+		final ConstructionKind kind,
+		final int packedX,
+		final int packedY) {
+		inventory.record(
+			kind,
+			packedX / Constants.REGION_SIZE,
+			packedY / Constants.REGION_SIZE);
+	}
+
+	private void recordObjectPlacement(
+		final LayeredPackedRegionAuthoredPlacementManifest.Builder manifest,
+		final GameObject object) {
+		if (object.getType() == 0) {
+			manifest.recordScenery(
+				object.getX() / Constants.REGION_SIZE,
+				object.getY() / Constants.REGION_SIZE,
+				object.getID(), object.getLoc().getPermId(),
+				object.getX(), object.getY(), object.getDirection(),
+				object.getType(), object.getOwner());
+		} else {
+			manifest.recordBoundary(
+				object.getX() / Constants.REGION_SIZE,
+				object.getY() / Constants.REGION_SIZE,
+				object.getID(), object.getLoc().getPermId(),
+				object.getX(), object.getY(), object.getDirection(),
+				object.getType(), object.getOwner());
+		}
+	}
+
+	private void recordNpcPlacement(
+		final LayeredPackedRegionAuthoredPlacementManifest.Builder manifest,
+		final NPCLoc loc) {
+		manifest.recordNpcSpawn(
+			loc.startX() / Constants.REGION_SIZE,
+			loc.startY() / Constants.REGION_SIZE,
+			loc.getId(), loc.startX(), loc.startY(),
+			loc.minX(), loc.maxX(), loc.minY(), loc.maxY());
+	}
+
+	private void recordGroundItemPlacement(
+		final LayeredPackedRegionAuthoredPlacementManifest.Builder manifest,
+		final ItemLoc loc) {
+		manifest.recordGroundItemSpawn(
+			loc.getX() / Constants.REGION_SIZE,
+			loc.getY() / Constants.REGION_SIZE,
+			loc.getId(), loc.getX(), loc.getY(), loc.getAmount(),
+			loc.getRespawnTime(), loc.getNoted());
+	}
+
+	private void recordHarvestingPlacement(
+		final LayeredPackedRegionAuthoredPlacementManifest.Builder manifest,
+		final ItemLoc source,
+		final GameObject constructed) {
+		manifest.recordHarvestingScenery(
+			constructed.getX() / Constants.REGION_SIZE,
+			constructed.getY() / Constants.REGION_SIZE,
+			source.getId(), constructed.getID(),
+			constructed.getLoc().getPermId(),
+			constructed.getX(), constructed.getY(),
+			constructed.getDirection(), constructed.getType(),
+			constructed.getOwner(), source.getAmount(),
+			source.getRespawnTime(), source.getNoted());
+	}
+
+	private void recordObjectDependency(
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			dependencies,
+		final GameObject object) {
+		recordObjectDependency(
+			dependencies, object,
+			object.getType() == 0 ? ConstructionKind.SCENERY
+				: ConstructionKind.BOUNDARY);
+	}
+
+	private void assignObjectIdentity(
+		final GameObject object,
+		final LayeredAuthoredPlacementIdentity identity) {
+		object.getLoc().assignAuthoredPlacementIdentity(identity);
+		object.assignAuthoredPlacementIdentity(identity);
+	}
+
+	private LayeredAuthoredPlacementIdentity collidingAuthoredObjectIdentity(
+		final GameObject object) {
+		Point location = Point.location(
+			object.getLoc().getX(), object.getLoc().getY());
+		GameObject colliding = object.getType() == 0
+			? getWorld().getRegionManager().getRegion(location)
+				.getGameObject(location, null)
+			: getWorld().getRegionManager().getRegion(location)
+				.getWallGameObject(location, object.getLoc().getDirection());
+		return colliding == null
+			? null : colliding.getAuthoredPlacementIdentity();
+	}
+
+	private void recordObjectDependency(
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			dependencies,
+		final GameObject object,
+		final ConstructionKind kind) {
+		Point[] footprint = object.getObjectBoundary();
+		int minimumX = Math.min(
+			object.getX(), Math.min(
+				footprint[0].getX(), footprint[1].getX()));
+		int maximumX = Math.max(
+			object.getX(), Math.max(
+				footprint[0].getX(), footprint[1].getX()));
+		int minimumY = Math.min(
+			object.getY(), Math.min(
+				footprint[0].getY(), footprint[1].getY()));
+		int maximumY = Math.max(
+			object.getY(), Math.max(
+				footprint[0].getY(), footprint[1].getY()));
+		recordPlacementDependency(
+			dependencies, kind, DependencyKind.OBJECT_FOOTPRINT,
+			object.getX(), object.getY(),
+			minimumX, maximumX, minimumY, maximumY);
+	}
+
+	private void recordNpcDependency(
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			dependencies,
+		final NPCLoc loc) {
+		int minimumX = Math.min(
+			loc.startX(), Math.min(loc.minX(), loc.maxX()));
+		int maximumX = Math.max(
+			loc.startX(), Math.max(loc.minX(), loc.maxX()));
+		int minimumY = Math.min(
+			loc.startY(), Math.min(loc.minY(), loc.maxY()));
+		int maximumY = Math.max(
+			loc.startY(), Math.max(loc.minY(), loc.maxY()));
+		recordPlacementDependency(
+			dependencies, ConstructionKind.NPC_SPAWN,
+			DependencyKind.NPC_ROAMING, loc.startX(), loc.startY(),
+			minimumX, maximumX, minimumY, maximumY);
+	}
+
+	private void recordGroundItemDependency(
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			dependencies,
+		final ItemLoc loc) {
+		recordPlacementDependency(
+			dependencies, ConstructionKind.GROUND_ITEM_SPAWN,
+			DependencyKind.ANCHOR_ONLY, loc.getX(), loc.getY(),
+			loc.getX(), loc.getX(), loc.getY(), loc.getY());
+	}
+
+	private void recordPlacementDependency(
+		final LayeredPackedRegionAuthoredPlacementDependencyInventory.Builder
+			dependencies,
+		final ConstructionKind kind,
+		final DependencyKind dependencyKind,
+		final int sourcePackedX,
+		final int sourcePackedY,
+		final int minimumPackedX,
+		final int maximumPackedX,
+		final int minimumPackedY,
+		final int maximumPackedY) {
+		dependencies.record(
+			kind, dependencyKind,
+			sourcePackedX / Constants.REGION_SIZE,
+			sourcePackedY / Constants.REGION_SIZE,
+			minimumPackedX, maximumPackedX,
+			minimumPackedY, maximumPackedY,
+			minimumPackedX / Constants.REGION_SIZE,
+			maximumPackedX / Constants.REGION_SIZE,
+			minimumPackedY / Constants.REGION_SIZE,
+			maximumPackedY / Constants.REGION_SIZE);
+	}
+
+	public LayeredPackedRegionAuthoredConstructionInventory
+		getAuthoredConstructionInventory() {
+		return authoredConstructionInventory;
+	}
+
+	public LayeredPackedRegionAuthoredPlacementManifest
+		getAuthoredPlacementManifest() {
+		return authoredPlacementManifest;
+	}
+
+	public LayeredPackedRegionAuthoredPlacementDependencyInventory
+		getAuthoredPlacementDependencies() {
+		return authoredPlacementDependencies;
+	}
+
+	public LayeredPackedRegionAuthoredPopulationOutcome
+		getAuthoredPopulationOutcome() {
+		return authoredPopulationOutcome;
+	}
+
+	public LayeredPackedRegionAuthoredReconstructionRecipe
+		getAuthoredReconstructionRecipe() {
+		return authoredReconstructionRecipe;
 	}
 
 	private int harvestingSceneryForGroundItem(int itemId) {

@@ -2,13 +2,18 @@ package com.openrsc.server.net.rsc.handlers;
 
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager.Validation;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager.TerrainStrokeResult;
+import com.openrsc.server.content.worldedit.WorldEditorSessionManager.NativeTerrainSnapshot;
+import com.openrsc.server.content.worldedit.WorldEditorSessionManager.NativeTerrainStrokeResult;
 import com.openrsc.server.content.worldedit.WorldEditorTerrainStroke;
+import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.WorldEditorTerrainArchive;
 import com.openrsc.server.io.WorldLoader;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.PayloadProcessor;
@@ -29,6 +34,14 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 			ActionSender.sendWorldEditor(player, out); return;
 		}
 		try {
+			if (player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
+				&& (request.type == 5 || request.type == 6)
+				&& !"spoiled-milk-builder-draft".equals(
+					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)) {
+				error(player, validation.nextSequence,
+					"Layered package review is read-only; no terrain was changed.");
+				return;
+			}
 			if (request.type == 2) inspectTerrain(request, player, validation.nextSequence);
 			else if (request.type == 3) inspectObject(request, player, validation.nextSequence);
 			else if (request.type == 4) inspectNpc(request, player, validation.nextSequence);
@@ -39,10 +52,45 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 	}
 
 	private void inspectTerrain(WorldEditorRequestStruct r, Player p, int next) throws Exception {
+		if (p.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE) {
+			inspectNativeTerrain(r, p, next);
+			return;
+		}
 		WorldEditorTerrainArchive.Snapshot s=p.getWorld().getServer().getWorldEditorSessions().inspectTerrain(p,r.x,r.y,r.plane);
 		sendTerrain(p,s,next,3,r.objectType==1,0);
 	}
+	private void inspectNativeTerrain(WorldEditorRequestStruct r,Player p,int next) {
+		WorldLocation current=p.getLayeredLocation();
+		if(r.plane!=current.getCoordinate().getLevel())
+			throw new IllegalArgumentException("Inspect a tile on the active signed level.");
+		WorldCoordinate coordinate=new WorldCoordinate(r.x,r.y,r.plane);
+		WorldLocation location=new WorldLocation(current.getWorldSpace(),coordinate);
+		NativeTerrainSnapshot inspected=p.getWorld().getServer()
+			.getWorldEditorSessions().inspectNativeTerrain(p,location);
+		NativeLayeredTerrainTile source=inspected.tile;
+		TileValue runtime=p.getWorld().getTile(location);
+		WorldEditorStruct out=new WorldEditorStruct();out.type=3;out.sequence=next;
+		out.x=coordinate.getX();out.y=coordinate.getY();out.plane=coordinate.getLevel();
+		out.sectorX=coordinate.getSectorX();out.sectorY=coordinate.getSectorY();
+		out.localX=coordinate.getLocalX();out.localY=coordinate.getLocalY();
+		out.elevation=source.getElevation();out.groundTexture=source.getTexture();
+		out.groundOverlay=inspectionGroundOverlay(runtime,source.getOverlay());
+		out.roofTexture=source.getRoof();out.horizontalWall=source.getHorizontalWall();
+		out.verticalWall=source.getVerticalWall();out.diagonal=source.getDiagonalWall();
+		out.traversalMask=runtime==null?0:runtime.traversalMask&0xff;
+		out.projectileAllowed=runtime!=null&&runtime.projectileAllowed;
+		out.copy=r.objectType==1;
+		out.message=wallDefinitionName(p,out.verticalWall-1)+"\t"
+			+wallDefinitionName(p,out.horizontalWall-1)+"\t"
+			+wallDefinitionName(p,diagonalRawWall(out.diagonal)-1);
+		ActionSender.sendWorldEditor(p,out);
+	}
 	private void paintTerrain(WorldEditorRequestStruct r,Player p,int next) throws Exception {
+		if(p.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			r.terrainTiles=new int[][]{{r.x,r.y}};
+			paintNativeTerrainStroke(r,p,next);
+			return;
+		}
 		if(!p.getWorld().withinWorld(r.x,r.y))throw new IllegalArgumentException("Terrain tile is outside the runtime world.");
 		validateTerrainDefinitions(p,r);
 		WorldEditorTerrainArchive.Snapshot before=p.getWorld().getServer().getWorldEditorSessions().inspectTerrain(p,r.x,r.y,r.plane);
@@ -51,6 +99,10 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		sendTerrain(p,s,next,7,false,r.fieldMask);
 	}
 	private void paintTerrainStroke(WorldEditorRequestStruct r,Player p,int next) throws Exception {
+		if(p.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
+			paintNativeTerrainStroke(r,p,next);
+			return;
+		}
 		validateTerrainDefinitions(p,r);
 		int[][] coordinates=WorldEditorTerrainStroke.validateTiles(r.terrainTiles);
 		for(int[] coordinate:coordinates){
@@ -69,6 +121,44 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		out.message=wallDefinitionName(p,center.verticalWall-1)+"\t"+wallDefinitionName(p,center.horizontalWall-1)
 			+"\t"+wallDefinitionName(p,center.diagonalDefinitionId());
 		ActionSender.sendWorldEditor(p,out);
+	}
+	private void paintNativeTerrainStroke(WorldEditorRequestStruct r,Player p,int next) {
+		validateTerrainDefinitions(p,r);
+		WorldLocation current=p.getLayeredLocation();
+		if(r.plane!=current.getCoordinate().getLevel())
+			throw new IllegalArgumentException("Paint terrain on the active signed level.");
+		int[][] coordinates=WorldEditorTerrainStroke.validateTiles(r.terrainTiles);
+		for(int[] coordinate:coordinates){
+			if(coordinate[0]<0||coordinate[0]>32767||coordinate[1]<0||coordinate[1]>32767)
+				throw new IllegalArgumentException("Terrain stroke leaves supported Builder coordinates.");
+		}
+		NativeTerrainStrokeResult result=p.getWorld().getServer().getWorldEditorSessions()
+			.paintNativeTerrainStroke(p,coordinates,r.plane,r.fieldMask,r.elevation,
+				r.groundTexture,r.groundOverlay,r.roofTexture,r.horizontalWall,
+				r.verticalWall,r.diagonal);
+		WorldEditorStruct out=new WorldEditorStruct();out.type=8;out.sequence=next;out.fieldMask=r.fieldMask;
+		for(NativeTerrainSnapshot after:result.after)out.terrainTiles.add(nativeTerrainTile(p,after));
+		NativeLayeredTerrainTile center=result.after.get(0).tile;
+		out.message=wallDefinitionName(p,center.getVerticalWall()-1)+"\t"
+			+wallDefinitionName(p,center.getHorizontalWall()-1)+"\t"
+			+wallDefinitionName(p,diagonalRawWall(center.getDiagonalWall())-1);
+		ActionSender.sendWorldEditor(p,out);
+	}
+	private WorldEditorStruct.TerrainTile nativeTerrainTile(Player p,NativeTerrainSnapshot snapshot){
+		WorldCoordinate coordinate=snapshot.location.getCoordinate();
+		NativeLayeredTerrainTile source=snapshot.tile;
+		TileValue runtime=p.getWorld().getTile(snapshot.location);
+		WorldEditorStruct.TerrainTile tile=new WorldEditorStruct.TerrainTile();
+		tile.x=coordinate.getX();tile.y=coordinate.getY();tile.plane=coordinate.getLevel();
+		tile.sectorX=coordinate.getSectorX();tile.sectorY=coordinate.getSectorY();
+		tile.localX=coordinate.getLocalX();tile.localY=coordinate.getLocalY();
+		tile.elevation=source.getElevation();tile.groundTexture=source.getTexture();
+		tile.groundOverlay=inspectionGroundOverlay(runtime,source.getOverlay());
+		tile.roofTexture=source.getRoof();tile.horizontalWall=source.getHorizontalWall();
+		tile.verticalWall=source.getVerticalWall();tile.diagonal=source.getDiagonalWall();
+		tile.traversalMask=runtime==null?0:runtime.traversalMask&0xff;
+		tile.projectileAllowed=runtime!=null&&runtime.projectileAllowed;
+		return tile;
 	}
 	private void applyRuntimeTerrain(Player p,WorldEditorTerrainArchive.Snapshot before,WorldEditorTerrainArchive.Snapshot s,int fieldMask){
 		int x=s.coordinates.worldX,y=s.coordinates.worldY;TileValue runtime=p.getWorld().getMutableTile(x,y);
@@ -128,16 +218,17 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		if(object==null||object.getID()!=r.entityId) text="Object is no longer present at " + r.x + "," + r.y;
 		else text=(object.isScenery()?object.getGameObjectDef().getName():object.getDoorDef().getName())
 			+" | id="+object.getID()+" direction="+object.getDirection()+" type="+(object.isScenery()?"scenery":"boundary")
-			+" source=runtime-authoritative @ "+object.getX()+","+object.getY();
+			+" source=runtime-authoritative @ "+logicalLocation(object.getWorldLocation());
 		info(p,4,next,text);
 	}
 	private void inspectNpc(WorldEditorRequestStruct r, Player p, int next) {
 		Npc npc=p.getWorld().getNpc(r.entityId);
 		int radius=npc==null||npc.getLoc()==null?0:Math.max(Math.max(npc.getLoc().startX-npc.getLoc().minX,npc.getLoc().maxX-npc.getLoc().startX),Math.max(npc.getLoc().startY-npc.getLoc().minY,npc.getLoc().maxY-npc.getLoc().startY));
 		String text=npc==null?"NPC is no longer present":npc.getDef().getName()+" | id="+npc.getID()+" radius="+radius+" serverIndex="+npc.getIndex()
-			+" source=runtime-authoritative @ "+npc.getX()+","+npc.getY();
+			+" source=runtime-authoritative @ "+logicalLocation(npc.getWorldLocation());
 		info(p,5,next,text);
 	}
 	private static void info(Player p,int type,int sequence,String text){WorldEditorStruct o=new WorldEditorStruct();o.type=type;o.sequence=sequence;o.message=text;ActionSender.sendWorldEditor(p,o);}
 	private static void error(Player p,int sequence,String text){info(p,6,sequence,text==null?"Unknown editor error":text);}
+	private static String logicalLocation(WorldLocation location){WorldCoordinate c=location.getCoordinate();return c.getX()+","+c.getY()+",L"+c.getLevel();}
 }

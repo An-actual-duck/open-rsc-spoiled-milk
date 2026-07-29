@@ -1532,9 +1532,11 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				if (affectedMob.isNpc()) {
 					Npc n = (Npc) affectedMob;
 
-					if (n.getID() == NpcId.DRAGON.id() || n.getID() == NpcId.KING_BLACK_DRAGON.id()) {
-						if (PathValidation.checkHostileProjectilePath(
-							getPlayer().getWorld(), n.getLocation(), getPlayer().getLocation())) {
+						if (n.getID() == NpcId.DRAGON.id() || n.getID() == NpcId.KING_BLACK_DRAGON.id()) {
+							if (PathValidation.checkHostileProjectilePath(
+								getPlayer().getWorld(),
+								n.getWorldLocation(),
+								getPlayer().getWorldLocation())) {
 							getPlayer().playerServerMessage(MessageType.QUEST, "The dragon breathes fire at you");
 							int percentage = 20;
 							int fireDamage;
@@ -1802,7 +1804,10 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						}
 
 						boolean giveExp = true;
-						if (affectedMob.getRegion().getGameObject(affectedMob.getLocation(), getPlayer()) == null) {
+						if (getPlayer().getWorld().getRegionManager()
+								.findInteractionScenery(
+									affectedMob.getLocation(),
+									getPlayer()) == null) {
 							// Authentically, the Guthix god spell only gave XP if the opponent was not stat drained already. Just RSC things...
 							if (affectedMob.getConfig().WANT_BUGGED_CLAWS_XP && isClaws && affectedMob.getSkills().getLevel(Skill.DEFENSE.id()) < affectedMob.getSkills().getMaxStat(Skill.DEFENSE.id())) {
 								giveExp = false;

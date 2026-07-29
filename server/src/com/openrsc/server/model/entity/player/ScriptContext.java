@@ -127,7 +127,10 @@ public class ScriptContext {
 			return null;
 		}
 
-		return getContextPlayer().getRegion().getItem(entityInteractingIndex, entityInteractingCoordinate, getContextPlayer());
+		return getWorld().getRegionManager().findInteractionGroundItem(
+			entityInteractingIndex,
+			entityInteractingCoordinate,
+			getContextPlayer());
 	}
 
 	public GameObject getInteractingLocation() {
@@ -143,7 +146,8 @@ public class ScriptContext {
 			return null;
 		}
 
-		return getContextPlayer().getRegion().getGameObject(entityInteractingCoordinate, getContextPlayer());
+		return getWorld().getRegionManager().findInteractionScenery(
+			entityInteractingCoordinate, getContextPlayer());
 	}
 
 	public GameObject getInteractingBoundary() {
@@ -159,7 +163,8 @@ public class ScriptContext {
 			return null;
 		}
 
-		return getContextPlayer().getRegion().getWallGameObject(entityInteractingCoordinate, getContextPlayer());
+		return getWorld().getRegionManager().findInteractionBoundary(
+			entityInteractingCoordinate, getContextPlayer());
 	}
 
 	public Item getInteractingInventory() {

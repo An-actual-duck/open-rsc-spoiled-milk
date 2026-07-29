@@ -8,6 +8,8 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.plugins.QuestInterface;
 import com.openrsc.server.plugins.custom.quests.MyWorldQuestShortcuts;
 import com.openrsc.server.plugins.shared.constants.Quest;
@@ -472,16 +474,27 @@ public class LostCity implements QuestInterface, TalkNpcTrigger,
 				mes("You find yourself in different surroundings");
 				delay(3);
 				if (getQuestStage(player, this) != -1) {
-					teleport(player, 126, 3518);
+					teleportToZanaris(player);
 					completeQuest(player, this);
 				} else {
-					teleport(player, 126, 3518);
+					teleportToZanaris(player);
 				}
 			} else {
 				doDoor(obj, player);
 				player.message("you go through the door and find yourself in a shed.");
 			}
 		}
+	}
+
+	private static void teleportToZanaris(Player player) {
+		WorldLocation destination = ZanarisLocation.entrance();
+		if (player.isLayeredLocationAuthorityEnabled()
+			&& player.getWorld().getRegionManager()
+				.hasNativeLayeredTerrain(destination)) {
+			player.teleportLayered(destination, false);
+			return;
+		}
+		teleport(player, 126, 3518);
 	}
 
 	public static int getWoodcutAxe(Player player) {

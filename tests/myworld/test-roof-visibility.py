@@ -143,7 +143,7 @@ def main() -> None:
             "resident chunk roof visibility query")
     require(frame_capture, 'writer.println("roofVisibility=" + renderer3DFrame.getRoofVisibility().name());',
             "AI-readable roof state capture")
-    require(world, "return (SECTION_SIZE / 2 + worldTile) / SECTION_SIZE;",
+    require(world, "return Math.floorDiv(SECTION_SIZE / 2 + worldTile, SECTION_SIZE);",
             "section selection uses half-section rounding")
     require(mudclient, "private static int activeRegionCenterWorldTile(int localBaseTile, int worldOffset)",
             "roof reload derives the active window center from its local base")

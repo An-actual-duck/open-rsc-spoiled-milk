@@ -4,6 +4,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
@@ -31,6 +32,18 @@ public class StatRestorationEvent extends GameTickEvent {
 	public StatRestorationEvent(World world, Mob mob) {
 		super(world, mob, 1, "Stat Restoration Event", DuplicationStrategy.ALLOW_MULTIPLE);
 		numberSkills = mob.isPlayer() ? world.getServer().getConstants().getSkills().getSkillsCount() : 4;
+	}
+
+	/**
+	 * Player stat restoration follows durable player/session state rather than
+	 * a terrain source. NPC restoration deliberately retains the default owner
+	 * position hint so NPC source-preservation correlation remains mandatory.
+	 */
+	@Override
+	public GameTickEventSpatialAffinity getSpatialAffinity() {
+		return getOwner() != null && getOwner().isPlayer()
+			? GameTickEventSpatialAffinity.nonSpatialGlobal()
+			: super.getSpatialAffinity();
 	}
 
 	@Override

@@ -68,14 +68,11 @@ def main() -> None:
     packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
     region_load = extract(client, "public final boolean loadNextRegion", "private void loadSounds()")
 
-    same_region_guard = """&& wantZ < this.currentRegionMaxZ) {
-\t\t\t\t\tif (hardAreaLoad) {
-\t\t\t\t\t\tthis.resetGroundItemsForHardAreaLoad();
-\t\t\t\t\t}
-\t\t\t\t\tthis.world.playerAlive = true;
-\t\t\t\t\treturn false;"""
+    same_region_guard = """if (!hardAreaLoad
+\t\t\t\t\t&& this.hasCompletedInitialRegionLoad
+\t\t\t\t\t&& this.lastHeightOffset == this.requestedPlane"""
     require(same_region_guard in region_load,
-            "same-region hard area loads must clear stale client ground items before returning")
+            "hard area loads must bypass the same-region early return and reach the unified reset")
     require("if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.resetGroundItemsForHardAreaLoad();" in region_load,
             "terrain/plane hard loads must use the same ground-item reset")
     require("private void resetGroundItemsForHardAreaLoad() {\n\t\tthis.groundItemCount = 0;" in client,

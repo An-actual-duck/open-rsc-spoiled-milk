@@ -50,7 +50,7 @@ EXPECTED: dict[str, tuple[int, str]] = {
     "isBoostSpell": (82, "2ec0f21a21983887f55dbbce2f93010f248f6abc047a310499fbb2fe9a9b7504"),
     "doesRingMatchSpellElement": (12382, "bc98ce292b4653faffcc327e3374893d68b22967d7a82d8661cbe56851307d15"),
     "shouldShowSpellProjectile": (3444, "70d611761e1349e6eb0e67d8a34d58f4213b730c562e22a0a0607efd6f86d1ae"),
-    "isMobCastOpcode": (96, "6482fbe4d3c302cd455b2c2617bf4c62d620b67c525d34fbf0eefe6b6f0962a7"),
+    "isMobCastOpcode": (98, "9e6c6fe1c19ba0358ce77d157b7c90684f321094699419f1a746d12fa17f5629"),
 }
 
 FIXTURE = r"""

@@ -267,6 +267,12 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				opcode = OpcodeIn.WORLD_EDITOR_REQUEST;
 				break;
 			case 154:
+				opcode = OpcodeIn.LAYERED_TERRAIN_READY;
+				break;
+			case 155:
+				opcode = OpcodeIn.LAYERED_TERRAIN_STAGE_READY;
+				break;
+			case 156:
 				opcode = OpcodeIn.HISCORE_REQUEST;
 				break;
 			case 0:
@@ -474,6 +480,10 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				return packet.getLength() >= 4;
 			case WORLD_EDITOR_REQUEST:
 				return isWorldEditorPacketLength(packet.getLength());
+			case LAYERED_TERRAIN_READY:
+				return packet.getLength() >= 24 && packet.getLength() <= 218;
+			case LAYERED_TERRAIN_STAGE_READY:
+				return packet.getLength() >= 28 && packet.getLength() <= 222;
 			case HISCORE_REQUEST:
 				return packet.getLength() == 1;
 		}
@@ -499,6 +509,33 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 		}
 
 		switch (opcode) {
+			case LAYERED_TERRAIN_READY:
+				LayeredTerrainReadyStruct ready =
+					new LayeredTerrainReadyStruct();
+				ready.protocolVersion = packet.readByte() & 0xff;
+				ready.contextSequence = packet.readInt();
+				ready.worldSpace = packet.readString();
+				ready.logicalLevel = packet.readInt();
+				ready.centerSectorX = packet.readInt();
+				ready.centerSectorY = packet.readInt();
+				ready.manifestSha256 = packet.readString();
+				if (packet.getReadableBytes() != 0) return null;
+				result = ready;
+				break;
+			case LAYERED_TERRAIN_STAGE_READY:
+				LayeredTerrainStageReadyStruct stageReady =
+					new LayeredTerrainStageReadyStruct();
+				stageReady.protocolVersion = packet.readByte() & 0xff;
+				stageReady.stageSequence = packet.readInt();
+				stageReady.contextSequence = packet.readInt();
+				stageReady.worldSpace = packet.readString();
+				stageReady.logicalLevel = packet.readInt();
+				stageReady.centerSectorX = packet.readInt();
+				stageReady.centerSectorY = packet.readInt();
+				stageReady.manifestSha256 = packet.readString();
+				if (packet.getReadableBytes() != 0) return null;
+				result = stageReady;
+				break;
 			case WORLD_EDITOR_REQUEST:
 				WorldEditorRequestStruct editor = new WorldEditorRequestStruct();
 				editor.type = packet.readByte() & 0xff;
@@ -507,20 +544,20 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				editor.sessionId = packet.readLong();
 				editor.sequence = packet.readInt();
 				if (editor.type == 2) {
-					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte();
 					editor.objectType=packet.readByte()&0xff;
 				} else if (editor.type == 3) {
-					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte();
 					editor.entityId=packet.readShort(); editor.direction=packet.readByte()&0xff; editor.objectType=packet.readByte()&0xff;
 				} else if (editor.type == 4) editor.entityId=packet.readShort();
 				else if (editor.type == 5) {
-					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte();
 					editor.fieldMask=packet.readByte()&0xff; editor.elevation=packet.readByte()&0xff;
 					editor.groundTexture=packet.readByte()&0xff; editor.groundOverlay=packet.readByte()&0xff;
 					editor.roofTexture=packet.readByte()&0xff;editor.horizontalWall=packet.readByte()&0xff;
 					editor.verticalWall=packet.readByte()&0xff;editor.diagonal=packet.readInt();
 				} else if(editor.type==6){
-					editor.plane=packet.readByte()&0xff;editor.fieldMask=packet.readByte()&0xff;editor.elevation=packet.readByte()&0xff;
+					editor.plane=packet.readByte();editor.fieldMask=packet.readByte()&0xff;editor.elevation=packet.readByte()&0xff;
 					editor.groundTexture=packet.readByte()&0xff;editor.groundOverlay=packet.readByte()&0xff;editor.roofTexture=packet.readByte()&0xff;
 					editor.horizontalWall=packet.readByte()&0xff;editor.verticalWall=packet.readByte()&0xff;editor.diagonal=packet.readInt();
 					int count=packet.readByte()&0xff;if(count<1||count>64||packet.getLength()!=26+count*4)return null;

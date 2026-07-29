@@ -7,6 +7,7 @@ ANT_HOME="$ROOT_DIR/tools/vendor/apache-ant-1.10.5"
 ANT_BIN="$ANT_HOME/bin/ant"
 DB_PATH="$ROOT_DIR/server/inc/sqlite/myworld_dev.db"
 SEED_DB_PATH="$ROOT_DIR/server/inc/sqlite/myworld_seed.db"
+CONF_PATH="$ROOT_DIR/server/myworld.conf"
 
 echo "Spoiled Milk private server"
 echo "Keep this window open while people are playing."
@@ -22,6 +23,21 @@ if [ ! -f "$ANT_BIN" ]; then
   exit 1
 fi
 
+SERVER_PORT=$(
+  sed -n \
+    's/^[[:space:]]*server_port:[[:space:]]*\([0-9][0-9]*\).*/\1/p' \
+    "$CONF_PATH" \
+    | head -n 1
+)
+if [ -z "$SERVER_PORT" ]; then
+  echo "Could not read server_port from $CONF_PATH"
+  exit 1
+fi
+if [ "$SERVER_PORT" = "43605" ]; then
+  echo "Refusing to launch a private server/client pair on public port 43605."
+  exit 1
+fi
+
 if [ ! -f "$DB_PATH" ]; then
   if [ ! -f "$SEED_DB_PATH" ]; then
     echo "Missing seed database: $SEED_DB_PATH"
@@ -34,7 +50,7 @@ else
 fi
 
 printf '%s\n' "localhost" > "$ROOT_DIR/Client_Base/Cache/ip.txt"
-printf '%s\n' "43605" > "$ROOT_DIR/Client_Base/Cache/port.txt"
+printf '%s\n' "$SERVER_PORT" > "$ROOT_DIR/Client_Base/Cache/port.txt"
 
 echo "Building and starting the server..."
 echo

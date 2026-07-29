@@ -3,6 +3,7 @@ package com.openrsc.server.model.world;
 import com.openrsc.server.Server;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.avatargenerator.AvatarGenerator;
+import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcDrops;
 import com.openrsc.server.constants.Quests;
@@ -18,9 +19,20 @@ import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.database.impl.mysql.queries.player.login.PlayerOnlineFlagQuery;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.SingleEvent;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.ConstructorState;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Definition;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Operation;
+import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.WorldBounds;
+import com.openrsc.server.event.rsc.GameTickEventRestorationState;
+import com.openrsc.server.event.rsc.GameTickEventRestorationState.AuthoredConstructionKind;
+import com.openrsc.server.event.rsc.GameTickEventRestorationState.AuthoredPlacementState;
+import com.openrsc.server.event.rsc.GameTickEventRestorationState.SceneryState;
+import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.external.NPCLoc;
+import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
 import com.openrsc.server.io.WorldLoader;
 import com.openrsc.server.model.GlobalMessage;
 import com.openrsc.server.model.HostileProjectileCollision;
@@ -36,6 +48,8 @@ import com.openrsc.server.model.entity.player.Group;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.snapshot.Snapshot;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.ConnectionAttachment;
@@ -117,6 +131,8 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	private final HashMap<Point, Integer> sceneryLocs;
 	private final ConcurrentMap<TrawlerBoat, FishingTrawler> fishingTrawler;
 	private final AuthoredGroundItemRegistry<GroundItem> authoredGroundItems;
+	private final AuthoredLayeredGroundItemRegistry<GroundItem>
+		nativeLayeredGroundItems;
 
 	private final ConcurrentMap<Player, Boolean> playerUnderAttackMap;
 	private final ConcurrentMap<Npc, Boolean> npcUnderAttackMap;
@@ -141,6 +157,8 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		this.npcUnderAttackMap = new ConcurrentHashMap<>();
 		this.fishingTrawler = new ConcurrentHashMap<>();
 		this.authoredGroundItems = new AuthoredGroundItemRegistry<>();
+		this.nativeLayeredGroundItems =
+			new AuthoredLayeredGroundItemRegistry<GroundItem>();
 		this.snapshots = new LinkedList<>();
 		this.worldLoader = new WorldLoader(this);
 		this.regionManager = new RegionManager(this);
@@ -184,6 +202,18 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 
 	public void delayedRemoveObject(final GameObject object, final int delay) {
 		getServer().getGameEventHandler().add(new SingleEvent(this, null, delay, "Delayed Remove Object") {
+			@Override
+			public GameTickEventSpatialAffinity getSpatialAffinity() {
+				return GameTickEventSpatialAffinity.exactFixedLocation(
+					object.getX(), object.getY());
+			}
+
+			@Override
+			public GameTickEventRestorationState getRestorationState() {
+				return GameTickEventRestorationState.sceneryRemove(
+					detachSceneryState(object));
+			}
+
 			public void action() {
 				unregisterGameObject(object);
 			}
@@ -195,17 +225,50 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	 */
 	public void delayedSpawnObject(final GameObjectLoc loc, final int respawnTime, final boolean forceFullBlock) {
 		getServer().getGameEventHandler().add(new SingleEvent(this, null, respawnTime, "Delayed Spawn Object") {
+			@Override
+			public GameTickEventSpatialAffinity getSpatialAffinity() {
+				return GameTickEventSpatialAffinity.exactFixedLocation(
+					loc.getX(), loc.getY());
+			}
+
+			@Override
+			public GameTickEventRestorationState getRestorationState() {
+				return GameTickEventRestorationState.scenerySpawn(
+					detachSceneryState(loc), forceFullBlock);
+			}
+
 			public void action() {
-				registerGameObject(new GameObject(getWorld(), loc));
-				if (forceFullBlock) {
-					getMutableTile(loc.getX(), loc.getY()).addBlockingScenery();
-				}
+				registerGameObject(new GameObject(getWorld(), loc), forceFullBlock);
 			}
 		});
 	}
 
 	public void delayedSpawnObject(final GameObjectLoc loc, final int respawnTime) {
 		this.delayedSpawnObject(loc, respawnTime, false);
+	}
+
+	private static SceneryState detachSceneryState(final GameObject object) {
+		return SceneryState.of(
+			object.getID(), object.getLoc().getPermId(),
+			object.getX(), object.getY(), object.getDirection(), object.getType(),
+			object.getOwner(), object.getRuntimeAttributeCount(),
+			detachAuthoredPlacement(object.getAuthoredPlacementIdentity()));
+	}
+
+	private static SceneryState detachSceneryState(final GameObjectLoc loc) {
+		return SceneryState.of(
+			loc.getId(), loc.getPermId(), loc.getX(), loc.getY(),
+			loc.getDirection(), loc.getType(), loc.getOwner(), 0,
+			detachAuthoredPlacement(loc.getAuthoredPlacementIdentity()));
+	}
+
+	private static AuthoredPlacementState detachAuthoredPlacement(
+		final LayeredAuthoredPlacementIdentity identity) {
+		return identity == null ? null : AuthoredPlacementState.of(
+			identity.getGeneration(), identity.getPackedRegionX(),
+			identity.getPackedRegionY(), identity.getSourceOrdinal(),
+			AuthoredConstructionKind.valueOf(
+				identity.getConstructionKind().name()));
 	}
 
 	public Npc getNpc(final int idx) {
@@ -422,6 +485,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			}
 			getRegionManager().load();
 			getWorldLoader().getWorldPopulator().populateWorld();
+			getRegionManager().populateNativeLayeredPlacements();
 			getNpcDrops().load();
 
 			if (PathValidation.DEBUG) {
@@ -436,6 +500,10 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			}
 		} catch (final Exception e) {
 			LOGGER.error("Error in World load()", e);
+			if (getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE) {
+				throw new IllegalStateException(
+					"Native layered world load failed closed", e);
+			}
 		}
 	}
 
@@ -475,6 +543,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		}
 		getRegionManager().unload();
 		authoredGroundItems.reset();
+		nativeLayeredGroundItems.reset();
 		getNpcDrops().unload();
 		npcs.clear();
 		sceneryLocs.clear();
@@ -498,99 +567,73 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	}
 
 	public void registerGameObject(final GameObject o) {
-		Point objectCoordinates = Point.location(o.getLoc().getX(), o.getLoc().getY());
-		final GameObject collidingGameObject = getRegionManager().getRegion(objectCoordinates).getGameObject(objectCoordinates, null);
-		final GameObject collidingWallObject = getRegionManager().getRegion(objectCoordinates).getWallGameObject(objectCoordinates, o.getLoc().getDirection());
-		if (collidingGameObject != null && o.getType() == 0) {
-			unregisterGameObject(collidingGameObject);
-		}
-		if (collidingWallObject != null && o.getType() == 1) {
-			unregisterGameObject(collidingWallObject);
-		}
-		o.setLocation(Point.location(o.getLoc().getX(), o.getLoc().getY()));
+		registerGameObject(o, false);
+	}
 
-		final int dir = o.getDirection();
-		if (o.getID() == 1147) {
+	private void registerGameObject(
+		final GameObject o,
+		final boolean forceFullBlock) {
+		if (getRegionManager().hasNativeLayeredGameObjectIdentity(o)) {
+			if (!getRegionManager().prepareNativeLayeredGameObject(o)) {
+				return;
+			}
+			GameObject current =
+				getRegionManager().findNativeLayeredGameObject(o);
+			if (current == o) {
+				throw new IllegalStateException(
+					"Native layered GameObject instance is already active");
+			}
+			applyGameObjectTransaction(current, o, forceFullBlock);
 			return;
 		}
-		switch (o.getGameObjectType()) {
-			case SCENERY:
-				final boolean blocksHostileProjectiles = HostileProjectileCollision.blocksScenery(o.getGameObjectDef());
-				int width, height;
-				if (dir == 0 || dir == 4) {
-					width = o.getGameObjectDef().getWidth();
-					height = o.getGameObjectDef().getHeight();
-				} else {
-					height = o.getGameObjectDef().getWidth();
-					width = o.getGameObjectDef().getHeight();
-				}
-				if (o.getGameObjectDef().getType() != 1 && o.getGameObjectDef().getType() != 2) {
-					if (blocksHostileProjectiles) {
-						for (int x = o.getX(); x < o.getX() + width; ++x) {
-							for (int y = o.getY(); y < o.getY() + height; ++y) {
-								updateHostileProjectileSceneryCollision(x, y, dir,
-									o.getGameObjectDef().getType(), true);
-							}
-						}
-					}
-					return;
-				}
-				for (int x = o.getX(); x < o.getX() + width; ++x) {
-					for (int y = o.getY(); y < o.getY() + height; ++y) {
-						if (isProjectileClipAllowed(o)) {
-							handleProjectileClipAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);
-						}
-						if (blocksHostileProjectiles) {
-							updateHostileProjectileSceneryCollision(x, y, dir,
-								o.getGameObjectDef().getType(), true);
-						}
-						if (o.getGameObjectDef().getType() == 1) {
-							getMutableTile(x, y).addBlockingScenery();
-						} else if (dir == 0) {
-							getMutableTile(x, y).addDynamicCollision(CollisionFlag.WALL_EAST);
-							if (getTile(x - 1, y) != null)
-								getMutableTile(x - 1, y).addDynamicCollision(CollisionFlag.WALL_WEST);
-						} else if (dir == 2) {
-							getMutableTile(x, y).addDynamicCollision(CollisionFlag.WALL_SOUTH);
-							if (getTile(x, y + 1) != null)
-								getMutableTile(x, y + 1).addDynamicCollision(CollisionFlag.WALL_NORTH);
-						} else if (dir == 4) {
-							getMutableTile(x, y).addDynamicCollision(CollisionFlag.WALL_WEST);
-							if (getTile(x + 1, y) != null)
-								getMutableTile(x + 1, y).addDynamicCollision(CollisionFlag.WALL_EAST);
-						} else if (dir == 6) {
-							getMutableTile(x, y).addDynamicCollision(CollisionFlag.WALL_NORTH);
-							if (getTile(x, y - 1) != null)
-								getMutableTile(x, y - 1).addDynamicCollision(CollisionFlag.WALL_SOUTH);
-						}
-					}
-				}
-				break;
+		Point objectCoordinates = Point.location(
+			o.getLoc().getX(), o.getLoc().getY());
+		final GameObject collidingObject = o.getType() == 0
+			? getRegionManager().getRegion(objectCoordinates)
+				.getGameObject(objectCoordinates, null)
+			: getRegionManager().getRegion(objectCoordinates)
+				.getWallGameObject(
+					objectCoordinates, o.getLoc().getDirection());
+		applyGameObjectTransaction(
+			collidingObject, o, forceFullBlock);
+	}
 
-			case BOUNDARY:
-				if (o.getDoorDef().getDoorType() != 1) {
-					return;
+	private void applyHostileProjectileCollision(
+		final GameObject object,
+		final boolean add) {
+		if (object == null || object.getID() == 1147) {
+			return;
+		}
+		final int direction = object.getDirection();
+		if (object.isScenery()) {
+			if (!HostileProjectileCollision.blocksScenery(
+					object.getGameObjectDef())) {
+				return;
+			}
+			final int width;
+			final int height;
+			if (direction == 0 || direction == 4) {
+				width = object.getGameObjectDef().getWidth();
+				height = object.getGameObjectDef().getHeight();
+			} else {
+				width = object.getGameObjectDef().getHeight();
+				height = object.getGameObjectDef().getWidth();
+			}
+			for (int x = object.getX(); x < object.getX() + width; x++) {
+				for (int y = object.getY(); y < object.getY() + height; y++) {
+					updateHostileProjectileSceneryCollision(
+						x,
+						y,
+						direction,
+						object.getGameObjectDef().getType(),
+						add);
 				}
-				int x = o.getX(), y = o.getY();
-				if (isProjectileClipAllowed(o)) {
-					handleProjectileClipAllowance(x, y, dir, o.getType(), -1, o.getDoorDef().getDoorType());
-				}
-				updateHostileProjectileBoundaryCollision(x, y, dir, true);
-				if (dir == 0) {
-
-					getMutableTile(x, y).addDynamicCollision(CollisionFlag.WALL_NORTH);
-					if (getTile(x, y - 1) != null)
-						getMutableTile(x, y - 1).addDynamicCollision(CollisionFlag.WALL_SOUTH);
-				} else if (dir == 1) {
-					getMutableTile(x, y).addDynamicCollision(CollisionFlag.WALL_EAST);
-					if (getTile(x - 1, y) != null)
-						getMutableTile(x - 1, y).addDynamicCollision(CollisionFlag.WALL_WEST);
-				} else if (dir == 2) {
-					getMutableTile(x, y).addDynamicCollision(CollisionFlag.FULL_BLOCK_A);
-				} else if (dir == 3) {
-					getMutableTile(x, y).addDynamicCollision(CollisionFlag.FULL_BLOCK_B);
-				}
-				break;
+			}
+			return;
+		}
+		if (object.getDoorDef().getDoorType() == 1) {
+			updateHostileProjectileBoundaryCollision(
+				object.getX(), object.getY(), direction, add);
 		}
 	}
 
@@ -652,77 +695,83 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		}
 	}
 
-	private boolean isProjectileClipAllowed(GameObject o) {
-		if (o.getType() == 0 && o.getGameObjectDef().getName().toLowerCase().contains("tree")) {
-			return true;
-		}
-
-		for (final String s : com.openrsc.server.constants.Constants.objectsProjectileClipAllowed) {
-			if (o.getType() == 0) {
-				// there are many of the objects that need to
-				// have clip enabled.
-				if (!o.getGameObjectDef().getName().equalsIgnoreCase("tree")) {
-					if (o.getGameObjectDef().getHeight() == 1 && o.getGameObjectDef().getWidth() == 1 && !o.getGameObjectDef().getName().toLowerCase().equalsIgnoreCase("chest"))
-						return true;
-				}
-				if (o.getGameObjectDef().getName().toLowerCase().equalsIgnoreCase(s)) {
-					return true;
-				}
-			} else if (o.getType() == 1) {
-				if (o.getDoorDef().getName().toLowerCase().equalsIgnoreCase(s)) {
-					return true;
-				}
+	private GameTickEventRestorationCollisionFootprintPlanner.Result
+		planGameObjectCollision(
+		final GameObject object,
+		final Operation operation,
+		final boolean forceFullBlock) {
+		Point currentLocation = object.getLocation();
+		int objectX = currentLocation == null
+			? object.getLoc().getX() : currentLocation.getX();
+		int objectY = currentLocation == null
+			? object.getLoc().getY() : currentLocation.getY();
+		Definition definition = null;
+		if (object.getID() != 1147 || operation != Operation.REGISTER) {
+			if (object.isScenery()) {
+				definition = Definition.scenery(
+					object.getGameObjectDef().getType(),
+					object.getGameObjectDef().getWidth(),
+					object.getGameObjectDef().getHeight(),
+					object.getGameObjectDef().getName(),
+					Constants.objectsProjectileClipAllowed);
+			} else {
+				definition = Definition.boundary(
+					object.getDoorDef().getDoorType(),
+					object.getDoorDef().getName(),
+					Constants.objectsProjectileClipAllowed);
 			}
 		}
-		return false;
+		return GameTickEventRestorationCollisionFootprintPlanner.plan(
+				operation,
+				ConstructorState.of(
+					object.getID(), objectX, objectY,
+					object.getDirection(), object.getType()),
+				definition, forceFullBlock,
+				WorldBounds.of(Constants.MAX_WIDTH, Constants.MAX_HEIGHT));
 	}
 
-	private void handleProjectileClipAllowance(final int x, final int y, final int dir, final int type, final int objectType, final int doorType) {
-
-		// Always give the current tile a clip mask.
-		getMutableTile(x, y).addDynamicProjectileBlock();
-
-		if ((type == 0 && objectType == 1) || (type == 1 && doorType != 1)) return;
-
-		if (dir == 0 && getTile(x - 1, y) != null) {
-			getMutableTile(x - 1, y).addDynamicProjectileBlock();
-		}
-
-		else if (dir == 2 && getTile(x, y + 1) != null) {
-			getMutableTile(x, y + 1).addDynamicProjectileBlock();
-		}
-
-		else if (dir == 4 && getTile(x + 1, y) != null) {
-			getMutableTile(x + 1, y).addDynamicProjectileBlock();
-		}
-
-		else if (dir == 6 && getTile(x, y - 1) != null) {
-			getMutableTile(x, y - 1).addDynamicProjectileBlock();
-		}
+	/**
+	 * Projects one detached GameObject collision footprint before an ordered
+	 * Region transaction acquires any runtime boundary.
+	 */
+	public GameTickEventRestorationCollisionFootprintPlanner.Result
+		projectGameObjectCollisionFootprint(
+		final GameObject object,
+		final Operation operation,
+		final boolean forceFullBlock) {
+		return planGameObjectCollision(object, operation, forceFullBlock);
 	}
 
-	public void resetProjectileAllowance(final int x, final int y, final int dir, final int type, final int objectType, final int doorType) {
-		TileValue tile = getMutableTile(x, y);
-		tile.removeDynamicProjectileBlock();
-
-		if ((type == 0 && objectType == 1) || (type == 1 && doorType != 1)) return;
-
-		if (dir == 0 && getTile(x - 1, y) != null) {
-			tile = getMutableTile(x - 1, y);
+	private void applyGameObjectTransaction(
+		final GameObject oldObject,
+		final GameObject newObject,
+		final boolean forceFullBlock) {
+		GameTickEventRestorationCollisionFootprintPlanner.Result
+			oldUnregister = oldObject == null ? null
+				: planGameObjectCollision(
+					oldObject, Operation.UNREGISTER, false);
+		GameTickEventRestorationCollisionFootprintPlanner.Result
+			oldRollbackRegister = oldObject == null ? null
+				: planGameObjectCollision(
+					oldObject, Operation.REGISTER, false);
+		GameTickEventRestorationCollisionFootprintPlanner.Result newRegister =
+			newObject == null ? null : planGameObjectCollision(
+				newObject, Operation.REGISTER, forceFullBlock);
+		final boolean nativeLayered = (oldObject != null
+				&& getRegionManager().isNativeLayeredGameObject(oldObject))
+			|| (newObject != null
+				&& getRegionManager().isNativeLayeredGameObject(newObject));
+		if (nativeLayered) {
+			getRegionManager().applyNativeLayeredGameObjectTransaction(
+				oldObject, oldUnregister, oldRollbackRegister,
+				newObject, newRegister);
+			return;
 		}
-
-		else if (dir == 2 && getTile(x, y + 1) != null) {
-			tile = getMutableTile(x, y + 1);
-		}
-
-		else if (dir == 4 && getTile(x + 1, y) != null) {
-			tile = getMutableTile(x + 1, y);
-		}
-
-		else if (dir == 6 && getTile(x, y - 1) != null) {
-			tile = getMutableTile(x, y - 1);
-		}
-		tile.removeDynamicProjectileBlock();
+		getRegionManager().applyObjectMembershipAndCollisionTransaction(
+			oldObject, oldUnregister, oldRollbackRegister,
+			newObject, newRegister);
+		applyHostileProjectileCollision(oldObject, false);
+		applyHostileProjectileCollision(newObject, true);
 	}
 
 	public void registerItem(final GroundItem i) {
@@ -762,6 +811,49 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		return authoredGroundItems.remove(loc.getX(), loc.getY(), item);
 	}
 
+	public GroundItem registerNativeLayeredGroundItem(
+		final NativeLayeredGroundItemPlacement placement) {
+		return registerNativeLayeredGroundItem(placement, null);
+	}
+
+	public GroundItem registerNativeLayeredGroundItem(
+		final NativeLayeredGroundItemPlacement placement,
+		final Long expectedGeneration) {
+		if (getServer().getConfig().RESTRICT_ITEM_ID > ItemId.NOTHING.id()
+			&& placement.getItemId()
+				> getServer().getConfig().RESTRICT_ITEM_ID) {
+			return null;
+		}
+		final GroundItem item;
+		if (expectedGeneration == null) {
+			item = nativeLayeredGroundItems.register(
+				placement.getLocation(),
+				() -> new GroundItem(this, placement));
+		} else {
+			item = nativeLayeredGroundItems.registerForGeneration(
+				placement.getLocation(),
+				expectedGeneration,
+				() -> new GroundItem(this, placement));
+		}
+		if (item != null) {
+			getRegionManager().markNativeLayeredPlacement(
+				item,
+				placement.getPlacementId(),
+				RegionManager.NATIVE_LAYERED_GROUND_ITEM_KIND);
+		}
+		return item;
+	}
+
+	public long removeNativeLayeredGroundItem(final GroundItem item) {
+		NativeLayeredGroundItemPlacement placement =
+			item.getNativeLayeredPlacement();
+		if (placement == null) {
+			return AuthoredLayeredGroundItemRegistry.NO_GENERATION;
+		}
+		return nativeLayeredGroundItems.remove(
+			placement.getLocation(), item);
+	}
+
 	public void registerItem(final GroundItem i, final int delayTime) {
 		try {
 			if (Summoning.tryLootGoblinCollectGroundItem(i)) {
@@ -771,7 +863,9 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			if (i.getLoc() == null) {
 				getServer().getGameEventHandler().add(new SingleEvent(this, null, delayTime, "Register Item") {
 					public void action() {
-						unregisterItem(i);
+						if (!i.isRemoved()) {
+							unregisterItem(i);
+						}
 					}
 				});
 			}
@@ -784,7 +878,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	public Npc registerNpc(final Npc n) {
 		final NPCLoc npc = n.getLoc();
 		if (npc.startX < npc.minX || npc.startX > npc.maxX || npc.startY < npc.minY || npc.startY > npc.maxY
-			|| (getTile(npc.startX, npc.startY).overlay & 64) != 0) {
+			|| (getTile(n.getWorldLocation()).overlay & 64) != 0) {
 			LOGGER.error("Broken Npc: <id>" + npc.id + "</id><startX>" + npc.startX + "</startX><startY>"
 				+ npc.startY + "</startY>");
 		}
@@ -857,8 +951,17 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	}
 
 	public void replaceGameObject(final GameObject old, final GameObject _new) {
-		unregisterGameObject(old);
-		registerGameObject(_new);
+		if (getRegionManager().isNativeLayeredGameObject(old)) {
+			getRegionManager().inheritNativeLayeredGameObjectIdentity(
+				old, _new);
+		}
+		LayeredAuthoredPlacementIdentity authoredIdentity =
+			old.getAuthoredPlacementIdentity();
+		if (authoredIdentity != null) {
+			_new.getLoc().assignAuthoredPlacementIdentity(authoredIdentity);
+			_new.assignAuthoredPlacementIdentity(authoredIdentity);
+		}
+		applyGameObjectTransaction(old, _new, false);
 	}
 
 	public void sendKilledUpdate(final long killedHash, final long killerHash, final int type) {
@@ -893,81 +996,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	 * Removes an object from the server
 	 */
 	public void unregisterGameObject(final GameObject o) {
-		o.remove();
-		final int dir = o.getDirection();
-		switch (o.getGameObjectType()) {
-			case SCENERY:
-				final boolean blocksHostileProjectiles = HostileProjectileCollision.blocksScenery(o.getGameObjectDef());
-				int width, height;
-				if (dir == 0 || dir == 4) {
-					width = o.getGameObjectDef().getWidth();
-					height = o.getGameObjectDef().getHeight();
-				} else {
-					height = o.getGameObjectDef().getWidth();
-					width = o.getGameObjectDef().getHeight();
-				}
-				if (o.getGameObjectDef().getType() != 1 && o.getGameObjectDef().getType() != 2) {
-					if (blocksHostileProjectiles) {
-						for (int x = o.getX(); x < o.getX() + width; ++x) {
-							for (int y = o.getY(); y < o.getY() + height; ++y) {
-								updateHostileProjectileSceneryCollision(x, y, dir,
-									o.getGameObjectDef().getType(), false);
-							}
-						}
-					}
-					return;
-				}
-				for (int x = o.getX(); x < o.getX() + width; ++x) {
-					for (int y = o.getY(); y < o.getY() + height; ++y) {
-						if (isProjectileClipAllowed(o)) {
-							resetProjectileAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);
-						}
-						if (blocksHostileProjectiles) {
-							updateHostileProjectileSceneryCollision(x, y, dir,
-								o.getGameObjectDef().getType(), false);
-						}
-						if (o.getGameObjectDef().getType() == 1) {
-							getMutableTile(x, y).removeBlockingScenery();
-						} else if (dir == 0) {
-							getMutableTile(x, y).removeDynamicCollision(CollisionFlag.WALL_EAST);
-							getMutableTile(x - 1, y).removeDynamicCollision(CollisionFlag.WALL_WEST);
-						} else if (dir == 2) {
-							getMutableTile(x, y).removeDynamicCollision(CollisionFlag.WALL_SOUTH);
-							getMutableTile(x, y + 1).removeDynamicCollision(CollisionFlag.WALL_NORTH);
-						} else if (dir == 4) {
-							getMutableTile(x, y).removeDynamicCollision(CollisionFlag.WALL_WEST);
-							getMutableTile(x + 1, y).removeDynamicCollision(CollisionFlag.WALL_EAST);
-						} else if (dir == 6) {
-							getMutableTile(x, y).removeDynamicCollision(CollisionFlag.WALL_NORTH);
-							getMutableTile(x, y - 1).removeDynamicCollision(CollisionFlag.WALL_SOUTH);
-						}
-					}
-				}
-				break;
-			case BOUNDARY:
-				if (o.getDoorDef().getDoorType() != 1) {
-					return;
-				}
-				int x = o.getX(), y = o.getY();
-
-				if (isProjectileClipAllowed(o)) {
-					resetProjectileAllowance(x, y, dir, o.getType(), -1, o.getDoorDef().getDoorType());
-				}
-				updateHostileProjectileBoundaryCollision(x, y, dir, false);
-
-				if (dir == 0) {
-					getMutableTile(x, y).removeDynamicCollision(CollisionFlag.WALL_NORTH);
-					getMutableTile(x, y - 1).removeDynamicCollision(CollisionFlag.WALL_SOUTH);
-				} else if (dir == 1) {
-					getMutableTile(x, y).removeDynamicCollision(CollisionFlag.WALL_EAST);
-					getMutableTile(x - 1, y).removeDynamicCollision(CollisionFlag.WALL_WEST);
-				} else if (dir == 2) {
-					getMutableTile(x, y).removeDynamicCollision(CollisionFlag.FULL_BLOCK_A);
-				} else if (dir == 3) {
-					getMutableTile(x, y).removeDynamicCollision(CollisionFlag.FULL_BLOCK_B);
-				}
-				break;
-		}
+		applyGameObjectTransaction(o, null, false);
 	}
 
 	public GlobalMessage getNextGlobalMessage() {
@@ -1087,6 +1116,10 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 
 	public TileValue getTile(final Point point) {
 		return getRegionManager().getTile(point);
+	}
+
+	public TileValue getTile(final WorldLocation location) {
+		return getRegionManager().getTile(location);
 	}
 
 	public boolean canYield(final Item item) {

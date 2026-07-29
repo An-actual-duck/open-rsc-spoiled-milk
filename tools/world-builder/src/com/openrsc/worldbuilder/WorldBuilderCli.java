@@ -32,6 +32,9 @@ public final class WorldBuilderCli {
 		if ("run".equals(args[0])) {
 			return runPrepared(args, false);
 		}
+		if ("create-level".equals(args[0])) {
+			return createLevel(args);
+		}
 		if ("export".equals(args[0])) {
 			return export(args);
 		}
@@ -84,6 +87,83 @@ public final class WorldBuilderCli {
 		} catch (WorldBuilderDiscoveryException refusal) {
 			System.err.println("ERROR: " + refusal.getMessage());
 			return 3;
+		}
+	}
+
+	private static int createLevel(String[] args) {
+		Path workspace = null;
+		Integer level = null;
+		Integer anchorX = null;
+		Integer anchorY = null;
+		String name = null;
+		String role = null;
+		for (int index = 1; index < args.length; index++) {
+			String argument = args[index];
+			if ("--workspace".equals(argument) && index + 1 < args.length) {
+				workspace = Paths.get(args[++index]);
+			} else if ("--level".equals(argument) && index + 1 < args.length) {
+				level = parseIntOption("--level", args[++index]);
+				if (level == null) return 2;
+			} else if ("--anchor-x".equals(argument) && index + 1 < args.length) {
+				anchorX = parseIntOption("--anchor-x", args[++index]);
+				if (anchorX == null) return 2;
+			} else if ("--anchor-y".equals(argument) && index + 1 < args.length) {
+				anchorY = parseIntOption("--anchor-y", args[++index]);
+				if (anchorY == null) return 2;
+			} else if ("--name".equals(argument) && index + 1 < args.length) {
+				name = args[++index];
+			} else if ("--role".equals(argument) && index + 1 < args.length) {
+				role = args[++index];
+			} else {
+				System.err.println(
+					"ERROR: Unknown or incomplete argument: " + argument);
+				usage();
+				return 2;
+			}
+		}
+		if (workspace == null || level == null
+			|| anchorX == null || anchorY == null) {
+			System.err.println(
+				"ERROR: create-level requires --workspace, --level, "
+					+ "--anchor-x, and --anchor-y.");
+			usage();
+			return 2;
+		}
+		if (name == null) {
+			name = WorldBuilderLayeredDraftWriter.defaultName(level.intValue());
+		}
+		if (role == null) {
+			role = WorldBuilderLayeredDraftWriter.defaultRole(level.intValue());
+		}
+		try {
+			WorldBuilderLayeredDraftWriter.CreateLevelResult result =
+				new WorldBuilderLayeredDraftWriter().createLevel(
+					workspace,
+					level.intValue(),
+					anchorX.intValue(),
+					anchorY.intValue(),
+					name,
+					role);
+			System.out.print(result.toJson());
+			return 0;
+		} catch (WorldBuilderDiscoveryException refusal) {
+			System.err.println("ERROR: " + refusal.getMessage());
+			return 3;
+		} catch (Exception failure) {
+			System.err.println(
+				"ERROR: Could not create layered Builder level: "
+					+ failure.getMessage());
+			return 4;
+		}
+	}
+
+	private static Integer parseIntOption(String option, String value) {
+		try {
+			return Integer.valueOf(value);
+		} catch (NumberFormatException failure) {
+			System.err.println(
+				"ERROR: " + option + " must be a signed 32-bit integer.");
+			return null;
 		}
 	}
 
@@ -356,7 +436,9 @@ public final class WorldBuilderCli {
 		return "--server-root".equals(argument)
 			|| "--runtime-root".equals(argument)
 			|| "--config".equals(argument)
-			|| "--runtime-config".equals(argument);
+			|| "--runtime-config".equals(argument)
+			|| "--layered-package".equals(argument)
+			|| "--layered-profile".equals(argument);
 	}
 
 	private static int prepare(String[] args) {
@@ -365,6 +447,8 @@ public final class WorldBuilderCli {
 		Path workspace = null;
 		String config = WorldBuilderDiscovery.DEFAULT_CONFIG;
 		String runtimeConfig = WorldBuilderDiscovery.DEFAULT_CONFIG;
+		Path layeredPackagePath = null;
+		String layeredProfile = null;
 		int port = 0;
 		for (int index = 1; index < args.length; index++) {
 			String argument = args[index];
@@ -378,6 +462,10 @@ public final class WorldBuilderCli {
 				config = args[++index];
 			} else if ("--runtime-config".equals(argument) && index + 1 < args.length) {
 				runtimeConfig = args[++index];
+			} else if ("--layered-package".equals(argument) && index + 1 < args.length) {
+				layeredPackagePath = Paths.get(args[++index]);
+			} else if ("--layered-profile".equals(argument) && index + 1 < args.length) {
+				layeredProfile = args[++index];
 			} else if ("--port".equals(argument) && index + 1 < args.length) {
 				try {
 					port = Integer.parseInt(args[++index]);
@@ -402,9 +490,17 @@ public final class WorldBuilderCli {
 			WorldBuilderDiscoveryResult runtime = discovery.discover(runtimeRoot, runtimeConfig, null);
 			WorldBuilderDiscoveryResult source = discovery.discover(
 				targetRoot, config, runtime.contentFingerprintSha256);
+			if ((layeredPackagePath == null) != (layeredProfile == null)) {
+				throw new WorldBuilderDiscoveryException(
+					"--layered-package and --layered-profile must be supplied together.");
+			}
+			WorldBuilderLayeredPackage layered = layeredPackagePath == null
+				? null
+				: WorldBuilderLayeredPackage.discover(
+					layeredPackagePath, layeredProfile);
 			WorldBuilderRuntimePreparer.PreparedRuntime prepared =
 				new WorldBuilderRuntimePreparer().prepare(
-					targetRoot, runtimeRoot, workspace, port, source, runtime);
+					targetRoot, runtimeRoot, workspace, port, source, runtime, layered);
 			System.out.print(prepared.toJson());
 			return 0;
 		} catch (WorldBuilderDiscoveryException refusal) {
@@ -423,6 +519,7 @@ public final class WorldBuilderCli {
 			+ "\n  WorldBuilderCli prepare --server-root <path> --runtime-root <path>"
 			+ " --workspace <path> --port <port>"
 			+ " [--config server/myworld.conf] [--runtime-config server/myworld.conf]"
+			+ " [--layered-package <package> --layered-profile spoiled-milk-replacement]"
 			+ "\n  WorldBuilderCli launch <same arguments as prepare>"
 			+ "\n  WorldBuilderCli run --workspace <prepared-path> [--port <port>]");
 		System.err.println("  WorldBuilderCli export --workspace <prepared-path>"
@@ -437,5 +534,8 @@ public final class WorldBuilderCli {
 			+ " --source-commit <40-hex>");
 		System.err.println("  WorldBuilderCli undo-latest-import --workspace <prepared-path>"
 			+ " --target-root <private-server-root>");
+		System.err.println("  WorldBuilderCli create-level --workspace <prepared-path>"
+			+ " --level <signed-level> --anchor-x <x> --anchor-y <y>"
+			+ " [--name <name>] [--role <role>]");
 	}
 }

@@ -44,6 +44,12 @@ public final class WorldBuilderMode {
 
 	public static void validate(ServerConfiguration config) {
 		if (!config.WORLD_BUILDER_MODE) {
+			if ("spoiled-milk-builder-draft".equals(
+				config.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)) {
+				throw new IllegalArgumentException(
+					"Unsafe server configuration: spoiled-milk-builder-draft "
+						+ "is restricted to isolated World Builder mode");
+			}
 			return;
 		}
 		List<String> errors = validationErrors(
@@ -59,6 +65,27 @@ public final class WorldBuilderMode {
 		if (!errors.isEmpty()) {
 			throw new IllegalArgumentException(
 				"Unsafe World Builder configuration: " + String.join("; ", errors));
+		}
+		if ("spoiled-milk-builder-draft".equals(
+				config.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)
+			&& !config.WORLD_BUILDER_LAYERED_REVIEW_MODE) {
+			throw new IllegalArgumentException(
+				"Unsafe World Builder configuration: Builder draft authority "
+					+ "requires layered review mode");
+		}
+		if (config.WORLD_BUILDER_LAYERED_REVIEW_MODE
+			&& (!config.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+				|| !config.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+				|| !config.WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
+				|| !config.WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+				|| (!"spoiled-milk-replacement".equals(
+						config.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)
+					&& !"spoiled-milk-builder-draft".equals(
+						config.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)))) {
+			throw new IllegalArgumentException(
+				"Unsafe World Builder configuration: layered review requires "
+					+ "the complete Spoiled Milk native package authority "
+					+ "or its isolated Builder draft authority");
 		}
 	}
 

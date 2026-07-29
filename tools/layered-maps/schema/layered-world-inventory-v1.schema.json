@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-world-inventory-v1.schema.json",
+  "title": "Layered World Inventory v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "manifestType",
+    "manifestSchema",
+    "coordinateModel",
+    "legacyCodec",
+    "layoutAdapter",
+    "worldSpace",
+    "sourceFingerprintSha256",
+    "inventoryFingerprintSha256",
+    "summary",
+    "terrain",
+    "placementSources",
+    "transitionGraph",
+    "unresolvedSourceOwners",
+    "findings"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "manifestType": {"const": "layered-world-inventory"},
+    "manifestSchema": {"const": "layered-world-inventory-v1"},
+    "coordinateModel": {"const": "signed-layered-v1"},
+    "legacyCodec": {"const": "legacy-packed-y-v1"},
+    "layoutAdapter": {"type": "string", "minLength": 1},
+    "worldSpace": {"const": "global"},
+    "sourceFingerprintSha256": {"$ref": "#/$defs/hash"},
+    "inventoryFingerprintSha256": {"$ref": "#/$defs/hash"},
+    "summary": {"$ref": "#/$defs/summary"},
+    "terrain": {"$ref": "#/$defs/terrain"},
+    "placementSources": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/placementSource"}
+    },
+    "transitionGraph": {"$ref": "#/$defs/transitionGraph"},
+    "unresolvedSourceOwners": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/sourceOwner"}
+    },
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    }
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "count": {"type": "integer", "minimum": 0},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "terrainSectorCount",
+        "placementSourceCount",
+        "placementRecordCount",
+        "fullyNormalizedPlacementRecordCount",
+        "partiallyNormalizedPlacementRecordCount",
+        "unresolvedPlacementRecordCount",
+        "transitionEdgeCount",
+        "coordinateCount",
+        "normalizedCoordinateCount",
+        "unresolvedCoordinateCount",
+        "unresolvedSourceOwnerCount",
+        "findingCount",
+        "roundTripVerified"
+      ],
+      "properties": {
+        "terrainSectorCount": {"$ref": "#/$defs/count"},
+        "placementSourceCount": {"$ref": "#/$defs/count"},
+        "placementRecordCount": {"$ref": "#/$defs/count"},
+        "fullyNormalizedPlacementRecordCount": {"$ref": "#/$defs/count"},
+        "partiallyNormalizedPlacementRecordCount": {"$ref": "#/$defs/count"},
+        "unresolvedPlacementRecordCount": {"$ref": "#/$defs/count"},
+        "transitionEdgeCount": {"$ref": "#/$defs/count"},
+        "coordinateCount": {"$ref": "#/$defs/count"},
+        "normalizedCoordinateCount": {"$ref": "#/$defs/count"},
+        "unresolvedCoordinateCount": {"$ref": "#/$defs/count"},
+        "unresolvedSourceOwnerCount": {"$ref": "#/$defs/count"},
+        "findingCount": {"$ref": "#/$defs/count"},
+        "roundTripVerified": {"const": true}
+      }
+    },
+    "terrain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "serverPath",
+        "clientPath",
+        "sourceSha256",
+        "sectorCount",
+        "sectorCountByLevel",
+        "storageSectorSize",
+        "payloadBytesPerSector",
+        "roundTripVerified",
+        "sectors"
+      ],
+      "properties": {
+        "serverPath": {"type": "string", "minLength": 1},
+        "clientPath": {"type": "string", "minLength": 1},
+        "sourceSha256": {"$ref": "#/$defs/hash"},
+        "sectorCount": {"type": "integer", "minimum": 1},
+        "sectorCountByLevel": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 1}
+        },
+        "storageSectorSize": {"const": 48},
+        "payloadBytesPerSector": {"const": 23040},
+        "roundTripVerified": {"const": true},
+        "sectors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/sector"}
+        }
+      }
+    },
+    "sector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacyEntry", "legacyPlane", "legacySectorX", "legacySectorY", "worldSpace", "level", "sectorX", "sectorY", "payloadSha256"],
+      "properties": {
+        "legacyEntry": {"type": "string", "pattern": "^h[0-3]x[0-9]+y[0-9]+$"},
+        "legacyPlane": {"type": "integer", "minimum": 0, "maximum": 3},
+        "legacySectorX": {"type": "integer", "minimum": 0},
+        "legacySectorY": {"type": "integer", "minimum": 0},
+        "worldSpace": {"const": "global"},
+        "level": {"enum": [-1, 0, 1, 2]},
+        "sectorX": {"type": "integer"},
+        "sectorY": {"type": "integer"},
+        "payloadSha256": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "placementSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sourceSha256",
+        "rootName",
+        "recordType",
+        "recordCount",
+        "fullyNormalizedRecordCount",
+        "partiallyNormalizedRecordCount",
+        "unresolvedRecordCount",
+        "coordinateCount",
+        "normalizedCoordinateCount",
+        "unresolvedCoordinateCount",
+        "roundTripVerified",
+        "records"
+      ],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sourceSha256": {"$ref": "#/$defs/hash"},
+        "rootName": {"enum": ["boundaries", "grounditems", "npclocs", "npc_removals", "sceneries", "scenery_removals"]},
+        "recordType": {"enum": ["boundary", "ground-item", "npc", "npc-removal", "scenery", "scenery-removal"]},
+        "recordCount": {"$ref": "#/$defs/count"},
+        "fullyNormalizedRecordCount": {"$ref": "#/$defs/count"},
+        "partiallyNormalizedRecordCount": {"$ref": "#/$defs/count"},
+        "unresolvedRecordCount": {"$ref": "#/$defs/count"},
+        "coordinateCount": {"$ref": "#/$defs/count"},
+        "normalizedCoordinateCount": {"$ref": "#/$defs/count"},
+        "unresolvedCoordinateCount": {"$ref": "#/$defs/count"},
+        "roundTripVerified": {"const": true},
+        "records": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/placementRecord"}
+        }
+      }
+    },
+    "placementRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "status", "sourceRecordSha256", "roundTripVerified", "attributes", "locations"],
+      "properties": {
+        "index": {"$ref": "#/$defs/count"},
+        "status": {"enum": ["fully-normalized", "partially-normalized"]},
+        "sourceRecordSha256": {"$ref": "#/$defs/hash"},
+        "roundTripVerified": {"const": true},
+        "attributes": {"type": "object"},
+        "locations": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/worldLocation"}
+        },
+        "unresolvedLocations": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/unresolvedLocation"}
+        }
+      }
+    },
+    "worldLocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worldSpace", "coordinate"],
+      "properties": {
+        "worldSpace": {"const": "global"},
+        "coordinate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "level"],
+          "properties": {
+            "x": {"type": "integer"},
+            "y": {"type": "integer"},
+            "level": {"type": "integer"}
+          }
+        }
+      }
+    },
+    "legacyCoordinate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["X", "Y"],
+      "properties": {
+        "X": {"type": "integer"},
+        "Y": {"type": "integer"}
+      }
+    },
+    "unresolvedLocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacyCoordinate", "reason"],
+      "properties": {
+        "legacyCoordinate": true,
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "transitionGraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourcePath", "sourceSha256", "edgeCount", "normalizedEdgeCount", "unresolvedEdgeCount", "roundTripVerified", "edges"],
+      "properties": {
+        "sourcePath": {"type": ["string", "null"]},
+        "sourceSha256": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]},
+        "edgeCount": {"$ref": "#/$defs/count"},
+        "normalizedEdgeCount": {"$ref": "#/$defs/count"},
+        "unresolvedEdgeCount": {"$ref": "#/$defs/count"},
+        "roundTripVerified": {"const": true},
+        "edges": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/transitionEdge"}
+        }
+      }
+    },
+    "transitionEdge": {
+      "type": "object",
+      "required": ["index", "command", "status", "sourceLegacy", "destinationLegacy", "roundTripVerified"],
+      "properties": {
+        "index": {"$ref": "#/$defs/count"},
+        "command": {"type": "string"},
+        "status": {"enum": ["normalized", "unresolved"]},
+        "sourceLegacy": {"$ref": "#/$defs/legacyCoordinate"},
+        "destinationLegacy": {"$ref": "#/$defs/legacyCoordinate"},
+        "source": {"$ref": "#/$defs/worldLocation"},
+        "destination": {"$ref": "#/$defs/worldLocation"},
+        "levelDelta": {"type": "integer"},
+        "deltaX": {"type": "integer"},
+        "deltaY": {"type": "integer"},
+        "sameGeographicAnchor": {"type": "boolean"},
+        "reason": {"type": "string"},
+        "roundTripVerified": {"const": true}
+      }
+    },
+    "sourceOwner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "role", "path", "size", "sha256", "signals"],
+      "properties": {
+        "status": {"const": "unresolved"},
+        "role": {"enum": ["server-coordinate-source", "client-coordinate-source", "builder-coordinate-source"]},
+        "path": {"type": "string", "minLength": 1},
+        "size": {"$ref": "#/$defs/count"},
+        "sha256": {"$ref": "#/$defs/hash"},
+        "signals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": ["severity", "code", "sourcePath", "recordIndex", "field", "message"],
+      "properties": {
+        "severity": {"enum": ["info", "warning", "error"]},
+        "code": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "sourcePath": {"type": "string", "minLength": 1},
+        "recordIndex": {"type": ["integer", "null"], "minimum": 0},
+        "field": {"type": ["string", "null"]},
+        "message": {"type": "string", "minLength": 1},
+        "legacyX": {"type": "integer"},
+        "legacyY": {"type": "integer"}
+      }
+    }
+  }
+}

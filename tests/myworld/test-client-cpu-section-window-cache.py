@@ -42,6 +42,18 @@ def main() -> None:
             "CPU section-window builds should be reflected in chunk telemetry")
     require(world, "this.worldStreamManager.markCpuCacheHit(",
             "CPU section-window cache hits should be reflected in chunk telemetry")
+    require(world, "if (nativeLayeredTerrainSnapshot != null) {\n\t\t\treturn;",
+            "Server-authoritative native windows must not launch stale speculative builds")
+    require(world, "if (!key.equals(sectionWindowKey(height, sectionX, sectionY)))",
+            "CPU window cache must refuse a build whose terrain scope changed")
+    for key_guard in (
+        "terrainModelInputKey(plane, sectionX, sectionY)",
+        "wallModelInputKey(plane, sectionX, sectionY)",
+        "roofModelInputKey(plane, sectionX, sectionY)",
+        "worldModelProductKey(",
+    ):
+        require(world, f"if (!key.equals({key_guard}",
+                f"model-product cache must retain its {key_guard} scope fence")
 
     require(manager, "private long cpuWindowBuilds;",
             "Telemetry should count CPU section-window builds")

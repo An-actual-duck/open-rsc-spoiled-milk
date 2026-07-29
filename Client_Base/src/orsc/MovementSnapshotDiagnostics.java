@@ -276,6 +276,7 @@ final class MovementSnapshotDiagnostics {
 
 	private static final class SnapshotDebugState {
 		private static final int RECENT_MOVE_CACHE_LOG_LIMIT = 5;
+		private static final long MOVE_CACHE_LOG_INTERVAL_MILLIS = 10000L;
 		private static final String MOVE_CACHE_LOG_PREFIX = "MOVEMENT_CACHE_RECENT";
 
 		private int protocolVersion = 0;
@@ -317,6 +318,7 @@ final class MovementSnapshotDiagnostics {
 		private int recentMoveCacheNext = 0;
 		private int recentMoveCacheCount = 0;
 		private int lastLoggedMismatchSequence = Integer.MIN_VALUE;
+		private long lastLoggedMismatchMillis = Long.MIN_VALUE;
 
 		private void recordPacket(
 			int protocolVersion,
@@ -370,8 +372,13 @@ final class MovementSnapshotDiagnostics {
 			this.lastPacketMillis = System.currentTimeMillis();
 			rememberMoveCacheLine(buildRecentMoveCacheLine(this.lastPacketMillis));
 			if ((parity.mismatches() > 0 || stageResult.mismatches > 0)
-				&& this.lastLoggedMismatchSequence != sequence) {
+				&& this.lastLoggedMismatchSequence != sequence
+				&& (this.lastLoggedMismatchMillis == Long.MIN_VALUE
+					|| this.lastPacketMillis
+						- this.lastLoggedMismatchMillis
+						>= MOVE_CACHE_LOG_INTERVAL_MILLIS)) {
 				this.lastLoggedMismatchSequence = sequence;
+				this.lastLoggedMismatchMillis = this.lastPacketMillis;
 				logRecentMoveCacheLines();
 			}
 		}

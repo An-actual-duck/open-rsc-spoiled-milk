@@ -49,6 +49,7 @@ public final class ClientSceneInstanceStoreFixture {
 		ClientSceneInstanceStore store = new ClientSceneInstanceStore(2, 1);
 		assertEquals(0, store.getGameObjectCount(), "empty game count");
 		assertEquals(0, store.getWallObjectCount(), "empty wall count");
+		assertEquals(0L, store.getGameObjectRevision(), "empty game revision");
 		store.setGameObjectCount(0);
 		store.setWallObjectCount(0);
 		store.clearPendingAreaLoadMarks();
@@ -56,9 +57,19 @@ public final class ClientSceneInstanceStoreFixture {
 
 		store.setGameObjectX(2, 31);
 		store.setGameObjectZ(2, 47);
+		store.setGameObjectId(2, 53);
 		assertEquals(130, store.getGameObjectCapacity(), "game growth boundary");
 		assertEquals(31, store.getGameObjectX(2), "grown game x");
 		assertEquals(47, store.getGameObjectZ(2), "grown game z");
+		assertEquals(3L, store.getGameObjectRevision(), "identity fields advance revision");
+		store.setGameObjectX(2, 31);
+		store.setGameObjectZ(2, 47);
+		store.setGameObjectId(2, 53);
+		assertEquals(3L, store.getGameObjectRevision(), "unchanged identity preserves revision");
+		store.setGameObjectCount(3);
+		assertEquals(4L, store.getGameObjectRevision(), "count change advances revision");
+		store.setGameObjectCount(3);
+		assertEquals(4L, store.getGameObjectRevision(), "unchanged count preserves revision");
 
 		store.setWallObjectX(1, 53);
 		store.setWallObjectZ(1, 59);

@@ -130,8 +130,12 @@ def main() -> None:
     player = PLAYER.read_text(encoding="utf-8")
     death = extract(player, "public void killedBy(final Mob mob)", "private int getEquippedWeaponID()")
     require(
-        "teleport(getConfig().RESPAWN_LOCATION_X, getConfig().RESPAWN_LOCATION_Y, false);" in death,
+        "teleportToConfiguredRespawn(false);" in death,
         "death must continue through the normal respawn teleport lifecycle",
+    )
+    require(
+        "public void teleportToConfiguredRespawn(final boolean bubble)" in player,
+        "respawn must retain the configured legacy destination across layered authority",
     )
 
     packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")

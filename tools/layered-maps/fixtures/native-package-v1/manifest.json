@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "packageType": "layered-world",
+  "packageId": "rsc-remastered.native-loader-lab",
+  "packageVersion": "0.7.0",
+  "coordinateModel": "signed-layered-v1",
+  "storage": {
+    "sectorSize": 48,
+    "presentationChunkSize": 24
+  },
+  "worldSpaces": [
+    {
+      "id": "global",
+      "kind": "static"
+    }
+  ],
+  "levels": [
+    {
+      "worldSpace": "global",
+      "level": 0,
+      "name": "Surface",
+      "role": "surface"
+    },
+    {
+      "worldSpace": "global",
+      "level": -2,
+      "name": "Native deep-loader fixture",
+      "role": "deep-underground"
+    },
+    {
+      "worldSpace": "global",
+      "level": -3,
+      "name": "Expandable-depth proof",
+      "role": "expansion-proof"
+    }
+  ],
+  "terrainSectors": [
+    {
+      "worldSpace": "global",
+      "level": -2,
+      "sectorX": 9,
+      "sectorY": 12,
+      "encoding": "rle-layered-sector-v1",
+      "path": "terrain/deep-l2-x9-y12.json",
+      "sha256": "f27b322379e80b1c36e89971d5622b9c78c97a29fe817e4876473eaf3343cc3c"
+    },
+    {
+      "worldSpace": "global",
+      "level": -2,
+      "sectorX": 10,
+      "sectorY": 12,
+      "encoding": "uniform-layered-sector-v1",
+      "path": "terrain/deep-l2-x10-y12.json",
+      "sha256": "299e8fb0be9d46c3f65b9a57700df59a3e9b56306b2750555e3d87a5a89b91c0"
+    },
+    {
+      "worldSpace": "global",
+      "level": -3,
+      "sectorX": 9,
+      "sectorY": 12,
+      "encoding": "uniform-layered-sector-v1",
+      "path": "terrain/expansion-l3-x9-y12.json",
+      "sha256": "8554cdce2a8c3b56e5e9e138b6db4aaf9335868b2f38de971b6516c8f1611216"
+    }
+  ],
+  "placementSets": [
+    {
+      "id": "deep-fixture-entities",
+      "worldSpace": "global",
+      "level": -2,
+      "encoding": "layered-world-placements-v2",
+      "path": "placements/deep-l2-entities.json",
+      "sha256": "6957253edd28608ec8587429109068b8439d166c45a23106ad5cf473b4c79441"
+    }
+  ]
+}

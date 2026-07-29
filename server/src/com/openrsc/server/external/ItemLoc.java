@@ -1,6 +1,14 @@
 package com.openrsc.server.external;
 
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentity;
+import com.openrsc.server.model.world.coordinate.LayeredAuthoredPlacementIdentitySlot;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+
 public class ItemLoc {
+	private final LayeredAuthoredPlacementIdentitySlot
+		authoredPlacementIdentity =
+			new LayeredAuthoredPlacementIdentitySlot();
 	/**
 	 * Is item noted?
 	 */
@@ -43,6 +51,16 @@ public class ItemLoc {
 
 	public int getNoted() { return noted; }
 
+	public LayeredAuthoredPlacementIdentity
+		getAuthoredPlacementIdentity() {
+		return authoredPlacementIdentity.get();
+	}
+
+	public void assignAuthoredPlacementIdentity(
+		final LayeredAuthoredPlacementIdentity identity) {
+		authoredPlacementIdentity.assign(identity);
+	}
+
 	public int getAmount() {
 		return amount;
 	}
@@ -61,5 +79,9 @@ public class ItemLoc {
 
 	public int getY() {
 		return y;
+	}
+
+	public WorldLocation toWorldLocation() {
+		return LegacyPackedPointAdapter.fromPackedValues(x, y);
 	}
 }

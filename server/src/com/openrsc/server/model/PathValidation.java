@@ -4,11 +4,12 @@ import com.google.common.collect.Multimap;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.model.action.WalkToMobAction;
 import com.openrsc.server.model.entity.Mob;
-import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
-import com.openrsc.server.model.world.region.Region;
+import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.CollisionFlag;
 
@@ -50,9 +51,18 @@ public class PathValidation {
 	 * barriers such as fences still block the path
 	 */
 	public static boolean checkPath(World world, Point src, Point dest, boolean ignoreProjectileAllowed) {
-		return checkPath(world, src, dest, ignoreProjectileAllowed
+		DistanceCollisionMode collisionMode = ignoreProjectileAllowed
 			? DistanceCollisionMode.STRICT_TRAVERSAL
-			: DistanceCollisionMode.DEFAULT);
+			: DistanceCollisionMode.DEFAULT;
+		if (world.getServer().getConfig()
+				.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			return checkPath(
+				world,
+				LegacyPackedPointAdapter.fromLegacyPoint(src),
+				LegacyPackedPointAdapter.fromLegacyPoint(dest),
+				collisionMode);
+		}
+		return checkLegacyPath(world, src, dest, collisionMode);
 	}
 
 	/**
@@ -61,10 +71,74 @@ public class PathValidation {
 	 * transparent; walls, closed doors, fences, and void block.
 	 */
 	public static boolean checkHostileProjectilePath(World world, Point src, Point dest) {
-		return checkPath(world, src, dest, DistanceCollisionMode.HOSTILE_PROJECTILE);
+		if (world.getServer().getConfig()
+				.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			return checkPath(
+				world,
+				LegacyPackedPointAdapter.fromLegacyPoint(src),
+				LegacyPackedPointAdapter.fromLegacyPoint(dest),
+				DistanceCollisionMode.HOSTILE_PROJECTILE);
+		}
+		return checkLegacyPath(
+			world, src, dest, DistanceCollisionMode.HOSTILE_PROJECTILE);
 	}
 
-	private static boolean checkPath(World world, Point src, Point dest, DistanceCollisionMode collisionMode) {
+	public static boolean checkHostileProjectilePath(
+		final World world,
+		final WorldLocation src,
+		final WorldLocation dest) {
+		return checkPath(
+			world, src, dest, DistanceCollisionMode.HOSTILE_PROJECTILE);
+	}
+
+	public static boolean checkPath(
+		final World world,
+		final WorldLocation src,
+		final WorldLocation dest,
+		final boolean ignoreProjectileAllowed) {
+		return checkPath(
+			world,
+			src,
+			dest,
+			ignoreProjectileAllowed
+				? DistanceCollisionMode.STRICT_TRAVERSAL
+				: DistanceCollisionMode.DEFAULT);
+	}
+
+	private static boolean checkPath(
+		final World world,
+		final WorldLocation src,
+		final WorldLocation dest,
+		final DistanceCollisionMode collisionMode) {
+		if (!sameSpatialDomain(src, dest)) {
+			return false;
+		}
+		if (world.getRegionManager().hasNativeLayeredTerrain(src)) {
+			return world.getRegionManager().hasNativeLayeredTerrain(dest);
+		}
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(src)) {
+			try {
+				world.getRegionManager()
+					.toRuntimeCompatibilityPoint(src);
+				world.getRegionManager()
+					.toRuntimeCompatibilityPoint(dest);
+				return true;
+			} catch (IllegalArgumentException outsideFixture) {
+				return false;
+			}
+		}
+		return checkLegacyPath(
+			world,
+			world.getRegionManager().toRuntimeCompatibilityPoint(src),
+			world.getRegionManager().toRuntimeCompatibilityPoint(dest),
+			collisionMode);
+	}
+
+	private static boolean checkLegacyPath(
+		final World world,
+		final Point src,
+		final Point dest,
+		final DistanceCollisionMode collisionMode) {
 		final Deque<Point> path = new ArrayDeque<>();
 
 		final Point curPoint = new Point(src.getX(), src.getY());
@@ -140,6 +214,70 @@ public class PathValidation {
 
 	public static boolean checkAdjacentDistance(World world, int startX, int startY, int destX, int destY, boolean ignoreProjectileAllowed) {
 		return checkAdjacentDistance(world, startX, startY, destX, destY, ignoreProjectileAllowed, true);
+	}
+
+	public static boolean checkAdjacentDistance(
+		final Mob start,
+		final Mob destination,
+		final boolean ignoreProjectileAllowed,
+		final boolean wantDiagCheck) {
+		if (start.getWorld() != destination.getWorld()) {
+			return false;
+		}
+		if (start.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			return checkAdjacentDistance(
+				start.getWorld(),
+				start.getWorldLocation(),
+				destination.getWorldLocation(),
+				ignoreProjectileAllowed,
+				wantDiagCheck);
+		}
+		return checkAdjacentDistance(
+			start.getWorld(),
+			start.getX(),
+			start.getY(),
+			destination.getX(),
+			destination.getY(),
+			ignoreProjectileAllowed,
+			wantDiagCheck);
+	}
+
+	public static boolean checkAdjacentDistance(
+		final World world,
+		final WorldLocation start,
+		final WorldLocation destination,
+		final boolean ignoreProjectileAllowed,
+		final boolean wantDiagCheck) {
+		if (!sameSpatialDomain(start, destination)) {
+			return false;
+		}
+		if (world.getRegionManager().hasNativeLayeredTerrain(start)) {
+			return world.getRegionManager()
+				.hasNativeLayeredTerrain(destination);
+		}
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(start)) {
+			try {
+				world.getRegionManager()
+					.toRuntimeCompatibilityPoint(start);
+				world.getRegionManager()
+					.toRuntimeCompatibilityPoint(destination);
+				return true;
+			} catch (IllegalArgumentException outsideFixture) {
+				return false;
+			}
+		}
+		Point startPoint = world.getRegionManager()
+			.toRuntimeCompatibilityPoint(start);
+		Point destinationPoint = world.getRegionManager()
+			.toRuntimeCompatibilityPoint(destination);
+		return checkAdjacentDistance(
+			world,
+			startPoint.getX(),
+			startPoint.getY(),
+			destinationPoint.getX(),
+			destinationPoint.getY(),
+			ignoreProjectileAllowed,
+			wantDiagCheck);
 	}
 
 	/**
@@ -572,6 +710,31 @@ public class PathValidation {
 	}
 
 	public static boolean checkAdjacent(Mob mob, int startX, int startY, int destX, int destY) {
+		if (mob.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			WorldLocation owner = mob.getWorldLocation();
+			WorldLocation start;
+			WorldLocation destination;
+			try {
+				start =
+					mob.getWorld().getRegionManager()
+						.fromRuntimeCompatibilityPoint(
+						Point.location(startX, startY),
+						owner,
+						false);
+				destination =
+					mob.getWorld().getRegionManager()
+						.fromRuntimeCompatibilityPoint(
+						Point.location(destX, destY),
+						owner,
+						false);
+			} catch (IllegalArgumentException outsideScope) {
+				return false;
+			}
+			if (!sameSpatialDomain(owner, start)
+				|| !sameSpatialDomain(owner, destination)) {
+				return false;
+			}
+		}
 		int[] coords = {startX, startY};
 		boolean myXBlocked = false, myYBlocked = false, newXBlocked = false, newYBlocked = false;
 
@@ -664,13 +827,39 @@ public class PathValidation {
 		if (DEBUG && mob.isPlayer()) System.out.println("Pathing 13");
 
 		// if (mob.isPlayer()) // for debugging
+		if (mob.getWorld().getRegionManager().hasNativeLayeredTerrain(
+				mob.getWorldLocation())
+			|| LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(
+				mob.getWorldLocation())) {
+			return true;
+		}
 		return !PathValidation.checkDiagonalPassThroughCollisions(mob.getWorld(), startX, startY, destX, destY);
 		// return true; // for debugging
 
 	}
 
 	private static boolean checkBlocking(Mob mob, int x, int y, int bit, boolean isCurrentTile) {
-		TileValue t = mob.getWorld().getTile(x, y);
+		TileValue t;
+		WorldLocation owner = mob.getWorldLocation();
+		if (mob.getWorld().getRegionManager().hasNativeLayeredTerrain(owner)
+			|| LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(owner)) {
+			try {
+				t = mob.getWorld().getTile(
+					new WorldLocation(
+						owner.getWorldSpace(),
+						new com.openrsc.server.model.world.coordinate
+							.WorldCoordinate(
+								x,
+								y,
+								owner.getCoordinate().getLevel())));
+			} catch (IllegalArgumentException outsideFixture) {
+				return true;
+			} catch (IllegalStateException missingNativeTerrain) {
+				return true;
+			}
+		} else {
+			t = mob.getWorld().getTile(x, y);
+		}
 		/*boolean inFisherKingdom = (mob.getLocation().inBounds(415, 976, 423, 984)
 			|| mob.getLocation().inBounds(511, 976, 519, 984));*/
 		boolean blockedPath = PathValidation.isBlocking(t.traversalMask, (byte) bit, isCurrentTile);
@@ -685,25 +874,8 @@ public class PathValidation {
 	}
 
 	private static boolean isNpcBlockedByScenery(Npc npc, int x, int y) {
-		for (GameObject object : npc.getWorld().getRegionManager().getLocalObjects(npc)) {
-			if (!object.isScenery() || object.getGameObjectDef().getType() == 0) {
-				continue;
-			}
-			int width;
-			int height;
-			if (object.getDirection() == 0 || object.getDirection() == 4) {
-				width = object.getGameObjectDef().getWidth();
-				height = object.getGameObjectDef().getHeight();
-			} else {
-				width = object.getGameObjectDef().getHeight();
-				height = object.getGameObjectDef().getWidth();
-			}
-			if (x >= object.getX() && x < object.getX() + width
-				&& y >= object.getY() && y < object.getY() + height) {
-				return true;
-			}
-		}
-		return false;
+		return npc.getWorld().getRegionManager()
+			.isNpcBlockedByScenery(npc, x, y);
 	}
 
 	public static boolean isPlayerBlocking(Player localPlayer, int x, int y) {
@@ -715,8 +887,9 @@ public class PathValidation {
 				return false;
 			case 1: // Players can walk through other players, but only if they are not the last point on their path (authentic to 2018 RSC)
 			case 2: // Players act like solid objects. Possibly authentic to very early RSC, based on reports that players could stand in doors to block off buildings.
-				Region region = localPlayer.getWorld().getRegionManager().getRegion(Point.location(x, y));
-				Player player = region.getPlayer(x, y, localPlayer, false);
+				Player player = localPlayer.getWorld().getRegionManager()
+					.findInteractionPlayer(
+						x, y, localPlayer, false);
 
 				if (player != null) {
 					localPlayer.face(player);
@@ -728,14 +901,13 @@ public class PathValidation {
 	}
 
 	public static boolean isMobBlocking(Mob mob, int x, int y) {
-		Region region = mob.getWorld().getRegionManager().getRegion(Point.location(x, y));
-
 		if (mob.getX() == x && mob.getY() == y) {
 			return false;
 		}
 
 		// visible (&alive) npcs
-		Npc npc = region.getNpc(Point.location(x, y), mob);
+		Npc npc = mob.getWorld().getRegionManager()
+			.findInteractionNpc(Point.location(x, y), mob);
 
 		/*
 		 * NPC blocking config controlled
@@ -758,10 +930,19 @@ public class PathValidation {
 		}
 
 		if (mob.isNpc()) {
-			Player player = region.getPlayer(x, y, mob, false);
+			Player player = mob.getWorld().getRegionManager()
+				.findInteractionPlayer(x, y, mob, false);
 			return player != null;
 		}
 		return false;
+	}
+
+	private static boolean sameSpatialDomain(
+		final WorldLocation first,
+		final WorldLocation second) {
+		return first.getWorldSpace().equals(second.getWorldSpace())
+			&& first.getCoordinate().getLevel()
+				== second.getCoordinate().getLevel();
 	}
 
 }

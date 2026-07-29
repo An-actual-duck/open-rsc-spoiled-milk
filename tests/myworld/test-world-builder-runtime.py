@@ -60,6 +60,12 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                     import com.openrsc.server.database.DatabaseType;
                     public class ServerConfiguration {
                         public boolean WORLD_BUILDER_MODE;
+                        public boolean WORLD_BUILDER_LAYERED_REVIEW_MODE;
+                        public boolean WANT_LAYERED_PLAYER_LOCATION_AUTHORITY;
+                        public boolean WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
+                        public boolean WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
+                        public boolean WANT_LAYERED_NATIVE_TERRAIN_PACKAGE;
+                        public String LAYERED_NATIVE_WORLD_RUNTIME_PROFILE;
                         public String SERVER_BIND_ADDRESS;
                         public DatabaseType DB_TYPE;
                         public String DB_NAME;
@@ -107,8 +113,35 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         ordinary.DB_TYPE = DatabaseType.MYSQL;
                         ordinary.DB_NAME = "live";
                         WorldBuilderMode.validate(ordinary);
+                        ordinary.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE =
+                            "spoiled-milk-builder-draft";
+                        boolean publicDraftRefused = false;
+                        try {
+                            WorldBuilderMode.validate(ordinary);
+                        } catch (IllegalArgumentException expected) {
+                            publicDraftRefused = expected.getMessage().contains(
+                                "restricted to isolated World Builder mode");
+                        }
+                        require(publicDraftRefused, "public Builder draft profile");
 
                         WorldBuilderMode.validate(config(true, "127.0.0.1"));
+                        ServerConfiguration layered = config(true, "127.0.0.1");
+                        layered.WORLD_BUILDER_LAYERED_REVIEW_MODE = true;
+                        boolean incompleteLayeredRefused = false;
+                        try {
+                            WorldBuilderMode.validate(layered);
+                        } catch (IllegalArgumentException expected) {
+                            incompleteLayeredRefused = expected.getMessage().contains(
+                                "complete Spoiled Milk native package authority");
+                        }
+                        require(incompleteLayeredRefused, "incomplete layered Builder authority");
+                        layered.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY = true;
+                        layered.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY = true;
+                        layered.WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY = true;
+                        layered.WANT_LAYERED_NATIVE_TERRAIN_PACKAGE = true;
+                        layered.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE =
+                            "spoiled-milk-builder-draft";
+                        WorldBuilderMode.validate(layered);
                         require(WorldBuilderMode.isBuilderAccount("builder"), "identity case");
                         require(!WorldBuilderMode.isBuilderAccount("DevDuck"), "identity scope");
                         require(WorldBuilderMode.isLoopbackAddress("::1"), "IPv6 loopback");
@@ -196,6 +229,31 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         require("0123456789ab".equals(profile.sourceRevisionShort()), "source revision");
                         require("127.0.0.1".equals(Config.SERVER_IP) && Config.SERVER_PORT == 43615,
                             "explicit connection");
+
+                        System.setProperty(WorldBuilderClientProfile.LAYERED_REVIEW_PROPERTY, "true");
+                        System.setProperty(WorldBuilderClientProfile.LAYERED_PACKAGE_ID_PROPERTY,
+                            "rsc-remastered.spoiled-milk-layered-world");
+                        System.setProperty(WorldBuilderClientProfile.LAYERED_PACKAGE_VERSION_PROPERTY, "0.5.0");
+                        System.setProperty(WorldBuilderClientProfile.LAYERED_MANIFEST_SHA256_PROPERTY,
+                            "f914d93e7abcf40dc281c06df5010269c7a9ce4fe4a16aaa6ae11f0d90a14306");
+                        System.setProperty(WorldBuilderClientProfile.LAYERED_WORLD_SPACE_PROPERTY, "global");
+                        System.setProperty(WorldBuilderClientProfile.LAYERED_LEVELS_PROPERTY, "-2,-1,0,1,2,10");
+                        profile = WorldBuilderClientProfile.initializeFromSystemProperties();
+                        require(profile.isLayeredReview(), "layered review enabled");
+                        require(!profile.isLayeredTerrainDraft(), "review is not writable by default");
+                        require(profile.declaresLayer(-2)
+                            && profile.declaresLayer(-1)
+                            && profile.declaresLayer(2)
+                            && profile.declaresLayer(10)
+                            && !profile.declaresLayer(-3), "declared signed levels");
+                        require("-2,-1,0,1,2,10".equals(
+                            profile.layeredLevelsLabel()), "level label");
+                        require("f914d93e7abcf".equals(
+                            profile.layeredManifestShort()), "manifest identity");
+                        System.setProperty(
+                            WorldBuilderClientProfile.LAYERED_TERRAIN_DRAFT_PROPERTY, "true");
+                        profile = WorldBuilderClientProfile.initializeFromSystemProperties();
+                        require(profile.isLayeredTerrainDraft(), "terrain draft enabled");
 
                         expectRefusal("0.0.0.0", "43615", args[0]);
                         expectRefusal("127.0.0.1", "0", args[0]);
@@ -314,8 +372,21 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
             ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
         ).read_text()
         client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
+        client_world = (
+            ROOT / "Client_Base/src/orsc/graphics/three/World.java"
+        ).read_text()
+        editor = (
+            ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java"
+        ).read_text()
+        editor_handler = (
+            ROOT / "server/src/com/openrsc/server/net/rsc/handlers/WorldEditorHandler.java"
+        ).read_text()
+        parser = (
+            ROOT / "server/src/com/openrsc/server/net/rsc/parsers/impl/PayloadCustomParser.java"
+        ).read_text()
 
         self.assertIn('tryReadBool("world_builder_mode").orElse(false)', config)
+        self.assertIn('tryReadBool("world_builder_layered_review_mode").orElse(false)', config)
         self.assertLess(server.index("WorldBuilderMode.validate(getConfig())"), server.index("packetFilter ="))
         self.assertIn("WorldEditStorageContext.create(getConfig())", server)
         self.assertIn("WorldBuilderAccountProvisioner.provision(this)", server)
@@ -329,11 +400,35 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
         self.assertIn("isAndroid() || !WorldBuilderClientProfile.isEnabled()", client)
         self.assertIn("profile.applyConnection()", client)
         self.assertIn("this.autoLoginTimeout = 3", client)
+        self.assertIn("getLogicalPlayerY", client)
+        self.assertIn('\"buildergoto \" + worldX + \" \" + worldY + \" \" + level', client)
+        self.assertIn("Layered package review is read-only", editor)
+        self.assertIn("declaresLayer(level)", editor)
+        self.assertIn("WORLD_BUILDER_LAYERED_REVIEW_MODE", editor_handler)
+        self.assertIn("inspectNativeTerrain(p,location)", editor_handler)
+        self.assertIn("editor.plane=packet.readByte();", parser)
+        self.assertIn("layeredBuilderGoTo(player, command, args)", command)
+        self.assertIn("isLayeredBuilderMutationCommand(command)", command)
         supervisor = (
             ROOT / "tools/world-builder/src/com/openrsc/worldbuilder/WorldBuilderProcessSupervisor.java"
         ).read_text()
+        layered_package = (
+            ROOT / "tools/world-builder/src/com/openrsc/worldbuilder/WorldBuilderLayeredPackage.java"
+        ).read_text()
+        exporter = (
+            ROOT / "tools/world-builder/src/com/openrsc/worldbuilder/WorldBuilderExporter.java"
+        ).read_text()
         self.assertIn("-Dopenrsc.worldBuilderWorkspaceRoot=", supervisor)
         self.assertIn("-Dopenrsc.worldBuilderSourceRevision=", supervisor)
+        self.assertIn("-Dopenrsc.worldBuilderLayeredReview=true", supervisor)
+        self.assertIn("-Dopenrsc.worldBuilderLayeredTerrainDraft=", supervisor)
+        self.assertIn("tile.groundOverlay = (byte) 8;", client_world)
+        self.assertIn("isBuilderCreatedLevel(snapshot.getLevel())", client_world)
+        self.assertIn("tile.editorPaintedOverlay = true;", client_world)
+        self.assertIn("WorldBuilderLayeredReview.readIfPresent(workspace)", supervisor)
+        self.assertIn("rsc-remastered.spoiled-milk-layered-world", layered_package)
+        self.assertIn("Layered package contains missing or untracked files", layered_package)
+        self.assertIn("Layered World Builder review projects are read-only", exporter)
         self.assertNotIn('workspace.resolve("server/run/world-builder")', supervisor)
 
 

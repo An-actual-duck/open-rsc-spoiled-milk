@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v29.schema.json",
+  "title": "Layered Map Parity Event v29",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "tileNeighborhood",
+    "adjacentCollision", "recentTraversal", "regionResidency",
+    "interestOwnership", "regionRetirement", "regionRetirementDecisions",
+    "packedRegionRetirementReadiness", "packedRegionRetirementSafety",
+    "packedRegionAuthoredConstruction", "packedRegionAuthoredProvenance",
+    "packedRegionAuthoredReconstruction",
+    "packedRegionAuthoredReconstructionCohort",
+    "packedRegionAuthoredReconstructionCohortAttribution",
+    "packedRegionAuthoredReconstructionTopology",
+    "packedRegionAuthoredReconstructionDependencySemantics",
+    "packedRegionActiveNpcResidency", "packedRegionActiveNpcContainment",
+    "packedRegionActiveNpcBoundaryRequirements",
+    "packedRegionRetirementRefinement",
+    "packedRegionRetirementRefinementReassessment", "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v29"},
+    "eventType": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/eventType"},
+    "sequence": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/sequence"},
+    "timestampEpochMillis": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/timestampEpochMillis"},
+    "player": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/player"},
+    "label": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/label"},
+    "teleported": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/teleported"},
+    "from": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/from"},
+    "to": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/to"},
+    "delta": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/delta"},
+    "interestDelta": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/interestDelta"},
+    "packedCoverage": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedCoverage"},
+    "tileSnapshot": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/tileSnapshot"},
+    "tileParity": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/tileParity"},
+    "tileNeighborhood": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/tileNeighborhood"},
+    "adjacentCollision": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/adjacentCollision"},
+    "recentTraversal": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/recentTraversal"},
+    "regionResidency": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/regionResidency"},
+    "interestOwnership": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/interestOwnership"},
+    "regionRetirement": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/regionRetirement"},
+    "regionRetirementDecisions": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/regionRetirementDecisions"},
+    "packedRegionRetirementReadiness": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionRetirementReadiness"},
+    "packedRegionRetirementSafety": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionRetirementSafety"},
+    "packedRegionAuthoredConstruction": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionAuthoredConstruction"},
+    "packedRegionAuthoredProvenance": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionAuthoredProvenance"},
+    "packedRegionAuthoredReconstruction": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionAuthoredReconstruction"},
+    "packedRegionAuthoredReconstructionCohort": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionAuthoredReconstructionCohort"},
+    "packedRegionAuthoredReconstructionCohortAttribution": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionAuthoredReconstructionCohortAttribution"},
+    "packedRegionAuthoredReconstructionTopology": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionAuthoredReconstructionTopology"},
+    "packedRegionAuthoredReconstructionDependencySemantics": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionAuthoredReconstructionDependencySemantics"},
+    "packedRegionActiveNpcResidency": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionActiveNpcResidency"},
+    "packedRegionActiveNpcContainment": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionActiveNpcContainment"},
+    "packedRegionActiveNpcBoundaryRequirements": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionActiveNpcBoundaryRequirements"},
+    "packedRegionRetirementRefinement": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/packedRegionRetirementRefinement"},
+    "packedRegionRetirementRefinementReassessment": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/reassessmentAttempt"}
+      ]
+    },
+    "roundTripExact": {"$ref": "layered-map-parity-event-v28.schema.json#/properties/roundTripExact"}
+  },
+  "$defs": {
+    "nonNegativeInteger": {"type": "integer", "minimum": 0},
+    "boundedCount": {"type": "integer", "minimum": 0, "maximum": 8192},
+    "reassessmentAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "attempted", "deferredNotNewer", "previousGeneration",
+        "previousSafetyObservedAtTick", "previousCensusObservedAtTick",
+        "pendingBeforeCandidateSourceCount",
+        "pendingAfterCandidateSourceCount", "pendingRetained", "reassessment"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "DEFERRED_NOT_NEWER", "STABLE", "EXPANDED", "HARD_BLOCKED",
+            "EXPANDED_AND_HARD_BLOCKED"
+          ]
+        },
+        "attempted": {"const": true},
+        "deferredNotNewer": {"type": "boolean"},
+        "previousGeneration": {"type": "integer", "minimum": 1},
+        "previousSafetyObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "previousCensusObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "pendingBeforeCandidateSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "pendingAfterCandidateSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "pendingRetained": {"type": "boolean"},
+        "reassessment": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/reassessmentResult"}
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "DEFERRED_NOT_NEWER"}}},
+          "then": {"properties": {
+            "deferredNotNewer": {"const": true},
+            "pendingRetained": {"const": true},
+            "reassessment": {"type": "null"}
+          }},
+          "else": {"properties": {
+            "deferredNotNewer": {"const": false},
+            "reassessment": {"type": "object"}
+          }}
+        },
+        {
+          "if": {"properties": {"status": {"const": "STABLE"}}},
+          "then": {"properties": {"pendingRetained": {"const": false}}}
+        },
+        {
+          "if": {"properties": {"status": {"enum": [
+            "EXPANDED", "HARD_BLOCKED", "EXPANDED_AND_HARD_BLOCKED"
+          ]}}},
+          "then": {"properties": {"pendingRetained": {"const": true}}}
+        }
+      ]
+    },
+    "reassessmentResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation", "previousSafetyObservedAtTick",
+        "previousCensusObservedAtTick", "reassessmentSafetyObservedAtTick",
+        "reassessmentCensusObservedAtTick", "previousCandidateSourceCount",
+        "reassessedSourceCount", "retainedCandidateSourceCount",
+        "nextCandidateSourceCount", "newCandidateSourceCount",
+        "nextExternalSupportRequirementSourceCount",
+        "hardBlockingConditionCount", "hardBlockingEvidenceCount",
+        "lifecycleReadyEvidenceSourceCount", "retirementReadinessEvidence",
+        "freshEvidenceAligned", "candidateSetStableAtObservation",
+        "furtherRefinementRequired", "nonExpandableHardBlockers",
+        "refinementConvergedAtObservation",
+        "allReassessedSourcesLifecycleReadyEvidence", "pointInTimeOnly",
+        "candidateSelectionMutated", "fixedPointLifecycleClosureProved",
+        "loadRequest", "entityRegistry", "arrivalGate",
+        "retirementCommitToken", "lifecycleAuthority", "freshSafety",
+        "newCandidates", "nextProposal"
+      ],
+      "properties": {
+        "generation": {"type": "integer", "minimum": 1},
+        "previousSafetyObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "previousCensusObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "reassessmentSafetyObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "reassessmentCensusObservedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "previousCandidateSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "reassessedSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "retainedCandidateSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "nextCandidateSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "newCandidateSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "nextExternalSupportRequirementSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "hardBlockingConditionCount": {"type": "integer", "minimum": 0, "maximum": 4},
+        "hardBlockingEvidenceCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "lifecycleReadyEvidenceSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "retirementReadinessEvidence": {"const": false},
+        "freshEvidenceAligned": {"const": true},
+        "candidateSetStableAtObservation": {"type": "boolean"},
+        "furtherRefinementRequired": {"type": "boolean"},
+        "nonExpandableHardBlockers": {"type": "boolean"},
+        "refinementConvergedAtObservation": {"type": "boolean"},
+        "allReassessedSourcesLifecycleReadyEvidence": {"type": "boolean"},
+        "pointInTimeOnly": {"const": true},
+        "candidateSelectionMutated": {"const": false},
+        "fixedPointLifecycleClosureProved": {"const": false},
+        "loadRequest": {"const": false},
+        "entityRegistry": {"const": false},
+        "arrivalGate": {"const": false},
+        "retirementCommitToken": {"const": false},
+        "lifecycleAuthority": {"const": false},
+        "freshSafety": {"$ref": "#/$defs/diagnosticRetirementSafety"},
+        "newCandidates": {
+          "type": "array",
+          "maxItems": 8192,
+          "items": {"$ref": "#/$defs/packedSourceCoordinate"}
+        },
+        "nextProposal": {"$ref": "layered-map-parity-event-v28.schema.json#/$defs/retirementRefinementProposal"}
+      }
+    },
+    "packedSourceCoordinate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packedRegionX", "packedRegionY"],
+      "properties": {
+        "packedRegionX": {"$ref": "#/$defs/nonNegativeInteger"},
+        "packedRegionY": {"$ref": "#/$defs/nonNegativeInteger"}
+      }
+    },
+    "diagnosticRetirementSafety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observedAtTick", "readinessObservedAtTick", "ownershipVersion",
+        "residencyMirrorVersion", "sourceCount", "contentQuiescentSourceCount",
+        "lifecycleReadySourceCount", "blockedSourceCount", "entries"
+      ],
+      "properties": {
+        "observedAtTick": {"$ref": "#/$defs/nonNegativeInteger"},
+        "readinessObservedAtTick": {"const": -1},
+        "ownershipVersion": {"const": -1},
+        "residencyMirrorVersion": {"const": -1},
+        "sourceCount": {"$ref": "#/$defs/boundedCount"},
+        "contentQuiescentSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "lifecycleReadySourceCount": {"const": 0},
+        "blockedSourceCount": {"$ref": "#/$defs/boundedCount"},
+        "entries": {
+          "type": "array",
+          "maxItems": 8192,
+          "items": {"$ref": "#/$defs/diagnosticRetirementSafetyEntry"}
+        }
+      }
+    },
+    "diagnosticRetirementSafetyEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packedRegionX", "packedRegionY", "readinessState", "resident",
+        "tileStorageAvailable", "regionReloadSupported", "playerCount",
+        "npcCount", "objectCount", "groundItemCount", "contentQuiescent",
+        "lifecycleReady", "blockers"
+      ],
+      "properties": {
+        "packedRegionX": {"$ref": "#/$defs/nonNegativeInteger"},
+        "packedRegionY": {"$ref": "#/$defs/nonNegativeInteger"},
+        "readinessState": {"const": "DIAGNOSTIC_SELECTION_ONLY"},
+        "resident": {"type": "boolean"},
+        "tileStorageAvailable": {"type": "boolean"},
+        "regionReloadSupported": {"type": "boolean"},
+        "playerCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "npcCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "objectCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "groundItemCount": {"$ref": "#/$defs/nonNegativeInteger"},
+        "contentQuiescent": {"type": "boolean"},
+        "lifecycleReady": {"const": false},
+        "blockers": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {"enum": [
+            "READINESS_NOT_READY", "SOURCE_NOT_RESIDENT",
+            "TILE_STORAGE_UNAVAILABLE", "PLAYERS_PRESENT", "NPCS_PRESENT",
+            "OBJECTS_PRESENT", "GROUND_ITEMS_PRESENT",
+            "RELOAD_PATH_UNAVAILABLE"
+          ]}
+        }
+      }
+    }
+  }
+}

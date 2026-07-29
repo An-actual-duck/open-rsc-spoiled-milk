@@ -1,0 +1,26 @@
+{
+  "explicitTransitionSource": {
+    "edgeCount": 20,
+    "normalizedEdgeCount": 20,
+    "path": "server/conf/server/defs/extras/ObjectTelePoints.xml",
+    "sha256": "957b32b927860170905460b9d2a5f6377256ce493503b62b738175fdda68f4ed",
+    "unresolvedEdgeCount": 0
+  },
+  "inventoryFingerprintSha256": "2e93bf57d37d86e506cd042eef939ed37acb8dcf3e646ab04f444cb1dd1e65c3",
+  "manifestType": "rsc-remastered-preservation-transition-compatibility-lock",
+  "parentBaselineFingerprintSha256": "ffbf27806fbe8fb3287b1d9543b355deebf0e22a329aec13885a16c7399fb86a",
+  "parentBaselineId": "rsc-remastered-preservation-r64-v1",
+  "runtimeBridgeSourceSet": {
+    "sourceFileCount": 4,
+    "sourceSetFingerprintSha256": "3c35d3d0764ffb7022d86c5964df06f648b46de2e1143d68b7da64d6901b5a2c"
+  },
+  "schemaVersion": 1,
+  "scriptedSourceSet": {
+    "locationMutationCallCount": 9,
+    "sourceFileCount": 107,
+    "sourceRoot": "server/plugins/com/openrsc/server/plugins/authentic",
+    "sourceSetFingerprintSha256": "3e7034d63a78680d84d90abb3501f285fc0ea6c979d7afec02d84159cb5ed359",
+    "telePointReferenceCount": 2,
+    "teleportCallCount": 693
+  }
+}

@@ -71,7 +71,9 @@ public class Bankers implements TalkNpcTrigger, OpNpcTrigger, UseNpcTrigger {
 			}
 
 			// bankers outside of bank should not allow you to open bank.
-			if (!npc.getLocation().isInBank(config().BASED_MAP_DATA)) {
+			if (!npc.getLocation().isInBank(
+					config().BASED_MAP_DATA,
+					npc.getWorldLocation())) {
 				npc.walkToRespawn(); // not known to be authentic.
 				return;
 			}

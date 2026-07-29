@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rsc-remastered.invalid/schema/layered-world-placements-v3.schema.json",
+  "title": "Native Layered World Placements v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "encoding",
+    "worldSpace",
+    "level",
+    "npcs",
+    "groundItems",
+    "scenery",
+    "boundaries"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 3},
+    "encoding": {"const": "layered-world-placements-v3"},
+    "worldSpace": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "level": {
+      "type": "integer",
+      "minimum": -2147483648,
+      "maximum": 2147483647
+    },
+    "npcs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["placementId", "npcId", "start", "roamBounds"],
+        "properties": {
+          "placementId": {"$ref": "#/$defs/placementId"},
+          "npcId": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+          "start": {"$ref": "#/$defs/position"},
+          "roamBounds": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["minimum", "maximum"],
+            "properties": {
+              "minimum": {"$ref": "#/$defs/position"},
+              "maximum": {"$ref": "#/$defs/position"}
+            }
+          }
+        }
+      }
+    },
+    "groundItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "placementId",
+          "itemId",
+          "position",
+          "amount",
+          "respawnSeconds"
+        ],
+        "properties": {
+          "placementId": {"$ref": "#/$defs/placementId"},
+          "itemId": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+          "position": {"$ref": "#/$defs/position"},
+          "amount": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+          "respawnSeconds": {"type": "integer", "minimum": 1, "maximum": 86400}
+        }
+      }
+    },
+    "scenery": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["placementId", "sceneryId", "position", "direction"],
+        "properties": {
+          "placementId": {"$ref": "#/$defs/placementId"},
+          "sceneryId": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+          "position": {"$ref": "#/$defs/position"},
+          "direction": {"type": "integer", "minimum": 0, "maximum": 8}
+        }
+      }
+    },
+    "boundaries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["placementId", "boundaryId", "position", "direction"],
+        "properties": {
+          "placementId": {"$ref": "#/$defs/placementId"},
+          "boundaryId": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+          "position": {"$ref": "#/$defs/position"},
+          "direction": {"type": "integer", "minimum": 0, "maximum": 7}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "placementId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        },
+        "y": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        }
+      }
+    }
+  }
+}

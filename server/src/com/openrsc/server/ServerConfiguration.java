@@ -88,6 +88,19 @@ public class ServerConfiguration {
 	public boolean WANT_SYNC_SCENE_BASELINE;
 	public boolean WANT_SYNC_MOVEMENT_SNAPSHOT;
 	public boolean WANT_MOVEMENT_STUTTER_DIAGNOSTICS;
+	public boolean WANT_LAYERED_MAP_PARITY_OBSERVER;
+	public boolean WANT_LAYERED_PLAYER_LOCATION_AUTHORITY;
+	public boolean WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
+	public boolean WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
+	public boolean WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE;
+	public boolean WANT_LAYERED_NATIVE_TERRAIN_PACKAGE;
+	public boolean WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY;
+	public boolean WANT_LAYERED_NATIVE_TERRAIN_READINESS;
+	public boolean WANT_LAYERED_NATIVE_TERRAIN_PREDICTION;
+	public boolean WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY;
+	public boolean WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION;
+	public String LAYERED_NATIVE_TERRAIN_PACKAGE_PATH;
+	public String LAYERED_NATIVE_WORLD_RUNTIME_PROFILE;
 	public int MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS;
 	public int MOVEMENT_STUTTER_POLL_OUTLIER_MS;
 	public int MOVEMENT_STUTTER_TICK_OUTLIER_MS;
@@ -275,6 +288,7 @@ public class ServerConfiguration {
 	/** Disabled-by-default gate for the desktop in-game world editor foundation. */
 	public boolean ALLOW_IN_GAME_WORLD_EDITOR;
 	public boolean WORLD_BUILDER_MODE;
+	public boolean WORLD_BUILDER_LAYERED_REVIEW_MODE;
 	public boolean LENIENT_CONTACT_DETAILS;
 	//loosened checks
 	public boolean LOOSE_SHALLOW_WATER_CHECK;
@@ -506,6 +520,73 @@ public class ServerConfiguration {
 			"OPENRSC_MOVEMENT_STUTTER_DIAGNOSTICS",
 			"want_movement_stutter_diagnostics",
 			false);
+		WANT_LAYERED_MAP_PARITY_OBSERVER = readBoolSystemEnvConfig(
+			"openrsc.layeredMapParityObserver",
+			"OPENRSC_LAYERED_MAP_PARITY_OBSERVER",
+			"want_layered_map_parity_observer",
+			false);
+		WANT_LAYERED_PLAYER_LOCATION_AUTHORITY = readBoolSystemEnvConfig(
+			"openrsc.layeredPlayerLocationAuthority",
+			"OPENRSC_LAYERED_PLAYER_LOCATION_AUTHORITY",
+			"want_layered_player_location_authority",
+			false);
+		WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY = readBoolSystemEnvConfig(
+			"openrsc.layeredSpatialRuntimeAuthority",
+			"OPENRSC_LAYERED_SPATIAL_RUNTIME_AUTHORITY",
+			"want_layered_spatial_runtime_authority",
+			false);
+		WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY = readBoolSystemEnvConfig(
+			"openrsc.layeredProtocolClientAuthority",
+			"OPENRSC_LAYERED_PROTOCOL_CLIENT_AUTHORITY",
+			"want_layered_protocol_client_authority",
+			false);
+		WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE = readBoolSystemEnvConfig(
+			"openrsc.layeredSyntheticDeepFixture",
+			"OPENRSC_LAYERED_SYNTHETIC_DEEP_FIXTURE",
+			"want_layered_synthetic_deep_fixture",
+			false);
+		WANT_LAYERED_NATIVE_TERRAIN_PACKAGE = readBoolSystemEnvConfig(
+			"openrsc.layeredNativeTerrainPackage",
+			"OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE",
+			"want_layered_native_terrain_package",
+			false);
+		WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY = readBoolSystemEnvConfig(
+			"openrsc.layeredNativeTerrainResidency",
+			"OPENRSC_LAYERED_NATIVE_TERRAIN_RESIDENCY",
+			"want_layered_native_terrain_residency",
+			false);
+		WANT_LAYERED_NATIVE_TERRAIN_READINESS = readBoolSystemEnvConfig(
+			"openrsc.layeredNativeTerrainReadiness",
+			"OPENRSC_LAYERED_NATIVE_TERRAIN_READINESS",
+			"want_layered_native_terrain_readiness",
+			false);
+		WANT_LAYERED_NATIVE_TERRAIN_PREDICTION = readBoolSystemEnvConfig(
+			"openrsc.layeredNativeTerrainPrediction",
+			"OPENRSC_LAYERED_NATIVE_TERRAIN_PREDICTION",
+			"want_layered_native_terrain_prediction",
+			false);
+		WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY =
+			readBoolSystemEnvConfig(
+				"openrsc.layeredNativeTerrainSymmetricResidency",
+				"OPENRSC_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY",
+				"want_layered_native_terrain_symmetric_residency",
+				false);
+		WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION =
+			readBoolSystemEnvConfig(
+				"openrsc.layeredNativeTerrainAtomicActivation",
+				"OPENRSC_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION",
+				"want_layered_native_terrain_atomic_activation",
+				false);
+		LAYERED_NATIVE_TERRAIN_PACKAGE_PATH = readStringSystemEnvConfig(
+			"openrsc.layeredNativeTerrainPackagePath",
+			"OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH",
+			"layered_native_terrain_package_path",
+			"");
+		LAYERED_NATIVE_WORLD_RUNTIME_PROFILE = readStringSystemEnvConfig(
+			"openrsc.layeredNativeWorldRuntimeProfile",
+			"OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE",
+			"layered_native_world_runtime_profile",
+			"fixture-additive");
 		MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS = Math.max(5, readIntSystemEnvConfig(
 			"openrsc.movementStutterDiagnosticSummarySeconds",
 			"OPENRSC_MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS",
@@ -621,6 +702,8 @@ public class ServerConfiguration {
 		ALLOW_RESIZE = tryReadBool("allow_resize").orElse(false);
 		ALLOW_IN_GAME_WORLD_EDITOR = tryReadBool("allow_in_game_world_editor").orElse(false);
 		WORLD_BUILDER_MODE = tryReadBool("world_builder_mode").orElse(false);
+		WORLD_BUILDER_LAYERED_REVIEW_MODE =
+			tryReadBool("world_builder_layered_review_mode").orElse(false);
 		LENIENT_CONTACT_DETAILS = tryReadBool("lenient_contact_details").orElse(false);
 		CHAR_NAME_CAN_CONTAIN_MOD = tryReadBool("char_name_can_contain_mod").orElse(false);
 		CHAR_NAME_CAN_EQUAL_GLOBAL = tryReadBool("char_name_can_equal_global").orElse(false);
@@ -992,6 +1075,18 @@ public class ServerConfiguration {
 			return Boolean.parseBoolean(systemValue.trim());
 		}
 		return readBoolEnvFirst(envKey, configKey, defaultValue);
+	}
+
+	private String readStringSystemEnvConfig(
+		String systemKey,
+		String envKey,
+		String configKey,
+		String defaultValue) {
+		String systemValue = System.getProperty(systemKey);
+		if (systemValue != null && !systemValue.trim().isEmpty()) {
+			return systemValue.trim();
+		}
+		return readStringEnvFirst(envKey, configKey, defaultValue);
 	}
 
 	private int readIntSystemEnvConfig(String systemKey, String envKey, String configKey, int defaultValue) {

@@ -92,8 +92,10 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_FRIEND_UPDATE, 149);
 		put(OpcodeOut.SEND_BANK_PRESET, 150); // custom
 		put(OpcodeOut.SEND_WORLD_EDITOR, 151); // custom, versioned editor envelope
-		put(OpcodeOut.SEND_HISCORES, 155); // custom
+		put(OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, 157); // custom, versioned layered scene scope
 		put(OpcodeOut.SEND_EQUIPMENT_STATS, 153);
+		put(OpcodeOut.SEND_LAYERED_TERRAIN_STAGE, 154); // custom, cache-only predicted terrain
+		put(OpcodeOut.SEND_HISCORES, 155); // custom
 		put(OpcodeOut.SEND_STATS, 156);
 		put(OpcodeOut.SEND_STAT, 159);
 		put(OpcodeOut.SEND_TRADE_OTHER_ACCEPTED, 162);
@@ -146,6 +148,109 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 
 		if (builder != null && possiblyValid) {
 			switch (payload.getOpcode()) {
+				case SEND_LAYERED_SCENE_CONTEXT:
+					LayeredSceneContextStruct context =
+						(LayeredSceneContextStruct) payload;
+					builder.writeByte((byte) context.protocolVersion);
+					builder.writeInt(context.sequence);
+					builder.writeInt(context.serverTick);
+					builder.writeString(context.worldSpace);
+					if (context.protocolVersion >= 2) {
+						builder.writeString(context.projectionId);
+					}
+					builder.writeInt(context.logicalX);
+					builder.writeInt(context.logicalY);
+					builder.writeInt(context.logicalLevel);
+					builder.writeShort(context.legacyX);
+					builder.writeShort(context.legacyY);
+					if (context.protocolVersion >= 3) {
+						builder.writeString(context.nativePackageId);
+						builder.writeString(context.nativePackageVersion);
+						builder.writeString(context.nativeManifestSha256);
+						builder.writeByte(
+							(byte) context.nativePresentationChunkSize);
+					}
+					if (context.protocolVersion == 3) {
+						builder.writeInt(context.nativeSectorX);
+						builder.writeInt(context.nativeSectorY);
+						builder.writeString(context.nativeEncoding);
+						builder.writeString(context.nativePayloadSha256);
+						builder.writeByte((byte) context.nativeElevation);
+						builder.writeByte((byte) context.nativeTexture);
+						builder.writeByte((byte) context.nativeOverlay);
+						builder.writeByte((byte) context.nativeRoof);
+						builder.writeByte((byte) context.nativeVerticalWall);
+						builder.writeByte((byte) context.nativeHorizontalWall);
+						builder.writeInt(context.nativeDiagonalWall);
+					} else if (context.protocolVersion >= 4) {
+						builder.writeInt(context.nativeCurrentChunkX);
+						builder.writeInt(context.nativeCurrentChunkY);
+						builder.writeByte((byte) context.nativeChunkRadius);
+						builder.writeByte((byte) context.nativeChunks.size());
+						for (LayeredSceneTerrainChunkStruct chunk
+							: context.nativeChunks) {
+							builder.writeInt(chunk.chunkX);
+							builder.writeInt(chunk.chunkY);
+							builder.writeByte(chunk.available ? 1 : 0);
+							if (chunk.available) {
+								builder.writeInt(chunk.sourceSectorX);
+								builder.writeInt(chunk.sourceSectorY);
+								builder.writeString(chunk.sourceEncoding);
+								builder.writeString(chunk.sourcePayloadSha256);
+								if (context.protocolVersion >= 6) {
+									builder.writeByte(
+										chunk.payloadPresent ? 1 : 0);
+								}
+								if (context.protocolVersion < 6
+									|| chunk.payloadPresent) {
+									builder.writeShort(chunk.tileBytes.length);
+									builder.write(chunk.tileBytes);
+								}
+							}
+						}
+					}
+					break;
+
+				case SEND_LAYERED_TERRAIN_STAGE:
+					LayeredTerrainStageStruct stage =
+						(LayeredTerrainStageStruct) payload;
+					builder.writeByte((byte) stage.protocolVersion);
+					builder.writeInt(stage.sequence);
+					builder.writeInt(stage.contextSequence);
+					builder.writeInt(stage.serverTick);
+					builder.writeString(stage.worldSpace);
+					builder.writeInt(stage.logicalLevel);
+					builder.writeString(stage.nativePackageId);
+					builder.writeString(stage.nativePackageVersion);
+					builder.writeString(stage.nativeManifestSha256);
+					builder.writeByte(
+						(byte) stage.nativePresentationChunkSize);
+					builder.writeInt(stage.nativeCurrentChunkX);
+					builder.writeInt(stage.nativeCurrentChunkY);
+					builder.writeByte((byte) stage.nativeChunkRadius);
+					builder.writeByte((byte) stage.nativeChunks.size());
+					for (LayeredSceneTerrainChunkStruct chunk
+						: stage.nativeChunks) {
+						builder.writeInt(chunk.chunkX);
+						builder.writeInt(chunk.chunkY);
+						builder.writeByte(chunk.available ? 1 : 0);
+						if (chunk.available) {
+							builder.writeInt(chunk.sourceSectorX);
+							builder.writeInt(chunk.sourceSectorY);
+							builder.writeString(chunk.sourceEncoding);
+							builder.writeString(
+								chunk.sourcePayloadSha256);
+							builder.writeByte(
+								chunk.payloadPresent ? 1 : 0);
+							if (chunk.payloadPresent) {
+								builder.writeShort(
+									chunk.tileBytes.length);
+								builder.write(chunk.tileBytes);
+							}
+						}
+					}
+					break;
+
 				case SEND_WORLD_EDITOR:
 					WorldEditorStruct editor = (WorldEditorStruct) payload;
 					builder.writeByte((byte) editor.type);
@@ -792,6 +897,9 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 				case SEND_MOVEMENT_SNAPSHOT:
 					MovementSnapshotStruct movementSnapshot = (MovementSnapshotStruct) payload;
 					builder.writeByte((byte) movementSnapshot.protocolVersion);
+					if (movementSnapshot.protocolVersion >= 2) {
+						builder.writeInt(movementSnapshot.locationContextSequence);
+					}
 					builder.writeInt(movementSnapshot.serverTick);
 					builder.writeInt(movementSnapshot.sequence);
 					builder.writeShort(movementSnapshot.localX);
@@ -826,6 +934,9 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					builder.writeInt(baseline.serverTick);
 					builder.writeShort(baseline.localX);
 					builder.writeShort(baseline.localY);
+					if (baseline.protocolVersion >= 6) {
+						builder.writeInt(baseline.locationContextSequence);
+					}
 					builder.writeShort(baseline.players);
 					builder.writeShort(baseline.npcs);
 					builder.writeShort(baseline.scenery);
@@ -837,14 +948,39 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					builder.writeInt(baseline.sceneryHash);
 					builder.writeInt(baseline.wallsHash);
 					builder.writeInt(baseline.groundItemsHash);
+					if (baseline.protocolVersion >= 8) {
+						builder.writeInt(
+							baseline.presentationCenterSectorX);
+						builder.writeInt(
+							baseline.presentationCenterSectorY);
+						builder.writeByte(
+							(byte) baseline.presentationOuterRadius);
+						builder.writeByte(
+							(byte) baseline.presentationInnerRadius);
+						builder.writeShort(
+							baseline.presentationScenery);
+						builder.writeShort(
+							baseline.presentationWalls);
+						builder.writeInt(
+							baseline.presentationSceneryHash);
+						builder.writeInt(
+							baseline.presentationWallsHash);
+					}
 					builder.writeByte((byte) baseline.pageCategory);
 					builder.writeShort(baseline.pageIndex);
 					builder.writeShort(baseline.pageTotal);
 					builder.writeShort(baseline.objectRecords.size());
 					for (SceneBaselineStruct.ObjectRecord objectRecord : baseline.objectRecords) {
 						builder.writeShort(objectRecord.id);
-						builder.writeShort(objectRecord.x);
-						builder.writeShort(objectRecord.y);
+						if (baseline.protocolVersion >= 8
+							&& (baseline.pageCategory == 4
+								|| baseline.pageCategory == 5)) {
+							builder.writeInt(objectRecord.x);
+							builder.writeInt(objectRecord.y);
+						} else {
+							builder.writeShort(objectRecord.x);
+							builder.writeShort(objectRecord.y);
+						}
 						builder.writeByte((byte) objectRecord.direction);
 						builder.writeByte((byte) objectRecord.type);
 					}

@@ -527,7 +527,9 @@ public final class RegularPlayer implements CommandTrigger {
 			player.playerServerMessage(MessageType.QUEST, "Quick banking is a QoL feature which you are opted out of.");
 			return;
 		}
-		if (!player.getLocation().isInBank(config().BASED_MAP_DATA)) {
+		if (!player.getLocation().isInBank(
+				config().BASED_MAP_DATA,
+				player.getWorldLocation())) {
 			player.playerServerMessage(MessageType.QUEST, "You are not inside a bank.");
 			return;
 		}

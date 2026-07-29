@@ -111,6 +111,11 @@ public final class Scene {
 	private int cameraProjX;
 	private int cameraProjY;
 	private int cameraProjZ;
+	private int terrainProjectionResult;
+	private int terrainProjectionIterativeResult;
+	private int terrainProjectionPass;
+	private int terrainProjectionTileX;
+	private int terrainProjectionTileZ;
 
 	public Scene(GraphicsController var1, int var2, int maxPolygonCount, int var4) {
 		this.m_Ib = new int[this.m_ib][256];
@@ -3718,6 +3723,302 @@ public final class Scene {
 		int tileX = Math.floorDiv((int) Math.floor(this.rot1024_off_x + rayX * t), tileSize);
 		int tileZ = Math.floorDiv((int) Math.floor(this.rot1024_off_z + rayZ * t), tileSize);
 		return new int[] {tileX, tileZ};
+	}
+
+	public int[] projectScreenToTerrainTile(
+		int screenX,
+		int screenY,
+		int tileSize,
+		World world) {
+		this.terrainProjectionResult = 0;
+		this.terrainProjectionIterativeResult = 0;
+		this.terrainProjectionPass = -1;
+		this.terrainProjectionTileX = Integer.MIN_VALUE;
+		this.terrainProjectionTileZ = Integer.MIN_VALUE;
+		if (tileSize <= 0 || world == null) {
+			this.terrainProjectionResult = 1;
+			return null;
+		}
+
+		double scale = 1 << this.rot1024_vp_src;
+		double rayX = (screenX - this.m_Zb) / scale;
+		double rayY = (screenY - this.m_Nb) / scale;
+		double rayZ = 1.0D;
+		double[] ray = rotateCameraRay(
+			rayX,
+			rayY,
+			rayZ,
+			1024 - this.cameraProjX & 1023,
+			Axis.X);
+		ray = rotateCameraRay(
+			ray[0],
+			ray[1],
+			ray[2],
+			1024 - this.cameraProjY & 1023,
+			Axis.Y);
+		ray = rotateCameraRay(
+			ray[0],
+			ray[1],
+			ray[2],
+			1024 - this.cameraProjZ & 1023,
+			Axis.Z);
+		rayX = ray[0];
+		rayY = ray[1];
+		rayZ = ray[2];
+
+		int[] fixedPointHit = projectScreenToTerrainTileIterative(
+			rayX, rayY, rayZ, tileSize, world);
+		if (fixedPointHit != null) {
+			this.terrainProjectionResult = 2;
+			this.terrainProjectionTileX = fixedPointHit[0];
+			this.terrainProjectionTileZ = fixedPointHit[1];
+			return fixedPointHit;
+		}
+
+		double horizontalLength =
+			Math.sqrt(rayX * rayX + rayZ * rayZ);
+		if (horizontalLength < 0.000001D) {
+			this.terrainProjectionResult = 3;
+			return null;
+		}
+		double stepT =
+			Math.max(4.0D, tileSize / 4.0D) / horizontalLength;
+		double maxT =
+			(World.SECTION_SIZE * 5.0D + 32.0D)
+				* tileSize
+				/ horizontalLength;
+		double previousT = 0.0D;
+		double previousDifference = Double.NaN;
+		boolean enteredTerrainWindow = false;
+		for (double t = 0.0D; t <= maxT; t += stepT) {
+			double worldX = this.rot1024_off_x + rayX * t;
+			double worldY = this.rot1024_off_y + rayY * t;
+			double worldZ = this.rot1024_off_z + rayZ * t;
+			int tileX = Math.floorDiv(
+				(int)Math.floor(worldX),
+				tileSize);
+			int tileZ = Math.floorDiv(
+				(int)Math.floor(worldZ),
+				tileSize);
+			int elevation = world.getPresentationTerrainElevation(
+				(int)Math.floor(worldX),
+				(int)Math.floor(worldZ));
+			if (!world.isPresentationTerrainFaceTile(tileX, tileZ)
+				|| elevation
+					== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+				if (enteredTerrainWindow) {
+					this.terrainProjectionResult = 4;
+					this.terrainProjectionTileX = tileX;
+					this.terrainProjectionTileZ = tileZ;
+					return null;
+				}
+				continue;
+			}
+			enteredTerrainWindow = true;
+			this.terrainProjectionTileX = tileX;
+			this.terrainProjectionTileZ = tileZ;
+			double terrainY = -elevation;
+			double difference = worldY - terrainY;
+			if (!Double.isNaN(previousDifference)
+				&& crossedTerrain(
+					previousDifference, difference)) {
+				double low = previousT;
+				double high = t;
+				double lowDifference = previousDifference;
+				for (int pass = 0; pass < 10; pass++) {
+					double middle = (low + high) * 0.5D;
+					double middleX =
+						this.rot1024_off_x + rayX * middle;
+					double middleY =
+						this.rot1024_off_y + rayY * middle;
+					double middleZ =
+						this.rot1024_off_z + rayZ * middle;
+					int middleElevation =
+						world.getPresentationTerrainElevation(
+						(int)Math.floor(middleX),
+						(int)Math.floor(middleZ));
+					if (middleElevation
+							== World
+								.PRESENTATION_ELEVATION_UNAVAILABLE) {
+						return null;
+					}
+					double middleDifference =
+						middleY + middleElevation;
+					if (crossedTerrain(
+							lowDifference,
+							middleDifference)) {
+						high = middle;
+					} else {
+						low = middle;
+						lowDifference = middleDifference;
+					}
+				}
+				int hitX = Math.floorDiv(
+					(int)Math.floor(
+						this.rot1024_off_x + rayX * high),
+					tileSize);
+				int hitZ = Math.floorDiv(
+					(int)Math.floor(
+						this.rot1024_off_z + rayZ * high),
+					tileSize);
+				if (world.isPresentationTerrainFaceTile(
+						hitX, hitZ)) {
+					this.terrainProjectionResult = 5;
+					this.terrainProjectionTileX = hitX;
+					this.terrainProjectionTileZ = hitZ;
+					return new int[] {hitX, hitZ};
+				}
+				this.terrainProjectionResult = 6;
+				this.terrainProjectionTileX = hitX;
+				this.terrainProjectionTileZ = hitZ;
+				return null;
+			}
+			previousT = t;
+			previousDifference = difference;
+		}
+		this.terrainProjectionResult = enteredTerrainWindow ? 7 : 8;
+		return null;
+	}
+
+	private int[] projectScreenToTerrainTileIterative(
+		double rayX,
+		double rayY,
+		double rayZ,
+		int tileSize,
+		World world) {
+		if (Math.abs(rayY) < 0.000001D) {
+			this.terrainProjectionIterativeResult = 1;
+			return null;
+		}
+		/*
+		 * Most terrain is smooth enough for a fixed-point height intersection,
+		 * which keeps ordinary mouse movement O(1). A sign-change march in the
+		 * caller handles discontinuities without changing the resident field.
+		 */
+		int cameraElevation =
+			world.getPresentationTerrainElevation(
+			this.rot1024_off_x,
+			this.rot1024_off_z);
+		if (cameraElevation
+				== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+			this.terrainProjectionIterativeResult = 2;
+			return null;
+		}
+		double terrainY = -cameraElevation;
+		double t = (terrainY - this.rot1024_off_y) / rayY;
+		if (t <= 0.0D) {
+			this.terrainProjectionIterativeResult = 3;
+			return null;
+		}
+		for (int pass = 0; pass < 16; pass++) {
+			double worldX = this.rot1024_off_x + rayX * t;
+			double worldZ = this.rot1024_off_z + rayZ * t;
+			int tileX = Math.floorDiv(
+				(int)Math.floor(worldX),
+				tileSize);
+			int tileZ = Math.floorDiv(
+				(int)Math.floor(worldZ),
+				tileSize);
+			this.terrainProjectionPass = pass;
+			this.terrainProjectionTileX = tileX;
+			this.terrainProjectionTileZ = tileZ;
+			if (!world.isPresentationTerrainFaceTile(
+					tileX, tileZ)) {
+				this.terrainProjectionIterativeResult = 4;
+				return null;
+			}
+			int candidateElevation =
+				world.getPresentationTerrainElevation(
+				(int)Math.floor(worldX),
+				(int)Math.floor(worldZ));
+			if (candidateElevation
+					== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+				this.terrainProjectionIterativeResult = 5;
+				return null;
+			}
+			double nextTerrainY = -candidateElevation;
+			double nextT =
+				(nextTerrainY - this.rot1024_off_y) / rayY;
+			if (nextT <= 0.0D) {
+				this.terrainProjectionIterativeResult = 6;
+				return null;
+			}
+			if (Math.abs(nextT - t) < 0.01D) {
+				this.terrainProjectionIterativeResult = 7;
+				return new int[] {tileX, tileZ};
+			}
+			t = nextT;
+		}
+		this.terrainProjectionIterativeResult = 8;
+		return null;
+	}
+
+	public String getTerrainProjectionDiagnostic() {
+		return "result=" + terrainProjectionResultName(
+				this.terrainProjectionResult)
+			+ " iterative=" + terrainProjectionIterativeResultName(
+				this.terrainProjectionIterativeResult)
+			+ " pass=" + this.terrainProjectionPass
+			+ " tile=" + this.terrainProjectionTileX
+				+ "," + this.terrainProjectionTileZ;
+	}
+
+	private static String terrainProjectionResultName(int result) {
+		switch (result) {
+			case 1:
+				return "invalid-input";
+			case 2:
+				return "iterative-hit";
+			case 3:
+				return "vertical-ray";
+			case 4:
+				return "march-left-field";
+			case 5:
+				return "march-hit";
+			case 6:
+				return "march-invalid-hit";
+			case 7:
+				return "march-no-crossing";
+			case 8:
+				return "march-no-field";
+			default:
+				return "unset";
+		}
+	}
+
+	private static String terrainProjectionIterativeResultName(
+		int result) {
+		switch (result) {
+			case 1:
+				return "parallel-ray";
+			case 2:
+				return "camera-outside-field";
+			case 3:
+				return "behind-camera";
+			case 4:
+				return "candidate-outside-field";
+			case 5:
+				return "candidate-no-elevation";
+			case 6:
+				return "candidate-behind-camera";
+			case 7:
+				return "hit";
+			case 8:
+				return "pass-limit";
+			default:
+				return "unset";
+		}
+	}
+
+	private static boolean crossedTerrain(
+		double firstDifference,
+		double secondDifference) {
+		return firstDifference == 0.0D
+			|| secondDifference == 0.0D
+			|| firstDifference < 0.0D
+				&& secondDifference > 0.0D
+			|| firstDifference > 0.0D
+				&& secondDifference < 0.0D;
 	}
 
 	private enum Axis {

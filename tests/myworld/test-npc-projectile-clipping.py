@@ -30,12 +30,12 @@ require(
 )
 
 require(
-    "PathValidation.checkHostileProjectilePath(npc.getWorld(), npc.getLocation(), target.getLocation())"
+    "PathValidation.checkHostileProjectilePath("
     in NPC_BEHAVIOR.read_text(),
     "Modern hostile NPC projectiles must use semantic hostile collision",
 )
 require(
-    "PathValidation.checkHostileProjectilePath(getWorld(), owner.getLocation(), victim.getLocation())"
+    "PathValidation.checkHostileProjectilePath("
     in NPC_RANGE.read_text(),
     "Legacy hostile NPC ranged attacks must use semantic hostile collision",
 )

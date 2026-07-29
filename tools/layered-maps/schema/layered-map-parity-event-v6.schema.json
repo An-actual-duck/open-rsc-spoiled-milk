@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schema/layered-map-parity-event-v6.schema.json",
+  "title": "Layered Map Parity Event v6",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "eventType", "sequence", "timestampEpochMillis", "player",
+    "label", "teleported", "from", "to", "delta", "interestDelta",
+    "packedCoverage", "tileSnapshot", "tileParity", "roundTripExact"
+  ],
+  "properties": {
+    "schema": {"const": "layered-map-parity-event-v6"},
+    "eventType": {
+      "enum": ["start", "snapshot", "marker", "move", "teleport", "login", "logout", "stop"]
+    },
+    "sequence": {"type": "integer", "minimum": 1},
+    "timestampEpochMillis": {"type": "integer", "minimum": 0},
+    "player": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["databaseId", "usernameHash"],
+      "properties": {
+        "databaseId": {"type": "integer", "minimum": 0},
+        "usernameHash": {"type": "string", "pattern": "^[0-9]+$"}
+      }
+    },
+    "label": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9._-]{1,64}$"},
+    "teleported": {"type": ["boolean", "null"]},
+    "from": {"oneOf": [{"$ref": "#/$defs/snapshot"}, {"type": "null"}]},
+    "to": {"$ref": "#/$defs/snapshot"},
+    "delta": {"oneOf": [{"$ref": "#/$defs/delta"}, {"type": "null"}]},
+    "interestDelta": {
+      "oneOf": [{"$ref": "#/$defs/interestDelta"}, {"type": "null"}]
+    },
+    "packedCoverage": {"$ref": "#/$defs/packedCoverage"},
+    "tileSnapshot": {"$ref": "#/$defs/tileSnapshot"},
+    "tileParity": {
+      "oneOf": [{"$ref": "#/$defs/tileParity"}, {"type": "null"}]
+    },
+    "roundTripExact": {"const": true}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "eventType": {"enum": ["start", "marker", "teleport", "stop"]}
+        }
+      },
+      "then": {"properties": {"tileParity": {"$ref": "#/$defs/tileParity"}}},
+      "else": {"properties": {"tileParity": {"type": "null"}}}
+    }
+  ],
+  "$defs": {
+    "xy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": {"type": "integer"},
+        "y": {"type": "integer"}
+      }
+    },
+    "layered": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worldSpace", "x", "y", "level"],
+      "properties": {
+        "worldSpace": {"const": "global"},
+        "x": {"type": "integer"},
+        "y": {"type": "integer"},
+        "level": {"enum": [-1, 0, 1, 2]}
+      }
+    },
+    "regionKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worldSpace", "level", "x", "y"],
+      "properties": {
+        "worldSpace": {"const": "global"},
+        "level": {"enum": [-1, 0, 1, 2]},
+        "x": {"type": "integer"},
+        "y": {"type": "integer"}
+      }
+    },
+    "visibilityWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worldSpace", "level", "gridDistance", "tileRadius", "minRegionX",
+        "minRegionY", "maxRegionX", "maxRegionY", "regionCount"
+      ],
+      "properties": {
+        "worldSpace": {"const": "global"},
+        "level": {"enum": [-1, 0, 1, 2]},
+        "gridDistance": {"type": "integer", "minimum": 0},
+        "tileRadius": {"type": "integer", "minimum": 0},
+        "minRegionX": {"type": "integer"},
+        "minRegionY": {"type": "integer"},
+        "maxRegionX": {"type": "integer"},
+        "maxRegionY": {"type": "integer"},
+        "regionCount": {"type": "integer", "minimum": 1}
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "legacy", "layered", "region", "terrainSector", "local",
+        "visibilityWindow", "roundTripExact"
+      ],
+      "properties": {
+        "legacy": {"$ref": "#/$defs/xy"},
+        "layered": {"$ref": "#/$defs/layered"},
+        "region": {"$ref": "#/$defs/xy"},
+        "terrainSector": {"$ref": "#/$defs/xy"},
+        "local": {"$ref": "#/$defs/xy"},
+        "visibilityWindow": {"$ref": "#/$defs/visibilityWindow"},
+        "roundTripExact": {"const": true}
+      }
+    },
+    "delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "level"],
+      "properties": {
+        "x": {"type": "integer"},
+        "y": {"type": "integer"},
+        "level": {"type": "integer"}
+      }
+    },
+    "interestDelta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "previousRegionCount", "currentRegionCount", "enteredCount",
+        "retainedCount", "exitedCount", "worldSpaceChanged", "levelChanged",
+        "noOp", "enteredKeys", "exitedKeys"
+      ],
+      "properties": {
+        "previousRegionCount": {"type": "integer", "minimum": 1},
+        "currentRegionCount": {"type": "integer", "minimum": 1},
+        "enteredCount": {"type": "integer", "minimum": 0},
+        "retainedCount": {"type": "integer", "minimum": 0},
+        "exitedCount": {"type": "integer", "minimum": 0},
+        "worldSpaceChanged": {"type": "boolean"},
+        "levelChanged": {"type": "boolean"},
+        "noOp": {"type": "boolean"},
+        "enteredKeys": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/regionKey"}
+        },
+        "exitedKeys": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/regionKey"}
+        }
+      }
+    },
+    "packedCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minPackedRegionX", "minPackedRegionY", "maxPackedRegionX",
+        "maxPackedRegionY", "packedCellCount", "unsupportedPackedCellCount",
+        "expectedKeyCount", "packedCoverageKeyCount", "missingKeyCount",
+        "extraKeyCount", "exact", "missingKeys", "extraKeys"
+      ],
+      "properties": {
+        "minPackedRegionX": {"type": "integer"},
+        "minPackedRegionY": {"type": "integer"},
+        "maxPackedRegionX": {"type": "integer"},
+        "maxPackedRegionY": {"type": "integer"},
+        "packedCellCount": {"type": "integer", "minimum": 1},
+        "unsupportedPackedCellCount": {"type": "integer", "minimum": 0},
+        "expectedKeyCount": {"type": "integer", "minimum": 1},
+        "packedCoverageKeyCount": {"type": "integer", "minimum": 0},
+        "missingKeyCount": {"type": "integer", "minimum": 0},
+        "extraKeyCount": {"type": "integer", "minimum": 0},
+        "exact": {"type": "boolean"},
+        "missingKeys": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/regionKey"}
+        },
+        "extraKeys": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/regionKey"}
+        }
+      }
+    },
+    "tileSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logicalRegion", "sourceFragmentCount", "missingSourceRegionCount",
+        "supportedTileCount", "targetTileCount", "complete", "fingerprint"
+      ],
+      "properties": {
+        "logicalRegion": {"$ref": "#/$defs/regionKey"},
+        "sourceFragmentCount": {"type": "integer", "minimum": 0},
+        "missingSourceRegionCount": {"type": "integer", "minimum": 0},
+        "supportedTileCount": {"type": "integer", "minimum": 0, "maximum": 2304},
+        "targetTileCount": {"const": 2304},
+        "complete": {"type": "boolean"},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "tileParity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logicalLocation", "legacyPackedAddress", "legacyRepresentable",
+        "packedSourcePresent", "missingPackedSource", "comparable", "exact"
+      ],
+      "properties": {
+        "logicalLocation": {"$ref": "#/$defs/layered"},
+        "legacyPackedAddress": {
+          "oneOf": [{"$ref": "#/$defs/xy"}, {"type": "null"}]
+        },
+        "legacyRepresentable": {"type": "boolean"},
+        "packedSourcePresent": {"type": "boolean"},
+        "missingPackedSource": {"type": "boolean"},
+        "comparable": {"type": "boolean"},
+        "exact": {"type": "boolean"}
+      }
+    }
+  }
+}
