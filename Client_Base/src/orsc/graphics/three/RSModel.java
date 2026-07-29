@@ -648,14 +648,17 @@ public final class RSModel {
 		RSModel[] models,
 		int modelCount,
 		int chunkRole) {
+		int limit = Math.min(modelCount, models == null ? 0 : models.length);
+		int triangleCapacity = ObjectChunkMeshBuilder.estimateTriangleCapacity(models, limit);
 		ObjectChunkMeshBuilder builder = new ObjectChunkMeshBuilder(
 			plane,
 			centerSectionX,
 			centerSectionY,
 			originWorldX,
 			originWorldZ,
-			chunkRole);
-		int limit = Math.min(modelCount, models == null ? 0 : models.length);
+			chunkRole,
+			triangleCapacity,
+			limit);
 		for (int index = 0; index < limit; index++) {
 			builder.addModel(models[index]);
 		}
@@ -1550,6 +1553,8 @@ public final class RSModel {
 
 	private static final class ObjectChunkMeshBuilder {
 		private static final int INITIAL_NUMERIC_CAPACITY = 64;
+		private static final int MAX_ARRAY_CAPACITY = Integer.MAX_VALUE - 8;
+		private static final int UNKNOWN_TRIANGLE_CAPACITY = -1;
 
 		private final int plane;
 		private final int centerSectionX;
@@ -1557,27 +1562,17 @@ public final class RSModel {
 		private final int originWorldX;
 		private final int originWorldZ;
 		private final int chunkRole;
-		private final IntArrayBuilder vertexCoords =
-			new IntArrayBuilder(INITIAL_NUMERIC_CAPACITY * 3);
-		private final FloatArrayBuilder vertexTextureU =
-			new FloatArrayBuilder(INITIAL_NUMERIC_CAPACITY);
-		private final FloatArrayBuilder vertexTextureV =
-			new FloatArrayBuilder(INITIAL_NUMERIC_CAPACITY);
-		private final IntArrayBuilder vertexLights =
-			new IntArrayBuilder(INITIAL_NUMERIC_CAPACITY);
-		private final IntArrayBuilder indices =
-			new IntArrayBuilder(INITIAL_NUMERIC_CAPACITY);
-		private final IntArrayBuilder triangleTextures =
-			new IntArrayBuilder(INITIAL_NUMERIC_CAPACITY / 3);
-		private final IntArrayBuilder triangleFallbackColors =
-			new IntArrayBuilder(INITIAL_NUMERIC_CAPACITY / 3);
-		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
-		private final List<Renderer3DMaterialFamily> triangleMaterialFamilies =
-			new ArrayList<Renderer3DMaterialFamily>();
-		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
-			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
-		private final List<Renderer3DWorldChunkFrame.GlowEmitter> glowEmitters =
-			new ArrayList<Renderer3DWorldChunkFrame.GlowEmitter>();
+		private final IntArrayBuilder vertexCoords;
+		private final FloatArrayBuilder vertexTextureU;
+		private final FloatArrayBuilder vertexTextureV;
+		private final IntArrayBuilder vertexLights;
+		private final IntArrayBuilder indices;
+		private final IntArrayBuilder triangleTextures;
+		private final IntArrayBuilder triangleFallbackColors;
+		private final List<Renderer3DModelKind> triangleModelKinds;
+		private final List<Renderer3DMaterialFamily> triangleMaterialFamilies;
+		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters;
+		private final List<Renderer3DWorldChunkFrame.GlowEmitter> glowEmitters;
 
 		private ObjectChunkMeshBuilder(
 			int plane,
@@ -1585,13 +1580,73 @@ public final class RSModel {
 			int centerSectionY,
 			int originWorldX,
 			int originWorldZ,
-			int chunkRole) {
+			int chunkRole,
+			int estimatedTriangleCapacity,
+			int estimatedModelCapacity) {
 			this.plane = plane;
 			this.centerSectionX = centerSectionX;
 			this.centerSectionY = centerSectionY;
 			this.originWorldX = originWorldX;
 			this.originWorldZ = originWorldZ;
 			this.chunkRole = chunkRole;
+			boolean exactCapacityKnown = estimatedTriangleCapacity >= 0;
+			int triangleCapacity = exactCapacityKnown
+				? estimatedTriangleCapacity
+				: INITIAL_NUMERIC_CAPACITY / 3;
+			int vertexCapacity = exactCapacityKnown
+				? triangleCapacity * 3
+				: INITIAL_NUMERIC_CAPACITY;
+			int coordinateCapacity = exactCapacityKnown
+				? vertexCapacity * 3
+				: INITIAL_NUMERIC_CAPACITY * 3;
+			int modelCapacity = Math.max(0, estimatedModelCapacity);
+			this.vertexCoords = new IntArrayBuilder(coordinateCapacity);
+			this.vertexTextureU = new FloatArrayBuilder(vertexCapacity);
+			this.vertexTextureV = new FloatArrayBuilder(vertexCapacity);
+			this.vertexLights = new IntArrayBuilder(vertexCapacity);
+			this.indices = new IntArrayBuilder(vertexCapacity);
+			this.triangleTextures = new IntArrayBuilder(triangleCapacity);
+			this.triangleFallbackColors = new IntArrayBuilder(triangleCapacity);
+			this.triangleModelKinds =
+				new ArrayList<Renderer3DModelKind>(triangleCapacity);
+			this.triangleMaterialFamilies =
+				new ArrayList<Renderer3DMaterialFamily>(triangleCapacity);
+			this.shadowCasters =
+				new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>(modelCapacity);
+			this.glowEmitters =
+				new ArrayList<Renderer3DWorldChunkFrame.GlowEmitter>(modelCapacity);
+		}
+
+		private static int estimateTriangleCapacity(RSModel[] models, int modelCount) {
+			int limit = Math.min(Math.max(0, modelCount), models == null ? 0 : models.length);
+			long triangleCount = 0L;
+			for (int index = 0; index < limit; index++) {
+				RSModel model = models[index];
+				if (model == null) {
+					continue;
+				}
+				Renderer3DModelKind kind = model.getRenderer3DModelKind();
+				if (kind != Renderer3DModelKind.GAME_OBJECT
+					&& kind != Renderer3DModelKind.WALL_OBJECT) {
+					continue;
+				}
+				for (int face = 0; face < model.faceHead; face++) {
+					int vertexCount = model.faceIndexCount[face];
+					if (vertexCount < 3
+						|| (model.faceTextureFront[face] == Scene.TRANSPARENT
+							&& model.faceTextureBack[face] == Scene.TRANSPARENT)) {
+						continue;
+					}
+					// Front/back ownership always emits two material sides when at
+					// least one side is visible, including the legacy one-sided
+					// duplication used to preserve lighting.
+					triangleCount += (long) (vertexCount - 2) * 2L;
+					if (triangleCount > MAX_ARRAY_CAPACITY / 9) {
+						return UNKNOWN_TRIANGLE_CAPACITY;
+					}
+				}
+			}
+			return (int) triangleCount;
 		}
 
 		private void addModel(RSModel model) {
@@ -2034,7 +2089,10 @@ public final class RSModel {
 			}
 
 			private int[] toArray() {
-				return size == 0 ? new int[0] : Arrays.copyOf(values, size);
+				if (size == 0) {
+					return new int[0];
+				}
+				return size == values.length ? values : Arrays.copyOf(values, size);
 			}
 
 			private void ensureCapacity(int requiredCapacity) {
@@ -2065,7 +2123,10 @@ public final class RSModel {
 			}
 
 			private float[] toArray() {
-				return size == 0 ? new float[0] : Arrays.copyOf(values, size);
+				if (size == 0) {
+					return new float[0];
+				}
+				return size == values.length ? values : Arrays.copyOf(values, size);
 			}
 
 			private void ensureCapacity(int requiredCapacity) {

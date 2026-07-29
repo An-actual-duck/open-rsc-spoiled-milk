@@ -4,8 +4,8 @@ Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
 attribution are underway, and the first fourteen focused optimizations have
 been accepted. Diagnostic shadow-inventory caching has now been accepted as the
-fourteenth optimization; the next maximum-distance profile will re-rank the
-remaining reduced workload before another implementation is selected.
+fourteenth optimization. A fresh maximum-distance profile now ranks exact
+object-chunk builder capacity as the first cycle-15 slice.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -857,6 +857,50 @@ use from 0.928 to 0.405 cores (-56.4%), GL render p95/p99 from 9.535/11.539 to
 0.871/0.979 ms (-87.9%/-88.4%), without an accepted visual tradeoff. Re-profile
 this reduced endpoint before selecting cycle 15.
 
+`session-20260729-185559-1519409` / `post14jfr` completed that profile on
+checkpoint `2ba397913`. The 104.7-second marked phase used the exact maximum
+camera state and retained 34 chunks, 209,162 resident triangles, 2,202
+considered batches, 1,245 models, and the accepted shadow inventory. JFR
+measured 3,998.96 weighted MiB, or 38.18 MiB/s, against telemetry's
+39.74 MiB/s.
+
+Object-chunk construction is the largest attributable allocation group at
+779.85 MiB (19.5% of all weighted allocation). Within it, repeated primitive
+builder growth alone owns 408.75 MiB (10.2%): 307.70 MiB from integer arrays
+and 101.05 MiB from float arrays. The builders start at a fixed 64-value
+capacity even though the input model face topology and visible material sides
+determine the exact output triangle count before construction. Remaining
+ranked groups include reflection-bound OpenGL wrappers at 344.78 MiB (8.6%),
+renderer-3D frame capture at 330.98 MiB (8.3%), renderer-2D command capture at
+328.74 MiB (8.2%), composite-scene construction at 284.77 MiB (7.1%), and
+composite character texture construction at 224.48 MiB (5.6%).
+
+CPU ownership is now split rather than dominated by the removed inventory
+scan. On the client thread, legacy resource-to-color lookup, presentation
+handoff, repeated scene-model removal, and model rotation account for
+15.5%, 13.9%, 13.7%, and 12.9% of samples respectively. Presenter samples are
+led by buffer swap (20.6%), dynamic texture upload (19.2%), glow-mask work
+(10.1%), and the remaining shadow-world signature and normal shadow-mask
+consumers. These CPU paths require separate audits and must not be combined
+with cycle 15's allocation change.
+
+The first cycle-15 candidate derives an exact object-chunk triangle capacity
+from model face counts and front/back visibility, pre-sizes all parallel
+numeric and per-triangle collections from that one value, and returns an exact
+backing array without an intermediate copy when the estimate matches. Existing
+grow-on-demand behavior remains the safety fallback, and immutable
+`ChunkMesh` normalization/cloning remains the ownership boundary. This targets
+the measured growth without changing triangulation, lighting, materials,
+signatures, shadow casters, glow emitters, or cache behavior.
+
+The client compiles and the full renderer guardrail suite passes. Focused Java
+8 coverage uses a polygon large enough to exceed every former fixed primitive
+capacity, verifies the exact two-sided triangle estimate, inspects all seven
+builder capacities after construction to prove no growth occurred, and then
+rechecks output geometry and the existing material, lighting, signature,
+shadow, glow, ignored-model, and empty-frame invariants. Cycle 15 now requires
+a fresh maximum-distance diagnostic comparison and owner visual review.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -1110,3 +1154,4 @@ Implementation checkpoint:
 | 2026-07-29 | `0b5cb5465` | `post12jfr` | Re-profile the cycle-12 endpoint and rank remaining CPU/allocation ownership. | Complete 103.5-second marked profile; JFR measured 35.38 MiB/s against telemetry's 36.14 MiB/s. The operator remained at zoom `255` / effective `1110`, so this is a ranking profile rather than a maximum-distance comparison. Explicit object-chunk builders own 22.9% of weighted allocation, with another 17.9% in separately retained client `ArrayList` growth; shadow classification leads presenter CPU but mixes diagnostic and render consumers. | Convert only the seven boxed numeric object-chunk accumulators to primitive storage for cycle 13; defer shadow classification until its consumers are separated. |
 | 2026-07-29 | `2db2f3f6b` | `primitive13` | Replace the seven boxed numeric object-chunk accumulators with growable primitive arrays while retaining immutable output normalization and all mesh semantics. | Exact 93.3-second maximum-distance workload and owner visual pass. Client allocation fell 13.5% and total allocation 9.7%; process/client CPU and world p95/p99 stayed flat. The older session incurred more GC and higher presenter/GL tails even though the changed path is client-only, so that difference is recorded without attribution. Focused Java 8 coverage proves exact geometry, material, lighting metadata, signatures, and empty behavior. | Accept cycle 13; isolate telemetry-only shadow inventory from normal shadow rendering before changing classification. |
 | 2026-07-29 | `6159beb7e` | `shadowcache14` | Cache only telemetry-requested shadow inventory using the existing world signature plus a lazy exact object-caster signature; leave normal shadow-mask building and drawing unchanged. | Exact 106.3-second maximum-distance workload and owner visual pass. Presenter CPU fell 32.4%, process use 13.4%, GL p95/p99 25.8%/28.3%, and world p95/p99 50.5%/49.5%; total/client/presenter allocation stayed within 1%. Focused Java 8 coverage proves cache hits, animation-only stability, exact invalidation, preserved counts, and lazy construction. | Accept cycle 14; re-profile the reduced endpoint before selecting cycle 15. |
+| 2026-07-29 | `2ba397913` | `post14jfr` | Re-profile the fourteen-cycle maximum-distance endpoint and separate remaining CPU and allocation ownership. | Complete 104.7-second phase at exact control geometry. JFR measured 38.18 MiB/s against telemetry's 39.74 MiB/s. Object-chunk builders lead attributable allocation at 19.5%, including 10.2% from fixed-start primitive-array growth; reflection wrappers, frame/command capture, composite scenes, and composite character textures follow. Client and presenter CPU now divide across distinct legacy scene, handoff, upload, glow, and shadow paths. | Pre-size the parallel object-chunk builders from exact face topology for cycle 15; retain the CPU and other allocation groups as separate audits. |

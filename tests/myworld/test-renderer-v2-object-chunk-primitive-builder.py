@@ -16,13 +16,18 @@ RSMODEL_SOURCE = ROOT / "Client_Base/src/orsc/graphics/three/RSModel.java"
 FIXTURE = r"""
 package orsc.graphics.three;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 public final class Renderer3DObjectChunkPrimitiveBuilderFixture {
 	private static final int LEGACY_TRANSPARENT = 12345678;
 
 	private Renderer3DObjectChunkPrimitiveBuilderFixture() {
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		RSModel model = new RSModel(4, 1);
 		int northWest = model.insertVertex(0, 0, 0);
 		int northEast = model.insertVertex(128, 0, 0);
@@ -139,6 +144,93 @@ public final class Renderer3DObjectChunkPrimitiveBuilderFixture {
 				Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS);
 		assertEquals(chunk.getSignature(), repeated.getSignature(), "stable signature");
 
+		RSModel large = polygonModel(40);
+		Class<?> builderType =
+			Class.forName("orsc.graphics.three.RSModel$ObjectChunkMeshBuilder");
+		Method estimate = builderType.getDeclaredMethod(
+			"estimateTriangleCapacity",
+			RSModel[].class,
+			int.class);
+		estimate.setAccessible(true);
+		int estimatedTriangles = ((Integer) estimate.invoke(
+			null,
+			new Object[] {new RSModel[] {large}, Integer.valueOf(1)})).intValue();
+		assertEquals(76, estimatedTriangles, "exact large-polygon triangle estimate");
+		RSModel oneSided = triangleModel(7, LEGACY_TRANSPARENT);
+		int oneSidedTriangles = ((Integer) estimate.invoke(
+			null,
+			new Object[] {new RSModel[] {oneSided}, Integer.valueOf(1)})).intValue();
+		assertEquals(2, oneSidedTriangles, "one-sided legacy duplicate estimate");
+		RSModel hidden = triangleModel(LEGACY_TRANSPARENT, LEGACY_TRANSPARENT);
+		int hiddenTriangles = ((Integer) estimate.invoke(
+			null,
+			new Object[] {new RSModel[] {hidden}, Integer.valueOf(1)})).intValue();
+		assertEquals(0, hiddenTriangles, "fully transparent estimate");
+
+		Constructor<?> constructor = builderType.getDeclaredConstructor(
+			int.class,
+			int.class,
+			int.class,
+			int.class,
+			int.class,
+			int.class,
+			int.class,
+			int.class);
+		constructor.setAccessible(true);
+		Object exactBuilder = constructor.newInstance(
+			Integer.valueOf(0),
+			Integer.valueOf(50),
+			Integer.valueOf(50),
+			Integer.valueOf(0),
+			Integer.valueOf(0),
+			Integer.valueOf(Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS),
+			Integer.valueOf(estimatedTriangles),
+			Integer.valueOf(1));
+		Method addModel = builderType.getDeclaredMethod("addModel", RSModel.class);
+		addModel.setAccessible(true);
+		addModel.invoke(exactBuilder, large);
+		assertNumericBuilderCapacity(
+			builderType,
+			exactBuilder,
+			"vertexCoords",
+			estimatedTriangles * 9);
+		assertNumericBuilderCapacity(
+			builderType,
+			exactBuilder,
+			"vertexTextureU",
+			estimatedTriangles * 3);
+		assertNumericBuilderCapacity(
+			builderType,
+			exactBuilder,
+			"vertexTextureV",
+			estimatedTriangles * 3);
+		assertNumericBuilderCapacity(
+			builderType,
+			exactBuilder,
+			"vertexLights",
+			estimatedTriangles * 3);
+		assertNumericBuilderCapacity(
+			builderType,
+			exactBuilder,
+			"indices",
+			estimatedTriangles * 3);
+		assertNumericBuilderCapacity(
+			builderType,
+			exactBuilder,
+			"triangleTextures",
+			estimatedTriangles);
+		assertNumericBuilderCapacity(
+			builderType,
+			exactBuilder,
+			"triangleFallbackColors",
+			estimatedTriangles);
+		Method build = builderType.getDeclaredMethod("build");
+		build.setAccessible(true);
+		Renderer3DWorldChunkFrame.ChunkMesh largeChunk =
+			(Renderer3DWorldChunkFrame.ChunkMesh) build.invoke(exactBuilder);
+		assertEquals(76, largeChunk.getTriangleCount(), "large-polygon triangle count");
+		assertEquals(228, largeChunk.getVertexCount(), "large-polygon vertex count");
+
 		Renderer3DWorldChunkFrame.ChunkMesh empty =
 			RSModel.buildRenderer3DObjectChunkMesh(
 				0,
@@ -151,6 +243,54 @@ public final class Renderer3DObjectChunkPrimitiveBuilderFixture {
 		assertEquals(0, empty.getVertexCount(), "empty vertex count");
 		assertEquals(0, empty.getTriangleCount(), "empty triangle count");
 		System.out.println("PASS: renderer-v2 object chunk primitive builder");
+	}
+
+	private static RSModel polygonModel(int vertexCount) {
+		RSModel model = new RSModel(vertexCount, 1);
+		int[] vertices = new int[vertexCount];
+		for (int vertex = 0; vertex < vertexCount; vertex++) {
+			double angle = Math.PI * 2.0 * vertex / vertexCount;
+			vertices[vertex] = model.insertVertex(
+				(int) Math.round(Math.cos(angle) * 128.0),
+				0,
+				(int) Math.round(Math.sin(angle) * 128.0));
+		}
+		model.insertFace(vertexCount, vertices, 7, 7, false);
+		model.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
+		model.setRenderer3DMaterialFamily(Renderer3DMaterialFamily.SCENERY);
+		return model;
+	}
+
+	private static RSModel triangleModel(int frontMaterial, int backMaterial) {
+		RSModel model = new RSModel(3, 1);
+		int first = model.insertVertex(0, 0, 0);
+		int second = model.insertVertex(128, 0, 0);
+		int third = model.insertVertex(0, 0, 128);
+		model.insertFace(
+			3,
+			new int[] {first, second, third},
+			frontMaterial,
+			backMaterial,
+			false);
+		model.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
+		model.setRenderer3DMaterialFamily(Renderer3DMaterialFamily.SCENERY);
+		return model;
+	}
+
+	private static void assertNumericBuilderCapacity(
+		Class<?> builderType,
+		Object builder,
+		String fieldName,
+		int expected) throws Exception {
+		Field field = builderType.getDeclaredField(fieldName);
+		field.setAccessible(true);
+		Object numericBuilder = field.get(builder);
+		Field valuesField = numericBuilder.getClass().getDeclaredField("values");
+		valuesField.setAccessible(true);
+		Field sizeField = numericBuilder.getClass().getDeclaredField("size");
+		sizeField.setAccessible(true);
+		assertEquals(expected, Array.getLength(valuesField.get(numericBuilder)), fieldName + " capacity");
+		assertEquals(expected, sizeField.getInt(numericBuilder), fieldName + " size");
 	}
 
 	private static void assertTriangle(
@@ -215,10 +355,26 @@ def main() -> None:
         "private final IntArrayBuilder vertexCoords",
         "private final FloatArrayBuilder vertexTextureU",
         "private final FloatArrayBuilder vertexTextureV",
+        "private static int estimateTriangleCapacity(RSModel[] models, int modelCount)",
+        "new IntArrayBuilder(coordinateCapacity)",
+        "new FloatArrayBuilder(vertexCapacity)",
+        "new ArrayList<Renderer3DModelKind>(triangleCapacity)",
         "int[] vertexArray = vertexCoords.toArray();",
         "float[] textureUArray = vertexTextureU.toArray();",
     ):
         require(builder_source, fragment)
+    require(
+        source,
+        "int triangleCapacity = "
+        "ObjectChunkMeshBuilder.estimateTriangleCapacity(models, limit);",
+    )
+    if builder_source.count(
+        "return size == values.length ? values : Arrays.copyOf(values, size);"
+    ) != 2:
+        raise AssertionError(
+            "exact primitive builders should hand their backing arrays to the "
+            "immutable ChunkMesh ownership boundary"
+        )
     for forbidden in (
         "List<Integer>",
         "List<Float>",
