@@ -2,11 +2,13 @@
 
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
-attribution are underway, and the first fifteen focused optimizations have
+attribution are underway, and the first sixteen focused optimizations have
 been accepted. Exact object-chunk builder sizing is the fifteenth accepted
-optimization. A sixteenth candidate now routes the remaining reflection
-wrappers measured by the post-cycle-14 JFR profile through exact typed
-dispatch and is awaiting a fresh maximum-distance comparison.
+optimization, and exact typed dispatch for the remaining measured OpenGL
+reflection wrappers is the sixteenth. The steady maximum-distance endpoint is
+now at the diminishing-returns gate for allocation-only cleanup; the next
+default direction is a larger renderer ownership swing, not an unprofiled
+seventeenth micro-optimization.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -930,7 +932,7 @@ use from 0.928 to 0.414 cores (-55.3%), GL render p95/p99 from 9.535/11.539 to
 2.381/2.624 ms (-75.0%/-77.3%), and world p95/p99 from 7.207/8.440 to
 0.896/1.021 ms (-87.6%/-87.9%), without an accepted visual tradeoff.
 
-The cycle-16 candidate targets the independent reflection group retained by
+The cycle-16 change targets the independent reflection group retained by
 `post14jfr`: 344.78 weighted MiB, or 8.6% of all sampled allocation. The 16
 measured wrappers cover event polling, clear/state/matrix setup, texture
 activation and sub-image upload, immediate begin/end, and integer shader
@@ -944,8 +946,59 @@ Java 8 fixture checks all 16 packaged LWJGL methods without creating an OpenGL
 context, proving the exact parameter and void-return types that each
 `invokeExact` call requires. Source guards also prevent these measured
 wrappers from silently returning to reflective varargs dispatch. This
-candidate requires a fresh `capacity15`-matched maximum-distance phase and
-owner visual pass before it can be accepted as cycle 16.
+established the implementation checkpoint for the following comparison.
+
+`session-20260729-191513-1545713` / `glhandles16` captured 110.6 seconds on
+checkpoint `90b79ac08` and completed owner testing without a reported visual
+abnormality. It is an exact workload match for `capacity15`: zoom `900` /
+effective `2400`, rotation `512` except for the control's brief move to `496`,
+34 resident chunks, 209,162 resident triangles, 2,202 considered batches,
+1,245 models, about 0.715 animated uploads per frame, 2,700 shadow casters,
+40,934 receiver triangles, and effectively identical sprite-command volume.
+Drawn triangles differed by 0.4%.
+
+Presenter allocation fell from 13.99 to 11.48 MiB/s (-18.0%). Total allocation
+fell from 35.70 to 31.15 MiB/s (-12.7%); because `capacity15` alone included
+1.11 MiB/s of background world-preload allocation, the like-owned reduction is
+about 9.9%. Client allocation moved from 20.59 to 19.67 MiB/s (-4.5%) despite
+no client-side code change and is treated as run variance. Process use fell
+5.2%, but presenter CPU was effectively flat at 0.095 versus 0.096 cores.
+GL p95/p99 improved modestly from 2.381/2.624 to 2.303/2.569 ms, while world
+p95/p99 stayed flat at 0.900/1.014 versus 0.896/1.021 ms. The targeted
+presenter-allocation reduction, exact workload, compile/guard coverage, and
+visual pass accept cycle 16.
+
+Relative to the original same-geometry maximum-distance baseline, sixteen
+accepted cycles have reduced total allocation from 871.16 to 31.15 MiB/s
+(-96.4%), client-loop allocation from 604.97 to 19.67 MiB/s (-96.7%), process
+use from 0.928 to 0.393 cores (-57.6%), GL render p95/p99 from 9.535/11.539 to
+2.303/2.569 ms (-75.8%/-77.7%), and world p95/p99 from 7.207/8.440 to
+0.900/1.014 ms (-87.5%/-88.0%), without an accepted visual tradeoff.
+
+### Diminishing-Returns Decision Gate
+
+The allocation campaign has accomplished its purpose. Cycle 16 still removed
+a measured allocation owner, but it produced only a small frame-time movement
+and no meaningful presenter-CPU or world-time change. Additional
+allocation-only changes must now wait for a fresh profile that connects a
+remaining owner to an actual frame, transition, or memory problem.
+
+The next performance program should return to the larger renderer roadmap.
+For performance, the highest-value ownership boundary is the remaining legacy
+scene/entity bridge: entity and effect data should originate as explicit
+world-space renderer inputs instead of being reconstructed from legacy
+screen-space scene commands, and the corresponding legacy sort, model
+rotation/removal, command capture, texture construction, and presentation
+handoff should be retired only as each replacement proves parity. This
+advances renderer-v2 Phase 3 and the unfinished world-space entity/sprite work
+in Phase 4A. Shader/material polish remains valuable for visuals, but the
+current sub-one-millisecond world phase does not justify treating it as the
+next pure performance target.
+
+Before measuring that architectural swing, preserve this maximum-distance
+route as the steady-state control and add a repeatable entity/effect-pressure
+row. Boundary traversal and hard relocation remain separate world-streaming
+workloads; they should not be mixed into steady renderer comparisons.
 
 ## Controlled Workload Matrix
 
@@ -1031,8 +1084,12 @@ them:
    bounded clip-storage reuse became the tenth accepted experiment and reduced
    client-loop allocation by 43.7% in its matched comparison. Replacing only
    the seven boxed numeric object-chunk accumulators then reduced client-loop
-   allocation another 13.5% in the accepted thirteenth experiment. Re-profile
-   before choosing another allocation target.
+   allocation another 13.5% in the accepted thirteenth experiment. Exact
+   object-builder sizing then reduced it another 12.7%, and exact typed
+   dispatch for the remaining measured OpenGL wrappers reduced presenter
+   allocation 18.0%. This line of work is now at its diminishing-returns gate;
+   re-profile only in response to a concrete problem or a new architectural
+   comparison before choosing another allocation target.
 2. The tenth-cycle JFR profile attributes 46.8% of sampled presenter CPU to
    repeated glow-bound vertex scans before cache lookup. Exact immutable
    chunk/frame bounds removed that scan without changing cache or visual
@@ -1152,7 +1209,7 @@ Implementation checkpoint:
       inventory by exact lazy world and object-caster signatures.
 - [x] Complete the fifteenth focused cycle: pre-size all parallel object-chunk
       builders from exact face topology and visible material sides.
-- [ ] Complete the sixteenth focused cycle: route the remaining JFR-measured
+- [x] Complete the sixteenth focused cycle: route the remaining JFR-measured
       OpenGL reflection wrappers through exact typed dispatch.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
@@ -1206,3 +1263,4 @@ Implementation checkpoint:
 | 2026-07-29 | `6159beb7e` | `shadowcache14` | Cache only telemetry-requested shadow inventory using the existing world signature plus a lazy exact object-caster signature; leave normal shadow-mask building and drawing unchanged. | Exact 106.3-second maximum-distance workload and owner visual pass. Presenter CPU fell 32.4%, process use 13.4%, GL p95/p99 25.8%/28.3%, and world p95/p99 50.5%/49.5%; total/client/presenter allocation stayed within 1%. Focused Java 8 coverage proves cache hits, animation-only stability, exact invalidation, preserved counts, and lazy construction. | Accept cycle 14; re-profile the reduced endpoint before selecting cycle 15. |
 | 2026-07-29 | `2ba397913` | `post14jfr` | Re-profile the fourteen-cycle maximum-distance endpoint and separate remaining CPU and allocation ownership. | Complete 104.7-second phase at exact control geometry. JFR measured 38.18 MiB/s against telemetry's 39.74 MiB/s. Object-chunk builders lead attributable allocation at 19.5%, including 10.2% from fixed-start primitive-array growth; reflection wrappers, frame/command capture, composite scenes, and composite character textures follow. Client and presenter CPU now divide across distinct legacy scene, handoff, upload, glow, and shadow paths. | Pre-size the parallel object-chunk builders from exact face topology for cycle 15; retain the CPU and other allocation groups as separate audits. |
 | 2026-07-29 | `c57df7186` | `capacity15` | Pre-size all object-chunk numeric and per-triangle collections from exact visible face topology, retaining growth fallback and immutable output ownership. | Matched 102.1-second maximum-distance workload and owner visual pass. Client allocation fell 12.7% and total allocation 5.1% despite 1.11 MiB/s of new background-preload allocation; presenter allocation stayed flat, CPU/world tails remained within variance, and GL p95/p99 improved. Focused Java 8 coverage proves exact capacity without growth and preserves geometry, materials, lighting, signatures, shadows, glows, and empty behavior. | Accept cycle 15; audit the independently ranked reflection wrappers and remaining object-builder ownership before cycle 16. |
+| 2026-07-29 | `90b79ac08` | `glhandles16` | Route the remaining 16 JFR-measured event/state/matrix/upload/immediate/uniform wrappers through exact typed Java 8 dispatch while retaining dynamic LWJGL discovery. | Exact 110.6-second maximum-distance workload and owner visual pass. Presenter allocation fell 18.0%; total allocation fell 12.7%, or about 9.9% after excluding background preload present only in the control. Presenter CPU and world tails stayed flat, while GL p95/p99 improved 3.3%/2.1%. Runtime coverage proves every packaged LWJGL signature used by `invokeExact`. | Accept cycle 16; declare diminishing returns for allocation-only cleanup and return to the larger renderer ownership roadmap before another micro-cycle. |

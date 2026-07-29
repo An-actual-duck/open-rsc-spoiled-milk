@@ -174,6 +174,15 @@ they need to be.
   The presenter still owns window/input/pass orchestration and some bridge
   callbacks, but it should no longer be treated as the place to add low-level
   renderer systems.
+- The controlled maximum-distance performance campaign has reached its
+  allocation-only stopping point after 16 accepted, visually neutral cycles.
+  Against the original exact-geometry stress baseline, total allocation is
+  down 96.4%, client-loop allocation 96.7%, process CPU 57.6%, OpenGL p95
+  75.8%, and OpenGL world p95 87.5%. The accepted endpoint holds 34 resident
+  chunks and 209,162 triangles at OpenGL/world p95 of 2.303/0.900 ms. The
+  sixteenth cycle still lowered its measured presenter allocation owner by
+  18.0%, but moved presenter CPU and world time negligibly. Do not continue
+  small allocation changes without a fresh profile tied to an actual problem.
 
 ## Current Shader State
 
@@ -520,23 +529,34 @@ come from one of these areas unless a concrete shadow regression appears:
 2. Treat day/night color, Remaster directional lighting, terrain-receiver
    shadows, and the static/animated object chunk split as the current accepted
    alpha baseline.
-3. Start non-shadow visual improvements with a parity-preserving material
-   family foundation, then material-aware shader polish:
+3. Treat the completed parity-preserving material-family foundation as the
+   baseline, then continue material-aware shader polish when visual work is
+   selected:
    terrain, water, foliage, ore, walls, roofs, scenery, sprites, projectiles,
    and effects should get explicit material families instead of one generic
    response. The proposed first metadata/telemetry slice is tracked in
    [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md).
 4. Treat the completed first terrain-variation and tile-edge blending pass as
    the baseline; revisit it only with a specific captured visual regression.
-5. Move world-space sprites/entities/effects farther away from legacy command replay
-   and toward explicit depth anchors, batching, and culling.
-6. Turn quality settings into real work culling: entity distance, draw distance,
+5. Treat the 16-cycle steady-state allocation campaign as complete. Preserve
+   its exact maximum-distance control and re-profile only when selecting a new
+   architecture target or investigating a real regression.
+6. Make the next broad renderer-performance swing the explicit renderer-v2
+   scene/entity boundary. Move players, NPCs, ground items, projectiles, and
+   effects from legacy screen-space command reconstruction toward direct
+   world-space inputs, persistent texture ownership, ordered batching, and
+   culling. Retire matching legacy scene sort/rotation/removal and capture work
+   incrementally as parity is proven.
+7. Turn quality settings into real work culling: entity distance, draw distance,
    roof visibility, sprite/effect distance, and weak-hardware presets should
    reduce built/submitted/drawn work.
-7. Convert the accepted dense-area route into a repeatable benchmark/capture
-   route before another large optimization pass so dense
-   scenes and zoomed-out movement can be compared without relying only on manual
-   F6 screenshots.
+8. Convert the accepted dense-area route into a repeatable benchmark/capture
+   route and add an entity/effect-pressure companion before evaluating the
+   scene/entity migration. Dense scenes and zoomed-out movement should no
+   longer rely only on manual F6 observation.
+9. Continue true world-stream lifecycle ownership—decoded, CPU-built,
+   GPU-ready, active, and stale—as a separate boundary/relocation program.
+   Do not mix its transition-tail measurements with steady renderer results.
 
 ## Open Long-Term Questions
 
