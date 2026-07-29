@@ -640,17 +640,39 @@ coordinate arrays and presentation rebases are immutable copies, exact
 per-chunk bounds can be computed once and aggregated into each lightweight
 chunk frame without approximating geometry.
 
-The selected eleventh experiment records exact X/Z vertex extrema when each
-immutable `ChunkMesh` is constructed, translates those extrema with the same
-checked arithmetic as presentation rebasing, and aggregates them while
-constructing `Renderer3DWorldChunkFrame`. Glow bounds then read the exact
-aggregate in constant time while retaining emitter-radius padding, signature,
-cache, and texture behavior. Empty geometry remains distinct from a real
-zero-coordinate bound, and emitter-only frames retain their existing result.
-A focused Java 8 fixture proves multi-chunk aggregation, source-preserving
-rebase translation, empty-frame semantics, exact glow-mask coordinates, and
-emitter-only behavior. Performance and visual acceptance remain pending a
-fresh fixed-view phase.
+Checkpoint `bb5e6ba5c` implements the eleventh experiment by recording exact
+X/Z vertex extrema when each immutable `ChunkMesh` is constructed, translating
+those extrema with the same checked arithmetic as presentation rebasing, and
+aggregating them while constructing `Renderer3DWorldChunkFrame`. Glow bounds
+then read the exact aggregate in constant time while retaining emitter-radius
+padding, signature, cache, and texture behavior. Empty geometry remains
+distinct from a real zero-coordinate bound, and emitter-only frames retain
+their existing result. A focused Java 8 fixture proves multi-chunk
+aggregation, source-preserving rebase translation, empty-frame semantics,
+exact glow-mask coordinates, and emitter-only behavior.
+
+`session-20260729-134659-1453503` / `bounds11` captured 89.8 seconds at the
+verified maximum camera state and passed owner review of active fire glows.
+It is an exceptionally close comparison with `clippool`: both phases
+requested 34 chunks and considered 2,202 batches, projected faces differed by
+less than 0.01%, and the new phase drew 0.5% more triangles and captured 1.7%
+more sprite commands.
+
+Presenter CPU fell from 0.463 to 0.286 cores (-38.1%) and process use from
+0.789 to 0.605 cores (-23.3%), while client CPU stayed flat at 0.196 versus
+0.199 cores. GL render p95/p99 improved from 8.747/9.419 to
+5.618/6.409 ms (-35.8%/-32.0%), and world p95/p99 from 6.738/7.344 to
+3.684/4.142 ms (-45.3%/-43.6%). Allocation remained close at 42.54 versus
+41.89 MiB/s, as expected from a CPU-only metadata change. This confirms that
+the eliminated full-vertex scan—not GPU waiting or changed geometry—owned the
+measured presenter time.
+
+Relative to the original same-geometry maximum-distance baseline, eleven
+accepted cycles have reduced total allocation from 871.16 to 42.54 MiB/s
+(-95.1%), client-loop allocation from 604.97 to 26.75 MiB/s (-95.6%), process
+use from 0.928 to 0.605 cores (-34.8%), and GL render p95/p99 from
+9.535/11.539 to 5.618/6.409 ms (-41.1%/-44.5%), without an accepted visual
+tradeoff.
 
 ## Controlled Workload Matrix
 
@@ -738,8 +760,11 @@ them:
    object-chunk array growth separate.
 2. The tenth-cycle JFR profile attributes 46.8% of sampled presenter CPU to
    repeated glow-bound vertex scans before cache lookup. Exact immutable
-   chunk/frame bounds should remove that scan without changing cache or visual
-   semantics; measure it as the eleventh isolated experiment.
+   chunk/frame bounds removed that scan without changing cache or visual
+   semantics, reducing presenter CPU by 38.1% and GL/world p95 by
+   35.8%/45.3% in the accepted eleventh experiment. Texture-signature scanning
+   is now the next measured presenter CPU audit; primitive object-chunk
+   storage remains the leading attributable allocation audit.
 3. A meaningful portion of `openGL.world` occurs outside the three existing
    sub-phases, potentially in visibility/material/shadow inventory or other
    per-frame preparation.
@@ -834,7 +859,7 @@ Implementation checkpoint:
       accumulation arrays with complete per-rebuild channel reset.
 - [x] Complete the tenth focused cycle: reuse bounded sprite-clip mask and row
       storage through the depth-frame release boundary.
-- [ ] Complete the eleventh focused cycle: replace repeated glow-bound
+- [x] Complete the eleventh focused cycle: replace repeated glow-bound
       full-vertex scans with exact immutable chunk/frame bounds.
 - [ ] Implement one evidence-backed change at a time.
 - [ ] Run focused guards and compile the client.
@@ -880,3 +905,4 @@ Implementation checkpoint:
 | 2026-07-29 | `5d314c8b2` | `glowscratch` | Reuse three presenter-owned fixed-size glow-mask accumulation arrays, clearing every color channel before each rebuild. | Fires remained visually stable. The complete 108.3-second phase varied zoom and scene, but its initial matched 16.9-second maximum-distance window retained 34 chunks and 2,202 batches while presenter allocation fell 45.7%, total allocation 17.7%, and GL/world p95 and p99 improved. Focused Java 8 coverage proves storage reuse and absence of stale channel state. | Accept and checkpoint the documented result; audit sprite-clip storage lifetime before choosing the tenth experiment. |
 | 2026-07-29 | `6b8cd1fd0` | `clippool` | Reuse bounded sprite-clip mask and row arrays through the depth-frame release boundary, with complete active-range reset and full/empty fallback preservation. | Homogeneous 94.2-second maximum-distance phase and visual occlusion pass. Against the matched post-glow window, client allocation fell 43.7%, total allocation 33.2%, and presenter allocation stayed flat; exact runtime coverage proves reuse, stale-state clearing, capacity selection, bounded retention, empty frames, and idempotent release. The longer cumulative control shows CPU and GL/world tails remained flat. | Accept and checkpoint the documented result; re-rank the remaining reduced workload before another implementation. |
 | 2026-07-29 | `e7216af51` | `jfrll` | Re-profile the ten-cycle maximum-distance workload and rank remaining CPU and allocation stacks. | Complete 98.0-second JFR phase at exact control geometry. JFR measured 41.16 MiB/s against telemetry's 41.40 MiB/s. Glow-bound full-vertex scans own 46.8% of sampled presenter CPU; explicit object-chunk builders lead attributable allocation at 16.9%, with additional stack-truncated list growth kept separate. | Precompute exact immutable chunk/frame bounds as the eleventh experiment; retain texture-signature, object-builder, and remaining GL-wrapper work as separate candidates. |
+| 2026-07-29 | `bb5e6ba5c` | `bounds11` | Precompute exact immutable X/Z bounds for chunk meshes and aggregate frames, then consume them in glow-mask lookup instead of rescanning every resident vertex. | Exact 89.8-second maximum-distance comparison and visual fire-glow pass. Presenter CPU fell 38.1%, process use 23.3%, GL p95/p99 35.8%/32.0%, and world p95/p99 45.3%/43.6%; allocation stayed flat. Focused Java 8 coverage proves exact aggregation, rebase translation, empty frames, unchanged glow coordinates, and emitter-only behavior. | Accept and checkpoint; audit texture-signature scans separately before another CPU change. |
