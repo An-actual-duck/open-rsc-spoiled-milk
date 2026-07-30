@@ -630,7 +630,48 @@ public final class RenderTelemetry {
 				event.number(
 					"upload.deferred",
 					safeUpload.deferredChunks);
+				appendOpenGLBoundaryUploadRole(
+					event,
+					"world",
+					Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD,
+					safeUpload);
+				appendOpenGLBoundaryUploadRole(
+					event,
+					"staticObjects",
+					Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS,
+					safeUpload);
+				appendOpenGLBoundaryUploadRole(
+					event,
+					"animatedObjects",
+					Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_ANIMATED_OBJECTS,
+					safeUpload);
+				event.number(
+					"upload.miss.cold",
+					safeUpload.coldKeyMisses);
+				event.number(
+					"upload.miss.alternateStorage",
+					safeUpload.alternateStorageKeyMisses);
+				event.number(
+					"upload.miss.alternateEquivalent",
+					safeUpload.alternateEquivalentKeyMisses);
+				event.number(
+					"upload.miss.existingMismatch",
+					safeUpload.existingKeyMismatches);
+				event.number(
+					"upload.cache.before",
+					safeUpload.cacheSizeBefore);
+				event.number(
+					"upload.cache.after",
+					safeUpload.cacheSizeAfter);
 				event.string("upload.reason", safeUpload.reason);
+				event.string(
+					"upload.detail",
+					safeUpload.diagnosticDetail);
+				event.bool(
+					"upload.detailTruncated",
+					safeUpload.diagnosticDetailTruncated);
 				event.number("upload.phaseNanos", chunkUploadNanos);
 				event.bool(
 					"ownership.replacementRequested",
@@ -675,6 +716,41 @@ public final class RenderTelemetry {
 			openGLBoundaryTransitionTraceFrameIndex++;
 			openGLBoundaryTransitionTraceFramesRemaining--;
 		}
+	}
+
+	static boolean isOpenGLBoundaryTransitionTraceActive() {
+		if (!RendererDiagnosticSession.isEnabled()) {
+			return false;
+		}
+		synchronized (RenderTelemetry.class) {
+			return openGLBoundaryTransitionTraceFramesRemaining > 0;
+		}
+	}
+
+	private static void appendOpenGLBoundaryUploadRole(
+		RendererDiagnosticSession.Record event,
+		String label,
+		int chunkRole,
+		OpenGLWorldChunkUploadStats upload) {
+		String prefix = "upload.role." + label + ".";
+		event.number(
+			prefix + "requested",
+			upload.requestedForRole(chunkRole));
+		event.number(
+			prefix + "uploaded",
+			upload.uploadedForRole(chunkRole));
+		event.number(
+			prefix + "reused",
+			upload.reusedForRole(chunkRole));
+		event.number(
+			prefix + "deferred",
+			upload.deferredForRole(chunkRole));
+		event.number(
+			prefix + "bytes",
+			upload.uploadedBytesForRole(chunkRole));
+		event.number(
+			prefix + "nanos",
+			upload.uploadNanosForRole(chunkRole));
 	}
 
 	public static void recordWorldModelTransition(

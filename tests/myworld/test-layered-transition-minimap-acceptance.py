@@ -475,6 +475,43 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             "RendererDiagnosticSession.isEnabled()",
             self.telemetry,
         )
+        self.assertIn(
+            "isOpenGLBoundaryTransitionTraceActive()",
+            self.telemetry,
+        )
+        self.assertIn(
+            "openGLBoundaryTransitionTraceFramesRemaining > 0",
+            self.telemetry,
+        )
+        self.assertIn(
+            "RenderTelemetry.isOpenGLBoundaryTransitionTraceActive()"
+            "\n\t\t\t\t? new UploadDiagnosticDetail(",
+            self.world_chunk_renderer,
+        )
+        self.assertIn(
+            "MAX_UPLOAD_DIAGNOSTIC_CHUNKS_PER_ROLE = 24",
+            self.world_chunk_renderer,
+        )
+        self.assertIn(
+            "new-alternate-equivalent",
+            self.world_chunk_renderer,
+        )
+        self.assertIn(
+            '"staticObjects",',
+            self.telemetry,
+        )
+        self.assertIn(
+            '"animatedObjects",',
+            self.telemetry,
+        )
+        self.assertIn(
+            '"upload.miss.cold"',
+            self.telemetry,
+        )
+        self.assertIn(
+            '"upload.detailTruncated"',
+            self.telemetry,
+        )
 
     def test_same_scope_activation_waits_for_stable_static_scene(self):
         harness = textwrap.dedent(
