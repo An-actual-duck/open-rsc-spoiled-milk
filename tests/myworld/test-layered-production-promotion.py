@@ -77,6 +77,7 @@ def test_hosted_profile_is_explicit() -> None:
         "want_layered_native_terrain_prediction": "true",
         "want_layered_native_terrain_symmetric_residency": "true",
         "want_layered_native_terrain_atomic_activation": "true",
+        "want_sync_scene_baseline": "true",
         "layered_native_world_runtime_profile": "spoiled-milk-replacement",
     }
     for key, value in expected.items():
@@ -155,6 +156,17 @@ def test_release_and_deployment_are_fail_closed() -> None:
         "--layered-production" in private
         and "layered_world_enable_private_production_profile" in private,
         "private final rehearsal cannot select the production profile",
+    )
+    require(
+        "export OPENRSC_SYNC_SCENE_BASELINE=true" in layered_library
+        and "export OPENRSC_SYNC_SCENE_BASELINE=false" in layered_library,
+        "layered production and rollback profiles must explicitly select the "
+        "atomic scene-baseline dependency",
+    )
+    require(
+        "want_sync_scene_baseline true" in common,
+        "hosted launch must fail closed when atomic activation lacks its "
+        "scene-baseline dependency",
     )
     require(
         "package-layered-world-release.sh" in manager,

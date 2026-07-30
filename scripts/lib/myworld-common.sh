@@ -427,6 +427,7 @@ myworld_require_hosted_conf() {
   myworld_require_conf_value "$conf_name" want_layered_native_terrain_prediction true
   myworld_require_conf_value "$conf_name" want_layered_native_terrain_symmetric_residency true
   myworld_require_conf_value "$conf_name" want_layered_native_terrain_atomic_activation true
+  myworld_require_conf_value "$conf_name" want_sync_scene_baseline true
   myworld_require_conf_value "$conf_name" layered_native_world_runtime_profile spoiled-milk-replacement
 }
 
