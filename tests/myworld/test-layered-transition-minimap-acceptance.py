@@ -8,6 +8,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
+TERRAIN_VERTEX_LIGHT = (
+    ROOT
+    / "Client_Base/src/orsc/graphics/three/"
+    "TerrainVertexLightVariation.java"
+)
 GRAPHICS = ROOT / "Client_Base/src/orsc/graphics/two/GraphicsController.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 TELEMETRY = ROOT / "Client_Base/src/orsc/RenderTelemetry.java"
@@ -100,6 +105,111 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             "this.localPlayer.currentZ - 6040",
             self.client,
         )
+
+    def test_terrain_vertex_light_is_stable_in_world_space(self):
+        self.assertIn(
+            "TerrainVertexLightVariation.forWorldVertex(",
+            self.world,
+        )
+        self.assertIn(
+            "(sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE",
+            self.world,
+        )
+        terrain_vertex_block = self.world.split(
+            "private TerrainVertexInput[] collectTerrainVertexInputs(",
+            1,
+        )[1].split(
+            "private TerrainVertexBlendInput terrainVertexBlendInput(",
+            1,
+        )[0]
+        self.assertNotIn("Math.random()", terrain_vertex_block)
+
+        harness = textwrap.dedent(
+            """
+            package orsc.graphics.three;
+
+            public final class TerrainVertexLightVariationHarness {
+                public static void main(String[] arguments) {
+                    boolean[] observed = new boolean[10];
+                    for (int x = -64; x <= 64; x++) {
+                        for (int z = -64; z <= 64; z++) {
+                            int light =
+                                TerrainVertexLightVariation
+                                    .forWorldVertex(0, x, z);
+                            require(light >= -5 && light <= 4,
+                                "legacy light range");
+                            require(
+                                light
+                                    == TerrainVertexLightVariation
+                                        .forWorldVertex(0, x, z),
+                                "repeatable world vertex");
+                            observed[light + 5] = true;
+                        }
+                    }
+                    for (int value = 0; value < observed.length; value++) {
+                        require(observed[value],
+                            "nearby terrain retains variation " + value);
+                    }
+
+                    int sectionSize = 48;
+                    int originOffset = 1;
+                    int worldXFromEastWindow =
+                        (51 - originOffset) * sectionSize;
+                    int worldXFromWestWindow =
+                        (50 - originOffset) * sectionSize + sectionSize;
+                    int worldZ = (50 - originOffset) * sectionSize + 24;
+                    require(worldXFromEastWindow == worldXFromWestWindow,
+                        "overlap fixture addresses same world vertex");
+                    require(
+                        TerrainVertexLightVariation.forWorldVertex(
+                            0, worldXFromEastWindow, worldZ)
+                            == TerrainVertexLightVariation.forWorldVertex(
+                                0, worldXFromWestWindow, worldZ),
+                        "overlapping section windows share light");
+                }
+
+                private static void require(
+                        boolean condition, String label) {
+                    if (!condition) {
+                        throw new AssertionError(label);
+                    }
+                }
+            }
+            """
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary)
+            harness_path = (
+                work / "TerrainVertexLightVariationHarness.java"
+            )
+            harness_path.write_text(harness, encoding="utf-8")
+            subprocess.run(
+                [
+                    "javac",
+                    "-Xlint:all",
+                    "-source",
+                    "8",
+                    "-target",
+                    "8",
+                    "-d",
+                    str(work),
+                    str(TERRAIN_VERTEX_LIGHT),
+                    str(harness_path),
+                ],
+                cwd=ROOT,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    str(work),
+                    "orsc.graphics.three."
+                    "TerrainVertexLightVariationHarness",
+                ],
+                cwd=ROOT,
+                check=True,
+            )
 
     def test_legacy_minimap_and_active_click_authority_remain_bounded(self):
         self.assertIn(

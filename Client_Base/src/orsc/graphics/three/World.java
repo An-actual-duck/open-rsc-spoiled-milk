@@ -735,7 +735,10 @@ public final class World {
 							worldOffsetZ);
 					TerrainModelInput terrainInput =
 						buildTerrainModelInput(
-							plane, window.sectors);
+							plane,
+							sectionX,
+							sectionY,
+							window.sectors);
 					WallModelInput wallInput =
 						new WallModelInput(new WallSegmentInput[0]);
 					RoofModelInput roofInput = null;
@@ -910,7 +913,11 @@ public final class World {
 			&& product.hasTerrainIfNeeded(true);
 		if (!productCacheHit) {
 			TerrainModelInput terrainInput =
-				buildTerrainModelInput(plane, window.sectors);
+				buildTerrainModelInput(
+					plane,
+					sectionX,
+					sectionY,
+					window.sectors);
 			WallModelInput wallInput =
 				buildWallModelInput(window.sectors);
 			terrainInput =
@@ -1134,7 +1141,11 @@ public final class World {
 			&& product.hasTerrainIfNeeded(true);
 		if (!productCacheHit) {
 			TerrainModelInput terrainInput =
-				buildTerrainModelInput(plane, window.sectors);
+				buildTerrainModelInput(
+					plane,
+					sectionX,
+					sectionY,
+					window.sectors);
 			WallModelInput wallInput =
 				buildWallModelInput(window.sectors);
 			terrainInput =
@@ -2722,10 +2733,18 @@ public final class World {
 		return true;
 	}
 
-	private TerrainModelInput buildTerrainModelInput(int plane, Sector[] sourceSectors) {
+	private TerrainModelInput buildTerrainModelInput(
+		int plane,
+		int sectionX,
+		int sectionY,
+		Sector[] sourceSectors) {
 		TerrainModelInputSource source = new TerrainModelInputSource(sourceSectors);
 		return new TerrainModelInput(
-			collectTerrainVertexInputs(plane, source),
+			collectTerrainVertexInputs(
+				plane,
+				sectionX,
+				sectionY,
+				source),
 			collectTerrainTileFaceInputs(plane, source),
 			collectTerrainOverlayFaceInputs(plane, source));
 	}
@@ -2747,7 +2766,11 @@ public final class World {
 		}
 
 		CpuSectionWindow window = loadCpuSectionWindow(plane, sectionX, sectionY);
-		TerrainModelInput built = buildTerrainModelInput(plane, window.sectors);
+		TerrainModelInput built = buildTerrainModelInput(
+			plane,
+			sectionX,
+			sectionY,
+			window.sectors);
 		if (!key.equals(terrainModelInputKey(plane, sectionX, sectionY))) {
 			return built;
 		}
@@ -2777,8 +2800,16 @@ public final class World {
 		return cached;
 	}
 
-	private TerrainVertexInput[] collectTerrainVertexInputs(int plane, TerrainModelInputSource source) {
+	private TerrainVertexInput[] collectTerrainVertexInputs(
+		int plane,
+		int sectionX,
+		int sectionY,
+		TerrainModelInputSource source) {
 		TerrainVertexInput[] vertices = new TerrainVertexInput[LOCAL_TILE_COUNT * LOCAL_TILE_COUNT];
+		int originTileX =
+			(sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
+		int originTileZ =
+			(sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
 		for (int x = 0; x < LOCAL_TILE_COUNT; ++x) {
 			for (int z = 0; z < LOCAL_TILE_COUNT; ++z) {
 				int y = -source.tileElevation(x, z);
@@ -2801,7 +2832,10 @@ public final class World {
 					y = 0;
 				}
 
-				int light = (int) (Math.random() * 10.0D) - 5;
+				int light = TerrainVertexLightVariation.forWorldVertex(
+					plane,
+					Math.addExact(originTileX, x),
+					Math.addExact(originTileZ, z));
 				TerrainVertexBlendInput blend = terrainVertexBlendInput(plane, source, x, z);
 				vertices[z + x * LOCAL_TILE_COUNT] =
 					new TerrainVertexInput(x * 128, y, z * 128, light, blend.color, blend.strength);
