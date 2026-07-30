@@ -114,32 +114,35 @@ final class OpenGLWorldSpriteDrawController {
 	}
 
 	int drawOwnedWorldSpriteSnapshots(
-		Frame frame,
-		List<Renderer3DFrame.WorldSpriteSnapshot> snapshots) throws Exception {
+		Frame frame) throws Exception {
 		if (frame == null
 			|| frame.renderer3DFrame == null
-			|| snapshots == null
-			|| snapshots.isEmpty()) {
+			|| frame.renderer3DFrame.getWorldSpriteSnapshotCount() == 0) {
 			return 0;
 		}
 		int drawn = 0;
-		for (Renderer3DFrame.WorldSpriteSnapshot snapshot : snapshots) {
+		for (int snapshotIndex = 0;
+			snapshotIndex < frame.renderer3DFrame.getWorldSpriteSnapshotCount();
+			snapshotIndex++) {
+			Renderer3DFrame.WorldSpriteSnapshot snapshot =
+				frame.renderer3DFrame.getWorldSpriteSnapshot(snapshotIndex);
 			if (!OpenGLCompositeSceneBuilder.isOpenGLCompositeWorldSpriteSnapshot(snapshot)) {
 				continue;
 			}
 			Renderer3DFrame.SpriteAnchor anchor = snapshot.getAnchor();
-			List<Renderer2DFrame.SpriteCommand> layerCommands = snapshot.getLayers();
-			if (anchor == null || layerCommands.isEmpty()) {
+			int layerCount = snapshot.getLayerCount();
+			if (anchor == null || layerCount == 0) {
 				continue;
 			}
-			Renderer2DFrame.SpriteCommand firstLayer = layerCommands.get(0);
-			if (layerCommands.size() > 1
+			Renderer2DFrame.SpriteCommand firstLayer = snapshot.getLayer(0);
+			if (layerCount > 1
 				&& OpenGLCompositeSceneBuilder.isLegacyEntitySpriteCommand(firstLayer)
-				&& drawCharacterSpriteLayers(frame, anchor, layerCommands)) {
-				drawn += layerCommands.size();
+				&& drawCharacterSpriteLayers(frame, anchor, snapshot)) {
+				drawn += layerCount;
 				continue;
 			}
-			for (Renderer2DFrame.SpriteCommand layerCommand : layerCommands) {
+			for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
+				Renderer2DFrame.SpriteCommand layerCommand = snapshot.getLayer(layerIndex);
 				drawOwnedWorldSpriteCommand(
 					frame,
 					anchor,
@@ -149,6 +152,22 @@ final class OpenGLWorldSpriteDrawController {
 			}
 		}
 		return drawn;
+	}
+
+	private boolean drawCharacterSpriteLayers(
+		Frame frame,
+		Renderer3DFrame.SpriteAnchor anchor,
+		Renderer3DFrame.WorldSpriteSnapshot snapshot) throws Exception {
+		CompositeWorldSpriteTexture compositeTexture =
+			OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(snapshot);
+		if (compositeTexture == null) {
+			return false;
+		}
+		return drawDepthOwnedWorldSpriteTextureData(
+			frame,
+			anchor,
+			compositeTexture,
+			1.0f);
 	}
 
 	private boolean drawCharacterSpriteLayers(

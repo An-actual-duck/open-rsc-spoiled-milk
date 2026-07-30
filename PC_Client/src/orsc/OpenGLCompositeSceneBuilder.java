@@ -165,8 +165,11 @@ final class OpenGLCompositeSceneBuilder {
 		int snapshotLayerCount = 0;
 		int previousDrawOrder = Integer.MIN_VALUE;
 		int previousSequence = Integer.MIN_VALUE;
-		for (Renderer3DFrame.WorldSpriteSnapshot snapshot
-			: frame.renderer3DFrame.getWorldSpriteSnapshots()) {
+		for (int snapshotIndex = 0;
+			snapshotIndex < frame.renderer3DFrame.getWorldSpriteSnapshotCount();
+			snapshotIndex++) {
+			Renderer3DFrame.WorldSpriteSnapshot snapshot =
+				frame.renderer3DFrame.getWorldSpriteSnapshot(snapshotIndex);
 			if (!isOpenGLCompositeWorldSpriteSnapshot(snapshot)) {
 				continue;
 			}
@@ -175,7 +178,8 @@ final class OpenGLCompositeSceneBuilder {
 				return false;
 			}
 			previousDrawOrder = anchor.getLegacyDrawOrder();
-			for (Renderer2DFrame.SpriteCommand layer : snapshot.getLayers()) {
+			for (int layerIndex = 0; layerIndex < snapshot.getLayerCount(); layerIndex++) {
+				Renderer2DFrame.SpriteCommand layer = snapshot.getLayer(layerIndex);
 				if (!isOpenGLCompositeWorldSpriteCommand(layer)
 					|| layer.getSceneSpriteAnchorIndex() != snapshot.getAnchorIndex()
 					|| findOwnedSpriteAnchor(frame, layer) != anchor
@@ -211,8 +215,11 @@ final class OpenGLCompositeSceneBuilder {
 			return 0;
 		}
 		int groups = 0;
-		for (Renderer3DFrame.WorldSpriteSnapshot snapshot
-			: frame.renderer3DFrame.getWorldSpriteSnapshots()) {
+		for (int snapshotIndex = 0;
+			snapshotIndex < frame.renderer3DFrame.getWorldSpriteSnapshotCount();
+			snapshotIndex++) {
+			Renderer3DFrame.WorldSpriteSnapshot snapshot =
+				frame.renderer3DFrame.getWorldSpriteSnapshot(snapshotIndex);
 			if (isOpenGLCompositeWorldSpriteSnapshot(snapshot)
 				&& snapshot.getLayerCount() > 0) {
 				groups++;
@@ -226,8 +233,11 @@ final class OpenGLCompositeSceneBuilder {
 			return 0;
 		}
 		int layers = 0;
-		for (Renderer3DFrame.WorldSpriteSnapshot snapshot
-			: frame.renderer3DFrame.getWorldSpriteSnapshots()) {
+		for (int snapshotIndex = 0;
+			snapshotIndex < frame.renderer3DFrame.getWorldSpriteSnapshotCount();
+			snapshotIndex++) {
+			Renderer3DFrame.WorldSpriteSnapshot snapshot =
+				frame.renderer3DFrame.getWorldSpriteSnapshot(snapshotIndex);
 			if (isOpenGLCompositeWorldSpriteSnapshot(snapshot)) {
 				layers += snapshot.getLayerCount();
 			}

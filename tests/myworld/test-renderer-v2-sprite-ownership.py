@@ -117,6 +117,9 @@ public final class Renderer3DSpriteOwnershipFixture {
 			assertTrue(snapshot != null, "renderer snapshot exists");
 			assertEquals(secondIndex, snapshot.getAnchorIndex(), "snapshot anchor index");
 			assertEquals(1, snapshot.getLayerCount(), "snapshot layer count");
+			assertTrue(snapshot.getLayer(0) == owned, "indexed snapshot layer");
+			assertTrue(snapshot.getLayer(-1) == null, "negative layer rejected");
+			assertTrue(snapshot.getLayer(1) == null, "past-end layer rejected");
 			assertTrue(snapshot.ownsLayer(owned), "snapshot owns exact layer");
 			assertTrue(
 				OpenGLCompositeSceneBuilder.canUseOwnedWorldSpriteSnapshots(

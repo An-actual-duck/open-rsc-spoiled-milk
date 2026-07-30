@@ -18,7 +18,16 @@ command builder retained as an all-or-nothing compatibility fallback. That
 slice is accepted at checkpoint `e3cced146`: it compiles, passes the full
 renderer guardrail suite and owner visual route, and completed 12 strict
 capture frames with 4,852/4,852 snapshot-owned layers and zero compatibility
-fallback.
+fallback. The first post-snapshot JFR profile confirms that the former
+composite scene reconstruction is absent. Its before/after scenes were not
+workload-matched, so raw frame-time and allocation totals are not treated as
+a performance delta. A measured follow-up now replaces the new per-anchor
+layer list/read-only-wrapper pair and iterator traversal with compact indexed
+storage. Compilation, the full guard suite, owner visual review, and a
+12-frame strict capture pass. All 6,158 captured layers retained exact
+snapshot ownership across 1,144 groups with zero compatibility fallback,
+invalid anchor/order, suspicious visibility, failed frames, or client
+exceptions.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -1180,6 +1189,81 @@ entity-pressure workloads at `e3cced146`, confirming that composite scene
 reconstruction is absent and checking whether the new snapshot construction
 merely moves allocation back to the client loop.
 
+### Post-Snapshot Profile And Indexed Storage Cleanup
+
+`session-20260729-211918-1603995` profiled the accepted grouped-snapshot
+endpoint with a live JFR dump at `snapshot-after-profile.jfr`. Both marked
+phases retained maximum zoom `900`, effective zoom `2400`, pitch `912`, a
+40-tile draw distance, a 28-tile fog start, and fog enabled:
+
+- `snapidle` ran for 85.9 seconds. GL render p95/p99 was 4.381/5.280 ms,
+  world p95/p99 was 2.337/2.952 ms, process use was 0.645 cores, and telemetry
+  allocation was 59.06 MiB/s.
+- `snapcombat` ran for 55.5 seconds with camera rotation from `56` to `624`
+  while retaining maximum zoom. GL render p95/p99 was 4.821/5.474 ms, world
+  p95/p99 was 2.371/2.876 ms, process use was 0.649 cores, and allocation was
+  66.11 MiB/s.
+- No client exception or renderer slow-frame event occurred, and grouped
+  snapshot compatibility fallback remained zero.
+
+These numbers are not a direct delta against `entityidle`/`entitycombat`.
+The post-change idle scene averaged about 81 anchors and 412 captured
+world-sprite layers, versus about 17 anchors and 136 layers in the earlier
+idle control. It also contained 1,415 source models and 3,387 considered
+batches, versus 1,348 and 2,913. The post-change combat phase averaged about
+444 layers versus 95 previously, while the earlier combat run also varied
+zoom. The newer phases therefore processed a materially denser actor scene.
+Raw CPU, allocation, and frame-time increases cannot be attributed to the
+snapshot change.
+
+Stack attribution still answers the boundary question:
+
+- the old `OpenGLCompositeSceneBuilder` command/list/sort reconstruction
+  recorded no allocation sample in either new phase, compared with a
+  measurable contribution in both pre-snapshot phases;
+- the new snapshot constructor's per-group `ArrayList` and unmodifiable view
+  accounted for about 0.37 MiB/s in `snapidle`, while snapshot validation
+  accounted for about 0.21 MiB/s;
+- anchor submission lookup appeared in only seven of 1,937 sampled idle
+  client-loop CPU stacks, so it is not a leading CPU target;
+- composite character-texture construction remains the larger sprite-specific
+  allocation owner and correctly scales with the much larger layer workload.
+  Persistent transformed-texture caching remains deferred because the prior
+  experiment proved that an incomplete parity key can render incorrect body
+  and combat layers.
+
+The selected cleanup is local to the newly introduced boundary. Each
+`WorldSpriteSnapshot` now stores its exact layer references in a growable
+array, using one slot for ground items and an eight-slot initial character
+capacity before geometric growth fallback. All validation, diagnostics,
+capture, texture composition, and direct presentation iterate by stable
+index. This removes one mutable list, one read-only wrapper, and iterator
+objects per group without changing command identity or order. The legacy
+typed-list path remains intact for all-or-nothing compatibility fallback.
+The client compiles, focused ownership/capture fixtures pass, and the full
+renderer guardrail suite passes.
+
+The private acceptance run used
+`session-20260729-214330-1614630`, launched from the tested dirty worktree
+based on `06110169b`. The owner reported that the indexed-storage client
+visually checked out. All 12 `Ctrl+F9` frames then passed strict session and
+capture analysis:
+
+- all 6,158 world-sprite commands were the identical objects owned by their
+  indexed snapshots and all 6,158 resolved through `owner-anchor`;
+- 1,144 nonempty groups comprised 966 character groups and 178 ground-item
+  groups;
+- invalid anchor rows, sequence-order violations, missing anchors,
+  compatibility fallback, suspicious visibility rows, failed frames, and
+  client exceptions were all zero;
+- projected characters with body commands were visible in every frame, and
+  each frame reported `suspicious:0`.
+
+This accepts the indexed-storage cleanup. It removes only the measured
+container and traversal overhead introduced by the second ownership slice;
+it does not reopen generic allocation-only micro-tuning beyond the established
+diminishing-returns gate.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -1440,6 +1524,16 @@ Implementation checkpoint:
       strict capture frames: 4,852/4,852 layers were snapshot-owned,
       compatibility fallback, invalid anchor/order, suspicious visibility,
       failed frames, and client exceptions were all zero.
+- [x] Profile the accepted grouped-snapshot endpoint. The intended composite
+      reconstruction disappeared, but a much denser actor scene prevents raw
+      before/after attribution.
+- [x] Remove the new boundary's measured per-group list, wrapper, and iterator
+      allocations with indexed array-backed layer storage; focused and full
+      guards pass.
+- [x] Complete private visual acceptance of indexed snapshot storage and a
+      strict 12-frame burst: 6,158/6,158 layers retained exact ownership
+      across 1,144 groups, with zero fallback, invalid anchor/order,
+      suspicious visibility, failed frames, or client exceptions.
 
 ### Milestone 4: Broader Performance Matrix
 
@@ -1490,3 +1584,5 @@ Implementation checkpoint:
 | 2026-07-29 | `840f43199` | dense sprite ownership | Preserve each multipart scene sprite command's exact frame-local renderer anchor and draw order, use validated indexed lookup, and retain the old matcher only as fallback. | Owner visual pass plus 12 strict capture frames: 2,424/2,424 commands used `owner-anchor`, with zero fallback, unmatched, invalid owner, or draw-order mismatch. The final frame covered 204 entity layers, three ground items, 79 NPC metadata rows, one player, and `suspicious:0`. The view was zoom `760`, so no maximum-distance performance claim is made. | Accept the first scene/entity ownership slice; profile a repeatable maximum-distance entity/effect workload before selecting the next direct-submission boundary. |
 | 2026-07-29 | `c40e3ae7a` | `entityidle`, `entitycombat` | Profile the first exact-owner endpoint at maximum-distance idle and under active combat/camera pressure. | Idle was an exact zoom `900` / effective `2400` control at 42.73 MiB/s and 0.484 cores. Combat varied zoom/rotation and rose to 70.18 MiB/s and 0.577 cores. Legacy `Scene.endScene` covered about 51% of client CPU samples in both; composite scene reconstruction cost about 1.2–1.5 MiB/s, while composite character textures rose from 1.27 to 2.51 MiB/s under combat. Visuals passed and ownership fallback/unmatched stayed zero. | Build a frame-owned grouped sprite snapshot to remove wrapper/list/sort reconstruction while preserving captured pixels; do not cache transformed character textures without a parity-complete key. |
 | 2026-07-29 | `e3cced146` | grouped snapshot acceptance | Attach exact captured layers to frame-owned anchor/submission/character snapshots, validate the complete frame, consume valid groups directly, and retain the typed command builder as an all-or-nothing fallback. | Client compile, focused ownership/capture fixtures, and the full guard suite passed. The owner visual route reported no issue. All 12 strict capture frames passed: 4,852/4,852 layers were snapshot-owned across 938 nonempty groups, 842 character groups, and 96 item groups, with zero compatibility fallback, invalid anchor/order, suspicious visibility, failed frames, or client exceptions. | Accept the second scene/entity ownership slice. Repeat the maximum-distance idle and entity-pressure measurements before retiring another bridge boundary. |
+| 2026-07-29 | `06110169b` | `snapidle`, `snapcombat` | Profile the accepted grouped-snapshot endpoint at maximum zoom and under actor/combat pressure. | Composite scene reconstruction recorded zero sampled allocation and compatibility fallback stayed zero. The new phases contained roughly three to five times as many sprite layers as their earlier namesakes, so their 59.06/66.11 MiB/s allocation and 0.645/0.649-core totals are not treated as a regression or a direct delta. New per-group list/wrapper storage measured about 0.37 MiB/s in idle; submission lookup was not a leading CPU cost. | Keep the architectural result, reject raw before/after attribution, and remove only the new snapshot container/iterator allocation before another broader boundary. |
+| 2026-07-29 | accepted worktree based on `06110169b` | indexed snapshot storage | Replace each snapshot's list/read-only wrapper with compact growable command-reference storage and consume it by stable index in validation, capture, composition, and drawing. | Command identity/order and all-or-nothing fallback are unchanged. Client compile, focused ownership/capture fixtures, and the full renderer guardrail suite passed; owner visual review passed. All 12 strict capture frames passed with 6,158/6,158 exactly owned layers across 1,144 groups and zero fallback, invalid anchor/order, suspicious visibility, failed frames, or client exceptions. | Accept and checkpoint this measured cleanup; retain the broader allocation-only diminishing-returns gate. |

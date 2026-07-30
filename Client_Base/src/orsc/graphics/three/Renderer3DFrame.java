@@ -610,14 +610,15 @@ public final class Renderer3DFrame {
 	}
 
 	public static final class WorldSpriteSnapshot {
+		private static final Renderer2DFrame.SpriteCommand[] EMPTY_LAYERS =
+			new Renderer2DFrame.SpriteCommand[0];
+		private static final int INITIAL_CHARACTER_LAYER_CAPACITY = 8;
 		private final int anchorIndex;
 		private final SpriteAnchor anchor;
 		private final SpriteSubmission submission;
 		private final CharacterSprite character;
-		private final List<Renderer2DFrame.SpriteCommand> layers =
-			new ArrayList<Renderer2DFrame.SpriteCommand>();
-		private final List<Renderer2DFrame.SpriteCommand> layersView =
-			Collections.unmodifiableList(layers);
+		private Renderer2DFrame.SpriteCommand[] layers = EMPTY_LAYERS;
+		private int layerCount;
 
 		private WorldSpriteSnapshot(
 			int anchorIndex,
@@ -631,7 +632,18 @@ public final class Renderer3DFrame {
 		}
 
 		private void addLayer(Renderer2DFrame.SpriteCommand command) {
-			layers.add(command);
+			if (layerCount >= layers.length) {
+				int nextCapacity;
+				if (layers.length == 0) {
+					nextCapacity = character == null
+						? 1
+						: INITIAL_CHARACTER_LAYER_CAPACITY;
+				} else {
+					nextCapacity = layers.length << 1;
+				}
+				layers = Arrays.copyOf(layers, nextCapacity);
+			}
+			layers[layerCount++] = command;
 		}
 
 		public int getAnchorIndex() {
@@ -650,17 +662,20 @@ public final class Renderer3DFrame {
 			return character;
 		}
 
-		public List<Renderer2DFrame.SpriteCommand> getLayers() {
-			return layersView;
+		public Renderer2DFrame.SpriteCommand getLayer(int layerIndex) {
+			if (layerIndex < 0 || layerIndex >= layerCount) {
+				return null;
+			}
+			return layers[layerIndex];
 		}
 
 		public int getLayerCount() {
-			return layers.size();
+			return layerCount;
 		}
 
 		public boolean ownsLayer(Renderer2DFrame.SpriteCommand command) {
-			for (Renderer2DFrame.SpriteCommand layer : layers) {
-				if (layer == command) {
+			for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
+				if (layers[layerIndex] == command) {
 					return true;
 				}
 			}

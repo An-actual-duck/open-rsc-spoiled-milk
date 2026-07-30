@@ -2,6 +2,7 @@ package orsc;
 
 import com.openrsc.client.model.Sprite;
 import orsc.graphics.Renderer2DFrame;
+import orsc.graphics.three.Renderer3DFrame;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -68,14 +69,31 @@ final class OpenGLSpriteTextureBuilder {
 
 	static CompositeWorldSpriteTexture buildCompositeCharacterSpriteTexture(
 		List<Renderer2DFrame.SpriteCommand> layerCommands) {
-		if (layerCommands == null || layerCommands.isEmpty()) {
+		return buildCompositeCharacterSpriteTexture(null, layerCommands);
+	}
+
+	static CompositeWorldSpriteTexture buildCompositeCharacterSpriteTexture(
+		Renderer3DFrame.WorldSpriteSnapshot snapshot) {
+		return buildCompositeCharacterSpriteTexture(snapshot, null);
+	}
+
+	private static CompositeWorldSpriteTexture buildCompositeCharacterSpriteTexture(
+		Renderer3DFrame.WorldSpriteSnapshot snapshot,
+		List<Renderer2DFrame.SpriteCommand> layerCommands) {
+		int layerCount = snapshot == null
+			? (layerCommands == null ? 0 : layerCommands.size())
+			: snapshot.getLayerCount();
+		if (layerCount == 0) {
 			return null;
 		}
 		int minX = Integer.MAX_VALUE;
 		int minY = Integer.MAX_VALUE;
 		int maxX = Integer.MIN_VALUE;
 		int maxY = Integer.MIN_VALUE;
-		for (Renderer2DFrame.SpriteCommand command : layerCommands) {
+		for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
+			Renderer2DFrame.SpriteCommand command = snapshot == null
+				? layerCommands.get(layerIndex)
+				: snapshot.getLayer(layerIndex);
 			if (command == null) {
 				continue;
 			}
@@ -95,7 +113,10 @@ final class OpenGLSpriteTextureBuilder {
 		int height = maxY - minY;
 		int[] compositePixels = new int[width * height];
 		int visiblePixelCount = 0;
-		for (Renderer2DFrame.SpriteCommand command : layerCommands) {
+		for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
+			Renderer2DFrame.SpriteCommand command = snapshot == null
+				? layerCommands.get(layerIndex)
+				: snapshot.getLayer(layerIndex);
 			if (command == null) {
 				continue;
 			}

@@ -2189,12 +2189,16 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				snapshotGroups,
 				snapshotLayers,
 				0);
-			for (Renderer3DFrame.WorldSpriteSnapshot snapshot
-				: frame.renderer3DFrame.getWorldSpriteSnapshots()) {
+			for (int snapshotIndex = 0;
+				snapshotIndex < frame.renderer3DFrame.getWorldSpriteSnapshotCount();
+				snapshotIndex++) {
+				Renderer3DFrame.WorldSpriteSnapshot snapshot =
+					frame.renderer3DFrame.getWorldSpriteSnapshot(snapshotIndex);
 				if (!OpenGLCompositeSceneBuilder.isOpenGLCompositeWorldSpriteSnapshot(snapshot)) {
 					continue;
 				}
-				for (Renderer2DFrame.SpriteCommand command : snapshot.getLayers()) {
+				for (int layerIndex = 0; layerIndex < snapshot.getLayerCount(); layerIndex++) {
+					Renderer2DFrame.SpriteCommand command = snapshot.getLayer(layerIndex);
 					logCompositeSpriteCommand(
 						"renderer-snapshot",
 						command,
@@ -2203,8 +2207,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				}
 			}
 			staticReplayed += drawOpenGLOwnedWorldSpriteSnapshots(
-				frame,
-				frame.renderer3DFrame.getWorldSpriteSnapshots());
+				frame);
 		} else {
 			List<OpenGLCompositeSceneCommand> compositeSceneCommands =
 				buildOpenGLCompositeSceneCommands(frame, commands);
@@ -3076,11 +3079,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private int drawOpenGLOwnedWorldSpriteSnapshots(
-		Frame frame,
-		List<Renderer3DFrame.WorldSpriteSnapshot> snapshots) throws Exception {
+		Frame frame) throws Exception {
 		int drawn = worldSpriteDrawController == null
 			? 0
-			: worldSpriteDrawController.drawOwnedWorldSpriteSnapshots(frame, snapshots);
+			: worldSpriteDrawController.drawOwnedWorldSpriteSnapshots(frame);
 		worldSpriteDepthDrawCommands = drawn;
 		worldSpriteDepthTextureBatches = drawn;
 		return drawn;

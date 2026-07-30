@@ -599,15 +599,16 @@ final class OpenGLFrameCapture {
 			if (frame == null || frame.renderer3DFrame == null) {
 				return;
 			}
-			List<Renderer3DFrame.WorldSpriteSnapshot> snapshots =
-				frame.renderer3DFrame.getWorldSpriteSnapshots();
-			for (int snapshotIndex = 0; snapshotIndex < snapshots.size(); snapshotIndex++) {
-				Renderer3DFrame.WorldSpriteSnapshot snapshot = snapshots.get(snapshotIndex);
+			for (int snapshotIndex = 0;
+				snapshotIndex < frame.renderer3DFrame.getWorldSpriteSnapshotCount();
+				snapshotIndex++) {
+				Renderer3DFrame.WorldSpriteSnapshot snapshot =
+					frame.renderer3DFrame.getWorldSpriteSnapshot(snapshotIndex);
 				Renderer3DFrame.SpriteAnchor anchor = snapshot.getAnchor();
 				Renderer3DFrame.SpriteSubmission submission = snapshot.getSubmission();
 				Renderer3DFrame.CharacterSprite character = snapshot.getCharacter();
-				List<Renderer2DFrame.SpriteCommand> layers = snapshot.getLayers();
-				if (layers.isEmpty()) {
+				int layerCount = snapshot.getLayerCount();
+				if (layerCount == 0) {
 					writeWorldSpriteSnapshotRow(
 						writer,
 						snapshotIndex,
@@ -619,7 +620,7 @@ final class OpenGLFrameCapture {
 						null);
 					continue;
 				}
-				for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+				for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
 					writeWorldSpriteSnapshotRow(
 						writer,
 						snapshotIndex,
@@ -628,7 +629,7 @@ final class OpenGLFrameCapture {
 						submission,
 						character,
 						layerIndex,
-						layers.get(layerIndex));
+						snapshot.getLayer(layerIndex));
 				}
 			}
 		} finally {
