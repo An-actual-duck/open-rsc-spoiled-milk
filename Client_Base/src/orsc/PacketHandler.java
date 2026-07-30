@@ -226,7 +226,7 @@ public class PacketHandler {
 		layeredSceneContextState.reset();
 		layeredSceneActivationState.reset();
 		if (mc != null) {
-			mc.setLayeredSceneActivationPending(false);
+			mc.resetLayeredSceneActivationPresentation();
 			mc.clearStaticScenePresentation();
 		}
 		nativeLayeredTerrainResidentCache.clear();

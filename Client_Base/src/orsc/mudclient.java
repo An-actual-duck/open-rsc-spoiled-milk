@@ -880,7 +880,9 @@ public final class mudclient implements Runnable {
 	private int lastObjectAnimatonNumberClaw = -1;
 	private boolean loadingArea = false;
 	private boolean layeredSceneActivationPending = false;
-	private boolean layeredSceneActivationRetainsPresentedFrame = false;
+	private final LayeredScenePresentationLatch
+		layeredScenePresentationLatch =
+			new LayeredScenePresentationLatch();
 	private boolean regionLoadNeedsHardPlayerReset = false;
 	private boolean hasCompletedInitialRegionLoad = false;
 	private final Map<Integer, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
@@ -6956,7 +6958,7 @@ public final class mudclient implements Runnable {
 					// 256, this.screenOffsetY);
 					clientPort.draw();
 					} else if (this.layeredSceneActivationPending
-							&& this.layeredSceneActivationRetainsPresentedFrame) {
+							&& this.shouldRetainLastPresentedFrame()) {
 						clientPort.draw();
 					} else if (this.layeredSceneActivationPending) {
 						this.getSurface().blackScreen(true);
@@ -7429,8 +7431,13 @@ public final class mudclient implements Runnable {
 					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
 					if (renderer3DFrame != null) {
 						renderer3DFrame.setRoofVisibility(roofVisibility, this.lastHeightOffset);
+						Renderer3DWorldChunkFrame presentedWorldChunkFrame =
+							this.appendResidentObjectChunkFrame(
+								this.world.getRenderer3DWorldChunkFrame());
 						renderer3DFrame.setWorldChunkFrame(
-							this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame()));
+							presentedWorldChunkFrame);
+						this.completeLayeredSceneActivationFreshFrame(
+							presentedWorldChunkFrame);
 						Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
 						Renderer3DMeshFrame meshFrame = renderer3DFrame.getMeshFrame();
 						RenderTelemetry.recordWorldGeometryFrame(
@@ -23845,21 +23852,44 @@ public final class mudclient implements Runnable {
 	public void setLayeredSceneActivationPending(
 		final boolean pending) {
 		this.layeredSceneActivationPending = pending;
-		if (!pending) {
-			this.layeredSceneActivationRetainsPresentedFrame = false;
-		}
+		this.layeredScenePresentationLatch.updatePending(pending);
 	}
 
 	public void beginLayeredSceneActivation(
 		final boolean retainPresentedFrame) {
 		this.layeredSceneActivationPending = true;
-		this.layeredSceneActivationRetainsPresentedFrame =
-			retainPresentedFrame;
+		this.layeredScenePresentationLatch.begin(retainPresentedFrame);
+	}
+
+	public void resetLayeredSceneActivationPresentation() {
+		this.layeredSceneActivationPending = false;
+		this.layeredScenePresentationLatch.reset();
 	}
 
 	public boolean shouldRetainLastPresentedFrame() {
-		return this.layeredSceneActivationPending
-			&& this.layeredSceneActivationRetainsPresentedFrame;
+		return this.layeredScenePresentationLatch
+			.shouldRetainLastPresentedFrame();
+	}
+
+	private void completeLayeredSceneActivationFreshFrame(
+		Renderer3DWorldChunkFrame worldChunkFrame) {
+		if (!this.layeredScenePresentationLatch.completeFreshFrame()) {
+			return;
+		}
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord(
+				"renderer.atomic-presentation-release");
+		if (event != null) {
+			event.number(
+				"world.chunkCount",
+				worldChunkFrame == null
+					? 0 : worldChunkFrame.getChunkCount());
+			event.number(
+				"world.triangleCount",
+				worldChunkFrame == null
+					? 0 : worldChunkFrame.getTotalTriangleCount());
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
 	}
 
 	public void applyLayeredSceneScope(

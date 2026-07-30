@@ -272,11 +272,15 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
         )
         self.assertIn(
             "this.layeredSceneActivationPending\n"
-            "\t\t\t\t\t\t\t&& this.layeredSceneActivationRetainsPresentedFrame",
+            "\t\t\t\t\t\t\t&& this.shouldRetainLastPresentedFrame()",
             client,
         )
         self.assertIn(
             "public boolean shouldRetainLastPresentedFrame()", client
+        )
+        self.assertIn(
+            "completeLayeredSceneActivationFreshFrame(",
+            client,
         )
         self.assertIn(
             "mudclient.shouldRetainLastPresentedFrame()", applet

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import subprocess
+import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -9,6 +12,9 @@ GRAPHICS = ROOT / "Client_Base/src/orsc/graphics/two/GraphicsController.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 TELEMETRY = ROOT / "Client_Base/src/orsc/RenderTelemetry.java"
 PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
+PRESENTATION_LATCH = (
+    ROOT / "Client_Base/src/orsc/LayeredScenePresentationLatch.java"
+)
 
 
 class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
@@ -236,6 +242,106 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
         self.assertIn(
             "RendererDiagnosticSession.isEnabled()",
             self.telemetry,
+        )
+
+    def test_same_scope_activation_waits_for_one_fresh_scene_frame(self):
+        harness = textwrap.dedent(
+            """
+            package orsc;
+
+            public final class LayeredScenePresentationLatchHarness {
+                public static void main(String[] arguments) {
+                    LayeredScenePresentationLatch latch =
+                        new LayeredScenePresentationLatch();
+                    require(!latch.shouldRetainLastPresentedFrame(),
+                        "initial state");
+
+                    latch.begin(true);
+                    require(latch.shouldRetainLastPresentedFrame(),
+                        "same-scope activation retains old frame");
+                    latch.updatePending(false);
+                    require(latch.shouldRetainLastPresentedFrame(),
+                        "barrier completion still retains old frame");
+                    latch.updatePending(false);
+                    require(latch.shouldRetainLastPresentedFrame(),
+                        "duplicate completion cannot release early");
+                    require(latch.completeFreshFrame(),
+                        "fresh scene frame releases latch");
+                    require(!latch.shouldRetainLastPresentedFrame(),
+                        "fresh frame is immediately presentable");
+                    require(!latch.completeFreshFrame(),
+                        "release is single-use");
+
+                    latch.begin(false);
+                    require(!latch.shouldRetainLastPresentedFrame(),
+                        "initial scope uses loading presentation");
+                    latch.updatePending(false);
+                    require(!latch.shouldRetainLastPresentedFrame(),
+                        "initial scope does not manufacture retention");
+
+                    latch.begin(true);
+                    latch.reset();
+                    require(!latch.shouldRetainLastPresentedFrame(),
+                        "reset cancels pending retention");
+                    require(!latch.completeFreshFrame(),
+                        "reset cancels release");
+                }
+
+                private static void require(
+                        boolean condition, String label) {
+                    if (!condition) {
+                        throw new AssertionError(label);
+                    }
+                }
+            }
+            """
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary)
+            harness_path = (
+                work / "LayeredScenePresentationLatchHarness.java"
+            )
+            harness_path.write_text(harness, encoding="utf-8")
+            subprocess.run(
+                [
+                    "javac",
+                    "-Xlint:all",
+                    "-source",
+                    "8",
+                    "-target",
+                    "8",
+                    "-d",
+                    str(work),
+                    str(PRESENTATION_LATCH),
+                    str(harness_path),
+                ],
+                cwd=ROOT,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    str(work),
+                    "orsc.LayeredScenePresentationLatchHarness",
+                ],
+                cwd=ROOT,
+                check=True,
+            )
+
+        self.assertIn(
+            "resetLayeredSceneActivationPresentation();",
+            (
+                ROOT / "Client_Base/src/orsc/PacketHandler.java"
+            ).read_text(encoding="utf-8"),
+        )
+        self.assertIn(
+            "completeLayeredSceneActivationFreshFrame(",
+            self.client,
+        )
+        self.assertIn(
+            '"renderer.atomic-presentation-release"',
+            self.client,
         )
 
 
