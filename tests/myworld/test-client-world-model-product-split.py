@@ -252,6 +252,22 @@ def main() -> None:
             "Canonical scenery diagnostics should hash a deterministic record order")
     require(mudclient, '"canonicalOwnershipMatches"',
             "Transition diagnostics should expose potential ownership-boundary reuse")
+    require(mudclient,
+            "if (RendererDiagnosticSession.isEnabled()) {\n"
+            "\t\t\t\t\t\tcanonicalComparisonCandidate = cached;",
+            "Canonical geometry comparison must remain diagnostic-only")
+    require(mudclient,
+            "ResidentObjectChunkGeometryComparison\n"
+            "\t\t\t\t\t\t\tcomparison =\n"
+            "\t\t\t\t\t\t\t\tResidentObjectChunkGeometryComparison\n"
+            "\t\t\t\t\t\t\t\t\t.compare(rebased, objectChunk);",
+            "Diagnostics should compare a rebased retained chunk with the normal fresh build")
+    require(mudclient, '"canonicalExactRenderMatches"',
+            "Canonical diagnostics should report exact render-data matches")
+    require(mudclient, '"canonicalPresentationSetMatches"',
+            "Canonical diagnostics should distinguish order-independent presentation matches")
+    require(mudclient, "private static long[] triangleFingerprints(",
+            "Canonical diagnostics should compare normalized rendered triangles")
     require(mudclient, "mixResidentObjectChunkCacheKey(\n\t\t\t\t\tthis.cacheKey, worldTileX)",
             "Static resident object cache keys should use stable world tile placement")
     require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, objectId)",

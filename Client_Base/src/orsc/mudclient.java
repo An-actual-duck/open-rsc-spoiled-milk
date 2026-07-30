@@ -4000,10 +4000,27 @@ public final class mudclient implements Runnable {
 		int cacheMisses = 0;
 		int canonicalOwnershipMatches = 0;
 		int canonicalOwnershipChanges = 0;
+		int canonicalGeometryComparisons = 0;
+		int canonicalExactRenderMatches = 0;
+		int canonicalPresentationSetMatches = 0;
+		int canonicalDrawMetadataMatches = 0;
+		int canonicalPositionMatches = 0;
+		int canonicalVertexAttributeMatches = 0;
+		int canonicalIndexMatches = 0;
+		int canonicalTriangleAttributeMatches = 0;
+		int canonicalTriangleSetMatches = 0;
+		int canonicalShadowSetMatches = 0;
+		int canonicalGlowSetMatches = 0;
+		int canonicalComparisonErrors = 0;
+		long canonicalComparisonNanos = 0L;
+		StringBuilder canonicalMismatchDetails =
+			new StringBuilder();
 		long meshBuildNanos = 0L;
 		for (ResidentObjectChunkInput input : objectInputs) {
 			activeCells.add(input.cellKey);
 			ResidentObjectChunkCacheEntry cached = this.cachedResidentObjectChunks.get(input.cellKey);
+			ResidentObjectChunkCacheEntry canonicalComparisonCandidate =
+				null;
 			Renderer3DWorldChunkFrame.ChunkMesh objectChunk;
 			if (cached != null
 				&& cached.cacheKey != input.cacheKey
@@ -4013,6 +4030,9 @@ public final class mudclient implements Runnable {
 				if (cached.canonicalContentKey
 						== input.canonicalContentKey) {
 					canonicalOwnershipMatches++;
+					if (RendererDiagnosticSession.isEnabled()) {
+						canonicalComparisonCandidate = cached;
+					}
 				} else {
 					canonicalOwnershipChanges++;
 				}
@@ -4066,6 +4086,90 @@ public final class mudclient implements Runnable {
 					this.cachedResidentObjectChunks.remove(input.cellKey);
 					continue;
 				}
+				if (canonicalComparisonCandidate != null) {
+					long comparisonStartNanos =
+						System.nanoTime();
+					try {
+						int offsetX = Math.multiplyExact(
+							canonicalComparisonCandidate.presentationBaseX
+								- this.midRegionBaseX,
+							this.tileSize);
+						int offsetZ = Math.multiplyExact(
+							canonicalComparisonCandidate.presentationBaseZ
+								- this.midRegionBaseZ,
+							this.tileSize);
+						Renderer3DWorldChunkFrame.ChunkMesh rebased =
+							canonicalComparisonCandidate.chunk
+								.rebaseStaticObjectPresentation(
+									input.anchor.getCenterSectionX(),
+									input.anchor.getCenterSectionY(),
+									offsetX,
+									offsetZ);
+						ResidentObjectChunkGeometryComparison
+							comparison =
+								ResidentObjectChunkGeometryComparison
+									.compare(rebased, objectChunk);
+						canonicalGeometryComparisons++;
+						canonicalExactRenderMatches +=
+							comparison.exactRenderMatches ? 1 : 0;
+						canonicalPresentationSetMatches +=
+							comparison.presentationSetMatches ? 1 : 0;
+						canonicalDrawMetadataMatches +=
+							comparison.drawMetadataMatches ? 1 : 0;
+						canonicalPositionMatches +=
+							comparison.positionMatches ? 1 : 0;
+						canonicalVertexAttributeMatches +=
+							comparison.vertexAttributeMatches ? 1 : 0;
+						canonicalIndexMatches +=
+							comparison.indexMatches ? 1 : 0;
+						canonicalTriangleAttributeMatches +=
+							comparison.triangleAttributeMatches
+								? 1 : 0;
+						canonicalTriangleSetMatches +=
+							comparison.triangleSetMatches ? 1 : 0;
+						canonicalShadowSetMatches +=
+							comparison.shadowSetMatches ? 1 : 0;
+						canonicalGlowSetMatches +=
+							comparison.glowSetMatches ? 1 : 0;
+						if (!comparison.exactRenderMatches
+							&& canonicalMismatchDetails.length()
+								< 2048) {
+							if (canonicalMismatchDetails.length()
+									> 0) {
+								canonicalMismatchDetails.append(';');
+							}
+							canonicalMismatchDetails
+								.append("cell=")
+								.append(input.cellX)
+								.append(',')
+								.append(input.cellZ)
+								.append(':')
+								.append(comparison.summary());
+						}
+					} catch (RuntimeException comparisonError) {
+						canonicalComparisonErrors++;
+						if (canonicalMismatchDetails.length()
+								< 2048) {
+							if (canonicalMismatchDetails.length()
+									> 0) {
+								canonicalMismatchDetails.append(';');
+							}
+							canonicalMismatchDetails
+								.append("cell=")
+								.append(input.cellX)
+								.append(',')
+								.append(input.cellZ)
+								.append(":error=")
+								.append(
+									comparisonError.getClass()
+										.getSimpleName());
+						}
+					} finally {
+						canonicalComparisonNanos +=
+							System.nanoTime()
+								- comparisonStartNanos;
+					}
+				}
 				debugResidentObjectChunkBuild("resident-chunk-build", input, objectChunk);
 				this.cachedResidentObjectChunks.put(
 					input.cellKey,
@@ -4098,6 +4202,50 @@ public final class mudclient implements Runnable {
 				event.number(
 					"canonicalOwnershipChanges",
 					canonicalOwnershipChanges);
+				event.number(
+					"canonicalGeometryComparisons",
+					canonicalGeometryComparisons);
+				event.number(
+					"canonicalExactRenderMatches",
+					canonicalExactRenderMatches);
+				event.number(
+					"canonicalPresentationSetMatches",
+					canonicalPresentationSetMatches);
+				event.number(
+					"canonicalDrawMetadataMatches",
+					canonicalDrawMetadataMatches);
+				event.number(
+					"canonicalPositionMatches",
+					canonicalPositionMatches);
+				event.number(
+					"canonicalVertexAttributeMatches",
+					canonicalVertexAttributeMatches);
+				event.number(
+					"canonicalIndexMatches",
+					canonicalIndexMatches);
+				event.number(
+					"canonicalTriangleAttributeMatches",
+					canonicalTriangleAttributeMatches);
+				event.number(
+					"canonicalTriangleSetMatches",
+					canonicalTriangleSetMatches);
+				event.number(
+					"canonicalShadowSetMatches",
+					canonicalShadowSetMatches);
+				event.number(
+					"canonicalGlowSetMatches",
+					canonicalGlowSetMatches);
+				event.number(
+					"canonicalComparisonErrors",
+					canonicalComparisonErrors);
+				event.number(
+					"canonicalComparisonNanos",
+					canonicalComparisonNanos);
+				if (canonicalMismatchDetails.length() > 0) {
+					event.string(
+						"canonicalMismatchDetails",
+						canonicalMismatchDetails.toString());
+				}
 				event.number(
 					"cacheRetainedInactive",
 					Math.max(
@@ -4881,6 +5029,563 @@ public final class mudclient implements Runnable {
 			this.chunk = chunk;
 			this.presentationBaseX = presentationBaseX;
 			this.presentationBaseZ = presentationBaseZ;
+		}
+	}
+
+	private static final class ResidentObjectChunkGeometryComparison {
+		private final boolean drawMetadataMatches;
+		private final boolean bufferOriginMatches;
+		private final boolean positionMatches;
+		private final boolean vertexAttributeMatches;
+		private final boolean indexMatches;
+		private final boolean triangleAttributeMatches;
+		private final boolean triangleSetMatches;
+		private final boolean shadowExactMatches;
+		private final boolean shadowSetMatches;
+		private final boolean glowExactMatches;
+		private final boolean glowSetMatches;
+		private final boolean exactRenderMatches;
+		private final boolean presentationSetMatches;
+		private final int cachedVertexCount;
+		private final int freshVertexCount;
+		private final int cachedTriangleCount;
+		private final int freshTriangleCount;
+		private final long cachedStorageSignature;
+		private final long freshStorageSignature;
+		private final long cachedTriangleSetSignature;
+		private final long freshTriangleSetSignature;
+
+		private ResidentObjectChunkGeometryComparison(
+			boolean drawMetadataMatches,
+			boolean bufferOriginMatches,
+			boolean positionMatches,
+			boolean vertexAttributeMatches,
+			boolean indexMatches,
+			boolean triangleAttributeMatches,
+			boolean triangleSetMatches,
+			boolean shadowExactMatches,
+			boolean shadowSetMatches,
+			boolean glowExactMatches,
+			boolean glowSetMatches,
+			int cachedVertexCount,
+			int freshVertexCount,
+			int cachedTriangleCount,
+			int freshTriangleCount,
+			long cachedStorageSignature,
+			long freshStorageSignature,
+			long cachedTriangleSetSignature,
+			long freshTriangleSetSignature) {
+			this.drawMetadataMatches = drawMetadataMatches;
+			this.bufferOriginMatches = bufferOriginMatches;
+			this.positionMatches = positionMatches;
+			this.vertexAttributeMatches =
+				vertexAttributeMatches;
+			this.indexMatches = indexMatches;
+			this.triangleAttributeMatches =
+				triangleAttributeMatches;
+			this.triangleSetMatches = triangleSetMatches;
+			this.shadowExactMatches = shadowExactMatches;
+			this.shadowSetMatches = shadowSetMatches;
+			this.glowExactMatches = glowExactMatches;
+			this.glowSetMatches = glowSetMatches;
+			this.exactRenderMatches =
+				drawMetadataMatches
+					&& positionMatches
+					&& vertexAttributeMatches
+					&& indexMatches
+					&& triangleAttributeMatches
+					&& shadowExactMatches
+					&& glowExactMatches;
+			this.presentationSetMatches =
+				drawMetadataMatches
+					&& triangleSetMatches
+					&& shadowSetMatches
+					&& glowSetMatches;
+			this.cachedVertexCount = cachedVertexCount;
+			this.freshVertexCount = freshVertexCount;
+			this.cachedTriangleCount = cachedTriangleCount;
+			this.freshTriangleCount = freshTriangleCount;
+			this.cachedStorageSignature =
+				cachedStorageSignature;
+			this.freshStorageSignature = freshStorageSignature;
+			this.cachedTriangleSetSignature =
+				cachedTriangleSetSignature;
+			this.freshTriangleSetSignature =
+				freshTriangleSetSignature;
+		}
+
+		private static ResidentObjectChunkGeometryComparison
+			compare(
+				Renderer3DWorldChunkFrame.ChunkMesh cached,
+				Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			long[] cachedTriangles =
+				triangleFingerprints(cached);
+			long[] freshTriangles =
+				triangleFingerprints(fresh);
+			long[] cachedShadows =
+				shadowFingerprints(cached);
+			long[] freshShadows =
+				shadowFingerprints(fresh);
+			long[] cachedGlows =
+				glowFingerprints(cached);
+			long[] freshGlows =
+				glowFingerprints(fresh);
+			return new ResidentObjectChunkGeometryComparison(
+				sameDrawMetadata(cached, fresh),
+				cached.getOriginWorldX()
+						== fresh.getOriginWorldX()
+					&& cached.getOriginWorldZ()
+						== fresh.getOriginWorldZ(),
+				samePositions(cached, fresh),
+				sameVertexAttributes(cached, fresh),
+				sameIndices(cached, fresh),
+				sameTriangleAttributes(cached, fresh),
+				Arrays.equals(
+					cachedTriangles, freshTriangles),
+				sameShadowCasters(cached, fresh),
+				Arrays.equals(cachedShadows, freshShadows),
+				sameGlowEmitters(cached, fresh),
+				Arrays.equals(cachedGlows, freshGlows),
+				cached.getVertexCount(),
+				fresh.getVertexCount(),
+				cached.getTriangleCount(),
+				fresh.getTriangleCount(),
+				cached.getStorageSignature(),
+				fresh.getStorageSignature(),
+				fingerprintSet(cachedTriangles),
+				fingerprintSet(freshTriangles));
+		}
+
+		private String summary() {
+			return "meta=" + digit(drawMetadataMatches)
+				+ ",origin=" + digit(bufferOriginMatches)
+				+ ",position=" + digit(positionMatches)
+				+ ",vertex=" + digit(vertexAttributeMatches)
+				+ ",index=" + digit(indexMatches)
+				+ ",triangle=" + digit(triangleAttributeMatches)
+				+ ",triangleSet=" + digit(triangleSetMatches)
+				+ ",shadow=" + digit(shadowExactMatches)
+				+ ",shadowSet=" + digit(shadowSetMatches)
+				+ ",glow=" + digit(glowExactMatches)
+				+ ",glowSet=" + digit(glowSetMatches)
+				+ ",vertices=" + cachedVertexCount
+					+ "/" + freshVertexCount
+				+ ",triangles=" + cachedTriangleCount
+					+ "/" + freshTriangleCount
+				+ ",storage="
+					+ Long.toHexString(cachedStorageSignature)
+					+ "/"
+					+ Long.toHexString(freshStorageSignature)
+				+ ",triangleFingerprint="
+					+ Long.toHexString(
+						cachedTriangleSetSignature)
+					+ "/"
+					+ Long.toHexString(
+						freshTriangleSetSignature);
+		}
+
+		private static int digit(boolean value) {
+			return value ? 1 : 0;
+		}
+
+		private static boolean sameDrawMetadata(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			return cached.getPlane() == fresh.getPlane()
+				&& cached.getCenterSectionX()
+					== fresh.getCenterSectionX()
+				&& cached.getCenterSectionY()
+					== fresh.getCenterSectionY()
+				&& cached.getLogicalWorldOffsetX()
+					== fresh.getLogicalWorldOffsetX()
+				&& cached.getLogicalWorldOffsetZ()
+					== fresh.getLogicalWorldOffsetZ()
+				&& cached.isObjectChunk()
+					== fresh.isObjectChunk()
+				&& cached.getChunkRole()
+					== fresh.getChunkRole();
+		}
+
+		private static boolean samePositions(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getVertexCount()
+					!= fresh.getVertexCount()) {
+				return false;
+			}
+			int coordinateCount = cached.getVertexCount() * 3;
+			for (int coordinate = 0;
+					coordinate < coordinateCount;
+					coordinate++) {
+				if (cached.getVertexCoord(coordinate)
+						!= fresh.getVertexCoord(coordinate)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static boolean sameVertexAttributes(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getVertexCount()
+					!= fresh.getVertexCount()) {
+				return false;
+			}
+			for (int vertex = 0;
+					vertex < cached.getVertexCount();
+					vertex++) {
+				if (Float.floatToIntBits(
+							cached.getVertexTextureU(vertex))
+						!= Float.floatToIntBits(
+							fresh.getVertexTextureU(vertex))
+					|| Float.floatToIntBits(
+							cached.getVertexTextureV(vertex))
+						!= Float.floatToIntBits(
+							fresh.getVertexTextureV(vertex))
+					|| cached.getVertexLight(vertex)
+						!= fresh.getVertexLight(vertex)
+					|| cached.getVertexNormalX(vertex)
+						!= fresh.getVertexNormalX(vertex)
+					|| cached.getVertexNormalY(vertex)
+						!= fresh.getVertexNormalY(vertex)
+					|| cached.getVertexNormalZ(vertex)
+						!= fresh.getVertexNormalZ(vertex)
+					|| cached.getVertexTerrainBlendColor(vertex)
+						!= fresh.getVertexTerrainBlendColor(vertex)
+					|| cached.getVertexTerrainBlendStrength(vertex)
+						!= fresh.getVertexTerrainBlendStrength(vertex)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static boolean sameIndices(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getIndexCount()
+					!= fresh.getIndexCount()) {
+				return false;
+			}
+			for (int index = 0;
+					index < cached.getIndexCount();
+					index++) {
+				if (cached.getIndex(index)
+						!= fresh.getIndex(index)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static boolean sameTriangleAttributes(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getTriangleCount()
+					!= fresh.getTriangleCount()) {
+				return false;
+			}
+			for (int triangle = 0;
+					triangle < cached.getTriangleCount();
+					triangle++) {
+				if (cached.getTriangleTexture(triangle)
+						!= fresh.getTriangleTexture(triangle)
+					|| cached.getTriangleFallbackColor(triangle)
+						!= fresh.getTriangleFallbackColor(triangle)
+					|| cached.getTriangleModelKind(triangle)
+						!= fresh.getTriangleModelKind(triangle)
+					|| cached.getTriangleMaterialFamily(triangle)
+						!= fresh.getTriangleMaterialFamily(
+							triangle)
+					|| cached
+							.getTriangleTerrainVariationMask(
+								triangle)
+						!= fresh
+							.getTriangleTerrainVariationMask(
+								triangle)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static boolean sameShadowCasters(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getShadowCasterCount()
+					!= fresh.getShadowCasterCount()) {
+				return false;
+			}
+			for (int index = 0;
+					index < cached.getShadowCasterCount();
+					index++) {
+				if (!sameShadowCaster(
+						cached.getShadowCaster(index),
+						fresh.getShadowCaster(index))) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static boolean sameShadowCaster(
+			Renderer3DWorldChunkFrame.ShadowCaster cached,
+			Renderer3DWorldChunkFrame.ShadowCaster fresh) {
+			return cached.getModelKind() == fresh.getModelKind()
+				&& cached.getBaseX0() == fresh.getBaseX0()
+				&& cached.getBaseY() == fresh.getBaseY()
+				&& cached.getBaseZ0() == fresh.getBaseZ0()
+				&& cached.getBaseX1() == fresh.getBaseX1()
+				&& cached.getBaseZ1() == fresh.getBaseZ1()
+				&& cached.getHeight() == fresh.getHeight()
+				&& cached.getWidth() == fresh.getWidth()
+				&& cached.getOpacity() == fresh.getOpacity()
+				&& cached.isOutdoorOnly()
+					== fresh.isOutdoorOnly()
+				&& cached.getFootprintMinX()
+					== fresh.getFootprintMinX()
+				&& cached.getFootprintMaxX()
+					== fresh.getFootprintMaxX()
+				&& cached.getFootprintMinZ()
+					== fresh.getFootprintMinZ()
+				&& cached.getFootprintMaxZ()
+					== fresh.getFootprintMaxZ();
+		}
+
+		private static boolean sameGlowEmitters(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getGlowEmitterCount()
+					!= fresh.getGlowEmitterCount()) {
+				return false;
+			}
+			for (int index = 0;
+					index < cached.getGlowEmitterCount();
+					index++) {
+				Renderer3DWorldChunkFrame.GlowEmitter left =
+					cached.getGlowEmitter(index);
+				Renderer3DWorldChunkFrame.GlowEmitter right =
+					fresh.getGlowEmitter(index);
+				if (left.getModelKind() != right.getModelKind()
+					|| left.getCenterX() != right.getCenterX()
+					|| left.getCenterY() != right.getCenterY()
+					|| left.getCenterZ() != right.getCenterZ()
+					|| left.getRadius() != right.getRadius()
+					|| left.getColor() != right.getColor()
+					|| left.getIntensity() != right.getIntensity()) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static long[] triangleFingerprints(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+			long[] fingerprints =
+				new long[chunk.getTriangleCount()];
+			for (int triangle = 0;
+					triangle < fingerprints.length;
+					triangle++) {
+				long header =
+					RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+				header = mixGeometryFingerprint(
+					header,
+					chunk.getTriangleTexture(triangle));
+				header = mixGeometryFingerprint(
+					header,
+					chunk.getTriangleFallbackColor(triangle));
+				header = mixGeometryFingerprint(
+					header,
+					chunk.getTriangleModelKind(
+						triangle).ordinal());
+				header = mixGeometryFingerprint(
+					header,
+					chunk.getTriangleMaterialFamily(
+						triangle).getShaderId());
+				header = mixGeometryFingerprint(
+					header,
+					chunk.getTriangleTerrainVariationMask(
+						triangle));
+				long[] vertices = new long[3];
+				for (int corner = 0; corner < 3; corner++) {
+					int indexOffset = triangle * 3 + corner;
+					int vertex =
+						indexOffset < chunk.getIndexCount()
+							? chunk.getIndex(indexOffset)
+							: -1;
+					vertices[corner] =
+						vertexFingerprint(chunk, vertex);
+				}
+				long first = triangleFingerprint(
+					header,
+					vertices[0],
+					vertices[1],
+					vertices[2]);
+				long second = triangleFingerprint(
+					header,
+					vertices[1],
+					vertices[2],
+					vertices[0]);
+				long third = triangleFingerprint(
+					header,
+					vertices[2],
+					vertices[0],
+					vertices[1]);
+				fingerprints[triangle] =
+					unsignedMinimum(first, second, third);
+			}
+			Arrays.sort(fingerprints);
+			return fingerprints;
+		}
+
+		private static long vertexFingerprint(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			int vertex) {
+			long hash = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+			if (vertex < 0 || vertex >= chunk.getVertexCount()) {
+				return mixGeometryFingerprint(hash, vertex);
+			}
+			int coordinate = vertex * 3;
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexCoord(coordinate));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexCoord(coordinate + 1));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexCoord(coordinate + 2));
+			hash = mixGeometryFingerprint(
+				hash,
+				Float.floatToIntBits(
+					chunk.getVertexTextureU(vertex)));
+			hash = mixGeometryFingerprint(
+				hash,
+				Float.floatToIntBits(
+					chunk.getVertexTextureV(vertex)));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexLight(vertex));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexNormalX(vertex));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexNormalY(vertex));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexNormalZ(vertex));
+			hash = mixGeometryFingerprint(
+				hash,
+				chunk.getVertexTerrainBlendColor(vertex));
+			return mixGeometryFingerprint(
+				hash,
+				chunk.getVertexTerrainBlendStrength(vertex));
+		}
+
+		private static long triangleFingerprint(
+			long header,
+			long first,
+			long second,
+			long third) {
+			long hash = mixGeometryFingerprint(header, first);
+			hash = mixGeometryFingerprint(hash, second);
+			return mixGeometryFingerprint(hash, third);
+		}
+
+		private static long unsignedMinimum(
+			long first,
+			long second,
+			long third) {
+			long minimum =
+				Long.compareUnsigned(first, second) <= 0
+					? first : second;
+			return Long.compareUnsigned(minimum, third) <= 0
+				? minimum : third;
+		}
+
+		private static long[] shadowFingerprints(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+			long[] fingerprints =
+				new long[chunk.getShadowCasterCount()];
+			for (int index = 0;
+					index < fingerprints.length;
+					index++) {
+				Renderer3DWorldChunkFrame.ShadowCaster caster =
+					chunk.getShadowCaster(index);
+				long hash =
+					RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+				hash = mixGeometryFingerprint(
+					hash, caster.getModelKind().ordinal());
+				hash = mixGeometryFingerprint(
+					hash, caster.getBaseX0());
+				hash = mixGeometryFingerprint(
+					hash, caster.getBaseY());
+				hash = mixGeometryFingerprint(
+					hash, caster.getBaseZ0());
+				hash = mixGeometryFingerprint(
+					hash, caster.getBaseX1());
+				hash = mixGeometryFingerprint(
+					hash, caster.getBaseZ1());
+				hash = mixGeometryFingerprint(
+					hash, caster.getHeight());
+				hash = mixGeometryFingerprint(
+					hash, caster.getWidth());
+				hash = mixGeometryFingerprint(
+					hash, caster.getOpacity());
+				hash = mixGeometryFingerprint(
+					hash, caster.isOutdoorOnly() ? 1 : 0);
+				hash = mixGeometryFingerprint(
+					hash, caster.getFootprintMinX());
+				hash = mixGeometryFingerprint(
+					hash, caster.getFootprintMaxX());
+				hash = mixGeometryFingerprint(
+					hash, caster.getFootprintMinZ());
+				fingerprints[index] = mixGeometryFingerprint(
+					hash, caster.getFootprintMaxZ());
+			}
+			Arrays.sort(fingerprints);
+			return fingerprints;
+		}
+
+		private static long[] glowFingerprints(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+			long[] fingerprints =
+				new long[chunk.getGlowEmitterCount()];
+			for (int index = 0;
+					index < fingerprints.length;
+					index++) {
+				Renderer3DWorldChunkFrame.GlowEmitter emitter =
+					chunk.getGlowEmitter(index);
+				long hash =
+					RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+				hash = mixGeometryFingerprint(
+					hash, emitter.getModelKind().ordinal());
+				hash = mixGeometryFingerprint(
+					hash, emitter.getCenterX());
+				hash = mixGeometryFingerprint(
+					hash, emitter.getCenterY());
+				hash = mixGeometryFingerprint(
+					hash, emitter.getCenterZ());
+				hash = mixGeometryFingerprint(
+					hash, emitter.getRadius());
+				hash = mixGeometryFingerprint(
+					hash, emitter.getColor());
+				fingerprints[index] = mixGeometryFingerprint(
+					hash, emitter.getIntensity());
+			}
+			Arrays.sort(fingerprints);
+			return fingerprints;
+		}
+
+		private static long fingerprintSet(long[] values) {
+			long hash = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+			hash = mixGeometryFingerprint(hash, values.length);
+			for (long value : values) {
+				hash = mixGeometryFingerprint(hash, value);
+			}
+			return hash;
+		}
+
+		private static long mixGeometryFingerprint(
+			long hash,
+			long value) {
+			hash ^= value;
+			return hash * RESIDENT_OBJECT_CHUNK_FNV_PRIME;
 		}
 	}
 
