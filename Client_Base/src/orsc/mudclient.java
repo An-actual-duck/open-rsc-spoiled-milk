@@ -4019,6 +4019,7 @@ public final class mudclient implements Runnable {
 					objectChunk = null;
 				}
 			} else {
+				cached = null;
 				objectChunk = null;
 			}
 			if (cached == null) {
