@@ -32,7 +32,8 @@ same port to `scripts/package-player-release.sh`.
    port `43605`.
 1. From clean, published manager `main`, run
    `./scripts/deploy-live-main.sh` to create or update the fixed detached live
-   worktree and its external-database link.
+   worktree, its external-database link, and the exact manifest-addressed
+   layered-world installation.
 1. Start the hosted server from `/tmp/spoiled-milk-live-main` with
    `./scripts/run-hosted-server.sh`. The command refuses to run unless the
    checkout is detached, completely clean, and exactly at the published
@@ -95,9 +96,10 @@ specific shutdown and that the warning window completed; the flags do not
 create authorization. Never use direct signals or Ctrl-C to skip the warning.
 
 Status separately audits the checkout, recorded launch commit, verified-live
-marker, database symlink, and database file descriptor. A missing or legacy
-marker, or a deleted or wrong database descriptor, is a danger requiring a
-controlled restart rather than an OK state.
+marker, database symlink, database file descriptor, layered runtime mode,
+package path, and manifest. A missing or legacy marker, a deleted or wrong
+database descriptor, or a mismatched production package is a danger requiring
+a controlled restart rather than an OK state.
 
 Never stop a process that reports a deleted or wrong runtime database
 descriptor until that open descriptor has been copied and integrity-checked.
@@ -123,4 +125,5 @@ database.
 
 The hosted launcher has no safety bypass and never synchronizes generated
 files. Private local testing uses `./scripts/run-server.sh` with the private
-configuration, database, bind address, and port.
+configuration, database, bind address, and port. The final production-profile
+rehearsal uses `./scripts/run-server.sh --layered-production`.

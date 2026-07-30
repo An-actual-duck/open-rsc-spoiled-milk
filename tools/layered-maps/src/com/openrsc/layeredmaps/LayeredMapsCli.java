@@ -221,7 +221,12 @@ public final class LayeredMapsCli {
 				== PreservationTerrainPackageGenerator.ContentTarget.SPOILED_MILK
 				? "Spoiled Milk layered world package generated"
 				: "Preservation layered parity package generated");
-		System.out.println("reviewState=transitions-pending");
+		System.out.println(
+			"reviewState="
+				+ (target
+					== PreservationTerrainPackageGenerator.ContentTarget.SPOILED_MILK
+						? "production-rehearsal-pending"
+						: "transitions-pending"));
 		System.out.println("runtimePromotionApproved=false");
 		System.out.println("baselineSha256=" + result.baselineFingerprint);
 		System.out.println("terrainSectors=" + result.terrainSectorCount);

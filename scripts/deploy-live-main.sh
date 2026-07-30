@@ -52,6 +52,9 @@ running_live_pids="$(myworld_server_pids_for_root "$MYWORLD_LIVE_ROOT")"
 [[ -z "$running_live_pids" ]] \
   || myworld_fail "A server process is still using the live worktree (PID(s): $running_live_pids). Stop it before deployment."
 
+live_layered_package="$(layered_world_install_live_package \
+  "$ROOT_DIR" "$MYWORLD_LIVE_DB_ROOT")"
+
 if [[ -e "$MYWORLD_LIVE_ROOT" ]]; then
   [[ -d "$MYWORLD_LIVE_ROOT" ]] \
     || myworld_fail "Fixed live path exists but is not a directory: $MYWORLD_LIVE_ROOT"
@@ -112,6 +115,8 @@ printf 'Deployed detached published main to the fixed live checkout.\n'
 printf '  Live root: %s\n' "$MYWORLD_LIVE_ROOT"
 printf '  Commit:    %s\n' "$deployed_commit"
 printf '  Database:  %s -> %s\n' "$checkout_db" "$external_db"
+printf '  Layered world: %s\n' "$live_layered_package"
+printf '  Layered manifest: %s\n' "$SPOILED_MILK_LAYERED_MANIFEST_SHA256"
 
 printf 'The public port was verified stopped throughout deployment.\n'
 printf 'Start the hosted server from the fixed live checkout when ready.\n'

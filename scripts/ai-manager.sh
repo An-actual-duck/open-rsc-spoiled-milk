@@ -292,14 +292,21 @@ manager_release_check() {
 }
 
 manager_release() {
-  local argument
+  local argument version="" previous=""
 
   for argument in "$@"; do
     [[ "$argument" != --skip-build ]] \
       || ai_fail "Manager releases cannot use --skip-build; release provenance requires a fresh client build."
+    if [[ "$previous" == --version ]]; then
+      version="$argument"
+    fi
+    previous="$argument"
   done
+  [[ -n "$version" ]] \
+    || ai_fail "Manager releases require --version so the layered-world artifact can share exact provenance."
   manager_release_check
-  exec "$SCRIPT_ROOT/scripts/package-player-release.sh" "$@"
+  "$SCRIPT_ROOT/scripts/package-player-release.sh" "$@"
+  "$SCRIPT_ROOT/scripts/package-layered-world-release.sh" --version "$version"
 }
 
 # Resolve a path back to its registered neutral slot without changing ROOT_DIR.

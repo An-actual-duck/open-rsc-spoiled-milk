@@ -12,6 +12,9 @@ Spoiled Milk world. Character progress is saved by that hosted world.
   `./play-spoiled-milk.sh` or `Play Spoiled Milk.cmd`.
 - `SHA256SUMS.txt`: checksum file for verifying downloaded archives.
 
+The release may also contain a `layered-world.zip`. That is a server
+deployment artifact; players should not download or install it.
+
 ## Alpha Expectations
 
 This release is for controlled playtesting. Game balance, encounter density,

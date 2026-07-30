@@ -116,6 +116,9 @@ print_pid_status() {
     marker_started_at=""
     marker_safety=""
     marker_db_path=""
+    marker_layered_package_path=""
+    marker_layered_manifest_sha256=""
+    marker_layered_runtime_mode=""
     # shellcheck disable=SC1090
     source "$marker_path"
     printf '  Launch:   %s\n' "${marker_label:-unknown}"
@@ -123,6 +126,11 @@ print_pid_status() {
     printf '  Launch commit: %s\n' "${marker_commit:-unknown}"
     printf '  Marker:   %s %s %s\n' "${marker_branch:-unknown}" "${marker_config:-unknown}" "${marker_db:-unknown}"
     printf '  Attestation: %s\n' "${marker_safety:-missing}"
+    printf '  Layered runtime: %s\n' "${marker_layered_runtime_mode:-legacy/unrecorded}"
+    if [[ -n "${marker_layered_package_path:-}" ]]; then
+      printf '  Layered package: %s\n' "$marker_layered_package_path"
+      printf '  Layered manifest: %s\n' "${marker_layered_manifest_sha256:-missing}"
+    fi
     launch_publication="$(myworld_git_commit_publication_state "$root" "${marker_commit:-}")"
     case "$launch_publication" in
       current)
@@ -149,10 +157,36 @@ print_pid_status() {
     printf '  Verdict:  UNKNOWN PROCESS\n'
     printf '  Args:     %s\n' "$args"
   elif [[ "$port" == "$MYWORLD_PUBLIC_PORT" ]]; then
-    local live_root_real root_real
+    local live_root_real root_real hosted_layered_required=false
+    local layered_marker_valid=false expected_layered_path expected_layered_real marker_layered_real
+    local installed_layered_manifest_sha256=""
     live_root_real="$(myworld_realpath "$MYWORLD_LIVE_ROOT" 2>/dev/null || true)"
     root_real="$(myworld_realpath "$root" 2>/dev/null || true)"
     if [[ "$root_real" == "$live_root_real" && "$conf" == "myworld-host.conf" && "$db_name" == "spoiled_milk_alpha" ]]; then
+      if grep -Eq '^[[:space:]]*want_layered_native_terrain_package:[[:space:]]*true([[:space:]]|$)' \
+          "$root/server/$conf"; then
+        hosted_layered_required=true
+      fi
+      if [[ "$hosted_layered_required" == false ]]; then
+        layered_marker_valid=true
+      elif [[ "${marker_layered_runtime_mode:-}" == legacy-rollback ]]; then
+        layered_marker_valid=true
+      elif [[ "${marker_layered_runtime_mode:-}" == production ]]; then
+        expected_layered_path="$(layered_world_live_package_path "$MYWORLD_LIVE_DB_ROOT")"
+        expected_layered_real="$(readlink -f "$expected_layered_path" 2>/dev/null || true)"
+        marker_layered_real="$(readlink -f "${marker_layered_package_path:-}" 2>/dev/null || true)"
+        if [[ -n "$expected_layered_real" && -f "$expected_layered_real/manifest.json" ]]; then
+          installed_layered_manifest_sha256="$(
+            layered_world_manifest_sha256 "$expected_layered_real" 2>/dev/null || true
+          )"
+        fi
+        if [[ -n "$expected_layered_real" \
+            && "$marker_layered_real" == "$expected_layered_real" \
+            && "$installed_layered_manifest_sha256" == "$SPOILED_MILK_LAYERED_MANIFEST_SHA256" \
+            && "${marker_layered_manifest_sha256:-}" == "$SPOILED_MILK_LAYERED_MANIFEST_SHA256" ]]; then
+          layered_marker_valid=true
+        fi
+      fi
       marker_identity="invalid"
       if [[ "$marker_state" == "present" ]]; then
         marker_root_real="$(myworld_realpath "${marker_root:-}" 2>/dev/null || true)"
@@ -162,6 +196,7 @@ print_pid_status() {
             && "${marker_db:-}" == "spoiled_milk_alpha" \
             && "${marker_db_path:-}" == "$external_db_real" \
             && "${marker_safety:-}" == verified-live \
+            && "$layered_marker_valid" == true \
             && "${marker_port:-}" == "$MYWORLD_PUBLIC_PORT" ]]; then
           marker_identity="valid"
         fi
@@ -174,7 +209,7 @@ print_pid_status() {
       elif [[ "$db_link_valid" != true ]]; then
         printf '  Verdict:  DANGER: live checkout database link is not the external database\n'
       elif [[ "$marker_identity" != "valid" ]]; then
-        printf '  Verdict:  DANGER: hosted launch marker lacks verified live identity or database attestation\n'
+        printf '  Verdict:  DANGER: hosted launch marker lacks verified live identity, database, or layered-runtime attestation\n'
       elif [[ "${marker_commit:-}" != "$commit" ]]; then
         printf '  Verdict:  DANGER: runtime launch commit differs from files currently in the live checkout\n'
       elif [[ "$runtime_db_valid" != true ]]; then

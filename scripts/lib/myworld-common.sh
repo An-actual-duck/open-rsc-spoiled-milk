@@ -25,6 +25,8 @@ if [[ "$(declare -p MYWORLD_LIVE_DB_NAME 2>/dev/null || true)" != declare\ -r* ]
 fi
 MYWORLD_PUBLIC_PORT="${MYWORLD_PUBLIC_PORT:-43605}"
 MYWORLD_DEV_PORT="${MYWORLD_DEV_PORT:-43615}"
+# shellcheck source=scripts/lib/layered-world-package.sh
+source "$MYWORLD_DIR/layered-world-package.sh"
 
 myworld_fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -363,7 +365,7 @@ myworld_write_launch_marker() {
   local conf_name="$2"
   local safety_attestation="${3:-unverified}"
   local marker_path marker_dir root_real branch commit db_name server_name bind_address server_port ws_port
-  local database_path database_real
+  local database_path database_real layered_package_path layered_manifest_sha256 layered_runtime_mode
 
   marker_path="$(myworld_launch_marker_path "$conf_name")"
   marker_dir="$(dirname "$marker_path")"
@@ -379,6 +381,13 @@ myworld_write_launch_marker() {
   ws_port="$(myworld_conf_value "$conf_name" ws_server_port)"
   database_path="$ROOT_DIR/server/inc/sqlite/${db_name}.db"
   database_real="$(readlink -f "$database_path" 2>/dev/null || true)"
+  layered_package_path="${OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH:-}"
+  layered_manifest_sha256=""
+  layered_runtime_mode="${SPOILED_MILK_LAYERED_RUNTIME_MODE:-legacy-default}"
+  if [[ -n "$layered_package_path" && -f "$layered_package_path/manifest.json" ]]; then
+    layered_package_path="$(myworld_realpath "$layered_package_path" 2>/dev/null || true)"
+    layered_manifest_sha256="$(layered_world_manifest_sha256 "$layered_package_path")"
+  fi
 
   {
     printf 'marker_label=%q\n' "$label"
@@ -388,6 +397,9 @@ myworld_write_launch_marker() {
     printf 'marker_config=%q\n' "$(basename "$(myworld_conf_path "$conf_name")")"
     printf 'marker_db=%q\n' "$db_name"
     printf 'marker_db_path=%q\n' "$database_real"
+    printf 'marker_layered_package_path=%q\n' "$layered_package_path"
+    printf 'marker_layered_manifest_sha256=%q\n' "$layered_manifest_sha256"
+    printf 'marker_layered_runtime_mode=%q\n' "$layered_runtime_mode"
     printf 'marker_safety=%q\n' "$safety_attestation"
     printf 'marker_server=%q\n' "$server_name"
     printf 'marker_bind=%q\n' "$bind_address"
@@ -405,6 +417,17 @@ myworld_require_hosted_conf() {
   myworld_require_conf_value "$conf_name" server_name "Spoiled Milk"
   myworld_require_conf_value "$conf_name" server_bind_address "0.0.0.0"
   myworld_require_conf_value "$conf_name" server_port "$MYWORLD_PUBLIC_PORT"
+  myworld_require_conf_value "$conf_name" want_layered_player_location_authority true
+  myworld_require_conf_value "$conf_name" want_layered_spatial_runtime_authority true
+  myworld_require_conf_value "$conf_name" want_layered_protocol_client_authority true
+  myworld_require_conf_value "$conf_name" want_layered_synthetic_deep_fixture false
+  myworld_require_conf_value "$conf_name" want_layered_native_terrain_package true
+  myworld_require_conf_value "$conf_name" want_layered_native_terrain_residency true
+  myworld_require_conf_value "$conf_name" want_layered_native_terrain_readiness true
+  myworld_require_conf_value "$conf_name" want_layered_native_terrain_prediction true
+  myworld_require_conf_value "$conf_name" want_layered_native_terrain_symmetric_residency true
+  myworld_require_conf_value "$conf_name" want_layered_native_terrain_atomic_activation true
+  myworld_require_conf_value "$conf_name" layered_native_world_runtime_profile spoiled-milk-replacement
 }
 
 myworld_require_private_dev_conf() {

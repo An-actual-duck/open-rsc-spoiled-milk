@@ -1759,7 +1759,11 @@ final class PreservationTerrainPackageGenerator {
 				"contentTarget",
 				target == ContentTarget.SPOILED_MILK
 					? "spoiled-milk" : "preservation");
-			document.put("reviewState", "transitions-pending");
+			document.put(
+				"reviewState",
+				target == ContentTarget.SPOILED_MILK
+					? "production-rehearsal-pending"
+					: "transitions-pending");
 			document.put("runtimePromotionApproved", Boolean.FALSE);
 			document.put(
 				"baselineId",
@@ -1848,7 +1852,11 @@ final class PreservationTerrainPackageGenerator {
 		String toMarkdown() {
 			StringBuilder out = new StringBuilder();
 			out.append("# ").append(target.reportTitle).append("\n\n");
-			out.append("- Review state: `transitions-pending`\n");
+			out.append("- Review state: `")
+				.append(target == ContentTarget.SPOILED_MILK
+					? "production-rehearsal-pending"
+					: "transitions-pending")
+				.append("`\n");
 			out.append("- Runtime promotion approved: `false`\n");
 			out.append("- Content target: `")
 				.append(target == ContentTarget.SPOILED_MILK

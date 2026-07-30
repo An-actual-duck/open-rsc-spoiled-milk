@@ -17,10 +17,12 @@ capability. It currently provides:
   spaces, arbitrary signed levels, hash-addressed terrain and entity-placement
   payloads, and presentation chunks smaller than the 48-tile storage page.
 
-It does **not** edit source archives, modify player data, or export into a
-game. Conversion writes isolated review packages only. A separately gated
-private runtime can load an exact selected package; ordinary and public
-defaults remain unchanged.
+It does **not** edit source archives or modify player data. Conversion writes
+an isolated package first; release and deployment tooling must independently
+validate that package before copying it into a release or the external live
+state. Ordinary private launches retain the legacy path unless
+`scripts/run-server.sh --layered-production` is selected. Hosted activation is
+fail-closed around the exact reviewed package identity.
 
 ## Active Spoiled Milk layered world
 
@@ -76,9 +78,12 @@ The active package is
 `f914d93e7abcf40dc281c06df5010269c7a9ce4fe4a16aaa6ae11f0d90a14306`
 and package fingerprint
 `add42670f99f1f43465a86fd03857febdb053763ec22485746b58ba06ed6661b`.
-It is consumed only by the default-off `spoiled-milk-replacement` private
-runtime profile. This complete distribution is the reference integration
-target while the layered engine and authoring path stabilize.
+It is consumed by the `spoiled-milk-replacement` runtime profile. The server
+configuration API still defaults every layered gate off, while the guarded
+hosted configuration explicitly selects the reviewed production profile and
+the private runner exposes the same profile through `--layered-production`.
+This complete distribution is the reference integration target while the
+layered engine and authoring path stabilize.
 
 ## RSC Remastered Preservation baseline (on hold)
 

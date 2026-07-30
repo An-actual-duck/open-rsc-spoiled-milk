@@ -32,6 +32,12 @@ From clean, published manager `main`:
 ./scripts/ai-manager.sh release-check
 ```
 
+The authoritative Spoiled Milk release command creates three ZIP artifacts:
+the Java client, bundled Windows client, and the server-side layered-world
+package. `SHA256SUMS.txt` covers all three. The layered artifact carries its
+generation report, package validation, source commit, manifest hash, and
+package fingerprint; it is not installed by players.
+
 Building, tagging, uploading, publishing, and advancing manager `main` do not
 authorize a public-server shutdown. They also do not alter the detached live
 checkout. The current server can continue running its previous published
@@ -76,6 +82,28 @@ After that permission is received:
 cd /tmp/spoiled-milk-live-main
 ./scripts/run-hosted-server.sh
 ```
+
+Deployment deterministically regenerates and validates the exact reviewed
+Spoiled Milk layered package, then installs it under the external live-state
+root in a manifest-addressed directory before changing the detached checkout.
+Hosted startup refuses a missing, changed, wrong-version, wrong-count, or
+wrong-fingerprint package. The hosted configuration explicitly enables the
+accepted Player-location, spatial, protocol, native-package, residency,
+readiness, prediction, symmetric-residency, and atomic-activation gates using
+the `spoiled-milk-replacement` profile.
+
+If the production-profile rehearsal or later live observation finds a
+layered-runtime regression, the guarded runner retains an explicit start-only
+rollback:
+
+```bash
+./scripts/run-hosted-server.sh --legacy-map-rollback
+```
+
+This disables the complete layered authority chain together and records
+`legacy-rollback` in the launch attestation. It does not authorize or perform a
+shutdown; the same permission, warning, backup, and stopped-port requirements
+still apply before using it.
 
 Normally `::update` performs the stop, so `stop-hosted-server.sh` is not
 needed. If the JVM remains after the entire authorized update window, inspect

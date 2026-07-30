@@ -43,6 +43,14 @@ class WorkflowFixture:
             encoding="utf-8",
         )
         package_stub.chmod(0o755)
+        layered_package_stub = self.root / "scripts" / "package-layered-world-release.sh"
+        layered_package_stub.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            "printf '%s\\n' \"$@\" > \"$AI_LAYERED_RELEASE_CAPTURE\"\n",
+            encoding="utf-8",
+        )
+        layered_package_stub.chmod(0o755)
         (self.root / ".gitignore").write_text("AI_WORKSPACE.md\n", encoding="utf-8")
         (self.root / "README.md").write_text("fixture\n", encoding="utf-8")
         self.git("add", ".")
@@ -59,6 +67,7 @@ class WorkflowFixture:
             "AI_WORKSPACE_PARENT": str(self.base),
             "MYWORLD_LIVE_ROOT": str(self.base / "live-does-not-exist"),
             "AI_RELEASE_CAPTURE": str(self.base / "release-args.txt"),
+            "AI_LAYERED_RELEASE_CAPTURE": str(self.base / "layered-release-args.txt"),
         }
 
     def close(self) -> None:
@@ -347,13 +356,20 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
     def test_manager_release_forwards_args_and_rejects_skip_build(self) -> None:
         f = self.fixture
         capture = f.base / "release-args.txt"
+        layered_capture = f.base / "layered-release-args.txt"
         f.run("ai-manager.sh", "release", "--version", "v1.2.3", "--assets-cleared")
         self.assertEqual(capture.read_text(encoding="utf-8").splitlines(), ["--version", "v1.2.3", "--assets-cleared"])
+        self.assertEqual(
+            layered_capture.read_text(encoding="utf-8").splitlines(),
+            ["--version", "v1.2.3"],
+        )
         capture.unlink()
+        layered_capture.unlink()
         blocked = f.run("ai-manager.sh", "release", "--skip-build", "--assets-cleared", check=False)
         self.assertNotEqual(blocked.returncode, 0)
         self.assertIn("cannot use --skip-build", blocked.stderr)
         self.assertFalse(capture.exists())
+        self.assertFalse(layered_capture.exists())
 
     def test_manager_collects_exact_external_handoff_without_merging(self) -> None:
         f = self.fixture

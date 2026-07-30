@@ -63,10 +63,14 @@ The packager writes ignored artifacts under
 
 - `spoiled-milk-RELEASE_VERSION-java.zip`
 - `spoiled-milk-RELEASE_VERSION-windows-x64.zip`
+- `spoiled-milk-RELEASE_VERSION-layered-world.zip`
 - `SHA256SUMS.txt`
 
 The client jar embeds runtime PNG assets under `myworld-assets/`; player
-archives do not need the loose development asset tree.
+archives do not need the loose development asset tree. The layered-world ZIP
+is a server/deployment artifact rather than a player download. It must contain
+the exact package, generation report, validation report, source commit,
+manifest hash, and package fingerprint.
 
 Each archive records the exact packaged Git revision in
 `game-files/SOURCE-COMMIT.txt`. It must match `$RELEASE_COMMIT`, captured
@@ -85,13 +89,14 @@ verification still requires a Windows machine or a tester.
    OpenRSC launcher.
 2. Confirm the archive endpoint files contain the public host/IP and port:
    `game-files/Cache/ip.txt` and `game-files/Cache/port.txt`.
-3. Confirm `game-files/SOURCE-COMMIT.txt` in both archives matches the full
-   commit in `$RELEASE_COMMIT`.
+3. Confirm `game-files/SOURCE-COMMIT.txt` in both player archives and
+   `SOURCE-COMMIT.txt` in the layered-world archive match the full commit in
+   `$RELEASE_COMMIT`.
 4. Launch the Windows archive on Windows and the Java archive with Java 17+,
    then connect to the hosted candidate server.
 5. Verify account creation, login, logout, and reconnect before publication.
-6. Create GitHub release `RELEASE_VERSION` and upload the two
-   zip files and `SHA256SUMS.txt`.
+6. Create GitHub release `RELEASE_VERSION` and upload all three ZIP files and
+   `SHA256SUMS.txt`.
    Confirm `git rev-parse "RELEASE_VERSION^{commit}"` equals
    `$RELEASE_COMMIT`; the immutable tag, not a later `main`, is the durable
    provenance reference.

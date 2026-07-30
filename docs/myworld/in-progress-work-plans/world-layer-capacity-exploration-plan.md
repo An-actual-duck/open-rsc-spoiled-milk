@@ -78,6 +78,43 @@ Branch: `docs/layered-map-rebuild-refinement`
 
 Started: 2026-07-17
 
+## Production-promotion correction: 2026-07-30
+
+The implementation and private acceptance handoff was merged completely, but
+the first player releases did not constitute production promotion. They
+contained the custom-client protocol classes and the deployed repository
+contained the server loader, while every hosted layered-runtime gate remained
+off, the package path remained empty, and the generated complete-world package
+remained under an ignored local workspace. The live server therefore continued
+using the legacy landscape/population path. Describing that state merely as
+"included but opt-in" was technically incomplete because no guarded release
+and deployment bridge installed the required server artifact.
+
+The corrective release candidate now requires:
+
+- the exact `rsc-remastered.spoiled-milk-layered-world@0.5.0` package to be
+  regenerated and independently validated during every manager release;
+- a separately downloadable server-side layered-world ZIP carrying generation,
+  validation, source-commit, manifest, and package-fingerprint provenance;
+- content-addressed installation beneath the external live-state root only
+  after the public listener and live JVM are confirmed stopped;
+- explicit hosted activation of the accepted Player-location, spatial,
+  protocol, package, residency, readiness, prediction, symmetric-residency,
+  and atomic-activation gates through `spoiled-milk-replacement`;
+- hosted startup refusal when the installed package is absent or differs from
+  manifest `f914d93e7abcf40dc281c06df5010269c7a9ce4fe4a16aaa6ae11f0d90a14306`,
+  package fingerprint
+  `add42670f99f1f43465a86fd03857febdb053763ec22485746b58ba06ed6661b`,
+  the reviewed counts, or the pinned server runtime identity; and
+- one final end-to-end private rehearsal using the same production profile and
+  artifact before public activation.
+
+Prior extensive private visual, transition, persistence, residency, and
+performance acceptance remains valid and will not be repeated wholesale. The
+final rehearsal is a release/deployment-path confirmation, not a reopening of
+the loader design. Public activation remains unauthorized until that rehearsal
+is owner-accepted and a fresh maintenance window is explicitly approved.
+
 ## Active Loader Roadmap: 2026-07-27
 
 This section is the concise source of truth for current work. Older progress
