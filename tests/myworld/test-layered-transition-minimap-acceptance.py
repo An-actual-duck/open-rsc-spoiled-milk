@@ -96,6 +96,10 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             self.world,
         )
         self.assertIn(
+            '"NATIVE_TERRAIN_CONTEXT_PRODUCT"',
+            self.world,
+        )
+        self.assertIn(
             "return sectorPreloadExecutor.submit(",
             self.world,
         )

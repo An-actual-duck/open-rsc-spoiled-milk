@@ -296,6 +296,29 @@ public final class World {
 			syntheticDeepFixtureOffsetZ = worldOffsetZ;
 			nativeLayeredTerrainActivationSummary = "";
 			worldEditorTerrainRevision++;
+			if (nativeTerrainSnapshot != null) {
+				NativeWorldModelPrebuild prebuild =
+					prebuildNativeWorldModelProduct(
+						nativeTerrainSnapshot,
+						worldOffsetX,
+						worldOffsetZ,
+						worldEditorTerrainRevision,
+						!Config.C_HIDE_ROOFS);
+				System.out.println(
+					"NATIVE_TERRAIN_CONTEXT_PRODUCT"
+						+ " scope="
+						+ nativeTerrainSnapshot.getWorldSpace()
+						+ ":L" + nativeTerrainSnapshot.getLevel()
+						+ " center="
+						+ nativeTerrainSnapshot.getCurrentChunkX()
+						+ ","
+						+ nativeTerrainSnapshot.getCurrentChunkY()
+						+ " product="
+						+ (prebuild.productCacheHit
+							? "hit" : "built")
+						+ " elapsedMs="
+						+ formatMillis(prebuild.elapsedNanos));
+			}
 		}
 	}
 
