@@ -4279,21 +4279,8 @@ public final class mudclient implements Runnable {
 			return true;
 		}
 		com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(objectId);
-		if (def == null) {
-			return false;
-		}
-		String modelName = lowerOrEmpty(def.getObjectModel());
-		return "portal".equals(modelName)
-			|| FISHING_SPOT_MODEL_NAME.equals(modelName)
-			|| modelName.startsWith("firea")
-			|| modelName.startsWith("fireplacea")
-			|| modelName.startsWith("lightning")
-			|| modelName.startsWith("firespell")
-			|| modelName.startsWith("spellcharge")
-			|| modelName.startsWith("torcha")
-			|| modelName.startsWith("skulltorcha")
-			|| modelName.startsWith("myworld_cosmic_sparkles")
-			|| modelName.startsWith("clawspell");
+		return def != null
+			&& ("portal".equals(def.getObjectModel()) || FISHING_SPOT_MODEL_NAME.equals(def.getObjectModel()));
 	}
 
 	private static final class Renderer3DGlowSpec {
@@ -4648,8 +4635,6 @@ public final class mudclient implements Runnable {
 		private final int chunkRole;
 		private final List<RSModel> models = new ArrayList<RSModel>();
 		private long cacheKey;
-		private long staticContentKeySum;
-		private long staticContentKeyXor;
 		private int debugMatchedModelCount;
 		private String debugFirstModelSummary = "";
 
@@ -4695,70 +4680,38 @@ public final class mudclient implements Runnable {
 					this.debugFirstModelSummary = debugSummary == null ? "" : debugSummary;
 				}
 			}
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, kind.ordinal());
 			if (this.chunkRole
 					== Renderer3DWorldChunkFrame
 						.CHUNK_ROLE_STATIC_OBJECTS) {
-				long modelContentKey =
-					RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
-				modelContentKey = mixResidentObjectChunkCacheKey(
-					modelContentKey, kind.ordinal());
-				modelContentKey = mixResidentObjectChunkCacheKey(
-					modelContentKey, worldTileX);
-				modelContentKey = mixResidentObjectChunkCacheKey(
-					modelContentKey, worldTileZ);
-				modelContentKey = mixResidentObjectChunkCacheKey(
-					modelContentKey, objectId);
-				modelContentKey = mixResidentObjectChunkCacheKey(
-					modelContentKey, direction);
-				this.staticContentKeySum += modelContentKey;
-				this.staticContentKeyXor ^=
-					Long.rotateLeft(
-						modelContentKey,
-						(int) (modelContentKey & 63L));
-			} else {
 				this.cacheKey = mixResidentObjectChunkCacheKey(
-					this.cacheKey, kind.ordinal());
+					this.cacheKey, worldTileX);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, worldTileZ);
+			} else {
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, instanceIndex);
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, tileX);
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, tileZ);
-				this.cacheKey = mixResidentObjectChunkCacheKey(
-					this.cacheKey, objectId);
-				this.cacheKey = mixResidentObjectChunkCacheKey(
-					this.cacheKey, direction);
+			}
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, objectId);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, direction);
+			if (this.chunkRole
+					!= Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS) {
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, model.key);
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, System.identityHashCode(model));
-				this.cacheKey = mixResidentObjectChunkCacheKey(
-					this.cacheKey,
-					model.getRenderer3DTransformVersion());
 			}
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, model.getRenderer3DTransformVersion());
 		}
 
 		private ResidentObjectChunkInput build() {
 			RSModel[] modelArray = this.models.toArray(new RSModel[this.models.size()]);
-			long finalCacheKey = this.cacheKey;
-			if (this.chunkRole
-					== Renderer3DWorldChunkFrame
-						.CHUNK_ROLE_STATIC_OBJECTS) {
-				finalCacheKey = mixResidentObjectChunkCacheKey(
-					finalCacheKey,
-					(int) this.staticContentKeySum);
-				finalCacheKey = mixResidentObjectChunkCacheKey(
-					finalCacheKey,
-					(int) (this.staticContentKeySum >>> 32));
-				finalCacheKey = mixResidentObjectChunkCacheKey(
-					finalCacheKey,
-					(int) this.staticContentKeyXor);
-				finalCacheKey = mixResidentObjectChunkCacheKey(
-					finalCacheKey,
-					(int) (this.staticContentKeyXor >>> 32));
-			}
-			finalCacheKey = mixResidentObjectChunkCacheKey(
-				finalCacheKey, modelArray.length);
+			long finalCacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, modelArray.length);
 			return new ResidentObjectChunkInput(
 				this.anchor,
 				this.cellKey,
