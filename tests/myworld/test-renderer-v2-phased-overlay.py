@@ -1035,6 +1035,47 @@ def main() -> None:
         "native UI blocker reason enum",
     )
     require(
+        graphics,
+        "public final void beginSoftwareOwnedRenderer2DFrame()",
+        "software-owned full-frame capture suppression",
+    )
+    require(
+        graphics,
+        "renderer2DCommandCaptureSuppressed = false;",
+        "capture suppression frame reset",
+    )
+    require(
+        graphics,
+        "renderer2DCommandCaptureSuppressed = true;",
+        "software-owned frame suppression activation",
+    )
+    require(
+        mudclient,
+        "private void drawLoadingPleaseWaitFrame()",
+        "single loading wait presentation owner",
+    )
+    require(
+        mudclient,
+        "this.getSurface().beginSoftwareOwnedRenderer2DFrame();",
+        "loading wait frame suppresses OpenGL overlay replay",
+    )
+    require(
+        mudclient,
+        'this.halfGameWidth(),\n'
+        '\t\t\t"Loading... Please wait",',
+        "loading wait text uses the active viewport center",
+    )
+    if mudclient.count("this.drawLoadingPleaseWaitFrame();") != 2:
+        raise AssertionError(
+            "initial-region and layered-pending loading paths must share "
+            "the single presentation owner"
+        )
+    forbid(
+        mudclient,
+        'drawColoredStringCentered(256, "Loading... Please wait"',
+        "obsolete fixed-size loading center",
+    )
+    require(
         plan,
         "safe|visible|phased|native-ui|geometry",
         "documented native UI overlay mode",

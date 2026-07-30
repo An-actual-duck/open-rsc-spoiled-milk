@@ -6989,16 +6989,7 @@ public final class mudclient implements Runnable {
 							&& this.shouldRetainLastPresentedFrame()) {
 						clientPort.draw();
 					} else if (this.layeredSceneActivationPending) {
-						this.getSurface().blackScreen(true);
-						this.getSurface().drawColoredStringCentered(
-							this.halfGameWidth(),
-							"Loading... Please wait",
-							0xFFFFFF,
-							0,
-							1,
-							this.halfGameHeight());
-						this.drawChatMessageTabs(5);
-						clientPort.draw();
+						this.drawLoadingPleaseWaitFrame();
 					} else if (this.world.playerAlive) {
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
@@ -19490,11 +19481,7 @@ public final class mudclient implements Runnable {
 					int oldBaseZ = this.midRegionBaseZ;
 					boolean heightOffsetChanged = this.lastHeightOffset != this.requestedPlane;
 					if (hardAreaLoad || !this.hasCompletedInitialRegionLoad) {
-						this.getSurface().drawColoredStringCentered(256, "Loading... Please wait", 0xFFFFFF, 0, 1, 192);
-						this.drawChatMessageTabs(5);
-						// this.getSurface().draw(this.graphics, this.screenOffsetX,
-						// 256, this.screenOffsetY);
-						clientPort.draw();
+						this.drawLoadingPleaseWaitFrame();
 					}
 					boolean centeredNativeWindow =
 						this.world.hasNativeLayeredTerrain();
@@ -19666,6 +19653,20 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var22) {
 			throw GenUtil.makeThrowable(var22, "client.MB(" + wantZ + ',' + wantX + ',' + var3 + ')');
 		}
+	}
+
+	private void drawLoadingPleaseWaitFrame() {
+		this.getSurface().beginSoftwareOwnedRenderer2DFrame();
+		this.getSurface().blackScreen(true);
+		this.getSurface().drawColoredStringCentered(
+			this.halfGameWidth(),
+			"Loading... Please wait",
+			0xFFFFFF,
+			0,
+			1,
+			this.halfGameHeight());
+		this.drawChatMessageTabs(5);
+		clientPort.draw();
 	}
 
 	private void resetGroundItemsForHardAreaLoad() {
