@@ -2434,9 +2434,13 @@ public class PacketHandler {
 		}
 		if (layeredSceneContextState.acceptLegacyPlayerPosition(
 				packedX, packedY)) {
+			boolean activationWasPending =
+				layeredSceneActivationState.isPending();
 			recordLayeredSceneActivationProgress(
 				layeredSceneActivationState.acceptPlayerReceipt(
-					layeredSceneContextState.getSequence()));
+					layeredSceneContextState.getSequence()),
+				"player",
+				activationWasPending);
 		}
 	}
 
@@ -2977,14 +2981,42 @@ public class PacketHandler {
 					!= sceneBaselineState.presentationApplyKey(mc)) {
 			return;
 		}
+		boolean activationWasPending =
+			layeredSceneActivationState.isPending();
 		recordLayeredSceneActivationProgress(
 			layeredSceneActivationState.acceptStaticBaseline(
-				sceneBaselineState.getLocationContextSequence()));
+				sceneBaselineState.getLocationContextSequence()),
+			"static-baseline",
+			activationWasPending);
 	}
 
 	private void recordLayeredSceneActivationProgress(
-		final boolean completed) {
+		final boolean completed,
+		final String receipt,
+		final boolean activationWasPending) {
 		refreshLayeredSceneActivationCover();
+		if (activationWasPending) {
+			RendererDiagnosticSession.Record event =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.atomic-activation-progress");
+			if (event != null) {
+				event.string("receipt", receipt);
+				event.number(
+					"contextSequence",
+					layeredSceneActivationState.getSequence());
+				event.bool(
+					"playerReceipt",
+					layeredSceneActivationState.hasPlayerReceipt());
+				event.bool(
+					"staticBaseline",
+					layeredSceneActivationState.hasStaticBaseline());
+				event.bool("completed", completed);
+				event.number(
+					"elapsedMillis",
+					layeredSceneActivationState.getElapsedMillis());
+				RendererDiagnosticSession.writeEventRecord(event);
+			}
+		}
 		if (!completed) {
 			return;
 		}

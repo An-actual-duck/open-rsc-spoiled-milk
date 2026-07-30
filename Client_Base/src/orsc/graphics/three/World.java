@@ -4227,10 +4227,22 @@ public final class World {
 				bridgeNanos = System.nanoTime() - phaseStart;
 			}
 			phaseStart = System.nanoTime();
-			this.renderer3DWorldChunkFrame = this.buildRenderer3DWorldChunkFrame(plane, x, z);
+			this.renderer3DWorldChunkFrame =
+				this.buildRenderer3DWorldChunkFrame(plane, x, z);
+			long activeChunkBuildNanos =
+				System.nanoTime() - phaseStart;
+			phaseStart = System.nanoTime();
 			this.clearPredictiveRenderer3DWorldChunkFrame();
+			long predictiveClearNanos =
+				System.nanoTime() - phaseStart;
+			phaseStart = System.nanoTime();
 			this.composeSymmetricRenderer3DWorldChunkFrame(x, z);
-			long chunkFrameNanos = System.nanoTime() - phaseStart;
+			long symmetricComposeNanos =
+				System.nanoTime() - phaseStart;
+			long chunkFrameNanos =
+				activeChunkBuildNanos
+					+ predictiveClearNanos
+					+ symmetricComposeNanos;
 			phaseStart = System.nanoTime();
 			this.preloadSections(worldX, worldZ, plane);
 			long preloadNanos = System.nanoTime() - phaseStart;
@@ -4260,6 +4272,9 @@ public final class World {
 				upperPlanesNanos,
 				bridgeNanos,
 				chunkFrameNanos,
+				activeChunkBuildNanos,
+				predictiveClearNanos,
+				symmetricComposeNanos,
 				preloadNanos);
 			logNativeLayeredTerrainActivation(worldX, worldZ, plane, x, z);
 

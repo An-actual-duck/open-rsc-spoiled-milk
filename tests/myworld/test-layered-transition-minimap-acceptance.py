@@ -564,6 +564,14 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             self.telemetry,
         )
         self.assertIn(
+            '"activeChunkBuildNanos"',
+            self.telemetry,
+        )
+        self.assertIn(
+            '"symmetricComposeNanos"',
+            self.telemetry,
+        )
+        self.assertIn(
             '"shadow.overProjectedFallback"',
             self.telemetry,
         )

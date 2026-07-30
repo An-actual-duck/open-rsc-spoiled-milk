@@ -507,6 +507,9 @@ public final class RenderTelemetry {
 		long upperPlanesNanos,
 		long bridgeNanos,
 		long chunkFrameNanos,
+		long activeChunkBuildNanos,
+		long predictiveClearNanos,
+		long symmetricComposeNanos,
 		long preloadNanos) {
 		if (isCollectionEnabled()) {
 			synchronized (RenderTelemetry.class) {
@@ -542,6 +545,15 @@ public final class RenderTelemetry {
 				event.number("upperPlanesNanos", upperPlanesNanos);
 				event.number("bridgeNanos", bridgeNanos);
 				event.number("chunkFrameNanos", chunkFrameNanos);
+				event.number(
+					"activeChunkBuildNanos",
+					activeChunkBuildNanos);
+				event.number(
+					"predictiveClearNanos",
+					predictiveClearNanos);
+				event.number(
+					"symmetricComposeNanos",
+					symmetricComposeNanos);
 				event.number("preloadNanos", preloadNanos);
 				RendererDiagnosticSession.writeEventRecord(event);
 			}
@@ -557,6 +569,12 @@ public final class RenderTelemetry {
 				+ " upperMs=" + formatMillisRoot(upperPlanesNanos)
 				+ " bridgeMs=" + formatMillisRoot(bridgeNanos)
 				+ " frameMs=" + formatMillisRoot(chunkFrameNanos)
+				+ " frameBuildMs="
+					+ formatMillisRoot(activeChunkBuildNanos)
+				+ " frameClearMs="
+					+ formatMillisRoot(predictiveClearNanos)
+				+ " frameComposeMs="
+					+ formatMillisRoot(symmetricComposeNanos)
 				+ " preloadMs=" + formatMillisRoot(preloadNanos);
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
