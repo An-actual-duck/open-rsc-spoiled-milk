@@ -1327,6 +1327,11 @@ they are not visual requirements for the baseline.
       invalid or compatibility commands. F6, structured telemetry, and all
       sprite/scene capture tables expose exact/fallback/unmatched ownership for
       the entity-pressure validation gate.
+- [x] Accept the exact-owner slice after private visual review and a 12-frame
+      strict capture covering 2,424 commands with 100% `owner-anchor`, zero
+      fallback/unmatched/order mismatch, 79 NPCs, one player, three ground
+      items, and `suspicious:0`. This capture proves parity at zoom `760`; it
+      is not the later maximum-distance performance profile.
 - [x] Add the first live camera-space world-sprite depth path. It back-projects
       each existing command rectangle at the legacy sprite face's interpolated
       top/bottom camera depth, preserving exact screen framing and skew while

@@ -7,10 +7,12 @@ been accepted. Exact object-chunk builder sizing is the fifteenth accepted
 optimization, and exact typed dispatch for the remaining measured OpenGL
 reflection wrappers is the sixteenth. The steady maximum-distance endpoint is
 now at the diminishing-returns gate for allocation-only cleanup. The first
-scene/entity ownership slice is implemented and guard-tested: captured sprite
-layers retain their exact renderer anchor and draw order instead of
-rediscovering them through screen-bound heuristics. It awaits private visual
-and diagnostic comparison before acceptance.
+scene/entity ownership slice is accepted: captured sprite layers retain their
+exact renderer anchor and draw order instead of rediscovering them through
+screen-bound heuristics. Focused coverage, private visual review, and a
+12-frame strict capture all passed. The next decision input is an
+entity/effect-pressure CPU/allocation profile, not another speculative bridge
+rewrite.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -1064,6 +1066,22 @@ submission. The intended next slices are:
 5. split entity bodies, front occluders, effects/hit splats/nameplates, and UI
    into explicit renderer passes.
 
+The private validation session
+`session-20260729-194435-1563718` accepted this first slice. The owner reported
+that visuals, animations, depth, and interactions behaved as expected. All 12
+`Ctrl+F9` frames passed strict capture and suspicious-visibility analysis.
+Across the burst, 2,424 of 2,424 world-sprite commands used `owner-anchor`;
+fallback, unmatched, invalid owner index, and owner/anchor draw-order mismatch
+counts were all zero. The final frame contained 207 owned world-sprite
+commands: 204 entity layers and three ground items grouped under 29 anchors,
+including 26 multipart groups with as many as 20 layers. Character metadata
+covered 79 NPCs and one player, and visibility analysis reported 26 projected
+characters with body commands, all 26 visible, and `suspicious:0`. Lifetime
+telemetry likewise recorded a maximum of zero fallback and unmatched commands
+across 9,887 sampled composite frames. The capture used zoom setting `760`,
+not the exact maximum-distance control, so it proves ownership/parity rather
+than a performance delta.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -1306,9 +1324,12 @@ Implementation checkpoint:
       exact/fallback/unmatched ownership.
 - [x] Add focused runtime coverage for ambiguous overlapping anchors, exact
       ownership, ordering, and compatibility fallback.
-- [ ] Run the maximum-distance steady control and the entity/effect-pressure
-      visual/capture workload; require zero fallback/unmatched commands before
-      accepting this slice.
+- [x] Run dense entity visual/capture validation; all 2,424 burst commands used
+      exact ownership with zero fallback/unmatched commands or order mismatch,
+      and owner review found no visual regression.
+- [ ] Run the maximum-distance timed control and a repeatable combat/effect
+      pressure phase. The accepted visual capture was at zoom `760`, so it
+      must not be presented as the maximum-distance performance row.
 - [ ] Profile the entity/effect-pressure row and attribute legacy sprite-model,
       2D capture, composite texture, atlas upload, and draw submission
       separately.
@@ -1361,3 +1382,4 @@ Implementation checkpoint:
 | 2026-07-29 | `2ba397913` | `post14jfr` | Re-profile the fourteen-cycle maximum-distance endpoint and separate remaining CPU and allocation ownership. | Complete 104.7-second phase at exact control geometry. JFR measured 38.18 MiB/s against telemetry's 39.74 MiB/s. Object-chunk builders lead attributable allocation at 19.5%, including 10.2% from fixed-start primitive-array growth; reflection wrappers, frame/command capture, composite scenes, and composite character textures follow. Client and presenter CPU now divide across distinct legacy scene, handoff, upload, glow, and shadow paths. | Pre-size the parallel object-chunk builders from exact face topology for cycle 15; retain the CPU and other allocation groups as separate audits. |
 | 2026-07-29 | `c57df7186` | `capacity15` | Pre-size all object-chunk numeric and per-triangle collections from exact visible face topology, retaining growth fallback and immutable output ownership. | Matched 102.1-second maximum-distance workload and owner visual pass. Client allocation fell 12.7% and total allocation 5.1% despite 1.11 MiB/s of new background-preload allocation; presenter allocation stayed flat, CPU/world tails remained within variance, and GL p95/p99 improved. Focused Java 8 coverage proves exact capacity without growth and preserves geometry, materials, lighting, signatures, shadows, glows, and empty behavior. | Accept cycle 15; audit the independently ranked reflection wrappers and remaining object-builder ownership before cycle 16. |
 | 2026-07-29 | `90b79ac08` | `glhandles16` | Route the remaining 16 JFR-measured event/state/matrix/upload/immediate/uniform wrappers through exact typed Java 8 dispatch while retaining dynamic LWJGL discovery. | Exact 110.6-second maximum-distance workload and owner visual pass. Presenter allocation fell 18.0%; total allocation fell 12.7%, or about 9.9% after excluding background preload present only in the control. Presenter CPU and world tails stayed flat, while GL p95/p99 improved 3.3%/2.1%. Runtime coverage proves every packaged LWJGL signature used by `invokeExact`. | Accept cycle 16; declare diminishing returns for allocation-only cleanup and return to the larger renderer ownership roadmap before another micro-cycle. |
+| 2026-07-29 | `840f43199` | dense sprite ownership | Preserve each multipart scene sprite command's exact frame-local renderer anchor and draw order, use validated indexed lookup, and retain the old matcher only as fallback. | Owner visual pass plus 12 strict capture frames: 2,424/2,424 commands used `owner-anchor`, with zero fallback, unmatched, invalid owner, or draw-order mismatch. The final frame covered 204 entity layers, three ground items, 79 NPC metadata rows, one player, and `suspicious:0`. The view was zoom `760`, so no maximum-distance performance claim is made. | Accept the first scene/entity ownership slice; profile a repeatable maximum-distance entity/effect workload before selecting the next direct-submission boundary. |

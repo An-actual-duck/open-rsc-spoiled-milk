@@ -515,8 +515,10 @@ come from one of these areas unless a concrete shadow regression appears:
   renderer. Constant-time validated ownership is preferred, the old
   screen-bound matcher remains only as a compatibility fallback, and F6 /
   structured captures report exact/fallback/unmatched counts. Private visual
-  and entity-pressure validation is still required before this slice is
-  accepted.
+  review and 12 strict frames accepted the slice with 2,424 exact matches,
+  zero fallbacks/unmatched/order mismatches, 79 NPCs, one player, three ground
+  items, and no suspicious visibility loss. A maximum-distance timed
+  entity/effect profile is still required before selecting the next boundary.
 - Quality settings: presets exist, but settings do not yet consistently reduce
   underlying renderer work.
 - Tooling: F6 telemetry is good for live diagnosis, but capture replay and
