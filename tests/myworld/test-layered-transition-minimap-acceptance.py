@@ -24,6 +24,9 @@ OPENGL_SHADER = ROOT / "PC_Client/src/orsc/OpenGLShaderProgram.java"
 PRESENTATION_LATCH = (
     ROOT / "Client_Base/src/orsc/LayeredScenePresentationLatch.java"
 )
+PACKET_DRAIN_POLICY = (
+    ROOT / "Client_Base/src/orsc/LayeredScenePacketDrainPolicy.java"
+)
 
 
 class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
@@ -486,6 +489,112 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
         )
         self.assertIn(
             '"renderer.atomic-presentation-release"',
+            self.client,
+        )
+
+    def test_atomic_activation_uses_a_bounded_packet_burst(self):
+        harness = textwrap.dedent(
+            """
+            package orsc;
+
+            public final class LayeredScenePacketDrainPolicyHarness {
+                public static void main(String[] arguments) {
+                    require(LayeredScenePacketDrainPolicy.shouldReadNext(
+                        0, false, false, false),
+                        "normal cadence reads one packet");
+                    require(!LayeredScenePacketDrainPolicy.shouldReadNext(
+                        1, false, false, false),
+                        "normal cadence remains one packet");
+
+                    require(LayeredScenePacketDrainPolicy.shouldReadNext(
+                        1, true, true, false),
+                        "atomic activation drains its ordered update");
+                    require(!LayeredScenePacketDrainPolicy.shouldReadNext(
+                        2, true, true, true),
+                        "terrain halo build pauses the drain");
+                    require(!LayeredScenePacketDrainPolicy.shouldReadNext(
+                        2, true, false, false),
+                        "completed activation ends the drain");
+
+                    for (int packet = 0;
+                            packet
+                                < LayeredScenePacketDrainPolicy
+                                    .ATOMIC_ACTIVATION_PACKET_LIMIT;
+                            packet++) {
+                        require(
+                            LayeredScenePacketDrainPolicy.shouldReadNext(
+                                packet, true, true, false),
+                            "atomic packet inside bound " + packet);
+                    }
+                    require(!LayeredScenePacketDrainPolicy.shouldReadNext(
+                        LayeredScenePacketDrainPolicy
+                            .ATOMIC_ACTIVATION_PACKET_LIMIT,
+                        true, true, false),
+                        "atomic burst has a hard bound");
+
+                    boolean rejectedNegative = false;
+                    try {
+                        LayeredScenePacketDrainPolicy.shouldReadNext(
+                            -1, false, false, false);
+                    } catch (IllegalArgumentException expected) {
+                        rejectedNegative = true;
+                    }
+                    require(rejectedNegative, "negative count rejected");
+                }
+
+                private static void require(
+                        boolean condition, String label) {
+                    if (!condition) {
+                        throw new AssertionError(label);
+                    }
+                }
+            }
+            """
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary)
+            harness_path = (
+                work / "LayeredScenePacketDrainPolicyHarness.java"
+            )
+            harness_path.write_text(harness, encoding="utf-8")
+            subprocess.run(
+                [
+                    "javac",
+                    "-Xlint:all",
+                    "-source",
+                    "8",
+                    "-target",
+                    "8",
+                    "-d",
+                    str(work),
+                    str(PACKET_DRAIN_POLICY),
+                    str(harness_path),
+                ],
+                cwd=ROOT,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    str(work),
+                    "orsc.LayeredScenePacketDrainPolicyHarness",
+                ],
+                cwd=ROOT,
+                check=True,
+            )
+
+        self.assertIn(
+            "boolean activationBurst = "
+            "this.layeredSceneActivationPending;",
+            self.client,
+        )
+        self.assertIn(
+            "isLayeredTerrainHaloPrebuildPending()",
+            self.client,
+        )
+        self.assertIn(
+            "activationBurst |= wasActivationPending",
             self.client,
         )
 

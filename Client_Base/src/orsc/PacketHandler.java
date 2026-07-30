@@ -950,6 +950,10 @@ public class PacketHandler {
 		clearPendingLayeredTerrainPrebuild();
 	}
 
+	boolean isLayeredTerrainHaloPrebuildPending() {
+		return pendingLayeredTerrainHaloPrebuild != null;
+	}
+
 	private void pollLayeredTerrainHaloReady() {
 		Future<World.NativeLayeredTerrainHaloPrebuildResult> pending =
 			pendingLayeredTerrainHaloPrebuild;

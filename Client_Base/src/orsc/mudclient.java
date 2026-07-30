@@ -2440,10 +2440,38 @@ public final class mudclient implements Runnable {
 				return;
 			}
 
-			// TODO: Inauthentic to loop through packets like this.
-			int len = this.packetHandler.getClientStream().readIncomingPacket(packetHandler.getPacketsIncoming());
-			if (len > 0)
-				this.packetHandler.handlePacket(packetHandler.getPacketsIncoming().getUnsignedByte(), len);
+			/*
+			 * Keep the authentic one-packet cadence during ordinary play.
+			 * Protocol-v8 atomic activation is one ordered server update,
+			 * however, and may contain several baseline pages. Reading those
+			 * pages one per client tick made a local scene transition pause in
+			 * proportion to packet count. Drain only that bounded activation
+			 * burst, pausing if its terrain halo is still being prepared.
+			 */
+			int processedPackets = 0;
+			boolean activationBurst = this.layeredSceneActivationPending;
+			while (LayeredScenePacketDrainPolicy.shouldReadNext(
+					processedPackets,
+					activationBurst,
+					this.layeredSceneActivationPending,
+					this.packetHandler
+						.isLayeredTerrainHaloPrebuildPending())) {
+				int len = this.packetHandler.getClientStream()
+					.readIncomingPacket(
+						this.packetHandler.getPacketsIncoming());
+				if (len <= 0) {
+					break;
+				}
+				boolean wasActivationPending =
+					this.layeredSceneActivationPending;
+				this.packetHandler.handlePacket(
+					this.packetHandler.getPacketsIncoming()
+						.getUnsignedByte(),
+					len);
+				processedPackets++;
+				activationBurst |= wasActivationPending
+					|| this.layeredSceneActivationPending;
+			}
 
 			if (System.currentTimeMillis() - timeOfLastCombatStylePacket > 1000) {
 				setCombatStyle(proposedStyle);
