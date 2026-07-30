@@ -250,6 +250,19 @@ def main() -> None:
             "Overlapping static object chunks should survive adjacent client-origin shifts")
     require(mudclient, "cached.presentationBaseX - this.midRegionBaseX",
             "Static chunk reuse should derive the exact presentation-origin delta")
+    require(mudclient, "cachedResidentObjectChunkPreviousViewCells",
+            "Resident scenery caching should retain the immediately previous view")
+    require(mudclient,
+            "this.cachedResidentObjectChunkPreviousViewCells.addAll(\n"
+            "\t\t\t\tthis.cachedResidentObjectChunkCurrentViewCells);",
+            "Adjacent region changes should rotate the current scenery footprint into the previous view")
+    require(mudclient,
+            "retainedCells.addAll(\n"
+            "\t\t\tthis.cachedResidentObjectChunkPreviousViewCells);",
+            "Resident scenery eviction should preserve the bounded current-plus-previous working set")
+    require(mudclient,
+            "this.cachedResidentObjectChunkPreviousViewCells.clear();",
+            "Hard cache invalidation should discard the retained previous view")
     require(world_chunk_frame, "public ChunkMesh rebaseStaticObjectPresentation(",
             "Chunk snapshots should translate retained static scenery without copying GPU arrays")
     require(mudclient, "this.isGameObjectInstanceMaterialized(i) && this.getGameObjectInstanceModel(i) != null",

@@ -887,6 +887,12 @@ public final class mudclient implements Runnable {
 	private boolean hasCompletedInitialRegionLoad = false;
 	private final Map<Long, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
 		new HashMap<Long, ResidentObjectChunkCacheEntry>();
+	private final Set<Long> cachedResidentObjectChunkCurrentViewCells =
+		new HashSet<Long>();
+	private final Set<Long> cachedResidentObjectChunkPreviousViewCells =
+		new HashSet<Long>();
+	private int cachedResidentObjectChunkViewBaseX = Integer.MIN_VALUE;
+	private int cachedResidentObjectChunkViewBaseZ = Integer.MIN_VALUE;
 	private List<SceneBaselineState.Record>
 		staticPresentationSceneryRecords =
 			Collections.emptyList();
@@ -3974,6 +3980,19 @@ public final class mudclient implements Runnable {
 			clearResidentObjectChunkCache();
 			return baseFrame;
 		}
+		if (this.cachedResidentObjectChunkViewBaseX
+					!= this.midRegionBaseX
+				|| this.cachedResidentObjectChunkViewBaseZ
+					!= this.midRegionBaseZ) {
+			this.cachedResidentObjectChunkPreviousViewCells.clear();
+			this.cachedResidentObjectChunkPreviousViewCells.addAll(
+				this.cachedResidentObjectChunkCurrentViewCells);
+			this.cachedResidentObjectChunkCurrentViewCells.clear();
+			this.cachedResidentObjectChunkViewBaseX =
+				this.midRegionBaseX;
+			this.cachedResidentObjectChunkViewBaseZ =
+				this.midRegionBaseZ;
+		}
 		ArrayList<Renderer3DWorldChunkFrame.ChunkMesh> chunks =
 			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(baseFrame.getChunks());
 		Set<Long> activeCells = new HashSet<Long>();
@@ -4043,7 +4062,12 @@ public final class mudclient implements Runnable {
 			}
 			chunks.add(objectChunk);
 		}
-		this.cachedResidentObjectChunks.keySet().retainAll(activeCells);
+		this.cachedResidentObjectChunkCurrentViewCells.clear();
+		this.cachedResidentObjectChunkCurrentViewCells.addAll(activeCells);
+		Set<Long> retainedCells = new HashSet<Long>(activeCells);
+		retainedCells.addAll(
+			this.cachedResidentObjectChunkPreviousViewCells);
+		this.cachedResidentObjectChunks.keySet().retainAll(retainedCells);
 		if (staticPresentationRebuildPending) {
 			RendererDiagnosticSession.Record event =
 				RendererDiagnosticSession.newEventRecord(
@@ -4052,6 +4076,15 @@ public final class mudclient implements Runnable {
 				event.number("inputs", objectInputs.size());
 				event.number("cacheHits", cacheHits);
 				event.number("cacheMisses", cacheMisses);
+				event.number(
+					"cacheRetainedInactive",
+					Math.max(
+						0,
+						this.cachedResidentObjectChunks.size()
+							- activeCells.size()));
+				event.number(
+					"cacheEntries",
+					this.cachedResidentObjectChunks.size());
 				event.number("inputDurationNanos", inputNanos);
 				event.number("meshDurationNanos", meshBuildNanos);
 				RendererDiagnosticSession.writeEventRecord(event);
@@ -4303,6 +4336,10 @@ public final class mudclient implements Runnable {
 
 	private void clearResidentObjectChunkCache() {
 		this.cachedResidentObjectChunks.clear();
+		this.cachedResidentObjectChunkCurrentViewCells.clear();
+		this.cachedResidentObjectChunkPreviousViewCells.clear();
+		this.cachedResidentObjectChunkViewBaseX = Integer.MIN_VALUE;
+		this.cachedResidentObjectChunkViewBaseZ = Integer.MIN_VALUE;
 	}
 
 	private int getDebugPlayerWorldTileX() {
