@@ -556,14 +556,16 @@ current alpha baseline:
     crop/mirror/skew/alpha data with the renderer-v2 depth anchor, anchor match
     mode, and legacy draw order. `Ctrl+F9` captures write
     `world-sprite-commands.tsv` so this boundary can be audited offline.
-  - Current grouped-snapshot candidate: each sorted renderer anchor owns one
+  - Accepted grouped-snapshot slice: each sorted renderer anchor owns one
     frame-local world-sprite snapshot linked to its sprite submission,
     character metadata, pick state, and ordered captured animation layers.
     Complete indexed/order/count validation lets the presenter consume these
     groups directly; any discrepancy routes the whole frame through the typed
     command builder. `world-sprite-snapshots.tsv` and stable group/layer/
-    compatibility-fallback counters make that decision auditable. Visual and
-    strict-capture acceptance are pending.
+    compatibility-fallback counters make that decision auditable. The owner
+    visual route and 12 strict frames accepted `e3cced146` with 4,852/4,852
+    snapshot-owned layers and zero compatibility fallback, invalid anchor/
+    order, suspicious visibility, failed frame, or client exception.
   - Current scene-queue slice: the OpenGL replacement composite consumes a
     behavior-preserving scene command queue and captures it as
     `scene-commands.tsv`. The queue currently emits typed world-sprite commands
@@ -1358,9 +1360,11 @@ they are not visual requirements for the baseline.
 - [x] Add snapshot group/layer/fallback telemetry and strict
       `world-sprite-snapshots.tsv` capture analysis for anchor ownership and
       layer order.
-- [ ] Accept the grouped-snapshot slice after private dense actor/combat/
-      ground-item/effect review and a strict capture with complete snapshot
-      ownership and zero compatibility fallback.
+- [x] Accept the grouped-snapshot slice after the owner visual route and 12
+      strict capture frames covering 4,852 snapshot-owned layers, 842
+      character groups, and 96 item groups with zero compatibility fallback,
+      invalid anchor/order, suspicious visibility, failed frame, or client
+      exception.
 - [x] Add the first live camera-space world-sprite depth path. It back-projects
       each existing command rectangle at the legacy sprite face's interpolated
       top/bottom camera depth, preserving exact screen framing and skew while

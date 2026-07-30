@@ -520,11 +520,13 @@ come from one of these areas unless a concrete shadow regression appears:
   items, and no suspicious visibility loss. The follow-up maximum-distance
   idle and active combat JFR phases now separate legacy scene, capture,
   composite, atlas, and draw costs. They selected a frame-owned grouped
-  world-sprite snapshot as the second slice. That candidate reuses the same
+  world-sprite snapshot as the second slice. The accepted implementation reuses the same
   captured animation-layer objects, validates the entire snapshot set, and
   retains the legacy typed command builder as an all-or-nothing fallback. It
-  is compiled and guard-tested but still awaits private visual/capture
-  acceptance.
+  is compiled and guard-tested; the owner visual route passed, and all 12
+  strict capture frames used the snapshot path for 4,852/4,852 layers with
+  zero compatibility fallback, anchor/order violation, suspicious visibility,
+  failed frame, or client exception.
 - Quality settings: presets exist, but settings do not yet consistently reduce
   underlying renderer work.
 - Tooling: F6 telemetry is good for live diagnosis, but capture replay and

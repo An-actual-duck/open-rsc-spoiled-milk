@@ -15,8 +15,10 @@ active combat/rotation JFR phases are complete. Their measured bridge costs
 selected a second narrow slice: a frame-owned grouped world-sprite snapshot
 that consumes the already captured animation layers directly, with the legacy
 command builder retained as an all-or-nothing compatibility fallback. That
-candidate compiles and passes the full renderer guardrail suite; private
-visual/capture acceptance remains pending.
+slice is accepted at checkpoint `e3cced146`: it compiles, passes the full
+renderer guardrail suite and owner visual route, and completed 12 strict
+capture frames with 4,852/4,852 snapshot-owned layers and zero compatibility
+fallback.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -1144,9 +1146,39 @@ and a `world-sprite-snapshots.tsv` capture table with anchor, pick, world
 position, character identity/direction/combat/effect, and ordered layer
 metadata. Strict capture analysis verifies layer totals, anchor identity, and
 stable sequence order. Compilation, focused Java 8 ownership tests, capture
-fixtures, and the full renderer guardrail suite pass. Private dense
-actor/combat/ground-item/effect review and a strict `Ctrl+F9` burst are the
-remaining acceptance gate.
+fixtures, and the full renderer guardrail suite pass.
+
+The private acceptance route used
+`session-20260729-205554-1593174`. The client was launched from the tested
+dirty worktree based on `c40e3ae7a`; that exact source was then committed and
+pushed as `e3cced146`. The owner completed the requested dense-actor,
+animation, movement, camera, interaction, and combat-when-practical visual
+route without reporting a regression. The 12-frame `Ctrl+F9` burst then
+passed strict and suspicious-visibility analysis in every frame:
+
+- all 4,852 world-sprite commands were the identical objects owned by their
+  renderer snapshots and all 4,852 diagnostic resolutions remained
+  `owner-anchor`;
+- 938 nonempty snapshot groups comprised 842 character groups and 96
+  ground-item groups; frames ranged from 398 to 414 layers and 77 to 80
+  nonempty groups;
+- invalid anchor rows, sequence-order violations, missing anchors,
+  compatibility fallback commands, suspicious visibility rows, failed capture
+  frames, and client exceptions were all zero;
+- seven anchor rows across the burst intentionally had no captured layer.
+  They remained outside the submitted layer/group totals and did not force
+  mixed ownership or fallback;
+- the burst itself did not contain active combat-direction, hit-splat, or
+  combat-effect metadata. It therefore proves dense multipart character and
+  item ownership, while the owner's preceding visual route supplies the
+  combat observation rather than a claim that combat was present in the
+  capture.
+
+This accepts the grouped-snapshot boundary without claiming a large frame-time
+win. The next comparison should measure the same maximum-distance idle and
+entity-pressure workloads at `e3cced146`, confirming that composite scene
+reconstruction is absent and checking whether the new snapshot construction
+merely moves allocation back to the client loop.
 
 ## Controlled Workload Matrix
 
@@ -1404,9 +1436,10 @@ Implementation checkpoint:
       from that profile: one frame-owned grouped snapshot per exact anchor,
       consuming the same captured layers and retaining an all-or-nothing
       compatibility fallback.
-- [ ] Accept the grouped-snapshot slice only after private dense actor/combat/
-      ground-item/effect review and strict capture proof of complete snapshot
-      ownership with no compatibility fallback.
+- [x] Accept the grouped-snapshot slice after the owner visual route and 12
+      strict capture frames: 4,852/4,852 layers were snapshot-owned,
+      compatibility fallback, invalid anchor/order, suspicious visibility,
+      failed frames, and client exceptions were all zero.
 
 ### Milestone 4: Broader Performance Matrix
 
@@ -1456,3 +1489,4 @@ Implementation checkpoint:
 | 2026-07-29 | `90b79ac08` | `glhandles16` | Route the remaining 16 JFR-measured event/state/matrix/upload/immediate/uniform wrappers through exact typed Java 8 dispatch while retaining dynamic LWJGL discovery. | Exact 110.6-second maximum-distance workload and owner visual pass. Presenter allocation fell 18.0%; total allocation fell 12.7%, or about 9.9% after excluding background preload present only in the control. Presenter CPU and world tails stayed flat, while GL p95/p99 improved 3.3%/2.1%. Runtime coverage proves every packaged LWJGL signature used by `invokeExact`. | Accept cycle 16; declare diminishing returns for allocation-only cleanup and return to the larger renderer ownership roadmap before another micro-cycle. |
 | 2026-07-29 | `840f43199` | dense sprite ownership | Preserve each multipart scene sprite command's exact frame-local renderer anchor and draw order, use validated indexed lookup, and retain the old matcher only as fallback. | Owner visual pass plus 12 strict capture frames: 2,424/2,424 commands used `owner-anchor`, with zero fallback, unmatched, invalid owner, or draw-order mismatch. The final frame covered 204 entity layers, three ground items, 79 NPC metadata rows, one player, and `suspicious:0`. The view was zoom `760`, so no maximum-distance performance claim is made. | Accept the first scene/entity ownership slice; profile a repeatable maximum-distance entity/effect workload before selecting the next direct-submission boundary. |
 | 2026-07-29 | `c40e3ae7a` | `entityidle`, `entitycombat` | Profile the first exact-owner endpoint at maximum-distance idle and under active combat/camera pressure. | Idle was an exact zoom `900` / effective `2400` control at 42.73 MiB/s and 0.484 cores. Combat varied zoom/rotation and rose to 70.18 MiB/s and 0.577 cores. Legacy `Scene.endScene` covered about 51% of client CPU samples in both; composite scene reconstruction cost about 1.2–1.5 MiB/s, while composite character textures rose from 1.27 to 2.51 MiB/s under combat. Visuals passed and ownership fallback/unmatched stayed zero. | Build a frame-owned grouped sprite snapshot to remove wrapper/list/sort reconstruction while preserving captured pixels; do not cache transformed character textures without a parity-complete key. |
+| 2026-07-29 | `e3cced146` | grouped snapshot acceptance | Attach exact captured layers to frame-owned anchor/submission/character snapshots, validate the complete frame, consume valid groups directly, and retain the typed command builder as an all-or-nothing fallback. | Client compile, focused ownership/capture fixtures, and the full guard suite passed. The owner visual route reported no issue. All 12 strict capture frames passed: 4,852/4,852 layers were snapshot-owned across 938 nonempty groups, 842 character groups, and 96 item groups, with zero compatibility fallback, invalid anchor/order, suspicious visibility, failed frames, or client exceptions. | Accept the second scene/entity ownership slice. Repeat the maximum-distance idle and entity-pressure measurements before retiring another bridge boundary. |
