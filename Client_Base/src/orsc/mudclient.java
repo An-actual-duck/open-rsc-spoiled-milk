@@ -3998,11 +3998,25 @@ public final class mudclient implements Runnable {
 		Set<Long> activeCells = new HashSet<Long>();
 		int cacheHits = 0;
 		int cacheMisses = 0;
+		int canonicalOwnershipMatches = 0;
+		int canonicalOwnershipChanges = 0;
 		long meshBuildNanos = 0L;
 		for (ResidentObjectChunkInput input : objectInputs) {
 			activeCells.add(input.cellKey);
 			ResidentObjectChunkCacheEntry cached = this.cachedResidentObjectChunks.get(input.cellKey);
 			Renderer3DWorldChunkFrame.ChunkMesh objectChunk;
+			if (cached != null
+				&& cached.cacheKey != input.cacheKey
+				&& input.chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS) {
+				if (cached.canonicalContentKey
+						== input.canonicalContentKey) {
+					canonicalOwnershipMatches++;
+				} else {
+					canonicalOwnershipChanges++;
+				}
+			}
 			if (cached != null && cached.cacheKey == input.cacheKey) {
 				if (input.chunkRole
 						== Renderer3DWorldChunkFrame
@@ -4023,6 +4037,7 @@ public final class mudclient implements Runnable {
 						input.cellKey,
 						new ResidentObjectChunkCacheEntry(
 							input.cacheKey,
+							input.canonicalContentKey,
 							objectChunk,
 							this.midRegionBaseX,
 							this.midRegionBaseZ));
@@ -4056,6 +4071,7 @@ public final class mudclient implements Runnable {
 					input.cellKey,
 					new ResidentObjectChunkCacheEntry(
 						input.cacheKey,
+						input.canonicalContentKey,
 						objectChunk,
 						this.midRegionBaseX,
 						this.midRegionBaseZ));
@@ -4076,6 +4092,12 @@ public final class mudclient implements Runnable {
 				event.number("inputs", objectInputs.size());
 				event.number("cacheHits", cacheHits);
 				event.number("cacheMisses", cacheMisses);
+				event.number(
+					"canonicalOwnershipMatches",
+					canonicalOwnershipMatches);
+				event.number(
+					"canonicalOwnershipChanges",
+					canonicalOwnershipChanges);
 				event.number(
 					"cacheRetainedInactive",
 					Math.max(
@@ -4109,7 +4131,8 @@ public final class mudclient implements Runnable {
 					i,
 					this.getGameObjectInstanceID(i),
 					this.getGameObjectInstanceDir(i),
-					this.getGameObjectInstanceModel(i));
+					this.getGameObjectInstanceModel(i),
+					false);
 			}
 		}
 		for (int i = 0; i < this.getWallObjectInstanceCount(); i++) {
@@ -4123,7 +4146,8 @@ public final class mudclient implements Runnable {
 					i,
 					this.getWallObjectInstanceID(i),
 					this.getWallObjectInstanceDir(i),
-					this.getWallObjectInstanceModel(i));
+					this.getWallObjectInstanceModel(i),
+					false);
 			}
 		}
 		for (StaticPresentationModel presentation
@@ -4137,7 +4161,8 @@ public final class mudclient implements Runnable {
 				presentation.instanceIndex,
 				presentation.objectId,
 				presentation.direction,
-				presentation.model);
+				presentation.model,
+				true);
 		}
 		List<ResidentObjectChunkInput> inputs = new ArrayList<ResidentObjectChunkInput>(builders.size());
 		for (ResidentObjectChunkInputBuilder builder : builders.values()) {
@@ -4155,7 +4180,8 @@ public final class mudclient implements Runnable {
 		int instanceIndex,
 		int objectId,
 		int direction,
-		RSModel model) {
+		RSModel model,
+		boolean presentationOnly) {
 		int chunkRole = isAnimatedResidentObjectChunkModel(kind, objectId)
 			? Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
 			: Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
@@ -4192,6 +4218,7 @@ public final class mudclient implements Runnable {
 			objectId,
 			direction,
 			model,
+			presentationOnly,
 			debugMatched,
 			debugMatched
 				? debugSceneObjectChunkSummary(kind, instanceIndex, tileX, tileZ, objectId, direction, model)
@@ -4597,6 +4624,9 @@ public final class mudclient implements Runnable {
 		private final RSModel[] models;
 		private final int modelCount;
 		private final long cacheKey;
+		private final long canonicalContentKey;
+		private final int liveModelCount;
+		private final int presentationModelCount;
 		private final int debugMatchedModelCount;
 		private final String debugFirstModelSummary;
 
@@ -4610,6 +4640,9 @@ public final class mudclient implements Runnable {
 			RSModel[] models,
 			int modelCount,
 			long cacheKey,
+			long canonicalContentKey,
+			int liveModelCount,
+			int presentationModelCount,
 			int debugMatchedModelCount,
 			String debugFirstModelSummary) {
 			this.anchor = anchor;
@@ -4621,6 +4654,9 @@ public final class mudclient implements Runnable {
 			this.models = models;
 			this.modelCount = modelCount;
 			this.cacheKey = cacheKey;
+			this.canonicalContentKey = canonicalContentKey;
+			this.liveModelCount = liveModelCount;
+			this.presentationModelCount = presentationModelCount;
 			this.debugMatchedModelCount = debugMatchedModelCount;
 			this.debugFirstModelSummary = debugFirstModelSummary;
 		}
@@ -4634,7 +4670,12 @@ public final class mudclient implements Runnable {
 		private final int cellTileSize;
 		private final int chunkRole;
 		private final List<RSModel> models = new ArrayList<RSModel>();
+		private final List<ResidentObjectCanonicalIdentity>
+			canonicalIdentities =
+				new ArrayList<ResidentObjectCanonicalIdentity>();
 		private long cacheKey;
+		private int liveModelCount;
+		private int presentationModelCount;
 		private int debugMatchedModelCount;
 		private String debugFirstModelSummary = "";
 
@@ -4671,9 +4712,15 @@ public final class mudclient implements Runnable {
 			int objectId,
 			int direction,
 			RSModel model,
+			boolean presentationOnly,
 			boolean debugMatched,
 			String debugSummary) {
 			this.models.add(model);
+			if (presentationOnly) {
+				this.presentationModelCount++;
+			} else {
+				this.liveModelCount++;
+			}
 			if (debugMatched) {
 				this.debugMatchedModelCount++;
 				if (this.debugFirstModelSummary.isEmpty()) {
@@ -4684,6 +4731,13 @@ public final class mudclient implements Runnable {
 			if (this.chunkRole
 					== Renderer3DWorldChunkFrame
 						.CHUNK_ROLE_STATIC_OBJECTS) {
+				this.canonicalIdentities.add(
+					new ResidentObjectCanonicalIdentity(
+						kind.ordinal(),
+						worldTileX,
+						worldTileZ,
+						objectId,
+						direction));
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, worldTileX);
 				this.cacheKey = mixResidentObjectChunkCacheKey(
@@ -4712,6 +4766,8 @@ public final class mudclient implements Runnable {
 		private ResidentObjectChunkInput build() {
 			RSModel[] modelArray = this.models.toArray(new RSModel[this.models.size()]);
 			long finalCacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, modelArray.length);
+			long canonicalContentKey =
+				buildCanonicalContentKey();
 			return new ResidentObjectChunkInput(
 				this.anchor,
 				this.cellKey,
@@ -4722,23 +4778,106 @@ public final class mudclient implements Runnable {
 				modelArray,
 				modelArray.length,
 				finalCacheKey,
+				canonicalContentKey,
+				this.liveModelCount,
+				this.presentationModelCount,
 				this.debugMatchedModelCount,
 				this.debugFirstModelSummary);
+		}
+
+		private long buildCanonicalContentKey() {
+			if (this.chunkRole
+					!= Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS) {
+				return 0L;
+			}
+			List<ResidentObjectCanonicalIdentity> sorted =
+				new ArrayList<ResidentObjectCanonicalIdentity>(
+					this.canonicalIdentities);
+			Collections.sort(sorted);
+			long hash = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+			hash = mixResidentObjectChunkCacheKey(
+				hash, sorted.size());
+			for (ResidentObjectCanonicalIdentity identity : sorted) {
+				hash = identity.mixInto(hash);
+			}
+			return hash;
+		}
+	}
+
+	private static final class ResidentObjectCanonicalIdentity
+			implements Comparable<ResidentObjectCanonicalIdentity> {
+		private final int kind;
+		private final int worldTileX;
+		private final int worldTileZ;
+		private final int objectId;
+		private final int direction;
+
+		private ResidentObjectCanonicalIdentity(
+			int kind,
+			int worldTileX,
+			int worldTileZ,
+			int objectId,
+			int direction) {
+			this.kind = kind;
+			this.worldTileX = worldTileX;
+			this.worldTileZ = worldTileZ;
+			this.objectId = objectId;
+			this.direction = direction;
+		}
+
+		private long mixInto(long hash) {
+			hash = mixResidentObjectChunkCacheKey(hash, this.kind);
+			hash = mixResidentObjectChunkCacheKey(
+				hash, this.worldTileX);
+			hash = mixResidentObjectChunkCacheKey(
+				hash, this.worldTileZ);
+			hash = mixResidentObjectChunkCacheKey(
+				hash, this.objectId);
+			return mixResidentObjectChunkCacheKey(
+				hash, this.direction);
+		}
+
+		@Override
+		public int compareTo(
+			ResidentObjectCanonicalIdentity other) {
+			int comparison = Integer.compare(
+				this.worldTileX, other.worldTileX);
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(
+				this.worldTileZ, other.worldTileZ);
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(this.kind, other.kind);
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(
+				this.direction, other.direction);
+			return comparison != 0
+				? comparison
+				: Integer.compare(this.objectId, other.objectId);
 		}
 	}
 
 	private static final class ResidentObjectChunkCacheEntry {
 		private final long cacheKey;
+		private final long canonicalContentKey;
 		private final Renderer3DWorldChunkFrame.ChunkMesh chunk;
 		private final int presentationBaseX;
 		private final int presentationBaseZ;
 
 		private ResidentObjectChunkCacheEntry(
 			long cacheKey,
+			long canonicalContentKey,
 			Renderer3DWorldChunkFrame.ChunkMesh chunk,
 			int presentationBaseX,
 			int presentationBaseZ) {
 			this.cacheKey = cacheKey;
+			this.canonicalContentKey = canonicalContentKey;
 			this.chunk = chunk;
 			this.presentationBaseX = presentationBaseX;
 			this.presentationBaseZ = presentationBaseZ;

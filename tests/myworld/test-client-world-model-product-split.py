@@ -238,6 +238,20 @@ def main() -> None:
             "Client should build resident object chunks from cached object chunk inputs")
     require(mudclient, "cached != null && cached.cacheKey == input.cacheKey",
             "Client should reuse resident object chunks when object transforms are unchanged")
+    require(mudclient,
+            "cached.cacheKey != input.cacheKey\n"
+            "\t\t\t\t&& input.chunkRole\n"
+            "\t\t\t\t\t== Renderer3DWorldChunkFrame\n"
+            "\t\t\t\t\t\t.CHUNK_ROLE_STATIC_OBJECTS",
+            "Canonical ownership diagnostics must remain outside the active exact-key reuse path")
+    require(mudclient,
+            "cached.canonicalContentKey\n"
+            "\t\t\t\t\t\t== input.canonicalContentKey",
+            "Adjacent views should measure canonical static-content matches without accepting them")
+    require(mudclient, "Collections.sort(sorted);",
+            "Canonical scenery diagnostics should hash a deterministic record order")
+    require(mudclient, '"canonicalOwnershipMatches"',
+            "Transition diagnostics should expose potential ownership-boundary reuse")
     require(mudclient, "mixResidentObjectChunkCacheKey(\n\t\t\t\t\tthis.cacheKey, worldTileX)",
             "Static resident object cache keys should use stable world tile placement")
     require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, objectId)",
