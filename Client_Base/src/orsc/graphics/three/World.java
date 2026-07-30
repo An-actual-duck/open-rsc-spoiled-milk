@@ -1719,7 +1719,8 @@ public final class World {
 					chunkX,
 					chunkZ,
 					showWallOnMinimap,
-					includeRoofGeometry);
+					includeRoofGeometry,
+					!showWallOnMinimap && plane > 0);
 				productNanos = System.nanoTime() - phaseStartNanos;
 				if (showWallOnMinimap) {
 					phaseStartNanos = System.nanoTime();
@@ -1783,8 +1784,10 @@ public final class World {
 		int sectionX,
 		int sectionY,
 		boolean includeTerrain,
-		boolean includeRoofGeometry) {
-		String key = worldModelProductKey(plane, sectionX, sectionY, includeRoofGeometry);
+		boolean includeRoofGeometry,
+		boolean stackedUpperPlane) {
+		String key = worldModelProductKey(
+			plane, sectionX, sectionY, includeRoofGeometry, stackedUpperPlane);
 		WorldModelProduct cached;
 		synchronized (worldModelProductCacheLock) {
 			cached = worldModelProductCache.get(key);
@@ -1802,17 +1805,40 @@ public final class World {
 		TerrainModelInput terrainInput = cached == null ? null : cached.terrainInput;
 		WallModelInput wallInput = cached == null ? null : cached.wallInput;
 		RoofModelInput roofInput = cached == null ? null : cached.roofInput;
+		CpuSectionWindow stackedWindow = null;
+		int[][] structuralBaseElevations = null;
+		if (stackedUpperPlane && (wallInput == null || roofInput == null)) {
+			if (plane <= 0) {
+				throw new IllegalArgumentException(
+					"A stacked upper-floor product requires plane 1 or above");
+			}
+			stackedWindow = loadCpuSectionWindow(plane, sectionX, sectionY);
+			/*
+			 * Upper floors viewed from ground level must continue from the
+			 * completed roof elevation below them. A floor-local product
+			 * intentionally starts from its own terrain when that floor is the
+			 * player's active plane. Keep those products distinct: sharing
+			 * either the geometry or its cache key flattens upper stories onto
+			 * the first story.
+			 */
+			structuralBaseElevations = this.loadStackedUpperFloorBase(
+				plane, sectionX, sectionY, includeRoofGeometry);
+		}
 		if (includeTerrain && terrainInput == null) {
 			terrainInput = this.loadTerrainModelInput(plane, sectionX, sectionY);
 		}
 		if (wallInput == null) {
-			wallInput = this.loadWallModelInput(plane, sectionX, sectionY);
+			wallInput = stackedUpperPlane
+				? buildWallModelInput(stackedWindow.sectors, structuralBaseElevations)
+				: this.loadWallModelInput(plane, sectionX, sectionY);
 		}
 		if (terrainInput != null) {
 			terrainInput = applyWallEndpointShadows(terrainInput, wallInput);
 		}
 		if (roofInput == null) {
-			roofInput = this.loadRoofModelInput(plane, sectionX, sectionY);
+			roofInput = stackedUpperPlane
+				? buildRoofModelInput(stackedWindow.sectors, structuralBaseElevations)
+				: this.loadRoofModelInput(plane, sectionX, sectionY);
 		}
 
 		WorldGpuChunkMesh gpuChunkMesh = buildWorldGpuChunkMesh(
@@ -1825,7 +1851,7 @@ public final class World {
 			includeRoofGeometry);
 		WorldModelProduct built = new WorldModelProduct(terrainInput, wallInput, roofInput, gpuChunkMesh);
 		if (!key.equals(worldModelProductKey(
-				plane, sectionX, sectionY, includeRoofGeometry))) {
+				plane, sectionX, sectionY, includeRoofGeometry, stackedUpperPlane))) {
 			return built;
 		}
 		boolean storedBuilt = false;
@@ -1859,6 +1885,23 @@ public final class World {
 			ACTIVE_SECTION_GRID,
 			ACTIVE_SECTION_ORIGIN_OFFSET);
 		return cached;
+	}
+
+	private int[][] loadStackedUpperFloorBase(
+		int plane,
+		int sectionX,
+		int sectionY,
+		boolean includeRoofGeometry) {
+		if (plane == 1) {
+			return this.loadRoofModelInput(0, sectionX, sectionY).finalElevations;
+		}
+		return this.loadWorldModelProduct(
+			plane - 1,
+			sectionX,
+			sectionY,
+			false,
+			includeRoofGeometry,
+			true).roofInput.finalElevations;
 	}
 
 	public Renderer3DWorldChunkFrame getRenderer3DWorldChunkFrame() {
@@ -1896,7 +1939,12 @@ public final class World {
 		boolean requireTerrain) {
 		WorldModelProduct product;
 		synchronized (worldModelProductCacheLock) {
-			product = worldModelProductCache.get(worldModelProductKey(plane, sectionX, sectionY, !Config.C_HIDE_ROOFS));
+			product = worldModelProductCache.get(worldModelProductKey(
+				plane,
+				sectionX,
+				sectionY,
+				!Config.C_HIDE_ROOFS,
+				!requireTerrain && plane > 0));
 		}
 		if (product == null || !product.hasTerrainIfNeeded(requireTerrain) || product.gpuChunkMesh == null) {
 			return;
@@ -2757,21 +2805,31 @@ public final class World {
 	}
 
 	private WallModelInput buildWallModelInput(Sector[] sourceSectors) {
+		return buildWallModelInput(sourceSectors, null);
+	}
+
+	private WallModelInput buildWallModelInput(
+		Sector[] sourceSectors,
+		int[][] structuralBaseElevations) {
 		TerrainModelInputSource source = new TerrainModelInputSource(sourceSectors);
 		List<WallSegmentInput> segments = new ArrayList<WallSegmentInput>();
 		for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x) {
 			for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
-				addWallSegmentInput(segments, source, source.verticalWall(x, z), WallSegmentInput.VERTICAL, x, z,
+				addWallSegmentInput(segments, source, structuralBaseElevations,
+					source.verticalWall(x, z), WallSegmentInput.VERTICAL, x, z,
 					1 + x, z, x, z);
-				addWallSegmentInput(segments, source, source.horizontalWall(x, z), WallSegmentInput.HORIZONTAL, x, z,
+				addWallSegmentInput(segments, source, structuralBaseElevations,
+					source.horizontalWall(x, z), WallSegmentInput.HORIZONTAL, x, z,
 					x, z, x, 1 + z);
 
 				int wall = source.wallDiagonal(x, z);
 				if (wall > 0 && wall < 12000) {
-					addWallSegmentInput(segments, source, wall, WallSegmentInput.DIAGONAL_A, x, z,
+					addWallSegmentInput(segments, source, structuralBaseElevations,
+						wall, WallSegmentInput.DIAGONAL_A, x, z,
 						x + 1, z, x, 1 + z);
 				} else if (wall > 12000 && wall < 24000) {
-					addWallSegmentInput(segments, source, wall - 12000, WallSegmentInput.DIAGONAL_B, x, z,
+					addWallSegmentInput(segments, source, structuralBaseElevations,
+						wall - 12000, WallSegmentInput.DIAGONAL_B, x, z,
 						x, z, x + 1, 1 + z);
 				}
 			}
@@ -2782,6 +2840,7 @@ public final class World {
 	private void addWallSegmentInput(
 		List<WallSegmentInput> segments,
 		TerrainModelInputSource source,
+		int[][] structuralBaseElevations,
 		int wall,
 		int kind,
 		int x,
@@ -2802,8 +2861,10 @@ public final class World {
 			int z1 = t1Z * 128;
 			int x2 = t2X * 128;
 			int z2 = t2Z * 128;
-			int y1 = -source.tileElevation(t1X, t1Z);
-			int y2 = -source.tileElevation(t2X, t2Z);
+			int y1 = -structuralElevation(
+				source, structuralBaseElevations, t1X, t1Z);
+			int y2 = -structuralElevation(
+				source, structuralBaseElevations, t2X, t2Z);
 			int facePickIndex = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getUnknown() == 5
 				? 30000 + wallID
 				: 0;
@@ -2813,6 +2874,16 @@ public final class World {
 				x2, y2 - height, z2,
 				x2, y2, z2));
 		}
+	}
+
+	private static int structuralElevation(
+		TerrainModelInputSource source,
+		int[][] structuralBaseElevations,
+		int x,
+		int z) {
+		return structuralBaseElevations == null
+			? source.tileElevation(x, z)
+			: structuralBaseElevations[x][z];
 	}
 
 	private void emitWallProduct(WallModelInput input, boolean showWallOnMinimap) {
@@ -2947,8 +3018,15 @@ public final class World {
 	}
 
 	private RoofModelInput buildRoofModelInput(Sector[] sourceSectors) {
+		return buildRoofModelInput(sourceSectors, null);
+	}
+
+	private RoofModelInput buildRoofModelInput(
+		Sector[] sourceSectors,
+		int[][] structuralBaseElevations) {
 		TerrainModelInputSource source = new TerrainModelInputSource(sourceSectors);
-		RoofElevationWorkspace elevations = this.prepareRoofElevationProduct(source);
+		RoofElevationWorkspace elevations =
+			this.prepareRoofElevationProduct(source, structuralBaseElevations);
 		List<RoofFaceInput> faces = this.collectRoofFaceInputs(source, elevations);
 		RoofCoverageTiles roofCoverage = collectRoofCoverageTiles(source);
 		elevations.clearRoofMarkers();
@@ -2975,8 +3053,11 @@ public final class World {
 		return new RoofCoverageTiles(bits, count);
 	}
 
-	private RoofElevationWorkspace prepareRoofElevationProduct(TerrainModelInputSource source) {
-		RoofElevationWorkspace elevations = RoofElevationWorkspace.fromSource(source);
+	private RoofElevationWorkspace prepareRoofElevationProduct(
+		TerrainModelInputSource source,
+		int[][] structuralBaseElevations) {
+		RoofElevationWorkspace elevations =
+			RoofElevationWorkspace.fromSource(source, structuralBaseElevations);
 		for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x) {
 			for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
 				int wall = source.verticalWall(x, z);
@@ -3635,14 +3716,17 @@ public final class World {
 		int sectionY = worldTileToSection(worldZ);
 		preloadSectionWindow(plane, sectionX, sectionY);
 		queueCpuSectionWindowPreload(plane, sectionX, sectionY);
-		queueWorldModelProductPreload(plane, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);
+		queueWorldModelProductPreload(
+			plane, sectionX, sectionY, true, !Config.C_HIDE_ROOFS, false);
 		if (shouldLoadUpperPlaneModels(plane)) {
 			preloadSectionWindow(1, sectionX, sectionY);
 			preloadSectionWindow(2, sectionX, sectionY);
 			queueCpuSectionWindowPreload(1, sectionX, sectionY);
 			queueCpuSectionWindowPreload(2, sectionX, sectionY);
-			queueWorldModelProductPreload(1, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);
-			queueWorldModelProductPreload(2, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);
+			queueWorldModelProductPreload(
+				1, sectionX, sectionY, false, !Config.C_HIDE_ROOFS, true);
+			queueWorldModelProductPreload(
+				2, sectionX, sectionY, false, !Config.C_HIDE_ROOFS, true);
 		}
 	}
 
@@ -3718,8 +3802,10 @@ public final class World {
 		final int sectionX,
 		final int sectionY,
 		final boolean includeTerrain,
-		final boolean includeRoofGeometry) {
-		final String key = worldModelProductKey(height, sectionX, sectionY, includeRoofGeometry);
+		final boolean includeRoofGeometry,
+		final boolean stackedUpperPlane) {
+		final String key = worldModelProductKey(
+			height, sectionX, sectionY, includeRoofGeometry, stackedUpperPlane);
 		final String preloadKey = key + (includeTerrain ? "-terrain" : "-surface");
 		synchronized (worldModelProductCacheLock) {
 			WorldModelProduct cached = worldModelProductCache.get(key);
@@ -3734,7 +3820,13 @@ public final class World {
 			@Override
 			public void run() {
 				try {
-					loadWorldModelProduct(height, sectionX, sectionY, includeTerrain, includeRoofGeometry);
+					loadWorldModelProduct(
+						height,
+						sectionX,
+						sectionY,
+						includeTerrain,
+						includeRoofGeometry,
+						stackedUpperPlane);
 				} finally {
 					synchronized (worldModelProductCacheLock) {
 						worldModelProductBuildsInFlight.remove(preloadKey);
@@ -4251,9 +4343,15 @@ public final class World {
 		return sectionWindowKey(height, sectionX, sectionY) + "-roof-input";
 	}
 
-	private String worldModelProductKey(int height, int sectionX, int sectionY, boolean includeRoofGeometry) {
+	private String worldModelProductKey(
+		int height,
+		int sectionX,
+		int sectionY,
+		boolean includeRoofGeometry,
+		boolean stackedUpperPlane) {
 		return sectionWindowKey(height, sectionX, sectionY)
-			+ (includeRoofGeometry ? "-world-product-roofs" : "-world-product-no-roofs");
+			+ (includeRoofGeometry ? "-world-product-roofs" : "-world-product-no-roofs")
+			+ (stackedUpperPlane ? "-stacked-upper" : "-floor-local");
 	}
 
 	private String worldModelProductKey(
@@ -6084,11 +6182,14 @@ public final class World {
 			this.elevations = elevations;
 		}
 
-		private static RoofElevationWorkspace fromSource(TerrainModelInputSource source) {
+		private static RoofElevationWorkspace fromSource(
+			TerrainModelInputSource source,
+			int[][] structuralBaseElevations) {
 			int[][] elevations = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
 			for (int x = 0; x < LOCAL_TILE_COUNT; x++) {
 				for (int z = 0; z < LOCAL_TILE_COUNT; z++) {
-					elevations[x][z] = source.tileElevation(x, z);
+					elevations[x][z] = structuralElevation(
+						source, structuralBaseElevations, x, z);
 				}
 			}
 			return new RoofElevationWorkspace(elevations);

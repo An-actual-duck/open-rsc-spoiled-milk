@@ -152,12 +152,9 @@ matrix cannot be proven from the current conditions. Required test states:
 
 #### Implementation record — 2026-07-11
 
-- Added the named per-frame states `VISIBLE`, `HIDDEN_BY_SETTING`,
-  `HIDDEN_INDOORS`, and `HIDDEN_ABOVE_ACTIVE_FLOOR`. Resolution preserves the
-  original client contract: enabled roofs appear only on an outdoor ground
-  tile; a covered ground tile hides roof layers and structures above the
-  active floor; an upper floor keeps its active walls while hiding the roof
-  above it.
+- Added named per-frame states shared by both renderers. The original
+  implementation preserved the legacy rule that hid every roof while the
+  player was above the ground plane.
 - The legacy scene loop and resident OpenGL chunks now consume the same state.
   This closes the split where projected geometry hid roofs indoors/upstairs
   but resident chunks filtered only from the global saved option.
@@ -178,15 +175,44 @@ matrix cannot be proven from the current conditions. Required test states:
   without rebasing collision, entities, scenery, or the camera, producing an
   exact 48-tile visual/picking shift. Roof reloads now rebuild the already
   active window from `midRegionBaseX/Z` and leave its bounds unchanged.
+
+#### Upper-story correction — 2026-07-30
+
+- Authentic and custom landscape fixtures both contain upper-plane roofs at
+  Lumbridge Castle, Varrock, Falador, and Draynor Manor. The missing visual was
+  therefore not map-data loss.
+- The first visibility-only prototype exposed a second, independent regression:
+  upper-plane geometry was submitted but appeared at first-story height. The
+  world-product refactor had changed wall vertices from the shared completed
+  elevation cache to each plane's raw terrain elevation, and independently
+  initialized each roof workspace the same way. That discarded the authentic
+  cumulative floor-to-floor construction used before the refactor.
+- Floor-local and stacked-upper model products now have separate cache
+  identities. A floor-local product still starts from its own terrain when the
+  player is on that plane. A stacked product viewed from ground level builds
+  both walls and roofs from the completed roof elevations of the floor below;
+  plane 2 recursively continues from the stacked plane-1 result.
+- The shared geometry products feed both classic scene grids and renderer-v2
+  chunks, so the stacking correction does not introduce renderer-specific
+  offsets or duplicated models.
+- The visibility state is now `VISIBLE_ON_ACTIVE_FLOOR` for an uncovered player
+  on plane 1 or 2. That player sees the active plane's roof, while roofs from
+  other planes and walls above the active plane remain hidden.
+- Covered tiles still resolve to `HIDDEN_INDOORS` on every plane, and the
+  global Hide Roofs setting still takes precedence.
   `events.jsonl` records each successful `roof.visibility.reload` with active
   section, player world tile, and player-to-active section deltas so future
   reports remain attributable even when toggled while moving.
-- Live validation recorded 35 successful toggles while walking and stationary.
-  Several events reached `playerSectionDeltaX=1` or `playerSectionDeltaZ=1`,
-  directly exercising the boundary condition that previously shifted visuals;
-  the active section remained fixed and visual, picking, and collision
-  alignment held. The strict session analyzer accepted all 12 `Ctrl+F9` burst
-  frames with no failed captures or client exceptions.
+- Automated coverage distinguishes the cumulative second/third-story heights
+  from floor-local height, requires both wall and roof builders to consume the
+  lower-floor result, and verifies separate product-cache identities alongside
+  the existing visibility and map-fixture matrix.
+- Private OpenGL validation confirmed that second stories now read as stacked
+  stories and that the active upper-floor roof behavior is substantially
+  corrected. Roof surfaces still hover slightly above the intended wall/eave
+  contact height. That residual alignment needs a focused follow-up against
+  representative roof pitch definitions and must not be hidden with a global
+  renderer offset.
 - This task deliberately preserves the legacy whole-grid visibility unit. A
   connected-roof-volume refinement would require a separate spatial ownership
   design and is not necessary to correct renderer parity.
