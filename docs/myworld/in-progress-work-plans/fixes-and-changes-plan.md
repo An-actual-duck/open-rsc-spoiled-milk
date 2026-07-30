@@ -206,8 +206,13 @@ matrix cannot be proven from the current conditions. Required test states:
 - Automated coverage distinguishes the cumulative second/third-story heights
   from floor-local height, requires both wall and roof builders to consume the
   lower-floor result, and verifies separate product-cache identities alongside
-  the existing visibility and map-fixture matrix. Private visual validation is
-  still required after the corrected model build.
+  the existing visibility and map-fixture matrix.
+- Private OpenGL validation confirmed that second stories now read as stacked
+  stories and that the active upper-floor roof behavior is substantially
+  corrected. Roof surfaces still hover slightly above the intended wall/eave
+  contact height. That residual alignment needs a focused follow-up against
+  representative roof pitch definitions and must not be hidden with a global
+  renderer offset.
 - This task deliberately preserves the legacy whole-grid visibility unit. A
   connected-roof-volume refinement would require a separate spatial ownership
   design and is not necessary to correct renderer parity.
