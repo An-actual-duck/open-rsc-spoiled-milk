@@ -60,7 +60,7 @@ def main() -> None:
     require("if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.clearResidentObjectChunkCache();\n\t\t\t\t\t}\n\t\t\t\t\tthis.materializeLoadedTerrainScenery();" in client,
             "Hard or plane-changing region shifts should clear resident object chunks before rebuilding scenery")
     require("debugSceneGameObjectHover(var9, var8, var7);" in client
-            and "debugResidentObjectChunkBuild(\"resident-chunk-build\", input, objectChunk);" in client,
+            and "\"resident-chunk-build\",\n\t\t\tinput," in client,
             "Scene object diagnostics should trace hover and resident chunk rebuilds")
     require("spoiledmilk.sceneObjectDebug" in scene_object_debug
             and "SPOILED_MILK_SCENE_OBJECT_DEBUG" in scene_object_debug
