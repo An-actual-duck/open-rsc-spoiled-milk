@@ -388,6 +388,59 @@ public final class World {
 			});
 	}
 
+	/**
+	 * Prepares the complete radius-two visual field and exact radius-one world
+	 * product for one adjacent, server-predicted center. Nothing in this method
+	 * changes collision, interaction, or the currently presented scene.
+	 */
+	public Future<NativeLayeredTerrainHaloPrebuildResult>
+		preloadPredictedNativeLayeredTerrainHalo(
+			final NativeLayeredTerrainSnapshot haloTerrain,
+			final int worldOffsetX,
+			final int worldOffsetZ) {
+		if (haloTerrain == null
+			|| haloTerrain.getProtocolVersion()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| haloTerrain.getChunkRadius()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			throw new IllegalArgumentException(
+				"Predicted native terrain requires a radius-two visual snapshot");
+		}
+		final NativeLayeredTerrainSnapshot activeTerrain =
+			nativeLayeredTerrainSnapshot;
+		if (!matchesPredictedHalo(activeTerrain, haloTerrain)
+			|| syntheticDeepFixtureOffsetX != worldOffsetX
+			|| syntheticDeepFixtureOffsetZ != worldOffsetZ) {
+			throw new IllegalStateException(
+				"Predicted native terrain does not match the active scope");
+		}
+		final long sourceRevision = worldEditorTerrainRevision;
+		final String activeScopeIdentity = activeTerrain.scopeIdentity();
+		final boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
+		final Renderer3DWorldChunkFrame reusableChunks =
+			reusableNativeLayeredTerrainChunks(
+				activeTerrain, worldOffsetX, worldOffsetZ);
+		return sectorPreloadExecutor.submit(
+			new Callable<NativeLayeredTerrainHaloPrebuildResult>() {
+				@Override
+				public NativeLayeredTerrainHaloPrebuildResult call() {
+					return buildNativeLayeredTerrainHalo(
+						activeTerrain,
+						haloTerrain,
+						haloTerrain.scopeIdentity(),
+						haloTerrain.getProtocolVersion(),
+						activeScopeIdentity,
+						worldOffsetX,
+						worldOffsetZ,
+						sourceRevision,
+						includeRoofGeometry,
+						reusableChunks);
+				}
+			});
+	}
+
 	private Renderer3DWorldChunkFrame reusableNativeLayeredTerrainChunks(
 		NativeLayeredTerrainSnapshot activeTerrain,
 		int worldOffsetX,
@@ -441,42 +494,108 @@ public final class World {
 		if (haloTerrain.getProtocolVersion()
 				== NativeLayeredTerrainSnapshot
 					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION) {
-			symmetricNativeLayeredTerrainVisualSnapshot = haloTerrain;
-			/*
-			 * The terrain-only halo is the first radius-two product available
-			 * during an atomic region shift. Publish its complete outer ring
-			 * before the activation cover lifts so the renderer never falls
-			 * back to an active-only or eleven-cell partial horizon. Keep the
-			 * retained structural set unchanged: the following structure
-			 * stage must still rebuild the newly entering cells with walls and
-			 * roofs instead of mistaking terrain-only cells for complete ones.
-			 */
-			symmetricOuterRenderer3DWorldChunkFrame =
-				Renderer3DWorldChunkFrame.fromChunks(result.outerChunks);
-			symmetricRenderer3DWorldCenterSectionX =
-				worldTileToSection(Math.addExact(
-					Math.multiplyExact(
-						activeTerrain.getCurrentChunkX(), SECTION_SIZE),
-					worldOffsetX));
-			symmetricRenderer3DWorldCenterSectionY =
-				worldTileToSection(Math.addExact(
-					Math.multiplyExact(
-						activeTerrain.getCurrentChunkY(), SECTION_SIZE),
-					worldOffsetZ));
-			symmetricRenderer3DWorldScopeIdentity =
-				activeTerrain.scopeIdentity();
-			composeSymmetricRenderer3DWorldChunkFrame(
-				symmetricRenderer3DWorldCenterSectionX,
-				symmetricRenderer3DWorldCenterSectionY);
-			nativeLayeredTerrainHaloDebugSummary =
-				result.compactDiagnosticSummary;
-			clearPredictiveRenderer3DWorldChunkFrame();
-			return true;
+			return publishNativeLayeredTerrainVisualHalo(
+				result, haloTerrain, activeTerrain, worldOffsetX, worldOffsetZ);
 		}
 		symmetricOuterRenderer3DWorldChunkFrame =
 			Renderer3DWorldChunkFrame.fromChunks(result.outerChunks);
 		symmetricRetainableRenderer3DWorldChunkFrame =
 			Renderer3DWorldChunkFrame.fromChunks(result.retentionChunks);
+		symmetricRenderer3DWorldCenterSectionX =
+			worldTileToSection(Math.addExact(
+				Math.multiplyExact(
+					activeTerrain.getCurrentChunkX(), SECTION_SIZE),
+				worldOffsetX));
+		symmetricRenderer3DWorldCenterSectionY =
+			worldTileToSection(Math.addExact(
+				Math.multiplyExact(
+					activeTerrain.getCurrentChunkY(), SECTION_SIZE),
+				worldOffsetZ));
+		symmetricRenderer3DWorldScopeIdentity =
+			activeTerrain.scopeIdentity();
+		composeSymmetricRenderer3DWorldChunkFrame(
+			symmetricRenderer3DWorldCenterSectionX,
+			symmetricRenderer3DWorldCenterSectionY);
+		nativeLayeredTerrainHaloDebugSummary =
+			result.compactDiagnosticSummary;
+		clearPredictiveRenderer3DWorldChunkFrame();
+		return true;
+	}
+
+	/**
+	 * Publishes an already acknowledged prediction only after the matching
+	 * protocol-v8 context has installed that center as the active authority.
+	 */
+	public boolean publishPredictedNativeLayeredTerrainHalo(
+		NativeLayeredTerrainHaloPrebuildResult result,
+		NativeLayeredTerrainSnapshot haloTerrain,
+		int worldOffsetX,
+		int worldOffsetZ) {
+		NativeLayeredTerrainSnapshot activeTerrain =
+			nativeLayeredTerrainSnapshot;
+		if (result == null
+			|| haloTerrain == null
+			|| haloTerrain.getProtocolVersion()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| !matchesActiveHalo(activeTerrain, haloTerrain)
+			|| !result.haloScopeIdentity.equals(
+				haloTerrain.scopeIdentity())
+			|| result.haloProtocolVersion
+				!= haloTerrain.getProtocolVersion()
+			|| result.sourceRevision + 1L
+				!= worldEditorTerrainRevision
+			|| result.worldOffsetX != worldOffsetX
+			|| result.worldOffsetZ != worldOffsetZ
+			|| syntheticDeepFixtureOffsetX != worldOffsetX
+			|| syntheticDeepFixtureOffsetZ != worldOffsetZ
+			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) {
+			return false;
+		}
+		return publishNativeLayeredTerrainVisualHalo(
+			result, haloTerrain, activeTerrain, worldOffsetX, worldOffsetZ);
+	}
+
+	public boolean canAcceptPredictedNativeLayeredTerrainHalo(
+		NativeLayeredTerrainHaloPrebuildResult result,
+		NativeLayeredTerrainSnapshot haloTerrain,
+		int worldOffsetX,
+		int worldOffsetZ) {
+		NativeLayeredTerrainSnapshot activeTerrain =
+			nativeLayeredTerrainSnapshot;
+		return result != null
+			&& haloTerrain != null
+			&& matchesPredictedHalo(activeTerrain, haloTerrain)
+			&& result.activeScopeIdentity.equals(
+				activeTerrain.scopeIdentity())
+			&& result.haloScopeIdentity.equals(
+				haloTerrain.scopeIdentity())
+			&& result.haloProtocolVersion
+				== haloTerrain.getProtocolVersion()
+			&& result.sourceRevision == worldEditorTerrainRevision
+			&& result.worldOffsetX == worldOffsetX
+			&& result.worldOffsetZ == worldOffsetZ
+			&& syntheticDeepFixtureOffsetX == worldOffsetX
+			&& syntheticDeepFixtureOffsetZ == worldOffsetZ
+			&& result.includeRoofGeometry == !Config.C_HIDE_ROOFS;
+	}
+
+	private boolean publishNativeLayeredTerrainVisualHalo(
+		NativeLayeredTerrainHaloPrebuildResult result,
+		NativeLayeredTerrainSnapshot haloTerrain,
+		NativeLayeredTerrainSnapshot activeTerrain,
+		int worldOffsetX,
+		int worldOffsetZ) {
+		symmetricNativeLayeredTerrainVisualSnapshot = haloTerrain;
+		/*
+		 * The terrain-only halo is the first radius-two product available
+		 * during an atomic region shift. Publish its complete outer ring before
+		 * the activation cover lifts. Keep the retained structural set
+		 * unchanged: the following structure stage must still rebuild newly
+		 * entering cells with walls and roofs.
+		 */
+		symmetricOuterRenderer3DWorldChunkFrame =
+			Renderer3DWorldChunkFrame.fromChunks(result.outerChunks);
 		symmetricRenderer3DWorldCenterSectionX =
 			worldTileToSection(Math.addExact(
 				Math.multiplyExact(
@@ -542,13 +661,21 @@ public final class World {
 			receivedProtocolVersion
 				== NativeLayeredTerrainSnapshot
 					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION;
+		boolean predicted =
+			terrainOnly && !matchesActiveHalo(activeTerrain, haloTerrain);
+		NativeLayeredTerrainSnapshot activeProductTerrain =
+			predicted
+				? haloTerrain.toAtomicActivationInnerWindow()
+				: activeTerrain;
 		NativeWorldModelPrebuild activePrebuild =
 			terrainOnly
 				? prebuildNativeWorldModelProduct(
-					activeTerrain,
+					activeProductTerrain,
 					worldOffsetX,
 					worldOffsetZ,
-					sourceRevision,
+					predicted
+						? Math.addExact(sourceRevision, 1L)
+						: sourceRevision,
 					includeRoofGeometry)
 				: null;
 		int sourceOuterSectors = 0;
@@ -839,8 +966,31 @@ public final class World {
 			&& activeTerrain.getLevel() == haloTerrain.getLevel()
 			&& activeTerrain.getCurrentChunkX()
 				== haloTerrain.getCurrentChunkX()
-			&& activeTerrain.getCurrentChunkY()
-				== haloTerrain.getCurrentChunkY();
+				&& activeTerrain.getCurrentChunkY()
+					== haloTerrain.getCurrentChunkY();
+	}
+
+	private static boolean matchesPredictedHalo(
+		NativeLayeredTerrainSnapshot activeTerrain,
+		NativeLayeredTerrainSnapshot haloTerrain) {
+		if (activeTerrain == null
+			|| haloTerrain == null
+			|| !activeTerrain.packageIdentity().equals(
+				haloTerrain.packageIdentity())
+			|| !activeTerrain.getWorldSpace().equals(
+				haloTerrain.getWorldSpace())
+			|| activeTerrain.getLevel() != haloTerrain.getLevel()) {
+			return false;
+		}
+		int deltaX =
+			haloTerrain.getCurrentChunkX()
+				- activeTerrain.getCurrentChunkX();
+		int deltaY =
+			haloTerrain.getCurrentChunkY()
+				- activeTerrain.getCurrentChunkY();
+		return (deltaX != 0 || deltaY != 0)
+			&& Math.abs(deltaX) <= 1
+			&& Math.abs(deltaY) <= 1;
 	}
 
 	/**

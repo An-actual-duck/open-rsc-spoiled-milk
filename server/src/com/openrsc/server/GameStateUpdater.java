@@ -97,6 +97,7 @@ public final class GameStateUpdater {
 	private static final int LAYERED_TERRAIN_STAGE_PROTOCOL_VERSION = 1;
 	private static final int LAYERED_TERRAIN_SYMMETRIC_RESIDENCY_PROTOCOL_VERSION = 2;
 	private static final int LAYERED_TERRAIN_SYMMETRIC_STRUCTURE_PROTOCOL_VERSION = 3;
+	private static final int LAYERED_TERRAIN_PREDICTED_SYMMETRIC_PROTOCOL_VERSION = 4;
 	private static final int NATIVE_LAYERED_PREDICTIVE_LEAD_TILES = 48;
 	private static final int NATIVE_LAYERED_CHUNK_RADIUS = 1;
 	private static final int NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS = 2;
@@ -313,6 +314,8 @@ public final class GameStateUpdater {
 				if (nativeTerrainSymmetricResidencyEnabled()) {
 					maybeSendNativeTerrainSymmetricResidency(
 						player, location, nativeTerrain);
+					maybeSendNativeTerrainPredictedSymmetricResidency(
+						player, location, nativeTerrain);
 				} else {
 					maybeSendNativeTerrainStage(
 						player, location, nativeTerrain);
@@ -339,6 +342,10 @@ public final class GameStateUpdater {
 				player, location, nativeTerrain)) {
 			return false;
 		}
+		final boolean predictedSymmetricReady =
+			nativeTerrain != null
+				&& hasAcceptedPredictedSymmetricStage(
+					player, location, nativeTerrain);
 
 		final Integer previousSequence = player.getAttribute(
 			LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, Integer.valueOf(0));
@@ -376,6 +383,17 @@ public final class GameStateUpdater {
 		player.setAttribute(
 			LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE,
 			Integer.valueOf(context.protocolVersion));
+		if (predictedSymmetricReady) {
+			/*
+			 * The client already acknowledged the exact radius-two visual
+			 * product for this new center. Mark that first symmetric cut as
+			 * complete so the ordered post-context stage can advance directly
+			 * to structural detail instead of resending terrain.
+			 */
+			player.setAttribute(
+				NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE,
+				Integer.valueOf(sequence));
+		}
 		if (nativeTerrain != null && nativeTerrain.requiresReadiness()) {
 			player.setAttribute(
 				NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE,
@@ -459,7 +477,9 @@ public final class GameStateUpdater {
 				&& receipt.protocolVersion
 					!= LAYERED_TERRAIN_SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
 				&& receipt.protocolVersion
-					!= LAYERED_TERRAIN_SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
+					!= LAYERED_TERRAIN_SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
+				&& receipt.protocolVersion
+					!= LAYERED_TERRAIN_PREDICTED_SYMMETRIC_PROTOCOL_VERSION) {
 			return;
 		}
 		final NativeLayeredTerrainStageReadiness pending =
@@ -498,8 +518,7 @@ public final class GameStateUpdater {
 		final Player player,
 		final WorldLocation location,
 		final NativeLayeredSceneTerrain nativeTerrain) {
-		if (!nativeTerrainPredictionEnabled()
-			|| nativeTerrainSymmetricResidencyEnabled()) {
+		if (!nativeTerrainPredictionEnabled()) {
 			return true;
 		}
 		final NativeLayeredTerrainStageReadiness pending =
@@ -518,6 +537,28 @@ public final class GameStateUpdater {
 			player.getAttribute(
 				NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE, null);
 		return pending.equals(accepted);
+	}
+
+	private boolean hasAcceptedPredictedSymmetricStage(
+		final Player player,
+		final WorldLocation location,
+		final NativeLayeredSceneTerrain nativeTerrain) {
+		final NativeLayeredTerrainStageReadiness pending =
+			player.getAttribute(
+				NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE, null);
+		final NativeLayeredTerrainStageReadiness accepted =
+			player.getAttribute(
+				NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE, null);
+		return pending != null
+			&& pending.hasProtocolVersion(
+				LAYERED_TERRAIN_PREDICTED_SYMMETRIC_PROTOCOL_VERSION)
+			&& pending.matchesTarget(
+				location.getWorldSpace().getValue(),
+				location.getCoordinate().getLevel(),
+				nativeTerrain.currentChunkX,
+				nativeTerrain.currentChunkY,
+				nativeTerrain.terrainPackage.getManifestSha256())
+			&& pending.equals(accepted);
 	}
 
 	private void maybeSendNativeTerrainStage(
@@ -645,6 +686,72 @@ public final class GameStateUpdater {
 		player.setAttribute(
 			NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE,
 			haloTerrain);
+		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
+	}
+
+	private void maybeSendNativeTerrainPredictedSymmetricResidency(
+		final Player player,
+		final WorldLocation location,
+		final NativeLayeredSceneTerrain activeTerrain) {
+		if (!nativeTerrainSymmetricResidencyEnabled()
+			|| player.isTeleporting()
+			|| player.getAttribute(
+				NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE, null) != null) {
+			return;
+		}
+		final int contextSequence =
+			requireLayeredSceneContextSequence(player);
+		final Integer structuralContext = player.getAttribute(
+			NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE,
+			Integer.valueOf(0));
+		if (structuralContext.intValue() != contextSequence) {
+			return;
+		}
+		final int[] targetCenter =
+			predictNativeTerrainCenter(player, activeTerrain);
+		if (targetCenter == null) {
+			return;
+		}
+		final NativeLayeredSceneTerrain stagedTerrain =
+			new NativeLayeredSceneTerrain(
+				getServer(),
+				nativeTerrainWireCache,
+				activeTerrain.residency,
+				activeTerrain.terrainPackage,
+				location,
+				targetCenter[0],
+				targetCenter[1]);
+		final Integer previousSequence = player.getAttribute(
+			NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE,
+			Integer.valueOf(0));
+		final int sequence = Math.addExact(
+			previousSequence.intValue(), 1);
+		final LayeredTerrainStageStruct stage =
+			new LayeredTerrainStageStruct();
+		stage.protocolVersion =
+			LAYERED_TERRAIN_PREDICTED_SYMMETRIC_PROTOCOL_VERSION;
+		stage.sequence = sequence;
+		stage.contextSequence = contextSequence;
+		stage.serverTick =
+			(int)(getServer().getCurrentTick() & 0x7FFFFFFF);
+		stage.worldSpace = location.getWorldSpace().getValue();
+		stage.logicalLevel = location.getCoordinate().getLevel();
+		stagedTerrain.populate(
+			stage, NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS);
+		if (!tryFinalizeAndSendPacketChecked(
+				OpcodeOut.SEND_LAYERED_TERRAIN_STAGE,
+				stage,
+				player)) {
+			return;
+		}
+		player.setAttribute(
+			NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE, sequence);
+		player.setAttribute(
+			NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE,
+			NativeLayeredTerrainStageReadiness.from(stage));
+		player.setAttribute(
+			NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE,
+			stagedTerrain);
 		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
 	}
 

@@ -418,6 +418,51 @@ public final class NativeLayeredTerrainSnapshot {
 		return false;
 	}
 
+	/**
+	 * Extracts the authoritative radius-one window carried inside a
+	 * terrain-only radius-two prediction. The returned scope identity matches
+	 * the protocol-v8 context the server will send for the predicted center,
+	 * allowing its CPU/GPU product to be cached before that context becomes
+	 * authoritative.
+	 */
+	public NativeLayeredTerrainSnapshot toAtomicActivationInnerWindow() {
+		if (protocolVersion != SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| chunkRadius != SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			throw new IllegalStateException(
+				"Only a radius-two visual snapshot has an atomic inner window");
+		}
+		int sourceWidth = chunkRadius * 2 + 1;
+		NativeLayeredTerrainChunk[] inner =
+			new NativeLayeredTerrainChunk[
+				(STREAMING_CHUNK_RADIUS * 2 + 1)
+					* (STREAMING_CHUNK_RADIUS * 2 + 1)];
+		int target = 0;
+		for (int deltaX = -STREAMING_CHUNK_RADIUS;
+				deltaX <= STREAMING_CHUNK_RADIUS;
+				deltaX++) {
+			for (int deltaY = -STREAMING_CHUNK_RADIUS;
+					deltaY <= STREAMING_CHUNK_RADIUS;
+					deltaY++) {
+				int source =
+					(deltaX + chunkRadius) * sourceWidth
+						+ deltaY + chunkRadius;
+				inner[target++] = chunks[source];
+			}
+		}
+		return new NativeLayeredTerrainSnapshot(
+			ATOMIC_ACTIVATION_PROTOCOL_VERSION,
+			packageId,
+			packageVersion,
+			manifestSha256,
+			presentationChunkSize,
+			worldSpace,
+			level,
+			currentChunkX,
+			currentChunkY,
+			STREAMING_CHUNK_RADIUS,
+			inner);
+	}
+
 	public static NativeLayeredTerrainSnapshot mergePresentation(
 		NativeLayeredTerrainSnapshot visual,
 		NativeLayeredTerrainSnapshot structural) {

@@ -131,6 +131,27 @@ public final class NativeLayeredTerrainPacketDecoder {
 			activeTerrain);
 	}
 
+	public static NativeLayeredTerrainSnapshot decodePredictedSymmetricHalo(
+		byte[] payload,
+		String worldSpace,
+		int level,
+		NativeLayeredTerrainResidentCache residentCache,
+		NativeLayeredTerrainSnapshot activeTerrain) {
+		if (residentCache == null || activeTerrain == null) {
+			throw new IllegalArgumentException(
+				"Predicted symmetric terrain requires resident and active terrain");
+		}
+		return decodeChunked(
+			payload,
+			worldSpace,
+			level,
+			NativeLayeredTerrainSnapshot
+				.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION,
+			residentCache,
+			activeTerrain,
+			true);
+	}
+
 	public static NativeLayeredTerrainSnapshot decodeV10Structure(
 		byte[] payload,
 		String worldSpace,
@@ -158,6 +179,24 @@ public final class NativeLayeredTerrainPacketDecoder {
 		int protocolVersion,
 		NativeLayeredTerrainResidentCache residentCache,
 		NativeLayeredTerrainSnapshot activeTerrain) {
+		return decodeChunked(
+			payload,
+			worldSpace,
+			level,
+			protocolVersion,
+			residentCache,
+			activeTerrain,
+			false);
+	}
+
+	private static NativeLayeredTerrainSnapshot decodeChunked(
+		byte[] payload,
+		String worldSpace,
+		int level,
+		int protocolVersion,
+		NativeLayeredTerrainResidentCache residentCache,
+		NativeLayeredTerrainSnapshot activeTerrain,
+		boolean predictedSymmetric) {
 		if (payload == null) {
 			throw new IllegalArgumentException(
 				"Native terrain packet body is required");
@@ -363,7 +402,11 @@ public final class NativeLayeredTerrainPacketDecoder {
 					|| protocolVersion
 						== NativeLayeredTerrainSnapshot
 							.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
-					requireSymmetricHalo(activeTerrain, result);
+					if (predictedSymmetric) {
+						requirePredictedSymmetricHalo(activeTerrain, result);
+					} else {
+						requireSymmetricHalo(activeTerrain, result);
+					}
 				} else {
 					requireAdjacentStage(activeTerrain, result);
 				}
@@ -423,6 +466,35 @@ public final class NativeLayeredTerrainPacketDecoder {
 					.SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
 			throw new IllegalArgumentException(
 				"Native terrain halo does not match the active center");
+		}
+	}
+
+	private static void requirePredictedSymmetricHalo(
+		NativeLayeredTerrainSnapshot active,
+		NativeLayeredTerrainSnapshot halo) {
+		if ((active.getProtocolVersion()
+					!= NativeLayeredTerrainSnapshot.READINESS_PROTOCOL_VERSION
+				&& active.getProtocolVersion()
+					!= NativeLayeredTerrainSnapshot
+						.ATOMIC_ACTIVATION_PROTOCOL_VERSION)
+			|| !active.packageIdentity().equals(halo.packageIdentity())
+			|| !active.getWorldSpace().equals(halo.getWorldSpace())
+			|| active.getLevel() != halo.getLevel()
+			|| halo.getChunkRadius()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			throw new IllegalArgumentException(
+				"Predicted terrain halo does not match the active generation");
+		}
+		int deltaX =
+			halo.getCurrentChunkX() - active.getCurrentChunkX();
+		int deltaY =
+			halo.getCurrentChunkY() - active.getCurrentChunkY();
+		if ((deltaX == 0 && deltaY == 0)
+			|| Math.abs(deltaX) > 1
+			|| Math.abs(deltaY) > 1) {
+			throw new IllegalArgumentException(
+				"Predicted terrain halo must be one adjacent center");
 		}
 	}
 

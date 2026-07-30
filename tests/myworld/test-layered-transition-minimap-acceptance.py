@@ -176,12 +176,12 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
         )
         self.assertIn(
             "symmetricOuterRenderer3DWorldChunkFrame =\n"
-            "\t\t\t\tRenderer3DWorldChunkFrame.fromChunks(result.outerChunks);",
+            "\t\t\tRenderer3DWorldChunkFrame.fromChunks(result.outerChunks);",
             self.world,
         )
         self.assertIn(
-            "Keep the\n"
-            "\t\t\t * retained structural set unchanged",
+            "Keep the retained structural set\n"
+            "\t\t * unchanged",
             self.world,
         )
         self.assertNotIn(
@@ -590,7 +590,7 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             self.client,
         )
         self.assertIn(
-            "isLayeredTerrainHaloPrebuildPending()",
+            "isLayeredTerrainActivationHaloPrebuildPending()",
             self.client,
         )
         self.assertIn(

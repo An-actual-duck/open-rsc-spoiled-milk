@@ -2455,7 +2455,7 @@ public final class mudclient implements Runnable {
 					activationBurst,
 					this.layeredSceneActivationPending,
 					this.packetHandler
-						.isLayeredTerrainHaloPrebuildPending())) {
+						.isLayeredTerrainActivationHaloPrebuildPending())) {
 				int len = this.packetHandler.getClientStream()
 					.readIncomingPacket(
 						this.packetHandler.getPacketsIncoming());
