@@ -41,6 +41,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [Renderer and shader roadmap](in-progress-work-plans/renderer-and-shader-roadmap.md):
   current AI-facing source of truth for renderer-v2, remaster lighting, shadows,
   shader work, and major optimization direction.
+- [Renderer performance investigation](in-progress-work-plans/renderer-performance-investigation-plan.md):
+  living baselines, controlled workloads, instrumentation gaps, hotspot
+  hypotheses, and profile-tweak-compare results.
 - [Roadmap](in-progress-work-plans/roadmap.md): high-level alpha milestone and
   version progression.
 - [Work items](in-progress-work-plans/work-items.md): active work list and
@@ -112,6 +115,8 @@ into one of the category folders, not directly into `docs/myworld/`.
   identities, metadata preservation, and per-sprite original fallback.
 - [renderer-and-shader-roadmap.md](in-progress-work-plans/renderer-and-shader-roadmap.md):
   combined current renderer/shader status and next big-swing roadmap.
+- [renderer-performance-investigation-plan.md](in-progress-work-plans/renderer-performance-investigation-plan.md):
+  active objective performance baseline, profiling, and optimization ledger.
 - [renderer-v2-plan.md](in-progress-work-plans/renderer-v2-plan.md):
   detailed renderer-v2 implementation ledger and historical checklist.
 - [resource-seed-plan.md](in-progress-work-plans/resource-seed-plan.md):

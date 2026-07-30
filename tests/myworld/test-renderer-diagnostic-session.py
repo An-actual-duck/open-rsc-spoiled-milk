@@ -10,6 +10,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 SESSION_SOURCE = ROOT / "Client_Base/src/orsc/RendererDiagnosticSession.java"
+PERFORMANCE_DIAGNOSTICS_SOURCE = (
+    ROOT / "Client_Base/src/orsc/RendererPerformanceDiagnostics.java"
+)
 OPENRSC_SOURCE = ROOT / "PC_Client/src/orsc/OpenRSC.java"
 RUNTIME_LOGGER_SOURCE = ROOT / "Client_Base/src/orsc/ClientRuntimeLogger.java"
 LAUNCHER = ROOT / "scripts/run-client.sh"
@@ -29,6 +32,7 @@ public final class RendererDiagnosticSessionFixture {
 		if (telemetry != null) {
 			telemetry.number("frame.totalNanos", 1234567L);
 			telemetry.number("frame.windowAverageNanos", 765432.5);
+			telemetry.numbers("frame.samplesNanos", new long[] {100L, 200L, 300L});
 			RendererDiagnosticSession.writeTelemetry(telemetry);
 		}
 		RendererDiagnosticSession.recordEvent("fixture.event", "safe detail");
@@ -174,6 +178,8 @@ def validate_runtime_session(tmp: Path) -> None:
         fail("launcher revision metadata was not retained")
     if manifest.get("settings.property.spoiledmilk.rendererExampleSetting") != "enabled":
         fail("safe renderer property missing from manifest")
+    if manifest.get("openGL.renderer") != "unknown":
+        fail("manifest should retain an explicit OpenGL device placeholder")
     if "must-not-appear" in json.dumps(manifest):
         fail("sensitive token-like property leaked into manifest")
 
@@ -193,15 +199,30 @@ def validate_runtime_session(tmp: Path) -> None:
         fail("telemetry frame sequence missing")
     if fixture_record.get("frame.totalNanos") != 1234567:
         fail("raw numeric telemetry missing")
+    if fixture_record.get("frame.samplesNanos") != [100, 200, 300]:
+        fail("raw numeric telemetry arrays are missing")
     expected_periodic = {
         "frame.sourceWidth": 512,
         "frame.sourceHeight": 346,
         "frame.path": "fixture-path",
         "stage.frame.lifetime.averageNanos": 2000000,
+        "stage.frame.window.p50Nanos": 2000000,
+        "stage.frame.window.p95Nanos": 2000000,
+        "stage.frame.window.p99Nanos": 2000000,
+        "stage.frame.window.samplesNanos": [2000000],
         "stage.sceneRender.lifetime.averageNanos": 500000,
         "runtime.heap.usedBytes": int,
         "runtime.nonHeap.usedBytes": int,
         "runtime.gc.collectionCountDelta": int,
+        "runtime.cpu.processTimeDeltaNanos": int,
+        "runtime.thread.cpuSupported": bool,
+        "runtime.thread.allocationSupported": bool,
+        "runtime.allocation.javaThreadBytesDelta": int,
+        "camera.stateKnown": bool,
+        "camera.zoomSetting": int,
+        "camera.zoomSettingMax": int,
+        "camera.effectiveZoom": int,
+        "camera.drawDistanceWorldUnits": int,
         "counter.openGLWorldMaterialUnclassified.window.average": 0.0,
         "counter.renderer2DSpriteCommandDropped.window.average": 0.0,
         "config.renderer2D.rotatedSpriteCommandLimit": 256,
@@ -211,6 +232,9 @@ def validate_runtime_session(tmp: Path) -> None:
         if expected is int:
             if not isinstance(value, int) or value < 0:
                 fail(f"periodic telemetry field {key} is not a nonnegative integer: {value!r}")
+        elif expected is bool:
+            if not isinstance(value, bool):
+                fail(f"periodic telemetry field {key} is not boolean: {value!r}")
         elif value != expected:
             fail(f"periodic telemetry field {key} expected {expected!r}, got {value!r}")
     if not any(
@@ -317,6 +341,7 @@ def validate_bounded_tee(tmp: Path) -> None:
 
 def validate_source_contract() -> None:
     session = SESSION_SOURCE.read_text(encoding="utf-8")
+    performance_diagnostics = PERFORMANCE_DIAGNOSTICS_SOURCE.read_text(encoding="utf-8")
     openrsc = OPENRSC_SOURCE.read_text(encoding="utf-8")
     runtime_logger = RUNTIME_LOGGER_SOURCE.read_text(encoding="utf-8")
     launcher = LAUNCHER.read_text(encoding="utf-8")
@@ -332,6 +357,8 @@ def validate_source_contract() -> None:
         "manifest publication": 'writeManifest("open")',
         "privacy filter": 'normalized.contains("credential")',
         "structured byte budget": "MAX_LOG_BYTES",
+        "full-session default budget": "256L * 1024L * 1024L",
+        "live truncation manifest update": 'writeManifest("open");',
     }
     for description, needle in required.items():
         if needle not in session:
@@ -354,11 +381,27 @@ def validate_source_contract() -> None:
         fail("diagnostic sessions do not mark account-free login epochs")
     if 'RendererDiagnosticSession.recordEvent("client.logout", null);' not in mudclient:
         fail("diagnostic sessions do not mark account-free logout epochs")
+    if "RenderTelemetry.recordCameraState(" not in mudclient:
+        fail("camera state is not connected to renderer telemetry")
+    if 'SPOILED_MILK_RENDERER_DIAGNOSTIC_MAX_LOG_MB:-256' not in launcher:
+        fail("diagnostic launcher does not provide the full-session structured-log budget")
+    for needle in (
+        '"renderer.performance-phase"',
+        'RenderTelemetry.recordPerformancePhaseBoundary("start")',
+        'RenderTelemetry.recordPerformancePhaseBoundary("stop")',
+        "Performance markers require a renderer-diagnostics launch.",
+    ):
+        if needle not in performance_diagnostics:
+            fail(f"performance phase diagnostics missing {needle}")
+    if "RendererPerformanceDiagnostics.isCommand(var11)" not in mudclient:
+        fail("client-local performance marker commands are not intercepted")
     for needle in (
         "--renderer-diagnostics",
         "SPOILED_MILK_RENDERER_TELEMETRY=true",
         "FRAME_CAPTURE_ENABLED=true",
         'SPOILED_MILK_OPENGL_FRAME_CAPTURE="$FRAME_CAPTURE_ENABLED"',
+        "--jfr",
+        "SPOILED_MILK_CLIENT_JFR_PATH",
         "bounded-log-tee.py",
     ):
         if needle not in launcher:

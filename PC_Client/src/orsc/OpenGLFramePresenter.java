@@ -20,6 +20,7 @@ import java.awt.Graphics2D;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -271,6 +272,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private int unitQuadIndexBufferId;
 	private int screenQuadVertexBufferId;
 	private FloatBuffer screenQuadUploadBuffer;
+	private boolean[] directOverlayCoverageMask;
 	private int legacySceneSpriteRestoreCommands;
 	private int legacySceneSpriteRestoreFallbacks;
 	private int legacySceneSpriteRestoreFallbackPixels;
@@ -344,6 +346,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		Renderer3DFrame renderer3DFrame,
 		String[] rendererDebugOverlayLines) {
 		if (image == null || closed || disabled) {
+			if (renderer3DFrame != null) {
+				renderer3DFrame.release();
+			}
 			return;
 		}
 		if (renderer2DFrame == null) {
@@ -352,6 +357,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 		ensureStarted();
 		if (disabled) {
+			if (renderer3DFrame != null) {
+				renderer3DFrame.release();
+			}
 			return;
 		}
 
@@ -661,12 +669,16 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 	private void logOpenGLDevice() {
 		try {
+			String renderer = gl.glGetString(gl.GL_RENDERER);
+			String version = gl.glGetString(gl.GL_VERSION);
+			String vendor = gl.glGetString(gl.GL_VENDOR);
+			RendererDiagnosticSession.recordOpenGLDevice(renderer, version, vendor);
 			log("OpenGL device: "
-				+ gl.glGetString(gl.GL_RENDERER)
+				+ renderer
 				+ " | "
-				+ gl.glGetString(gl.GL_VERSION)
+				+ version
 				+ " | "
-				+ gl.glGetString(gl.GL_VENDOR));
+				+ vendor);
 		} catch (Throwable t) {
 			log("OpenGL device info unavailable: " + t.getMessage());
 		}
@@ -1467,6 +1479,14 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, filter);
 	}
 
+	private RemasterShadowInventory inspectRemasterShadowInventory(
+		Renderer3DWorldChunkFrame worldChunkFrame) {
+		if (worldChunkRenderer != null) {
+			return worldChunkRenderer.inspectRemasterShadowInventory(worldChunkFrame);
+		}
+		return RemasterShadowClassifier.inspectInventory(worldChunkFrame);
+	}
+
 	private void drawWorldMesh(Frame frame, boolean worldReplacementComposite) throws Exception {
 		long chunkUploadPhaseNanos = 0L;
 		long projectedMeshPhaseNanos = 0L;
@@ -1483,7 +1503,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		RenderTelemetry.recordOpenGLWorldMaterialFamilies(
 			worldChunkFrame);
 		RemasterShadowInventory shadowInventory = RenderTelemetry.isEnabled()
-			? RemasterShadowClassifier.inspectInventory(worldChunkFrame)
+			? inspectRemasterShadowInventory(worldChunkFrame)
 			: RemasterShadowInventory.EMPTY;
 		RenderTelemetry.recordOpenGLRemasterShadowInventory(
 			shadowInventory.receiverChunks,
@@ -2159,15 +2179,56 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		if (visibleSpriteTextureAtlas != null) {
 			visibleSpriteTextureAtlas.beginFrame();
 		}
-		List<OpenGLCompositeSceneCommand> compositeSceneCommands =
-			buildOpenGLCompositeSceneCommands(frame, commands);
-		for (OpenGLCompositeSceneCommand sceneCommand : compositeSceneCommands) {
-			WorldSpriteCommand worldSpriteCommand = sceneCommand.worldSpriteCommand;
-			Renderer2DFrame.SpriteCommand command = worldSpriteCommand.command;
-			logCompositeSpriteCommand("direct-entity", command, command.getWidth() * command.getHeight());
-			directReplayedByPhase[phaseIndex(command.getPhase())]++;
+		if (OpenGLCompositeSceneBuilder.canUseOwnedWorldSpriteSnapshots(frame, commands)) {
+			int snapshotGroups =
+				OpenGLCompositeSceneBuilder.countOwnedWorldSpriteSnapshotGroups(frame);
+			int snapshotLayers =
+				OpenGLCompositeSceneBuilder.countOwnedWorldSpriteSnapshotLayers(frame);
+			RenderTelemetry.recordOpenGLWorldSpriteOwnershipFrame(snapshotLayers, 0, 0);
+			RenderTelemetry.recordOpenGLWorldSpriteSnapshotFrame(
+				snapshotGroups,
+				snapshotLayers,
+				0);
+			for (int snapshotIndex = 0;
+				snapshotIndex < frame.renderer3DFrame.getWorldSpriteSnapshotCount();
+				snapshotIndex++) {
+				Renderer3DFrame.WorldSpriteSnapshot snapshot =
+					frame.renderer3DFrame.getWorldSpriteSnapshot(snapshotIndex);
+				if (!OpenGLCompositeSceneBuilder.isOpenGLCompositeWorldSpriteSnapshot(snapshot)) {
+					continue;
+				}
+				for (int layerIndex = 0; layerIndex < snapshot.getLayerCount(); layerIndex++) {
+					Renderer2DFrame.SpriteCommand command = snapshot.getLayer(layerIndex);
+					logCompositeSpriteCommand(
+						"renderer-snapshot",
+						command,
+						command.getWidth() * command.getHeight());
+					directReplayedByPhase[phaseIndex(command.getPhase())]++;
+				}
+			}
+			staticReplayed += drawOpenGLOwnedWorldSpriteSnapshots(
+				frame);
+		} else {
+			List<OpenGLCompositeSceneCommand> compositeSceneCommands =
+				buildOpenGLCompositeSceneCommands(frame, commands);
+			recordOpenGLCompositeSpriteOwnership(compositeSceneCommands);
+			int compatibilityFallbackCommands = 0;
+			for (OpenGLCompositeSceneCommand sceneCommand : compositeSceneCommands) {
+				WorldSpriteCommand worldSpriteCommand = sceneCommand.worldSpriteCommand;
+				if (worldSpriteCommand == null) {
+					continue;
+				}
+				Renderer2DFrame.SpriteCommand command = worldSpriteCommand.command;
+				logCompositeSpriteCommand("direct-entity", command, command.getWidth() * command.getHeight());
+				directReplayedByPhase[phaseIndex(command.getPhase())]++;
+				compatibilityFallbackCommands++;
+			}
+			RenderTelemetry.recordOpenGLWorldSpriteSnapshotFrame(
+				0,
+				0,
+				compatibilityFallbackCommands);
+			staticReplayed += drawOpenGLCompositeWorldSpriteCommands(frame, compositeSceneCommands);
 		}
-		staticReplayed += drawOpenGLCompositeWorldSpriteCommands(frame, compositeSceneCommands);
 		captureLayer(activeFrameCapture, "04b-entity-sprites");
 		captureLayer(activeFrameCapture, "04c-ordered-static-overlays");
 
@@ -3017,6 +3078,16 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		return drawn;
 	}
 
+	private int drawOpenGLOwnedWorldSpriteSnapshots(
+		Frame frame) throws Exception {
+		int drawn = worldSpriteDrawController == null
+			? 0
+			: worldSpriteDrawController.drawOwnedWorldSpriteSnapshots(frame);
+		worldSpriteDepthDrawCommands = drawn;
+		worldSpriteDepthTextureBatches = drawn;
+		return drawn;
+	}
+
 	private void initializeUnitQuadBuffers() throws Exception {
 		unitQuadVertexBufferId = gl.glGenBuffers();
 		unitQuadIndexBufferId = gl.glGenBuffers();
@@ -3231,6 +3302,30 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		Frame frame,
 		Renderer2DFrame.SpriteCommand[] commands) {
 		return OpenGLCompositeSceneBuilder.buildSceneCommands(frame, commands);
+	}
+
+	private void recordOpenGLCompositeSpriteOwnership(
+		List<OpenGLCompositeSceneCommand> sceneCommands) {
+		int ownerAnchors = 0;
+		int legacyFallbacks = 0;
+		int unmatched = 0;
+		if (sceneCommands != null) {
+			for (OpenGLCompositeSceneCommand sceneCommand : sceneCommands) {
+				WorldSpriteCommand command =
+					sceneCommand == null ? null : sceneCommand.worldSpriteCommand;
+				if (command == null || command.anchor == null) {
+					unmatched++;
+				} else if ("owner-anchor".equals(command.anchorMatch.mode)) {
+					ownerAnchors++;
+				} else {
+					legacyFallbacks++;
+				}
+			}
+		}
+		RenderTelemetry.recordOpenGLWorldSpriteOwnershipFrame(
+			ownerAnchors,
+			legacyFallbacks,
+			unmatched);
 	}
 
 	private WorldSpriteCommand buildOpenGLCompositeWorldSpriteCommand(
@@ -3598,7 +3693,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				}
 
 				if (mask == null) {
-					mask = new boolean[sourceWidth * sourceHeight];
+					mask = acquireDirectOverlayCoverageMask(sourceWidth, sourceHeight);
 				}
 				long xDelta16 = (long) command.getBottomX16() - command.getTopX16();
 				for (int row = 0; row < height; row++) {
@@ -3652,6 +3747,17 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		return mask;
 	}
 
+	private boolean[] acquireDirectOverlayCoverageMask(int sourceWidth, int sourceHeight) {
+		int requiredPixels = sourceWidth * sourceHeight;
+		if (directOverlayCoverageMask == null
+			|| directOverlayCoverageMask.length < requiredPixels) {
+			directOverlayCoverageMask = new boolean[requiredPixels];
+		} else {
+			Arrays.fill(directOverlayCoverageMask, 0, requiredPixels, false);
+		}
+		return directOverlayCoverageMask;
+	}
+
 	private boolean[] markOverlayRectangle(
 		boolean[] mask,
 		int sourceWidth,
@@ -3671,7 +3777,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return mask;
 		}
 		if (mask == null) {
-			mask = new boolean[sourceWidth * sourceHeight];
+			mask = acquireDirectOverlayCoverageMask(sourceWidth, sourceHeight);
 		}
 		for (int row = top; row < bottom; row++) {
 			int offset = row * sourceWidth;

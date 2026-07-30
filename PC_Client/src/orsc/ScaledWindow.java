@@ -291,6 +291,9 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		Renderer3DFrame renderer3DFrame,
 		String[] rendererDebugOverlayLines) {
 		if (gameImage == null) {
+			if (renderer3DFrame != null) {
+				renderer3DFrame.release();
+			}
 			return;
 		}
 		if (renderer2DFrame == null) {
@@ -352,6 +355,8 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 				LegacySoftwareScalingSettings.getScalingAlgorithm(),
 				renderer2DFrame,
 				renderer3DFrame);
+		} else if (renderer3DFrame != null) {
+			renderer3DFrame.release();
 		}
 
 		scaledViewport.setViewportImage(presentationImage);

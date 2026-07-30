@@ -1,5 +1,8 @@
 package orsc.graphics.three;
 
+import orsc.graphics.Renderer2DFrame;
+
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -8,6 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 public final class Renderer3DFrame {
+	private static final int MAX_RETAINED_WORLD_FACE_STORAGES = 3;
+	private static final int MAX_POOLED_FACE_VERTEX_COUNT = 64;
+	private static final ArrayDeque<WorldFaceStorage> AVAILABLE_WORLD_FACE_STORAGES =
+		new ArrayDeque<WorldFaceStorage>();
 	private final int sourceModelCount;
 	private final int fogDistance;
 	private final int fogStartDistance;
@@ -24,17 +31,24 @@ public final class Renderer3DFrame {
 	private final int perspectiveShift;
 	private final int nearPlane;
 	private final Renderer3DTextureData[] textures;
-	private final List<FaceCommand> worldFaces = new ArrayList<FaceCommand>();
+	private final long textureCatalogSignature;
+	private final WorldFaceStorage worldFaceStorage;
+	private final List<FaceCommand> worldFaces;
+	private final List<FaceCommand> worldFacesView;
 	private final List<SpriteSubmission> spriteSubmissions = new ArrayList<SpriteSubmission>();
 	private final List<CharacterSprite> characterSprites = new ArrayList<CharacterSprite>();
 	private final List<SpriteAnchor> spriteAnchors = new ArrayList<SpriteAnchor>();
-	private final Map<Long, FaceCommand> worldFacesByModelFace = new HashMap<Long, FaceCommand>();
-	private final int[] worldFaceCountsByKind = new int[Renderer3DModelKind.values().length];
+	private final List<WorldSpriteSnapshot> worldSpriteSnapshots = new ArrayList<WorldSpriteSnapshot>();
+	private final List<WorldSpriteSnapshot> worldSpriteSnapshotsView =
+		Collections.unmodifiableList(worldSpriteSnapshots);
+	private final Map<Long, FaceCommand> worldFacesByModelFace;
+	private final int[] worldFaceCountsByKind;
 	private Renderer3DDepthFrame depthFrame;
 	private Renderer3DMeshFrame meshFrame;
 	private Renderer3DWorldChunkFrame worldChunkFrame = Renderer3DWorldChunkFrame.EMPTY;
 	private Renderer3DRoofVisibility roofVisibility = Renderer3DRoofVisibility.VISIBLE;
 	private int activePlane;
+	private boolean worldFaceStorageReleased;
 
 	Renderer3DFrame(
 		int sourceModelCount,
@@ -53,6 +67,11 @@ public final class Renderer3DFrame {
 		int perspectiveShift,
 		int nearPlane,
 		Renderer3DTextureData[] textures) {
+		this.worldFaceStorage = acquireWorldFaceStorage();
+		this.worldFaces = worldFaceStorage.worldFaces;
+		this.worldFacesView = worldFaceStorage.worldFacesView;
+		this.worldFacesByModelFace = worldFaceStorage.worldFacesByModelFace;
+		this.worldFaceCountsByKind = worldFaceStorage.worldFaceCountsByKind;
 		this.sourceModelCount = sourceModelCount;
 		this.fogDistance = fogDistance;
 		this.fogStartDistance = fogStartDistance;
@@ -68,7 +87,10 @@ public final class Renderer3DFrame {
 		this.cameraRotationZ = cameraRotationZ;
 		this.perspectiveShift = perspectiveShift;
 		this.nearPlane = nearPlane;
-		this.textures = textures == null ? new Renderer3DTextureData[0] : textures;
+		this.textures = textures == null
+			? new Renderer3DTextureData[0]
+			: textures.clone();
+		this.textureCatalogSignature = textureCatalogSignature(this.textures);
 	}
 
 	void addWorldFace(
@@ -83,23 +105,10 @@ public final class Renderer3DFrame {
 		int vertexCount,
 		int[] light,
 		int[] baseLight) {
-		int[] cameraX = new int[vertexCount];
-		int[] cameraY = new int[vertexCount];
-		int[] cameraZ = new int[vertexCount];
-		int[] screenX = new int[vertexCount];
-		int[] screenY = new int[vertexCount];
 		Renderer3DModelKind modelKind = model.getRenderer3DModelKind();
 
-		for (int vertex = 0; vertex < vertexCount; vertex++) {
-			int modelVertex = faceIndices[vertex];
-			cameraX[vertex] = model.vertXRot[modelVertex];
-			cameraY[vertex] = model.vertYRot[modelVertex];
-			cameraZ[vertex] = model.vertZRot[modelVertex];
-			screenX[vertex] = model.vertexParam6[modelVertex];
-			screenY[vertex] = model.vertexParam2[modelVertex];
-		}
-
-		FaceCommand face = new FaceCommand(
+		FaceCommand face = worldFaceStorage.acquireFaceCommand(vertexCount);
+		face.reset(
 			modelKind,
 			modelIndex,
 			faceId,
@@ -107,11 +116,8 @@ public final class Renderer3DFrame {
 			color,
 			orientation,
 			averageDepth,
-			cameraX,
-			cameraY,
-			cameraZ,
-			screenX,
-			screenY,
+			model,
+			faceIndices,
 			light,
 			baseLight);
 		this.worldFaces.add(face);
@@ -143,7 +149,7 @@ public final class Renderer3DFrame {
 		}
 	}
 
-	void addSpriteAnchor(
+	int addSpriteAnchor(
 		int faceId,
 		int spriteId,
 		int pickIndex,
@@ -161,7 +167,8 @@ public final class Renderer3DFrame {
 		int scale,
 		int horizontalSkew,
 		boolean pickable) {
-		this.spriteAnchors.add(new SpriteAnchor(
+		int anchorIndex = this.spriteAnchors.size();
+		SpriteAnchor anchor = new SpriteAnchor(
 			faceId,
 			spriteId,
 			pickIndex,
@@ -178,7 +185,58 @@ public final class Renderer3DFrame {
 			drawHeight,
 			scale,
 			horizontalSkew,
-			pickable));
+			pickable);
+		this.spriteAnchors.add(anchor);
+		this.worldSpriteSnapshots.add(new WorldSpriteSnapshot(
+			anchorIndex,
+			anchor,
+			findSpriteSubmission(faceId),
+			findCharacterSprite(faceId)));
+		return anchorIndex;
+	}
+
+	public boolean recordWorldSpriteLayer(
+		int anchorIndex,
+		int legacyDrawOrder,
+		Renderer2DFrame.SpriteCommand command) {
+		if (command == null
+			|| command.getPhase() != Renderer2DFrame.Phase.SCENE
+			|| anchorIndex < 0
+			|| anchorIndex >= worldSpriteSnapshots.size()) {
+			return false;
+		}
+		WorldSpriteSnapshot snapshot = worldSpriteSnapshots.get(anchorIndex);
+		SpriteAnchor anchor = snapshot == null ? null : snapshot.getAnchor();
+		if (anchor == null
+			|| anchor.getLegacyDrawOrder() != legacyDrawOrder
+			|| command.getSceneSpriteAnchorIndex() != anchorIndex
+			|| command.getSceneSpriteDrawOrder() != legacyDrawOrder
+			|| (command.getLegacySpriteId() >= 0
+				&& command.getLegacySpriteId() != anchor.getSpriteId())) {
+			return false;
+		}
+		snapshot.addLayer(command);
+		return true;
+	}
+
+	private SpriteSubmission findSpriteSubmission(int faceId) {
+		for (int index = spriteSubmissions.size() - 1; index >= 0; index--) {
+			SpriteSubmission submission = spriteSubmissions.get(index);
+			if (submission != null && submission.getFaceId() == faceId) {
+				return submission;
+			}
+		}
+		return null;
+	}
+
+	private CharacterSprite findCharacterSprite(int faceId) {
+		for (int index = characterSprites.size() - 1; index >= 0; index--) {
+			CharacterSprite character = characterSprites.get(index);
+			if (character != null && character.getFaceId() == faceId) {
+				return character;
+			}
+		}
+		return null;
 	}
 
 	void addSpriteSubmission(
@@ -297,6 +355,42 @@ public final class Renderer3DFrame {
 		return ((long) modelIndex << 32) ^ (faceId & 0xffffffffL);
 	}
 
+	private static synchronized WorldFaceStorage acquireWorldFaceStorage() {
+		WorldFaceStorage selected = null;
+		for (WorldFaceStorage candidate : AVAILABLE_WORLD_FACE_STORAGES) {
+			if (selected == null || candidate.faceCommandCapacity > selected.faceCommandCapacity) {
+				selected = candidate;
+			}
+		}
+		if (selected != null) {
+			AVAILABLE_WORLD_FACE_STORAGES.remove(selected);
+			return selected;
+		}
+		return new WorldFaceStorage();
+	}
+
+	private static synchronized void releaseWorldFaceStorage(WorldFaceStorage storage) {
+		if (storage == null) {
+			return;
+		}
+		storage.recycleActiveFaces();
+		if (AVAILABLE_WORLD_FACE_STORAGES.size() >= MAX_RETAINED_WORLD_FACE_STORAGES) {
+			WorldFaceStorage smallestRetained = null;
+			for (WorldFaceStorage candidate : AVAILABLE_WORLD_FACE_STORAGES) {
+				if (smallestRetained == null
+					|| candidate.faceCommandCapacity < smallestRetained.faceCommandCapacity) {
+					smallestRetained = candidate;
+				}
+			}
+			if (smallestRetained != null
+				&& smallestRetained.faceCommandCapacity >= storage.faceCommandCapacity) {
+				return;
+			}
+			AVAILABLE_WORLD_FACE_STORAGES.remove(smallestRetained);
+		}
+		AVAILABLE_WORLD_FACE_STORAGES.addFirst(storage);
+	}
+
 	public int getSourceModelCount() {
 		return sourceModelCount;
 	}
@@ -361,6 +455,14 @@ public final class Renderer3DFrame {
 		return textures;
 	}
 
+	public int getTextureCount() {
+		return textures.length;
+	}
+
+	public long getTextureCatalogSignature() {
+		return textureCatalogSignature;
+	}
+
 	public Renderer3DTextureData getTexture(int textureId) {
 		if (textureId < 0 || textureId >= textures.length) {
 			return null;
@@ -368,12 +470,30 @@ public final class Renderer3DFrame {
 		return textures[textureId];
 	}
 
+	private static long textureCatalogSignature(Renderer3DTextureData[] textures) {
+		long signature = 1469598103934665603L;
+		signature = mixSignature(signature, textures.length);
+		for (int textureId = 0; textureId < textures.length; textureId++) {
+			Renderer3DTextureData texture = textures[textureId];
+			signature = mixSignature(signature, textureId);
+			signature = mixSignature(
+				signature,
+				texture == null ? 0L : texture.getSignature());
+		}
+		return signature;
+	}
+
+	private static long mixSignature(long signature, long value) {
+		signature ^= value;
+		return signature * 1099511628211L;
+	}
+
 	public int getWorldFaceCount() {
 		return worldFaces.size();
 	}
 
 	public List<FaceCommand> getWorldFaces() {
-		return Collections.unmodifiableList(worldFaces);
+		return worldFacesView;
 	}
 
 	public int getSpriteAnchorCount() {
@@ -382,6 +502,21 @@ public final class Renderer3DFrame {
 
 	public List<SpriteAnchor> getSpriteAnchors() {
 		return Collections.unmodifiableList(spriteAnchors);
+	}
+
+	public int getWorldSpriteSnapshotCount() {
+		return worldSpriteSnapshots.size();
+	}
+
+	public List<WorldSpriteSnapshot> getWorldSpriteSnapshots() {
+		return worldSpriteSnapshotsView;
+	}
+
+	public WorldSpriteSnapshot getWorldSpriteSnapshot(int anchorIndex) {
+		if (anchorIndex < 0 || anchorIndex >= worldSpriteSnapshots.size()) {
+			return null;
+		}
+		return worldSpriteSnapshots.get(anchorIndex);
 	}
 
 	public int getSpriteSubmissionCount() {
@@ -413,6 +548,30 @@ public final class Renderer3DFrame {
 
 	public Renderer3DDepthFrame getDepthFrame() {
 		return depthFrame;
+	}
+
+	public void releaseDepthFrame() {
+		Renderer3DDepthFrame releasedDepthFrame;
+		synchronized (this) {
+			releasedDepthFrame = depthFrame;
+			depthFrame = null;
+		}
+		if (releasedDepthFrame != null) {
+			releasedDepthFrame.release();
+		}
+	}
+
+	public void release() {
+		releaseDepthFrame();
+		WorldFaceStorage releasedWorldFaceStorage;
+		synchronized (this) {
+			if (worldFaceStorageReleased) {
+				return;
+			}
+			worldFaceStorageReleased = true;
+			releasedWorldFaceStorage = worldFaceStorage;
+		}
+		releaseWorldFaceStorage(releasedWorldFaceStorage);
 	}
 
 	void setMeshFrame(Renderer3DMeshFrame meshFrame) {
@@ -448,6 +607,88 @@ public final class Renderer3DFrame {
 
 	public boolean isWorldChunkModelKindVisible(Renderer3DModelKind modelKind, int chunkPlane) {
 		return roofVisibility.isWorldChunkModelKindVisible(modelKind, activePlane, chunkPlane);
+	}
+
+	public static final class WorldSpriteSnapshot {
+		private static final Renderer2DFrame.SpriteCommand[] EMPTY_LAYERS =
+			new Renderer2DFrame.SpriteCommand[0];
+		private static final int INITIAL_CHARACTER_LAYER_CAPACITY = 8;
+		private final int anchorIndex;
+		private final SpriteAnchor anchor;
+		private final SpriteSubmission submission;
+		private final CharacterSprite character;
+		private Renderer2DFrame.SpriteCommand[] layers = EMPTY_LAYERS;
+		private int layerCount;
+
+		private WorldSpriteSnapshot(
+			int anchorIndex,
+			SpriteAnchor anchor,
+			SpriteSubmission submission,
+			CharacterSprite character) {
+			this.anchorIndex = anchorIndex;
+			this.anchor = anchor;
+			this.submission = submission;
+			this.character = character;
+		}
+
+		private void addLayer(Renderer2DFrame.SpriteCommand command) {
+			if (layerCount >= layers.length) {
+				int nextCapacity;
+				if (layers.length == 0) {
+					nextCapacity = character == null
+						? 1
+						: INITIAL_CHARACTER_LAYER_CAPACITY;
+				} else {
+					nextCapacity = layers.length << 1;
+				}
+				layers = Arrays.copyOf(layers, nextCapacity);
+			}
+			layers[layerCount++] = command;
+		}
+
+		public int getAnchorIndex() {
+			return anchorIndex;
+		}
+
+		public SpriteAnchor getAnchor() {
+			return anchor;
+		}
+
+		public SpriteSubmission getSubmission() {
+			return submission;
+		}
+
+		public CharacterSprite getCharacter() {
+			return character;
+		}
+
+		public Renderer2DFrame.SpriteCommand getLayer(int layerIndex) {
+			if (layerIndex < 0 || layerIndex >= layerCount) {
+				return null;
+			}
+			return layers[layerIndex];
+		}
+
+		public int getLayerCount() {
+			return layerCount;
+		}
+
+		public boolean ownsLayer(Renderer2DFrame.SpriteCommand command) {
+			for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
+				if (layers[layerIndex] == command) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public int getPickIndex() {
+			return anchor == null ? -1 : anchor.getPickIndex();
+		}
+
+		public boolean isPickable() {
+			return anchor != null && anchor.isPickable();
+		}
 	}
 
 	public static final class CharacterSprite {
@@ -951,14 +1192,61 @@ public final class Renderer3DFrame {
 		}
 	}
 
+	private static final class WorldFaceStorage {
+		private final List<FaceCommand> worldFaces = new ArrayList<FaceCommand>();
+		private final List<FaceCommand> worldFacesView = Collections.unmodifiableList(worldFaces);
+		private final Map<Long, FaceCommand> worldFacesByModelFace = new HashMap<Long, FaceCommand>();
+		private final int[] worldFaceCountsByKind =
+			new int[Renderer3DModelKind.values().length];
+		private final ArrayDeque<FaceCommand>[] reusableFacesByVertexCount;
+		private int faceCommandCapacity;
+
+		@SuppressWarnings("unchecked")
+		private WorldFaceStorage() {
+			this.reusableFacesByVertexCount =
+				(ArrayDeque<FaceCommand>[]) new ArrayDeque<?>[MAX_POOLED_FACE_VERTEX_COUNT + 1];
+		}
+
+		private FaceCommand acquireFaceCommand(int vertexCount) {
+			if (vertexCount >= 0 && vertexCount <= MAX_POOLED_FACE_VERTEX_COUNT) {
+				ArrayDeque<FaceCommand> reusableFaces =
+					reusableFacesByVertexCount[vertexCount];
+				if (reusableFaces != null && !reusableFaces.isEmpty()) {
+					return reusableFaces.removeFirst();
+				}
+				faceCommandCapacity++;
+			}
+			return new FaceCommand(vertexCount);
+		}
+
+		private void recycleActiveFaces() {
+			for (FaceCommand face : worldFaces) {
+				int vertexCount = face.getVertexCount();
+				if (vertexCount < 0 || vertexCount > MAX_POOLED_FACE_VERTEX_COUNT) {
+					continue;
+				}
+				ArrayDeque<FaceCommand> reusableFaces =
+					reusableFacesByVertexCount[vertexCount];
+				if (reusableFaces == null) {
+					reusableFaces = new ArrayDeque<FaceCommand>();
+					reusableFacesByVertexCount[vertexCount] = reusableFaces;
+				}
+				reusableFaces.addFirst(face);
+			}
+			worldFaces.clear();
+			worldFacesByModelFace.clear();
+			Arrays.fill(worldFaceCountsByKind, 0);
+		}
+	}
+
 	public static final class FaceCommand {
-		private final Renderer3DModelKind modelKind;
-		private final int modelIndex;
-		private final int faceId;
-		private final int texture;
-		private final int color;
-		private final int orientation;
-		private final int averageDepth;
+		private Renderer3DModelKind modelKind;
+		private int modelIndex;
+		private int faceId;
+		private int texture;
+		private int color;
+		private int orientation;
+		private int averageDepth;
 		private final int[] cameraX;
 		private final int[] cameraY;
 		private final int[] cameraZ;
@@ -978,8 +1266,21 @@ public final class Renderer3DFrame {
 		private float[] clippedTextureU;
 		private float[] clippedTextureV;
 		private int legacyDrawOrder = -1;
+		private int clippedVertexCount;
 
-		private FaceCommand(
+		private FaceCommand(int vertexCount) {
+			this.cameraX = new int[vertexCount];
+			this.cameraY = new int[vertexCount];
+			this.cameraZ = new int[vertexCount];
+			this.screenX = new int[vertexCount];
+			this.screenY = new int[vertexCount];
+			this.light = new int[vertexCount];
+			this.baseLight = new int[vertexCount];
+			this.textureU = new float[vertexCount];
+			this.textureV = new float[vertexCount];
+		}
+
+		private void reset(
 			Renderer3DModelKind modelKind,
 			int modelIndex,
 			int faceId,
@@ -987,13 +1288,10 @@ public final class Renderer3DFrame {
 			int color,
 			int orientation,
 			int averageDepth,
-			int[] cameraX,
-			int[] cameraY,
-			int[] cameraZ,
-			int[] screenX,
-			int[] screenY,
-			int[] light,
-			int[] baseLight) {
+			RSModel model,
+			int[] faceIndices,
+			int[] sourceLight,
+			int[] sourceBaseLight) {
 			this.modelKind = modelKind;
 			this.modelIndex = modelIndex;
 			this.faceId = faceId;
@@ -1001,23 +1299,27 @@ public final class Renderer3DFrame {
 			this.color = color;
 			this.orientation = orientation;
 			this.averageDepth = averageDepth;
-			this.cameraX = cameraX;
-			this.cameraY = cameraY;
-			this.cameraZ = cameraZ;
-			this.screenX = screenX;
-			this.screenY = screenY;
-			this.light = copyLight(light, cameraX.length);
-			this.baseLight = copyLight(baseLight, cameraX.length);
-			this.textureU = new float[cameraX.length];
-			this.textureV = new float[cameraX.length];
+			this.legacyDrawOrder = -1;
+			this.clippedVertexCount = 0;
+			for (int vertex = 0; vertex < cameraX.length; vertex++) {
+				int modelVertex = faceIndices[vertex];
+				cameraX[vertex] = model.vertXRot[modelVertex];
+				cameraY[vertex] = model.vertYRot[modelVertex];
+				cameraZ[vertex] = model.vertZRot[modelVertex];
+				screenX[vertex] = model.vertexParam6[modelVertex];
+				screenY[vertex] = model.vertexParam2[modelVertex];
+			}
+			copyLight(sourceLight, light);
+			copyLight(sourceBaseLight, baseLight);
 			populateTextureCoordinates(cameraX, cameraY, cameraZ, textureU, textureV);
 		}
 
-		private static int[] copyLight(int[] source, int vertexCount) {
-			if (source == null || source.length < vertexCount) {
-				return new int[vertexCount];
+		private static void copyLight(int[] source, int[] destination) {
+			if (source == null || source.length < destination.length) {
+				Arrays.fill(destination, 0);
+				return;
 			}
-			return Arrays.copyOf(source, vertexCount);
+			System.arraycopy(source, 0, destination, 0, destination.length);
 		}
 
 		public Renderer3DModelKind getModelKind() {
@@ -1061,7 +1363,7 @@ public final class Renderer3DFrame {
 		}
 
 		public int getRenderVertexCount() {
-			return clippedCameraX == null ? cameraX.length : clippedCameraX.length;
+			return hasClippedGeometry() ? clippedVertexCount : cameraX.length;
 		}
 
 		public int[] getCameraX() {
@@ -1069,7 +1371,7 @@ public final class Renderer3DFrame {
 		}
 
 		public int[] getRenderCameraX() {
-			return clippedCameraX == null ? cameraX : clippedCameraX;
+			return hasClippedGeometry() ? clippedCameraX : cameraX;
 		}
 
 		public int[] getCameraY() {
@@ -1077,7 +1379,7 @@ public final class Renderer3DFrame {
 		}
 
 		public int[] getRenderCameraY() {
-			return clippedCameraY == null ? cameraY : clippedCameraY;
+			return hasClippedGeometry() ? clippedCameraY : cameraY;
 		}
 
 		public int[] getCameraZ() {
@@ -1085,7 +1387,7 @@ public final class Renderer3DFrame {
 		}
 
 		public int[] getRenderCameraZ() {
-			return clippedCameraZ == null ? cameraZ : clippedCameraZ;
+			return hasClippedGeometry() ? clippedCameraZ : cameraZ;
 		}
 
 		public int[] getScreenX() {
@@ -1093,7 +1395,7 @@ public final class Renderer3DFrame {
 		}
 
 		public int[] getRenderScreenX() {
-			return clippedScreenX == null ? screenX : clippedScreenX;
+			return hasClippedGeometry() ? clippedScreenX : screenX;
 		}
 
 		public int[] getScreenY() {
@@ -1101,15 +1403,15 @@ public final class Renderer3DFrame {
 		}
 
 		public int[] getRenderScreenY() {
-			return clippedScreenY == null ? screenY : clippedScreenY;
+			return hasClippedGeometry() ? clippedScreenY : screenY;
 		}
 
 		public int[] getRenderLight() {
-			return clippedLight == null ? light : clippedLight;
+			return hasClippedGeometry() ? clippedLight : light;
 		}
 
 		public int[] getRenderBaseLight() {
-			return clippedBaseLight == null ? baseLight : clippedBaseLight;
+			return hasClippedGeometry() ? clippedBaseLight : baseLight;
 		}
 
 		public float[] getTextureU() {
@@ -1117,7 +1419,7 @@ public final class Renderer3DFrame {
 		}
 
 		public float[] getRenderTextureU() {
-			return clippedTextureU == null ? textureU : clippedTextureU;
+			return hasClippedGeometry() ? clippedTextureU : textureU;
 		}
 
 		public float[] getTextureV() {
@@ -1125,7 +1427,11 @@ public final class Renderer3DFrame {
 		}
 
 		public float[] getRenderTextureV() {
-			return clippedTextureV == null ? textureV : clippedTextureV;
+			return hasClippedGeometry() ? clippedTextureV : textureV;
+		}
+
+		private boolean hasClippedGeometry() {
+			return clippedVertexCount >= 3;
 		}
 
 		private void setLegacyClippedGeometry(
@@ -1141,15 +1447,25 @@ public final class Renderer3DFrame {
 				return;
 			}
 
-			this.clippedCameraX = Arrays.copyOf(cameraX, vertexCount);
-			this.clippedCameraY = Arrays.copyOf(cameraY, vertexCount);
-			this.clippedCameraZ = Arrays.copyOf(cameraZ, vertexCount);
-			this.clippedScreenX = Arrays.copyOf(screenX, vertexCount);
-			this.clippedScreenY = Arrays.copyOf(screenY, vertexCount);
-			this.clippedLight = light == null ? new int[vertexCount] : Arrays.copyOf(light, vertexCount);
-			this.clippedBaseLight = baseLight == null ? new int[vertexCount] : Arrays.copyOf(baseLight, vertexCount);
-			this.clippedTextureU = new float[vertexCount];
-			this.clippedTextureV = new float[vertexCount];
+			if (this.clippedCameraX == null || this.clippedCameraX.length != vertexCount) {
+				this.clippedCameraX = new int[vertexCount];
+				this.clippedCameraY = new int[vertexCount];
+				this.clippedCameraZ = new int[vertexCount];
+				this.clippedScreenX = new int[vertexCount];
+				this.clippedScreenY = new int[vertexCount];
+				this.clippedLight = new int[vertexCount];
+				this.clippedBaseLight = new int[vertexCount];
+				this.clippedTextureU = new float[vertexCount];
+				this.clippedTextureV = new float[vertexCount];
+			}
+			System.arraycopy(cameraX, 0, this.clippedCameraX, 0, vertexCount);
+			System.arraycopy(cameraY, 0, this.clippedCameraY, 0, vertexCount);
+			System.arraycopy(cameraZ, 0, this.clippedCameraZ, 0, vertexCount);
+			System.arraycopy(screenX, 0, this.clippedScreenX, 0, vertexCount);
+			System.arraycopy(screenY, 0, this.clippedScreenY, 0, vertexCount);
+			copyClippedLight(light, this.clippedLight, vertexCount);
+			copyClippedLight(baseLight, this.clippedBaseLight, vertexCount);
+			this.clippedVertexCount = vertexCount;
 			populateTextureCoordinates(
 				this.clippedCameraX,
 				this.clippedCameraY,
@@ -1158,12 +1474,21 @@ public final class Renderer3DFrame {
 				this.clippedTextureV);
 		}
 
+		private static void copyClippedLight(int[] source, int[] destination, int vertexCount) {
+			Arrays.fill(destination, 0);
+			if (source != null) {
+				System.arraycopy(source, 0, destination, 0, Math.min(source.length, vertexCount));
+			}
+		}
+
 		private void populateTextureCoordinates(
 			int[] sourceCameraX,
 			int[] sourceCameraY,
 			int[] sourceCameraZ,
 			float[] destinationU,
 			float[] destinationV) {
+			Arrays.fill(destinationU, 0.0f);
+			Arrays.fill(destinationV, 0.0f);
 			if (texture < 0 || cameraX.length < 3) {
 				return;
 			}

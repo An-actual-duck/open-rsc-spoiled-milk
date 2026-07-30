@@ -350,6 +350,12 @@ Current ownership after the first split:
 - `OpenGLFrame.java` / `Frame`
   - Owns the per-frame source pixels, target sizing, renderer 2D/3D snapshots,
     debug overlay lines, and reusable frame-buffer lifetime.
+- `Renderer3DFrame.WorldSpriteSnapshot`
+  - Owns the frame-local link between one sorted sprite anchor, its world-space
+    submission, optional character metadata, pick state, and the exact ordered
+    2D animation layers captured for that anchor.
+  - The OpenGL path consumes these groups only after whole-frame validation;
+    older or inconsistent frames remain owned by the compatibility builder.
 - `OpenGLCompositeSceneCommand`
   - Owns package-local composite scene-command, world-sprite command,
     static-world command, and related sprite diagnostic records.
@@ -550,6 +556,16 @@ current alpha baseline:
     crop/mirror/skew/alpha data with the renderer-v2 depth anchor, anchor match
     mode, and legacy draw order. `Ctrl+F9` captures write
     `world-sprite-commands.tsv` so this boundary can be audited offline.
+  - Accepted grouped-snapshot slice: each sorted renderer anchor owns one
+    frame-local world-sprite snapshot linked to its sprite submission,
+    character metadata, pick state, and ordered captured animation layers.
+    Complete indexed/order/count validation lets the presenter consume these
+    groups directly; any discrepancy routes the whole frame through the typed
+    command builder. `world-sprite-snapshots.tsv` and stable group/layer/
+    compatibility-fallback counters make that decision auditable. The owner
+    visual route and 12 strict frames accepted `e3cced146` with 4,852/4,852
+    snapshot-owned layers and zero compatibility fallback, invalid anchor/
+    order, suspicious visibility, failed frame, or client exception.
   - Current scene-queue slice: the OpenGL replacement composite consumes a
     behavior-preserving scene command queue and captures it as
     `scene-commands.tsv`. The queue currently emits typed world-sprite commands
@@ -1320,6 +1336,49 @@ they are not visual requirements for the baseline.
       that bind each entity/item sprite command to its renderer-v2 anchor,
       anchor-match diagnosis, legacy draw order, source crop, mirror, and skew
       state, and by capturing those commands in `world-sprite-commands.tsv`.
+- [x] Preserve the exact frame-local sprite-anchor index and legacy draw order
+      while `Scene` expands one entity into multipart 2D commands. Composite
+      assembly now uses a validated constant-time owner lookup and reports
+      `owner-anchor`; the older ID/screen-bounds matcher remains only for
+      invalid or compatibility commands. F6, structured telemetry, and all
+      sprite/scene capture tables expose exact/fallback/unmatched ownership for
+      the entity-pressure validation gate.
+- [x] Accept the exact-owner slice after private visual review and a 12-frame
+      strict capture covering 2,424 commands with 100% `owner-anchor`, zero
+      fallback/unmatched/order mismatch, 79 NPCs, one player, three ground
+      items, and `suspicious:0`. This capture proves parity at zoom `760`; it
+      is not the later maximum-distance performance profile.
+- [x] Profile the exact-owner endpoint at verified maximum-distance idle and
+      under active combat/camera pressure, separately attributing legacy
+      scene, 2D capture, composite scene, character texture, atlas, and sprite
+      draw work.
+- [x] Add a frame-owned grouped world-sprite snapshot that links each exact
+      anchor to its submission, optional character metadata, pick state, and
+      ordered captured layers. Consume it directly only when complete
+      validation passes, with the typed command builder retained as an
+      all-or-nothing compatibility fallback.
+- [x] Add snapshot group/layer/fallback telemetry and strict
+      `world-sprite-snapshots.tsv` capture analysis for anchor ownership and
+      layer order.
+- [x] Accept the grouped-snapshot slice after the owner visual route and 12
+      strict capture frames covering 4,852 snapshot-owned layers, 842
+      character groups, and 96 item groups with zero compatibility fallback,
+      invalid anchor/order, suspicious visibility, failed frame, or client
+      exception.
+- [x] Profile the accepted grouped-snapshot endpoint. The former composite
+      command/list/sort reconstruction recorded no allocation sample and
+      compatibility fallback stayed zero. The new scene contained roughly
+      three to five times as many sprite layers as the earlier profile, so raw
+      frame-time, CPU, and allocation totals are not treated as a direct
+      before/after delta.
+- [x] Remove the grouped snapshot's measured per-anchor list, read-only
+      wrapper, and iterator allocation with compact indexed layer storage.
+      Checkpoint `87aed9cbf` preserves exact command identity/order and the
+      all-or-nothing typed fallback. Compilation, the full renderer suite,
+      owner visual review, and 12 strict frames passed; all 6,158 layers used
+      exact snapshot ownership across 1,144 groups with zero fallback,
+      invalid anchor/order, suspicious visibility, failed frame, or client
+      exception.
 - [x] Add the first live camera-space world-sprite depth path. It back-projects
       each existing command rectangle at the legacy sprite face's interpolated
       top/bottom camera depth, preserving exact screen framing and skew while

@@ -1,5 +1,6 @@
 package orsc.remastered;
 
+import com.openrsc.client.entityhandling.defs.extras.AnimationDef;
 import com.openrsc.client.model.Sprite;
 import orsc.graphics.RendererTransparency;
 
@@ -23,6 +24,8 @@ public final class RemasteredSpriteResolver {
 	private final Map<String, Sprite> loaded = new HashMap<String, Sprite>();
 	private final Set<String> invalid = new HashSet<String>();
 	private final Set<String> loggedFailures = new HashSet<String>();
+	private final RemasteredAnimationKeyCache animationKeyCache =
+		new RemasteredAnimationKeyCache();
 	private long selectedCount;
 	private long disabledFallbackCount;
 	private long absentFallbackCount;
@@ -30,6 +33,14 @@ public final class RemasteredSpriteResolver {
 	private long decodeCount;
 
 	public synchronized Sprite resolve(String key, Sprite canonical) {
+		return resolveKey(key, canonical);
+	}
+
+	public synchronized Sprite resolve(AnimationDef animation, int frame, Sprite canonical) {
+		return resolveKey(animationKeyCache.key(animation, frame), canonical);
+	}
+
+	private Sprite resolveKey(String key, Sprite canonical) {
 		if (canonical == null) {
 			return null;
 		}

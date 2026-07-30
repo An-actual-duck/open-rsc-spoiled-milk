@@ -7,6 +7,10 @@ active state from `renderer-v2-plan.md` and
 
 Use this file first when deciding what renderer work to do next. The older
 documents remain detailed implementation ledgers and historical checklists.
+Use
+[renderer-performance-investigation-plan.md](renderer-performance-investigation-plan.md)
+for controlled workloads, current measurements, instrumentation gaps, and the
+profile-tweak-compare experiment ledger.
 For structural cleanup, file splitting, and stale-option quarantine work, use
 `code-cleanup-and-modularization-plan.md`.
 
@@ -170,6 +174,15 @@ they need to be.
   The presenter still owns window/input/pass orchestration and some bridge
   callbacks, but it should no longer be treated as the place to add low-level
   renderer systems.
+- The controlled maximum-distance performance campaign has reached its
+  allocation-only stopping point after 16 accepted, visually neutral cycles.
+  Against the original exact-geometry stress baseline, total allocation is
+  down 96.4%, client-loop allocation 96.7%, process CPU 57.6%, OpenGL p95
+  75.8%, and OpenGL world p95 87.5%. The accepted endpoint holds 34 resident
+  chunks and 209,162 triangles at OpenGL/world p95 of 2.303/0.900 ms. The
+  sixteenth cycle still lowered its measured presenter allocation owner by
+  18.0%, but moved presenter CPU and world time negligibly. Do not continue
+  small allocation changes without a fresh profile tied to an actual problem.
 
 ## Current Shader State
 
@@ -496,7 +509,29 @@ come from one of these areas unless a concrete shadow regression appears:
   metadata, cheaper rebuilds, and broader receivers only after a deliberate
   decision to reopen shadows.
 - Entity sprites: visually much better than earlier alpha work, but still an
-  important modernization target because sprites are central to Classic.
+  important modernization target because sprites are central to Classic. The
+  first scene/entity ownership slice now carries each captured multipart layer's
+  exact frame-local anchor index and legacy draw order into the composite
+  renderer. Constant-time validated ownership is preferred, the old
+  screen-bound matcher remains only as a compatibility fallback, and F6 /
+  structured captures report exact/fallback/unmatched counts. Private visual
+  review and 12 strict frames accepted the slice with 2,424 exact matches,
+  zero fallbacks/unmatched/order mismatches, 79 NPCs, one player, three ground
+  items, and no suspicious visibility loss. The follow-up maximum-distance
+  idle and active combat JFR phases now separate legacy scene, capture,
+  composite, atlas, and draw costs. They selected a frame-owned grouped
+  world-sprite snapshot as the second slice. The accepted implementation reuses the same
+  captured animation-layer objects, validates the entire snapshot set, and
+  retains the legacy typed command builder as an all-or-nothing fallback. It
+  is compiled and guard-tested; the owner visual route passed, and all 12
+  strict capture frames used the snapshot path for 4,852/4,852 layers with
+  zero compatibility fallback, anchor/order violation, suspicious visibility,
+  failed frame, or client exception. The follow-up JFR profile confirmed that
+  the old composite reconstruction was absent but used a materially denser
+  actor scene, so its raw totals are not a direct performance delta. Measured
+  per-group container/iterator allocation was removed at `87aed9cbf` with
+  indexed layer storage; owner review and another 12 strict frames accepted
+  6,158/6,158 exact layers across 1,144 groups with the same zero-error gates.
 - Quality settings: presets exist, but settings do not yet consistently reduce
   underlying renderer work.
 - Tooling: F6 telemetry is good for live diagnosis, but capture replay and
@@ -505,8 +540,9 @@ come from one of these areas unless a concrete shadow regression appears:
   `LEGACY BRIDGE` / `RENDERER-V2 OWNER` labels are in place. Pure composite
   scene-command building, camera-space world-sprite quad submission,
   world-sprite draw orchestration, and command-sized sprite texture building
-  now live outside the presenter. This is a good stopping point for the first
-  refactor pass before returning to renderer optimization.
+  now live outside the presenter. The exact sprite-owner link is the first
+  concrete seam across that split; later slices can replace legacy capture
+  inputs without changing the proven depth-owned draw path all at once.
 
 ## Recommended Near-Term Order
 
@@ -516,23 +552,42 @@ come from one of these areas unless a concrete shadow regression appears:
 2. Treat day/night color, Remaster directional lighting, terrain-receiver
    shadows, and the static/animated object chunk split as the current accepted
    alpha baseline.
-3. Start non-shadow visual improvements with a parity-preserving material
-   family foundation, then material-aware shader polish:
+3. Treat the completed parity-preserving material-family foundation as the
+   baseline, then continue material-aware shader polish when visual work is
+   selected:
    terrain, water, foliage, ore, walls, roofs, scenery, sprites, projectiles,
    and effects should get explicit material families instead of one generic
    response. The proposed first metadata/telemetry slice is tracked in
    [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md).
 4. Treat the completed first terrain-variation and tile-edge blending pass as
    the baseline; revisit it only with a specific captured visual regression.
-5. Move world-space sprites/entities/effects farther away from legacy command replay
-   and toward explicit depth anchors, batching, and culling.
-6. Turn quality settings into real work culling: entity distance, draw distance,
+5. Treat the 16-cycle steady-state allocation campaign as complete. Preserve
+   its exact maximum-distance control and re-profile only when selecting a new
+   architecture target or investigating a real regression.
+6. Continue the explicit renderer-v2 scene/entity boundary. The first slice
+   preserves exact anchor ownership through the legacy capture stream. The
+   accepted second slice groups those exact captured layers in a renderer-owned
+   frame snapshot and bypasses per-frame command-wrapper/list/sort
+   reconstruction when complete validation passes; its own measured
+   container/iterator allocation has also been removed. Next, design the
+   direct world-space input contract and migrate the simplest category first
+   behind exact parity/fallback checks. Ground items are the preferred first
+   slice because they are single-layer submissions without multipart character
+   composition. Then move players, NPCs, projectiles, and effects from
+   captured screen-space layers toward direct world-space inputs,
+   parity-complete persistent texture ownership, ordered batching, and
+   culling. Retire matching legacy scene sort/rotation/removal and capture work
+   incrementally as parity is proven.
+7. Turn quality settings into real work culling: entity distance, draw distance,
    roof visibility, sprite/effect distance, and weak-hardware presets should
    reduce built/submitted/drawn work.
-7. Convert the accepted dense-area route into a repeatable benchmark/capture
-   route before another large optimization pass so dense
-   scenes and zoomed-out movement can be compared without relying only on manual
-   F6 screenshots.
+8. Preserve the completed maximum-distance idle and active entity/effect JFR
+   phases as the first ownership-profile pair. Formal benchmark automation is
+   still desirable; dense scenes and zoomed-out movement should not regress
+   to manual F6-only observation.
+9. Continue true world-stream lifecycle ownership—decoded, CPU-built,
+   GPU-ready, active, and stale—as a separate boundary/relocation program.
+   Do not mix its transition-tail measurements with steady renderer results.
 
 ## Open Long-Term Questions
 

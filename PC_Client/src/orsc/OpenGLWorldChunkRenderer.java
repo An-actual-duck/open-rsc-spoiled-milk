@@ -167,6 +167,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private RemasterShadowRoofCoverage cachedRemasterShadowRoofCoverage;
 	private long cachedRemasterShadowRoofCoverageSignature;
 	private boolean cachedRemasterShadowRoofCoverageKnown;
+	private RemasterShadowInventory cachedRemasterShadowInventory;
+	private long cachedRemasterShadowInventoryWorldSignature;
+	private long cachedRemasterShadowInventoryObjectCasterSignature;
+	private boolean cachedRemasterShadowInventoryKnown;
 	private boolean remasterShadowMaskLastUpload;
 	private boolean remasterShadowMaskLastUploadSkip;
 	private boolean closed;
@@ -1118,6 +1122,28 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return useResidentChunkShader(textured) && remasterLightingShaderEnabled;
 	}
 
+	RemasterShadowInventory inspectRemasterShadowInventory(
+		Renderer3DWorldChunkFrame chunkFrame) {
+		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
+			return RemasterShadowInventory.EMPTY;
+		}
+		long worldSignature = RemasterShadowMaskBuilder.remasterShadowWorldSignature(chunkFrame);
+		long objectCasterSignature = chunkFrame.getObjectShadowCasterSignature();
+		if (cachedRemasterShadowInventoryKnown
+			&& cachedRemasterShadowInventoryWorldSignature == worldSignature
+			&& cachedRemasterShadowInventoryObjectCasterSignature == objectCasterSignature
+			&& cachedRemasterShadowInventory != null) {
+			return cachedRemasterShadowInventory;
+		}
+		cachedRemasterShadowInventory = RemasterShadowClassifier.inspectInventory(
+			chunkFrame,
+			remasterShadowRoofCoverage(chunkFrame, worldSignature));
+		cachedRemasterShadowInventoryWorldSignature = worldSignature;
+		cachedRemasterShadowInventoryObjectCasterSignature = objectCasterSignature;
+		cachedRemasterShadowInventoryKnown = true;
+		return cachedRemasterShadowInventory;
+	}
+
 	void drawRemasterShadowInventoryDebug(Renderer3DFrame frame) throws Exception {
 		Renderer3DWorldChunkFrame chunkFrame = frame == null ? null : frame.getWorldChunkFrame();
 		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
@@ -1139,7 +1165,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
 		gl.glDepthMask(false);
 		try {
-			RemasterShadowRoofCoverage roofCoverage = RemasterShadowRoofCoverage.from(chunkFrame);
+			long worldSignature = RemasterShadowMaskBuilder.remasterShadowWorldSignature(chunkFrame);
+			RemasterShadowRoofCoverage roofCoverage =
+				remasterShadowRoofCoverage(chunkFrame, worldSignature);
 			drawRemasterShadowReceiverDebug(chunkFrame, roofCoverage);
 			drawRemasterShadowCasterDebug(chunkFrame, roofCoverage);
 		} finally {
@@ -2427,7 +2455,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	private boolean isFrameTextureReference(Renderer3DFrame frame, int textureId) {
-		return frame != null && textureId >= 0 && textureId < frame.getTextures().length;
+		return frame != null && textureId >= 0 && textureId < frame.getTextureCount();
 	}
 
 	private int averageTextureColor(Renderer3DFrame frame, int textureId) {
@@ -3438,6 +3466,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		cachedRemasterShadowRoofCoverage = null;
 		cachedRemasterShadowRoofCoverageSignature = 0L;
 		cachedRemasterShadowRoofCoverageKnown = false;
+		cachedRemasterShadowInventory = null;
+		cachedRemasterShadowInventoryWorldSignature = 0L;
+		cachedRemasterShadowInventoryObjectCasterSignature = 0L;
+		cachedRemasterShadowInventoryKnown = false;
 		remasterShadowMaskLastUpload = false;
 		remasterShadowMaskLastUploadSkip = false;
 	}

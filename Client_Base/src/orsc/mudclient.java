@@ -3493,6 +3493,10 @@ public final class mudclient implements Runnable {
 		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
 		model.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, -95);
 		model.key = index + ClientSceneInstanceStore.WALL_OBJECT_KEY_BASE;
+		applyRenderer3DMaterialMetadata(
+			Renderer3DModelKind.WALL_OBJECT,
+			type,
+			model);
 		return model;
 	}
 
@@ -4012,7 +4016,6 @@ public final class mudclient implements Runnable {
 			builder = new ResidentObjectChunkInputBuilder(anchor, cellKey, cellX, cellZ, chunkRole, cellTileSize);
 			builders.put(cellKey, builder);
 		}
-		applyRenderer3DMaterialMetadata(kind, objectId, model);
 		boolean debugMatched = shouldDebugResidentObjectChunkModel(kind, tileX, tileZ, objectId);
 		builder.add(
 			kind,
@@ -16654,6 +16657,14 @@ public final class mudclient implements Runnable {
 									MessageType.GAME,
 									0,
 									null);
+							} else if (RendererPerformanceDiagnostics.isCommand(var11)) {
+								this.showMessage(
+									false,
+									null,
+									RendererPerformanceDiagnostics.handleCommand(var11),
+									MessageType.GAME,
+									0,
+									null);
 							} else if (var11.startsWith("::n ") && localPlayer.isDev()) {
 								devMenuNpcID = Integer.parseInt(var11.split(" ")[1]);
 							} else if (var11.equalsIgnoreCase("::overlay") && S_SIDE_MENU_TOGGLE) {
@@ -17011,6 +17022,20 @@ public final class mudclient implements Runnable {
 		this.scene.fogSmoothingStartDistance = fogStartDistance;
 		int fadeDistance = Math.max(0, drawDistance - fogStartDistance);
 		this.scene.fogZFalloff = Math.max(1, (fadeDistance + 254) / 255);
+		RenderTelemetry.recordCameraState(
+			osConfig.C_LAST_ZOOM,
+			getCameraZoomSettingMin(),
+			getCameraZoomSettingMax(),
+			this.cameraZoom,
+			scaledCameraZoom,
+			getCameraPitch(),
+			this.cameraRotation * 4,
+			this.isInFirstPersonView(),
+			fogMode.id,
+			drawDistance,
+			fogStartDistance,
+			Math.max(0, (drawDistance - cameraDepthOffset) / this.tileSize),
+			Math.max(0, (fogStartDistance - cameraDepthOffset) / this.tileSize));
 	}
 
 	private int getCameraHeightCompensatedCenterY(int baseCenterY, int baseZoom, int scaledZoom) {
@@ -23600,6 +23625,10 @@ public final class mudclient implements Runnable {
 		if (objectId == DRAGON_SULFUR_ROCK_OBJECT_ID) {
 			model.tintVisibleFaces(DRAGON_SULFUR_ROCK_COLOR_RESOURCE);
 		}
+		applyRenderer3DMaterialMetadata(
+			Renderer3DModelKind.GAME_OBJECT,
+			objectId,
+			model);
 		return model;
 	}
 

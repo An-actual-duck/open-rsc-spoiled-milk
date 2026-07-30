@@ -11,8 +11,11 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -28,6 +31,8 @@ public final class RenderTelemetry {
 	private static final int RECENT_SAMPLE_LIMIT = 120;
 	private static final boolean RUNTIME_ENABLED = readBoolean(ENABLED_PROPERTY, ENABLED_ENV);
 	private static final int REPORT_INTERVAL = Math.max(1, readInt(REPORT_INTERVAL_PROPERTY, 300));
+	private static final int WINDOW_SAMPLE_LIMIT = Math.max(512, REPORT_INTERVAL * 2);
+	private static final int RUNTIME_TOP_THREAD_LIMIT = 8;
 	private static final long SLOW_FRAME_NANOS = Math.max(1L, readInt(SLOW_FRAME_MS_PROPERTY, 35)) * 1_000_000L;
 	private static final long SLOW_REPORT_THROTTLE_NANOS = 1_000_000_000L;
 
@@ -260,6 +265,12 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldSpriteAnchorStats = new CounterStats();
 	private static final CounterStats openGLWorldSpriteMatchedStats = new CounterStats();
 	private static final CounterStats openGLWorldSpriteDrawnStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteOwnerAnchorStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteLegacyFallbackStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteUnmatchedStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteSnapshotGroupStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteSnapshotLayerStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteSnapshotCompatibilityFallbackStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityConsideredStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityDrawnStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityCulledStats = new CounterStats();
@@ -288,11 +299,29 @@ public final class RenderTelemetry {
 	private static float diagnosticLastScalar;
 	private static String diagnosticLastScalingType = "unknown";
 	private static String diagnosticLastFramePath = "unknown";
+	private static boolean diagnosticCameraStateKnown;
+	private static int diagnosticCameraZoomSetting;
+	private static int diagnosticCameraZoomSettingMin;
+	private static int diagnosticCameraZoomSettingMax;
+	private static int diagnosticCameraBaseZoom;
+	private static int diagnosticCameraEffectiveZoom;
+	private static int diagnosticCameraPitch;
+	private static int diagnosticCameraRotation;
+	private static boolean diagnosticCameraFirstPerson;
+	private static String diagnosticCameraFogMode = "unknown";
+	private static int diagnosticCameraDrawDistanceWorldUnits;
+	private static int diagnosticCameraFogStartDistanceWorldUnits;
+	private static int diagnosticCameraDrawDistanceTiles;
+	private static int diagnosticCameraFogStartDistanceTiles;
 	private static final DiagnosticMetric[] DIAGNOSTIC_METRICS = buildDiagnosticMetrics();
 	private static long diagnosticLastGcCount = -1L;
 	private static long diagnosticLastGcTimeMillis = -1L;
 	private static final Map<String, Long> diagnosticLastGcCountByName = new LinkedHashMap<>();
 	private static final Map<String, Long> diagnosticLastGcTimeByName = new LinkedHashMap<>();
+	private static long diagnosticLastRuntimeSampleNanos = -1L;
+	private static long diagnosticLastProcessCpuTimeNanos = -1L;
+	private static final Map<Long, RuntimeThreadSample> diagnosticLastThreadSamples =
+		new LinkedHashMap<Long, RuntimeThreadSample>();
 
 	private RenderTelemetry() {
 	}
@@ -683,6 +712,14 @@ public final class RenderTelemetry {
 		}
 	}
 
+	public static String worldSpriteOwnershipSummary() {
+		synchronized (RenderTelemetry.class) {
+			return formatCount(openGLWorldSpriteOwnerAnchorStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldSpriteLegacyFallbackStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldSpriteUnmatchedStats.recentAverage());
+		}
+	}
+
 	public static String renderer2DCommandLimitSummary() {
 		synchronized (RenderTelemetry.class) {
 			return "s " + commandLimitSummary(
@@ -722,6 +759,43 @@ public final class RenderTelemetry {
 		return formatCount(attempted.average())
 			+ "/" + formatCount(accepted.average())
 			+ "/" + formatCount(dropped.average());
+	}
+
+	static void recordCameraState(
+		int zoomSetting,
+		int zoomSettingMin,
+		int zoomSettingMax,
+		int baseZoom,
+		int effectiveZoom,
+		int pitch,
+		int rotation,
+		boolean firstPerson,
+		String fogMode,
+		int drawDistanceWorldUnits,
+		int fogStartDistanceWorldUnits,
+		int drawDistanceTiles,
+		int fogStartDistanceTiles) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			diagnosticCameraStateKnown = true;
+			diagnosticCameraZoomSetting = zoomSetting;
+			diagnosticCameraZoomSettingMin = zoomSettingMin;
+			diagnosticCameraZoomSettingMax = zoomSettingMax;
+			diagnosticCameraBaseZoom = baseZoom;
+			diagnosticCameraEffectiveZoom = effectiveZoom;
+			diagnosticCameraPitch = pitch;
+			diagnosticCameraRotation = rotation;
+			diagnosticCameraFirstPerson = firstPerson;
+			diagnosticCameraFogMode =
+				fogMode == null || fogMode.isEmpty() ? "unknown" : fogMode;
+			diagnosticCameraDrawDistanceWorldUnits = drawDistanceWorldUnits;
+			diagnosticCameraFogStartDistanceWorldUnits = fogStartDistanceWorldUnits;
+			diagnosticCameraDrawDistanceTiles = drawDistanceTiles;
+			diagnosticCameraFogStartDistanceTiles = fogStartDistanceTiles;
+		}
 	}
 
 	static void recordWorldGeometryFrame(
@@ -1085,6 +1159,37 @@ public final class RenderTelemetry {
 			openGLWorldEntityConsideredStats.record(anchors);
 			openGLWorldEntityDrawnStats.record(drawn);
 			openGLWorldEntityCulledStats.record(Math.max(0, anchors - drawn));
+		}
+	}
+
+	static void recordOpenGLWorldSpriteOwnershipFrame(
+		int ownerAnchors,
+		int legacyFallbacks,
+		int unmatched) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			openGLWorldSpriteOwnerAnchorStats.record(ownerAnchors);
+			openGLWorldSpriteLegacyFallbackStats.record(legacyFallbacks);
+			openGLWorldSpriteUnmatchedStats.record(unmatched);
+		}
+	}
+
+	static void recordOpenGLWorldSpriteSnapshotFrame(
+		int snapshotGroups,
+		int snapshotLayers,
+		int compatibilityFallbackCommands) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			openGLWorldSpriteSnapshotGroupStats.record(snapshotGroups);
+			openGLWorldSpriteSnapshotLayerStats.record(snapshotLayers);
+			openGLWorldSpriteSnapshotCompatibilityFallbackStats.record(
+				compatibilityFallbackCommands);
 		}
 	}
 
@@ -1837,6 +1942,18 @@ public final class RenderTelemetry {
 					false));
 
 		System.out.println(
+			"[renderer-v2 telemetry] composite sprite ownership avg: exact="
+				+ formatCount(openGLWorldSpriteOwnerAnchorStats.average())
+				+ " fallback=" + formatCount(openGLWorldSpriteLegacyFallbackStats.average())
+				+ " unmatched=" + formatCount(openGLWorldSpriteUnmatchedStats.average()));
+		System.out.println(
+			"[renderer-v2 telemetry] renderer sprite snapshots avg: groups="
+				+ formatCount(openGLWorldSpriteSnapshotGroupStats.average())
+				+ " layers=" + formatCount(openGLWorldSpriteSnapshotLayerStats.average())
+				+ " compatibilityFallback="
+				+ formatCount(openGLWorldSpriteSnapshotCompatibilityFallbackStats.average()));
+
+		System.out.println(
 			"[renderer-v2 telemetry] presentation avg ms: setImage=" + formatMillis(setGameImageStats.average())
 				+ " sourceCopy=" + formatMillis(sourceCopyStats.average())
 				+ " paintImmediate=" + formatMillis(paintImmediateStats.average())
@@ -2000,6 +2117,7 @@ public final class RenderTelemetry {
 		float scalar,
 		Object scalingType,
 		String framePath) {
+		DiagnosticRuntimeSnapshot runtimeSnapshot = captureDiagnosticRuntimeSnapshot();
 		RendererDiagnosticSession.Record record =
 			RendererDiagnosticSession.newTelemetryRecord(trigger, frameStats.count);
 		if (record == null) {
@@ -2012,6 +2130,24 @@ public final class RenderTelemetry {
 		record.number("frame.scalar", scalar);
 		record.string("frame.scalingType", String.valueOf(scalingType));
 		record.string("frame.path", framePath);
+		record.bool("camera.stateKnown", diagnosticCameraStateKnown);
+		record.number("camera.zoomSetting", diagnosticCameraZoomSetting);
+		record.number("camera.zoomSettingMin", diagnosticCameraZoomSettingMin);
+		record.number("camera.zoomSettingMax", diagnosticCameraZoomSettingMax);
+		record.number("camera.baseZoom", diagnosticCameraBaseZoom);
+		record.number("camera.effectiveZoom", diagnosticCameraEffectiveZoom);
+		record.number("camera.pitch", diagnosticCameraPitch);
+		record.number("camera.rotation", diagnosticCameraRotation);
+		record.bool("camera.firstPerson", diagnosticCameraFirstPerson);
+		record.string("camera.fogMode", diagnosticCameraFogMode);
+		record.number(
+			"camera.drawDistanceWorldUnits",
+			diagnosticCameraDrawDistanceWorldUnits);
+		record.number(
+			"camera.fogStartDistanceWorldUnits",
+			diagnosticCameraFogStartDistanceWorldUnits);
+		record.number("camera.drawDistanceTiles", diagnosticCameraDrawDistanceTiles);
+		record.number("camera.fogStartDistanceTiles", diagnosticCameraFogStartDistanceTiles);
 		record.number("config.reportIntervalFrames", REPORT_INTERVAL);
 		record.number("config.slowFrameNanos", SLOW_FRAME_NANOS);
 		record.number("config.recentSampleLimit", RECENT_SAMPLE_LIMIT);
@@ -2066,6 +2202,7 @@ public final class RenderTelemetry {
 		record.number("runtime.memory.totalBytes", runtime.totalMemory());
 		record.number("runtime.memory.maxBytes", runtime.maxMemory());
 		record.number("runtime.availableProcessors", runtime.availableProcessors());
+		appendDiagnosticRuntimeSnapshot(record, runtimeSnapshot);
 
 		long gcCount = 0L;
 		long gcTimeMillis = 0L;
@@ -2143,6 +2280,284 @@ public final class RenderTelemetry {
 		RendererDiagnosticSession.writeTelemetry(record);
 	}
 
+	private static DiagnosticRuntimeSnapshot captureDiagnosticRuntimeSnapshot() {
+		long sampleNanos = System.nanoTime();
+		long sampleWallNanos = diagnosticLastRuntimeSampleNanos < 0L
+			? 0L
+			: Math.max(0L, sampleNanos - diagnosticLastRuntimeSampleNanos);
+		diagnosticLastRuntimeSampleNanos = sampleNanos;
+
+		long processCpuTimeNanos = -1L;
+		long freePhysicalMemoryBytes = -1L;
+		long totalPhysicalMemoryBytes = -1L;
+		long freeSwapBytes = -1L;
+		long totalSwapBytes = -1L;
+		double processLoad = -1.0D;
+		double systemLoad = -1.0D;
+		java.lang.management.OperatingSystemMXBean operatingSystem =
+			ManagementFactory.getOperatingSystemMXBean();
+		if (operatingSystem instanceof com.sun.management.OperatingSystemMXBean) {
+			com.sun.management.OperatingSystemMXBean extended =
+				(com.sun.management.OperatingSystemMXBean) operatingSystem;
+			processCpuTimeNanos = extended.getProcessCpuTime();
+			processLoad = extended.getProcessCpuLoad();
+			systemLoad = extended.getSystemCpuLoad();
+			freePhysicalMemoryBytes = extended.getFreePhysicalMemorySize();
+			totalPhysicalMemoryBytes = extended.getTotalPhysicalMemorySize();
+			freeSwapBytes = extended.getFreeSwapSpaceSize();
+			totalSwapBytes = extended.getTotalSwapSpaceSize();
+		}
+		long processCpuTimeDeltaNanos =
+			processCpuTimeNanos < 0L || diagnosticLastProcessCpuTimeNanos < 0L
+				? 0L
+				: Math.max(0L, processCpuTimeNanos - diagnosticLastProcessCpuTimeNanos);
+		diagnosticLastProcessCpuTimeNanos = processCpuTimeNanos;
+
+		ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+		boolean threadCpuSupported = threadBean.isThreadCpuTimeSupported();
+		if (threadCpuSupported && !threadBean.isThreadCpuTimeEnabled()) {
+			try {
+				threadBean.setThreadCpuTimeEnabled(true);
+			} catch (RuntimeException ignored) {
+				threadCpuSupported = false;
+			}
+		}
+		com.sun.management.ThreadMXBean allocationBean =
+			threadBean instanceof com.sun.management.ThreadMXBean
+				? (com.sun.management.ThreadMXBean) threadBean
+				: null;
+		boolean threadAllocationSupported =
+			allocationBean != null && allocationBean.isThreadAllocatedMemorySupported();
+		if (threadAllocationSupported && !allocationBean.isThreadAllocatedMemoryEnabled()) {
+			try {
+				allocationBean.setThreadAllocatedMemoryEnabled(true);
+			} catch (RuntimeException ignored) {
+				threadAllocationSupported = false;
+			}
+		}
+
+		long[] threadIds = threadBean.getAllThreadIds();
+		ThreadInfo[] threadInfos = threadBean.getThreadInfo(threadIds);
+		long[] threadCpuTimes = new long[threadIds.length];
+		long[] threadAllocatedBytes = new long[threadIds.length];
+		Arrays.fill(threadCpuTimes, -1L);
+		Arrays.fill(threadAllocatedBytes, -1L);
+		if (threadCpuSupported) {
+			if (allocationBean != null) {
+				threadCpuTimes = allocationBean.getThreadCpuTime(threadIds);
+			} else {
+				for (int i = 0; i < threadIds.length; i++) {
+					threadCpuTimes[i] = threadBean.getThreadCpuTime(threadIds[i]);
+				}
+			}
+		}
+		if (threadAllocationSupported) {
+			threadAllocatedBytes = allocationBean.getThreadAllocatedBytes(threadIds);
+		}
+
+		Map<Long, RuntimeThreadSample> currentSamples =
+			new LinkedHashMap<Long, RuntimeThreadSample>();
+		List<RuntimeThreadDelta> threadDeltas = new ArrayList<RuntimeThreadDelta>();
+		long javaThreadCpuTimeDeltaNanos = 0L;
+		long javaThreadAllocatedBytesDelta = 0L;
+		for (int i = 0; i < threadIds.length; i++) {
+			ThreadInfo info = threadInfos[i];
+			if (info == null) {
+				continue;
+			}
+			RuntimeThreadSample current = new RuntimeThreadSample(
+				threadIds[i],
+				info.getThreadName(),
+				info.getThreadState().name(),
+				threadCpuTimes[i],
+				threadAllocatedBytes[i]);
+			currentSamples.put(threadIds[i], current);
+			RuntimeThreadSample previous = diagnosticLastThreadSamples.get(threadIds[i]);
+			long cpuDelta = delta(current.cpuTimeNanos, previous == null ? -1L : previous.cpuTimeNanos);
+			long allocatedDelta =
+				delta(current.allocatedBytes, previous == null ? -1L : previous.allocatedBytes);
+			if (cpuDelta >= 0L) {
+				javaThreadCpuTimeDeltaNanos += cpuDelta;
+			}
+			if (allocatedDelta >= 0L) {
+				javaThreadAllocatedBytesDelta += allocatedDelta;
+			}
+			threadDeltas.add(new RuntimeThreadDelta(current, cpuDelta, allocatedDelta));
+		}
+		diagnosticLastThreadSamples.clear();
+		diagnosticLastThreadSamples.putAll(currentSamples);
+
+		return new DiagnosticRuntimeSnapshot(
+			sampleWallNanos,
+			processCpuTimeNanos,
+			processCpuTimeDeltaNanos,
+			processLoad,
+			systemLoad,
+			freePhysicalMemoryBytes,
+			totalPhysicalMemoryBytes,
+			freeSwapBytes,
+			totalSwapBytes,
+			threadCpuSupported,
+			threadAllocationSupported,
+			javaThreadCpuTimeDeltaNanos,
+			javaThreadAllocatedBytesDelta,
+			threadDeltas);
+	}
+
+	private static long delta(long current, long previous) {
+		return current < 0L || previous < 0L ? -1L : Math.max(0L, current - previous);
+	}
+
+	private static void appendDiagnosticRuntimeSnapshot(
+		RendererDiagnosticSession.Record record,
+		DiagnosticRuntimeSnapshot snapshot) {
+		if (snapshot == null) {
+			return;
+		}
+		record.number("runtime.cpu.sampleWallNanos", snapshot.sampleWallNanos);
+		record.number("runtime.cpu.processTimeNanos", snapshot.processCpuTimeNanos);
+		record.number("runtime.cpu.processTimeDeltaNanos", snapshot.processCpuTimeDeltaNanos);
+		record.number(
+			"runtime.cpu.processCoreUtilization",
+			rate(snapshot.processCpuTimeDeltaNanos, snapshot.sampleWallNanos));
+		record.number("runtime.cpu.processLoad", snapshot.processLoad);
+		record.number("runtime.cpu.systemLoad", snapshot.systemLoad);
+		record.number("runtime.cpu.javaThreadTimeDeltaNanos", snapshot.javaThreadCpuTimeDeltaNanos);
+		record.number(
+			"runtime.cpu.unattributedTimeDeltaNanos",
+			Math.max(
+				0L,
+				snapshot.processCpuTimeDeltaNanos - snapshot.javaThreadCpuTimeDeltaNanos));
+		record.number("runtime.os.freePhysicalMemoryBytes", snapshot.freePhysicalMemoryBytes);
+		record.number("runtime.os.totalPhysicalMemoryBytes", snapshot.totalPhysicalMemoryBytes);
+		record.number("runtime.os.freeSwapBytes", snapshot.freeSwapBytes);
+		record.number("runtime.os.totalSwapBytes", snapshot.totalSwapBytes);
+		record.bool("runtime.thread.cpuSupported", snapshot.threadCpuSupported);
+		record.bool("runtime.thread.allocationSupported", snapshot.threadAllocationSupported);
+		record.number("runtime.thread.count", snapshot.threadDeltas.size());
+		record.number(
+			"runtime.allocation.javaThreadBytesDelta",
+			snapshot.javaThreadAllocatedBytesDelta);
+		record.number(
+			"runtime.allocation.javaThreadBytesPerSecond",
+			perSecond(snapshot.javaThreadAllocatedBytesDelta, snapshot.sampleWallNanos));
+
+		appendNamedRuntimeThread(
+			record,
+			"clientLoop",
+			"Spoiled Milk Client Loop",
+			snapshot.threadDeltas,
+			snapshot.sampleWallNanos);
+		appendNamedRuntimeThread(
+			record,
+			"openGLPresenter",
+			"Spoiled Milk OpenGL Presenter",
+			snapshot.threadDeltas,
+			snapshot.sampleWallNanos);
+		appendNamedRuntimeThread(
+			record,
+			"worldPreload",
+			"world-sector-preload",
+			snapshot.threadDeltas,
+			snapshot.sampleWallNanos);
+		appendNamedRuntimeThread(
+			record,
+			"awtEventQueue",
+			"AWT-EventQueue-0",
+			snapshot.threadDeltas,
+			snapshot.sampleWallNanos);
+
+		List<RuntimeThreadDelta> byCpu =
+			new ArrayList<RuntimeThreadDelta>(snapshot.threadDeltas);
+		Collections.sort(byCpu, new Comparator<RuntimeThreadDelta>() {
+			@Override
+			public int compare(RuntimeThreadDelta left, RuntimeThreadDelta right) {
+				int byDelta = Long.compare(right.cpuTimeDeltaNanos, left.cpuTimeDeltaNanos);
+				return byDelta != 0 ? byDelta : left.sample.name.compareTo(right.sample.name);
+			}
+		});
+		appendTopRuntimeThreads(record, "runtime.thread.topCpu", byCpu, snapshot.sampleWallNanos);
+
+		List<RuntimeThreadDelta> byAllocation =
+			new ArrayList<RuntimeThreadDelta>(snapshot.threadDeltas);
+		Collections.sort(byAllocation, new Comparator<RuntimeThreadDelta>() {
+			@Override
+			public int compare(RuntimeThreadDelta left, RuntimeThreadDelta right) {
+				int byDelta = Long.compare(
+					right.allocatedBytesDelta,
+					left.allocatedBytesDelta);
+				return byDelta != 0 ? byDelta : left.sample.name.compareTo(right.sample.name);
+			}
+		});
+		appendTopRuntimeThreads(
+			record,
+			"runtime.thread.topAllocation",
+			byAllocation,
+			snapshot.sampleWallNanos);
+	}
+
+	private static void appendNamedRuntimeThread(
+		RendererDiagnosticSession.Record record,
+		String keyName,
+		String threadName,
+		List<RuntimeThreadDelta> deltas,
+		long sampleWallNanos) {
+		for (RuntimeThreadDelta thread : deltas) {
+			if (threadName.equals(thread.sample.name)) {
+				appendRuntimeThread(
+					record,
+					"runtime.thread.named." + keyName,
+					thread,
+					sampleWallNanos);
+				return;
+			}
+		}
+		record.bool("runtime.thread.named." + keyName + ".present", false);
+	}
+
+	private static void appendTopRuntimeThreads(
+		RendererDiagnosticSession.Record record,
+		String key,
+		List<RuntimeThreadDelta> threads,
+		long sampleWallNanos) {
+		int count = Math.min(RUNTIME_TOP_THREAD_LIMIT, threads.size());
+		record.number(key + ".count", count);
+		for (int i = 0; i < count; i++) {
+			appendRuntimeThread(record, key + "." + i, threads.get(i), sampleWallNanos);
+		}
+	}
+
+	private static void appendRuntimeThread(
+		RendererDiagnosticSession.Record record,
+		String key,
+		RuntimeThreadDelta thread,
+		long sampleWallNanos) {
+		record.bool(key + ".present", true);
+		record.number(key + ".id", thread.sample.id);
+		record.string(key + ".name", thread.sample.name);
+		record.string(key + ".state", thread.sample.state);
+		record.number(key + ".cpuTimeNanos", thread.sample.cpuTimeNanos);
+		record.number(key + ".cpuTimeDeltaNanos", thread.cpuTimeDeltaNanos);
+		record.number(
+			key + ".cpuCoreUtilization",
+			rate(thread.cpuTimeDeltaNanos, sampleWallNanos));
+		record.number(key + ".allocatedBytes", thread.sample.allocatedBytes);
+		record.number(key + ".allocatedBytesDelta", thread.allocatedBytesDelta);
+		record.number(
+			key + ".allocatedBytesPerSecond",
+			perSecond(thread.allocatedBytesDelta, sampleWallNanos));
+	}
+
+	private static double rate(long value, long duration) {
+		return value < 0L || duration <= 0L ? -1.0D : value / (double) duration;
+	}
+
+	private static double perSecond(long value, long durationNanos) {
+		return value < 0L || durationNanos <= 0L
+			? -1.0D
+			: value * 1_000_000_000.0D / durationNanos;
+	}
+
 	private static void appendDiagnosticMemoryUsage(
 		RendererDiagnosticSession.Record record,
 		String key,
@@ -2169,6 +2584,25 @@ public final class RenderTelemetry {
 				diagnosticLastScalar,
 				diagnosticLastScalingType,
 				diagnosticLastFramePath);
+		}
+	}
+
+	static void recordPerformancePhaseBoundary(String action) {
+		if (!RendererDiagnosticSession.isEnabled()) {
+			return;
+		}
+		synchronized (RenderTelemetry.class) {
+			writeDiagnosticTelemetry(
+				"performance-phase-" + action,
+				diagnosticLastFrameNanos,
+				diagnosticLastSourceWidth,
+				diagnosticLastSourceHeight,
+				diagnosticLastScalar,
+				diagnosticLastScalingType,
+				diagnosticLastFramePath);
+			if ("start".equals(action) || "stop".equals(action)) {
+				resetReportWindow();
+			}
 		}
 	}
 
@@ -2207,6 +2641,7 @@ public final class RenderTelemetry {
 		String name,
 		StageStats stats) {
 		String key = "stage." + name;
+		StagePercentiles percentiles = stats.windowPercentiles();
 		record.number(key + ".lifetime.count", stats.count);
 		record.number(key + ".lifetime.totalNanos", stats.total);
 		record.number(key + ".lifetime.averageNanos", stats.average());
@@ -2215,9 +2650,37 @@ public final class RenderTelemetry {
 		record.number(key + ".window.totalNanos", stats.windowTotal);
 		record.number(key + ".window.averageNanos", stats.windowAverage());
 		record.number(key + ".window.maxNanos", stats.windowMax);
+		record.number(key + ".window.retainedSampleCount", percentiles.sampleCount);
+		record.number(
+			key + ".window.droppedSampleCount",
+			Math.max(0L, stats.windowCount - percentiles.sampleCount));
+		record.number(key + ".window.p50Nanos", percentiles.p50Nanos);
+		record.number(key + ".window.p95Nanos", percentiles.p95Nanos);
+		record.number(key + ".window.p99Nanos", percentiles.p99Nanos);
+		if (hasRawFrameDistribution(name)) {
+			record.numbers(key + ".window.samplesNanos", percentiles.samplesNanos);
+		}
 		record.number(key + ".recent.count", stats.recentCount);
 		record.number(key + ".recent.averageNanos", stats.recentAverage());
 		record.number(key + ".recent.latestNanos", stats.latest());
+	}
+
+	private static boolean hasRawFrameDistribution(String name) {
+		return "frame".equals(name)
+			|| "clientLoop".equals(name)
+			|| "clientLoopUpdate".equals(name)
+			|| "clientLoopDraw".equals(name)
+			|| "sceneRender".equals(name)
+			|| "sceneWorldCull".equals(name)
+			|| "sceneDepthExport".equals(name)
+			|| "sceneLegacyDraw".equals(name)
+			|| "openGLRender".equals(name)
+			|| "openGLWorld".equals(name)
+			|| "openGLWorldChunkUploadPhase".equals(name)
+			|| "openGLWorldChunkDrawPhase".equals(name)
+			|| "openGLWorldSprite".equals(name)
+			|| "openGLSpriteOverlay".equals(name)
+			|| "openGLSwap".equals(name);
 	}
 
 	private static void appendDiagnosticCounter(
@@ -2504,6 +2967,12 @@ public final class RenderTelemetry {
 			openGLWorldSpriteAnchorStats,
 			openGLWorldSpriteMatchedStats,
 			openGLWorldSpriteDrawnStats,
+			openGLWorldSpriteOwnerAnchorStats,
+			openGLWorldSpriteLegacyFallbackStats,
+			openGLWorldSpriteUnmatchedStats,
+			openGLWorldSpriteSnapshotGroupStats,
+			openGLWorldSpriteSnapshotLayerStats,
+			openGLWorldSpriteSnapshotCompatibilityFallbackStats,
 			openGLWorldEntityConsideredStats,
 			openGLWorldEntityDrawnStats,
 			openGLWorldEntityCulledStats
@@ -2668,6 +3137,9 @@ public final class RenderTelemetry {
 		private long windowCount;
 		private long windowTotal;
 		private long windowMax;
+		private final long[] windowSamples = new long[WINDOW_SAMPLE_LIMIT];
+		private int windowSampleIndex;
+		private int windowSampleCount;
 		private final long[] recentSamples = new long[RECENT_SAMPLE_LIMIT];
 		private int recentIndex;
 		private int recentCount;
@@ -2684,6 +3156,7 @@ public final class RenderTelemetry {
 			if (nanos > windowMax) {
 				windowMax = nanos;
 			}
+			recordWindowSample(nanos);
 			recordRecent(nanos);
 		}
 
@@ -2719,6 +3192,8 @@ public final class RenderTelemetry {
 			windowCount = 0L;
 			windowTotal = 0L;
 			windowMax = 0L;
+			windowSampleIndex = 0;
+			windowSampleCount = 0;
 		}
 
 		private void resetRecent() {
@@ -2738,6 +3213,144 @@ public final class RenderTelemetry {
 				recentTotal += nanos;
 			}
 			recentIndex = (recentIndex + 1) % recentSamples.length;
+		}
+
+		private void recordWindowSample(long nanos) {
+			windowSamples[windowSampleIndex] = nanos;
+			windowSampleIndex = (windowSampleIndex + 1) % windowSamples.length;
+			if (windowSampleCount < windowSamples.length) {
+				windowSampleCount++;
+			}
+		}
+
+		private StagePercentiles windowPercentiles() {
+			long[] samples = new long[windowSampleCount];
+			if (windowSampleCount < windowSamples.length) {
+				System.arraycopy(windowSamples, 0, samples, 0, windowSampleCount);
+			} else {
+				int tail = windowSamples.length - windowSampleIndex;
+				System.arraycopy(windowSamples, windowSampleIndex, samples, 0, tail);
+				System.arraycopy(windowSamples, 0, samples, tail, windowSampleIndex);
+			}
+			long[] sorted = Arrays.copyOf(samples, samples.length);
+			Arrays.sort(sorted);
+			return new StagePercentiles(
+				samples,
+				percentile(sorted, 0.50D),
+				percentile(sorted, 0.95D),
+				percentile(sorted, 0.99D));
+		}
+
+		private long percentile(long[] sorted, double proportion) {
+			if (sorted.length == 0) {
+				return 0L;
+			}
+			int index = (int) Math.ceil(proportion * sorted.length) - 1;
+			return sorted[Math.max(0, Math.min(sorted.length - 1, index))];
+		}
+	}
+
+	private static final class StagePercentiles {
+		private final long[] samplesNanos;
+		private final int sampleCount;
+		private final long p50Nanos;
+		private final long p95Nanos;
+		private final long p99Nanos;
+
+		private StagePercentiles(
+			long[] samplesNanos,
+			long p50Nanos,
+			long p95Nanos,
+			long p99Nanos) {
+			this.samplesNanos = samplesNanos;
+			this.sampleCount = samplesNanos.length;
+			this.p50Nanos = p50Nanos;
+			this.p95Nanos = p95Nanos;
+			this.p99Nanos = p99Nanos;
+		}
+	}
+
+	private static final class DiagnosticRuntimeSnapshot {
+		private final long sampleWallNanos;
+		private final long processCpuTimeNanos;
+		private final long processCpuTimeDeltaNanos;
+		private final double processLoad;
+		private final double systemLoad;
+		private final long freePhysicalMemoryBytes;
+		private final long totalPhysicalMemoryBytes;
+		private final long freeSwapBytes;
+		private final long totalSwapBytes;
+		private final boolean threadCpuSupported;
+		private final boolean threadAllocationSupported;
+		private final long javaThreadCpuTimeDeltaNanos;
+		private final long javaThreadAllocatedBytesDelta;
+		private final List<RuntimeThreadDelta> threadDeltas;
+
+		private DiagnosticRuntimeSnapshot(
+			long sampleWallNanos,
+			long processCpuTimeNanos,
+			long processCpuTimeDeltaNanos,
+			double processLoad,
+			double systemLoad,
+			long freePhysicalMemoryBytes,
+			long totalPhysicalMemoryBytes,
+			long freeSwapBytes,
+			long totalSwapBytes,
+			boolean threadCpuSupported,
+			boolean threadAllocationSupported,
+			long javaThreadCpuTimeDeltaNanos,
+			long javaThreadAllocatedBytesDelta,
+			List<RuntimeThreadDelta> threadDeltas) {
+			this.sampleWallNanos = sampleWallNanos;
+			this.processCpuTimeNanos = processCpuTimeNanos;
+			this.processCpuTimeDeltaNanos = processCpuTimeDeltaNanos;
+			this.processLoad = processLoad;
+			this.systemLoad = systemLoad;
+			this.freePhysicalMemoryBytes = freePhysicalMemoryBytes;
+			this.totalPhysicalMemoryBytes = totalPhysicalMemoryBytes;
+			this.freeSwapBytes = freeSwapBytes;
+			this.totalSwapBytes = totalSwapBytes;
+			this.threadCpuSupported = threadCpuSupported;
+			this.threadAllocationSupported = threadAllocationSupported;
+			this.javaThreadCpuTimeDeltaNanos = javaThreadCpuTimeDeltaNanos;
+			this.javaThreadAllocatedBytesDelta = javaThreadAllocatedBytesDelta;
+			this.threadDeltas = threadDeltas;
+		}
+	}
+
+	private static final class RuntimeThreadSample {
+		private final long id;
+		private final String name;
+		private final String state;
+		private final long cpuTimeNanos;
+		private final long allocatedBytes;
+
+		private RuntimeThreadSample(
+			long id,
+			String name,
+			String state,
+			long cpuTimeNanos,
+			long allocatedBytes) {
+			this.id = id;
+			this.name = name;
+			this.state = state;
+			this.cpuTimeNanos = cpuTimeNanos;
+			this.allocatedBytes = allocatedBytes;
+		}
+	}
+
+	private static final class RuntimeThreadDelta {
+		private final RuntimeThreadSample sample;
+		private final long cpuTimeDeltaNanos;
+		private final long allocatedBytesDelta;
+
+		private RuntimeThreadDelta(
+			RuntimeThreadSample sample,
+			long cpuTimeDeltaNanos,
+			long allocatedBytesDelta) {
+			this.sample = sample;
+			this.cpuTimeDeltaNanos = cpuTimeDeltaNanos;
+			this.allocatedBytesDelta = allocatedBytesDelta;
 		}
 	}
 

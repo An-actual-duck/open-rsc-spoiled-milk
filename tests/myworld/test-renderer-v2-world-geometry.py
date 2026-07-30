@@ -25,7 +25,9 @@ APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 RUNTIME_DEFAULTS = ROOT / "PC_Client/src/orsc/RendererRuntimeDefaults.java"
 SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 OPENGL_PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
+PRESENTATION_FRAME = ROOT / "PC_Client/src/orsc/Frame.java"
 OPENGL_WORLD_CHUNK_RENDERER = ROOT / "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java"
+REMASTER_SHADOW_CLASSIFIER = ROOT / "PC_Client/src/orsc/RemasterShadowClassifier.java"
 RESIDENT_CHUNK_READINESS = ROOT / "PC_Client/src/orsc/ResidentChunkReadiness.java"
 OPENGL_WORLD_SUBSYSTEM = (
     ROOT / "PC_Client/src/orsc/LwjglBindings.java",
@@ -104,7 +106,9 @@ def main() -> None:
     runtime_defaults = RUNTIME_DEFAULTS.read_text(encoding="utf-8")
     scaled_window = SCALED_WINDOW.read_text(encoding="utf-8")
     opengl_presenter = OPENGL_PRESENTER.read_text(encoding="utf-8")
+    frame = PRESENTATION_FRAME.read_text(encoding="utf-8")
     opengl_world_chunk_renderer = OPENGL_WORLD_CHUNK_RENDERER.read_text(encoding="utf-8")
+    remaster_shadow_classifier = REMASTER_SHADOW_CLASSIFIER.read_text(encoding="utf-8")
     opengl_world_chunk_renderer += "\n" + RESIDENT_CHUNK_READINESS.read_text(encoding="utf-8")
     opengl_presenter += "\n" + opengl_world_chunk_renderer
     opengl_presenter += "\n" + "\n".join(
@@ -245,8 +249,23 @@ def main() -> None:
 
     require(geometry_frame, "public final class Renderer3DFrame", "geometry frame class")
     require(geometry_frame, "public static final class FaceCommand", "geometry face command")
-    require(geometry_frame, "private final int[] worldFaceCountsByKind = new int[Renderer3DModelKind.values().length];", "per-kind face counters")
-    require(geometry_frame, "private final Map<Long, FaceCommand> worldFacesByModelFace = new HashMap<Long, FaceCommand>();", "world face lookup for sorted order")
+    require(geometry_frame, "private final int[] worldFaceCountsByKind;", "per-kind face counters")
+    require(geometry_frame, "private final Map<Long, FaceCommand> worldFacesByModelFace;", "world face lookup for sorted order")
+    require(geometry_frame, "private final WorldFaceStorage worldFaceStorage;", "pooled world face storage owner")
+    require(geometry_frame, "private static final int MAX_RETAINED_WORLD_FACE_STORAGES = 3;", "bounded world face storage pool")
+    require(geometry_frame, "private static final int MAX_POOLED_FACE_VERTEX_COUNT = 64;", "bounded pooled face vertex count")
+    require(geometry_frame, "private static synchronized WorldFaceStorage acquireWorldFaceStorage()", "thread-safe world face storage acquisition")
+    require(geometry_frame, "candidate.faceCommandCapacity > selected.faceCommandCapacity", "world face pool acquires the largest retained storage")
+    require(geometry_frame, "smallestRetained.faceCommandCapacity >= storage.faceCommandCapacity", "world face pool retains larger storage")
+    require(geometry_frame, "private final ArrayDeque<FaceCommand>[] reusableFacesByVertexCount;", "world faces pool by exact vertex count")
+    require(geometry_frame, "FaceCommand face = worldFaceStorage.acquireFaceCommand(vertexCount);", "world face command reuse")
+    require(geometry_frame, "private FaceCommand(int vertexCount)", "world face arrays allocate only on pool growth")
+    require(geometry_frame, "face.reset(", "reused world face state reset")
+    require(geometry_frame, "this.legacyDrawOrder = -1;", "reused face draw order reset")
+    require(geometry_frame, "this.clippedVertexCount = 0;", "reused face clipped geometry reset")
+    require(geometry_frame, "Arrays.fill(destinationU, 0.0f);", "reused face texture u reset")
+    require(geometry_frame, "Arrays.fill(destinationV, 0.0f);", "reused face texture v reset")
+    forbid(geometry_frame, "FaceCommand face = new FaceCommand(", "per-frame world face command allocation")
     require(geometry_frame, "private final List<SpriteAnchor> spriteAnchors = new ArrayList<SpriteAnchor>();", "sprite anchor storage")
     require(geometry_frame, "private Renderer3DDepthFrame depthFrame;", "depth frame storage")
     require(geometry_frame, "private Renderer3DMeshFrame meshFrame;", "mesh frame storage")
@@ -275,7 +294,7 @@ def main() -> None:
     require(geometry_frame, "void recordLegacyClippedGeometry(", "face clipped geometry writer")
     require(geometry_frame, "public int getLegacyDrawOrder()", "face legacy draw-order accessor")
     require(geometry_frame, "public static final class SpriteAnchor", "sprite anchor command")
-    require(geometry_frame, "void addSpriteAnchor(", "sprite anchor writer")
+    require(geometry_frame, "int addSpriteAnchor(", "indexed sprite anchor writer")
     require(geometry_frame, "public int getSpriteAnchorCount()", "sprite anchor count accessor")
     require(geometry_frame, "public List<SpriteAnchor> getSpriteAnchors()", "sprite anchor list accessor")
     require(geometry_frame, "private final int legacyDrawOrder;", "sprite anchor legacy draw-order storage")
@@ -293,7 +312,8 @@ def main() -> None:
     require(geometry_frame, "public int[] getRenderScreenX()", "face render screen x accessor")
     require(geometry_frame, "public float[] getRenderTextureU()", "face render texture u accessor")
     require(geometry_frame, "private void setLegacyClippedGeometry(", "face clipped geometry storage")
-    require(geometry_frame, "private static int[] copyLight(int[] source, int vertexCount)", "face unclipped light copy helper")
+    require(geometry_frame, "private static void copyLight(int[] source, int[] destination)", "reused face light copy helper")
+    require(geometry_frame, "System.arraycopy(source, 0, destination, 0, destination.length);", "reused face light copy")
     require(geometry_frame, "private static long worldFaceKey(int modelIndex, int faceId)", "face lookup key helper")
     require(geometry_frame, "private void populateTextureCoordinates(", "face texture coordinate derivation")
     require(geometry_frame, "double determinant = uu * vv - uv * uv;", "face texture basis solve")
@@ -339,7 +359,77 @@ def main() -> None:
     require(depth_frame, "private final int[] spriteClipRowMinX;", "depth sprite clip stores per-row minimum coverage")
     require(depth_frame, "private final int[] spriteClipRowMaxX;", "depth sprite clip stores per-row maximum coverage")
     require(depth_frame, "rowMinX = Math.max(rowMinX, bufferOriginX + maskRowMinX);", "depth raster clamps rows to sprite coverage")
-    require(depth_frame, "Arrays.fill(\n\t\t\t\t\t\tmask,", "sprite clip mask is built in window-local coordinates")
+    require(depth_frame, "row * maskWidth + localLeft,", "sprite clip mask is built in window-local coordinates")
+    require(depth_frame, "private static final int MAX_RETAINED_DEPTH_BUFFERS = 3;", "depth buffer pool remains bounded")
+    require(depth_frame, "private static synchronized DepthBuffers acquireDepthBuffers(", "depth buffer pool acquisition is thread-safe")
+    require(depth_frame, "candidate.capacity() < selected.capacity()", "depth buffer pool chooses the smallest adequate buffer")
+    require(depth_frame, "smallestRetained.capacity() >= buffers.capacity()", "depth buffer pool retains larger world buffers over login buffers")
+    require(depth_frame, "Arrays.fill(this.depth, 0, bufferSize, Integer.MAX_VALUE);", "reused depth range is reset")
+    require(depth_frame, "Arrays.fill(this.color, 0, bufferSize, 0);", "reused depth color range is reset")
+    require(depth_frame, "synchronized void release()", "depth buffers have idempotent release")
+    require(geometry_frame, "public void releaseDepthFrame()", "geometry frame releases client depth storage")
+    require(geometry_frame, "public void release()", "geometry frame releases all pooled frame storage")
+    require(frame, "renderer3DFrame.release();", "presented and dropped frames recycle all renderer frame storage")
+    require(opengl_presenter, "if (image == null || closed || disabled) {\n\t\t\tif (renderer3DFrame != null) {\n\t\t\t\trenderer3DFrame.release();", "unpresented frames recycle all renderer frame storage")
+    require(scaled_window, "if (gameImage == null) {\n\t\t\tif (renderer3DFrame != null) {\n\t\t\t\trenderer3DFrame.release();", "null software frames recycle renderer frame storage")
+    require(scaled_window, "} else if (renderer3DFrame != null) {\n\t\t\trenderer3DFrame.release();", "software-only frames recycle renderer frame storage")
+    require(opengl_presenter, "private final MethodHandle glColor4f;", "hot OpenGL color call uses a typed method handle")
+    require(opengl_presenter, "private final MethodHandle glVertex3f;", "hot OpenGL vertex call uses a typed method handle")
+    require(opengl_presenter, "glColor4f.invokeExact(red, green, blue, alpha);", "OpenGL colors avoid reflection argument allocation")
+    require(opengl_presenter, "glVertex3f.invokeExact(x, y, z);", "OpenGL vertices avoid reflection argument allocation")
+    forbid(opengl_presenter, "invoke(glColor4f, red, green, blue, alpha);", "OpenGL color reflection allocation")
+    forbid(opengl_presenter, "invoke(glVertex3f, x, y, z);", "OpenGL vertex reflection allocation")
+    hot_opengl_handles = (
+        ("glfwPollEvents", "glfwPollEvents.invokeExact();", "invoke(glfwPollEvents);"),
+        ("glClearColor", "glClearColor.invokeExact(red, green, blue, alpha);", "invoke(glClearColor, red, green, blue, alpha);"),
+        ("glClear", "glClear.invokeExact(mask);", "invoke(glClear, mask);"),
+        ("glEnable", "glEnable.invokeExact(capability);", "invoke(glEnable, capability);"),
+        ("glDisable", "glDisable.invokeExact(capability);", "invoke(glDisable, capability);"),
+        ("glPopAttrib", "glPopAttrib.invokeExact();", "invoke(glPopAttrib);"),
+        ("glPolygonOffset", "glPolygonOffset.invokeExact(factor, units);", "invoke(glPolygonOffset, factor, units);"),
+        ("glActiveTexture", "glActiveTexture.invokeExact(textureUnit);", "invoke(glActiveTexture, textureUnit);"),
+        ("glBindTexture", "glBindTexture.invokeExact(target, texture);", "invoke(glBindTexture, target, texture);"),
+        ("glTexParameteri", "glTexParameteri.invokeExact(target, name, value);", "invoke(glTexParameteri, target, name, value);"),
+        ("glTexSubImage2D", "glTexSubImage2D.invokeExact(", "invoke(glTexSubImage2D, target, level, xOffset, yOffset, width, height, format, type, pixels);"),
+        ("glBlendFunc", "glBlendFunc.invokeExact(sourceFactor, destinationFactor);", "invoke(glBlendFunc, sourceFactor, destinationFactor);"),
+        ("glAlphaFunc", "glAlphaFunc.invokeExact(function, reference);", "invoke(glAlphaFunc, function, reference);"),
+        ("glDepthMask", "glDepthMask.invokeExact(flag);", "invoke(glDepthMask, flag);"),
+        ("glMatrixMode", "glMatrixMode.invokeExact(mode);", "invoke(glMatrixMode, mode);"),
+        ("glLoadIdentity", "glLoadIdentity.invokeExact();", "invoke(glLoadIdentity);"),
+        ("glLoadMatrixf", "glLoadMatrixf.invokeExact(matrix);", "invoke(glLoadMatrixf, matrix);"),
+        ("glOrtho", "glOrtho.invokeExact(left, right, bottom, top, near, far);", "invoke(glOrtho, left, right, bottom, top, near, far);"),
+        ("glBindBuffer", "glBindBuffer.invokeExact(target, buffer);", "invoke(glBindBuffer, target, buffer);"),
+        ("glBufferDataFloat", "glBufferDataFloat.invokeExact(target, data, usage);", "invoke(glBufferDataFloat, target, data, usage);"),
+        ("glBufferDataInt", "glBufferDataInt.invokeExact(target, data, usage);", "invoke(glBufferDataInt, target, data, usage);"),
+        ("glEnableClientState", "glEnableClientState.invokeExact(array);", "invoke(glEnableClientState, array);"),
+        ("glDisableClientState", "glDisableClientState.invokeExact(array);", "invoke(glDisableClientState, array);"),
+        ("glVertexPointer", "glVertexPointer.invokeExact(size, type, stride, pointer);", "invoke(glVertexPointer, size, type, stride, pointer);"),
+        ("glColorPointer", "glColorPointer.invokeExact(size, type, stride, pointer);", "invoke(glColorPointer, size, type, stride, pointer);"),
+        ("glTexCoordPointer", "glTexCoordPointer.invokeExact(size, type, stride, pointer);", "invoke(glTexCoordPointer, size, type, stride, pointer);"),
+        ("glDrawElements", "glDrawElements.invokeExact(mode, count, type, indices);", "invoke(glDrawElements, mode, count, type, indices);"),
+        ("glBegin", "glBegin.invokeExact(mode);", "invoke(glBegin, mode);"),
+        ("glEnd", "glEnd.invokeExact();", "invoke(glEnd);"),
+        ("glUniform1i", "glUniform1i.invokeExact(location, value);", "invoke(glUniform1i, location, value);"),
+        ("glEnableVertexAttribArray", "glEnableVertexAttribArray.invokeExact(index);", "invoke(glEnableVertexAttribArray, index);"),
+        ("glDisableVertexAttribArray", "glDisableVertexAttribArray.invokeExact(index);", "invoke(glDisableVertexAttribArray, index);"),
+        ("glVertexAttribPointer", "glVertexAttribPointer.invokeExact(", "invoke(glVertexAttribPointer, index, size, type, normalized, stride, pointer);"),
+    )
+    for field_name, exact_call, reflective_call in hot_opengl_handles:
+        require(
+            opengl_presenter,
+            f"private final MethodHandle {field_name};",
+            f"hot OpenGL {field_name} call uses a typed method handle",
+        )
+        require(
+            opengl_presenter,
+            exact_call,
+            f"hot OpenGL {field_name} call avoids reflection argument allocation",
+        )
+        forbid(
+            opengl_presenter,
+            reflective_call,
+            f"hot OpenGL {field_name} reflection allocation",
+        )
     require(depth_frame, "depth[pixel] = z;", "depth write")
     require(depth_frame, "color[pixel] = shadeColor(face.getColor(), z, face.getModelKind());", "depth-tested color write")
     require(depth_frame, "pixelWriteCount++;", "depth pixel write counter")
@@ -621,7 +711,7 @@ def main() -> None:
     require(opengl_presenter, "private boolean isReasonableProjectedTriangle(", "OpenGL projected triangle guard")
     require(opengl_presenter, "buildPaddedRgbaPixels(", "OpenGL atlas border padding")
     require(opengl_presenter, "texelCenterU(placement.x)", "OpenGL atlas texel-center sampling")
-    require(opengl_presenter, 'glAlphaFunc = method(gl11Class, "glAlphaFunc", int.class, float.class);', "OpenGL alpha function binding")
+    require(opengl_presenter, 'glAlphaFunc = methodHandle(gl11Class, "glAlphaFunc", int.class, float.class);', "OpenGL alpha function binding")
     require(opengl_presenter, 'WORLD_SPRITES_VISIBLE_ENV = "SPOILED_MILK_OPENGL_WORLD_SPRITES_VISIBLE"', "OpenGL visible world sprites flag")
     require(opengl_presenter, 'log("OpenGL world sprite diagnostic active.");', "OpenGL world sprite startup log")
     require(opengl_presenter, "private OpenGLWorldTextureCache worldTextureCache;", "OpenGL shared world texture cache field")
@@ -693,12 +783,12 @@ def main() -> None:
     require(opengl_presenter, "glCreateShader = method(gl20Class, \"glCreateShader\", int.class);", "OpenGL shader creation binding")
     require(opengl_presenter, "glLinkProgram = method(gl20Class, \"glLinkProgram\", int.class);", "OpenGL shader program link binding")
     require(opengl_presenter, "glGetUniformLocation = method(gl20Class, \"glGetUniformLocation\", int.class, CharSequence.class);", "OpenGL shader uniform lookup binding")
-    require(opengl_presenter, "glUniform1i = method(gl20Class, \"glUniform1i\", int.class, int.class);", "OpenGL shader integer uniform binding")
+    require(opengl_presenter, "glUniform1i = methodHandle(gl20Class, \"glUniform1i\", int.class, int.class);", "OpenGL shader integer uniform binding")
     require(opengl_presenter, "glUniformMatrix4fv = method(gl20Class, \"glUniformMatrix4fv\", int.class, boolean.class, FloatBuffer.class);", "OpenGL shader matrix uniform binding")
     require(opengl_presenter, "glBindAttribLocation = method(gl20Class, \"glBindAttribLocation\", int.class, int.class, CharSequence.class);", "OpenGL shader attribute location binding")
-    require(opengl_presenter, "glEnableVertexAttribArray = method(gl20Class, \"glEnableVertexAttribArray\", int.class);", "OpenGL shader enable attribute array binding")
-    require(opengl_presenter, "glDisableVertexAttribArray = method(gl20Class, \"glDisableVertexAttribArray\", int.class);", "OpenGL shader disable attribute array binding")
-    require(opengl_presenter, "glVertexAttribPointer =\n\t\t\tmethod(gl20Class, \"glVertexAttribPointer\", int.class, int.class, int.class, boolean.class, int.class, long.class);", "OpenGL shader attribute pointer binding")
+    require(opengl_presenter, "glEnableVertexAttribArray = methodHandle(gl20Class, \"glEnableVertexAttribArray\", int.class);", "OpenGL shader enable attribute array binding")
+    require(opengl_presenter, "glDisableVertexAttribArray = methodHandle(gl20Class, \"glDisableVertexAttribArray\", int.class);", "OpenGL shader disable attribute array binding")
+    require(opengl_presenter, "glVertexAttribPointer =\n\t\t\tmethodHandle(", "OpenGL shader attribute pointer binding")
     require(opengl_presenter, "void glUseProgram(int program) throws Exception", "OpenGL shader program bind wrapper")
     require(opengl_presenter, "import orsc.graphics.three.Renderer3DModelKind;", "OpenGL model kind import")
     require(opengl_presenter, "import orsc.graphics.three.Renderer3DTextureData;", "OpenGL renderer-v2 texture import")
@@ -759,8 +849,10 @@ def main() -> None:
     require(opengl_presenter, "chunkTextureV(textureRegion, chunk.getVertexTextureV(vertex))", "OpenGL world chunk atlas texture-v upload")
     require(opengl_presenter, "putChunkTextureLight(unbakedRemasterBase ? 1.0f : textureLightFactor(legacyLight));", "OpenGL world chunk light upload")
     require(opengl_presenter, "textureCache.uploadReferencedTextures(frame, chunkFrame);", "OpenGL world chunk filled diagnostic texture atlas warmup")
-    require(opengl_presenter, "int fallbackTextureId = chunk.getTriangleFallbackColor(triangle);", "OpenGL world chunk fallback texture atlas discovery")
-    require(opengl_presenter, "&& isTextureBacked(frame, fallbackTextureId)", "OpenGL world chunk fallback resource upload gate")
+    require(world_chunk_frame, "if (textureId == LEGACY_TRANSPARENT_TEXTURE", "OpenGL world chunk fallback texture reference discovery")
+    require(world_chunk_frame, "references.add(triangleFallbackColors[triangle]);", "OpenGL world chunk fallback texture reference capture")
+    require(opengl_presenter, "int textureId = chunkFrame.getReferencedTextureId(index);", "OpenGL world chunk precomputed texture-reference upload")
+    require(opengl_presenter, "if (!isTextureBacked(frame, textureId))", "OpenGL world chunk referenced texture resource upload gate")
     require(opengl_presenter, "WorldChunkBufferKey.from(chunk)", "OpenGL world chunk cache key")
     require(opengl_presenter, "final boolean objectOnly;", "OpenGL world chunk cache key should separate object-only dynamic chunks")
     require(opengl_presenter, "chunk.isObjectChunk()", "OpenGL world chunk cache key should use explicit object chunk metadata")
@@ -784,6 +876,35 @@ def main() -> None:
             "Resident object chunks should use captured legacy object light directly")
     require(opengl_presenter, "wireGeometry || (!filled && !textured) ? gl.GL_LINE : gl.GL_FILL", "OpenGL wire geometry should use line polygon mode")
     require(opengl_presenter, "private static final float SHADOW_PROOF_DIRECTION_X", "OpenGL directional shadow proof should have a projected light direction")
+    require(
+        remaster_shadow_classifier,
+        "Renderer3DWorldChunkFrame worldChunkFrame,\n\t\tRemasterShadowRoofCoverage roofCoverage)",
+        "remaster shadow inventory should accept reusable roof coverage",
+    )
+    require(
+        opengl_world_chunk_renderer,
+        "RemasterShadowInventory inspectRemasterShadowInventory(",
+        "OpenGL chunk renderer should own cached shadow inventory coverage",
+    )
+    require(
+        opengl_world_chunk_renderer,
+        "remasterShadowRoofCoverage(chunkFrame, worldSignature))",
+        "OpenGL shadow inventory should reuse renderer roof coverage",
+    )
+    shadow_inventory_call = opengl_presenter.split(
+        "RemasterShadowInventory shadowInventory = RenderTelemetry.isEnabled()",
+        1,
+    )[1].split("RenderTelemetry.recordOpenGLRemasterShadowInventory(", 1)[0]
+    require(
+        shadow_inventory_call,
+        "? inspectRemasterShadowInventory(worldChunkFrame)",
+        "OpenGL per-frame telemetry should use cached shadow coverage",
+    )
+    require_absent(
+        shadow_inventory_call,
+        "? RemasterShadowClassifier.inspectInventory(worldChunkFrame)",
+        "OpenGL per-frame telemetry should not rebuild shadow coverage",
+    )
     require(opengl_presenter, "SPOILED_MILK_OPENGL_WORLD_CHUNK_SHADOW_PROOF", "OpenGL directional shadow proof should have an A/B runtime gate")
     require(opengl_presenter, "readBoolean(WORLD_CHUNKS_SHADOW_PROOF_PROPERTY, WORLD_CHUNKS_SHADOW_PROOF_ENV, false)", "OpenGL directional shadow proof should default off after FPS validation")
     require_absent(opengl_presenter, "drawProjectedShadowProof(", "OpenGL directional shadows should be baked into cached terrain lighting, not drawn as an overlay")
@@ -887,7 +1008,7 @@ def main() -> None:
     require(opengl_presenter, "private boolean shouldDrawChunkModelKind(\n\t\tRenderer3DFrame frame,", "OpenGL chunk roof visibility helper")
     require(opengl_presenter, "frame.isWorldChunkModelKindVisible(modelKind, chunk.getPlane())", "OpenGL chunk roof state source")
     require(opengl_presenter, "GL_STATIC_DRAW = constant(gl15Class, \"GL_STATIC_DRAW\");", "OpenGL static draw binding")
-    require(opengl_presenter, 'glLoadMatrixf = method(gl11Class, "glLoadMatrixf", FloatBuffer.class);', "OpenGL matrix load binding")
+    require(opengl_presenter, 'glLoadMatrixf = methodHandle(gl11Class, "glLoadMatrixf", FloatBuffer.class);', "OpenGL matrix load binding")
     require(opengl_presenter, "final class WorldMeshUploadSignature", "OpenGL upload signature class")
     require(opengl_presenter, "enum WorldMeshTriangleFilter", "OpenGL world mesh triangle filter")
     require(opengl_presenter, "STATIC_OBJECTS", "OpenGL object-only projected mesh filter")
@@ -1002,12 +1123,12 @@ def main() -> None:
     upload_only_block = opengl_presenter.split("if (!wireframeVisible && !texturedVisible) {", 1)[1].split("}\n\n\t\tgl.glEnable(gl.GL_DEPTH_TEST);", 1)[0]
     if "gl.glDisable(gl.GL_TEXTURE_2D)" in upload_only_block or "gl.glEnable(gl.GL_DEPTH_TEST)" in upload_only_block:
         raise AssertionError("OpenGL mesh upload-only path must not mutate visible GL texture/depth state")
-    require(opengl_presenter, "glBufferDataFloat = method(gl15Class, \"glBufferData\", int.class, FloatBuffer.class, int.class);", "LWJGL float buffer binding")
+    require(opengl_presenter, "glBufferDataFloat =\n\t\t\tmethodHandle(gl15Class, \"glBufferData\", int.class, FloatBuffer.class, int.class);", "LWJGL float buffer binding")
     require(opengl_presenter, "glPushAttrib = method(gl11Class, \"glPushAttrib\", int.class);", "LWJGL pass server-state binding")
     require(opengl_presenter, "glPushClientAttrib = method(gl11Class, \"glPushClientAttrib\", int.class);", "LWJGL pass client-state binding")
     require(opengl_presenter, "glPolygonMode = method(gl11Class, \"glPolygonMode\", int.class, int.class);", "LWJGL polygon mode binding")
-    require(opengl_presenter, "glTexCoordPointer = method(gl11Class, \"glTexCoordPointer\", int.class, int.class, int.class, long.class);", "LWJGL texture coordinate pointer binding")
-    require(opengl_presenter, 'glDepthMask = method(gl11Class, "glDepthMask", boolean.class);', "LWJGL depth-mask binding")
+    require(opengl_presenter, "glTexCoordPointer =\n\t\t\tmethodHandle(gl11Class, \"glTexCoordPointer\", int.class, int.class, int.class, long.class);", "LWJGL texture coordinate pointer binding")
+    require(opengl_presenter, 'glDepthMask = methodHandle(gl11Class, "glDepthMask", boolean.class);', "LWJGL depth-mask binding")
     require(opengl_presenter, "void glDepthMask(boolean flag) throws Exception", "LWJGL depth-mask wrapper")
     require(opengl_presenter, 'glColorMask = method(gl11Class, "glColorMask", boolean.class, boolean.class, boolean.class, boolean.class);', "LWJGL color-mask binding")
     require(opengl_presenter, "void glColorMask(boolean red, boolean green, boolean blue, boolean alpha) throws Exception", "LWJGL color-mask wrapper")
