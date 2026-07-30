@@ -526,7 +526,12 @@ come from one of these areas unless a concrete shadow regression appears:
   is compiled and guard-tested; the owner visual route passed, and all 12
   strict capture frames used the snapshot path for 4,852/4,852 layers with
   zero compatibility fallback, anchor/order violation, suspicious visibility,
-  failed frame, or client exception.
+  failed frame, or client exception. The follow-up JFR profile confirmed that
+  the old composite reconstruction was absent but used a materially denser
+  actor scene, so its raw totals are not a direct performance delta. Measured
+  per-group container/iterator allocation was removed at `87aed9cbf` with
+  indexed layer storage; owner review and another 12 strict frames accepted
+  6,158/6,158 exact layers across 1,144 groups with the same zero-error gates.
 - Quality settings: presets exist, but settings do not yet consistently reduce
   underlying renderer work.
 - Tooling: F6 telemetry is good for live diagnosis, but capture replay and
@@ -561,14 +566,18 @@ come from one of these areas unless a concrete shadow regression appears:
    architecture target or investigating a real regression.
 6. Continue the explicit renderer-v2 scene/entity boundary. The first slice
    preserves exact anchor ownership through the legacy capture stream. The
-   second candidate groups those exact captured layers in a renderer-owned
+   accepted second slice groups those exact captured layers in a renderer-owned
    frame snapshot and bypasses per-frame command-wrapper/list/sort
-   reconstruction when complete validation passes. Accept it under dense
-   actors, combat, ground items, and effects, then move players, NPCs, ground
-   items, projectiles, and effects from captured screen-space layers toward
-   direct world-space inputs, parity-complete persistent texture ownership,
-   ordered batching, and culling. Retire matching legacy scene
-   sort/rotation/removal and capture work incrementally as parity is proven.
+   reconstruction when complete validation passes; its own measured
+   container/iterator allocation has also been removed. Next, design the
+   direct world-space input contract and migrate the simplest category first
+   behind exact parity/fallback checks. Ground items are the preferred first
+   slice because they are single-layer submissions without multipart character
+   composition. Then move players, NPCs, projectiles, and effects from
+   captured screen-space layers toward direct world-space inputs,
+   parity-complete persistent texture ownership, ordered batching, and
+   culling. Retire matching legacy scene sort/rotation/removal and capture work
+   incrementally as parity is proven.
 7. Turn quality settings into real work culling: entity distance, draw distance,
    roof visibility, sprite/effect distance, and weak-hardware presets should
    reduce built/submitted/drawn work.

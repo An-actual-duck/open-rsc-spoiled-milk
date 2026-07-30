@@ -1365,6 +1365,20 @@ they are not visual requirements for the baseline.
       character groups, and 96 item groups with zero compatibility fallback,
       invalid anchor/order, suspicious visibility, failed frame, or client
       exception.
+- [x] Profile the accepted grouped-snapshot endpoint. The former composite
+      command/list/sort reconstruction recorded no allocation sample and
+      compatibility fallback stayed zero. The new scene contained roughly
+      three to five times as many sprite layers as the earlier profile, so raw
+      frame-time, CPU, and allocation totals are not treated as a direct
+      before/after delta.
+- [x] Remove the grouped snapshot's measured per-anchor list, read-only
+      wrapper, and iterator allocation with compact indexed layer storage.
+      Checkpoint `87aed9cbf` preserves exact command identity/order and the
+      all-or-nothing typed fallback. Compilation, the full renderer suite,
+      owner visual review, and 12 strict frames passed; all 6,158 layers used
+      exact snapshot ownership across 1,144 groups with zero fallback,
+      invalid anchor/order, suspicious visibility, failed frame, or client
+      exception.
 - [x] Add the first live camera-space world-sprite depth path. It back-projects
       each existing command rectangle at the legacy sprite face's interpolated
       top/bottom camera depth, preserving exact screen framing and skew while
