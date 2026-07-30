@@ -31,7 +31,13 @@ def main() -> None:
 
     require(world, "private void publishTerrainProduct(RSModel worldMod)",
             "Terrain model publication should be isolated behind a product boundary")
-    require(world, "private TerrainModelInput buildTerrainModelInput(int plane, Sector[] sourceSectors)",
+    require(
+        world,
+        "private TerrainModelInput buildTerrainModelInput(\n"
+        "\t\tint plane,\n"
+        "\t\tint sectionX,\n"
+        "\t\tint sectionY,\n"
+        "\t\tSector[] sourceSectors)",
             "Terrain model input should be built from an explicit sector-window source")
     require(world, "private TerrainModelInput loadTerrainModelInput(int plane, int sectionX, int sectionY)",
             "Terrain model input should be loaded through the active-window cache")
@@ -197,7 +203,10 @@ def main() -> None:
             "GPU-ready chunk meshes should preserve per-vertex light inputs")
     require(world, "Float.floatToIntBits(value)",
             "GPU-ready chunk mesh upload signatures should include texture coordinate bits")
-    require(world, "this.renderer3DWorldChunkFrame = this.buildRenderer3DWorldChunkFrame(plane, x, z);",
+    require(
+        world,
+        "this.renderer3DWorldChunkFrame =\n"
+        "\t\t\t\tthis.buildRenderer3DWorldChunkFrame(plane, x, z);",
             "Active section loads should refresh the renderer-v2 chunk snapshot")
     require(world, "private Renderer3DWorldChunkFrame.ChunkMesh toRenderer3DWorldChunkMesh()",
             "GPU-ready chunk meshes should convert to a frame-safe snapshot")
@@ -293,7 +302,13 @@ def main() -> None:
 
     require(world, "CpuSectionWindow window = loadCpuSectionWindow(plane, sectionX, sectionY);",
             "Terrain model input cache should build from the CPU section-window cache")
-    require(world, "TerrainModelInput built = buildTerrainModelInput(plane, window.sectors);",
+    require(
+        world,
+        "TerrainModelInput built = buildTerrainModelInput(\n"
+        "\t\t\tplane,\n"
+        "\t\t\tsectionX,\n"
+        "\t\t\tsectionY,\n"
+        "\t\t\twindow.sectors);",
             "Terrain model input should be built from cached CPU window sectors")
     require(
         world,

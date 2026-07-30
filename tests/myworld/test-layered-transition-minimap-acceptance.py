@@ -271,6 +271,60 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             self.world,
         )
 
+    def test_prediction_prepares_a_bounded_activation_mesh(self):
+        self.assertIn(
+            "PREPARED_RENDERER_CHUNK_CACHE_LIMIT = 4",
+            self.world,
+        )
+        self.assertIn(
+            "return size() > PREPARED_RENDERER_CHUNK_CACHE_LIMIT;",
+            self.world,
+        )
+        prebuild = self.world.split(
+            "private NativeWorldModelPrebuild "
+            "prebuildNativeWorldModelProduct(",
+            1,
+        )[1].split(
+            "private static String formatMillis(",
+            1,
+        )[0]
+        self.assertIn(
+            "prepareRenderer3DWorldChunkMesh(product, true);",
+            prebuild,
+        )
+        activation = self.world.split(
+            "private void addRenderer3DWorldChunkMesh(",
+            1,
+        )[1].split(
+            "private Renderer3DWorldChunkFrame.ChunkMesh\n"
+            "\t\tprepareRenderer3DWorldChunkMesh(",
+            1,
+        )[0]
+        self.assertIn(
+            "prepareRenderer3DWorldChunkMesh(product, requireTerrain);",
+            activation,
+        )
+        self.assertNotIn(
+            "product.gpuChunkMesh.toRenderer3DWorldChunkMesh()",
+            activation,
+        )
+        preparation = self.world.split(
+            "private Renderer3DWorldChunkFrame.ChunkMesh\n"
+            "\t\tprepareRenderer3DWorldChunkMesh(",
+            1,
+        )[1].split(
+            "private static int[] worldEditorTerrainGridHeights(",
+            1,
+        )[0]
+        self.assertIn(
+            "synchronized (preparedRendererChunkCacheLock)",
+            preparation,
+        )
+        self.assertIn(
+            "preparedRendererChunkCache.put(key, chunk);",
+            preparation,
+        )
+
     def test_protocol_two_publishes_a_complete_terrain_horizon(self):
         self.assertIn(
             'terrainOnly ? "terrain-ready" : "structure"',

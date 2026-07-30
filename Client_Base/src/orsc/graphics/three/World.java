@@ -67,6 +67,7 @@ public final class World {
 	private static final int WALL_MODEL_INPUT_CACHE_LIMIT = 24;
 	private static final int ROOF_MODEL_INPUT_CACHE_LIMIT = 24;
 	private static final int WORLD_MODEL_PRODUCT_CACHE_LIMIT = 48;
+	private static final int PREPARED_RENDERER_CHUNK_CACHE_LIMIT = 4;
 	private static final int LAVA_GLOW_OVERLAY_ID = 11;
 	private static final int LAVA_GLOW_COLOR = 0xff5a18;
 	private static final int LAVA_GLOW_RADIUS = 384;
@@ -88,6 +89,7 @@ public final class World {
 	private final Object wallModelInputCacheLock = new Object();
 	private final Object roofModelInputCacheLock = new Object();
 	private final Object worldModelProductCacheLock = new Object();
+	private final Object preparedRendererChunkCacheLock = new Object();
 	private final Object tileArchiveLock = new Object();
 	private final Object worldEditorTerrainPatchLock = new Object();
 	private final Map<String, Map<Integer, TerrainPatch>> worldEditorTerrainPatches =
@@ -147,6 +149,23 @@ public final class World {
 				return size() > WORLD_MODEL_PRODUCT_CACHE_LIMIT;
 			}
 		};
+	/*
+	 * Converting a product into its renderer form clones the large mesh arrays
+	 * and derives normals. Native prediction performs that work before the
+	 * boundary is crossed, while this deliberately small cache keeps only the
+	 * current and immediately useful neighboring results resident.
+	 */
+	private final Map<PreparedRendererChunkKey, Renderer3DWorldChunkFrame.ChunkMesh>
+		preparedRendererChunkCache =
+			new LinkedHashMap<PreparedRendererChunkKey, Renderer3DWorldChunkFrame.ChunkMesh>(
+				PREPARED_RENDERER_CHUNK_CACHE_LIMIT, 0.75F, true) {
+				@Override
+				protected boolean removeEldestEntry(
+					Map.Entry<PreparedRendererChunkKey,
+						Renderer3DWorldChunkFrame.ChunkMesh> eldest) {
+					return size() > PREPARED_RENDERER_CHUNK_CACHE_LIMIT;
+				}
+			};
 	private final Set<String> cpuSectionWindowBuildsInFlight = new HashSet<String>();
 	private final Set<String> terrainModelInputBuildsInFlight = new HashSet<String>();
 	private final Set<String> wallModelInputBuildsInFlight = new HashSet<String>();
@@ -949,6 +968,7 @@ public final class World {
 				}
 			}
 		}
+		prepareRenderer3DWorldChunkMesh(product, true);
 		return new NativeWorldModelPrebuild(
 			productCacheHit,
 			System.nanoTime() - buildStart);
@@ -1177,6 +1197,7 @@ public final class World {
 				}
 			}
 		}
+		prepareRenderer3DWorldChunkMesh(product, true);
 		long elapsedNanos = System.nanoTime() - buildStart;
 		NativeLayeredTerrainPrebuildResult result =
 			new NativeLayeredTerrainPrebuildResult(
@@ -2415,11 +2436,44 @@ public final class World {
 		if (product == null || !product.hasTerrainIfNeeded(requireTerrain) || product.gpuChunkMesh == null) {
 			return;
 		}
-		Renderer3DWorldChunkFrame.ChunkMesh chunk = product.gpuChunkMesh.toRenderer3DWorldChunkMesh();
-		if (requireTerrain && product.terrainInput != null) {
-			chunk.setWorldEditorTerrainGrid(LOCAL_TILE_COUNT, worldEditorTerrainGridHeights(product.terrainInput));
+		Renderer3DWorldChunkFrame.ChunkMesh chunk =
+			prepareRenderer3DWorldChunkMesh(product, requireTerrain);
+		if (chunk != null) {
+			chunks.add(chunk);
 		}
-		chunks.add(chunk);
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh
+		prepareRenderer3DWorldChunkMesh(
+			WorldModelProduct product,
+			boolean includeTerrainGrid) {
+		if (product == null || product.gpuChunkMesh == null) {
+			return null;
+		}
+		PreparedRendererChunkKey key = new PreparedRendererChunkKey(
+			product.gpuChunkMesh,
+			includeTerrainGrid);
+		/*
+		 * Keep construction inside the cache monitor. Prediction and activation
+		 * may meet at a boundary; serializing the rare miss prevents both
+		 * threads from cloning and normalizing the same large mesh at once.
+		 * A hit only holds this private four-entry lock for one map lookup.
+		 */
+		synchronized (preparedRendererChunkCacheLock) {
+			Renderer3DWorldChunkFrame.ChunkMesh chunk =
+				preparedRendererChunkCache.get(key);
+			if (chunk != null) {
+				return chunk;
+			}
+			chunk = product.gpuChunkMesh.toRenderer3DWorldChunkMesh();
+			if (includeTerrainGrid && product.terrainInput != null) {
+				chunk.setWorldEditorTerrainGrid(
+					LOCAL_TILE_COUNT,
+					worldEditorTerrainGridHeights(product.terrainInput));
+			}
+			preparedRendererChunkCache.put(key, chunk);
+			return chunk;
+		}
 	}
 
 	private static int[] worldEditorTerrainGridHeights(TerrainModelInput input) {
@@ -5637,6 +5691,59 @@ public final class World {
 
 		private boolean hasTerrainIfNeeded(boolean includeTerrain) {
 			return !includeTerrain || terrainInput != null;
+		}
+	}
+
+	private static final class PreparedRendererChunkKey {
+		private final int plane;
+		private final int centerSectionX;
+		private final int centerSectionY;
+		private final int originWorldX;
+		private final int originWorldZ;
+		private final long storageSignature;
+		private final boolean terrainGrid;
+
+		private PreparedRendererChunkKey(
+			WorldGpuChunkMesh mesh,
+			boolean terrainGrid) {
+			this.plane = mesh.plane;
+			this.centerSectionX = mesh.centerSectionX;
+			this.centerSectionY = mesh.centerSectionY;
+			this.originWorldX = mesh.originWorldX;
+			this.originWorldZ = mesh.originWorldZ;
+			this.storageSignature = mesh.signature;
+			this.terrainGrid = terrainGrid;
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (this == other) {
+				return true;
+			}
+			if (!(other instanceof PreparedRendererChunkKey)) {
+				return false;
+			}
+			PreparedRendererChunkKey key =
+				(PreparedRendererChunkKey) other;
+			return plane == key.plane
+				&& centerSectionX == key.centerSectionX
+				&& centerSectionY == key.centerSectionY
+				&& originWorldX == key.originWorldX
+				&& originWorldZ == key.originWorldZ
+				&& storageSignature == key.storageSignature
+				&& terrainGrid == key.terrainGrid;
+		}
+
+		@Override
+		public int hashCode() {
+			int result = plane;
+			result = 31 * result + centerSectionX;
+			result = 31 * result + centerSectionY;
+			result = 31 * result + originWorldX;
+			result = 31 * result + originWorldZ;
+			result = 31 * result
+				+ (int) (storageSignature ^ storageSignature >>> 32);
+			return 31 * result + (terrainGrid ? 1 : 0);
 		}
 	}
 
