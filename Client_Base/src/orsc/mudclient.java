@@ -70,6 +70,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -117,6 +123,8 @@ public final class mudclient implements Runnable {
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_PRIME = 0x100000001b3L;
 	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
 	private static final int RESIDENT_ANIMATED_OBJECT_CHUNK_TILE_SIZE = 8;
+	private static final int RESIDENT_OBJECT_BUILD_WORKER_LIMIT = 4;
+	private static final int RESIDENT_OBJECT_PARALLEL_BUILD_MINIMUM = 8;
 	public static final int spriteMedia = 2000;
 	public static final int spriteUtil = 2100;
 	public static final int spriteItem = 2150;
@@ -887,6 +895,25 @@ public final class mudclient implements Runnable {
 	private boolean hasCompletedInitialRegionLoad = false;
 	private final Map<Long, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
 		new HashMap<Long, ResidentObjectChunkCacheEntry>();
+	private final ExecutorService residentObjectBuildExecutor =
+		Executors.newFixedThreadPool(
+			residentObjectBuildWorkerCount(),
+			new ThreadFactory() {
+				private int nextWorker = 1;
+
+				@Override
+				public Thread newThread(Runnable runnable) {
+					Thread thread = new Thread(
+						runnable,
+						"resident-object-build-" + nextWorker++);
+					thread.setDaemon(true);
+					thread.setPriority(
+						Math.max(
+							Thread.MIN_PRIORITY,
+							Thread.NORM_PRIORITY - 1));
+					return thread;
+				}
+			});
 	private final Set<Long> cachedResidentObjectChunkCurrentViewCells =
 		new HashSet<Long>();
 	private final Set<Long> cachedResidentObjectChunkPreviousViewCells =
@@ -3957,6 +3984,14 @@ public final class mudclient implements Runnable {
 		return model;
 	}
 
+	private static int residentObjectBuildWorkerCount() {
+		return Math.max(
+			1,
+			Math.min(
+				RESIDENT_OBJECT_BUILD_WORKER_LIMIT,
+				Runtime.getRuntime().availableProcessors() - 1));
+	}
+
 	private Renderer3DWorldChunkFrame appendResidentObjectChunkFrame(Renderer3DWorldChunkFrame baseFrame) {
 		if (!Renderer3DSettings.canUseResidentObjectChunks()) {
 			clearResidentObjectChunkCache();
@@ -3995,11 +4030,29 @@ public final class mudclient implements Runnable {
 		}
 		ArrayList<Renderer3DWorldChunkFrame.ChunkMesh> chunks =
 			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(baseFrame.getChunks());
+		List<Renderer3DWorldChunkFrame.ChunkMesh> objectChunks =
+			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
+				Collections.nCopies(
+					objectInputs.size(),
+					(Renderer3DWorldChunkFrame.ChunkMesh) null));
+		List<PendingResidentObjectChunkBuild> pendingBuilds =
+			new ArrayList<PendingResidentObjectChunkBuild>();
 		Set<Long> activeCells = new HashSet<Long>();
 		int cacheHits = 0;
 		int cacheMisses = 0;
 		long meshBuildNanos = 0L;
-		for (ResidentObjectChunkInput input : objectInputs) {
+		long meshCpuNanos = 0L;
+		long parallelBuildStartNanos = 0L;
+		boolean parallelBuild =
+			staticPresentationRebuildPending
+				&& objectInputs.size()
+					>= RESIDENT_OBJECT_PARALLEL_BUILD_MINIMUM
+				&& residentObjectBuildWorkerCount() > 1;
+		for (int inputIndex = 0;
+				inputIndex < objectInputs.size();
+				inputIndex++) {
+			final ResidentObjectChunkInput input =
+				objectInputs.get(inputIndex);
 			activeCells.add(input.cellKey);
 			ResidentObjectChunkCacheEntry cached = this.cachedResidentObjectChunks.get(input.cellKey);
 			Renderer3DWorldChunkFrame.ChunkMesh objectChunk;
@@ -4042,25 +4095,57 @@ public final class mudclient implements Runnable {
 				objectChunk = null;
 			}
 			if (cached == null) {
-				long meshStartNanos = System.nanoTime();
-				objectChunk = buildResidentObjectChunkMesh(input);
-				meshBuildNanos += System.nanoTime() - meshStartNanos;
 				cacheMisses++;
-				if (objectChunk == null || objectChunk.getTriangleCount() <= 0) {
-					debugResidentObjectChunkBuild("resident-chunk-empty", input, objectChunk);
-					this.cachedResidentObjectChunks.remove(input.cellKey);
+				if (parallelBuild) {
+					if (pendingBuilds.isEmpty()) {
+						parallelBuildStartNanos =
+							System.nanoTime();
+					}
+					Future<ResidentObjectChunkBuildResult> future =
+						this.residentObjectBuildExecutor.submit(
+							new Callable<ResidentObjectChunkBuildResult>() {
+								@Override
+								public ResidentObjectChunkBuildResult call() {
+									return buildResidentObjectChunkMeshMeasured(
+										input);
+								}
+							});
+					pendingBuilds.add(
+						new PendingResidentObjectChunkBuild(
+							inputIndex,
+							input,
+							future));
 					continue;
 				}
-				debugResidentObjectChunkBuild("resident-chunk-build", input, objectChunk);
-				this.cachedResidentObjectChunks.put(
-					input.cellKey,
-					new ResidentObjectChunkCacheEntry(
-						input.cacheKey,
-						objectChunk,
-						this.midRegionBaseX,
-						this.midRegionBaseZ));
+				ResidentObjectChunkBuildResult result =
+					buildResidentObjectChunkMeshMeasured(input);
+				meshBuildNanos += result.durationNanos;
+				meshCpuNanos += result.durationNanos;
+				objectChunk = acceptResidentObjectChunkBuild(
+					input, result.chunk);
 			}
-			chunks.add(objectChunk);
+			objectChunks.set(inputIndex, objectChunk);
+		}
+		for (PendingResidentObjectChunkBuild pending
+				: pendingBuilds) {
+			ResidentObjectChunkBuildResult result =
+				awaitResidentObjectChunkBuild(pending.future);
+			meshCpuNanos += result.durationNanos;
+			objectChunks.set(
+				pending.inputIndex,
+				acceptResidentObjectChunkBuild(
+					pending.input,
+					result.chunk));
+		}
+		if (!pendingBuilds.isEmpty()) {
+			meshBuildNanos =
+				System.nanoTime() - parallelBuildStartNanos;
+		}
+		for (Renderer3DWorldChunkFrame.ChunkMesh objectChunk
+				: objectChunks) {
+			if (objectChunk != null) {
+				chunks.add(objectChunk);
+			}
 		}
 		this.cachedResidentObjectChunkCurrentViewCells.clear();
 		this.cachedResidentObjectChunkCurrentViewCells.addAll(activeCells);
@@ -4087,6 +4172,14 @@ public final class mudclient implements Runnable {
 					this.cachedResidentObjectChunks.size());
 				event.number("inputDurationNanos", inputNanos);
 				event.number("meshDurationNanos", meshBuildNanos);
+				event.number(
+					"meshCpuDurationNanos",
+					meshCpuNanos);
+				event.bool("meshParallel", parallelBuild);
+				event.number(
+					"meshWorkers",
+					parallelBuild
+						? residentObjectBuildWorkerCount() : 1);
 				RendererDiagnosticSession.writeEventRecord(event);
 			}
 		}
@@ -4332,6 +4425,88 @@ public final class mudclient implements Runnable {
 			input.models,
 			input.modelCount,
 			input.chunkRole);
+	}
+
+	private ResidentObjectChunkBuildResult
+		buildResidentObjectChunkMeshMeasured(
+			ResidentObjectChunkInput input) {
+		long startNanos = System.nanoTime();
+		Renderer3DWorldChunkFrame.ChunkMesh chunk =
+			buildResidentObjectChunkMesh(input);
+		return new ResidentObjectChunkBuildResult(
+			chunk,
+			System.nanoTime() - startNanos);
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh
+		acceptResidentObjectChunkBuild(
+			ResidentObjectChunkInput input,
+			Renderer3DWorldChunkFrame.ChunkMesh objectChunk) {
+		if (objectChunk == null
+			|| objectChunk.getTriangleCount() <= 0) {
+			debugResidentObjectChunkBuild(
+				"resident-chunk-empty",
+				input,
+				objectChunk);
+			this.cachedResidentObjectChunks.remove(input.cellKey);
+			return null;
+		}
+		debugResidentObjectChunkBuild(
+			"resident-chunk-build",
+			input,
+			objectChunk);
+		this.cachedResidentObjectChunks.put(
+			input.cellKey,
+			new ResidentObjectChunkCacheEntry(
+				input.cacheKey,
+				objectChunk,
+				this.midRegionBaseX,
+				this.midRegionBaseZ));
+		return objectChunk;
+	}
+
+	private static ResidentObjectChunkBuildResult
+		awaitResidentObjectChunkBuild(
+			Future<ResidentObjectChunkBuildResult> future) {
+		try {
+			return future.get();
+		} catch (InterruptedException interrupted) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException(
+				"Interrupted while building resident object chunks",
+				interrupted);
+		} catch (ExecutionException failed) {
+			throw new IllegalStateException(
+				"Resident object chunk build failed",
+				failed.getCause());
+		}
+	}
+
+	private static final class ResidentObjectChunkBuildResult {
+		private final Renderer3DWorldChunkFrame.ChunkMesh chunk;
+		private final long durationNanos;
+
+		private ResidentObjectChunkBuildResult(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			long durationNanos) {
+			this.chunk = chunk;
+			this.durationNanos = durationNanos;
+		}
+	}
+
+	private static final class PendingResidentObjectChunkBuild {
+		private final int inputIndex;
+		private final ResidentObjectChunkInput input;
+		private final Future<ResidentObjectChunkBuildResult> future;
+
+		private PendingResidentObjectChunkBuild(
+			int inputIndex,
+			ResidentObjectChunkInput input,
+			Future<ResidentObjectChunkBuildResult> future) {
+			this.inputIndex = inputIndex;
+			this.input = input;
+			this.future = future;
+		}
 	}
 
 	private void clearResidentObjectChunkCache() {
