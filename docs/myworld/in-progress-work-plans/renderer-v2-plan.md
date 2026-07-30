@@ -1391,11 +1391,14 @@ they are not visual requirements for the baseline.
       parity state, mismatch reason, and whether direct presentation was
       selected. Noted item sprite id `-1` is explicitly classified as a ground
       item instead of falling outside the world-sprite path.
-- [ ] Accept the direct ground-item slice only after a private visual route and
+- [x] Accept the direct ground-item slice after a private visual route and
       strict capture cover ordinary, stacked, shifted/remastered, and noted
       items with preserved pickup/right-click/nameplate behavior, all item
       groups parity-exact and active, and zero mismatch or compatibility
-      fallback.
+      fallback. Session `session-20260730-150823-170397` passed all 12 strict
+      frames: 72/72 item groups across six sources had direct inputs, exact
+      parity, and direct presentation, with zero mismatch, fallback, failed
+      frame, or client exception. Owner visual and interaction review passed.
 - [ ] Once accepted, isolate ground-item nameplate bookkeeping from legacy
       sprite raster/capture, measure the remaining redundant work, and retire
       it in a separate guarded milestone before starting multipart characters.
