@@ -885,8 +885,8 @@ public final class mudclient implements Runnable {
 			new LayeredScenePresentationLatch();
 	private boolean regionLoadNeedsHardPlayerReset = false;
 	private boolean hasCompletedInitialRegionLoad = false;
-	private final Map<Integer, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
-		new HashMap<Integer, ResidentObjectChunkCacheEntry>();
+	private final Map<Long, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
+		new HashMap<Long, ResidentObjectChunkCacheEntry>();
 	private List<SceneBaselineState.Record>
 		staticPresentationSceneryRecords =
 			Collections.emptyList();
@@ -3747,6 +3747,7 @@ public final class mudclient implements Runnable {
 			Collections.emptyList();
 		this.staticPresentationRevision++;
 		invalidateStaticScenePresentationModels();
+		clearResidentObjectChunkCache();
 	}
 
 	private void invalidateStaticScenePresentationModels() {
@@ -3754,7 +3755,6 @@ public final class mudclient implements Runnable {
 		this.builtStaticPresentationRevision = -1L;
 		this.builtStaticPresentationBaseX = Integer.MIN_VALUE;
 		this.builtStaticPresentationBaseZ = Integer.MIN_VALUE;
-		clearResidentObjectChunkCache();
 	}
 
 	private void ensureStaticScenePresentationModels() {
@@ -3810,7 +3810,6 @@ public final class mudclient implements Runnable {
 			this.staticPresentationRevision;
 		this.builtStaticPresentationBaseX = this.midRegionBaseX;
 		this.builtStaticPresentationBaseZ = this.midRegionBaseZ;
-		clearResidentObjectChunkCache();
 		long buildNanos = System.nanoTime() - buildStartNanos;
 		String summary = "STATIC_SCENE_PRESENTATION"
 			+ " records="
@@ -3977,7 +3976,7 @@ public final class mudclient implements Runnable {
 		}
 		ArrayList<Renderer3DWorldChunkFrame.ChunkMesh> chunks =
 			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(baseFrame.getChunks());
-		Set<Integer> activeCells = new HashSet<Integer>();
+		Set<Long> activeCells = new HashSet<Long>();
 		int cacheHits = 0;
 		int cacheMisses = 0;
 		long meshBuildNanos = 0L;
@@ -3986,9 +3985,43 @@ public final class mudclient implements Runnable {
 			ResidentObjectChunkCacheEntry cached = this.cachedResidentObjectChunks.get(input.cellKey);
 			Renderer3DWorldChunkFrame.ChunkMesh objectChunk;
 			if (cached != null && cached.cacheKey == input.cacheKey) {
-				objectChunk = cached.chunk;
-				cacheHits++;
+				if (input.chunkRole
+						== Renderer3DWorldChunkFrame
+							.CHUNK_ROLE_STATIC_OBJECTS) {
+					int offsetX = Math.multiplyExact(
+						cached.presentationBaseX - this.midRegionBaseX,
+						this.tileSize);
+					int offsetZ = Math.multiplyExact(
+						cached.presentationBaseZ - this.midRegionBaseZ,
+						this.tileSize);
+					objectChunk =
+						cached.chunk.rebaseStaticObjectPresentation(
+							input.anchor.getCenterSectionX(),
+							input.anchor.getCenterSectionY(),
+							offsetX,
+							offsetZ);
+					this.cachedResidentObjectChunks.put(
+						input.cellKey,
+						new ResidentObjectChunkCacheEntry(
+							input.cacheKey,
+							objectChunk,
+							this.midRegionBaseX,
+							this.midRegionBaseZ));
+					cacheHits++;
+				} else if (cached.presentationBaseX
+						== this.midRegionBaseX
+					&& cached.presentationBaseZ
+						== this.midRegionBaseZ) {
+					objectChunk = cached.chunk;
+					cacheHits++;
+				} else {
+					cached = null;
+					objectChunk = null;
+				}
 			} else {
+				objectChunk = null;
+			}
+			if (cached == null) {
 				long meshStartNanos = System.nanoTime();
 				objectChunk = buildResidentObjectChunkMesh(input);
 				meshBuildNanos += System.nanoTime() - meshStartNanos;
@@ -4001,7 +4034,11 @@ public final class mudclient implements Runnable {
 				debugResidentObjectChunkBuild("resident-chunk-build", input, objectChunk);
 				this.cachedResidentObjectChunks.put(
 					input.cellKey,
-					new ResidentObjectChunkCacheEntry(input.cacheKey, objectChunk));
+					new ResidentObjectChunkCacheEntry(
+						input.cacheKey,
+						objectChunk,
+						this.midRegionBaseX,
+						this.midRegionBaseZ));
 			}
 			chunks.add(objectChunk);
 		}
@@ -4024,8 +4061,8 @@ public final class mudclient implements Runnable {
 
 	private List<ResidentObjectChunkInput> buildResidentObjectChunkInputs(Renderer3DWorldChunkFrame baseFrame) {
 		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
-		Map<Integer, ResidentObjectChunkInputBuilder> builders =
-			new TreeMap<Integer, ResidentObjectChunkInputBuilder>();
+		Map<Long, ResidentObjectChunkInputBuilder> builders =
+			new TreeMap<Long, ResidentObjectChunkInputBuilder>();
 		ensureStaticScenePresentationModels();
 		for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {
 			if (this.isGameObjectInstanceMaterialized(i) && this.getGameObjectInstanceModel(i) != null) {
@@ -4076,7 +4113,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void addResidentObjectChunkModel(
-		Map<Integer, ResidentObjectChunkInputBuilder> builders,
+		Map<Long, ResidentObjectChunkInputBuilder> builders,
 		Renderer3DWorldChunkFrame.ChunkMesh anchor,
 		int tileX,
 		int tileZ,
@@ -4091,10 +4128,23 @@ public final class mudclient implements Runnable {
 		int cellTileSize = residentObjectChunkTileSize(chunkRole);
 		int cellX = Math.floorDiv(tileX, cellTileSize);
 		int cellZ = Math.floorDiv(tileZ, cellTileSize);
-		int cellKey = (cellZ * 1024 + cellX) * 4 + chunkRole;
+		int worldTileX = Math.addExact(tileX, this.midRegionBaseX);
+		int worldTileZ = Math.addExact(tileZ, this.midRegionBaseZ);
+		int worldCellX = Math.floorDiv(worldTileX, cellTileSize);
+		int worldCellZ = Math.floorDiv(worldTileZ, cellTileSize);
+		long cellKey = residentObjectChunkCellKey(
+			worldCellX, worldCellZ, chunkRole);
 		ResidentObjectChunkInputBuilder builder = builders.get(cellKey);
 		if (builder == null) {
-			builder = new ResidentObjectChunkInputBuilder(anchor, cellKey, cellX, cellZ, chunkRole, cellTileSize);
+			builder = new ResidentObjectChunkInputBuilder(
+				anchor,
+				cellKey,
+				cellX,
+				cellZ,
+				worldCellX,
+				worldCellZ,
+				chunkRole,
+				cellTileSize);
 			builders.put(cellKey, builder);
 		}
 		boolean debugMatched = shouldDebugResidentObjectChunkModel(kind, tileX, tileZ, objectId);
@@ -4103,6 +4153,8 @@ public final class mudclient implements Runnable {
 			instanceIndex,
 			tileX,
 			tileZ,
+			worldTileX,
+			worldTileZ,
 			objectId,
 			direction,
 			model,
@@ -4110,6 +4162,16 @@ public final class mudclient implements Runnable {
 			debugMatched
 				? debugSceneObjectChunkSummary(kind, instanceIndex, tileX, tileZ, objectId, direction, model)
 				: "");
+	}
+
+	private static long residentObjectChunkCellKey(
+		int worldCellX,
+		int worldCellZ,
+		int chunkRole) {
+		long hash = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+		hash = mixResidentObjectChunkCacheKey(hash, worldCellX);
+		hash = mixResidentObjectChunkCacheKey(hash, worldCellZ);
+		return mixResidentObjectChunkCacheKey(hash, chunkRole);
 	}
 
 	private static int residentObjectChunkTileSize(int chunkRole) {
@@ -4489,7 +4551,7 @@ public final class mudclient implements Runnable {
 
 	private static final class ResidentObjectChunkInput {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
-		private final int cellKey;
+		private final long cellKey;
 		private final int cellX;
 		private final int cellZ;
 		private final int cellTileSize;
@@ -4502,7 +4564,7 @@ public final class mudclient implements Runnable {
 
 		private ResidentObjectChunkInput(
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
-			int cellKey,
+			long cellKey,
 			int cellX,
 			int cellZ,
 			int cellTileSize,
@@ -4528,7 +4590,7 @@ public final class mudclient implements Runnable {
 
 	private static final class ResidentObjectChunkInputBuilder {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
-		private final int cellKey;
+		private final long cellKey;
 		private final int cellX;
 		private final int cellZ;
 		private final int cellTileSize;
@@ -4540,9 +4602,11 @@ public final class mudclient implements Runnable {
 
 		private ResidentObjectChunkInputBuilder(
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
-			int cellKey,
+			long cellKey,
 			int cellX,
 			int cellZ,
+			int worldCellX,
+			int worldCellZ,
 			int chunkRole,
 			int cellTileSize) {
 			this.anchor = anchor;
@@ -4553,9 +4617,8 @@ public final class mudclient implements Runnable {
 			this.chunkRole = chunkRole;
 			this.cacheKey = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getPlane());
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getCenterSectionX());
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getCenterSectionY());
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, cellKey);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, worldCellX);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, worldCellZ);
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, chunkRole);
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, cellTileSize);
 		}
@@ -4565,6 +4628,8 @@ public final class mudclient implements Runnable {
 			int instanceIndex,
 			int tileX,
 			int tileZ,
+			int worldTileX,
+			int worldTileZ,
 			int objectId,
 			int direction,
 			RSModel model,
@@ -4578,13 +4643,31 @@ public final class mudclient implements Runnable {
 				}
 			}
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, kind.ordinal());
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, instanceIndex);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, tileX);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, tileZ);
+			if (this.chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS) {
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, worldTileX);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, worldTileZ);
+			} else {
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, instanceIndex);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, tileX);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, tileZ);
+			}
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, objectId);
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, direction);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, model.key);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, System.identityHashCode(model));
+			if (this.chunkRole
+					!= Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS) {
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, model.key);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, System.identityHashCode(model));
+			}
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, model.getRenderer3DTransformVersion());
 		}
 
@@ -4609,10 +4692,18 @@ public final class mudclient implements Runnable {
 	private static final class ResidentObjectChunkCacheEntry {
 		private final long cacheKey;
 		private final Renderer3DWorldChunkFrame.ChunkMesh chunk;
+		private final int presentationBaseX;
+		private final int presentationBaseZ;
 
-		private ResidentObjectChunkCacheEntry(long cacheKey, Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		private ResidentObjectChunkCacheEntry(
+			long cacheKey,
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			int presentationBaseX,
+			int presentationBaseZ) {
 			this.cacheKey = cacheKey;
 			this.chunk = chunk;
+			this.presentationBaseX = presentationBaseX;
+			this.presentationBaseZ = presentationBaseZ;
 		}
 	}
 
@@ -19558,7 +19649,9 @@ public final class mudclient implements Runnable {
 					for (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {
 						this.dematerializeWallObjectInstance(i);
 					}
-					this.clearResidentObjectChunkCache();
+					if (hardAreaLoad || heightOffsetChanged) {
+						this.clearResidentObjectChunkCache();
+					}
 					long dematerializeNanos =
 						System.nanoTime() - phaseStartNanos;
 					phaseStartNanos = System.nanoTime();
@@ -19609,7 +19702,9 @@ public final class mudclient implements Runnable {
 					long staticRebaseNanos =
 						System.nanoTime() - phaseStartNanos;
 					phaseStartNanos = System.nanoTime();
-					this.clearResidentObjectChunkCache();
+					if (hardAreaLoad || heightOffsetChanged) {
+						this.clearResidentObjectChunkCache();
+					}
 					this.materializeLoadedTerrainScenery();
 					long staticMaterializeNanos =
 						System.nanoTime() - phaseStartNanos;

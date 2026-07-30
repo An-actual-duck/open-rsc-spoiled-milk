@@ -238,14 +238,20 @@ def main() -> None:
             "Client should build resident object chunks from cached object chunk inputs")
     require(mudclient, "cached != null && cached.cacheKey == input.cacheKey",
             "Client should reuse resident object chunks when object transforms are unchanged")
-    require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, tileX)",
-            "Resident object cache keys should include tile placement")
+    require(mudclient, "mixResidentObjectChunkCacheKey(\n\t\t\t\t\tthis.cacheKey, worldTileX)",
+            "Static resident object cache keys should use stable world tile placement")
     require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, objectId)",
             "Resident object cache keys should include object identity")
     require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, direction)",
             "Resident object cache keys should include object direction")
     require(mudclient, "model.getRenderer3DTransformVersion()",
             "Resident object cache keys should include model transform versions")
+    require(mudclient, "rebaseStaticObjectPresentation(",
+            "Overlapping static object chunks should survive adjacent client-origin shifts")
+    require(mudclient, "cached.presentationBaseX - this.midRegionBaseX",
+            "Static chunk reuse should derive the exact presentation-origin delta")
+    require(world_chunk_frame, "public ChunkMesh rebaseStaticObjectPresentation(",
+            "Chunk snapshots should translate retained static scenery without copying GPU arrays")
     require(mudclient, "this.isGameObjectInstanceMaterialized(i) && this.getGameObjectInstanceModel(i) != null",
             "Resident object chunk should only include materialized game-object instances")
     require(mudclient, "this.isWallObjectInstanceMaterialized(i) && this.getWallObjectInstanceModel(i) != null",

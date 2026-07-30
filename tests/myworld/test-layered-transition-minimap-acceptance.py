@@ -490,10 +490,71 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                             != frameWithStaticObject
                                 .getStaticPresentationSignature(),
                         "static object changes restart stability");
+
+                    Renderer3DWorldChunkFrame.ShadowCaster caster =
+                        new Renderer3DWorldChunkFrame.ShadowCaster(
+                            Renderer3DModelKind.GAME_OBJECT,
+                            10, -20, 30, 40, 50,
+                            60, 70, 80, true,
+                            5, 45, 25, 55);
+                    Renderer3DWorldChunkFrame.GlowEmitter emitter =
+                        new Renderer3DWorldChunkFrame.GlowEmitter(
+                            Renderer3DModelKind.GAME_OBJECT,
+                            20, -10, 40, 128, 0xff8040, 200);
+                    Renderer3DWorldChunkFrame.ChunkMesh staticSource =
+                        objectChunk(
+                            Renderer3DWorldChunkFrame
+                                .CHUNK_ROLE_STATIC_OBJECTS,
+                            400L,
+                            caster,
+                            emitter);
+                    Renderer3DWorldChunkFrame.ChunkMesh staticRebased =
+                        staticSource.rebaseStaticObjectPresentation(
+                            11, 9, 6144, -6144);
+                    require(
+                        staticSource.getStorageSignature()
+                            == staticRebased.getStorageSignature(),
+                        "static scenery keeps immutable GPU storage");
+                    require(staticRebased.getCenterSectionX() == 11
+                            && staticRebased.getCenterSectionY() == 9,
+                        "static scenery adopts the active presentation center");
+                    require(staticRebased.getVertexCoord(0) == 6144
+                            && staticRebased.getVertexCoord(2) == -6144,
+                        "static scenery vertices receive the origin delta");
+                    require(
+                        staticRebased.getShadowCaster(0).getBaseX0()
+                            == 6154
+                        && staticRebased.getShadowCaster(0).getBaseZ0()
+                            == -6114
+                        && staticRebased.getShadowCaster(0)
+                            .getFootprintMaxX() == 6189
+                        && staticRebased.getShadowCaster(0)
+                            .getFootprintMinZ() == -6119,
+                        "static scenery shadows move with geometry");
+                    require(
+                        staticRebased.getGlowEmitter(0).getCenterX()
+                            == 6164
+                        && staticRebased.getGlowEmitter(0).getCenterZ()
+                            == -6104,
+                        "static scenery glows move with geometry");
+                    require(staticSource.getShadowCaster(0).getBaseX0() == 10
+                            && staticSource.getGlowEmitter(0).getCenterZ()
+                                == 40,
+                        "source effects remain immutable");
                 }
 
                 private static Renderer3DWorldChunkFrame.ChunkMesh
                         objectChunk(int role, long signature) {
+                    return objectChunk(
+                        role, signature, null, null);
+                }
+
+                private static Renderer3DWorldChunkFrame.ChunkMesh
+                        objectChunk(
+                            int role,
+                            long signature,
+                            Renderer3DWorldChunkFrame.ShadowCaster caster,
+                            Renderer3DWorldChunkFrame.GlowEmitter emitter) {
                     return new Renderer3DWorldChunkFrame.ChunkMesh(
                         0, 10, 10, 100, 200,
                         new int[] {0, 0, 0, 128, 0, 0, 0, 0, 128},
@@ -506,8 +567,16 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                         new Renderer3DModelKind[] {
                             Renderer3DModelKind.GAME_OBJECT
                         },
-                        null,
-                        null,
+                        caster == null
+                            ? null
+                            : new Renderer3DWorldChunkFrame.ShadowCaster[] {
+                                caster
+                            },
+                        emitter == null
+                            ? null
+                            : new Renderer3DWorldChunkFrame.GlowEmitter[] {
+                                emitter
+                            },
                         0, 0, 0, true, role, signature);
                 }
 

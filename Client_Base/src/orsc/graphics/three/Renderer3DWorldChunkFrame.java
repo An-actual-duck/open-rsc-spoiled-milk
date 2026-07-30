@@ -908,9 +908,25 @@ public final class Renderer3DWorldChunkFrame {
 			ChunkMesh source,
 			int additionalOffsetX,
 			int additionalOffsetZ) {
+			this(
+				source,
+				source.centerSectionX,
+				source.centerSectionY,
+				additionalOffsetX,
+				additionalOffsetZ,
+				false);
+		}
+
+		private ChunkMesh(
+			ChunkMesh source,
+			int nextCenterSectionX,
+			int nextCenterSectionY,
+			int additionalOffsetX,
+			int additionalOffsetZ,
+			boolean translateObjectEffects) {
 			this.plane = source.plane;
-			this.centerSectionX = source.centerSectionX;
-			this.centerSectionY = source.centerSectionY;
+			this.centerSectionX = nextCenterSectionX;
+			this.centerSectionY = nextCenterSectionY;
 			this.originWorldX = source.originWorldX;
 			this.originWorldZ = source.originWorldZ;
 			this.vertexCoords = source.vertexCoords;
@@ -952,12 +968,24 @@ public final class Renderer3DWorldChunkFrame {
 				source.materialFamilyTriangleCounts;
 			this.triangleTerrainVariationMasks =
 				source.triangleTerrainVariationMasks;
-			this.shadowCasters = source.shadowCasters;
+			this.shadowCasters = translateObjectEffects
+				? translateShadowCasters(
+					source.shadowCasters,
+					additionalOffsetX,
+					additionalOffsetZ)
+				: source.shadowCasters;
 			this.shadowCasterInventorySignature =
-				source.shadowCasterInventorySignature;
+				translateObjectEffects
+					? 0L : source.shadowCasterInventorySignature;
 			this.shadowCasterInventorySignatureKnown =
-				source.shadowCasterInventorySignatureKnown;
-			this.glowEmitters = source.glowEmitters;
+				!translateObjectEffects
+					&& source.shadowCasterInventorySignatureKnown;
+			this.glowEmitters = translateObjectEffects
+				? translateGlowEmitters(
+					source.glowEmitters,
+					additionalOffsetX,
+					additionalOffsetZ)
+				: source.glowEmitters;
 			this.roofCoverageBits = source.roofCoverageBits;
 			this.roofCoverageAxis = source.roofCoverageAxis;
 			this.roofCoveredTileCount = source.roofCoveredTileCount;
@@ -983,6 +1011,53 @@ public final class Renderer3DWorldChunkFrame {
 				source.worldEditorTerrainGridSignature;
 		}
 
+		private static ShadowCaster[] translateShadowCasters(
+			ShadowCaster[] source,
+			int offsetX,
+			int offsetZ) {
+			ShadowCaster[] translated =
+				new ShadowCaster[source == null ? 0 : source.length];
+			for (int index = 0; index < translated.length; index++) {
+				ShadowCaster caster = source[index];
+				translated[index] = new ShadowCaster(
+					caster.getModelKind(),
+					Math.addExact(caster.getBaseX0(), offsetX),
+					caster.getBaseY(),
+					Math.addExact(caster.getBaseZ0(), offsetZ),
+					Math.addExact(caster.getBaseX1(), offsetX),
+					Math.addExact(caster.getBaseZ1(), offsetZ),
+					caster.getHeight(),
+					caster.getWidth(),
+					caster.getOpacity(),
+					caster.isOutdoorOnly(),
+					Math.addExact(caster.getFootprintMinX(), offsetX),
+					Math.addExact(caster.getFootprintMaxX(), offsetX),
+					Math.addExact(caster.getFootprintMinZ(), offsetZ),
+					Math.addExact(caster.getFootprintMaxZ(), offsetZ));
+			}
+			return translated;
+		}
+
+		private static GlowEmitter[] translateGlowEmitters(
+			GlowEmitter[] source,
+			int offsetX,
+			int offsetZ) {
+			GlowEmitter[] translated =
+				new GlowEmitter[source == null ? 0 : source.length];
+			for (int index = 0; index < translated.length; index++) {
+				GlowEmitter emitter = source[index];
+				translated[index] = new GlowEmitter(
+					emitter.getModelKind(),
+					Math.addExact(emitter.getCenterX(), offsetX),
+					emitter.getCenterY(),
+					Math.addExact(emitter.getCenterZ(), offsetZ),
+					emitter.getRadius(),
+					emitter.getColor(),
+					emitter.getIntensity());
+			}
+			return translated;
+		}
+
 		/**
 		 * Re-expresses one immutable presentation-only mesh in a new client
 		 * section origin without copying its large source arrays. Gameplay and
@@ -1003,6 +1078,36 @@ public final class Renderer3DWorldChunkFrame {
 			}
 			return new ChunkMesh(
 				this, additionalOffsetX, additionalOffsetZ);
+		}
+
+		/**
+		 * Retains an immutable static-scenery mesh across an adjacent client
+		 * origin shift. Vertex storage remains reusable by the GPU while the
+		 * presentation offset, shadow casters, and glow emitters move together.
+		 */
+		public ChunkMesh rebaseStaticObjectPresentation(
+			int nextCenterSectionX,
+			int nextCenterSectionY,
+			int additionalOffsetX,
+			int additionalOffsetZ) {
+			if (!objectChunk
+				|| chunkRole != CHUNK_ROLE_STATIC_OBJECTS) {
+				throw new IllegalStateException(
+					"Only static object chunks may cross presentation origins");
+			}
+			if (additionalOffsetX == 0
+				&& additionalOffsetZ == 0
+				&& centerSectionX == nextCenterSectionX
+				&& centerSectionY == nextCenterSectionY) {
+				return this;
+			}
+			return new ChunkMesh(
+				this,
+				nextCenterSectionX,
+				nextCenterSectionY,
+				additionalOffsetX,
+				additionalOffsetZ,
+				true);
 		}
 
 		private static int normalizeChunkRole(boolean objectChunk, int chunkRole) {
