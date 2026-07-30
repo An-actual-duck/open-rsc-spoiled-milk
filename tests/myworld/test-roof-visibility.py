@@ -2,6 +2,7 @@
 import subprocess
 import tempfile
 import textwrap
+import zipfile
 from pathlib import Path
 
 
@@ -13,6 +14,8 @@ MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 CHUNK_RENDERER = ROOT / "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java"
 FRAME_CAPTURE = ROOT / "PC_Client/src/orsc/OpenGLFrameCapture.java"
 WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
+AUTHENTIC_LANDSCAPE = ROOT / "Client_Base/Cache/video/Authentic_Landscape.orsc"
+CUSTOM_LANDSCAPE = ROOT / "Client_Base/Cache/video/Custom_Landscape.orsc"
 
 
 def require(text: str, needle: str, label: str) -> None:
@@ -52,13 +55,37 @@ def run_visibility_matrix() -> None:
 
                 Renderer3DRoofVisibility upstairs =
                     Renderer3DRoofVisibility.resolve(false, 1, false);
-                expect(upstairs == Renderer3DRoofVisibility.HIDDEN_ABOVE_ACTIVE_FLOOR,
+                expect(upstairs == Renderer3DRoofVisibility.VISIBLE_ON_ACTIVE_FLOOR,
                     "upper-floor state");
-                expect(!upstairs.areRoofsVisible(), "upper-floor roof hidden");
+                expect(upstairs.areRoofsVisible(), "upper-floor outdoor roof visible");
+                expect(upstairs.isWorldChunkModelKindVisible(Renderer3DModelKind.ROOF, 1, 1),
+                    "upper-floor active roof visible");
+                expect(!upstairs.isWorldChunkModelKindVisible(Renderer3DModelKind.ROOF, 1, 0),
+                    "roof below upper floor hidden");
+                expect(!upstairs.isWorldChunkModelKindVisible(Renderer3DModelKind.ROOF, 1, 2),
+                    "roof above upper floor hidden");
                 expect(upstairs.isWorldChunkModelKindVisible(Renderer3DModelKind.WALL, 1, 1),
                     "upper-floor active walls");
                 expect(!upstairs.isWorldChunkModelKindVisible(Renderer3DModelKind.WALL, 1, 2),
                     "walls above upper floor hidden");
+
+                Renderer3DRoofVisibility upstairsIndoor =
+                    Renderer3DRoofVisibility.resolve(false, 1, true);
+                expect(upstairsIndoor == Renderer3DRoofVisibility.HIDDEN_INDOORS,
+                    "upper-floor indoor state");
+                expect(!upstairsIndoor.areRoofsVisible(), "upper-floor indoor roof hidden");
+                expect(!upstairsIndoor.isWorldChunkModelKindVisible(
+                    Renderer3DModelKind.ROOF, 1, 1),
+                    "upper-floor indoor active roof hidden");
+
+                Renderer3DRoofVisibility topFloor =
+                    Renderer3DRoofVisibility.resolve(false, 2, false);
+                expect(topFloor == Renderer3DRoofVisibility.VISIBLE_ON_ACTIVE_FLOOR,
+                    "top-floor state");
+                expect(topFloor.isWorldChunkModelKindVisible(Renderer3DModelKind.ROOF, 2, 2),
+                    "top-floor active roof visible");
+                expect(!topFloor.isWorldChunkModelKindVisible(Renderer3DModelKind.ROOF, 2, 1),
+                    "roof below top floor hidden");
 
                 Renderer3DRoofVisibility setting =
                     Renderer3DRoofVisibility.resolve(true, 1, false);
@@ -96,6 +123,33 @@ def run_visibility_matrix() -> None:
         )
 
 
+def roof_texture_at(archive: Path, plane: int, world_x: int, world_y: int) -> int:
+    archive_x = world_x + 48 * 48
+    archive_y = world_y + 37 * 48
+    entry = f"h{plane}x{archive_x // 48}y{archive_y // 48}"
+    with zipfile.ZipFile(archive) as landscape:
+        data = landscape.read(entry)
+    assert len(data) % 10 == 0, f"{archive.name}:{entry} has invalid tile data"
+    local_x = archive_x % 48
+    local_y = archive_y % 48
+    return data[(local_x * 48 + local_y) * 10 + 3]
+
+
+def run_upper_floor_map_fixture_matrix() -> None:
+    representative_roof_tiles = {
+        "Lumbridge Castle": (118, 655),
+        "Varrock": (126, 514),
+        "Falador": (319, 545),
+        "Draynor Manor": (216, 450),
+    }
+    for location, (world_x, world_y) in representative_roof_tiles.items():
+        for archive in (AUTHENTIC_LANDSCAPE, CUSTOM_LANDSCAPE):
+            assert roof_texture_at(archive, 1, world_x, world_y) > 0, (
+                f"{location} has no upper-floor roof at ({world_x}, {world_y}) "
+                f"in {archive.name}"
+            )
+
+
 def run_active_region_reload_matrix() -> None:
     section_size = 48
 
@@ -130,7 +184,8 @@ def main() -> None:
     world = WORLD.read_text(encoding="utf-8")
 
     require(roof_visibility, "HIDDEN_INDOORS", "named indoor roof state")
-    require(roof_visibility, "HIDDEN_ABOVE_ACTIVE_FLOOR", "named upper-floor roof state")
+    require(roof_visibility, "VISIBLE_ON_ACTIVE_FLOOR", "named upper-floor roof state")
+    require(roof_visibility, "chunkPlane == activePlane", "active-floor roof constraint")
     require(mudclient, "Renderer3DRoofVisibility roofVisibility = this.currentRenderer3DRoofVisibility();",
             "legacy scene resolves one roof state")
     require(mudclient, "(this.world.collisionFlags[tileX][tileZ] & CollisionFlag.OBJECT) != 0",
@@ -155,8 +210,9 @@ def main() -> None:
             "AI-readable roof reload event")
 
     run_visibility_matrix()
+    run_upper_floor_map_fixture_matrix()
     run_active_region_reload_matrix()
-    print("PASS: roof visibility matrix is shared by legacy and resident rendering")
+    print("PASS: upper-floor roofs are map-backed and visible through shared rendering policy")
 
 
 if __name__ == "__main__":

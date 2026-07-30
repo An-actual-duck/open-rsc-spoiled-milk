@@ -5,19 +5,22 @@ package orsc.graphics.three;
  * player's current floor/coverage state.
  */
 public enum Renderer3DRoofVisibility {
-	VISIBLE(true, true),
-	HIDDEN_BY_SETTING(false, false),
-	HIDDEN_INDOORS(false, false),
-	HIDDEN_ABOVE_ACTIVE_FLOOR(false, false);
+	VISIBLE(true, true, false),
+	VISIBLE_ON_ACTIVE_FLOOR(true, false, true),
+	HIDDEN_BY_SETTING(false, false, false),
+	HIDDEN_INDOORS(false, false, false);
 
 	private final boolean roofsVisible;
 	private final boolean structuresAboveActiveFloorVisible;
+	private final boolean roofsLimitedToActiveFloor;
 
 	Renderer3DRoofVisibility(
 		boolean roofsVisible,
-		boolean structuresAboveActiveFloorVisible) {
+		boolean structuresAboveActiveFloorVisible,
+		boolean roofsLimitedToActiveFloor) {
 		this.roofsVisible = roofsVisible;
 		this.structuresAboveActiveFloorVisible = structuresAboveActiveFloorVisible;
+		this.roofsLimitedToActiveFloor = roofsLimitedToActiveFloor;
 	}
 
 	public static Renderer3DRoofVisibility resolve(
@@ -27,13 +30,10 @@ public enum Renderer3DRoofVisibility {
 		if (hideRoofsSetting) {
 			return HIDDEN_BY_SETTING;
 		}
-		if (activePlane > 0) {
-			return HIDDEN_ABOVE_ACTIVE_FLOOR;
-		}
 		if (playerTileCovered) {
 			return HIDDEN_INDOORS;
 		}
-		return VISIBLE;
+		return activePlane > 0 ? VISIBLE_ON_ACTIVE_FLOOR : VISIBLE;
 	}
 
 	public boolean areRoofsVisible() {
@@ -49,7 +49,8 @@ public enum Renderer3DRoofVisibility {
 		int activePlane,
 		int chunkPlane) {
 		if (modelKind == Renderer3DModelKind.ROOF) {
-			return roofsVisible;
+			return roofsVisible
+				&& (!roofsLimitedToActiveFloor || chunkPlane == activePlane);
 		}
 		if (modelKind == Renderer3DModelKind.WALL && chunkPlane > activePlane) {
 			return structuresAboveActiveFloorVisible;

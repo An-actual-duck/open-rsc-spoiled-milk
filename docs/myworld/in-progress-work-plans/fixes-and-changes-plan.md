@@ -152,12 +152,9 @@ matrix cannot be proven from the current conditions. Required test states:
 
 #### Implementation record — 2026-07-11
 
-- Added the named per-frame states `VISIBLE`, `HIDDEN_BY_SETTING`,
-  `HIDDEN_INDOORS`, and `HIDDEN_ABOVE_ACTIVE_FLOOR`. Resolution preserves the
-  original client contract: enabled roofs appear only on an outdoor ground
-  tile; a covered ground tile hides roof layers and structures above the
-  active floor; an upper floor keeps its active walls while hiding the roof
-  above it.
+- Added named per-frame states shared by both renderers. The original
+  implementation preserved the legacy rule that hid every roof while the
+  player was above the ground plane.
 - The legacy scene loop and resident OpenGL chunks now consume the same state.
   This closes the split where projected geometry hid roofs indoors/upstairs
   but resident chunks filtered only from the global saved option.
@@ -178,6 +175,18 @@ matrix cannot be proven from the current conditions. Required test states:
   without rebasing collision, entities, scenery, or the camera, producing an
   exact 48-tile visual/picking shift. Roof reloads now rebuild the already
   active window from `midRegionBaseX/Z` and leave its bounds unchanged.
+
+#### Upper-story correction — 2026-07-30
+
+- Authentic and custom landscape fixtures both contain upper-plane roofs at
+  Lumbridge Castle, Varrock, Falador, and Draynor Manor. The missing visual was
+  therefore not map-data loss.
+- Replaced the unconditional upper-plane hiding state with
+  `VISIBLE_ON_ACTIVE_FLOOR`. An uncovered player on plane 1 or 2 now sees that
+  plane's roof, while roofs from other planes and walls above the active plane
+  remain hidden.
+- Covered tiles still resolve to `HIDDEN_INDOORS` on every plane, and the
+  global Hide Roofs setting still takes precedence.
   `events.jsonl` records each successful `roof.visibility.reload` with active
   section, player world tile, and player-to-active section deltas so future
   reports remain attributable even when toggled while moving.
