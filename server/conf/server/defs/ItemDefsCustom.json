@@ -1732,7 +1732,7 @@
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 1,
-      "isStackable": 0,
+      "isStackable": 1,
       "isUntradable": 0,
       "isWearable": 0,
       "appearanceID": 0,

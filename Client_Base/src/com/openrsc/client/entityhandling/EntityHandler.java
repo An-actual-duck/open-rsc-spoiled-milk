@@ -3911,7 +3911,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Beverage glass", "A glass left after a tasty drink", "", 1, -1, "items:525", false, false, 0, 0, false, false, true, 1345));
 
 		addItemDefinition(new ItemDef("Dragon 2-handed Sword", "A massive sword", "", 5000000, -1, "items:dragon2hander", false, true, 8216, 0, false, false, true, 1346));
-		addItemDefinition(new ItemDef("Black dragon scale", "Taken from a black dragon", "", 2500, 146, "items:kbdscale", false, false, 0, 0, true, false, true, 1347));
+		addItemDefinition(new ItemDef("Black dragon scale", "Taken from a black dragon", "", 2500, 146, "items:kbdscale", true, false, 0, 0, true, false, true, 1347));
 
 
 		//Harvesting

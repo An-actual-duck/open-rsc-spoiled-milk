@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import sys
 from pathlib import Path
 from typing import NoReturn
@@ -40,6 +41,7 @@ def main() -> None:
     guide = SKILL_GUIDE.read_text(encoding="utf-8")
     client_entity_handler = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     item_defs_custom = ITEM_DEFS_CUSTOM.read_text(encoding="utf-8")
+    custom_items = json.loads(item_defs_custom)["items"]
     inv_action = INV_ACTION.read_text(encoding="utf-8")
     dwarf_rescue = DWARF_RESCUE.read_text(encoding="utf-8")
     wayne = WAYNE.read_text(encoding="utf-8")
@@ -63,6 +65,11 @@ def main() -> None:
     require(smelting, 'LAVA_FORGE_REPAIRED_CACHE_KEY = "myworld_lava_forge_repaired"', "Lava forge should have a repair state")
     require(smelting, "LAVA_FORGE_REPAIR_SCALE_AMOUNT = 100", "Lava forge repair should require 100 black dragon scales")
     require(smelting, "LAVA_FORGE_REPAIR_COIN_AMOUNT = 1000000", "Lava forge repair should require 1,000,000 coins")
+    require(
+        smelting,
+        "remove(new Item(ItemId.KING_BLACK_DRAGON_SCALE.id(), LAVA_FORGE_REPAIR_SCALE_AMOUNT))",
+        "Lava forge repair should consume the exact black dragon scale requirement",
+    )
     require(smelting, "new SmeltRecipe(ItemId.DRAGON_BAR.id(), DRAGON_SMELTING_LEVEL, RAW_DRAGON_METAL_XP, 1, \"lava forge\"", "Dragon bar should be made at the lava forge")
     require(smelting, "ingredient(ItemId.RAW_DRAGON_METAL.id(), 1), ingredient(ItemId.DRAGON_SULFUR.id(), 6)", "Dragon bar should require dragon metal scrap and dragon sulfur")
     require(smelting, "new SmeltRecipe(MyWorldItemId.PURIFIED_RUNE_BAR, 90, 500, 1, \"lava forge\"", "Purified rune should be moved to the lava forge")
@@ -70,6 +77,21 @@ def main() -> None:
     require(client_entity_handler, '"external-png:raw-dragon-metal@43x27"', "Dragon metal scrap should use its custom sprite")
     require(client_entity_handler, 'new ItemDef("Dragon Metal Scrap",', "Client should display the dragon metal scrap name")
     require(item_defs_custom, '"name": "Dragon Metal Scrap"', "Server should display the dragon metal scrap name")
+    black_dragon_scale = next(
+        (item for item in custom_items if item["id"] == 1347),
+        None,
+    )
+    if black_dragon_scale is None:
+        fail("Server should define the black dragon scale repair material")
+    if black_dragon_scale["name"] != "Black dragon scale":
+        fail("Black dragon scale item ID should retain its repair-material name")
+    if black_dragon_scale["isStackable"] != 1:
+        fail("Black dragon scales must stack so 100 can fit in inventory for forge repair")
+    require(
+        client_entity_handler,
+        'new ItemDef("Black dragon scale", "Taken from a black dragon", "", 2500, 146, "items:kbdscale", true,',
+        "Client should display black dragon scales as one inventory stack",
+    )
     forbid(client_entity_handler, 'new ItemDef("Raw Dragon Metal",', "Client should not retain the retired item name")
     forbid(item_defs_custom, '"name": "Raw Dragon Metal"', "Server should not retain the retired item name")
     forbid(smelting, "Dragon metal chains", "Lava forge should not offer dragon metal chains")
