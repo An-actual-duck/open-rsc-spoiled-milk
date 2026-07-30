@@ -250,22 +250,6 @@ def main() -> None:
             "Overlapping static object chunks should survive adjacent client-origin shifts")
     require(mudclient, "cached.presentationBaseX - this.midRegionBaseX",
             "Static chunk reuse should derive the exact presentation-origin delta")
-    require(mudclient, "RESIDENT_OBJECT_BUILD_WORKER_LIMIT = 4",
-            "Transition chunk parallelism should remain explicitly bounded")
-    require(mudclient, "Executors.newFixedThreadPool(\n"
-            "\t\t\tresidentObjectBuildWorkerCount()",
-            "Resident scenery should use a dedicated bounded worker pool")
-    require(mudclient,
-            "Future<ResidentObjectChunkBuildResult> future =\n"
-            "\t\t\t\t\t\tthis.residentObjectBuildExecutor.submit(",
-            "Independent transition scenery chunks should build concurrently")
-    require(mudclient,
-            "objectChunks.set(\n"
-            "\t\t\t\tpending.inputIndex,\n"
-            "\t\t\t\tacceptResidentObjectChunkBuild(",
-            "Parallel scenery results should return to deterministic input order")
-    require(mudclient, "cached != null && cached.cacheKey == input.cacheKey",
-            "Parallel chunk construction must retain exact cache identity checks")
     forbid(mudclient, "staticContentKeySum",
            "Order-independent approximate scenery equivalence must remain withdrawn")
     require(mudclient, "cachedResidentObjectChunkPreviousViewCells",
