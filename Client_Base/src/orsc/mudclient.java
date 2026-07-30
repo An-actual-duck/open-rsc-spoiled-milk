@@ -23901,7 +23901,17 @@ public final class mudclient implements Runnable {
 
 	private void completeLayeredSceneActivationFreshFrame(
 		Renderer3DWorldChunkFrame worldChunkFrame) {
-		if (!this.layeredScenePresentationLatch.completeFreshFrame()) {
+		long staticWorldSignature =
+			worldChunkFrame == null
+				? 0L
+				: worldChunkFrame.getStaticPresentationSignature();
+		int staticChunkCount =
+			worldChunkFrame == null
+				? 0
+				: worldChunkFrame.getStaticPresentationChunkCount();
+		if (!this.layeredScenePresentationLatch.completeFreshFrame(
+				staticWorldSignature,
+				staticChunkCount)) {
 			return;
 		}
 		RendererDiagnosticSession.Record event =
@@ -23916,6 +23926,20 @@ public final class mudclient implements Runnable {
 				"world.triangleCount",
 				worldChunkFrame == null
 					? 0 : worldChunkFrame.getTotalTriangleCount());
+			event.number(
+				"world.staticChunkCount",
+				staticChunkCount);
+			event.number(
+				"world.staticPresentationSignature",
+				staticWorldSignature);
+			event.number(
+				"stability.samples",
+				this.layeredScenePresentationLatch
+					.getFreshFrameSamples());
+			event.bool(
+				"stability.matched",
+				this.layeredScenePresentationLatch
+					.wasLastReleaseStable());
 			RendererDiagnosticSession.writeEventRecord(event);
 		}
 	}

@@ -270,6 +270,69 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                         "presented vertex includes x offset");
                     require(source.getVertexCoord(0) == 0,
                         "source geometry stays immutable");
+
+                    Renderer3DWorldChunkFrame.ChunkMesh animatedA =
+                        objectChunk(
+                            Renderer3DWorldChunkFrame
+                                .CHUNK_ROLE_ANIMATED_OBJECTS,
+                            200L);
+                    Renderer3DWorldChunkFrame.ChunkMesh animatedB =
+                        objectChunk(
+                            Renderer3DWorldChunkFrame
+                                .CHUNK_ROLE_ANIMATED_OBJECTS,
+                            201L);
+                    Renderer3DWorldChunkFrame frameA =
+                        Renderer3DWorldChunkFrame.fromChunks(
+                            java.util.Arrays.asList(
+                                source, animatedA));
+                    Renderer3DWorldChunkFrame frameB =
+                        Renderer3DWorldChunkFrame.fromChunks(
+                            java.util.Arrays.asList(
+                                source, animatedB));
+                    require(
+                        frameA.getStaticPresentationChunkCount() == 1,
+                        "animated chunks do not enter static count");
+                    require(
+                        frameA.getStaticPresentationSignature()
+                            == frameB.getStaticPresentationSignature(),
+                        "animated changes do not prevent stability");
+
+                    Renderer3DWorldChunkFrame frameWithStaticObject =
+                        Renderer3DWorldChunkFrame.fromChunks(
+                            java.util.Arrays.asList(
+                                source,
+                                objectChunk(
+                                    Renderer3DWorldChunkFrame
+                                        .CHUNK_ROLE_STATIC_OBJECTS,
+                                    300L)));
+                    require(
+                        frameWithStaticObject
+                            .getStaticPresentationChunkCount() == 2,
+                        "static objects enter stability count");
+                    require(
+                        frameA.getStaticPresentationSignature()
+                            != frameWithStaticObject
+                                .getStaticPresentationSignature(),
+                        "static object changes restart stability");
+                }
+
+                private static Renderer3DWorldChunkFrame.ChunkMesh
+                        objectChunk(int role, long signature) {
+                    return new Renderer3DWorldChunkFrame.ChunkMesh(
+                        0, 10, 10, 100, 200,
+                        new int[] {0, 0, 0, 128, 0, 0, 0, 0, 128},
+                        new float[] {0.0f, 1.0f, 0.0f},
+                        new float[] {0.0f, 0.0f, 1.0f},
+                        new int[] {0, 0, 0},
+                        new int[] {0, 1, 2},
+                        new int[] {1},
+                        new int[] {0},
+                        new Renderer3DModelKind[] {
+                            Renderer3DModelKind.GAME_OBJECT
+                        },
+                        null,
+                        null,
+                        0, 0, 0, true, role, signature);
                 }
 
                 private static void require(
@@ -392,7 +455,7 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             self.telemetry,
         )
 
-    def test_same_scope_activation_waits_for_one_fresh_scene_frame(self):
+    def test_same_scope_activation_waits_for_stable_static_scene(self):
         harness = textwrap.dedent(
             """
             package orsc;
@@ -413,11 +476,23 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                     latch.updatePending(false);
                     require(latch.shouldRetainLastPresentedFrame(),
                         "duplicate completion cannot release early");
-                    require(latch.completeFreshFrame(),
-                        "fresh scene frame releases latch");
+                    require(!latch.completeFreshFrame(100L, 4),
+                        "first fresh scene frame becomes candidate");
+                    require(latch.shouldRetainLastPresentedFrame(),
+                        "first candidate remains hidden");
+                    require(!latch.completeFreshFrame(200L, 5),
+                        "changed static scene restarts stability");
+                    require(latch.shouldRetainLastPresentedFrame(),
+                        "changed static scene remains hidden");
+                    require(latch.completeFreshFrame(200L, 5),
+                        "matching static scene releases latch");
                     require(!latch.shouldRetainLastPresentedFrame(),
-                        "fresh frame is immediately presentable");
-                    require(!latch.completeFreshFrame(),
+                        "stable frame is immediately presentable");
+                    require(latch.wasLastReleaseStable(),
+                        "release records static stability");
+                    require(latch.getFreshFrameSamples() == 3,
+                        "all candidate frames are counted");
+                    require(!latch.completeFreshFrame(200L, 5),
                         "release is single-use");
 
                     latch.begin(false);
@@ -431,8 +506,25 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                     latch.reset();
                     require(!latch.shouldRetainLastPresentedFrame(),
                         "reset cancels pending retention");
-                    require(!latch.completeFreshFrame(),
+                    require(!latch.completeFreshFrame(300L, 6),
                         "reset cancels release");
+
+                    latch.begin(true);
+                    latch.updatePending(false);
+                    for (int sample = 0;
+                            sample
+                                < LayeredScenePresentationLatch
+                                    .MAX_FRESH_FRAME_SAMPLES - 1;
+                            sample++) {
+                        require(!latch.completeFreshFrame(
+                                1000L + sample, 7),
+                            "unstable candidate remains bounded "
+                                + sample);
+                    }
+                    require(latch.completeFreshFrame(2000L, 7),
+                        "hard bound eventually releases");
+                    require(!latch.wasLastReleaseStable(),
+                        "bounded fallback is distinguishable");
                 }
 
                 private static void require(

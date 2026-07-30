@@ -20,6 +20,8 @@ public final class Renderer3DWorldChunkFrame {
 	private final int totalVertexCount;
 	private final int totalIndexCount;
 	private final int totalTriangleCount;
+	private final int staticPresentationChunkCount;
+	private final long staticPresentationSignature;
 	private final int[] materialFamilyTriangleCounts;
 	private final boolean hasVertexBounds;
 	private final int minVertexX;
@@ -48,10 +50,45 @@ public final class Renderer3DWorldChunkFrame {
 		int maximumVertexZ = Integer.MIN_VALUE;
 		TextureReferenceSet textureReferences = new TextureReferenceSet();
 		long referenceSignature = 1469598103934665603L;
+		long staticSignature = 1469598103934665603L;
+		int staticChunkCount = 0;
 		referenceSignature = mixSignature(referenceSignature, chunks.size());
 		for (ChunkMesh chunk : chunks) {
 			referenceSignature = mixSignature(referenceSignature, chunk.getSignature());
 			referenceSignature = mixSignature(referenceSignature, chunk.getTriangleCount());
+			if (chunk.getChunkRole() != CHUNK_ROLE_ANIMATED_OBJECTS) {
+				staticChunkCount++;
+				staticSignature =
+					mixSignature(staticSignature, chunk.getPlane());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getCenterSectionX());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getCenterSectionY());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getOriginWorldX());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getOriginWorldZ());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getChunkRole());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getSignature());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getTriangleCount());
+			}
 			for (Renderer3DMaterialFamily family : Renderer3DMaterialFamily.values()) {
 				this.materialFamilyTriangleCounts[family.ordinal()] +=
 					chunk.getMaterialFamilyTriangleCount(family);
@@ -67,6 +104,9 @@ public final class Renderer3DWorldChunkFrame {
 				maximumVertexZ = Math.max(maximumVertexZ, chunk.getMaxVertexZ());
 			}
 		}
+		this.staticPresentationChunkCount = staticChunkCount;
+		this.staticPresentationSignature =
+			mixSignature(staticSignature, staticChunkCount);
 		this.hasVertexBounds = foundVertexBounds;
 		this.minVertexX = foundVertexBounds ? minimumVertexX : 0;
 		this.maxVertexX = foundVertexBounds ? maximumVertexX : 0;
@@ -119,6 +159,19 @@ public final class Renderer3DWorldChunkFrame {
 
 	public int getTotalTriangleCount() {
 		return totalTriangleCount;
+	}
+
+	/**
+	 * Returns the static subset used to decide when an atomic scene activation
+	 * is safe to present. Animated object chunks intentionally do not
+	 * participate because their geometry may change every gameplay frame.
+	 */
+	public int getStaticPresentationChunkCount() {
+		return staticPresentationChunkCount;
+	}
+
+	public long getStaticPresentationSignature() {
+		return staticPresentationSignature;
 	}
 
 	public boolean hasVertexBounds() {
