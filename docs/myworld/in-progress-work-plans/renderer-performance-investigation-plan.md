@@ -27,7 +27,7 @@ storage. Compilation, the full guard suite, owner visual review, and a
 12-frame strict capture pass. All 6,158 captured layers retained exact
 snapshot ownership across 1,144 groups with zero compatibility fallback,
 invalid anchor/order, suspicious visibility, failed frames, or client
-exceptions.
+exceptions. The accepted cleanup is checkpointed at `87aed9cbf`.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -1234,8 +1234,8 @@ Stack attribution still answers the boundary question:
 
 The selected cleanup is local to the newly introduced boundary. Each
 `WorldSpriteSnapshot` now stores its exact layer references in a growable
-array, using one slot for ground items and an eight-slot initial character
-capacity before geometric growth fallback. All validation, diagnostics,
+array, using one slot for non-character groups and an eight-slot initial
+character capacity before geometric growth fallback. All validation, diagnostics,
 capture, texture composition, and direct presentation iterate by stable
 index. This removes one mutable list, one read-only wrapper, and iterator
 objects per group without changing command identity or order. The legacy
@@ -1246,8 +1246,9 @@ renderer guardrail suite passes.
 The private acceptance run used
 `session-20260729-214330-1614630`, launched from the tested dirty worktree
 based on `06110169b`. The owner reported that the indexed-storage client
-visually checked out. All 12 `Ctrl+F9` frames then passed strict session and
-capture analysis:
+visually checked out. That exact tested source was then committed and pushed
+as `87aed9cbf`. All 12 `Ctrl+F9` frames passed strict session and capture
+analysis:
 
 - all 6,158 world-sprite commands were the identical objects owned by their
   indexed snapshots and all 6,158 resolved through `owner-anchor`;
@@ -1585,4 +1586,4 @@ Implementation checkpoint:
 | 2026-07-29 | `c40e3ae7a` | `entityidle`, `entitycombat` | Profile the first exact-owner endpoint at maximum-distance idle and under active combat/camera pressure. | Idle was an exact zoom `900` / effective `2400` control at 42.73 MiB/s and 0.484 cores. Combat varied zoom/rotation and rose to 70.18 MiB/s and 0.577 cores. Legacy `Scene.endScene` covered about 51% of client CPU samples in both; composite scene reconstruction cost about 1.2–1.5 MiB/s, while composite character textures rose from 1.27 to 2.51 MiB/s under combat. Visuals passed and ownership fallback/unmatched stayed zero. | Build a frame-owned grouped sprite snapshot to remove wrapper/list/sort reconstruction while preserving captured pixels; do not cache transformed character textures without a parity-complete key. |
 | 2026-07-29 | `e3cced146` | grouped snapshot acceptance | Attach exact captured layers to frame-owned anchor/submission/character snapshots, validate the complete frame, consume valid groups directly, and retain the typed command builder as an all-or-nothing fallback. | Client compile, focused ownership/capture fixtures, and the full guard suite passed. The owner visual route reported no issue. All 12 strict capture frames passed: 4,852/4,852 layers were snapshot-owned across 938 nonempty groups, 842 character groups, and 96 item groups, with zero compatibility fallback, invalid anchor/order, suspicious visibility, failed frames, or client exceptions. | Accept the second scene/entity ownership slice. Repeat the maximum-distance idle and entity-pressure measurements before retiring another bridge boundary. |
 | 2026-07-29 | `06110169b` | `snapidle`, `snapcombat` | Profile the accepted grouped-snapshot endpoint at maximum zoom and under actor/combat pressure. | Composite scene reconstruction recorded zero sampled allocation and compatibility fallback stayed zero. The new phases contained roughly three to five times as many sprite layers as their earlier namesakes, so their 59.06/66.11 MiB/s allocation and 0.645/0.649-core totals are not treated as a regression or a direct delta. New per-group list/wrapper storage measured about 0.37 MiB/s in idle; submission lookup was not a leading CPU cost. | Keep the architectural result, reject raw before/after attribution, and remove only the new snapshot container/iterator allocation before another broader boundary. |
-| 2026-07-29 | accepted worktree based on `06110169b` | indexed snapshot storage | Replace each snapshot's list/read-only wrapper with compact growable command-reference storage and consume it by stable index in validation, capture, composition, and drawing. | Command identity/order and all-or-nothing fallback are unchanged. Client compile, focused ownership/capture fixtures, and the full renderer guardrail suite passed; owner visual review passed. All 12 strict capture frames passed with 6,158/6,158 exactly owned layers across 1,144 groups and zero fallback, invalid anchor/order, suspicious visibility, failed frames, or client exceptions. | Accept and checkpoint this measured cleanup; retain the broader allocation-only diminishing-returns gate. |
+| 2026-07-29 | `87aed9cbf` | indexed snapshot storage | Replace each snapshot's list/read-only wrapper with compact growable command-reference storage and consume it by stable index in validation, capture, composition, and drawing. | Command identity/order and all-or-nothing fallback are unchanged. Client compile, focused ownership/capture fixtures, and the full renderer guardrail suite passed; owner visual review passed. All 12 strict capture frames passed with 6,158/6,158 exactly owned layers across 1,144 groups and zero fallback, invalid anchor/order, suspicious visibility, failed frames, or client exceptions. | Accept and checkpoint this measured cleanup; retain the broader allocation-only diminishing-returns gate. |
