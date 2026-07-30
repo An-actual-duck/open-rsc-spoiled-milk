@@ -3786,15 +3786,13 @@ public final class mudclient implements Runnable {
 		this.staticPresentationWallRecords =
 			Collections.emptyList();
 		this.staticPresentationRevision++;
+		this.staticPresentationModels.clear();
 		invalidateStaticScenePresentationModels();
 		clearResidentObjectChunkCache();
 	}
 
 	private void invalidateStaticScenePresentationModels() {
-		this.staticPresentationModels.clear();
 		this.builtStaticPresentationRevision = -1L;
-		this.builtStaticPresentationBaseX = Integer.MIN_VALUE;
-		this.builtStaticPresentationBaseZ = Integer.MIN_VALUE;
 	}
 
 	private void ensureStaticScenePresentationModels() {
@@ -3805,13 +3803,47 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		long buildStartNanos = System.nanoTime();
+		int previousBaseX = this.builtStaticPresentationBaseX;
+		int previousBaseZ = this.builtStaticPresentationBaseZ;
+		Map<StaticPresentationGeometryKey, ArrayDeque<StaticPresentationModel>>
+			reusableModels =
+				new HashMap<
+					StaticPresentationGeometryKey,
+					ArrayDeque<StaticPresentationModel>>();
+		for (StaticPresentationModel presentation
+				: this.staticPresentationModels) {
+			ArrayDeque<StaticPresentationModel> matches =
+				reusableModels.get(presentation.geometryKey);
+			if (matches == null) {
+				matches = new ArrayDeque<StaticPresentationModel>();
+				reusableModels.put(presentation.geometryKey, matches);
+			}
+			matches.addLast(presentation);
+		}
 		this.staticPresentationModels.clear();
 		int skipped = 0;
+		int reused = 0;
+		int built = 0;
 		int index = 0;
 		for (SceneBaselineState.Record record
 				: this.staticPresentationSceneryRecords) {
-			RSModel model = createStaticPresentationGameObjectModel(
-				record, index);
+			StaticPresentationGeometryKey geometryKey =
+				staticPresentationGameObjectGeometryKey(record);
+			RSModel model = reuseStaticPresentationModel(
+				reusableModels,
+				geometryKey,
+				previousBaseX,
+				previousBaseZ);
+			if (model != null) {
+				reused++;
+				model.key = -1 - index;
+			} else {
+				model = createStaticPresentationGameObjectModel(
+					record, index, geometryKey);
+				if (model != null) {
+					built++;
+				}
+			}
 			if (model == null) {
 				skipped++;
 			} else {
@@ -3823,14 +3855,30 @@ public final class mudclient implements Runnable {
 						record.y - this.midRegionBaseZ,
 						record.id,
 						record.direction,
-						model));
+						model,
+						geometryKey));
 			}
 			index++;
 		}
 		for (SceneBaselineState.Record record
 				: this.staticPresentationWallRecords) {
-			RSModel model = createStaticPresentationWallObjectModel(
-				record, index);
+			StaticPresentationGeometryKey geometryKey =
+				staticPresentationWallObjectGeometryKey(record);
+			RSModel model = reuseStaticPresentationModel(
+				reusableModels,
+				geometryKey,
+				previousBaseX,
+				previousBaseZ);
+			if (model != null) {
+				reused++;
+				model.key = -1 - index;
+			} else {
+				model = createStaticPresentationWallObjectModel(
+					record, index, geometryKey);
+				if (model != null) {
+					built++;
+				}
+			}
 			if (model == null) {
 				skipped++;
 			} else {
@@ -3842,7 +3890,8 @@ public final class mudclient implements Runnable {
 						record.y - this.midRegionBaseZ,
 						record.id,
 						record.direction,
-						model));
+						model,
+						geometryKey));
 			}
 			index++;
 		}
@@ -3856,6 +3905,8 @@ public final class mudclient implements Runnable {
 			+ (this.staticPresentationSceneryRecords.size()
 				+ this.staticPresentationWallRecords.size())
 			+ " models=" + this.staticPresentationModels.size()
+			+ " reused=" + reused
+			+ " built=" + built
 			+ " skipped=" + skipped
 			+ " base=" + this.midRegionBaseX + ","
 				+ this.midRegionBaseZ
@@ -3875,6 +3926,8 @@ public final class mudclient implements Runnable {
 				this.staticPresentationSceneryRecords.size()
 					+ this.staticPresentationWallRecords.size());
 			event.number("models", this.staticPresentationModels.size());
+			event.number("reused", reused);
+			event.number("built", built);
 			event.number("skipped", skipped);
 			event.number("base.x", this.midRegionBaseX);
 			event.number("base.z", this.midRegionBaseZ);
@@ -3883,9 +3936,38 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private RSModel createStaticPresentationGameObjectModel(
-		SceneBaselineState.Record record,
-		int index) {
+	private RSModel reuseStaticPresentationModel(
+		Map<StaticPresentationGeometryKey, ArrayDeque<StaticPresentationModel>>
+			reusableModels,
+		StaticPresentationGeometryKey geometryKey,
+		int previousBaseX,
+		int previousBaseZ) {
+		if (geometryKey == null
+			|| previousBaseX == Integer.MIN_VALUE
+			|| previousBaseZ == Integer.MIN_VALUE) {
+			return null;
+		}
+		ArrayDeque<StaticPresentationModel> matches =
+			reusableModels.get(geometryKey);
+		if (matches == null || matches.isEmpty()) {
+			return null;
+		}
+		StaticPresentationModel reusable = matches.removeFirst();
+		int offsetX = Math.multiplyExact(
+			previousBaseX - this.midRegionBaseX,
+			this.tileSize);
+		int offsetZ = Math.multiplyExact(
+			previousBaseZ - this.midRegionBaseZ,
+			this.tileSize);
+		if (offsetX != 0 || offsetZ != 0) {
+			reusable.model.translate2(offsetX, 0, offsetZ);
+		}
+		return reusable.model;
+	}
+
+	private StaticPresentationGeometryKey
+		staticPresentationGameObjectGeometryKey(
+			SceneBaselineState.Record record) {
 		GameObjectDef def = EntityHandler.getObjectDef(record.id);
 		if (def == null || def.modelID < 0) {
 			return null;
@@ -3908,13 +3990,46 @@ public final class mudclient implements Runnable {
 		if (elevation == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
 			return null;
 		}
+		return new StaticPresentationGeometryKey(
+			Renderer3DModelKind.GAME_OBJECT,
+			this.requestedPlane,
+			record.id,
+			record.x,
+			record.y,
+			record.direction,
+			record.type,
+			elevation,
+			elevation);
+	}
+
+	private RSModel createStaticPresentationGameObjectModel(
+		SceneBaselineState.Record record,
+		int index,
+		StaticPresentationGeometryKey geometryKey) {
+		GameObjectDef def = EntityHandler.getObjectDef(record.id);
+		if (def == null || def.modelID < 0 || geometryKey == null) {
+			return null;
+		}
+		int localX = record.x - this.midRegionBaseX;
+		int localZ = record.y - this.midRegionBaseZ;
+		int xSize;
+		int zSize;
+		if (record.direction == 0 || record.direction == 4) {
+			xSize = def.getWidth();
+			zSize = def.getHeight();
+		} else {
+			xSize = def.getHeight();
+			zSize = def.getWidth();
+		}
+		int x = (2 * localX + xSize) * this.tileSize / 2;
+		int z = (2 * localZ + zSize) * this.tileSize / 2;
 		RSModel model = this.getModelCacheItem(def.modelID).clone();
 		model.key = -1 - index;
 		model.addRotation(0, record.direction * 32, 0);
 		model.setDiffuseLightAndColor(
 			-50, -10, -50, 48, 48, true, 117);
 		model.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
-		model.setTranslate(x, -elevation, z);
+		model.setTranslate(x, -geometryKey.elevation1, z);
 		if (record.id == 74) {
 			model.translate2(0, -480, 0);
 		}
@@ -3925,11 +4040,62 @@ public final class mudclient implements Runnable {
 		return model;
 	}
 
-	private RSModel createStaticPresentationWallObjectModel(
-		SceneBaselineState.Record record,
-		int index) {
+	private StaticPresentationGeometryKey
+		staticPresentationWallObjectGeometryKey(
+			SceneBaselineState.Record record) {
 		DoorDef definition = EntityHandler.getDoorDef(record.id);
 		if (definition == null) {
+			return null;
+		}
+		int x1 = record.x - this.midRegionBaseX;
+		int x2 = x1;
+		int y1 = record.y - this.midRegionBaseZ;
+		int y2 = y1;
+		if (record.direction == 1) {
+			y2++;
+		}
+		if (record.direction == 0) {
+			x2++;
+		}
+		if (record.direction == 2) {
+			x1++;
+			y2++;
+		}
+		if (record.direction == 3) {
+			x2++;
+			y2++;
+		}
+		int elevation1 =
+			this.world.getPresentationTerrainElevation(
+				x1 * this.tileSize,
+				y1 * this.tileSize);
+		int elevation2 =
+			this.world.getPresentationTerrainElevation(
+				x2 * this.tileSize,
+				y2 * this.tileSize);
+		if (elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE
+			|| elevation2
+				== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+			return null;
+		}
+		return new StaticPresentationGeometryKey(
+			Renderer3DModelKind.WALL_OBJECT,
+			this.requestedPlane,
+			record.id,
+			record.x,
+			record.y,
+			record.direction,
+			record.type,
+			elevation1,
+			elevation2);
+	}
+
+	private RSModel createStaticPresentationWallObjectModel(
+		SceneBaselineState.Record record,
+		int index,
+		StaticPresentationGeometryKey geometryKey) {
+		DoorDef definition = EntityHandler.getDoorDef(record.id);
+		if (definition == null || geometryKey == null) {
 			return null;
 		}
 		int x1 = record.x - this.midRegionBaseX;
@@ -3954,15 +4120,8 @@ public final class mudclient implements Runnable {
 		int y1World = y1 * this.tileSize;
 		int x2World = x2 * this.tileSize;
 		int y2World = y2 * this.tileSize;
-		int elevation1 = this.world.getPresentationTerrainElevation(
-			x1World, y1World);
-		int elevation2 = this.world.getPresentationTerrainElevation(
-			x2World, y2World);
-		if (elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE
-			|| elevation2
-				== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
-			return null;
-		}
+		int elevation1 = geometryKey.elevation1;
+		int elevation2 = geometryKey.elevation2;
 		int height = definition.getWallObjectHeight();
 		RSModel model = new RSModel(4, 1);
 		int v1 = model.insertVertex(
@@ -4582,6 +4741,7 @@ public final class mudclient implements Runnable {
 		private final int objectId;
 		private final int direction;
 		private final RSModel model;
+		private final StaticPresentationGeometryKey geometryKey;
 
 		private StaticPresentationModel(
 			Renderer3DModelKind kind,
@@ -4590,7 +4750,8 @@ public final class mudclient implements Runnable {
 			int tileZ,
 			int objectId,
 			int direction,
-			RSModel model) {
+			RSModel model,
+			StaticPresentationGeometryKey geometryKey) {
 			this.kind = kind;
 			this.instanceIndex = instanceIndex;
 			this.tileX = tileX;
@@ -4598,6 +4759,74 @@ public final class mudclient implements Runnable {
 			this.objectId = objectId;
 			this.direction = direction;
 			this.model = model;
+			this.geometryKey = geometryKey;
+		}
+	}
+
+	private static final class StaticPresentationGeometryKey {
+		private final Renderer3DModelKind kind;
+		private final int plane;
+		private final int objectId;
+		private final int worldTileX;
+		private final int worldTileZ;
+		private final int direction;
+		private final int type;
+		private final int elevation1;
+		private final int elevation2;
+
+		private StaticPresentationGeometryKey(
+			Renderer3DModelKind kind,
+			int plane,
+			int objectId,
+			int worldTileX,
+			int worldTileZ,
+			int direction,
+			int type,
+			int elevation1,
+			int elevation2) {
+			this.kind = kind;
+			this.plane = plane;
+			this.objectId = objectId;
+			this.worldTileX = worldTileX;
+			this.worldTileZ = worldTileZ;
+			this.direction = direction;
+			this.type = type;
+			this.elevation1 = elevation1;
+			this.elevation2 = elevation2;
+		}
+
+		@Override
+		public boolean equals(Object value) {
+			if (this == value) {
+				return true;
+			}
+			if (!(value instanceof StaticPresentationGeometryKey)) {
+				return false;
+			}
+			StaticPresentationGeometryKey other =
+				(StaticPresentationGeometryKey) value;
+			return this.kind == other.kind
+				&& this.plane == other.plane
+				&& this.objectId == other.objectId
+				&& this.worldTileX == other.worldTileX
+				&& this.worldTileZ == other.worldTileZ
+				&& this.direction == other.direction
+				&& this.type == other.type
+				&& this.elevation1 == other.elevation1
+				&& this.elevation2 == other.elevation2;
+		}
+
+		@Override
+		public int hashCode() {
+			int result = this.kind.hashCode();
+			result = 31 * result + this.plane;
+			result = 31 * result + this.objectId;
+			result = 31 * result + this.worldTileX;
+			result = 31 * result + this.worldTileZ;
+			result = 31 * result + this.direction;
+			result = 31 * result + this.type;
+			result = 31 * result + this.elevation1;
+			return 31 * result + this.elevation2;
 		}
 	}
 

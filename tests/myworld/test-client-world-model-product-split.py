@@ -298,6 +298,51 @@ def main() -> None:
     require(mudclient,
             "&& !RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED;",
             "Deep comparison runs should keep deterministic sequential construction")
+    require(
+        mudclient,
+        "Map<StaticPresentationGeometryKey, ArrayDeque<StaticPresentationModel>>\n"
+        "\t\t\treusableModels",
+        "Adjacent presentations should retain exact static model geometry",
+    )
+    require(
+        mudclient,
+        "ArrayDeque<StaticPresentationModel> matches =\n"
+        "\t\t\treusableModels.get(geometryKey);",
+        "Static model retention should require an exact geometry key",
+    )
+    require(
+        mudclient,
+        "previousBaseX - this.midRegionBaseX",
+        "Retained models should move by the exact presentation-origin delta",
+    )
+    require(
+        mudclient,
+        "this.requestedPlane,\n"
+        "\t\t\trecord.id,\n"
+        "\t\t\trecord.x,\n"
+        "\t\t\trecord.y,\n"
+        "\t\t\trecord.direction,\n"
+        "\t\t\trecord.type,\n"
+        "\t\t\televation",
+        "Scenery retention must include plane, identity, placement, and terrain height",
+    )
+    require(
+        mudclient,
+        "&& this.elevation1 == other.elevation1\n"
+        "\t\t\t\t&& this.elevation2 == other.elevation2;",
+        "Wall retention must reject changed endpoint elevations",
+    )
+    require(
+        mudclient,
+        "this.staticPresentationModels.clear();\n"
+        "\t\tinvalidateStaticScenePresentationModels();\n"
+        "\t\tclearResidentObjectChunkCache();",
+        "Hard presentation clears must discard retained model ownership",
+    )
+    require(mudclient, 'event.number("reused", reused);',
+            "Transition diagnostics should report retained model reuse")
+    require(mudclient, 'event.number("built", built);',
+            "Transition diagnostics should report newly built models")
     require(mudclient, "cached != null && cached.cacheKey == input.cacheKey",
             "Parallel chunk construction must retain exact cache identity checks")
     forbid(mudclient, "staticContentKeySum",
