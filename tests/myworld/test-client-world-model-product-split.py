@@ -238,14 +238,22 @@ def main() -> None:
             "Client should build resident object chunks from cached object chunk inputs")
     require(mudclient, "cached != null && cached.cacheKey == input.cacheKey",
             "Client should reuse resident object chunks when object transforms are unchanged")
-    require(mudclient, "mixResidentObjectChunkCacheKey(\n\t\t\t\t\tthis.cacheKey, worldTileX)",
+    require(mudclient, "mixResidentObjectChunkCacheKey(\n\t\t\t\t\tmodelContentKey, worldTileX)",
             "Static resident object cache keys should use stable world tile placement")
-    require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, objectId)",
+    require(mudclient, "modelContentKey, objectId",
             "Resident object cache keys should include object identity")
-    require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, direction)",
+    require(mudclient, "modelContentKey, direction",
             "Resident object cache keys should include object direction")
     require(mudclient, "model.getRenderer3DTransformVersion()",
-            "Resident object cache keys should include model transform versions")
+            "Animated resident object cache keys should include model transform versions")
+    require(mudclient, "staticContentKeySum += modelContentKey;",
+            "Static resident object cache identity should be independent of baseline record order")
+    require(mudclient, "staticContentKeyXor ^=",
+            "Static resident object cache identity should retain a second commutative content accumulator")
+    require(mudclient, 'modelName.startsWith("torcha")'
+            and 'modelName.startsWith("firea")'
+            and 'modelName.startsWith("myworld_cosmic_sparkles")',
+            "Known mutable scenery families should remain outside static chunk reuse")
     require(mudclient, "rebaseStaticObjectPresentation(",
             "Overlapping static object chunks should survive adjacent client-origin shifts")
     require(mudclient, "cached.presentationBaseX - this.midRegionBaseX",
