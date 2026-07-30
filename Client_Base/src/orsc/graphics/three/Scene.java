@@ -4,6 +4,7 @@ import com.openrsc.client.model.Sprite;
 import orsc.MiscFunctions;
 import orsc.RenderTelemetry;
 import orsc.buffers.BufferStack;
+import orsc.graphics.Renderer2DFrame;
 import orsc.graphics.RendererTransparency;
 import orsc.graphics.two.GraphicsController;
 import orsc.util.FastMath;
@@ -72,6 +73,10 @@ public final class Scene {
 	private int[] m_Q;
 	private boolean[] m_S;
 	private boolean[] renderer3DCharacterTagged;
+	private boolean[] renderer3DGroundItemTagged;
+	private boolean[] renderer3DGroundItemNoted;
+	private int[] renderer3DGroundItemId;
+	private int[] renderer3DGroundItemIndex;
 	private boolean[] renderer3DCharacterCombatDirection;
 	private boolean[] renderer3DCharacterActiveHitSplats;
 	private int[] renderer3DCharacterArrayIndex;
@@ -174,6 +179,10 @@ public final class Scene {
 			this.m_gb = new int[var4];
 			this.m_a = new int[var4];
 			this.renderer3DCharacterTagged = new boolean[var4];
+			this.renderer3DGroundItemTagged = new boolean[var4];
+			this.renderer3DGroundItemNoted = new boolean[var4];
+			this.renderer3DGroundItemId = new int[var4];
+			this.renderer3DGroundItemIndex = new int[var4];
 			this.renderer3DCharacterCombatDirection = new boolean[var4];
 			this.renderer3DCharacterActiveHitSplats = new boolean[var4];
 			this.renderer3DCharacterArrayIndex = new int[var4];
@@ -2690,6 +2699,7 @@ public final class Scene {
 			this.m_Eb[this.m_n] = var7;
 			this.m_Q[this.m_n] = 0;
 			this.renderer3DCharacterTagged[this.m_n] = false;
+			this.renderer3DGroundItemTagged[this.m_n] = false;
 			int var9 = this.m_T.insertVertex2(false, var2, var4, var5);
 			int var10 = this.m_T.insertVertex2(false, var2, var4, var5 - var7);
 			if (var9 < 0 || var10 < 0) {
@@ -2728,6 +2738,10 @@ public final class Scene {
 		this.m_gb = Arrays.copyOf(this.m_gb, newCapacity);
 		this.m_a = Arrays.copyOf(this.m_a, newCapacity);
 		this.renderer3DCharacterTagged = Arrays.copyOf(this.renderer3DCharacterTagged, newCapacity);
+		this.renderer3DGroundItemTagged = Arrays.copyOf(this.renderer3DGroundItemTagged, newCapacity);
+		this.renderer3DGroundItemNoted = Arrays.copyOf(this.renderer3DGroundItemNoted, newCapacity);
+		this.renderer3DGroundItemId = Arrays.copyOf(this.renderer3DGroundItemId, newCapacity);
+		this.renderer3DGroundItemIndex = Arrays.copyOf(this.renderer3DGroundItemIndex, newCapacity);
 		this.renderer3DCharacterCombatDirection = Arrays.copyOf(this.renderer3DCharacterCombatDirection, newCapacity);
 		this.renderer3DCharacterActiveHitSplats = Arrays.copyOf(this.renderer3DCharacterActiveHitSplats, newCapacity);
 		this.renderer3DCharacterArrayIndex = Arrays.copyOf(this.renderer3DCharacterArrayIndex, newCapacity);
@@ -2749,6 +2763,20 @@ public final class Scene {
 		this.renderer3DCharacterDisplayName = Arrays.copyOf(this.renderer3DCharacterDisplayName, newCapacity);
 		this.renderer3DCharacterDirection = Arrays.copyOf(this.renderer3DCharacterDirection, newCapacity);
 		this.m_T.ensureCapacity(newCapacity * 2, newCapacity);
+	}
+
+	public void tagGroundItemSprite(
+		int faceId,
+		int itemId,
+		int groundItemIndex,
+		boolean noted) {
+		if (faceId < 0 || faceId >= this.renderer3DGroundItemTagged.length) {
+			return;
+		}
+		this.renderer3DGroundItemTagged[faceId] = true;
+		this.renderer3DGroundItemId[faceId] = itemId;
+		this.renderer3DGroundItemIndex[faceId] = groundItemIndex;
+		this.renderer3DGroundItemNoted[faceId] = noted;
 	}
 
 	public void tagCharacterSprite(
@@ -3103,6 +3131,27 @@ public final class Scene {
 								spriteScale,
 								var19,
 								!var2.m_db && var2.m_zb[var3] == 0);
+							Renderer3DFrame.WorldSpriteSnapshot spriteSnapshot =
+								geometryFrame.getWorldSpriteSnapshot(spriteAnchorIndex);
+							Renderer3DFrame.GroundItemSpriteSource groundItemSource =
+								spriteSnapshot == null ? null : spriteSnapshot.getGroundItemSource();
+							if (groundItemSource != null) {
+								Renderer2DFrame.SpriteCommand directGroundItemLayer =
+									this.graphics.buildRenderer2DSceneSpriteCommand(
+										groundItemSource.getSprite(),
+										var20 + this.m_Zb,
+										var21,
+										var28,
+										var17,
+										groundItemSource.getTransform(),
+										this.m_gb[var3],
+										spriteAnchorIndex,
+										spriteDrawOrder);
+								geometryFrame.recordDirectGroundItemLayer(
+									spriteAnchorIndex,
+									spriteDrawOrder,
+									directGroundItemLayer);
+							}
 						}
 						this.graphics.drawSceneEntity(
 							this.m_gb[var3],
@@ -3471,6 +3520,13 @@ public final class Scene {
 			if (spriteModel.facePickIndex != null && face < spriteModel.facePickIndex.length) {
 				pickIndex = spriteModel.facePickIndex[face];
 			}
+			Renderer3DFrame.GroundItemSpriteSource groundItemSource = null;
+			if (this.renderer3DGroundItemTagged[face] && "projected".equals(cullReason)) {
+				groundItemSource = this.graphics.resolveGroundItemRendererSource(
+					this.renderer3DGroundItemId[face],
+					this.renderer3DGroundItemIndex[face],
+					this.renderer3DGroundItemNoted[face]);
+			}
 			geometryFrame.addSpriteSubmission(
 				face,
 				this.m_gb[face],
@@ -3492,7 +3548,8 @@ public final class Scene {
 				scale,
 				horizontalSkew,
 				"projected".equals(cullReason),
-				cullReason);
+				cullReason,
+				groundItemSource);
 			if (this.renderer3DCharacterTagged[face]) {
 				geometryFrame.addCharacterSprite(
 					this.renderer3DCharacterKind[face],

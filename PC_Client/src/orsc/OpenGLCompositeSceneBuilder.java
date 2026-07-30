@@ -137,10 +137,11 @@ final class OpenGLCompositeSceneBuilder {
 	}
 
 	static boolean isLegacyGroundItemSpriteCommand(Renderer2DFrame.SpriteCommand command) {
-		if (!isLegacySceneSpriteCommand(command)) {
+		if (command == null || command.getPhase() != Renderer2DFrame.Phase.SCENE) {
 			return false;
 		}
-		return isLegacyGroundItemSpriteId(command.getLegacySpriteId());
+		return command.getLegacySpriteId() == -1
+			|| isLegacyGroundItemSpriteId(command.getLegacySpriteId());
 	}
 
 	static boolean isOpenGLCompositeWorldSpriteCommand(Renderer2DFrame.SpriteCommand command) {
@@ -153,7 +154,9 @@ final class OpenGLCompositeSceneBuilder {
 			return false;
 		}
 		int spriteId = snapshot.getAnchor().getSpriteId();
-		return isLegacyEntitySpriteId(spriteId) || isLegacyGroundItemSpriteId(spriteId);
+		return isLegacyEntitySpriteId(spriteId)
+			|| spriteId == -1
+			|| isLegacyGroundItemSpriteId(spriteId);
 	}
 
 	static boolean canUseOwnedWorldSpriteSnapshots(

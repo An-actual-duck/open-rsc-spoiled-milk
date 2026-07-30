@@ -4,6 +4,7 @@ import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.model.Sprite;
 
 import orsc.Config;
+import orsc.graphics.three.Renderer3DFrame;
 import orsc.mudclient;
 import orsc.util.GenUtil;
 
@@ -14,6 +15,19 @@ public final class MudClientGraphics extends GraphicsController {
 
 	public MudClientGraphics(int var1, int var2, int var3) {
 		super(var1, var2, var3);
+	}
+
+	@Override
+	public Renderer3DFrame.GroundItemSpriteSource resolveGroundItemRendererSource(
+		int itemId,
+		int groundItemIndex,
+		boolean noted) {
+		return this.mudClientRef == null
+			? null
+			: this.mudClientRef.resolveGroundItemRendererSource(
+				itemId,
+				groundItemIndex,
+				noted);
 	}
 
 	@Override

@@ -573,7 +573,13 @@ come from one of these areas unless a concrete shadow regression appears:
    direct world-space input contract and migrate the simplest category first
    behind exact parity/fallback checks. Ground items are the preferred first
    slice because they are single-layer submissions without multipart character
-   composition. Then move players, NPCs, projectiles, and effects from
+   composition. That ground-item slice is now implemented for private
+   validation: projected items carry typed sprite/mask sources, independently
+   derived commands become active only after field-exact comparison with the
+   retained capture, and any mismatch falls back automatically. Accept it with
+   an item-heavy visual/strict-capture route, then separate nameplate
+   bookkeeping and measure whether redundant item raster/capture can be
+   retired. After that, move players, NPCs, projectiles, and effects from
    captured screen-space layers toward direct world-space inputs,
    parity-complete persistent texture ownership, ordered batching, and
    culling. Retire matching legacy scene sort/rotation/removal and capture work

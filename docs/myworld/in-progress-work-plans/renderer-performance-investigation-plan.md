@@ -28,6 +28,14 @@ storage. Compilation, the full guard suite, owner visual review, and a
 snapshot ownership across 1,144 groups with zero compatibility fallback,
 invalid anchor/order, suspicious visibility, failed frames, or client
 exceptions. The accepted cleanup is checkpointed at `87aed9cbf`.
+The next architecture milestone is now implemented for private validation:
+single-layer ground items carry an explicit frame-local sprite/transform
+source alongside their world submission. `Scene` independently derives a
+direct command from the projected anchor, compares every visual and ownership
+field against the retained legacy 2D capture, and lets that direct command
+become presentation authority only on an exact match. The captured command
+remains the automatic fallback and parity oracle. This is not accepted yet;
+it requires a ground-item-heavy visual route and strict `Ctrl+F9` evidence.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -1265,6 +1273,52 @@ container and traversal overhead introduced by the second ownership slice;
 it does not reopen generic allocation-only micro-tuning beyond the established
 diminishing-returns gate.
 
+## Direct Ground-Item Input Slice
+
+The first direct world-space input slice deliberately starts with ground
+items. Each projected item is one layer, has one sprite definition and mask
+transform, and already has an exact scene anchor and pick owner. Characters
+remain on their accepted multipart captured-layer path.
+
+The initial implementation keeps two inputs for each projected ground item:
+
+1. a renderer-owned `GroundItemSpriteSource` containing the logical item,
+   source ground-item index, noted state, selected sprite, and immutable mask
+   transform;
+2. the existing legacy `SpriteCommand`, retained as the comparator and
+   immediate fallback.
+
+`Scene` resolves the source only after the item is projected, derives the
+direct command from the anchor rectangle with the legacy shifted-sprite and
+clip rules, and attaches it to the exact `WorldSpriteSnapshot`. The snapshot
+compares sprite identity, destination, source bounds/sampling, transform,
+shape, and owner metadata. Sequence is intentionally excluded because the
+renderer-owned command is ordered by its exact anchor while the comparator's
+sequence belongs to the legacy 2D stream. OpenGL selects the direct command
+only when the snapshot has exactly one captured layer and every compared field
+matches; otherwise it presents the captured command.
+
+This milestone intentionally does **not** skip legacy item drawing yet.
+`drawItemAt` still supplies ground-item nameplate bookkeeping and produces the
+parity command. After private proof, the next isolated slice may separate that
+bookkeeping from sprite raster/capture and retire the redundant item command
+work. It must retain picking, stacking offsets, noted/certificate art,
+external/remastered item sprites, nameplate grouping, and whole-frame snapshot
+fallback.
+
+Validation requirements:
+
+- ordinary and stacked items, including shifted/cropped sprite art, look
+  unchanged while walking and rotating the camera;
+- noted items use the same direct ground-item classification and art;
+- item pickup/right-click targeting and optional ground-item names remain
+  unchanged;
+- strict `world-sprite-snapshots.tsv` reports every ground-item group with
+  `groundItemSource=true`, parity checked/exact, direct presentation active,
+  and no mismatch reason;
+- snapshot compatibility fallback, invalid owner/order, command drops, client
+  exceptions, and suspicious visibility remain zero.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -1535,6 +1589,17 @@ Implementation checkpoint:
       strict 12-frame burst: 6,158/6,158 layers retained exact ownership
       across 1,144 groups, with zero fallback, invalid anchor/order,
       suspicious visibility, failed frames, or client exceptions.
+- [x] Implement the first direct world-space input boundary for single-layer
+      ground items with typed item/sprite/transform sources, independently
+      derived commands, field-level parity diagnosis, noted-item support, and
+      automatic captured-command fallback.
+- [ ] Validate ordinary, stacked, shifted/remastered, and noted ground items
+      on the private client. Capture a strict burst proving every projected
+      item is direct-source, parity-exact, and actively presented with zero
+      mismatch or compatibility fallback.
+- [ ] After that acceptance, measure the retained legacy item capture/nameplate
+      cost and propose a separate slice that can skip only redundant item
+      raster/capture while preserving nameplates, picking, and fallback.
 
 ### Milestone 4: Broader Performance Matrix
 

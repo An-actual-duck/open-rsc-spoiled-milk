@@ -2179,7 +2179,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		if (visibleSpriteTextureAtlas != null) {
 			visibleSpriteTextureAtlas.beginFrame();
 		}
-		if (OpenGLCompositeSceneBuilder.canUseOwnedWorldSpriteSnapshots(frame, commands)) {
+		boolean useOwnedWorldSpriteSnapshots =
+			OpenGLCompositeSceneBuilder.canUseOwnedWorldSpriteSnapshots(frame, commands);
+		recordDirectGroundItemFrame(frame, useOwnedWorldSpriteSnapshots);
+		if (useOwnedWorldSpriteSnapshots) {
 			int snapshotGroups =
 				OpenGLCompositeSceneBuilder.countOwnedWorldSpriteSnapshotGroups(frame);
 			int snapshotLayers =
@@ -3086,6 +3089,39 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		worldSpriteDepthDrawCommands = drawn;
 		worldSpriteDepthTextureBatches = drawn;
 		return drawn;
+	}
+
+	private void recordDirectGroundItemFrame(
+		Frame frame,
+		boolean useOwnedWorldSpriteSnapshots) {
+		if (frame == null || frame.renderer3DFrame == null) {
+			RenderTelemetry.recordOpenGLDirectGroundItemFrame(0, 0, 0, 0);
+			return;
+		}
+		int sources = 0;
+		int parityExact = 0;
+		int active = 0;
+		for (int snapshotIndex = 0;
+			snapshotIndex < frame.renderer3DFrame.getWorldSpriteSnapshotCount();
+			snapshotIndex++) {
+			Renderer3DFrame.WorldSpriteSnapshot snapshot =
+				frame.renderer3DFrame.getWorldSpriteSnapshot(snapshotIndex);
+			if (snapshot == null || snapshot.getGroundItemSource() == null) {
+				continue;
+			}
+			sources++;
+			if (snapshot.isDirectGroundItemParityExact()) {
+				parityExact++;
+			}
+			if (useOwnedWorldSpriteSnapshots && snapshot.canUseDirectGroundItemLayer()) {
+				active++;
+			}
+		}
+		RenderTelemetry.recordOpenGLDirectGroundItemFrame(
+			sources,
+			parityExact,
+			active,
+			Math.max(0, sources - active));
 	}
 
 	private void initializeUnitQuadBuffers() throws Exception {

@@ -1379,6 +1379,26 @@ they are not visual requirements for the baseline.
       exact snapshot ownership across 1,144 groups with zero fallback,
       invalid anchor/order, suspicious visibility, failed frame, or client
       exception.
+- [x] Implement the first direct world-space input slice for ground items.
+      Projected items now carry a typed frame-local source containing item
+      identity, source index, noted state, selected sprite, and immutable mask
+      transform. `Scene` derives a renderer-owned command from the exact
+      projected anchor and the snapshot compares it field-for-field with the
+      retained legacy 2D command.
+- [x] Gate direct ground-item presentation on exact single-layer parity.
+      Mismatches automatically retain the captured command as visual
+      authority, while structured snapshot capture records source presence,
+      parity state, mismatch reason, and whether direct presentation was
+      selected. Noted item sprite id `-1` is explicitly classified as a ground
+      item instead of falling outside the world-sprite path.
+- [ ] Accept the direct ground-item slice only after a private visual route and
+      strict capture cover ordinary, stacked, shifted/remastered, and noted
+      items with preserved pickup/right-click/nameplate behavior, all item
+      groups parity-exact and active, and zero mismatch or compatibility
+      fallback.
+- [ ] Once accepted, isolate ground-item nameplate bookkeeping from legacy
+      sprite raster/capture, measure the remaining redundant work, and retire
+      it in a separate guarded milestone before starting multipart characters.
 - [x] Add the first live camera-space world-sprite depth path. It back-projects
       each existing command rectangle at the legacy sprite face's interpolated
       top/bottom camera depth, preserving exact screen framing and skew while
