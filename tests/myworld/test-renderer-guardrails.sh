@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 
 renderer_tests=(
   test-client-cpu-section-window-cache.py
+  test-layered-transition-minimap-acceptance.py
   test-client-predictive-terrain-preload.py
   test-client-world-model-product-split.py
   test-client-world-streaming-backend.py

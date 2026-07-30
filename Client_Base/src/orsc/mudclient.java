@@ -13086,8 +13086,14 @@ public final class mudclient implements Runnable {
 
 			int var6 = 192 + this.minimapRandom_2;
 			int var7 = 255 & this.cameraRotation + this.minimapRandom_1;
-			int mX = var6 * (this.localPlayer.currentX - 6040) * 3 / 2048;
-			int mZ = var6 * (this.localPlayer.currentZ - 6040) * 3 / 2048;
+			int minimapLocalCenter =
+				this.world.getMinimapLocalCenterPixel();
+			int mX = var6
+				* (this.localPlayer.currentX - minimapLocalCenter)
+				* 3 / 2048;
+			int mZ = var6
+				* (this.localPlayer.currentZ - minimapLocalCenter)
+				* 3 / 2048;
 			int var10 = FastMath.trigTable_1024[1023 & 1024 - var7 * 4];
 			int var11 = FastMath.trigTable_1024[(1023 & 1024 - var7 * 4) + 1024];
 			int var12 = mX * var11 + var10 * mZ >> 18;

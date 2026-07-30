@@ -2260,6 +2260,27 @@ public class GraphicsController {
 		}
 	}
 
+	public final void publishMinimapRaster(int[] rowMajorPixels, int width, int height) {
+		if (rowMajorPixels == null
+			|| width <= 0
+			|| height <= 0
+			|| rowMajorPixels.length != width * height) {
+			throw new IllegalArgumentException("Invalid minimap raster");
+		}
+		int[] spritePixels = new int[rowMajorPixels.length];
+		int pixel = 0;
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				spritePixels[pixel++] = rowMajorPixels[x + y * width];
+			}
+		}
+		Sprite sprite = new Sprite(spritePixels, width, height);
+		sprite.setShift(0, 0);
+		sprite.setRequiresShift(false);
+		sprite.setSomething(width, height);
+		minimapSprite = sprite;
+	}
+
 	public final void drawVerticalGradient(int x, int y, int width, int height, int topColor, int bottomColor) {
 		try {
 			markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.GRADIENT);

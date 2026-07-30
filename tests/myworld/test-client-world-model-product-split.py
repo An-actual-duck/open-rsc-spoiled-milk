@@ -67,7 +67,7 @@ def main() -> None:
             "Wall model input should be loaded through the active-window cache")
     require(world, "private WallModelInput buildWallModelInput(Sector[] sourceSectors)",
             "Wall model input should be built from an explicit sector-window source")
-    require(world, "private void emitWallProduct(WallModelInput input, boolean showWallOnMinimap)",
+    require(world, "private void emitWallProduct(",
             "Wall model input should replay through a wall product emitter")
     require(world, "segment.vertexCoords[offset]",
             "Wall product replay should use cached final wall vertices")
@@ -322,7 +322,7 @@ def main() -> None:
             "Landscape generation should replay terrain from the combined product")
     require(world, "this.publishTerrainProduct(worldMod);",
             "Landscape generation should call the terrain product boundary")
-    require(world, "private void publishTerrainAuthorityProduct(TerrainModelInput input)",
+    require(world, "private void publishTerrainAuthorityProduct(",
             "Native terrain authority should publish collision, minimap, and elevation without legacy geometry")
     require(world, "this.shouldUseNativeTerrainAuthorityOnly()",
             "Landscape generation should explicitly gate the native authority-only terrain path")
@@ -354,7 +354,7 @@ def main() -> None:
             "Native terrain raycast coverage should retain the resident world frame contract")
     require(mudclient, "MenuItemAction.LANDSCAPE_CAST_SPELL",
             "Projected native terrain picking should preserve ground-target spells")
-    require(world, "this.emitWallProduct(worldProduct.wallInput, showWallOnMinimap);",
+    require(world, "this.emitWallProduct(",
             "Landscape generation should replay walls from the combined product")
     require(world, "this.publishWallProduct(plane);",
             "Landscape generation should call the wall product boundary")

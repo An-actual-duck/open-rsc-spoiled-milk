@@ -482,14 +482,17 @@ class NativeTerrainSymmetricResidencyTest(unittest.TestCase):
         self.assertIn("decodeV9Halo(", handler)
         self.assertIn("decodeV10Structure(", handler)
         self.assertIn("preloadNativeLayeredTerrainHalo(", handler)
-        self.assertIn("CompletableFuture.completedFuture(", world)
+        self.assertIn("prebuildNativeWorldModelProduct(", world)
+        self.assertIn("sectorPreloadExecutor.submit(", world)
         self.assertIn(
             "activeFrame.getChunkCount() + outerFrame.getChunkCount()",
             world,
         )
         self.assertIn("NATIVE_TERRAIN_SYMMETRIC_RETAIN", world)
         self.assertIn("rebasePresentation(rebaseX, rebaseZ)", world)
-        self.assertIn("Math.max(Math.abs(deltaX), Math.abs(deltaY)) != 2", world)
+        self.assertIn("retainedOuter.add(rebased);", world)
+        self.assertIn("retainedAll.add(rebased);", world)
+        self.assertIn("findReusableNativePresentationChunk(", world)
         self.assertIn("NATIVE_TERRAIN_SYMMETRIC_FIELD", world)
         self.assertIn("includePresentationEffects", world)
 
