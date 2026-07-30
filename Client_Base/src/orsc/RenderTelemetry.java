@@ -290,6 +290,12 @@ public final class RenderTelemetry {
 	private static long lastClientLoopSampleNanos;
 	private static long openGLWorldChunkUploadBudgetLimitNanos;
 	private static String openGLWorldChunkUploadReason = "steady";
+	private static final int OPENGL_BOUNDARY_TRANSITION_TRACE_FRAMES = 90;
+	private static long openGLBoundaryTransitionTraceId;
+	private static int openGLBoundaryTransitionTraceFramesRemaining;
+	private static int openGLBoundaryTransitionTraceFrameIndex;
+	private static int openGLBoundaryTransitionSectionX;
+	private static int openGLBoundaryTransitionSectionY;
 	private static long lastReportNanos;
 	private static String openGLRemasterShadowMaskReason = "not-built";
 	private static String openGLResidentChunkReplacementReason = "not-requested";
@@ -511,6 +517,16 @@ public final class RenderTelemetry {
 				worldSectionLoadBridgeStats.record(bridgeNanos);
 				worldSectionLoadChunkFrameStats.record(chunkFrameNanos);
 				worldSectionLoadPreloadStats.record(preloadNanos);
+				if (RendererDiagnosticSession.isEnabled()
+					&& path != null
+					&& path.startsWith("native-")) {
+					openGLBoundaryTransitionTraceId++;
+					openGLBoundaryTransitionTraceFramesRemaining =
+						OPENGL_BOUNDARY_TRANSITION_TRACE_FRAMES;
+					openGLBoundaryTransitionTraceFrameIndex = 0;
+					openGLBoundaryTransitionSectionX = sectionX;
+					openGLBoundaryTransitionSectionY = sectionY;
+				}
 			}
 			RendererDiagnosticSession.Record event =
 				RendererDiagnosticSession.newEventRecord(
@@ -544,6 +560,121 @@ public final class RenderTelemetry {
 				+ " preloadMs=" + formatMillisRoot(preloadNanos);
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
+	}
+
+	static void recordOpenGLBoundaryTransitionFrame(
+		int chunkCount,
+		int triangleCount,
+		OpenGLWorldChunkUploadStats uploadStats,
+		boolean replacementRequested,
+		boolean residentReady,
+		boolean residentActive,
+		String replacementReason,
+		boolean projectedWorldDrawn,
+		boolean residentWorldDrawn,
+		boolean remasterShadowPrepared,
+		boolean explicitRemasterShadowRequested,
+		OpenGLWorldChunkDrawStats drawStats,
+		long chunkUploadNanos,
+		long projectedDrawNanos,
+		long residentDrawNanos) {
+		if (!RendererDiagnosticSession.isEnabled()) {
+			return;
+		}
+		synchronized (RenderTelemetry.class) {
+			if (openGLBoundaryTransitionTraceFramesRemaining <= 0) {
+				return;
+			}
+			OpenGLWorldChunkUploadStats safeUpload =
+				uploadStats == null
+					? OpenGLWorldChunkUploadStats.EMPTY
+					: uploadStats;
+			OpenGLWorldChunkDrawStats safeDraw =
+				drawStats == null
+					? OpenGLWorldChunkDrawStats.EMPTY
+					: drawStats;
+			boolean shadowOverProjectedFallback =
+				projectedWorldDrawn
+					&& !residentWorldDrawn
+					&& explicitRemasterShadowRequested;
+			RendererDiagnosticSession.Record event =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.boundary-transition-frame");
+			if (event != null) {
+				event.number(
+					"transitionId",
+					openGLBoundaryTransitionTraceId);
+				event.number(
+					"transitionFrame",
+					openGLBoundaryTransitionTraceFrameIndex);
+				event.number(
+					"rendererFrameSequence",
+					frameStats.count);
+				event.number(
+					"sectionX",
+					openGLBoundaryTransitionSectionX);
+				event.number(
+					"sectionY",
+					openGLBoundaryTransitionSectionY);
+				event.number("world.chunkCount", chunkCount);
+				event.number("world.triangleCount", triangleCount);
+				event.number(
+					"upload.requested",
+					safeUpload.requestedChunks);
+				event.number(
+					"upload.uploaded",
+					safeUpload.uploadedChunks);
+				event.number(
+					"upload.reused",
+					safeUpload.reusedChunks);
+				event.number(
+					"upload.deferred",
+					safeUpload.deferredChunks);
+				event.string("upload.reason", safeUpload.reason);
+				event.number("upload.phaseNanos", chunkUploadNanos);
+				event.bool(
+					"ownership.replacementRequested",
+					replacementRequested);
+				event.bool("ownership.residentReady", residentReady);
+				event.bool("ownership.residentActive", residentActive);
+				event.string(
+					"ownership.replacementReason",
+					replacementReason);
+				event.bool(
+					"draw.projectedWorld",
+					projectedWorldDrawn);
+				event.bool(
+					"draw.residentWorld",
+					residentWorldDrawn);
+				event.number(
+					"draw.projectedNanos",
+					projectedDrawNanos);
+				event.number(
+					"draw.residentNanos",
+					residentDrawNanos);
+				event.number(
+					"draw.residentChunks",
+					safeDraw.drawnChunks);
+				event.number(
+					"draw.residentTriangles",
+					safeDraw.drawnTriangles);
+				event.number(
+					"draw.shadowProofChunks",
+					safeDraw.shadowProofChunks);
+				event.bool(
+					"shadow.remasterPrepared",
+					remasterShadowPrepared);
+				event.bool(
+					"shadow.explicitRemasterRequested",
+					explicitRemasterShadowRequested);
+				event.bool(
+					"shadow.overProjectedFallback",
+					shadowOverProjectedFallback);
+				RendererDiagnosticSession.writeEventRecord(event);
+			}
+			openGLBoundaryTransitionTraceFrameIndex++;
+			openGLBoundaryTransitionTraceFramesRemaining--;
+		}
 	}
 
 	public static void recordWorldModelTransition(

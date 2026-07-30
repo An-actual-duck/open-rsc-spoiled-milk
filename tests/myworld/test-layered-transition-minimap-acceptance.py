@@ -7,6 +7,8 @@ ROOT = Path(__file__).resolve().parents[2]
 WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
 GRAPHICS = ROOT / "Client_Base/src/orsc/graphics/two/GraphicsController.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+TELEMETRY = ROOT / "Client_Base/src/orsc/RenderTelemetry.java"
+PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
 
 
 class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
@@ -15,6 +17,8 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
         cls.world = WORLD.read_text(encoding="utf-8")
         cls.graphics = GRAPHICS.read_text(encoding="utf-8")
         cls.client = CLIENT.read_text(encoding="utf-8")
+        cls.telemetry = TELEMETRY.read_text(encoding="utf-8")
+        cls.presenter = PRESENTER.read_text(encoding="utf-8")
 
     def test_native_minimap_owns_the_complete_active_window(self):
         self.assertIn(
@@ -200,6 +204,38 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
         self.assertIn(
             '"/built:" + builtCells',
             self.world,
+        )
+
+    def test_boundary_trace_records_world_and_shadow_ownership(self):
+        self.assertIn(
+            "OPENGL_BOUNDARY_TRANSITION_TRACE_FRAMES = 90",
+            self.telemetry,
+        )
+        self.assertIn(
+            '"renderer.boundary-transition-frame"',
+            self.telemetry,
+        )
+        self.assertIn(
+            '"shadow.overProjectedFallback"',
+            self.telemetry,
+        )
+        self.assertIn(
+            "projectedWorldDrawn\n"
+            "\t\t\t\t\t&& !residentWorldDrawn\n"
+            "\t\t\t\t\t&& explicitRemasterShadowRequested",
+            self.telemetry,
+        )
+        self.assertIn(
+            "recordOpenGLBoundaryTransitionFrame(",
+            self.presenter,
+        )
+        self.assertIn(
+            "explicitRemasterShadowRequested",
+            self.presenter,
+        )
+        self.assertIn(
+            "RendererDiagnosticSession.isEnabled()",
+            self.telemetry,
         )
 
 
