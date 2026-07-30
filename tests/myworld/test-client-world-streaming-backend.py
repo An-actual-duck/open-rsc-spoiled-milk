@@ -142,7 +142,10 @@ def main() -> None:
             "Renderer3DFrame should carry the active world-space chunk frame")
     require(renderer_3d_frame, "public Renderer3DWorldChunkFrame getWorldChunkFrame()",
             "Renderer3DFrame should expose the active world-space chunk frame")
-    require(mudclient, "this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame())",
+    require(
+        mudclient,
+        "this.appendResidentObjectChunkFrame(\n"
+        "\t\t\t\t\t\t\t\tthis.world.getRenderer3DWorldChunkFrame())",
             "Client draw should attach world-space chunk snapshots plus resident object chunks to captured frames")
 
     print("PASS: client world streaming backend scaffold is documented and instrumented")

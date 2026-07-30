@@ -221,6 +221,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			: Collections.<ShadowProofCaster>emptyList();
 		long shadowProofSignature =
 			shouldDrawProjectedShadowProof() ? shadowProofCasterSignature(shadowProofCasters) : 0L;
+		boolean drawOffsetSupported =
+			useResidentChunkShader(atlasTextureCoordinates);
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
 			int vertexCount = chunk.getVertexCount();
 			int indexCount = chunk.getIndexCount();
@@ -235,10 +237,12 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			int fogModeBits = currentFogModeBits();
 			int lightingModeBits = currentLightingModeBits();
 			int geometryModeBits = currentGeometryModeBits();
+			long bufferSignature =
+				chunkBufferSignature(chunk, drawOffsetSupported);
 			String mismatchReason = buffer == null
 				? "new"
 				: buffer.mismatchReason(
-					chunk.getSignature(),
+					bufferSignature,
 					vertexCount,
 					indexCount,
 					chunk.getTriangleCount(),
@@ -252,7 +256,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 					chunk.isObjectChunk(),
 					chunk.getChunkRole());
 			if (buffer != null && buffer.matches(
-				chunk.getSignature(),
+				bufferSignature,
 				vertexCount,
 				indexCount,
 				chunk.getTriangleCount(),
@@ -285,6 +289,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				chunk,
 				buffer,
 				frame,
+				bufferSignature,
 				vertexCount,
 				indexCount,
 				atlasTextureCoordinates,
@@ -321,6 +326,14 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			return currentReason;
 		}
 		return currentReason + "+" + nextReason;
+	}
+
+	private long chunkBufferSignature(
+		Renderer3DWorldChunkFrame.ChunkMesh chunk,
+		boolean drawOffsetSupported) {
+		return drawOffsetSupported
+			? chunk.getStorageSignature()
+			: chunk.getSignature();
 	}
 
 	private boolean shouldDeferChunkUpload(
@@ -1586,6 +1599,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		int drawableTerrainBatches = 0;
 		int drawableWallBatches = 0;
 		int drawableRoofBatches = 0;
+		boolean drawOffsetSupported = useResidentChunkShader(textured);
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
 			if (chunk.getVertexCount() <= 0 || chunk.getIndexCount() <= 0) {
 				continue;
@@ -1594,7 +1608,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
 			WorldChunkBuffer buffer = residentChunks.get(key);
 			if (buffer == null || !buffer.matches(
-				chunk.getSignature(),
+				chunkBufferSignature(chunk, drawOffsetSupported),
 				chunk.getVertexCount(),
 				chunk.getIndexCount(),
 				chunk.getTriangleCount(),
@@ -2054,7 +2068,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
 				WorldChunkBuffer buffer = residentChunks.get(key);
 				if (buffer == null || !buffer.matches(
-					chunk.getSignature(),
+					chunkBufferSignature(chunk, shaderActive),
 					chunk.getVertexCount(),
 					chunk.getIndexCount(),
 					chunk.getTriangleCount(),
@@ -2066,6 +2080,16 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 					replacementCompositeEnabled,
 					shadowProofSignature)) {
 					continue;
+				}
+				int drawOffsetX = shaderActive
+					? chunk.getVertexOffsetX() - buffer.uploadedVertexOffsetX
+					: 0;
+				int drawOffsetZ = shaderActive
+					? chunk.getVertexOffsetZ() - buffer.uploadedVertexOffsetZ
+					: 0;
+				if (shaderActive) {
+					residentChunkShader.setChunkOffset(
+						drawOffsetX, drawOffsetZ);
 				}
 				accumulator.recordConsideredChunk(key);
 				gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.vertexBufferId);
@@ -2088,8 +2112,18 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 						continue;
 					}
 					accumulator.recordConsideredBatch();
-					if (isFrustumCulledChunkBatch(frame, batch, batchCullViewMatrix)
-						|| isFogCulledChunkBatch(frame, batch, batchCullViewMatrix)) {
+					if (isFrustumCulledChunkBatch(
+							frame,
+							batch,
+							batchCullViewMatrix,
+							drawOffsetX,
+							drawOffsetZ)
+						|| isFogCulledChunkBatch(
+							frame,
+							batch,
+							batchCullViewMatrix,
+							drawOffsetX,
+							drawOffsetZ)) {
 						accumulator.recordCulledBatch();
 						accumulator.recordSkippedBatch(batch.indexCount / 3);
 						continue;
@@ -2131,6 +2165,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				}
 			}
 		} finally {
+			if (shaderActive) {
+				residentChunkShader.setChunkOffset(0.0f, 0.0f);
+			}
 			if (residentObjectCull) {
 				gl.glDisable(gl.GL_CULL_FACE);
 			}
@@ -2274,7 +2311,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private boolean isFrustumCulledChunkBatch(
 		Renderer3DFrame frame,
 		WorldChunkMaterialBatch batch,
-		float[] viewMatrix) {
+		float[] viewMatrix,
+		int drawOffsetX,
+		int drawOffsetZ) {
 		if (frame == null || batch == null || viewMatrix == null || !batch.hasBounds()) {
 			return false;
 		}
@@ -2289,11 +2328,15 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		float minScreenY = Float.MAX_VALUE;
 		float maxScreenY = -Float.MAX_VALUE;
 		for (int xIndex = 0; xIndex < 2; xIndex++) {
-			float x = xIndex == 0 ? batch.minX : batch.maxX;
+			float x =
+				(xIndex == 0 ? batch.minX : batch.maxX)
+					+ drawOffsetX;
 			for (int yIndex = 0; yIndex < 2; yIndex++) {
 				float y = yIndex == 0 ? batch.minY : batch.maxY;
 				for (int zIndex = 0; zIndex < 2; zIndex++) {
-					float z = zIndex == 0 ? batch.minZ : batch.maxZ;
+					float z =
+						(zIndex == 0 ? batch.minZ : batch.maxZ)
+							+ drawOffsetZ;
 					float cameraX = viewMatrix[0] * x + viewMatrix[1] * y + viewMatrix[2] * z + viewMatrix[3];
 					float cameraY = viewMatrix[4] * x + viewMatrix[5] * y + viewMatrix[6] * z + viewMatrix[7];
 					float cameraZ = viewMatrix[8] * x + viewMatrix[9] * y + viewMatrix[10] * z + viewMatrix[11];
@@ -2321,18 +2364,24 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private boolean isFogCulledChunkBatch(
 		Renderer3DFrame frame,
 		WorldChunkMaterialBatch batch,
-		float[] viewMatrix) {
+		float[] viewMatrix,
+		int drawOffsetX,
+		int drawOffsetZ) {
 		if (frame == null || batch == null || viewMatrix == null || !batch.hasSpatialBounds()) {
 			return false;
 		}
 		float fogEnd = frame.getFogDistance() + FOG_BATCH_CULL_PADDING;
 		float nearestCameraZ = Float.MAX_VALUE;
 		for (int xIndex = 0; xIndex < 2; xIndex++) {
-			float x = xIndex == 0 ? batch.minX : batch.maxX;
+			float x =
+				(xIndex == 0 ? batch.minX : batch.maxX)
+					+ drawOffsetX;
 			for (int yIndex = 0; yIndex < 2; yIndex++) {
 				float y = yIndex == 0 ? batch.minY : batch.maxY;
 				for (int zIndex = 0; zIndex < 2; zIndex++) {
-					float z = zIndex == 0 ? batch.minZ : batch.maxZ;
+					float z =
+						(zIndex == 0 ? batch.minZ : batch.maxZ)
+							+ drawOffsetZ;
 					float cameraZ = viewMatrix[8] * x + viewMatrix[9] * y + viewMatrix[10] * z + viewMatrix[11];
 					if (cameraZ < nearestCameraZ) {
 						nearestCameraZ = cameraZ;
@@ -2779,6 +2828,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		Renderer3DWorldChunkFrame.ChunkMesh chunk,
 		WorldChunkBuffer buffer,
 		Renderer3DFrame frame,
+		long bufferSignature,
 		int vertexCount,
 		int indexCount,
 		boolean atlasTextureCoordinates,
@@ -2805,7 +2855,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
 
-		buffer.signature = chunk.getSignature();
+		buffer.signature = bufferSignature;
+		buffer.uploadedVertexOffsetX = chunk.getVertexOffsetX();
+		buffer.uploadedVertexOffsetZ = chunk.getVertexOffsetZ();
 		buffer.vertexCount = vertexCount;
 		buffer.indexCount = indexCount;
 		buffer.triangleCount = chunk.getTriangleCount();
@@ -3898,6 +3950,8 @@ final class WorldChunkBuffer {
 	final int indexBufferId;
 	final int materialIndexBufferId;
 	long signature;
+	int uploadedVertexOffsetX;
+	int uploadedVertexOffsetZ;
 	int vertexCount;
 	int indexCount;
 	int triangleCount;

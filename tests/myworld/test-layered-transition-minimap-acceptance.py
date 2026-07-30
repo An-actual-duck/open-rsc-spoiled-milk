@@ -12,6 +12,15 @@ GRAPHICS = ROOT / "Client_Base/src/orsc/graphics/two/GraphicsController.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 TELEMETRY = ROOT / "Client_Base/src/orsc/RenderTelemetry.java"
 PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
+WORLD_CHUNK_FRAME = (
+    ROOT
+    / "Client_Base/src/orsc/graphics/three/"
+    "Renderer3DWorldChunkFrame.java"
+)
+WORLD_CHUNK_RENDERER = (
+    ROOT / "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java"
+)
+OPENGL_SHADER = ROOT / "PC_Client/src/orsc/OpenGLShaderProgram.java"
 PRESENTATION_LATCH = (
     ROOT / "Client_Base/src/orsc/LayeredScenePresentationLatch.java"
 )
@@ -25,6 +34,13 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
         cls.client = CLIENT.read_text(encoding="utf-8")
         cls.telemetry = TELEMETRY.read_text(encoding="utf-8")
         cls.presenter = PRESENTER.read_text(encoding="utf-8")
+        cls.world_chunk_frame = WORLD_CHUNK_FRAME.read_text(
+            encoding="utf-8"
+        )
+        cls.world_chunk_renderer = WORLD_CHUNK_RENDERER.read_text(
+            encoding="utf-8"
+        )
+        cls.opengl_shader = OPENGL_SHADER.read_text(encoding="utf-8")
 
     def test_native_minimap_owns_the_complete_active_window(self):
         self.assertIn(
@@ -210,6 +226,135 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
         self.assertIn(
             '"/built:" + builtCells',
             self.world,
+        )
+
+    def test_presentation_rebase_keeps_immutable_gpu_storage_identity(self):
+        harness = textwrap.dedent(
+            """
+            package orsc.graphics.three;
+
+            public final class PresentationRebaseStorageHarness {
+                public static void main(String[] arguments) {
+                    Renderer3DWorldChunkFrame.ChunkMesh source =
+                        new Renderer3DWorldChunkFrame.ChunkMesh(
+                            0, 10, 10, 100, 200,
+                            new int[] {0, 0, 0, 128, 0, 0, 0, 0, 128},
+                            new float[] {0.0f, 1.0f, 0.0f},
+                            new float[] {0.0f, 0.0f, 1.0f},
+                            new int[] {0, 0, 0},
+                            new int[] {0, 1, 2},
+                            new int[] {1},
+                            new int[] {0},
+                            new Renderer3DModelKind[] {
+                                Renderer3DModelKind.TERRAIN
+                            },
+                            1, 0, 0, 123L);
+                    Renderer3DWorldChunkFrame.ChunkMesh rebased =
+                        source.rebasePresentation(-6144, 6144);
+
+                    require(
+                        source.getStorageSignature()
+                            == rebased.getStorageSignature(),
+                        "storage identity must survive a draw-only rebase");
+                    require(
+                        source.getSignature() != rebased.getSignature(),
+                        "presented frame identity must include its rebase");
+                    require(rebased.getVertexOffsetX() == -6144,
+                        "x draw offset");
+                    require(rebased.getVertexOffsetZ() == 6144,
+                        "z draw offset");
+                    require(rebased.getVertexCoord(0) == -6144,
+                        "presented vertex includes x offset");
+                    require(source.getVertexCoord(0) == 0,
+                        "source geometry stays immutable");
+                }
+
+                private static void require(
+                        boolean condition, String label) {
+                    if (!condition) {
+                        throw new AssertionError(label);
+                    }
+                }
+            }
+            """
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary)
+            harness_path = (
+                work / "PresentationRebaseStorageHarness.java"
+            )
+            harness_path.write_text(harness, encoding="utf-8")
+            classifier_stub = (
+                work / "Renderer3DMaterialClassifier.java"
+            )
+            classifier_stub.write_text(
+                textwrap.dedent(
+                    """
+                    package orsc.graphics.three;
+
+                    final class Renderer3DMaterialClassifier {
+                        static Renderer3DMaterialFamily fallbackFor(
+                                Renderer3DModelKind kind) {
+                            return Renderer3DMaterialFamily.UNCLASSIFIED;
+                        }
+                    }
+                    """
+                ),
+                encoding="utf-8",
+            )
+            subprocess.run(
+                [
+                    "javac",
+                    "-Xlint:all",
+                    "-source",
+                    "8",
+                    "-target",
+                    "8",
+                    "-d",
+                    str(work),
+                    str(
+                        ROOT
+                        / "Client_Base/src/orsc/graphics/three/"
+                        "Renderer3DMaterialFamily.java"
+                    ),
+                    str(
+                        ROOT
+                        / "Client_Base/src/orsc/graphics/three/"
+                        "Renderer3DModelKind.java"
+                    ),
+                    str(classifier_stub),
+                    str(WORLD_CHUNK_FRAME),
+                    str(harness_path),
+                ],
+                cwd=ROOT,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    str(work),
+                    "orsc.graphics.three.PresentationRebaseStorageHarness",
+                ],
+                cwd=ROOT,
+                check=True,
+            )
+
+        self.assertIn(
+            "? chunk.getStorageSignature()",
+            self.world_chunk_renderer,
+        )
+        self.assertIn(
+            "chunk.getVertexOffsetX() - buffer.uploadedVertexOffsetX",
+            self.world_chunk_renderer,
+        )
+        self.assertIn(
+            "residentChunkShader.setChunkOffset(",
+            self.world_chunk_renderer,
+        )
+        self.assertIn(
+            "aPosition + vec3(uChunkOffsetX, 0.0, uChunkOffsetZ)",
+            self.opengl_shader,
         )
 
     def test_boundary_trace_records_world_and_shadow_ownership(self):

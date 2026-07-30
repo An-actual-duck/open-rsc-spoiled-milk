@@ -247,7 +247,10 @@ def main() -> None:
             "Wall-object material metadata should be attached once when constructing the live model")
     forbid(mudclient, "applyRenderer3DMaterialMetadata(kind, objectId, model);",
            "Resident object enumeration should not repeat immutable material classification every frame")
-    require(mudclient, "this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame())",
+    require(
+        mudclient,
+        "this.appendResidentObjectChunkFrame(\n"
+        "\t\t\t\t\t\t\t\tthis.world.getRenderer3DWorldChunkFrame())",
             "Renderer frames should receive resident world chunks plus dynamic object chunks")
     require(world_chunk_frame, "public final class Renderer3DWorldChunkFrame",
             "Renderer-v2 chunk snapshots should have a dedicated public frame type")

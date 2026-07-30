@@ -235,6 +235,7 @@ public final class Renderer3DWorldChunkFrame {
 		private final int roofTriangles;
 		private final boolean objectChunk;
 		private final int chunkRole;
+		private final long storageSignature;
 		private final long signature;
 		private int worldEditorTerrainGridAxis;
 		private int[] worldEditorTerrainGridHeights = new int[0];
@@ -480,6 +481,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.roofTriangles = roofTriangles;
 			this.objectChunk = objectChunk;
 			this.chunkRole = normalizeChunkRole(objectChunk, chunkRole);
+			this.storageSignature = signature;
 			this.signature = signature;
 		}
 
@@ -781,6 +783,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.roofTriangles = roofTriangles;
 			this.objectChunk = objectChunk;
 			this.chunkRole = normalizeChunkRole(objectChunk, chunkRole);
+			this.storageSignature = signature;
 			this.signature = signature;
 		}
 
@@ -910,6 +913,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.roofTriangles = source.roofTriangles;
 			this.objectChunk = source.objectChunk;
 			this.chunkRole = source.chunkRole;
+			this.storageSignature = source.storageSignature;
 			long translatedSignature = source.signature;
 			translatedSignature =
 				(translatedSignature ^ this.vertexOffsetX)
@@ -1444,6 +1448,24 @@ public final class Renderer3DWorldChunkFrame {
 
 		public long getSignature() {
 			return signature;
+		}
+
+		/**
+		 * Identifies the immutable vertex/index storage independently of a
+		 * presentation-only rebase. Renderers may retain the same GPU buffer
+		 * while applying {@link #getVertexOffsetX()} and
+		 * {@link #getVertexOffsetZ()} at draw time.
+		 */
+		public long getStorageSignature() {
+			return storageSignature;
+		}
+
+		public int getVertexOffsetX() {
+			return vertexOffsetX;
+		}
+
+		public int getVertexOffsetZ() {
+			return vertexOffsetZ;
 		}
 
 		public int getVertexCoord(int coordIndex) {

@@ -129,6 +129,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		"#version 120\n"
 			+ "uniform mat4 uProjectionMatrix;\n"
 			+ "uniform mat4 uWorldViewMatrix;\n"
+			+ "uniform float uChunkOffsetX;\n"
+			+ "uniform float uChunkOffsetZ;\n"
 			+ "attribute vec3 aPosition;\n"
 			+ "attribute vec2 aTexCoord;\n"
 			+ "attribute vec4 aMaterialColor;\n"
@@ -153,10 +155,11 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "varying float vTerrainBlendStrength;\n"
 			+ "varying float vCameraDepth;\n"
 			+ "void main() {\n"
-			+ "\tvec4 worldPosition = vec4(aPosition, 1.0);\n"
+			+ "\tvec3 rebasedPosition = aPosition + vec3(uChunkOffsetX, 0.0, uChunkOffsetZ);\n"
+			+ "\tvec4 worldPosition = vec4(rebasedPosition, 1.0);\n"
 			+ "\tgl_Position = uProjectionMatrix * worldPosition;\n"
 			+ "\tvTexCoord = aTexCoord;\n"
-			+ "\tvWorldXZ = aPosition.xz;\n"
+			+ "\tvWorldXZ = rebasedPosition.xz;\n"
 			+ "\tvMaterialColor = aMaterialColor;\n"
 			+ "\tvRawMaterialColor = aRawMaterialColor;\n"
 			+ "\tvBaseLegacyLight = aBaseLegacyLight;\n"
@@ -391,6 +394,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private final int programId;
 	private final int projectionMatrixUniformLocation;
 	private final int worldViewMatrixUniformLocation;
+	private final int chunkOffsetXUniformLocation;
+	private final int chunkOffsetZUniformLocation;
 	private final int textureUniformLocation;
 	private final int shadowMaskUniformLocation;
 	private final int glowMaskUniformLocation;
@@ -487,11 +492,15 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int fogEndUniformLocation,
 		int fogRedUniformLocation,
 		int fogGreenUniformLocation,
-		int fogBlueUniformLocation) {
+		int fogBlueUniformLocation) throws Exception {
 		this.gl = gl;
 		this.programId = programId;
 		this.projectionMatrixUniformLocation = projectionMatrixUniformLocation;
 		this.worldViewMatrixUniformLocation = worldViewMatrixUniformLocation;
+		this.chunkOffsetXUniformLocation =
+			gl.glGetUniformLocation(programId, "uChunkOffsetX");
+		this.chunkOffsetZUniformLocation =
+			gl.glGetUniformLocation(programId, "uChunkOffsetZ");
 		this.textureUniformLocation = textureUniformLocation;
 		this.shadowMaskUniformLocation = shadowMaskUniformLocation;
 		this.glowMaskUniformLocation = glowMaskUniformLocation;
@@ -916,6 +925,15 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	void setTextureEnabled(boolean textureEnabled) throws Exception {
 		if (textureEnabledUniformLocation >= 0) {
 			gl.glUniform1i(textureEnabledUniformLocation, textureEnabled ? 1 : 0);
+		}
+	}
+
+	void setChunkOffset(float offsetX, float offsetZ) throws Exception {
+		if (chunkOffsetXUniformLocation >= 0) {
+			gl.glUniform1f(chunkOffsetXUniformLocation, offsetX);
+		}
+		if (chunkOffsetZUniformLocation >= 0) {
+			gl.glUniform1f(chunkOffsetZUniformLocation, offsetZ);
 		}
 	}
 
