@@ -239,27 +239,36 @@ def main() -> None:
     require(mudclient, "cached != null && cached.cacheKey == input.cacheKey",
             "Client should reuse resident object chunks when object transforms are unchanged")
     require(mudclient,
-            "cached.cacheKey != input.cacheKey\n"
-            "\t\t\t\t&& input.chunkRole\n"
-            "\t\t\t\t\t== Renderer3DWorldChunkFrame\n"
-            "\t\t\t\t\t\t.CHUNK_ROLE_STATIC_OBJECTS",
-            "Canonical ownership diagnostics must remain outside the active exact-key reuse path")
+            "Collections.sort(this.canonicalIdentities);",
+            "Canonical scenery should use deterministic world-record order")
     require(mudclient,
-            "cached.canonicalContentKey\n"
-            "\t\t\t\t\t\t== input.canonicalContentKey",
-            "Adjacent views should measure canonical static-content matches without accepting them")
-    require(mudclient, "Collections.sort(sorted);",
-            "Canonical scenery diagnostics should hash a deterministic record order")
-    require(mudclient, '"canonicalOwnershipMatches"',
-            "Transition diagnostics should expose potential ownership-boundary reuse")
-    require(mudclient, "mixResidentObjectChunkCacheKey(\n\t\t\t\t\tthis.cacheKey, worldTileX)",
-            "Static resident object cache keys should use stable world tile placement")
-    require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, objectId)",
-            "Resident object cache keys should include object identity")
-    require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, direction)",
-            "Resident object cache keys should include object direction")
+            "? canonicalContentKey\n"
+            "\t\t\t\t: mixResidentObjectChunkCacheKey(",
+            "Static cache acceptance should use the canonical exact-content key")
+    require(mudclient,
+            "for (SceneBaselineState.Record record\n"
+            "\t\t\t\t: this.staticPresentationSceneryRecords)",
+            "Outer scenery records should feed the same canonical pipeline as live inner scenery")
+    require(mudclient,
+            "buildCanonicalResidentObjectModels(input)",
+            "Static models should be constructed lazily only for canonical cache misses")
+    require(mudclient,
+            "hash, this.worldTileX",
+            "Canonical static keys should use stable world tile placement")
+    require(mudclient, "hash, this.objectId",
+            "Canonical static keys should include object identity")
+    require(mudclient, "hash, this.direction",
+            "Canonical static keys should include object direction")
+    require(mudclient, "hash, this.elevation1",
+            "Canonical static keys should include derived terrain elevation")
     require(mudclient, "model.getRenderer3DTransformVersion()",
-            "Resident object cache keys should include model transform versions")
+            "Animated resident object cache keys should retain live transform versions")
+    require(mudclient, 'modelName.startsWith("torcha")'
+            and 'modelName.startsWith("firea")'
+            and 'modelName.startsWith("myworld_cosmic_sparkles")',
+            "Mutable scenery families should remain outside canonical static reuse")
+    require(mudclient, '"canonicalOwnershipReuse"',
+            "Transition diagnostics should expose exact cross-ownership reuse")
     require(mudclient, "rebaseStaticObjectPresentation(",
             "Overlapping static object chunks should survive adjacent client-origin shifts")
     require(mudclient, "cached.presentationBaseX - this.midRegionBaseX",

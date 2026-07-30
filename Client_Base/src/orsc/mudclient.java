@@ -3884,11 +3884,8 @@ public final class mudclient implements Runnable {
 		if (record.id == 74) {
 			model.translate2(0, -480, 0);
 		}
-		applyRenderer3DMaterialMetadata(
-			Renderer3DModelKind.GAME_OBJECT,
-			record.id,
-			model);
-		return model;
+		return prepareGameObjectInstanceModel(
+			record.id, model);
 	}
 
 	private RSModel createStaticPresentationWallObjectModel(
@@ -4000,6 +3997,7 @@ public final class mudclient implements Runnable {
 		int cacheMisses = 0;
 		int canonicalOwnershipMatches = 0;
 		int canonicalOwnershipChanges = 0;
+		int canonicalOwnershipReuse = 0;
 		long meshBuildNanos = 0L;
 		for (ResidentObjectChunkInput input : objectInputs) {
 			activeCells.add(input.cellKey);
@@ -4016,6 +4014,16 @@ public final class mudclient implements Runnable {
 				} else {
 					canonicalOwnershipChanges++;
 				}
+			}
+			if (cached != null
+				&& cached.cacheKey == input.cacheKey
+				&& input.chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS
+				&& (cached.liveModelCount != input.liveModelCount
+					|| cached.presentationModelCount
+						!= input.presentationModelCount)) {
+				canonicalOwnershipReuse++;
 			}
 			if (cached != null && cached.cacheKey == input.cacheKey) {
 				if (input.chunkRole
@@ -4040,7 +4048,9 @@ public final class mudclient implements Runnable {
 							input.canonicalContentKey,
 							objectChunk,
 							this.midRegionBaseX,
-							this.midRegionBaseZ));
+							this.midRegionBaseZ,
+							input.liveModelCount,
+							input.presentationModelCount));
 					cacheHits++;
 				} else if (cached.presentationBaseX
 						== this.midRegionBaseX
@@ -4074,7 +4084,9 @@ public final class mudclient implements Runnable {
 						input.canonicalContentKey,
 						objectChunk,
 						this.midRegionBaseX,
-						this.midRegionBaseZ));
+						this.midRegionBaseZ,
+						input.liveModelCount,
+						input.presentationModelCount));
 			}
 			chunks.add(objectChunk);
 		}
@@ -4099,6 +4111,9 @@ public final class mudclient implements Runnable {
 					"canonicalOwnershipChanges",
 					canonicalOwnershipChanges);
 				event.number(
+					"canonicalOwnershipReuse",
+					canonicalOwnershipReuse);
+				event.number(
 					"cacheRetainedInactive",
 					Math.max(
 						0,
@@ -4112,6 +4127,12 @@ public final class mudclient implements Runnable {
 				RendererDiagnosticSession.writeEventRecord(event);
 			}
 		}
+		this.builtStaticPresentationRevision =
+			this.staticPresentationRevision;
+		this.builtStaticPresentationBaseX =
+			this.midRegionBaseX;
+		this.builtStaticPresentationBaseZ =
+			this.midRegionBaseZ;
 		return Renderer3DWorldChunkFrame.fromChunks(chunks);
 	}
 
@@ -4119,7 +4140,6 @@ public final class mudclient implements Runnable {
 		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
 		Map<Long, ResidentObjectChunkInputBuilder> builders =
 			new TreeMap<Long, ResidentObjectChunkInputBuilder>();
-		ensureStaticScenePresentationModels();
 		for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {
 			if (this.isGameObjectInstanceMaterialized(i) && this.getGameObjectInstanceModel(i) != null) {
 				addResidentObjectChunkModel(
@@ -4150,18 +4170,33 @@ public final class mudclient implements Runnable {
 					false);
 			}
 		}
-		for (StaticPresentationModel presentation
-				: this.staticPresentationModels) {
+		int presentationIndex = 0;
+		for (SceneBaselineState.Record record
+				: this.staticPresentationSceneryRecords) {
 			addResidentObjectChunkModel(
 				builders,
 				anchor,
-				presentation.tileX,
-				presentation.tileZ,
-				presentation.kind,
-				presentation.instanceIndex,
-				presentation.objectId,
-				presentation.direction,
-				presentation.model,
+				record.x - this.midRegionBaseX,
+				record.y - this.midRegionBaseZ,
+				Renderer3DModelKind.GAME_OBJECT,
+				presentationIndex++,
+				record.id,
+				record.direction,
+				null,
+				true);
+		}
+		for (SceneBaselineState.Record record
+				: this.staticPresentationWallRecords) {
+			addResidentObjectChunkModel(
+				builders,
+				anchor,
+				record.x - this.midRegionBaseX,
+				record.y - this.midRegionBaseZ,
+				Renderer3DModelKind.WALL_OBJECT,
+				presentationIndex++,
+				record.id,
+				record.direction,
+				null,
 				true);
 		}
 		List<ResidentObjectChunkInput> inputs = new ArrayList<ResidentObjectChunkInput>(builders.size());
@@ -4182,7 +4217,8 @@ public final class mudclient implements Runnable {
 		int direction,
 		RSModel model,
 		boolean presentationOnly) {
-		int chunkRole = isAnimatedResidentObjectChunkModel(kind, objectId)
+		int chunkRole = !presentationOnly
+			&& isAnimatedResidentObjectChunkModel(kind, objectId)
 			? Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
 			: Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
 		int cellTileSize = residentObjectChunkTileSize(chunkRole);
@@ -4208,6 +4244,17 @@ public final class mudclient implements Runnable {
 			builders.put(cellKey, builder);
 		}
 		boolean debugMatched = shouldDebugResidentObjectChunkModel(kind, tileX, tileZ, objectId);
+		ResidentObjectCanonicalIdentity canonicalIdentity =
+			chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS
+				? createResidentObjectCanonicalIdentity(
+					kind,
+					worldTileX,
+					worldTileZ,
+					objectId,
+					direction)
+				: null;
 		builder.add(
 			kind,
 			instanceIndex,
@@ -4218,6 +4265,7 @@ public final class mudclient implements Runnable {
 			objectId,
 			direction,
 			model,
+			canonicalIdentity,
 			presentationOnly,
 			debugMatched,
 			debugMatched
@@ -4306,8 +4354,89 @@ public final class mudclient implements Runnable {
 			return true;
 		}
 		com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(objectId);
-		return def != null
-			&& ("portal".equals(def.getObjectModel()) || FISHING_SPOT_MODEL_NAME.equals(def.getObjectModel()));
+		if (def == null) {
+			return false;
+		}
+		String modelName = lowerOrEmpty(def.getObjectModel());
+		return "portal".equals(modelName)
+			|| FISHING_SPOT_MODEL_NAME.equals(modelName)
+			|| modelName.startsWith("firea")
+			|| modelName.startsWith("fireplacea")
+			|| modelName.startsWith("lightning")
+			|| modelName.startsWith("firespell")
+			|| modelName.startsWith("spellcharge")
+			|| modelName.startsWith("torcha")
+			|| modelName.startsWith("skulltorcha")
+			|| modelName.startsWith("myworld_cosmic_sparkles")
+			|| modelName.startsWith("clawspell");
+	}
+
+	private ResidentObjectCanonicalIdentity
+		createResidentObjectCanonicalIdentity(
+			Renderer3DModelKind kind,
+			int worldTileX,
+			int worldTileZ,
+			int objectId,
+			int direction) {
+		int localX = worldTileX - this.midRegionBaseX;
+		int localZ = worldTileZ - this.midRegionBaseZ;
+		int elevation1 = World.PRESENTATION_ELEVATION_UNAVAILABLE;
+		int elevation2 = World.PRESENTATION_ELEVATION_UNAVAILABLE;
+		if (kind == Renderer3DModelKind.GAME_OBJECT) {
+			GameObjectDef definition =
+				EntityHandler.getObjectDef(objectId);
+			if (definition != null && definition.modelID >= 0) {
+				int xSize;
+				int zSize;
+				if (direction == 0 || direction == 4) {
+					xSize = definition.getWidth();
+					zSize = definition.getHeight();
+				} else {
+					xSize = definition.getHeight();
+					zSize = definition.getWidth();
+				}
+				int centerX =
+					(2 * localX + xSize) * this.tileSize / 2;
+				int centerZ =
+					(2 * localZ + zSize) * this.tileSize / 2;
+				elevation1 =
+					this.world.getPresentationTerrainElevation(
+						centerX, centerZ);
+				elevation2 = elevation1;
+			}
+		} else if (kind == Renderer3DModelKind.WALL_OBJECT) {
+			int startX = localX;
+			int startZ = localZ;
+			int endpointX = localX;
+			int endpointZ = localZ;
+			if (direction == 1) {
+				endpointZ++;
+			} else if (direction == 0) {
+				endpointX++;
+			} else if (direction == 2) {
+				startX++;
+				endpointZ++;
+			} else if (direction == 3) {
+				endpointX++;
+				endpointZ++;
+			}
+			elevation1 =
+				this.world.getPresentationTerrainElevation(
+					startX * this.tileSize,
+					startZ * this.tileSize);
+			elevation2 =
+				this.world.getPresentationTerrainElevation(
+					endpointX * this.tileSize,
+					endpointZ * this.tileSize);
+		}
+		return new ResidentObjectCanonicalIdentity(
+			kind.ordinal(),
+			worldTileX,
+			worldTileZ,
+			objectId,
+			direction,
+			elevation1,
+			elevation2);
 	}
 
 	private static final class Renderer3DGlowSpec {
@@ -4350,15 +4479,51 @@ public final class mudclient implements Runnable {
 	}
 
 	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input) {
+		RSModel[] models = input.models;
+		if (input.chunkRole
+				== Renderer3DWorldChunkFrame
+					.CHUNK_ROLE_STATIC_OBJECTS) {
+			models =
+				buildCanonicalResidentObjectModels(input);
+		}
 		return RSModel.buildRenderer3DObjectChunkMesh(
 			input.anchor.getPlane(),
 			input.anchor.getCenterSectionX(),
 			input.anchor.getCenterSectionY(),
 			input.anchor.getOriginWorldX() + input.cellX * input.cellTileSize * this.tileSize,
 			input.anchor.getOriginWorldZ() + input.cellZ * input.cellTileSize * this.tileSize,
-			input.models,
+			models,
 			input.modelCount,
 			input.chunkRole);
+	}
+
+	private RSModel[] buildCanonicalResidentObjectModels(
+		ResidentObjectChunkInput input) {
+		ResidentObjectCanonicalIdentity[] identities =
+			input.canonicalIdentities;
+		RSModel[] models =
+			new RSModel[identities == null ? 0 : identities.length];
+		for (int index = 0; index < models.length; index++) {
+			ResidentObjectCanonicalIdentity identity =
+				identities[index];
+			SceneBaselineState.Record record =
+				new SceneBaselineState.Record(
+					identity.objectId,
+					identity.worldTileX,
+					identity.worldTileZ,
+					identity.direction,
+					identity.kind
+						== Renderer3DModelKind.WALL_OBJECT.ordinal()
+							? 1 : 0);
+			models[index] =
+				identity.kind
+						== Renderer3DModelKind.GAME_OBJECT.ordinal()
+					? createStaticPresentationGameObjectModel(
+						record, index)
+					: createStaticPresentationWallObjectModel(
+						record, index);
+		}
+		return models;
 	}
 
 	private void clearResidentObjectChunkCache() {
@@ -4622,6 +4787,8 @@ public final class mudclient implements Runnable {
 		private final int cellTileSize;
 		private final int chunkRole;
 		private final RSModel[] models;
+		private final ResidentObjectCanonicalIdentity[]
+			canonicalIdentities;
 		private final int modelCount;
 		private final long cacheKey;
 		private final long canonicalContentKey;
@@ -4638,6 +4805,7 @@ public final class mudclient implements Runnable {
 			int cellTileSize,
 			int chunkRole,
 			RSModel[] models,
+			ResidentObjectCanonicalIdentity[] canonicalIdentities,
 			int modelCount,
 			long cacheKey,
 			long canonicalContentKey,
@@ -4652,6 +4820,7 @@ public final class mudclient implements Runnable {
 			this.cellTileSize = cellTileSize;
 			this.chunkRole = chunkRole;
 			this.models = models;
+			this.canonicalIdentities = canonicalIdentities;
 			this.modelCount = modelCount;
 			this.cacheKey = cacheKey;
 			this.canonicalContentKey = canonicalContentKey;
@@ -4712,10 +4881,10 @@ public final class mudclient implements Runnable {
 			int objectId,
 			int direction,
 			RSModel model,
+			ResidentObjectCanonicalIdentity canonicalIdentity,
 			boolean presentationOnly,
 			boolean debugMatched,
 			String debugSummary) {
-			this.models.add(model);
 			if (presentationOnly) {
 				this.presentationModelCount++;
 			} else {
@@ -4727,47 +4896,62 @@ public final class mudclient implements Runnable {
 					this.debugFirstModelSummary = debugSummary == null ? "" : debugSummary;
 				}
 			}
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, kind.ordinal());
 			if (this.chunkRole
 					== Renderer3DWorldChunkFrame
 						.CHUNK_ROLE_STATIC_OBJECTS) {
-				this.canonicalIdentities.add(
-					new ResidentObjectCanonicalIdentity(
-						kind.ordinal(),
-						worldTileX,
-						worldTileZ,
-						objectId,
-						direction));
-				this.cacheKey = mixResidentObjectChunkCacheKey(
-					this.cacheKey, worldTileX);
-				this.cacheKey = mixResidentObjectChunkCacheKey(
-					this.cacheKey, worldTileZ);
+				if (canonicalIdentity == null) {
+					throw new IllegalArgumentException(
+						"Static resident scenery requires canonical identity");
+				}
+					this.canonicalIdentities.add(canonicalIdentity);
 			} else {
+				if (model == null) {
+					throw new IllegalArgumentException(
+						"Animated resident scenery requires a live model");
+				}
+				this.models.add(model);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, kind.ordinal());
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, instanceIndex);
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, tileX);
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, tileZ);
-			}
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, objectId);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, direction);
-			if (this.chunkRole
-					!= Renderer3DWorldChunkFrame
-						.CHUNK_ROLE_STATIC_OBJECTS) {
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, objectId);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, direction);
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, model.key);
 				this.cacheKey = mixResidentObjectChunkCacheKey(
 					this.cacheKey, System.identityHashCode(model));
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey,
+					model.getRenderer3DTransformVersion());
 			}
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, model.getRenderer3DTransformVersion());
 		}
 
 		private ResidentObjectChunkInput build() {
+			Collections.sort(this.canonicalIdentities);
 			RSModel[] modelArray = this.models.toArray(new RSModel[this.models.size()]);
-			long finalCacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, modelArray.length);
+			ResidentObjectCanonicalIdentity[] canonicalIdentityArray =
+				this.canonicalIdentities.toArray(
+					new ResidentObjectCanonicalIdentity[
+						this.canonicalIdentities.size()]);
+			int modelCount = this.chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS
+				? canonicalIdentityArray.length
+				: modelArray.length;
 			long canonicalContentKey =
 				buildCanonicalContentKey();
+			long finalCacheKey = this.chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS
+				? canonicalContentKey
+				: mixResidentObjectChunkCacheKey(
+					this.cacheKey, modelArray.length);
 			return new ResidentObjectChunkInput(
 				this.anchor,
 				this.cellKey,
@@ -4776,7 +4960,8 @@ public final class mudclient implements Runnable {
 				this.cellTileSize,
 				this.chunkRole,
 				modelArray,
-				modelArray.length,
+				canonicalIdentityArray,
+				modelCount,
 				finalCacheKey,
 				canonicalContentKey,
 				this.liveModelCount,
@@ -4791,14 +4976,11 @@ public final class mudclient implements Runnable {
 						.CHUNK_ROLE_STATIC_OBJECTS) {
 				return 0L;
 			}
-			List<ResidentObjectCanonicalIdentity> sorted =
-				new ArrayList<ResidentObjectCanonicalIdentity>(
-					this.canonicalIdentities);
-			Collections.sort(sorted);
-			long hash = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+			long hash = this.cacheKey;
 			hash = mixResidentObjectChunkCacheKey(
-				hash, sorted.size());
-			for (ResidentObjectCanonicalIdentity identity : sorted) {
+				hash, this.canonicalIdentities.size());
+			for (ResidentObjectCanonicalIdentity identity
+					: this.canonicalIdentities) {
 				hash = identity.mixInto(hash);
 			}
 			return hash;
@@ -4812,18 +4994,24 @@ public final class mudclient implements Runnable {
 		private final int worldTileZ;
 		private final int objectId;
 		private final int direction;
+		private final int elevation1;
+		private final int elevation2;
 
 		private ResidentObjectCanonicalIdentity(
 			int kind,
 			int worldTileX,
 			int worldTileZ,
 			int objectId,
-			int direction) {
+			int direction,
+			int elevation1,
+			int elevation2) {
 			this.kind = kind;
 			this.worldTileX = worldTileX;
 			this.worldTileZ = worldTileZ;
 			this.objectId = objectId;
 			this.direction = direction;
+			this.elevation1 = elevation1;
+			this.elevation2 = elevation2;
 		}
 
 		private long mixInto(long hash) {
@@ -4834,8 +5022,12 @@ public final class mudclient implements Runnable {
 				hash, this.worldTileZ);
 			hash = mixResidentObjectChunkCacheKey(
 				hash, this.objectId);
-			return mixResidentObjectChunkCacheKey(
+			hash = mixResidentObjectChunkCacheKey(
 				hash, this.direction);
+			hash = mixResidentObjectChunkCacheKey(
+				hash, this.elevation1);
+			return mixResidentObjectChunkCacheKey(
+				hash, this.elevation2);
 		}
 
 		@Override
@@ -4857,9 +5049,20 @@ public final class mudclient implements Runnable {
 			}
 			comparison = Integer.compare(
 				this.direction, other.direction);
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(
+				this.objectId, other.objectId);
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(
+				this.elevation1, other.elevation1);
 			return comparison != 0
 				? comparison
-				: Integer.compare(this.objectId, other.objectId);
+				: Integer.compare(
+					this.elevation2, other.elevation2);
 		}
 	}
 
@@ -4869,18 +5072,25 @@ public final class mudclient implements Runnable {
 		private final Renderer3DWorldChunkFrame.ChunkMesh chunk;
 		private final int presentationBaseX;
 		private final int presentationBaseZ;
+		private final int liveModelCount;
+		private final int presentationModelCount;
 
 		private ResidentObjectChunkCacheEntry(
 			long cacheKey,
 			long canonicalContentKey,
 			Renderer3DWorldChunkFrame.ChunkMesh chunk,
 			int presentationBaseX,
-			int presentationBaseZ) {
+			int presentationBaseZ,
+			int liveModelCount,
+			int presentationModelCount) {
 			this.cacheKey = cacheKey;
 			this.canonicalContentKey = canonicalContentKey;
 			this.chunk = chunk;
 			this.presentationBaseX = presentationBaseX;
 			this.presentationBaseZ = presentationBaseZ;
+			this.liveModelCount = liveModelCount;
+			this.presentationModelCount =
+				presentationModelCount;
 		}
 	}
 

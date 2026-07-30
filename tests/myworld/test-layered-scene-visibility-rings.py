@@ -221,9 +221,15 @@ resident_inputs = between(
     "private void addResidentObjectChunkModel(",
 )
 require(
-    "ensureStaticScenePresentationModels();" in resident_inputs
-    and "for (StaticPresentationModel presentation" in resident_inputs,
-    "outer models are not attached to resident renderer chunks",
+    "for (SceneBaselineState.Record record" in resident_inputs
+    and "this.staticPresentationSceneryRecords" in resident_inputs
+    and "this.staticPresentationWallRecords" in resident_inputs
+    and "null,\n\t\t\t\ttrue);" in resident_inputs,
+    "outer records are not attached to canonical resident renderer chunks",
+)
+require(
+    "buildCanonicalResidentObjectModels(input)" in CLIENT,
+    "canonical outer models are not built lazily for resident renderer misses",
 )
 require(
     "isPresentationTerrainFaceTile" in CLIENT
