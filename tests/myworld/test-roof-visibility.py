@@ -175,6 +175,26 @@ def run_active_region_reload_matrix() -> None:
         assert active_center - section_to_local_base_tile(active_section + 1) == 0
 
 
+def run_stacked_story_elevation_matrix() -> None:
+    # The authentic builder carries the completed roof height forward before
+    # constructing the next floor. Raw upper-plane terrain remains floor-local
+    # and must not replace that carried height when viewed from ground level.
+    raw_floor_height = 0
+    wall_height = 128
+    roof_pitch = 16
+
+    ground_roof = raw_floor_height + wall_height + roof_pitch
+    stacked_second_roof = ground_roof + wall_height + roof_pitch
+    stacked_third_roof = stacked_second_roof + wall_height + roof_pitch
+    floor_local_second_roof = raw_floor_height + wall_height + roof_pitch
+
+    assert ground_roof == 144
+    assert stacked_second_roof == 288
+    assert stacked_third_roof == 432
+    assert floor_local_second_roof == ground_roof
+    assert stacked_second_roof > floor_local_second_roof
+
+
 def main() -> None:
     roof_visibility = ROOF_VISIBILITY.read_text(encoding="utf-8")
     frame = FRAME.read_text(encoding="utf-8")
@@ -208,11 +228,29 @@ def main() -> None:
             "roof reload keeps the active section window")
     require(mudclient, 'RendererDiagnosticSession.newEventRecord("roof.visibility.reload")',
             "AI-readable roof reload event")
+    require(world, "loadStackedUpperFloorBase(", "stacked upper-floor elevation chain")
+    require(world, "loadRoofModelInput(0, sectionX, sectionY).finalElevations",
+            "ground roof supplies second-story base")
+    require(world, "plane - 1,", "higher stories recurse through the lower floor")
+    require(world, "buildWallModelInput(stackedWindow.sectors, structuralBaseElevations)",
+            "upper-story walls use cumulative elevation")
+    require(world, "buildRoofModelInput(stackedWindow.sectors, structuralBaseElevations)",
+            "upper-story roofs use cumulative elevation")
+    require(world, 'stackedUpperPlane ? "-stacked-upper" : "-floor-local"',
+            "floor-local and stacked products have separate cache identities")
+    require(world, "!showWallOnMinimap && plane > 0",
+            "legacy upper-story builds request stacked products")
+    require(world, "!requireTerrain && plane > 0",
+            "renderer-v2 upper-story chunks request stacked products")
 
     run_visibility_matrix()
     run_upper_floor_map_fixture_matrix()
     run_active_region_reload_matrix()
-    print("PASS: upper-floor roofs are map-backed and visible through shared rendering policy")
+    run_stacked_story_elevation_matrix()
+    print(
+        "PASS: upper-floor walls and roofs are map-backed, visible, and "
+        "cumulatively stacked"
+    )
 
 
 if __name__ == "__main__":

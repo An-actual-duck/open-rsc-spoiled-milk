@@ -181,21 +181,33 @@ matrix cannot be proven from the current conditions. Required test states:
 - Authentic and custom landscape fixtures both contain upper-plane roofs at
   Lumbridge Castle, Varrock, Falador, and Draynor Manor. The missing visual was
   therefore not map-data loss.
-- Replaced the unconditional upper-plane hiding state with
-  `VISIBLE_ON_ACTIVE_FLOOR`. An uncovered player on plane 1 or 2 now sees that
-  plane's roof, while roofs from other planes and walls above the active plane
-  remain hidden.
+- The first visibility-only prototype exposed a second, independent regression:
+  upper-plane geometry was submitted but appeared at first-story height. The
+  world-product refactor had changed wall vertices from the shared completed
+  elevation cache to each plane's raw terrain elevation, and independently
+  initialized each roof workspace the same way. That discarded the authentic
+  cumulative floor-to-floor construction used before the refactor.
+- Floor-local and stacked-upper model products now have separate cache
+  identities. A floor-local product still starts from its own terrain when the
+  player is on that plane. A stacked product viewed from ground level builds
+  both walls and roofs from the completed roof elevations of the floor below;
+  plane 2 recursively continues from the stacked plane-1 result.
+- The shared geometry products feed both classic scene grids and renderer-v2
+  chunks, so the stacking correction does not introduce renderer-specific
+  offsets or duplicated models.
+- The visibility state is now `VISIBLE_ON_ACTIVE_FLOOR` for an uncovered player
+  on plane 1 or 2. That player sees the active plane's roof, while roofs from
+  other planes and walls above the active plane remain hidden.
 - Covered tiles still resolve to `HIDDEN_INDOORS` on every plane, and the
   global Hide Roofs setting still takes precedence.
   `events.jsonl` records each successful `roof.visibility.reload` with active
   section, player world tile, and player-to-active section deltas so future
   reports remain attributable even when toggled while moving.
-- Live validation recorded 35 successful toggles while walking and stationary.
-  Several events reached `playerSectionDeltaX=1` or `playerSectionDeltaZ=1`,
-  directly exercising the boundary condition that previously shifted visuals;
-  the active section remained fixed and visual, picking, and collision
-  alignment held. The strict session analyzer accepted all 12 `Ctrl+F9` burst
-  frames with no failed captures or client exceptions.
+- Automated coverage distinguishes the cumulative second/third-story heights
+  from floor-local height, requires both wall and roof builders to consume the
+  lower-floor result, and verifies separate product-cache identities alongside
+  the existing visibility and map-fixture matrix. Private visual validation is
+  still required after the corrected model build.
 - This task deliberately preserves the legacy whole-grid visibility unit. A
   connected-roof-volume refinement would require a separate spatial ownership
   design and is not necessary to correct renderer parity.

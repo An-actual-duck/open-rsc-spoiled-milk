@@ -91,8 +91,13 @@ def main() -> None:
             "Roof model input should be loaded through the active-window cache")
     require(world, "private RoofModelInput buildRoofModelInput(Sector[] sourceSectors)",
             "Roof model input should be built from an explicit sector-window source")
-    require(world, "private RoofElevationWorkspace prepareRoofElevationProduct(TerrainModelInputSource source)",
-            "Roof elevation preparation should be isolated behind a source-derived mutable workspace")
+    require(
+        world,
+        "private RoofElevationWorkspace prepareRoofElevationProduct(\n"
+        "\t\tTerrainModelInputSource source,\n"
+        "\t\tint[][] structuralBaseElevations)",
+        "Roof elevation preparation should accept an explicit structural base",
+    )
     require(world, "private List<RoofFaceInput> collectRoofFaceInputs(TerrainModelInputSource source, RoofElevationWorkspace elevations)",
             "Roof face input collection should consume source-window data and the roof elevation workspace")
     require(world, "private void emitRoofFaceProduct(RoofModelInput input)",
@@ -107,8 +112,13 @@ def main() -> None:
             "Predictive preload should be able to queue roof model-input records")
     require(world, "private static final class RoofElevationWorkspace",
             "Roof elevation mutation should be represented by an explicit workspace")
-    require(world, "private static RoofElevationWorkspace fromSource(TerrainModelInputSource source)",
-            "Roof elevation workspaces should be derived from source-window terrain data")
+    require(
+        world,
+        "private static RoofElevationWorkspace fromSource(\n"
+        "\t\t\tTerrainModelInputSource source,\n"
+        "\t\t\tint[][] structuralBaseElevations)",
+        "Roof elevation workspaces should support floor-local or cumulative terrain data",
+    )
     require(world, "private static final class RoofModelInput",
             "Roof model-input records should be represented explicitly")
     require(world, "private static final class RoofFaceInput",
@@ -122,8 +132,27 @@ def main() -> None:
             "Landscape generation should load combined world-model products from a cache boundary")
     require(world, "private void queueWorldModelProductPreload(",
             "Predictive preload should warm presentable world-model products")
-    require(world, "private String worldModelProductKey(int height, int sectionX, int sectionY, boolean includeRoofGeometry)",
-            "World-model products should be keyed by section window and plane")
+    require(
+        world,
+        "boolean stackedUpperPlane) {\n"
+        "\t\treturn sectionWindowKey(height, sectionX, sectionY)",
+        "World-model products should distinguish floor-local and stacked upper geometry",
+    )
+    require(
+        world,
+        'stackedUpperPlane ? "-stacked-upper" : "-floor-local"',
+        "World-model cache keys should prevent flat and stacked products from colliding",
+    )
+    require(
+        world,
+        "buildWallModelInput(stackedWindow.sectors, structuralBaseElevations)",
+        "Stacked wall inputs should continue from the completed lower floor",
+    )
+    require(
+        world,
+        "buildRoofModelInput(stackedWindow.sectors, structuralBaseElevations)",
+        "Stacked roof inputs should continue from the completed lower floor",
+    )
     require(world, "private static final class WorldModelProduct",
             "Terrain, wall, and roof model inputs should be grouped into a presentable product")
     require(world, "private boolean hasTerrainIfNeeded(boolean includeTerrain)",
@@ -263,14 +292,22 @@ def main() -> None:
             "Terrain model input cache should build from the CPU section-window cache")
     require(world, "TerrainModelInput built = buildTerrainModelInput(plane, window.sectors);",
             "Terrain model input should be built from cached CPU window sectors")
-    require(world, "queueWorldModelProductPreload(plane, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);",
-            "Predictive terrain preload should warm full world-model products")
+    require(
+        world,
+        "plane, sectionX, sectionY, true, !Config.C_HIDE_ROOFS, false);",
+        "Predictive terrain preload should warm the active floor-local product",
+    )
+    require(
+        world,
+        "1, sectionX, sectionY, false, !Config.C_HIDE_ROOFS, true);",
+        "Predictive terrain preload should warm stacked upper-floor products",
+    )
     require(world, "boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;",
             "Landscape generation should make roof geometry inclusion explicit")
     require(world, "WorldModelProduct worldProduct = this.loadWorldModelProduct(",
             "Landscape generation should load the combined world-model product once")
-    require(world, "includeRoofGeometry);",
-            "Landscape generation should key combined products by roof visibility")
+    require(world, "includeRoofGeometry,\n\t\t\t\t\t!showWallOnMinimap && plane > 0);",
+            "Landscape generation should key products by roof visibility and story role")
     require(world, "WorldGpuChunkMesh gpuChunkMesh = buildWorldGpuChunkMesh(",
             "World-model product loads should build the GPU-ready chunk mesh from cached inputs")
     require(world, "terrainInput = applyWallEndpointShadows(terrainInput, wallInput);",
