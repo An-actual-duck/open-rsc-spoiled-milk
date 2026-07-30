@@ -983,6 +983,24 @@ public class PacketHandler {
 			&& pendingLayeredTerrainStageProtocol == 2;
 	}
 
+	boolean isLayeredTerrainPresentationStagePending() {
+		return pendingLayeredTerrainHaloPrebuild != null
+			&& (pendingLayeredTerrainStageProtocol == 2
+				|| pendingLayeredTerrainStageProtocol == 3)
+			&& pendingLayeredTerrainContextSequence
+				== layeredSceneContextState.getSequence();
+	}
+
+	int getPendingLayeredTerrainPresentationStageProtocol() {
+		return isLayeredTerrainPresentationStagePending()
+			? pendingLayeredTerrainStageProtocol : 0;
+	}
+
+	int getPendingLayeredTerrainPresentationStageSequence() {
+		return isLayeredTerrainPresentationStagePending()
+			? pendingLayeredTerrainStageSequence : 0;
+	}
+
 	private void pollLayeredTerrainHaloReady() {
 		Future<World.NativeLayeredTerrainHaloPrebuildResult> pending =
 			pendingLayeredTerrainHaloPrebuild;

@@ -775,15 +775,25 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                     latch.updatePending(false);
                     require(latch.shouldRetainLastPresentedFrame(),
                         "duplicate completion cannot release early");
-                    require(!latch.completeFreshFrame(100L, 4),
+                    require(!latch.completeFreshFrame(
+                            100L, 4, false),
+                        "pending terrain product cannot become a candidate");
+                    require(latch.getFreshFrameSamples() == 0,
+                        "pending terrain product consumes no stability sample");
+                    require(latch.shouldRetainLastPresentedFrame(),
+                        "pending terrain product keeps old frame visible");
+                    require(!latch.completeFreshFrame(
+                            100L, 4, true),
                         "first fresh scene frame becomes candidate");
                     require(latch.shouldRetainLastPresentedFrame(),
                         "first candidate remains hidden");
-                    require(!latch.completeFreshFrame(200L, 5),
+                    require(!latch.completeFreshFrame(
+                            200L, 5, true),
                         "changed static scene restarts stability");
                     require(latch.shouldRetainLastPresentedFrame(),
                         "changed static scene remains hidden");
-                    require(latch.completeFreshFrame(200L, 5),
+                    require(latch.completeFreshFrame(
+                            200L, 5, true),
                         "matching static scene releases latch");
                     require(!latch.shouldRetainLastPresentedFrame(),
                         "stable frame is immediately presentable");
@@ -791,7 +801,8 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                         "release records static stability");
                     require(latch.getFreshFrameSamples() == 3,
                         "all candidate frames are counted");
-                    require(!latch.completeFreshFrame(200L, 5),
+                    require(!latch.completeFreshFrame(
+                            200L, 5, true),
                         "release is single-use");
 
                     latch.begin(false);
@@ -805,7 +816,8 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                     latch.reset();
                     require(!latch.shouldRetainLastPresentedFrame(),
                         "reset cancels pending retention");
-                    require(!latch.completeFreshFrame(300L, 6),
+                    require(!latch.completeFreshFrame(
+                            300L, 6, true),
                         "reset cancels release");
 
                     latch.begin(true);
@@ -816,11 +828,12 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                                     .MAX_FRESH_FRAME_SAMPLES - 1;
                             sample++) {
                         require(!latch.completeFreshFrame(
-                                1000L + sample, 7),
+                                1000L + sample, 7, true),
                             "unstable candidate remains bounded "
                                 + sample);
                     }
-                    require(latch.completeFreshFrame(2000L, 7),
+                    require(latch.completeFreshFrame(
+                            2000L, 7, true),
                         "hard bound eventually releases");
                     require(!latch.wasLastReleaseStable(),
                         "bounded fallback is distinguishable");
@@ -880,6 +893,16 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
         )
         self.assertIn(
             '"renderer.atomic-presentation-release"',
+            self.client,
+        )
+        self.assertIn(
+            "isLayeredTerrainPresentationStagePending()",
+            (
+                ROOT / "Client_Base/src/orsc/PacketHandler.java"
+            ).read_text(encoding="utf-8"),
+        )
+        self.assertIn(
+            '"renderer.atomic-presentation-wait"',
             self.client,
         )
 

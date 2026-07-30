@@ -6,11 +6,12 @@ package orsc;
  * <p>The network activation barrier can complete between rendered gameplay
  * frames. Releasing the old frame immediately would let the presenter observe
  * the newly installed terrain before the client has rebuilt the matching
- * scenery/object chunks. The first assembled frame can still precede the last
- * static-scene baseline update, so this latch requires two consecutive
- * matching static-world signatures before releasing it. A hard sample bound
- * prevents an incorrectly classified continuously-changing chunk from holding
- * the old presentation forever.</p>
+ * scenery/object chunks. The first assembled frame can also precede the
+ * asynchronous structure-stage publication. The latch therefore refuses to
+ * sample while an authoritative presentation product is pending, then requires
+ * two consecutive matching static-world signatures before releasing it. A
+ * hard sample bound prevents an incorrectly classified continuously-changing
+ * chunk from holding the old presentation forever.</p>
  */
 final class LayeredScenePresentationLatch {
 	static final int MAX_FRESH_FRAME_SAMPLES = 8;
@@ -51,8 +52,10 @@ final class LayeredScenePresentationLatch {
 
 	boolean completeFreshFrame(
 		long staticWorldSignature,
-		int staticChunkCount) {
-		if (!awaitingFreshFrame) {
+		int staticChunkCount,
+		boolean presentationProductsReady) {
+		if (!awaitingFreshFrame
+			|| !presentationProductsReady) {
 			return false;
 		}
 		freshFrameSamples++;

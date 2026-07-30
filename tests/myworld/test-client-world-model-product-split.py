@@ -253,9 +253,10 @@ def main() -> None:
     require(mudclient, '"canonicalOwnershipMatches"',
             "Transition diagnostics should expose potential ownership-boundary reuse")
     require(mudclient,
-            "if (RendererDiagnosticSession.isEnabled()) {\n"
+            "if (RendererDiagnosticSession.isEnabled()\n"
+            "\t\t\t\t\t\t&& RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED) {\n"
             "\t\t\t\t\t\tcanonicalComparisonCandidate = cached;",
-            "Canonical geometry comparison must remain diagnostic-only")
+            "Canonical geometry comparison must remain explicitly opt-in diagnostic work")
     require(mudclient,
             "ResidentObjectChunkGeometryComparison\n"
             "\t\t\t\t\t\t\tcomparison =\n"

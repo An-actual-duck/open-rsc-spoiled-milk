@@ -117,6 +117,12 @@ public final class mudclient implements Runnable {
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_PRIME = 0x100000001b3L;
 	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
 	private static final int RESIDENT_ANIMATED_OBJECT_CHUNK_TILE_SIZE = 8;
+	private static final boolean
+		RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED =
+			readBoolean(
+				"spoiledmilk.residentObjectGeometryDiagnostics",
+				"SPOILED_MILK_RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS",
+				false);
 	public static final int spriteMedia = 2000;
 	public static final int spriteUtil = 2100;
 	public static final int spriteItem = 2150;
@@ -883,6 +889,7 @@ public final class mudclient implements Runnable {
 	private final LayeredScenePresentationLatch
 		layeredScenePresentationLatch =
 			new LayeredScenePresentationLatch();
+	private boolean layeredSceneTerrainStageWaitLogged = false;
 	private boolean regionLoadNeedsHardPlayerReset = false;
 	private boolean hasCompletedInitialRegionLoad = false;
 	private final Map<Long, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
@@ -4030,7 +4037,8 @@ public final class mudclient implements Runnable {
 				if (cached.canonicalContentKey
 						== input.canonicalContentKey) {
 					canonicalOwnershipMatches++;
-					if (RendererDiagnosticSession.isEnabled()) {
+					if (RendererDiagnosticSession.isEnabled()
+						&& RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED) {
 						canonicalComparisonCandidate = cached;
 					}
 				} else {
@@ -24915,11 +24923,13 @@ public final class mudclient implements Runnable {
 	public void beginLayeredSceneActivation(
 		final boolean retainPresentedFrame) {
 		this.layeredSceneActivationPending = true;
+		this.layeredSceneTerrainStageWaitLogged = false;
 		this.layeredScenePresentationLatch.begin(retainPresentedFrame);
 	}
 
 	public void resetLayeredSceneActivationPresentation() {
 		this.layeredSceneActivationPending = false;
+		this.layeredSceneTerrainStageWaitLogged = false;
 		this.layeredScenePresentationLatch.reset();
 	}
 
@@ -24940,10 +24950,36 @@ public final class mudclient implements Runnable {
 				: worldChunkFrame.getStaticPresentationChunkCount();
 		int previousSamples =
 			this.layeredScenePresentationLatch.getFreshFrameSamples();
+		boolean presentationProductsReady =
+			!this.packetHandler
+				.isLayeredTerrainPresentationStagePending();
+		if (!presentationProductsReady
+			&& this.shouldRetainLastPresentedFrame()
+			&& !this.layeredSceneTerrainStageWaitLogged) {
+			this.layeredSceneTerrainStageWaitLogged = true;
+			RendererDiagnosticSession.Record wait =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.atomic-presentation-wait");
+			if (wait != null) {
+				wait.string(
+					"reason",
+					"terrain-presentation-stage");
+				wait.number(
+					"terrainStage.protocol",
+					this.packetHandler
+						.getPendingLayeredTerrainPresentationStageProtocol());
+				wait.number(
+					"terrainStage.sequence",
+					this.packetHandler
+						.getPendingLayeredTerrainPresentationStageSequence());
+				RendererDiagnosticSession.writeEventRecord(wait);
+			}
+		}
 		boolean released =
 			this.layeredScenePresentationLatch.completeFreshFrame(
 				staticWorldSignature,
-				staticChunkCount);
+				staticChunkCount,
+				presentationProductsReady);
 		int freshFrameSamples =
 			this.layeredScenePresentationLatch.getFreshFrameSamples();
 		if (freshFrameSamples > previousSamples) {
