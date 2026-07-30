@@ -1521,6 +1521,24 @@ public final class Renderer3DWorldChunkFrame {
 			return vertexOffsetZ;
 		}
 
+		/**
+		 * Converts this chunk's presentation-local X coordinate to its stable
+		 * logical-world coordinate. A presentation rebase changes the vertex
+		 * offset but must not move world-anchored shader effects such as terrain
+		 * variation.
+		 */
+		public int getLogicalWorldOffsetX() {
+			return Math.subtractExact(originWorldX, vertexOffsetX);
+		}
+
+		/**
+		 * Converts this chunk's presentation-local Z coordinate to its stable
+		 * logical-world coordinate.
+		 */
+		public int getLogicalWorldOffsetZ() {
+			return Math.subtractExact(originWorldZ, vertexOffsetZ);
+		}
+
 		public int getVertexCoord(int coordIndex) {
 			int value = vertexCoords[coordIndex];
 			int axis = coordIndex % 3;

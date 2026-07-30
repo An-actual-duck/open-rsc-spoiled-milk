@@ -2088,8 +2088,11 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 					? chunk.getVertexOffsetZ() - buffer.uploadedVertexOffsetZ
 					: 0;
 				if (shaderActive) {
-					residentChunkShader.setChunkOffset(
-						drawOffsetX, drawOffsetZ);
+					residentChunkShader.setChunkOffsets(
+						drawOffsetX,
+						drawOffsetZ,
+						chunk.getLogicalWorldOffsetX(),
+						chunk.getLogicalWorldOffsetZ());
 				}
 				accumulator.recordConsideredChunk(key);
 				gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.vertexBufferId);
@@ -2166,7 +2169,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			}
 		} finally {
 			if (shaderActive) {
-				residentChunkShader.setChunkOffset(0.0f, 0.0f);
+				residentChunkShader.setChunkOffsets(
+					0.0f, 0.0f, 0.0f, 0.0f);
 			}
 			if (residentObjectCull) {
 				gl.glDisable(gl.GL_CULL_FACE);

@@ -270,6 +270,18 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                         "presented vertex includes x offset");
                     require(source.getVertexCoord(0) == 0,
                         "source geometry stays immutable");
+                    require(
+                        source.getVertexCoord(0)
+                                + source.getLogicalWorldOffsetX()
+                            == rebased.getVertexCoord(0)
+                                + rebased.getLogicalWorldOffsetX(),
+                        "x terrain variation coordinate survives rebase");
+                    require(
+                        source.getVertexCoord(2)
+                                + source.getLogicalWorldOffsetZ()
+                            == rebased.getVertexCoord(2)
+                                + rebased.getLogicalWorldOffsetZ(),
+                        "z terrain variation coordinate survives rebase");
 
                     Renderer3DWorldChunkFrame.ChunkMesh animatedA =
                         objectChunk(
@@ -415,11 +427,20 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             self.world_chunk_renderer,
         )
         self.assertIn(
-            "residentChunkShader.setChunkOffset(",
+            "residentChunkShader.setChunkOffsets(",
             self.world_chunk_renderer,
         )
         self.assertIn(
             "aPosition + vec3(uChunkOffsetX, 0.0, uChunkOffsetZ)",
+            self.opengl_shader,
+        )
+        self.assertIn(
+            "vTerrainWorldXZ = rebasedPosition.xz"
+            " + vec2(uTerrainWorldOffsetX, uTerrainWorldOffsetZ)",
+            self.opengl_shader,
+        )
+        self.assertIn(
+            "vec2 terrainPoint = vTerrainWorldXZ / 128.0",
             self.opengl_shader,
         )
 
