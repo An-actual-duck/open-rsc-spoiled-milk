@@ -142,7 +142,8 @@ final class OpenGLWorldSpriteDrawController {
 				continue;
 			}
 			for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
-				Renderer2DFrame.SpriteCommand layerCommand = snapshot.getLayer(layerIndex);
+				Renderer2DFrame.SpriteCommand layerCommand =
+					snapshot.getPresentationLayer(layerIndex);
 				drawOwnedWorldSpriteCommand(
 					frame,
 					anchor,

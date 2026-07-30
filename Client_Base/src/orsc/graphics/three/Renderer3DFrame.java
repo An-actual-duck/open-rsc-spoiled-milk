@@ -1,6 +1,8 @@
 package orsc.graphics.three;
 
+import com.openrsc.client.model.Sprite;
 import orsc.graphics.Renderer2DFrame;
+import orsc.graphics.RendererSpriteTransform;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -219,6 +221,33 @@ public final class Renderer3DFrame {
 		return true;
 	}
 
+	public boolean recordDirectGroundItemLayer(
+		int anchorIndex,
+		int legacyDrawOrder,
+		Renderer2DFrame.SpriteCommand command) {
+		if (command == null
+			|| command.getPhase() != Renderer2DFrame.Phase.SCENE
+			|| anchorIndex < 0
+			|| anchorIndex >= worldSpriteSnapshots.size()) {
+			return false;
+		}
+		WorldSpriteSnapshot snapshot = worldSpriteSnapshots.get(anchorIndex);
+		SpriteAnchor anchor = snapshot == null ? null : snapshot.getAnchor();
+		GroundItemSpriteSource source = snapshot == null ? null : snapshot.getGroundItemSource();
+		if (anchor == null
+			|| source == null
+			|| anchor.getLegacyDrawOrder() != legacyDrawOrder
+			|| command.getSceneSpriteAnchorIndex() != anchorIndex
+			|| command.getSceneSpriteDrawOrder() != legacyDrawOrder
+			|| command.getLegacySpriteId() != anchor.getSpriteId()
+			|| command.getSprite() != source.getSprite()
+			|| !command.getTransform().equals(source.getTransform())) {
+			return false;
+		}
+		snapshot.setDirectGroundItemLayer(command);
+		return true;
+	}
+
 	private SpriteSubmission findSpriteSubmission(int faceId) {
 		for (int index = spriteSubmissions.size() - 1; index >= 0; index--) {
 			SpriteSubmission submission = spriteSubmissions.get(index);
@@ -260,7 +289,8 @@ public final class Renderer3DFrame {
 		int scale,
 		int horizontalSkew,
 		boolean projected,
-		String cullReason) {
+		String cullReason,
+		GroundItemSpriteSource groundItemSource) {
 		this.spriteSubmissions.add(new SpriteSubmission(
 			faceId,
 			spriteId,
@@ -282,7 +312,8 @@ public final class Renderer3DFrame {
 			scale,
 			horizontalSkew,
 			projected,
-			cullReason));
+			cullReason,
+			groundItemSource));
 	}
 
 	void addCharacterSprite(
@@ -619,6 +650,10 @@ public final class Renderer3DFrame {
 		private final CharacterSprite character;
 		private Renderer2DFrame.SpriteCommand[] layers = EMPTY_LAYERS;
 		private int layerCount;
+		private Renderer2DFrame.SpriteCommand directGroundItemLayer;
+		private boolean directGroundItemParityChecked;
+		private boolean directGroundItemParityExact;
+		private String directGroundItemMismatchReason = "";
 
 		private WorldSpriteSnapshot(
 			int anchorIndex,
@@ -644,6 +679,27 @@ public final class Renderer3DFrame {
 				layers = Arrays.copyOf(layers, nextCapacity);
 			}
 			layers[layerCount++] = command;
+			checkDirectGroundItemParity();
+		}
+
+		private void setDirectGroundItemLayer(Renderer2DFrame.SpriteCommand command) {
+			this.directGroundItemLayer = command;
+			checkDirectGroundItemParity();
+		}
+
+		private void checkDirectGroundItemParity() {
+			if (directGroundItemLayer == null || layerCount == 0) {
+				return;
+			}
+			directGroundItemParityChecked = true;
+			if (layerCount != 1) {
+				directGroundItemParityExact = false;
+				directGroundItemMismatchReason = "layer-count";
+				return;
+			}
+			directGroundItemMismatchReason =
+				directGroundItemMismatchReason(directGroundItemLayer, layers[0]);
+			directGroundItemParityExact = directGroundItemMismatchReason.length() == 0;
 		}
 
 		public int getAnchorIndex() {
@@ -662,6 +718,10 @@ public final class Renderer3DFrame {
 			return character;
 		}
 
+		public GroundItemSpriteSource getGroundItemSource() {
+			return submission == null ? null : submission.getGroundItemSource();
+		}
+
 		public Renderer2DFrame.SpriteCommand getLayer(int layerIndex) {
 			if (layerIndex < 0 || layerIndex >= layerCount) {
 				return null;
@@ -671,6 +731,36 @@ public final class Renderer3DFrame {
 
 		public int getLayerCount() {
 			return layerCount;
+		}
+
+		public Renderer2DFrame.SpriteCommand getDirectGroundItemLayer() {
+			return directGroundItemLayer;
+		}
+
+		public boolean isDirectGroundItemParityChecked() {
+			return directGroundItemParityChecked;
+		}
+
+		public boolean isDirectGroundItemParityExact() {
+			return directGroundItemParityExact;
+		}
+
+		public String getDirectGroundItemMismatchReason() {
+			return directGroundItemMismatchReason;
+		}
+
+		public boolean canUseDirectGroundItemLayer() {
+			return directGroundItemLayer != null
+				&& directGroundItemParityChecked
+				&& directGroundItemParityExact
+				&& layerCount == 1;
+		}
+
+		public Renderer2DFrame.SpriteCommand getPresentationLayer(int layerIndex) {
+			if (layerIndex == 0 && canUseDirectGroundItemLayer()) {
+				return directGroundItemLayer;
+			}
+			return getLayer(layerIndex);
 		}
 
 		public boolean ownsLayer(Renderer2DFrame.SpriteCommand command) {
@@ -688,6 +778,99 @@ public final class Renderer3DFrame {
 
 		public boolean isPickable() {
 			return anchor != null && anchor.isPickable();
+		}
+
+		private static String directGroundItemMismatchReason(
+			Renderer2DFrame.SpriteCommand direct,
+			Renderer2DFrame.SpriteCommand captured) {
+			if (direct == null || captured == null) {
+				return "missing-command";
+			}
+			if (direct.getSprite() != captured.getSprite()) {
+				return "sprite";
+			}
+			if (direct.getX() != captured.getX() || direct.getY() != captured.getY()) {
+				return "destination-origin";
+			}
+			if (direct.getWidth() != captured.getWidth()
+				|| direct.getHeight() != captured.getHeight()) {
+				return "destination-size";
+			}
+			if (direct.getSourceX() != captured.getSourceX()
+				|| direct.getSourceY() != captured.getSourceY()
+				|| direct.getSourceWidth() != captured.getSourceWidth()
+				|| direct.getSourceHeight() != captured.getSourceHeight()) {
+				return "source-bounds";
+			}
+			if (direct.getSourceStartX16() != captured.getSourceStartX16()
+				|| direct.getSourceStartY16() != captured.getSourceStartY16()
+				|| direct.getSourceScaleX16() != captured.getSourceScaleX16()
+				|| direct.getSourceScaleY16() != captured.getSourceScaleY16()) {
+				return "source-sampling";
+			}
+			if (direct.getAlpha() != captured.getAlpha()
+				|| !direct.getTransform().equals(captured.getTransform())) {
+				return "transform";
+			}
+			if (direct.getTopX16() != captured.getTopX16()
+				|| direct.getBottomX16() != captured.getBottomX16()
+				|| direct.isMirrorX() != captured.isMirrorX()
+				|| direct.requiresOrderedReplay() != captured.requiresOrderedReplay()) {
+				return "shape";
+			}
+			if (direct.getLegacySpriteId() != captured.getLegacySpriteId()
+				|| direct.getSceneSpriteAnchorIndex() != captured.getSceneSpriteAnchorIndex()
+				|| direct.getSceneSpriteDrawOrder() != captured.getSceneSpriteDrawOrder()
+				|| direct.getPhase() != captured.getPhase()) {
+				return "ownership";
+			}
+			return "";
+		}
+	}
+
+	public static final class GroundItemSpriteSource {
+		private final int itemId;
+		private final int groundItemIndex;
+		private final boolean noted;
+		private final Sprite sprite;
+		private final RendererSpriteTransform transform;
+
+		public GroundItemSpriteSource(
+			int itemId,
+			int groundItemIndex,
+			boolean noted,
+			Sprite sprite,
+			RendererSpriteTransform transform) {
+			if (sprite == null) {
+				throw new IllegalArgumentException("ground-item sprite must not be null");
+			}
+			this.itemId = itemId;
+			this.groundItemIndex = groundItemIndex;
+			this.noted = noted;
+			this.sprite = sprite;
+			this.transform = transform == null
+				? RendererSpriteTransform.IDENTITY
+				: transform;
+		}
+
+		public int getItemId() {
+			return itemId;
+		}
+
+		public int getGroundItemIndex() {
+			return groundItemIndex;
+		}
+
+		public boolean isNoted() {
+			return noted;
+		}
+
+		public Sprite getSprite() {
+			return sprite;
+		}
+
+		public RendererSpriteTransform getTransform() {
+			return transform;
 		}
 	}
 
@@ -936,6 +1119,7 @@ public final class Renderer3DFrame {
 		private final int horizontalSkew;
 		private final boolean projected;
 		private final String cullReason;
+		private final GroundItemSpriteSource groundItemSource;
 
 		private SpriteSubmission(
 			int faceId,
@@ -958,7 +1142,8 @@ public final class Renderer3DFrame {
 			int scale,
 			int horizontalSkew,
 			boolean projected,
-			String cullReason) {
+			String cullReason,
+			GroundItemSpriteSource groundItemSource) {
 			this.faceId = faceId;
 			this.spriteId = spriteId;
 			this.pickIndex = pickIndex;
@@ -980,6 +1165,7 @@ public final class Renderer3DFrame {
 			this.horizontalSkew = horizontalSkew;
 			this.projected = projected;
 			this.cullReason = cullReason == null ? "" : cullReason;
+			this.groundItemSource = groundItemSource;
 		}
 
 		public int getFaceId() {
@@ -1064,6 +1250,10 @@ public final class Renderer3DFrame {
 
 		public String getCullReason() {
 			return cullReason;
+		}
+
+		public GroundItemSpriteSource getGroundItemSource() {
+			return groundItemSource;
 		}
 	}
 

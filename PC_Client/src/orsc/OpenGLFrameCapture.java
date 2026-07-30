@@ -593,6 +593,9 @@ final class OpenGLFrameCapture {
 				"snapshotIndex\tanchorIndex\tanchorFaceId\tlegacySpriteId\tlegacyDrawOrder"
 					+ "\tpickIndex\tpickable\tlayerIndex\tsequence\talpha\tmirrorX\tskewed"
 					+ "\tsourceX\tsourceY\tsourceWidth\tsourceHeight"
+					+ "\tgroundItemSource\tgroundItemId\tgroundItemIndex\tgroundItemNoted"
+					+ "\tdirectGroundItemLayer\tdirectParityChecked\tdirectParityExact"
+					+ "\tdirectMismatchReason\tdirectPresentation"
 					+ "\tworldX\tworldY\tworldZ\tcharacterKind\tcharacterArrayIndex"
 					+ "\tcharacterServerIndex\tcharacterEntityId\tdirection\tcombatDirection"
 					+ "\tcombatTimeout\tcombatEffectType\tcombatEffectTime\tactiveHitSplats");
@@ -646,6 +649,8 @@ final class OpenGLFrameCapture {
 		Renderer3DFrame.CharacterSprite character,
 		int layerIndex,
 		Renderer2DFrame.SpriteCommand layer) {
+		Renderer3DFrame.GroundItemSpriteSource groundItemSource =
+			snapshot.getGroundItemSource();
 		writer.println(snapshotIndex
 			+ "\t" + snapshot.getAnchorIndex()
 			+ "\t" + (anchor == null ? "" : String.valueOf(anchor.getFaceId()))
@@ -662,6 +667,15 @@ final class OpenGLFrameCapture {
 			+ "\t" + (layer == null ? "" : String.valueOf(layer.getSourceY()))
 			+ "\t" + (layer == null ? "" : String.valueOf(layer.getSourceWidth()))
 			+ "\t" + (layer == null ? "" : String.valueOf(layer.getSourceHeight()))
+			+ "\t" + (groundItemSource != null)
+			+ "\t" + (groundItemSource == null ? "" : String.valueOf(groundItemSource.getItemId()))
+			+ "\t" + (groundItemSource == null ? "" : String.valueOf(groundItemSource.getGroundItemIndex()))
+			+ "\t" + (groundItemSource != null && groundItemSource.isNoted())
+			+ "\t" + (snapshot.getDirectGroundItemLayer() != null)
+			+ "\t" + snapshot.isDirectGroundItemParityChecked()
+			+ "\t" + snapshot.isDirectGroundItemParityExact()
+			+ "\t" + snapshot.getDirectGroundItemMismatchReason()
+			+ "\t" + snapshot.canUseDirectGroundItemLayer()
 			+ "\t" + (submission == null ? "" : String.valueOf(submission.getWorldX()))
 			+ "\t" + (submission == null ? "" : String.valueOf(submission.getWorldY()))
 			+ "\t" + (submission == null ? "" : String.valueOf(submission.getWorldZ()))
@@ -1698,7 +1712,8 @@ final class OpenGLFrameCapture {
 		if (isLegacyEntitySpriteId(legacySpriteId)) {
 			return "entity";
 		}
-		if (legacySpriteId >= 40000 && legacySpriteId < 50000) {
+		if (legacySpriteId == -1
+			|| (legacySpriteId >= 40000 && legacySpriteId < 50000)) {
 			return "ground-item";
 		}
 		return "unknown";

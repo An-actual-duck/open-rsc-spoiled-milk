@@ -271,6 +271,10 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldSpriteSnapshotGroupStats = new CounterStats();
 	private static final CounterStats openGLWorldSpriteSnapshotLayerStats = new CounterStats();
 	private static final CounterStats openGLWorldSpriteSnapshotCompatibilityFallbackStats = new CounterStats();
+	private static final CounterStats openGLDirectGroundItemSourceStats = new CounterStats();
+	private static final CounterStats openGLDirectGroundItemParityExactStats = new CounterStats();
+	private static final CounterStats openGLDirectGroundItemActiveStats = new CounterStats();
+	private static final CounterStats openGLDirectGroundItemFallbackStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityConsideredStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityDrawnStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityCulledStats = new CounterStats();
@@ -1193,6 +1197,23 @@ public final class RenderTelemetry {
 		}
 	}
 
+	static void recordOpenGLDirectGroundItemFrame(
+		int sources,
+		int parityExact,
+		int active,
+		int fallback) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			openGLDirectGroundItemSourceStats.record(sources);
+			openGLDirectGroundItemParityExactStats.record(parityExact);
+			openGLDirectGroundItemActiveStats.record(active);
+			openGLDirectGroundItemFallbackStats.record(fallback);
+		}
+	}
+
 	static void recordSetGameImage(
 		long totalNanos,
 		long sourceCopyNanos,
@@ -1952,6 +1973,12 @@ public final class RenderTelemetry {
 				+ " layers=" + formatCount(openGLWorldSpriteSnapshotLayerStats.average())
 				+ " compatibilityFallback="
 				+ formatCount(openGLWorldSpriteSnapshotCompatibilityFallbackStats.average()));
+		System.out.println(
+			"[renderer-v2 telemetry] direct ground items avg: sources="
+				+ formatCount(openGLDirectGroundItemSourceStats.average())
+				+ " parityExact=" + formatCount(openGLDirectGroundItemParityExactStats.average())
+				+ " active=" + formatCount(openGLDirectGroundItemActiveStats.average())
+				+ " fallback=" + formatCount(openGLDirectGroundItemFallbackStats.average()));
 
 		System.out.println(
 			"[renderer-v2 telemetry] presentation avg ms: setImage=" + formatMillis(setGameImageStats.average())
@@ -2973,6 +3000,10 @@ public final class RenderTelemetry {
 			openGLWorldSpriteSnapshotGroupStats,
 			openGLWorldSpriteSnapshotLayerStats,
 			openGLWorldSpriteSnapshotCompatibilityFallbackStats,
+			openGLDirectGroundItemSourceStats,
+			openGLDirectGroundItemParityExactStats,
+			openGLDirectGroundItemActiveStats,
+			openGLDirectGroundItemFallbackStats,
 			openGLWorldEntityConsideredStats,
 			openGLWorldEntityDrawnStats,
 			openGLWorldEntityCulledStats

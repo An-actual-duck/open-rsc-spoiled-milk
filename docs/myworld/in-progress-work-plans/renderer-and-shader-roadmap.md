@@ -532,6 +532,13 @@ come from one of these areas unless a concrete shadow regression appears:
   per-group container/iterator allocation was removed at `87aed9cbf` with
   indexed layer storage; owner review and another 12 strict frames accepted
   6,158/6,158 exact layers across 1,144 groups with the same zero-error gates.
+  The first direct world-space input slice is also accepted: single-layer
+  ground items now provide renderer-owned item/sprite/transform sources and
+  activate only after field-exact comparison with the retained legacy
+  command. The owner accepted ordinary, stacked, shifted/remastered, noted,
+  and interaction/nameplate behavior. Twelve strict frames covered 72/72
+  direct-source, parity-exact, directly presented item groups with zero
+  mismatch, fallback, failed frame, or client exception.
 - Quality settings: presets exist, but settings do not yet consistently reduce
   underlying renderer work.
 - Tooling: F6 telemetry is good for live diagnosis, but capture replay and
@@ -571,10 +578,14 @@ come from one of these areas unless a concrete shadow regression appears:
    reconstruction when complete validation passes; its own measured
    container/iterator allocation has also been removed. Next, design the
    direct world-space input contract and migrate the simplest category first
-   behind exact parity/fallback checks. Ground items are the preferred first
+   behind exact parity/fallback checks. Ground items were the preferred first
    slice because they are single-layer submissions without multipart character
-   composition. Then move players, NPCs, projectiles, and effects from
-   captured screen-space layers toward direct world-space inputs,
+   composition. That slice is now owner-accepted after an item-heavy visual
+   route and 12 strict frames with 72/72 exact direct item groups. Next,
+   separate nameplate bookkeeping and measure whether redundant legacy item
+   raster/capture can be retired behind the same fallback. After that, move
+   players, NPCs, projectiles, and effects from captured screen-space layers
+   toward direct world-space inputs,
    parity-complete persistent texture ownership, ordered batching, and
    culling. Retire matching legacy scene sort/rotation/removal and capture work
    incrementally as parity is proven.

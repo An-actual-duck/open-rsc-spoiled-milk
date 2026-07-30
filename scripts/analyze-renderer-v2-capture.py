@@ -378,7 +378,10 @@ def summarize_world_sprite_snapshots(rows: list[dict[str, str]]) -> dict[str, in
     world_rows = [
         row
         for row in rows
-        if 5000 <= parse_int(row.get("legacySpriteId"), -1) < 50000
+        if (
+            5000 <= parse_int(row.get("legacySpriteId"), -1) < 50000
+            or parse_bool(row.get("groundItemSource"))
+        )
     ]
     groups = {row.get("snapshotIndex", "") for row in world_rows}
     groups.discard("")
@@ -392,9 +395,42 @@ def summarize_world_sprite_snapshots(rows: list[dict[str, str]]) -> dict[str, in
     ground_item_groups = {
         row.get("snapshotIndex", "")
         for row in world_rows
-        if 40000 <= parse_int(row.get("legacySpriteId"), -1) < 50000
+        if (
+            40000 <= parse_int(row.get("legacySpriteId"), -1) < 50000
+            or parse_bool(row.get("groundItemSource"))
+        )
     }
     ground_item_groups.discard("")
+    direct_source_groups = {
+        row.get("snapshotIndex", "")
+        for row in world_rows
+        if parse_bool(row.get("groundItemSource"))
+    }
+    direct_source_groups.discard("")
+    direct_parity_checked_groups = {
+        row.get("snapshotIndex", "")
+        for row in world_rows
+        if parse_bool(row.get("directParityChecked"))
+    }
+    direct_parity_checked_groups.discard("")
+    direct_parity_exact_groups = {
+        row.get("snapshotIndex", "")
+        for row in world_rows
+        if parse_bool(row.get("directParityExact"))
+    }
+    direct_parity_exact_groups.discard("")
+    direct_presentation_groups = {
+        row.get("snapshotIndex", "")
+        for row in world_rows
+        if parse_bool(row.get("directPresentation"))
+    }
+    direct_presentation_groups.discard("")
+    direct_mismatch_groups = {
+        row.get("snapshotIndex", "")
+        for row in world_rows
+        if row.get("directMismatchReason", "") != ""
+    }
+    direct_mismatch_groups.discard("")
     invalid_anchor_rows = sum(
         1
         for row in world_rows
@@ -416,6 +452,11 @@ def summarize_world_sprite_snapshots(rows: list[dict[str, str]]) -> dict[str, in
         "layers": len(layer_rows),
         "characterGroups": len(character_groups),
         "groundItemGroups": len(ground_item_groups),
+        "directSourceGroups": len(direct_source_groups),
+        "directParityCheckedGroups": len(direct_parity_checked_groups),
+        "directParityExactGroups": len(direct_parity_exact_groups),
+        "directPresentationGroups": len(direct_presentation_groups),
+        "directMismatchGroups": len(direct_mismatch_groups),
         "invalidAnchorRows": invalid_anchor_rows,
         "sequenceOrderViolations": sequence_order_violations,
     }
@@ -1519,6 +1560,33 @@ def main() -> None:
                 "renderer snapshot layer order is not stable: "
                 f"{world_sprite_snapshot_summary['sequenceOrderViolations']}"
             )
+        if "groundItemSource" in world_sprite_snapshots[0]:
+            if (
+                world_sprite_snapshot_summary["directSourceGroups"]
+                != world_sprite_snapshot_summary["groundItemGroups"]
+            ):
+                fail(
+                    "ground-item snapshots are missing direct source inputs: "
+                    f"{world_sprite_snapshot_summary['directSourceGroups']} != "
+                    f"{world_sprite_snapshot_summary['groundItemGroups']}"
+                )
+            if (
+                world_sprite_snapshot_summary["directParityCheckedGroups"]
+                != world_sprite_snapshot_summary["groundItemGroups"]
+                or world_sprite_snapshot_summary["directParityExactGroups"]
+                != world_sprite_snapshot_summary["groundItemGroups"]
+                or world_sprite_snapshot_summary["directPresentationGroups"]
+                != world_sprite_snapshot_summary["groundItemGroups"]
+                or world_sprite_snapshot_summary["directMismatchGroups"] != 0
+            ):
+                fail(
+                    "ground-item direct inputs did not reach exact active parity: "
+                    f"items={world_sprite_snapshot_summary['groundItemGroups']} "
+                    f"checked={world_sprite_snapshot_summary['directParityCheckedGroups']} "
+                    f"exact={world_sprite_snapshot_summary['directParityExactGroups']} "
+                    f"active={world_sprite_snapshot_summary['directPresentationGroups']} "
+                    f"mismatch={world_sprite_snapshot_summary['directMismatchGroups']}"
+                )
     print("worldSpriteSnapshots:")
     if not world_sprite_snapshots:
         print("  none")

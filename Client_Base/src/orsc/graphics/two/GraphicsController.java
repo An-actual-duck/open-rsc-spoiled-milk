@@ -1054,6 +1054,152 @@ public class GraphicsController {
 		return true;
 	}
 
+	/*
+	 * RENDERER-V2 DIRECT INPUT: build the same command shape that the legacy
+	 * masked/scaled item draw would capture, but without recording or rasterizing
+	 * it. Scene uses this only for explicitly tagged ground-item submissions.
+	 * The captured legacy command remains the parity comparator and fallback.
+	 */
+	public final Renderer2DFrame.SpriteCommand buildRenderer2DSceneSpriteCommand(
+		Sprite sprite,
+		int x,
+		int y,
+		int width,
+		int height,
+		RendererSpriteTransform transform,
+		int legacySpriteId,
+		int sceneSpriteAnchorIndex,
+		int sceneSpriteDrawOrder) {
+		if (sprite == null
+			|| sprite.getPixels() == null
+			|| width <= 0
+			|| height <= 0
+			|| this.width2 <= 0
+			|| this.interlace
+			|| transform == null) {
+			return null;
+		}
+
+		int spriteWidth = sprite.getWidth();
+		int spriteHeight = sprite.getHeight();
+		int srcStartX = 0;
+		int srcStartY = 0;
+		int destFirstColumn = 0;
+		int scaleX = (spriteWidth << 16) / width;
+		int scaleY = (spriteHeight << 16) / height;
+		int destColumnSkewPerRow = 0;
+		if (sprite.requiresShift()) {
+			int sourceCanvasWidth = sprite.getSomething1();
+			int sourceCanvasHeight = sprite.getSomething2();
+			if (sourceCanvasWidth == 0 || sourceCanvasHeight == 0) {
+				return null;
+			}
+
+			scaleX = (sourceCanvasWidth << 16) / width;
+			scaleY = (sourceCanvasHeight << 16) / height;
+			int sourceShiftX = sprite.getXShift();
+			int sourceShiftY = sprite.getYShift();
+			x += (sourceCanvasWidth + sourceShiftX * width - 1) / sourceCanvasWidth;
+			int clippedShiftY =
+				(sourceShiftY * height + sourceCanvasHeight - 1) / sourceCanvasHeight;
+			if (sourceShiftX * width % sourceCanvasWidth != 0) {
+				srcStartX =
+					(sourceCanvasWidth - width * sourceShiftX % sourceCanvasWidth << 16)
+						/ width;
+			}
+
+			y += clippedShiftY;
+			destFirstColumn += clippedShiftY * destColumnSkewPerRow;
+			if (sourceShiftY * height % sourceCanvasHeight != 0) {
+				srcStartY =
+					(sourceCanvasHeight - height * sourceShiftY % sourceCanvasHeight << 16)
+						/ height;
+			}
+
+			width =
+				(scaleX + ((sprite.getWidth() << 16) - (srcStartX + 1))) / scaleX;
+			height =
+				((sprite.getHeight() << 16) - srcStartY - (1 - scaleY)) / scaleY;
+		}
+
+		int destRowHead = this.width2 * y;
+		destFirstColumn += x << 16;
+		if (y < this.clipTop) {
+			int clippedRows = this.clipTop - y;
+			destFirstColumn += destColumnSkewPerRow * clippedRows;
+			height -= clippedRows;
+			srcStartY += clippedRows * scaleY;
+			destRowHead += this.width2 * clippedRows;
+			y = this.clipTop;
+		}
+		if (y + height >= this.clipBottom) {
+			height -= 1 + y + height - this.clipBottom;
+		}
+		if (width <= 0 || height <= 0) {
+			return null;
+		}
+
+		int destY = destRowHead / this.width2;
+		long topX16 = destFirstColumn;
+		long bottomX16 = topX16 + (long) destColumnSkewPerRow * height;
+		int minLeft = floorFixedToInt(Math.min(topX16, bottomX16));
+		int maxLeft = ceilFixedToInt(Math.max(topX16, bottomX16));
+		if (maxLeft + width <= this.clipLeft
+			|| minLeft >= this.clipRight
+			|| destY + height <= this.clipTop
+			|| destY >= this.clipBottom) {
+			return null;
+		}
+
+		int sourceX = srcStartX >> 16;
+		int sourceY = srcStartY >> 16;
+		int sourceRight =
+			(int) ((srcStartX + (long) (width - 1) * scaleX) >> 16) + 1;
+		int sourceBottom =
+			(int) ((srcStartY + (long) (height - 1) * scaleY) >> 16) + 1;
+		if (sourceX < 0
+			|| sourceY < 0
+			|| sourceRight > sprite.getWidth()
+			|| sourceBottom > sprite.getHeight()
+			|| sourceX >= sourceRight
+			|| sourceY >= sourceBottom) {
+			return null;
+		}
+
+		return new Renderer2DFrame.SpriteCommand(
+			sprite,
+			floorFixedToInt(topX16),
+			destY,
+			width,
+			height,
+			sourceX,
+			sourceY,
+			sourceRight - sourceX,
+			sourceBottom - sourceY,
+			srcStartX,
+			srcStartY,
+			scaleX,
+			scaleY,
+			transform.getOpacity(),
+			transform,
+			(int) topX16,
+			(int) bottomX16,
+			false,
+			false,
+			legacySpriteId,
+			sceneSpriteAnchorIndex,
+			sceneSpriteDrawOrder,
+			Renderer2DFrame.Phase.SCENE,
+			-1);
+	}
+
+	public Renderer3DFrame.GroundItemSpriteSource resolveGroundItemRendererSource(
+		int itemId,
+		int groundItemIndex,
+		boolean noted) {
+		return null;
+	}
+
 	private static int floorFixedToInt(long value) {
 		return (int) (value >> 16);
 	}

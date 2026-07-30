@@ -339,6 +339,9 @@ def main() -> None:
         if (
             "worldSpriteSnapshots:\n"
             "  rows:1 groups:1 layers:1 characterGroups:1 groundItemGroups:0 "
+            "directSourceGroups:0 directParityCheckedGroups:0 "
+            "directParityExactGroups:0 directPresentationGroups:0 "
+            "directMismatchGroups:0 "
             "invalidAnchorRows:0 sequenceOrderViolations:0"
             not in result.stdout
         ):

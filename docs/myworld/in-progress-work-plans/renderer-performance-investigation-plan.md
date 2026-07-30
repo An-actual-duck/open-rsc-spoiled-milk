@@ -28,6 +28,17 @@ storage. Compilation, the full guard suite, owner visual review, and a
 snapshot ownership across 1,144 groups with zero compatibility fallback,
 invalid anchor/order, suspicious visibility, failed frames, or client
 exceptions. The accepted cleanup is checkpointed at `87aed9cbf`.
+The first direct-input architecture milestone is accepted. Single-layer
+ground items carry an explicit frame-local sprite/transform source alongside
+their world submission. `Scene` independently derives a direct command from
+the projected anchor, compares every visual and ownership field against the
+retained legacy 2D capture, and lets that direct command become presentation
+authority only on an exact match. The captured command remains the automatic
+fallback and parity oracle. The owner accepted the ordinary, stacked,
+shifted/remastered, and noted-item visual and interaction route. All 12 strict
+capture frames passed: 72 of 72 item groups had a direct source, exact parity,
+and direct presentation, with zero mismatch, compatibility fallback, failed
+capture, or client exception.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -1265,6 +1276,70 @@ container and traversal overhead introduced by the second ownership slice;
 it does not reopen generic allocation-only micro-tuning beyond the established
 diminishing-returns gate.
 
+## Direct Ground-Item Input Slice
+
+The first direct world-space input slice deliberately starts with ground
+items. Each projected item is one layer, has one sprite definition and mask
+transform, and already has an exact scene anchor and pick owner. Characters
+remain on their accepted multipart captured-layer path.
+
+The initial implementation keeps two inputs for each projected ground item:
+
+1. a renderer-owned `GroundItemSpriteSource` containing the logical item,
+   source ground-item index, noted state, selected sprite, and immutable mask
+   transform;
+2. the existing legacy `SpriteCommand`, retained as the comparator and
+   immediate fallback.
+
+`Scene` resolves the source only after the item is projected, derives the
+direct command from the anchor rectangle with the legacy shifted-sprite and
+clip rules, and attaches it to the exact `WorldSpriteSnapshot`. The snapshot
+compares sprite identity, destination, source bounds/sampling, transform,
+shape, and owner metadata. Sequence is intentionally excluded because the
+renderer-owned command is ordered by its exact anchor while the comparator's
+sequence belongs to the legacy 2D stream. OpenGL selects the direct command
+only when the snapshot has exactly one captured layer and every compared field
+matches; otherwise it presents the captured command.
+
+This milestone intentionally does **not** skip legacy item drawing yet.
+`drawItemAt` still supplies ground-item nameplate bookkeeping and produces the
+parity command. After private proof, the next isolated slice may separate that
+bookkeeping from sprite raster/capture and retire the redundant item command
+work. It must retain picking, stacking offsets, noted/certificate art,
+external/remastered item sprites, nameplate grouping, and whole-frame snapshot
+fallback.
+
+Validation requirements:
+
+- ordinary and stacked items, including shifted/cropped sprite art, look
+  unchanged while walking and rotating the camera;
+- noted items use the same direct ground-item classification and art;
+- item pickup/right-click targeting and optional ground-item names remain
+  unchanged;
+- strict `world-sprite-snapshots.tsv` reports every ground-item group with
+  `groundItemSource=true`, parity checked/exact, direct presentation active,
+  and no mismatch reason;
+- snapshot compatibility fallback, invalid owner/order, command drops, client
+  exceptions, and suspicious visibility remain zero.
+
+Acceptance evidence, 2026-07-30:
+
+- the owner dropped ordinary, shifted/remastered, and noted items together,
+  checked their visuals and interaction behavior, and reported no issue;
+- the apparent freeze during the first noted-item attempt was a private-server
+  port collision between concurrent AI sessions, not an item or renderer
+  failure; a fresh captured private server accepted `::noteditem 12 1`
+  normally;
+- session `session-20260730-150823-170397` completed all 12 indexed capture
+  frames and passed the strict session/frame analyzers;
+- each frame contained six ground-item groups, including logical item IDs
+  `0`, `12`, `18`, `20`, `706`, and noted item sprite ID `-1`;
+- all 72 groups reported `groundItemSource=true`,
+  `directParityChecked=true`, `directParityExact=true`, and
+  `directPresentation=true`, with no mismatch reason; and
+- snapshot compatibility fallback, capture failure, and client exception
+  counts were zero.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -1535,6 +1610,18 @@ Implementation checkpoint:
       strict 12-frame burst: 6,158/6,158 layers retained exact ownership
       across 1,144 groups, with zero fallback, invalid anchor/order,
       suspicious visibility, failed frames, or client exceptions.
+- [x] Implement the first direct world-space input boundary for single-layer
+      ground items with typed item/sprite/transform sources, independently
+      derived commands, field-level parity diagnosis, noted-item support, and
+      automatic captured-command fallback.
+- [x] Validate ordinary, stacked, shifted/remastered, and noted ground items
+      on the private client. Capture a strict burst proving every projected
+      item is direct-source, parity-exact, and actively presented with zero
+      mismatch or compatibility fallback. The accepted 12-frame burst covered
+      72/72 exact and directly presented item groups.
+- [ ] After that acceptance, measure the retained legacy item capture/nameplate
+      cost and propose a separate slice that can skip only redundant item
+      raster/capture while preserving nameplates, picking, and fallback.
 
 ### Milestone 4: Broader Performance Matrix
 
@@ -1587,3 +1674,4 @@ Implementation checkpoint:
 | 2026-07-29 | `e3cced146` | grouped snapshot acceptance | Attach exact captured layers to frame-owned anchor/submission/character snapshots, validate the complete frame, consume valid groups directly, and retain the typed command builder as an all-or-nothing fallback. | Client compile, focused ownership/capture fixtures, and the full guard suite passed. The owner visual route reported no issue. All 12 strict capture frames passed: 4,852/4,852 layers were snapshot-owned across 938 nonempty groups, 842 character groups, and 96 item groups, with zero compatibility fallback, invalid anchor/order, suspicious visibility, failed frames, or client exceptions. | Accept the second scene/entity ownership slice. Repeat the maximum-distance idle and entity-pressure measurements before retiring another bridge boundary. |
 | 2026-07-29 | `06110169b` | `snapidle`, `snapcombat` | Profile the accepted grouped-snapshot endpoint at maximum zoom and under actor/combat pressure. | Composite scene reconstruction recorded zero sampled allocation and compatibility fallback stayed zero. The new phases contained roughly three to five times as many sprite layers as their earlier namesakes, so their 59.06/66.11 MiB/s allocation and 0.645/0.649-core totals are not treated as a regression or a direct delta. New per-group list/wrapper storage measured about 0.37 MiB/s in idle; submission lookup was not a leading CPU cost. | Keep the architectural result, reject raw before/after attribution, and remove only the new snapshot container/iterator allocation before another broader boundary. |
 | 2026-07-29 | `87aed9cbf` | indexed snapshot storage | Replace each snapshot's list/read-only wrapper with compact growable command-reference storage and consume it by stable index in validation, capture, composition, and drawing. | Command identity/order and all-or-nothing fallback are unchanged. Client compile, focused ownership/capture fixtures, and the full renderer guardrail suite passed; owner visual review passed. All 12 strict capture frames passed with 6,158/6,158 exactly owned layers across 1,144 groups and zero fallback, invalid anchor/order, suspicious visibility, failed frames, or client exceptions. | Accept and checkpoint this measured cleanup; retain the broader allocation-only diminishing-returns gate. |
+| 2026-07-30 | `3ecedad86` | direct ground-item acceptance | Give each projected single-layer ground item an independently derived renderer-owned command, select it only after field-exact comparison with the retained legacy capture, and retain automatic fallback. | The owner accepted the ordinary, stacked, shifted/remastered, noted, pickup/right-click, and nameplate route. Session `session-20260730-150823-170397` passed all 12 strict frames; 72/72 item groups across six sources were direct-source, parity-exact, and directly presented, with zero mismatch, fallback, failed frame, or client exception. The earlier apparent command freeze was traced to a concurrent private-server port collision. | Accept the first direct world-space input slice; isolate and measure retained legacy item raster/capture and nameplate work as a separate guarded milestone before multipart characters. |

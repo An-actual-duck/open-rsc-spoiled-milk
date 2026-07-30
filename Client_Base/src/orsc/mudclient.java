@@ -27,6 +27,7 @@ import orsc.buffers.RSBufferUtils;
 import orsc.buffers.RSBuffer_Bits;
 import orsc.enumerations.*;
 import orsc.graphics.Renderer2DFrame;
+import orsc.graphics.RendererSpriteTransform;
 import orsc.graphics.gui.*;
 import orsc.graphics.three.CollisionFlag;
 import orsc.graphics.three.Renderer3DDepthFrame;
@@ -7292,13 +7293,21 @@ public final class mudclient implements Runnable {
 							int stackOffsetZ = this.getGroundItemStackOffsetZ(this.groundItemRenderStackIndex[centerX]);
 							centerZ = this.groundItemX[centerX] * this.tileSize + 64 + stackOffsetX;
 							int var4 = this.tileSize * this.groundItemZ[centerX] + 64 + stackOffsetZ;
+							boolean noted = S_WANT_BANK_NOTES && this.groundItemNoted[centerX];
+							int renderItemId = noted ? -1 : this.groundItemID[centerX];
+							int groundItemFace;
 							if (S_WANT_BANK_NOTES && this.groundItemNoted[centerX]) {
-								this.scene.drawSprite(-1, var4, centerX + 20000, centerZ,
+								groundItemFace = this.scene.drawSprite(-1, var4, centerX + 20000, centerZ,
 									-this.world.getElevation(centerZ, var4) - this.groundItemHeight[centerX], 96, 64, (byte) 109);
 							} else {
-								this.scene.drawSprite(40000 + this.groundItemID[centerX], var4, centerX + 20000, centerZ,
+								groundItemFace = this.scene.drawSprite(40000 + this.groundItemID[centerX], var4, centerX + 20000, centerZ,
 									-this.world.getElevation(centerZ, var4) - this.groundItemHeight[centerX], 96, 64, (byte) 109);
 							}
+							this.scene.tagGroundItemSprite(
+								groundItemFace,
+								renderItemId,
+								centerX,
+								noted);
 							++this.spriteCount;
 						}
 					}
@@ -8326,20 +8335,8 @@ public final class mudclient implements Runnable {
 	public final void drawItemAt(int id, int x, int y, int width, int height, int topPixelSkew,
 								 int groundItemIndex) {
 		try {
-			Sprite sprite;
-			ItemDef renderItemDef;
-			if (S_WANT_BANK_NOTES && id == -1) {
-				if (S_WANT_CERT_AS_NOTES) {
-					renderItemDef = EntityHandler.noteDef;
-				} else {
-					renderItemDef = EntityHandler.certificateDef;
-				}
-				sprite = spriteSelect(renderItemDef);
-			}
-			else {
-				renderItemDef = EntityHandler.getItemDef(id);
-				sprite = spriteSelect(renderItemDef);
-			}
+			ItemDef renderItemDef = getGroundItemRenderItemDef(id);
+			Sprite sprite = spriteSelect(renderItemDef);
 
 			ItemDef nameplateItemDef = this.getGroundItemNameplateItemDef(id, groundItemIndex);
 			int mask = renderItemDef.getPictureMask();
@@ -8357,6 +8354,33 @@ public final class mudclient implements Runnable {
 			throw GenUtil.makeThrowable(var10, "client.CA(" + height + ',' + topPixelSkew + ',' + x + ',' + id + ',' + width
 				+ ',' + "dummy" + ',' + y + ')');
 		}
+	}
+
+	public Renderer3DFrame.GroundItemSpriteSource resolveGroundItemRendererSource(
+		int itemId,
+		int groundItemIndex,
+		boolean noted) {
+		ItemDef renderItemDef = getGroundItemRenderItemDef(itemId);
+		Sprite sprite = spriteSelect(renderItemDef);
+		return new Renderer3DFrame.GroundItemSpriteSource(
+			itemId,
+			groundItemIndex,
+			noted,
+			sprite,
+			RendererSpriteTransform.legacyMasks(
+				renderItemDef.getPictureMask(),
+				0,
+				renderItemDef.getBlueMask(),
+				0xFFFFFFFF));
+	}
+
+	private ItemDef getGroundItemRenderItemDef(int id) {
+		if (S_WANT_BANK_NOTES && id == -1) {
+			return S_WANT_CERT_AS_NOTES
+				? EntityHandler.noteDef
+				: EntityHandler.certificateDef;
+		}
+		return EntityHandler.getItemDef(id);
 	}
 
 	private ItemDef getGroundItemNameplateItemDef(int id, int groundItemIndex) {
