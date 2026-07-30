@@ -11,6 +11,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
+import java.util.function.IntConsumer;
 
 final class RemasterShadowMaskBuilder {
 	private static final String TEXTURE_SIZE_PROPERTY = "spoiledmilk.remasterShadowMaskTextureSize";
@@ -39,6 +42,14 @@ final class RemasterShadowMaskBuilder {
 	private static final String CONTACT_RADIUS_SCALE_ENV = "SPOILED_MILK_REMASTER_CONTACT_SHADOW_RADIUS_SCALE";
 	private static final String CONTACT_BLUR_RADIUS_PROPERTY = "spoiledmilk.remasterContactShadowBlurRadius";
 	private static final String CONTACT_BLUR_RADIUS_ENV = "SPOILED_MILK_REMASTER_CONTACT_SHADOW_BLUR_RADIUS";
+	private static final int MASK_BUILD_PARALLELISM = Math.max(
+		1,
+		Math.min(4, Runtime.getRuntime().availableProcessors() - 1));
+	private static final int MASK_BUILD_ROW_THRESHOLD = 16;
+	private static final ForkJoinPool MASK_BUILD_POOL =
+		MASK_BUILD_PARALLELISM > 1
+			? new ForkJoinPool(MASK_BUILD_PARALLELISM)
+			: null;
 
 	static final int REMASTER_SHADOW_MASK_GRID_SIZE = 512;
 	static final float REMASTER_SHADOW_MASK_BASE_ALPHA = 0.42f;
@@ -349,6 +360,7 @@ final class RemasterShadowMaskBuilder {
 			return null;
 		}
 		bounds = bounds.withPadding(REMASTER_SHADOW_MASK_TEXTURE_PADDING);
+		final RemasterShadowMaskBounds rasterBounds = bounds;
 		long signature = remasterTerrainShadowMaskSignature(casters, bounds);
 		RemasterTerrainShadowMask cachedMask = cacheBySignature.get(signature);
 		if (cachedMask != null) {
@@ -371,21 +383,21 @@ final class RemasterShadowMaskBuilder {
 		float[] contactBlurredAlpha = new float[width * height];
 		Map<Long, List<RemasterTerrainShadowCaster>> casterGrid =
 			buildRemasterTerrainShadowCasterGrid(casters);
-		for (int y = 0; y < height; y++) {
-			float z = bounds.zAt(y, height);
+		forEachMaskRow(height, y -> {
+			float z = rasterBounds.zAt(y, height);
 			int row = y * width;
 			for (int x = 0; x < width; x++) {
 				remasterTerrainShadowMaskAlphas(
 					roofCoverage,
 					casterGrid,
-					bounds.xAt(x, width),
+					rasterBounds.xAt(x, width),
 					z,
 					stripAlpha,
 					sceneryAlpha,
 					contactAlpha,
 					row + x);
 			}
-		}
+		});
 		blurHorizontal(stripAlpha, horizontalAlpha, width, height, REMASTER_SHADOW_MASK_BLUR_RADIUS);
 		blurVertical(horizontalAlpha, stripBlurredAlpha, width, height, REMASTER_SHADOW_MASK_BLUR_RADIUS);
 		blurHorizontal(sceneryAlpha, horizontalAlpha, width, height, REMASTER_SHADOW_MASK_SCENERY_BLUR_RADIUS);
@@ -525,7 +537,7 @@ final class RemasterShadowMaskBuilder {
 			System.arraycopy(source, 0, target, 0, source.length);
 			return;
 		}
-		for (int y = 0; y < height; y++) {
+		forEachMaskRow(height, y -> {
 			int row = y * width;
 			for (int x = 0; x < width; x++) {
 				float total = 0.0f;
@@ -540,7 +552,7 @@ final class RemasterShadowMaskBuilder {
 				}
 				target[row + x] = count <= 0 ? 0.0f : total / count;
 			}
-		}
+		});
 	}
 
 	private static void blurVertical(float[] source, float[] target, int width, int height, int radius) {
@@ -548,7 +560,7 @@ final class RemasterShadowMaskBuilder {
 			System.arraycopy(source, 0, target, 0, source.length);
 			return;
 		}
-		for (int y = 0; y < height; y++) {
+		forEachMaskRow(height, y -> {
 			for (int x = 0; x < width; x++) {
 				float total = 0.0f;
 				int count = 0;
@@ -562,6 +574,49 @@ final class RemasterShadowMaskBuilder {
 				}
 				target[y * width + x] = count <= 0 ? 0.0f : total / count;
 			}
+		});
+	}
+
+	private static void forEachMaskRow(int rowCount, IntConsumer action) {
+		if (rowCount <= 0 || action == null) {
+			return;
+		}
+		if (MASK_BUILD_POOL == null || rowCount <= MASK_BUILD_ROW_THRESHOLD) {
+			for (int row = 0; row < rowCount; row++) {
+				action.accept(row);
+			}
+			return;
+		}
+		MASK_BUILD_POOL.invoke(new MaskRowAction(action, 0, rowCount));
+	}
+
+	private static final class MaskRowAction extends RecursiveAction {
+		private final IntConsumer action;
+		private final int startInclusive;
+		private final int endExclusive;
+
+		private MaskRowAction(
+			IntConsumer action,
+			int startInclusive,
+			int endExclusive) {
+			this.action = action;
+			this.startInclusive = startInclusive;
+			this.endExclusive = endExclusive;
+		}
+
+		@Override
+		protected void compute() {
+			int count = endExclusive - startInclusive;
+			if (count <= MASK_BUILD_ROW_THRESHOLD) {
+				for (int row = startInclusive; row < endExclusive; row++) {
+					action.accept(row);
+				}
+				return;
+			}
+			int middle = startInclusive + count / 2;
+			invokeAll(
+				new MaskRowAction(action, startInclusive, middle),
+				new MaskRowAction(action, middle, endExclusive));
 		}
 	}
 

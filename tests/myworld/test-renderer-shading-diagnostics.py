@@ -251,6 +251,15 @@ def main() -> None:
     require(shadow_mask,
             "* REMASTER_SHADOW_MASK_DIRECTIONAL_ALPHA_SCALE;",
             "directional terrain-shadow diagnostic scaling")
+    require(shadow_mask,
+            "Math.min(4, Runtime.getRuntime().availableProcessors() - 1)",
+            "bounded remaster shadow-mask build parallelism")
+    require(shadow_mask,
+            "forEachMaskRow(height, y -> {",
+            "parallel row ownership for shadow raster and blur passes")
+    require(shadow_mask,
+            "MASK_BUILD_POOL.invoke(new MaskRowAction(action, 0, rowCount));",
+            "single bounded shadow-mask worker pool")
     require(applet, "String shadingLine = RendererReliefSettings.debugSummary()",
             "F6 shading summary")
     for key in (
