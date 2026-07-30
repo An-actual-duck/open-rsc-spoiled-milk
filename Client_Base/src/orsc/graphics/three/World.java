@@ -609,7 +609,8 @@ public final class World {
 					TerrainModelInput terrainInput =
 						buildTerrainModelInput(
 							plane, window.sectors);
-					WallModelInput wallInput = null;
+					WallModelInput wallInput =
+						new WallModelInput(new WallSegmentInput[0]);
 					RoofModelInput roofInput = null;
 					if (!terrainOnly) {
 						wallInput =

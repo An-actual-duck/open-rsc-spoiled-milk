@@ -142,6 +142,10 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             self.world,
         )
         self.assertIn(
+            "new WallModelInput(new WallSegmentInput[0])",
+            self.world,
+        )
+        self.assertIn(
             "symmetricOuterRenderer3DWorldChunkFrame =\n"
             "\t\t\t\tRenderer3DWorldChunkFrame.fromChunks(result.outerChunks);",
             self.world,
