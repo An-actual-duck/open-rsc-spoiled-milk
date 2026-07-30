@@ -221,6 +221,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "renderer-and-shader-roadmap.md",
             "renderer-diagnostic-session-logging-plan.md",
             "renderer-material-family-foundation-plan.md",
+            "renderer-performance-investigation-plan.md",
             "renderer-retention-characterization-plan.md",
             "renderer-v2-plan.md",
             "resource-seed-plan.md",

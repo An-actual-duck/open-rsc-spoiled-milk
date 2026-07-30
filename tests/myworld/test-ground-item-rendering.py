@@ -49,7 +49,7 @@ def main() -> None:
     require(ground_item, "private int tileZ;", "ground item tile z for nameplates")
     require(ground_item, "public boolean hasTile()", "ground item tile-backed nameplate marker")
     require(scene, "this.graphics.drawSceneEntity(", "scene forwards sprite ownership to 2d renderer")
-    require(scene, "spritePickIndex,\n\t\t\t\t\t\t\tspriteAnchorIndex,\n\t\t\t\t\t\t\tspriteDrawOrder);", "scene preserves pick index with sprite ownership")
+    require(scene, "spritePickIndex,\n\t\t\t\t\t\t\tspriteAnchorIndex,\n\t\t\t\t\t\t\tspriteDrawOrder,\n\t\t\t\t\t\t\tgeometryFrame);", "scene preserves pick index with sprite ownership")
     require(graphics, "public void drawEntity(int index, int x, int y, int width, int height, int var1, int var8, int scenePickIndex)", "2d renderer accepts scene pick index")
     require(mud_graphics, "this.mudClientRef.drawItemAt(index - 40000, x, y, width, height, topPixelSkew,\n\t\t\t\t\t\t\tthis.mudClientRef.getGroundItemIndexFromScenePickIndex(scenePickIndex))", "item draw receives ground item source index")
     require(packet_handler, "private void removeGroundItemsAt(int groundItemX, int groundItemY, int groundItemID)", "ground item de-dupe helper")
