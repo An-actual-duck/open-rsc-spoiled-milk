@@ -3764,6 +3764,7 @@ public final class mudclient implements Runnable {
 			&& this.builtStaticPresentationBaseZ == this.midRegionBaseZ) {
 			return;
 		}
+		long buildStartNanos = System.nanoTime();
 		this.staticPresentationModels.clear();
 		int skipped = 0;
 		int index = 0;
@@ -3810,6 +3811,7 @@ public final class mudclient implements Runnable {
 		this.builtStaticPresentationBaseX = this.midRegionBaseX;
 		this.builtStaticPresentationBaseZ = this.midRegionBaseZ;
 		clearResidentObjectChunkCache();
+		long buildNanos = System.nanoTime() - buildStartNanos;
 		String summary = "STATIC_SCENE_PRESENTATION"
 			+ " records="
 			+ (this.staticPresentationSceneryRecords.size()
@@ -3817,9 +3819,29 @@ public final class mudclient implements Runnable {
 			+ " models=" + this.staticPresentationModels.size()
 			+ " skipped=" + skipped
 			+ " base=" + this.midRegionBaseX + ","
-				+ this.midRegionBaseZ;
+				+ this.midRegionBaseZ
+			+ " elapsedMs="
+				+ String.format(
+					java.util.Locale.ROOT,
+					"%.3f",
+					buildNanos / 1_000_000.0D);
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord(
+				"renderer.static-presentation-model-build");
+		if (event != null) {
+			event.number(
+				"records",
+				this.staticPresentationSceneryRecords.size()
+					+ this.staticPresentationWallRecords.size());
+			event.number("models", this.staticPresentationModels.size());
+			event.number("skipped", skipped);
+			event.number("base.x", this.midRegionBaseX);
+			event.number("base.z", this.midRegionBaseZ);
+			event.number("durationNanos", buildNanos);
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
 	}
 
 	private RSModel createStaticPresentationGameObjectModel(
@@ -3939,7 +3961,16 @@ public final class mudclient implements Runnable {
 			clearResidentObjectChunkCache();
 			return baseFrame;
 		}
+		boolean staticPresentationRebuildPending =
+			this.builtStaticPresentationRevision
+					!= this.staticPresentationRevision
+				|| this.builtStaticPresentationBaseX
+					!= this.midRegionBaseX
+				|| this.builtStaticPresentationBaseZ
+					!= this.midRegionBaseZ;
+		long inputStartNanos = System.nanoTime();
 		List<ResidentObjectChunkInput> objectInputs = buildResidentObjectChunkInputs(baseFrame);
+		long inputNanos = System.nanoTime() - inputStartNanos;
 		if (objectInputs.isEmpty()) {
 			clearResidentObjectChunkCache();
 			return baseFrame;
@@ -3947,14 +3978,21 @@ public final class mudclient implements Runnable {
 		ArrayList<Renderer3DWorldChunkFrame.ChunkMesh> chunks =
 			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(baseFrame.getChunks());
 		Set<Integer> activeCells = new HashSet<Integer>();
+		int cacheHits = 0;
+		int cacheMisses = 0;
+		long meshBuildNanos = 0L;
 		for (ResidentObjectChunkInput input : objectInputs) {
 			activeCells.add(input.cellKey);
 			ResidentObjectChunkCacheEntry cached = this.cachedResidentObjectChunks.get(input.cellKey);
 			Renderer3DWorldChunkFrame.ChunkMesh objectChunk;
 			if (cached != null && cached.cacheKey == input.cacheKey) {
 				objectChunk = cached.chunk;
+				cacheHits++;
 			} else {
+				long meshStartNanos = System.nanoTime();
 				objectChunk = buildResidentObjectChunkMesh(input);
+				meshBuildNanos += System.nanoTime() - meshStartNanos;
+				cacheMisses++;
 				if (objectChunk == null || objectChunk.getTriangleCount() <= 0) {
 					debugResidentObjectChunkBuild("resident-chunk-empty", input, objectChunk);
 					this.cachedResidentObjectChunks.remove(input.cellKey);
@@ -3968,6 +4006,19 @@ public final class mudclient implements Runnable {
 			chunks.add(objectChunk);
 		}
 		this.cachedResidentObjectChunks.keySet().retainAll(activeCells);
+		if (staticPresentationRebuildPending) {
+			RendererDiagnosticSession.Record event =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.static-presentation-chunk-build");
+			if (event != null) {
+				event.number("inputs", objectInputs.size());
+				event.number("cacheHits", cacheHits);
+				event.number("cacheMisses", cacheMisses);
+				event.number("inputDurationNanos", inputNanos);
+				event.number("meshDurationNanos", meshBuildNanos);
+				RendererDiagnosticSession.writeEventRecord(event);
+			}
+		}
 		return Renderer3DWorldChunkFrame.fromChunks(chunks);
 	}
 
@@ -23910,9 +23961,29 @@ public final class mudclient implements Runnable {
 			worldChunkFrame == null
 				? 0
 				: worldChunkFrame.getStaticPresentationChunkCount();
-		if (!this.layeredScenePresentationLatch.completeFreshFrame(
+		int previousSamples =
+			this.layeredScenePresentationLatch.getFreshFrameSamples();
+		boolean released =
+			this.layeredScenePresentationLatch.completeFreshFrame(
 				staticWorldSignature,
-				staticChunkCount)) {
+				staticChunkCount);
+		int freshFrameSamples =
+			this.layeredScenePresentationLatch.getFreshFrameSamples();
+		if (freshFrameSamples > previousSamples) {
+			RendererDiagnosticSession.Record sample =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.atomic-presentation-sample");
+			if (sample != null) {
+				sample.number("world.staticChunkCount", staticChunkCount);
+				sample.number(
+					"world.staticPresentationSignature",
+					staticWorldSignature);
+				sample.number("stability.samples", freshFrameSamples);
+				sample.bool("stability.released", released);
+				RendererDiagnosticSession.writeEventRecord(sample);
+			}
+		}
+		if (!released) {
 			return;
 		}
 		RendererDiagnosticSession.Record event =
@@ -23935,8 +24006,7 @@ public final class mudclient implements Runnable {
 				staticWorldSignature);
 			event.number(
 				"stability.samples",
-				this.layeredScenePresentationLatch
-					.getFreshFrameSamples());
+				freshFrameSamples);
 			event.bool(
 				"stability.matched",
 				this.layeredScenePresentationLatch
