@@ -1232,7 +1232,8 @@ public final class World {
 		for (int index = 0; index < window.length; index++) {
 			window[index] = nativeLayeredVoidSector();
 		}
-		applyNativeLayeredTerrain(
+		NativeLayeredTerrainApplyResult applyResult =
+			applyNativeLayeredTerrain(
 			window,
 			sectionX,
 			sectionY,
@@ -1251,7 +1252,11 @@ public final class World {
 			}
 		}
 		applyBridgeDecorations(window);
-		return new CpuSectionWindow(window, true);
+		return new CpuSectionWindow(
+			window,
+			true,
+			applyResult.appliedTiles,
+			applyResult.nonVoidTiles);
 	}
 
 	private static void tagRenderer3DModels(RSModel[] models, Renderer3DModelKind kind) {
@@ -1473,6 +1478,16 @@ public final class World {
 	private boolean loadSectionWindow(Sector[] target, int height, int sectionX, int sectionY) {
 		CpuSectionWindow window = loadCpuSectionWindow(height, sectionX, sectionY);
 		window.copyInto(target);
+		if (height == nativeLayeredPresentationPlane()
+			&& nativeLayeredTerrainSnapshot != null
+			&& window.hasNativeLayeredTerrain()) {
+			nativeLayeredTerrainAppliedTiles =
+				window.nativeLayeredTerrainAppliedTiles;
+			nativeLayeredTerrainNonVoidTiles =
+				window.nativeLayeredTerrainNonVoidTiles;
+			nativeLayeredTerrainAppliedSectionX = sectionX;
+			nativeLayeredTerrainAppliedSectionY = sectionY;
+		}
 		return window.bridgeDecorationsApplied;
 	}
 
@@ -4310,9 +4325,11 @@ public final class World {
 				}
 			}
 		}
+		NativeLayeredTerrainApplyResult nativeApplyResult = null;
 		if (height == nativePresentationPlane
 			&& nativeLayeredTerrainSnapshot != null) {
-			applyNativeLayeredTerrain(window, sectionX, sectionY);
+			nativeApplyResult =
+				applyNativeLayeredTerrain(window, sectionX, sectionY);
 			for (int y = 0; y < ACTIVE_SECTION_GRID; y++) {
 				for (int x = 0; x < ACTIVE_SECTION_GRID; x++) {
 					applyWorldEditorTerrainPatches(
@@ -4326,7 +4343,13 @@ public final class World {
 			applySyntheticDeepFixtureTerrain(window, sectionX, sectionY);
 		}
 		applyBridgeDecorations(window);
-		return new CpuSectionWindow(window, true);
+		return nativeApplyResult == null
+			? new CpuSectionWindow(window, true)
+			: new CpuSectionWindow(
+				window,
+				true,
+				nativeApplyResult.appliedTiles,
+				nativeApplyResult.nonVoidTiles);
 	}
 
 	private int nativeLayeredPresentationPlane() {
@@ -4366,7 +4389,7 @@ public final class World {
 		return sector;
 	}
 
-	private void applyNativeLayeredTerrain(
+	private NativeLayeredTerrainApplyResult applyNativeLayeredTerrain(
 		Sector[] window,
 		int sectionX,
 		int sectionY) {
@@ -4388,6 +4411,7 @@ public final class World {
 		nativeLayeredTerrainNonVoidTiles = result.nonVoidTiles;
 		nativeLayeredTerrainAppliedSectionX = sectionX;
 		nativeLayeredTerrainAppliedSectionY = sectionY;
+		return result;
 	}
 
 	private static NativeLayeredTerrainApplyResult
@@ -6779,10 +6803,29 @@ public final class World {
 	private static final class CpuSectionWindow {
 		private final Sector[] sectors;
 		private final boolean bridgeDecorationsApplied;
+		private final int nativeLayeredTerrainAppliedTiles;
+		private final int nativeLayeredTerrainNonVoidTiles;
 
 		private CpuSectionWindow(Sector[] sectors, boolean bridgeDecorationsApplied) {
+			this(sectors, bridgeDecorationsApplied, -1, -1);
+		}
+
+		private CpuSectionWindow(
+			Sector[] sectors,
+			boolean bridgeDecorationsApplied,
+			int nativeLayeredTerrainAppliedTiles,
+			int nativeLayeredTerrainNonVoidTiles) {
 			this.sectors = sectors;
 			this.bridgeDecorationsApplied = bridgeDecorationsApplied;
+			this.nativeLayeredTerrainAppliedTiles =
+				nativeLayeredTerrainAppliedTiles;
+			this.nativeLayeredTerrainNonVoidTiles =
+				nativeLayeredTerrainNonVoidTiles;
+		}
+
+		private boolean hasNativeLayeredTerrain() {
+			return nativeLayeredTerrainAppliedTiles >= 0
+				&& nativeLayeredTerrainNonVoidTiles >= 0;
 		}
 
 		private void copyInto(Sector[] target) {

@@ -115,6 +115,18 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             "result.includeRoofGeometry != !Config.C_HIDE_ROOFS",
             self.world,
         )
+        self.assertIn(
+            "window.hasNativeLayeredTerrain()",
+            self.world,
+        )
+        self.assertIn(
+            "nativeLayeredTerrainAppliedSectionX = sectionX;",
+            self.world,
+        )
+        self.assertIn(
+            "nativeLayeredTerrainAppliedSectionY = sectionY;",
+            self.world,
+        )
 
     def test_cardinal_border_shift_reuses_eighteen_of_twenty_four_cells(self):
         old_cells = {
