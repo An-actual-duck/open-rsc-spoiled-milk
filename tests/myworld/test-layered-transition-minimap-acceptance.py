@@ -132,6 +132,34 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             self.world,
         )
 
+    def test_protocol_two_publishes_a_complete_terrain_horizon(self):
+        self.assertIn(
+            'terrainOnly ? "terrain-ready" : "structure"',
+            self.world,
+        )
+        self.assertIn(
+            "includeRoofGeometry && !terrainOnly",
+            self.world,
+        )
+        self.assertIn(
+            "symmetricOuterRenderer3DWorldChunkFrame =\n"
+            "\t\t\t\tRenderer3DWorldChunkFrame.fromChunks(result.outerChunks);",
+            self.world,
+        )
+        self.assertIn(
+            "Keep the\n"
+            "\t\t\t * retained structural set unchanged",
+            self.world,
+        )
+        self.assertNotIn(
+            '"halo detail=terrain-cache src="',
+            self.world,
+        )
+        self.assertNotIn(
+            '" mesh=deferred activeProduct="',
+            self.world,
+        )
+
     def test_cardinal_border_shift_reuses_eighteen_of_twenty_four_cells(self):
         old_cells = {
             (x, y)

@@ -442,6 +442,32 @@ public final class World {
 				== NativeLayeredTerrainSnapshot
 					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION) {
 			symmetricNativeLayeredTerrainVisualSnapshot = haloTerrain;
+			/*
+			 * The terrain-only halo is the first radius-two product available
+			 * during an atomic region shift. Publish its complete outer ring
+			 * before the activation cover lifts so the renderer never falls
+			 * back to an active-only or eleven-cell partial horizon. Keep the
+			 * retained structural set unchanged: the following structure
+			 * stage must still rebuild the newly entering cells with walls and
+			 * roofs instead of mistaking terrain-only cells for complete ones.
+			 */
+			symmetricOuterRenderer3DWorldChunkFrame =
+				Renderer3DWorldChunkFrame.fromChunks(result.outerChunks);
+			symmetricRenderer3DWorldCenterSectionX =
+				worldTileToSection(Math.addExact(
+					Math.multiplyExact(
+						activeTerrain.getCurrentChunkX(), SECTION_SIZE),
+					worldOffsetX));
+			symmetricRenderer3DWorldCenterSectionY =
+				worldTileToSection(Math.addExact(
+					Math.multiplyExact(
+						activeTerrain.getCurrentChunkY(), SECTION_SIZE),
+					worldOffsetZ));
+			symmetricRenderer3DWorldScopeIdentity =
+				activeTerrain.scopeIdentity();
+			composeSymmetricRenderer3DWorldChunkFrame(
+				symmetricRenderer3DWorldCenterSectionX,
+				symmetricRenderer3DWorldCenterSectionY);
 			nativeLayeredTerrainHaloDebugSummary =
 				result.compactDiagnosticSummary;
 			clearPredictiveRenderer3DWorldChunkFrame();
@@ -512,6 +538,19 @@ public final class World {
 		int activeSectionY = worldTileToSection(
 			Math.addExact(logicalCenterZ, worldOffsetZ));
 		int plane = nativeLayeredPresentationPlane(haloTerrain);
+		boolean terrainOnly =
+			receivedProtocolVersion
+				== NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION;
+		NativeWorldModelPrebuild activePrebuild =
+			terrainOnly
+				? prebuildNativeWorldModelProduct(
+					activeTerrain,
+					worldOffsetX,
+					worldOffsetZ,
+					sourceRevision,
+					includeRoofGeometry)
+				: null;
 		int sourceOuterSectors = 0;
 		StringBuilder cellDiagnostics = new StringBuilder();
 		for (int deltaX = -2; deltaX <= 2; deltaX++) {
@@ -531,44 +570,10 @@ public final class World {
 					.append(":src=").append(available ? 1 : 0);
 			}
 		}
-		if (receivedProtocolVersion
-				== NativeLayeredTerrainSnapshot
-					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION) {
-			NativeWorldModelPrebuild activePrebuild =
-				prebuildNativeWorldModelProduct(
-					activeTerrain,
-					worldOffsetX,
-					worldOffsetZ,
-					sourceRevision,
-					includeRoofGeometry);
-			long elapsed = System.nanoTime() - buildStart;
-			return new NativeLayeredTerrainHaloPrebuildResult(
-				activeScopeIdentity,
-				receivedHaloScopeIdentity,
-				receivedProtocolVersion,
-				sourceRevision,
-				worldOffsetX,
-				worldOffsetZ,
-				plane,
-				activeSectionX,
-				activeSectionY,
-				includeRoofGeometry,
-					Collections.<Renderer3DWorldChunkFrame.ChunkMesh>emptyList(),
-					Collections.<Renderer3DWorldChunkFrame.ChunkMesh>emptyList(),
-					0,
-				"halo detail=terrain-cache src=" + sourceOuterSectors
-					+ "/16 mesh=deferred activeProduct="
-					+ (activePrebuild.productCacheHit
-						? "hit" : "built")
-					+ " activeProductMs="
-					+ formatMillis(activePrebuild.elapsedNanos),
-				cellDiagnostics.toString(),
-				elapsed);
-		}
-			List<Renderer3DWorldChunkFrame.ChunkMesh> outerChunks =
-				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(16);
-			List<Renderer3DWorldChunkFrame.ChunkMesh> retentionChunks =
-				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(24);
+		List<Renderer3DWorldChunkFrame.ChunkMesh> outerChunks =
+			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(16);
+		List<Renderer3DWorldChunkFrame.ChunkMesh> retentionChunks =
+			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(24);
 		int triangles = 0;
 		int terrainTriangles = 0;
 		int wallTriangles = 0;
@@ -604,13 +609,17 @@ public final class World {
 					TerrainModelInput terrainInput =
 						buildTerrainModelInput(
 							plane, window.sectors);
-					WallModelInput wallInput =
-						buildWallModelInput(window.sectors);
-					terrainInput =
-						applyWallEndpointShadows(
-							terrainInput, wallInput);
-					RoofModelInput roofInput =
-						buildRoofModelInput(window.sectors);
+					WallModelInput wallInput = null;
+					RoofModelInput roofInput = null;
+					if (!terrainOnly) {
+						wallInput =
+							buildWallModelInput(window.sectors);
+						terrainInput =
+							applyWallEndpointShadows(
+								terrainInput, wallInput);
+						roofInput =
+							buildRoofModelInput(window.sectors);
+					}
 					WorldGpuChunkMesh mesh =
 						buildWorldGpuChunkMesh(
 							plane,
@@ -619,7 +628,7 @@ public final class World {
 							terrainInput,
 							wallInput,
 							roofInput,
-							includeRoofGeometry,
+							includeRoofGeometry && !terrainOnly,
 							false);
 					presentation =
 						mesh.toRenderer3DWorldPresentationCell(
@@ -668,16 +677,24 @@ public final class World {
 			plane,
 			activeSectionX,
 			activeSectionY,
-				includeRoofGeometry,
-				outerChunks,
-				retentionChunks,
-				triangles,
-			"halo detail=structure src=" + sourceOuterSectors
+			includeRoofGeometry,
+			outerChunks,
+			retentionChunks,
+			triangles,
+			"halo detail=" + (terrainOnly ? "terrain-ready" : "structure")
+				+ " src=" + sourceOuterSectors
 				+ "/16 mesh=" + outerChunks.size() + "/16 zeroTerrain="
 				+ zeroTerrainCells + " triangles=" + terrainTriangles
 				+ "/" + wallTriangles + "/" + roofTriangles
 				+ " cells=reused:" + reusedCells
-				+ "/built:" + builtCells,
+				+ "/built:" + builtCells
+				+ (terrainOnly
+					? " activeProduct="
+						+ (activePrebuild.productCacheHit
+							? "hit" : "built")
+						+ " activeProductMs="
+						+ formatMillis(activePrebuild.elapsedNanos)
+					: ""),
 			cellDiagnostics.append('|').append(meshDiagnostics).toString(),
 			System.nanoTime() - buildStart);
 	}
