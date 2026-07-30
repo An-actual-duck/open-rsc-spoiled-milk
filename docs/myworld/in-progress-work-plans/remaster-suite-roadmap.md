@@ -481,7 +481,9 @@ original starting-point description:
   incremental presentation, and Region-free native entity membership are
   operational.
 - The complete configured Spoiled Milk world is reproducible as a strict native
-  package with 1,771 terrain sectors and 33,515 effective placements.
+  package. The current reviewed `0.5.0` package contains 1,782 native terrain
+  sectors and retains 33,512 effective placements after the accepted Zanaris
+  and lava-forge relocations.
 - The layered Builder can open that package in an isolated copied workspace,
   create arbitrary signed levels and sparse canvases, author terrain/scenery/
   NPCs, save deterministic working-package transactions, and automatically
@@ -490,8 +492,9 @@ original starting-point description:
   transition inventory remain preserved research, but vanilla promotion and
   geographic conversion are on hold.
 - The normal Spoiled Milk runtime still accepts only the code-pinned exact
-  `0.2.0` manifest, while the more permissive descendant policy is restricted
-  to isolated Builder mode. This is the most direct remaining loader-product
+  `0.5.0` manifest, while the more permissive descendant policy is restricted
+  to isolated Builder mode. Separating generic package loading from these
+  target/tool policies without weakening either check is a direct Server R2
   boundary.
 - Renderer, Server, Layered Maps, Builder, Content, and Launcher artifacts are
   still delivered mainly through the combined repository/product rather than
@@ -712,6 +715,9 @@ Exit gate:
 ### Phase 4: Server module productization
 
 Goal: produce a content-neutral improved Server package.
+
+Detailed execution and reconciliation plan:
+[Server R2 Productization Plan](server-r2-plan.md).
 
 Work:
 

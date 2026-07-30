@@ -227,6 +227,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "resource-seed-plan.md",
             "roadmap.md",
             "rune-crafting-xp-redesign-analysis.md",
+            "server-r2-plan.md",
             "skybox-depth-and-horizon-rnd.md",
             "standalone-world-builder-plan.md",
             "summoning-plan.md",

@@ -123,6 +123,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   rare resource seed framework and remaining seed-system direction.
 - [roadmap.md](in-progress-work-plans/roadmap.md):
   alpha milestone roadmap and release progression.
+- [server-r2-plan.md](in-progress-work-plans/server-r2-plan.md):
+  content-neutral server productization, extension/profile boundaries,
+  recoverable persistence, compatibility, packaging, and acceptance gates.
 - [skybox-depth-and-horizon-rnd.md](in-progress-work-plans/skybox-depth-and-horizon-rnd.md):
   accepted world-anchored sky and below-terrain depth work with retained visual
   comparison switches and future terrain-skirt notes.
