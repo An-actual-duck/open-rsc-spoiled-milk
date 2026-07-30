@@ -3114,7 +3114,8 @@ public final class Scene {
 							var19,
 							spritePickIndex,
 							spriteAnchorIndex,
-							spriteDrawOrder);
+							spriteDrawOrder,
+							geometryFrame);
 						if (this.m_K) {
 							var20 += (this.m_Q[var3] << this.rot1024_vp_src) / var15;
 							if (var21 <= this.m_Wb && var21 + var17 >= this.m_Wb && var20 <= this.m_j

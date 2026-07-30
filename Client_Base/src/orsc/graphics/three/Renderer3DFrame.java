@@ -1,5 +1,7 @@
 package orsc.graphics.three;
 
+import orsc.graphics.Renderer2DFrame;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +38,9 @@ public final class Renderer3DFrame {
 	private final List<SpriteSubmission> spriteSubmissions = new ArrayList<SpriteSubmission>();
 	private final List<CharacterSprite> characterSprites = new ArrayList<CharacterSprite>();
 	private final List<SpriteAnchor> spriteAnchors = new ArrayList<SpriteAnchor>();
+	private final List<WorldSpriteSnapshot> worldSpriteSnapshots = new ArrayList<WorldSpriteSnapshot>();
+	private final List<WorldSpriteSnapshot> worldSpriteSnapshotsView =
+		Collections.unmodifiableList(worldSpriteSnapshots);
 	private final Map<Long, FaceCommand> worldFacesByModelFace;
 	private final int[] worldFaceCountsByKind;
 	private Renderer3DDepthFrame depthFrame;
@@ -163,7 +168,7 @@ public final class Renderer3DFrame {
 		int horizontalSkew,
 		boolean pickable) {
 		int anchorIndex = this.spriteAnchors.size();
-		this.spriteAnchors.add(new SpriteAnchor(
+		SpriteAnchor anchor = new SpriteAnchor(
 			faceId,
 			spriteId,
 			pickIndex,
@@ -180,8 +185,58 @@ public final class Renderer3DFrame {
 			drawHeight,
 			scale,
 			horizontalSkew,
-			pickable));
+			pickable);
+		this.spriteAnchors.add(anchor);
+		this.worldSpriteSnapshots.add(new WorldSpriteSnapshot(
+			anchorIndex,
+			anchor,
+			findSpriteSubmission(faceId),
+			findCharacterSprite(faceId)));
 		return anchorIndex;
+	}
+
+	public boolean recordWorldSpriteLayer(
+		int anchorIndex,
+		int legacyDrawOrder,
+		Renderer2DFrame.SpriteCommand command) {
+		if (command == null
+			|| command.getPhase() != Renderer2DFrame.Phase.SCENE
+			|| anchorIndex < 0
+			|| anchorIndex >= worldSpriteSnapshots.size()) {
+			return false;
+		}
+		WorldSpriteSnapshot snapshot = worldSpriteSnapshots.get(anchorIndex);
+		SpriteAnchor anchor = snapshot == null ? null : snapshot.getAnchor();
+		if (anchor == null
+			|| anchor.getLegacyDrawOrder() != legacyDrawOrder
+			|| command.getSceneSpriteAnchorIndex() != anchorIndex
+			|| command.getSceneSpriteDrawOrder() != legacyDrawOrder
+			|| (command.getLegacySpriteId() >= 0
+				&& command.getLegacySpriteId() != anchor.getSpriteId())) {
+			return false;
+		}
+		snapshot.addLayer(command);
+		return true;
+	}
+
+	private SpriteSubmission findSpriteSubmission(int faceId) {
+		for (int index = spriteSubmissions.size() - 1; index >= 0; index--) {
+			SpriteSubmission submission = spriteSubmissions.get(index);
+			if (submission != null && submission.getFaceId() == faceId) {
+				return submission;
+			}
+		}
+		return null;
+	}
+
+	private CharacterSprite findCharacterSprite(int faceId) {
+		for (int index = characterSprites.size() - 1; index >= 0; index--) {
+			CharacterSprite character = characterSprites.get(index);
+			if (character != null && character.getFaceId() == faceId) {
+				return character;
+			}
+		}
+		return null;
 	}
 
 	void addSpriteSubmission(
@@ -449,6 +504,21 @@ public final class Renderer3DFrame {
 		return Collections.unmodifiableList(spriteAnchors);
 	}
 
+	public int getWorldSpriteSnapshotCount() {
+		return worldSpriteSnapshots.size();
+	}
+
+	public List<WorldSpriteSnapshot> getWorldSpriteSnapshots() {
+		return worldSpriteSnapshotsView;
+	}
+
+	public WorldSpriteSnapshot getWorldSpriteSnapshot(int anchorIndex) {
+		if (anchorIndex < 0 || anchorIndex >= worldSpriteSnapshots.size()) {
+			return null;
+		}
+		return worldSpriteSnapshots.get(anchorIndex);
+	}
+
 	public int getSpriteSubmissionCount() {
 		return spriteSubmissions.size();
 	}
@@ -537,6 +607,73 @@ public final class Renderer3DFrame {
 
 	public boolean isWorldChunkModelKindVisible(Renderer3DModelKind modelKind, int chunkPlane) {
 		return roofVisibility.isWorldChunkModelKindVisible(modelKind, activePlane, chunkPlane);
+	}
+
+	public static final class WorldSpriteSnapshot {
+		private final int anchorIndex;
+		private final SpriteAnchor anchor;
+		private final SpriteSubmission submission;
+		private final CharacterSprite character;
+		private final List<Renderer2DFrame.SpriteCommand> layers =
+			new ArrayList<Renderer2DFrame.SpriteCommand>();
+		private final List<Renderer2DFrame.SpriteCommand> layersView =
+			Collections.unmodifiableList(layers);
+
+		private WorldSpriteSnapshot(
+			int anchorIndex,
+			SpriteAnchor anchor,
+			SpriteSubmission submission,
+			CharacterSprite character) {
+			this.anchorIndex = anchorIndex;
+			this.anchor = anchor;
+			this.submission = submission;
+			this.character = character;
+		}
+
+		private void addLayer(Renderer2DFrame.SpriteCommand command) {
+			layers.add(command);
+		}
+
+		public int getAnchorIndex() {
+			return anchorIndex;
+		}
+
+		public SpriteAnchor getAnchor() {
+			return anchor;
+		}
+
+		public SpriteSubmission getSubmission() {
+			return submission;
+		}
+
+		public CharacterSprite getCharacter() {
+			return character;
+		}
+
+		public List<Renderer2DFrame.SpriteCommand> getLayers() {
+			return layersView;
+		}
+
+		public int getLayerCount() {
+			return layers.size();
+		}
+
+		public boolean ownsLayer(Renderer2DFrame.SpriteCommand command) {
+			for (Renderer2DFrame.SpriteCommand layer : layers) {
+				if (layer == command) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public int getPickIndex() {
+			return anchor == null ? -1 : anchor.getPickIndex();
+		}
+
+		public boolean isPickable() {
+			return anchor != null && anchor.isPickable();
+		}
 	}
 
 	public static final class CharacterSprite {

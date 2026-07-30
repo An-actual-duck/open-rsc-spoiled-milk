@@ -113,16 +113,13 @@ def main() -> None:
         "rgba = (replayRgb << 8) | alpha;",
         "direct sprite texture double opacity",
     )
-    require(
-        controller,
-        "textureData,\n\t\t\t\tcommand.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA);",
-        "anchored world sprite draw opacity",
+    controller_alpha_expression = (
+        "command.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA"
     )
-    require(
-        controller,
-        "textureData,\n\t\t\t\t\tcommand.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA);",
-        "unanchored world sprite draw opacity",
-    )
+    if controller.count(controller_alpha_expression) < 2:
+        raise AssertionError(
+            "anchored and unanchored world sprite draws must both preserve command opacity"
+        )
     require(
         presenter,
         "textureData,\n\t\t\tcommand.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA))",

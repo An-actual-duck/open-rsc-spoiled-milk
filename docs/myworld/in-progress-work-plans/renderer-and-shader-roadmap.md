@@ -517,8 +517,14 @@ come from one of these areas unless a concrete shadow regression appears:
   structured captures report exact/fallback/unmatched counts. Private visual
   review and 12 strict frames accepted the slice with 2,424 exact matches,
   zero fallbacks/unmatched/order mismatches, 79 NPCs, one player, three ground
-  items, and no suspicious visibility loss. A maximum-distance timed
-  entity/effect profile is still required before selecting the next boundary.
+  items, and no suspicious visibility loss. The follow-up maximum-distance
+  idle and active combat JFR phases now separate legacy scene, capture,
+  composite, atlas, and draw costs. They selected a frame-owned grouped
+  world-sprite snapshot as the second slice. That candidate reuses the same
+  captured animation-layer objects, validates the entire snapshot set, and
+  retains the legacy typed command builder as an all-or-nothing fallback. It
+  is compiled and guard-tested but still awaits private visual/capture
+  acceptance.
 - Quality settings: presets exist, but settings do not yet consistently reduce
   underlying renderer work.
 - Tooling: F6 telemetry is good for live diagnosis, but capture replay and
@@ -552,20 +558,22 @@ come from one of these areas unless a concrete shadow regression appears:
    its exact maximum-distance control and re-profile only when selecting a new
    architecture target or investigating a real regression.
 6. Continue the explicit renderer-v2 scene/entity boundary. The first slice
-   now preserves exact anchor ownership through the legacy capture stream;
-   validate zero fallback/unmatched commands under dense actors, combat,
-   ground items, and effects. Then move players, NPCs, ground items,
-   projectiles, and effects from legacy screen-space command reconstruction
-   toward direct world-space inputs, parity-complete persistent texture
-   ownership, ordered batching, and culling. Retire matching legacy scene
+   preserves exact anchor ownership through the legacy capture stream. The
+   second candidate groups those exact captured layers in a renderer-owned
+   frame snapshot and bypasses per-frame command-wrapper/list/sort
+   reconstruction when complete validation passes. Accept it under dense
+   actors, combat, ground items, and effects, then move players, NPCs, ground
+   items, projectiles, and effects from captured screen-space layers toward
+   direct world-space inputs, parity-complete persistent texture ownership,
+   ordered batching, and culling. Retire matching legacy scene
    sort/rotation/removal and capture work incrementally as parity is proven.
 7. Turn quality settings into real work culling: entity distance, draw distance,
    roof visibility, sprite/effect distance, and weak-hardware presets should
    reduce built/submitted/drawn work.
-8. Convert the accepted dense-area route into a repeatable benchmark/capture
-   route and add an entity/effect-pressure companion before evaluating the
-   scene/entity migration. Dense scenes and zoomed-out movement should no
-   longer rely only on manual F6 observation.
+8. Preserve the completed maximum-distance idle and active entity/effect JFR
+   phases as the first ownership-profile pair. Formal benchmark automation is
+   still desirable; dense scenes and zoomed-out movement should not regress
+   to manual F6-only observation.
 9. Continue true world-stream lifecycle ownership—decoded, CPU-built,
    GPU-ready, active, and stale—as a separate boundary/relocation program.
    Do not mix its transition-tail measurements with steady renderer results.

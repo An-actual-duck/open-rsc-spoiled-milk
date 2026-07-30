@@ -348,6 +348,7 @@ def summarize_world_sprite_commands(rows: list[dict[str, str]]) -> tuple[dict[st
         "anchored": 0,
         "missingAnchor": 0,
         "depthOwned": 0,
+        "rendererSnapshotOwned": 0,
         "sourceCropped": 0,
         "mirrorX": 0,
         "skewed": 0,
@@ -362,6 +363,8 @@ def summarize_world_sprite_commands(rows: list[dict[str, str]]) -> tuple[dict[st
             summary["missingAnchor"] += 1
         if parse_bool(row.get("depthOwned")):
             summary["depthOwned"] += 1
+        if parse_bool(row.get("rendererSnapshotOwned")):
+            summary["rendererSnapshotOwned"] += 1
         if parse_bool(row.get("sourceCropped")):
             summary["sourceCropped"] += 1
         if parse_bool(row.get("mirrorX")):
@@ -369,6 +372,53 @@ def summarize_world_sprite_commands(rows: list[dict[str, str]]) -> tuple[dict[st
         if parse_bool(row.get("skewed")):
             summary["skewed"] += 1
     return summary, modes
+
+
+def summarize_world_sprite_snapshots(rows: list[dict[str, str]]) -> dict[str, int]:
+    world_rows = [
+        row
+        for row in rows
+        if 5000 <= parse_int(row.get("legacySpriteId"), -1) < 50000
+    ]
+    groups = {row.get("snapshotIndex", "") for row in world_rows}
+    groups.discard("")
+    layer_rows = [row for row in world_rows if row.get("layerIndex", "") != ""]
+    character_groups = {
+        row.get("snapshotIndex", "")
+        for row in world_rows
+        if row.get("characterKind", "") != ""
+    }
+    character_groups.discard("")
+    ground_item_groups = {
+        row.get("snapshotIndex", "")
+        for row in world_rows
+        if 40000 <= parse_int(row.get("legacySpriteId"), -1) < 50000
+    }
+    ground_item_groups.discard("")
+    invalid_anchor_rows = sum(
+        1
+        for row in world_rows
+        if parse_int(row.get("snapshotIndex"), -1)
+        != parse_int(row.get("anchorIndex"), -2)
+    )
+    sequence_order_violations = 0
+    previous_sequence_by_group: dict[str, int] = {}
+    for row in layer_rows:
+        group = row.get("snapshotIndex", "")
+        sequence = parse_int(row.get("sequence"), -1)
+        previous = previous_sequence_by_group.get(group)
+        if previous is not None and sequence <= previous:
+            sequence_order_violations += 1
+        previous_sequence_by_group[group] = sequence
+    return {
+        "rows": len(world_rows),
+        "groups": len(groups),
+        "layers": len(layer_rows),
+        "characterGroups": len(character_groups),
+        "groundItemGroups": len(ground_item_groups),
+        "invalidAnchorRows": invalid_anchor_rows,
+        "sequenceOrderViolations": sequence_order_violations,
+    }
 
 
 def summarize_depth_owned_entity_world_sprite_commands(rows: list[dict[str, str]]) -> Counter[str]:
@@ -1322,6 +1372,7 @@ def main() -> None:
     metadata = load_metadata(capture_dir / "metadata.txt")
     world_faces = read_tsv(capture_dir / "world-faces.tsv")
     sprite_commands = read_tsv(capture_dir / "sprite-commands.tsv")
+    world_sprite_snapshots = read_optional_tsv(capture_dir / "world-sprite-snapshots.tsv")
     world_sprite_commands = read_optional_tsv(capture_dir / "world-sprite-commands.tsv")
     world_sprite_batch_stats = read_optional_tsv(capture_dir / "world-sprite-batch-stats.tsv")
     scene_commands = read_optional_tsv(capture_dir / "scene-commands.tsv")
@@ -1368,6 +1419,7 @@ def main() -> None:
         "counts="
         f"worldFaces:{len(world_faces)} "
         f"spriteCommands:{len(sprite_commands)} "
+        f"worldSpriteSnapshotRows:{len(world_sprite_snapshots)} "
         f"worldSpriteCommands:{len(world_sprite_commands)} "
         f"sceneCommands:{len(scene_commands)} "
         f"staticWorldCommands:{len(static_world_commands)} "
@@ -1433,6 +1485,10 @@ def main() -> None:
                     ("anchored", world_sprite_summary["anchored"]),
                     ("missingAnchor", world_sprite_summary["missingAnchor"]),
                     ("depthOwned", world_sprite_summary["depthOwned"]),
+                    (
+                        "rendererSnapshotOwned",
+                        world_sprite_summary["rendererSnapshotOwned"],
+                    ),
                     ("sourceCropped", world_sprite_summary["sourceCropped"]),
                     ("mirrorX", world_sprite_summary["mirrorX"]),
                     ("skewed", world_sprite_summary["skewed"]),
@@ -1440,6 +1496,40 @@ def main() -> None:
             )
         )
         print_counter("worldSpriteAnchorMatchModes:", world_sprite_match_modes)
+    world_sprite_snapshot_summary = summarize_world_sprite_snapshots(
+        world_sprite_snapshots
+    )
+    if args.strict and world_sprite_snapshots:
+        if (
+            world_sprite_snapshot_summary["layers"]
+            != world_sprite_summary["rendererSnapshotOwned"]
+        ):
+            fail(
+                "renderer snapshot layer total differs from snapshot-owned world commands: "
+                f"{world_sprite_snapshot_summary['layers']} != "
+                f"{world_sprite_summary['rendererSnapshotOwned']}"
+            )
+        if world_sprite_snapshot_summary["invalidAnchorRows"] != 0:
+            fail(
+                "renderer snapshot rows contain invalid anchor ownership: "
+                f"{world_sprite_snapshot_summary['invalidAnchorRows']}"
+            )
+        if world_sprite_snapshot_summary["sequenceOrderViolations"] != 0:
+            fail(
+                "renderer snapshot layer order is not stable: "
+                f"{world_sprite_snapshot_summary['sequenceOrderViolations']}"
+            )
+    print("worldSpriteSnapshots:")
+    if not world_sprite_snapshots:
+        print("  none")
+    else:
+        print(
+            "  "
+            + " ".join(
+                f"{key}:{value}"
+                for key, value in world_sprite_snapshot_summary.items()
+            )
+        )
     print("worldSpriteBatches:")
     if not world_sprite_batch_stats:
         print("  none")

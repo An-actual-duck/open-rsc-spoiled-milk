@@ -133,21 +133,115 @@ final class OpenGLCompositeSceneBuilder {
 		if (!isLegacySceneSpriteCommand(command)) {
 			return false;
 		}
-		int legacySpriteId = command.getLegacySpriteId();
-		return (legacySpriteId >= 5000 && legacySpriteId < 20000)
-			|| (legacySpriteId >= 20000 && legacySpriteId < 40000);
+		return isLegacyEntitySpriteId(command.getLegacySpriteId());
 	}
 
 	static boolean isLegacyGroundItemSpriteCommand(Renderer2DFrame.SpriteCommand command) {
 		if (!isLegacySceneSpriteCommand(command)) {
 			return false;
 		}
-		int legacySpriteId = command.getLegacySpriteId();
-		return legacySpriteId >= 40000 && legacySpriteId < 50000;
+		return isLegacyGroundItemSpriteId(command.getLegacySpriteId());
 	}
 
 	static boolean isOpenGLCompositeWorldSpriteCommand(Renderer2DFrame.SpriteCommand command) {
 		return isLegacyEntitySpriteCommand(command) || isLegacyGroundItemSpriteCommand(command);
+	}
+
+	static boolean isOpenGLCompositeWorldSpriteSnapshot(
+		Renderer3DFrame.WorldSpriteSnapshot snapshot) {
+		if (snapshot == null || snapshot.getAnchor() == null) {
+			return false;
+		}
+		int spriteId = snapshot.getAnchor().getSpriteId();
+		return isLegacyEntitySpriteId(spriteId) || isLegacyGroundItemSpriteId(spriteId);
+	}
+
+	static boolean canUseOwnedWorldSpriteSnapshots(
+		Frame frame,
+		Renderer2DFrame.SpriteCommand[] commands) {
+		if (frame == null || frame.renderer3DFrame == null || commands == null) {
+			return false;
+		}
+		int snapshotLayerCount = 0;
+		int previousDrawOrder = Integer.MIN_VALUE;
+		int previousSequence = Integer.MIN_VALUE;
+		for (Renderer3DFrame.WorldSpriteSnapshot snapshot
+			: frame.renderer3DFrame.getWorldSpriteSnapshots()) {
+			if (!isOpenGLCompositeWorldSpriteSnapshot(snapshot)) {
+				continue;
+			}
+			Renderer3DFrame.SpriteAnchor anchor = snapshot.getAnchor();
+			if (anchor.getLegacyDrawOrder() < previousDrawOrder) {
+				return false;
+			}
+			previousDrawOrder = anchor.getLegacyDrawOrder();
+			for (Renderer2DFrame.SpriteCommand layer : snapshot.getLayers()) {
+				if (!isOpenGLCompositeWorldSpriteCommand(layer)
+					|| layer.getSceneSpriteAnchorIndex() != snapshot.getAnchorIndex()
+					|| findOwnedSpriteAnchor(frame, layer) != anchor
+					|| layer.getSequence() <= previousSequence) {
+					return false;
+				}
+				previousSequence = layer.getSequence();
+				snapshotLayerCount++;
+			}
+		}
+
+		int capturedWorldCommandCount = 0;
+		for (Renderer2DFrame.SpriteCommand command : commands) {
+			if (!isOpenGLCompositeWorldSpriteCommand(command)) {
+				continue;
+			}
+			capturedWorldCommandCount++;
+			Renderer3DFrame.WorldSpriteSnapshot snapshot =
+				frame.renderer3DFrame.getWorldSpriteSnapshot(command.getSceneSpriteAnchorIndex());
+			if (snapshot == null
+				|| !isOpenGLCompositeWorldSpriteSnapshot(snapshot)
+				|| !snapshot.ownsLayer(command)
+				|| findOwnedSpriteAnchor(frame, command) != snapshot.getAnchor()) {
+				return false;
+			}
+		}
+		return capturedWorldCommandCount > 0
+			&& capturedWorldCommandCount == snapshotLayerCount;
+	}
+
+	static int countOwnedWorldSpriteSnapshotGroups(Frame frame) {
+		if (frame == null || frame.renderer3DFrame == null) {
+			return 0;
+		}
+		int groups = 0;
+		for (Renderer3DFrame.WorldSpriteSnapshot snapshot
+			: frame.renderer3DFrame.getWorldSpriteSnapshots()) {
+			if (isOpenGLCompositeWorldSpriteSnapshot(snapshot)
+				&& snapshot.getLayerCount() > 0) {
+				groups++;
+			}
+		}
+		return groups;
+	}
+
+	static int countOwnedWorldSpriteSnapshotLayers(Frame frame) {
+		if (frame == null || frame.renderer3DFrame == null) {
+			return 0;
+		}
+		int layers = 0;
+		for (Renderer3DFrame.WorldSpriteSnapshot snapshot
+			: frame.renderer3DFrame.getWorldSpriteSnapshots()) {
+			if (isOpenGLCompositeWorldSpriteSnapshot(snapshot)) {
+				layers += snapshot.getLayerCount();
+			}
+		}
+		return layers;
+	}
+
+	private static boolean isLegacyEntitySpriteId(int legacySpriteId) {
+		return (legacySpriteId >= 5000 && legacySpriteId < 20000)
+			|| (legacySpriteId >= 20000 && legacySpriteId < 40000);
+	}
+
+	private static boolean isLegacyGroundItemSpriteId(int legacySpriteId) {
+		return legacySpriteId >= 40000 && legacySpriteId < 50000;
 	}
 
 	static List<WorldSpriteCommand> buildWorldSpriteCommands(

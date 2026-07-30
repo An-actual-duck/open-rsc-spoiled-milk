@@ -2179,16 +2179,53 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		if (visibleSpriteTextureAtlas != null) {
 			visibleSpriteTextureAtlas.beginFrame();
 		}
-		List<OpenGLCompositeSceneCommand> compositeSceneCommands =
-			buildOpenGLCompositeSceneCommands(frame, commands);
-		recordOpenGLCompositeSpriteOwnership(compositeSceneCommands);
-		for (OpenGLCompositeSceneCommand sceneCommand : compositeSceneCommands) {
-			WorldSpriteCommand worldSpriteCommand = sceneCommand.worldSpriteCommand;
-			Renderer2DFrame.SpriteCommand command = worldSpriteCommand.command;
-			logCompositeSpriteCommand("direct-entity", command, command.getWidth() * command.getHeight());
-			directReplayedByPhase[phaseIndex(command.getPhase())]++;
+		if (OpenGLCompositeSceneBuilder.canUseOwnedWorldSpriteSnapshots(frame, commands)) {
+			int snapshotGroups =
+				OpenGLCompositeSceneBuilder.countOwnedWorldSpriteSnapshotGroups(frame);
+			int snapshotLayers =
+				OpenGLCompositeSceneBuilder.countOwnedWorldSpriteSnapshotLayers(frame);
+			RenderTelemetry.recordOpenGLWorldSpriteOwnershipFrame(snapshotLayers, 0, 0);
+			RenderTelemetry.recordOpenGLWorldSpriteSnapshotFrame(
+				snapshotGroups,
+				snapshotLayers,
+				0);
+			for (Renderer3DFrame.WorldSpriteSnapshot snapshot
+				: frame.renderer3DFrame.getWorldSpriteSnapshots()) {
+				if (!OpenGLCompositeSceneBuilder.isOpenGLCompositeWorldSpriteSnapshot(snapshot)) {
+					continue;
+				}
+				for (Renderer2DFrame.SpriteCommand command : snapshot.getLayers()) {
+					logCompositeSpriteCommand(
+						"renderer-snapshot",
+						command,
+						command.getWidth() * command.getHeight());
+					directReplayedByPhase[phaseIndex(command.getPhase())]++;
+				}
+			}
+			staticReplayed += drawOpenGLOwnedWorldSpriteSnapshots(
+				frame,
+				frame.renderer3DFrame.getWorldSpriteSnapshots());
+		} else {
+			List<OpenGLCompositeSceneCommand> compositeSceneCommands =
+				buildOpenGLCompositeSceneCommands(frame, commands);
+			recordOpenGLCompositeSpriteOwnership(compositeSceneCommands);
+			int compatibilityFallbackCommands = 0;
+			for (OpenGLCompositeSceneCommand sceneCommand : compositeSceneCommands) {
+				WorldSpriteCommand worldSpriteCommand = sceneCommand.worldSpriteCommand;
+				if (worldSpriteCommand == null) {
+					continue;
+				}
+				Renderer2DFrame.SpriteCommand command = worldSpriteCommand.command;
+				logCompositeSpriteCommand("direct-entity", command, command.getWidth() * command.getHeight());
+				directReplayedByPhase[phaseIndex(command.getPhase())]++;
+				compatibilityFallbackCommands++;
+			}
+			RenderTelemetry.recordOpenGLWorldSpriteSnapshotFrame(
+				0,
+				0,
+				compatibilityFallbackCommands);
+			staticReplayed += drawOpenGLCompositeWorldSpriteCommands(frame, compositeSceneCommands);
 		}
-		staticReplayed += drawOpenGLCompositeWorldSpriteCommands(frame, compositeSceneCommands);
 		captureLayer(activeFrameCapture, "04b-entity-sprites");
 		captureLayer(activeFrameCapture, "04c-ordered-static-overlays");
 
@@ -3033,6 +3070,17 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		int drawn = worldSpriteDrawController == null
 			? 0
 			: worldSpriteDrawController.drawSceneCommands(frame, sceneCommands);
+		worldSpriteDepthDrawCommands = drawn;
+		worldSpriteDepthTextureBatches = drawn;
+		return drawn;
+	}
+
+	private int drawOpenGLOwnedWorldSpriteSnapshots(
+		Frame frame,
+		List<Renderer3DFrame.WorldSpriteSnapshot> snapshots) throws Exception {
+		int drawn = worldSpriteDrawController == null
+			? 0
+			: worldSpriteDrawController.drawOwnedWorldSpriteSnapshots(frame, snapshots);
 		worldSpriteDepthDrawCommands = drawn;
 		worldSpriteDepthTextureBatches = drawn;
 		return drawn;

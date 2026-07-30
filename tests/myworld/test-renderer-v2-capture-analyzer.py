@@ -23,6 +23,7 @@ def run_analyzer(capture_dir: Path, *args: str) -> subprocess.CompletedProcess[s
 
 
 def make_capture_fixture(capture_dir: Path) -> None:
+    (capture_dir / "world-sprite-snapshots.tsv").unlink(missing_ok=True)
     write(
         capture_dir / "metadata.txt",
         "\n".join(
@@ -213,6 +214,37 @@ def make_capture_fixture(capture_dir: Path) -> None:
     )
 
 
+def add_owned_snapshot_fixture(capture_dir: Path) -> None:
+    write(
+        capture_dir / "world-sprite-snapshots.tsv",
+        "\n".join(
+            [
+                "snapshotIndex\tanchorIndex\tlegacySpriteId\tlayerIndex\tsequence\tcharacterKind",
+                "0\t0\t20001\t0\t0\tNPC",
+                "",
+            ]
+        ),
+    )
+    write(
+        capture_dir / "world-sprite-commands.tsv",
+        "\n".join(
+            [
+                "index\tsequence\tphase\tlegacySpriteId\tsceneSpriteAnchorIndex"
+                "\tsceneSpriteDrawOrder\trendererSnapshotOwned\tworldSpriteKind"
+                "\tanchorMatchMode\tanchorMatchScore\tanchorFaceId"
+                "\tanchorLegacyDrawOrder\tanchorAverageDepth\tanchorCameraZ\tdepthOwned"
+                "\tx\ty\twidth\theight\ttopX16\tbottomX16\talpha\tsourceX\tsourceY"
+                "\tsourceWidth\tsourceHeight\tspriteWidth\tspriteHeight"
+                "\tsourceCropped\tmirrorX\tskewed",
+                "0\t0\tSCENE\t20001\t0\t150\ttrue\tentity\trenderer-snapshot\t0"
+                "\t99\t150\t400\t400\ttrue\t25\t25\t20\t20\t0\t0\t255\t0\t0"
+                "\t20\t20\t20\t20\tfalse\tfalse\tfalse",
+                "",
+            ]
+        ),
+    )
+
+
 def main() -> None:
     with tempfile.TemporaryDirectory(prefix="renderer-v2-capture-analyzer-") as tmp:
         capture_dir = Path(tmp)
@@ -222,7 +254,7 @@ def main() -> None:
             raise AssertionError(result.stderr or result.stdout)
         output = result.stdout
         for snippet in [
-            "counts=worldFaces:2 spriteCommands:1 worldSpriteCommands:1 sceneCommands:2 staticWorldCommands:2 staticWorldOwnedFaces:2 staticWorldMaterialTriangles:4 residentMaterialRows:4 staticRangeCandidates:1 frontOccluderCandidates:1 spriteAnchors:1 spriteSubmissions:0 characters:1 entityDepthEvaluations:1",
+            "counts=worldFaces:2 spriteCommands:1 worldSpriteSnapshotRows:0 worldSpriteCommands:1 sceneCommands:2 staticWorldCommands:2 staticWorldOwnedFaces:2 staticWorldMaterialTriangles:4 residentMaterialRows:4 staticRangeCandidates:1 frontOccluderCandidates:1 spriteAnchors:1 spriteSubmissions:0 characters:1 entityDepthEvaluations:1",
             "worldKinds:",
             "  TERRAIN: 1",
             "  WALL: 1",
@@ -232,9 +264,10 @@ def main() -> None:
             "  sprite: limit=4096 attempted=1 accepted=1 dropped=0",
             "  rotated-sprite: limit=256 attempted=259 accepted=256 dropped=3",
             "worldSpriteCommands:",
-            "total:1 anchored:1 missingAnchor:0 depthOwned:1 sourceCropped:0 mirrorX:0 skewed:0",
+            "total:1 anchored:1 missingAnchor:0 depthOwned:1 rendererSnapshotOwned:0 sourceCropped:0 mirrorX:0 skewed:0",
             "worldSpriteAnchorMatchModes:",
             "  strict-id-bounds: 1",
+            "worldSpriteSnapshots:\n  none",
             "sceneCommandQueue:",
             "total:2 worldSprite:1 frontOccluderRange:1 frontOccluderFaces:1 staticWorldRange:0 sourceCropped:0 mirrorX:0 skewed:0",
             "sceneCommandAnchorMatchModes:",
@@ -291,6 +324,39 @@ def main() -> None:
         ]:
             if snippet not in output:
                 raise AssertionError(f"missing {snippet!r} in:\n{output}")
+
+        make_capture_fixture(capture_dir)
+        add_owned_snapshot_fixture(capture_dir)
+        result = run_analyzer(capture_dir, "--strict")
+        if result.returncode != 0:
+            raise AssertionError(result.stderr or result.stdout)
+        if (
+            "worldSpriteCommands:\n"
+            "  total:1 anchored:1 missingAnchor:0 depthOwned:1 rendererSnapshotOwned:1"
+            not in result.stdout
+        ):
+            raise AssertionError(result.stdout)
+        if (
+            "worldSpriteSnapshots:\n"
+            "  rows:1 groups:1 layers:1 characterGroups:1 groundItemGroups:0 "
+            "invalidAnchorRows:0 sequenceOrderViolations:0"
+            not in result.stdout
+        ):
+            raise AssertionError(result.stdout)
+
+        snapshot_path = capture_dir / "world-sprite-snapshots.tsv"
+        snapshot_path.write_text(
+            snapshot_path.read_text(encoding="utf-8").replace(
+                "0\t0\t20001\t0\t0\tNPC",
+                "0\t1\t20001\t0\t0\tNPC",
+            ),
+            encoding="utf-8",
+        )
+        result = run_analyzer(capture_dir, "--strict")
+        if result.returncode == 0:
+            raise AssertionError("analyzer should reject invalid snapshot anchor ownership")
+        if "renderer snapshot rows contain invalid anchor ownership: 1" not in result.stderr:
+            raise AssertionError(result.stderr)
 
         make_capture_fixture(capture_dir)
         (capture_dir / "renderer-2d-command-limits.tsv").unlink()

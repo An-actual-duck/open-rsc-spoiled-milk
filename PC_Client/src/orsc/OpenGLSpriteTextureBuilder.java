@@ -67,7 +67,7 @@ final class OpenGLSpriteTextureBuilder {
 	}
 
 	static CompositeWorldSpriteTexture buildCompositeCharacterSpriteTexture(
-		List<WorldSpriteCommand> layerCommands) {
+		List<Renderer2DFrame.SpriteCommand> layerCommands) {
 		if (layerCommands == null || layerCommands.isEmpty()) {
 			return null;
 		}
@@ -75,9 +75,7 @@ final class OpenGLSpriteTextureBuilder {
 		int minY = Integer.MAX_VALUE;
 		int maxX = Integer.MIN_VALUE;
 		int maxY = Integer.MIN_VALUE;
-		for (WorldSpriteCommand layerCommand : layerCommands) {
-			Renderer2DFrame.SpriteCommand command =
-				layerCommand == null ? null : layerCommand.command;
+		for (Renderer2DFrame.SpriteCommand command : layerCommands) {
 			if (command == null) {
 				continue;
 			}
@@ -97,9 +95,7 @@ final class OpenGLSpriteTextureBuilder {
 		int height = maxY - minY;
 		int[] compositePixels = new int[width * height];
 		int visiblePixelCount = 0;
-		for (WorldSpriteCommand layerCommand : layerCommands) {
-			Renderer2DFrame.SpriteCommand command =
-				layerCommand == null ? null : layerCommand.command;
+		for (Renderer2DFrame.SpriteCommand command : layerCommands) {
 			if (command == null) {
 				continue;
 			}

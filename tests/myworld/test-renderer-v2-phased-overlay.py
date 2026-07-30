@@ -250,19 +250,23 @@ def main() -> None:
         "drawOpenGLCompositeWorldSpriteCommands(frame, compositeSceneCommands);",
         "OpenGL replacement composite submits world sprites through the typed world sprite path",
     )
+    owned_world_sprite_draw = world_sprite_draw_controller.split(
+        "private void drawOwnedWorldSpriteCommand(",
+        1,
+    )[1].split("\n\tprivate boolean drawDepthOwnedWorldSpriteTextureData(", 1)[0]
     require(
-        world_sprite_draw_controller,
-        "depthDiagnosticTexture = delegate.buildDepthVisibleEntitySpriteTexture(\n"
+        owned_world_sprite_draw,
+        "delegate.buildDepthVisibleEntitySpriteTexture(\n"
         "\t\t\t\tframe,\n"
         "\t\t\t\tcommand,\n"
-        "\t\t\t\tworldSpriteCommand.anchor,\n"
+        "\t\t\t\tanchor,\n"
         "\t\t\t\tnull,\n"
-        "\t\t\t\tworldSpriteCommand.anchorMatch);",
+        "\t\t\t\tanchorMatch);",
         "OpenGL replacement composite retains software depth diagnostics during GPU migration",
     )
     require(
-        world_sprite_draw_controller,
-        "worldSpriteCommand.anchor != null && delegate.hasActiveFrameCapture()",
+        owned_world_sprite_draw,
+        "if (delegate.hasActiveFrameCapture()) {",
         "software sprite depth masking runs only for capture",
     )
     require(
@@ -282,7 +286,11 @@ def main() -> None:
     )
     require(
         presenter,
-        "drawDepthOwnedWorldSpriteTextureData(\n\t\t\t\tframe,\n\t\t\t\tworldSpriteCommand,\n\t\t\t\ttextureData,",
+        "drawDepthOwnedWorldSpriteTextureData(\n"
+        "\t\t\tframe,\n"
+        "\t\t\tanchor,\n"
+        "\t\t\tcommand,\n"
+        "\t\t\ttextureData,",
         "OpenGL replacement composite submits anchored sprites to GPU depth",
     )
     require(

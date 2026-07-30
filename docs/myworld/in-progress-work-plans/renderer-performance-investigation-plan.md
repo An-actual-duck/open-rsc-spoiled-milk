@@ -10,9 +10,13 @@ now at the diminishing-returns gate for allocation-only cleanup. The first
 scene/entity ownership slice is accepted: captured sprite layers retain their
 exact renderer anchor and draw order instead of rediscovering them through
 screen-bound heuristics. Focused coverage, private visual review, and a
-12-frame strict capture all passed. The next decision input is an
-entity/effect-pressure CPU/allocation profile, not another speculative bridge
-rewrite.
+12-frame strict capture all passed. The maximum-distance entity control and
+active combat/rotation JFR phases are complete. Their measured bridge costs
+selected a second narrow slice: a frame-owned grouped world-sprite snapshot
+that consumes the already captured animation layers directly, with the legacy
+command builder retained as an all-or-nothing compatibility fallback. That
+candidate compiles and passes the full renderer guardrail suite; private
+visual/capture acceptance remains pending.
 
 This is the living measurement and optimization ledger for the ongoing
 renderer-v2 performance workstream. It complements
@@ -1082,6 +1086,68 @@ across 9,887 sampled composite frames. The capture used zoom setting `760`,
 not the exact maximum-distance control, so it proves ownership/parity rather
 than a performance delta.
 
+### Entity/Effect Profile And Second Snapshot Slice
+
+`session-20260729-200450-1567645` on checkpoint `c40e3ae7a` captured two
+complete JFR phases after the first ownership slice:
+
+- `entityidle` ran for 88.3 seconds at the verified maximum camera state:
+  zoom `900`, effective zoom `2400`, pitch `912`, rotation `512`, 40-tile draw
+  distance, 28-tile fog start, and fog enabled. It averaged about 35 drawn
+  chunks and 181,594 triangles. GL render p95/p99 was 3.924/4.674 ms, world
+  p95/p99 was 2.076/2.562 ms, process use was 0.484 cores, and telemetry
+  allocation was 42.73 MiB/s.
+- `entitycombat` ran for 64.7 seconds with combat/activity and camera rotation.
+  It is a valid entity-pressure profile, but not an exact maximum-distance
+  comparison: zoom varied from `180` to `590` and rotation from `128` to
+  `1016`. It averaged about 33.1 drawn chunks and 165,312 triangles. GL render
+  p95/p99 was 4.694/5.624 ms, world p95/p99 was 2.549/2.872 ms, process use
+  was 0.577 cores, and allocation was 70.18 MiB/s.
+- The owner reported no visual or behavioral issue in either phase. No sprite
+  command was dropped. Exact owner lookup remained complete; fallback and
+  unmatched ownership stayed at zero.
+
+JFR separates the active entity bridge instead of treating all overlay work as
+one cost:
+
+| Inclusive owner | `entityidle` | `entitycombat` |
+| --- | ---: | ---: |
+| Legacy `Scene.endScene` allocation | 4.49 MiB/s | 5.38 MiB/s |
+| Renderer-3D frame construction | 2.99 MiB/s | 3.04 MiB/s |
+| Renderer-2D command capture | 1.93 MiB/s | 2.04 MiB/s |
+| Composite scene reconstruction | 1.54 MiB/s | 1.24 MiB/s |
+| World-sprite draw controller | 1.90 MiB/s | 3.14 MiB/s |
+| Composite character texture construction | 1.27 MiB/s | 2.51 MiB/s |
+
+Legacy `Scene.endScene` appeared in roughly 51% of sampled client-loop CPU in
+both phases. Within the OpenGL overlay samples, direct-overlay coverage-mask
+work remained the largest sampled subpath. Combat approximately doubled
+composite character-texture allocation, while dynamic-atlas allocation stayed
+small. This does not justify reviving the rejected persistent transformed-
+texture cache: its parity key and lifecycle are still incomplete, and the
+earlier experiment rendered incorrect body/combat layers.
+
+The selected second slice therefore removes reconstruction rather than caching
+pixels. Each sorted `SpriteAnchor` now creates one frame-owned
+`WorldSpriteSnapshot` linked to its exact sprite submission and optional
+character metadata. Multipart animation commands attach to that snapshot as
+they are captured. Before drawing, the presenter validates the complete set:
+anchor order, indexed ownership, sprite kind, command identity, and total
+layer count must all agree. A valid frame is drawn directly from the grouped
+snapshots; any discrepancy routes the entire frame through the established
+typed command builder. Mixed direct/fallback ownership is prohibited.
+
+The candidate retains the exact captured layer objects, compositing math,
+dynamic-atlas upload, camera-space quad, depth, alpha, crop, mirror, skew,
+pick, and fallback behavior. It adds snapshot group/layer/fallback telemetry
+and a `world-sprite-snapshots.tsv` capture table with anchor, pick, world
+position, character identity/direction/combat/effect, and ordered layer
+metadata. Strict capture analysis verifies layer totals, anchor identity, and
+stable sequence order. Compilation, focused Java 8 ownership tests, capture
+fixtures, and the full renderer guardrail suite pass. Private dense
+actor/combat/ground-item/effect review and a strict `Ctrl+F9` burst are the
+remaining acceptance gate.
+
 ## Controlled Workload Matrix
 
 Every optimization comparison should use the same graphics preset, sliders,
@@ -1327,14 +1393,20 @@ Implementation checkpoint:
 - [x] Run dense entity visual/capture validation; all 2,424 burst commands used
       exact ownership with zero fallback/unmatched commands or order mismatch,
       and owner review found no visual regression.
-- [ ] Run the maximum-distance timed control and a repeatable combat/effect
-      pressure phase. The accepted visual capture was at zoom `760`, so it
-      must not be presented as the maximum-distance performance row.
-- [ ] Profile the entity/effect-pressure row and attribute legacy sprite-model,
+- [x] Run the maximum-distance timed control and a repeatable combat/effect
+      pressure phase. `entityidle` retained zoom `900` / effective `2400`;
+      `entitycombat` varied zoom and rotation, so it is a pressure profile and
+      not an exact maximum-distance before/after comparison.
+- [x] Profile the entity/effect-pressure row and attribute legacy sprite-model,
       2D capture, composite texture, atlas upload, and draw submission
       separately.
-- [ ] Select and implement the next narrow direct entity-snapshot boundary
-      from that profile.
+- [x] Select and implement the next narrow direct entity-snapshot boundary
+      from that profile: one frame-owned grouped snapshot per exact anchor,
+      consuming the same captured layers and retaining an all-or-nothing
+      compatibility fallback.
+- [ ] Accept the grouped-snapshot slice only after private dense actor/combat/
+      ground-item/effect review and strict capture proof of complete snapshot
+      ownership with no compatibility fallback.
 
 ### Milestone 4: Broader Performance Matrix
 
@@ -1383,3 +1455,4 @@ Implementation checkpoint:
 | 2026-07-29 | `c57df7186` | `capacity15` | Pre-size all object-chunk numeric and per-triangle collections from exact visible face topology, retaining growth fallback and immutable output ownership. | Matched 102.1-second maximum-distance workload and owner visual pass. Client allocation fell 12.7% and total allocation 5.1% despite 1.11 MiB/s of new background-preload allocation; presenter allocation stayed flat, CPU/world tails remained within variance, and GL p95/p99 improved. Focused Java 8 coverage proves exact capacity without growth and preserves geometry, materials, lighting, signatures, shadows, glows, and empty behavior. | Accept cycle 15; audit the independently ranked reflection wrappers and remaining object-builder ownership before cycle 16. |
 | 2026-07-29 | `90b79ac08` | `glhandles16` | Route the remaining 16 JFR-measured event/state/matrix/upload/immediate/uniform wrappers through exact typed Java 8 dispatch while retaining dynamic LWJGL discovery. | Exact 110.6-second maximum-distance workload and owner visual pass. Presenter allocation fell 18.0%; total allocation fell 12.7%, or about 9.9% after excluding background preload present only in the control. Presenter CPU and world tails stayed flat, while GL p95/p99 improved 3.3%/2.1%. Runtime coverage proves every packaged LWJGL signature used by `invokeExact`. | Accept cycle 16; declare diminishing returns for allocation-only cleanup and return to the larger renderer ownership roadmap before another micro-cycle. |
 | 2026-07-29 | `840f43199` | dense sprite ownership | Preserve each multipart scene sprite command's exact frame-local renderer anchor and draw order, use validated indexed lookup, and retain the old matcher only as fallback. | Owner visual pass plus 12 strict capture frames: 2,424/2,424 commands used `owner-anchor`, with zero fallback, unmatched, invalid owner, or draw-order mismatch. The final frame covered 204 entity layers, three ground items, 79 NPC metadata rows, one player, and `suspicious:0`. The view was zoom `760`, so no maximum-distance performance claim is made. | Accept the first scene/entity ownership slice; profile a repeatable maximum-distance entity/effect workload before selecting the next direct-submission boundary. |
+| 2026-07-29 | `c40e3ae7a` | `entityidle`, `entitycombat` | Profile the first exact-owner endpoint at maximum-distance idle and under active combat/camera pressure. | Idle was an exact zoom `900` / effective `2400` control at 42.73 MiB/s and 0.484 cores. Combat varied zoom/rotation and rose to 70.18 MiB/s and 0.577 cores. Legacy `Scene.endScene` covered about 51% of client CPU samples in both; composite scene reconstruction cost about 1.2–1.5 MiB/s, while composite character textures rose from 1.27 to 2.51 MiB/s under combat. Visuals passed and ownership fallback/unmatched stayed zero. | Build a frame-owned grouped sprite snapshot to remove wrapper/list/sort reconstruction while preserving captured pixels; do not cache transformed character textures without a parity-complete key. |

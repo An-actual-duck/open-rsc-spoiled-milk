@@ -14,6 +14,9 @@ import java.util.List;
  * callbacks that are still shared with other overlay paths.
  */
 final class OpenGLWorldSpriteDrawController {
+	private static final WorldSpriteAnchorMatch RENDERER_SNAPSHOT_MATCH =
+		new WorldSpriteAnchorMatch("renderer-snapshot", 0);
+
 	interface Delegate {
 		boolean hasActiveFrameCapture();
 
@@ -73,8 +76,9 @@ final class OpenGLWorldSpriteDrawController {
 			}
 			if (worldSpriteCommand.anchor != null
 				&& OpenGLCompositeSceneBuilder.isLegacyEntitySpriteCommand(worldSpriteCommand.command)) {
-				List<WorldSpriteCommand> characterLayerCommands = new ArrayList<WorldSpriteCommand>();
-				characterLayerCommands.add(worldSpriteCommand);
+				List<Renderer2DFrame.SpriteCommand> characterLayerCommands =
+					new ArrayList<Renderer2DFrame.SpriteCommand>();
+				characterLayerCommands.add(worldSpriteCommand.command);
 				while (index + 1 < sceneCommands.size()) {
 					WorldSpriteCommand nextWorldSpriteCommand = sceneCommands.get(index + 1).worldSpriteCommand;
 					if (nextWorldSpriteCommand == null
@@ -83,12 +87,23 @@ final class OpenGLWorldSpriteDrawController {
 						|| !sameWorldSpriteAnchor(worldSpriteCommand.anchor, nextWorldSpriteCommand.anchor)) {
 						break;
 					}
-					characterLayerCommands.add(nextWorldSpriteCommand);
+					characterLayerCommands.add(nextWorldSpriteCommand.command);
 					index++;
 				}
 				if (characterLayerCommands.size() > 1
 					&& drawCharacterSpriteLayers(frame, worldSpriteCommand.anchor, characterLayerCommands)) {
 					drawn += characterLayerCommands.size();
+					continue;
+				}
+				if (characterLayerCommands.size() > 1) {
+					for (Renderer2DFrame.SpriteCommand layerCommand : characterLayerCommands) {
+						drawOwnedWorldSpriteCommand(
+							frame,
+							worldSpriteCommand.anchor,
+							layerCommand,
+							worldSpriteCommand.anchorMatch);
+						drawn++;
+					}
 					continue;
 				}
 			}
@@ -98,10 +113,48 @@ final class OpenGLWorldSpriteDrawController {
 		return drawn;
 	}
 
+	int drawOwnedWorldSpriteSnapshots(
+		Frame frame,
+		List<Renderer3DFrame.WorldSpriteSnapshot> snapshots) throws Exception {
+		if (frame == null
+			|| frame.renderer3DFrame == null
+			|| snapshots == null
+			|| snapshots.isEmpty()) {
+			return 0;
+		}
+		int drawn = 0;
+		for (Renderer3DFrame.WorldSpriteSnapshot snapshot : snapshots) {
+			if (!OpenGLCompositeSceneBuilder.isOpenGLCompositeWorldSpriteSnapshot(snapshot)) {
+				continue;
+			}
+			Renderer3DFrame.SpriteAnchor anchor = snapshot.getAnchor();
+			List<Renderer2DFrame.SpriteCommand> layerCommands = snapshot.getLayers();
+			if (anchor == null || layerCommands.isEmpty()) {
+				continue;
+			}
+			Renderer2DFrame.SpriteCommand firstLayer = layerCommands.get(0);
+			if (layerCommands.size() > 1
+				&& OpenGLCompositeSceneBuilder.isLegacyEntitySpriteCommand(firstLayer)
+				&& drawCharacterSpriteLayers(frame, anchor, layerCommands)) {
+				drawn += layerCommands.size();
+				continue;
+			}
+			for (Renderer2DFrame.SpriteCommand layerCommand : layerCommands) {
+				drawOwnedWorldSpriteCommand(
+					frame,
+					anchor,
+					layerCommand,
+					RENDERER_SNAPSHOT_MATCH);
+				drawn++;
+			}
+		}
+		return drawn;
+	}
+
 	private boolean drawCharacterSpriteLayers(
 		Frame frame,
 		Renderer3DFrame.SpriteAnchor anchor,
-		List<WorldSpriteCommand> layerCommands) throws Exception {
+		List<Renderer2DFrame.SpriteCommand> layerCommands) throws Exception {
 		CompositeWorldSpriteTexture compositeTexture =
 			OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(layerCommands);
 		if (compositeTexture == null) {
@@ -120,35 +173,49 @@ final class OpenGLWorldSpriteDrawController {
 		if (worldSpriteCommand == null) {
 			return;
 		}
-		Renderer2DFrame.SpriteCommand command = worldSpriteCommand.command;
-		DynamicTextureData depthDiagnosticTexture = null;
-		if (worldSpriteCommand.anchor != null && delegate.hasActiveFrameCapture()) {
-			depthDiagnosticTexture = delegate.buildDepthVisibleEntitySpriteTexture(
-				frame,
-				command,
-				worldSpriteCommand.anchor,
-				null,
-				worldSpriteCommand.anchorMatch);
-		}
-		boolean drawn;
 		if (worldSpriteCommand.anchor != null) {
-			DynamicTextureData textureData = OpenGLSpriteTextureBuilder.buildDirectSpriteTexture(command);
-			drawn = drawDepthOwnedWorldSpriteTextureData(
+			drawOwnedWorldSpriteCommand(
 				frame,
-				worldSpriteCommand,
+				worldSpriteCommand.anchor,
+				worldSpriteCommand.command,
+				worldSpriteCommand.anchorMatch);
+			return;
+		}
+		Renderer2DFrame.SpriteCommand command = worldSpriteCommand.command;
+		DynamicTextureData textureData = OpenGLSpriteTextureBuilder.buildDirectSpriteTexture(command);
+		boolean drawn = textureData != null
+			&& delegate.drawDynamicSpriteTexture(
+				command,
 				textureData,
 				command.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA);
-		} else {
-			DynamicTextureData textureData = depthDiagnosticTexture;
-			if (textureData == null) {
-				textureData = OpenGLSpriteTextureBuilder.buildDirectSpriteTexture(command);
-			}
-			drawn = textureData != null
-				&& delegate.drawDynamicSpriteTexture(
-					command,
-					textureData,
-					command.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA);
+		if (!drawn) {
+			delegate.drawFallbackSprite(command);
 		}
+	}
+
+	private void drawOwnedWorldSpriteCommand(
+		Frame frame,
+		Renderer3DFrame.SpriteAnchor anchor,
+		Renderer2DFrame.SpriteCommand command,
+		WorldSpriteAnchorMatch anchorMatch) throws Exception {
+		if (anchor == null || command == null) {
+			return;
+		}
+		if (delegate.hasActiveFrameCapture()) {
+			delegate.buildDepthVisibleEntitySpriteTexture(
+				frame,
+				command,
+				anchor,
+				null,
+				anchorMatch);
+		}
+		DynamicTextureData textureData = OpenGLSpriteTextureBuilder.buildDirectSpriteTexture(command);
+		boolean drawn = drawDepthOwnedWorldSpriteTextureData(
+			frame,
+			anchor,
+			command,
+			textureData,
+			command.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA);
 		if (!drawn) {
 			delegate.drawFallbackSprite(command);
 		}
@@ -156,7 +223,8 @@ final class OpenGLWorldSpriteDrawController {
 
 	private boolean drawDepthOwnedWorldSpriteTextureData(
 		Frame frame,
-		WorldSpriteCommand worldSpriteCommand,
+		Renderer3DFrame.SpriteAnchor anchor,
+		Renderer2DFrame.SpriteCommand command,
 		DynamicTextureData textureData,
 		float alpha) throws Exception {
 		if (textureAtlas == null || textureData == null) {
@@ -172,7 +240,8 @@ final class OpenGLWorldSpriteDrawController {
 		}
 		return drawDepthOwnedWorldSpriteTexture(
 			frame,
-			worldSpriteCommand,
+			anchor,
+			command,
 			region,
 			alpha,
 			true);
@@ -207,15 +276,16 @@ final class OpenGLWorldSpriteDrawController {
 
 	private boolean drawDepthOwnedWorldSpriteTexture(
 		Frame frame,
-		WorldSpriteCommand worldSpriteCommand,
+		Renderer3DFrame.SpriteAnchor anchor,
+		Renderer2DFrame.SpriteCommand command,
 		OpenGLTextureRegion region,
 		float alpha,
 		boolean fullRegion) throws Exception {
 		if (region == null
 			|| frame == null
 			|| frame.renderer3DFrame == null
-			|| worldSpriteCommand == null
-			|| worldSpriteCommand.anchor == null
+			|| anchor == null
+			|| command == null
 			|| spriteRenderer == null) {
 			return false;
 		}
@@ -231,15 +301,15 @@ final class OpenGLWorldSpriteDrawController {
 			if (fullRegion) {
 				spriteRenderer.drawFullRegion(
 					frame.renderer3DFrame,
-					worldSpriteCommand.command,
-					worldSpriteCommand.anchor,
+					command,
+					anchor,
 					region,
 					alpha);
 			} else {
 				spriteRenderer.drawCommandRegion(
 					frame.renderer3DFrame,
-					worldSpriteCommand.command,
-					worldSpriteCommand.anchor,
+					command,
+					anchor,
 					region,
 					alpha);
 			}

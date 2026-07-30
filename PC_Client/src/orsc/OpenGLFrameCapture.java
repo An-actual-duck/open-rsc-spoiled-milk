@@ -98,6 +98,7 @@ final class OpenGLFrameCapture {
 		writeDepthDiagnostics(frame);
 		writeWorldFaces(frame);
 		writeSpriteCommands(frame);
+		writeWorldSpriteSnapshots(frame);
 		writeRenderer2DCommandLimits(frame);
 		writeWorldSpriteCommands(frame, presenter);
 		writeCompositeSceneCommands(frame, presenter);
@@ -545,7 +546,7 @@ final class OpenGLFrameCapture {
 		try {
 			writer.println(
 				"index\tsequence\tphase\tlegacySpriteId\tsceneSpriteAnchorIndex\tsceneSpriteDrawOrder"
-					+ "\tlegacyEntity\trequiresOrderedReplay"
+					+ "\trendererSnapshotOwned\tlegacyEntity\trequiresOrderedReplay"
 					+ "\tx\ty\twidth\theight\ttopX16\tbottomX16\talpha"
 					+ "\tsourceX\tsourceY\tsourceWidth\tsourceHeight"
 					+ "\tspriteWidth\tspriteHeight\tmirrorX");
@@ -562,6 +563,7 @@ final class OpenGLFrameCapture {
 					+ "\t" + command.getLegacySpriteId()
 					+ "\t" + command.getSceneSpriteAnchorIndex()
 					+ "\t" + command.getSceneSpriteDrawOrder()
+					+ "\t" + isRendererSnapshotOwned(frame, command)
 					+ "\t" + isLegacyEntitySpriteId(command.getLegacySpriteId())
 					+ "\t" + command.requiresOrderedReplay()
 					+ "\t" + command.getX()
@@ -584,12 +586,102 @@ final class OpenGLFrameCapture {
 		}
 	}
 
+	void writeWorldSpriteSnapshots(Frame frame) throws Exception {
+		PrintWriter writer = new PrintWriter(new File(directory, "world-sprite-snapshots.tsv"));
+		try {
+			writer.println(
+				"snapshotIndex\tanchorIndex\tanchorFaceId\tlegacySpriteId\tlegacyDrawOrder"
+					+ "\tpickIndex\tpickable\tlayerIndex\tsequence\talpha\tmirrorX\tskewed"
+					+ "\tsourceX\tsourceY\tsourceWidth\tsourceHeight"
+					+ "\tworldX\tworldY\tworldZ\tcharacterKind\tcharacterArrayIndex"
+					+ "\tcharacterServerIndex\tcharacterEntityId\tdirection\tcombatDirection"
+					+ "\tcombatTimeout\tcombatEffectType\tcombatEffectTime\tactiveHitSplats");
+			if (frame == null || frame.renderer3DFrame == null) {
+				return;
+			}
+			List<Renderer3DFrame.WorldSpriteSnapshot> snapshots =
+				frame.renderer3DFrame.getWorldSpriteSnapshots();
+			for (int snapshotIndex = 0; snapshotIndex < snapshots.size(); snapshotIndex++) {
+				Renderer3DFrame.WorldSpriteSnapshot snapshot = snapshots.get(snapshotIndex);
+				Renderer3DFrame.SpriteAnchor anchor = snapshot.getAnchor();
+				Renderer3DFrame.SpriteSubmission submission = snapshot.getSubmission();
+				Renderer3DFrame.CharacterSprite character = snapshot.getCharacter();
+				List<Renderer2DFrame.SpriteCommand> layers = snapshot.getLayers();
+				if (layers.isEmpty()) {
+					writeWorldSpriteSnapshotRow(
+						writer,
+						snapshotIndex,
+						snapshot,
+						anchor,
+						submission,
+						character,
+						-1,
+						null);
+					continue;
+				}
+				for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+					writeWorldSpriteSnapshotRow(
+						writer,
+						snapshotIndex,
+						snapshot,
+						anchor,
+						submission,
+						character,
+						layerIndex,
+						layers.get(layerIndex));
+				}
+			}
+		} finally {
+			writer.close();
+		}
+	}
+
+	private void writeWorldSpriteSnapshotRow(
+		PrintWriter writer,
+		int snapshotIndex,
+		Renderer3DFrame.WorldSpriteSnapshot snapshot,
+		Renderer3DFrame.SpriteAnchor anchor,
+		Renderer3DFrame.SpriteSubmission submission,
+		Renderer3DFrame.CharacterSprite character,
+		int layerIndex,
+		Renderer2DFrame.SpriteCommand layer) {
+		writer.println(snapshotIndex
+			+ "\t" + snapshot.getAnchorIndex()
+			+ "\t" + (anchor == null ? "" : String.valueOf(anchor.getFaceId()))
+			+ "\t" + (anchor == null ? "" : String.valueOf(anchor.getSpriteId()))
+			+ "\t" + (anchor == null ? "" : String.valueOf(anchor.getLegacyDrawOrder()))
+			+ "\t" + snapshot.getPickIndex()
+			+ "\t" + snapshot.isPickable()
+			+ "\t" + emptyIfUnset(layerIndex, -1)
+			+ "\t" + (layer == null ? "" : String.valueOf(layer.getSequence()))
+			+ "\t" + (layer == null ? "" : String.valueOf(layer.getAlpha()))
+			+ "\t" + (layer != null && layer.isMirrorX())
+			+ "\t" + (layer != null && layer.getTopX16() != layer.getBottomX16())
+			+ "\t" + (layer == null ? "" : String.valueOf(layer.getSourceX()))
+			+ "\t" + (layer == null ? "" : String.valueOf(layer.getSourceY()))
+			+ "\t" + (layer == null ? "" : String.valueOf(layer.getSourceWidth()))
+			+ "\t" + (layer == null ? "" : String.valueOf(layer.getSourceHeight()))
+			+ "\t" + (submission == null ? "" : String.valueOf(submission.getWorldX()))
+			+ "\t" + (submission == null ? "" : String.valueOf(submission.getWorldY()))
+			+ "\t" + (submission == null ? "" : String.valueOf(submission.getWorldZ()))
+			+ "\t" + (character == null ? "" : character.getKind())
+			+ "\t" + (character == null ? "" : String.valueOf(character.getArrayIndex()))
+			+ "\t" + (character == null ? "" : String.valueOf(character.getServerIndex()))
+			+ "\t" + (character == null ? "" : String.valueOf(character.getEntityId()))
+			+ "\t" + (character == null ? "" : character.getDirection())
+			+ "\t" + (character != null && character.isCombatDirection())
+			+ "\t" + (character == null ? "" : String.valueOf(character.getCombatTimeout()))
+			+ "\t" + (character == null ? "" : String.valueOf(character.getCombatEffectType()))
+			+ "\t" + (character == null ? "" : String.valueOf(character.getCombatEffectTime()))
+			+ "\t" + (character != null && character.hasActiveHitSplats()));
+	}
+
 	void writeWorldSpriteCommands(Frame frame, OpenGLFramePresenter presenter) throws Exception {
 		PrintWriter writer = new PrintWriter(new File(directory, "world-sprite-commands.tsv"));
 		try {
 			writer.println(
 				"index\tsequence\tphase\tlegacySpriteId\tsceneSpriteAnchorIndex\tsceneSpriteDrawOrder"
-					+ "\tworldSpriteKind\tanchorMatchMode\tanchorMatchScore"
+					+ "\trendererSnapshotOwned\tworldSpriteKind\tanchorMatchMode\tanchorMatchScore"
 					+ "\tanchorFaceId\tanchorLegacyDrawOrder\tanchorAverageDepth\tanchorCameraZ\tdepthOwned"
 					+ "\tx\ty\twidth\theight\ttopX16\tbottomX16\talpha"
 					+ "\tsourceX\tsourceY\tsourceWidth\tsourceHeight\tspriteWidth\tspriteHeight"
@@ -611,6 +703,7 @@ final class OpenGLFrameCapture {
 					+ "\t" + command.getLegacySpriteId()
 					+ "\t" + command.getSceneSpriteAnchorIndex()
 					+ "\t" + command.getSceneSpriteDrawOrder()
+					+ "\t" + isRendererSnapshotOwned(frame, command)
 					+ "\t" + worldSpriteKind(command)
 					+ "\t" + worldCommand.anchorMatch.mode
 					+ "\t" + worldCommand.anchorMatch.score
@@ -647,7 +740,7 @@ final class OpenGLFrameCapture {
 			writer.println(
 				"index\tkind\tlegacyDrawOrder\tsequence\tminExclusiveOrder\tmaxExclusiveOrder"
 					+ "\tfrontOccluderFaces\tlegacySpriteId\tsceneSpriteAnchorIndex\tsceneSpriteDrawOrder"
-					+ "\tworldSpriteKind\tanchorMatchMode\tanchorFaceId"
+					+ "\trendererSnapshotOwned\tworldSpriteKind\tanchorMatchMode\tanchorFaceId"
 					+ "\tsourceCropped\tmirrorX\tskewed");
 			if (frame.renderer2DFrame == null || presenter == null) {
 				return;
@@ -671,6 +764,7 @@ final class OpenGLFrameCapture {
 					+ "\t" + (spriteCommand == null ? "" : String.valueOf(spriteCommand.getLegacySpriteId()))
 					+ "\t" + (spriteCommand == null ? "" : String.valueOf(spriteCommand.getSceneSpriteAnchorIndex()))
 					+ "\t" + (spriteCommand == null ? "" : String.valueOf(spriteCommand.getSceneSpriteDrawOrder()))
+					+ "\t" + (spriteCommand != null && isRendererSnapshotOwned(frame, spriteCommand))
 					+ "\t" + (spriteCommand == null ? "" : worldSpriteKind(spriteCommand))
 					+ "\t" + (worldCommand == null ? "" : worldCommand.anchorMatch.mode)
 					+ "\t" + (anchor == null ? "" : String.valueOf(anchor.getFaceId()))
@@ -1574,6 +1668,20 @@ final class OpenGLFrameCapture {
 				}
 			}
 		}
+	}
+
+	static boolean isRendererSnapshotOwned(
+		Frame frame,
+		Renderer2DFrame.SpriteCommand command) {
+		if (frame == null
+			|| frame.renderer3DFrame == null
+			|| command == null) {
+			return false;
+		}
+		Renderer3DFrame.WorldSpriteSnapshot snapshot =
+			frame.renderer3DFrame.getWorldSpriteSnapshot(
+				command.getSceneSpriteAnchorIndex());
+		return snapshot != null && snapshot.ownsLayer(command);
 	}
 
 	static boolean isLegacyEntitySpriteId(int legacySpriteId) {

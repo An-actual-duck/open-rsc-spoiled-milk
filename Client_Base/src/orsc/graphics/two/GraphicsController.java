@@ -13,6 +13,7 @@ import orsc.graphics.Renderer2DFrame;
 import orsc.graphics.Renderer2DSettings;
 import orsc.graphics.RendererSpriteTransform;
 import orsc.graphics.RendererTransparency;
+import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.two.SpriteArchive.*;
 import orsc.mudclient;
 import orsc.remastered.RemasteredSpriteKey;
@@ -89,6 +90,7 @@ public class GraphicsController {
 	private int renderer2DLegacySpriteId = -1;
 	private int renderer2DSceneSpriteAnchorIndex = -1;
 	private int renderer2DSceneSpriteDrawOrder = -1;
+	private Renderer3DFrame renderer2DSceneFrame;
 	private boolean renderer2DCommandOverflowLogged;
 	private int renderer2DCaptureAttempts;
 	private int renderer2DCaptureAccepted;
@@ -166,6 +168,9 @@ public class GraphicsController {
 		renderer2DCommandSequence = 0;
 		renderer2DCommandOverflowLogged = false;
 		renderer2DPhase = Renderer2DFrame.Phase.UI_OVERLAY;
+		renderer2DSceneSpriteAnchorIndex = -1;
+		renderer2DSceneSpriteDrawOrder = -1;
+		renderer2DSceneFrame = null;
 		renderer2DCaptureAttempts = 0;
 		renderer2DCaptureAccepted = 0;
 		renderer2DCaptureReplacedUi = 0;
@@ -826,7 +831,7 @@ public class GraphicsController {
 			return false;
 		}
 
-		renderer2DSpriteCommands.add(
+		recordCapturedRenderer2DSprite(
 			new Renderer2DFrame.SpriteCommand(
 				sprite,
 				x,
@@ -854,6 +859,16 @@ public class GraphicsController {
 				renderer2DCommandSequence++));
 		renderer2DCaptureAccepted++;
 		return true;
+	}
+
+	private void recordCapturedRenderer2DSprite(Renderer2DFrame.SpriteCommand command) {
+		renderer2DSpriteCommands.add(command);
+		if (renderer2DSceneFrame != null) {
+			renderer2DSceneFrame.recordWorldSpriteLayer(
+				renderer2DSceneSpriteAnchorIndex,
+				renderer2DSceneSpriteDrawOrder,
+				command);
+		}
 	}
 
 	private boolean recordRenderer2DScaledSprite(
@@ -1009,7 +1024,7 @@ public class GraphicsController {
 			return false;
 		}
 
-		renderer2DSpriteCommands.add(
+		recordCapturedRenderer2DSprite(
 			new Renderer2DFrame.SpriteCommand(
 				sprite,
 				floorFixedToInt(topX16),
@@ -1558,11 +1573,14 @@ public class GraphicsController {
 		int topPixelSkew,
 		int scenePickIndex,
 		int sceneSpriteAnchorIndex,
-		int sceneSpriteDrawOrder) {
+		int sceneSpriteDrawOrder,
+		Renderer3DFrame sceneFrame) {
 		int previousAnchorIndex = renderer2DSceneSpriteAnchorIndex;
 		int previousDrawOrder = renderer2DSceneSpriteDrawOrder;
+		Renderer3DFrame previousSceneFrame = renderer2DSceneFrame;
 		renderer2DSceneSpriteAnchorIndex = sceneSpriteAnchorIndex;
 		renderer2DSceneSpriteDrawOrder = sceneSpriteDrawOrder;
+		renderer2DSceneFrame = sceneFrame;
 		try {
 			drawEntity(
 				index,
@@ -1576,6 +1594,7 @@ public class GraphicsController {
 		} finally {
 			renderer2DSceneSpriteAnchorIndex = previousAnchorIndex;
 			renderer2DSceneSpriteDrawOrder = previousDrawOrder;
+			renderer2DSceneFrame = previousSceneFrame;
 		}
 	}
 

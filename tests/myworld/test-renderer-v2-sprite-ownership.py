@@ -109,6 +109,20 @@ public final class Renderer3DSpriteOwnershipFixture {
 		try {
 			Renderer2DFrame.SpriteCommand owned =
 				command(secondIndex, 200, 7);
+			assertTrue(
+				geometryFrame.recordWorldSpriteLayer(secondIndex, 200, owned),
+				"record exact renderer snapshot layer");
+			Renderer3DFrame.WorldSpriteSnapshot snapshot =
+				geometryFrame.getWorldSpriteSnapshot(secondIndex);
+			assertTrue(snapshot != null, "renderer snapshot exists");
+			assertEquals(secondIndex, snapshot.getAnchorIndex(), "snapshot anchor index");
+			assertEquals(1, snapshot.getLayerCount(), "snapshot layer count");
+			assertTrue(snapshot.ownsLayer(owned), "snapshot owns exact layer");
+			assertTrue(
+				OpenGLCompositeSceneBuilder.canUseOwnedWorldSpriteSnapshots(
+					frame,
+					new Renderer2DFrame.SpriteCommand[] { owned }),
+				"renderer snapshot direct path");
 			WorldSpriteCommand ownedWorld =
 				OpenGLCompositeSceneBuilder.buildWorldSpriteCommand(frame, owned);
 			assertEquals(12, ownedWorld.anchor.getFaceId(), "owned anchor face");
@@ -118,6 +132,14 @@ public final class Renderer3DSpriteOwnershipFixture {
 
 			Renderer2DFrame.SpriteCommand invalidOwner =
 				command(secondIndex, 999, 8);
+			assertTrue(
+				!OpenGLCompositeSceneBuilder.canUseOwnedWorldSpriteSnapshots(
+					frame,
+					new Renderer2DFrame.SpriteCommand[] {
+						invalidOwner,
+						owned,
+					}),
+				"invalid owner selects compatibility path");
 			WorldSpriteCommand fallbackWorld =
 				OpenGLCompositeSceneBuilder.buildWorldSpriteCommand(
 					frame,
@@ -144,6 +166,23 @@ public final class Renderer3DSpriteOwnershipFixture {
 				200,
 				ordered.get(1).legacyDrawOrder,
 				"exact owner ordering");
+
+			Renderer2DFrame.SpriteCommand outOfSequence =
+				command(secondIndex, 200, 6);
+			assertTrue(
+				geometryFrame.recordWorldSpriteLayer(
+					secondIndex,
+					200,
+					outOfSequence),
+				"record sequence-corruption fixture");
+			assertTrue(
+				!OpenGLCompositeSceneBuilder.canUseOwnedWorldSpriteSnapshots(
+					frame,
+					new Renderer2DFrame.SpriteCommand[] {
+						owned,
+						outOfSequence,
+					}),
+				"out-of-sequence layers select compatibility path");
 		} finally {
 			frame.release();
 		}
@@ -238,6 +277,12 @@ public final class Renderer3DSpriteOwnershipFixture {
 				label + ": expected " + expected + " but was " + actual);
 		}
 	}
+
+	private static void assertTrue(boolean condition, String label) {
+		if (!condition) {
+			throw new AssertionError(label);
+		}
+	}
 }
 """
 
@@ -291,6 +336,37 @@ def main() -> None:
         composite_builder,
         "Renderer3DFrame.SpriteAnchor ownedAnchor = findOwnedSpriteAnchor(frame, command);",
         "constant-time owner lookup before legacy fallback",
+    )
+    require(
+        renderer_2d_frame,
+        "private final int sceneSpriteAnchorIndex;",
+        "captured sprite owner metadata",
+    )
+    renderer_3d_frame = (
+        ROOT / "Client_Base/src/orsc/graphics/three/Renderer3DFrame.java"
+    ).read_text(encoding="utf-8")
+    presenter = (
+        ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
+    ).read_text(encoding="utf-8")
+    require(
+        renderer_3d_frame,
+        "public static final class WorldSpriteSnapshot",
+        "frame-owned world sprite snapshot",
+    )
+    require(
+        renderer_3d_frame,
+        "public boolean recordWorldSpriteLayer(",
+        "exact layer attachment",
+    )
+    require(
+        composite_builder,
+        "static boolean canUseOwnedWorldSpriteSnapshots(",
+        "snapshot completeness guard",
+    )
+    require(
+        presenter,
+        "drawOpenGLOwnedWorldSpriteSnapshots(",
+        "direct snapshot presentation path",
     )
 
     with tempfile.TemporaryDirectory(

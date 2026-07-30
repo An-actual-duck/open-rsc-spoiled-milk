@@ -268,6 +268,9 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldSpriteOwnerAnchorStats = new CounterStats();
 	private static final CounterStats openGLWorldSpriteLegacyFallbackStats = new CounterStats();
 	private static final CounterStats openGLWorldSpriteUnmatchedStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteSnapshotGroupStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteSnapshotLayerStats = new CounterStats();
+	private static final CounterStats openGLWorldSpriteSnapshotCompatibilityFallbackStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityConsideredStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityDrawnStats = new CounterStats();
 	private static final CounterStats openGLWorldEntityCulledStats = new CounterStats();
@@ -1174,6 +1177,22 @@ public final class RenderTelemetry {
 		}
 	}
 
+	static void recordOpenGLWorldSpriteSnapshotFrame(
+		int snapshotGroups,
+		int snapshotLayers,
+		int compatibilityFallbackCommands) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			openGLWorldSpriteSnapshotGroupStats.record(snapshotGroups);
+			openGLWorldSpriteSnapshotLayerStats.record(snapshotLayers);
+			openGLWorldSpriteSnapshotCompatibilityFallbackStats.record(
+				compatibilityFallbackCommands);
+		}
+	}
+
 	static void recordSetGameImage(
 		long totalNanos,
 		long sourceCopyNanos,
@@ -1927,6 +1946,12 @@ public final class RenderTelemetry {
 				+ formatCount(openGLWorldSpriteOwnerAnchorStats.average())
 				+ " fallback=" + formatCount(openGLWorldSpriteLegacyFallbackStats.average())
 				+ " unmatched=" + formatCount(openGLWorldSpriteUnmatchedStats.average()));
+		System.out.println(
+			"[renderer-v2 telemetry] renderer sprite snapshots avg: groups="
+				+ formatCount(openGLWorldSpriteSnapshotGroupStats.average())
+				+ " layers=" + formatCount(openGLWorldSpriteSnapshotLayerStats.average())
+				+ " compatibilityFallback="
+				+ formatCount(openGLWorldSpriteSnapshotCompatibilityFallbackStats.average()));
 
 		System.out.println(
 			"[renderer-v2 telemetry] presentation avg ms: setImage=" + formatMillis(setGameImageStats.average())
@@ -2945,6 +2970,9 @@ public final class RenderTelemetry {
 			openGLWorldSpriteOwnerAnchorStats,
 			openGLWorldSpriteLegacyFallbackStats,
 			openGLWorldSpriteUnmatchedStats,
+			openGLWorldSpriteSnapshotGroupStats,
+			openGLWorldSpriteSnapshotLayerStats,
+			openGLWorldSpriteSnapshotCompatibilityFallbackStats,
 			openGLWorldEntityConsideredStats,
 			openGLWorldEntityDrawnStats,
 			openGLWorldEntityCulledStats
