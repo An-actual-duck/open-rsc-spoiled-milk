@@ -205,9 +205,12 @@ public final class WorldBuilderRuntimePreparer {
 	private static LinkedHashMap<String, String> overrides(
 		int port, Path workspace, WorldBuilderLayeredPackage layered) {
 		LinkedHashMap<String, String> values = new LinkedHashMap<String, String>();
+		String productName = layered == null
+			? "Spoiled Milk World Builder"
+			: "Spoiled Milk World Builder 2";
 		values.put("world_builder_mode", "true");
-		values.put("server_name", "Spoiled Milk World Builder");
-		values.put("server_name_welcome", "Spoiled Milk World Builder");
+		values.put("server_name", productName);
+		values.put("server_name_welcome", productName);
 		values.put("welcome_text", "Local isolated World Builder");
 		values.put("server_bind_address", "127.0.0.1");
 		values.put("server_port", Integer.toString(port));

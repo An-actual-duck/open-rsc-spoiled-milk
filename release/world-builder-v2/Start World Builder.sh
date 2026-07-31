@@ -6,6 +6,8 @@ TARGET_ROOT="$(cd "$ROOT_DIR/.." && pwd)"
 RUNTIME_ROOT="$ROOT_DIR/builder-runtime"
 WORKSPACE="$ROOT_DIR/workspace"
 TOOLS_JAR="$RUNTIME_ROOT/launcher/world-builder-tools.jar"
+LAYERED_PACKAGE="$RUNTIME_ROOT/layered-world/package"
+RELEASE_IDENTITY="$ROOT_DIR/RELEASE-IDENTITY.json"
 
 fail() {
 	printf 'World Builder could not start: %s\n' "$*" >&2
@@ -22,9 +24,17 @@ fi
 
 [[ -n "$JAVA_EXE" ]] || fail "Java 17 or newer was not found."
 [[ -f "$TOOLS_JAR" ]] || fail "The packaged launcher is missing: $TOOLS_JAR"
+[[ -f "$LAYERED_PACKAGE/manifest.json" ]] \
+	|| fail "The packaged signed-layered map is missing."
+[[ -f "$RELEASE_IDENTITY" ]] \
+	|| fail "World Builder 2 release identity is missing."
+grep -F '"productId": "rsc-world-editor-v2"' "$RELEASE_IDENTITY" >/dev/null \
+	|| fail "This launcher is not inside a World Builder 2 release."
 "$JAVA_EXE" -version >/dev/null 2>&1 || fail "Java could not be executed: $JAVA_EXE"
 
 if [[ -f "$WORKSPACE/project-source.json" ]]; then
+	[[ -f "$WORKSPACE/layered-review.json" ]] \
+		|| fail "The existing workspace is legacy or unidentified; World Builder 2 will not open or migrate it."
 	exec "$JAVA_EXE" -jar "$TOOLS_JAR" run --workspace "$WORKSPACE"
 fi
 if [[ -e "$WORKSPACE" ]]; then
@@ -41,4 +51,6 @@ exec "$JAVA_EXE" -jar "$TOOLS_JAR" launch \
 	--workspace "$WORKSPACE" \
 	--port "$PORT" \
 	--config server/myworld.conf \
-	--runtime-config server/myworld.conf
+	--runtime-config server/myworld.conf \
+	--layered-package "$LAYERED_PACKAGE" \
+	--layered-profile spoiled-milk-replacement

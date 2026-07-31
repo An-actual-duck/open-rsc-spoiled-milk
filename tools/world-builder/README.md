@@ -4,6 +4,22 @@ This module owns standalone World Builder project discovery, manifests,
 workspace management, export, import, rollback, and launch supervision as
 those phases are implemented.
 
+## Product generations
+
+The packed-map editor is frozen and unmaintained at release tag
+`rsc-world-editor-v1.03`. Current signed-layered work belongs to the separate
+`Spoiled Milk World Builder 2` product and update channel
+`rsc-world-editor-v2`. Its archive prefix, install folder, signed-layered
+workspace, and release identity are distinct; automatic updates are eligible
+only from v2 itself, and the v2 packaged launcher refuses a legacy or
+unidentified workspace.
+
+The ambiguous `scripts/package-world-builder-release.sh` command therefore
+fails closed. Future v2 artifacts use
+`scripts/package-world-builder-v2-release.sh`, which embeds the reviewed
+signed-layered package and remains production-locked until layered
+export/import and final release validation are accepted.
+
 Read-only target discovery remains available independently:
 
 ```bash
