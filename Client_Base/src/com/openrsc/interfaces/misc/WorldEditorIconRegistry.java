@@ -30,6 +30,7 @@ public final class WorldEditorIconRegistry {
 		MODE_INSPECT("mode-inspect.png", "Look"),
 		MODE_SCENERY("mode-scenery.png", "Obj"),
 		MODE_NPC("mode-npc.png", "NPC"),
+		MODE_ITEMS("mode-items.png", "Item"),
 		FIELD_ELEVATION("field-elevation.png", "Elev"),
 		FIELD_FLOOR_COLOR("field-floor-color.png", "Color"),
 		FIELD_FLOOR_TEXTURE("field-floor-texture.png", "Floor"),

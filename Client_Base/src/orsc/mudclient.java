@@ -10079,6 +10079,17 @@ public final class mudclient implements Runnable {
 
 	private void addGroundItemMenuEntry(int index) {
 		String itemActor = "@lre@" + EntityHandler.getItemDef(this.groundItemID[index]).getName();
+		if (this.worldEditorInterface != null
+			&& this.worldEditorInterface.isGroundItemRemoving()) {
+			this.menuCommon.addTileItem_WithID(
+				MenuItemAction.WORLD_EDITOR_REMOVE_GROUND_ITEM,
+				this.groundItemZ[index],
+				this.groundItemID[index],
+				this.groundItemX[index],
+				this.groundItemID[index],
+				itemActor,
+				"Remove spawn");
+		}
 		if (this.selectedSpell >= 0) {
 			SpellDef spellDef = EntityHandler.getSpellDef(this.selectedSpell);
 			if (spellDef != null && spellDef.getSpellType() == 3) {
@@ -11935,6 +11946,8 @@ public final class mudclient implements Runnable {
 			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_SCENERY,"Place "+EntityHandler.getObjectDef(worldEditorInterface.getSceneryId()).getName(),localZ);
 		if(worldEditorInterface.isNpcPlacing())
 			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_NPC,"Place "+EntityHandler.getNpcDef(worldEditorInterface.getNpcId()).getName(),localZ);
+		if(worldEditorInterface.isGroundItemPlacing())
+			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_GROUND_ITEM,"Place "+EntityHandler.getItemDef(worldEditorInterface.getGroundItemId()).getName(),localZ);
 	}
 	private boolean addProjectedEditorTileFallback(){
 		boolean editorOpen=worldEditorInterface!=null&&worldEditorInterface.isEditorOpen();
@@ -19560,6 +19573,25 @@ public final class mudclient implements Runnable {
 				case WORLD_EDITOR_REMOVE_SCENERY: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("robject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
 				case WORLD_EDITOR_PLACE_NPC: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("cnpc "+worldEditorInterface.getNpcId()+" "+worldEditorInterface.getNpcRadius()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
 				case WORLD_EDITOR_REMOVE_NPC: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("rpc "+indexOrX); break; }
+				case WORLD_EDITOR_PLACE_GROUND_ITEM: {
+					int worldX=indexOrX+midRegionBaseX,worldY=idOrZ+midRegionBaseZ;
+					worldEditorInterface.recordWorldClick(worldX,worldY);
+					worldEditorInterface.markPotentialEntityEdit();
+					sendCommandString("buildergrounditem "
+						+worldEditorInterface.getGroundItemId()+" "
+						+worldEditorInterface.getGroundItemAmount()+" "
+						+worldEditorInterface.getGroundItemRespawnSeconds()+" "
+						+worldX+" "+worldY);
+					break;
+				}
+				case WORLD_EDITOR_REMOVE_GROUND_ITEM: {
+					int worldX=indexOrX+midRegionBaseX,worldY=idOrZ+midRegionBaseZ;
+					worldEditorInterface.recordWorldClick(worldX,worldY);
+					worldEditorInterface.markPotentialEntityEdit();
+					sendCommandString("removebuildergrounditem "
+						+tileID+" "+worldX+" "+worldY);
+					break;
+				}
 				case MOD_SUMMON_PLAYER: {
 					String playerName = var9;
 					playerName = playerName.replaceAll(" ", "_");

@@ -36,12 +36,16 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		"world-builder-layered-draft-v3";
 	private static final String ALLOCATION_HEADER =
 		"world-builder-layered-draft-v4";
+	private static final String GROUND_ITEM_HEADER =
+		"world-builder-layered-draft-v5";
 	private static final int SECTOR_SIZE = 48;
 	private static final int TILE_BYTES = 10;
 	private static final int MAX_TILES = 4096;
 	private static final int MAX_SECTORS = 64;
 	private static final int MAX_SCENERY = 4096;
 	private static final int MAX_NPCS = 4096;
+	private static final int MAX_GROUND_ITEMS = 4096;
+	private static final int MAX_GROUND_ITEM_RESPAWN_SECONDS = 86400;
 	private static final int MAX_LEVELS = 64;
 	private static final java.util.regex.Pattern ID =
 		java.util.regex.Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
@@ -125,6 +129,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 				journal.tiles.size(), journal.sectors.size(),
 				journal.scenery.size(),
 				journal.npcs.size(),
+				journal.groundItems.size(),
 				installed.manifestSha256,
 				installed.packageFingerprintSha256);
 		} catch (IOException failure) {
@@ -267,6 +272,9 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		applyNpcs(
 			packageRoot, sourceLevels, writableLevels, manifest,
 			journal.npcs);
+		applyGroundItems(
+			packageRoot, sourceLevels, writableLevels, manifest,
+			journal.groundItems);
 		sortByLevel(levels);
 		sortPlacements(placements);
 		sortTerrain(terrain);
@@ -494,6 +502,120 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		return result;
 	}
 
+	private static void applyGroundItems(
+		Path packageRoot,
+		Set<Integer> sourceLevels,
+		Set<Integer> writableLevels,
+		Map<String,Object> manifest,
+		List<GroundItemEdit> edits)
+		throws IOException, WorldBuilderDiscoveryException {
+		if (edits.isEmpty()) return;
+		Map<Integer,Map<String,Object>> declarations =
+			new LinkedHashMap<Integer,Map<String,Object>>();
+		for (Object value : array(manifest, "placementSets")) {
+			Map<String,Object> declaration = object(value);
+			declarations.put(
+				Integer.valueOf(number(declaration, "level")), declaration);
+		}
+		Map<Integer,List<GroundItemEdit>> byLevel =
+			new LinkedHashMap<Integer,List<GroundItemEdit>>();
+		for (GroundItemEdit edit : edits) {
+			if (sourceLevels.contains(Integer.valueOf(edit.level))
+				|| !writableLevels.contains(Integer.valueOf(edit.level))) {
+				throw new WorldBuilderDiscoveryException(
+					"Ground-item editing is restricted to a Builder-created level.");
+			}
+			List<GroundItemEdit> levelEdits =
+				byLevel.get(Integer.valueOf(edit.level));
+			if (levelEdits == null) {
+				levelEdits = new ArrayList<GroundItemEdit>();
+				byLevel.put(Integer.valueOf(edit.level), levelEdits);
+			}
+			levelEdits.add(edit);
+		}
+		for (Map.Entry<Integer,List<GroundItemEdit>> levelEntry
+			: byLevel.entrySet()) {
+			int level = levelEntry.getKey().intValue();
+			Map<String,Object> declaration =
+				declarations.get(Integer.valueOf(level));
+			if (declaration == null) {
+				throw new WorldBuilderDiscoveryException(
+					"Builder-created level has no placement declaration: "
+						+ level);
+			}
+			String expectedPath = "placements/global/l"
+				+ WorldBuilderLayeredPackage.signedToken(level) + ".json";
+			String relative = text(declaration, "path");
+			if (!expectedPath.equals(relative)) {
+				throw new WorldBuilderDiscoveryException(
+					"Ground-item placement payload path is not deterministic.");
+			}
+			Path payloadPath = packageRoot.resolve(relative).normalize();
+			requireContained(packageRoot, payloadPath, relative);
+			Map<String,Object> payload =
+				WorldBuilderJsonDocuments.readObject(payloadPath);
+			List<Object> groundItems = array(payload, "groundItems");
+			Map<String,Map<String,Object>> bySlot =
+				new LinkedHashMap<String,Map<String,Object>>();
+			Set<String> placementIds = placementIds(payload);
+			for (Object value : groundItems) {
+				Map<String,Object> record = object(value);
+				Map<String,Object> position = object(record.get("position"));
+				String slot = key(
+					level, number(position, "x"), number(position, "y"));
+				if (bySlot.put(slot, record) != null) {
+					throw new WorldBuilderDiscoveryException(
+						"Builder-created ground-item payload contains "
+							+ "duplicate tile slots.");
+				}
+			}
+			for (GroundItemEdit edit : levelEntry.getValue()) {
+				String slot = key(edit.level, edit.x, edit.y);
+				Map<String,Object> existing = bySlot.get(slot);
+				if (edit.remove) {
+					if (existing == null || !edit.matches(existing)) {
+						throw new WorldBuilderDiscoveryException(
+							"Ground-item removal no longer matches the "
+								+ "working package.");
+					}
+					groundItems.remove(existing);
+					bySlot.remove(slot);
+					placementIds.remove(edit.placementId);
+					continue;
+				}
+				if (existing != null
+					&& !edit.placementId.equals(
+						text(existing, "placementId"))) {
+					throw new WorldBuilderDiscoveryException(
+						"Ground-item upsert collides with another placement.");
+				}
+				if (existing == null
+					&& !placementIds.add(edit.placementId)) {
+					throw new WorldBuilderDiscoveryException(
+						"Ground-item upsert duplicates a placement ID.");
+				}
+				Map<String,Object> replacement = edit.toJson();
+				if (existing == null) groundItems.add(replacement);
+				else {
+					groundItems.set(
+						groundItems.indexOf(existing), replacement);
+				}
+				bySlot.put(slot, replacement);
+			}
+			sortGroundItems(groundItems);
+			Path stagedPayload = payloadPath.resolveSibling(
+				payloadPath.getFileName() + ".ground-item-draft");
+			Files.write(
+				stagedPayload,
+				WorldBuilderJsonDocuments.pretty(payload)
+					.getBytes(StandardCharsets.UTF_8),
+				StandardOpenOption.CREATE_NEW);
+			moveFile(stagedPayload, payloadPath);
+			declaration.put(
+				"sha256", WorldBuilderHashes.sha256(payloadPath));
+		}
+	}
+
 	private static void applyScenery(
 		Path packageRoot,
 		Set<Integer> sourceLevels,
@@ -609,13 +731,15 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 	private static Journal read(Path path)
 		throws IOException, WorldBuilderDiscoveryException {
 		List<String> lines = Files.readAllLines(path, StandardCharsets.US_ASCII);
-		boolean allocation =
-			!lines.isEmpty() && ALLOCATION_HEADER.equals(lines.get(0));
+		boolean groundItemAuthoring =
+			!lines.isEmpty() && GROUND_ITEM_HEADER.equals(lines.get(0));
+		boolean allocation = groundItemAuthoring
+			|| (!lines.isEmpty() && ALLOCATION_HEADER.equals(lines.get(0)));
 		boolean authoring = allocation
 			|| (!lines.isEmpty() && AUTHORING_HEADER.equals(lines.get(0)));
 		boolean combined = authoring
 			|| (!lines.isEmpty() && COMBINED_HEADER.equals(lines.get(0)));
-		int minimumHeaderLines = allocation ? 7
+		int minimumHeaderLines = groundItemAuthoring ? 8 : allocation ? 7
 			: authoring ? 6 : combined ? 5 : 4;
 		if (lines.size() < minimumHeaderLines
 			|| (!combined && !HEADER.equals(lines.get(0)))) {
@@ -642,15 +766,20 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		int npcCount = authoring
 			? boundedCount(
 				field(lines.get(5+fieldOffset), "npc-count"), MAX_NPCS) : 0;
-		int recordStart = allocation?7:authoring ? 6 : combined ? 5 : 4;
+		int groundItemCount = groundItemAuthoring
+			? boundedCount(
+				field(lines.get(6 + fieldOffset), "ground-item-count"),
+				MAX_GROUND_ITEMS) : 0;
+		int recordStart = groundItemAuthoring ? 8
+			: allocation ? 7 : authoring ? 6 : combined ? 5 : 4;
 		if (levelCount == 0 && tileCount == 0 && sectorCount == 0 && sceneryCount == 0
-			&& npcCount == 0) {
+			&& npcCount == 0 && groundItemCount == 0) {
 			throw new WorldBuilderDiscoveryException(
 				"Layered draft journal is empty.");
 		}
 		if (lines.size()
 			!= recordStart + levelCount + sectorCount + tileCount
-				+ sceneryCount + npcCount) {
+				+ sceneryCount + npcCount + groundItemCount) {
 			throw new WorldBuilderDiscoveryException(
 				"Layered draft journal count is inconsistent.");
 		}
@@ -659,9 +788,12 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		List<TileEdit> tiles = new ArrayList<TileEdit>();
 		List<SceneryEdit> scenery = new ArrayList<SceneryEdit>();
 		List<NpcEdit> npcs = new ArrayList<NpcEdit>();
+		List<GroundItemEdit> groundItems =
+			new ArrayList<GroundItemEdit>();
 		Set<String> sectorKeys = new HashSet<String>();
 		Set<String> tileKeys = new HashSet<String>();
 		Set<String> sceneryKeys = new HashSet<String>();
+		Set<String> groundItemKeys = new HashSet<String>();
 		Set<String> placementIds = new HashSet<String>();
 		Set<Integer> levelKeys = new HashSet<Integer>();
 		int index = recordStart;
@@ -762,8 +894,35 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			}
 			npcs.add(edit);
 		}
+		for (int item = 0; item < groundItemCount; item++, index++) {
+			String[] values = lines.get(index).split("\\t", -1);
+			if (values.length != 9 || !"ground-item".equals(values[0])
+				|| (!"upsert".equals(values[1])
+					&& !"remove".equals(values[1]))) {
+				throw new WorldBuilderDiscoveryException(
+					"Layered ground-item record is malformed.");
+			}
+			GroundItemEdit edit = new GroundItemEdit(
+				"remove".equals(values[1]),
+				signed(values[2]),
+				coordinate(values[3]),
+				coordinate(values[4]),
+				identifier(values[5]),
+				nonNegative(values[6]),
+				positive(values[7], Integer.MAX_VALUE, "amount"),
+				positive(
+					values[8], MAX_GROUND_ITEM_RESPAWN_SECONDS,
+					"respawn time"));
+			if (!groundItemKeys.add(key(edit.level, edit.x, edit.y))
+				|| !placementIds.add(edit.placementId)) {
+				throw new WorldBuilderDiscoveryException(
+					"Layered ground-item journal contains duplicate identity.");
+			}
+			groundItems.add(edit);
+		}
 		return new Journal(
-			base, levels, sectors, tiles, scenery, npcs, allocation);
+			base, levels, sectors, tiles, scenery, npcs, groundItems,
+			allocation);
 	}
 
 	private static String field(String line, String name)
@@ -812,6 +971,17 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		if (result < 0) {
 			throw new WorldBuilderDiscoveryException(
 				"Layered scenery definition ID is invalid.");
+		}
+		return result;
+	}
+
+	private static int positive(
+		String value, int maximum, String label)
+		throws WorldBuilderDiscoveryException {
+		int result = signed(value);
+		if (result < 1 || result > maximum) {
+			throw new WorldBuilderDiscoveryException(
+				"Layered ground-item " + label + " is invalid.");
 		}
 		return result;
 	}
@@ -954,6 +1124,29 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 					number(aStart, "y"), number(bStart, "y"));
 				if (result == 0) result = text(a, "placementId").compareTo(
 					text(b, "placementId"));
+				return result;
+			}
+		});
+	}
+
+	private static void sortGroundItems(List<Object> values) {
+		Collections.sort(values, new Comparator<Object>() {
+			@Override
+			public int compare(Object left, Object right) {
+				Map<String,Object> a = object(left);
+				Map<String,Object> b = object(right);
+				Map<String,Object> aPosition = object(a.get("position"));
+				Map<String,Object> bPosition = object(b.get("position"));
+				int result = Integer.compare(
+					number(aPosition, "x"), number(bPosition, "x"));
+				if (result == 0) {
+					result = Integer.compare(
+						number(aPosition, "y"), number(bPosition, "y"));
+				}
+				if (result == 0) {
+					result = text(a, "placementId").compareTo(
+						text(b, "placementId"));
+				}
 				return result;
 			}
 		});
@@ -1114,18 +1307,20 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		final int sectorCount;
 		final int sceneryCount;
 		final int npcCount;
+		final int groundItemCount;
 		final String manifestSha256;
 		final String packageFingerprintSha256;
 
 		CommitResult(
 			int levelCount, int tileCount, int sectorCount,
-			int sceneryCount, int npcCount,
+			int sceneryCount, int npcCount, int groundItemCount,
 			String manifestSha256, String packageFingerprintSha256) {
 			this.levelCount = levelCount;
 			this.tileCount = tileCount;
 			this.sectorCount = sectorCount;
 			this.sceneryCount = sceneryCount;
 			this.npcCount = npcCount;
+			this.groundItemCount = groundItemCount;
 			this.manifestSha256 = manifestSha256;
 			this.packageFingerprintSha256 = packageFingerprintSha256;
 		}
@@ -1138,6 +1333,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 		final List<TileEdit> tiles;
 		final List<SceneryEdit> scenery;
 		final List<NpcEdit> npcs;
+		final List<GroundItemEdit> groundItems;
 		final boolean sparseAllocation;
 
 		Journal(
@@ -1147,6 +1343,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			List<TileEdit> tiles,
 			List<SceneryEdit> scenery,
 			List<NpcEdit> npcs,
+			List<GroundItemEdit> groundItems,
 			boolean sparseAllocation) {
 			this.baseManifestSha256 = baseManifestSha256;
 			this.levels = levels;
@@ -1154,6 +1351,7 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			this.tiles = tiles;
 			this.scenery = scenery;
 			this.npcs = npcs;
+			this.groundItems = groundItems;
 			this.sparseAllocation = sparseAllocation;
 		}
 	}
@@ -1338,6 +1536,61 @@ final class WorldBuilderLayeredTerrainDraftJournal {
 			point.put("x", Long.valueOf(x));
 			point.put("y", Long.valueOf(y));
 			return point;
+		}
+	}
+
+	private static final class GroundItemEdit {
+		final boolean remove;
+		final int level;
+		final int x;
+		final int y;
+		final String placementId;
+		final int itemId;
+		final int amount;
+		final int respawnSeconds;
+
+		GroundItemEdit(
+			boolean remove,
+			int level,
+			int x,
+			int y,
+			String placementId,
+			int itemId,
+			int amount,
+			int respawnSeconds) {
+			this.remove = remove;
+			this.level = level;
+			this.x = x;
+			this.y = y;
+			this.placementId = placementId;
+			this.itemId = itemId;
+			this.amount = amount;
+			this.respawnSeconds = respawnSeconds;
+		}
+
+		boolean matches(Map<String,Object> record) {
+			Map<String,Object> position = object(record.get("position"));
+			return placementId.equals(text(record, "placementId"))
+				&& itemId == number(record, "itemId")
+				&& amount == number(record, "amount")
+				&& respawnSeconds == number(record, "respawnSeconds")
+				&& x == number(position, "x")
+				&& y == number(position, "y");
+		}
+
+		Map<String,Object> toJson() {
+			Map<String,Object> position =
+				new LinkedHashMap<String,Object>();
+			position.put("x", Long.valueOf(x));
+			position.put("y", Long.valueOf(y));
+			Map<String,Object> result =
+				new LinkedHashMap<String,Object>();
+			result.put("amount", Long.valueOf(amount));
+			result.put("itemId", Long.valueOf(itemId));
+			result.put("placementId", placementId);
+			result.put("position", position);
+			result.put("respawnSeconds", Long.valueOf(respawnSeconds));
+			return result;
 		}
 	}
 }

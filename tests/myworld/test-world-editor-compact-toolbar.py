@@ -90,6 +90,8 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                         state.open(WorldEditorToolbarState.Flyout.NPC);
                         state.toggleCollapsed();
                         require(state.isCollapsed() && !state.isFlyoutOpen());
+                        state.open(WorldEditorToolbarState.Flyout.ITEMS);
+                        require(state.getFlyout() == WorldEditorToolbarState.Flyout.ITEMS);
                         state.setExpandedFallback(true);
                         require(state.isExpandedFallback() && !state.isCollapsed());
                         state.reset();
@@ -126,7 +128,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                             WorldEditorIconRegistry registry = new WorldEditorIconRegistry();
                             registry.initialize();
                             require(registry.loadedCount() == 1);
-                            require(registry.missingKeys().size() == 18);
+                            require(registry.missingKeys().size() == 19);
                             require(registry.isLoaded(WorldEditorIconRegistry.Key.MODE_NAVIGATE));
                             require(!registry.isLoaded(WorldEditorIconRegistry.Key.MODE_INSPECT));
                             Sprite first = registry.get(WorldEditorIconRegistry.Key.MODE_NAVIGATE);
@@ -142,7 +144,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                 cwd=working,
             )
         self.assertEqual(1, output.count("[world-editor icons]"))
-        self.assertIn("18 unavailable", output)
+        self.assertIn("19 unavailable", output)
         self.assertIn("mode-inspect.png (expected 24x24, got 12x12)", output)
         self.assertTrue(output.rstrip().endswith("icon-registry-ok"))
 
@@ -151,6 +153,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
         expected = {
             "toolbar-collapse.png", "toolbar-expand.png", "mode-navigate.png",
             "mode-inspect.png", "mode-scenery.png", "mode-npc.png",
+            "mode-items.png",
             "field-elevation.png", "field-floor-color.png",
             "field-floor-texture.png", "field-roof.png",
             "field-wall-north.png", "field-wall-east.png",

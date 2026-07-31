@@ -126,12 +126,16 @@ class WorldEditorFoundationTest(unittest.TestCase):
 
         self.assertIn("enum SceneryTool { PLACE, ROTATE, REMOVE }", ui)
         self.assertIn("enum NpcTool { PLACE, REMOVE }", ui)
+        self.assertIn("enum GroundItemTool { PLACE, REMOVE }", ui)
         self.assertIn("Math.min(radius,64)", ui)
         self.assertIn("Boundaries remain inspection-only", ui)
         self.assertIn("isLayeredPlacementDraftLevel()", ui)
         self.assertIn("placeNativeNpc(", sessions)
         self.assertIn("removeNativeNpc(", sessions)
         self.assertIn("nativeNpcDraftSize()", sessions)
+        self.assertIn("placeNativeGroundItem(", sessions)
+        self.assertIn("removeNativeGroundItem(", sessions)
+        self.assertIn("nativeGroundItemDraftSize()", sessions)
         self.assertIn("placeNativeNpc(player,id,radius,x,y)", commands)
         self.assertIn("removeNativeNpc(player,npc)", commands)
         self.assertIn('sendCommandString("saveworldedits")', ui)
@@ -144,6 +148,8 @@ class WorldEditorFoundationTest(unittest.TestCase):
             'sendCommandString("robject "+',
             'sendCommandString("cnpc "+',
             'sendCommandString("rpc "+',
+            'sendCommandString("buildergrounditem "',
+            'sendCommandString("removebuildergrounditem "',
         )
         for command in expected_commands:
             self.assertIn(command, client)
@@ -153,6 +159,8 @@ class WorldEditorFoundationTest(unittest.TestCase):
             "WORLD_EDITOR_REMOVE_SCENERY(100)",
             "WORLD_EDITOR_PLACE_NPC(100)",
             "WORLD_EDITOR_REMOVE_NPC(100)",
+            "WORLD_EDITOR_PLACE_GROUND_ITEM(100)",
+            "WORLD_EDITOR_REMOVE_GROUND_ITEM(100)",
         ):
             self.assertIn(action, actions)
         self.assertIn('" radius="+radius', handler)

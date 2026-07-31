@@ -95,7 +95,9 @@ public final class WorldBuilderProcessSupervisor {
 					+ committed.tileCount + " tiles, "
 					+ committed.sectorCount + " sectors, "
 					+ committed.sceneryCount + " scenery edits, "
-					+ committed.npcCount + " NPC edits, manifest "
+					+ committed.npcCount + " NPC edits, "
+					+ committed.groundItemCount
+					+ " ground-item edits, manifest "
 					+ committed.manifestSha256.substring(0, 12));
 		}
 	}

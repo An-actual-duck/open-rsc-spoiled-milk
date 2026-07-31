@@ -196,6 +196,26 @@ public class GroundItem extends Entity {
 		}
 	}
 
+	/**
+	 * Removes an authored layered spawn without scheduling its normal
+	 * replacement. This is restricted to the authoritative Builder lifecycle.
+	 */
+	public void retireNativeLayeredPlacement() {
+		if (nativeLayeredPlacement == null) {
+			throw new IllegalStateException(
+				"Ground item is not a native layered placement.");
+		}
+		if (isRemoved()) {
+			throw new IllegalStateException(
+				"Ground-item placement is already removed.");
+		}
+		if (!getWorld().retireNativeLayeredGroundItem(this)) {
+			throw new IllegalStateException(
+				"Ground-item placement is not the active authored instance.");
+		}
+		super.remove();
+	}
+
 	public boolean isInvisibleTo(final Player player) {
 		if (getAttribute("personalNpcDrop", false) && !belongsTo(player)) {
 			return true;

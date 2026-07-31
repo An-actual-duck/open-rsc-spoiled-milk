@@ -219,12 +219,43 @@ public final class WorldBuilderWorkingPersistenceHarness {
         layered = WorldEditorLayeredTerrainJournal.save(
             layeredJournal,
             "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.LevelCreation>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.SectorGrowth>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.TileEdit>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.SceneryEdit>emptyList(),
+            java.util.Collections.<WorldEditorLayeredTerrainJournal.NpcEdit>emptyList(),
+            Arrays.asList(
+                new WorldEditorLayeredTerrainJournal.GroundItemEdit(
+                    false, -3, 144, 640,
+                    "spoiled-milk.builder.ground-item.lm3.xp144.yp640",
+                    10, 25, 5),
+                new WorldEditorLayeredTerrainJournal.GroundItemEdit(
+                    false, -3, 143, 640,
+                    "spoiled-milk.builder.ground-item.lm3.xp143.yp640",
+                    20, 1, 30)));
+        require(layered.groundItemCount == 2
+                && layered.levelCount == 0
+                && layered.tileCount == 0,
+            "ground-item layered journal counts");
+        journalText = new String(
+            Files.readAllBytes(layeredJournal), "US-ASCII");
+        require(journalText.startsWith("world-builder-layered-draft-v5\n")
+                && journalText.contains("ground-item-count\t2\n")
+                && journalText.indexOf(
+                    "ground-item\tupsert\t-3\t143\t640")
+                    < journalText.indexOf(
+                        "ground-item\tupsert\t-3\t144\t640"),
+            "ground-item journal is not stable and deterministic");
+        layered = WorldEditorLayeredTerrainJournal.save(
+            layeredJournal,
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
             java.util.Collections.<WorldEditorLayeredTerrainJournal.SectorGrowth>emptyList(),
             java.util.Collections.<WorldEditorLayeredTerrainJournal.TileEdit>emptyList(),
             java.util.Collections.<WorldEditorLayeredTerrainJournal.SceneryEdit>emptyList(),
             java.util.Collections.<WorldEditorLayeredTerrainJournal.NpcEdit>emptyList());
         require(layered.tileCount == 0 && layered.sectorCount == 0
                 && layered.sceneryCount == 0 && layered.npcCount == 0
+                && layered.groundItemCount == 0
                 && layered.levelCount == 0
                 && !Files.exists(layeredJournal),
             "fully reverted layered draft retained a stale journal");

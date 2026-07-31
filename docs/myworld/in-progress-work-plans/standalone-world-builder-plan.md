@@ -1,6 +1,7 @@
 # Standalone World Builder Plan
 
-Status: active; Phases 0-4 complete, Phase 5 standalone packaging active
+Status: active; Phases 0-4 complete, Phase 5 standalone packaging and layered
+feature-completeness work active
 
 Owner: Spoiled Milk project owner
 
@@ -46,7 +47,8 @@ The intended first-use flow is:
 4. A private loopback server and local client start automatically.
 5. Login is skipped. The user appears as `Builder`, invulnerable, with the
    world editor already open and Build renderer mode available.
-6. The user edits terrain, scenery, and NPCs and saves normally.
+6. The user edits terrain, scenery, NPCs, and collectible respawning ground
+   items and saves normally.
 7. The original private-server files remain unchanged.
 8. The user runs `Import Map Changes` when ready and reviews a clear preview.
 9. The importer backs up the target, installs and verifies the bundle, and
@@ -70,7 +72,8 @@ diagnostics, but should not be required knowledge for ordinary use.
 - Normal authenticated login performed automatically by the client.
 - Server-enforced administrator access, invulnerability, and automatic world
   editor session opening.
-- Terrain, ordinary scenery, and NPC editing supported by the existing editor.
+- Terrain, ordinary scenery, NPC, and layered respawning ground-item editing
+  supported by the existing editor.
 - Isolated save, deterministic export, deliberate import, and exact rollback.
 - Self-contained Linux-x64 and Windows-x64 packages with platform launch,
   import, and rollback scripts plus bundled Java runtimes.
@@ -179,6 +182,19 @@ ambiguous keys, and verify the resulting configuration before committing it.
 Absent optional overlay files are represented explicitly as absent/empty in
 the source manifest. The tool must distinguish “the source had no file” from
 “the source contained an empty array” so rollback can restore absence exactly.
+
+### Layered-generation placement extension
+
+The five-file table above remains the legacy packed-map export contract. It
+must not be silently broadened or claimed to carry native layered placements.
+The layered Builder instead writes package-owned
+`layered-world-placements-v3` payloads inside its isolated working package.
+Its first resumed feature-completeness milestone adds definition-aware ground
+spawns with amount and respawn time, persisted with terrain, level allocation,
+scenery, and NPC changes through one backward-compatible v5 draft journal and
+one clean-close copy-on-write package swap. Import/export of that layered
+package remains a later explicit transaction; authoring the spawn does not
+write the target game.
 
 ## Compatibility Contract
 

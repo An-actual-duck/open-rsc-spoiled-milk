@@ -163,6 +163,12 @@ public final class Development implements CommandTrigger {
 		else if (command.equalsIgnoreCase("rpc") || command.equalsIgnoreCase("rnpc") || command.equalsIgnoreCase("removenpc")){
 			removeNpc(player, command, args);
 		}
+		else if (command.equalsIgnoreCase("buildergrounditem")) {
+			createBuilderGroundItem(player, command, args);
+		}
+		else if (command.equalsIgnoreCase("removebuildergrounditem")) {
+			removeBuilderGroundItem(player, command, args);
+		}
 		else if (command.equalsIgnoreCase("removeobject") || command.equalsIgnoreCase("robject") || command.equalsIgnoreCase("removescenery") || command.equalsIgnoreCase("rscenery")) {
 			removeObject(player, command, args);
 		}
@@ -311,6 +317,8 @@ public final class Development implements CommandTrigger {
 			||normalized.equals("createboundary")||normalized.equals("cboundary")
 			||normalized.equals("addboundary")||normalized.equals("aboundary")
 			||normalized.equals("rotateobject")||normalized.equals("rotatescenery")
+			||normalized.equals("buildergrounditem")
+			||normalized.equals("removebuildergrounditem")
 			||normalized.equals("saveworldedits")
 			||normalized.equals("clearworldedits")
 			||normalized.equals("discardworldedits");
@@ -338,7 +346,9 @@ public final class Development implements CommandTrigger {
 			||normalized.equals("addscenery")
 			||normalized.equals("ascenery")
 			||normalized.equals("rotateobject")
-			||normalized.equals("rotatescenery");
+			||normalized.equals("rotatescenery")
+			||normalized.equals("buildergrounditem")
+			||normalized.equals("removebuildergrounditem");
 	}
 
 	private static void layeredBuilderGoTo(
@@ -1011,6 +1021,69 @@ public final class Development implements CommandTrigger {
 		player.getWorld().unregisterNpc(npc);
 	}
 
+	private void createBuilderGroundItem(
+		Player player, String command, String[] args) {
+		if (args.length != 3 && args.length != 5) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [item_id] [amount] [respawn_seconds] (x) (y)");
+			return;
+		}
+		try {
+			int itemId = Integer.parseInt(args[0]);
+			int amount = Integer.parseInt(args[1]);
+			int respawnSeconds = Integer.parseInt(args[2]);
+			int x = args.length == 5
+				? Integer.parseInt(args[3]) : player.getX();
+			int y = args.length == 5
+				? Integer.parseInt(args[4]) : player.getY();
+			GroundItem item = player.getWorld().getServer()
+				.getWorldEditorSessions().placeNativeGroundItem(
+					player, itemId, amount, respawnSeconds, x, y);
+			player.message(messagePrefix + "Added layered ground-item spawn: "
+				+ item.getDef().getName() + " x"
+				+ item.getNativeLayeredPlacement().getAmount()
+				+ " at " + item.getWorldLocation() + " (respawn "
+				+ item.getNativeLayeredPlacement().getRespawnSeconds()
+				+ "s). Save and close/reopen the Builder to commit.");
+		} catch (NumberFormatException failure) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [item_id] [amount] [respawn_seconds] (x) (y)");
+		} catch (Exception failure) {
+			player.message(messagePrefix
+				+ "Layered ground-item placement refused: "
+				+ failure.getMessage());
+		}
+	}
+
+	private void removeBuilderGroundItem(
+		Player player, String command, String[] args) {
+		if (args.length != 3) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [item_id] [x] [y]");
+			return;
+		}
+		try {
+			int itemId = Integer.parseInt(args[0]);
+			int x = Integer.parseInt(args[1]);
+			int y = Integer.parseInt(args[2]);
+			GroundItem item = player.getWorld().getServer()
+				.getWorldEditorSessions().removeNativeGroundItem(
+					player, itemId, x, y);
+			player.message(messagePrefix
+				+ "Removed layered ground-item spawn: "
+				+ item.getDef().getName() + " at "
+				+ item.getWorldLocation()
+				+ ". Save and close/reopen the Builder to commit.");
+		} catch (NumberFormatException failure) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ " [item_id] [x] [y]");
+		} catch (Exception failure) {
+			player.message(messagePrefix
+				+ "Layered ground-item removal refused: "
+				+ failure.getMessage());
+		}
+	}
+
 	private void createObject(Player player, String command, String[] args) {
 		if (args.length < 1 || args.length == 2) {
 			player.message(badSyntaxPrefix + command.toUpperCase() + " [id] (x) (y)");
@@ -1502,29 +1575,31 @@ public final class Development implements CommandTrigger {
 			npcEdits = new ArrayList<WorldNpcEditFiles.Edit>(PENDING_NPC_EDITS.values());
 		}
 
-		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int levelCreations=editor.nativeLevelCreationDraftSize();int terrainEdits=editor.terrainDraftSize();int terrainGrowth=editor.nativeTerrainGrowthDraftSize();int nativeScenery=editor.nativeSceneryDraftSize();int nativeNpcs=editor.nativeNpcDraftSize();
-		if (edits.isEmpty() && npcEdits.isEmpty() && levelCreations==0&&terrainEdits==0&&terrainGrowth==0&&nativeScenery==0&&nativeNpcs==0) {
+		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int levelCreations=editor.nativeLevelCreationDraftSize();int terrainEdits=editor.terrainDraftSize();int terrainGrowth=editor.nativeTerrainGrowthDraftSize();int nativeScenery=editor.nativeSceneryDraftSize();int nativeNpcs=editor.nativeNpcDraftSize();int nativeGroundItems=editor.nativeGroundItemDraftSize();
+		if (edits.isEmpty() && npcEdits.isEmpty() && levelCreations==0&&terrainEdits==0&&terrainGrowth==0&&nativeScenery==0&&nativeNpcs==0&&nativeGroundItems==0) {
 			player.message(messagePrefix + "No pending world edits to save.");
 			return;
 		}
-		if((levelCreations>0||terrainEdits>0||terrainGrowth>0||nativeScenery>0||nativeNpcs>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the layered draft.");return;}
+		if((levelCreations>0||terrainEdits>0||terrainGrowth>0||nativeScenery>0||nativeNpcs>0||nativeGroundItems>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the layered draft.");return;}
 		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
 			try{
 				com.openrsc.server.content.worldedit.WorldEditorLayeredTerrainJournal.SaveResult saved=
 					editor.saveNativeTerrainDraft(player);
-				int total=saved.levelCount+saved.tileCount+saved.sectorCount+saved.sceneryCount+saved.npcCount;
+				int total=saved.levelCount+saved.tileCount+saved.sectorCount+saved.sceneryCount+saved.npcCount+saved.groundItemCount;
 				player.message(messagePrefix+"Saved "+total+" world edits.");
 				player.message(messagePrefix+"Layered draft journal: "+saved.levelCount
 					+" new levels, "+saved.tileCount+" tiles, "
 					+saved.sectorCount+" new sectors, "
 					+saved.sceneryCount+" scenery edits, "+saved.npcCount
-					+" NPC edits. Close and reopen "
+					+" NPC edits, "+saved.groundItemCount
+					+" ground-item edits. Close and reopen "
 					+"the Builder to commit and reload the working package.");
 				LOGGER.info(player.getUsername()+" saved layered draft journal "
 					+saved.journal+" with "+saved.levelCount+" levels and "
 					+saved.tileCount+" tiles and "
 					+saved.sectorCount+" sectors and "+saved.sceneryCount
-					+" scenery edits and "+saved.npcCount+" NPC edits");
+					+" scenery edits and "+saved.npcCount+" NPC edits and "
+					+saved.groundItemCount+" ground-item edits");
 			}catch(Exception failure){
 				LOGGER.error(failure);
 				player.message(messagePrefix+"Failed to save world edits: "+failure.getMessage());

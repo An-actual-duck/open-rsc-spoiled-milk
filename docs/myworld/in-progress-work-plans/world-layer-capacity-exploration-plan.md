@@ -19371,6 +19371,7 @@ private environment should validate at least:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-30 | Resume layered World Builder feature-completeness work with collectible respawning ground-item authoring as the first focused placement milestone. | Implemented, automated-validated, and owner-accepted. The bounded design is one package-owned spawn per allocated generated-level tile with definition-aware amount, configurable respawn time, ordinary pickup/respawn behavior, permanent per-location generation-fenced removal, and atomic v5 journal/package commit. The owner reported the complete tool working as intended and supplied the final Game-icons.net toolbar mark. Accepted source levels, boundaries, export, and target files remain locked pending their own milestones |
 | 2026-07-28 | Move the isolated lava-forge/demon miniquest component reached from the Dwarven Mine down one true layer, while retaining the adjacent dragon dungeon on level `-1`. | Implemented, automated-validated, and owner-accepted as fail-closed package `0.5.0`. Exact connectivity moves 2,170 non-void tiles plus a 204-tile void ring, 20 NPCs, one item, and three scenery objects from `-1` to `-2` with X/Y preserved. An independent negative guard keeps all 2,955 Taverley blue-dragon terrain tiles and its exact 83/10/217/11 placement census byte-identical on `-1`. Private review accepts relocated visuals/content, protected dragon content, bidirectional Dwarven Mine ladder travel, and reconnect behavior. The quest gate, saved-player migration, runtime profile, and Builder protected-source contract are level-qualified; legacy fallback remains |
 | 2026-07-28 | Relocate the complete Zanaris/Fairy Dimension content island from shared underground level `-1` to dedicated global level `+10`, preserving X/Y and all content ownership. | Implemented, automated-validated, and owner-accepted as fail-closed package `0.4.0`: exact flood-fill and placement signatures move 1,639 non-void tiles plus their presentation ring, 28 NPCs, four items, 194 scenery objects, and six boundaries into four level-`+10` sectors; portal, ladder, marketplace, bank, hopper, aliases, and old saved-player migration are level-qualified; Builder protects `+10` as accepted source. The first private route accepted destination content and behavior but exposed 214 wall-bearing tiles retained on the nominally void source ring. The corrected package clears all 2,206 source component/ring tiles, passes byte-exact guards, and the owner confirms the former location is clean |
 | 2026-07-28 | Close the accepted loader visual milestone with one measured server fast path, and keep renderer glow-mask caching, canonical incoming-strip mesh products, static collision pages, and server eviction in their proper later workstreams. | Implemented, automated-validated, and owner-accepted. Native NPC destination checks use exact level-qualified scenery occupancy staged atomically with package-object collision and replacement state instead of scanning the configured multi-region object window. Focused full-block, directional, collisionless, layer-isolation, replacement, removal, and reset guards pass. The private route preserved NPC wall/scenery blocking, Player collision/interactions, and loader travel while processing 5,446 NPC moves at 1 ms poll p95, zero Player backpressure, and 26 ms average active ticks |
@@ -19950,18 +19951,18 @@ after the transaction. Working drafts must retain every accepted source level,
 terrain identity, placement set, path, and payload hash. Every additional
 level starts with one contiguous nine-sector allocation and one empty placement
 set, then may grow only through edge-connected Builder transactions. Later
-Builder-owned transactions may add NPCs and scenery to that new level without
+Builder-owned transactions may add NPCs, scenery, and ground items to that new level without
 changing the accepted source placement sets. Duplicate
 levels, active Builder
 sessions, unsafe paths, source drift, malformed hashes, partial terrain, or
-new levels containing ground-item or boundary placements refuse before
+new levels containing boundary placements refuse before
 publication.
 
 Empty v3 placement payloads are now an explicit format capability; v1 and v2
 retain their non-empty rule. Runtime consumption uses the new
 `spoiled-milk-builder-draft` profile, which accepts the exact original
-per-level placement-family totals plus additive terrain, NPC, and scenery new
-levels. `WorldBuilderMode` refuses that
+per-level placement-family totals plus additive terrain, NPC, scenery, and
+ground-item new levels. `WorldBuilderMode` refuses that
 profile outside the isolated Builder. The ordinary
 `spoiled-milk-replacement` profile remains pinned to the exact accepted
 manifest, so this change cannot silently broaden a normal or live server.
@@ -19988,7 +19989,7 @@ focused owner acceptance. The existing terrain inspect/copy, checked-field,
 1-by-1, and 3-by-3 controls are available only while standing on a
 Builder-created level. Paints update a bounded in-memory native overlay and
 therefore rebuild both presentation and collision from the same tile state.
-Accepted source levels `[-1,0,1,2]` still refuse all terrain mutation.
+Accepted source levels `[-2,-1,0,1,2,10]` still refuse all terrain mutation.
 
 **Save** writes `working/layered-world/terrain-draft-v1.tsv` atomically with
 the exact working-manifest parent, sorted sector-growth records, and sorted
@@ -20057,11 +20058,12 @@ prior location. The additional owner-painted tiles were intentional.
 The scenery-only checkpoint has now been absorbed into a broader
 **Builder-created-level workbench** and has completed free-form owner
 acceptance. Terrain Surface and Structure controls, Scenery
-Place/Rotate/Remove, and NPC Place/Remove are enabled together on an additional
-signed level. The server independently requires an active isolated Builder
-session, allocated package terrain, a non-source signed level, and native
-package ownership. Ground items, standalone boundary-object placement,
-accepted source levels, export, and target-game mutation remain locked.
+Place/Rotate/Remove, NPC Place/Remove, and respawning ground-item Place/Remove
+are enabled together on an additional signed level. The server independently
+requires an active isolated Builder session, allocated package terrain, a
+non-source signed level, and native package ownership. Standalone
+boundary-object placement, accepted source levels, export, and target-game
+mutation remain locked.
 
 New scenery receives a deterministic placement identity derived from
 `(level,x,y)`. Rotation retains that identity; removing and re-adding a
@@ -20076,18 +20078,39 @@ runtime placement and removal use native signed locations and refuse a roaming
 rectangle whose sectors are not allocated. Multiple NPCs may deliberately
 share a start tile without colliding identities.
 
-New saves use v3 of the existing bounded draft journal while the launcher
-continues to read v1 terrain-only and v2 terrain/scenery journals. Terrain
-tiles, sector growth, scenery operations, and NPC operations are sorted and
-committed in one clean-close copy-on-write package swap; there is no second
-placement transaction that could partially publish. Reverting all saved
-changes to the current manifest removes the pending journal. The launcher
-updates only the created level's v3 placement payload and its manifest hash,
-then revalidates source ancestry, allowed placement families, terrain
-coverage, payload identity, and the installed working review before deleting
-the journal. Automated coverage proves combined authoring, restart visibility,
-identity-preserving scenery rotation, exact scenery/NPC removal, stable
-ordering, stale-match refusal, and unchanged accepted source payloads.
+The active 2026-07-30 feature-completeness milestone adds one authored
+respawning ground-item spawn per tile. The Items palette exposes definition ID
+and name, stack amount, and a bounded `1..86400` second respawn time.
+Non-stackable definitions force amount `1`; placement refuses invalid
+definitions, absent terrain, source levels, and an occupied authored item
+slot. Normal player pickup uses the package-owned runtime respawn lifecycle.
+The authored registry retains the slot while its item is temporarily absent,
+so an editor cannot duplicate a picked-up spawn. Permanent editor removal
+invalidates that location's delayed generation without invalidating another
+spawn on the same X/Y at a different level. The first removal control targets
+a visible package-owned item; an absent picked-up spawn must respawn before it
+can be selected for removal.
+
+New saves use v5 of the existing bounded draft journal while the launcher
+continues to read v1 terrain-only, v2 terrain/scenery, v3 NPC-authoring, and v4
+level-allocation journals. Terrain tiles, sector growth, scenery operations,
+NPC operations, and ground-item operations are sorted and committed in one
+clean-close copy-on-write package swap; there is no second placement
+transaction that could partially publish. Reverting all saved changes to the
+current manifest removes the pending journal. The launcher updates only the
+created level's v3 placement payload and its manifest hash, then revalidates
+source ancestry, allowed placement families, terrain coverage, payload
+identity, and the installed working review before deleting the journal.
+Automated coverage now proves combined authoring, restart visibility,
+identity-preserving scenery rotation, exact scenery/NPC/ground-item removal,
+ground-item amount and respawn fidelity, stable ordering, stale-match refusal,
+per-location delayed-respawn cancellation, cross-level slot independence, and
+unchanged accepted source payloads. Authoritative server, client, and Builder
+tool builds pass. Owner acceptance completed on 2026-07-30: placement,
+pickup, respawn, duplicate-slot refusal, permanent removal, controls, and
+presentation behaved as intended with no further functional changes
+requested. The supplied Game-icons.net coin-stack mark replaces the temporary
+generated toolbar artwork.
 
 The owner-reported `-3` failure exposed a presentation defect before broad
 review began. Arbitrary signed levels use render plane `0` as a compatibility
