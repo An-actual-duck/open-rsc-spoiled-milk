@@ -1811,6 +1811,10 @@ public class Functions {
 				teleport(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
 				teleport(player, object.getX() + 1, object.getY());
+			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() + 1) {
+				teleport(player, object.getX() + 1, object.getY() + 1);
+			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() - 1) {
+				teleport(player, object.getX() - 1, object.getY() - 1);
 			}
 		}
 		if (object.getDirection() == 3) {
@@ -1828,6 +1832,10 @@ public class Functions {
 				teleport(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
 				teleport(player, object.getX() - 1, object.getY());
+			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() + 1) {
+				teleport(player, object.getX() - 1, object.getY() + 1);
+			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() - 1) {
+				teleport(player, object.getX() + 1, object.getY() - 1);
 			}
 
 		}
