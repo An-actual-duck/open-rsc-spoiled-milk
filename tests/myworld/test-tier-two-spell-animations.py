@@ -193,8 +193,8 @@ def main() -> int:
     complete_teleport = re.search(
         r"private void completeTeleport.*?\n\t\}", spell_handler, re.DOTALL
     )
-    assert complete_teleport and "teleport(120, 504, false)" in complete_teleport.group(0)
-    assert "teleport(120, 504, true)" not in complete_teleport.group(0), \
+    assert complete_teleport and "teleport(120, 504, 0, false)" in complete_teleport.group(0)
+    assert "teleport(120, 504, 0, true)" not in complete_teleport.group(0), \
         "spell teleports must not append the legacy teleport bubble"
     assert "COMBAT_EFFECT_TICKS" not in client, \
         "combat effects must derive total playback time from their loaded frame count"

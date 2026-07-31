@@ -2258,22 +2258,22 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 		switch (spellEnum) {
 			case VARROCK_TELEPORT:
-				player.teleport(120, 504, false);
+				player.teleport(120, 504, 0, false);
 				break;
 			case LUMBRIDGE_TELEPORT:
-				player.teleport(120, 648, false);
+				player.teleport(120, 648, 0, false);
 				break;
 			case FALADOR_TELEPORT:
-				player.teleport(312, 552, false);
+				player.teleport(312, 552, 0, false);
 				break;
 			case CAMELOT_TELEPORT:
-				player.teleport(456, 456, false);
+				player.teleport(456, 456, 0, false);
 				break;
 			case ARDOUGNE_TELEPORT:
-				player.teleport(588, 621, false);
+				player.teleport(588, 621, 0, false);
 				break;
 			case WATCHTOWER_TELEPORT:
-				player.teleport(493, 3525, false);
+				player.teleport(493, 693, -1, false);
 				break;
 			default:
 				break;

@@ -28,52 +28,56 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 	private static final String DRAGONSTONE_AMULET_ITEM_UID_KEY = "production_context_item_uid";
 
 	private enum Destination {
-		CRAFTING_GUILD("Crafting Guild", 347, 599),
-		MINING_GUILD("Mining Guild", 250, 537),
-		RANGERS_GUILD("Rangers Guild", 496, 462),
-		PRAYER_GUILD("Worship Guild", 256, 471),
-		FISHING_GUILD("Fishing Guild", 586, 525),
-		COOKING_GUILD("Cooking Guild", 179, 489),
-		HEROES_GUILD("Heroes' Guild", 372, 443),
-		WIZARDS_GUILD("Wizards' Guild", 600, 757),
-		CHAMPIONS_GUILD("Champions' Guild", 150, 552),
-		LEGENDS_GUILD("Legends' Guild", 513, 552);
+		CRAFTING_GUILD("Crafting Guild", 347, 599, 0),
+		MINING_GUILD("Mining Guild", 250, 537, 0),
+		RANGERS_GUILD("Rangers Guild", 496, 462, 0),
+		PRAYER_GUILD("Worship Guild", 256, 471, 0),
+		FISHING_GUILD("Fishing Guild", 586, 525, 0),
+		COOKING_GUILD("Cooking Guild", 179, 489, 0),
+		HEROES_GUILD("Heroes' Guild", 372, 443, 0),
+		WIZARDS_GUILD("Wizards' Guild", 600, 757, 0),
+		CHAMPIONS_GUILD("Champions' Guild", 150, 552, 0),
+		LEGENDS_GUILD("Legends' Guild", 513, 552, 0);
 
 		private final String label;
 		private final int x;
 		private final int y;
+		private final int level;
 
-		Destination(final String label, final int x, final int y) {
+		Destination(final String label, final int x, final int y, final int level) {
 			this.label = label;
 			this.x = x;
 			this.y = y;
+			this.level = level;
 		}
 	}
 
 	private enum RuneAltarDestination {
-		AIR(ItemId.AIR_RUNE.id(), 305, 593),
-		MIND(ItemId.MIND_RUNE.id(), 296, 438),
-		WATER(ItemId.WATER_RUNE.id(), 146, 684),
-		EARTH(ItemId.EARTH_RUNE.id(), 61, 464),
-		FIRE(ItemId.FIRE_RUNE.id(), 49, 633),
-		BODY(ItemId.BODY_RUNE.id(), 258, 503),
-		COSMIC(ItemId.COSMIC_RUNE.id(), 104, 3556),
-		CHAOS(ItemId.CHAOS_RUNE.id(), 231, 375),
-		NATURE(ItemId.NATURE_RUNE.id(), 391, 804),
-		LAW(ItemId.LAW_RUNE.id(), 408, 534),
-		DEATH(ItemId.DEATH_RUNE.id(), 150, 212),
-		BLOOD(ItemId.BLOOD_RUNE.id(), 246, 102),
-		SOUL(ItemId.SOUL_RUNE.id(), 610, 3599),
-		LIFE(ItemId.LIFE_RUNE.id(), 282, 694);
+		AIR(ItemId.AIR_RUNE.id(), 305, 593, 0),
+		MIND(ItemId.MIND_RUNE.id(), 296, 438, 0),
+		WATER(ItemId.WATER_RUNE.id(), 146, 684, 0),
+		EARTH(ItemId.EARTH_RUNE.id(), 61, 464, 0),
+		FIRE(ItemId.FIRE_RUNE.id(), 49, 633, 0),
+		BODY(ItemId.BODY_RUNE.id(), 258, 503, 0),
+		COSMIC(ItemId.COSMIC_RUNE.id(), 104, 724, -1),
+		CHAOS(ItemId.CHAOS_RUNE.id(), 231, 375, 0),
+		NATURE(ItemId.NATURE_RUNE.id(), 391, 804, 0),
+		LAW(ItemId.LAW_RUNE.id(), 408, 534, 0),
+		DEATH(ItemId.DEATH_RUNE.id(), 150, 212, 0),
+		BLOOD(ItemId.BLOOD_RUNE.id(), 246, 102, 0),
+		SOUL(ItemId.SOUL_RUNE.id(), 610, 767, -1),
+		LIFE(ItemId.LIFE_RUNE.id(), 282, 694, 0);
 
 		private final int runeItemId;
 		private final int x;
 		private final int y;
+		private final int level;
 
-		RuneAltarDestination(final int runeItemId, final int x, final int y) {
+		RuneAltarDestination(final int runeItemId, final int x, final int y, final int level) {
 			this.runeItemId = runeItemId;
 			this.x = x;
 			this.y = y;
+			this.level = level;
 		}
 
 		private static RuneAltarDestination forRuneItem(final int itemId) {
@@ -144,7 +148,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 		}
 
 		final Destination destination = destinations[option];
-		player.teleport(destination.x, destination.y, true);
+		player.teleport(destination.x, destination.y, destination.level, true);
 		setRemainingCharges(player, item, charges - 1);
 		player.message("Your law Bangle now has " + formatCharges(charges - 1) + " remaining.");
 	}
@@ -206,7 +210,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			return true;
 		}
 
-		player.teleport(destination.x, destination.y, true);
+		player.teleport(destination.x, destination.y, destination.level, true);
 		lawJewelry.setRemainingCharges(player, amulet, charges - 1);
 		player.message("Your law Bangle now has " + lawJewelry.formatCharges(charges - 1) + " remaining.");
 		return true;

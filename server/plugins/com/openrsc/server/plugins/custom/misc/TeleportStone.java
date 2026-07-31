@@ -58,40 +58,40 @@ public class TeleportStone implements OpInvTrigger {
 				case -1:// stop them.
 					return;
 				case 0: // lumb
-					player.teleport(125, 648);
+					player.teleport(125, 648, 0, false);
 					break;
 				case 1: // dray
-					player.teleport(214, 632);
+					player.teleport(214, 632, 0, false);
 					break;
 				case 2: // falla
-					player.teleport(304, 542);
+					player.teleport(304, 542, 0, false);
 					break;
 				case 3: // edge
-					player.teleport(223, 447);
+					player.teleport(223, 447, 0, false);
 					break;
 				case 4: // varrock
-					player.teleport(122, 509);
+					player.teleport(122, 509, 0, false);
 					break;
 				case 5: // alkharid
-					player.teleport(85, 691);
+					player.teleport(85, 691, 0, false);
 					break;
 				case 6: // Karamja
-					player.teleport(372, 706);
+					player.teleport(372, 706, 0, false);
 					break;
 				case 7: // Yanille
-					player.teleport(583, 747);
+					player.teleport(583, 747, 0, false);
 					break;
 				case 8: // Ardougne
-					player.teleport(557, 606);
+					player.teleport(557, 606, 0, false);
 					break;
 				case 9: // Catherby
-					player.teleport(442, 503);
+					player.teleport(442, 503, 0, false);
 					break;
 				case 10: // Seers
-					player.teleport(493, 456);
+					player.teleport(493, 456, 0, false);
 					break;
 				case 11: // Gnome Stronghold
-					player.teleport(703, 481);
+					player.teleport(703, 481, 0, false);
 					break;
 				case 12:
 					return;
